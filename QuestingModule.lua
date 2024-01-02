@@ -202,9 +202,10 @@ RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 
 local function UpdateHeader(frame, baseTitle, questCount)
     local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
+    local numShownEntries, numQuestsInLog = C_QuestLog.GetNumQuestLogEntries()
     local titleText = baseTitle
     if frame == RQE.QuestsFrame then
-        titleText = titleText .. " (" .. questCount .. "/" .. maxQuests .. ")"
+        titleText = titleText .. " (" .. questCount .. "/" .. numQuestsInLog .. "/" .. maxQuests .. ")"
     else
         titleText = titleText .. " (" .. questCount .. ")"
     end
@@ -570,8 +571,8 @@ function UpdateRQEQuestFrame()
 	local lastQuestObjectivesOrDescription = nil
 
     -- Initialize default positions
-    --RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-    --RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
+    RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
 	
     -- Separate variables to track the last element in each child frame
 	local lastCampaignElement, lastQuestElement = nil, nil
@@ -688,16 +689,14 @@ function UpdateRQEQuestFrame()
 					end
 				end)
 				
-                -- Anchor logic based on the quest type and index of lastelement/first
-				if lastElement and RQE.QuestLogIndexButtons[i - 1] and RQE.QuestLogIndexButtons[i - 1].QuestObjectivesOrDescription then
-					-- For subsequent quests, anchor below the QuestObjectivesOrDescription of the last element of the same type
-					QuestLevelAndName:SetPoint("TOPLEFT", RQE.QuestLogIndexButtons[i - 1].QuestObjectivesOrDescription, "BOTTOMLEFT", 0, -15)
+				-- Anchor logic based on the quest type and index of lastelement/first
+				if lastElement then
+					QuestLevelAndName:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
 				else
-					-- For the first quest of each type, anchor to the parent frame with a specific offset
 					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
 				end
 				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
-				
+
 				-- Set Justification and Word Wrap
 				QuestLevelAndName:SetJustifyH("LEFT")
 				QuestLevelAndName:SetJustifyV("TOP")
