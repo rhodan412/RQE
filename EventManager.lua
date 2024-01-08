@@ -48,6 +48,7 @@ end
 -- Define a list of events to register
 local eventsToRegister = {
 	"ADDON_LOADED",
+	"BAG_UPDATE_COOLDOWN",
 	"SUPER_TRACKING_CHANGED",
 	"QUEST_CURRENCY_LOOT_RECEIVED",
 	"QUEST_LOOT_RECEIVED",
@@ -57,7 +58,6 @@ local eventsToRegister = {
 	"QUEST_LOG_UPDATE",
 	"TASK_PROGRESS_UPDATE",
 	"UNIT_EXITING_VEHICLE",
-	"PLAYER_ENTERING_WORLD",
 	"ZONE_CHANGED",
 	"ZONE_CHANGED_INDOORS",
 	"ZONE_CHANGED_NEW_AREA",
@@ -369,7 +369,6 @@ local function HandleEvents(frame, event, ...)
 				
                 -- Call the functions to update the frame
                 UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
-                --UpdateFrameForUnknownQuest(currentQuestID)
 				UpdateRQEQuestFrame()
 				SortQuestsByProximity()
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -379,7 +378,8 @@ local function HandleEvents(frame, event, ...)
 	-- Handling multiple quest related events to update the main frame
 	elseif event == "QUEST_CURRENCY_LOOT_RECEIVED" or 
 		   event == "QUEST_LOOT_RECEIVED" or 
-		   event == "QUEST_LOG_CRITERIA_UPDATE" or 
+		   event == "QUEST_LOG_CRITERIA_UPDATE" or
+		   event == "BAG_UPDATE_COOLDOWN" or
 		   event == "QUESTLINE_UPDATE" or 
 		   event == "QUEST_POI_UPDATE" or 
 		   event == "QUEST_LOG_UPDATE" or 
@@ -391,10 +391,8 @@ local function HandleEvents(frame, event, ...)
 		-- Attempt to fetch other necessary information using the currentQuestID
 		local currentQuestInfo = RQEDatabase[currentQuestID]
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-
-		--UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 		
-		if currentQuestID and currentQuestInfo then
+		if currentQuestID then
 			C_Timer.After(0.5, function()
 				HideObjectiveTracker()
 				UpdateRQEQuestFrame()
@@ -431,29 +429,28 @@ local function HandleEvents(frame, event, ...)
 	-- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
 	elseif event == "QUEST_WATCH_LIST_CHANGED" then
 		local questID, added = ...
-		if questID and added then
-			-- Quest is added to the Watch List
-			RQEQuestFrame:ClearAllPoints()
-			RQE:ClearRQEQuestFrame()
-			UpdateRQEQuestFrame()
-			SortQuestsByProximity()
-			--TrackOrUntrackQuest(questID, isTracking)
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		elseif questID and not added then
-			RQEQuestFrame:ClearAllPoints()
-			RQE:ClearRQEQuestFrame()
-			UpdateRQEQuestFrame()
-			SortQuestsByProximity()
-			--TrackOrUntrackQuest(questID, isTracking)
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		elseif questID and removed then
-			-- Quest is removed from the Watch List
-			RQEQuestFrame:ClearAllPoints()
-			RQE:ClearRQEQuestFrame()
-			UpdateRQEQuestFrame()
-			SortQuestsByProximity()
-			--TrackOrUntrackQuest(questID, isTracking)
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		if questID then
+			if C_QuestLog.IsWorldQuest(questID) then
+				-- If the quest is a World Quest, handle it specifically
+				if added then
+					-- World Quest is added to the Watch List
+					-- Call a function to update just the World Quests part of the RQEQuestFrame
+					--RQE.UpdateWorldQuestsFrame(questID, true)
+					UpdateRQEQuestFrame()
+				else
+					-- World Quest is removed from the Watch List
+					-- Call a function to update just the World Quests part of the RQEQuestFrame
+					--RQE.UpdateWorldQuestsFrame(questID, false)
+					UpdateRQEQuestFrame()
+				end
+			else
+				-- If the quest is not a World Quest, handle all quests
+				RQEQuestFrame:ClearAllPoints()
+				RQE:ClearRQEQuestFrame()
+				UpdateRQEQuestFrame()
+				SortQuestsByProximity()
+				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+			end
 		end
 		
 	-- Handling QUEST_TURNED_IN event
@@ -462,7 +459,6 @@ local function HandleEvents(frame, event, ...)
 		RQE:ClearRQEQuestFrame()
 		UpdateRQEQuestFrame()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		--UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
  
 	-- Handling PLAYER_LOGOUT event
 	elseif event == "PLAYER_LOGOUT" then
