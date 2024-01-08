@@ -263,7 +263,6 @@ function RQE:HandleSuperTrackedQuestUpdate()
             if questInfo then
                 local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(savedSuperTrackedQuestID)
                 UpdateFrame(savedSuperTrackedQuestID, questInfo, StepsText, CoordsText, MapIDs)
-                --UpdateFrameForUnknownQuest(savedSuperTrackedQuestID)
             end
         end
     end)
