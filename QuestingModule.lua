@@ -217,76 +217,6 @@ end
 function SortQuestsByProximity()
     -- Logic to sort quests based on proximity
     C_QuestLog.SortQuestWatches()
-    
-    -- -- Get the last campaign quest being tracked
-    -- local lastCampaignQuestIndex = 0
-    -- for i = 1, GetNumQuestWatches() do
-        -- local questID, _, _, _, _, isCampaign = GetQuestWatchInfo(i)
-        -- if isCampaign then
-            -- lastCampaignQuestIndex = i
-        -- end
-    -- end
-    
-    -- -- Anchor RQE.CampaignFrame to the top of its parent frame
-    -- RQE.CampaignFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    
-    -- -- Anchor RQE.QuestsFrame to the header of RQE.CampaignFrame
-    -- if lastCampaignQuestIndex > 0 then
-        -- local questID, _, _, _, _, isCampaign = GetQuestWatchInfo(lastCampaignQuestIndex)
-        -- local questObjectivesOrDescription = GetQuestObjectiveOrDescription(questID)
-        -- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-        -- RQE.QuestsFrame:SetHeight(100) -- Set the height of RQE.QuestsFrame as per your requirement
-        
-        -- -- Anchor the header of RQE.WorldQuestsFrame to the last regular quest being tracked's QuestObjectivesOrDescription
-        -- RQE.WorldQuestsFrame.header:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
-    -- else
-        -- -- If no quests being tracked, anchor RQE.QuestsFrame to the top of its parent frame
-        -- RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-        
-        -- -- Anchor the header of RQE.WorldQuestsFrame to the last regular quest being tracked's QuestObjectivesOrDescription
-        -- local lastRegularQuestIndex = GetNumQuestWatches()
-        -- if lastRegularQuestIndex > 0 then
-            -- local questID, _, _, _, _, isCampaign = GetQuestWatchInfo(lastRegularQuestIndex)
-            -- local questObjectivesOrDescription = GetQuestObjectiveOrDescription(questID)
-            -- RQE.WorldQuestsFrame.header:SetPoint("TOPLEFT", questObjectivesOrDescription, "BOTTOMLEFT", 0, -10)
-        -- end
-    -- end
-end
-
-
--- Creating the frame for the Timer (Scenarios)
--- Create a frame for the timer
-local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
-timerFrame:SetSize(100, 20) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP") -- Position at the top of your module
-
--- Create a FontString for the timer text
-local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-timerText:SetAllPoints(timerFrame)
-
-local startTime
-local function UpdateTimer(self, elapsed)
-    if startTime then
-        local currentTime = GetTime()
-        local elapsedTime = currentTime - startTime
-        local hours = math.floor(elapsedTime / 3600)
-        local minutes = math.floor(elapsedTime / 60) % 60
-        local seconds = elapsedTime % 60
-        timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
-    end
-end
-
--- Start the timer
-function StartTimer()
-    startTime = GetTime()
-    timerFrame:SetScript("OnUpdate", UpdateTimer)
-end
-
--- Stop the timer
-function StopTimer()
-    startTime = nil
-    timerFrame:SetScript("OnUpdate", nil)
-    timerText:SetText("00:00:00")
 end
 
 
@@ -482,6 +412,8 @@ function GetQuestType(questID)
     end
 end
 
+
+-- Set ChildFrames to Default Anchors
 local function ResetChildFramesToDefault()
     -- Resetting child frames to default positions
     RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -5)
@@ -489,13 +421,10 @@ local function ResetChildFramesToDefault()
 end
 
 
-
-
-
+-- Adjust Set Point Anchor of Child Frames based on LastElements
 function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
     -- Reset positions to default first
 	ResetChildFramesToDefault()
-		
 
     -- Adjusting Quests child frame position based on last campaign element
     if lastCampaignElement then
@@ -511,8 +440,67 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
     end
 end
 
+-- -- New function to get World Quest Info
+-- function AddWorldQuestToFrame(questID, parentFrame)
+    -- -- Assume you have a function or a way to get the correct uiMapID for the given questID
+    -- local uiMapID = C_TaskQuest.GetQuestZoneID(questID)
 
+	-- print("QuestID:", questID, "uiMapID:", uiMapID)
 
+    -- -- Check if uiMapID is available
+    -- if not uiMapID then
+        -- print("Error: uiMapID not available for questID:", questID)
+        -- return
+    -- end
+    
+    -- -- Now you can safely call GetQuestLocation
+    -- local x, y = C_TaskQuest.GetQuestLocation(questID, uiMapID)
+    -- if not x or not y then
+        -- print("Error: Could not get location for questID:", questID, "on uiMapID:", uiMapID)
+        -- return
+    -- end
+	
+    -- local taskQuestTitle, factionID, capped, displayAsObjective = C_TaskQuest.GetQuestInfoByQuestID(questID)
+    -- local locationX, locationY = C_TaskQuest.GetQuestLocation(questID, uiMapID) -- Ensure uiMapID is correct
+
+    -- local questFrame = CreateFrame("Frame", "WorldQuest" .. questID, parentFrame, "BackdropTemplate")
+    -- questFrame:SetSize(200, 30) -- Adjust size as needed
+    -- questFrame:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -30 * (questID % 5)) -- Position it; adjust as needed
+    -- questFrame:SetBackdrop({ -- Set a backdrop for visibility during debugging
+        -- bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        -- edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        -- tile = true, tileSize = 16, edgeSize = 16,
+        -- insets = { left = 4, right = 4, top = 4, bottom = 4 }
+    -- })
+    -- questFrame:SetBackdropColor(0.1, 0.1, 0.1, 0.8) -- Dark background for visibility
+    -- questFrame:Show() -- Ensure the frame is shown
+
+    -- local titleText = questFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- titleText:SetPoint("LEFT", questFrame, "LEFT", 5, 0)
+    -- titleText:SetText(taskQuestTitle)
+    -- titleText:Show() -- Ensure the text is shown
+
+    -- print("Adding World Quest to frame:", questID, taskQuestTitle)
+
+    -- -- Debug: Check if the parent frame is visible
+    -- if not parentFrame:IsVisible() then
+        -- print("Parent frame is not visible.")
+    -- end
+
+    -- return questFrame
+-- end
+
+-- function RQE.UpdateWorldQuestsFrame(questID, added)
+    -- if added then
+        -- -- Logic to add the World Quest to the RQE.WorldQuestsFrame
+        -- local questFrame = AddWorldQuestToFrame(questID, RQE.WorldQuestsFrame)
+        -- -- Position the questFrame within RQE.WorldQuestsFrame
+        -- -- ...
+    -- else
+        -- -- Logic to remove the World Quest from the RQE.WorldQuestsFrame
+        -- -- ...
+    -- end
+-- end
 
 -- Your function to update the RQEQuestFrame
 function UpdateRQEQuestFrame()
@@ -553,45 +541,52 @@ function UpdateRQEQuestFrame()
     RQE.CampaignFrame.questCount = campaignQuestCount
     RQE.QuestsFrame.questCount = regularQuestCount
     RQE.WorldQuestsFrame.questCount = worldQuestCount
-	
+
     -- Let's assume you have stored your quest title FontStrings in a table
     for _, fontString in pairs(RQEQuestFrame.questTitles or {}) do
         fontString:Hide()
     end
-    
+
     RQEQuestFrame.questTitles = RQEQuestFrame.questTitles or {}
-    
+
     -- Get the number of tracked quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-    
+
     -- Initialize the table to hold the QuestLogIndexButtons if it doesn't exist
     RQE.QuestLogIndexButtons = RQE.QuestLogIndexButtons or {}
 
-	-- Create a variable to hold the last QuestObjectivesOrDescription
-	local lastQuestObjectivesOrDescription = nil
+    -- Create a variable to hold the last QuestObjectivesOrDescription
+    local lastQuestObjectivesOrDescription = nil
 
     -- Initialize default positions
     RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
     RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
-	
+
     -- Separate variables to track the last element in each child frame
-	local lastCampaignElement, lastQuestElement = nil, nil
-	
+    local lastCampaignElement, lastQuestElement, lastWorldQuestElement = nil, nil, nil
+
     -- Loop through all tracked quests
     for i = 1, numTrackedQuests do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
         local isQuestComplete = C_QuestLog.IsComplete(questID)
-		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
-		
+        local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+			
         if questIndex then
             local info = C_QuestLog.GetInfo(questIndex)
             if info and not info.isHeader then
-			
                 -- Determine the type of the quest (Campaign, World Quest, or Regular)
                 local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID)
                 local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 
+				-- Check if it's a World Quest
+				if isWorldQuest then
+					-- Get the World Quest information
+					--local questTitle, factionID, capped, displayAsObjective = C_TaskQuest.GetQuestInfoByQuestID(questID)
+					local questTitle = C_TaskQuest.GetQuestInfoByQuestID(questID)
+					local worldQuestFrame = CreateWorldQuestFrame(questID, RQE.WorldQuestsFrame, questTitle)
+				end
+			
                 local parentFrame
                 local lastElement
                 if isCampaignQuest then
@@ -605,279 +600,291 @@ function UpdateRQEQuestFrame()
                     lastElement = lastQuestElement
                 end
 
-				-- Call the function to update child frame positions
-				UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+                -- Call the function to update child frame positions
+                UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 
                 -- Create or reuse the QuestLogIndexButton
                 local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)
                 QuestLogIndexButton:SetSize(35, 35)
 
-				-- Create or update the background texture
-				local bg = QuestLogIndexButton.bg or QuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
-				bg:SetAllPoints()
-				if isSuperTracked then
-					bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-					--bg:SetTexture("Interface\\Buttons\\goldring64")
-				else
-					bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
-				end
-				QuestLogIndexButton.bg = bg  -- Save for future reference
-		
-				-- Create or update the number label
-				local number = QuestLogIndexButton.number or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-				number:SetPoint("CENTER", QuestLogIndexButton, "CENTER")
-				number:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-				number:SetTextColor(1, 0.7, 0.2)
-				number:SetText(questIndex)
-				QuestLogIndexButton.number = number  -- Save for future reference
+                -- Create or update the background texture
+                local bg = QuestLogIndexButton.bg or QuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints()
+                if isSuperTracked then
+                    bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+                else
+                    bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+                end
+                QuestLogIndexButton.bg = bg  -- Save for future reference
 
-				-- Quest Watch List
-				QuestLogIndexButton:SetScript("OnClick", function(self, button)
-					if IsShiftKeyDown() and button == "LeftButton" then
-						-- Untrack the quest
-						C_QuestLog.RemoveQuestWatch(questID)
-						C_QuestLog.RemoveWorldQuestWatch(questID)
-						RQE.infoLog("Untracking quest:", info.title)  -- Optional: print a message to the chat
-					else
-						-- Existing code to set as super-tracked
-						C_SuperTrack.SetSuperTrackedQuestID(questID)
-					end
-				end)
-				
-				-- Save the button in the table for future reference
-				RQE.QuestLogIndexButtons[i] = QuestLogIndexButton
+                -- Create or update the number label
+                local number = QuestLogIndexButton.number or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+                number:SetPoint("CENTER", QuestLogIndexButton, "CENTER")
+                number:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+                number:SetTextColor(1, 0.7, 0.2)
+                number:SetText(questIndex)
+                QuestLogIndexButton.number = number  -- Save for future reference
+
+                -- Quest Watch List
+                QuestLogIndexButton:SetScript("OnClick", function(self, button)
+                    if IsShiftKeyDown() and button == "LeftButton" then
+                        -- Untrack the quest
+                        C_QuestLog.RemoveQuestWatch(questID)
+                        C_QuestLog.RemoveWorldQuestWatch(questID)
+                        RQE.infoLog("Untracking quest:", info.title)  -- Optional: print a message to the chat
+                    else
+                        -- Existing code to set as super-tracked
+                        C_SuperTrack.SetSuperTrackedQuestID(questID)
+                    end
+                end)
+
+                -- Save the button in the table for future reference
+                RQE.QuestLogIndexButtons[i] = QuestLogIndexButton
 
                 -- Fetch Quest Description
                 local _, questObjectivesText = GetQuestLogQuestText(questIndex)
-                
+
                 -- Fetch Quest Objectives
                 local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
                 local objectivesText = objectivesTable and "" or "No objectives available."
-                
+
                 if objectivesTable then
                     for _, objective in pairs(objectivesTable) do
                         objectivesText = objectivesText .. objective.text .. "\n"
                     end
                 end
 
+				local questTitle, questLevel
+				if isWorldQuest then
+					-- Get world quest title and set level to 'WQ' or similar
+					questTitle = C_TaskQuest.GetQuestInfoByQuestID(questID)
+					questLevel = "WQ"
+				else
+					-- Use the regular quest title and level
+					questTitle = info.title
+					questLevel = info.level
+				end
+			
                 -- Create or reuse the QuestObjectives label
                 local QuestObjectives = RQE.QuestLogIndexButtons[i].QuestObjectives or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 QuestObjectives:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
                 QuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-				QuestObjectives:SetWordWrap(true)
-				QuestObjectives:SetHeight(0)  -- Auto height
+                QuestObjectives:SetWordWrap(true)
+                QuestObjectives:SetHeight(0)  -- Auto height
                 QuestObjectives:SetText(objectivesText)
 
                 RQE.QuestLogIndexButtons[i].QuestObjectives = QuestObjectives
 
-				-- Create or reuse the QuestLevelAndName label
-				local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal", content)
-				QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-				QuestLevelAndName:SetTextColor(209/255, 125/255, 255/255)  -- Heliotrope
-				QuestLevelAndName:SetText("[" .. info.level .. "] " .. info.title)  -- Concatenated quest level and name
+                -- Create or reuse the QuestLevelAndName label
+                local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal", content)
+				QuestLogIndexButton.QuestLevelAndName = QuestLevelAndName
+                QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+                QuestLevelAndName:SetTextColor(209/255, 125/255, 255/255)  -- Heliotrope
+                --QuestLevelAndName:SetText("[" .. info.level .. "] " .. info.title)  -- Concatenated quest level and name
+				QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
-				-- Quest Details and Menu
-				QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
-					if IsShiftKeyDown() and button == "LeftButton" then
-						-- Untrack the quest
-						C_QuestLog.RemoveQuestWatch(questID)
-						C_QuestLog.RemoveWorldQuestWatch(questID)
-					elseif button == "LeftButton" then
-						OpenQuestLogToQuestDetails(questID)
-					elseif button == "RightButton" then
-						ShowQuestDropdown(self, questID)
-					end
-				end)
-				
-				-- Anchor logic based on the quest type and index of lastelement/first
-				if lastElement then
-					QuestLevelAndName:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
-				else
-					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
-				end
-				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
+                -- Quest Details and Menu
+                QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
+                    if IsShiftKeyDown() and button == "LeftButton" then
+                        -- Untrack the quest
+                        C_QuestLog.RemoveQuestWatch(questID)
+                        C_QuestLog.RemoveWorldQuestWatch(questID)
+                    elseif button == "LeftButton" then
+                        OpenQuestLogToQuestDetails(questID)
+                    elseif button == "RightButton" then
+                        ShowQuestDropdown(self, questID)
+                    end
+                end)
 
-				-- Set Justification and Word Wrap
-				QuestLevelAndName:SetJustifyH("LEFT")
-				QuestLevelAndName:SetJustifyV("TOP")
-				QuestLevelAndName:SetWordWrap(true)
-				QuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -10 for padding
-				QuestLevelAndName:SetHeight(0)  -- Auto height
-				QuestLevelAndName:EnableMouse(true)
-		
+                -- Anchor logic based on the quest type and index of lastelement/first
+                if lastElement then
+                    QuestLevelAndName:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
+                else
+                    QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
+                end
+                QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
+
+                -- Set Justification and Word Wrap
+                QuestLevelAndName:SetJustifyH("LEFT")
+                QuestLevelAndName:SetJustifyV("TOP")
+                QuestLevelAndName:SetWordWrap(true)
+                QuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -10 for padding
+                QuestLevelAndName:SetHeight(0)  -- Auto height
+                QuestLevelAndName:EnableMouse(true)
+
                 QuestLevelAndName:SetScript("OnLeave", function()
                     GameTooltip:Hide()
                 end)
 
-				-- Quest Type
-				local questTypeText = GetQuestType(questID)
-				local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
-				QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-				QuestTypeLabel:SetTextColor(153/255, 255/255, 255/255)  -- Light Blue
-				QuestTypeLabel:SetText(questTypeText)
-				QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
+                -- Quest Type
+                local questTypeText = GetQuestType(questID)
+                local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
+                QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+                QuestTypeLabel:SetTextColor(153/255, 255/255, 255/255)  -- Light Blue
+                QuestTypeLabel:SetText(questTypeText)
+                QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
 
-				-- Create or reuse the QuestObjectivesOrDescription label
-				local QuestObjectivesOrDescription = RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
-				QuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-				QuestObjectivesOrDescription:SetJustifyH("LEFT")
-				QuestObjectivesOrDescription:SetJustifyV("TOP")
-				QuestObjectivesOrDescription:SetHeight(0)  -- Auto height
-				QuestObjectivesOrDescription:EnableMouse(true)
+                -- Create or reuse the QuestObjectivesOrDescription label
+                local QuestObjectivesOrDescription = RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
+                QuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+                QuestObjectivesOrDescription:SetJustifyH("LEFT")
+                QuestObjectivesOrDescription:SetJustifyV("TOP")
+                QuestObjectivesOrDescription:SetHeight(0)  -- Auto height
+                QuestObjectivesOrDescription:EnableMouse(true)
 
-				-- Update the last element tracker for the correct type
-				if isCampaignQuest then
-					lastCampaignElement = QuestObjectivesOrDescription
-				elseif isWorldQuest then
-					lastWorldQuestElement = QuestObjectivesOrDescription
-				else  -- Regular quest
-					lastQuestElement = QuestObjectivesOrDescription
-				end
-				
-				QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
-					if button == "RightButton" then
-						ShowQuestDropdown(self, questID)
-					end
-				end)
+                -- Update the last element tracker for the correct type
+                if isCampaignQuest then
+                    lastCampaignElement = QuestObjectivesOrDescription
+                elseif isWorldQuest then
+                    lastWorldQuestElement = QuestObjectivesOrDescription
+                else  -- Regular quest
+                    lastQuestElement = QuestObjectivesOrDescription
+                end
 
-				-- Tooltip on mouseover
-				QuestLevelAndName:SetScript("OnEnter", function(self)
-					GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
-					GameTooltip:SetMinimumWidth(350)
-					GameTooltip:SetHeight(0)
-					GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-					GameTooltip:SetText(info.title)
+                QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
+                    if button == "RightButton" then
+                        ShowQuestDropdown(self, questID)
+                    end
+                end)
 
-					GameTooltip:AddLine(" ")
+                -- Tooltip on mouseover
+                QuestLevelAndName:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
+                    GameTooltip:SetMinimumWidth(350)
+                    GameTooltip:SetHeight(0)
+                    GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+                    GameTooltip:SetText(info.title)
 
-					-- Add description
-					local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
-					if questLogIndex then
-						local _, questObjectives = GetQuestLogQuestText(questLogIndex)
-						local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
-						GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
-					end
-					
-					-- Add objectives
-					if objectivesText and objectivesText ~= "" then
-						GameTooltip:AddLine(" ")
-						GameTooltip:AddLine("Objectives:")
+                    GameTooltip:AddLine(" ")
 
-						local colorizedObjectives = colorizeObjectives(objectivesText)
-						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
-					end
+                    -- Add description
+                    local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+                    if questLogIndex then
+                        local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+                        local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
+                        GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+                    end
 
-					-- Add Rewards
-					AddQuestRewardsToTooltip(GameTooltip, questID, isBonus)
-					GameTooltip:AddLine(" ")
+                    -- Add objectives
+                    if objectivesText and objectivesText ~= "" then
+                        GameTooltip:AddLine(" ")
+                        GameTooltip:AddLine("Objectives:")
 
-					-- Party Members' Quest Progress
-					if IsInGroup() then
-						local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
-						if tooltipData and tooltipData.lines then
-							local player_name = UnitName("player")
-							local isFirstPartyMember = true
-							local skipPlayerLines = false
-							local skipQuestNameLine = false  -- Flag to skip quest name lines
+                        local colorizedObjectives = colorizeObjectives(objectivesText)
+                        GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
+                    end
 
-							for _, line in ipairs(tooltipData.lines) do
-								if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-									skipQuestNameLine = true
-								end
+                    -- Add Rewards
+                    AddQuestRewardsToTooltip(GameTooltip, questID, isBonus)
+                    GameTooltip:AddLine(" ")
 
-								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-									skipPlayerLines = true
-									isFirstPartyMember = false
-								end
+                    -- Party Members' Quest Progress
+                    if IsInGroup() then
+                        local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+                        if tooltipData and tooltipData.lines then
+                            local player_name = UnitName("player")
+                            local isFirstPartyMember = true
+                            local skipPlayerLines = false
+                            local skipQuestNameLine = false  -- Flag to skip quest name lines
 
-								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-									skipPlayerLines = false
-									skipQuestNameLine = false  -- Reset for the next quest
-									if isFirstPartyMember then
-										GameTooltip:AddLine(" ")
-										isFirstPartyMember = false
-									end
-								end
+                            for _, line in ipairs(tooltipData.lines) do
+                                if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
+                                    skipQuestNameLine = true
+                                end
 
-								if not skipPlayerLines and not skipQuestNameLine then
-									local text = line.leftText
-									local r, g, b = line.leftColor:GetRGB()
-									GameTooltip:AddLine(text, r, g, b, true)
-								end
-							end
-						end
-					end
+                                if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
+                                    skipPlayerLines = true
+                                    isFirstPartyMember = false
+                                end
 
-					GameTooltip:AddLine(" ")
-					GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
-					GameTooltip:Show()
-				end)
+                                if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
+                                    skipPlayerLines = false
+                                    skipQuestNameLine = false  -- Reset for the next quest
+                                    if isFirstPartyMember then
+                                        GameTooltip:AddLine(" ")
+                                        isFirstPartyMember = false
+                                    end
+                                end
 
-				QuestObjectivesOrDescription:SetScript("OnEnter", function(self)
-					GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
-					GameTooltip:SetMinimumWidth(350)
-					GameTooltip:SetHeight(0)
-					GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-					GameTooltip:SetText(info.title)
+                                if not skipPlayerLines and not skipQuestNameLine then
+                                    local text = line.leftText
+                                    local r, g, b = line.leftColor:GetRGB()
+                                    GameTooltip:AddLine(text, r, g, b, true)
+                                end
+                            end
+                        end
+                    end
 
-					GameTooltip:AddLine(" ")
+                    GameTooltip:AddLine(" ")
+                    GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+                    GameTooltip:Show()
+                end)
 
-					if objectivesText and objectivesText ~= "" then
-						GameTooltip:AddLine(" ")
-						GameTooltip:AddLine("Objectives:")
+                QuestObjectivesOrDescription:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
+                    GameTooltip:SetMinimumWidth(350)
+                    GameTooltip:SetHeight(0)
+                    GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+                    GameTooltip:SetText(info.title)
 
-						local colorizedObjectives = colorizeObjectives(objectivesText)
-						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
-					end
+                    GameTooltip:AddLine(" ")
 
-					-- Add Rewards
-					AddQuestRewardsToTooltip(GameTooltip, questID, isBonus)
-					GameTooltip:AddLine(" ")
+                    if objectivesText and objectivesText ~= "" then
+                        GameTooltip:AddLine(" ")
+                        GameTooltip:AddLine("Objectives:")
 
-					-- Party Members' Quest Progress
-					if IsInGroup() then
-						local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
-						if tooltipData and tooltipData.lines then
-							local player_name = UnitName("player")
-							local isFirstPartyMember = true
-							local skipPlayerLines = false
-							local skipQuestNameLine = false  -- Flag to skip quest name lines
+                        local colorizedObjectives = colorizeObjectives(objectivesText)
+                        GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
+                    end
 
-							for _, line in ipairs(tooltipData.lines) do
-								if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-									skipQuestNameLine = true
-								end
+                    -- Add Rewards
+                    AddQuestRewardsToTooltip(GameTooltip, questID, isBonus)
+                    GameTooltip:AddLine(" ")
 
-								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-									skipPlayerLines = true
-									isFirstPartyMember = false
-								end
+                    -- Party Members' Quest Progress
+                    if IsInGroup() then
+                        local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+                        if tooltipData and tooltipData.lines then
+                            local player_name = UnitName("player")
+                            local isFirstPartyMember = true
+                            local skipPlayerLines = false
+                            local skipQuestNameLine = false  -- Flag to skip quest name lines
 
-								if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-									skipPlayerLines = false
-									skipQuestNameLine = false  -- Reset for the next quest
-									if isFirstPartyMember then
-										GameTooltip:AddLine(" ")
-										isFirstPartyMember = false
-									end
-								end
+                            for _, line in ipairs(tooltipData.lines) do
+                                if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
+                                    skipQuestNameLine = true
+                                end
 
-								if not skipPlayerLines and not skipQuestNameLine then
-									local text = line.leftText
-									local r, g, b = line.leftColor:GetRGB()
-									GameTooltip:AddLine(text, r, g, b, true)
-								end
-							end
-						end
-					end
+                                if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
+                                    skipPlayerLines = true
+                                    isFirstPartyMember = false
+                                end
 
-					GameTooltip:AddLine(" ")
-					GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
-					GameTooltip:Show()
-				end)
-				
+                                if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
+                                    skipPlayerLines = false
+                                    skipQuestNameLine = false  -- Reset for the next quest
+                                    if isFirstPartyMember then
+                                        GameTooltip:AddLine(" ")
+                                        isFirstPartyMember = false
+                                    end
+                                end
+
+                                if not skipPlayerLines and not skipQuestNameLine then
+                                    local text = line.leftText
+                                    local r, g, b = line.leftColor:GetRGB()
+                                    GameTooltip:AddLine(text, r, g, b, true)
+                                end
+                            end
+                        end
+                    end
+
+                    GameTooltip:AddLine(" ")
+                    GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+                    GameTooltip:Show()
+                end)
+
                 -- Moved this block of code after the creation of QuestLevelAndName and QuestObjectivesOrDescription
                 if QuestLevelAndName and QuestObjectivesOrDescription then
                     local questLevelAndNameHeight = QuestLevelAndName:GetStringHeight()
@@ -887,59 +894,59 @@ function UpdateRQEQuestFrame()
                     -- Debug or error log
                     print("Debug: QuestLevelAndName or QuestObjectivesOrDescription is nil.")
                 end
-				
-				-- Check if objectivesText is blank
-				if objectivesText and objectivesText ~= "" then
-					-- Colorize each objective individually
-					local colorizedObjectives = colorizeObjectives(objectivesText)
-					QuestObjectivesOrDescription:SetText(colorizedObjectives)
-				else
-					-- If there are no objectives, set the text as is (fallback)
-					QuestObjectivesOrDescription:SetText(questObjectivesText)
-				end
 
-				-- Save the FontString in a table for future reference
-				RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription = QuestObjectivesOrDescription
+                -- Check if objectivesText is blank
+                if objectivesText and objectivesText ~= "" then
+                    -- Colorize each objective individually
+                    local colorizedObjectives = colorizeObjectives(objectivesText)
+                    QuestObjectivesOrDescription:SetText(colorizedObjectives)
+                else
+                    -- If there are no objectives, set the text as is (fallback)
+                    QuestObjectivesOrDescription:SetText(questObjectivesText)
+                end
 
-				-- Show the label
-				QuestObjectivesOrDescription:Show()
+                -- Save the FontString in a table for future reference
+                RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription = QuestObjectivesOrDescription
 
-				-- Save the FontString in a table for future reference
-				RQE.QuestLogIndexButtons[i].QuestLevelAndName = QuestLevelAndName
-				
-				-- Show the labels
-				QuestLevelAndName:Show()
+                -- Show the label
+                QuestObjectivesOrDescription:Show()
 
-				-- Save the button in the table for future reference
-				QuestLogIndexButton:Show()
+                -- Save the FontString in a table for future reference
+                RQE.QuestLogIndexButtons[i].QuestLevelAndName = QuestLevelAndName
 
-				-- Update lastQuestObjectivesOrDescription for the next iteration
-				lastQuestObjectivesOrDescription = QuestObjectivesOrDescription
-				
-				local elementHeight = QuestLogIndexButton:GetHeight()
-				totalHeight = totalHeight + elementHeight + spacingBetweenElements
-			end
-		end
-		
+                -- Show the labels
+                QuestLevelAndName:Show()
+
+                -- Save the button in the table for future reference
+                QuestLogIndexButton:Show()
+
+                -- Update lastQuestObjectivesOrDescription for the next iteration
+                lastQuestObjectivesOrDescription = QuestObjectivesOrDescription
+
+                local elementHeight = QuestLogIndexButton:GetHeight()
+                totalHeight = totalHeight + elementHeight + spacingBetweenElements
+            end
+        end
+    end
+
     -- After adding all quest items, update the total height of the content frame
     content:SetHeight(totalHeight)
 
     -- Call the function to reposition child frames again at the end
     UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 
-	UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.CampaignFrame.questCount)
-	UpdateHeader(RQE.QuestsFrame, "Quests", RQE.QuestsFrame.questCount)
-	UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.WorldQuestsFrame.questCount)
+    UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.CampaignFrame.questCount)
+    UpdateHeader(RQE.QuestsFrame, "Quests", RQE.QuestsFrame.questCount)
+    UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.WorldQuestsFrame.questCount)
 
     -- Update scrollbar range and visibility
     local scrollFrameHeight = RQE.QTScrollFrame:GetHeight()
-		if totalHeight > scrollFrameHeight then
-			RQE.QMQTslider:SetMinMaxValues(0, totalHeight - scrollFrameHeight)
-			RQE.QMQTslider:Show()
-		else
-			RQE.QMQTslider:Hide()	
-		end
-	end
+    if totalHeight > scrollFrameHeight then
+        RQE.QMQTslider:SetMinMaxValues(0, totalHeight - scrollFrameHeight)
+        RQE.QMQTslider:Show()
+    else
+        RQE.QMQTslider:Hide()
+    end
 end
 
 
