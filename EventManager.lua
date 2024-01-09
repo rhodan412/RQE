@@ -137,6 +137,7 @@ local function HandleEvents(frame, event, ...)
         C_Timer.After(0.5, function()
 			HideObjectiveTracker()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+			RQE:UpdateFrameOpacity()
         end)
 
 	-- Handling for QUEST_DATA_LOAD_RESULT

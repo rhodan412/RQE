@@ -39,7 +39,8 @@ RQEQuestFrame:SetBackdrop({
     edgeSize = 5,
     insets = { left = 0, right = 0, top = 1, bottom = 0 }
 })
-RQEQuestFrame:SetBackdropColor(0, 0, 0, 0.5)
+RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
+--RQEQuestFrame:SetBackdropColor(0, 0, 0, 0.5)  -- this was before the change to allow the user to make the QuestingFrame opacity change
 
 
 -- Create the ScrollFrame

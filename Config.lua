@@ -166,7 +166,7 @@ RQE.options = {
 			type = "group",
 			name = "Main Frame Position",
 			inline = true,
-			order = 8,  -- Set this order to wherever you want it to appear
+			order = 7,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -225,13 +225,28 @@ RQE.options = {
 					end,
 					order = 3,
 				},
+				MainFrameOpacity = {
+					type = 'range',
+					name = 'Quest Helper Opacity',
+					desc = 'Adjust the opacity of the main helper frame.',
+					min = 0,
+					max = 1,
+					step = 0.01,
+					isPercent = true,
+					get = function(info) return RQE.db.profile.MainFrameOpacity end,
+					set = function(info, value)
+						RQE.db.profile.MainFrameOpacity = value
+						RQE:UpdateFrameOpacity()  -- You will need to create this function
+					end,
+					order = 4,  -- Adjust this number to place it in your preferred order
+				},
 			},
 		},
 		QuestFramePosition = {
 			type = "group",
 			name = "Quest Frame Position",
 			inline = true,
-			order = 9,  -- Set this order to wherever you want it to appear
+			order = 8,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -290,13 +305,65 @@ RQE.options = {
 					end,
 					order = 3,
 				},
+				QuestFrameOpacity = {
+					type = 'range',
+					name = 'Quest Tracker Opacity',
+					desc = 'Adjust the opacity of the quest tracking frame.',
+					min = 0,
+					max = 1,
+					step = 0.01,
+					isPercent = true,
+					get = function(info) return RQE.db.profile.QuestFrameOpacity end,
+					set = function(info, value)
+						RQE.db.profile.QuestFrameOpacity = value
+						RQE:UpdateFrameOpacity()  -- You will need to create this function
+					end,
+					order = 4,  -- Adjust this number to place it in your preferred order
+				},
+			},
+		},
+		debug = {
+			type = "group",
+			name = "Debug",
+			inline = true,
+			order = 9,  -- Set this order to wherever you want it to appear
+			hidden = function()
+				return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
+			end,
+			args = {
+				debugLevel = {
+					type = 'select',
+					name = 'Debug Level',
+					desc = 'Set the level of debug logging.',
+					values = debugLevelOptions,
+					get = function(info)
+						return getDebugLevelIndex(RQE.db.profile.debugLevel)  -- Convert string to index
+					end,
+					set = function(info, value)
+						RQE.db.profile.debugLevel = debugLevelOptions[value]  -- Convert index to string
+					end,
+					order = 1,
+				},
+				resetFramePosition = {
+					type = "execute",
+					name = "Reset Position",
+					desc = "Reset the position of the frame to its default coded location.",
+					func = function()
+						RQE:ResetFramePositionToDBorDefault()
+						RQE:ResetQuestFramePositionToDBorDefault()
+					end,
+					hidden = function()
+					    return not (RQE.db.profile.debugMode and RQE.db.profile.debugLevel == "INFO")
+					end,
+					order = 2,
+				},
 			},
 		},
 		fontSizeAndColor = {
 			type = "group",
 			name = "Font Size and Color",
 			inline = true,
-			order = 9,  -- Set this order to wherever you want it to appear
+			order = 10,  -- Set this order to wherever you want it to appear
 			args = {						
                 headerText = {
                     name = "Header Text",
@@ -856,43 +923,6 @@ RQE.options = {
 						-- },
 					-- },
 				-- },
-			},
-		},
-		debug = {
-			type = "group",
-			name = "Debug",
-			inline = true,
-			order = 7,  -- Set this order to wherever you want it to appear
-			hidden = function()
-				return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
-			end,
-			args = {
-				debugLevel = {
-					type = 'select',
-					name = 'Debug Level',
-					desc = 'Set the level of debug logging.',
-					values = debugLevelOptions,
-					get = function(info)
-						return getDebugLevelIndex(RQE.db.profile.debugLevel)  -- Convert string to index
-					end,
-					set = function(info, value)
-						RQE.db.profile.debugLevel = debugLevelOptions[value]  -- Convert index to string
-					end,
-					order = 1,
-				},
-				resetFramePosition = {
-					type = "execute",
-					name = "Reset Position",
-					desc = "Reset the position of the frame to its default coded location.",
-					func = function()
-						RQE:ResetFramePositionToDBorDefault()
-						RQE:ResetQuestFramePositionToDBorDefault()
-					end,
-					hidden = function()
-					    return not (RQE.db.profile.debugMode and RQE.db.profile.debugLevel == "INFO")
-					end,
-					order = 2,
-				},
 			},
 		},
     },
