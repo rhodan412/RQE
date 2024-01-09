@@ -350,7 +350,7 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
     QTMaximizeButton:SetPoint("TOPRIGHT", RQE.QTQuestCloseButton, "TOPLEFT", -3, 0)
     QTMaximizeButton:SetScript("OnClick", function()
 		RQE.db.profile.enableQuestFrame = false
-		RQE:ToggleRQEQuestFrame()
+		RQE.RQEQuestFrame:Show()
 		
 		-- Set RQE.QTMinimized to false since we're maximizing the frame
 		RQE.QTMinimized = false

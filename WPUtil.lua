@@ -43,8 +43,8 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         end
 
 		-- Convert coordinates to percentage format
-		if posX then posX = posX * 100 end
-		if posY then posY = posY * 100 end
+		--if posX then posX = posX * 100 end
+		--if posY then posY = posY * 100 end
 		
 		-- If POI info is not available, try using GetNextWaypointForMap
 		if not posX or not posY then
