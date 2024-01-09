@@ -137,12 +137,18 @@ local defaults = {
             yPos = -300,
             anchorPoint = "TOPRIGHT",
 		},
+		MainFrameOpacity = 0.3, 
+		textSettings = {
+		},
         QuestFramePosition = {
             xPos = -40,
             yPos = 125,
 			anchorPoint = "BOTTOMRIGHT",
             frameWidth = 325,
             frameHeight = 450
+		},
+		QuestFrameOpacity = 0.25, 
+		textSettings = {
 		},
         textSettings = {
             headerText = {
@@ -593,6 +599,17 @@ function RQE:MinimizeFrame()
 end
 
 
+-- Function to Update the Opacity of Main Frame and Quest Tracker
+function RQE:UpdateFrameOpacity()
+    if RQEFrame then
+        RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
+    end
+    if RQE.RQEQuestFrame then
+        RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
+    end
+end
+
+
 -- Function for Button in Configuration that will reset the anchorPoint, xPos and yPos to what is listed in the DB file
 function RQE:ResetQuestFramePositionToDBorDefault()
     local anchorPoint = "BOTTOMRIGHT"  -- Default anchor point for RQEQuestFrame
@@ -827,10 +844,6 @@ local function HandleSlashCommands(msg, editbox)
         print("Invalid command. Use '/rqetimer start' to start the timer or '/rqetimer stop' to stop it.")
     end
 end
-
--- Register the slash command
-SLASH_MYTIMER1 = "/rqetimer"
-SlashCmdList["MYTIMER"] = HandleSlashCommands
 
 
 -- UpdateFrame function
