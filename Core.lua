@@ -137,7 +137,7 @@ local defaults = {
             yPos = -300,
             anchorPoint = "TOPRIGHT",
 		},
-		MainFrameOpacity = 0.3, 
+		MainFrameOpacity = 0.45, 
 		textSettings = {
 		},
         QuestFramePosition = {
@@ -147,7 +147,7 @@ local defaults = {
             frameWidth = 325,
             frameHeight = 450
 		},
-		QuestFrameOpacity = 0.25, 
+		QuestFrameOpacity = 0.35, 
 		textSettings = {
 		},
         textSettings = {
