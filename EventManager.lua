@@ -263,21 +263,23 @@ local function HandleEvents(frame, event, ...)
 		-- Clear frame data and waypoints
 		--RQE:ClearFrameData()
 		C_Map.ClearUserWaypoint()
-		TomTom.waydb:ResetProfile()
+		if IsAddOnLoaded("TomTom") then
+			TomTom.waydb:ResetProfile()
+		end
 		
-			-- Initialize RQEQuestFrame position based on saved variables
-			local xPos = RQE.db.profile.QuestFramePosition.xPos
-			local yPos = RQE.db.profile.QuestFramePosition.yPos
-			local anchorPoint = RQE.db.profile.QuestFramePosition.anchorPoint
+		-- Initialize RQEQuestFrame position based on saved variables
+		local xPos = RQE.db.profile.QuestFramePosition.xPos
+		local yPos = RQE.db.profile.QuestFramePosition.yPos
+		local anchorPoint = RQE.db.profile.QuestFramePosition.anchorPoint
 
-			local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
+		local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
 
-			if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
-				RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
-				RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
-			else
-				RQE.debugLog("Invalid quest frame position or anchor point.")
-			end
+		if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
+			RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
+			RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+		else
+			RQE.debugLog("Invalid quest frame position or anchor point.")
+		end
 
 	-- Handling PLAYER_ENTERING_WORLD Event
 	elseif event == "PLAYER_ENTERING_WORLD" then
@@ -460,7 +462,11 @@ local function HandleEvents(frame, event, ...)
 		RQE:ClearRQEQuestFrame()
 		UpdateRQEQuestFrame()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
- 
+		
+        C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
+			RQE:ClearFrameData()
+        end)
+		
 	-- Handling PLAYER_LOGOUT event
 	elseif event == "PLAYER_LOGOUT" then
         RQE:SaveFramePosition()  -- Custom function that saves frame's position
