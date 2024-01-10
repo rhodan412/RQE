@@ -403,6 +403,7 @@ local function HandleEvents(frame, event, ...)
 				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end)
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 		
 	-- Handling QUEST_COMPLETE event
@@ -448,6 +449,7 @@ local function HandleEvents(frame, event, ...)
 				end
 			else
 				-- If the quest is not a World Quest, handle all quests
+				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 				RQEQuestFrame:ClearAllPoints()
 				RQE:ClearRQEQuestFrame()
 				UpdateRQEQuestFrame()
