@@ -728,9 +728,9 @@ end
 ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
     local value = slider:GetValue()
     if delta > 0 then
-        slider:SetValue(value - 20)
+        slider:SetValue(value - 25) -- A Change from 20 to 25 on both slider SetValues increases the scroll speed
     else
-        slider:SetValue(value + 20)
+        slider:SetValue(value + 25)
     end
 end)
 

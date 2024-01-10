@@ -135,9 +135,9 @@ end)
 ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
     local value = QMQTslider:GetValue()
     if delta > 0 then
-        QMQTslider:SetValue(value - 20)
+        QMQTslider:SetValue(value - 50) -- A Change from 20 to 40 on both slider SetValues increases the scroll speed
     else
-        QMQTslider:SetValue(value + 20)
+        QMQTslider:SetValue(value + 50)
     end
 end)
 
