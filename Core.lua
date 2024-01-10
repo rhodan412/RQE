@@ -31,11 +31,11 @@ local ACD = LibStub("AceConfigDialog-3.0")
 
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
-local AceConfig = LibStub("AceConfig-3.0")
-local AceConfigDialog = LibStub("AceConfigDialog-3.0")
-local AceConfigCmd = LibStub("AceConfigCmd-3.0")
-local AceDB = LibStub("AceDB-3.0")
-local AceDBOptions = LibStub("AceDBOptions-3.0")
+--local AceConfig = LibStub("AceConfig-3.0")  -- These are handled within Config.lua
+--local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+--local AceConfigCmd = LibStub("AceConfigCmd-3.0")
+--local AceDB = LibStub("AceDB-3.0")
+--local AceDBOptions = LibStub("AceDBOptions-3.0")
 
 ---------------------------
 -- 3. Debugging Functions
@@ -231,6 +231,9 @@ function RQE:OnInitialize()
     self:GetCharacterInfo()
 	
     -- Register the options table and add it to the Blizzard options window
+	print("self.options before registration:", self.options ~= nil)
+	print("First key in self.options:", next(self.options))
+
     AC:RegisterOptionsTable("RQE_Options", self.options)
     self.optionsFrame = ACD:AddToBlizOptions("RQE_Options", "Rhodan's Quest Explorer")
 
