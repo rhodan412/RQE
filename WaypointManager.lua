@@ -87,10 +87,17 @@ function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
         waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
     end
 
-    if mapID and x and y then  -- Check if x and y are not nil
-        TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
+    -- Check if TomTom is loaded and enabled
+    if IsAddOnLoaded("TomTom") then
+        RQE.debugLog("TomTom is available.")
+        if mapID and x and y then  -- Check if x and y are not nil
+            TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
+        else
+            RQE.debugLog("Could not create waypoint for unknown quest.")
+        end
     else
-        RQE.debugLog("Could not create waypoint for unknown quest.")
+        RQE.debugLog("TomTom is not available.")
+        -- Code for your own waypoint system or an alternative action
     end
 end
 
@@ -147,19 +154,22 @@ end
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
     local title = description and description:match("^(.-)\n") or "No description"
-    if TomTom then
+    
+    -- Check if TomTom is loaded and enabled
+    if IsAddOnLoaded("TomTom") then
         RQE.debugLog("TomTom is available.")
         
-        --Use the questHeader for the stepIndex if available
+        -- Use the questHeader for the stepIndex if available
         local questID = C_SuperTrack.GetSuperTrackedQuestID()
         if questID and RQEDatabase[questID] then
-			local _, _, _, questHeader = PrintQuestStepsToChat(questID)
-			RQE.debugLog("questHeader received in OnCoordinateClicked: ", questHeader)
-			if questHeader and questHeader[stepIndex] then
-				title = questHeader[stepIndex]
-			end
+            local _, _, _, questHeader = PrintQuestStepsToChat(questID)
+            RQE.debugLog("questHeader received in OnCoordinateClicked: ", questHeader)
+            if questHeader and questHeader[stepIndex] then
+                title = questHeader[stepIndex]
+            end
         end
 
+        -- Add waypoint using TomTom
         local uid = TomTom:AddWaypoint(mapID, x/100, y/100, {
             title = title,
             from = "RQE",
@@ -175,9 +185,10 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
         end
     else
         RQE.debugLog("TomTom is not available.")
-        -- Use your own waypoint system
+        -- Code for your own waypoint system or an alternative action
     end
 end
+
 
 ---------------------------
 -- 4. Finalization

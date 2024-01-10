@@ -172,7 +172,9 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
     RWButton:SetScript("OnClick", function() 
         -- Your code for RWButton functionality here
         C_Map.ClearUserWaypoint()
-        TomTom.waydb:ResetProfile()
+		if IsAddOnLoaded("TomTom") then
+			TomTom.waydb:ResetProfile()
+		end
     end)
 	
     CreateTooltip(RWButton, "Remove Waypoints")
