@@ -751,6 +751,58 @@ end
 -- 9. Quest Info Functions
 ---------------------------
 
+-- Function to retrieve questdata from API
+function RQE:LoadQuestData(questID)
+    -- Check if the quest data already exists
+    if RQEDatabase and RQEDatabase[questID] then
+        RQE.debugLog("Quest data for ID " .. questID .. " is already loaded.")
+        return RQEDatabase[questID]
+    else
+        RQE.debugLog("Loading quest data for ID " .. questID)
+
+        -- Fetch quest data from source or API
+        local questData = RQE:FetchQuestDataFromSource(questID)
+        if not questData or not next(questData) then
+            -- If data is not in source, build it from WoW API
+            questData = RQE:BuildQuestData(questID)
+        end
+
+        if questData then
+            -- Store the loaded data in RQEDatabase
+            RQEDatabase[questID] = questData
+            RQE.debugLog("Quest data loaded for ID " .. questID)
+            return questData
+        else
+            RQE.debugLog("Failed to load quest data for ID " .. questID)
+            return nil
+        end
+    end
+end
+
+
+-- Function to build quest data from WoW API
+function RQE:BuildQuestData(questID)
+    local questData = {}
+    
+    -- Fetch basic quest details from WoW API
+    questData.name = C_QuestLog.GetTitleForQuestID(questID)
+    questData.questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+    questData.directionText = C_QuestLog.GetNextWaypointText(questID)
+    
+    -- Fetch quest objectives
+    local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+    questData.objectives = objectivesTable
+
+    -- Fetch quest description
+    if questData.questLogIndex then
+        local _, questDescription = GetQuestLogQuestText(questData.questLogIndex)
+        questData.description = questDescription
+    end
+
+    return questData
+end
+
+
 -- Function to print quest steps to chat
 function PrintQuestStepsToChat(questID)
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
@@ -946,6 +998,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	-- Always show the UnknownQuestButton
     RQE.UnknownQuestButton:Show()
+	RQE.SearchGroupButton:Show()
 end
 
 
@@ -1021,12 +1074,20 @@ function RQE:ClearFrameData()
         RQE.debugLog("WaypointButtons is not initialized.")
     end
 	
-    	-- Clear Waypoint Button from "Unknown Quests (not in RQEDatabase)"
+	-- Clear Waypoint Button from "Unknown Quests Button"
 	if RQE.UnknownQuestButton then
 		RQE.UnknownQuestButton:Hide()
 		RQE.debugLog("Hide Special WaypointButton")
 	else
 		RQE.debugLog("Special WaypointButton is not initialized.")
+	end
+
+	-- Clear SearchGroup Button
+	if RQE.SearchGroupButton then
+		RQE.SearchGroupButton:Hide()
+		RQE.debugLog("Hide SearchGroup Button")
+	else
+		RQE.debugLog("SearchGroup Button is not initialized.")
 	end
 
 	RQE:ClearStepsTextInFrame()

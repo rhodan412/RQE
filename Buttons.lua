@@ -91,7 +91,7 @@ RQE.UnknownButtonTooltip = function()
                     GameTooltip:Show()
                 end)
             else
-                GameTooltip:SetText("Unknown Quest Waypoint")
+                GameTooltip:SetText("")
                 GameTooltip:Show()
             end
         else
@@ -131,9 +131,45 @@ RQE.UnknownQuestButtonMouseUp = function()
 	end)
 end
 
+-- Add a mouse down event to simulate a button press
+RQE.SearchGroupButtonMouseDown = function()
+	RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
+		RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
+
+		if button == "LeftButton" then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			if questID then
+				RQE:LFG_Search(questID)
+				-- Additional logic for handling search results
+			else
+				print("No super-tracked quest found")  -- Debug statement
+			end
+		elseif button == "RightButton" then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			RQE:LFG_Create(questID)
+			-- Logic for creating a group
+		end
+	end)
+
+	RQE.SearchGroupButton:SetScript("OnMouseUp", function(self, button)
+		RQE.sgbg:SetAlpha(1)  -- Reset the alpha
+	end)
+end
+
+
 ---------------------------
 -- 3. Button Initialization (RQEFrame)
 ---------------------------
+
+-- -- Create Search Group button
+-- function RQE.Buttons.CreateSearchGroupButton(parentFrame)
+    -- local btn = CreateFrame("Button", "RQE_SearchGroupButton", parentFrame, "GameMenuButtonTemplate")
+    -- btn:SetText("SG")  -- Set the button text
+    -- -- Configure other properties of the button, such as size, scripts, etc.
+
+    -- return btn
+-- end
+
 
 -- Parent function to Create ClearButton
 function RQE.Buttons.CreateClearButton(RQEFrame)
