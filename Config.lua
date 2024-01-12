@@ -19,9 +19,6 @@ local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local AceConfigCmd = LibStub("AceConfigCmd-3.0")
 
---local AC = LibStub("AceConfig-3.0")
---local ACD = LibStub("AceConfigDialog-3.0")
-
 -- Main Table
 if not RQE then RQE = {} end
 

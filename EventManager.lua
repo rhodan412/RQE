@@ -304,7 +304,7 @@ local function HandleEvents(frame, event, ...)
 		else
 			RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
 		end
-
+	
         -- Simulate clicking the RWButton
         if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
             RQE.RWButton:GetScript("OnClick")()
@@ -313,13 +313,12 @@ local function HandleEvents(frame, event, ...)
 		local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
 
 		-- If the quest is NOT in the database
-		RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, 0)
-		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -13)
+		RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, -5)
+		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -33)
        
-	   -- Existing logic for SUPER_TRACKING_CHANGED
 		if questID then
 			if questID ~= lastSuperTrackedQuestID then
-				RQE:ClearFrameData()
+				--RQE:ClearFrameData()
 				lastSuperTrackedQuestID = questID
 			end
             
@@ -339,12 +338,12 @@ local function HandleEvents(frame, event, ...)
 			UpdateRQEQuestFrame()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
         else
-			RQE:ClearRQEQuestFrame()
+			--RQE:ClearRQEQuestFrame()
 			UpdateRQEQuestFrame()
 			SortQuestsByProximity()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
         end
-
+		
 	-- Handling of several events for purpose of updating the DirectionText
     elseif event == "UNIT_EXITING_VEHICLE" or
        event == "ZONE_CHANGED" or 
