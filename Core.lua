@@ -122,6 +122,7 @@ local defaults = {
         showMapID = true,
         showCoordinates = true,
 		autoSortRQEFrame = false,
+		autoTrackProgress = true,
         frameWidth = 400,
         frameHeight = 300,
         framePosition = {
@@ -129,7 +130,7 @@ local defaults = {
             yPos = -300,
             anchorPoint = "TOPRIGHT",
 		},
-		MainFrameOpacity = 0.45, 
+		MainFrameOpacity = 0.55, 
 		textSettings = {
 		},
         QuestFramePosition = {
@@ -139,7 +140,7 @@ local defaults = {
             frameWidth = 325,
             frameHeight = 450
 		},
-		QuestFrameOpacity = 0.35, 
+		QuestFrameOpacity = 0.55, 
 		textSettings = {
 		},
         textSettings = {
@@ -209,6 +210,11 @@ function RQE:OnInitialize()
 	-- Initialize checkbox state for Auto Sort Frame
 	if autoSortRQEFrame then  -- replace with your actual checkbox frame name
 		autoSortRQEFrame:SetChecked(RQE.db.profile.autoSortRQEFrame)
+	end
+
+	-- Initialize checkbox state for Auto Progress Update
+	if autoTrackProgress then  -- replace with your actual checkbox frame name
+		autoTrackProgress:SetChecked(RQE.db.profile.autoTrackProgress)
 	end
 	
     -- Initialize checkbox state for MapID
@@ -1219,6 +1225,45 @@ RQE:RegisterChatCommand("rqe", "SlashCommand")
 function RQE:ClearWQTracking()
 	RQE:ClearRQEWorldQuestFrame()
 	QuestType()
+end
+
+
+-- Function to automatically watch quests with progress
+function AutoWatchQuestsWithProgress()
+    for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader and HasQuestProgress(questInfo.questID) then
+            local isWatched = false
+            local numWatchedQuests = C_QuestLog.GetNumQuestWatches()
+
+            for watchIndex = 1, numWatchedQuests do
+                local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+                if watchedQuestID == questInfo.questID then
+                    isWatched = true
+                    break
+                end
+            end
+
+            if not isWatched then
+                C_QuestLog.AddQuestWatch(questInfo.questID)
+            end
+        end
+    end
+end
+
+function HasQuestProgress(questID)
+    -- Use the WoW API to get quest objectives
+    local objectives = C_QuestLog.GetQuestObjectives(questID)
+    if not objectives then return false end
+
+    for i, objective in ipairs(objectives) do
+        if objective and not objective.finished then
+            -- If any objective is not finished, consider it as progress
+            return true
+        end
+    end
+
+    return false -- Return false if all objectives are finished or no objectives are found
 end
 
 

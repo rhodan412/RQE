@@ -171,11 +171,21 @@ RQE.options = {
 				RQE.db.profile.autoSortRQEFrame = newValue;
 			end,
 		},
+		autoTrackProgress = {
+			type = "toggle",
+			name = "Auto Track Progress",
+			desc = "Will put any quest in the watchlist/quest tracker that you make progress on.",
+			order = 8,  -- Adjust this based on where you want it in the order
+			get = function() return RQE.db.profile.autoTrackProgress end,
+			set = function(_, newValue) 
+				RQE.db.profile.autoTrackProgress = newValue;
+			end,
+		},
 		framePosition = {
 			type = "group",
 			name = "Main Frame Position",
 			inline = true,
-			order = 8,  -- Set this order to wherever you want it to appear
+			order = 9,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -255,7 +265,7 @@ RQE.options = {
 			type = "group",
 			name = "Quest Frame Position",
 			inline = true,
-			order = 9,  -- Set this order to wherever you want it to appear
+			order = 10,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -335,7 +345,7 @@ RQE.options = {
 			type = "group",
 			name = "Debug",
 			inline = true,
-			order = 10,  -- Set this order to wherever you want it to appear
+			order = 111,  -- Set this order to wherever you want it to appear
 			hidden = function()
 				return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
 			end,
@@ -372,7 +382,7 @@ RQE.options = {
 			type = "group",
 			name = "Font Size and Color",
 			inline = true,
-			order = 11,  -- Set this order to wherever you want it to appear
+			order = 12,  -- Set this order to wherever you want it to appear
 			args = {						
                 headerText = {
                     name = "Header Text",
