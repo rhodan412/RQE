@@ -196,5 +196,3 @@ end
 
 -- Final steps and exporting functions for use in other files
 -- e.g., 
--- RQE.WaypointManager = {}
--- RQE.WaypointManager.CreateWaypoint = createWaypointm

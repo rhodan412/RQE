@@ -26,8 +26,6 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 			if RQEFrame:IsShown() then
 				RQEFrame:Hide()
 				RQEQuestFrame:Hide()
-				--RQE.db.profile.enableFrame = false
-				--RQE.db.profile.enableQuestFrame = false
 			else
 				RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
 				RQEFrame:Show()
@@ -35,8 +33,6 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
                 if RQE.db.profile.enableQuestFrame then
                     RQEQuestFrame:Show()
                 end
-				--RQE.db.profile.enableFrame = true
-				--RQE.db.profile.enableQuestFrame = true
 			end
 			
 		elseif button == "RightButton" then

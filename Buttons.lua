@@ -131,6 +131,7 @@ RQE.UnknownQuestButtonMouseUp = function()
 	end)
 end
 
+
 -- Add a mouse down event to simulate a button press
 RQE.SearchGroupButtonMouseDown = function()
 	RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
@@ -161,16 +162,6 @@ end
 -- 3. Button Initialization (RQEFrame)
 ---------------------------
 
--- -- Create Search Group button
--- function RQE.Buttons.CreateSearchGroupButton(parentFrame)
-    -- local btn = CreateFrame("Button", "RQE_SearchGroupButton", parentFrame, "GameMenuButtonTemplate")
-    -- btn:SetText("SG")  -- Set the button text
-    -- -- Configure other properties of the button, such as size, scripts, etc.
-
-    -- return btn
--- end
-
-
 -- Parent function to Create ClearButton
 function RQE.Buttons.CreateClearButton(RQEFrame)
     local ClearButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
@@ -184,7 +175,12 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 	
     -- Nested functions
     ClearButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 6, -6)  -- Anchoring
-    ClearButton:SetScript("OnClick", function() RQE:ClearFrameData() end)  -- Functionality
+    ClearButton:SetScript("OnClick", function() 
+        -- Your code for ClearButton functionality here
+		RQE:ClearFrameData()
+		--C_SuperTrack.SetSuperTrackedQuestID(0)
+    end)
+
     CreateTooltip(ClearButton, "Clear Window")  -- Tooltip
     CreateBorder(ClearButton)  -- Border
     
