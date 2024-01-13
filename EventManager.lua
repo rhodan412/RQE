@@ -145,7 +145,13 @@ local function HandleEvents(frame, event, ...)
         C_Timer.After(0.5, function()
 			HideObjectiveTracker()
         end)
-		SortQuestsByProximity()
+
+		local questID, added = ...
+
+		-- Check if auto-tracking of quest progress is enabled and call the function
+		if questID and added and RQE.db.profile.autoTrackProgress then
+			SortQuestsByProximity()
+		end
 		
 	-- Handling PLAYER_STOPPED_MOVING Event
 	elseif event == "PLAYER_STARTED_MOVING" then
@@ -315,8 +321,8 @@ local function HandleEvents(frame, event, ...)
 		local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
 
 		-- If the quest is NOT in the database
-		RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, -5)
-		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -33)
+		--RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, -5)
+		--RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -33)
        
 		if questID then
 			if questID ~= lastSuperTrackedQuestID then
@@ -350,9 +356,10 @@ local function HandleEvents(frame, event, ...)
 		
 	-- Handling of several events for purpose of updating the DirectionText
     elseif event == "UNIT_EXITING_VEHICLE" or
-       event == "ZONE_CHANGED" or 
-       event == "ZONE_CHANGED_INDOORS" or 
-       event == "ZONE_CHANGED_NEW_AREA" then
+		event == "ZONE_CHANGED" or 
+		event == "QUEST_ACCEPTED" or 
+		event == "ZONE_CHANGED_INDOORS" or 
+		event == "ZONE_CHANGED_NEW_AREA" then
         local unit = ...
         if unit == "player" or event == "UNIT_EXITING_VEHICLE" or event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" then
             C_Timer.After(1.0, function()  -- Delay of 1 second
@@ -397,7 +404,33 @@ local function HandleEvents(frame, event, ...)
 		-- Attempt to fetch other necessary information using the currentQuestID
 		local currentQuestInfo = RQEDatabase[currentQuestID]
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-		
+
+		-- -- Logic to automatically watch quests with progress
+		-- for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+			-- local questInfo = C_QuestLog.GetInfo(i)
+			-- if questInfo and not questInfo.isHeader and HasQuestProgress(questInfo.questID) then
+				-- local isWatched = false
+				-- local numWatchedQuests = C_QuestLog.GetNumQuestWatches()
+
+				-- for watchIndex = 1, numWatchedQuests do
+					-- local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+					-- if watchedQuestID == questInfo.questID then
+						-- isWatched = true
+						-- break
+					-- end
+				-- end
+
+				-- if not isWatched then
+					-- C_QuestLog.AddQuestWatch(questInfo.questID)
+				-- end
+			-- end
+		-- end
+
+		-- Check if auto-tracking of quest progress is enabled and call the function
+		if RQE.db.profile.autoTrackProgress then
+			AutoWatchQuestsWithProgress()
+		end
+	
 		if currentQuestID then
 			C_Timer.After(0.5, function()
 				HideObjectiveTracker()
@@ -431,7 +464,7 @@ local function HandleEvents(frame, event, ...)
 		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
+
 	-- Handling QUEST_WATCH_UPDATE event
 	elseif event == "QUEST_WATCH_UPDATE" then
 		RQEQuestFrame:ClearAllPoints()
@@ -440,6 +473,32 @@ local function HandleEvents(frame, event, ...)
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
+		-- -- Logic to automatically watch quests with progress
+		-- for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+			-- local questInfo = C_QuestLog.GetInfo(i)
+			-- if questInfo and not questInfo.isHeader and HasQuestProgress(questInfo.questID) then
+				-- local isWatched = false
+				-- local numWatchedQuests = C_QuestLog.GetNumQuestWatches()
+
+				-- for watchIndex = 1, numWatchedQuests do
+					-- local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+					-- if watchedQuestID == questInfo.questID then
+						-- isWatched = true
+						-- break
+					-- end
+				-- end
+
+				-- if not isWatched then
+					-- C_QuestLog.AddQuestWatch(questInfo.questID)
+				-- end
+			-- end
+		-- end
+
+		-- Check if auto-tracking of quest progress is enabled and call the function
+		if RQE.db.profile.autoTrackProgress then
+			AutoWatchQuestsWithProgress()
+		end
+	
 	-- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
 	elseif event == "QUEST_WATCH_LIST_CHANGED" then
 		local questID, added = ...
@@ -459,14 +518,16 @@ local function HandleEvents(frame, event, ...)
 			else
 				-- Handle regular quests
 				--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-					UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+					if RQE.db.profile.autoTrackProgress then
+						SortQuestsByProximity()
+					end					
 				--else
 					--return
 				--end
 				RQEQuestFrame:ClearAllPoints()
 				RQE:ClearRQEQuestFrame()
 				QuestType()
-				SortQuestsByProximity()
+				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end
 		end
