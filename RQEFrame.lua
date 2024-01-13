@@ -238,6 +238,7 @@ RQE.UnknownQuestButtonCalcNTrack()
 RQE.SearchGroupButton = CreateFrame("Button", nil, content)
 RQE.SearchGroupButton:SetSize(25, 25)  -- Set size to match the UnknownQuestButton
 RQE.SearchGroupButton:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "BOTTOMLEFT", 0, -5)  -- Position below UnknownQuestButton
+RQE.SearchGroupButton:Hide() -- Hide the button Initially
 
 -- Use a similar texture for the background as UnknownQuestButton
 local sgBg = RQE.SearchGroupButton:CreateTexture(nil, "BACKGROUND")
@@ -643,6 +644,7 @@ local function CreateQuestTooltip(frame, questID)
     end
 
     -- Add Rewards
+	GameTooltip:AddLine("Rewards: ")
     AddQuestRewardsToTooltip(GameTooltip, questID)  -- Assuming AddQuestRewardsToTooltip is defined
     GameTooltip:AddLine(" ")
 
@@ -980,123 +982,14 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
     RQE:UpdateContentSize()
 end
 
--- -- Function to handle button clicks
--- function RQE:LFG_Search(questID)
-	-- print("RQE_LFG_Search called with questID:", questID)  -- Debug statement
-	
-    -- -- Ensure questID is valid
-    -- if not questID then
-        -- print("Invalid questID in RQE:LFG_Search")
-        -- return
-    -- end
-	
-	-- -- Logic for searching for groups
-	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	-- local questName = C_QuestLog.GetTitleForQuestID(questID)
-	-- local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-	-- --local categoryID = --[appropriate category ID for the quest type]--
-	-- --local searchResultID = -- need to determine how we can find this value
-	-- print("Left mouse button has been pressed", questID)  -- Debug statement
-
-	-- -- [1] = "questing",
-	-- -- [2] = "dungeons",
-	-- -- [3] = "raids", --Prefix for expansion
-	-- -- [4] = "arenas",
-	-- -- [5] = "scenarios",
-	-- -- [6] = "custom", -- Prefix for "-pve" or "-pvp"
-	-- -- [7] = "skirmishes",
-	-- -- [8] = "battlegrounds",
-	-- -- [9] = "ratedbgs",
-	-- -- [10] = "ashran",
-	-- -- [111] = "islands",
-	-- -- [113] = "torghast",
-
-	-- local categoryID = 3
-	
-    -- if not categoryID or categoryID == 0 then
-        -- print("Invalid category ID for the quest")
-        -- return
-    -- end
-
-	-- --local categoryInfo = C_LFGList.GetLfgCategoryInfo(categoryID);
-
-	-- local languages = C_LFGList.GetLanguageSearchFilter()
-
-	-- -- ACTIVITY_RETURN_VALUES = {
-		-- -- fullName = 1,
-		-- -- shortName = 2,
-		-- -- categoryID = 3,
-		-- -- groupID = 4,
-		-- -- itemLevel = 5,
-		-- -- filters = 6,
-		-- -- minLevel = 7,
-		-- -- maxPlayers = 8,
-		-- -- displayType = 9,
-		-- -- orderIndex = 10,
-		-- -- useHonorLevel = 11,
-	-- -- };
-
-    -- -- Open the Group Finder frame if it's not already open
-    -- if not GroupFinderFrame:IsVisible() then
-        -- LFGListUtil_OpenBestWindow()
-    -- end
-	
-    -- -- Set the search to the quest ID
-    -- if questID then
-        -- C_LFGList.SetSearchToQuestID(questID)
-    -- end
-	
-	-- local filters = 0 -- You need to determine the appropriate filters based on your requirements
-	-- local preferredFilters = 0 -- Same as above, determine based on your requirements
-
-    -- -- Accessing the search panel directly
-    -- local SearchPanel = LFGListFrame.SearchPanel
-    -- LFGListSearchPanel_SetCategory(SearchPanel, categoryID, filters)
-    -- LFGListSearchPanel_DoSearch(SearchPanel)
-    -- LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
-	
-	-- --local filters = ResolveCategoryFilters(categoryID, filters)
-	-- print("ActivityID is:", activityID)  -- Debug statement
-	-- print("CategoryID is:", categoryID)  -- Debug statement
-	-- print("Filters are:", filters)  -- Debug statement
-	-- print("preferredFilters are:", preferredFilters)  -- Debug statement
-	-- print("Languages is:", languages)  -- Debug statement
-    -- -- Initiate search
-	-- --PVEFrame_ToggleFrame()
-	-- --C_LFGList.SetSearchToActivity(activityID)
-	-- if questID then
-		-- C_LFGList.SetSearchToQuestID(questID);
-	-- end
-	
-    -- --LFGListCategorySelection_StartFindGroup(LFGListFrame.CategorySelection, questID)
-    -- --C_LFGList.Search(categoryID, filters, preferredFilters, languages)
-	-- --LFGListSearchPanel_UpdateResultList(self)
-	
-    -- -- -- Retrieve search results after a brief delay to ensure the search has time to complete
-    -- -- C_Timer.After(1, function()
-        -- -- local totalResultsFound, results = C_LFGList.GetSearchResults()
-        -- -- for i = 1, totalResultsFound do
-            -- -- local searchResultID = results[i]
-            -- -- local searchResultInfo = C_LFGList.GetSearchResultInfo(searchResultID)
-            -- -- if searchResultInfo and searchResultInfo.questID == questID then
-                -- -- -- This result is related to our quest
-                -- -- print("Found matching group: ", searchResultInfo.name)
-                -- -- -- Additional logic to handle/display this search result
-            -- -- end
-        -- -- end
-    -- -- end)
-	-- --C_LFGList.SetSearchToActivity(activityID)
-	-- --C_LFGList.GetSearchResultInfo(searchResultID) 
--- end
 
 -- Function to handle button clicks
 function RQE:LFG_Search(questID)
-
     -- Open the Group Finder frame if it's not already open
     if not GroupFinderFrame:IsVisible() then
         LFGListUtil_OpenBestWindow()
     end
-	
+
 	-- Logic for searching for groups
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questName = C_QuestLog.GetTitleForQuestID(questID)
@@ -1123,9 +1016,9 @@ function RQE:LFG_Search(questID)
 
     -- Accessing the search panel directly
     local SearchPanel = LFGListFrame.SearchPanel
+	LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
     LFGListSearchPanel_SetCategory(SearchPanel, categoryID, filters)
     LFGListSearchPanel_DoSearch(SearchPanel)
-    LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
 end
 
 -- Function to handle button clicks
