@@ -261,7 +261,8 @@ local function HandleEvents(frame, event, ...)
 			RQE.MinimizeButton:Hide()
 		end
 
-		-- Clear waypoints
+		-- Clear frame data and waypoints
+		--RQE:ClearFrameData()
 		C_Map.ClearUserWaypoint()
 		if IsAddOnLoaded("TomTom") then
 			TomTom.waydb:ResetProfile()
@@ -294,6 +295,7 @@ local function HandleEvents(frame, event, ...)
         end)
 		
 		QuestType()
+		--UpdateRQEQuestFrame()
 	    RQE.superTrackingChanged = true
         RQE:ClearFrameData()
 
@@ -318,6 +320,7 @@ local function HandleEvents(frame, event, ...)
        
 		if questID then
 			if questID ~= lastSuperTrackedQuestID then
+				--RQE:ClearFrameData()
 				lastSuperTrackedQuestID = questID
 			end
             
@@ -333,15 +336,14 @@ local function HandleEvents(frame, event, ...)
             if StepsText and CoordsText and MapIDs then
                 UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
             end
-			if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-			else
-				return
-			end
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			QuestType()
+			--UpdateRQEQuestFrame()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
         else
+			--RQE:ClearRQEQuestFrame()
 			QuestType()
+			--UpdateRQEQuestFrame()
 			SortQuestsByProximity()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
         end
@@ -372,11 +374,7 @@ local function HandleEvents(frame, event, ...)
 				end			
 				
                 -- Call the functions to update the frame
-				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-					UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
-				else
-					return
-				end
+                UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
 				QuestType()
 				--UpdateRQEQuestFrame()
 				SortQuestsByProximity()
@@ -413,7 +411,7 @@ local function HandleEvents(frame, event, ...)
 				end
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end)
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 		
 	-- Handling QUEST_COMPLETE event
@@ -457,11 +455,11 @@ local function HandleEvents(frame, event, ...)
 				end
 			else
 				-- Handle regular quests
-				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+				--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
 					UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-				else
-					return
-				end
+				--else
+					--return
+				--end
 				RQEQuestFrame:ClearAllPoints()
 				RQE:ClearRQEQuestFrame()
 				QuestType()
@@ -476,7 +474,6 @@ local function HandleEvents(frame, event, ...)
 		RQE:QuestComplete(questID)
 		RQE:ClearRQEQuestFrame()
 		QuestType()
-		--UpdateRQEQuestFrame()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
         C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
@@ -511,5 +508,5 @@ end
 -- Register "Enter" key event for SearchEditBox
 SearchEditBox:SetScript("OnEnterPressed", function(self)
     self:ClearFocus()  -- remove focus from the edit box
-    -- Implement search logic here, likely the same as the click event
+    -- Implement your search logic here, likely the same as the click event
 end)

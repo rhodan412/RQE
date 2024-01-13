@@ -1131,7 +1131,7 @@ function RQE:InitializeFrame()
 				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 			else
 				return
-			end
+			end			
         end
     end
 end
