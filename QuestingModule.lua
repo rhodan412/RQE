@@ -597,8 +597,18 @@ function UpdateRQEQuestFrame()
 						C_QuestLog.RemoveQuestWatch(questID)
 						RQE.infoLog("Untracking quest:", info.title)  -- Optional: print a message to the chat
 					else
-						-- Existing code to set as super-tracked
-						C_SuperTrack.SetSuperTrackedQuestID(questID)
+						-- Get the currently super tracked quest ID
+						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+						if currentSuperTrackedQuestID ~= questID then
+							-- If the clicked quest is different from the currently super tracked quest,
+							-- super track the new quest
+							C_SuperTrack.SetSuperTrackedQuestID(questID)
+						else
+							-- If the clicked quest is the same as the currently super tracked quest,
+							-- clear super tracking
+							C_SuperTrack.ClearSuperTrackedContent()
+						end
 					end
 				end)
 
