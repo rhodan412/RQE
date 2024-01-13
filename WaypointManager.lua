@@ -153,21 +153,24 @@ end
 -- @param mapID: ID of the map where the coordinate was clicked
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
-    local title = description and description:match("^(.-)\n") or "No description"
-    
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
+
+    local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+    local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
+
+    local directionText = RQEFrame.DirectionText
+    local description = RQEDatabase[questID].description
+
+    if directionText then
+        title = title .. "\nDirection: " .. directionText
+    elseif description then
+        title = title .. "\nDescription: " .. description
+    end
+
     -- Check if TomTom is loaded and enabled
     if IsAddOnLoaded("TomTom") then
         RQE.debugLog("TomTom is available.")
-        
-        -- Use the questHeader for the stepIndex if available
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
-        if questID and RQEDatabase[questID] then
-            local _, _, _, questHeader = PrintQuestStepsToChat(questID)
-            RQE.debugLog("questHeader received in OnCoordinateClicked: ", questHeader)
-            if questHeader and questHeader[stepIndex] then
-                title = questHeader[stepIndex]
-            end
-        end
 
         -- Add waypoint using TomTom
         local uid = TomTom:AddWaypoint(mapID, x/100, y/100, {
@@ -177,7 +180,7 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
             minimap = true,
             world = true
         })
-        
+
         if uid then
             RQE.debugLog("Waypoint added successfully with UID:", uid)
         else
@@ -188,6 +191,8 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
         -- Code for your own waypoint system or an alternative action
     end
 end
+
+
 
 
 ---------------------------
