@@ -161,11 +161,21 @@ RQE.options = {
 				RQE:UpdateCoordinates();  -- Immediately update the coordinates display
 			end,
 		},
+		autoSortRQEFrame = {
+			type = "toggle",
+			name = "Auto Populate Frame",
+			desc = "Will auto populate the RQEFrame (super tracked frame) by supertracking closest tracked quest (regardless of if you're currently tracking something else).",
+			order = 7,  -- Adjust this based on where you want it in the order
+			get = function() return RQE.db.profile.autoSortRQEFrame end,
+			set = function(_, newValue) 
+				RQE.db.profile.autoSortRQEFrame = newValue;
+			end,
+		},
 		framePosition = {
 			type = "group",
 			name = "Main Frame Position",
 			inline = true,
-			order = 7,  -- Set this order to wherever you want it to appear
+			order = 8,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -245,7 +255,7 @@ RQE.options = {
 			type = "group",
 			name = "Quest Frame Position",
 			inline = true,
-			order = 8,  -- Set this order to wherever you want it to appear
+			order = 9,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -325,7 +335,7 @@ RQE.options = {
 			type = "group",
 			name = "Debug",
 			inline = true,
-			order = 9,  -- Set this order to wherever you want it to appear
+			order = 10,  -- Set this order to wherever you want it to appear
 			hidden = function()
 				return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
 			end,
@@ -362,7 +372,7 @@ RQE.options = {
 			type = "group",
 			name = "Font Size and Color",
 			inline = true,
-			order = 10,  -- Set this order to wherever you want it to appear
+			order = 11,  -- Set this order to wherever you want it to appear
 			args = {						
                 headerText = {
                     name = "Header Text",
@@ -828,100 +838,6 @@ RQE.options = {
 						},
 					},
 				},
-				-- QuestObjectives = {
-					-- name = "Quest Objectives",
-					-- type = "group",
-					-- order = 6,  -- set an appropriate order
-					-- args = {
-						-- fontSize = {
-							-- name = "Font Size",
-							-- desc = "Default: 13",
-							-- type = "range",
-							-- min = 8,
-							-- max = 24,
-							-- step = 1,
-							-- get = function(info) return RQE.db.profile.textSettings.QuestObjectives.size end,
-							-- set = function(info, val) RQE.db.profile.textSettings.QuestObjectives.size = val 
-								-- RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
-							-- end,
-							-- order = 1,
-						-- },
-                        -- fontStyle = {
-                            -- name = "Font Style",
-                            -- type = "select",
-                            -- values = {
-                                -- ["SKURRI"] = "SKURRI.TTF",
-                                -- ["FRIZQT__"] = "FRIZQT__.TTF"
-                            -- },
-							-- get = function(info)
-								-- if RQE.db.profile.textSettings.QuestObjectives.font then
-									-- local value = RQE.db.profile.textSettings.QuestObjectives.font:match("Fonts\\([a-zA-Z0-9_]+)%.TTF")
-									-- return value
-								-- else
-									-- RQE.debugLog("Stored value in DB is nil.")
-									-- return nil
-								-- end
-							-- end,
-							-- set = function(info, val)
-								-- RQE.db.profile.textSettings.QuestObjectives.font = "Fonts\\" .. val .. ".TTF"
-								-- RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
-							-- end,
-						-- order = 2,
-                        -- },
-						-- fontColor = {
-							-- name = "Font Color",
-							-- desc = "Default: Cyan",
-							-- type = "select",
-							-- values = {
-								-- ["Yellow"] = "Yellow",
-								-- ["Green"] = "Green",
-								-- ["Cyan"] = "Cyan",
-								-- ["Canary"] = "Canary",
-								-- ["Cream Can"] = "Cream Can",
-								-- -- Add other named colors here
-							-- },
-							-- get = function(info)
-								-- local color = RQE.db.profile.textSettings.QuestObjectives.color
-								-- local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-								
-								-- if hexColor == "ffff00" then
-									-- return "Yellow"
-								-- elseif hexColor == "00ff00" then
-									-- return "Green"
-								-- elseif hexColor == "00ff99" then
-									-- return "Cyan"
-								-- elseif hexColor == "ffffd9" then
-									-- return "Canary"
-								-- elseif hexColor == "edbf59" then
-									-- return "Cream Can"
-								-- end
-							-- end,
-							-- set = function(info, val)
-								-- local hexColor
-								-- if val == "Yellow" then
-									-- hexColor = "ffff00"
-								-- elseif val == "Green" then
-									-- hexColor = "00ff00"
-								-- elseif val == "Cyan" then
-									-- hexColor = "00ff99"
-								-- elseif val == "Canary" then
-									-- hexColor = "ffffd9"
-								-- elseif val == "Cream Can" then
-									-- hexColor = "edbf59"
-								-- end
-								
-								-- local r = tonumber(hexColor:sub(1,2), 16) / 255
-								-- local g = tonumber(hexColor:sub(3,4), 16) / 255
-								-- local b = tonumber(hexColor:sub(5,6), 16) / 255
-								-- RQE.db.profile.textSettings.QuestObjectives.color = {r, g, b}
-								
-								-- local new_value = val
-								-- RQE:ConfigurationChanged()
-							-- end,
-							-- order = 3,
-						-- },
-					-- },
-				-- },
 			},
 		},
     },

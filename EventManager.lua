@@ -164,7 +164,8 @@ local function HandleEvents(frame, event, ...)
 			HideObjectiveTracker()
         end)
 		
-		UpdateRQEQuestFrame()
+		QuestType()
+		--UpdateRQEQuestFrame()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
@@ -260,8 +261,7 @@ local function HandleEvents(frame, event, ...)
 			RQE.MinimizeButton:Hide()
 		end
 
-		-- Clear frame data and waypoints
-		--RQE:ClearFrameData()
+		-- Clear waypoints
 		C_Map.ClearUserWaypoint()
 		if IsAddOnLoaded("TomTom") then
 			TomTom.waydb:ResetProfile()
@@ -293,7 +293,7 @@ local function HandleEvents(frame, event, ...)
 			HideObjectiveTracker()
         end)
 		
-		UpdateRQEQuestFrame()
+		QuestType()
 	    RQE.superTrackingChanged = true
         RQE:ClearFrameData()
 
@@ -318,7 +318,6 @@ local function HandleEvents(frame, event, ...)
        
 		if questID then
 			if questID ~= lastSuperTrackedQuestID then
-				--RQE:ClearFrameData()
 				lastSuperTrackedQuestID = questID
 			end
             
@@ -334,12 +333,15 @@ local function HandleEvents(frame, event, ...)
             if StepsText and CoordsText and MapIDs then
                 UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
             end
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			UpdateRQEQuestFrame()
+			if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+			else
+				return
+			end
+			QuestType()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
         else
-			--RQE:ClearRQEQuestFrame()
-			UpdateRQEQuestFrame()
+			QuestType()
 			SortQuestsByProximity()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
         end
@@ -370,8 +372,13 @@ local function HandleEvents(frame, event, ...)
 				end			
 				
                 -- Call the functions to update the frame
-                UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
-				UpdateRQEQuestFrame()
+				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+					UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
+				else
+					return
+				end
+				QuestType()
+				--UpdateRQEQuestFrame()
 				SortQuestsByProximity()
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
             end)
@@ -397,9 +404,13 @@ local function HandleEvents(frame, event, ...)
 		if currentQuestID then
 			C_Timer.After(0.5, function()
 				HideObjectiveTracker()
-				UpdateRQEQuestFrame()
+				QuestType()
 				SortQuestsByProximity()
-				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+					UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+				else
+					return
+				end
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end)
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -410,7 +421,7 @@ local function HandleEvents(frame, event, ...)
 		local questID = ...  -- Extract the questID from the event
 		RQE:QuestComplete(questID)
 		RQEQuestFrame:ClearAllPoints()
-		UpdateRQEQuestFrame()
+		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
@@ -418,50 +429,54 @@ local function HandleEvents(frame, event, ...)
 	elseif event == "QUEST_REMOVED" then
 		RQEQuestFrame:ClearAllPoints()
 		RQE:ClearRQEQuestFrame()
-		UpdateRQEQuestFrame()
+		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
 	-- Handling QUEST_WATCH_UPDATE event
 	elseif event == "QUEST_WATCH_UPDATE" then
 		RQEQuestFrame:ClearAllPoints()
-		UpdateRQEQuestFrame()
+		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
 	-- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
 	elseif event == "QUEST_WATCH_LIST_CHANGED" then
 		local questID, added = ...
+
 		if questID then
 			if C_QuestLog.IsWorldQuest(questID) then
-				-- If the quest is a World Quest, handle it specifically
+				-- Handle World Quests specifically
 				if added then
 					-- World Quest is added to the Watch List
-					-- Call a function to update just the World Quests part of the RQEQuestFrame
-					--RQE.UpdateWorldQuestsFrame(questID, true)
-					UpdateRQEQuestFrame()
+					QuestType()  -- Repopulate the frame with tracked World Quests
 				else
 					-- World Quest is removed from the Watch List
-					-- Call a function to update just the World Quests part of the RQEQuestFrame
-					--RQE.UpdateWorldQuestsFrame(questID, false)
-					UpdateRQEQuestFrame()
+					RQE:ClearRQEWorldQuestFrame()  -- Clear the frame
+					QuestType()  -- Repopulate the frame with remaining tracked World Quests
 				end
 			else
-				-- If the quest is not a World Quest, handle all quests
-				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+				-- Handle regular quests
+				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+					UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+				else
+					return
+				end
 				RQEQuestFrame:ClearAllPoints()
 				RQE:ClearRQEQuestFrame()
-				UpdateRQEQuestFrame()
+				QuestType()
 				SortQuestsByProximity()
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end
 		end
+
 		
 	-- Handling QUEST_TURNED_IN event
 	elseif event == "QUEST_TURNED_IN" then
 		RQE:QuestComplete(questID)
 		RQE:ClearRQEQuestFrame()
-		UpdateRQEQuestFrame()
+		QuestType()
+		--UpdateRQEQuestFrame()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
         C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
@@ -496,5 +511,5 @@ end
 -- Register "Enter" key event for SearchEditBox
 SearchEditBox:SetScript("OnEnterPressed", function(self)
     self:ClearFocus()  -- remove focus from the edit box
-    -- Implement your search logic here, likely the same as the click event
+    -- Implement search logic here, likely the same as the click event
 end)

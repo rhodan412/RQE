@@ -31,11 +31,6 @@ local ACD = LibStub("AceConfigDialog-3.0")
 
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
---local AceConfig = LibStub("AceConfig-3.0")  -- These are handled within Config.lua
---local AceConfigDialog = LibStub("AceConfigDialog-3.0")
---local AceConfigCmd = LibStub("AceConfigCmd-3.0")
---local AceDB = LibStub("AceDB-3.0")
---local AceDBOptions = LibStub("AceDBOptions-3.0")
 
 ---------------------------
 -- 3. Debugging Functions
@@ -62,10 +57,6 @@ function RQE.infoLog(message, ...)
     if RQE.db and RQE.db.profile.debugMode then
         local debugLevel = RQE.db.profile.debugLevel
 		if debugLevel == "INFO" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
-            --local stack = debugstack(2, 1, 0)
-            --local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
-            --fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
-            --RQE:CustomDebugLog(line, "cf9999FF", fileName .. " Info: " .. message, ...)
 			RQE:CustomDebugLog(line, "cf9999FF", " Info: " .. message, ...)
         end
     end
@@ -130,6 +121,7 @@ local defaults = {
         showMinimapIcon = false,
         showMapID = true,
         showCoordinates = true,
+		autoSortRQEFrame = false,
         frameWidth = 400,
         frameHeight = 300,
         framePosition = {
@@ -210,10 +202,15 @@ function RQE:OnInitialize()
 	RQE.WaypointButtons = RQE.WaypointButtons or {}
 
 	-- Initialize checkbox state for Coordinates
-	if CoordinatesCheckbox then  -- replace with your actual checkbox frame name
-		CoordinatesCheckbox:SetChecked(RQE.db.profile.showCoordinates)
+	if showCoordinates then  -- replace with your actual checkbox frame name
+		showCoordinates:SetChecked(RQE.db.profile.showCoordinates)
 	end
 
+	-- Initialize checkbox state for Auto Sort Frame
+	if autoSortRQEFrame then  -- replace with your actual checkbox frame name
+		autoSortRQEFrame:SetChecked(RQE.db.profile.autoSortRQEFrame)
+	end
+	
     -- Initialize checkbox state for MapID
     if MapIDCheckbox then  -- replace with your actual checkbox frame name
         MapIDCheckbox:SetChecked(RQE.db.profile.showMapID)
@@ -885,6 +882,7 @@ local function colorizeObjectives(objectivesText)
     return colorizedText
 end
 
+
 -- Define the slash command handler function
 local function HandleSlashCommands(msg, editbox)
     local command = string.lower(msg)
@@ -998,13 +996,20 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	-- Always show the UnknownQuestButton
     RQE.UnknownQuestButton:Show()
-	RQE.SearchGroupButton:Show()
+
+	-- Runs a check to see if the super tracked quest allows for forming quest group (such as World Boss WQ)
+    if questID and C_LFGList.CanCreateQuestGroup(questID) then
+        -- If a quest group can be created for this quest, show the button
+        RQE.SearchGroupButton:Show()
+    else
+        -- Otherwise, hide the button
+        RQE.SearchGroupButton:Hide()
+    end
 end
 
 
 -- ClearFrameData function
 function RQE:ClearFrameData()
-
 	-- Clear the Quest ID and Quest Name
     if RQE.QuestIDText then
         RQE.QuestIDText:SetText("")
@@ -1122,7 +1127,11 @@ function RQE:InitializeFrame()
         local currentQuestInfo = RQEDatabase[currentQuestID]
         if currentQuestInfo then
             local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-            UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+			if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+			else
+				return
+			end
         end
     end
 end
@@ -1179,7 +1188,6 @@ end
 
 
 -- SlashCommand function
--- Slash command handler
 function RQE:SlashCommand(input)
     if input == "config" then
         -- Open the config panel
@@ -1216,15 +1224,3 @@ function RQE:UpdateFrameFromProfile()
     RQEFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", xPos, yPos)
     -- Any other code to update your frame based on the profile
 end
-
-
--- -- New function to handle the PLAYER_LOGIN event
--- function RQE:HandlePlayerLogin()
-    -- self:InitializeAddon()
--- end
-
-
--- -- Function where you enable the add-on
--- function RQE:OnEnable()
-    -- self:RegisterEvent("PLAYER_LOGIN", "HandlePlayerLogin")
--- end
