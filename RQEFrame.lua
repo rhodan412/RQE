@@ -352,6 +352,7 @@ RQE.QuestIDText:SetWordWrap(true)
 RQE.QuestIDText:SetWidth(RQEFrame:GetWidth() - 20)
 RQE.QuestIDText:SetHeight(0)
 RQE.QuestIDText:EnableMouse(true)
+RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, -5)
 
 
 -- Create QuestName Text
