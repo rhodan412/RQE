@@ -255,11 +255,13 @@ sgLabel:SetTextColor(1, 1, 0)  -- Adjust color as needed
 RQE.bg = bg
 RQE.sgbg = sgBg
 
--- Function to set up a tooltip for a given frame and text
-local function SetUpTooltip(frame, text)
+-- Function to set up a tooltip for a given frame and multiple text lines
+local function SetUpTooltip(frame, texts)
     frame:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText(text, nil, nil, nil, nil, true)
+        -- Concatenate all text lines, separated by line breaks
+        local combinedText = table.concat(texts, "\n")
+        GameTooltip:SetText(combinedText, nil, nil, nil, nil, true)
         GameTooltip:Show()
     end)
 
@@ -268,8 +270,12 @@ local function SetUpTooltip(frame, text)
     end)
 end
 
--- Setting up the tooltip for RQE.SearchGroupButton
-SetUpTooltip(RQE.SearchGroupButton, "Press twice to search for group")
+-- Setting up the tooltip for RQE.SearchGroupButton with all texts
+SetUpTooltip(RQE.SearchGroupButton, {
+    "2x Lt Click: Search for Group",
+    "Rt Click: Create Group",
+    "Shift Lt Click: Delist Group"
+})
 
 -- Add a mouse down event to simulate a button press
 RQE.UnknownQuestButtonMouseDown()
