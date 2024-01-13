@@ -214,6 +214,10 @@ local function UpdateHeader(frame, baseTitle, questCount)
 end
 
 
+-- Create Buttons
+RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
+
+
 -- Function to create and position the ScrollFrame's child frames
 function SortQuestsByProximity()
     -- Logic to sort quests based on proximity

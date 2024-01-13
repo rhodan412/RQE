@@ -187,6 +187,31 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 end
 
 
+-- Parent function to Create ClearWQButton
+function RQE.Buttons.ClearWQButton(RQEQuestFrame)
+    local ClearWQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+    ClearWQButton:SetSize(18, 18)
+    ClearWQButton:SetText("CT")
+	RQE.ClearWQButton = ClearWQButton  -- Store reference for later use
+
+    -- Set the frame strata and level
+    ClearWQButton:SetFrameStrata("MEDIUM")
+    ClearWQButton:SetFrameLevel(3)
+	
+    -- Nested functions
+    ClearWQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
+    ClearWQButton:SetScript("OnClick", function() 
+        -- Your code for ClearWQButton functionality here
+		RQE:ClearWQTracking()
+    end)
+
+    CreateTooltip(ClearWQButton, "Reset WQ Tracking")  -- Tooltip
+    CreateBorder(ClearWQButton)  -- Border
+    
+    return ClearWQButton
+end
+
+
 -- Parent function to create RWButton
 function RQE.Buttons.CreateRWButton(RQEFrame)
     local RWButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")

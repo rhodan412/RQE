@@ -1214,6 +1214,14 @@ end
 -- Register the slash command
 RQE:RegisterChatCommand("rqe", "SlashCommand")
 
+
+-- This function will clear the WQ Tracking and reset it to clear Completed Quests
+function RQE:ClearWQTracking()
+	RQE:ClearRQEWorldQuestFrame()
+	QuestType()
+end
+
+
 ---------------------------
 -- 11. Finalization
 ---------------------------
