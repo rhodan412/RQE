@@ -356,7 +356,6 @@ local function HandleEvents(frame, event, ...)
         local unit = ...
         if unit == "player" or event == "UNIT_EXITING_VEHICLE" or event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or event == "ZONE_CHANGED_NEW_AREA" then
             C_Timer.After(1.0, function()  -- Delay of 1 second
-				--RQE:ClearFrameData()
 				ObjectiveTrackerFrame:Hide()
 				
 				local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -419,6 +418,7 @@ local function HandleEvents(frame, event, ...)
 		local questID = ...  -- Extract the questID from the event
 		RQE:QuestComplete(questID)
 		RQEQuestFrame:ClearAllPoints()
+		RQE:ClearRQEWorldQuestFrame()
 		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -427,6 +427,7 @@ local function HandleEvents(frame, event, ...)
 	elseif event == "QUEST_REMOVED" then
 		RQEQuestFrame:ClearAllPoints()
 		RQE:ClearRQEQuestFrame()
+		RQE:ClearRQEWorldQuestFrame()
 		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -434,6 +435,7 @@ local function HandleEvents(frame, event, ...)
 	-- Handling QUEST_WATCH_UPDATE event
 	elseif event == "QUEST_WATCH_UPDATE" then
 		RQEQuestFrame:ClearAllPoints()
+		RQE:ClearRQEWorldQuestFrame()
 		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -447,7 +449,8 @@ local function HandleEvents(frame, event, ...)
 				-- Handle World Quests specifically
 				if added then
 					-- World Quest is added to the Watch List
-					QuestType()  -- Repopulate the frame with tracked World Quests
+					RQE:ClearRQEWorldQuestFrame()
+					QuestType()
 				else
 					-- World Quest is removed from the Watch List
 					RQE:ClearRQEWorldQuestFrame()  -- Clear the frame
@@ -473,6 +476,7 @@ local function HandleEvents(frame, event, ...)
 	elseif event == "QUEST_TURNED_IN" then
 		RQE:QuestComplete(questID)
 		RQE:ClearRQEQuestFrame()
+		RQE:ClearRQEWorldQuestFrame()
 		QuestType()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
