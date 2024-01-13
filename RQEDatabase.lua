@@ -54250,16 +54250,28 @@ RQEDatabase = {
             -- },
         -- },
 
-        -- [38356] = {
-            -- [1] = {
-                -- description = "This is Step One.",
-                -- coordinates = {x = 40.7, y = 64.1, mapID = 123}
-            -- },
-            -- [2] = {
-                -- description = "This is Step Two.",
-                -- coordinates = {x = 72.1, y = 38.6, mapID = 13}
-            -- },
-        -- },
+        [38356] = { -- Bringing the Bass
+            [1] = {
+                description = "S.P.R.K. Capacitor - Travel to Talador and defeat the Iron Shredder.",
+                coordinates = {x = 64.65, y = 31.81, mapID = 535}
+            },
+            [2] = {
+                description = "Cord of Ancient Wood - Travel to Gorgrond, kill the big tree guy (it has a patrol route).",
+                coordinates = {x = 58.05, y = 40.23, mapID = 543}
+            },
+            [3] = {
+                description = "Bass Blaster - Travel to Nagrand, loot the Blaster (Dancing Ogres will turn hostile after a few seconds - mount quickly).",
+                coordinates = {x = 57.79, y = 10.89, mapID = 550}
+            },
+            [4] = {
+                description = "Phonic Amplifier - Travel to Skettis (Spires of Arak) and kill a  Stalward Warden.",
+                coordinates = {x = 53.94, y = 9.45, mapID = 542}
+            },
+            [5] = {
+                description = "Laz-Tron Disc Reader - Travel to Pinchwhistle Point located in upstairs room.",
+                coordinates = {x = 55.56, y = 90.59, mapID = 542}
+            },
+        },
 
         -- [38428] = {
             -- [1] = {
