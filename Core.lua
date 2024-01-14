@@ -1228,28 +1228,50 @@ function RQE:ClearWQTracking()
 end
 
 
--- Function to automatically watch quests with progress
+-- Table to store the last known progress of quests
+local lastKnownProgress = {}
+
 function AutoWatchQuestsWithProgress()
     for i = 1, C_QuestLog.GetNumQuestLogEntries() do
         local questInfo = C_QuestLog.GetInfo(i)
-        if questInfo and not questInfo.isHeader and HasQuestProgress(questInfo.questID) then
-            local isWatched = false
-            local numWatchedQuests = C_QuestLog.GetNumQuestWatches()
+        if questInfo and not questInfo.isHeader then
+            local questID = questInfo.questID
+            local objectives = C_QuestLog.GetQuestObjectives(questID)
+            local currentProgress = 0
 
-            for watchIndex = 1, numWatchedQuests do
-                local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
-                if watchedQuestID == questInfo.questID then
-                    isWatched = true
-                    break
+            -- Calculate current progress
+            if C_QuestLog.IsWorldQuest(questID) then
+                local watchType = C_QuestLog.GetQuestWatchType(questID)
+                for _, objective in ipairs(objectives or {}) do
+                    if objective and not objective.finished and objective.numFulfilled then
+                        currentProgress = currentProgress + objective.numFulfilled
+                    end
+                end
+                -- Compare with last known progress
+                if currentProgress > (lastKnownProgress[questID] or 0) then
+                    C_QuestLog.AddWorldQuestWatch(questID, watchType)
+                    print("Adding World Quest", questID, "to tracking with watchType:", watchType)
+                end
+            else
+                -- For regular quests, count the number of finished objectives
+                for _, objective in ipairs(objectives or {}) do
+                    if objective and objective.finished then
+                        currentProgress = currentProgress + 1
+                    end
+                end
+                -- Compare with last known progress
+                if currentProgress > (lastKnownProgress[questID] or 0) then
+                    C_QuestLog.AddQuestWatch(questID)
                 end
             end
 
-            if not isWatched then
-                C_QuestLog.AddQuestWatch(questInfo.questID)
-            end
+            lastKnownProgress[questID] = currentProgress
         end
     end
 end
+
+
+
 
 function HasQuestProgress(questID)
     -- Use the WoW API to get quest objectives

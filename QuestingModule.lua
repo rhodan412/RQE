@@ -1030,7 +1030,7 @@ function UpdateRQEWorldQuestFrame()
 					-- Untrack the quest
 					C_QuestLog.RemoveQuestWatch(questID)
 					RQE:ClearRQEQuestFrame()
-					QuestType()
+					RQE:ClearWQTracking()
 				end
 			end)
 			
@@ -1195,9 +1195,6 @@ function RQE:ClearRQEWorldQuestFrame()
                     if WQuestLogIndexButton.QuestObjectivesOrDescription then
                         WQuestLogIndexButton.QuestObjectivesOrDescription:Hide()
                     end
-                else
-                    -- Debug log for elements that don't match the criteria
-                    print("Element skipped:", i, type(WQuestLogIndexButton.GetName), type(WQuestLogIndexButton:GetName()))
                 end
             end
         end

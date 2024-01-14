@@ -147,9 +147,11 @@ local function HandleEvents(frame, event, ...)
         end)
 
 		local questID, added = ...
+		local watchType = C_QuestLog.GetQuestWatchType(questID)
 
 		-- Check if auto-tracking of quest progress is enabled and call the function
 		if questID and added and RQE.db.profile.autoTrackProgress then
+			AutoWatchQuestsWithProgress()
 			SortQuestsByProximity()
 		end
 		
@@ -170,8 +172,7 @@ local function HandleEvents(frame, event, ...)
 			HideObjectiveTracker()
         end)
 		
-		QuestType()
-		--UpdateRQEQuestFrame()
+		RQE:ClearWQTracking()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
@@ -268,7 +269,6 @@ local function HandleEvents(frame, event, ...)
 		end
 
 		-- Clear frame data and waypoints
-		--RQE:ClearFrameData()
 		C_Map.ClearUserWaypoint()
 		if IsAddOnLoaded("TomTom") then
 			TomTom.waydb:ResetProfile()
@@ -294,65 +294,45 @@ local function HandleEvents(frame, event, ...)
 			RQE:HandleSuperTrackedQuestUpdate()
 		end)	
 
-    -- Handling SUPER_TRACKING_CHANGED Event
-    elseif event == "SUPER_TRACKING_CHANGED" then
-        C_Timer.After(0.5, function()
+	-- Handling SUPER_TRACKING_CHANGED Event
+	elseif event == "SUPER_TRACKING_CHANGED" then
+		C_Timer.After(0.5, function()
 			HideObjectiveTracker()
-        end)
-		
-		QuestType()
-		--UpdateRQEQuestFrame()
-	    RQE.superTrackingChanged = true
-        RQE:ClearFrameData()
+		end)
 
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		QuestType()
+		RQE.superTrackingChanged = true
+		RQE:ClearFrameData()
+
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		local questName
 		if questID then
 			questName = C_QuestLog.GetTitleForQuestID(questID)
+			if questID ~= lastSuperTrackedQuestID then
+				lastSuperTrackedQuestID = questID
+				local questLink = GetQuestLink(questID)  -- Generate the quest link
+				RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
+
+				-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
+				local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+				local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+				if StepsText and CoordsText and MapIDs then
+					UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+				end
+				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+			end
 		else
 			RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
-		end
-	
-        -- Simulate clicking the RWButton
-        if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
-            RQE.RWButton:GetScript("OnClick")()
-        end
-
-		local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
-
-		-- If the quest is NOT in the database
-		--RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, -5)
-		--RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -33)
-       
-		if questID then
-			if questID ~= lastSuperTrackedQuestID then
-				--RQE:ClearFrameData()
-				lastSuperTrackedQuestID = questID
-			end
-            
-            local questName = C_QuestLog.GetTitleForQuestID(questID)
-            local questLink = GetQuestLink(questID)  -- Generate the quest link
-			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
-
-			-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-			local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
-			
-			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-            if StepsText and CoordsText and MapIDs then
-                UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-            end
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			QuestType()
-			--UpdateRQEQuestFrame()
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-        else
-			--RQE:ClearRQEQuestFrame()
-			QuestType()
-			--UpdateRQEQuestFrame()
+			RQE:ClearWQTracking()
 			SortQuestsByProximity()
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-        end
+		end
+
+		-- Simulate clicking the RWButton
+		if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
+			RQE.RWButton:GetScript("OnClick")()
+		end
 		
 	-- Handling of several events for purpose of updating the DirectionText
     elseif event == "UNIT_EXITING_VEHICLE" or
@@ -366,6 +346,11 @@ local function HandleEvents(frame, event, ...)
 				ObjectiveTrackerFrame:Hide()
 				
 				local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+				
+				local watchType
+				if currentQuestID then
+					watchType = C_QuestLog.GetQuestWatchType(currentQuestID)
+				end
 				
                 -- Fetch necessary data for UpdateFrame
                 local questInfo = RQEDatabase[currentQuestID]
@@ -381,8 +366,11 @@ local function HandleEvents(frame, event, ...)
 				
                 -- Call the functions to update the frame
                 UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
-				QuestType()
-				--UpdateRQEQuestFrame()
+				--RQE:ClearWQTracking()
+				-- Check if auto-tracking of quest progress is enabled and call the function
+				--if RQE.db.profile.autoTrackProgress then
+					AutoWatchQuestsWithProgress()
+				--end
 				SortQuestsByProximity()
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
             end)
@@ -401,30 +389,15 @@ local function HandleEvents(frame, event, ...)
 		-- Attempt to fetch the current super-tracked quest ID
 		local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
+		-- Only get the watch type if currentQuestID is valid
+		local watchType
+		if currentQuestID then
+			watchType = C_QuestLog.GetQuestWatchType(currentQuestID)
+		end
+		
 		-- Attempt to fetch other necessary information using the currentQuestID
 		local currentQuestInfo = RQEDatabase[currentQuestID]
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-
-		-- -- Logic to automatically watch quests with progress
-		-- for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-			-- local questInfo = C_QuestLog.GetInfo(i)
-			-- if questInfo and not questInfo.isHeader and HasQuestProgress(questInfo.questID) then
-				-- local isWatched = false
-				-- local numWatchedQuests = C_QuestLog.GetNumQuestWatches()
-
-				-- for watchIndex = 1, numWatchedQuests do
-					-- local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
-					-- if watchedQuestID == questInfo.questID then
-						-- isWatched = true
-						-- break
-					-- end
-				-- end
-
-				-- if not isWatched then
-					-- C_QuestLog.AddQuestWatch(questInfo.questID)
-				-- end
-			-- end
-		-- end
 
 		-- Check if auto-tracking of quest progress is enabled and call the function
 		if RQE.db.profile.autoTrackProgress then
@@ -434,7 +407,7 @@ local function HandleEvents(frame, event, ...)
 		if currentQuestID then
 			C_Timer.After(0.5, function()
 				HideObjectiveTracker()
-				QuestType()
+				RQE:ClearWQTracking()
 				SortQuestsByProximity()
 				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
 					UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
@@ -451,8 +424,7 @@ local function HandleEvents(frame, event, ...)
 		local questID = ...  -- Extract the questID from the event
 		RQE:QuestComplete(questID)
 		RQEQuestFrame:ClearAllPoints()
-		RQE:ClearRQEWorldQuestFrame()
-		QuestType()
+		RQE:ClearWQTracking()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
@@ -460,39 +432,24 @@ local function HandleEvents(frame, event, ...)
 	elseif event == "QUEST_REMOVED" then
 		RQEQuestFrame:ClearAllPoints()
 		RQE:ClearRQEQuestFrame()
-		RQE:ClearRQEWorldQuestFrame()
-		QuestType()
+		RQE:ClearWQTracking()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
 	-- Handling QUEST_WATCH_UPDATE event
 	elseif event == "QUEST_WATCH_UPDATE" then
+	
+		local questID
+		local watchType
+		
+		if currentQuestID then
+			watchType = C_QuestLog.GetQuestWatchType(questID)
+		end
+		
 		RQEQuestFrame:ClearAllPoints()
-		RQE:ClearRQEWorldQuestFrame()
-		QuestType()
+		RQE:ClearWQTracking()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
-		-- -- Logic to automatically watch quests with progress
-		-- for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-			-- local questInfo = C_QuestLog.GetInfo(i)
-			-- if questInfo and not questInfo.isHeader and HasQuestProgress(questInfo.questID) then
-				-- local isWatched = false
-				-- local numWatchedQuests = C_QuestLog.GetNumQuestWatches()
-
-				-- for watchIndex = 1, numWatchedQuests do
-					-- local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
-					-- if watchedQuestID == questInfo.questID then
-						-- isWatched = true
-						-- break
-					-- end
-				-- end
-
-				-- if not isWatched then
-					-- C_QuestLog.AddQuestWatch(questInfo.questID)
-				-- end
-			-- end
-		-- end
 
 		-- Check if auto-tracking of quest progress is enabled and call the function
 		if RQE.db.profile.autoTrackProgress then
@@ -502,23 +459,30 @@ local function HandleEvents(frame, event, ...)
 	-- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
 	elseif event == "QUEST_WATCH_LIST_CHANGED" then
 		local questID, added = ...
-
+		
+		local watchType
+		if currentQuestID then
+			watchType = C_QuestLog.GetQuestWatchType(questID)
+		end
+		
 		if questID then
 			if C_QuestLog.IsWorldQuest(questID) then
 				-- Handle World Quests specifically
 				if added then
 					-- World Quest is added to the Watch List
-					RQE:ClearRQEWorldQuestFrame()
-					QuestType()
+					-- Check if auto-tracking of quest progress is enabled and call the function
+					if RQE.db.profile.autoTrackProgress then
+						AutoWatchQuestsWithProgress()
+					end
 				else
 					-- World Quest is removed from the Watch List
-					RQE:ClearRQEWorldQuestFrame()  -- Clear the frame
-					QuestType()  -- Repopulate the frame with remaining tracked World Quests
+					RQE:ClearWQTracking()
 				end
 			else
 				-- Handle regular quests
 				--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
 					if RQE.db.profile.autoTrackProgress then
+						AutoWatchQuestsWithProgress()
 						SortQuestsByProximity()
 					end					
 				--else
@@ -526,7 +490,7 @@ local function HandleEvents(frame, event, ...)
 				--end
 				RQEQuestFrame:ClearAllPoints()
 				RQE:ClearRQEQuestFrame()
-				QuestType()
+				RQE:ClearWQTracking()
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end
@@ -537,8 +501,7 @@ local function HandleEvents(frame, event, ...)
 	elseif event == "QUEST_TURNED_IN" then
 		RQE:QuestComplete(questID)
 		RQE:ClearRQEQuestFrame()
-		RQE:ClearRQEWorldQuestFrame()
-		QuestType()
+		RQE:ClearWQTracking()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		
         C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
