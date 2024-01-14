@@ -1044,8 +1044,44 @@ function RQE:LFG_Create(questID)
 	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID)
 end
 
+
 -- Set the script for the button
 RQE.SearchGroupButton:SetScript("OnClick", SearchGroupButton_OnClick)
+
+
+-- Register frame for event handling
+local eventFrame = CreateFrame("Frame")
+
+-- Define the function to show the role selection dialog
+local function ShowRoleSelection(activityID)
+    if LFGListApplicationDialog then
+        LFGListApplicationDialog_Show(LFGListApplicationDialog, activityID)
+    end
+end
+
+-- Define the function to handle GROUP_ROSTER_UPDATE event
+local function OnGroupRosterUpdate()
+    local isInGroup = IsInGroup()
+    local isInRaid = IsInRaid()
+    local isInstanceGroup = IsInInstance()
+
+    -- Check if the player has left a group
+    if not isInGroup and not isInRaid and not isInstanceGroup then
+        -- The player has left an outdoor group, show the role selection dialog
+        -- Note: You will need to define how you get the 'activityID'
+        ShowRoleSelection(activityID)
+    end
+end
+
+-- Register the GROUP_ROSTER_UPDATE event
+eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+
+-- Set the script handler for the event
+eventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "GROUP_ROSTER_UPDATE" then
+        OnGroupRosterUpdate()
+    end
+end)
 
 
 -- Function to clear StepsText in RQEFrame.lua
