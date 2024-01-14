@@ -181,11 +181,48 @@ RQE.options = {
 				RQE.db.profile.autoTrackProgress = newValue;
 			end,
 		},
+		debug = {
+			type = "group",
+			name = "Debug",
+			inline = true,
+			order = 9,  -- Set this order to wherever you want it to appear
+			hidden = function()
+				return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
+			end,
+			args = {
+				debugLevel = {
+					type = 'select',
+					name = 'Debug Level',
+					desc = 'Set the level of debug logging.',
+					values = debugLevelOptions,
+					get = function(info)
+						return getDebugLevelIndex(RQE.db.profile.debugLevel)  -- Convert string to index
+					end,
+					set = function(info, value)
+						RQE.db.profile.debugLevel = debugLevelOptions[value]  -- Convert index to string
+					end,
+					order = 1,
+				},
+				resetFramePosition = {
+					type = "execute",
+					name = "Reset Position",
+					desc = "Reset the position of the frame to its default coded location.",
+					func = function()
+						RQE:ResetFramePositionToDBorDefault()
+						RQE:ResetQuestFramePositionToDBorDefault()
+					end,
+					hidden = function()
+					    return not (RQE.db.profile.debugMode and RQE.db.profile.debugLevel == "INFO")
+					end,
+					order = 2,
+				},
+			},
+		},
 		framePosition = {
 			type = "group",
 			name = "Main Frame Position",
 			inline = true,
-			order = 9,  -- Set this order to wherever you want it to appear
+			order = 10,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -265,7 +302,7 @@ RQE.options = {
 			type = "group",
 			name = "Quest Frame Position",
 			inline = true,
-			order = 10,  -- Set this order to wherever you want it to appear
+			order = 11,  -- Set this order to wherever you want it to appear
 			args = {
 				anchorPoint = {
 					type = 'select',
@@ -338,43 +375,6 @@ RQE.options = {
 						RQE:UpdateFrameOpacity()  -- You will need to create this function
 					end,
 					order = 4,  -- Adjust this number to place it in your preferred order
-				},
-			},
-		},
-		debug = {
-			type = "group",
-			name = "Debug",
-			inline = true,
-			order = 111,  -- Set this order to wherever you want it to appear
-			hidden = function()
-				return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
-			end,
-			args = {
-				debugLevel = {
-					type = 'select',
-					name = 'Debug Level',
-					desc = 'Set the level of debug logging.',
-					values = debugLevelOptions,
-					get = function(info)
-						return getDebugLevelIndex(RQE.db.profile.debugLevel)  -- Convert string to index
-					end,
-					set = function(info, value)
-						RQE.db.profile.debugLevel = debugLevelOptions[value]  -- Convert index to string
-					end,
-					order = 1,
-				},
-				resetFramePosition = {
-					type = "execute",
-					name = "Reset Position",
-					desc = "Reset the position of the frame to its default coded location.",
-					func = function()
-						RQE:ResetFramePositionToDBorDefault()
-						RQE:ResetQuestFramePositionToDBorDefault()
-					end,
-					hidden = function()
-					    return not (RQE.db.profile.debugMode and RQE.db.profile.debugLevel == "INFO")
-					end,
-					order = 2,
 				},
 			},
 		},
