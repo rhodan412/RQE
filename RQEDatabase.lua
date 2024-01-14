@@ -36,10 +36,52 @@
 RQEDatabase = {
 -- Dragonflight Expansion
 -- Dragonflight WQ/Dailies
-        [76992] = {
+        [76520] = { -- A Shared Dream
+            [1] = {
+                description = "Speak with Yvelyn (she will be your tank while attacking mobs on ground).",
+                coordinates = {x = 64.7, y = 73.1, mapID = 2200}
+            },
+            [2] = {
+                description = "Head up the hill and kill Avius Flamebeak (flaming bird).",
+                coordinates = {x = 64.0, y = 75.4, mapID = 2200}
+            },
+            [3] = {
+                description = "Travel across the water to the south and defeat Oxis of Fire.",
+                coordinates = {x = 63.0, y = 83.7, mapID = 2200}
+            },
+            [4] = {
+                description = "Defeat Phebis of the Burning Sea in the water to the East Northeast.",
+                coordinates = {x = 69.2, y = 82.1, mapID = 2200}
+            },
+            [5] = {
+                description = "Use extra action to ride on Yvelyn and attack small flaming birds nearby using Yvelyn's abilities.",
+                coordinates = {x = 61.18, y = 83.51, mapID = 2200}
+            },
+        },
+        [76551] = { -- Treasure Diving
+            [1] = {
+                description = "Swim underwater, in lake, and loot the Handful of Rubble.",
+                coordinates = {x = 51.2, y = 32.1, mapID = 2200}
+            },
+            [2] = {
+                description = "Speak with Enaru Silverbark (Ancient of Lore) above water on rock outcropping attached to cliff wall.",
+                coordinates = {x = 50.9, y = 28.7, mapID = 2200}
+            },
+        },
+        [76992] = { -- Fickle Judgment
             [1] = {
                 description = "Reduce the HP of Podlings to less than 50% and use Q'onzu's Faerie Feather (ability can hit multiple mobs below 50% HP).",
                 coordinates = {x = 36.63, y = 68.06, mapID = 2200}
+            },
+        },
+        [76993] = { -- Turtle Power
+            [1] = {
+                description = "Weaken Cantankerous Turtle to < 50% health.",
+                coordinates = {x = 42.1, y = 77.5, mapID = 2200}
+            },
+            [2] = {
+                description = "Use your Slumberfruit on the weakened turtle.",
+                coordinates = {x = 42.1, y = 77.5, mapID = 2200} --nil
             },
         },
 
