@@ -1213,6 +1213,16 @@ function RQE:SlashCommand(input)
 end
 
 
+SLASH_RESETROLE1 = "/rqeresetrole"
+SlashCmdList["RESETROLE"] = function()
+    local dialog = LFGListApplicationDialog
+    if dialog then
+        LFGListApplicationDialog_UpdateRoles(dialog)
+        LFGListApplicationDialog_UpdateValidState(dialog)
+        LFGListApplicationDialog_Show(dialog)
+    end
+end
+
 -- Register the slash command
 RQE:RegisterChatCommand("rqe", "SlashCommand")
 
