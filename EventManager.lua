@@ -409,11 +409,6 @@ local function HandleEvents(frame, event, ...)
 				HideObjectiveTracker()
 				RQE:ClearWQTracking()
 				SortQuestsByProximity()
-				-- if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-					-- UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-				-- else
-					-- return
-				-- end
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end)
 		UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
@@ -437,13 +432,17 @@ local function HandleEvents(frame, event, ...)
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
 	-- Handling QUEST_WATCH_UPDATE event
-	elseif event == "QUEST_WATCH_UPDATE" then
-	
+	elseif event == "QUEST_WATCH_UPDATE" then	
 		local questID
 		local watchType
 		
-		if currentQuestID then
-			watchType = C_QuestLog.GetQuestWatchType(questID)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			
+			-- If the watchType is nil, then do not proceed with setting super tracking
+			if watchType then
+				C_SuperTrack.SetSuperTrackedQuestID(questID)
+			end
 		end
 		
 		RQEQuestFrame:ClearAllPoints()
@@ -460,17 +459,18 @@ local function HandleEvents(frame, event, ...)
 	elseif event == "QUEST_WATCH_LIST_CHANGED" then
 		local questID, added = ...
 		
-		local watchType
-		if currentQuestID then
-			watchType = C_QuestLog.GetQuestWatchType(questID)
-		end
-		
 		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			
+			-- If the watchType is nil, then do not proceed with setting super tracking
+			if watchType then
+				C_SuperTrack.SetSuperTrackedQuestID(questID)
+			end
+
 			if C_QuestLog.IsWorldQuest(questID) then
 				-- Handle World Quests specifically
 				if added then
 					-- World Quest is added to the Watch List
-					-- Check if auto-tracking of quest progress is enabled and call the function
 					if RQE.db.profile.autoTrackProgress then
 						AutoWatchQuestsWithProgress()
 					end
@@ -480,18 +480,16 @@ local function HandleEvents(frame, event, ...)
 				end
 			else
 				-- Handle regular quests
-				--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-					if RQE.db.profile.autoTrackProgress then
-						AutoWatchQuestsWithProgress()
-						SortQuestsByProximity()
-					end					
-				--else
-					--return
-				--end
+				if RQE.db.profile.autoTrackProgress then
+					AutoWatchQuestsWithProgress()
+					SortQuestsByProximity()
+				end
+
+				-- The following functions should only be called when necessary,
+				-- so ensure their logic is correct before calling them.
 				RQEQuestFrame:ClearAllPoints()
 				RQE:ClearRQEQuestFrame()
 				RQE:ClearWQTracking()
-				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end
 		end
