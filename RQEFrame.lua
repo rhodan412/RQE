@@ -1053,14 +1053,14 @@ RQE.SearchGroupButton:SetScript("OnClick", SearchGroupButton_OnClick)
 local eventFrame = CreateFrame("Frame")
 
 -- Define the function to show the role selection dialog
-local function ShowRoleSelection(activityID)
+function RQEShowRoleSelection(activityID)
     if LFGListApplicationDialog then
         LFGListApplicationDialog_Show(LFGListApplicationDialog, activityID)
     end
 end
 
 -- Define the function to handle GROUP_ROSTER_UPDATE event
-local function OnGroupRosterUpdate()
+function RQEOnGroupRosterUpdate()
     local isInGroup = IsInGroup()
     local isInRaid = IsInRaid()
     local isInstanceGroup = IsInInstance()
@@ -1069,7 +1069,7 @@ local function OnGroupRosterUpdate()
     if not isInGroup and not isInRaid and not isInstanceGroup then
         -- The player has left an outdoor group, show the role selection dialog
         -- Note: You will need to define how you get the 'activityID'
-        ShowRoleSelection(activityID)
+        RQEShowRoleSelection(activityID)
     end
 end
 
@@ -1079,7 +1079,7 @@ eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 -- Set the script handler for the event
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "GROUP_ROSTER_UPDATE" then
-        OnGroupRosterUpdate()
+        RQEOnGroupRosterUpdate()
     end
 end)
 
