@@ -368,9 +368,9 @@ local function HandleEvents(frame, event, ...)
                 UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
 				--RQE:ClearWQTracking()
 				-- Check if auto-tracking of quest progress is enabled and call the function
-				--if RQE.db.profile.autoTrackProgress then
+				if RQE.db.profile.autoTrackProgress then
 					AutoWatchQuestsWithProgress()
-				--end
+				end
 				SortQuestsByProximity()
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
             end)
@@ -409,14 +409,14 @@ local function HandleEvents(frame, event, ...)
 				HideObjectiveTracker()
 				RQE:ClearWQTracking()
 				SortQuestsByProximity()
-				if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-					UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-				else
-					return
-				end
+				-- if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+					-- UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+				-- else
+					-- return
+				-- end
 				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 			end)
-		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 		end
 		
 	-- Handling QUEST_COMPLETE event

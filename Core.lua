@@ -232,10 +232,6 @@ function RQE:OnInitialize()
 	
     -- Initialize character-specific data
     self:GetCharacterInfo()
-	
-    -- Register the options table and add it to the Blizzard options window
-	print("self.options before registration:", self.options ~= nil)
-	print("First key in self.options:", next(self.options))
 
     AC:RegisterOptionsTable("RQE_Options", self.options)
     self.optionsFrame = ACD:AddToBlizOptions("RQE_Options", "Rhodan's Quest Explorer")
@@ -1230,47 +1226,55 @@ end
 
 -- Table to store the last known progress of quests
 local lastKnownProgress = {}
+local isFirstRun = true
 
 function AutoWatchQuestsWithProgress()
+    if isFirstRun then
+        -- On first run, just populate lastKnownProgress without tracking
+        for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+            local questInfo = C_QuestLog.GetInfo(i)
+            if questInfo and not questInfo.isHeader then
+                local questID = questInfo.questID
+                local objectives = C_QuestLog.GetQuestObjectives(questID)
+                local currentProgress = CalculateCurrentProgress(objectives)
+                lastKnownProgress[questID] = currentProgress
+            end
+        end
+        isFirstRun = false
+    else
+        -- On subsequent runs, track quests with new progress
+        TrackQuestsWithNewProgress()
+    end
+end
+
+
+function CalculateCurrentProgress(objectives)
+    local currentProgress = 0
+    for _, objective in ipairs(objectives or {}) do
+        if objective and objective.finished then
+            currentProgress = currentProgress + 1
+        end
+    end
+    return currentProgress
+end
+
+
+function TrackQuestsWithNewProgress()
     for i = 1, C_QuestLog.GetNumQuestLogEntries() do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
             local questID = questInfo.questID
             local objectives = C_QuestLog.GetQuestObjectives(questID)
-            local currentProgress = 0
+            local currentProgress = CalculateCurrentProgress(objectives)
 
-            -- Calculate current progress
-            if C_QuestLog.IsWorldQuest(questID) then
-                local watchType = C_QuestLog.GetQuestWatchType(questID)
-                for _, objective in ipairs(objectives or {}) do
-                    if objective and not objective.finished and objective.numFulfilled then
-                        currentProgress = currentProgress + objective.numFulfilled
-                    end
-                end
-                -- Compare with last known progress
-                if currentProgress > (lastKnownProgress[questID] or 0) then
-                    C_QuestLog.AddWorldQuestWatch(questID, watchType)
-                    print("Adding World Quest", questID, "to tracking with watchType:", watchType)
-                end
-            else
-                -- For regular quests, count the number of finished objectives
-                for _, objective in ipairs(objectives or {}) do
-                    if objective and objective.finished then
-                        currentProgress = currentProgress + 1
-                    end
-                end
-                -- Compare with last known progress
-                if currentProgress > (lastKnownProgress[questID] or 0) then
-                    C_QuestLog.AddQuestWatch(questID)
-                end
+            if currentProgress > (lastKnownProgress[questID] or 0) then
+                C_QuestLog.AddQuestWatch(questID)
             end
 
             lastKnownProgress[questID] = currentProgress
         end
     end
 end
-
-
 
 
 function HasQuestProgress(questID)
