@@ -1030,7 +1030,6 @@ end
 
 -- Function to handle button clicks
 function RQE:LFG_Create(questID)
-	print("RQE_LFG_Create called with questID:", questID)  -- Debug statement
 	-- Logic for creating a group
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questName = C_QuestLog.GetTitleForQuestID(questID)
@@ -1041,7 +1040,6 @@ function RQE:LFG_Create(questID)
 	local honorLevel = 0
 	local autoAccept = true
 	local privateGroup = false
-	print("Right mouse button has been pressed", questID)  -- Debug statement
 
 	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID)
 end

@@ -141,9 +141,6 @@ RQE.SearchGroupButtonMouseDown = function()
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			if questID then
 				RQE:LFG_Search(questID)
-				-- Additional logic for handling search results
-			else
-				print("No super-tracked quest found")  -- Debug statement
 			end
 		elseif button == "RightButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
