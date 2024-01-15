@@ -720,7 +720,10 @@ function RQE.SearchModule:CreateSearchBox()
 			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Replace with your method to get this data
 
             -- Add the World Quest to the tracker
-            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+			C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
+			print("adding world quest thru core" .. questID)
+			C_QuestLog.AddQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
+			print("adding regular quest thru core" .. questID)
 			
 			-- Update the frame based on whether the quest is in the database
 			if questInfo then
@@ -1279,6 +1282,7 @@ function TrackQuestsWithNewProgress()
 
             if currentProgress > (lastKnownProgress[questID] or 0) then
                 C_QuestLog.AddQuestWatch(questID)
+				--print("added regular quest thru core trackquestswithnewprogress")
             end
 
             lastKnownProgress[questID] = currentProgress
