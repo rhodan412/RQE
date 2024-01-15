@@ -402,7 +402,9 @@ end
 
 -- Determine QuestType Function
 function GetQuestType(questID)
-    if C_CampaignInfo.IsCampaignQuest(questID) then
+    if C_QuestLog.ReadyForTurnIn(questID) then
+        return "|cFF00FF00QUEST COMPLETE|r"  -- Green color for completed quests
+    elseif C_CampaignInfo.IsCampaignQuest(questID) then
         return "Campaign"
     elseif C_QuestLog.IsWorldQuest(questID) then
         return "World Quest"
@@ -694,7 +696,9 @@ function UpdateRQEQuestFrame()
 				QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 				QuestTypeLabel:SetTextColor(153/255, 255/255, 255/255)  -- Light Blue
-				QuestTypeLabel:SetText(questTypeText)
+				--QuestTypeLabel:SetText(questTypeText)
+				-- Update the quest type label text
+				QuestTypeLabel:SetText(GetQuestType(questID))
 				QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
 
 				-- Create or reuse the QuestObjectivesOrDescription label
