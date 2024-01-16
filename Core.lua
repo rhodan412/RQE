@@ -52,15 +52,29 @@ function RQE:CustomDebugLog(index, color, message, ...)
     print(output)
 end
 
+
+-- Custom Info Message Function
+function RQE:CustomLogMsg(color, message, ...)
+    local output = "|c" .. color .. message  -- Removed the line number part
+    local args = {...}
+    for i = 1, select("#", ...) do
+        output = output .. " " .. tostring(args[i])
+    end
+    output = output .. "|r"
+    print(output)
+end
+
+
 -- Function to log general info messages
 function RQE.infoLog(message, ...)
     if RQE.db and RQE.db.profile.debugMode then
         local debugLevel = RQE.db.profile.debugLevel
 		if debugLevel == "INFO" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
-			RQE:CustomDebugLog(line, "cf9999FF", " Info: " .. message, ...)
+			RQE:CustomLogMsg("cf9999FF", " RQE Info: " .. message, ...)
         end
     end
 end
+
 
 -- Function to log general debug messages
 function RQE.debugLog(message, ...)
@@ -277,6 +291,155 @@ function RQE:HandleSuperTrackedQuestUpdate()
 end
 
 
+function ResetLFGRoles()
+    -- Set default roles DAMAGE only: (leader, tank, healer, damage)
+    SetLFGRoles(false, false, false, true)
+
+    -- Optionally, print a confirmation message to the chat window
+    RQE.infoLog("LFG roles have been reset.")
+end
+
+
+-- function UpdateWorldQuestTrackingForMap(uiMapID)
+    -- local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
+    
+    -- if taskPOIs then
+        -- for _, taskPOI in ipairs(taskPOIs) do
+            -- local questID = taskPOI.questId
+            -- if questID and C_QuestLog.IsWorldQuest(questID) then
+                -- local isManuallyTracked = C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Manual
+                -- if not isManuallyTracked then
+                    -- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+                    -- print("World QuestID: " .. questID .. " added to watch list.")
+					-- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+					-- print("Manual World QuestID: " .. questID .. " added to watch list.")
+                -- end
+            -- end
+        -- end
+    -- end
+-- end
+
+
+-- function UpdateWorldQuestTrackingForMap(uiMapID)
+    -- local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
+    -- local trackedQuests = {}
+    -- local maxTracked = 0
+    -- local currentTrackedCount = 0  -- Initialize the counter for tracked quests
+
+    -- -- -- Retrieve the currently tracked quests to avoid duplicates
+    -- -- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        -- -- local watchedQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        -- -- if watchedQuestID then
+            -- -- trackedQuests[watchedQuestID] = true
+            -- -- currentTrackedCount = currentTrackedCount + 1
+        -- -- end
+    -- -- end
+
+    -- if taskPOIs then --and currentTrackedCount < maxTracked then
+        -- print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
+        -- for _, taskPOI in ipairs(taskPOIs) do
+            -- local questID = taskPOI.questId
+            -- if questID and C_QuestLog.IsWorldQuest(questID) then
+                -- print("Checking World QuestID: " .. questID)
+                -- -- Check if the quest is already tracked
+				-- if not trackedQuests[questID] then
+					-- print("Attempting to track World QuestID: " .. questID)
+					-- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+					-- trackedQuests[questID] = true  -- Mark as tracked
+					-- --currentTrackedCount = currentTrackedCount + 1  -- Increment the count
+					-- print("Manual World QuestID: " .. questID .. " added to watch list.")
+					
+					-- -- Check if we've reached the maximum number of tracked quests
+					-- if currentTrackedCount >= maxTracked then
+						-- print("Reached the maximum number of tracked World Quests: " .. maxTracked)
+						-- break  -- Exit the loop as we've reached the limit
+					-- end
+				-- else
+                    -- print("Manual World QuestID: " .. questID .. " added to watch list.")
+                -- end
+            -- end
+        -- end
+    -- end
+	-- --RQE:ClearWQTracking()
+-- end
+
+
+function UpdateWorldQuestTrackingForMap(uiMapID)
+    local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
+    local trackedQuests = {}
+    local maxTracked = 1
+    local currentTrackedCount = 0  -- Initialize the counter for tracked quests
+
+    -- Retrieve the currently tracked quests to avoid duplicates
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local watchedQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if watchedQuestID then
+            trackedQuests[watchedQuestID] = true
+            currentTrackedCount = currentTrackedCount + 1
+        end
+    end
+
+    if taskPOIs and currentTrackedCount < maxTracked then
+        print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
+        for _, taskPOI in ipairs(taskPOIs) do
+            local questID = taskPOI.questId
+            if questID and C_QuestLog.IsWorldQuest(questID) then
+                print("Checking World QuestID: " .. questID)
+                -- Check if the quest is already tracked
+				if not trackedQuests[questID] then
+					print("Attempting to track World QuestID: " .. questID)
+					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+					trackedQuests[questID] = true  -- Mark as tracked
+					currentTrackedCount = currentTrackedCount + 1  -- Increment the count
+					print("Manual World QuestID: " .. questID .. " added to watch list.")
+					
+					-- Check if we've reached the maximum number of tracked quests
+					if currentTrackedCount >= maxTracked then
+						print("Reached the maximum number of tracked World Quests: " .. maxTracked)
+						break  -- Exit the loop as we've reached the limit
+					end
+				else
+                    print("Manual World QuestID: " .. questID .. " added to watch list.")
+                end
+            end
+        end
+    end
+	--RQE:ClearWQTracking()
+end
+
+
+function UpdateWorldQuestTracking(questID)
+    -- Check if questID is actually a quest ID and not a table or nil
+    if type(questID) == "table" then
+        print("UpdateWorldQuestTracking was passed a table instead of a questID. Table contents:", questID)
+        return
+    elseif not questID then
+        print("UpdateWorldQuestTracking was passed a nil value for questID.")
+        return
+    end
+
+    local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+    local watchType = C_QuestLog.GetQuestWatchType(questID)
+    local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
+
+    if isWorldQuest and not isManuallyTracked then
+        C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+        C_SuperTrack.SetSuperTrackedQuestID(questID)
+    end
+
+    -- The loop for tracking all quests on the player's map is commented out, as it seems unnecessary
+	
+	
+    -- The following loop might not be needed anymore, since you are now tracking quests individually
+    -- local quests = C_TaskQuest.GetQuestsForPlayerByMapID(C_Map.GetBestMapForUnit("player"))
+    -- for _, questInfo in ipairs(quests) do
+    --     if questInfo and not C_QuestLog.GetQuestWatchType(questInfo.questId) then
+    --         C_QuestLog.AddWorldQuestWatch(questInfo.questId, Enum.QuestWatchType.Automatic)
+    --     end
+    -- end
+end
+
+
 -- Profile Refresh Function
 function RQE:RefreshConfig()
     -- Here, you would reload any saved variables or reset frames, etc.
@@ -399,7 +562,9 @@ end
 
 -- Function to update MapID display
 function RQE:UpdateMapIDDisplay()
-    local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID = C_Map.GetBestMapForUnit("player")
+	--UpdateWorldQuestTrackingForMap(mapID)
+
     if RQE.db.profile.showMapID and mapID then
         RQEFrame.MapIDText:SetText("MapID: " .. mapID)
     else
@@ -849,7 +1014,9 @@ end
 
 -- Function to update Coordinates display
 function RQE:UpdateCoordinates()
-    local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID = C_Map.GetBestMapForUnit("player")
+	--UpdateWorldQuestTrackingForMap(mapID)
+				
     local position = C_Map.GetPlayerMapPosition(mapID, "player")
     if RQEFrame.CoordinatesText then  -- Check if CoordinatesText is initialized
         if RQE.db.profile.showCoordinates and position then
