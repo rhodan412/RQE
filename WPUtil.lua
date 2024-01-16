@@ -30,7 +30,14 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 		if isWorldQuest then
 			-- It's a world quest, use the TaskQuest APIs
 			mapID = C_TaskQuest.GetQuestZoneID(unknownQuestID)
-			posX, posY = C_TaskQuest.GetQuestLocation(unknownQuestID, mapID)
+			
+			-- Ensure mapID is valid before calling GetQuestLocation
+			if mapID then
+				posX, posY = C_TaskQuest.GetQuestLocation(unknownQuestID, mapID)
+			else
+				RQE.debugLog("Invalid mapID for World QuestID:", unknownQuestID)
+				return
+			end
 		else
 			-- Not a world quest, use the existing logic
 			mapID = GetQuestUiMapID(unknownQuestID)
