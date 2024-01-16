@@ -1054,9 +1054,36 @@ local eventFrame = CreateFrame("Frame")
 
 -- Define the function to show the role selection dialog
 function RQEShowRoleSelection(activityID)
-    if LFGListApplicationDialog then
-        LFGListApplicationDialog_Show(LFGListApplicationDialog, activityID)
+	ResetLFGRoles()
+    -- if LFGListApplicationDialog then
+        -- LFGListApplicationDialog_Show(LFGListApplicationDialog, activityID)
+    -- end
+end
+
+-- Global variable to keep track of the last known group size and type
+local lastGroupSize = 0
+local lastGroupType = "none" -- "none", "party", "raid", "instance"
+
+-- Update lastGroupSize on GROUP_ROSTER_UPDATE
+-- Function to update the group size and type
+function RQEUpdateGroupSizeAndType()
+    local isInRaid = IsInRaid()
+    local isInGroup = IsInGroup()
+    local isInstanceGroup = IsInInstance()
+    local groupSize = GetNumGroupMembers()
+	local availTank, availHealer, availDPS = C_LFGList.GetAvailableRoles()
+
+    if isInRaid then
+        lastGroupType = "raid"
+    elseif isInGroup then
+        lastGroupType = "party"
+    elseif isInstanceGroup then
+        lastGroupType = "instance"
+    else
+        lastGroupType = "none"
     end
+
+    lastGroupSize = groupSize
 end
 
 -- Define the function to handle GROUP_ROSTER_UPDATE event
@@ -1065,12 +1092,16 @@ function RQEOnGroupRosterUpdate()
     local isInRaid = IsInRaid()
     local isInstanceGroup = IsInInstance()
 
-    -- Check if the player has left a group
-    if not isInGroup and not isInRaid and not isInstanceGroup then
-        -- The player has left an outdoor group, show the role selection dialog
-        -- Note: You will need to define how you get the 'activityID'
+    -- Trigger the role selection only if the player was in an outdoor raid group
+	if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
+    --if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup and (availTank or availHealer or (availDPS and not (availTank and availHealer))) then
+        -- The player has left an outdoor raid group, show the role selection dialog
+        -- Ensure 'activityID' is defined appropriately
         RQEShowRoleSelection(activityID)
     end
+
+    -- Update the group size and type for the next check
+    RQEUpdateGroupSizeAndType()
 end
 
 -- Register the GROUP_ROSTER_UPDATE event
