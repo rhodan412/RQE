@@ -76,10 +76,6 @@ local eventsToRegister = {
 	"QUEST_TURNED_IN"
 }
 
--- Loop through the list and register each event
-for _, eventName in ipairs(eventsToRegister) do
-    Frame:RegisterEvent(eventName)
-end
 
 
 ---------------------------
@@ -90,521 +86,492 @@ end
 local function HandleEvents(frame, event, ...)
 	--RQE.criticalLog("EventHandler triggered with event:", event)  -- Debug print here
 
-    -- Handling PLAYER_LOGIN Event
-    if event == "PLAYER_LOGIN" then
-		
-		-- Initialize other components of your AddOn
-		RQE:InitializeAddon()
-		RQE:InitializeFrame()
+    local handlers = {
+		ADDON_LOADED = RQE.handleAddonLoaded,
+		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
+		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
+		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
+		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
+		QUEST_COMPLETE = RQE.handleQuestComplete,
+		QUESTLINE_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
+		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
+		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
+		ZONE_CHANGED = RQE.handleZoneChange,
+		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
+		ZONE_CHANGED_NEW_AREA = RQE.handleZoneChange,
+		PLAYER_LOGIN = RQE.handlePlayerLogin,
+		QUEST_ACCEPTED = RQE.handleQuestAccepted,
+		PLAYER_LOGOUT = RQE.handlePlayerLogout,
+		QUEST_DATA_LOAD_RESULT = RQE.handleQuestDataLoad,
+		VARIABLES_LOADED = RQE.handleVariablesLoaded,
+		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
+		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
+		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
+		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
+		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
+		QUEST_REMOVED = RQE.handleQuestRemoved,
+		QUEST_TURNED_IN = RQE.handleQuestTurnIn
+    }
+    
+    if handlers[event] then
+        handlers[event](...)
+    else
+        RQE.debugLog("Unhandled event:", event)
+    end
+end
 
-		-- Add this line to update coordinates when player logs in
-		RQE:UpdateCoordinates()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
-		-- Fetch current MapID to have option of appearing with Frame
-		local mapID = C_Map.GetBestMapForUnit("player")
-		if RQEFrame.MapIDText then  -- Check if MapIDText is initialized
-			if RQE.db.profile.showMapID and mapID then
-				RQEFrame.MapIDText:SetText("MapID: " .. mapID)
-			else
-				RQEFrame.MapIDText:SetText("")
-			end
+
+function RQE.UnregisterUnusedEvents()
+    -- Example: Unregister events that are no longer needed
+    Frame:UnregisterEvent("EVENT_NAME")
+end
+
+
+-- Handling PLAYER_LOGIN Event
+function RQE.handlePlayerLogin(...)
+	
+	-- Initialize other components of your AddOn
+	RQE:InitializeAddon()
+	RQE:InitializeFrame()
+
+	-- Add this line to update coordinates when player logs in
+	RQE:UpdateCoordinates()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	
+	-- Fetch current MapID to have option of appearing with Frame
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if RQEFrame.MapIDText then  -- Check if MapIDText is initialized
+		if RQE.db.profile.showMapID and mapID then
+			RQEFrame.MapIDText:SetText("MapID: " .. mapID)
 		else
-			RQE.debugLog("RQEFrame.MapIDText is not initialized.")
+			RQEFrame.MapIDText:SetText("")
 		end
+	else
+		RQE.debugLog("RQEFrame.MapIDText is not initialized.")
+	end
 
-		-- Make sure RQE.db is initialized
-		if RQE.db == nil then
-			RQE.db = {}
-		end
+	-- Make sure RQE.db is initialized
+	if RQE.db == nil then
+		RQE.db = {}
+	end
+	
+	-- Make sure the profileKeys table is initialized
+	if RQE.db.profileKeys == nil then
+		RQE.db.profileKeys = {}
+	end
+	
+	RQE:ConfigurationChanged()
+
+	local charKey = UnitName("player") .. " - " .. GetRealmName()
+
+	-- Debugging: Print the current charKey
+	RQE.debugLog("Current charKey is:", charKey)
+
+	-- This will set the profile to "Default"
+	RQE.db:SetProfile("Default")
+end
 		
-		-- Make sure the profileKeys table is initialized
-		if RQE.db.profileKeys == nil then
-			RQE.db.profileKeys = {}
-		end
+
+function RQE.handleAddonLoaded(...)
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		RQE:UpdateFrameOpacity()
+	end)
+end
+
 		
-		RQE:ConfigurationChanged()
+-- Handling for QUEST_DATA_LOAD_RESULT
+function RQE.handleQuestDataLoad(...)
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
 
-		local charKey = UnitName("player") .. " - " .. GetRealmName()
+	local questID, added = ...
+	local watchType = C_QuestLog.GetQuestWatchType(questID)
 
-		-- Debugging: Print the current charKey
-		RQE.debugLog("Current charKey is:", charKey)
-
-		-- This will set the profile to "Default"
-		RQE.db:SetProfile("Default")
-		
-	-- Handling for ADDON_LOADED	
-	elseif event == "ADDON_LOADED" then
-        C_Timer.After(0.5, function()
-			HideObjectiveTracker()
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-			RQE:UpdateFrameOpacity()
-        end)
-
-	-- Handling for QUEST_DATA_LOAD_RESULT
-	elseif event == "QUEST_DATA_LOAD_RESULT" then
-        C_Timer.After(0.5, function()
-			HideObjectiveTracker()
-        end)
-
-		local questID, added = ...
-		local watchType = C_QuestLog.GetQuestWatchType(questID)
-
-		-- Check if auto-tracking of quest progress is enabled and call the function
-		if questID and added and RQE.db.profile.autoTrackProgress then
-			AutoWatchQuestsWithProgress()
-			SortQuestsByProximity()
-		end
-		
-	-- Handling PLAYER_STOPPED_MOVING Event
-	elseif event == "PLAYER_STARTED_MOVING" then
-        RQE:StartUpdatingCoordinates()
-		
-	-- Handling PLAYER_STARTED_MOVING Event
-    elseif event == "PLAYER_STOPPED_MOVING" then
-        RQE:StopUpdatingCoordinates()
+	-- Check if auto-tracking of quest progress is enabled and call the function
+	if questID and added and RQE.db.profile.autoTrackProgress then
+		AutoWatchQuestsWithProgress()
 		SortQuestsByProximity()
-
-	-- Handling VARIABLES_LOADED Event
-	elseif event == "VARIABLES_LOADED" then
-		RQE:InitializeFrame()
-		isVariablesLoaded = true
-        C_Timer.After(0.5, function()
-			HideObjectiveTracker()
-        end)
+	end
+end
 		
-		RQE:ClearWQTracking()
+
+-- Handling PLAYER_STARTED_MOVING Event
+function RQE.handlePlayerStartedMoving(...)
+	RQE:StopUpdatingCoordinates()
+	SortQuestsByProximity()
+end	
+		
+
+-- Handling VARIABLES_LOADED Event
+function RQE.handleVariablesLoaded(...)
+	RQE:InitializeFrame()
+	isVariablesLoaded = true
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
+	
+	RQE:ClearWQTracking()
+	--QuestType()
+	SortQuestsByProximity()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+
+	-- Load time End timer
+	RQE.endTime = debugprofilestop()
+	RQE.loadTime = RQE.endTime - RQE.startTime
+	local loadTimeSeconds = RQE.loadTime / 1000
+	RQE.infoLog("Rhodan's Quest Explorer (RQE) loaded in " .. RQE.loadTime .. " ms. (" .. loadTimeSeconds .. " seconds)")
+
+	-- Initialize the frame based on saved settings
+	if RQE.db.profile.enableFrame then
+		RQEFrame:Show()
+	else
+		RQEFrame:Hide()
+	end
+		
+	-- Initialize the questing frame based on saved settings
+	if RQE.db.profile.enableQuestFrame then
+		RQEQuestFrame:Show()
+	else
+		RQEQuestFrame:Hide()
+	end
+	
+	-- Initialize QuestNameText (or other fields that need early initialization)
+	if not RQE.QuestNameText then
+		-- Create/Initialize QuestNameText on PLAYER_LOGIN
+		RQE.QuestNameText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.QuestNameText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -10)
+	end
+
+	-- Initialize StepsText (or other fields that need early initialization)
+	if not RQE.StepsText then
+		RQE.StepsText = {}  -- Code to initialize StepsText
+	end
+
+	-- Initialize the minimap icon based on saved settings
+	if RQE.db.profile.showMinimapIcon then
+		RQE.MinimapButton:Show()
+	else
+		RQE.MinimapButton:Hide()
+	end
+
+	-- Initialize frame position based on saved variables
+	RQE.debugLog("RQE.db after initialization:", RQE.db)
+
+	local xPos = RQE.db.profile.framePosition.xPos
+	local yPos = RQE.db.profile.framePosition.yPos
+	local anchorPoint = RQE.db.profile.framePosition.anchorPoint
+
+	local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
+
+	if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
+		RQEFrame:ClearAllPoints()  -- Clear any existing anchoring
+		RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+	else
+		RQE.debugLog("Invalid frame position or anchor point.")
+	end
+
+	-- Initialize frame maximized/minimized state
+	if RQE.db.profile.isFrameMaximized then
+		-- Code to maximize the frame
+		RQEFrame:ClearAllPoints()
+		RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+		RQE:MaximizeFrame()
+		if ScrollFrame then
+			ScrollFrame:Show()
+		else
+			RQE.debugLog("ScrollFrame is not initialized.")
+		end
+		
+		if slider then
+			slider:Show()
+		else
+			RQE.debugLog("slider is not initialized.")
+		end
+
+		RQE.MinimizeButton:Show()
+		RQE.MaximizeButton:Hide()
+
+	else
+		-- Code to minimize the frame
+		RQEFrame:SetSize(400, 30)
+		
+		if ScrollFrame then
+			ScrollFrame:Hide()
+		end
+		
+		if slider then
+			slider:Hide()
+		end
+
+		RQE.MaximizeButton:Show()
+		RQE.MinimizeButton:Hide()
+	end
+
+	-- Clear frame data and waypoints
+	C_Map.ClearUserWaypoint()
+	if IsAddOnLoaded("TomTom") then
+		TomTom.waydb:ResetProfile()
+	end
+	
+	-- Initialize RQEQuestFrame position based on saved variables
+	local xPos = RQE.db.profile.QuestFramePosition.xPos
+	local yPos = RQE.db.profile.QuestFramePosition.yPos
+	local anchorPoint = RQE.db.profile.QuestFramePosition.anchorPoint
+
+	local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
+
+	if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
+		RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
+		RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+	else
+		RQE.debugLog("Invalid quest frame position or anchor point.")
+	end
+end
+		
+
+-- Handling PLAYER_ENTERING_WORLD Event
+function RQE.handlePlayerEnterWorld(...)
+	C_Timer.After(1, function()  -- Delay of 1 second
+		RQE:HandleSuperTrackedQuestUpdate()
+	end)	
+	
+	local mapID = C_Map.GetBestMapForUnit("player")
+end	
+		
+
+-- Handling SUPER_TRACKING_CHANGED Event
+function RQE.handleSuperTracking(...)
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
+
+	QuestType()
+	RQE.superTrackingChanged = true
+	RQE:ClearFrameData()
+
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questName
+	if questID then
+		questName = C_QuestLog.GetTitleForQuestID(questID)
+		if questID ~= lastSuperTrackedQuestID then
+			lastSuperTrackedQuestID = questID
+			local questLink = GetQuestLink(questID)  -- Generate the quest link
+			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
+
+			-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
+			local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+			if StepsText and CoordsText and MapIDs then
+				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+			end
+			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		end
+	else
+		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
+		--RQE:ClearWQTracking()
 		--QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	end
 
-		-- Load time End timer
-		RQE.endTime = debugprofilestop()
-		RQE.loadTime = RQE.endTime - RQE.startTime
-		local loadTimeSeconds = RQE.loadTime / 1000
-		RQE.infoLog("Rhodan's Quest Explorer (RQE) loaded in " .. RQE.loadTime .. " ms. (" .. loadTimeSeconds .. " seconds)")
+	-- Simulate clicking the RWButton
+	if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
+		RQE.RWButton:GetScript("OnClick")()
+	end
 
-		-- Initialize the frame based on saved settings
-		if RQE.db.profile.enableFrame then
-			RQEFrame:Show()
-		else
-			RQEFrame:Hide()
-		end
-			
-		-- Initialize the questing frame based on saved settings
-		if RQE.db.profile.enableQuestFrame then
-			RQEQuestFrame:Show()
-		else
-			RQEQuestFrame:Hide()
-		end
-		
-		-- Initialize QuestNameText (or other fields that need early initialization)
-		if not RQE.QuestNameText then
-			-- Create/Initialize QuestNameText on PLAYER_LOGIN
-			RQE.QuestNameText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.QuestNameText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -10)
-		end
-
-		-- Initialize StepsText (or other fields that need early initialization)
-		if not RQE.StepsText then
-			RQE.StepsText = {}  -- Code to initialize StepsText
-		end
-
-		-- Initialize the minimap icon based on saved settings
-		if RQE.db.profile.showMinimapIcon then
-			RQE.MinimapButton:Show()
-		else
-			RQE.MinimapButton:Hide()
-		end
-
-		-- Initialize frame position based on saved variables
-		RQE.debugLog("RQE.db after initialization:", RQE.db)
-
-		local xPos = RQE.db.profile.framePosition.xPos
-		local yPos = RQE.db.profile.framePosition.yPos
-		local anchorPoint = RQE.db.profile.framePosition.anchorPoint
-
-		local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
-
-		if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
-			RQEFrame:ClearAllPoints()  -- Clear any existing anchoring
-			RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
-		else
-			RQE.debugLog("Invalid frame position or anchor point.")
-		end
-
-		-- Initialize frame maximized/minimized state
-		if RQE.db.profile.isFrameMaximized then
-			-- Code to maximize the frame
-			RQEFrame:ClearAllPoints()
-			RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
-			RQE:MaximizeFrame()
-			if ScrollFrame then
-				ScrollFrame:Show()
-			else
-				RQE.debugLog("ScrollFrame is not initialized.")
-			end
-			
-			if slider then
-				slider:Show()
-			else
-				RQE.debugLog("slider is not initialized.")
-			end
-
-			RQE.MinimizeButton:Show()
-			RQE.MaximizeButton:Hide()
-
-		else
-			-- Code to minimize the frame
-			RQEFrame:SetSize(400, 30)
-			
-			if ScrollFrame then
-				ScrollFrame:Hide()
-			end
-			
-			if slider then
-				slider:Hide()
-			end
-
-			RQE.MaximizeButton:Show()
-			RQE.MinimizeButton:Hide()
-		end
-
-		-- Clear frame data and waypoints
-		C_Map.ClearUserWaypoint()
-		if IsAddOnLoaded("TomTom") then
-			TomTom.waydb:ResetProfile()
-		end
-		
-		-- Initialize RQEQuestFrame position based on saved variables
-		local xPos = RQE.db.profile.QuestFramePosition.xPos
-		local yPos = RQE.db.profile.QuestFramePosition.yPos
-		local anchorPoint = RQE.db.profile.QuestFramePosition.anchorPoint
-
-		local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
-
-		if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
-			RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
-			RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
-		else
-			RQE.debugLog("Invalid quest frame position or anchor point.")
-		end
-
-	-- Handling PLAYER_ENTERING_WORLD Event
-	elseif event == "PLAYER_ENTERING_WORLD" then
-		C_Timer.After(1, function()  -- Delay of 1 second
-			RQE:HandleSuperTrackedQuestUpdate()
-		end)	
-		
-		local mapID = C_Map.GetBestMapForUnit("player")
-		--UpdateWorldQuestTrackingForMap(mapID)
-
-        -- if mapID then
-            -- UpdateWorldQuestTrackingForMap(mapID)
-        -- end
-		
-		-- local quests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
-		-- for _, questInfo in ipairs(quests) do
-			-- UpdateWorldQuestTracking(questInfo.questId)
-		-- end
-		
-	-- Handling SUPER_TRACKING_CHANGED Event
-	elseif event == "SUPER_TRACKING_CHANGED" then
-		C_Timer.After(0.5, function()
-			HideObjectiveTracker()
-		end)
-
-		QuestType()
-		RQE.superTrackingChanged = true
-		RQE:ClearFrameData()
-
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		local questName
-		if questID then
-			questName = C_QuestLog.GetTitleForQuestID(questID)
-			if questID ~= lastSuperTrackedQuestID then
-				lastSuperTrackedQuestID = questID
-				local questLink = GetQuestLink(questID)  -- Generate the quest link
-				RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
-
-				-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-				local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
-				local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-				if StepsText and CoordsText and MapIDs then
-					UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-				end
-				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-			end
-		else
-			RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
-			--RQE:ClearWQTracking()
-			--QuestType()
-			SortQuestsByProximity()
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		end
-
-		-- Simulate clicking the RWButton
-		if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
-			RQE.RWButton:GetScript("OnClick")()
-		end
-
-		-- Simulate clicking the RWButton
-		if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
-			RQE.RWButton:GetScript("OnClick")()
-		end
-		
-	-- elseif event == "QUEST_ACCEPTED" then
-		-- local questID = arg1
-		
-		-- print("QUEST_ACCEPTED event engaged")
-		-- if questID and C_QuestLog.IsWorldQuest(questID) then
-			-- -- We've confirmed this is a World Quest. Now let's update the tracking.
-			-- --local mapID = C_Map.GetBestMapForUnit("player")
-			-- print("Attempting to initiate UpdateWorldQuestTrackingForMap from within QUEST ACCEPTED event")
-			-- UpdateWorldQuestTrackingForMap(mapID)
-			-- print("Initiate complete for UpdateWorldQuestTrackingForMap from within QUEST ACCEPTED event")
-			-- -- if mapID then
-				-- -- UpdateWorldQuestTrackingForMap(mapID)
-			-- -- end
-
-			-- -- Update the rest of your tracking and frame update logic here
-			-- -- Make sure to define questInfo, StepsText, CoordsText, MapIDs properly
-			-- -- UpdateWorldQuestTracking(questID) -- This might be redundant now, since we're already handling it above
-			-- -- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			-- -- SortQuestsByProximity() -- Uncomment if needed
-			-- -- AdjustQuestItemWidths(RQEQuestFrame:GetWidth()) -- Uncomment if needed
-		-- -- end
-
-	elseif event == "QUEST_ACCEPTED" then
-		local questID = arg1
-		if questID then
-			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-			local watchType = C_QuestLog.GetQuestWatchType(questID)
-			local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
-
-			if isWorldQuest and not isManuallyTracked then
-				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-				C_SuperTrack.SetSuperTrackedQuestID(questID)
-			end
-			
-			local mapID = C_Map.GetBestMapForUnit("player")
-			UpdateWorldQuestTrackingForMap(mapID)
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-
-			-- if mapID then
-				-- UpdateWorldQuestTrackingForMap(mapID)
-			-- end
-
-			-- Update the rest of your tracking and frame update logic here
-			-- Make sure to define questInfo, StepsText, CoordsText, MapIDs properly
-			-- UpdateWorldQuestTracking(questID) -- This might be redundant now, since we're already handling it above
-			-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			-- SortQuestsByProximity() -- Uncomment if needed
-			-- AdjustQuestItemWidths(RQEQuestFrame:GetWidth()) -- Uncomment if needed
-		end
-
-
-	-- Handling of several events for purpose of updating the DirectionText
-	elseif event == "UNIT_EXITING_VEHICLE" or
-		   event == "ZONE_CHANGED" or 
-		   event == "ZONE_CHANGED_INDOORS" or 
-		   event == "ZONE_CHANGED_NEW_AREA" then
-
-		if unit == "player" or event == "UNIT_EXITING_VEHICLE" or 
-		   event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" or 
-		   event == "ZONE_CHANGED_NEW_AREA" then
-
-			--print("Event triggered: " .. event)  -- Log the event
-
-			C_Timer.After(1.0, function()  -- Delay of 1 second
-				--print("Starting delayed event actions for: " .. event)
-
-				-- Get the current map ID
-				local currentMapID = C_Map.GetBestMapForUnit("player")
-				--print("Current Map ID: " .. (currentMapID or "nil"))
-
-				-- Check if the map ID is valid before proceeding
-				if currentMapID then
-					-- Update World Quest Tracking for the current map
-					--print("Calling UpdateWorldQuestTrackingForMap with Map ID: " .. currentMapID)
-					--UpdateWorldQuestTrackingForMap(currentMapID)
-				end
-			
-					local watchType
-					-- if currentQuestID then
-						-- watchType = C_QuestLog.GetQuestWatchType(currentQuestID)
-					-- end
-					
-					-- Fetch necessary data for UpdateFrame
-					local questInfo = RQEDatabase[currentQuestID]
-					local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-
-					-- Fetch current MapID to have option of appearing with Frame
-					--local mapID = C_Map.GetBestMapForUnit("player")
-					--UpdateWorldQuestTrackingForMap(mapID)
-					UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-					
-					if RQE.db.profile.showMapID and mapID then
-						RQEFrame.MapIDText:SetText("MapID: " .. mapID)
-					else
-						RQEFrame.MapIDText:SetText("")
-					end			
-					
-				-- Call the functions to update the frame
-				--print("Updating frame for quest ID: " .. (currentQuestID or "nil"))
-				UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
-
-				-- Check if auto-tracking of quest progress is enabled and call the function
-				if RQE.db.profile.autoTrackProgress then
-					--print("Auto-tracking of quest progress is enabled.")
-					AutoWatchQuestsWithProgress()
-				end
-				
-				SortQuestsByProximity()
-				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-			end)
-        end
-
-	-- Handling multiple quest related events to update the main frame
-	elseif event == "QUEST_CURRENCY_LOOT_RECEIVED" or event == "QUEST_LOOT_RECEIVED" or 
-		   event == "QUEST_LOG_CRITERIA_UPDATE" or event == "QUESTLINE_UPDATE" or 
-		   event == "QUEST_POI_UPDATE" or event == "QUEST_LOG_UPDATE" or event == "TASK_PROGRESS_UPDATE" then  		
-		
-		-- Attempt to fetch the current super-tracked quest ID
-		local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-		-- Attempt to fetch other necessary information using the currentQuestID
-		local currentQuestInfo = RQEDatabase[currentQuestID]
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-
-        C_Timer.After(0.5, function()
-			HideObjectiveTracker()
-        end)
-		
-		RQE:ClearWQTracking()
-		UpdateRQEQuestFrame()
-		SortQuestsByProximity()
-		UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-		--UpdateFrameForUnknownQuest(currentQuestID)
-		
-	-- Handling QUEST_COMPLETE event
-	elseif event == "QUEST_COMPLETE" or
-		event == "QUEST_AUTOCOMPLETE" then
-		local questID = ...  -- Extract the questID from the event
-		RQE:QuestComplete(questID)
-		RQEQuestFrame:ClearAllPoints()
-		RQE:ClearWQTracking()
-		SortQuestsByProximity()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
-	-- Handling QUEST_REMOVED event
-	elseif event == "QUEST_REMOVED" then
-		RQEQuestFrame:ClearAllPoints()
-		RQE:ClearRQEQuestFrame()
-		UpdateRQEQuestFrame()
-		RQE:ClearWQTracking()
-		SortQuestsByProximity()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-
-	-- -- Handling QUEST_WATCH_UPDATE event
-	-- elseif event == "QUEST_WATCH_UPDATE" then	
-		-- local questID
-		-- -- local watchType
-		
-		-- -- if questID then
-			-- -- local watchType = C_QuestLog.GetQuestWatchType(questID)
-			
-			-- -- -- If the watchType is nil, then do not proceed with setting super tracking
-			-- -- if watchType then
-				-- --C_SuperTrack.SetSuperTrackedQuestID(questID)
-			-- -- end
-		-- -- end
-		
-		-- --UpdateWorldQuestTracking()
-		-- RQEQuestFrame:ClearAllPoints()
-		-- --RQE:ClearWQTracking()
-		-- QuestType()
-		-- SortQuestsByProximity()
-		-- AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-
-		-- -- Check if auto-tracking of quest progress is enabled and call the function
-		-- if RQE.db.profile.autoTrackProgress then
-			-- AutoWatchQuestsWithProgress()
-		-- end
-
-	-- Handling QUEST_WATCH_UPDATE event
-	elseif event == "QUEST_WATCH_UPDATE" then
-		RQEQuestFrame:ClearAllPoints()
-		UpdateRQEQuestFrame()
-		QuestType()
-		SortQuestsByProximity()
-		
-	-- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
-	elseif event == "QUEST_WATCH_LIST_CHANGED" then
-		local questID, added = ...
-		
-		local watchType
-		if currentQuestID then
-			watchType = C_QuestLog.GetQuestWatchType(questID)
-		end
-		
-		if questID then
-			if C_QuestLog.IsWorldQuest(questID) then
-				-- Handle World Quests specifically
-				if added then
-					-- World Quest is added to the Watch List
-					-- Check if auto-tracking of quest progress is enabled and call the function
-					if RQE.db.profile.autoTrackProgress then
-						AutoWatchQuestsWithProgress()
-					end
-				else
-					-- World Quest is removed from the Watch List
-					RQE:ClearWQTracking()
-				end
-			else
-				-- Handle regular quests
-				--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-					if RQE.db.profile.autoTrackProgress then
-						AutoWatchQuestsWithProgress()
-						SortQuestsByProximity()
-					end					
-				--else
-					--return
-				--end
-				RQEQuestFrame:ClearAllPoints()
-				RQE:ClearRQEQuestFrame()
-				RQE:ClearWQTracking()
-				UpdateRQEQuestFrame()
-				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-				AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-			end
-		end
-
-
-		
-	-- Handling QUEST_TURNED_IN event
-	elseif event == "QUEST_TURNED_IN" then
-		RQE:QuestComplete(questID)
-		RQE:ClearRQEQuestFrame()
-		UpdateRQEQuestFrame()
-		--RQE:ClearWQTracking()
-		QuestType()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
-        C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
-			RQE:ClearFrameData()
-        end)
-		
-	-- Handling PLAYER_LOGOUT event
-	elseif event == "PLAYER_LOGOUT" then
-        RQE:SaveFramePosition()  -- Custom function that saves frame's position
+	-- Simulate clicking the RWButton
+	if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
+		RQE.RWButton:GetScript("OnClick")()
 	end
 end
+		
+
+function RQE.handleQuestAccepted(...)
+	local questID = arg1
+	if questID then
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		local watchType = C_QuestLog.GetQuestWatchType(questID)
+		local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
+
+		if isWorldQuest and not isManuallyTracked then
+			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+			C_SuperTrack.SetSuperTrackedQuestID(questID)
+		end
+		
+		local mapID = C_Map.GetBestMapForUnit("player")
+		UpdateWorldQuestTrackingForMap(mapID)
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	end
+end
+
+		
+-- Handling of several events for purpose of updating the DirectionText
+function RQE.handleZoneChange(...)
+	C_Timer.After(1.0, function()  -- Delay of 1 second
+
+		-- Get the current map ID
+		local currentMapID = C_Map.GetBestMapForUnit("player")			
+		local questInfo = RQEDatabase[currentQuestID]
+		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		
+		if RQE.db.profile.showMapID and mapID then
+			RQEFrame.MapIDText:SetText("MapID: " .. mapID)
+		else
+			RQEFrame.MapIDText:SetText("")
+		end
+			
+		-- Call the functions to update the frame
+		UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
+
+		-- Check if auto-tracking of quest progress is enabled and call the function
+		if RQE.db.profile.autoTrackProgress then
+			AutoWatchQuestsWithProgress()
+		end
+		
+		SortQuestsByProximity()
+		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	end)
+end
+
+
+-- Handling multiple quest related events to update the main frame
+function RQE.handleQuestStatusUpdate(...)
+	
+	-- Attempt to fetch the current super-tracked quest ID
+	local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Attempt to fetch other necessary information using the currentQuestID
+	local currentQuestInfo = RQEDatabase[currentQuestID]
+	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
+	
+	RQE:ClearWQTracking()
+	UpdateRQEQuestFrame()
+	SortQuestsByProximity()
+	UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+end
+	
+
+-- Handling QUEST_COMPLETE event
+function RQE.handleQuestComplete(...)
+	local questID = ...  -- Extract the questID from the event
+	RQE:QuestComplete(questID)
+	RQEQuestFrame:ClearAllPoints()
+	RQE:ClearWQTracking()
+	SortQuestsByProximity()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+end
+		
+		
+-- Handling QUEST_REMOVED event
+function RQE.handleQuestRemoved(...)
+	RQEQuestFrame:ClearAllPoints()
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	RQE:ClearWQTracking()
+	SortQuestsByProximity()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+end
+	
+		
+-- Handling QUEST_WATCH_UPDATE event
+function RQE.handleQuestWatchUpdate(...)
+	RQEQuestFrame:ClearAllPoints()
+	UpdateRQEQuestFrame()
+	QuestType()
+	SortQuestsByProximity()
+end
+		
+
+-- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
+function RQE.handleQuestWatchListChanged(...)
+	local questID, added = ...
+	RQE:ClearWQTracking()
+	local watchType
+	if currentQuestID then
+		watchType = C_QuestLog.GetQuestWatchType(questID)
+	end
+	
+	if questID then
+		if C_QuestLog.IsWorldQuest(questID) then
+			-- Handle World Quests specifically
+			if added then
+				-- World Quest is added to the Watch List
+				-- Check if auto-tracking of quest progress is enabled and call the function
+				if RQE.db.profile.autoTrackProgress then
+					AutoWatchQuestsWithProgress()
+				end
+			else
+				-- World Quest is removed from the Watch List
+				RQE:ClearWQTracking()
+			end
+		else
+			-- Handle regular quests
+			--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+				if RQE.db.profile.autoTrackProgress then
+					AutoWatchQuestsWithProgress()
+					SortQuestsByProximity()
+				end					
+			--else
+				--return
+			--end
+			RQEQuestFrame:ClearAllPoints()
+			RQE:ClearRQEQuestFrame()
+			RQE:ClearWQTracking()
+			UpdateRQEQuestFrame()
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		end
+	end
+end
+		
+
+-- Handling QUEST_TURNED_IN event
+function RQE.handleQuestTurnIn(...)
+	RQE:QuestComplete(questID)
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	--RQE:ClearWQTracking()
+	QuestType()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	
+	C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
+		RQE:ClearFrameData()
+	end)
+end
+	
+	
+-- Handling PLAYER_LOGOUT event
+function RQE.handlePlayerLogout(...)
+	RQE:SaveFramePosition()  -- Custom function that saves frame's position
+end
+--end
 
 
 -- Set the event handler
 Frame:SetScript("OnEvent", HandleEvents)
+
+
+-- Loop through the list and register each event
+for _, eventName in ipairs(eventsToRegister) do
+    Frame:RegisterEvent(eventName)
+end
+
+
+
+
 
 ---------------------------
 -- 5. Event Callbacks
