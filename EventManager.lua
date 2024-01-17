@@ -56,7 +56,7 @@ local eventsToRegister = {
 	"QUEST_AUTOCOMPLETE",
 	"QUESTLINE_UPDATE",
 	"QUEST_POI_UPDATE",
-	"QUEST_LOG_UPDATE",
+	--"QUEST_LOG_UPDATE",
 	"TASK_PROGRESS_UPDATE",
 	"UNIT_EXITING_VEHICLE",
 	"ZONE_CHANGED",
@@ -65,7 +65,7 @@ local eventsToRegister = {
 	"PLAYER_LOGIN",
 	"QUEST_ACCEPTED",
 	"PLAYER_LOGOUT",
-	"QUEST_DATA_LOAD_RESULT",
+	--"QUEST_DATA_LOAD_RESULT",
 	"VARIABLES_LOADED",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_STARTED_MOVING",
@@ -96,7 +96,7 @@ local function HandleEvents(frame, event, ...)
 		QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUESTLINE_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
-		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
+		--QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		ZONE_CHANGED = RQE.handleZoneChange,
@@ -105,7 +105,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
-		QUEST_DATA_LOAD_RESULT = RQE.handleQuestDataLoad,
+		--QUEST_DATA_LOAD_RESULT = RQE.handleQuestDataLoad,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
@@ -185,7 +185,7 @@ end
 
 		
 -- Handling for QUEST_DATA_LOAD_RESULT
-function RQE.handleQuestDataLoad(...)
+function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)
@@ -203,10 +203,17 @@ end
 
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving(...)
+	RQE:StartUpdatingCoordinates()
+end	
+
+
+-- Handling PLAYER_STOPPED_MOVING Event
+function RQE.handlePlayerStoppedMoving(...)
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end	
-		
+
 
 -- Handling VARIABLES_LOADED Event
 function RQE.handleVariablesLoaded(...)
@@ -393,8 +400,10 @@ function RQE.handleSuperTracking(...)
 end
 		
 
+-- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(...)
-	local questID = arg1
+	local questID = ...  -- Extract the questID from the event
+	
 	if questID then
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -492,6 +501,7 @@ function RQE.handleQuestWatchUpdate(...)
 	UpdateRQEQuestFrame()
 	QuestType()
 	SortQuestsByProximity()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end
 		
 
@@ -499,6 +509,7 @@ end
 function RQE.handleQuestWatchListChanged(...)
 	local questID, added = ...
 	RQE:ClearWQTracking()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	local watchType
 	if currentQuestID then
 		watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -532,7 +543,7 @@ function RQE.handleQuestWatchListChanged(...)
 			RQE:ClearWQTracking()
 			UpdateRQEQuestFrame()
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+			--AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		end
 	end
 end

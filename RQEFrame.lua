@@ -381,7 +381,7 @@ end
 RQE.QuestNameText:SetJustifyH("LEFT")
 RQE.QuestNameText:SetJustifyV("TOP")
 RQE.QuestNameText:SetWordWrap(true)
-RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 20)
+RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 40)
 RQE.QuestNameText:SetHeight(0)
 RQE.QuestNameText:EnableMouse(true)
 
@@ -389,8 +389,17 @@ RQE.QuestNameText:EnableMouse(true)
 -- Create DirectionTextFrame
 RQE.DirectionTextFrame = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
--- Set the anchor point relative to QuestIDText
-RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestIDText, "BOTTOMLEFT", -35, -33)
+
+-- Set the anchor point relative to SearchGroupButton/QuestIDText
+-- Check if RQE.SearchGroupButton exists
+if RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
+    -- If RQE.SearchGroupButton exists, set the anchor point relative to it
+    RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -12)
+else
+    -- If RQE.SearchGroupButton does not exist, set the anchor point relative to RQE.QuestIDText
+    RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestIDText, "BOTTOMLEFT", -35, -45)
+end
+
 
 local DirectionTextFrame_settings
 if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
@@ -398,6 +407,7 @@ if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
 else
     RQE.debugLog("textSettings is not initialized.")
 end
+
 
 -- Debug: Check if settings are properly initialized
 if DirectionTextFrame_settings then
@@ -429,19 +439,19 @@ else
     RQE.debugLog("textSettings is not initialized.")
 end
 
--- Function to Update QuestDescription
-function RQE:UpdateQuestDescription()
-    if RQEDatabase and RQEDatabase[currentQuestID] then
-        local questDescription = RQEDatabase[currentQuestID].description
-        RQE.QuestDescription:SetText(questDescription)
-    else
-        -- Handle the case where the quest ID is not found in the database
-        RQE.QuestDescription:SetText("Quest information not available.")
-    end
-end
+-- -- Function to Update QuestDescription
+-- function RQE:UpdateQuestDescription()
+    -- if RQEDatabase and RQEDatabase[currentQuestID] then
+        -- local questDescription = RQEDatabase[currentQuestID].description
+        -- RQE.QuestDescription:SetText(questDescription)
+    -- else
+        -- -- Handle the case where the quest ID is not found in the database
+        -- RQE.QuestDescription:SetText("Quest information not available.")
+    -- end
+-- end
 
--- Call this function to initially set the text
-RQE:UpdateQuestDescription()
+-- -- Call this function to initially set the text
+-- RQE:UpdateQuestDescription()
 
 -- Debug: Check if settings are properly initialized
 if QuestDescription_settings then
@@ -464,14 +474,21 @@ RQE.QuestDescription:EnableMouse(true)
 RQEFrame.QuestObjectives = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 RQE.QuestObjectives = RQEFrame.QuestObjectives
 
+
 -- Check if QuestDescription is empty
-if RQE.QuestDescription:GetText() == "" then
-    -- If QuestDescription is empty, anchor QuestObjectives to DirectionTextFrame
-    RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.DirectionTextFrame, "BOTTOMLEFT", 0, 5)
+-- Check if RQE.QuestDescription has text and is shown
+-- If QuestDescription is already visible at the time of this code execution,
+-- you need to set the initial position of QuestObjectives.
+if RQE.QuestDescription and RQE.QuestDescription:IsShown() and RQE.QuestDescription:GetText() ~= "" then
+    -- There is a description, so show it and position objectives below it.
+    RQE.QuestDescription:Show()
+    RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.QuestDescription, "BOTTOMLEFT", 0, -17)
 else
-    -- If QuestDescription has content, anchor QuestObjectives to QuestDescription
-    RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.QuestDescription, "BOTTOMLEFT", 0, -12)
+    -- There is no description, so hide it and move objectives up.
+    RQE.QuestDescription:Hide()
+    RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.DirectionTextFrame, "TOPLEFT", 0, -107) -- Adjust the X and Y offsets as needed.
 end
+
 
 local QuestObjectives_settings
 if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
@@ -555,7 +572,7 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
     local newWidth = width - 45  -- Adjust the padding as needed
     RQE.debugLog("OnSizeChanged: New width is " .. newWidth)
 
-    RQE.QuestIDText:SetWidth(newWidth)
+    --RQE.QuestIDText:SetWidth(newWidth)
     if RQE.QuestNameText then
         RQE.QuestNameText:SetWidth(newWidth)
     else
@@ -563,10 +580,10 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
     end
 	
     -- Update widths
-    RQE.QuestNameText:SetWidth(newWidth)
-    RQE.DirectionTextFrame:SetWidth(newWidth)
-    RQE.QuestDescription:SetWidth(newWidth)
-    RQE.QuestObjectives:SetWidth(newWidth)
+    --RQE.QuestNameText:SetWidth(newWidth)
+    --RQE.DirectionTextFrame:SetWidth(newWidth)
+    --RQE.QuestDescription:SetWidth(newWidth)
+    --RQE.QuestObjectives:SetWidth(newWidth)
     
     if self.StepsText then
         for i, stepsTextElement in ipairs(self.StepsText) do
@@ -749,8 +766,21 @@ function RQEFrame:OnSearchResultClicked(_, arg1, _, checked)
 end
 
 
+-- Function used to adjust the RQE Frame width
+function AdjustRQEFrameWidths(newWidth)
+    -- Adjust width for each element
+    RQE.QuestIDText:SetWidth(RQEFrame:GetWidth() - 25)	
+    RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 45)
+    RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 25)
+    RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 25)
+    RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 25)
+	
+	--RQE.OnFrameResized()
+end
+
+
 -- Function to reposition text elements upon frame resizing
-local function OnFrameResized(self)
+function RQE.OnFrameResized(self)
     local newWidth, newHeight = self:GetSize()
     
     -- Update the width for word wrapping

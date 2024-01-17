@@ -285,6 +285,7 @@ function RQE:HandleSuperTrackedQuestUpdate()
             if questInfo then
                 local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(savedSuperTrackedQuestID)
                 UpdateFrame(savedSuperTrackedQuestID, questInfo, StepsText, CoordsText, MapIDs)
+				AdjustRQEFrameWidths(newWidth)
             end
         end
     end)
@@ -1074,7 +1075,8 @@ end
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     RQE.debugLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
-
+	AdjustRQEFrameWidths(newWidth)
+	
     if not questID then  -- Check if questID is nil
         RQE.debugLog("questID is nil.")
         return  -- Exit the function
@@ -1260,7 +1262,8 @@ function RQE:ClearFrameData()
 	end
 
 	-- Clear SearchGroup Button
-	if RQE.SearchGroupButton then
+	if RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
+	--if RQE.SearchGroupButton then
 		RQE.SearchGroupButton:Hide()
 		RQE.debugLog("Hide SearchGroup Button")
 	else
