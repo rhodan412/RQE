@@ -155,7 +155,11 @@ local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
     return frame
 end
 
--- Create the first child frame, anchored to the content frame
+
+-- Create the ScenarioChildFrame, anchored to the content frame
+RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 200)
+
+-- Create the Campaign Child frame, anchored to the content frame/Scenario Frame if available
 RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, 0, content:GetWidth(), 200)
 
 -- Create the second child frame, anchored below the CampaignFrame
@@ -191,10 +195,57 @@ local function CreateChildFrameHeader(childFrame, title)
     return headerText  -- Return the FontString instead of the frame
 end
 
+-- Update the Campaign frame anchor dynamically based on the state of the ScenarioChild being is present or not
+function RQE.UpdateCampaignFrameAnchor()
+    if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If ScenarioChildFrame is present and shown, anchor CampaignFrame to ScenarioChildFrame
+        RQE.CampaignFrame:ClearAllPoints()  -- Clear existing points
+        RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        -- If ScenarioChildFrame is not present or not shown, anchor CampaignFrame to content
+        RQE.CampaignFrame:ClearAllPoints()  -- Clear existing points
+        RQE.CampaignFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+end
+
 -- Create headers for each child frame
 RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
 RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Quests")
 RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+
+-- ScenarioChildFrame header
+-- Function to create a unique header for the ScenarioChildFrame
+local function CreateUniqueScenarioHeader(scenarioFrame, title)
+    local header = CreateFrame("Frame", nil, scenarioFrame, "BackdropTemplate")
+	header:SetFrameStrata("LOW") -- or "LOW" if you want it above the background but below medium elements
+    header:SetHeight(100)  -- Setting a custom height for the scenario header
+    header:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 8,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+    })
+    header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+    header:SetPoint("TOPLEFT", scenarioFrame, "TOPLEFT", 0, 0)
+    header:SetPoint("TOPRIGHT", scenarioFrame, "TOPRIGHT", 0, 0)
+
+    -- Create header text
+    local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    headerText:SetPoint("CENTER", header, "CENTER", 0, -10)  -- Adjust Y offset to vertically center the text in the taller header
+    headerText:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+    headerText:SetTextColor(239/255, 191/255, 90/255)
+    headerText:SetText(title)
+    headerText:SetWordWrap(true)
+
+    scenarioFrame.header = header  -- Assign the header to the scenario frame
+    return header  -- Return the new header frame
+end
+
+-- Use the function to create a unique header for the ScenarioChildFrame
+RQE.ScenarioChildFrame = RQE.ScenarioChildFrame or CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
+CreateUniqueScenarioHeader(RQE.ScenarioChildFrame, "")
 
 -- Initialize with default values
 RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
@@ -484,10 +535,19 @@ end
 -- Your function to update the RQEQuestFrame
 function UpdateRQEQuestFrame()
     local campaignQuestCount, regularQuestCount, worldQuestCount = 0, 0, 0
-    local baseHeight = 100 -- Base height when no quests are present
-    local questHeight = 50 -- Height per quest
+    local baseHeight = 175 -- Base height when no quests are present
+    local questHeight = 65 -- Height per quest
     local spacingBetweenElements = 5
+    local extraHeightForScenario = 50
 
+    -- Check if ScenarioChildFrame is present and visible
+    if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- Here you could access the numCriteria from the ScenarioChildFrame if it's stored there
+        -- For example, if you have RQE.ScenarioChildFrame.numCriteria set somewhere
+        local numCriteria = RQE.ScenarioChildFrame.numCriteria or 0
+        extraHeightForScenario = numCriteria * questHeight
+    end
+	
     -- Loop through all tracked quests to count campaign and world quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 	local worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
@@ -503,7 +563,7 @@ function UpdateRQEQuestFrame()
 
     -- Calculate frame heights
     local campaignHeight = baseHeight + (campaignQuestCount * questHeight)
-    local regularHeight = baseHeight + (regularQuestCount * questHeight)
+    local regularHeight = baseHeight + (regularQuestCount * questHeight) + extraHeightForScenario
     local worldQuestHeight = baseHeight + (worldQuestCount * questHeight)
 
     -- Update frame heights
@@ -912,6 +972,7 @@ function UpdateRQEQuestFrame()
     -- Call the function to reposition child frames again at the end
     UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 
+	--UpdateHeader(RQE.ScenarioChildFrame, "", RQE.ScenarioChildFrame.questCount)  -- Add this line
     UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.CampaignFrame.questCount)
     UpdateHeader(RQE.QuestsFrame, "Quests", RQE.QuestsFrame.questCount)
     UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.WorldQuestsFrame.questCount)
@@ -1204,6 +1265,159 @@ function RQE:ClearRQEWorldQuestFrame()
         end
     end
 end
+
+
+-- Function to initiate the Scenario Frame
+function RQE.InitializeScenarioFrame()
+    -- Create the ScenarioChildFrame if not already done
+    -- Only create the ScenarioChildFrame if it does not already exist
+    if not RQE.ScenarioChildFrame then
+        -- Create the ScenarioChildFrame if it does not already exist
+        RQE.ScenarioChildFrame = CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
+        RQE.ScenarioChildFrame:SetSize(400, 200) -- Set the size as needed
+        RQE.ScenarioChildFrame:SetPoint("CENTER") -- Position it at the center, or change as needed
+    end
+
+    if not RQE.ScenarioChildFrame.scenarioTitle then
+        -- Create the scenarioTitle as a FontString within the ScenarioChildFrame
+        RQE.ScenarioChildFrame.scenarioTitle = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		RQE.ScenarioChildFrame.scenarioTitle:ClearAllPoints()
+		RQE.ScenarioChildFrame.scenarioTitle:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "TOPLEFT", 10, -10)
+        --RQE.ScenarioChildFrame.scenarioTitle:SetSize(380, 50) -- Adjust the size as needed
+		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 18, "THICKOUTLINE")
+        --RQE.ScenarioChildFrame.scenarioTitle:SetText("Scenario Title")
+		-- Ensure the text fits nicely and is readable
+		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyV("TOP")
+    end
+
+    if not RQE.ScenarioChildFrame.stage then
+        -- Create the stage as a FontString within the ScenarioChildFrame
+        RQE.ScenarioChildFrame.stage = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		RQE.ScenarioChildFrame.stage:ClearAllPoints()
+		RQE.ScenarioChildFrame.stage:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.scenarioTitle, "TOPLEFT", 0, -40)
+        --RQE.ScenarioChildFrame.stage:SetSize(380, 50) -- Adjust the size as needed
+		RQE.ScenarioChildFrame.stage:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
+        --RQE.ScenarioChildFrame.stage:SetText("Scenario Title")
+		-- Ensure the text fits nicely and is readable
+		RQE.ScenarioChildFrame.stage:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.stage:SetJustifyV("TOP")
+    end
+	
+    -- Ensure that scenarioTitle is a valid FontString object before creating title
+    if not RQE.ScenarioChildFrame.title then
+        -- Create the title as a FontString below the scenarioTitle
+        RQE.ScenarioChildFrame.title = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.ScenarioChildFrame.title:ClearAllPoints()
+        RQE.ScenarioChildFrame.title:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.stage, "TOPLEFT", 0, -25) -- Offset of (0, -20)
+        --RQE.ScenarioChildFrame.title:SetSize(380, 20) -- Adjust the size as needed
+		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
+        --RQE.ScenarioChildFrame.title:SetText("Initial Title")
+		RQE.ScenarioChildFrame.title:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.title:SetJustifyV("TOP")
+    end
+	
+	-- Create a new frame for the timer
+    RQE.ScenarioChildFrame.timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame, "BackdropTemplate")
+    RQE.ScenarioChildFrame.timerFrame:SetSize(100, 50)
+    RQE.ScenarioChildFrame.timerFrame:SetPoint("BOTTOMRIGHT", RQE.ScenarioChildFrame.header, "BOTTOMRIGHT", -10, 10)
+    RQE.ScenarioChildFrame.timerFrame:SetFrameStrata("MEDIUM")
+	RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 2)
+    RQE.ScenarioChildFrame.timerFrame:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        tile = true, tileSize = 8, edgeSize = 0.1,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+    })
+    RQE.ScenarioChildFrame.timerFrame:SetBackdropColor(0, 0, 0, 0)
+
+    -- Ensure the timer frame is on top of other elements
+    RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 1)
+
+    -- Create the FontString for the timer within the timer frame
+    --if not RQE.ScenarioChildFrame.timer then
+	RQE.ScenarioChildFrame.timer = RQE.ScenarioChildFrame.timer or RQE.ScenarioChildFrame.timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	RQE.ScenarioChildFrame.timer:SetAllPoints()
+	RQE.ScenarioChildFrame.timer:SetJustifyH("CENTER")
+	RQE.ScenarioChildFrame.timer:SetJustifyV("MIDDLE")
+	RQE.ScenarioChildFrame.timer:SetText("Initial Timer")
+	RQE.ScenarioChildFrame.timer:SetTextColor(1, 1, 0, 1)
+
+    -- Show the timer frame and its text
+    RQE.ScenarioChildFrame.timerFrame:Show()
+    RQE.ScenarioChildFrame.timer:Show()
+
+    if not RQE.ScenarioChildFrame.body then
+        -- Create the body as a FontString below the header
+        RQE.ScenarioChildFrame.body = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        RQE.ScenarioChildFrame.body:ClearAllPoints()
+		RQE.ScenarioChildFrame.body:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "BOTTOMLEFT", 10, -15)  -- Assuming the header is around 60px in height plus a 30px gap
+        --RQE.ScenarioChildFrame.body:SetSize(380, 130) -- Adjust width to allow for padding, and height as needed
+		RQE.ScenarioChildFrame.body:SetFont("Fonts\\FRIZQT__.TTF", 14, "MONOCHROME")
+        RQE.ScenarioChildFrame.body:SetText("Initial Body Text")
+		RQE.ScenarioChildFrame.body:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.body:SetJustifyV("TOP")
+		-- Set the color of the body FontString to white (r, g, b, alpha)
+		RQE.ScenarioChildFrame.body:SetTextColor(1, 1, 1, 0.9) -- White color
+	end
+end
+
+
+-- Function to update the scenario frame with the latest information
+function RQE.UpdateScenarioFrame()
+    -- Get the full scenario information once at the beginning of the function
+    local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
+    local scenarioStepInfo = C_Scenario.GetStepInfo()
+    local _, _, numCriteria = C_Scenario.GetStepInfo()
+        
+    -- Check if we have valid scenario information
+    if scenarioStepInfo and type(scenarioStepInfo) == "table" then
+        if scenarioStepInfo.title then
+            RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
+        else
+            RQE.ScenarioChildFrame.title:SetText("Title is not available")
+        end
+    end
+
+    -- Check if we have valid scenario information
+    if scenarioName and scenarioStepInfo then
+        -- Update the scenarioTitle with the scenario name
+        RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
+        
+        -- Update the stage with the current stage and total stages
+        RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
+        
+        -- Update the title with the scenario step title
+        RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo)--(scenarioStepInfo.title)
+        
+        -- Update the main frame with criteria
+        local criteriaText = ""
+        for criteriaIndex = 1, numCriteria do
+            local criteriaString, _, completed, quantity, totalQuantity = C_Scenario.GetCriteriaInfo(criteriaIndex)
+            if criteriaString then
+                criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n"
+            end
+        end
+        RQE.ScenarioChildFrame.body:SetText(criteriaText)
+
+        -- Update the timer, if applicable
+        local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+        if duration and elapsed then
+            local timeLeft = duration - elapsed
+            RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+        else
+            RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+        end
+        
+        -- Display the frame if it's not already shown
+        RQE.ScenarioChildFrame:Show()
+    else
+        print("No active scenario or scenario information is not available.")
+        -- Hide the scenario frame since we're not in a scenario
+        RQE.ScenarioChildFrame:Hide()
+    end
+end
+
 
 
 -- Event to update text widths when the frame is resized

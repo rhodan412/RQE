@@ -55,6 +55,10 @@ local eventsToRegister = {
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_AUTOCOMPLETE",
 	"QUESTLINE_UPDATE",
+	"SCENARIO_UPDATE",
+	"SCENARIO_COMPLETED",
+	"LEAVE_PARTY_CONFIRMATION",
+	"SCENARIO_CRITERIA_UPDATE",
 	"QUEST_POI_UPDATE",
 	--"QUEST_LOG_UPDATE",
 	"TASK_PROGRESS_UPDATE",
@@ -101,6 +105,10 @@ local function HandleEvents(frame, event, ...)
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		ZONE_CHANGED = RQE.handleZoneChange,
 		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
+		SCENARIO_UPDATE = RQE.handleScenario,
+		SCENARIO_COMPLETED = handleScenarioComplete,
+		SCENARIO_CRITERIA_UPDATE = handleScenario,
+		LEAVE_PARTY_CONFIRMATION = handleScenario,
 		ZONE_CHANGED_NEW_AREA = RQE.handleZoneChange,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
@@ -181,9 +189,36 @@ function RQE.handleAddonLoaded(...)
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		RQE:UpdateFrameOpacity()
 	end)
+	
+	if C_Scenario.IsInScenario() then
+		RQE.ScenarioChildFrame:Show()
+		RQE.handleScenario()
+	else
+		RQE.ScenarioChildFrame:Hide()
+		RQE.handleScenario()
+	end
 end
 
-		
+
+-- Function to handle SCENARIO_UPDATE:
+function RQE.handleScenario()
+	if C_Scenario.IsInScenario() then
+		RQE.ScenarioChildFrame:Show()
+		RQE.InitializeScenarioFrame()
+		RQE.UpdateScenarioFrame()
+	else
+		RQE.ScenarioChildFrame:Hide()
+	end
+	RQE.UpdateCampaignFrameAnchor()
+end
+
+
+-- Function to handle SCENARIO_COMPLETED:
+function RQE.handleScenarioComplete()
+	RQE.UpdateCampaignFrameAnchor()
+end
+
+
 -- Handling for QUEST_DATA_LOAD_RESULT
 function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
 	C_Timer.After(0.5, function()
@@ -211,6 +246,7 @@ end
 function RQE.handlePlayerStoppedMoving(...)
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
+	AdjustRQEFrameWidths(RQEQuestFrame:GetWidth())
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end	
 
@@ -222,6 +258,14 @@ function RQE.handleVariablesLoaded(...)
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)
+
+	if C_Scenario.IsInScenario() then
+		RQE.ScenarioChildFrame:Show()
+		RQE.handleScenario()
+	else
+		RQE.ScenarioChildFrame:Hide()
+		RQE.handleScenario()
+	end
 	
 	RQE:ClearWQTracking()
 	--QuestType()
@@ -349,6 +393,16 @@ function RQE.handlePlayerEnterWorld(...)
 	end)	
 	
 	local mapID = C_Map.GetBestMapForUnit("player")
+	
+    if isReloadingUi then
+		if C_Scenario.IsInScenario() then
+			RQE.ScenarioChildFrame:Show()
+			RQE.handleScenario()
+		else
+			RQE.ScenarioChildFrame:Hide()
+			RQE.handleScenario()
+		end
+    end
 end	
 		
 
@@ -448,6 +502,14 @@ function RQE.handleZoneChange(...)
 		
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		
+		if C_Scenario.IsInScenario() then
+			RQE.ScenarioChildFrame:Show()
+			RQE.handleScenario()
+		else
+			RQE.ScenarioChildFrame:Hide()
+			RQE.handleScenario()
+		end
 	end)
 end
 
