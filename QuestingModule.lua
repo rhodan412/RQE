@@ -1369,7 +1369,38 @@ function RQE.UpdateScenarioFrame()
     local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
     local scenarioStepInfo = C_Scenario.GetStepInfo()
     local _, _, numCriteria = C_Scenario.GetStepInfo()
-        
+
+    -- Retrieve the timer information for the first criteria
+    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+
+		-- -- Somewhere in your addon, when you want to start tracking a timer:
+	-- local timerIDs = { GetWorldElapsedTimers() }
+	-- for _, timerID in ipairs(timerIDs) do
+		-- local elapsed, duration, type = GetWorldElapsedTime(timerID)
+		-- -- Check if the timer is of a type you want to track
+		-- if type == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE then
+			-- -- Start your timer UI component
+			-- RQE.StartScenarioTimer(timerID, elapsed)
+			-- break
+		-- end
+	-- end
+
+    -- Check if we have valid timer information
+    if duration and elapsed then
+        local timeLeft = duration - elapsed
+        RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+        print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
+    else
+        RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+        print("No timer info available.")  -- This will print if the timer info is not available
+    end
+	
+	if duration and elapsed then
+		print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
+	else
+		print("No timer info available.")  -- This will print if the timer info is not available
+	end
+
     -- Check if we have valid scenario information
     if scenarioStepInfo and type(scenarioStepInfo) == "table" then
         if scenarioStepInfo.title then
@@ -1398,6 +1429,17 @@ function RQE.UpdateScenarioFrame()
                 criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n"
             end
         end
+		
+		-- for criteriaIndex = 1, numCriteria do
+			-- local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(criteriaIndex))
+			-- if duration and elapsed and duration > 0 then
+				-- local timeLeft = duration - elapsed
+				-- RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+				-- print("Got timer info for criteria " .. criteriaIndex .. ": ", duration, elapsed)
+				-- break  -- Found a criteria with a timer, break the loop
+			-- end
+		-- end
+
         RQE.ScenarioChildFrame.body:SetText(criteriaText)
 
         -- Update the timer, if applicable
@@ -1441,6 +1483,12 @@ function AdjustQuestItemWidths(frameWidth)
             button.QuestObjectivesOrDescription:SetHeight(0)
         end
     end
+    -- Add a check to ensure RQE.ScenarioChildFrame.body is not nil
+    if RQE.ScenarioChildFrame.body then
+        RQE.ScenarioChildFrame.body:SetWidth(frameWidth - 75)  -- Adjust the padding as needed
+        RQE.ScenarioChildFrame.body:SetWordWrap(true)  -- Ensure word wrap
+        RQE.ScenarioChildFrame.body:SetHeight(0)
+    end
 end
 
 
@@ -1480,4 +1528,49 @@ function ShowQuestDropdown(self, questID)
 
     local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
     EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
+end
+
+
+
+
+
+-- ##### TESTING #####
+
+-- Creating the frame for the Timer (Scenarios)
+-- Create a frame for the timer
+-- Creating the frame for the Timer (Scenarios)
+-- Create a frame for the timer
+local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
+timerFrame:SetSize(100, 20) -- Adjust size as needed
+timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP") -- Position at the top of your module
+
+-- Create a FontString for the timer text
+local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+timerText:SetAllPoints(timerFrame)
+
+local startTime
+local function UpdateTimer(self, elapsed)
+    if startTime then
+        local currentTime = GetTime()
+        local elapsedTime = currentTime - startTime
+        local hours = math.floor(elapsedTime / 3600)
+        local minutes = math.floor(elapsedTime / 60) % 60
+        local seconds = elapsedTime % 60
+        timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
+    end
+end
+
+-- Start the timer
+function StartTimer()
+    startTime = GetTime()
+    timerFrame:SetScript("OnUpdate", UpdateTimer)
+	timerFrame:Show()
+end
+
+-- Stop the timer
+function StopTimer()
+    startTime = nil
+    timerFrame:SetScript("OnUpdate", nil)
+    timerText:SetText("00:00:00")
+	timerFrame:Hide()
 end

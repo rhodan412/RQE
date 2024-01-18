@@ -632,6 +632,26 @@ function RQE:UpdateFramePosition()
 end
 
 
+-- Define the slash command handler function
+local function HandleSlashCommands(msg, editbox)
+    local command = string.lower(msg)
+
+    if command == "start" then
+        StartTimer() -- Start the timer
+        print("Timer started.")
+    elseif command == "stop" then
+        StopTimer() -- Stop the timer
+        print("Timer stopped.")
+    else
+        print("Invalid command. Use '/rqetimer start' to start the timer or '/rqetimer stop' to stop it.")
+    end
+end
+
+-- Register the slash command
+SLASH_MYTIMER1 = "/rqetimer"
+SlashCmdList["MYTIMER"] = HandleSlashCommands
+
+
 -- Function to update the RQEQuestFrame based on the current profile settings
 function RQE:UpdateQuestFramePosition()
     -- When reading from DB, replace with the appropriate keys for RQEQuestFrame
@@ -1056,18 +1076,83 @@ local function colorizeObjectives(objectivesText)
 end
 
 
--- Define the slash command handler function
-local function HandleSlashCommands(msg, editbox)
-    local command = string.lower(msg)
+-- Updates the timer display
+function RQE.Timer_OnUpdate(self, elapsed)
+    if not self then
+        print("RQE.Timer_OnUpdate: self is nil.")  -- Debug print
+        return  -- Exit the function if self is nil
+    end
 
-    if command == "start" then
-        StartTimer() -- Start the timer
-        print("Timer started.")
-    elseif command == "stop" then
-        StopTimer() -- Stop the timer
-        print("Timer stopped.")
+    -- Initialize timeSinceLastUpdate if it's nil
+    if not self.timeSinceLastUpdate then
+        self.timeSinceLastUpdate = 0
+    end
+
+    self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
+    print("RQE.Timer_OnUpdate: timeSinceLastUpdate: ", self.timeSinceLastUpdate)  -- Debug print
+
+    if self.timeSinceLastUpdate >= 1 then  -- Update the timer every second
+        local timeLeft = self.endTime - GetTime()  -- Calculate the remaining time
+        if timeLeft > 0 then
+            -- Update your timer display here
+            RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+        else
+            RQE.Timer_Stop()  -- Stop the timer if the time has elapsed
+        end
+        self.timeSinceLastUpdate = 0
+    end
+end
+
+
+function RQE.Timer_Start(duration)
+    local timerFrame = RQE.ScenarioChildFrame.timerFrame
+    if not timerFrame then
+        print("RQE.Timer_Start: timerFrame is nil.")
+        return
+    end
+
+    timerFrame.endTime = GetTime() + duration
+    timerFrame:SetScript("OnUpdate", RQE.Timer_OnUpdate)
+    timerFrame:Show()
+end
+
+
+
+
+-- Stops the timer and hides the UI elements
+function RQE.Timer_Stop()
+    local timerFrame = RQE.ScenarioChildFrame.timerFrame  -- Your custom timer frame
+
+    if not timerFrame then
+        print("RQE.Timer_Stop: timerFrame is nil.")
+        return  -- Ensure the frame exists
+    end
+    
+    print("RQE.Timer_Stop: Timer stopped.")  -- Debug print
+    
+    -- Stop the OnUpdate script and hide the frame
+    timerFrame:SetScript("OnUpdate", nil)
+    timerFrame:Hide()
+end
+
+
+-- Checks active timers and starts/stops the timer as necessary
+function RQE.Timer_CheckTimers()
+    -- Retrieve the timer information (example: for the first criteria)
+    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+    
+    if duration and elapsed then
+        local timeLeft = duration - elapsed
+        print("RQE.Timer_CheckTimers: Duration: ", duration, ", Elapsed: ", elapsed)  -- Debug print
+        if timeLeft > 0 then
+            RQE.Timer_Start(timeLeft)
+        else
+            RQE.Timer_Stop()
+        end
     else
-        print("Invalid command. Use '/rqetimer start' to start the timer or '/rqetimer stop' to stop it.")
+        print("RQE.Timer_CheckTimers: No timer information available.")  -- Debug print
+        -- No timer information available, stop any running timer
+        RQE.Timer_Stop()
     end
 end
 
