@@ -55,10 +55,13 @@ local eventsToRegister = {
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_AUTOCOMPLETE",
 	"QUESTLINE_UPDATE",
+	"SCENARIO_POI_UPDATE",
 	"SCENARIO_UPDATE",
 	"SCENARIO_COMPLETED",
 	"LEAVE_PARTY_CONFIRMATION",
 	"SCENARIO_CRITERIA_UPDATE",
+	"WORLD_STATE_TIMER_START",
+	"WORLD_STATE_TIMER_STOP",
 	"QUEST_POI_UPDATE",
 	--"QUEST_LOG_UPDATE",
 	"TASK_PROGRESS_UPDATE",
@@ -105,9 +108,12 @@ local function HandleEvents(frame, event, ...)
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		ZONE_CHANGED = RQE.handleZoneChange,
 		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
+		SCENARIO_POI_UPDATE = RQE.handleScenario,
 		SCENARIO_UPDATE = RQE.handleScenario,
 		SCENARIO_COMPLETED = handleScenarioComplete,
 		SCENARIO_CRITERIA_UPDATE = handleScenario,
+		WORLD_STATE_TIMER_START = RQE.handleScenario,
+		WORLD_STATE_TIMER_STOP = RQE.handleTimerStop,
 		LEAVE_PARTY_CONFIRMATION = handleScenario,
 		ZONE_CHANGED_NEW_AREA = RQE.handleZoneChange,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
@@ -200,12 +206,15 @@ function RQE.handleAddonLoaded(...)
 end
 
 
--- Function to handle SCENARIO_UPDATE:
+-- Function to handle LEAVE_PARTY_CONFIRMATION, SCENARIO_CRITERIA_UPDATE, SCENARIO_UPDATE, WORLD_STATE_TIMER_START
 function RQE.handleScenario()
 	if C_Scenario.IsInScenario() then
 		RQE.ScenarioChildFrame:Show()
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
+        --local duration = --[[ logic to determine duration based on the event data ]]
+        --RQE.Timer_Start(duration)
+		RQE.Timer_CheckTimers()
 	else
 		RQE.ScenarioChildFrame:Hide()
 	end
@@ -216,6 +225,13 @@ end
 -- Function to handle SCENARIO_COMPLETED:
 function RQE.handleScenarioComplete()
 	RQE.UpdateCampaignFrameAnchor()
+end
+
+
+-- Function to handle WORLD_STATE_TIMER_STOP:
+function RQE.handleTimerStop()
+	-- A world timer has stopped; you might want to stop your timer as well
+	RQE.Timer_Stop()
 end
 
 
