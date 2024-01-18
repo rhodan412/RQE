@@ -51,6 +51,25 @@ local frameMenu = {
 }
 
 
+---------------------------
+-- 2. Local Variables
+---------------------------
+
+-- Variable to keep track of the last known group size and type
+local lastGroupSize = 0
+local lastGroupType = "none" -- "none", "party", "raid", "instance"
+
+
+
+
+---------------------------------
+-- 3. RQEFrame Right-Click Menu
+---------------------------------
+
+-- Menu Frame Creation
+local menuFrame = CreateFrame("Frame", "RQEFrameMenu", UIParent, "UIDropDownMenuTemplate")
+
+
 -- Function to update the menu text
 function UpdateMenuText()
     if isFrameLocked then
@@ -60,15 +79,9 @@ function UpdateMenuText()
     end
 end
 
-
--- Menu Frame Creation
-local menuFrame = CreateFrame("Frame", "RQEFrameMenu", UIParent, "UIDropDownMenuTemplate")
-
-
 menuFrame:SetScript("OnShow", function()
     UpdateMenuText()
 end)
-
 
 
 -- Function to Show Right-Click Dropdown Menu
@@ -93,15 +106,14 @@ function ShowQuestDropdownRQEFrame(self, questID)
 end
 
 
-
 ---------------------------
--- 2. Imports
+-- 4. Imports
 ---------------------------
 
 local AceGUI = LibStub("AceGUI-3.0")
 
 ---------------------------
--- 3. Frame Initialization
+-- 5. Frame Initialization
 ---------------------------
 
 -- Debug to check state of main Frame
@@ -114,7 +126,8 @@ end
 
 
 -- Create the main frame
-_G["RQEFrame"] = CreateFrame("Frame", "RQEFrame", UIParent, "BackdropTemplate")
+RQEFrame = CreateFrame("Frame", "RQE.RQEFrame", UIParent, "BackdropTemplate")
+--_G["RQEFrame"] = CreateFrame("Frame", "RQEFrame", UIParent, "BackdropTemplate")
 RQEFrame:SetSize(435, 300)
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.framePosition then
@@ -381,7 +394,7 @@ end
 RQE.QuestNameText:SetJustifyH("LEFT")
 RQE.QuestNameText:SetJustifyV("TOP")
 RQE.QuestNameText:SetWordWrap(true)
-RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 40)
+RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.QuestNameText:SetHeight(0)
 RQE.QuestNameText:EnableMouse(true)
 
@@ -394,10 +407,10 @@ RQE.DirectionTextFrame = content:CreateFontString(nil, "OVERLAY", "GameFontNorma
 -- Check if RQE.SearchGroupButton exists
 if RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
     -- If RQE.SearchGroupButton exists, set the anchor point relative to it
-    RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -12)
+    RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -20)
 else
     -- If RQE.SearchGroupButton does not exist, set the anchor point relative to RQE.QuestIDText
-    RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestIDText, "BOTTOMLEFT", -35, -45)
+    RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -20)
 end
 
 
@@ -486,7 +499,7 @@ if RQE.QuestDescription and RQE.QuestDescription:IsShown() and RQE.QuestDescript
 else
     -- There is no description, so hide it and move objectives up.
     RQE.QuestDescription:Hide()
-    RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.DirectionTextFrame, "TOPLEFT", 0, -107) -- Adjust the X and Y offsets as needed.
+    RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.DirectionTextFrame, "TOPLEFT", 0, -17) -- Adjust the X and Y offsets as needed.
 end
 
 
@@ -545,7 +558,7 @@ searchExecuteButton:SetPoint("LEFT", searchEditBox, "RIGHT", 5, 0)
 searchExecuteButton:SetText(">")
 
 ---------------------------
--- 5. Event Handlers
+-- 6. Event Handlers
 ---------------------------
 
 -- Function for Update Button Visibility
@@ -770,7 +783,7 @@ end
 function AdjustRQEFrameWidths(newWidth)
     -- Adjust width for each element
     RQE.QuestIDText:SetWidth(RQEFrame:GetWidth() - 25)	
-    RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 45)
+    RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 80)
     RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 25)
     RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 25)
     RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 25)
@@ -781,7 +794,7 @@ end
 
 -- Function to reposition text elements upon frame resizing
 function RQE.OnFrameResized(self)
-    local newWidth, newHeight = self:GetSize()
+    local newWidth = self:GetSize()
     
     -- Update the width for word wrapping
     if self.StepsText then  -- Add this check
@@ -809,7 +822,7 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 end)
 
 ---------------------------
--- 6. Utility Functions
+-- 7. Utility Functions
 ---------------------------
 
 -- Make this a global variable or part of the RQE table
@@ -873,7 +886,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights
 	local stepTextHeights = {}
 	local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
-	local baseYOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
+	local baseYOffset = -20
 	
 	if self.CoordsText then
 		for i, textElement in ipairs(self.CoordsText) do
@@ -895,9 +908,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 	-- Create new step texts
 	for i = 1, #StepsText do
-		stepTextHeight = 0
-		local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
-		local baseYOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
+		localstepTextHeight = 0
+		-- local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
+		-- local baseYOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	
 		-- Create StepsText
 		local StepText = content:CreateFontString(nil, "OVERLAY")
@@ -1090,9 +1103,9 @@ function RQEShowRoleSelection(activityID)
     -- end
 end
 
--- Global variable to keep track of the last known group size and type
-local lastGroupSize = 0
-local lastGroupType = "none" -- "none", "party", "raid", "instance"
+-- -- Global variable to keep track of the last known group size and type
+-- local lastGroupSize = 0
+-- local lastGroupType = "none" -- "none", "party", "raid", "instance"
 
 -- Update lastGroupSize on GROUP_ROSTER_UPDATE
 -- Function to update the group size and type
@@ -1180,7 +1193,7 @@ function AddQuestStepsToFrame(questSteps)
 end
 
 ---------------------------
--- 7. Finalization
+-- 8. Finalization
 ---------------------------
 
 -- Call to function create the search frame

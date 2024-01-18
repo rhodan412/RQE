@@ -12,7 +12,11 @@ This add-on file handles the creation logic of the Waypoint and Map Pin creation
 
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 RQE.Frame = RQE.Frame or {}
---RQEFrame = RQEFrame or {}
+
+RQE.WM = RQE.WM or {}
+RQE.WM.x = RQE.WM.x or nil   -- Initialize x, or set a default value if applicable
+RQE.WM.y = RQE.WM.y or nil   -- Initialize y, or set a default value if applicable
+RQE.WM.mapID = RQE.WM.mapID or nil  -- Initialize mapID, or set a default value if applicable
 
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
@@ -41,9 +45,9 @@ end
 -- @return: Returns the created waypoint object
 function RQE:CreateWaypoint(x, y, mapID, title)
     
-    -- If x and y are nil, use stored values from RQE.x and RQE.y
-    x = x or RQE.x
-    y = y or RQE.y
+    -- If x and y are nil, use stored values from RQE.WM.x and RQE.WM.y
+    x = x or RQE.WM.x
+    y = y or RQE.WM.y
 	
     -- Create the waypoint data
     local waypoint = {}
@@ -65,9 +69,9 @@ end
 
 -- Remove the extra functions and keep only this one
 function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
-    local posX = RQE.x
-    local posY = RQE.y
-    local mapID = RQE.mapID
+    local posX = RQE.WM.x
+    local posY = RQE.WM.y
+    local mapID = RQE.WM.mapID
     local DirectionText = RQEFrame.DirectionText  -- Assuming DirectionText is stored in RQE table
     local questName = C_QuestLog.GetTitleForQuestID(unknownQuestID) or "Unknown"
     
