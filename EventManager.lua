@@ -63,7 +63,7 @@ local eventsToRegister = {
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
 	"QUEST_POI_UPDATE",
-	--"QUEST_LOG_UPDATE",
+	"QUEST_LOG_UPDATE",
 	"TASK_PROGRESS_UPDATE",
 	"UNIT_EXITING_VEHICLE",
 	"ZONE_CHANGED",
@@ -103,7 +103,7 @@ local function HandleEvents(frame, event, ...)
 		QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUESTLINE_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
-		--QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		ZONE_CHANGED = RQE.handleZoneChange,
@@ -157,6 +157,7 @@ function RQE.handlePlayerLogin(...)
 	
 	-- Fetch current MapID to have option of appearing with Frame
 	local mapID = C_Map.GetBestMapForUnit("player")
+	RQE.infoLog("Current MAP ID: " .. mapID)
 	if RQEFrame.MapIDText then  -- Check if MapIDText is initialized
 		if RQE.db.profile.showMapID and mapID then
 			RQEFrame.MapIDText:SetText("MapID: " .. mapID)
@@ -198,40 +199,56 @@ function RQE.handleAddonLoaded(...)
 	
 	if C_Scenario.IsInScenario() then
 		RQE.ScenarioChildFrame:Show()
+		--RQE.TimerFrame:Show()
 		RQE.handleScenario()
 	else
 		RQE.ScenarioChildFrame:Hide()
+		--RQE.TimerFrame:Hide()
 		RQE.handleScenario()
 	end
 end
 
 
 -- Function to handle LEAVE_PARTY_CONFIRMATION, SCENARIO_CRITERIA_UPDATE, SCENARIO_UPDATE, WORLD_STATE_TIMER_START
-function RQE.handleScenario()
-	if C_Scenario.IsInScenario() then
-		RQE.ScenarioChildFrame:Show()
-		RQE.InitializeScenarioFrame()
-		RQE.UpdateScenarioFrame()
+function RQE.handleScenario(self, event, ...)
+    local args = {...}  -- Capture all arguments in a table
+	RQE.Timer_CheckTimers(timerID)
+	
+    if event == "WORLD_STATE_TIMER_START" then
+        local timerID = args[1]  -- For WORLD_STATE_TIMER_START, the first argument is timerID
+		RQE.HandleTimerStart(timerID)
+	end
+
+    -- Handle other events
+    if C_Scenario.IsInScenario() then
+        RQE.ScenarioChildFrame:Show()
+		--RQE.TimerFrame:Show()
+        RQE.InitializeScenarioFrame()
+        RQE.UpdateScenarioFrame()
         --local duration = --[[ logic to determine duration based on the event data ]]
         --RQE.Timer_Start(duration)
-		RQE.Timer_CheckTimers()
-	else
-		RQE.ScenarioChildFrame:Hide()
-	end
-	RQE.UpdateCampaignFrameAnchor()
+		--RQE.Timer_CheckTimers()
+    else
+        RQE.ScenarioChildFrame:Hide()
+    end
+    RQE.UpdateCampaignFrameAnchor()
 end
 
 
 -- Function to handle SCENARIO_COMPLETED:
 function RQE.handleScenarioComplete()
 	RQE.UpdateCampaignFrameAnchor()
+	RQE.HandleTimerStop(timerID)
 end
 
 
 -- Function to handle WORLD_STATE_TIMER_STOP:
-function RQE.handleTimerStop()
+function RQE.handleTimerStop(self, event, ...)
+    local args = {...}  -- Capture all arguments in a table
+    local timerID = args[1]  -- For WORLD_STATE_TIMER_STOP, if you need the timerID
 	-- A world timer has stopped; you might want to stop your timer as well
-	RQE.Timer_Stop()
+    RQE.Timer_Stop()
+	--RQE.Timer_CheckTimers(timerID)
 end
 
 
@@ -262,8 +279,8 @@ end
 function RQE.handlePlayerStoppedMoving(...)
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
-	AdjustRQEFrameWidths(RQEQuestFrame:GetWidth())
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	--AdjustRQEFrameWidths(RQEQuestFrame:GetWidth())
+	--AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end	
 
 
@@ -277,9 +294,11 @@ function RQE.handleVariablesLoaded(...)
 
 	if C_Scenario.IsInScenario() then
 		RQE.ScenarioChildFrame:Show()
+		--RQE.TimerFrame:Show()
 		RQE.handleScenario()
 	else
 		RQE.ScenarioChildFrame:Hide()
+		--RQE.TimerFrame:Hide()
 		RQE.handleScenario()
 	end
 	
@@ -413,9 +432,11 @@ function RQE.handlePlayerEnterWorld(...)
     if isReloadingUi then
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
+			--RQE.TimerFrame:Show()
 			RQE.handleScenario()
 		else
 			RQE.ScenarioChildFrame:Hide()
+			--RQE.TimerFrame:Hide()
 			RQE.handleScenario()
 		end
     end
@@ -486,7 +507,7 @@ function RQE.handleQuestAccepted(...)
 		
 		local mapID = C_Map.GetBestMapForUnit("player")
 		UpdateWorldQuestTrackingForMap(mapID)
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 end
 
@@ -521,9 +542,11 @@ function RQE.handleZoneChange(...)
 		
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
+			--RQE.TimerFrame:Show()
 			RQE.handleScenario()
 		else
 			RQE.ScenarioChildFrame:Hide()
+			--RQE.TimerFrame:Hide()
 			RQE.handleScenario()
 		end
 	end)
@@ -575,11 +598,26 @@ end
 		
 -- Handling QUEST_WATCH_UPDATE event
 function RQE.handleQuestWatchUpdate(...)
-	RQEQuestFrame:ClearAllPoints()
-	UpdateRQEQuestFrame()
-	QuestType()
-	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+    -- Retrieve the current watched quest ID if needed
+    local questID, added = ...
+	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+	
+    -- If you need details about the quest, fetch them here
+    local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+	if questID then
+		RQEQuestFrame:ClearAllPoints()
+		UpdateRQEQuestFrame()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+
+		-- Update RQEFrame here if needed
+		-- UpdateRQEFrame() -- Pseudo-function, replace with actual function calls needed to update RQEFrame
+
+		-- Further processing
+		QuestType()
+		SortQuestsByProximity()
+		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	end
 end
 		
 
