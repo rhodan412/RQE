@@ -786,7 +786,7 @@ function AdjustRQEFrameWidths(newWidth)
     RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 80)
     RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 25)
     RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 25)
-    RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 25)
+    RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 40)
 	
 	--RQE.OnFrameResized()
 end
