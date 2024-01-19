@@ -1389,17 +1389,17 @@ function RQE.UpdateScenarioFrame()
     if duration and elapsed then
         local timeLeft = duration - elapsed
         RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-        print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
+        --print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
     else
         RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
-        print("No timer info available.")  -- This will print if the timer info is not available
+        --print("No timer info available.")  -- This will print if the timer info is not available
     end
 	
-	if duration and elapsed then
-		print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
-	else
-		print("No timer info available.")  -- This will print if the timer info is not available
-	end
+	-- if duration and elapsed then
+		-- print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
+	-- else
+		-- print("No timer info available.")  -- This will print if the timer info is not available
+	-- end
 
     -- Check if we have valid scenario information
     if scenarioStepInfo and type(scenarioStepInfo) == "table" then
@@ -1453,6 +1453,7 @@ function RQE.UpdateScenarioFrame()
         
         -- Display the frame if it's not already shown
         RQE.ScenarioChildFrame:Show()
+		--RQE.TimerFrame:Show()
     else
         print("No active scenario or scenario information is not available.")
         -- Hide the scenario frame since we're not in a scenario
@@ -1536,17 +1537,94 @@ end
 
 -- ##### TESTING #####
 
--- Creating the frame for the Timer (Scenarios)
--- Create a frame for the timer
--- Creating the frame for the Timer (Scenarios)
--- Create a frame for the timer
+-- -- Creating the frame for the Timer (Scenarios)
+-- -- Create a frame for the timer inside RQE.RQEQuestFrame
+-- RQE.TimerFrame = CreateFrame("Frame", "RQETimerFrame", UIParent, "BackdropTemplate")
+-- RQE.TimerFrame:SetSize(200, 50)  -- Adjust size as needed
+-- RQE.TimerFrame:SetPoint("CENTER", UIParent, "CENTER")  -- Center on screen
+-- RQE.TimerFrame:SetBackdrop({
+    -- bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+    -- edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+    -- tile = true,
+    -- tileSize = 16,
+    -- edgeSize = 16,
+    -- insets = { left = 4, right = 4, top = 4, bottom = 4 }
+-- })
+-- RQE.TimerFrame:SetBackdropColor(0, 0, 0, 1)  -- Black background
+-- --RQE.TimerFrame:Hide() -- Hide frame initially
+
+-- -- Create the timer text
+-- RQE.TimerFrame.timerText = RQE.TimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+-- RQE.TimerFrame.timerText:SetPoint("CENTER", RQE.TimerFrame, "CENTER")  -- Center text in the timer frame
+-- RQE.TimerFrame.timerText:SetText("")
+
+-- -- Create the timer text
+-- RQE.TimerFrame.timerText = RQE.TimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+-- RQE.TimerFrame.timerText:SetPoint("CENTER", RQE.TimerFrame, "CENTER")  -- Center text in the timer frame
+-- RQE.TimerFrame.timerText:SetText("")
+
+
+-- function RQE.HandleTimerStart(timerID)
+    -- local _, elapsedTime, timerType = GetWorldElapsedTime(timerID)
+    -- -- Check if the timer type is one you care about
+    -- -- For example, if you're only interested in challenge mode timers:
+    -- if timerType == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE then
+        -- local _, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID)
+        -- RQE.ScenarioTimer_Start(timeLimit - elapsedTime)
+    -- end
+-- end
+
+
+-- function RQE.ScenarioTimer_OnUpdate(self, elapsed)
+    -- print("Timer update called")  -- Debug message
+    -- if not self.timeSinceLastUpdate then
+        -- self.timeSinceLastUpdate = 0
+    -- end
+    -- self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
+
+    -- if self.timeSinceLastUpdate >= 1 then
+        -- local timeLeft = self.endTime - GetTime()
+        -- if timeLeft > 0 then
+            -- -- Update your timer display here, e.g.:
+            -- RQE.RQEQuestFrame.timerText:SetText(SecondsToTime(timeLeft))
+        -- else
+            -- RQE.ScenarioTimer_Stop()
+        -- end
+        -- self.timeSinceLastUpdate = 0
+    -- end
+-- end
+
+-- function RQE.ScenarioTimer_Start(duration)
+    -- local timerFrame = RQE.TimerFrame  -- Using the dedicated Timer Frame
+    -- timerFrame.endTime = GetTime() + duration
+    -- timerFrame:SetScript("OnUpdate", RQE.ScenarioTimer_OnUpdate)
+    -- timerFrame:Show()  -- Ensure the frame is visible
+    -- timerFrame.timerText:Show()  -- Ensure the timer text is visible
+-- end
+
+
+
+-- function RQE.ScenarioTimer_Stop()
+    -- local timerFrame = RQE.TimerFrame
+    -- timerFrame:SetScript("OnUpdate", nil)
+    -- timerFrame.timerText:SetText("")
+    -- timerFrame:Hide()
+-- end
+
+
+
+
+
+
+
 local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
-timerFrame:SetSize(100, 20) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP") -- Position at the top of your module
+timerFrame:SetSize(100, 10) -- Adjust size as needed
+timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP", 65, -50)
 
 -- Create a FontString for the timer text
 local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 timerText:SetAllPoints(timerFrame)
+timerText:SetFont("Fonts\\FRIZQT__.TTF", 20, "OUTLINE")  -- Increase font size to 20, adjust as needed
 
 local startTime
 local function UpdateTimer(self, elapsed)
@@ -1561,14 +1639,14 @@ local function UpdateTimer(self, elapsed)
 end
 
 -- Start the timer
-function StartTimer()
+function RQE.StartTimer()
     startTime = GetTime()
     timerFrame:SetScript("OnUpdate", UpdateTimer)
 	timerFrame:Show()
 end
 
 -- Stop the timer
-function StopTimer()
+function RQE.StopTimer()
     startTime = nil
     timerFrame:SetScript("OnUpdate", nil)
     timerText:SetText("00:00:00")
