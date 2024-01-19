@@ -30,6 +30,9 @@ Libs/AceTab-3.0/AceTab-3.0.xml
 Libs/AceTimer-3.0/AceTimer-3.0.xml
 Libs/AceBucket-3.0/AceBucket-3.0.xml
 
+# Modules
+#Modules/Blizzard_ScenarioObjectiveTracker.lua
+
 # Core Functionality
 Core.lua
 RQEMinimap.lua
@@ -44,9 +47,6 @@ Config.lua
 WPUtil.lua
 QuestingModule.lua
 RQEFrame.lua
-#Localization.lua
-#AccessibilityTools.lua
-#CustomKeybinds.lua
 
 # Waypoint and Map Modules
 WaypointManager.lua
@@ -54,7 +54,3 @@ MapPinModule.lua
 
 # Questing and Map Features
 #MapModule.lua
-
-# FAQ and Resources
-#FAQModule.lua
-#ResourcesModule.lua
