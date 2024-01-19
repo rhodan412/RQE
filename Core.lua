@@ -32,6 +32,9 @@ local ACD = LibStub("AceConfigDialog-3.0")
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
 
+-- Blizzard Imports
+local ScenarioObjectiveTracker = RQE:NewModule("ScenarioObjectiveTracker", "AceEvent-3.0")
+
 ---------------------------
 -- 3. Debugging Functions
 ---------------------------
@@ -652,6 +655,71 @@ SLASH_MYTIMER1 = "/rqetimer"
 SlashCmdList["MYTIMER"] = HandleSlashCommands
 
 
+-- Function to fetch Scenario Criteria information
+function RQE.PrintScenarioCriteriaInfo()
+    print("Fetching scenario criteria info...")
+    local numCriteria = select(3, C_Scenario.GetStepInfo())
+    if not numCriteria or numCriteria == 0 then
+        print("No criteria info available or not in a scenario.")
+        return
+    end
+    for criteriaIndex = 1, numCriteria do
+        local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
+        print("Criteria Index:", criteriaIndex)
+        print("Criteria String:", criteriaString or "N/A")
+        print("Criteria Type:", criteriaType or "N/A")
+        print("Completed:", completed)
+        print("Quantity:", quantity or "N/A")
+        print("Total Quantity:", totalQuantity or "N/A")
+        print("Flags:", flags or "N/A")
+        print("Asset ID:", assetID or "N/A")
+        print("Quantity String:", quantityString or "N/A")
+        print("Criteria ID:", criteriaID or "N/A")
+        print("Duration:", duration or "N/A")
+        print("Elapsed:", elapsed or "N/A")
+        print("Criteria Failed:", criteriaFailed)
+        print("Is Weighted Progress:", isWeightedProgress)
+        print("---")
+    end
+    print("Done fetching scenario criteria info.")
+end
+
+
+
+function RQE.PrintScenarioCriteriaInfoByStep()
+    print("Fetching scenario criteria info by step...")
+    local currentStep, numSteps = C_Scenario.GetInfo()
+    for stepID = 1, numSteps do
+        local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
+        if not numCriteria or numCriteria == 0 then
+            print("No criteria info available for step", stepID)
+        else
+            for criteriaIndex = 1, numCriteria do
+                local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex)
+                print("Step ID:", stepID)
+                print("Criteria Index:", criteriaIndex)
+                print("Criteria String:", criteriaString or "N/A")
+                print("Criteria Type:", criteriaType or "N/A")
+                print("Completed:", completed)
+                print("Quantity:", quantity or "N/A")
+                print("Total Quantity:", totalQuantity or "N/A")
+                print("Flags:", flags or "N/A")
+                print("Asset ID:", assetID or "N/A")
+                print("Quantity String:", quantityString or "N/A")
+                print("Criteria ID:", criteriaID or "N/A")
+                print("Duration:", duration or "N/A")
+                print("Elapsed:", elapsed or "N/A")
+                print("Criteria Failed:", criteriaFailed)
+                print("Is Weighted Progress:", isWeightedProgress)
+                print("---")
+            end
+        end
+    end
+    print("Done fetching scenario criteria info by step.")
+end
+
+
+
 -- Function to update the RQEQuestFrame based on the current profile settings
 function RQE:UpdateQuestFramePosition()
     -- When reading from DB, replace with the appropriate keys for RQEQuestFrame
@@ -1107,7 +1175,7 @@ end
 function RQE.Timer_Start(duration)
     local timerFrame = RQE.ScenarioChildFrame.timerFrame
     if not timerFrame then
-        print("RQE.Timer_Start: timerFrame is nil.")
+        --print("RQE.Timer_Start: timerFrame is nil.")
         return
     end
 
@@ -1124,11 +1192,10 @@ function RQE.Timer_Stop()
     local timerFrame = RQE.ScenarioChildFrame.timerFrame  -- Your custom timer frame
 
     if not timerFrame then
-        print("RQE.Timer_Stop: timerFrame is nil.")
         return  -- Ensure the frame exists
     end
     
-    print("RQE.Timer_Stop: Timer stopped.")  -- Debug print
+    --print("RQE.Timer_Stop: Timer stopped.")  -- Debug print
     
     -- Stop the OnUpdate script and hide the frame
     timerFrame:SetScript("OnUpdate", nil)
@@ -1140,7 +1207,8 @@ end
 function RQE.Timer_CheckTimers()
     -- Retrieve the timer information (example: for the first criteria)
     local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-    
+    ScenarioTimer_CheckTimers(GetWorldElapsedTimers())
+	
     if duration and elapsed then
         local timeLeft = duration - elapsed
         print("RQE.Timer_CheckTimers: Duration: ", duration, ", Elapsed: ", elapsed)  -- Debug print
@@ -1150,8 +1218,6 @@ function RQE.Timer_CheckTimers()
             RQE.Timer_Stop()
         end
     else
-        print("RQE.Timer_CheckTimers: No timer information available.")  -- Debug print
-        -- No timer information available, stop any running timer
         RQE.Timer_Stop()
     end
 end
@@ -1560,6 +1626,22 @@ function HasQuestProgress(questID)
 
     return false -- Return false if all objectives are finished or no objectives are found
 end
+
+
+-- function ScenarioObjectiveTracker:OnEnable()
+    -- -- Initialize the scenario tracker
+    -- self:RegisterEvent("SCENARIO_UPDATE", "OnScenarioUpdate")
+    -- self:RegisterEvent("SCENARIO_COMPLETED", "OnScenarioCompleted")
+    -- -- ... register other events as needed ...
+-- end
+
+-- function ScenarioObjectiveTracker:OnScenarioUpdate()
+    -- -- Handle the scenario update
+-- end
+
+-- function ScenarioObjectiveTracker:OnScenarioCompleted()
+    -- -- Handle the scenario completion
+-- end
 
 
 ---------------------------
