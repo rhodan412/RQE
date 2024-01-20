@@ -23,13 +23,13 @@ local frame = RQE.RQEQuestFrame
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.QuestFramePosition then
     xPos = RQE.db.profile.QuestFramePosition.xPos or -40  -- Default x position
-    yPos = RQE.db.profile.QuestFramePosition.yPos or 125  -- Default y position
+    yPos = RQE.db.profile.QuestFramePosition.yPos or 135  -- Default y position
 else
     xPos = -40  -- Default x position if db is not available
-    yPos = 125  -- Default y position if db is not available
+    yPos = 135  -- Default y position if db is not available
 end
 
-RQEQuestFrame:SetSize(325, 450)
+RQEQuestFrame:SetSize(300, 450)
 RQEQuestFrame:SetPoint("CENTER", UIParent, "CENTER", xPos, yPos)
 RQEQuestFrame:SetBackdrop({
     bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -514,13 +514,22 @@ function QuestType()
         end
     end
 
-    -- Loop through all tracked World Quests
-    for i = 1, numTrackedWorldQuests do
-        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-        if questID then
-            worldQuestUpdated = true
-        end
-    end
+	-- Loop through all tracked World Quests
+	for i = 1, numTrackedWorldQuests do
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			if C_QuestLog.IsQuestTask(questID) then
+				-- Quest data is expected to be cached since it's a quest task
+				local questTitle = C_QuestLog.GetTitleForQuestID(questID)
+				-- At this point, questTitle should not be nil
+				-- Proceed to use questTitle for whatever you need, for example:
+				WQuestLevelAndName:SetText("[WQ] " .. questTitle)
+			else
+				-- Handle the case where questTitle is still nil or the data is not cached
+				-- You might want to defer the action until the data is available
+			end
+		end
+	end
 
     -- Update frames if needed
     if regularQuestUpdated then
