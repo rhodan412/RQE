@@ -152,9 +152,9 @@ local defaults = {
 		},
         QuestFramePosition = {
             xPos = -40,
-            yPos = 125,
+            yPos = 135,
 			anchorPoint = "BOTTOMRIGHT",
-            frameWidth = 325,
+            frameWidth = 300,
             frameHeight = 450
 		},
 		QuestFrameOpacity = 0.55, 
@@ -732,7 +732,7 @@ function RQE:UpdateQuestFramePosition()
     end
 
     local xPos = self.db.profile.QuestFramePosition.xPos or -40
-    local yPos = self.db.profile.QuestFramePosition.yPos or 125
+    local yPos = self.db.profile.QuestFramePosition.yPos or 135
 
     -- Error handling
     local success, err = pcall(function()
@@ -870,7 +870,7 @@ end
 function RQE:ResetQuestFramePositionToDBorDefault()
     local anchorPoint = "BOTTOMRIGHT"  -- Default anchor point for RQEQuestFrame
     local xPos = -40  -- Preset xPos
-    local yPos = 125  -- Preset yPos
+    local yPos = 135  -- Preset yPos
     
     -- Update the database
     RQE.db.profile.QuestFramePosition.anchorPoint = anchorPoint
@@ -884,7 +884,7 @@ end
 
 -- When the frame is maximized
 function RQE:MaximizeQuestFrame()
-    local defaultWidth = RQE.db.profile.QuestFrameWidth or 325  -- Replace 325 with the default width
+    local defaultWidth = RQE.db.profile.QuestFrameWidth or 300  -- Replace 300 with the default width
     local defaultHeight = RQE.db.profile.QuestFrameHeight or 450  -- Replace 450 with the default height
     
     local width = RQE.db.profile.QuestFramePosition.originalWidth or defaultWidth
@@ -897,7 +897,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeQuestFrame()
-    RQEQuestFrame:SetSize(325, 30)  -- If you want to make this configurable, you can use similar logic as above
+    RQEQuestFrame:SetSize(300, 30)  -- If you want to make this configurable, you can use similar logic as above
     RQE.db.profile.isQuestFrameMaximized = false
 end
 

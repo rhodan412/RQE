@@ -440,7 +440,7 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 		-- Set RQE.QTMinimized to false since we're maximizing the frame
 		RQE.QTMinimized = true
 		
-		RQEQuestFrame:SetSize(400, 30)
+		RQEQuestFrame:SetSize(300, 30)
 		
 		-- Hide the ScrollFrame if they exist
 		if RQE.QTScrollFrame then
