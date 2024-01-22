@@ -661,6 +661,8 @@ function RQE.handleQuestWatchListChanged(...)
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			--AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 		end
+	--UpdateFrameAnchors()
+	UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 	end
 end
 		
