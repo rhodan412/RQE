@@ -1326,7 +1326,10 @@ function UpdateRQEWorldQuestFrame()
             WQuestObjectives:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
+			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 20)  -- -20 for padding
             WQuestObjectives:SetHeight(0)
+            WQuestObjectives:SetJustifyH("LEFT")
+            WQuestObjectives:SetJustifyV("TOP")
             WQuestObjectives:SetText(objectivesText)
             WQuestLogIndexButton.QuestObjectives = WQuestObjectives
 			
@@ -1346,6 +1349,7 @@ function UpdateRQEWorldQuestFrame()
             WQuestObjectivesOrDescription:SetJustifyH("LEFT")
             WQuestObjectivesOrDescription:SetJustifyV("TOP")
             WQuestObjectivesOrDescription:SetHeight(0)
+			WQuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -30 for padding
             WQuestObjectivesOrDescription:SetText(questObjectivesText)
             WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
