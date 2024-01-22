@@ -375,7 +375,7 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
         RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
     elseif not RQE.CampaignFrame:IsShown() and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
         -- If there are no campaign quests but ScenarioChildFrame is shown
-        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", -40, -30)
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
     elseif not RQE.CampaignFrame:IsShown() then
         -- If there are no campaign quests, anchor QuestsFrame to content
         RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
@@ -852,8 +852,8 @@ function UpdateRQEQuestFrame()
 					lastElement = lastQuestElement
 				end
 
-				-- Call the function to update child frame positions
-				UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+				-- -- Call the function to update child frame positions
+				-- UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 
 				-- Create or reuse the QuestLogIndexButton
 				local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)
@@ -1201,6 +1201,7 @@ function UpdateRQEQuestFrame()
     content:SetHeight(totalHeight)
 
     -- Call the function to reposition child frames again at the end
+	UpdateFrameAnchors()
     UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 
 	--UpdateHeader(RQE.ScenarioChildFrame, "", RQE.ScenarioChildFrame.questCount)  -- Add this line
