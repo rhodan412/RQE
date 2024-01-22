@@ -645,23 +645,20 @@ function RQE.handleQuestWatchListChanged(...)
 				RQE:ClearWQTracking()
 			end
 		else
-			-- Handle regular quests
-			--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-				if RQE.db.profile.autoTrackProgress then
-					AutoWatchQuestsWithProgress()
-					SortQuestsByProximity()
-				end					
-			--else
-				--return
-			--end
-			RQEQuestFrame:ClearAllPoints()
-			RQE:ClearRQEQuestFrame()
-			RQE:ClearWQTracking()
-			UpdateRQEQuestFrame()
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			--AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		-- Handle regular quests
+		--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+			if RQE.db.profile.autoTrackProgress then
+				AutoWatchQuestsWithProgress()
+				SortQuestsByProximity()
+			end					
 		end
-	--UpdateFrameAnchors()
+	RQEQuestFrame:ClearAllPoints()
+	RQE:ClearRQEQuestFrame()
+	RQE:ClearWQTracking()
+	UpdateRQEQuestFrame()
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	SortQuestsByProximity()
+	UpdateFrameAnchors()
 	UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 	end
 end
