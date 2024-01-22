@@ -1297,13 +1297,29 @@ function UpdateRQEWorldQuestFrame()
 				end
 			end)
 
-            -- Fetch Quest Description and Objectives
-            local _, questObjectivesText = GetQuestLogQuestText(questID)
-            local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
-            local objectivesText = objectivesTable and "" or "No objectives available."
-            for _, objective in ipairs(objectivesTable or {}) do
-                objectivesText = objectivesText .. objective.text .. "\n"
-            end
+			-- Fetch Quest Description and Objectives
+			local _, questObjectivesText = GetQuestLogQuestText(questID)
+			local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+			local objectivesText = ""
+			if objectivesTable then
+				for _, objective in ipairs(objectivesTable) do
+					objectivesText = objectivesText .. objective.text .. "\n"
+				end
+			end
+
+			-- Apply colorization to objectivesText
+			objectivesText = colorizeObjectives(objectivesText)
+
+            -- Create or update the quest title label
+            local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            WQuestLevelAndName:SetPoint("TOP", RQE.WorldQuestsFrame, "BOTTOM", 0, -5)
+            WQuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+			WQuestLevelAndName:SetHeight(0)
+            WQuestLevelAndName:SetJustifyH("LEFT")
+            WQuestLevelAndName:SetJustifyV("TOP")
+			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 70)  -- -70 for padding
+            WQuestLevelAndName:SetText("[WQ] " .. questTitle)
+            WQuestLogIndexButton.WQuestLevelAndName = WQuestLevelAndName
 
             -- Create QuestObjectives label
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1314,13 +1330,6 @@ function UpdateRQEWorldQuestFrame()
             WQuestObjectives:SetText(objectivesText)
             WQuestLogIndexButton.QuestObjectives = WQuestObjectives
 			
-            -- Create or update the quest title label
-            local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            WQuestLevelAndName:SetPoint("TOP", RQE.WorldQuestsFrame, "BOTTOM", 0, -5)
-            WQuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-            WQuestLevelAndName:SetText("[WQ] " .. questTitle)
-            WQuestLogIndexButton.WQuestLevelAndName = WQuestLevelAndName
-
 			-- Untrack World Quest
 			WQuestLevelAndName:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
@@ -1376,6 +1385,7 @@ function UpdateRQEWorldQuestFrame()
             WQuestLevelAndName:Show()
             WQuestObjectivesOrDescription:Show()
             WQuestLogIndexButton:Show()
+			WQuestObjectives:Show()
 
             lastElement = WQuestLevelAndName
 
