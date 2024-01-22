@@ -208,45 +208,201 @@ function RQE.UpdateCampaignFrameAnchor()
     end
 end
 
+-- function UpdateFrameAnchors()
+    -- -- Clear all points to prevent any previous anchoring affecting the new setup
+    -- RQE.CampaignFrame:ClearAllPoints()
+    -- RQE.QuestsFrame:ClearAllPoints()
+    -- RQE.WorldQuestsFrame:ClearAllPoints()
+    
+    -- -- Determine the base anchor point depending on the ScenarioChildFrame's visibility
+    -- local baseAnchorFrame = RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() and RQE.ScenarioChildFrame or content
+    
+    -- -- Anchor CampaignFrame relative to base anchor (ScenarioChildFrame or content)
+    -- RQE.CampaignFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
+    
+    -- -- Anchor QuestsFrame relative to CampaignFrame if shown, otherwise to base anchor
+    -- if RQE.CampaignFrame:IsShown() then
+        -- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    -- else
+        -- RQE.QuestsFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
+    -- end
+    
+    -- -- -- Anchor WorldQuestsFrame relative to QuestsFrame if shown, otherwise to the last shown of CampaignFrame or ScenarioChildFrame
+    -- -- if RQE.QuestsFrame:IsShown() then
+        -- -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+    -- -- elseif RQE.CampaignFrame:IsShown() or (RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown()) then
+        -- -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
+    -- -- else
+        -- -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    -- -- end
+
+    -- -- Anchor WorldQuestsFrame relative to QuestsFrame if shown, otherwise to the last shown of CampaignFrame or ScenarioChildFrame
+    -- if RQE.QuestsFrame:IsShown() then
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+    -- elseif RQE.CampaignFrame:IsShown() then
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    -- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- -- This ensures that WorldQuestsFrame follows ScenarioChildFrame if QuestsFrame and CampaignFrame are not shown
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    -- else
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    -- end
+	
+    -- -- Determine the last visible element for the Quests frame
+    -- -- Make sure this variable is properly defined in the scope
+    -- lastQuestElement = QuestObjectivesOrDescription
+    
+    -- -- Set the Quests frame anchor based on the last visible element
+    -- if lastQuestElement then
+        -- RQE.QuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -10)
+    -- end
+-- end
+
 function UpdateFrameAnchors()
     -- Clear all points to prevent any previous anchoring affecting the new setup
     RQE.CampaignFrame:ClearAllPoints()
     RQE.QuestsFrame:ClearAllPoints()
     RQE.WorldQuestsFrame:ClearAllPoints()
     
-    -- Determine the base anchor point depending on the ScenarioChildFrame's visibility
-    local baseAnchorFrame = RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() and RQE.ScenarioChildFrame or content
+    -- Anchor CampaignFrame
+    if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        RQE.CampaignFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
     
-    -- Anchor CampaignFrame relative to base anchor (ScenarioChildFrame or content)
-    RQE.CampaignFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
-    
-    -- Anchor QuestsFrame relative to CampaignFrame if shown, otherwise to base anchor
+    -- Anchor QuestsFrame
     if RQE.CampaignFrame:IsShown() then
         RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
     else
-        RQE.QuestsFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
+        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
     
-    -- Anchor WorldQuestsFrame relative to QuestsFrame if shown, otherwise to the last shown of CampaignFrame or ScenarioChildFrame
+    -- Anchor WorldQuestsFrame
     if RQE.QuestsFrame:IsShown() then
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-    elseif RQE.CampaignFrame:IsShown() or (RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown()) then
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.CampaignFrame:IsShown() then
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
     else
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-    
-    -- Determine the last visible element for the Quests frame
-    -- Make sure this variable is properly defined in the scope
-    lastQuestElement = QuestObjectivesOrDescription
-    
-    -- Set the Quests frame anchor based on the last visible element
-    if lastQuestElement then
-        RQE.QuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -10)
     end
 end
 
 
+-- Make the function global or move it outside where it is defined so it can be accessed by UpdateFrameAnchors
+function ResetChildFramesToDefault()
+    -- CampaignFrame positioning
+    if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        RQE.CampaignFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+    -- QuestsFrame positioning
+    if RQE.CampaignFrame:IsShown() then
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+    -- WorldQuestsFrame positioning
+    if RQE.QuestsFrame:IsShown() then
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+    elseif RQE.CampaignFrame:IsShown() then
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+end
+
+
+
+-- -- Adjust Set Point Anchor of Child Frames based on LastElements
+-- function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+    -- -- Reset positions to default first
+    -- ResetChildFramesToDefault()
+
+    -- -- Adjusting Quests child frame position based on last campaign element
+    -- if lastCampaignElement then
+        -- RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", 0, -15)
+    -- end
+
+    -- -- Adjusting WorldQuests child frame position based on last quest element
+    -- if lastQuestElement then
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -15)
+    -- elseif lastCampaignElement and not RQE.QuestsFrame:IsShown() then
+        -- -- If there are no regular quests but there are campaign quests
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", 0, -15)
+    -- elseif not lastCampaignElement and not lastQuestElement and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- -- If there are no campaign or regular quests, but ScenarioChildFrame is shown
+        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    -- end
+	
+	-- -- Adjusting WorldQuests child frame position based on last quest element
+	-- if lastQuestElement then
+		-- -- If there's a last element in the regular quests frame, anchor to it
+		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
+	-- elseif lastCampaignElement then
+		-- -- If there's no last regular quest element but a last campaign element, anchor to it
+		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+	-- elseif RQE.CampaignFrame:IsShown() and not RQE.QuestsFrame:IsShown() then
+		-- -- If the Campaign frame is shown but no regular quests are shown, anchor to the Campaign frame
+		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
+	-- elseif RQE.QuestsFrame:IsShown() and not lastQuestElement then
+		-- -- If the Quests frame is shown but there's no last element, anchor to the Quests frame
+		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
+	-- else
+		-- -- If neither Campaign nor Regular Quests frames have elements, anchor to the content
+		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+	-- end
+-- end
+
+-- Adjust Set Point Anchor of Child Frames based on LastElements
+function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+    -- Reset positions to default first
+    ResetChildFramesToDefault()
+
+    -- Adjusting Quests child frame position based on last campaign element
+    if lastCampaignElement then
+        RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+    elseif not RQE.CampaignFrame:IsShown() and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If there are no campaign quests but ScenarioChildFrame is shown
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", -40, -30)
+    elseif not RQE.CampaignFrame:IsShown() then
+        -- If there are no campaign quests, anchor QuestsFrame to content
+        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+
+    -- Adjusting WorldQuests child frame position
+    if lastQuestElement then
+        -- If there's a last element in the regular quests frame, anchor to it
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
+    elseif lastCampaignElement then
+        -- If there's no last regular quest element but a last campaign element, anchor to it
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+    elseif RQE.CampaignFrame:IsShown() and not lastCampaignElement then
+        -- If the Campaign frame is shown but there's no last campaign element, anchor to the Campaign frame
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
+    elseif RQE.QuestsFrame:IsShown() and not lastQuestElement then
+        -- If the Quests frame is shown but there's no last quest element, anchor to the Quests frame
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If the ScenarioChildFrame is shown, anchor to it
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        -- If neither Campaign nor Regular Quests frames have elements, anchor to the content
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+end
 
 
 -- Create headers for each child frame
@@ -510,55 +666,6 @@ function GetQuestType(questID)
         return "Regular Quest"
     end
 end
-
-
--- Make the function global or move it outside where it is defined so it can be accessed by UpdateFrameAnchors
-function ResetChildFramesToDefault()
-    -- Resetting child frames to default positions based on the visibility of CampaignFrame or ScenarioChildFrame
-    if RQE.CampaignFrame:IsShown() then
-        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    else
-        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-
-    if RQE.QuestsFrame:IsShown() then
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        -- This ensures that WorldQuestsFrame follows ScenarioChildFrame if QuestsFrame is not shown
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    else
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-end
-
-
--- Adjust Set Point Anchor of Child Frames based on LastElements
-function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
-    -- Reset positions to default first
-    ResetChildFramesToDefault()
-
-    -- Adjusting Quests child frame position based on last campaign element
-    if lastCampaignElement then
-        RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
-    elseif not RQE.CampaignFrame:IsShown() then
-        -- If there is no campaign quest, anchor QuestsFrame to content
-        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-
-    -- Adjusting WorldQuests child frame position based on last quest element
-    if lastQuestElement then
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
-    elseif not RQE.QuestsFrame:IsShown() and RQE.CampaignFrame:IsShown() then
-        -- If there are no regular quests but there are campaign quests
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
-    elseif not RQE.QuestsFrame:IsShown() and not RQE.CampaignFrame:IsShown() then
-        -- If there are no campaign or regular quests, anchor WorldQuestsFrame to content
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-end
-
 
 
 -- Function to determine if each quest belongs to World Quest or Non-World Quest
