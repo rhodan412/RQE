@@ -651,7 +651,8 @@ end
 -- Determine QuestType Function
 function GetQuestType(questID)
     if C_QuestLog.ReadyForTurnIn(questID) then
-        return "|cFF00FF00QUEST COMPLETE|r"  -- Green color for completed quests
+        --return "|cFF00FF00QUEST COMPLETE|r"  -- Green color for completed quests
+		return "|cFFFFA500QUEST COMPLETE|r"  -- Orange color for completed quests
     elseif C_CampaignInfo.IsCampaignQuest(questID) then
         return "Campaign"
     elseif C_QuestLog.IsWorldQuest(questID) then
@@ -682,23 +683,6 @@ function QuestType()
             regularQuestUpdated = true
         end
     end
-
-	-- -- Loop through all tracked World Quests -------- RESULTED IN ERROR PREVENTING VIEWING WQ IN RQEQUESTFRAME!!
-	-- for i = 1, numTrackedWorldQuests do
-		-- local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-		-- if questID then
-			-- if C_QuestLog.IsQuestTask(questID) then
-				-- -- Quest data is expected to be cached since it's a quest task
-				-- local questTitle = C_QuestLog.GetTitleForQuestID(questID)
-				-- -- At this point, questTitle should not be nil
-				-- -- Proceed to use questTitle for whatever you need, for example:
-				-- WQuestLevelAndName:SetText("[WQ] " .. questTitle)
-			-- else
-				-- -- Handle the case where questTitle is still nil or the data is not cached
-				-- -- You might want to defer the action until the data is available
-			-- end
-		-- end
-	-- end
 	
     -- Loop through all tracked World Quests
     for i = 1, numTrackedWorldQuests do
@@ -935,7 +919,8 @@ function UpdateRQEQuestFrame()
 				local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal", content)
 				QuestLogIndexButton.QuestLevelAndName = QuestLevelAndName
 				QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-				QuestLevelAndName:SetTextColor(209/255, 125/255, 255/255)  -- Heliotrope
+				--QuestLevelAndName:SetTextColor(209/255, 125/255, 255/255)  -- Heliotrope
+				QuestLevelAndName:SetTextColor(137/255, 95/255, 221/255)  -- Medium Purple
 				--QuestLevelAndName:SetText("[" .. info.level .. "] " .. info.title)  -- Concatenated quest level and name
 				QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
@@ -976,8 +961,9 @@ function UpdateRQEQuestFrame()
 				local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-				QuestTypeLabel:SetTextColor(153/255, 255/255, 255/255)  -- Light Blue
-				--QuestTypeLabel:SetText(questTypeText)
+				--QuestTypeLabel:SetTextColor(153/255, 255/255, 255/255)  -- Light Blue
+				QuestTypeLabel:SetTextColor(250/255, 128/255, 115/255)  -- Salmon
+
 				-- Update the quest type label text
 				QuestTypeLabel:SetText(GetQuestType(questID))
 				QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
@@ -1223,7 +1209,7 @@ end
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
     -- Define padding value
-    local padding = 25 -- Example padding value
+    local padding = 45 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
 	
     -- Hide all existing World Quest buttons first
@@ -1317,13 +1303,12 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetHeight(0)
             WQuestLevelAndName:SetJustifyH("LEFT")
             WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 70)  -- -70 for padding
+			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 65)  -- -70 for padding
             WQuestLevelAndName:SetText("[WQ] " .. questTitle)
             WQuestLogIndexButton.WQuestLevelAndName = WQuestLevelAndName
 
             -- Create QuestObjectives label
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            WQuestObjectives:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
 			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 20)  -- -20 for padding
@@ -1342,24 +1327,67 @@ function UpdateRQEWorldQuestFrame()
 					RQE:ClearWQTracking()
 				end
 			end)
-			
-            -- Create QuestObjectivesOrDescription label
-            local WQuestObjectivesOrDescription = WQuestLogIndexButton.QuestObjectivesOrDescription or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            WQuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-            WQuestObjectivesOrDescription:SetJustifyH("LEFT")
-            WQuestObjectivesOrDescription:SetJustifyV("TOP")
-            WQuestObjectivesOrDescription:SetHeight(0)
-			WQuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -30 for padding
-            WQuestObjectivesOrDescription:SetText(questObjectivesText)
-            WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
-			-- Position QuestObjectivesOrDescription based on whether WQuestObjectives has text
-			if WQuestObjectives:GetText() ~= "" then
-				WQuestObjectivesOrDescription:SetPoint("TOPLEFT", WQuestObjectives, "BOTTOMLEFT", 0, -5)
-			else
-				WQuestObjectivesOrDescription:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
+			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
+
+			-- Position WQuestLogIndexButton relative to WQuestLevelAndName
+			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
+
+			-- Function to format time left based on seconds
+			local function FormatTimeLeft(secondsLeft)
+				if not secondsLeft then return "" end
+				local days = math.floor(secondsLeft / (24 * 60 * 60))
+				local hours = math.floor((secondsLeft % (24 * 60 * 60)) / (60 * 60))
+				local minutes = math.floor((secondsLeft % (60 * 60)) / 60)
+				local seconds = secondsLeft % 60
+
+				local timeStrings = {}
+				if days > 0 then table.insert(timeStrings, days .. " days") end
+				if hours > 0 then table.insert(timeStrings, hours .. " hours") end
+				if minutes > 0 or (days == 0 and hours == 0) then
+					table.insert(timeStrings, minutes .. " min")
+				end
+				if secondsLeft < 60 then
+					table.insert(timeStrings, seconds .. " sec")
+				end
+
+				return table.concat(timeStrings, ", ")
 			end
 
+			local WQuestTimeLeft = WQuestLogIndexButton.WQuestTimeLeft or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			WQuestTimeLeft:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
+			WQuestTimeLeft:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+			WQuestTimeLeft:SetTextColor(0.98, 0.5, 0.45)  -- Set the text color to Salmon
+			WQuestTimeLeft:SetJustifyH("LEFT")
+			WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 65)
+			WQuestLogIndexButton.WQuestTimeLeft = WQuestTimeLeft
+
+			-- Get the time left for the World Quest
+			local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(questID)
+			-- Set the time left text
+			WQuestTimeLeft:SetText(FormatTimeLeft(secondsLeft))
+			WQuestTimeLeft:Show()
+			
+			-- Create QuestObjectivesOrDescription label
+			local WQuestObjectivesOrDescription = WQuestLogIndexButton.QuestObjectivesOrDescription or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			WQuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+			WQuestObjectivesOrDescription:SetJustifyH("LEFT")
+			WQuestObjectivesOrDescription:SetJustifyV("TOP")
+			WQuestObjectivesOrDescription:SetHeight(0)
+			WQuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -30 for padding
+			WQuestObjectivesOrDescription:SetText(questObjectivesText)
+			WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
+
+			-- Set position of the WQuestObjectives based on TimeLeft
+			WQuestObjectives:SetPoint("TOPLEFT", WQuestTimeLeft, "BOTTOMLEFT", 0, -5)
+			
+			-- -- Position QuestObjectivesOrDescription based on whether WQuestObjectives has text
+			-- if WQuestObjectives:GetText() ~= "" then
+				-- WQuestObjectivesOrDescription:SetPoint("TOPLEFT", WQuestObjectives, "BOTTOMLEFT", 0, -5)
+			-- else
+				-- WQuestObjectivesOrDescription:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
+			-- end
+			
 			-- Untrack World Quest
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
@@ -1368,23 +1396,18 @@ function UpdateRQEWorldQuestFrame()
 				end
 			end)
 
-        -- Positioning logic for WQuestLevelAndName
-		if i == 1 then
-			WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset)
-		else
-			local previousWQButton = RQE.WorldQuestsFrame["WQButton" .. (i-1)]
-			if previousWQButton and previousWQButton.WQuestLevelAndName then
-				WQuestLevelAndName:SetPoint("TOPLEFT", previousWQButton.WQuestLevelAndName, "BOTTOMLEFT", 0, -padding)
+			-- Positioning logic for WQuestLevelAndName
+			if i == 1 then
+				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset)
 			else
-				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
+				local previousWQButton = RQE.WorldQuestsFrame["WQButton" .. (i-1)]
+				if previousWQButton and previousWQButton.WQuestLevelAndName then
+					WQuestLevelAndName:SetPoint("TOPLEFT", previousWQButton.WQuestLevelAndName, "BOTTOMLEFT", 0, -padding)
+				else
+					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
+				end
 			end
-		end
-
-		WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
-
-        -- Position WQuestLogIndexButton relative to WQuestLevelAndName
-        WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
-
+			
             -- Show the elements
             WQuestLevelAndName:Show()
             WQuestObjectivesOrDescription:Show()
@@ -1396,7 +1419,7 @@ function UpdateRQEWorldQuestFrame()
             -- Show the button
             WQuestLogIndexButton:Show()
 			
-            lastElement = WQuestObjectivesOrDescription  -- Update the last element for next iteration
+            lastElement = WQuestObjectives  -- Update the last element for next iteration
 			
 			-- Set the mouseover tooltip for the World Quest button
 			WQuestLevelAndName:SetScript("OnEnter", function(self)
@@ -1417,17 +1440,24 @@ function UpdateRQEWorldQuestFrame()
 	
 				-- Add objectives
 				if objectivesText and objectivesText ~= "" then
-					GameTooltip:AddLine(" ")
+					--GameTooltip:AddLine(" ")
 					GameTooltip:AddLine("Objectives:")
 
 					local colorizedObjectives = colorizeObjectives(objectivesText)
 					GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 				end
 
-				-- Add rewards (you'll need to define this function according to your requirements)
+				-- Add rewards
 				GameTooltip:AddLine("Rewards: ")
-				AddQuestRewardsToTooltip(GameTooltip, questID)
+				AddQuestRewardsToTooltip(GameTooltip, questID)  -- Ensure this function is defined elsewhere in your code
 				GameTooltip:AddLine(" ")  -- Blank line
+
+				-- Add time left
+				local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
+				if timeLeftString and timeLeftString ~= "" then
+					GameTooltip:AddLine("Time Left: " .. timeLeftString, 1, 0.08, 0.58) -- Pink color
+					GameTooltip:AddLine(" ")  -- Blank line
+				end
 				
 				-- Add the quest ID
 				GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
@@ -1472,7 +1502,7 @@ function UpdateRQEWorldQuestFrame()
 				end
 			end
 	
-			WQuestLogIndexButton:SetScript("OnLeave", function(self)
+			WQuestLevelAndName:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()  -- Hide the tooltip when the mouse leaves the button
 			end)
 		
