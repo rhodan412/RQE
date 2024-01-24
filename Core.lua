@@ -205,6 +205,43 @@ local defaults = {
 -- 4. Initialization
 ---------------------------
 
+function RQE.InitializeFilterDropdown(self, level)
+    local info = UIDropDownMenu_CreateInfo()
+    info.isNotRadio = true
+    info.notCheckable = true
+
+    if level == 1 then
+        -- First-level menu items
+        info.text = "Complete Quests"
+        info.func = RQE.filterCompleteQuests  -- Link to your filter function
+        UIDropDownMenu_AddButton(info, level)
+
+        info.text = "Daily / Weekly Quests"
+        info.func = RQE.filterDailyWeeklyQuests  -- Link to your filter function
+        UIDropDownMenu_AddButton(info, level)
+
+        info.text = "Zone Quests"
+        info.func = RQE.filterZoneQuests  -- Link to your filter function
+        UIDropDownMenu_AddButton(info, level)
+
+        -- ... other first-level items ...
+
+        info.text = "Select Campaign..."
+        info.hasArrow = true  -- Important for creating a submenu
+        info.value = "campaign_submenu"  -- Used to identify this item in the next level
+        UIDropDownMenu_AddButton(info, level)
+    elseif level == 2 and UIDROPDOWNMENU_MENU_VALUE == "campaign_submenu" then
+        local campaigns = RQE.GetCampaignsFromQuestLog()
+        for campaignID, campaignName in pairs(campaigns) do
+            info.text = campaignName
+            info.func = function() RQE.filterSpecificCampaign(campaignID) end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end
+end
+
+
+
 -- Addon Initialization
 function RQE:OnInitialize()
 	-- Start the timer
@@ -269,6 +306,8 @@ function RQE:OnInitialize()
     self:RegisterChatCommand("rqe", "SlashCommand")
 	
 	self:UpdateFramePosition()
+	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
+	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 end
 
 
@@ -384,26 +423,26 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
     end
 
     if taskPOIs and currentTrackedCount < maxTracked then
-        print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
+        --print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
         for _, taskPOI in ipairs(taskPOIs) do
             local questID = taskPOI.questId
             if questID and C_QuestLog.IsWorldQuest(questID) then
                 print("Checking World QuestID: " .. questID)
                 -- Check if the quest is already tracked
 				if not trackedQuests[questID] then
-					print("Attempting to track World QuestID: " .. questID)
+					--print("Attempting to track World QuestID: " .. questID)
 					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 					trackedQuests[questID] = true  -- Mark as tracked
 					currentTrackedCount = currentTrackedCount + 1  -- Increment the count
-					print("Manual World QuestID: " .. questID .. " added to watch list.")
+					--print("Manual World QuestID: " .. questID .. " added to watch list.")
 					
 					-- Check if we've reached the maximum number of tracked quests
 					if currentTrackedCount >= maxTracked then
-						print("Reached the maximum number of tracked World Quests: " .. maxTracked)
+						--print("Reached the maximum number of tracked World Quests: " .. maxTracked)
 						break  -- Exit the loop as we've reached the limit
 					end
 				else
-                    print("Manual World QuestID: " .. questID .. " added to watch list.")
+                    --print("Manual World QuestID: " .. questID .. " added to watch list.")
                 end
             end
         end
@@ -1147,7 +1186,6 @@ end
 -- Updates the timer display
 function RQE.Timer_OnUpdate(self, elapsed)
     if not self then
-        print("RQE.Timer_OnUpdate: self is nil.")  -- Debug print
         return  -- Exit the function if self is nil
     end
 
@@ -1157,7 +1195,7 @@ function RQE.Timer_OnUpdate(self, elapsed)
     end
 
     self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
-    print("RQE.Timer_OnUpdate: timeSinceLastUpdate: ", self.timeSinceLastUpdate)  -- Debug print
+    --print("RQE.Timer_OnUpdate: timeSinceLastUpdate: ", self.timeSinceLastUpdate)  -- Debug print
 
     if self.timeSinceLastUpdate >= 1 then  -- Update the timer every second
         local timeLeft = self.endTime - GetTime()  -- Calculate the remaining time
@@ -1211,7 +1249,7 @@ function RQE.Timer_CheckTimers()
 	
     if duration and elapsed then
         local timeLeft = duration - elapsed
-        print("RQE.Timer_CheckTimers: Duration: ", duration, ", Elapsed: ", elapsed)  -- Debug print
+        --print("RQE.Timer_CheckTimers: Duration: ", duration, ", Elapsed: ", elapsed)  -- Debug print
         if timeLeft > 0 then
             RQE.Timer_Start(timeLeft)
         else
@@ -1642,6 +1680,187 @@ end
 -- function ScenarioObjectiveTracker:OnScenarioCompleted()
     -- -- Handle the scenario completion
 -- end
+
+
+-- Contain filters for the RQEQuestingFrame
+RQE.filterCompleteQuests = function()
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader and C_QuestLog.IsComplete(questInfo.questID) then
+            C_QuestLog.AddQuestWatch(questInfo.questID)
+        else
+            C_QuestLog.RemoveQuestWatch(questInfo.questID)
+        end
+    end
+end
+
+RQE.filterDailyWeeklyQuests = function()
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and (questInfo.isDaily or questInfo.isWeekly) then --and not questInfo.isHeader then
+            C_QuestLog.AddQuestWatch(questInfo.questID)
+        else
+            C_QuestLog.RemoveQuestWatch(questInfo.questID)
+        end
+    end
+end
+
+RQE.filterZoneQuests = function()
+    local currentMapID = C_Map.GetBestMapForUnit("player")
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader then
+			local questMapID = GetQuestUiMapID(questInfo.questID)
+            if questMapID == currentMapID then
+                C_QuestLog.AddQuestWatch(questInfo.questID)
+            else
+                C_QuestLog.RemoveQuestWatch(questInfo.questID)
+            end
+        end
+    end
+end
+
+
+RQE.filterZoneQuestsWithPOI = function()
+    local currentMapID = C_Map.GetBestMapForUnit("player")
+    local currentZoneName = GetRealZoneText() or ""
+    C_QuestLog.SetMapForQuestPOIs(currentMapID)
+    local poiMapID = C_QuestLog.GetMapForQuestPOIs()
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+
+    local isQuestInCurrentZone = false
+
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader then
+            local questMapID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID)
+            local onMap, hasLocalPOI = C_QuestLog.IsOnMap(questInfo.questID)
+            local isSpecialQuest = questInfo.isCampaign or questInfo.isDaily or questInfo.isWeekly or questInfo.isRepeatable
+            
+            isQuestInCurrentZone = (onMap or (poiMapID == currentMapID and hasLocalPOI)) or (questMapID == currentMapID)
+
+            print("QuestID:", questInfo.questID, "QuestMapID:", questMapID, "OnMap:", onMap, "HasLocalPOI:", hasLocalPOI, "IsSpecialQuest:", isSpecialQuest, "ZoneMatch:", isQuestInCurrentZone)
+            
+            if isQuestInCurrentZone or (isSpecialQuest and (questMapID == currentMapID or questInfo.title:find(currentZoneName))) then
+                C_QuestLog.AddQuestWatch(questInfo.questID)
+            else
+                C_QuestLog.RemoveQuestWatch(questInfo.questID)
+            end
+        end
+    end
+    print("Filtering zone quests with POIs...")
+end
+
+-- local function GetQuestCampaignInfo(questID)
+    -- local campaignID = C_CampaignInfo.GetCampaignID(questID)
+    -- if campaignID then
+        -- local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+        -- if campaignInfo then
+            -- return campaignInfo
+        -- end
+    -- end
+    -- return nil  -- This quest is not part of a campaign
+-- end
+
+-- function RQE.GetCampaignsFromQuestLog()
+    -- local campaigns = {}
+    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
+
+    -- for i = 1, numEntries do
+        -- local questInfo = C_QuestLog.GetInfo(i)
+        -- if questInfo and not questInfo.isHeader then
+            -- local campaignInfo = GetQuestCampaignInfo(questInfo.questID)
+            -- if campaignInfo and campaignInfo.campaignID then  -- Ensure campaignID is not nil
+                -- -- If this campaign is not yet in the table, add it
+                -- if not campaigns[campaignInfo.campaignID] then
+                    -- campaigns[campaignInfo.campaignID] = campaignInfo.name
+                -- end
+            -- end
+        -- end
+    -- end
+    -- return campaigns
+-- end
+
+
+
+-- function RQE.GetDynamicCampaignMenuList()
+    -- local campaigns = RQE.GetCampaignsFromQuestLog()
+    -- local campaignMenuList = {}
+
+    -- for campaignID, campaignName in pairs(campaigns) do
+        -- table.insert(campaignMenuList, {
+            -- text = campaignName,
+            -- func = function() RQE.filterSpecificCampaign(campaignID) end
+        -- })
+    -- end
+
+    -- if #campaignMenuList == 0 then
+        -- -- If there are no campaigns, add a placeholder item
+        -- table.insert(campaignMenuList, {
+            -- text = "No active campaigns",
+            -- func = function() print("No active campaigns to filter.") end,
+            -- disabled = true
+        -- })
+    -- end
+
+    -- return campaignMenuList
+-- end
+
+
+
+-- RQE.filterSpecificCampaign = function(campaignID)
+    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    -- for i = 1, numEntries do
+        -- local questInfo = C_QuestLog.GetInfo(i)
+        -- if questInfo and not questInfo.isHeader then
+            -- local questCampaignInfo = GetQuestCampaignInfo(questInfo.questID)
+            -- if questCampaignInfo and questCampaignInfo.campaignID == campaignID then
+                -- C_QuestLog.AddQuestWatch(questInfo.questID)
+            -- else
+                -- C_QuestLog.RemoveQuestWatch(questInfo.questID)
+            -- end
+        -- end
+    -- end
+    -- print("Filtering quests for campaign ID:", campaignID)
+-- end
+
+
+
+-- RQE.filterQuestlineOrTag = function(questTag)
+    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    -- for i = 1, numEntries do
+        -- local questInfo = C_QuestLog.GetInfo(i)
+        -- if questInfo and not questInfo.isHeader then
+            -- if questInfo.tags and tContains(questInfo.tags, questTag) then
+                -- C_QuestLog.AddQuestWatch(questInfo.questID)
+            -- else
+                -- C_QuestLog.RemoveQuestWatch(questInfo.questID)
+            -- end
+        -- end
+    -- end
+    -- print("Filtering quests with tag:", questTag)
+-- end
+
+
+
+-- -- Function to be called when a campaign or questline is selected
+-- function RQE.FilterCampaign(campaignID)
+    -- -- Your logic to filter and display quests for the selected campaign or questline
+    -- print("Filtering Campaign ID:", campaignID)
+-- end
+
+-- -- Function to dynamically get the list of campaigns or questlines (you need to implement this)
+-- function RQE.GetCampaigns()
+    -- -- Your logic to retrieve a list of campaigns or questlines
+    -- -- This should return a table of campaigns or questlines with 'id' and 'name'
+    -- -- Example: { {id = 1, name = "Campaign 1"}, {id = 2, name = "Campaign 2"} }
+    -- return {}
+-- end
+
+-- ... Add more filter functions as needed
 
 
 ---------------------------

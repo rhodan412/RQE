@@ -463,6 +463,59 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
     return QTMinimizeButton
 end
 
+
+-- Parent function to Create QTFilterButton for RQEQuestFrame
+function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QToriginalHeight, QTcontent, QTScrollFrame, QTslider)
+    local QTFilterButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+    QTFilterButton:SetSize(18, 18)  -- Set to your desired size
+    QTFilterButton:SetText("F")
+    RQE.QTQuestFilterButton = QTFilterButton  -- Store the reference in the RQE table
+
+    -- Position the button next to your minimize/maximize buttons
+    QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMinimizeButton, "TOPLEFT", -3, 0)
+    
+    -- Set the frame strata and level
+    QTFilterButton:SetFrameStrata("MEDIUM")
+    QTFilterButton:SetFrameLevel(3)
+
+    QTFilterButton:SetScript("OnClick", function(self, button, down)
+        print("RQE.FilterDropDownMenu:", RQE.FilterDropDownMenu)  -- Should not be nil
+		local menuItems = {
+			{ text = "Complete Quests", func = RQE.filterCompleteQuests },
+			{ text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
+			{ text = "Zone Quests", func = RQE.filterZoneQuests },
+			{ text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
+			-- {
+				-- text = "Specific Campaign",
+				-- hasArrow = true,
+				-- menuList = {
+					-- { text = "Campaign 1", func = function() RQE.filterSpecificCampaign(1) end },
+					-- { text = "Campaign 2", func = function() RQE.filterSpecificCampaign(2) end },
+					-- -- Add more campaigns here...
+				-- }
+			-- },
+			-- { text = "Specific Questline", func = RQE.filterQuestlineOrTag },
+			-- -- Add more filter options here...
+			--}
+		}
+        
+        -- Debugging: Print each menu item to ensure proper structure
+        for i, item in ipairs(menuItems) do
+            print("Item", i, ":", item.text)
+        end
+        
+        EasyMenu(menuItems, RQE.FilterDropDownMenu, "cursor", 0, 0, "MENU")
+    end)
+
+    CreateTooltip(QTFilterButton, "Filter Quests")  -- Tooltip function from your code
+    CreateBorder(QTFilterButton)  -- Border function from your code
+
+    return QTFilterButton
+end
+
+
+
+
 ---------------------------
 -- 4. Finalization
 ---------------------------
