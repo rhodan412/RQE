@@ -91,7 +91,7 @@ RQE.QTResizeButton = resizeBtn
 
 
 -- Title text in a custom header
-local header = CreateFrame("Frame", "RQEFrameHeader", RQEQuestFrame, "BackdropTemplate")
+local header = CreateFrame("Frame", "RQEQuestFrameHeader", RQEQuestFrame, "BackdropTemplate")
 header:SetHeight(30)
 header:SetBackdrop({
     bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -381,9 +381,7 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
         -- If there are no campaign quests, anchor QuestsFrame to content
         RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
-
-
-    -- Adjusting WorldQuests child frame position
+	
     if lastQuestElement then
         -- If there's a last element in the regular quests frame, anchor to it
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
@@ -732,7 +730,9 @@ function UpdateRQEQuestFrame()
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if C_CampaignInfo.IsCampaignQuest(questID) then
             campaignQuestCount = campaignQuestCount + 1
-        end
+        elseif C_QuestLog.IsWorldQuest(questID) then
+			worldQuestCounter = worldQuestCounter + 1
+		end
     end
 
     -- Calculate the number of regular quests
@@ -774,9 +774,6 @@ function UpdateRQEQuestFrame()
     -- Create a variable to hold the last QuestObjectivesOrDescription
     local lastQuestObjectivesOrDescription = nil
 
-    -- Initialize default positions
-    --RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-
 	-- Create the Set Point for the Regular Quests Child Frame
     if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
         -- If CampaignFrame is present and shown, anchor QuestsFrame to CampaignFrame
@@ -791,9 +788,7 @@ function UpdateRQEQuestFrame()
         RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
         RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
-	
-    --RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
-
+		
 	-- Create the Set Point for the World Quests Child Frame
     if RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
         -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
@@ -987,8 +982,6 @@ function UpdateRQEQuestFrame()
 				-- Update the last element tracker for the correct type
 				if isCampaignQuest then
 					lastCampaignElement = QuestObjectivesOrDescription
-				elseif isWorldQuest then
-					lastWorldQuestElement = QuestObjectivesOrDescription
 				else  -- Regular quest
 					lastQuestElement = QuestObjectivesOrDescription
 				end
@@ -1196,12 +1189,7 @@ function UpdateRQEQuestFrame()
     RQE.CampaignFrame:SetShown(campaignQuestCount > 0)
     RQE.QuestsFrame:SetShown(regularQuestCount > 0)
     RQE.WorldQuestsFrame:SetShown(worldQuestCount > 0)
-	
-	-- -- Call functions to change anchor points based on visibility of child frames
-	-- RQE.UpdateCampaignFrameAnchor()
-	-- RQE.UpdateQuestsFrameAnchor()
-	-- RQE.UpdateWorldQuestsFrameAnchor()
-	
+		
     -- After adding all quest items, update the total height of the content frame
     content:SetHeight(totalHeight)
 
@@ -1228,7 +1216,7 @@ end
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
     -- Define padding value
-    local padding = 45 -- Example padding value
+    local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
 	
     -- Hide all existing World Quest buttons first
@@ -1243,7 +1231,7 @@ function UpdateRQEWorldQuestFrame()
 
     -- Get the number of tracked World Quests
     local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
-    local lastElement
+    local lastWorldQuestElement = nil
 	
     -- Loop through each tracked World Quest
     for i = 1, numTrackedWorldQuests do
@@ -1317,12 +1305,12 @@ function UpdateRQEWorldQuestFrame()
 
             -- Create or update the quest title label
             local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            WQuestLevelAndName:SetPoint("TOP", RQE.WorldQuestsFrame, "BOTTOM", 0, -5)
+            --WQuestLevelAndName:SetPoint("TOP", RQE.WorldQuestsFrame, "BOTTOM", 0, -5)
             WQuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 			WQuestLevelAndName:SetHeight(0)
             WQuestLevelAndName:SetJustifyH("LEFT")
             WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 65)  -- -70 for padding
+			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 70)  -- -70 for padding
             WQuestLevelAndName:SetText("[WQ] " .. questTitle)
             WQuestLogIndexButton.WQuestLevelAndName = WQuestLevelAndName
 
@@ -1346,9 +1334,7 @@ function UpdateRQEWorldQuestFrame()
 					RQE:ClearWQTracking()
 				end
 			end)
-
-			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
-
+				
 			-- Position WQuestLogIndexButton relative to WQuestLevelAndName
 			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
 
@@ -1397,16 +1383,15 @@ function UpdateRQEWorldQuestFrame()
 			WQuestObjectivesOrDescription:SetText(questObjectivesText)
 			WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
+			-- Update the last element tracker for the correct type
+			if isWorldQuest then
+				lastWorldQuestElement = WQuestObjectivesOrDescription
+				print("lastWorldQuestElement is " .. lastWorldQuestElement)
+			end
+				
 			-- Set position of the WQuestObjectives based on TimeLeft
 			WQuestObjectives:SetPoint("TOPLEFT", WQuestTimeLeft, "BOTTOMLEFT", 0, -5)
-			
-			-- -- Position QuestObjectivesOrDescription based on whether WQuestObjectives has text
-			-- if WQuestObjectives:GetText() ~= "" then
-				-- WQuestObjectivesOrDescription:SetPoint("TOPLEFT", WQuestObjectives, "BOTTOMLEFT", 0, -5)
-			-- else
-				-- WQuestObjectivesOrDescription:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
-			-- end
-			
+						
 			-- Untrack World Quest
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
@@ -1417,28 +1402,33 @@ function UpdateRQEWorldQuestFrame()
 
 			-- Positioning logic for WQuestLevelAndName
 			if i == 1 then
+				-- If this is the first world quest, position it at the top left of the frame
 				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset)
 			else
-				local previousWQButton = RQE.WorldQuestsFrame["WQButton" .. (i-1)]
-				if previousWQButton and previousWQButton.WQuestLevelAndName then
-					WQuestLevelAndName:SetPoint("TOPLEFT", previousWQButton.WQuestLevelAndName, "BOTTOMLEFT", 0, -padding)
+				-- For the second and subsequent world quests, position them relative to the last world quest element
+				if lastWorldQuestElement then
+					WQuestLevelAndName:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", 0, -padding)
 				else
+					-- Fallback to the top left position if for some reason the last element doesn't exist
+					-- This should not happen if your world quest elements are handled correctly
 					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
 				end
 			end
-			
+
             -- Show the elements
             WQuestLevelAndName:Show()
             WQuestObjectivesOrDescription:Show()
             WQuestLogIndexButton:Show()
 			WQuestObjectives:Show()
 
-            lastElement = WQuestLevelAndName
+            --lastElement = WQuestLevelAndName
+			--lastWorldQuestElement = WQuestLevelAndName
 
             -- Show the button
             WQuestLogIndexButton:Show()
 			
-            lastElement = WQuestObjectives  -- Update the last element for next iteration
+            --lastElement = WQuestObjectives  -- Update the last element for next iteration
+			lastWorldQuestElement = WQuestObjectives  -- Update the last element for next iteration
 			
 			-- Set the mouseover tooltip for the World Quest button
 			WQuestLevelAndName:SetScript("OnEnter", function(self)
@@ -1578,9 +1568,7 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.scenarioTitle = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		RQE.ScenarioChildFrame.scenarioTitle:ClearAllPoints()
 		RQE.ScenarioChildFrame.scenarioTitle:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "TOPLEFT", 10, -10)
-        --RQE.ScenarioChildFrame.scenarioTitle:SetSize(380, 50) -- Adjust the size as needed
 		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 18, "THICKOUTLINE")
-        --RQE.ScenarioChildFrame.scenarioTitle:SetText("Scenario Title")
 		-- Ensure the text fits nicely and is readable
 		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyV("TOP")
@@ -1591,9 +1579,7 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.stage = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		RQE.ScenarioChildFrame.stage:ClearAllPoints()
 		RQE.ScenarioChildFrame.stage:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.scenarioTitle, "TOPLEFT", 0, -40)
-        --RQE.ScenarioChildFrame.stage:SetSize(380, 50) -- Adjust the size as needed
 		RQE.ScenarioChildFrame.stage:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
-        --RQE.ScenarioChildFrame.stage:SetText("Scenario Title")
 		-- Ensure the text fits nicely and is readable
 		RQE.ScenarioChildFrame.stage:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.stage:SetJustifyV("TOP")
@@ -1604,10 +1590,8 @@ function RQE.InitializeScenarioFrame()
         -- Create the title as a FontString below the scenarioTitle
         RQE.ScenarioChildFrame.title = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		RQE.ScenarioChildFrame.title:ClearAllPoints()
-        RQE.ScenarioChildFrame.title:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.stage, "TOPLEFT", 0, -25) -- Offset of (0, -20)
-        --RQE.ScenarioChildFrame.title:SetSize(380, 20) -- Adjust the size as needed
+        RQE.ScenarioChildFrame.title:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.stage, "TOPLEFT", 0, -25)
 		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
-        --RQE.ScenarioChildFrame.title:SetText("Initial Title")
 		RQE.ScenarioChildFrame.title:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.title:SetJustifyV("TOP")
     end
@@ -1630,7 +1614,6 @@ function RQE.InitializeScenarioFrame()
     RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 1)
 
     -- Create the FontString for the timer within the timer frame
-    --if not RQE.ScenarioChildFrame.timer then
 	RQE.ScenarioChildFrame.timer = RQE.ScenarioChildFrame.timer or RQE.ScenarioChildFrame.timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	RQE.ScenarioChildFrame.timer:SetAllPoints()
 	RQE.ScenarioChildFrame.timer:SetJustifyH("CENTER")
@@ -1647,7 +1630,6 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.body = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         RQE.ScenarioChildFrame.body:ClearAllPoints()
 		RQE.ScenarioChildFrame.body:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "BOTTOMLEFT", 10, -15)  -- Assuming the header is around 60px in height plus a 30px gap
-        --RQE.ScenarioChildFrame.body:SetSize(380, 130) -- Adjust width to allow for padding, and height as needed
 		RQE.ScenarioChildFrame.body:SetFont("Fonts\\FRIZQT__.TTF", 14, "MONOCHROME")
         RQE.ScenarioChildFrame.body:SetText("Initial Body Text")
 		RQE.ScenarioChildFrame.body:SetJustifyH("LEFT")
@@ -1668,33 +1650,13 @@ function RQE.UpdateScenarioFrame()
     -- Retrieve the timer information for the first criteria
     local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
 
-		-- -- Somewhere in your addon, when you want to start tracking a timer:
-	-- local timerIDs = { GetWorldElapsedTimers() }
-	-- for _, timerID in ipairs(timerIDs) do
-		-- local elapsed, duration, type = GetWorldElapsedTime(timerID)
-		-- -- Check if the timer is of a type you want to track
-		-- if type == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE then
-			-- -- Start your timer UI component
-			-- RQE.StartScenarioTimer(timerID, elapsed)
-			-- break
-		-- end
-	-- end
-
     -- Check if we have valid timer information
     if duration and elapsed then
         local timeLeft = duration - elapsed
         RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-        --print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
     else
         RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
-        --print("No timer info available.")  -- This will print if the timer info is not available
     end
-	
-	-- if duration and elapsed then
-		-- print("Got timer info:", duration, elapsed)  -- This will print the timer info if it exists
-	-- else
-		-- print("No timer info available.")  -- This will print if the timer info is not available
-	-- end
 
     -- Check if we have valid scenario information
     if scenarioStepInfo and type(scenarioStepInfo) == "table" then
@@ -1725,16 +1687,6 @@ function RQE.UpdateScenarioFrame()
             end
         end
 		
-		-- for criteriaIndex = 1, numCriteria do
-			-- local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(criteriaIndex))
-			-- if duration and elapsed and duration > 0 then
-				-- local timeLeft = duration - elapsed
-				-- RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-				-- print("Got timer info for criteria " .. criteriaIndex .. ": ", duration, elapsed)
-				-- break  -- Found a criteria with a timer, break the loop
-			-- end
-		-- end
-
         RQE.ScenarioChildFrame.body:SetText(criteriaText)
 
         -- Update the timer, if applicable

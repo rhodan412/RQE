@@ -563,6 +563,11 @@ function RQE.handleQuestStatusUpdate(...)
 	local currentQuestInfo = RQEDatabase[currentQuestID]
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 
+	if not RQE.QuestLinesCached then
+		RQE.RequestAndCacheQuestLines()
+		RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
+	end
+		
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)

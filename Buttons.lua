@@ -471,6 +471,9 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
     QTFilterButton:SetText("F")
     RQE.QTQuestFilterButton = QTFilterButton  -- Store the reference in the RQE table
 
+    -- Define cursorX and cursorY outside the OnClick function
+    local cursorX, cursorY
+	
     -- Position the button next to your minimize/maximize buttons
     QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMinimizeButton, "TOPLEFT", -3, 0)
     
@@ -479,39 +482,81 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
     QTFilterButton:SetFrameLevel(3)
 
     QTFilterButton:SetScript("OnClick", function(self, button, down)
-        print("RQE.FilterDropDownMenu:", RQE.FilterDropDownMenu)  -- Should not be nil
+        RQE.debugLog("RQE.FilterDropDownMenu:", RQE.FilterDropDownMenu)  -- Should not be nil
+        RQE.ScanQuestTypes()  -- Ensure quest types are up-to-date
+        
+        local questTypeMenuList = {}
+        for questType in pairs(RQE.QuestTypes) do
+            local questTypeName = RQE.GetQuestTypeName(questType)  -- You need to implement this function
+            table.insert(questTypeMenuList, {
+                text = questType .. ": " .. questTypeName,
+                func = function() RQE.filterByQuestType(questType) end,
+            })
+        end
+
+        RQE.ScanAndCacheZoneQuests()  -- Scan and cache zone quests
+        local zoneQuestMenuList = RQE.BuildZoneQuestMenuList()  -- Get the dynamically built zone quest menu list
+
+		RQE.ScanAndCacheCampaigns()
+		
+		-- Get the dynamically built campaign menu list
+		local campaignMenuList = RQE.BuildCampaignMenuList() --RQE.GetDynamicCampaignMenuList()
+		-- Print the campaign menu list for debugging
+		RQE.debugLog("Campaign Menu List: ", campaignMenuList)
+
+		-- Fetch the cursor position
+		local cursorX, cursorY = GetCursorPosition()
+		local uiScale = UIParent:GetScale()
+		cursorX, cursorY = cursorX / uiScale, cursorY / uiScale
+
 		local menuItems = {
+			{
+                text = "Camapaign Quests",
+                hasArrow = true,
+                menuList = campaignMenuList,
+			},
+			{
+				text = "Quest Line",
+				hasArrow = true,
+				menuList = RQE.BuildQuestLineMenuList()
+			},
+            {
+                text = "Quest Type",
+                hasArrow = true,
+                menuList = questTypeMenuList,
+            },
+            {
+                text = "Zone Quests",
+                hasArrow = true,
+                menuList = zoneQuestMenuList,  -- Add zone quest menu list here
+            },
 			{ text = "Complete Quests", func = RQE.filterCompleteQuests },
-			{ text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
-			{ text = "Zone Quests", func = RQE.filterZoneQuests },
-			{ text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
-			-- {
-				-- text = "Specific Campaign",
-				-- hasArrow = true,
-				-- menuList = {
-					-- { text = "Campaign 1", func = function() RQE.filterSpecificCampaign(1) end },
-					-- { text = "Campaign 2", func = function() RQE.filterSpecificCampaign(2) end },
-					-- -- Add more campaigns here...
-				-- }
-			-- },
-			-- { text = "Specific Questline", func = RQE.filterQuestlineOrTag },
+            { text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
+			-- { text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
+
 			-- -- Add more filter options here...
 			--}
 		}
-        
-        -- Debugging: Print each menu item to ensure proper structure
-        for i, item in ipairs(menuItems) do
-            print("Item", i, ":", item.text)
-        end
-        
-        EasyMenu(menuItems, RQE.FilterDropDownMenu, "cursor", 0, 0, "MENU")
-    end)
+
+		-- Set up the anchor point for the dropdown menu
+		local menuAnchor = {
+			point = "TOPLEFT", -- Point on the dropdown
+			relativeFrame = RQEQuestFrameHeader, -- Frame to anchor the dropdown to
+			relativePoint = "TOPLEFT", -- Point on RQEQuestFrame
+			offsetX = 0, -- X offset from the anchor point
+			offsetY = 0, -- Y offset from the anchor point
+		}
+
+		-- Open the dropdown menu at the specified position
+	    EasyMenu(menuItems, RQE.FilterDropDownMenu, menuAnchor.relativeFrame, menuAnchor.offsetX, menuAnchor.offsetY, "MENU", 2)
+	end)
 
     CreateTooltip(QTFilterButton, "Filter Quests")  -- Tooltip function from your code
     CreateBorder(QTFilterButton)  -- Border function from your code
 
     return QTFilterButton
 end
+
 
 
 
