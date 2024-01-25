@@ -466,7 +466,7 @@ function UpdateWorldQuestTracking(questID)
 
     if isWorldQuest and not isManuallyTracked then
         C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-        C_SuperTrack.SetSuperTrackedQuestID(questID)
+        --C_SuperTrack.SetSuperTrackedQuestID(questID)
     end
 end
 
@@ -1125,21 +1125,28 @@ end
 
 -- Function to update Coordinates display
 function RQE:UpdateCoordinates()
-	local mapID = C_Map.GetBestMapForUnit("player")
-	--UpdateWorldQuestTrackingForMap(mapID)
-				
-    local position = C_Map.GetPlayerMapPosition(mapID, "player")
-    if RQEFrame.CoordinatesText then  -- Check if CoordinatesText is initialized
-        if RQE.db.profile.showCoordinates and position then
-            local x, y = position:GetXY()
-            x = x * 100  -- converting to percentage
-            y = y * 100  -- converting to percentage
-            RQEFrame.CoordinatesText:SetText(string.format("Coordinates: %.2f, %.2f", x, y))
+    local mapID = C_Map.GetBestMapForUnit("player")
+
+    -- Check if the mapID is valid before proceeding
+    if mapID then
+        local position = C_Map.GetPlayerMapPosition(mapID, "player")
+        if RQEFrame.CoordinatesText then  -- Check if CoordinatesText is initialized
+            if RQE.db.profile.showCoordinates and position then
+                local x, y = position:GetXY()
+                x = x * 100  -- converting to percentage
+                y = y * 100  -- converting to percentage
+                RQEFrame.CoordinatesText:SetText(string.format("Coordinates: %.2f, %.2f", x, y))
+            else
+                RQEFrame.CoordinatesText:SetText("")
+            end
         else
-            RQEFrame.CoordinatesText:SetText("")
+            RQE.debugLog("RQEFrame.CoordinatesText is not initialized.")
         end
     else
-        RQE.debugLog("RQEFrame.CoordinatesText is not initialized.")
+        -- If mapID is invalid, don't try to update coordinates and clear any existing coordinate text
+        if RQEFrame.CoordinatesText then
+            RQEFrame.CoordinatesText:SetText("")
+        end
     end
 end
 
@@ -1821,6 +1828,7 @@ local function GetQuestCampaignInfo(questID)
     end
     return nil  -- This quest is not part of a campaign
 end
+
 
 function RQE.GetCampaignsFromQuestLog()
     local campaigns = {}

@@ -502,7 +502,7 @@ function RQE.handleQuestAccepted(...)
 
 		if isWorldQuest and not isManuallyTracked then
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-			C_SuperTrack.SetSuperTrackedQuestID(questID)
+			--C_SuperTrack.SetSuperTrackedQuestID(questID)
 		end
 		
 		local mapID = C_Map.GetBestMapForUnit("player")
