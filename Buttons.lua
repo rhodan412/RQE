@@ -485,18 +485,12 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
         RQE.debugLog("RQE.FilterDropDownMenu:", RQE.FilterDropDownMenu)  -- Should not be nil
         RQE.ScanQuestTypes()  -- Ensure quest types are up-to-date
         
-        local questTypeMenuList = {}
-        for questType in pairs(RQE.QuestTypes) do
-            local questTypeName = RQE.GetQuestTypeName(questType)  -- You need to implement this function
-            table.insert(questTypeMenuList, {
-                text = questType .. ": " .. questTypeName,
-                func = function() RQE.filterByQuestType(questType) end,
-            })
-        end
+        -- Build the sorted quest type menu list
+        local questTypeMenuList = RQE.BuildQuestTypeMenuList()
 
         RQE.ScanAndCacheZoneQuests()  -- Scan and cache zone quests
         local zoneQuestMenuList = RQE.BuildZoneQuestMenuList()  -- Get the dynamically built zone quest menu list
-
+		
 		RQE.ScanAndCacheCampaigns()
 		
 		-- Get the dynamically built campaign menu list
