@@ -1,14 +1,12 @@
 ## Interface: 100205
 ## Title: Rhodan's Quest Explorer
-## Author: Aurleis
+## Author: Rhodan
 ## Version: 1.5
 ## Notes: A handy tool for questing.
-## IconTexture: Interface/Icons/Wow_store
+## IconTexture: Interface\AddOns\RQE\rhodan.tga
 
 ## SavedVariables: RQEDB
 ## OptionalDeps: TomTom
-
-# Add-On is incompatible with Chat Notifications as WaypointButtons won't operate for unknown reason
 
 ## Libraries
 Libs/LibStub/LibStub.lua
@@ -30,9 +28,6 @@ Libs/AceTab-3.0/AceTab-3.0.xml
 Libs/AceTimer-3.0/AceTimer-3.0.xml
 Libs/AceBucket-3.0/AceBucket-3.0.xml
 
-# Modules
-#Modules/Blizzard_ScenarioObjectiveTracker.lua
-
 # Core Functionality
 Core.lua
 RQEMinimap.lua
@@ -50,7 +45,3 @@ RQEFrame.lua
 
 # Waypoint and Map Modules
 WaypointManager.lua
-MapPinModule.lua
-
-# Questing and Map Features
-#MapModule.lua

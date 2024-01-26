@@ -19,7 +19,7 @@ local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 -- Create a Data Broker object
 RQE.dataBroker = ldb:NewDataObject("RQE", {
     type = "launcher",
-    icon = "Interface\\Icons\\Ability_Spy",  -- Replace with your own icon
+	icon = "Interface\\Addons\\RQE\\rhodan.tga",  -- Replace with your own icon
     OnClick = function(_, button)
 		if button == "LeftButton" then
 			-- Existing code for left button click, likely toggling your main frame
@@ -51,14 +51,14 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 
 -- Create the minimap button frame
 RQE.MinimapButton = CreateFrame("Button", "MyMinimapButton", Minimap)
-RQE.MinimapButton:SetSize(31, 31)  -- Set the size of the frame
+RQE.MinimapButton:SetSize(25, 25)  -- Set the size of the frame
+
 
 
 -- Set up the texture for the button
-RQE.MinimapButton:SetNormalTexture("Interface\\ICONS\\Ability_Spy")
-RQE.MinimapButton:SetHighlightTexture("Interface\\ICONS\\Ability_Spy")
-RQE.MinimapButton:SetPushedTexture("Interface\\ICONS\\Ability_Spy")
-
+RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\rhodan")
+RQE.MinimapButton:SetHighlightTexture("Interface\\Addons\\RQE\\rhodan")
+RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\rhodan")
 
 -- Set the position of the minimap button
 RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
@@ -88,3 +88,11 @@ RQE.MinimapButton:SetScript("OnDragStop", function(self)
 end)
 
 RQE.MinimapButton:RegisterForDrag("LeftButton")
+
+-- Tooltip scripts
+RQE.MinimapButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+    GameTooltip:SetText("Rhodan's Quest Explorer", 1, 1, 1)
+    GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
+    GameTooltip:Show()
+end)
