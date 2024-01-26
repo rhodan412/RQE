@@ -68,32 +68,26 @@ RQE.UnknownButtonTooltip = function()
         local unknownQuestID = C_SuperTrack.GetSuperTrackedQuestID()
         local mapID = GetQuestUiMapID(unknownQuestID)
         if mapID == 0 then mapID = nil end
+		
+        if not RQE.x or not RQE.y and mapID then
+            -- Open the quest log details for the super tracked quest to fetch the coordinates
+            OpenQuestLogToQuestDetails(unknownQuestID)
 
-        -- Check if the world map is initially open
-        local isWorldMapOpenInitially = WorldMapFrame:IsShown()
-        
-        if not RQE.x or not RQE.y then
-            -- If coordinates are not available, simulate the click behavior
-            if mapID ~= nil and mapID ~= 0 then  -- Check if mapID is neither nil nor 0
-                C_Timer.After(0.1, function()
-                    if not isWorldMapOpenInitially then
-                        WorldMapFrame:Hide()
-                    end
+            -- Delay to allow the map to open and fetch coordinates
+            C_Timer.After(0.1, function()  -- Reduced delay to 0.05 seconds for faster response
+                -- Hide the map if it was opened by the script
+                WorldMapFrame:Hide()
 
-                    -- Update tooltip text based on new coordinates
-                    if RQE.x and RQE.y then
-                        local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.x * 100, RQE.y * 100, tostring(RQE.mapID))
-                        GameTooltip:SetText(tooltipText)
-                    else
-                        GameTooltip:SetText("")
-                    end
+                -- Update tooltip text based on new coordinates
+                if RQE.x and RQE.y then
+                    local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.x * 100, RQE.y * 100, tostring(RQE.mapID))
+                    GameTooltip:SetText(tooltipText)
+                else
+                    GameTooltip:SetText("Coordinates: Calculating...")
+                end
 
-                    GameTooltip:Show()
-                end)
-            else
-                GameTooltip:SetText("")
                 GameTooltip:Show()
-            end
+            end)
         else
             -- If coordinates are already available, just show them
             local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.x * 100, RQE.y * 100, tostring(RQE.mapID))
@@ -101,7 +95,12 @@ RQE.UnknownButtonTooltip = function()
             GameTooltip:Show()
         end
     end)
+
+    RQE.UnknownQuestButton:SetScript("OnLeave", function(self)
+        GameTooltip:Hide()
+    end)
 end
+
 
 
 -- Hide the tooltip when the mouse leaves

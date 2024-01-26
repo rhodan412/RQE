@@ -432,11 +432,9 @@ function RQE.handlePlayerEnterWorld(...)
     if isReloadingUi then
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
-			--RQE.TimerFrame:Show()
 			RQE.handleScenario()
 		else
 			RQE.ScenarioChildFrame:Hide()
-			--RQE.TimerFrame:Hide()
 			RQE.handleScenario()
 		end
     end
@@ -454,6 +452,7 @@ function RQE.handleSuperTracking(...)
 	RQE:ClearFrameData()
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+					
 	local questName
 	if questID then
 		questName = C_QuestLog.GetTitleForQuestID(questID)
@@ -502,12 +501,10 @@ function RQE.handleQuestAccepted(...)
 
 		if isWorldQuest and not isManuallyTracked then
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-			--C_SuperTrack.SetSuperTrackedQuestID(questID)
 		end
 		
 		local mapID = C_Map.GetBestMapForUnit("player")
 		UpdateWorldQuestTrackingForMap(mapID)
-		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 end
 
