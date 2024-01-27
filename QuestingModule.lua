@@ -469,6 +469,48 @@ RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
 function SortQuestsByProximity()
     -- Logic to sort quests based on proximity
     C_QuestLog.SortQuestWatches()
+	RQE.SortWorldQuestsByProximity()
+end
+
+
+-- Function to Get Distances for Sort Quests
+local function GetDistance(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+
+-- Function to Sort World Quests by Proximity
+function RQE.SortWorldQuestsByProximity()
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local playerPosition = C_Map.GetPlayerMapPosition(mapID, "player")
+    if not playerPosition then return end
+
+    local playerX, playerY = playerPosition:GetXY()
+    local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+
+    -- Calculate distances and store them with the quest info
+    for i, quest in ipairs(worldQuests) do
+        if quest.x and quest.y then
+            quest.distance = GetDistance(playerX, playerY, quest.x, quest.y)
+        else
+            quest.distance = math.huge
+        end
+    end
+
+    -- Sort the quests by distance
+    table.sort(worldQuests, function(a, b)
+        return a.distance < b.distance
+    end)
+
+    return worldQuests
+end
+
+-- Example usage
+local sortedQuests = RQE.SortWorldQuestsByProximity()
+for _, quest in ipairs(sortedQuests) do
+    print("Quest ID:", quest.questId, "Distance:", quest.distance)
 end
 
 

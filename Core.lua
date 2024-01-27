@@ -416,7 +416,7 @@ end
 function UpdateWorldQuestTrackingForMap(uiMapID)
     local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
     local trackedQuests = {}
-    local maxTracked = 1
+    local maxTracked = 5
     local currentTrackedCount = 0  -- Initialize the counter for tracked quests
 
     -- Retrieve the currently tracked quests to avoid duplicates
@@ -1575,6 +1575,13 @@ end
 -- Register the slash command
 RQE:RegisterChatCommand("rqe", "SlashCommand")
 
+-- This function will clear the WQ Tracking for a specific quest
+function RQE:ClearSpecificWQTracking(questID)
+    if C_QuestLog.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
+        C_QuestLog.RemoveWorldQuestWatch(questID)
+    end
+end
+
 
 -- This function will clear the WQ Tracking and reset it to clear Completed Quests
 function RQE:ClearWQTracking()
@@ -1981,7 +1988,7 @@ function RQE.filterByQuestLine(questLineID)
     for i = numQuestWatches, 1, -1 do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if not questIDSet[questID] then
-            C_QuestLog.RemoveQuestWatch(questID)
+            -- -- --C_QuestLog.RemoveQuestWatch(questID)
         end
     end
 
@@ -2085,6 +2092,46 @@ function RQE.BuildQuestTypeMenuList()
     return questTypeMenuList
 end
 
+-- Ensure the table exists
+RQE.savedWorldQuestWatches = RQE.savedWorldQuestWatches or {}
+
+-- Function to save the currently watched world quests
+function RQE:SaveWorldQuestWatches()
+    wipe(RQE.savedWorldQuestWatches) -- Clear the existing table
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID then
+            RQE.savedWorldQuestWatches[questID] = true
+            print("Saving World Quest" .. questID)
+        end
+    end
+    print("World Quest Saving complete")
+end
+
+-- Function to restore saved watched world quests
+function RQE:RestoreSavedWorldQuestWatches()
+    local delay = 1 -- Delay in seconds
+    for questID, _ in pairs(RQE.savedWorldQuestWatches) do
+        if C_QuestLog.IsWorldQuest(questID) then
+            C_Timer.After(delay, function()
+                if not C_QuestLog.GetQuestWatchType(questID) then
+                    C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+                    print("Restoring World Quest" .. questID)
+                else
+                    print("World Quest" .. questID .. " is already being watched.")
+                end
+            end)
+            delay = delay + 1 -- Increase delay for the next quest to prevent throttling
+        else
+            print("Quest ID" .. questID .. " is no longer a valid world quest.")
+        end
+    end
+    -- Clear the saved world quest watches after a delay
+    C_Timer.After(delay, function()
+        wipe(RQE.savedWorldQuestWatches)
+        print("World Quest Restoration complete")
+    end)
+end
 
 
 ---------------------------

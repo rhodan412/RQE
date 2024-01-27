@@ -36,7 +36,7 @@ local Frame = CreateFrame("Frame")
 local function HideObjectiveTracker()
     if ObjectiveTrackerFrame:IsShown() then
         --RQE:ClearFrameData() -- clears frame data of first super tracked quest if super track done right after log in. commenting this out corrects that
-        ObjectiveTrackerFrame:Hide()
+        --ObjectiveTrackerFrame:Hide()
     end
 end
 
@@ -49,6 +49,8 @@ end
 local eventsToRegister = {
 	"ADDON_LOADED",
 	"BAG_UPDATE_COOLDOWN",
+	"CLIENT_SCENE_CLOSED",
+	"CLIENT_SCENE_OPENED",
 	"SUPER_TRACKING_CHANGED",
 	"QUEST_CURRENCY_LOOT_RECEIVED",
 	"QUEST_LOOT_RECEIVED",
@@ -96,6 +98,8 @@ local function HandleEvents(frame, event, ...)
     local handlers = {
 		ADDON_LOADED = RQE.handleAddonLoaded,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
+		CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,
+		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
 		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
 		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
@@ -568,8 +572,9 @@ function RQE.handleQuestStatusUpdate(...)
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)
-	
-	RQE:ClearWQTracking()
+
+	--RQE:ClearWQTracking()
+	QuestType()
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
@@ -585,14 +590,38 @@ function RQE.handleQuestComplete(...)
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end
-		
+
+
+-- Handles the Saving of World Quests
+function RQE.HandleClientSceneOpened()
+    RQE:SaveWorldQuestWatches()  -- Save the watch list when a scene is opened
+end
+
+-- Handles the Restoration of World Quests
+function RQE.HandleClientSceneClosed()
+    RQE.isRestoringWorldQuests = true
+    C_Timer.After(1, function()
+        RQE:RestoreSavedWorldQuestWatches()
+        -- Set isRestoringWorldQuests back to false after all quests are restored
+        C_Timer.After(2, function() -- adjust the delay as needed
+            RQE.isRestoringWorldQuests = false
+        end)
+    end)
+end
+
+
 		
 -- Handling QUEST_REMOVED event
-function RQE.handleQuestRemoved(...)
+function RQE.handleQuestRemoved(questID)
+    if questID and C_QuestLog.IsWorldQuest(questID) then
+        -- Only clear tracking if the removed quest is a World Quest
+        RQE:ClearSpecificWQTracking(questID)
+    end
+
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
-	RQE:ClearWQTracking()
+	--RQE:ClearWQTracking()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end
@@ -626,8 +655,15 @@ end
 -- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
 function RQE.handleQuestWatchListChanged(...)
 	local questID, added = ...
+	
+    if RQE.isRestoringWorldQuests then
+        -- Skip clearing WQ tracking if we are in the process of restoring world quests
+        return
+    end
+	
 	RQE:ClearWQTracking()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	
 	local watchType
 	if currentQuestID then
 		watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -644,7 +680,7 @@ function RQE.handleQuestWatchListChanged(...)
 				end
 			else
 				-- World Quest is removed from the Watch List
-				RQE:ClearWQTracking()
+				--RQE:ClearWQTracking()
 			end
 		else
 		-- Handle regular quests
@@ -656,7 +692,7 @@ function RQE.handleQuestWatchListChanged(...)
 		end
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
-	RQE:ClearWQTracking()
+	--QuestType()
 	UpdateRQEQuestFrame()
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	SortQuestsByProximity()
