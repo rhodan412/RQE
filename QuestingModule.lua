@@ -4,6 +4,7 @@
 -- Initialize RQE global table
 RQE = RQE or {}
 RQE.modules = RQE.modules or {}
+RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
@@ -481,37 +482,39 @@ local function GetDistance(x1, y1, x2, y2)
 end
 
 
--- Function to Sort World Quests by Proximity
+-- Function to Sort World Quests by the squared distance
 function RQE.SortWorldQuestsByProximity()
     local mapID = C_Map.GetBestMapForUnit("player")
-    local playerPosition = C_Map.GetPlayerMapPosition(mapID, "player")
-    if not playerPosition then return end
-
-    local playerX, playerY = playerPosition:GetXY()
-    local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
-
-    -- Calculate distances and store them with the quest info
-    for i, quest in ipairs(worldQuests) do
-        if quest.x and quest.y then
-            quest.distance = GetDistance(playerX, playerY, quest.x, quest.y)
-        else
-            quest.distance = math.huge
-        end
+    
+    -- Check if mapID is valid
+    if not mapID then
+        RQE.warningLog("Invalid mapID for player location.")
+        return nil
     end
 
-    -- Sort the quests by distance
+    local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+
+    -- Add squared distance to the quest info
+    for i, quest in ipairs(worldQuests) do
+        local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(quest.questId)
+        quest.distanceSq = onContinent and distanceSq or math.huge  -- Use math.huge for quests on different continents
+    end
+
+    -- Sort the quests by squared distance
     table.sort(worldQuests, function(a, b)
-        return a.distance < b.distance
+        return a.distanceSq < b.distanceSq
     end)
 
     return worldQuests
 end
 
--- Example usage
-local sortedQuests = RQE.SortWorldQuestsByProximity()
-for _, quest in ipairs(sortedQuests) do
-    print("Quest ID:", quest.questId, "Distance:", quest.distance)
-end
+
+
+-- -- Example usage
+-- local sortedQuests = RQE.SortWorldQuestsByProximity()
+-- for _, quest in ipairs(sortedQuests) do
+    -- print("Quest ID:", quest.questId, "Distance:", quest.distance)
+-- end
 
 
 -- Define the function to save frame position
@@ -1255,6 +1258,7 @@ function UpdateRQEQuestFrame()
 end
 
 
+
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
     -- Define padding value
@@ -1391,7 +1395,7 @@ function UpdateRQEWorldQuestFrame()
 
 			-- Function to format time left based on seconds
 			local function FormatTimeLeft(secondsLeft)
-				if not secondsLeft then return "" end
+				if not secondsLeft then return "No time left info" end
 				local days = math.floor(secondsLeft / (24 * 60 * 60))
 				local hours = math.floor((secondsLeft % (24 * 60 * 60)) / (60 * 60))
 				local minutes = math.floor((secondsLeft % (60 * 60)) / 60)
@@ -1409,21 +1413,42 @@ function UpdateRQEWorldQuestFrame()
 
 				return table.concat(timeStrings, ", ")
 			end
-
+		
 			local WQuestTimeLeft = WQuestLogIndexButton.WQuestTimeLeft or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			WQuestTimeLeft:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
 			WQuestTimeLeft:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQuestTimeLeft:SetTextColor(0.98, 0.5, 0.45)  -- Set the text color to Salmon
 			WQuestTimeLeft:SetJustifyH("LEFT")
-			WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 65)
+			WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 45)
 			WQuestLogIndexButton.WQuestTimeLeft = WQuestTimeLeft
-
+	
 			-- Get the time left for the World Quest
 			local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(questID)
-			-- Set the time left text
-			WQuestTimeLeft:SetText(FormatTimeLeft(secondsLeft))
+			local timeLeftString = FormatTimeLeft(secondsLeft)  -- Ensure it always returns a string
+			WQuestTimeLeft:SetText(timeLeftString)
 			WQuestTimeLeft:Show()
 			
+			-- Inside your loop for updating World Quest frames:
+			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			print("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
+			local questDistanceText = "Distance: N/A"  -- Default text if distance is not available
+
+			if distanceSq then  -- This condition now checks only for a valid distanceSq value
+				local distance = math.sqrt(distanceSq)
+				questDistanceText = string.format("Distance: %.2f", distance)
+				print("DEBUG: questDistance is " .. questDistanceText .. " for questID " .. questID)
+			end
+
+			-- Create or update the distance label
+			local WQuestDistance = WQuestLogIndexButton.WQuestDistance or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			WQuestDistance:SetPoint("TOPLEFT", WQuestTimeLeft, "BOTTOMLEFT", 0, -5)
+			WQuestDistance:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+			WQuestDistance:SetJustifyH("LEFT")
+			WQuestDistance:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 65)
+			WQuestDistance:SetText(questDistanceText)
+			WQuestLogIndexButton.WQuestDistance = WQuestDistance
+			WQuestDistance:Show()
+
 			-- Create QuestObjectivesOrDescription label
 			local WQuestObjectivesOrDescription = WQuestLogIndexButton.QuestObjectivesOrDescription or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			WQuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
@@ -1441,7 +1466,7 @@ function UpdateRQEWorldQuestFrame()
 			end
 				
 			-- Set position of the WQuestObjectives based on TimeLeft
-			WQuestObjectives:SetPoint("TOPLEFT", WQuestTimeLeft, "BOTTOMLEFT", 0, -5)
+			WQuestObjectives:SetPoint("TOPLEFT", WQuestDistance, "BOTTOMLEFT", 0, -5)
 						
 			-- Untrack World Quest
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
