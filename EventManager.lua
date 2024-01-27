@@ -24,6 +24,7 @@ RQE.db.profile = RQE.db.profile or {}
 
 RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
+RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQEDatabase = RQEDatabase or {}
 
 ---------------------------
@@ -556,29 +557,51 @@ end
 
 -- Handling multiple quest related events to update the main frame
 function RQE.handleQuestStatusUpdate(...)
+    -- Attempt to fetch the current super-tracked quest ID
+    local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    -- Fetch and update world quest coordinates
+    local mapID = C_Map.GetBestMapForUnit("player")
+    if mapID then
+        local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+        for _, questInfo in ipairs(worldQuests) do
+            if questInfo and questInfo.questId and questInfo.x and questInfo.y then
+                RQE.WorldQuestsInfo[questInfo.questId] = { x = questInfo.x, y = questInfo.y }
+                print("DEBUG: QuestID " .. questInfo.questId .. " has coordinates: " .. questInfo.x .. ", " .. questInfo.y)
+            else
+                print("DEBUG: QuestID " .. (questInfo and questInfo.questId or "nil") .. " has no coordinates")
+            end
+        end
+    end
 	
-	-- Attempt to fetch the current super-tracked quest ID
-	local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- Cache quest lines if not already cached
+    if not RQE.QuestLinesCached then
+        RQE.RequestAndCacheQuestLines()
+        RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
+    end
 
-	-- Attempt to fetch other necessary information using the currentQuestID
-	local currentQuestInfo = RQEDatabase[currentQuestID]
-	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+    -- Hide the default objective tracker
+    C_Timer.After(0.5, function()
+        HideObjectiveTracker()
+    end)
 
-	if not RQE.QuestLinesCached then
-		RQE.RequestAndCacheQuestLines()
-		RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
-	end
-		
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-	end)
+    -- Update custom quest frame information
+    QuestType()
+    UpdateRQEQuestFrame()
+    SortQuestsByProximity()
 
-	--RQE:ClearWQTracking()
-	QuestType()
-	UpdateRQEQuestFrame()
-	SortQuestsByProximity()
-	UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+    -- Fetch other necessary information using the currentQuestID if needed
+    local currentQuestInfo = RQEDatabase[currentQuestID]
+    local StepsText, CoordsText, MapIDs
+    if currentQuestInfo then
+        -- Assuming PrintQuestStepsToChat exists and returns these values
+        StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
+    end
+
+    -- Update the main frame with the fetched quest info
+    UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 end
+
 	
 
 -- Handling QUEST_COMPLETE event
