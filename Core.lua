@@ -2102,10 +2102,10 @@ function RQE:SaveWorldQuestWatches()
         local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
         if questID then
             RQE.savedWorldQuestWatches[questID] = true
-            print("Saving World Quest" .. questID)
+            --print("Saving World Quest" .. questID)
         end
     end
-    print("World Quest Saving complete")
+    --print("World Quest Saving complete")
 end
 
 -- Function to restore saved watched world quests
@@ -2116,14 +2116,14 @@ function RQE:RestoreSavedWorldQuestWatches()
             C_Timer.After(delay, function()
                 if not C_QuestLog.GetQuestWatchType(questID) then
                     C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-                    print("Restoring World Quest" .. questID)
+                    --print("Restoring World Quest" .. questID)
                 else
-                    print("World Quest" .. questID .. " is already being watched.")
+                    --print("World Quest" .. questID .. " is already being watched.")
                 end
             end)
             delay = delay + 1 -- Increase delay for the next quest to prevent throttling
         else
-            print("Quest ID" .. questID .. " is no longer a valid world quest.")
+            --print("Quest ID" .. questID .. " is no longer a valid world quest.")
         end
     end
     -- Clear the saved world quest watches after a delay
