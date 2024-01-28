@@ -124,7 +124,6 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
-		--QUEST_DATA_LOAD_RESULT = RQE.handleQuestDataLoad,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
@@ -256,23 +255,7 @@ function RQE.handleTimerStop(self, event, ...)
 	--RQE.Timer_CheckTimers(timerID)
 end
 
-
--- Handling for QUEST_DATA_LOAD_RESULT
-function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-	end)
-
-	local questID, added = ...
-	local watchType = C_QuestLog.GetQuestWatchType(questID)
-
-	-- Check if auto-tracking of quest progress is enabled and call the function
-	if questID and added and RQE.db.profile.autoTrackProgress then
-		AutoWatchQuestsWithProgress()
-		SortQuestsByProximity()
-	end
-end
-		
+	
 
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving(...)
@@ -544,11 +527,9 @@ function RQE.handleZoneChange(...)
 		
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
-			--RQE.TimerFrame:Show()
 			RQE.handleScenario()
 		else
 			RQE.ScenarioChildFrame:Hide()
-			--RQE.TimerFrame:Hide()
 			RQE.handleScenario()
 		end
 	end)
@@ -560,19 +541,19 @@ function RQE.handleQuestStatusUpdate(...)
     -- Attempt to fetch the current super-tracked quest ID
     local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-    -- Fetch and update world quest coordinates
-    local mapID = C_Map.GetBestMapForUnit("player")
-    if mapID then
-        local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
-        for _, questInfo in ipairs(worldQuests) do
-            if questInfo and questInfo.questId and questInfo.x and questInfo.y then
-                RQE.WorldQuestsInfo[questInfo.questId] = { x = questInfo.x, y = questInfo.y }
-                print("DEBUG: QuestID " .. questInfo.questId .. " has coordinates: " .. questInfo.x .. ", " .. questInfo.y)
-            else
-                print("DEBUG: QuestID " .. (questInfo and questInfo.questId or "nil") .. " has no coordinates")
-            end
-        end
-    end
+    -- -- Fetch and update world quest coordinates
+    -- local mapID = C_Map.GetBestMapForUnit("player")
+    -- if mapID then
+        -- local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
+        -- for _, questInfo in ipairs(worldQuests) do
+            -- if questInfo and questInfo.questId and questInfo.x and questInfo.y then
+                -- RQE.WorldQuestsInfo[questInfo.questId] = { x = questInfo.x, y = questInfo.y }
+                -- print("DEBUG: QuestID " .. questInfo.questId .. " has coordinates: " .. questInfo.x .. ", " .. questInfo.y)
+            -- else
+                -- print("DEBUG: QuestID " .. (questInfo and questInfo.questId or "nil") .. " has no coordinates")
+            -- end
+        -- end
+    -- end
 	
     -- Cache quest lines if not already cached
     if not RQE.QuestLinesCached then

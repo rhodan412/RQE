@@ -470,51 +470,38 @@ RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
 function SortQuestsByProximity()
     -- Logic to sort quests based on proximity
     C_QuestLog.SortQuestWatches()
-	RQE.SortWorldQuestsByProximity()
+	GatherAndSortWorldQuestsByProximity()
+	-- local sortedQuests = RQE.SortWorldQuestsByProximity()
+	-- for _, quest in ipairs(sortedQuests) do
+		-- print("Quest ID:", quest.questId, "Distance:", quest.distance)
+	-- end
 end
 
 
--- Function to Get Distances for Sort Quests
-local function GetDistance(x1, y1, x2, y2)
-    local dx = x2 - x1
-    local dy = y2 - y1
-    return math.sqrt(dx * dx + dy * dy)
-end
+-- -- Function to Get Distances for Sort Quests
+-- local function GetDistance(x1, y1, x2, y2)
+    -- local dx = x2 - x1
+    -- local dy = y2 - y1
+    -- return math.sqrt(dx * dx + dy * dy)
+-- end
 
 
--- Function to Sort World Quests by the squared distance
-function RQE.SortWorldQuestsByProximity()
-    local mapID = C_Map.GetBestMapForUnit("player")
-    
-    -- Check if mapID is valid
-    if not mapID then
-        RQE.warningLog("Invalid mapID for player location.")
-        return nil
+-- Function to gather and sort World Quests by proximity
+function GatherAndSortWorldQuestsByProximity()
+    local worldQuests = {}
+    local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+
+    for i = 1, numTrackedWorldQuests do
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID and C_QuestLog.IsWorldQuest(questID) then
+            local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+            table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge })
+        end
     end
 
-    local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
-
-    -- Add squared distance to the quest info
-    for i, quest in ipairs(worldQuests) do
-        local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(quest.questId)
-        quest.distanceSq = onContinent and distanceSq or math.huge  -- Use math.huge for quests on different continents
-    end
-
-    -- Sort the quests by squared distance
-    table.sort(worldQuests, function(a, b)
-        return a.distanceSq < b.distanceSq
-    end)
-
+    table.sort(worldQuests, function(a, b) return a.distanceSq < b.distanceSq end)
     return worldQuests
 end
-
-
-
--- -- Example usage
--- local sortedQuests = RQE.SortWorldQuestsByProximity()
--- for _, quest in ipairs(sortedQuests) do
-    -- print("Quest ID:", quest.questId, "Distance:", quest.distance)
--- end
 
 
 -- Define the function to save frame position
@@ -1264,6 +1251,7 @@ function UpdateRQEWorldQuestFrame()
     -- Define padding value
     local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
+	local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
 	
     -- Hide all existing World Quest buttons first
     for i = 1, 50 do -- Assuming you won't have more than 50 World Quests tracked at once
@@ -1278,30 +1266,36 @@ function UpdateRQEWorldQuestFrame()
     -- Get the number of tracked World Quests
     local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
     local lastWorldQuestElement = nil
+	local usedQuestIDs = {}  -- Table to keep track of used quest IDs
 	
     -- Loop through each tracked World Quest
-    for i = 1, numTrackedWorldQuests do
-        -- Get the quest ID of the tracked World Quest
-        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+	print("Number of sorted quests: ", #sortedWorldQuests)
+    for i, questInfo in ipairs(sortedWorldQuests) do
+		print("Sorted quest " .. i .. ": ID " .. questInfo.questID)
+        local questID = questInfo.questID
 			
-        if questID and C_QuestLog.IsWorldQuest(questID) then
-            -- Get the quest title and other necessary details
-            local questTitle = C_QuestLog.GetTitleForQuestID(questID)
-            -- Create or reuse the World Quest Log Index Button
-            local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. i] or CreateFrame("Button", "WQButton" .. i, RQE.WorldQuestsFrame)
-            WQuestLogIndexButton:SetSize(35, 35)
+		-- Define WQuestLogIndexButton outside the if block
+		local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
 
-			-- Create or update the background texture
-			local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
-			WQbg = bg
-			WQbg:SetAllPoints()
-			if isSuperTracked then
-				bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-			else
-				bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+		if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
+			usedQuestIDs[questID] = true
+
+			if not WQuestLogIndexButton then
+				WQuestLogIndexButton = CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
+				WQuestLogIndexButton:SetSize(35, 35)
+
+				-- Create or update the background texture
+				local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
+				WQbg = bg
+				WQbg:SetAllPoints()
+				if isSuperTracked then
+					bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+				else
+					bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+				end
+				WQuestLogIndexButton.bg = WQbg  -- Save for future reference
 			end
-			WQuestLogIndexButton.bg = WQbg  -- Save for future reference
-
+			
             -- Create or update the number label
             local WQnumber = WQuestLogIndexButton.number or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
             WQnumber:SetPoint("CENTER", WQuestLogIndexButton, "CENTER")
@@ -1476,6 +1470,16 @@ function UpdateRQEWorldQuestFrame()
 				end
 			end)
 
+			-- -- Positioning logic for WQuestLevelAndName
+			-- if i == 1 then
+				-- WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset)
+			-- else
+				-- local previousButton = RQE.WorldQuestsFrame["WQButton" .. sortedWorldQuests[i-1].questID]
+				-- if previousButton then
+					-- WQuestLevelAndName:SetPoint("TOPLEFT", previousButton.WQuestLevelAndName, "BOTTOMLEFT", 0, -padding)
+				-- end
+			-- end
+
 			-- Positioning logic for WQuestLevelAndName
 			if i == 1 then
 				-- If this is the first world quest, position it at the top left of the frame
@@ -1490,18 +1494,12 @@ function UpdateRQEWorldQuestFrame()
 					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
 				end
 			end
-
+			
             -- Show the elements
             WQuestLevelAndName:Show()
             WQuestObjectivesOrDescription:Show()
             WQuestLogIndexButton:Show()
 			WQuestObjectives:Show()
-
-            --lastElement = WQuestLevelAndName
-			--lastWorldQuestElement = WQuestLevelAndName
-
-            -- Show the button
-            WQuestLogIndexButton:Show()
 			
             --lastElement = WQuestObjectives  -- Update the last element for next iteration
 			lastWorldQuestElement = WQuestObjectives  -- Update the last element for next iteration
@@ -1586,6 +1584,7 @@ function UpdateRQEWorldQuestFrame()
 					end
 				end
 			end
+			print("Created button for quest ID: ", questID)
 	
 			WQuestLevelAndName:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()  -- Hide the tooltip when the mouse leaves the button
@@ -1595,9 +1594,24 @@ function UpdateRQEWorldQuestFrame()
             RQE.WorldQuestsFrame["WQButton" .. i] = WQuestLogIndexButton
 
 			-- Adjust RQE.WorldQuestsFrame size based on the number of buttons
-			if lastElement then
-				local newHeight = lastElement:GetBottom() - RQE.WorldQuestsFrame:GetTop() - padding
-				RQE.WorldQuestsFrame:SetHeight(math.abs(newHeight))
+			if lastWorldQuestElement and lastWorldQuestElement:IsShown() then
+				local bottomPosition = lastWorldQuestElement:GetBottom()
+				if bottomPosition then
+					local topPosition = RQE.WorldQuestsFrame:GetTop()
+					if topPosition then
+						local newHeight = bottomPosition - topPosition - padding
+						RQE.WorldQuestsFrame:SetHeight(math.abs(newHeight))
+						-- After the loop, check the final height of the frame
+						print("Final frame height: ", RQE.WorldQuestsFrame:GetHeight())
+					else
+						print("Error: RQE.WorldQuestsFrame top position is not available.")
+					end
+				else
+					-- Handle case where bottom position is not available
+					print("Error: Unable to get the bottom position of the last world quest element.")
+				end
+			else
+				print("Error: lastWorldQuestElement is not visible or does not exist.")
 			end
         end
     end
