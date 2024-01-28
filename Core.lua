@@ -316,6 +316,42 @@ function RQE:OnInitialize()
 	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 end
 
+-- Function that saves data of the Super Tracked Quest
+function RQE.SaveSuperTrackData()
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	
+    if questID then
+        local playerMapID = C_Map.GetBestMapForUnit("player")
+        local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
+        local questTitle = C_QuestLog.GetTitleForQuestID(questID)
+        local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+        local posX, posY
+
+        if isWorldQuest then
+			print("Is a World Quest")
+            posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+        else
+			print("Is NOT a World Quest")
+			posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+        end
+
+        RQE.superX = posX
+        RQE.superY = posY
+        RQE.mapID = mapID
+        RQE.superQuestID = questID
+        RQE.superQuestTitle = questTitle
+
+		print("QuestID: " .. RQE.superQuestID)
+		print("Quest Title: " .. RQE.superQuestTitle)
+		print("MapID: " .. tostring(RQE.mapID))
+        print("xPos: " .. tostring(RQE.superX))
+        print("yPos: " .. tostring(RQE.superY))
+		
+        -- Optional: Return the values for immediate use
+        return posX, posY, mapID, questID, questTitle
+    end
+end
+
 
 -- Function controls the restoration of the quest that is super tracked to the RQEFrame
 function RQE:HandleSuperTrackedQuestUpdate()
