@@ -65,16 +65,16 @@ RQE.UnknownButtonTooltip = function()
     RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
-        local unknownQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-        local mapID = GetQuestUiMapID(unknownQuestID)
+        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+        local mapID = GetQuestUiMapID(questID)
         if mapID == 0 then mapID = nil end
 		
         if not RQE.x or not RQE.y and mapID then
             -- Open the quest log details for the super tracked quest to fetch the coordinates
-            OpenQuestLogToQuestDetails(unknownQuestID)
+            OpenQuestLogToQuestDetails(questID)
 
             -- Delay to allow the map to open and fetch coordinates
-            C_Timer.After(0.1, function()  -- Reduced delay to 0.05 seconds for faster response
+            C_Timer.After(0.5, function()  -- Reduced delay to 0.05 seconds for faster response
                 -- Hide the map if it was opened by the script
                 WorldMapFrame:Hide()
 

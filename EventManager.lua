@@ -37,7 +37,7 @@ local Frame = CreateFrame("Frame")
 local function HideObjectiveTracker()
     if ObjectiveTrackerFrame:IsShown() then
         --RQE:ClearFrameData() -- clears frame data of first super tracked quest if super track done right after log in. commenting this out corrects that
-        --ObjectiveTrackerFrame:Hide()
+        ObjectiveTrackerFrame:Hide()
     end
 end
 
@@ -255,7 +255,23 @@ function RQE.handleTimerStop(self, event, ...)
 	--RQE.Timer_CheckTimers(timerID)
 end
 
-	
+
+-- Handling for QUEST_DATA_LOAD_RESULT
+function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
+
+	local questID, added = ...
+	local watchType = C_QuestLog.GetQuestWatchType(questID)
+
+	-- Check if auto-tracking of quest progress is enabled and call the function
+	if questID and added and RQE.db.profile.autoTrackProgress then
+		AutoWatchQuestsWithProgress()
+		SortQuestsByProximity()
+	end
+end
+		
 
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving(...)
@@ -527,9 +543,11 @@ function RQE.handleZoneChange(...)
 		
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
+			--RQE.TimerFrame:Show()
 			RQE.handleScenario()
 		else
 			RQE.ScenarioChildFrame:Hide()
+			--RQE.TimerFrame:Hide()
 			RQE.handleScenario()
 		end
 	end)
@@ -538,51 +556,28 @@ end
 
 -- Handling multiple quest related events to update the main frame
 function RQE.handleQuestStatusUpdate(...)
-    -- Attempt to fetch the current super-tracked quest ID
-    local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-    -- -- Fetch and update world quest coordinates
-    -- local mapID = C_Map.GetBestMapForUnit("player")
-    -- if mapID then
-        -- local worldQuests = C_TaskQuest.GetQuestsForPlayerByMapID(mapID)
-        -- for _, questInfo in ipairs(worldQuests) do
-            -- if questInfo and questInfo.questId and questInfo.x and questInfo.y then
-                -- RQE.WorldQuestsInfo[questInfo.questId] = { x = questInfo.x, y = questInfo.y }
-                -- print("DEBUG: QuestID " .. questInfo.questId .. " has coordinates: " .. questInfo.x .. ", " .. questInfo.y)
-            -- else
-                -- print("DEBUG: QuestID " .. (questInfo and questInfo.questId or "nil") .. " has no coordinates")
-            -- end
-        -- end
-    -- end
 	
-    -- Cache quest lines if not already cached
-    if not RQE.QuestLinesCached then
-        RQE.RequestAndCacheQuestLines()
-        RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
-    end
+	-- Attempt to fetch the current super-tracked quest ID
+	local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-    -- Hide the default objective tracker
-    C_Timer.After(0.5, function()
-        HideObjectiveTracker()
-    end)
+	-- Attempt to fetch other necessary information using the currentQuestID
+	local currentQuestInfo = RQEDatabase[currentQuestID]
+	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 
-    -- Update custom quest frame information
-    QuestType()
-    UpdateRQEQuestFrame()
-    SortQuestsByProximity()
-
-    -- Fetch other necessary information using the currentQuestID if needed
-    local currentQuestInfo = RQEDatabase[currentQuestID]
-    local StepsText, CoordsText, MapIDs
-    if currentQuestInfo then
-        -- Assuming PrintQuestStepsToChat exists and returns these values
-        StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-    end
-
-    -- Update the main frame with the fetched quest info
-    UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+	if not RQE.QuestLinesCached then
+		RQE.RequestAndCacheQuestLines()
+		RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
+	end
+		
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
+	
+	RQE:ClearWQTracking()
+	UpdateRQEQuestFrame()
+	SortQuestsByProximity()
+	UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 end
-
 	
 
 -- Handling QUEST_COMPLETE event
@@ -594,8 +589,8 @@ function RQE.handleQuestComplete(...)
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end
-
-
+		
+		
 -- Handles the Saving of World Quests
 function RQE.HandleClientSceneOpened()
     RQE:SaveWorldQuestWatches()  -- Save the watch list when a scene is opened
@@ -616,16 +611,11 @@ end
 
 		
 -- Handling QUEST_REMOVED event
-function RQE.handleQuestRemoved(questID)
-    if questID and C_QuestLog.IsWorldQuest(questID) then
-        -- Only clear tracking if the removed quest is a World Quest
-        RQE:ClearSpecificWQTracking(questID)
-    end
-
+function RQE.handleQuestRemoved(...)
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
-	--RQE:ClearWQTracking()
+	RQE:ClearWQTracking()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end
@@ -659,15 +649,8 @@ end
 -- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
 function RQE.handleQuestWatchListChanged(...)
 	local questID, added = ...
-	
-    if RQE.isRestoringWorldQuests then
-        -- Skip clearing WQ tracking if we are in the process of restoring world quests
-        return
-    end
-	
 	RQE:ClearWQTracking()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-	
 	local watchType
 	if currentQuestID then
 		watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -684,7 +667,7 @@ function RQE.handleQuestWatchListChanged(...)
 				end
 			else
 				-- World Quest is removed from the Watch List
-				--RQE:ClearWQTracking()
+				RQE:ClearWQTracking()
 			end
 		else
 		-- Handle regular quests
@@ -696,7 +679,7 @@ function RQE.handleQuestWatchListChanged(...)
 		end
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
-	--QuestType()
+	RQE:ClearWQTracking()
 	UpdateRQEQuestFrame()
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	SortQuestsByProximity()
