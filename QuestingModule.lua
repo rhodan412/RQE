@@ -1178,9 +1178,6 @@ function UpdateRQEQuestFrame()
 					local questLevelAndNameHeight = QuestLevelAndName:GetStringHeight()
 					local questObjectivesOrDescriptionHeight = QuestObjectivesOrDescription:GetStringHeight()
 					-- Your other code here, like calculating total height or setting positions
-				else
-					-- Debug or error log
-					print("Debug: QuestLevelAndName or QuestObjectivesOrDescription is nil.")
 				end
 
 				-- Check if objectivesText is blank
@@ -1269,9 +1266,7 @@ function UpdateRQEWorldQuestFrame()
 	local usedQuestIDs = {}  -- Table to keep track of used quest IDs
 	
     -- Loop through each tracked World Quest
-	--print("Number of sorted quests: ", #sortedWorldQuests)
     for i, questInfo in ipairs(sortedWorldQuests) do
-		--print("Sorted quest " .. i .. ": ID " .. questInfo.questID)
         local questID = questInfo.questID
 			
 		-- Define WQuestLogIndexButton outside the if block
@@ -1584,7 +1579,6 @@ function UpdateRQEWorldQuestFrame()
 					end
 				end
 			end
-			--print("Created button for quest ID: ", questID)
 	
 			WQuestLevelAndName:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()  -- Hide the tooltip when the mouse leaves the button
@@ -1601,17 +1595,8 @@ function UpdateRQEWorldQuestFrame()
 					if topPosition then
 						local newHeight = bottomPosition - topPosition - padding
 						RQE.WorldQuestsFrame:SetHeight(math.abs(newHeight))
-						-- After the loop, check the final height of the frame
-						--print("Final frame height: ", RQE.WorldQuestsFrame:GetHeight())
-					else
-						print("Error: RQE.WorldQuestsFrame top position is not available.")
 					end
-				else
-					-- Handle case where bottom position is not available
-					print("Error: Unable to get the bottom position of the last world quest element.")
 				end
-			else
-				print("Error: lastWorldQuestElement is not visible or does not exist.")
 			end
         end
     end
