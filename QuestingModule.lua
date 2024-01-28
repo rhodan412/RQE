@@ -1269,9 +1269,9 @@ function UpdateRQEWorldQuestFrame()
 	local usedQuestIDs = {}  -- Table to keep track of used quest IDs
 	
     -- Loop through each tracked World Quest
-	print("Number of sorted quests: ", #sortedWorldQuests)
+	--print("Number of sorted quests: ", #sortedWorldQuests)
     for i, questInfo in ipairs(sortedWorldQuests) do
-		print("Sorted quest " .. i .. ": ID " .. questInfo.questID)
+		--print("Sorted quest " .. i .. ": ID " .. questInfo.questID)
         local questID = questInfo.questID
 			
 		-- Define WQuestLogIndexButton outside the if block
@@ -1424,13 +1424,13 @@ function UpdateRQEWorldQuestFrame()
 			
 			-- Inside your loop for updating World Quest frames:
 			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
-			print("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
+			--print("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
 			local questDistanceText = "Distance: N/A"  -- Default text if distance is not available
 
 			if distanceSq then  -- This condition now checks only for a valid distanceSq value
 				local distance = math.sqrt(distanceSq)
 				questDistanceText = string.format("Distance: %.2f", distance)
-				print("DEBUG: questDistance is " .. questDistanceText .. " for questID " .. questID)
+				--print("DEBUG: questDistance is " .. questDistanceText .. " for questID " .. questID)
 			end
 
 			-- Create or update the distance label
@@ -1584,7 +1584,7 @@ function UpdateRQEWorldQuestFrame()
 					end
 				end
 			end
-			print("Created button for quest ID: ", questID)
+			--print("Created button for quest ID: ", questID)
 	
 			WQuestLevelAndName:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()  -- Hide the tooltip when the mouse leaves the button
@@ -1602,7 +1602,7 @@ function UpdateRQEWorldQuestFrame()
 						local newHeight = bottomPosition - topPosition - padding
 						RQE.WorldQuestsFrame:SetHeight(math.abs(newHeight))
 						-- After the loop, check the final height of the frame
-						print("Final frame height: ", RQE.WorldQuestsFrame:GetHeight())
+						--print("Final frame height: ", RQE.WorldQuestsFrame:GetHeight())
 					else
 						print("Error: RQE.WorldQuestsFrame top position is not available.")
 					end
