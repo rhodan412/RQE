@@ -900,7 +900,6 @@ function UpdateRQEQuestFrame()
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
-						RQE.infoLog("Untracking quest:", info.title)  -- Optional: print a message to the chat
 					else
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1304,7 +1303,6 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveWorldQuestWatch(questID)
-					RQE.infoLog("Untracking quest:", questTitle)  -- Replace 'info.title' with 'questTitle'
 				else
 					-- Existing code to set as super-tracked
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
@@ -1755,12 +1753,14 @@ function RQE.UpdateScenarioFrame()
         
         -- Update the main frame with criteria
         local criteriaText = ""
-        for criteriaIndex = 1, numCriteria do
-            local criteriaString, _, completed, quantity, totalQuantity = C_Scenario.GetCriteriaInfo(criteriaIndex)
-            if criteriaString then
-                criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n"
-            end
-        end
+		for criteriaIndex = 1, numCriteria do
+			local criteriaString, _, completed, quantity, totalQuantity = C_Scenario.GetCriteriaInfo(criteriaIndex)
+			if completed then
+				criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
+			else
+				criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
+			end
+		end
 		
         RQE.ScenarioChildFrame.body:SetText(criteriaText)
 
