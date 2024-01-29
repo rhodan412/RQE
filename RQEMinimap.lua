@@ -2,8 +2,16 @@
 -- Creates minimap button that will toggle the RQEFrame
 
 
+---------------------------
+-- 1. Declarations
+---------------------------
+
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 RQE.Frame = RQE.Frame or {}
+
+---------------------------
+-- 2. Debug Logic
+---------------------------
 
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
@@ -12,9 +20,12 @@ else
 end
 
 
+---------------------------
+-- 3. Data Broker Handling
+---------------------------
+
 -- Assuming RQE is your main addon table
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
-
 
 -- Create a Data Broker object
 RQE.dataBroker = ldb:NewDataObject("RQE", {
@@ -49,11 +60,13 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 })
 
 
+---------------------------
+-- 4. Minimap Button
+---------------------------
+
 -- Create the minimap button frame
 RQE.MinimapButton = CreateFrame("Button", "MyMinimapButton", Minimap)
 RQE.MinimapButton:SetSize(25, 25)  -- Set the size of the frame
-
-
 
 -- Set up the texture for the button
 RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\rhodan")
@@ -63,6 +76,10 @@ RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\rhodan")
 -- Set the position of the minimap button
 RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
 
+
+---------------------------
+-- 5. Event Handler
+---------------------------
 
 -- OnClick handler
 RQE.MinimapButton:SetScript("OnClick", function()
@@ -75,7 +92,20 @@ RQE.MinimapButton:SetScript("OnClick", function()
 end)
 
 
--- Assuming MinimapButton is your minimap button
+-- Tooltip scripts
+RQE.MinimapButton:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+    GameTooltip:SetText("Rhodan's Quest Explorer", 1, 1, 1)
+    GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
+    GameTooltip:Show()
+end)
+
+
+---------------------------
+-- 6. Drag n Drop Functions
+---------------------------
+
+-- Enabling movement of the Minimap button
 RQE.MinimapButton:SetMovable(true)
 RQE.MinimapButton:EnableMouse(true)
 
@@ -88,11 +118,3 @@ RQE.MinimapButton:SetScript("OnDragStop", function(self)
 end)
 
 RQE.MinimapButton:RegisterForDrag("LeftButton")
-
--- Tooltip scripts
-RQE.MinimapButton:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-    GameTooltip:SetText("Rhodan's Quest Explorer", 1, 1, 1)
-    GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
-    GameTooltip:Show()
-end)
