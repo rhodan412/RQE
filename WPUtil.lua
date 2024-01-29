@@ -1,8 +1,18 @@
 -- WPUtil.lua
 -- This add-on file may be used to either store, or call coordinate information from the RQEDatabase file for the purposes of modularity/compartmentalization
 
+
+---------------------------
+-- 1. Declarations
+---------------------------
+
 RQE = RQE or {}
 RQE.Frame = RQE.Frame or {}
+
+
+---------------------------
+-- 2. Debug Logic
+---------------------------
 
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
@@ -10,6 +20,10 @@ else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
 
+
+---------------------------
+-- 3. Waypoint Logic
+---------------------------
 
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
 -- Assume CloseWorldMap() closes the world map
