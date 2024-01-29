@@ -335,15 +335,13 @@ end
 -- InitializeFrame function
 -- @param RQEFrame: The main frame object
 function RQE:InitializeFrame()
-    RQE.criticalLog("Entered InitializeFrame function")
-    self:Initialize()  -- Call Initialize() within InitializeFrame
+    --self:Initialize()  -- Call Initialize() within InitializeFrame
    
     -- Initialize search box (Now calling the function from Buttons.lua)
     RQE.Buttons.CreateSearchBox(RQEFrame)
     
     -- Initialize search button (Now calling the function from Buttons.lua)
     RQE.Buttons.CreateSearchButton(RQEFrame)
-	RQE.criticalLog("Exiting InitializeFrame function")
 
     -- Add logic to update frame with the current supertracked quest
     local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -500,25 +498,6 @@ function ResetLFGRoles()
 end
 
 
--- function UpdateWorldQuestTrackingForMap(uiMapID)
-    -- local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
-    
-    -- if taskPOIs then
-        -- for _, taskPOI in ipairs(taskPOIs) do
-            -- local questID = taskPOI.questId
-            -- if questID and C_QuestLog.IsWorldQuest(questID) then
-                -- local isManuallyTracked = C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Manual
-                -- if not isManuallyTracked then
-                    -- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-                    -- print("World QuestID: " .. questID .. " added to watch list.")
-					-- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-					-- print("Manual World QuestID: " .. questID .. " added to watch list.")
-                -- end
-            -- end
-        -- end
-    -- end
--- end
-
 -- SlashCommand function
 function RQE:SlashCommand(input)
     if input == "config" then
@@ -543,6 +522,7 @@ function RQE:SlashCommand(input)
 end
 
 
+-- SlashCommand to Reset LFG Role
 SLASH_RESETROLE1 = "/rqeresetrole"
 SlashCmdList["RESETROLE"] = function()
     local dialog = LFGListApplicationDialog
@@ -871,6 +851,28 @@ function RQE:ClearFrameData()
 end
 
 
+-- Colorization of the RQEFrame
+local function colorizeObjectives(objectivesText)
+    local objectives = { strsplit("\n", objectivesText) }
+    local colorizedText = ""
+
+    for _, objective in ipairs(objectives) do
+        local current, total = objective:match("(%d+)/(%d+)")  -- Extract current and total progress
+        current, total = tonumber(current), tonumber(total)
+
+        if current and total and current >= total then
+            -- Objective complete, colorize in green
+            colorizedText = colorizedText .. "|cff00ff00" .. objective .. "|r\n"
+        else
+            -- Objective incomplete, colorize in white
+            colorizedText = colorizedText .. "|cffffffff" .. objective .. "|r\n"
+        end
+    end
+
+    return colorizedText
+end
+
+
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     RQE.debugLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -1025,6 +1027,7 @@ end
 -- end
 
 
+-- Function that checks world quests in the player's zone
 function UpdateWorldQuestTrackingForMap(uiMapID)
     local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
     local trackedQuests = {}
@@ -1041,7 +1044,7 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
     end
 
     if taskPOIs and currentTrackedCount < maxTracked then
-        --print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
+        RQE.infoLog("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
         for _, taskPOI in ipairs(taskPOIs) do
             local questID = taskPOI.questId
             if questID and C_QuestLog.IsWorldQuest(questID) then
@@ -1062,6 +1065,7 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 end
 
 
+-- Function for adding World Quest Watch to Tracker
 function UpdateWorldQuestTracking(questID)
     -- Check if questID is actually a quest ID and not a table or nil
     if type(questID) == "table" then
@@ -1080,31 +1084,6 @@ function UpdateWorldQuestTracking(questID)
         C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
         --C_SuperTrack.SetSuperTrackedQuestID(questID)
     end
-end
-
-
-
-
-
--- Colorization of the RQEFrame
-local function colorizeObjectives(objectivesText)
-    local objectives = { strsplit("\n", objectivesText) }
-    local colorizedText = ""
-
-    for _, objective in ipairs(objectives) do
-        local current, total = objective:match("(%d+)/(%d+)")  -- Extract current and total progress
-        current, total = tonumber(current), tonumber(total)
-
-        if current and total and current >= total then
-            -- Objective complete, colorize in green
-            colorizedText = colorizedText .. "|cff00ff00" .. objective .. "|r\n"
-        else
-            -- Objective incomplete, colorize in white
-            colorizedText = colorizedText .. "|cffffffff" .. objective .. "|r\n"
-        end
-    end
-
-    return colorizedText
 end
 
 
@@ -1140,21 +1119,21 @@ function RQE.PrintScenarioCriteriaInfo()
     end
     for criteriaIndex = 1, numCriteria do
         local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
-        RQE.warningLog("Criteria Index:", criteriaIndex)
-        RQE.warningLog("Criteria String:", criteriaString or "N/A")
-        RQE.warningLog("Criteria Type:", criteriaType or "N/A")
-        RQE.warningLog("Completed:", completed)
-        RQE.warningLog("Quantity:", quantity or "N/A")
-        RQE.warningLog("Total Quantity:", totalQuantity or "N/A")
-        RQE.warningLog("Flags:", flags or "N/A")
-        RQE.warningLog("Asset ID:", assetID or "N/A")
-        RQE.warningLog("Quantity String:", quantityString or "N/A")
-        RQE.warningLog("Criteria ID:", criteriaID or "N/A")
-        RQE.warningLog("Duration:", duration or "N/A")
-        RQE.warningLog("Elapsed:", elapsed or "N/A")
-        RQE.warningLog("Criteria Failed:", criteriaFailed)
-        RQE.warningLog("Is Weighted Progress:", isWeightedProgress)
-        RQE.warningLog("---")
+        RQE.infoLog("Criteria Index:", criteriaIndex)
+        RQE.infoLog("Criteria String:", criteriaString or "N/A")
+        RQE.infoLog("Criteria Type:", criteriaType or "N/A")
+        RQE.infoLog("Completed:", completed)
+        RQE.infoLog("Quantity:", quantity or "N/A")
+        RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
+        RQE.infoLog("Flags:", flags or "N/A")
+        RQE.infoLog("Asset ID:", assetID or "N/A")
+        RQE.infoLog("Quantity String:", quantityString or "N/A")
+        RQE.infoLog("Criteria ID:", criteriaID or "N/A")
+        RQE.infoLog("Duration:", duration or "N/A")
+        RQE.infoLog("Elapsed:", elapsed or "N/A")
+        RQE.infoLog("Criteria Failed:", criteriaFailed)
+        RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
+        RQE.infoLog("---")
     end
 end
 
@@ -1205,9 +1184,7 @@ function RQE.Timer_Stop()
     if not timerFrame then
         return  -- Ensure the frame exists
     end
-    
-    --print("RQE.Timer_Stop: Timer stopped.")  -- Debug print
-    
+        
     -- Stop the OnUpdate script and hide the frame
     timerFrame:SetScript("OnUpdate", nil)
     timerFrame:Hide()
@@ -1239,26 +1216,26 @@ function RQE.PrintScenarioCriteriaInfoByStep()
     for stepID = 1, numSteps do
         local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
         if not numCriteria or numCriteria == 0 then
-            RQE.warningLog("No criteria info available for step", stepID)
+            RQE.debugLog("No criteria info available for step", stepID)
         else
             for criteriaIndex = 1, numCriteria do
                 local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex)
-                RQE.warningLog("Step ID:", stepID)
-                RQE.warningLog("Criteria Index:", criteriaIndex)
-                RQE.warningLog("Criteria String:", criteriaString or "N/A")
-                RQE.warningLog("Criteria Type:", criteriaType or "N/A")
-                RQE.warningLog("Completed:", completed)
-                RQE.warningLog("Quantity:", quantity or "N/A")
-                RQE.warningLog("Total Quantity:", totalQuantity or "N/A")
-                RQE.warningLog("Flags:", flags or "N/A")
-                RQE.warningLog("Asset ID:", assetID or "N/A")
-                RQE.warningLog("Quantity String:", quantityString or "N/A")
-                RQE.warningLog("Criteria ID:", criteriaID or "N/A")
-                RQE.warningLog("Duration:", duration or "N/A")
-                RQE.warningLog("Elapsed:", elapsed or "N/A")
-                RQE.warningLog("Criteria Failed:", criteriaFailed)
-                RQE.warningLog("Is Weighted Progress:", isWeightedProgress)
-                RQE.warningLog("---")
+                RQE.infoLog("Step ID:", stepID)
+                RQE.infoLog("Criteria Index:", criteriaIndex)
+                RQE.infoLog("Criteria String:", criteriaString or "N/A")
+                RQE.infoLog("Criteria Type:", criteriaType or "N/A")
+                RQE.infoLog("Completed:", completed)
+                RQE.infoLog("Quantity:", quantity or "N/A")
+                RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
+                RQE.infoLog("Flags:", flags or "N/A")
+                RQE.infoLog("Asset ID:", assetID or "N/A")
+                RQE.infoLog("Quantity String:", quantityString or "N/A")
+                RQE.infoLog("Criteria ID:", criteriaID or "N/A")
+                RQE.infoLog("Duration:", duration or "N/A")
+                RQE.infoLog("Elapsed:", elapsed or "N/A")
+                RQE.infoLog("Criteria Failed:", criteriaFailed)
+                RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
+                RQE.infoLog("---")
             end
         end
     end
@@ -1450,6 +1427,12 @@ end
 ---------------------------------------------------
 -- 15. Utility Functions
 ---------------------------------------------------
+
+-- InitializeAddon function
+function RQE:InitializeAddon()
+    -- Your code here
+end
+
 
 -- Function to update Coordinates display
 function RQE:UpdateCoordinates()
