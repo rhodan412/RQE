@@ -1,10 +1,7 @@
 --[[ 
-
 Buttons.lua
 Manages button designs for the main frame
-
 ]]
-
 
 ---------------------------
 -- 1. Global Declarations
@@ -22,6 +19,7 @@ RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
 
 RQE.debugLog("RQE.content initialized: " .. tostring(RQE.content ~= nil))
+
 
 ---------------------------
 -- 2. Utility Functions
@@ -102,7 +100,6 @@ RQE.UnknownButtonTooltip = function()
 end
 
 
-
 -- Hide the tooltip when the mouse leaves
 RQE.HideUnknownButtonTooltip = function()
     RQE.UnknownQuestButton:SetScript("OnLeave", function()
@@ -180,31 +177,6 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     CreateBorder(ClearButton)  -- Border
     
     return ClearButton
-end
-
-
--- Parent function to Create ClearWQButton
-function RQE.Buttons.ClearWQButton(RQEQuestFrame)
-    local ClearWQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
-    ClearWQButton:SetSize(18, 18)
-    ClearWQButton:SetText("CT")
-	RQE.ClearWQButton = ClearWQButton  -- Store reference for later use
-
-    -- Set the frame strata and level
-    ClearWQButton:SetFrameStrata("MEDIUM")
-    ClearWQButton:SetFrameLevel(3)
-	
-    -- Nested functions
-    ClearWQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
-    ClearWQButton:SetScript("OnClick", function() 
-        -- Your code for ClearWQButton functionality here
-		RQE:ClearWQTracking()
-    end)
-
-    CreateTooltip(ClearWQButton, "Reset WQ Tracking")  -- Tooltip
-    CreateBorder(ClearWQButton)  -- Border
-    
-    return ClearWQButton
 end
 
 
@@ -366,9 +338,35 @@ function RQE.Buttons.CreateMinimizeButton(RQEFrame, originalWidth, originalHeigh
     return MinimizeButton
 end
 
+
 ---------------------------
--- 3. Button Initialization (RQEQuestFrame)
+-- 4. Button Initialization (RQEFrame)
 ---------------------------
+
+-- Parent function to Create ClearWQButton
+function RQE.Buttons.ClearWQButton(RQEQuestFrame)
+    local ClearWQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+    ClearWQButton:SetSize(18, 18)
+    ClearWQButton:SetText("CT")
+	RQE.ClearWQButton = ClearWQButton  -- Store reference for later use
+
+    -- Set the frame strata and level
+    ClearWQButton:SetFrameStrata("MEDIUM")
+    ClearWQButton:SetFrameLevel(3)
+	
+    -- Nested functions
+    ClearWQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
+    ClearWQButton:SetScript("OnClick", function() 
+        -- Your code for ClearWQButton functionality here
+		RQE:ClearWQTracking()
+    end)
+
+    CreateTooltip(ClearWQButton, "Reset WQ Tracking")  -- Tooltip
+    CreateBorder(ClearWQButton)  -- Border
+    
+    return ClearWQButton
+end
+
 
 -- Parent function to create QTCloseButton for RQEQuestFrame
 function RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
@@ -389,6 +387,7 @@ function RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
 
     return QTCloseButton
 end
+
 
 -- Parent function to Create QTMaximizeButton for RQEQuestFrame
 function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, originalHeight, content, ScrollFrame, slider)
@@ -549,9 +548,6 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 
     return QTFilterButton
 end
-
-
-
 
 
 ---------------------------
