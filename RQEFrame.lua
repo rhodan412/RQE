@@ -870,7 +870,7 @@ function RQE.SearchModule:FetchAndDisplayQuestData(questID)
         local questDetail, questObjectives = GetQuestLogQuestText(questID)
 
         if not questTitle or not questDetail or not questObjectives then
-            print("Quest information not available for Quest ID: " .. questID)
+            RQE.debugLog("Quest information not available for Quest ID: " .. questID)
             return
         end
 

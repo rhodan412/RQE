@@ -451,10 +451,8 @@ function RQE.SaveSuperTrackData()
         local posX, posY
 
         if isWorldQuest then
-			print("Is a World Quest")
             posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
         else
-			print("Is NOT a World Quest")
 			if not posX or not posX and mapID then
 				local questID = C_SuperTrack.GetSuperTrackedQuestID()
 				local mapID = GetQuestUiMapID(questID)
@@ -471,18 +469,14 @@ function RQE.SaveSuperTrackData()
         RQE.superQuestTitle = questTitle
 
 		if posX == nil then
-			print("posX is nil")
 			RQE.superX = RQE.x
 		else
-			print("posX is NOT nil")
 			RQE.superX = posX
 		end
 
 		if posY == nil then
-			print("posY is nil")
 			RQE.superY = RQE.y
 		else
-			print("posY is NOT nil")
 			RQE.superY = posY
 		end
 	
@@ -492,12 +486,6 @@ function RQE.SaveSuperTrackData()
 				return
 			end
 		end)
-
-		print("QuestID: " .. RQE.superQuestID)
-		print("Quest Title: " .. RQE.superQuestTitle)
-		print("MapID: " .. tostring(RQE.superMapID))
-        print("xPos: " .. tostring(RQE.superX))
-        print("yPos: " .. tostring(RQE.superY))
 		
 		--RQE.UnknownQuestButtonCalcNTrack()
         -- Optional: Return the values for immediate use
@@ -1527,9 +1515,9 @@ function RQE.SearchModule:CreateSearchBox()
 
             -- Add the World Quest to the tracker
 			C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-			print("adding world quest thru core" .. questID)
+			RQE.infoLog("adding world quest thru core" .. questID)
 			C_QuestLog.AddQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-			print("adding regular quest thru core" .. questID)
+			RQE.infoLog("adding regular quest thru core" .. questID)
 			
 			-- Update the frame based on whether the quest is in the database
 			if questInfo then

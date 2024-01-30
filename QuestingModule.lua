@@ -672,7 +672,7 @@ function RQE.UpdateScenarioFrame()
         RQE.ScenarioChildFrame:Show()
 		--RQE.TimerFrame:Show()
     else
-        print("No active scenario or scenario information is not available.")
+        RQE.debugLog("No active scenario or scenario information is not available.")
         -- Hide the scenario frame since we're not in a scenario
         RQE.ScenarioChildFrame:Hide()
     end
@@ -1622,13 +1622,13 @@ function UpdateRQEWorldQuestFrame()
 			
 			-- Inside your loop for updating World Quest frames:
 			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
-			--print("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
+			RQE.debugLog("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
 			local questDistanceText = "Distance: N/A"  -- Default text if distance is not available
 
 			if distanceSq then  -- This condition now checks only for a valid distanceSq value
 				local distance = math.sqrt(distanceSq)
 				questDistanceText = string.format("Distance: %.2f", distance)
-				--print("DEBUG: questDistance is " .. questDistanceText .. " for questID " .. questID)
+				RQE.debugLog("DEBUG: questDistance is " .. questDistanceText .. " for questID " .. questID)
 			end
 
 			-- Create or update the distance label
@@ -1654,7 +1654,6 @@ function UpdateRQEWorldQuestFrame()
 			-- Update the last element tracker for the correct type
 			if isWorldQuest then
 				lastWorldQuestElement = WQuestObjectivesOrDescription
-				print("lastWorldQuestElement is " .. lastWorldQuestElement)
 			end
 				
 			-- Set position of the WQuestObjectives based on TimeLeft
