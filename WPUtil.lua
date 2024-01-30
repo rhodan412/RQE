@@ -25,8 +25,8 @@ end
 -- 3. Waypoint Logic
 ---------------------------
 
--- -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
--- -- Assume CloseWorldMap() closes the world map
+-- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
+-- Assume CloseWorldMap() closes the world map
 -- RQE.UnknownQuestButtonCalcNTrack = function()
 	-- RQE.UnknownQuestButton:SetScript("OnClick", function()
 		

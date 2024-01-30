@@ -427,6 +427,15 @@ end
 -- 6. Saving/Restoring SuperTrack Data
 ---------------------------------------------------
 
+-- Function to open the quest log and show specific quest details
+function OpenQuestLogToQuestDetails(questID)
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    local mapID = GetQuestUiMapID(questID)
+    if mapID == 0 then mapID = nil end
+    OpenQuestLog(mapID)
+    QuestMapFrame_ShowQuestDetails(questID)
+end
+
 -- Function that saves data of the Super Tracked Quest
 function RQE.SaveSuperTrackData()
 	-- Extracts Details of Quest if possible
@@ -442,10 +451,10 @@ function RQE.SaveSuperTrackData()
         local posX, posY
 
         if isWorldQuest then
-			--print("Is a World Quest")
+			print("Is a World Quest")
             posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
         else
-			--print("Is NOT a World Quest")
+			print("Is NOT a World Quest")
 			if not posX or not posX and mapID then
 				local questID = C_SuperTrack.GetSuperTrackedQuestID()
 				local mapID = GetQuestUiMapID(questID)
@@ -462,14 +471,18 @@ function RQE.SaveSuperTrackData()
         RQE.superQuestTitle = questTitle
 
 		if posX == nil then
+			print("posX is nil")
 			RQE.superX = RQE.x
 		else
+			print("posX is NOT nil")
 			RQE.superX = posX
 		end
 
 		if posY == nil then
+			print("posY is nil")
 			RQE.superY = RQE.y
 		else
+			print("posY is NOT nil")
 			RQE.superY = posY
 		end
 	
@@ -479,6 +492,12 @@ function RQE.SaveSuperTrackData()
 				return
 			end
 		end)
+
+		print("QuestID: " .. RQE.superQuestID)
+		print("Quest Title: " .. RQE.superQuestTitle)
+		print("MapID: " .. tostring(RQE.superMapID))
+        print("xPos: " .. tostring(RQE.superX))
+        print("yPos: " .. tostring(RQE.superY))
 		
 		--RQE.UnknownQuestButtonCalcNTrack()
         -- Optional: Return the values for immediate use
@@ -487,43 +506,81 @@ function RQE.SaveSuperTrackData()
 end
 
 
--- Function to Extract Coordinates
 function RQE.ExtractAndSaveQuestCoordinates()
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+	
+	if not questID then
+		RQE.debugLog("No QuestID found. Cannot proceed.")
+		return
+	end
 
-    if not questID then
-        print("No super-tracked quest found.")
-        return
-    end
+	local isMapOpen = WorldMapFrame:IsShown()
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	local mapID, posX, posY, completed, objective
 
-    local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-    local mapID, posX, posY
+	if isWorldQuest then
+		-- It's a world quest, use the TaskQuest APIs
+		mapID = C_TaskQuest.GetQuestZoneID(questID)
+		
+		-- Ensure mapID is valid before calling GetQuestLocation
+		if mapID then
+			posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+		else
+			RQE.debugLog("Invalid mapID for World QuestID:", questID)
+			return
+		end
+	else
+		-- Not a world quest, use the existing logic
+		mapID = GetQuestUiMapID(questID)
+		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
+	end
 
-    if isWorldQuest then
-        -- Handle World Quest
-        mapID = C_TaskQuest.GetQuestZoneID(questID)
-        if mapID then
-            posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
-        end
-    else
-        -- Handle Regular Quest
-        mapID = GetQuestUiMapID(questID)
-        _, posX, posY = QuestPOIGetIconInfo(questID)
-        if not posX or not posY and mapID then
-            OpenQuestLog(mapID)
-            QuestMapFrame_ShowQuestDetails(questID)
-            _, posX, posY = QuestPOIGetIconInfo(questID) -- Re-fetch coordinates after opening quest log
-        end
-    end
+	if not mapID then
+		RQE.debugLog("MapID not found for QuestID:", questID)
+		return
+	end
+	
+	-- If POI info is not available, try using GetNextWaypointForMap
+	if not posX or not posY then
+		if not isMapOpen and RQE.superTrackingChanged then
+			-- Call the function to open the quest log with the details of the super tracked quest
+			OpenQuestLogToQuestDetails(questID)
+		end
+		
+		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
+		
+		if not posX or not posY then
+			local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			
+			if nextMapID == nil or nextPosX == nil or nextPosY == nil then
+				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
+			else
+				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
+			end
 
-    -- Save coordinates to RQE table
-    RQE.x = posX
-    RQE.y = posY
+			-- Update the posX and posY variables with the new information
+			posX = nextPosX
+			posY = nextPosY
+		end
+
+		if not isMapOpen then
+			WorldMapFrame:Hide()
+		end
+	end
+	
+	-- Reset the superTrackingChanged flag
+	RQE.superTrackingChanged = false
+	
+	-- Save these to the RQE table
+	RQE.x = posX
+	RQE.y = posY
 	RQE.mapID = mapID
-
-    -- Print the saved coordinates
-    --print("Coordinates saved: x = " .. tostring(RQE.x) .. ", y = " .. tostring(RQE.y) .. ", MapID = " .. tostring(RQE.mapID))
 end
+
+
+
+
+
 
 
 

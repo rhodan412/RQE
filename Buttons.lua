@@ -67,31 +67,32 @@ RQE.UnknownButtonTooltip = function()
         local mapID = GetQuestUiMapID(questID)
         if mapID == 0 then mapID = nil end
 		
-        if not RQE.x or not RQE.y and mapID then
+        if not RQE.superX or not RQE.superY and RQE.superMapID then
             -- Open the quest log details for the super tracked quest to fetch the coordinates
             OpenQuestLogToQuestDetails(questID)
 			
             -- Delay to allow the map to open and fetch coordinates
-            C_Timer.After(0.2, function()  -- Reduced delay to 0.05 seconds for faster response
+            --C_Timer.After(0.2, function()  -- Reduced delay to 0.05 seconds for faster response
                 -- Hide the map if it was opened by the script
                 --WorldMapFrame:Hide()
 
                 -- Update tooltip text based on new coordinates
-                if RQE.x and RQE.y then
-                    local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.x * 100, RQE.y * 100, tostring(RQE.mapID))
+                if RQE.superX and RQE.superY then
+                    local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
                     GameTooltip:SetText(tooltipText)
                 else
                     GameTooltip:SetText("Coordinates: Calculating...")
                 end
 
                 GameTooltip:Show()
-            end)
+            --end)
         else
             -- If coordinates are already available, just show them
-            local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.x * 100, RQE.y * 100, tostring(RQE.mapID))
+            local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
             GameTooltip:SetText(tooltipText)
             GameTooltip:Show()
         end
+		WorldMapFrame:Hide()
     end)
 
     RQE.UnknownQuestButton:SetScript("OnLeave", function(self)

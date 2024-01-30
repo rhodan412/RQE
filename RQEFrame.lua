@@ -619,14 +619,7 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
 end)
 
 
--- Function to open the quest log and show specific quest details
-function OpenQuestLogToQuestDetails(questID)
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-    local mapID = GetQuestUiMapID(questID)
-    if mapID == 0 then mapID = nil end
-    OpenQuestLog(mapID)
-    QuestMapFrame_ShowQuestDetails(questID)
-end
+
 
 
 
