@@ -891,7 +891,7 @@ end
 -- Determine QuestType Function
 function GetQuestType(questID)
     if C_QuestLog.ReadyForTurnIn(questID) then
-		return "|cFFFFA500QUEST COMPLETE|r"  -- Orange color for completed quests
+		return "|cFF00FF00QUEST COMPLETE|r"  -- Orange color for completed quests
     elseif C_CampaignInfo.IsCampaignQuest(questID) then
         return "Campaign"
     elseif C_QuestLog.IsWorldQuest(questID) then
@@ -1109,15 +1109,13 @@ function UpdateRQEQuestFrame()
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-						if currentSuperTrackedQuestID ~= questID then
-							-- If the clicked quest is different from the currently super tracked quest,
-							-- super track the new quest
-							C_SuperTrack.SetSuperTrackedQuestID(questID)
-						else
-							-- If the clicked quest is the same as the currently super tracked quest,
-							-- clear super tracking
-							C_SuperTrack.ClearSuperTrackedContent()
-						end
+						-- Clear any existing super tracking
+						C_SuperTrack.ClearSuperTrackedContent()
+
+						-- Super track the new quest
+						-- This will re-super track the quest even if it's the same as the currently super tracked quest
+						C_SuperTrack.SetSuperTrackedQuestID(questID)
+						UpdateFrame()
 					end
 				end)
 
