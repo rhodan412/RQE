@@ -30,6 +30,7 @@ Libs/AceBucket-3.0/AceBucket-3.0.xml
 
 # Core Functionality
 Core.lua
+DebugLog.lua
 RQEMinimap.lua
 RQEDatabase.lua
 EventManager.lua

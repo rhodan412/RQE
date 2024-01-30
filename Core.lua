@@ -56,8 +56,14 @@ function RQE:CustomDebugLog(index, color, message, ...)
         end
     end
     output = output .. "|r"
+	
+    -- Add to logTable
+    RQE.AddToDebugLog(output)
+
+    -- Print to chat
     print(output)
 end
+
 
 
 -- Custom Info Message Function
@@ -68,6 +74,11 @@ function RQE:CustomLogMsg(color, message, ...)
         output = output .. " " .. tostring(args[i])
     end
     output = output .. "|r"
+	
+    -- Add to logTable
+    RQE.AddToDebugLog(output)
+
+    -- Print to chat
     print(output)
 end
 
