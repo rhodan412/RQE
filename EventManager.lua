@@ -450,11 +450,13 @@ function RQE.handleSuperTracking(...)
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)
-
+	
 	QuestType()
 	RQE.superTrackingChanged = true
 	RQE:ClearFrameData()
-
+	RQE.SaveSuperTrackData()
+	RQE.UnknownQuestButtonCalcNTrack()
+	
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 					
 	local questName
