@@ -79,25 +79,29 @@ function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
         return
     end
 
-    -- Construct the waypoint title
-    local waypointTitle = "Quest ID: " .. unknownQuestID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
-    
-    if DirectionText and DirectionText ~= "No direction available." then
-        waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
-    end
+	C_Map.ClearUserWaypoint()
 
-    -- Check if TomTom is loaded and enabled
-    if IsAddOnLoaded("TomTom") then
-        RQE.debugLog("TomTom is available.")
-        if mapID and x and y then  -- Check if x and y are not nil
-            TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
-        else
-            RQE.debugLog("Could not create waypoint for unknown quest.")
-        end
-    else
-        RQE.debugLog("TomTom is not available.")
-        -- Code for your own waypoint system or an alternative action
-    end
+	C_Timer.After(0.5, function()
+		-- Construct the waypoint title
+		local waypointTitle = "Quest ID: " .. unknownQuestID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
+		
+		if DirectionText and DirectionText ~= "No direction available." then
+			waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
+		end
+
+		-- Check if TomTom is loaded and enabled
+		if IsAddOnLoaded("TomTom") then
+			RQE.debugLog("TomTom is available.")
+			if mapID and x and y then  -- Check if x and y are not nil
+				TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
+			else
+				RQE.debugLog("Could not create waypoint for unknown quest.")
+			end
+		else
+			RQE.debugLog("TomTom is not available.")
+			-- Code for your own waypoint system or an alternative action
+		end
+	end)
 end
 
 
