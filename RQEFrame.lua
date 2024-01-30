@@ -235,15 +235,20 @@ label:SetPoint("CENTER", RQE.UnknownQuestButton, "CENTER")
 label:SetText("W")  -- W for Waypoint
 label:SetTextColor(1, 1, 0)
 
--- Add mouseover tooltip (functions listed in WPUtil.lua)
+
+-- Add mouseover tooltip (functions listed in Buttons.lua)
 RQE.UnknownButtonTooltip()
+
 
 -- Hide the tooltip when the mouse leaves
 RQE.HideUnknownButtonTooltip()
 
+
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
 -- Assume CloseWorldMap() closes the world map
-RQE.UnknownQuestButtonCalcNTrack()
+--RQE.UnknownQuestButtonCalcNTrack()
+RQE.SaveSuperTrackData()
+
 
 
 -- Create and position the new Search Group Button
@@ -683,7 +688,7 @@ local function CreateQuestTooltip(frame, questID)
 
     -- Add Rewards
 	GameTooltip:AddLine("Rewards: ")
-    AddQuestRewardsToTooltip(GameTooltip, questID)  -- Assuming AddQuestRewardsToTooltip is defined
+    QuestRewardsTooltip(GameTooltip, questID)  -- Assuming QuestRewardsTooltip is defined
     GameTooltip:AddLine(" ")
 
 	-- Party Members' Quest Progress
