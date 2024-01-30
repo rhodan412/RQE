@@ -70,11 +70,11 @@ RQE.UnknownButtonTooltip = function()
         if not RQE.x or not RQE.y and mapID then
             -- Open the quest log details for the super tracked quest to fetch the coordinates
             OpenQuestLogToQuestDetails(questID)
-
+			
             -- Delay to allow the map to open and fetch coordinates
-            C_Timer.After(0.5, function()  -- Reduced delay to 0.05 seconds for faster response
+            C_Timer.After(0.2, function()  -- Reduced delay to 0.05 seconds for faster response
                 -- Hide the map if it was opened by the script
-                WorldMapFrame:Hide()
+                --WorldMapFrame:Hide()
 
                 -- Update tooltip text based on new coordinates
                 if RQE.x and RQE.y then
