@@ -3,9 +3,9 @@ Buttons.lua
 Manages button designs for the main frame
 ]]
 
----------------------------
+-----------------------------------------
 -- 1. Global Declarations
----------------------------
+-----------------------------------------
 
 RQE = RQE or {}
 
@@ -21,9 +21,9 @@ RQE.Frame = RQE.Frame or {}
 RQE.debugLog("RQE.content initialized: " .. tostring(RQE.content ~= nil))
 
 
----------------------------
+-----------------------------------------
 -- 2. Utility Functions
----------------------------
+-----------------------------------------
 
 -- Function to show tooltips
 local function ShowTooltip(self, text)
@@ -152,9 +152,9 @@ RQE.SearchGroupButtonMouseDown = function()
 end
 
 
----------------------------
+-----------------------------------------
 -- 3. Button Initialization (RQEFrame)
----------------------------
+-----------------------------------------
 
 -- Parent function to Create ClearButton
 function RQE.Buttons.CreateClearButton(RQEFrame)
@@ -340,9 +340,9 @@ function RQE.Buttons.CreateMinimizeButton(RQEFrame, originalWidth, originalHeigh
 end
 
 
----------------------------
+-----------------------------------------
 -- 4. Button Initialization (RQEFrame)
----------------------------
+-----------------------------------------
 
 -- Parent function to Create ClearWQButton
 function RQE.Buttons.ClearWQButton(RQEQuestFrame)
@@ -551,9 +551,26 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 end
 
 
----------------------------
--- 4. Finalization
----------------------------
+-----------------------------------------
+-- 5. Button Initialization (DebugFrame)
+-----------------------------------------
+
+function RQE.Buttons.CreateDebugLogCloseButton(logFrame)
+    -- Ensure the frame is valid
+    if not logFrame then return end
+
+    local closeButton = CreateFrame("Button", nil, logFrame, "UIPanelCloseButton")
+    closeButton:SetSize(18, 18)
+    closeButton:SetPoint("TOPRIGHT", logFrame, "TOPRIGHT", -6, -6)
+    closeButton:SetScript("OnClick", function(self, button)
+        logFrame:Hide()
+    end)
+end
+
+
+-----------------------------------------
+-- 6. Finalization
+-----------------------------------------
 
 -- Function to create and initialize the SearchBox
 function RQE.Buttons.CreateSearchBox(RQEFrame)

@@ -61,7 +61,7 @@ function RQE:CustomDebugLog(index, color, message, ...)
     RQE.AddToDebugLog(output)
 
     -- Print to chat
-    print(output)
+    --print(output)
 end
 
 
@@ -79,7 +79,7 @@ function RQE:CustomLogMsg(color, message, ...)
     RQE.AddToDebugLog(output)
 
     -- Print to chat
-    print(output)
+    --print(output)
 end
 
 

@@ -21,7 +21,45 @@ end
 
 
 ---------------------------
--- 3. Data Broker Handling
+-- 3. Function/Utilities
+---------------------------
+
+-- Toggle Debug Log window function
+function RQE:ToggleDebugLog()
+    -- Assuming RQE.DebugLogFrame is the frame for your debug log window
+    if not RQE.DebugLogFrame then
+        -- Initialize the debug log frame here if it doesn't exist yet
+        -- Example: RQE.DebugLogFrame = CreateFrame("Frame", nil, UIParent)
+        -- Add necessary frame setup here (size, position, appearance, etc.)
+    end
+
+    -- Check if the frame is currently shown or hidden
+	RQE.DebugLogFrame()
+end
+
+
+-- Open Settings function (reuse your existing settings functionality)
+function RQE:OpenSettings()
+    InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+    InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+end
+
+
+-- Create the dropdown menu
+local function CreateDropdownMenu()
+    local info = UIDropDownMenu_CreateInfo()
+    info.text = "Debug Log"
+    info.func = ToggleDebugLog
+    UIDropDownMenu_AddButton(info)
+
+    info.text = "Settings"
+    info.func = OpenSettings
+    UIDropDownMenu_AddButton(info)
+end
+
+
+---------------------------
+-- 4. Data Broker Handling
 ---------------------------
 
 -- Assuming RQE is your main addon table
@@ -47,11 +85,10 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 			end
 			
 		elseif button == "RightButton" then
-			-- Open the add-on's configuration window
-			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")  -- Call twice to actually open the page
-        end
-    end,
+			-- Show dropdown menu
+			RQE:ShowLDBDropdownMenu()
+		end
+	end,
     OnTooltipShow = function(tooltip)
         if not tooltip or not tooltip.AddLine then return end
         tooltip:AddLine("Rhodan's Quest Explorer")
@@ -61,7 +98,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 
 
 ---------------------------
--- 4. Minimap Button
+-- 5. Minimap Button
 ---------------------------
 
 -- Create the minimap button frame
@@ -78,7 +115,7 @@ RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
 
 
 ---------------------------
--- 5. Event Handler
+-- 6. Event Handler
 ---------------------------
 
 -- OnClick handler
@@ -101,8 +138,31 @@ RQE.MinimapButton:SetScript("OnEnter", function(self)
 end)
 
 
+-- Function to toggle debug log
+local function ToggleDebugLog()
+    -- Assuming you have a function or a way to toggle the debug log
+    RQE:ToggleDebugLog()  -- Replace with actual toggle function
+end
+
+
 ---------------------------
--- 6. Drag n Drop Functions
+-- 7. Menu Creation Functions
+---------------------------
+
+-- Function to show dropdown menu
+function RQE:ShowLDBDropdownMenu()
+    local menuFrame = CreateFrame("Frame", "RQE_LDBDropdownMenu", UIParent, "UIDropDownMenuTemplate")
+    local menuList = {
+        { text = "Debug Log", func = function() RQE:ToggleDebugLog() end },
+        { text = "Settings", func = function() RQE:OpenSettings() end }
+    }
+    
+    EasyMenu(menuList, menuFrame, "cursor", 0 , 0, "MENU")
+end
+
+
+---------------------------
+-- 8. Drag n Drop Functions
 ---------------------------
 
 -- Enabling movement of the Minimap button
