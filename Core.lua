@@ -427,9 +427,11 @@ end
 -- 6. Saving/Restoring SuperTrack Data
 ---------------------------------------------------
 
-
 -- Function that saves data of the Super Tracked Quest
 function RQE.SaveSuperTrackData()
+	-- Extracts Details of Quest if possible
+	RQE.ExtractAndSaveQuestCoordinates()
+	
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	
     if questID then
@@ -440,29 +442,90 @@ function RQE.SaveSuperTrackData()
         local posX, posY
 
         if isWorldQuest then
-			print("Is a World Quest")
+			--print("Is a World Quest")
             posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
         else
-			print("Is NOT a World Quest")
-			posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			--print("Is NOT a World Quest")
+			if not posX or not posX and mapID then
+				local questID = C_SuperTrack.GetSuperTrackedQuestID()
+				local mapID = GetQuestUiMapID(questID)
+				if mapID == 0 then mapID = nil end
+				--OpenQuestLog(mapID)
+				--QuestMapFrame_ShowQuestDetails(questID)
+			else
+				posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			end
         end
 
-        RQE.superX = posX
-        RQE.superY = posY
-        RQE.mapID = mapID
+        RQE.superMapID = mapID
         RQE.superQuestID = questID
         RQE.superQuestTitle = questTitle
 
-		print("QuestID: " .. RQE.superQuestID)
-		print("Quest Title: " .. RQE.superQuestTitle)
-		print("MapID: " .. tostring(RQE.mapID))
-        print("xPos: " .. tostring(RQE.superX))
-        print("yPos: " .. tostring(RQE.superY))
+		if posX == nil then
+			RQE.superX = RQE.x
+		else
+			RQE.superX = posX
+		end
+
+		if posY == nil then
+			RQE.superY = RQE.y
+		else
+			RQE.superY = posY
+		end
+	
+		C_Timer.After(1, function()
+			if RQE.superX == nil or RQE.superY == nil then
+				RQE.SaveSuperTrackData()
+				return
+			end
+		end)
 		
+		--RQE.UnknownQuestButtonCalcNTrack()
         -- Optional: Return the values for immediate use
         return posX, posY, mapID, questID, questTitle
     end
 end
+
+
+-- Function to Extract Coordinates
+function RQE.ExtractAndSaveQuestCoordinates()
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    if not questID then
+        print("No super-tracked quest found.")
+        return
+    end
+
+    local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+    local mapID, posX, posY
+
+    if isWorldQuest then
+        -- Handle World Quest
+        mapID = C_TaskQuest.GetQuestZoneID(questID)
+        if mapID then
+            posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+        end
+    else
+        -- Handle Regular Quest
+        mapID = GetQuestUiMapID(questID)
+        _, posX, posY = QuestPOIGetIconInfo(questID)
+        if not posX or not posY and mapID then
+            OpenQuestLog(mapID)
+            QuestMapFrame_ShowQuestDetails(questID)
+            _, posX, posY = QuestPOIGetIconInfo(questID) -- Re-fetch coordinates after opening quest log
+        end
+    end
+
+    -- Save coordinates to RQE table
+    RQE.x = posX
+    RQE.y = posY
+	RQE.mapID = mapID
+
+    -- Print the saved coordinates
+    --print("Coordinates saved: x = " .. tostring(RQE.x) .. ", y = " .. tostring(RQE.y) .. ", MapID = " .. tostring(RQE.mapID))
+end
+
+
 
 
 -- Function controls the restoration of the quest that is super tracked to the RQEFrame
