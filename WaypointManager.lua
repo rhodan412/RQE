@@ -64,9 +64,9 @@ end
 
 -- Remove the extra functions and keep only this one
 function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
-    local posX = RQE.x
-    local posY = RQE.y
-    local mapID = RQE.mapID
+    local posX = RQE.superX
+    local posY = RQE.superY
+    local mapID = RQE.superMapID
     local DirectionText = RQEFrame.DirectionText  -- Assuming DirectionText is stored in RQE table
     local questName = C_QuestLog.GetTitleForQuestID(unknownQuestID) or "Unknown"
     
