@@ -1,6 +1,6 @@
 All Rights Reserved
 
-Copyright (c) RQE by Aurleis
+Copyright (c) RQE by Rhodan {Aurleis}
 
 Created by Techcable
 
