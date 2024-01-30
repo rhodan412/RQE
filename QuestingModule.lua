@@ -1,5 +1,13 @@
--- QuestingModule.lua
--- For advanced quest tracking features linked with RQEFrame
+--[[ 
+
+QuestingModule.lua
+For advanced quest tracking features linked with RQEFrame
+
+]]
+
+---------------------------
+-- 1. Global Declarations
+---------------------------
 
 -- Initialize RQE global table
 RQE = RQE or {}
@@ -15,6 +23,10 @@ end
 -- Assuming AceGUI is already loaded and RQE is initialized
 local AceGUI = LibStub("AceGUI-3.0")
 
+
+---------------------------
+-- 2. Frame Creation/Initialization
+---------------------------
 
 -- Create the frame
 RQE.RQEQuestFrame = CreateFrame("Frame", "RQEQuestFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
@@ -41,8 +53,6 @@ RQEQuestFrame:SetBackdrop({
     insets = { left = 0, right = 0, top = 1, bottom = 0 }
 })
 RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
---RQEQuestFrame:SetBackdropColor(0, 0, 0, 0.5)  -- this was before the change to allow the user to make the QuestingFrame opacity change
-
 
 -- Create the ScrollFrame
 local ScrollFrame = CreateFrame("ScrollFrame", nil, RQEQuestFrame)
@@ -53,14 +63,12 @@ ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
 RQE.QTScrollFrame = ScrollFrame
 
-
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
 content:SetSize(360, 600)  -- Set the content size here
 ScrollFrame:SetScrollChild(content)
 content:SetAllPoints()
 RQE.QTcontent = content
-
 
 -- Make it draggable
 frame:SetMovable(true)
@@ -71,7 +79,6 @@ frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 
 -- Make it resizable
 frame:SetResizable(true)
-
 
 -- Create a resize button
 local resizeBtn = CreateFrame("Button", nil, frame)
@@ -90,7 +97,6 @@ resizeBtn:SetScript("OnMouseUp", function(self, button)
 end)
 RQE.QTResizeButton = resizeBtn
 
-
 -- Title text in a custom header
 local header = CreateFrame("Frame", "RQEQuestFrameHeader", RQEQuestFrame, "BackdropTemplate")
 header:SetHeight(30)
@@ -106,7 +112,6 @@ header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
 header:SetPoint("TOPLEFT", 0, 0)
 header:SetPoint("TOPRIGHT", 0, 0)
 
-
 -- Create header text
 local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 headerText:SetPoint("CENTER", header, "CENTER")
@@ -116,7 +121,6 @@ headerText:SetText("RQE Quest Tracker")
 headerText:SetWordWrap(true)
 
 RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. frame:GetHeight())
-
 
 -- Create the Slider (Scrollbar)
 local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
@@ -143,12 +147,23 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 end)
 
 
--- Create buttons using functions from Buttons.lua for RQEQuestFrame
+---------------------------
+-- 3. Button Creation
+---------------------------
+
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Right Side)
 RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
 RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
+RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
+
+
+---------------------------
+-- 4. Child Frames
+---------------------------
 
 local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
     local frame = CreateFrame("Frame", name, parent)
@@ -169,6 +184,13 @@ RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -200, content:G
 
 -- Create the third child frame, anchored below the QuestsFrame
 RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -400, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
+
+
+-- Initialize with default values
+RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
+RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
+RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
+
 
 -- Function to create a header for a child frame
 local function CreateChildFrameHeader(childFrame, title)
@@ -197,6 +219,7 @@ local function CreateChildFrameHeader(childFrame, title)
     return headerText  -- Return the FontString instead of the frame
 end
 
+
 -- Update the Campaign frame anchor dynamically based on the state of the ScenarioChild being is present or not
 function RQE.UpdateCampaignFrameAnchor()
     if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
@@ -210,55 +233,65 @@ function RQE.UpdateCampaignFrameAnchor()
     end
 end
 
--- function UpdateFrameAnchors()
-    -- -- Clear all points to prevent any previous anchoring affecting the new setup
-    -- RQE.CampaignFrame:ClearAllPoints()
-    -- RQE.QuestsFrame:ClearAllPoints()
-    -- RQE.WorldQuestsFrame:ClearAllPoints()
-    
-    -- -- Determine the base anchor point depending on the ScenarioChildFrame's visibility
-    -- local baseAnchorFrame = RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() and RQE.ScenarioChildFrame or content
-    
-    -- -- Anchor CampaignFrame relative to base anchor (ScenarioChildFrame or content)
-    -- RQE.CampaignFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
-    
-    -- -- Anchor QuestsFrame relative to CampaignFrame if shown, otherwise to base anchor
-    -- if RQE.CampaignFrame:IsShown() then
-        -- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-    -- else
-        -- RQE.QuestsFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
-    -- end
-    
-    -- -- -- Anchor WorldQuestsFrame relative to QuestsFrame if shown, otherwise to the last shown of CampaignFrame or ScenarioChildFrame
-    -- -- if RQE.QuestsFrame:IsShown() then
-        -- -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-    -- -- elseif RQE.CampaignFrame:IsShown() or (RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown()) then
-        -- -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", baseAnchorFrame, "BOTTOMLEFT", 0, -10)
-    -- -- else
-        -- -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    -- -- end
 
-    -- -- Anchor WorldQuestsFrame relative to QuestsFrame if shown, otherwise to the last shown of CampaignFrame or ScenarioChildFrame
-    -- if RQE.QuestsFrame:IsShown() then
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-    -- elseif RQE.CampaignFrame:IsShown() then
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-    -- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        -- -- This ensures that WorldQuestsFrame follows ScenarioChildFrame if QuestsFrame and CampaignFrame are not shown
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    -- else
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    -- end
-	
-    -- -- Determine the last visible element for the Quests frame
-    -- -- Make sure this variable is properly defined in the scope
-    -- lastQuestElement = QuestObjectivesOrDescription
-    
-    -- -- Set the Quests frame anchor based on the last visible element
-    -- if lastQuestElement then
-        -- RQE.QuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -10)
-    -- end
--- end
+-- Create headers for each child frame
+RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
+RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Quests")
+RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+
+
+-- ScenarioChildFrame header
+-- Function to create a unique header for the ScenarioChildFrame
+local function CreateUniqueScenarioHeader(scenarioFrame, title)
+    local header = CreateFrame("Frame", nil, scenarioFrame, "BackdropTemplate")
+	header:SetFrameStrata("LOW") -- or "LOW" if you want it above the background but below medium elements
+    header:SetHeight(100)  -- Setting a custom height for the scenario header
+    header:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 8,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+    })
+    header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+    header:SetPoint("TOPLEFT", scenarioFrame, "TOPLEFT", 0, 0)
+    header:SetPoint("TOPRIGHT", scenarioFrame, "TOPRIGHT", 0, 0)
+
+    -- Create header text
+    local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    headerText:SetPoint("CENTER", header, "CENTER", 0, -10)  -- Adjust Y offset to vertically center the text in the taller header
+    headerText:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+    headerText:SetTextColor(239/255, 191/255, 90/255)
+    headerText:SetText(title)
+    headerText:SetWordWrap(true)
+
+    scenarioFrame.header = header  -- Assign the header to the scenario frame
+    return header  -- Return the new header frame
+end
+
+
+-- Use the function to create a unique header for the ScenarioChildFrame
+RQE.ScenarioChildFrame = RQE.ScenarioChildFrame or CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
+CreateUniqueScenarioHeader(RQE.ScenarioChildFrame, "")
+
+
+local function UpdateHeader(frame, baseTitle, questCount)
+    local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
+    local numShownEntries, numQuestsInLog = C_QuestLog.GetNumQuestLogEntries()
+    local titleText = baseTitle
+    if frame == RQE.QuestsFrame then
+        titleText = titleText .. " (" .. questCount .. "/" .. numQuestsInLog .. "/" .. maxQuests .. ")"
+    else
+        titleText = titleText .. " (" .. questCount .. ")"
+    end
+    frame.header:SetText(titleText)
+end
+
+
+---------------------------
+-- 5. Child Frame Anchors
+---------------------------
 
 function UpdateFrameAnchors()
     -- Clear all points to prevent any previous anchoring affecting the new setup
@@ -326,47 +359,6 @@ function ResetChildFramesToDefault()
 end
 
 
-
--- -- Adjust Set Point Anchor of Child Frames based on LastElements
--- function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
-    -- -- Reset positions to default first
-    -- ResetChildFramesToDefault()
-
-    -- -- Adjusting Quests child frame position based on last campaign element
-    -- if lastCampaignElement then
-        -- RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", 0, -15)
-    -- end
-
-    -- -- Adjusting WorldQuests child frame position based on last quest element
-    -- if lastQuestElement then
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -15)
-    -- elseif lastCampaignElement and not RQE.QuestsFrame:IsShown() then
-        -- -- If there are no regular quests but there are campaign quests
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", 0, -15)
-    -- elseif not lastCampaignElement and not lastQuestElement and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        -- -- If there are no campaign or regular quests, but ScenarioChildFrame is shown
-        -- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    -- end
-	
-	-- -- Adjusting WorldQuests child frame position based on last quest element
-	-- if lastQuestElement then
-		-- -- If there's a last element in the regular quests frame, anchor to it
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
-	-- elseif lastCampaignElement then
-		-- -- If there's no last regular quest element but a last campaign element, anchor to it
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
-	-- elseif RQE.CampaignFrame:IsShown() and not RQE.QuestsFrame:IsShown() then
-		-- -- If the Campaign frame is shown but no regular quests are shown, anchor to the Campaign frame
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
-	-- elseif RQE.QuestsFrame:IsShown() and not lastQuestElement then
-		-- -- If the Quests frame is shown but there's no last element, anchor to the Quests frame
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
-	-- else
-		-- -- If neither Campaign nor Regular Quests frames have elements, anchor to the content
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
 -- Adjust Set Point Anchor of Child Frames based on LastElements
 function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
     -- Reset positions to default first
@@ -405,85 +397,81 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
 end
 
 
--- Create headers for each child frame
-RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
-RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Quests")
-RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+---------------------------
+-- 6. Event Handlers
+---------------------------
 
--- ScenarioChildFrame header
--- Function to create a unique header for the ScenarioChildFrame
-local function CreateUniqueScenarioHeader(scenarioFrame, title)
-    local header = CreateFrame("Frame", nil, scenarioFrame, "BackdropTemplate")
-	header:SetFrameStrata("LOW") -- or "LOW" if you want it above the background but below medium elements
-    header:SetHeight(100)  -- Setting a custom height for the scenario header
-    header:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true,
-        tileSize = 16,
-        edgeSize = 8,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 }
-    })
-    header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
-    header:SetPoint("TOPLEFT", scenarioFrame, "TOPLEFT", 0, 0)
-    header:SetPoint("TOPRIGHT", scenarioFrame, "TOPRIGHT", 0, 0)
+-- Event to update text widths when the frame is resized
+RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
+    AdjustQuestItemWidths(width)
+end)
 
-    -- Create header text
-    local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    headerText:SetPoint("CENTER", header, "CENTER", 0, -10)  -- Adjust Y offset to vertically center the text in the taller header
-    headerText:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-    headerText:SetTextColor(239/255, 191/255, 90/255)
-    headerText:SetText(title)
-    headerText:SetWordWrap(true)
 
-    scenarioFrame.header = header  -- Assign the header to the scenario frame
-    return header  -- Return the new header frame
+-- Calls function to save Quest Frame Position OnDragStop
+RQEQuestFrame:SetScript("OnDragStop", function()
+    RQEQuestFrame:StopMovingOrSizing()
+    SaveQuestFramePosition()  -- This will save the current frame position
+end)
+
+
+-- Define the function to save frame position
+function SaveQuestFramePosition()
+    local point, relativeTo, relativePoint, xOfs, yOfs = RQEQuestFrame:GetPoint()
+    RQE.db.profile.QuestFramePosition.xPos = xOfs
+    RQE.db.profile.QuestFramePosition.yPos = yOfs
+    RQE.db.profile.QuestFramePosition.anchorPoint = relativePoint
 end
 
--- Use the function to create a unique header for the ScenarioChildFrame
-RQE.ScenarioChildFrame = RQE.ScenarioChildFrame or CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
-CreateUniqueScenarioHeader(RQE.ScenarioChildFrame, "")
 
--- Initialize with default values
-RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
-RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
-RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
+-- Calls function to save Quest Frame Position OnDragStop
+RQEQuestFrame:SetScript("OnDragStop", function()
+    RQEQuestFrame:StopMovingOrSizing()
+    SaveQuestFramePosition()  -- This will save the current frame position
+end)
 
-local function UpdateHeader(frame, baseTitle, questCount)
-    local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
-    local numShownEntries, numQuestsInLog = C_QuestLog.GetNumQuestLogEntries()
-    local titleText = baseTitle
-    if frame == RQE.QuestsFrame then
-        titleText = titleText .. " (" .. questCount .. "/" .. numQuestsInLog .. "/" .. maxQuests .. ")"
-    else
-        titleText = titleText .. " (" .. questCount .. ")"
+
+-- Event to update text widths when the frame is resized
+RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
+	AdjustQuestItemWidths(width)
+end)
+
+
+-- Function used to adjust the Questing Frame width
+function AdjustQuestItemWidths(frameWidth)
+    for i, button in pairs(RQE.QuestLogIndexButtons or {}) do
+        if button.QuestLevelAndName then  -- Check if QuestLevelAndName is initialized
+            button.QuestLevelAndName:SetWidth(frameWidth - 80)  -- Adjust the padding as needed
+            button.QuestLevelAndName:SetWordWrap(true)  -- Ensure word wrap
+            button.QuestLevelAndName:SetHeight(0)
+        end
+
+        if button.QuestObjectivesOrDescription then  -- Check if QuestObjectivesOrDescription is initialized
+            button.QuestObjectivesOrDescription:SetWidth(frameWidth - 80)  -- Adjust the padding as needed
+            button.QuestObjectivesOrDescription:SetWordWrap(true)  -- Ensure word wrap
+            button.QuestObjectivesOrDescription:SetHeight(0)
+        end
     end
-    frame.header:SetText(titleText)
+    -- Add a check to ensure RQE.ScenarioChildFrame.body is not nil
+    if RQE.ScenarioChildFrame.body then
+        RQE.ScenarioChildFrame.body:SetWidth(frameWidth - 75)  -- Adjust the padding as needed
+        RQE.ScenarioChildFrame.body:SetWordWrap(true)  -- Ensure word wrap
+        RQE.ScenarioChildFrame.body:SetHeight(0)
+    end
 end
 
 
--- Create Buttons
-RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
+---------------------------
+-- 8. Utility Functions
+---------------------------
 
+-- [Utility functions like AdjustQuestItemWidths, SaveQuestFramePosition, colorizeObjectives, AddQuestRewardsToTooltip, etc.]
 
 -- Function to create and position the ScrollFrame's child frames
 function SortQuestsByProximity()
     -- Logic to sort quests based on proximity
     C_QuestLog.SortQuestWatches()
 	GatherAndSortWorldQuestsByProximity()
-	-- local sortedQuests = RQE.SortWorldQuestsByProximity()
-	-- for _, quest in ipairs(sortedQuests) do
-		-- print("Quest ID:", quest.questId, "Distance:", quest.distance)
-	-- end
 end
-
-
--- -- Function to Get Distances for Sort Quests
--- local function GetDistance(x1, y1, x2, y2)
-    -- local dx = x2 - x1
-    -- local dy = y2 - y1
-    -- return math.sqrt(dx * dx + dy * dy)
--- end
 
 
 -- Function to gather and sort World Quests by proximity
@@ -504,20 +492,283 @@ function GatherAndSortWorldQuestsByProximity()
 end
 
 
--- Define the function to save frame position
-function SaveQuestFramePosition()
-    local point, relativeTo, relativePoint, xOfs, yOfs = RQEQuestFrame:GetPoint()
-    RQE.db.profile.QuestFramePosition.xPos = xOfs
-    RQE.db.profile.QuestFramePosition.yPos = yOfs
-    RQE.db.profile.QuestFramePosition.anchorPoint = relativePoint
+-- Function to Show Right-Click Dropdown Menu
+function ShowQuestDropdown(self, questID)
+    local menu = {}
+
+    -- Check if the player is in a group and the quest is shareable
+    local isPlayerInGroup = IsInGroup()
+    local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+    
+    if isPlayerInGroup and isQuestShareable then
+        table.insert(menu, { text = "Share Quest", func = function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end })
+    end
+
+    -- Always include the other options
+    table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID) end })
+    table.insert(menu, { text = "Abandon Quest", func = function() C_QuestLog.SetAbandonQuest(); C_QuestLog.AbandonQuest(); end })
+	table.insert(menu, { text = "View Quest", func = function() OpenQuestLogToQuestDetails(questID) end })
+
+    local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
+    EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
 end
 
 
--- Calls function to save Quest Frame Position OnDragStop
-RQEQuestFrame:SetScript("OnDragStop", function()
-    RQEQuestFrame:StopMovingOrSizing()
-    SaveQuestFramePosition()  -- This will save the current frame position
-end)
+---------------------------
+-- 9. Scenario Frame Handling
+---------------------------
+
+-- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
+
+-- Function to initiate the Scenario Frame
+function RQE.InitializeScenarioFrame()
+    -- Create the ScenarioChildFrame if not already done
+    -- Only create the ScenarioChildFrame if it does not already exist
+    if not RQE.ScenarioChildFrame then
+        -- Create the ScenarioChildFrame if it does not already exist
+        RQE.ScenarioChildFrame = CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
+        RQE.ScenarioChildFrame:SetSize(400, 200) -- Set the size as needed
+        RQE.ScenarioChildFrame:SetPoint("CENTER") -- Position it at the center, or change as needed
+    end
+
+    if not RQE.ScenarioChildFrame.scenarioTitle then
+        -- Create the scenarioTitle as a FontString within the ScenarioChildFrame
+        RQE.ScenarioChildFrame.scenarioTitle = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		RQE.ScenarioChildFrame.scenarioTitle:ClearAllPoints()
+		RQE.ScenarioChildFrame.scenarioTitle:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "TOPLEFT", 10, -10)
+		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 18, "THICKOUTLINE")
+		-- Ensure the text fits nicely and is readable
+		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyV("TOP")
+    end
+
+    if not RQE.ScenarioChildFrame.stage then
+        -- Create the stage as a FontString within the ScenarioChildFrame
+        RQE.ScenarioChildFrame.stage = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		RQE.ScenarioChildFrame.stage:ClearAllPoints()
+		RQE.ScenarioChildFrame.stage:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.scenarioTitle, "TOPLEFT", 0, -40)
+		RQE.ScenarioChildFrame.stage:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
+		-- Ensure the text fits nicely and is readable
+		RQE.ScenarioChildFrame.stage:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.stage:SetJustifyV("TOP")
+    end
+	
+    -- Ensure that scenarioTitle is a valid FontString object before creating title
+    if not RQE.ScenarioChildFrame.title then
+        -- Create the title as a FontString below the scenarioTitle
+        RQE.ScenarioChildFrame.title = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.ScenarioChildFrame.title:ClearAllPoints()
+        RQE.ScenarioChildFrame.title:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.stage, "TOPLEFT", 0, -25)
+		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
+		RQE.ScenarioChildFrame.title:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.title:SetJustifyV("TOP")
+    end
+	
+	-- Create a new frame for the timer
+    RQE.ScenarioChildFrame.timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame, "BackdropTemplate")
+    RQE.ScenarioChildFrame.timerFrame:SetSize(100, 50)
+    RQE.ScenarioChildFrame.timerFrame:SetPoint("BOTTOMRIGHT", RQE.ScenarioChildFrame.header, "BOTTOMRIGHT", -10, 10)
+    RQE.ScenarioChildFrame.timerFrame:SetFrameStrata("MEDIUM")
+	RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 2)
+    RQE.ScenarioChildFrame.timerFrame:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        tile = true, tileSize = 8, edgeSize = 0.1,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+    })
+    RQE.ScenarioChildFrame.timerFrame:SetBackdropColor(0, 0, 0, 0)
+
+    -- Ensure the timer frame is on top of other elements
+    RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 1)
+
+    -- Create the FontString for the timer within the timer frame
+	RQE.ScenarioChildFrame.timer = RQE.ScenarioChildFrame.timer or RQE.ScenarioChildFrame.timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	RQE.ScenarioChildFrame.timer:SetAllPoints()
+	RQE.ScenarioChildFrame.timer:SetJustifyH("CENTER")
+	RQE.ScenarioChildFrame.timer:SetJustifyV("MIDDLE")
+	RQE.ScenarioChildFrame.timer:SetText("Initial Timer")
+	RQE.ScenarioChildFrame.timer:SetTextColor(1, 1, 0, 1)
+
+    -- Show the timer frame and its text
+    RQE.ScenarioChildFrame.timerFrame:Show()
+    RQE.ScenarioChildFrame.timer:Show()
+
+    if not RQE.ScenarioChildFrame.body then
+        -- Create the body as a FontString below the header
+        RQE.ScenarioChildFrame.body = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        RQE.ScenarioChildFrame.body:ClearAllPoints()
+		RQE.ScenarioChildFrame.body:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "BOTTOMLEFT", 10, -15)  -- Assuming the header is around 60px in height plus a 30px gap
+		RQE.ScenarioChildFrame.body:SetFont("Fonts\\FRIZQT__.TTF", 14, "MONOCHROME")
+        RQE.ScenarioChildFrame.body:SetText("Initial Body Text")
+		RQE.ScenarioChildFrame.body:SetJustifyH("LEFT")
+		RQE.ScenarioChildFrame.body:SetJustifyV("TOP")
+		-- Set the color of the body FontString to white (r, g, b, alpha)
+		RQE.ScenarioChildFrame.body:SetTextColor(1, 1, 1, 0.9) -- White color
+	end
+end
+
+
+-- Function to update the scenario frame with the latest information
+function RQE.UpdateScenarioFrame()
+    -- Get the full scenario information once at the beginning of the function
+    local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
+    local scenarioStepInfo = C_Scenario.GetStepInfo()
+    local _, _, numCriteria = C_Scenario.GetStepInfo()
+
+    -- Retrieve the timer information for the first criteria
+    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+
+    -- Check if we have valid timer information
+    if duration and elapsed then
+        local timeLeft = duration - elapsed
+        RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+    else
+        RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+    end
+
+    -- Check if we have valid scenario information
+    if scenarioStepInfo and type(scenarioStepInfo) == "table" then
+        if scenarioStepInfo.title then
+            RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
+        else
+            RQE.ScenarioChildFrame.title:SetText("Title is not available")
+        end
+    end
+
+    -- Check if we have valid scenario information
+    if scenarioName and scenarioStepInfo then
+        -- Update the scenarioTitle with the scenario name
+        RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
+        
+        -- Update the stage with the current stage and total stages
+        RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
+        
+        -- Update the title with the scenario step title
+        RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo)--(scenarioStepInfo.title)
+        
+        -- Update the main frame with criteria
+        local criteriaText = ""
+		for criteriaIndex = 1, numCriteria do
+			local criteriaString, _, completed, quantity, totalQuantity = C_Scenario.GetCriteriaInfo(criteriaIndex)
+			if completed then
+				criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
+			else
+				criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
+			end
+		end
+		
+        RQE.ScenarioChildFrame.body:SetText(criteriaText)
+
+        -- Update the timer, if applicable
+        local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+        if duration and elapsed then
+            local timeLeft = duration - elapsed
+            RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+        else
+            RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+        end
+        
+        -- Display the frame if it's not already shown
+        RQE.ScenarioChildFrame:Show()
+		--RQE.TimerFrame:Show()
+    else
+        print("No active scenario or scenario information is not available.")
+        -- Hide the scenario frame since we're not in a scenario
+        RQE.ScenarioChildFrame:Hide()
+    end
+end
+
+---------------------------
+-- 10. Timer Functionality
+---------------------------
+
+local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
+timerFrame:SetSize(100, 10) -- Adjust size as needed
+timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP", 65, -50)
+
+
+-- Create a FontString for the timer text
+local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+timerText:SetAllPoints(timerFrame)
+timerText:SetFont("Fonts\\FRIZQT__.TTF", 20, "OUTLINE")  -- Increase font size to 20, adjust as needed
+
+
+local startTime
+local function UpdateTimer(self, elapsed)
+    if startTime then
+        local currentTime = GetTime()
+        local elapsedTime = currentTime - startTime
+        local hours = math.floor(elapsedTime / 3600)
+        local minutes = math.floor(elapsedTime / 60) % 60
+        local seconds = elapsedTime % 60
+        timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
+    end
+end
+
+
+-- Start the timer
+function RQE.StartTimer()
+    startTime = GetTime()
+    timerFrame:SetScript("OnUpdate", UpdateTimer)
+	timerFrame:Show()
+end
+
+
+-- Stop the timer
+function RQE.StopTimer()
+    startTime = nil
+    timerFrame:SetScript("OnUpdate", nil)
+    timerText:SetText("00:00:00")
+	timerFrame:Hide()
+end
+
+
+---------------------------
+-- 11. Quest Frame Updates
+---------------------------
+
+-- [Functions for updating the quest frames, such as UpdateRQEQuestFrame, UpdateRQEWorldQuestFrame, RQE:ClearRQEQuestFrame, etc.]
+
+-- Function used to clear the Questing Frame
+function RQE:ClearRQEQuestFrame()
+    -- Clearing regular quest buttons
+    for i, QuestLogIndexButton in pairs(RQE.QuestLogIndexButtons or {}) do
+        if QuestLogIndexButton then
+            QuestLogIndexButton:Hide()
+            if QuestLogIndexButton.QuestLevelAndName then
+                QuestLogIndexButton.QuestLevelAndName:Hide()
+            end
+            if QuestLogIndexButton.QuestObjectivesOrDescription then
+                QuestLogIndexButton.QuestObjectivesOrDescription:Hide()
+            end
+        end
+    end
+end
+
+
+-- Function used to clear the World Quest Frame
+function RQE:ClearRQEWorldQuestFrame()
+    -- Ensure that RQE.WorldQuestsFrame exists and is a table
+    if RQE.WorldQuestsFrame and type(RQE.WorldQuestsFrame) == "table" then
+        -- Iterate over all elements in RQE.WorldQuestsFrame
+        for i, WQuestLogIndexButton in pairs(RQE.WorldQuestsFrame) do
+            -- Check if each element is a valid table
+            if WQuestLogIndexButton and type(WQuestLogIndexButton) == "table" then
+                -- Check if the element has a GetName method and a name that matches the pattern
+                if WQuestLogIndexButton.GetName and WQuestLogIndexButton:GetName() and WQuestLogIndexButton:GetName():find("WQButton") then
+                    WQuestLogIndexButton:Hide()
+                    -- Hide sub-elements of the World Quest Button
+                    if WQuestLogIndexButton.WQuestLevelAndName then
+                        WQuestLogIndexButton.WQuestLevelAndName:Hide()
+                    end
+                    if WQuestLogIndexButton.QuestObjectivesOrDescription then
+                        WQuestLogIndexButton.QuestObjectivesOrDescription:Hide()
+                    end
+                end
+            end
+        end
+    end
+end
 
 
 -- Function to Colorize the Quest Tracker Module
@@ -1598,381 +1849,4 @@ function UpdateRQEWorldQuestFrame()
 			end
         end
     end
-end
-
--- Function used to clear the World Quest Frame
-function RQE:ClearRQEWorldQuestFrame()
-    -- Ensure that RQE.WorldQuestsFrame exists and is a table
-    if RQE.WorldQuestsFrame and type(RQE.WorldQuestsFrame) == "table" then
-        -- Iterate over all elements in RQE.WorldQuestsFrame
-        for i, WQuestLogIndexButton in pairs(RQE.WorldQuestsFrame) do
-            -- Check if each element is a valid table
-            if WQuestLogIndexButton and type(WQuestLogIndexButton) == "table" then
-                -- Check if the element has a GetName method and a name that matches the pattern
-                if WQuestLogIndexButton.GetName and WQuestLogIndexButton:GetName() and WQuestLogIndexButton:GetName():find("WQButton") then
-                    WQuestLogIndexButton:Hide()
-                    -- Hide sub-elements of the World Quest Button
-                    if WQuestLogIndexButton.WQuestLevelAndName then
-                        WQuestLogIndexButton.WQuestLevelAndName:Hide()
-                    end
-                    if WQuestLogIndexButton.QuestObjectivesOrDescription then
-                        WQuestLogIndexButton.QuestObjectivesOrDescription:Hide()
-                    end
-                end
-            end
-        end
-    end
-end
-
-
--- Function to initiate the Scenario Frame
-function RQE.InitializeScenarioFrame()
-    -- Create the ScenarioChildFrame if not already done
-    -- Only create the ScenarioChildFrame if it does not already exist
-    if not RQE.ScenarioChildFrame then
-        -- Create the ScenarioChildFrame if it does not already exist
-        RQE.ScenarioChildFrame = CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
-        RQE.ScenarioChildFrame:SetSize(400, 200) -- Set the size as needed
-        RQE.ScenarioChildFrame:SetPoint("CENTER") -- Position it at the center, or change as needed
-    end
-
-    if not RQE.ScenarioChildFrame.scenarioTitle then
-        -- Create the scenarioTitle as a FontString within the ScenarioChildFrame
-        RQE.ScenarioChildFrame.scenarioTitle = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-		RQE.ScenarioChildFrame.scenarioTitle:ClearAllPoints()
-		RQE.ScenarioChildFrame.scenarioTitle:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "TOPLEFT", 10, -10)
-		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 18, "THICKOUTLINE")
-		-- Ensure the text fits nicely and is readable
-		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyH("LEFT")
-		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyV("TOP")
-    end
-
-    if not RQE.ScenarioChildFrame.stage then
-        -- Create the stage as a FontString within the ScenarioChildFrame
-        RQE.ScenarioChildFrame.stage = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-		RQE.ScenarioChildFrame.stage:ClearAllPoints()
-		RQE.ScenarioChildFrame.stage:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.scenarioTitle, "TOPLEFT", 0, -40)
-		RQE.ScenarioChildFrame.stage:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
-		-- Ensure the text fits nicely and is readable
-		RQE.ScenarioChildFrame.stage:SetJustifyH("LEFT")
-		RQE.ScenarioChildFrame.stage:SetJustifyV("TOP")
-    end
-	
-    -- Ensure that scenarioTitle is a valid FontString object before creating title
-    if not RQE.ScenarioChildFrame.title then
-        -- Create the title as a FontString below the scenarioTitle
-        RQE.ScenarioChildFrame.title = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-		RQE.ScenarioChildFrame.title:ClearAllPoints()
-        RQE.ScenarioChildFrame.title:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.stage, "TOPLEFT", 0, -25)
-		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
-		RQE.ScenarioChildFrame.title:SetJustifyH("LEFT")
-		RQE.ScenarioChildFrame.title:SetJustifyV("TOP")
-    end
-	
-	-- Create a new frame for the timer
-    RQE.ScenarioChildFrame.timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame, "BackdropTemplate")
-    RQE.ScenarioChildFrame.timerFrame:SetSize(100, 50)
-    RQE.ScenarioChildFrame.timerFrame:SetPoint("BOTTOMRIGHT", RQE.ScenarioChildFrame.header, "BOTTOMRIGHT", -10, 10)
-    RQE.ScenarioChildFrame.timerFrame:SetFrameStrata("MEDIUM")
-	RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 2)
-    RQE.ScenarioChildFrame.timerFrame:SetBackdrop({
-        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 8, edgeSize = 0.1,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 }
-    })
-    RQE.ScenarioChildFrame.timerFrame:SetBackdropColor(0, 0, 0, 0)
-
-    -- Ensure the timer frame is on top of other elements
-    RQE.ScenarioChildFrame.timerFrame:SetFrameLevel(RQE.ScenarioChildFrame:GetFrameLevel() + 1)
-
-    -- Create the FontString for the timer within the timer frame
-	RQE.ScenarioChildFrame.timer = RQE.ScenarioChildFrame.timer or RQE.ScenarioChildFrame.timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	RQE.ScenarioChildFrame.timer:SetAllPoints()
-	RQE.ScenarioChildFrame.timer:SetJustifyH("CENTER")
-	RQE.ScenarioChildFrame.timer:SetJustifyV("MIDDLE")
-	RQE.ScenarioChildFrame.timer:SetText("Initial Timer")
-	RQE.ScenarioChildFrame.timer:SetTextColor(1, 1, 0, 1)
-
-    -- Show the timer frame and its text
-    RQE.ScenarioChildFrame.timerFrame:Show()
-    RQE.ScenarioChildFrame.timer:Show()
-
-    if not RQE.ScenarioChildFrame.body then
-        -- Create the body as a FontString below the header
-        RQE.ScenarioChildFrame.body = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        RQE.ScenarioChildFrame.body:ClearAllPoints()
-		RQE.ScenarioChildFrame.body:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "BOTTOMLEFT", 10, -15)  -- Assuming the header is around 60px in height plus a 30px gap
-		RQE.ScenarioChildFrame.body:SetFont("Fonts\\FRIZQT__.TTF", 14, "MONOCHROME")
-        RQE.ScenarioChildFrame.body:SetText("Initial Body Text")
-		RQE.ScenarioChildFrame.body:SetJustifyH("LEFT")
-		RQE.ScenarioChildFrame.body:SetJustifyV("TOP")
-		-- Set the color of the body FontString to white (r, g, b, alpha)
-		RQE.ScenarioChildFrame.body:SetTextColor(1, 1, 1, 0.9) -- White color
-	end
-end
-
-
--- Function to update the scenario frame with the latest information
-function RQE.UpdateScenarioFrame()
-    -- Get the full scenario information once at the beginning of the function
-    local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
-    local scenarioStepInfo = C_Scenario.GetStepInfo()
-    local _, _, numCriteria = C_Scenario.GetStepInfo()
-
-    -- Retrieve the timer information for the first criteria
-    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-
-    -- Check if we have valid timer information
-    if duration and elapsed then
-        local timeLeft = duration - elapsed
-        RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-    else
-        RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
-    end
-
-    -- Check if we have valid scenario information
-    if scenarioStepInfo and type(scenarioStepInfo) == "table" then
-        if scenarioStepInfo.title then
-            RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
-        else
-            RQE.ScenarioChildFrame.title:SetText("Title is not available")
-        end
-    end
-
-    -- Check if we have valid scenario information
-    if scenarioName and scenarioStepInfo then
-        -- Update the scenarioTitle with the scenario name
-        RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
-        
-        -- Update the stage with the current stage and total stages
-        RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
-        
-        -- Update the title with the scenario step title
-        RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo)--(scenarioStepInfo.title)
-        
-        -- Update the main frame with criteria
-        local criteriaText = ""
-		for criteriaIndex = 1, numCriteria do
-			local criteriaString, _, completed, quantity, totalQuantity = C_Scenario.GetCriteriaInfo(criteriaIndex)
-			if completed then
-				criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
-			else
-				criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
-			end
-		end
-		
-        RQE.ScenarioChildFrame.body:SetText(criteriaText)
-
-        -- Update the timer, if applicable
-        local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-        if duration and elapsed then
-            local timeLeft = duration - elapsed
-            RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-        else
-            RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
-        end
-        
-        -- Display the frame if it's not already shown
-        RQE.ScenarioChildFrame:Show()
-		--RQE.TimerFrame:Show()
-    else
-        print("No active scenario or scenario information is not available.")
-        -- Hide the scenario frame since we're not in a scenario
-        RQE.ScenarioChildFrame:Hide()
-    end
-end
-
-
-
--- Event to update text widths when the frame is resized
-RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
-	AdjustQuestItemWidths(width)
-end)
-
-
--- Function used to adjust the Questing Frame width
-function AdjustQuestItemWidths(frameWidth)
-    for i, button in pairs(RQE.QuestLogIndexButtons or {}) do
-        if button.QuestLevelAndName then  -- Check if QuestLevelAndName is initialized
-            button.QuestLevelAndName:SetWidth(frameWidth - 80)  -- Adjust the padding as needed
-            button.QuestLevelAndName:SetWordWrap(true)  -- Ensure word wrap
-            button.QuestLevelAndName:SetHeight(0)
-        end
-
-        if button.QuestObjectivesOrDescription then  -- Check if QuestObjectivesOrDescription is initialized
-            button.QuestObjectivesOrDescription:SetWidth(frameWidth - 80)  -- Adjust the padding as needed
-            button.QuestObjectivesOrDescription:SetWordWrap(true)  -- Ensure word wrap
-            button.QuestObjectivesOrDescription:SetHeight(0)
-        end
-    end
-    -- Add a check to ensure RQE.ScenarioChildFrame.body is not nil
-    if RQE.ScenarioChildFrame.body then
-        RQE.ScenarioChildFrame.body:SetWidth(frameWidth - 75)  -- Adjust the padding as needed
-        RQE.ScenarioChildFrame.body:SetWordWrap(true)  -- Ensure word wrap
-        RQE.ScenarioChildFrame.body:SetHeight(0)
-    end
-end
-
-
--- Function used to clear the Questing Frame
-function RQE:ClearRQEQuestFrame()
-    -- Clearing regular quest buttons
-    for i, QuestLogIndexButton in pairs(RQE.QuestLogIndexButtons or {}) do
-        if QuestLogIndexButton then
-            QuestLogIndexButton:Hide()
-            if QuestLogIndexButton.QuestLevelAndName then
-                QuestLogIndexButton.QuestLevelAndName:Hide()
-            end
-            if QuestLogIndexButton.QuestObjectivesOrDescription then
-                QuestLogIndexButton.QuestObjectivesOrDescription:Hide()
-            end
-        end
-    end
-end
-
-
--- Function to Show Right-Click Dropdown Menu
-function ShowQuestDropdown(self, questID)
-    local menu = {}
-
-    -- Check if the player is in a group and the quest is shareable
-    local isPlayerInGroup = IsInGroup()
-    local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
-    
-    if isPlayerInGroup and isQuestShareable then
-        table.insert(menu, { text = "Share Quest", func = function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end })
-    end
-
-    -- Always include the other options
-    table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID) end })
-    table.insert(menu, { text = "Abandon Quest", func = function() C_QuestLog.SetAbandonQuest(); C_QuestLog.AbandonQuest(); end })
-	table.insert(menu, { text = "View Quest", func = function() OpenQuestLogToQuestDetails(questID) end })
-
-    local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
-    EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
-end
-
-
-
-
-
-
-
--- ##### TESTING #####
-
--- -- Creating the frame for the Timer (Scenarios)
--- -- Create a frame for the timer inside RQE.RQEQuestFrame
--- RQE.TimerFrame = CreateFrame("Frame", "RQETimerFrame", UIParent, "BackdropTemplate")
--- RQE.TimerFrame:SetSize(200, 50)  -- Adjust size as needed
--- RQE.TimerFrame:SetPoint("CENTER", UIParent, "CENTER")  -- Center on screen
--- RQE.TimerFrame:SetBackdrop({
-    -- bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-    -- edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-    -- tile = true,
-    -- tileSize = 16,
-    -- edgeSize = 16,
-    -- insets = { left = 4, right = 4, top = 4, bottom = 4 }
--- })
--- RQE.TimerFrame:SetBackdropColor(0, 0, 0, 1)  -- Black background
--- --RQE.TimerFrame:Hide() -- Hide frame initially
-
--- -- Create the timer text
--- RQE.TimerFrame.timerText = RQE.TimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
--- RQE.TimerFrame.timerText:SetPoint("CENTER", RQE.TimerFrame, "CENTER")  -- Center text in the timer frame
--- RQE.TimerFrame.timerText:SetText("")
-
--- -- Create the timer text
--- RQE.TimerFrame.timerText = RQE.TimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
--- RQE.TimerFrame.timerText:SetPoint("CENTER", RQE.TimerFrame, "CENTER")  -- Center text in the timer frame
--- RQE.TimerFrame.timerText:SetText("")
-
-
--- function RQE.HandleTimerStart(timerID)
-    -- local _, elapsedTime, timerType = GetWorldElapsedTime(timerID)
-    -- -- Check if the timer type is one you care about
-    -- -- For example, if you're only interested in challenge mode timers:
-    -- if timerType == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE then
-        -- local _, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID)
-        -- RQE.ScenarioTimer_Start(timeLimit - elapsedTime)
-    -- end
--- end
-
-
--- function RQE.ScenarioTimer_OnUpdate(self, elapsed)
-    -- print("Timer update called")  -- Debug message
-    -- if not self.timeSinceLastUpdate then
-        -- self.timeSinceLastUpdate = 0
-    -- end
-    -- self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
-
-    -- if self.timeSinceLastUpdate >= 1 then
-        -- local timeLeft = self.endTime - GetTime()
-        -- if timeLeft > 0 then
-            -- -- Update your timer display here, e.g.:
-            -- RQE.RQEQuestFrame.timerText:SetText(SecondsToTime(timeLeft))
-        -- else
-            -- RQE.ScenarioTimer_Stop()
-        -- end
-        -- self.timeSinceLastUpdate = 0
-    -- end
--- end
-
--- function RQE.ScenarioTimer_Start(duration)
-    -- local timerFrame = RQE.TimerFrame  -- Using the dedicated Timer Frame
-    -- timerFrame.endTime = GetTime() + duration
-    -- timerFrame:SetScript("OnUpdate", RQE.ScenarioTimer_OnUpdate)
-    -- timerFrame:Show()  -- Ensure the frame is visible
-    -- timerFrame.timerText:Show()  -- Ensure the timer text is visible
--- end
-
-
-
--- function RQE.ScenarioTimer_Stop()
-    -- local timerFrame = RQE.TimerFrame
-    -- timerFrame:SetScript("OnUpdate", nil)
-    -- timerFrame.timerText:SetText("")
-    -- timerFrame:Hide()
--- end
-
-
-
-
-
-
-
-local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
-timerFrame:SetSize(100, 10) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP", 65, -50)
-
--- Create a FontString for the timer text
-local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-timerText:SetAllPoints(timerFrame)
-timerText:SetFont("Fonts\\FRIZQT__.TTF", 20, "OUTLINE")  -- Increase font size to 20, adjust as needed
-
-local startTime
-local function UpdateTimer(self, elapsed)
-    if startTime then
-        local currentTime = GetTime()
-        local elapsedTime = currentTime - startTime
-        local hours = math.floor(elapsedTime / 3600)
-        local minutes = math.floor(elapsedTime / 60) % 60
-        local seconds = elapsedTime % 60
-        timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
-    end
-end
-
--- Start the timer
-function RQE.StartTimer()
-    startTime = GetTime()
-    timerFrame:SetScript("OnUpdate", UpdateTimer)
-	timerFrame:Show()
-end
-
--- Stop the timer
-function RQE.StopTimer()
-    startTime = nil
-    timerFrame:SetScript("OnUpdate", nil)
-    timerText:SetText("00:00:00")
-	timerFrame:Hide()
 end
