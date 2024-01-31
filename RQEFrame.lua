@@ -598,13 +598,7 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
     else
         RQE.debugLog("RQE.QuestNameText is not initialized.")
     end
-	
-    -- Update widths
-    --RQE.QuestNameText:SetWidth(newWidth)
-    --RQE.DirectionTextFrame:SetWidth(newWidth)
-    --RQE.QuestDescription:SetWidth(newWidth)
-    --RQE.QuestObjectives:SetWidth(newWidth)
-    
+	    
     if self.StepsText then
         for i, stepsTextElement in ipairs(self.StepsText) do
             stepsTextElement:SetWidth(newWidth)
@@ -619,10 +613,6 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
         end
     end
 end)
-
-
-
-
 
 
 -- Add a click event to open the quest details for the current QuestID

@@ -1782,22 +1782,30 @@ function RQE:QuestComplete(questID)
 end
 
 
+-- Function to highlight text for copying
+local function HighlightTextForCopy(editBox)
+    editBox:SetFocus()
+    editBox:HighlightText()
+    print("Press Ctrl+C to copy the link.")
+end
+
+
 -- Function to generate frame on menu choice that will display the wowhead link for a given quest
 function RQE:ShowWowheadLink(questID)
     local wowheadURL = "https://www.wowhead.com/quest=" .. questID
 
     -- Create and configure the frame
-    local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "DialogBoxFrame")
+    local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate") --, "DialogBoxFrame")
     linkFrame:SetSize(350, 120)  -- Increased height
     linkFrame:SetPoint("CENTER")
     linkFrame:SetFrameStrata("HIGH")
 	RQE.linkFrame = linkFrame
 
-	-- After creating the linkFrame
-	local dialogButton = _G[linkFrame:GetName().."Button"]
-	if dialogButton then
-		dialogButton:Hide()
-	end
+	-- -- After creating the linkFrame
+	-- local dialogButton = _G[linkFrame:GetName().."Button"]
+	-- if dialogButton then
+		--dialogButton:Hide()
+	-- end
 
     -- Create and configure the EditBox
     local wowHeadeditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
@@ -1911,17 +1919,17 @@ function RQE:ShowWowWikiLink(questID)
     local wowWikiURL = "https://warcraft.wiki.gg/index.php?search=" .. searchTitle .. "&title=Special%3ASearch&profile=default&fulltext=1"
 	
     -- Create and configure the frame
-    local linkFrame = CreateFrame("Frame", "WowWikiLinkFrame", UIParent, "DialogBoxFrame")
+    local linkFrame = CreateFrame("Frame", "WowWikiLinkFrame", UIParent, "BackdropTemplate")
     linkFrame:SetSize(350, 120)  -- Increased height
     linkFrame:SetPoint("CENTER")
     linkFrame:SetFrameStrata("HIGH")
 	RQE.wowWikiLinkFrame = linkFrame
 
-	-- After creating the linkFrame
-	local dialogButton = _G[linkFrame:GetName().."Button"]
-	if dialogButton then
-		dialogButton:Hide()
-	end
+	-- -- After creating the linkFrame
+	-- local dialogButton = _G[linkFrame:GetName().."Button"]
+	-- if dialogButton then
+		--dialogButton:Hide()
+	-- end
 
     -- Create and configure the EditBox
     local wowWikieditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
@@ -1991,7 +1999,7 @@ function RQE:ShowWowWikiLink(questID)
 
     -- Apply the font to the copy button text
     copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-
+	
 	local borderBackdrop = {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
