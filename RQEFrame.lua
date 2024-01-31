@@ -100,7 +100,9 @@ function ShowQuestDropdownRQEFrame(self, questID)
     table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end })
 	-- Even though no error it can be glitchy with abandoning this from anything other than the world map/official quest log
     table.insert(menu, { text = "Abandon Quest", func = function() C_QuestLog.SetAbandonQuest(); C_QuestLog.AbandonQuest(); end })
-
+	table.insert(menu, { text = "Show Wowhead Link", func = function() RQE:ShowWowheadLink(questID) end })
+	table.insert(menu, { text = "Search Warcraft Wiki", func = function() RQE:ShowWowWikiLink(questID) end })
+	
     local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
     EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
 end
@@ -668,7 +670,7 @@ local function CreateQuestTooltip(frame, questID)
     if C_QuestLog.IsQuestFlaggedCompleted(questID) then
         GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
     else
-        GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+        --GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
     end
 	
     -- Add objectives
