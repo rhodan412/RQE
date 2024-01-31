@@ -1499,17 +1499,25 @@ function RQE.SearchModule:CreateSearchBox()
     editBox:SetWidth(200)
     editBox:SetCallback("OnEnterPressed", function(widget, event, text)
         local questID = tonumber(text)
-        if questID then
-            local questLink = GetQuestLink(questID)
-            if questLink then
-                DEFAULT_CHAT_FRAME:AddMessage(questLink)
-            else
-                print("Quest link not available for Quest ID: " .. questID)
-            end
-        else
-            print("Invalid Quest ID")
-        end
-    end)
+		if questID then
+			local questLink = GetQuestLink(questID)
+			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+
+			if questLink then
+				DEFAULT_CHAT_FRAME:AddMessage(questLink)
+			else
+				print("Quest link not available for Quest ID: " .. questID)
+			end
+
+			if isQuestCompleted then
+				DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)  -- Green text
+			else
+				DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)  -- Red text
+			end
+		else
+			print("Invalid Quest ID")
+		end
+	end)
 
     -- Create the Examine button
     local examineButton = AceGUI:Create("Button")
