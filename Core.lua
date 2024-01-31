@@ -1782,6 +1782,128 @@ function RQE:QuestComplete(questID)
 end
 
 
+-- Function to generate frame on menu choice that will display the wowhead link for a given quest
+function RQE:ShowWowheadLink(questID)
+    local wowheadURL = "https://www.wowhead.com/quest=" .. questID
+
+    -- Create and configure the frame
+    local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "DialogBoxFrame")
+    linkFrame:SetSize(350, 120)  -- Increased height
+    linkFrame:SetPoint("CENTER")
+    linkFrame:SetFrameStrata("HIGH")
+	RQE.linkFrame = linkFrame
+
+	-- After creating the linkFrame
+	local dialogButton = _G[linkFrame:GetName().."Button"]
+	if dialogButton then
+		dialogButton:Hide()
+	end
+
+    -- Create and configure the EditBox
+    local wowHeadeditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
+    wowHeadeditBox:SetSize(325, 20)
+    wowHeadeditBox:SetPoint("TOP", 0, -20)  -- Adjusted position
+    wowHeadeditBox:SetAutoFocus(false)
+    wowHeadeditBox:SetText(wowheadURL)
+    wowHeadeditBox:SetCursorPosition(0)
+    wowHeadeditBox:HighlightText()
+    wowHeadeditBox:SetHyperlinksEnabled(false)
+	RQE.wowHeadeditBox = wowHeadeditBox
+
+    -- Function to copy text to clipboard
+	local function CopyTextToClipboard()
+		if wowHeadeditBox:IsVisible() then
+			wowHeadeditBox:SetFocus()
+			wowHeadeditBox:HighlightText()
+			-- Copy the text
+			if not InCombatLockdown() then
+				C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+			else
+				print("Cannot copy while in combat.")
+			end
+		end
+	end
+
+	-- Function to highlight text for copying
+	local function HighlightTextForCopy()
+		wowHeadeditBox:SetFocus()
+		wowHeadeditBox:HighlightText()
+		-- Inform the user to press Ctrl+C to copy
+		print("Press Ctrl+C to copy the link.")
+	end
+
+	-- Configure the Copy button
+	local copyButton = CreateFrame("Button", nil, linkFrame, "UIPanelButtonTemplate")
+	copyButton:SetSize(100, 20)
+    copyButton:ClearAllPoints()
+    copyButton:SetPoint("TOP", wowHeadeditBox, "BOTTOM", 0, -10)  -- Adjust the Y-offset as needed
+	copyButton:SetText("Copy to Clipboard")
+	copyButton:SetScript("OnClick", HighlightTextForCopy)
+	
+    -- Create and configure the Close button
+    local wowHeadcloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
+	wowHeadeditBox:ClearAllPoints()
+    wowHeadeditBox:SetPoint("TOP", 0, -30)
+    wowHeadcloseButton:SetScript("OnClick", function() linkFrame:Hide() end)
+	RQE.wowHeadcloseButton = wowHeadcloseButton
+
+    -- Make the frame movable
+    linkFrame:SetMovable(true)
+    linkFrame:EnableMouse(true)
+    linkFrame:RegisterForDrag("LeftButton")
+    linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
+    linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
+
+    -- Apply the border to the frame
+    linkFrame:SetBackdrop(borderBackdrop)
+
+    -- Configure the EditBox font
+    wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+	
+    -- Resize and reposition the close button
+    wowHeadcloseButton:SetSize(20, 20)
+    wowHeadcloseButton:ClearAllPoints()
+    wowHeadcloseButton:SetPoint("TOPRIGHT", linkFrame, "TOPRIGHT", -5, -5)
+
+    -- Apply the font to the copy button text
+    copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+
+local borderBackdrop = {
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
+    tile = true,
+    tileSize = 32,
+    edgeSize = 12, -- this controls the thickness of the border
+    insets = { left = 11, right = 11, top = 12, bottom = 11 },
+}
+linkFrame:SetBackdrop(borderBackdrop)
+
+    -- Show the frame
+    linkFrame:Show()
+end
+
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("CHAT_MSG_ADDON")
+f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
+    if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == UnitName("player") then
+        -- Attempt to use the hidden chat frame method to copy text
+        local editBox = ChatFrame1EditBox or ChatEdit_ChooseBoxForSend() -- Fallback to an existing chat edit box
+        editBox:Show()
+        editBox:SetText(wowHeadeditBox:GetText())
+        editBox:HighlightText()
+        editBox:SetFocus()
+        editBox:CopyChatFrame(editBox)
+        editBox:Hide()
+    end
+end)
+
+
+-- Function to generate frame on menu choice that will display the wowhead link for a given quest
+function RQE:ShowWowWikiLink(questID)
+	-- Place Code Here
+end
+
 ---------------------------------------------------
 -- 17. Filtering Functions
 ---------------------------------------------------
