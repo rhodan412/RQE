@@ -661,8 +661,16 @@ local function CreateQuestTooltip(frame, questID)
 		local _, questObjectives = GetQuestLogQuestText(questLogIndex)
 		local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 		GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+		GameTooltip:AddLine(" ")
 	end
 
+    -- Check if the quest is completed
+    if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+        GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
+    else
+        GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+    end
+	
     -- Add objectives
     local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
     if objectivesInfo and #objectivesInfo > 0 then
