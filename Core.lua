@@ -1868,15 +1868,15 @@ function RQE:ShowWowheadLink(questID)
     -- Apply the font to the copy button text
     copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
 
-local borderBackdrop = {
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
-    tile = true,
-    tileSize = 32,
-    edgeSize = 12, -- this controls the thickness of the border
-    insets = { left = 11, right = 11, top = 12, bottom = 11 },
-}
-linkFrame:SetBackdrop(borderBackdrop)
+	local borderBackdrop = {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
+		tile = true,
+		tileSize = 32,
+		edgeSize = 12, -- this controls the thickness of the border
+		insets = { left = 11, right = 11, top = 12, bottom = 11 },
+	}
+	linkFrame:SetBackdrop(borderBackdrop)
 
     -- Show the frame
     linkFrame:Show()
@@ -1901,8 +1901,111 @@ end)
 
 -- Function to generate frame on menu choice that will display the wowhead link for a given quest
 function RQE:ShowWowWikiLink(questID)
-	-- Place Code Here
+    local questTitle = C_QuestLog.GetTitleForQuestID(questID)
+    if not questTitle then
+        print("Quest title not available for Quest ID: " .. questID)
+        return
+    end
+    -- Replace spaces with '+' for URL encoding
+    local searchTitle = questTitle:gsub(" ", "+")
+    local wowWikiURL = "https://warcraft.wiki.gg/index.php?search=" .. searchTitle .. "&title=Special%3ASearch&profile=default&fulltext=1"
+	
+    -- Create and configure the frame
+    local linkFrame = CreateFrame("Frame", "WowWikiLinkFrame", UIParent, "DialogBoxFrame")
+    linkFrame:SetSize(350, 120)  -- Increased height
+    linkFrame:SetPoint("CENTER")
+    linkFrame:SetFrameStrata("HIGH")
+	RQE.wowWikiLinkFrame = linkFrame
+
+	-- After creating the linkFrame
+	local dialogButton = _G[linkFrame:GetName().."Button"]
+	if dialogButton then
+		dialogButton:Hide()
+	end
+
+    -- Create and configure the EditBox
+    local wowWikieditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
+    wowWikieditBox:SetSize(325, 20)
+    wowWikieditBox:SetPoint("TOP", 0, -30)  -- Adjusted position
+    wowWikieditBox:SetAutoFocus(false)
+    wowWikieditBox:SetText(wowWikiURL)
+    wowWikieditBox:SetCursorPosition(0)
+    wowWikieditBox:HighlightText()
+    wowWikieditBox:SetHyperlinksEnabled(false)
+	RQE.wowWikieditBox = wowWikieditBox
+
+    -- Function to copy text to clipboard
+	local function CopyTextToClipboard()
+		if wowWikieditBox:IsVisible() then
+			wowWikieditBox:SetFocus()
+			wowWikieditBox:HighlightText()
+			-- Copy the text
+			if not InCombatLockdown() then
+				C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+			else
+				print("Cannot copy while in combat.")
+			end
+		end
+	end
+
+	-- Function to highlight text for copying
+	local function HighlightTextForCopy()
+		wowWikieditBox:SetFocus()
+		wowWikieditBox:HighlightText()
+		-- Inform the user to press Ctrl+C to copy
+		print("Press Ctrl+C to copy the link.")
+	end
+
+	-- Configure the Copy button
+	local copyButton = CreateFrame("Button", nil, linkFrame, "UIPanelButtonTemplate")
+	copyButton:SetSize(100, 20)
+    copyButton:ClearAllPoints()
+    copyButton:SetPoint("TOP", wowWikieditBox, "BOTTOM", 0, -15)  -- Adjust the Y-offset as needed
+	copyButton:SetText("Copy to Clipboard")
+	copyButton:SetScript("OnClick", HighlightTextForCopy)
+	
+    -- Create and configure the Close button
+    local wowWikicloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
+	wowWikicloseButton:ClearAllPoints()
+    wowWikicloseButton:SetPoint("TOP", 0, -30)
+    wowWikicloseButton:SetScript("OnClick", function() linkFrame:Hide() end)
+	RQE.wowWikicloseButton = wowWikicloseButton
+
+    -- Make the frame movable
+    linkFrame:SetMovable(true)
+    linkFrame:EnableMouse(true)
+    linkFrame:RegisterForDrag("LeftButton")
+    linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
+    linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
+
+    -- Apply the border to the frame
+    linkFrame:SetBackdrop(borderBackdrop)
+
+    -- Configure the EditBox font
+    wowWikieditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+	
+    -- Resize and reposition the close button
+    wowWikicloseButton:SetSize(20, 20)
+    wowWikicloseButton:ClearAllPoints()
+    wowWikicloseButton:SetPoint("TOPRIGHT", linkFrame, "TOPRIGHT", -5, -5)
+
+    -- Apply the font to the copy button text
+    copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+
+	local borderBackdrop = {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
+		tile = true,
+		tileSize = 32,
+		edgeSize = 12, -- this controls the thickness of the border
+		insets = { left = 11, right = 11, top = 12, bottom = 11 },
+	}
+	linkFrame:SetBackdrop(borderBackdrop)
+
+    -- Show the frame
+    linkFrame:Show()
 end
+
 
 ---------------------------------------------------
 -- 17. Filtering Functions

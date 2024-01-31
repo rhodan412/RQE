@@ -1621,6 +1621,8 @@ function UpdateRQEWorldQuestFrame()
 					C_QuestLog.RemoveQuestWatch(questID)
 					RQE:ClearRQEQuestFrame()
 					RQE:ClearWQTracking()
+				elseif button == "RightButton" then
+					ShowQuestDropdown(self, questID)
 				end
 			end)
 				
@@ -1693,6 +1695,12 @@ function UpdateRQEWorldQuestFrame()
 			WQuestObjectivesOrDescription:SetText(questObjectivesText)
 			WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
+			WQuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
+				if button == "RightButton" then
+					ShowQuestDropdown(self, questID)
+				end
+			end)
+				
 			-- Update the last element tracker for the correct type
 			if isWorldQuest then
 				lastWorldQuestElement = WQuestObjectivesOrDescription
