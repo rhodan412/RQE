@@ -282,9 +282,22 @@ function RQE:OnInitialize()
     -- Initialize character-specific data
     self:GetCharacterInfo()
 
-    AC:RegisterOptionsTable("RQE_Options", self.options)
-    self.optionsFrame = ACD:AddToBlizOptions("RQE_Options", "Rhodan's Quest Explorer")
+    -- Register the main options table
+    AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
+    self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "Rhodan's Quest Explorer")
 
+    -- Register the "Frame" options table as a separate tab
+    AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
+    self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "Rhodan's Quest Explorer")
+	
+    -- Register the "Font" options table as a separate tab
+    AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
+    self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "Rhodan's Quest Explorer")
+	
+    -- Register the "Debug" options table as a separate tab
+    AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
+    self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "Rhodan's Quest Explorer")
+	
     -- Add profiles (if needed)
     local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
     AC:RegisterOptionsTable("RQE_Profiles", profiles)
