@@ -202,6 +202,7 @@ function RQE.handleAddonLoaded(...)
 	end)
 	
 	if C_Scenario.IsInScenario() then
+		RQE.PrintScenarioCriteriaInfoByStep()
 		RQE.ScenarioChildFrame:Show()
 		--RQE.TimerFrame:Show()
 		RQE.handleScenario()
@@ -217,6 +218,7 @@ end
 function RQE.handleScenario(self, event, ...)
     local args = {...}  -- Capture all arguments in a table
 	RQE.Timer_CheckTimers(timerID)
+	RQE.PrintScenarioCriteriaInfoByStep()
 	
     if event == "WORLD_STATE_TIMER_START" then
         local timerID = args[1]  -- For WORLD_STATE_TIMER_START, the first argument is timerID
@@ -231,7 +233,7 @@ function RQE.handleScenario(self, event, ...)
         RQE.UpdateScenarioFrame()
         --local duration = --[[ logic to determine duration based on the event data ]]
         --RQE.Timer_Start(duration)
-		--RQE.Timer_CheckTimers()
+		RQE.Timer_CheckTimers()
     else
         RQE.ScenarioChildFrame:Hide()
     end
