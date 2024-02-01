@@ -619,6 +619,10 @@ function RQE.UpdateScenarioFrame()
 
     -- Retrieve the timer information for the first criteria
     local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+	print("Duration is: " .. duration)
+	RQE.infoLog("Duration is: " .. duration)
+	print("Elapsed is: " .. elapsed)
+	RQE.infoLog("Elapsed is: " .. elapsed)
 
     -- Check if we have valid timer information
     if duration and elapsed then
