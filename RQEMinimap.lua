@@ -40,8 +40,7 @@ end
 
 -- Open Settings function (reuse your existing settings functionality)
 function RQE:OpenSettings()
-    InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-    InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+	Settings.OpenToCategory("Rhodan's Quest Explorer")
 end
 
 
@@ -70,7 +69,15 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
     type = "launcher",
 	icon = "Interface\\Addons\\RQE\\rhodan.tga",  -- Replace with your own icon
     OnClick = function(_, button)
-		if button == "LeftButton" then
+		if IsShiftKeyDown() and button == "LeftButton" then
+			-- Show config settings
+			RQE:OpenSettings()
+			
+		elseif IsShiftKeyDown() and button == "RightButton" then
+			-- Toggle Debug Log
+			RQE:ToggleDebugLog()
+			
+		elseif button == "LeftButton" then
 			-- Existing code for left button click, likely toggling your main frame
 			if RQEFrame:IsShown() then
 				RQEFrame:Hide()
@@ -93,6 +100,9 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
         if not tooltip or not tooltip.AddLine then return end
         tooltip:AddLine("Rhodan's Quest Explorer")
         tooltip:AddLine("Left-click to toggle frame.")
+		tooltip:AddLine("Right-click to toggle menu.")
+		tooltip:AddLine("Shift+Left-click to toggle Settings.")
+		tooltip:AddLine("Shift+Right-click to toggle Debug Log.")
     end,
 })
 
