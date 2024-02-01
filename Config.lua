@@ -149,20 +149,24 @@ RQE.options = {
 						RQE:UpdateCoordinates();  -- Immediately update the coordinates display
 					end,
 				},
+				-- Make this modify autoQuestWatch CVAR instead
 				autoSortRQEFrame = {
 					type = "toggle",
 					name = "Auto Populate Frame",
 					desc = "Will auto populate the RQEFrame (super tracked frame) by supertracking closest tracked quest (regardless of if you're currently tracking something else).",
+					--desc = "Automatically track quests as soon as you obtain them and after achieving an objective.",
 					order = 7,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.autoSortRQEFrame end,
 					set = function(_, newValue) 
 						RQE.db.profile.autoSortRQEFrame = newValue;
 					end,
 				},
+				-- Make this modify autoQuestProgress CVAR instead
 				autoTrackProgress = {
 					type = "toggle",
 					name = "Auto Track Progress",
 					desc = "Will put any quest in the watchlist/quest tracker that you make progress on.",
+					--desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.",
 					order = 8,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.autoTrackProgress end,
 					set = function(_, newValue) 

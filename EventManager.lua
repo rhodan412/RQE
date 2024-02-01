@@ -217,11 +217,14 @@ end
 -- Function to handle LEAVE_PARTY_CONFIRMATION, SCENARIO_CRITERIA_UPDATE, SCENARIO_UPDATE, WORLD_STATE_TIMER_START
 function RQE.handleScenario(self, event, ...)
     local args = {...}  -- Capture all arguments in a table
-	RQE.Timer_CheckTimers(timerID)
+	--RQE.Timer_CheckTimers(timerID)
+	RQE.LogScenarioInfo()
 	RQE.PrintScenarioCriteriaInfoByStep()
 	
     if event == "WORLD_STATE_TIMER_START" then
         local timerID = args[1]  -- For WORLD_STATE_TIMER_START, the first argument is timerID
+        RQE.StopTimer()
+		RQE.StartTimer()
 		RQE.HandleTimerStart(timerID)
 	end
 
@@ -232,7 +235,9 @@ function RQE.handleScenario(self, event, ...)
         RQE.InitializeScenarioFrame()
         RQE.UpdateScenarioFrame()
         --local duration = --[[ logic to determine duration based on the event data ]]
-        --RQE.Timer_Start(duration)
+        RQE.StopTimer()
+		RQE.StartTimer()
+		--RQE.Timer_Start()
 		RQE.Timer_CheckTimers()
     else
         RQE.ScenarioChildFrame:Hide()
@@ -243,6 +248,7 @@ end
 
 -- Function to handle SCENARIO_COMPLETED:
 function RQE.handleScenarioComplete()
+	RQE.StopTimer()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE.HandleTimerStop(timerID)
 end
@@ -251,9 +257,11 @@ end
 -- Function to handle WORLD_STATE_TIMER_STOP:
 function RQE.handleTimerStop(self, event, ...)
     local args = {...}  -- Capture all arguments in a table
-    local timerID = args[1]  -- For WORLD_STATE_TIMER_STOP, if you need the timerID
+    --local timerID = args[1]  -- For WORLD_STATE_TIMER_STOP, if you need the timerID
+	local timerID = ...;
 	-- A world timer has stopped; you might want to stop your timer as well
-    RQE.Timer_Stop()
+    RQE.StopTimer()
+	--RQE.Timer_Stop()
 	--RQE.Timer_CheckTimers(timerID)
 end
 
@@ -434,6 +442,7 @@ function RQE.handlePlayerEnterWorld(...)
 	end)	
 	
 	local mapID = C_Map.GetBestMapForUnit("player")
+	RQE.Timer_CheckTimers(GetWorldElapsedTimers())
 	
     if isReloadingUi then
 		if C_Scenario.IsInScenario() then

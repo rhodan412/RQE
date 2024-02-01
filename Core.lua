@@ -1305,6 +1305,7 @@ function RQE.Timer_Start(duration)
 
     timerFrame.endTime = GetTime() + duration
     timerFrame:SetScript("OnUpdate", RQE.Timer_OnUpdate)
+	RQE.TimerFrame = timerFrame
     timerFrame:Show()
 end
 
@@ -1323,11 +1324,13 @@ function RQE.Timer_Stop()
 end
 
 
--- Checks active timers and starts/stops the timer as necessary
+--Checks active timers and starts/stops the timer as necessary
 function RQE.Timer_CheckTimers()
     -- Retrieve the timer information (example: for the first criteria)
     local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-
+	RQE.infoLog("[CheckTimers] Duration is " .. tostring(duration))
+	RQE.infoLog("[CheckTimers] Elapsed is " .. tostring(elapsed))
+	
     -- Check if duration and elapsed are valid before proceeding
     if duration and elapsed then
         local timeLeft = duration - elapsed
@@ -1349,7 +1352,6 @@ function RQE.Timer_CheckTimers()
         end
     end
 end
-
 
 
 -- Function to fetch/print Scenario Criteria Step by Step
@@ -2573,4 +2575,100 @@ function RQE:UpdateFrameFromProfile()
     local xPos = RQE.db.profile.framePosition.xPos or -40
     local yPos = RQE.db.profile.framePosition.yPos or -300
     RQEFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", xPos, yPos)
+end
+
+
+-- Create a frame for the timer
+local scenarioTimerFrame = CreateFrame("Frame", "ScenarioTimerFrame", RQEScenarioChildFrame)
+scenarioTimerFrame:SetSize(100, 30) -- Size of the frame
+scenarioTimerFrame:SetPoint("TOPRIGHT", RQEScenarioChildFrame, "TOPRIGHT") -- Position on the upper right of RQEScenarioChildFrame
+scenarioTimerFrame:Show()
+
+-- Set the frame strata
+scenarioTimerFrame:SetFrameStrata("HIGH")
+
+-- Set the frame level
+scenarioTimerFrame:SetFrameLevel(5)
+
+-- Create a font string for the timer text
+scenarioTimerFrame.text = scenarioTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+scenarioTimerFrame.text:SetPoint("CENTER", scenarioTimerFrame, "CENTER")
+scenarioTimerFrame.text:SetText("00:00")
+
+
+-- Function to update the timer
+local function UpdateScenarioTimer()
+    -- Get the timer information
+    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+    if duration and elapsed then
+        local timeLeft = duration - elapsed
+        -- Format the time left as MM:SS
+        local minutes = math.floor(timeLeft / 60)
+        local seconds = timeLeft % 60
+        scenarioTimerFrame.text:SetText(string.format("%02d:%02d", minutes, seconds))
+    else
+        -- Hide the frame if there's no timer
+        scenarioTimerFrame:Hide()
+    end
+end
+
+-- Set up an OnUpdate script to update the timer every second
+scenarioTimerFrame:SetScript("OnUpdate", function(self, elapsed)
+    self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
+    if self.timeSinceLastUpdate >= 1 then
+        UpdateScenarioTimer()
+        self.timeSinceLastUpdate = 0
+    end
+end)
+
+-- Function to start the timer when entering a scenario
+function RQE:StartScenarioTimer()
+    scenarioTimerFrame:Show()
+    UpdateScenarioTimer()
+end
+
+-- Function to stop the timer when leaving a scenario
+function RQE:StopScenarioTimer()
+    scenarioTimerFrame:Hide()
+end
+
+
+---------------------------------------------------
+-- 20. Experimental Testing Ground
+---------------------------------------------------
+
+
+-- Function to log scenario information, including previously ignored values
+function RQE.LogScenarioInfo()
+    if C_Scenario.IsInScenario() then
+        local scenarioName, currentStage, numStages, flags, value5, value6, completed, xp, money, scenarioType, value11, textureKit = C_Scenario.GetInfo()
+        
+        print("Scenario Name: " .. tostring(scenarioName))
+        print("Current Stage: " .. tostring(currentStage))
+        print("Number of Stages: " .. tostring(numStages))
+        print("Flags: " .. tostring(flags))
+        print("Value 5: " .. tostring(value5))
+        print("Value 6: " .. tostring(value6))
+        print("Completed: " .. tostring(completed))
+        print("XP Reward: " .. tostring(xp))
+        print("Money Reward: " .. tostring(money))
+        print("Scenario Type: " .. tostring(scenarioType))
+        print("Value 11: " .. tostring(value11))
+        print("Texture Kit: " .. tostring(textureKit))
+		
+        RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
+        RQE.infoLog("Current Stage: " .. tostring(currentStage))
+        RQE.infoLog("Number of Stages: " .. tostring(numStages))
+        RQE.infoLog("Flags: " .. tostring(flags))
+        RQE.infoLog("Value 5: " .. tostring(value5))
+        RQE.infoLog("Value 6: " .. tostring(value6))
+        RQE.infoLog("Completed: " .. tostring(completed))
+        RQE.infoLog("XP Reward: " .. tostring(xp))
+        RQE.infoLog("Money Reward: " .. tostring(money))
+        RQE.infoLog("Scenario Type: " .. tostring(scenarioType))
+        RQE.infoLog("Value 11: " .. tostring(value11))
+        RQE.infoLog("Texture Kit: " .. tostring(textureKit))
+    else
+        print("Not currently in a scenario.")
+    end
 end

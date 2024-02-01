@@ -613,17 +613,20 @@ end
 -- Function to update the scenario frame with the latest information
 function RQE.UpdateScenarioFrame()
     -- Get the full scenario information once at the beginning of the function
-    local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
+    local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
+	--local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
     local scenarioStepInfo = C_Scenario.GetStepInfo()
     local _, _, numCriteria = C_Scenario.GetStepInfo()
 
-    -- Retrieve the timer information for the first criteria
-    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-	print("Duration is: " .. duration)
-	RQE.infoLog("Duration is: " .. duration)
-	print("Elapsed is: " .. elapsed)
-	RQE.infoLog("Elapsed is: " .. elapsed)
+	-- Assuming currentStage is the stepID and you want the first criteria
+	local stepID = currentStage
+	local criteriaIndex = 1
+	local duration, elapsed = select(10, C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex))
 
+	--local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+	RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
+	RQE.infoLog("[UpdateScenarioFrame, String] Elapsed is " .. tostring(elapsed))
+	
     -- Check if we have valid timer information
     if duration and elapsed then
         local timeLeft = duration - elapsed
@@ -667,6 +670,7 @@ function RQE.UpdateScenarioFrame()
 
         -- Update the timer, if applicable
         local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+
         if duration and elapsed then
             local timeLeft = duration - elapsed
             RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
@@ -690,7 +694,7 @@ end
 
 local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
 timerFrame:SetSize(100, 10) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP", 65, -50)
+timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP", 70, -60)
 
 
 -- Create a FontString for the timer text
