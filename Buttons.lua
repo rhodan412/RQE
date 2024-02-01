@@ -134,15 +134,20 @@ RQE.SearchGroupButtonMouseDown = function()
 	RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
 		RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
-		if button == "LeftButton" then
+		if IsShiftKeyDown() and button == "LeftButton" then
+			-- Show settings for delisting group
+			RQE:LFG_Delist(questID)
+			
+		elseif button == "LeftButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			if questID then
 				RQE:LFG_Search(questID)
 			end
+			
 		elseif button == "RightButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
-			RQE:LFG_Create(questID)
 			-- Logic for creating a group
+			RQE:LFG_Create(questID)
 		end
 	end)
 
@@ -324,7 +329,7 @@ function RQE.Buttons.CreateMinimizeButton(RQEFrame, originalWidth, originalHeigh
     MinimizeButton:SetFrameStrata("MEDIUM")
     MinimizeButton:SetFrameLevel(3)
 	
-    MinimizeButton:SetPoint("TOPRIGHT", RQE.MaximizeButton, "TOPLEFT", -3, 0)
+    MinimizeButton:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
 	
     MinimizeButton:SetScript("OnClick", function()
 		RQE.debugLog("RQE.content inside button click: " .. tostring(RQE.content ~= nil))
