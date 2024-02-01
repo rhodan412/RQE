@@ -1087,6 +1087,8 @@ function RQE:LFG_Create(questID)
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questName = C_QuestLog.GetTitleForQuestID(questID)
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+	local activityInfo = C_LFGList.GetActivityInfoTable(activityID)
+	local currentAreaActivities = C_LFGList.GetActivityInfoExpensive(activityID)
 	local playerIlvl = GetAverageItemLevel()
 	local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
 	local itemLevel = minIlvlReq > playerIlvl and math.floor(playerIlvl) or minIlvlReq
