@@ -1327,10 +1327,13 @@ end
 function RQE.Timer_CheckTimers()
     -- Retrieve the timer information (example: for the first criteria)
     local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-    ScenarioTimer_CheckTimers(GetWorldElapsedTimers())
-	
+
+    -- Check if duration and elapsed are valid before proceeding
     if duration and elapsed then
         local timeLeft = duration - elapsed
+        RQE.infoLog("Duration is " .. tostring(duration))
+        RQE.infoLog("Elapsed is " .. tostring(elapsed))
+
         if timeLeft > 0 then
             RQE.Timer_Start(timeLeft)
         else
@@ -1338,8 +1341,15 @@ function RQE.Timer_CheckTimers()
         end
     else
         RQE.Timer_Stop()
+        if not duration then
+            RQE.infoLog("Duration is nil")
+        end
+        if not elapsed then
+            RQE.infoLog("Elapsed is nil")
+        end
     end
 end
+
 
 
 -- Function to fetch/print Scenario Criteria Step by Step
