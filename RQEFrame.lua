@@ -252,7 +252,6 @@ RQE.HideUnknownButtonTooltip()
 RQE.SaveSuperTrackData()
 
 
-
 -- Create and position the new Search Group Button
 -- Create Search Group button
 RQE.SearchGroupButton = CreateFrame("Button", nil, content)
@@ -260,10 +259,12 @@ RQE.SearchGroupButton:SetSize(25, 25)  -- Set size to match the UnknownQuestButt
 RQE.SearchGroupButton:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "BOTTOMLEFT", 0, -5)  -- Position below UnknownQuestButton
 RQE.SearchGroupButton:Hide() -- Hide the button Initially
 
+
 -- Use a similar texture for the background as UnknownQuestButton
 local sgBg = RQE.SearchGroupButton:CreateTexture(nil, "BACKGROUND")
 sgBg:SetAllPoints()
 sgBg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")  -- Adjust texture as needed
+
 
 -- Create the text label for Search Group button
 local sgLabel = RQE.SearchGroupButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -271,9 +272,11 @@ sgLabel:SetPoint("CENTER", RQE.SearchGroupButton, "CENTER")
 sgLabel:SetText("SG")  -- SG for Search Group
 sgLabel:SetTextColor(1, 1, 0)  -- Adjust color as needed
 
+
 -- Add bg to the global RQE table
 RQE.bg = bg
 RQE.sgbg = sgBg
+
 
 -- Function to set up a tooltip for a given frame and multiple text lines
 local function SetUpTooltip(frame, texts)
@@ -290,6 +293,7 @@ local function SetUpTooltip(frame, texts)
     end)
 end
 
+
 -- Setting up the tooltip for RQE.SearchGroupButton with all texts
 SetUpTooltip(RQE.SearchGroupButton, {
     "2x Lt Click: Search for Group",
@@ -297,12 +301,15 @@ SetUpTooltip(RQE.SearchGroupButton, {
     "Shift Lt Click: Delist Group"
 })
 
+
 -- Add a mouse down event to simulate a button press
 RQE.UnknownQuestButtonMouseDown()
 RQE.SearchGroupButtonMouseDown()
 
+
 -- Add a mouse up event to reset the texture
 RQE.UnknownQuestButtonMouseUp()
+
 
 -- Function to Colorize the RQEFrame Quest Helper Module
 local function colorizeObjectives(objectivesText)
@@ -365,6 +372,7 @@ if settings then
         RQE.QuestIDText:SetTextColor(unpack(RQE.db.profile.textSettings.QuestIDText.color))
     end
 end
+
 
 RQE.QuestIDText:SetJustifyH("LEFT")
 RQE.QuestIDText:SetJustifyV("TOP")
@@ -1072,6 +1080,7 @@ function RQE:LFG_Search(questID)
     LFGListSearchPanel_DoSearch(SearchPanel)
 end
 
+
 -- Function to handle button clicks
 function RQE:LFG_Create(questID)
 	-- Logic for creating a group
@@ -1086,6 +1095,12 @@ function RQE:LFG_Create(questID)
 	local privateGroup = false
 
 	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID)
+end
+
+
+-- Function to handle button clicks
+function RQE:LFG_Delist(questID)
+	C_LFGList.RemoveListing();
 end
 
 
