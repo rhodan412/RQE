@@ -2668,7 +2668,5 @@ function RQE.LogScenarioInfo()
         RQE.infoLog("Scenario Type: " .. tostring(scenarioType))
         RQE.infoLog("Value 11: " .. tostring(value11))
         RQE.infoLog("Texture Kit: " .. tostring(textureKit))
-    else
-        print("Not currently in a scenario.")
     end
 end

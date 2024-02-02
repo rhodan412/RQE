@@ -148,21 +148,7 @@ end)
 
 
 ---------------------------
--- 3. Button Creation
----------------------------
-
--- Create buttons using functions from Buttons.lua for RQEQuestFrame (Right Side)
-RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
-RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
-RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
-RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
-
--- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
-
-
----------------------------
--- 4. Child Frames
+-- 3. Child Frames
 ---------------------------
 
 local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
@@ -290,7 +276,7 @@ end
 
 
 ---------------------------
--- 5. Child Frame Anchors
+-- 4. Child Frame Anchors
 ---------------------------
 
 function UpdateFrameAnchors()
@@ -395,6 +381,20 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
 end
+
+
+---------------------------
+-- 5. Button Creation
+---------------------------
+
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Right Side)
+RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
+RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
+RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
+RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
+
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
+RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
 
 
 ---------------------------
