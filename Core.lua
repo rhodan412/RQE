@@ -27,7 +27,7 @@ RQE.QuestLines = RQE.QuestLines or {}
 ---------------------------------------------------
 
 -- Initialize your RQE addon with AceAddon
-RQE = LibStub("AceAddon-3.0"):NewAddon("RQE", "AceConsole-3.0", "AceEvent-3.0")
+RQE = LibStub("AceAddon-3.0"):NewAddon("RQE", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
 -- AceConfig and AceConfigDialog references
 local AC = LibStub("AceConfig-3.0")
@@ -35,6 +35,7 @@ local ACD = LibStub("AceConfigDialog-3.0")
 
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
+
 
 -- Blizzard Imports
 local ScenarioObjectiveTracker = RQE:NewModule("ScenarioObjectiveTracker", "AceEvent-3.0")
@@ -144,14 +145,15 @@ end
 
 local defaults = {
     profile = {
-        debugMode = false,
-        debugLevel = "NONE",
+        debugMode = true,
+        debugLevel = "INFO",
         enableFrame = true,
+		enableQuestFrame = true,
         showMinimapIcon = false,
         showMapID = true,
         showCoordinates = true,
-		autoSortRQEFrame = false,
-		autoTrackProgress = true,
+		autoQuestWatch = true,
+		autoQuestProgress = true,
         frameWidth = 400,
         frameHeight = 300,
         framePosition = {
@@ -251,13 +253,13 @@ function RQE:OnInitialize()
 	end
 
 	-- Initialize checkbox state for Auto Sort Frame
-	if autoSortRQEFrame then  -- replace with your actual checkbox frame name
-		autoSortRQEFrame:SetChecked(RQE.db.profile.autoSortRQEFrame)
+	if autoQuestWatch then  -- replace with your actual checkbox frame name
+		autoQuestWatch:SetChecked(RQE.db.profile.autoQuestWatch)
 	end
 
 	-- Initialize checkbox state for Auto Progress Update
-	if autoTrackProgress then  -- replace with your actual checkbox frame name
-		autoTrackProgress:SetChecked(RQE.db.profile.autoTrackProgress)
+	if autoQuestProgress then  -- replace with your actual checkbox frame name
+		autoQuestProgress:SetChecked(RQE.db.profile.autoQuestProgress)
 	end
 	
     -- Initialize checkbox state for MapID
@@ -306,6 +308,12 @@ function RQE:OnInitialize()
 
     -- Register chat commands (if needed)
     self:RegisterChatCommand("rqe", "SlashCommand")
+
+    -- Ensure that frame opacity is set to default values
+    local MainOpacity = RQE.db.profile.MainFrameOpacity
+	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
+    RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
+    RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
 	
 	self:UpdateFramePosition()
 	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
@@ -367,11 +375,11 @@ function RQE:InitializeFrame()
         local currentQuestInfo = RQEDatabase[currentQuestID]
         if currentQuestInfo then
             local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-			if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+			--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
 				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-			else
-				return
-			end			
+			--else
+				--return
+			--end			
         end
     end
 end
@@ -1617,24 +1625,24 @@ end
 local lastKnownProgress = {}
 local isFirstRun = true
 
-function AutoWatchQuestsWithProgress()
-    if isFirstRun then
-        -- On first run, just populate lastKnownProgress without tracking
-        for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-            local questInfo = C_QuestLog.GetInfo(i)
-            if questInfo and not questInfo.isHeader then
-                local questID = questInfo.questID
-                local objectives = C_QuestLog.GetQuestObjectives(questID)
-                local currentProgress = CalculateCurrentProgress(objectives)
-                lastKnownProgress[questID] = currentProgress
-            end
-        end
-        isFirstRun = false
-    else
-        -- On subsequent runs, track quests with new progress
-        TrackQuestsWithNewProgress()
-    end
-end
+-- function AutoWatchQuestsWithProgress()
+    -- if isFirstRun then
+        -- -- On first run, just populate lastKnownProgress without tracking
+        -- for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+            -- local questInfo = C_QuestLog.GetInfo(i)
+            -- if questInfo and not questInfo.isHeader then
+                -- local questID = questInfo.questID
+                -- local objectives = C_QuestLog.GetQuestObjectives(questID)
+                -- local currentProgress = CalculateCurrentProgress(objectives)
+                -- lastKnownProgress[questID] = currentProgress
+            -- end
+        -- end
+        -- isFirstRun = false
+    -- else
+        -- -- On subsequent runs, track quests with new progress
+        -- TrackQuestsWithNewProgress()
+    -- end
+-- end
 
 
 function CalculateCurrentProgress(objectives)

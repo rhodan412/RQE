@@ -149,28 +149,28 @@ RQE.options = {
 						RQE:UpdateCoordinates();  -- Immediately update the coordinates display
 					end,
 				},
-				-- Make this modify autoQuestWatch CVAR instead
-				autoSortRQEFrame = {
+				autoQuestWatch = {
 					type = "toggle",
-					name = "Auto Populate Frame",
-					desc = "Will auto populate the RQEFrame (super tracked frame) by supertracking closest tracked quest (regardless of if you're currently tracking something else).",
-					--desc = "Automatically track quests as soon as you obtain them and after achieving an objective.",
+					name = "Auto Quest Watch",
+					desc = "Automatically track quests as soon as you obtain them and after achieving an objective.\n\n" ..
+							"|cffff0000If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 					order = 7,  -- Adjust this based on where you want it in the order
-					get = function() return RQE.db.profile.autoSortRQEFrame end,
+					get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
 					set = function(_, newValue) 
-						RQE.db.profile.autoSortRQEFrame = newValue;
+						RQE.db.profile.autoQuestWatch = newValue;
+						SetCVar("autoQuestWatch", newValue and "1" or "0")  -- Set the CVAR based on the new value
 					end,
 				},
-				-- Make this modify autoQuestProgress CVAR instead
-				autoTrackProgress = {
+				autoQuestProgress = {
 					type = "toggle",
-					name = "Auto Track Progress",
-					desc = "Will put any quest in the watchlist/quest tracker that you make progress on.",
-					--desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.",
+					name = "Auto Quest Progress",
+					desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n" ..
+							"|cffff0000If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 					order = 8,  -- Adjust this based on where you want it in the order
-					get = function() return RQE.db.profile.autoTrackProgress end,
+					get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
 					set = function(_, newValue) 
-						RQE.db.profile.autoTrackProgress = newValue;
+						RQE.db.profile.autoQuestProgress = newValue;
+						SetCVar("autoQuestProgress", newValue and "1" or "0")  -- Set the CVAR based on the new value
 					end,
 				},
 			},
