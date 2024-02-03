@@ -1,9 +1,9 @@
 ## Interface: 100205
 ## Title: Rhodan's Quest Explorer
 ## Author: Rhodan {Aurleis}
-## Version: 1.5
+## Version: 1.0
 ## Notes: A handy tool for questing.
-## IconTexture: Interface\AddOns\RQE\rhodan.tga
+## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
 ## SavedVariables: RQEDB
 ## OptionalDeps: TomTom
@@ -46,3 +46,6 @@ RQEFrame.lua
 
 # Waypoint and Map Modules
 WaypointManager.lua
+
+# Quest Map Module
+#RQEQuestMap.lua
