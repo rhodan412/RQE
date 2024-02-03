@@ -13,6 +13,7 @@ For advanced quest tracking features linked with RQEFrame
 RQE = RQE or {}
 RQE.modules = RQE.modules or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
+RQE.TrackedQuests = RQE.TrackedQuests or {}
 
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
@@ -680,7 +681,6 @@ function RQE.UpdateScenarioFrame()
         
         -- Display the frame if it's not already shown
         RQE.ScenarioChildFrame:Show()
-		--RQE.TimerFrame:Show()
     else
         RQE.debugLog("No active scenario or scenario information is not available.")
         -- Hide the scenario frame since we're not in a scenario
@@ -692,9 +692,9 @@ end
 -- 10. Timer Functionality
 ---------------------------
 
-local timerFrame = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
+local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
 timerFrame:SetSize(100, 10) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.RQEQuestFrame, "TOP", 70, -60)
+timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 85, -35)
 
 
 -- Create a FontString for the timer text
@@ -1558,6 +1558,7 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveWorldQuestWatch(questID)
+					RQE.TrackedQuests[questID] = nil -- Update the tracking table
 				else
 					-- Existing code to set as super-tracked
 					C_SuperTrack.SetSuperTrackedQuestID(questID)

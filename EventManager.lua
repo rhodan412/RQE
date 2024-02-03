@@ -52,40 +52,40 @@ local eventsToRegister = {
 	"BAG_UPDATE_COOLDOWN",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
-	"SUPER_TRACKING_CHANGED",
-	"QUEST_CURRENCY_LOOT_RECEIVED",
-	"QUEST_LOOT_RECEIVED",
-	"QUEST_LOG_CRITERIA_UPDATE",
-	"QUEST_AUTOCOMPLETE",
-	"QUESTLINE_UPDATE",
-	"SCENARIO_POI_UPDATE",
-	"SCENARIO_UPDATE",
-	"SCENARIO_COMPLETED",
 	"LEAVE_PARTY_CONFIRMATION",
-	"SCENARIO_CRITERIA_UPDATE",
-	"WORLD_STATE_TIMER_START",
-	"WORLD_STATE_TIMER_STOP",
-	"QUEST_POI_UPDATE",
-	"QUEST_LOG_UPDATE",
-	"TASK_PROGRESS_UPDATE",
-	"UNIT_EXITING_VEHICLE",
-	"ZONE_CHANGED",
-	"ZONE_CHANGED_INDOORS",
-	"ZONE_CHANGED_NEW_AREA",
-	"PLAYER_LOGIN",
-	"QUEST_ACCEPTED",
-	"PLAYER_LOGOUT",
-	--"QUEST_DATA_LOAD_RESULT",
-	"VARIABLES_LOADED",
 	"PLAYER_ENTERING_WORLD",
+	"PLAYER_LOGIN",
+	"PLAYER_LOGOUT",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
-	"QUEST_WATCH_UPDATE",
-	"QUEST_WATCH_LIST_CHANGED",
+	"QUEST_ACCEPTED",
+	"QUEST_AUTOCOMPLETE",
+	"QUEST_CURRENCY_LOOT_RECEIVED",
+	--"QUEST_DATA_LOAD_RESULT",
+	"QUEST_LOG_CRITERIA_UPDATE",
+	"QUEST_LOG_UPDATE",
+	"QUEST_LOOT_RECEIVED",
+	"QUEST_POI_UPDATE",
 	"QUEST_REMOVED",
-	"QUEST_TURNED_IN"
+	"QUEST_TURNED_IN",
+	"QUEST_WATCH_LIST_CHANGED",
+	"QUEST_WATCH_UPDATE",
+	"QUESTLINE_UPDATE",
+	"SCENARIO_COMPLETED",
+	"SCENARIO_CRITERIA_UPDATE",
+	"SCENARIO_POI_UPDATE",
+	"SCENARIO_UPDATE",
+	"START_TIMER",
+	"SUPER_TRACKING_CHANGED",
+	"TASK_PROGRESS_UPDATE",
+	"UNIT_EXITING_VEHICLE",
+	"VARIABLES_LOADED",
+	"WORLD_STATE_TIMER_START",
+	"WORLD_STATE_TIMER_STOP",
+	"ZONE_CHANGED",
+	"ZONE_CHANGED_INDOORS",
+	"ZONE_CHANGED_NEW_AREA"
 }
-
 
 
 ---------------------------
@@ -98,40 +98,41 @@ local function HandleEvents(frame, event, ...)
 
     local handlers = {
 		ADDON_LOADED = RQE.handleAddonLoaded,
-		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
-		CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
-		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
-		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
-		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
-		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
-		QUEST_COMPLETE = RQE.handleQuestComplete,
-		QUESTLINE_UPDATE = RQE.handleQuestStatusUpdate,
-		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
-		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
-		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
-		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
-		ZONE_CHANGED = RQE.handleZoneChange,
-		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
-		SCENARIO_POI_UPDATE = RQE.handleScenario,
-		SCENARIO_UPDATE = RQE.handleScenario,
-		SCENARIO_COMPLETED = handleScenarioComplete,
-		SCENARIO_CRITERIA_UPDATE = handleScenario,
-		WORLD_STATE_TIMER_START = RQE.handleScenario,
-		WORLD_STATE_TIMER_STOP = RQE.handleTimerStop,
+		--CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,
 		LEAVE_PARTY_CONFIRMATION = handleScenario,
-		ZONE_CHANGED_NEW_AREA = RQE.handleZoneChange,
-		PLAYER_LOGIN = RQE.handlePlayerLogin,
-		QUEST_ACCEPTED = RQE.handleQuestAccepted,
-		PLAYER_LOGOUT = RQE.handlePlayerLogout,
-		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
+		PLAYER_LOGIN = RQE.handlePlayerLogin,
+		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
-		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
-		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
+		QUEST_ACCEPTED = RQE.handleQuestAccepted,
+		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
+		QUEST_COMPLETE = RQE.handleQuestComplete,
+		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
+		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
+		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_REMOVED = RQE.handleQuestRemoved,
-		QUEST_TURNED_IN = RQE.handleQuestTurnIn
+		QUEST_TURNED_IN = RQE.handleQuestTurnIn,
+		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
+		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
+		QUESTLINE_UPDATE = RQE.handleQuestStatusUpdate,
+		SCENARIO_COMPLETED = handleScenarioComplete,
+		SCENARIO_CRITERIA_UPDATE = handleScenario,
+		SCENARIO_POI_UPDATE = RQE.handleScenario,
+		SCENARIO_UPDATE = RQE.handleScenario,
+		START_TIMER = RQE.HandleClientSceneOpened,
+		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
+		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
+		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
+		VARIABLES_LOADED = RQE.handleVariablesLoaded,
+		WORLD_STATE_TIMER_START = RQE.handleScenario,
+		WORLD_STATE_TIMER_STOP = RQE.handleTimerStop,
+		ZONE_CHANGED = RQE.handleZoneChange,
+		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
+		ZONE_CHANGED_NEW_AREA = RQE.handleZoneChange
     }
     
     if handlers[event] then
@@ -194,6 +195,7 @@ function RQE.handlePlayerLogin(...)
 end
 		
 
+-- Function to handle ADDON_LOADED
 function RQE.handleAddonLoaded(...)
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
@@ -204,11 +206,9 @@ function RQE.handleAddonLoaded(...)
 	if C_Scenario.IsInScenario() then
 		RQE.PrintScenarioCriteriaInfoByStep()
 		RQE.ScenarioChildFrame:Show()
-		--RQE.TimerFrame:Show()
 		RQE.handleScenario()
 	else
 		RQE.ScenarioChildFrame:Hide()
-		--RQE.TimerFrame:Hide()
 		RQE.handleScenario()
 	end
 end
@@ -231,7 +231,6 @@ function RQE.handleScenario(self, event, ...)
     -- Handle other events
     if C_Scenario.IsInScenario() then
         RQE.ScenarioChildFrame:Show()
-		--RQE.TimerFrame:Show()
         RQE.InitializeScenarioFrame()
         RQE.UpdateScenarioFrame()
         --local duration = --[[ logic to determine duration based on the event data ]]
@@ -240,6 +239,7 @@ function RQE.handleScenario(self, event, ...)
 		--RQE.Timer_Start()
 		RQE.Timer_CheckTimers()
     else
+		RQE.StopTimer()
         RQE.ScenarioChildFrame:Hide()
     end
     RQE.UpdateCampaignFrameAnchor()
@@ -308,16 +308,13 @@ function RQE.handleVariablesLoaded(...)
 
 	if C_Scenario.IsInScenario() then
 		RQE.ScenarioChildFrame:Show()
-		--RQE.TimerFrame:Show()
 		RQE.handleScenario()
 	else
 		RQE.ScenarioChildFrame:Hide()
-		--RQE.TimerFrame:Hide()
 		RQE.handleScenario()
 	end
 	
 	RQE:ClearWQTracking()
-	--QuestType()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
@@ -438,6 +435,7 @@ end
 -- Handling PLAYER_ENTERING_WORLD Event
 function RQE.handlePlayerEnterWorld(...)
 	C_Timer.After(1, function()  -- Delay of 1 second
+		wipe(RQE.savedWorldQuestWatches)
 		RQE:HandleSuperTrackedQuestUpdate()
 	end)	
 	
@@ -489,8 +487,6 @@ function RQE.handleSuperTracking(...)
 		end
 	else
 		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
-		--RQE:ClearWQTracking()
-		--QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	end
@@ -518,6 +514,7 @@ function RQE.handleQuestAccepted(...)
 
 		if isWorldQuest and not isManuallyTracked then
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+			RQE.infoLog("Automatically tracking " .. questID)
 		end
 		
 		local mapID = C_Map.GetBestMapForUnit("player")
@@ -556,11 +553,9 @@ function RQE.handleZoneChange(...)
 		
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
-			--RQE.TimerFrame:Show()
 			RQE.handleScenario()
 		else
 			RQE.ScenarioChildFrame:Hide()
-			--RQE.TimerFrame:Hide()
 			RQE.handleScenario()
 		end
 	end)
@@ -609,7 +604,8 @@ function RQE.HandleClientSceneOpened()
     RQE:SaveWorldQuestWatches()  -- Save the watch list when a scene is opened
 end
 
--- Handles the Restoration of World Quests
+
+-- Handles the Restoration of World Quests after event CLIENT_SCENE_CLOSED
 function RQE.HandleClientSceneClosed()
     RQE.isRestoringWorldQuests = true
     C_Timer.After(1, function()
@@ -621,16 +617,25 @@ function RQE.HandleClientSceneClosed()
     end)
 end
 
-
 		
 -- Handling QUEST_REMOVED event
-function RQE.handleQuestRemoved(...)
+--function RQE.handleQuestRemoved(...)
+function RQE.handleQuestRemoved(questID, removedByUser)
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
 	RQE:ClearWQTracking()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	
+    -- Check if the questID is valid and if it was being tracked automatically
+    if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
+        -- Remove the quest from the tracking list
+        C_QuestLog.RemoveWorldQuestWatch(questID)
+        -- Clear the saved state for this quest
+        RQE.TrackedQuests[questID] = nil
+        RQE.infoLog("Quest ID " .. questID .. " has been removed from automatic tracking.")
+    end
 end
 	
 		
@@ -665,8 +670,16 @@ function RQE.handleQuestWatchListChanged(...)
 	RQE:ClearWQTracking()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	local watchType
-	if currentQuestID then
-		watchType = C_QuestLog.GetQuestWatchType(questID)
+    if questID then
+        local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+        local watchType = C_QuestLog.GetQuestWatchType(questID)
+        if isWorldQuest then
+            if added then
+                RQE.TrackedQuests[questID] = watchType -- Track the type of watch added
+            else
+                RQE.TrackedQuests[questID] = nil -- Remove the tracking if the quest is removed
+            end
+        end
 	end
 	
 	if questID then
@@ -680,11 +693,13 @@ function RQE.handleQuestWatchListChanged(...)
 				end
 			else
 				-- World Quest is removed from the Watch List
+				RQE.savedWorldQuestWatches[questID] = nil
 				RQE:ClearWQTracking()
 			end
 		else
 		-- Handle regular quests
 		--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
+			RQE.savedWorldQuestWatches[questID] = nil
 			if RQE.db.profile.autoTrackProgress then
 				AutoWatchQuestsWithProgress()
 				SortQuestsByProximity()
@@ -721,7 +736,6 @@ end
 function RQE.handlePlayerLogout(...)
 	RQE:SaveFramePosition()  -- Custom function that saves frame's position
 end
---end
 
 
 -- Set the event handler
@@ -732,9 +746,6 @@ Frame:SetScript("OnEvent", HandleEvents)
 for _, eventName in ipairs(eventsToRegister) do
     Frame:RegisterEvent(eventName)
 end
-
-
-
 
 
 ---------------------------

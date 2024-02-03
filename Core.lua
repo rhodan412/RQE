@@ -59,9 +59,6 @@ function RQE:CustomDebugLog(index, color, message, ...)
 	
     -- Add to logTable
     RQE.AddToDebugLog(output)
-
-    -- Print to chat
-    --print(output)
 end
 
 
@@ -77,9 +74,6 @@ function RQE:CustomLogMsg(color, message, ...)
 	
     -- Add to logTable
     RQE.AddToDebugLog(output)
-
-    -- Print to chat
-    --print(output)
 end
 
 
@@ -1115,55 +1109,11 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 
 
--- function UpdateWorldQuestTrackingForMap(uiMapID)
-    -- local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
-    -- local trackedQuests = {}
-    -- local maxTracked = 0
-    -- local currentTrackedCount = 0  -- Initialize the counter for tracked quests
-
-    -- -- -- Retrieve the currently tracked quests to avoid duplicates
-    -- -- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-        -- -- local watchedQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-        -- -- if watchedQuestID then
-            -- -- trackedQuests[watchedQuestID] = true
-            -- -- currentTrackedCount = currentTrackedCount + 1
-        -- -- end
-    -- -- end
-
-    -- if taskPOIs then --and currentTrackedCount < maxTracked then
-        -- print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
-        -- for _, taskPOI in ipairs(taskPOIs) do
-            -- local questID = taskPOI.questId
-            -- if questID and C_QuestLog.IsWorldQuest(questID) then
-                -- print("Checking World QuestID: " .. questID)
-                -- -- Check if the quest is already tracked
-				-- if not trackedQuests[questID] then
-					-- print("Attempting to track World QuestID: " .. questID)
-					-- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-					-- trackedQuests[questID] = true  -- Mark as tracked
-					-- --currentTrackedCount = currentTrackedCount + 1  -- Increment the count
-					-- print("Manual World QuestID: " .. questID .. " added to watch list.")
-					
-					-- -- Check if we've reached the maximum number of tracked quests
-					-- if currentTrackedCount >= maxTracked then
-						-- print("Reached the maximum number of tracked World Quests: " .. maxTracked)
-						-- break  -- Exit the loop as we've reached the limit
-					-- end
-				-- else
-                    -- print("Manual World QuestID: " .. questID .. " added to watch list.")
-                -- end
-            -- end
-        -- end
-    -- end
-	-- --RQE:ClearWQTracking()
--- end
-
-
--- Function that checks world quests in the player's zone
+-- Function for Tracking World Quests
 function UpdateWorldQuestTrackingForMap(uiMapID)
     local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
     local trackedQuests = {}
-    local maxTracked = 5
+    local maxTracked = 1
     local currentTrackedCount = 0  -- Initialize the counter for tracked quests
 
     -- Retrieve the currently tracked quests to avoid duplicates
@@ -1180,16 +1130,21 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
         for _, taskPOI in ipairs(taskPOIs) do
             local questID = taskPOI.questId
             if questID and C_QuestLog.IsWorldQuest(questID) then
+                RQE.debugLog("Checking World QuestID: " .. questID)
                 -- Check if the quest is already tracked
 				if not trackedQuests[questID] then
 					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 					trackedQuests[questID] = true  -- Mark as tracked
 					currentTrackedCount = currentTrackedCount + 1  -- Increment the count
+					RQE.infoLog("Manual World QuestID: " .. questID .. " added to watch list.")
 					
 					-- Check if we've reached the maximum number of tracked quests
 					if currentTrackedCount >= maxTracked then
+						RQE.debugLog("Reached the maximum number of tracked World Quests: " .. maxTracked)
 						break  -- Exit the loop as we've reached the limit
 					end
+				else
+                    RQE.infoLog("Manual World QuestID: " .. questID .. " added to watch list.")
                 end
             end
         end
@@ -1197,14 +1152,13 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 end
 
 
--- Function for adding World Quest Watch to Tracker
 function UpdateWorldQuestTracking(questID)
     -- Check if questID is actually a quest ID and not a table or nil
     if type(questID) == "table" then
-        RQE.debugLog("UpdateWorldQuestTracking was passed a table instead of a questID. Table contents:", questID)
+        RQE.infoLog("UpdateWorldQuestTracking was passed a table instead of a questID. Table contents:", questID)
         return
     elseif not questID then
-        RQE.debugLog("UpdateWorldQuestTracking was passed a nil value for questID.")
+        RQE.infoLog("UpdateWorldQuestTracking was passed a nil value for questID.")
         return
     end
 
@@ -1214,7 +1168,7 @@ function UpdateWorldQuestTracking(questID)
 
     if isWorldQuest and not isManuallyTracked then
         C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-        --C_SuperTrack.SetSuperTrackedQuestID(questID)
+        C_SuperTrack.SetSuperTrackedQuestID(questID)
     end
 end
 
@@ -1558,10 +1512,10 @@ function RQE.SearchModule:CreateSearchBox()
 			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Replace with your method to get this data
 
             -- Add the World Quest to the tracker
+			RQE.infoLog("Manual tracking " .. questID)
 			C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-			RQE.infoLog("adding world quest thru core" .. questID)
+			RQE.infoLog("Manual tracking " .. questID)
 			C_QuestLog.AddQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-			RQE.infoLog("adding regular quest thru core" .. questID)
 			
 			-- Update the frame based on whether the quest is in the database
 			if questInfo then
@@ -2516,37 +2470,86 @@ end
 
 -- Function to save the currently watched world quests
 function RQE:SaveWorldQuestWatches()
-    wipe(RQE.savedWorldQuestWatches) -- Clear the existing table
+    wipe(RQE.savedWorldQuestWatches)
     for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
         local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
         if questID then
             RQE.savedWorldQuestWatches[questID] = true
-            RQE.debugLog("Saving World Quest" .. questID)
         end
     end
-    RQE.debugLog("World Quest Saving complete")
+    -- Debug: Print the saved world quests
+    for questID, _ in pairs(RQE.savedWorldQuestWatches) do
+        RQE.infoLog("Saved World Quest ID:", questID)
+    end
+    RQE.infoLog("World Quest Saving complete")
 end
 
 
 -- Function to restore saved watched world quests
 function RQE:RestoreSavedWorldQuestWatches()
-    local delay = 1 -- Delay in seconds
+    local questsToRestore = {}
     for questID, _ in pairs(RQE.savedWorldQuestWatches) do
-        if C_QuestLog.IsWorldQuest(questID) then
-            C_Timer.After(delay, function()
-                if not C_QuestLog.GetQuestWatchType(questID) then
-                    C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-                end
-            end)
-            delay = delay + 1 -- Increase delay for the next quest to prevent throttling
-        else
+        questsToRestore[#questsToRestore + 1] = questID
+    end
+
+    local function restoreNext()
+        if #questsToRestore == 0 then
+            wipe(RQE.savedWorldQuestWatches)
+            RQE.infoLog("Restoration Complete")
+            return
+        end
+        local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
+        if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+            RQE.infoLog("Manually tracking World Quest ID " .. questID)
+        end
+        C_Timer.After(1, restoreNext) -- Call the next restoration after 1 second
+    end
+
+    -- Start the restoration process
+    restoreNext()
+end
+
+
+-- Function to print the tracking type of all watched world quests
+function PrintTrackedWorldQuestTypes()
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID then
+            local watchType = C_QuestLog.GetQuestWatchType(questID)
+            local trackingType = watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"
+            print("Quest ID " .. questID .. " is being tracked " .. trackingType)
         end
     end
-    -- Clear the saved world quest watches after a delay
-    C_Timer.After(delay, function()
-        wipe(RQE.savedWorldQuestWatches)
-    end)
 end
+
+function UntrackAutomaticWorldQuests()
+    local playerMapID = C_Map.GetBestMapForUnit("player")
+    local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+
+    -- Convert the questsInArea to a lookup table for quicker access
+    local questsInAreaLookup = {}
+    for _, taskPOI in ipairs(questsInArea) do
+        questsInAreaLookup[taskPOI.questId] = true
+    end
+
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID then
+            local watchType = C_QuestLog.GetQuestWatchType(questID)
+            -- If the quest is not in the current area and it was tracked automatically, untrack it
+            if watchType == Enum.QuestWatchType.Automatic then --and not questsInAreaLookup[questID] then
+                C_QuestLog.RemoveWorldQuestWatch(questID)
+                RQE.infoLog("Untracked automatic World Quest ID: " .. questID)
+            end
+        end
+    end
+end
+
+SLASH_UNTRACKAUTO1 = '/untrackauto'
+SlashCmdList["UNTRACKAUTO"] = UntrackAutomaticWorldQuests
+
+
 
 
 ---------------------------------------------------
@@ -2643,18 +2646,18 @@ function RQE.LogScenarioInfo()
     if C_Scenario.IsInScenario() then
         local scenarioName, currentStage, numStages, flags, value5, value6, completed, xp, money, scenarioType, value11, textureKit = C_Scenario.GetInfo()
         
-        print("Scenario Name: " .. tostring(scenarioName))
-        print("Current Stage: " .. tostring(currentStage))
-        print("Number of Stages: " .. tostring(numStages))
-        print("Flags: " .. tostring(flags))
-        print("Value 5: " .. tostring(value5))
-        print("Value 6: " .. tostring(value6))
-        print("Completed: " .. tostring(completed))
-        print("XP Reward: " .. tostring(xp))
-        print("Money Reward: " .. tostring(money))
-        print("Scenario Type: " .. tostring(scenarioType))
-        print("Value 11: " .. tostring(value11))
-        print("Texture Kit: " .. tostring(textureKit))
+        -- print("Scenario Name: " .. tostring(scenarioName))
+        -- print("Current Stage: " .. tostring(currentStage))
+        -- print("Number of Stages: " .. tostring(numStages))
+        -- print("Flags: " .. tostring(flags))
+        -- print("Value 5: " .. tostring(value5))
+        -- print("Value 6: " .. tostring(value6))
+        -- print("Completed: " .. tostring(completed))
+        -- print("XP Reward: " .. tostring(xp))
+        -- print("Money Reward: " .. tostring(money))
+        -- print("Scenario Type: " .. tostring(scenarioType))
+        -- print("Value 11: " .. tostring(value11))
+        -- print("Texture Kit: " .. tostring(textureKit))
 		
         RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
         RQE.infoLog("Current Stage: " .. tostring(currentStage))
