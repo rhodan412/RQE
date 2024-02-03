@@ -158,7 +158,7 @@ local defaults = {
         frameHeight = 300,
         framePosition = {
             xPos = -40,
-            yPos = -300,
+            yPos = -270,
             anchorPoint = "TOPRIGHT",
 		},
 		MainFrameOpacity = 0.55, 
@@ -166,7 +166,7 @@ local defaults = {
 		},
         QuestFramePosition = {
             xPos = -40,
-            yPos = 135,
+            yPos = 150,
 			anchorPoint = "BOTTOMRIGHT",
             frameWidth = 300,
             frameHeight = 450
@@ -822,7 +822,7 @@ function RQE:UpdateFramePosition()
     end
 
     local xPos = self.db.profile.framePosition.xPos or -40
-    local yPos = self.db.profile.framePosition.yPos or -300
+    local yPos = self.db.profile.framePosition.yPos or -270
 
     RQE.debugLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
 
@@ -851,7 +851,7 @@ end
     -- end
 
     -- local xPos = self.db.profile.framePosition.xPos or -40
-    -- local yPos = self.db.profile.framePosition.yPos or -300
+    -- local yPos = self.db.profile.framePosition.yPos or -270
 
     -- RQE.debugLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
 
@@ -879,7 +879,7 @@ function RQE:UpdateQuestFramePosition()
     end
 
     local xPos = self.db.profile.QuestFramePosition.xPos or -40
-    local yPos = self.db.profile.QuestFramePosition.yPos or 135
+    local yPos = self.db.profile.QuestFramePosition.yPos or 150
 
     -- Error handling
     local success, err = pcall(function()
@@ -1356,7 +1356,7 @@ end
 function RQE:ResetFramePositionToDBorDefault()
     local anchorPoint = "TOPRIGHT"  -- Always set to TOPRIGHT
     local xPos = -40  -- Preset xPos
-    local yPos = -300  -- Preset yPos
+    local yPos = -270  -- Preset yPos
     
     -- Update the database
     RQE.db.profile.framePosition.anchorPoint = anchorPoint
@@ -1403,7 +1403,7 @@ end
 function RQE:ResetQuestFramePositionToDBorDefault()
     local anchorPoint = "BOTTOMRIGHT"  -- Default anchor point for RQEQuestFrame
     local xPos = -40  -- Preset xPos
-    local yPos = 135  -- Preset yPos
+    local yPos = 150  -- Preset yPos
     
     -- Update the database
     RQE.db.profile.QuestFramePosition.anchorPoint = anchorPoint
@@ -2584,7 +2584,7 @@ end
 -- Function to update DB profile frame position
 function RQE:UpdateFrameFromProfile()
     local xPos = RQE.db.profile.framePosition.xPos or -40
-    local yPos = RQE.db.profile.framePosition.yPos or -300
+    local yPos = RQE.db.profile.framePosition.yPos or -270
     RQEFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", xPos, yPos)
 end
 
