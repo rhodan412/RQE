@@ -560,7 +560,7 @@ end
 -- 5. Button Initialization (QuestFrame headers)
 ----------------------------------------------------
 
-
+-- Code to be used for any buttons that are placed on the child headers of RQEQuestFrame
 
 
 ----------------------------------------------------
