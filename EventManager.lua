@@ -196,21 +196,39 @@ end
 		
 
 -- Function to handle ADDON_LOADED
-function RQE.handleAddonLoaded(...)
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		RQE:UpdateFrameOpacity()
-	end)
-	
-	if C_Scenario.IsInScenario() then
-		RQE.PrintScenarioCriteriaInfoByStep()
-		RQE.ScenarioChildFrame:Show()
-		RQE.handleScenario()
-	else
-		RQE.ScenarioChildFrame:Hide()
-		RQE.handleScenario()
-	end
+function RQE.handleAddonLoaded(addonName)
+    -- Only proceed if RQE is the addon being loaded
+    if addonName ~= "Rhodan's Quest Explorer" then return end
+
+    -- Hide the default objective tracker and make other UI adjustments after a short delay
+    C_Timer.After(0.5, function()
+        if RQE.HideObjectiveTracker then
+            RQE.HideObjectiveTracker()  -- Assuming you have a function defined to hide the tracker
+        end
+
+        if RQE.AdjustQuestItemWidths then
+            RQE.AdjustQuestItemWidths(RQEQuestFrame:GetWidth())  -- Adjust quest item widths based on frame width
+        end
+
+        if RQE.UpdateFrameOpacity then
+            RQE.UpdateFrameOpacity()  -- Update the frame opacity
+        end
+    end)
+    
+    -- Handle scenarios
+    if C_Scenario.IsInScenario() then
+        if RQE.PrintScenarioCriteriaInfoByStep then
+            RQE.PrintScenarioCriteriaInfoByStep()  -- Print scenario information
+        end
+        RQE.ScenarioChildFrame:Show()
+    else
+        RQE.ScenarioChildFrame:Hide()
+    end
+
+    -- Handle scenario regardless of the condition
+    if RQE.handleScenario then
+        RQE.handleScenario()
+    end
 end
 
 
@@ -276,10 +294,10 @@ function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
 	local watchType = C_QuestLog.GetQuestWatchType(questID)
 
 	-- Check if auto-tracking of quest progress is enabled and call the function
-	if questID and added and RQE.db.profile.autoTrackProgress then
-		AutoWatchQuestsWithProgress()
+	--if questID and added and RQE.db.profile.autoTrackProgress then
+		--AutoWatchQuestsWithProgress()
 		SortQuestsByProximity()
-	end
+	--end
 end
 		
 
@@ -543,10 +561,10 @@ function RQE.handleZoneChange(...)
 		-- Call the functions to update the frame
 		UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
 
-		-- Check if auto-tracking of quest progress is enabled and call the function
-		if RQE.db.profile.autoTrackProgress then
-			AutoWatchQuestsWithProgress()
-		end
+		-- -- Check if auto-tracking of quest progress is enabled and call the function
+		-- if RQE.db.profile.autoTrackProgress then
+			-- AutoWatchQuestsWithProgress()
+		-- end
 		
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -688,9 +706,9 @@ function RQE.handleQuestWatchListChanged(...)
 			if added then
 				-- World Quest is added to the Watch List
 				-- Check if auto-tracking of quest progress is enabled and call the function
-				if RQE.db.profile.autoTrackProgress then
-					AutoWatchQuestsWithProgress()
-				end
+				-- if RQE.db.profile.autoTrackProgress then
+					-- AutoWatchQuestsWithProgress()
+				-- end
 			else
 				-- World Quest is removed from the Watch List
 				RQE.savedWorldQuestWatches[questID] = nil
@@ -700,10 +718,10 @@ function RQE.handleQuestWatchListChanged(...)
 		-- Handle regular quests
 		--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
 			RQE.savedWorldQuestWatches[questID] = nil
-			if RQE.db.profile.autoTrackProgress then
-				AutoWatchQuestsWithProgress()
+			--if RQE.db.profile.autoTrackProgress then
+				--AutoWatchQuestsWithProgress()
 				SortQuestsByProximity()
-			end					
+			--end					
 		end
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
