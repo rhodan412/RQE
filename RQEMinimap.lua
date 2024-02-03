@@ -9,6 +9,7 @@
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 RQE.Frame = RQE.Frame or {}
 
+
 ---------------------------
 -- 2. Debug Logic
 ---------------------------
@@ -67,14 +68,10 @@ local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 -- Create a Data Broker object
 RQE.dataBroker = ldb:NewDataObject("RQE", {
     type = "launcher",
-	icon = "Interface\\Addons\\RQE\\rhodan.tga",  -- Replace with your own icon
+	icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",  -- Replace with your own icon
     OnClick = function(_, button)
 		if IsShiftKeyDown() and button == "LeftButton" then
 			-- Show config settings
-			RQE:OpenSettings()
-			
-		elseif IsShiftKeyDown() and button == "RightButton" then
-			-- Toggle Debug Log
 			RQE:ToggleDebugLog()
 			
 		elseif button == "LeftButton" then
@@ -92,19 +89,56 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 			end
 			
 		elseif button == "RightButton" then
-			-- Show dropdown menu
-			RQE:ShowLDBDropdownMenu()
+			RQE:OpenSettings()
 		end
 	end,
+	
+    OnEnter = function(display)
+        if display.hoverTimer then
+            RQE:CancelTimer(display.hoverTimer)
+        end
+        display.hoverTimer = RQE:ScheduleTimer(function()
+            RQE:ShowLDBDropdownMenu()
+        end, 1.5)  -- 1.5 seconds hover delay
+		
+	GameTooltip:SetOwner(display, "ANCHOR_NONE")  -- You can change ANCHOR_NONE to another anchor type if needed.
+	GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")  -- Adjust this to position the tooltip as desired.
+	RQE.dataBroker.OnTooltipShow(GameTooltip)
+	GameTooltip:Show()
+    end,
+	
+    OnLeave = function(display)
+        if display.hoverTimer then
+            RQE:CancelTimer(display.hoverTimer)
+            display.hoverTimer = nil
+        end
+	GameTooltip:Hide()
+    end,
+	
     OnTooltipShow = function(tooltip)
         if not tooltip or not tooltip.AddLine then return end
         tooltip:AddLine("Rhodan's Quest Explorer")
         tooltip:AddLine("Left-click to toggle frame.")
-		tooltip:AddLine("Right-click to toggle menu.")
-		tooltip:AddLine("Shift+Left-click to toggle Settings.")
-		tooltip:AddLine("Shift+Right-click to toggle Debug Log.")
+		tooltip:AddLine("Right-click to Settings.")
+		tooltip:AddLine("Shift+Left-click to toggle Debug Log.")
     end,
 })
+
+
+-- Function for the toggling of RQEFrame and RQEQuestFrame
+function RQE.ToggleBothFramesfromLDB()
+	if RQEFrame:IsShown() then
+		RQEFrame:Hide()
+		RQEQuestFrame:Hide()
+	else
+		RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
+		RQEFrame:Show()
+		-- Check if enableQuestFrame is true before showing RQEQuestFrame
+		if RQE.db.profile.enableQuestFrame then
+			RQEQuestFrame:Show()
+		end
+	end
+end
 
 
 ---------------------------
@@ -116,9 +150,9 @@ RQE.MinimapButton = CreateFrame("Button", "MyMinimapButton", Minimap)
 RQE.MinimapButton:SetSize(25, 25)  -- Set the size of the frame
 
 -- Set up the texture for the button
-RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\rhodan")
-RQE.MinimapButton:SetHighlightTexture("Interface\\Addons\\RQE\\rhodan")
-RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\rhodan")
+RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+RQE.MinimapButton:SetHighlightTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
 
 -- Set the position of the minimap button
 RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
@@ -163,8 +197,9 @@ end
 function RQE:ShowLDBDropdownMenu()
     local menuFrame = CreateFrame("Frame", "RQE_LDBDropdownMenu", UIParent, "UIDropDownMenuTemplate")
     local menuList = {
-        { text = "Debug Log", func = function() RQE:ToggleDebugLog() end },
-        { text = "Settings", func = function() RQE:OpenSettings() end }
+        { text = "Toggle Frame(s)", func = function() RQE.ToggleBothFramesfromLDB() end },
+        { text = "Settings", func = function() RQE:OpenSettings() end },
+        { text = "Debug Log", func = function() RQE:ToggleDebugLog() end }
     }
     
     EasyMenu(menuList, menuFrame, "cursor", 0 , 0, "MENU")
