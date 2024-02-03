@@ -37,15 +37,17 @@ logFrame:SetPoint("CENTER") -- position
 logFrame:SetBackdrop({
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
     edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true, tileSize = 32, edgeSize = 32,
+    tile = true, tileSize = 16, edgeSize = 8,
     insets = { left = 8, right = 8, top = 8, bottom = 8 }
 })
 logFrame:SetMovable(true)
 logFrame:EnableMouse(true)
+logFrame:SetResizable(true)
 logFrame:RegisterForDrag("LeftButton")
 logFrame:SetScript("OnDragStart", logFrame.StartMoving)
 logFrame:SetScript("OnDragStop", logFrame.StopMovingOrSizing)
 logFrame:SetFrameStrata("HIGH")
+RQE.DebugLogFrame = logFrame
 
 
 local header = CreateFrame("Frame", "RQE.LogFrameHeader", logFrame, "BackdropTemplate")
@@ -106,6 +108,7 @@ scrollBar:SetValue(0)
 scrollBar:SetWidth(16)
 
 
+
 -- Function to calculate the height of the text in the EditBox
 local function CalculateTextHeight(editBox)
     local textString = editBox:GetText()
@@ -120,12 +123,63 @@ local function CalculateTextHeight(editBox)
     return totalHeight
 end
 
-
 -- Function to update the log frame with logTable contents
 local function UpdateLogFrame()
     local logText = table.concat(logTable, "\n")
     editBox:SetText(logText)
+    -- We need to update the size of the editBox and the scrollFrame here as well
+    editBox:SetWidth(scrollFrame:GetWidth())
+    editBox:SetHeight(CalculateTextHeight(editBox))  -- CalculateTextHeight needs to be defined correctly
+    scrollFrame:UpdateScrollChildRect()  -- This updates the scroll bar to account for the new size of the scroll child
 end
+
+
+-- Create and Display closeButton for DebugLog
+local closeButton = CreateFrame("Button", "RQEDebugLogCloseButton", RQE.DebugLogFrame, "UIPanelCloseButton")
+closeButton:SetSize(30, 30) -- Set the size of the close button
+closeButton:SetPoint("TOPRIGHT", RQE.DebugLogFrame, "TOPRIGHT", 0, 0) -- Position it at the top-right corner
+
+closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up") -- Set the normal texture
+closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down") -- Set the pushed texture
+closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight") -- Set the highlight texture
+
+closeButton:SetScript("OnClick", function()
+    RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
+end)
+
+
+
+
+-- Resize button
+local resizeButton = CreateFrame("Button", nil, logFrame)
+resizeButton:SetPoint("BOTTOMRIGHT", -6, 7)
+resizeButton:SetSize(16, 16)
+resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+
+
+resizeButton:SetScript("OnMouseDown", function(self, button)
+    if button == "LeftButton" then
+        logFrame:StartSizing("BOTTOMRIGHT")
+        self:GetHighlightTexture():Hide()  -- Hide highlight so it doesn't stick while sizing
+    end
+end)
+
+resizeButton:SetScript("OnMouseUp", function(self, button)
+    logFrame:StopMovingOrSizing()
+    self:GetHighlightTexture():Show()
+    UpdateLogFrame()  -- Update the contents to fit the new size
+end)
+
+
+-- -- Function to update the log frame with logTable contents
+-- local function UpdateLogFrame()
+    -- local logText = table.concat(logTable, "\n")
+    -- editBox:SetText(logText)
+-- end
+
+
 
 
 -- Make sure the log frame is initially hidden
@@ -179,10 +233,10 @@ SLASH_LOGTOGGLE1 = "/logtoggle"
 SlashCmdList["LOGTOGGLE"] = ToggleLogFrame
 
 
--- Ensure the RQE.Buttons.CreateDebugLogCloseButton function is loaded and available before calling it
-if RQE.Buttons and RQE.Buttons.CreateDebugLogCloseButton then
-    -- Creates button for Closing Debug Log Frame
-    RQE.Buttons.CreateDebugLogCloseButton(logFrame)
-else
-    RQE.debugLog("RQE Debug Log Close Button creation function is not available.")
-end
+-- -- Ensure the RQE.Buttons.CreateDebugLogCloseButton function is loaded and available before calling it
+-- if RQE.Buttons and RQE.Buttons.CreateDebugLogCloseButton then
+    -- -- Creates button for Closing Debug Log Frame
+    -- RQE.Buttons.CreateDebugLogCloseButton(logFrame)
+-- else
+    -- RQE.debugLog("RQE Debug Log Close Button creation function is not available.")
+-- end
