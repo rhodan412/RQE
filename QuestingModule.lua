@@ -966,6 +966,51 @@ function GetQuestType(questID)
 end
 
 
+-- Function to get the zone name for a given quest
+function GetQuestZone(questID)
+    local mapID = GetQuestUiMapID(questID, ignoreWaypoints)
+    if mapID then
+        local mapInfo = C_Map.GetMapInfo(mapID)
+        if mapInfo and mapInfo.name then
+            return mapInfo.name
+        end
+	elseif ( mapID ~= 0 ) then
+		QuestMapFrame:GetParent():SetMapID(mapID)
+    end	
+	
+    local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questID)
+    if uiMapID then
+        local mapInfo = C_Map.GetMapInfo(uiMapID)
+        if mapInfo and mapInfo.name then
+            return mapInfo.name
+        end
+    end
+
+    local fallbackZoneID = C_TaskQuest.GetQuestZoneID(questID)
+    if fallbackZoneID then
+        local fallbackMapInfo = C_Map.GetMapInfo(fallbackZoneID)
+        if fallbackMapInfo and fallbackMapInfo.name then
+            return fallbackMapInfo.name
+        end
+    end
+
+    local waypointZoneID = C_QuestLog.GetNextWaypoint(questID)
+    if waypointZoneID then
+        local waypointMapInfo = C_Map.GetMapInfo(waypointZoneID)
+        if waypointMapInfo and waypointMapInfo.name then
+            return waypointMapInfo.name
+        end
+    end
+
+    -- Fallback to a pre-compiled quest-zone list
+    if RQE.ZoneQuests and RQE.ZoneQuests[questID] then
+        return RQE.ZoneQuests[questID]
+    end
+
+    return "Unknown Zone"
+end
+
+
 -- Function to determine if each quest belongs to World Quest or Non-World Quest
 function QuestType()
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
@@ -1106,10 +1151,12 @@ function UpdateRQEQuestFrame()
 		-- Loop through all tracked quests
 		for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		local directionText = C_QuestLog.GetNextWaypointText(questID)
+		RQE.QuestDirectionText = directionText
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 		local isQuestComplete = C_QuestLog.IsComplete(questID)
 		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
-		
+			
 		if questIndex and not C_QuestLog.IsWorldQuest(questID) then
 			local info = C_QuestLog.GetInfo(questIndex)
 		
@@ -1246,6 +1293,7 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Type
 				local questTypeText = GetQuestType(questID)
+				local questZoneText = GetQuestZone(questID)
 				local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
@@ -1253,7 +1301,7 @@ function UpdateRQEQuestFrame()
 				QuestTypeLabel:SetTextColor(250/255, 128/255, 115/255)  -- Salmon
 
 				-- Update the quest type label text
-				QuestTypeLabel:SetText(GetQuestType(questID))
+				QuestTypeLabel:SetText(questTypeText .. " @ " .. questZoneText)
 				QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
 
 				-- Create or reuse the QuestObjectivesOrDescription label
@@ -1296,6 +1344,17 @@ function UpdateRQEQuestFrame()
 						GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 					end
 
+					-- Add Direction Text
+					local directionText = C_QuestLog.GetNextWaypointText(questID)
+					RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)
+					if directionText and directionText ~= "" then
+						GameTooltip:AddLine(" ")
+						GameTooltip:AddLine("Next Step: " .. directionText, 0.81, 0.5, 1, true)
+					else
+						GameTooltip:AddLine(" ")
+						GameTooltip:AddLine("Next Step: [No additional information]", 0.81, 0.5, 1, true)
+					end
+					
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine(" ")
@@ -1347,7 +1406,7 @@ function UpdateRQEQuestFrame()
 							end
 						end
 					end
-
+					
 					GameTooltip:AddLine(" ")
 					GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
 					GameTooltip:Show()
@@ -1369,7 +1428,18 @@ function UpdateRQEQuestFrame()
 						local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 						GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 					end
-
+				
+					-- Add Direction Text
+					local directionText = C_QuestLog.GetNextWaypointText(questID)
+					RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)  -- Debug print
+					if directionText and directionText ~= "" then
+						GameTooltip:AddLine(" ")
+						GameTooltip:AddLine("Next Step: " .. directionText, 0.81, 0.5, 1, true)
+					else
+						GameTooltip:AddLine(" ")
+						GameTooltip:AddLine("Next Step: [No additional information]", 0.81, 0.5, 1, true)
+					end
+	
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine(" ")

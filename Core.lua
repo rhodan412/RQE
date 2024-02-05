@@ -477,8 +477,7 @@ end
 
 -- Function to open the quest log and show specific quest details
 function OpenQuestLogToQuestDetails(questID)
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-    local mapID = GetQuestUiMapID(questID)
+    local mapID = GetQuestUiMapID(questID, ignoreWaypoints)
     if mapID == 0 then mapID = nil end
     OpenQuestLog(mapID)
     QuestMapFrame_ShowQuestDetails(questID)
@@ -493,7 +492,7 @@ function RQE.SaveSuperTrackData()
 	
     if questID then
         local playerMapID = C_Map.GetBestMapForUnit("player")
-        local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
+        local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID, ignoreWaypoints)
         local questTitle = C_QuestLog.GetTitleForQuestID(questID)
         local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
         local posX, posY
@@ -503,7 +502,7 @@ function RQE.SaveSuperTrackData()
         else
 			if not posX or not posX and mapID then
 				local questID = C_SuperTrack.GetSuperTrackedQuestID()
-				local mapID = GetQuestUiMapID(questID)
+				local mapID = GetQuestUiMapID(questID, ignoreWaypoints)
 				if mapID == 0 then mapID = nil end
 				--OpenQuestLog(mapID)
 				--QuestMapFrame_ShowQuestDetails(questID)
@@ -567,7 +566,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
 		end
 	else
 		-- Not a world quest, use the existing logic
-		mapID = GetQuestUiMapID(questID)
+		mapID = GetQuestUiMapID(questID, ignoreWaypoints)
 		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
 	end
 
@@ -2064,7 +2063,7 @@ function RQE.ScanAndCacheZoneQuests()
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
-            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID)  -- Using fallback
+            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)  -- Using fallback
             if zoneID then
                 RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
                 table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
