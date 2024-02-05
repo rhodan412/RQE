@@ -28,7 +28,7 @@ end
 -- Toggle Debug Log window function
 function RQE:ToggleDebugLog()
     -- Assuming RQE.DebugLogFrame is the frame for your debug log window
-    if not RQE.DebugLogFrame then
+    if not RQE.DebugLogFrameRef then
         -- Initialize the debug log frame here if it doesn't exist yet
         -- Example: RQE.DebugLogFrame = CreateFrame("Frame", nil, UIParent)
         -- Add necessary frame setup here (size, position, appearance, etc.)
