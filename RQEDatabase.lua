@@ -5,7 +5,7 @@
 
 -- Sample Quest
 --[[
-    [12345] = {
+    [12345] = { -- QUEST TITLE
         [1] = {
             description = "This is Step One.",
             coordinates = {x = 40.7, y = 64.1, mapID = 123}
@@ -56,6 +56,24 @@ RQEDatabase = {
             [5] = {
                 description = "Use extra action to ride on Yvelyn and attack small flaming birds nearby using Yvelyn's abilities.",
                 coordinates = {x = 61.18, y = 83.51, mapID = 2200}
+            },
+        },
+        [29508] = { -- Baby Needs Two Pairs of Shoes (Darkmoon Faire/Blacksmithing)
+            [1] = {
+                description = "Place a Thermal Anvil on the ground, or locate one.",
+                coordinates = {x = 51.13, y = 81.76, mapID = 407} --nil
+            },
+            [2] = {
+                description = "Use your extra action button four times to create 4 Horseshoe.",
+                coordinates = {x = 51.13, y = 81.76, mapID = 407} --nil
+            },
+            [3] = {
+                description = "Use your extra action button again to apply the horseshoes to Baby.",
+                coordinates = {x = 51.13, y = 81.76, mapID = 407} --nil
+            },
+            [4] = {
+                description = "Turn in the quest to Yebb Neblegear.",
+                coordinates = {x = 51.13, y = 81.76, mapID = 407} --nil
             },
         },
         [76551] = { -- Treasure Diving
