@@ -63,7 +63,6 @@ function RQE:CustomDebugLog(index, color, message, ...)
 end
 
 
-
 -- Custom Info Message Function
 function RQE:CustomLogMsg(color, message, ...)
     local output = "|c" .. color .. message  -- Removed the line number part
@@ -75,6 +74,11 @@ function RQE:CustomLogMsg(color, message, ...)
 	
     -- Add to logTable
     RQE.AddToDebugLog(output)
+	
+    -- Update the log frame to display the new log entry
+    if RQE.DebugLogFrameRef and RQE.DebugLogFrameRef:IsShown() then
+        RQE.UpdateLogFrame()
+    end
 end
 
 
@@ -309,11 +313,29 @@ function RQE:OnInitialize()
     -- Register chat commands (if needed)
     self:RegisterChatCommand("rqe", "SlashCommand")
 
+    -- Ensure that MAP ID value is set to default values
+    local showMapID = RQE.db.profile.showMapID
+	if showMapID then
+		-- Code to display MapID
+		RQEFrame.MapIDText:Show()
+	else
+		-- Code to hide MapID
+		RQEFrame.MapIDText:Hide()
+	end
+	
     -- Ensure that frame opacity is set to default values
     local MainOpacity = RQE.db.profile.MainFrameOpacity
 	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
     RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
     RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+
+    -- Override the print function
+    local originalPrint = print
+    print = function(...)
+        local message = table.concat({...}, " ")
+        RQE.AddToDebugLog(message)
+        originalPrint(...)
+    end
 	
 	self:UpdateFramePosition()
 	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
@@ -592,13 +614,6 @@ function RQE.ExtractAndSaveQuestCoordinates()
 end
 
 
-
-
-
-
-
-
-
 -- Function controls the restoration of the quest that is super tracked to the RQEFrame
 function RQE:HandleSuperTrackedQuestUpdate()
     -- Save the current super tracked quest ID
@@ -838,35 +853,6 @@ function RQE:UpdateFramePosition()
 end
 
 
--- -- Function to update the frame based on the current profile settings
--- function RQE:UpdateFramePosition()
-    -- -- When reading from DB
-    -- local anchorPoint = self.db.profile.framePosition.anchorPoint or "TOPRIGHT"
-	-- RQE.debugLog("anchorPoint in RQE:UpdateFramePosition is ", anchorPoint)  -- Debug statement
-
-    -- -- Validation
-    -- local validAnchorPoints = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
-    -- if not tContains(validAnchorPoints, anchorPoint) then
-        -- anchorPoint = "TOPRIGHT"  -- Set to default
-    -- end
-
-    -- local xPos = self.db.profile.framePosition.xPos or -40
-    -- local yPos = self.db.profile.framePosition.yPos or -270
-
-    -- RQE.debugLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
-
-    -- -- Error handling
-    -- local success, err = pcall(function()
-        -- RQEFrame:ClearAllPoints()
-        -- RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
-    -- end)
-
-    -- if not success then
-        -- RQE.debugLog("Error setting frame position: ", err)
-    -- end
--- end
-
-
 -- Function to update the RQEQuestFrame based on the current profile settings
 function RQE:UpdateQuestFramePosition()
     -- When reading from DB, replace with the appropriate keys for RQEQuestFrame
@@ -1096,7 +1082,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     -- Fetch the next waypoint text for the quest
 	local DirectionText = C_QuestLog.GetNextWaypointText(questID)
 	RQEFrame.DirectionText = DirectionText  -- Save to addon table
-	RQE.UnknownQuestButton:Click()
+	--RQE.UnknownQuestButton:Click() -- incorrect non-existent function call as it instead needs RQE.UnknownQuestButtonCalcNTrack() to update the waypoint on quest progress changes
+	RQE.UnknownQuestButtonCalcNTrack()
 	
 	-- Assuming you have a UI element named DirectionTextFrame
 	if RQE.DirectionTextFrame then
@@ -2558,8 +2545,6 @@ SLASH_UNTRACKAUTO1 = '/untrackauto'
 SlashCmdList["UNTRACKAUTO"] = UntrackAutomaticWorldQuests
 
 
-
-
 ---------------------------------------------------
 -- 19. Finalization
 ---------------------------------------------------
@@ -2647,7 +2632,6 @@ end
 ---------------------------------------------------
 -- 20. Experimental Testing Ground
 ---------------------------------------------------
-
 
 -- Function to log scenario information, including previously ignored values
 function RQE.LogScenarioInfo()

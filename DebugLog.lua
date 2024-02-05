@@ -12,6 +12,7 @@ function RQE.AddToDebugLog(message)
     local timestamp = date("%Y-%m-%d %H:%M:%S")
     local logEntry = string.format("[%s] %s", timestamp, message)
     table.insert(logTable, logEntry)
+    RQE.UpdateLogFrame()  -- Refresh the log frame each time a new message is added
 end
 
 
@@ -108,7 +109,6 @@ scrollBar:SetValue(0)
 scrollBar:SetWidth(16)
 
 
-
 -- Function to calculate the height of the text in the EditBox
 local function CalculateTextHeight(editBox)
     local textString = editBox:GetText()
@@ -124,7 +124,7 @@ local function CalculateTextHeight(editBox)
 end
 
 -- Function to update the log frame with logTable contents
-local function UpdateLogFrame()
+function RQE.UpdateLogFrame()
     local logText = table.concat(logTable, "\n")
     editBox:SetText(logText)
     -- We need to update the size of the editBox and the scrollFrame here as well
@@ -148,8 +148,6 @@ closeButton:SetScript("OnClick", function()
 end)
 
 
-
-
 -- Resize button
 local resizeButton = CreateFrame("Button", nil, logFrame)
 resizeButton:SetPoint("BOTTOMRIGHT", -6, 7)
@@ -169,21 +167,12 @@ end)
 resizeButton:SetScript("OnMouseUp", function(self, button)
     logFrame:StopMovingOrSizing()
     self:GetHighlightTexture():Show()
-    UpdateLogFrame()  -- Update the contents to fit the new size
+    RQE.UpdateLogFrame()  -- Update the contents to fit the new size
 end)
 
 
--- -- Function to update the log frame with logTable contents
--- local function UpdateLogFrame()
-    -- local logText = table.concat(logTable, "\n")
-    -- editBox:SetText(logText)
--- end
-
-
-
-
 -- Make sure the log frame is initially hidden
-UpdateLogFrame()
+RQE.UpdateLogFrame()
 logFrame:Hide()
 
 
@@ -194,7 +183,7 @@ SlashCmdList["LOGTOGGLE"] = function()
         logFrame:Hide()
     else
         logFrame:Show()
-        UpdateLogFrame()
+        RQE.UpdateLogFrame()
     end
 end
 
@@ -204,7 +193,7 @@ function RQE.DebugLogFrame()
     if logFrame:IsShown() then
         logFrame:Hide()
     else
-        UpdateLogFrame()
+        RQE.UpdateLogFrame()
         logFrame:Show()
     end
 end
