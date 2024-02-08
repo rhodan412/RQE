@@ -917,7 +917,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 	-- Create new step texts
 	for i = 1, #StepsText do
-		localstepTextHeight = 0
+		localstepTextHeight = 10
 		-- local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 		-- local baseYOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	
@@ -1200,8 +1200,9 @@ end
 -- Function to update the content size dynamically based on the number of steps
 function RQE:UpdateContentSize()
     local n = #self.StepsText  -- The number of steps
-    local totalHeight = 20 + 20 + (20 * n) + (20 * n) + 10 * (n - 1)
+    local totalHeight = 25 + 25 + (35 * n) + (35 * n) + 30 * (n - 1)
     content:SetHeight(totalHeight)
+	slider:SetMinMaxValues(0, content:GetHeight())
 end
 
 
