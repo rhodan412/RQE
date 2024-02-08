@@ -58,6 +58,96 @@ RQEDatabase = {
                 coordinates = {x = 61.18, y = 83.51, mapID = 2200}
             },
         },
+        [78332] = { -- I SMELL TROUBLE
+            [1] = {
+                description = "Use O.D.I.E's Remote Control near the Fountain (Trade District).",
+                coordinates = {x = 62.18, y = 73.77, mapID = 84}
+            },
+            [2] = {
+                description = "Use O.D.I.E's Remote Control and follow the smoke until you get the First Clue (Trade District).",
+                coordinates = {x = 60.76, y = 68.58, mapID = 84}
+            },
+            [3] = {
+                description = "Use O.D.I.E's Remote Control and follow the smoke until you get the Second Clue.",
+                coordinates = {x = 69, y = 66.67, mapID = 84}
+            },
+            [4] = {
+                description = "Use O.D.I.E's Remote Control and follow the smoke until you get the Third Clue (Dwarven District).",
+                coordinates = {x = 65.46, y = 41.49, mapID = 84}
+            },
+            [5] = {
+                description = "Turn in the quest to Inspector Snip Snagglebolt.",
+                coordinates = {x = 65.46, y = 41.49, mapID = 84} -- nil
+            },
+        },
+        [78591] = { -- GETAWAY TO SCENIC NAGRAND
+            [1] = {
+                description = "Take the portal to Nagrand.",
+                coordinates = {x = 49.74, y = 46.28, mapID = 37}
+            },
+            [2] = {
+                description = "Take a picture of Toothy.",
+                coordinates = {x = 52.64, y = 44.95, mapID = 107}
+            },
+            [3] = {
+                description = "Take a picture of Swifthorn the Timid.",
+                coordinates = {x = 49.31, y = 38.43, mapID = 107}
+            },
+            [4] = {
+                description = "Take a picture of a Great White Elekk (LIVING!).",
+                coordinates = {x = 42.55, y = 60.37, mapID = 107}
+            },
+            [5] = {
+                description = "Take a picture of a Soaring Windroc.",
+                coordinates = {x = 37.1, y = 58.45, mapID = 107}
+            },
+            [6] = {
+                description = "Deliver the photograph to Beatrice.",
+                coordinates = {x = 28.74, y = 46.62, mapID = 107}
+            },
+            [7] = {
+                description = "Travel through the portal back to Stormwind.",
+                coordinates = {x = 49.74, y = 46.28, mapID = 107}
+            },
+            [8] = {
+                description = "Speak with Maurice Guichi to share photograph.",
+                coordinates = {x = 33.67, y = 49.98, mapID = 37}
+            },
+            [9] = {
+                description = "Turn in the quest to Gabbo Blinkwink.",
+                coordinates = {x = 34.34, y = 51.58, mapID = 37}
+            },
+        },
+        [78328] = { -- TAKE A LOOK AROUND
+            [1] = {
+                description = "Speak with Kiera Torres.",
+                coordinates = {x = 32.34, y = 50.45, mapID = 37}
+            },
+            [2] = {
+                description = "Speak with Maurice Guichi.",
+                coordinates = {x = 33.67, y = 49.98, mapID = 37}
+            },
+            [3] = {
+                description = "Speak with Bang Sparknozzle.",
+                coordinates = {x = 33.61, y = 47.73, mapID = 37}
+            },
+            [4] = {
+                description = "Speak with Sylandra Silverbreeze.",
+                coordinates = {x = 34.3, y = 48.8, mapID = 37}
+            },
+            [5] = {
+                description = "Speak with Gabbo Blinkwink.",
+                coordinates = {x = 34.35, y = 51.59, mapID = 37}
+            },
+            [6] = {
+                description = "Speak with Ying.",
+                coordinates = {x = 35.18, y = 50.5, mapID = 37}
+            },
+            [7] = {
+                description = "Turn in the quest to Luciana Delgado.",
+                coordinates = {x = 32.3, y = 49.44, mapID = 37}
+            },
+        },
         [29508] = { -- Baby Needs Two Pairs of Shoes (Darkmoon Faire/Blacksmithing)
             [1] = {
                 description = "Place a Thermal Anvil on the ground, or locate one.",
