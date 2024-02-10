@@ -27,6 +27,8 @@ Libs/AceSerializer-3.0/AceSerializer-3.0.xml
 Libs/AceTab-3.0/AceTab-3.0.xml
 Libs/AceTimer-3.0/AceTimer-3.0.xml
 Libs/AceBucket-3.0/AceBucket-3.0.xml
+Libs/LibSharedMedia-3.0/lib.xml
+
 
 # Core Functionality
 Core.lua

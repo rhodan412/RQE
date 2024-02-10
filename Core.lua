@@ -32,6 +32,7 @@ RQE = LibStub("AceAddon-3.0"):NewAddon("RQE", "AceConsole-3.0", "AceEvent-3.0", 
 -- AceConfig and AceConfigDialog references
 local AC = LibStub("AceConfig-3.0")
 local ACD = LibStub("AceConfigDialog-3.0")
+local LSM = LibStub("LibSharedMedia-3.0")
 
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
@@ -2544,6 +2545,82 @@ SLASH_UNTRACKAUTO1 = '/untrackauto'
 SlashCmdList["UNTRACKAUTO"] = UntrackAutomaticWorldQuests
 
 
+-- Create Event for the sound of Quest Progress/Completion
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("QUEST_LOG_UPDATE")
+eventFrame:RegisterEvent("PLAYER_LOGIN")
+
+local questObjectiveCompletion = {}
+local soundCooldown = false
+
+local function InitializeQuestObjectiveCompletion()
+    for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
+        local info = C_QuestLog.GetInfo(questIndex)
+        if info and not info.isHeader then
+            local questID = info.questID
+            local objectives = C_QuestLog.GetQuestObjectives(questID)
+            for i, objective in ipairs(objectives) do
+                local key = questID .. "-" .. i
+                questObjectiveCompletion[key] = objective.finished
+            end
+        end
+    end
+end
+
+local function CheckQuestObjectivesAndPlaySound()
+    if soundCooldown then return end -- Exit if we're in cooldown
+    local playSoundForCompletion = false
+    local playSoundForObjectives = false
+    
+    for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
+        local info = C_QuestLog.GetInfo(questIndex)
+        if info and not info.isHeader then
+            local questID = info.questID
+            local objectives = C_QuestLog.GetQuestObjectives(questID)
+            local allObjectivesComplete = true
+            for i, objective in ipairs(objectives) do
+                local key = questID .. "-" .. i
+                if objective.finished then
+                    if not questObjectiveCompletion[key] then
+                        -- Objective just completed
+                        questObjectiveCompletion[key] = true
+                        playSoundForObjectives = true -- Play sound for individual objective completion
+                    end
+                else
+                    allObjectivesComplete = false
+                    questObjectiveCompletion[key] = false
+                end
+            end
+            if allObjectivesComplete then
+                local key = tostring(questID) .. "-complete"
+                if not questObjectiveCompletion[key] then
+                    questObjectiveCompletion[key] = true
+                    playSoundForCompletion = true -- Play sound for quest completion
+                end
+            end
+        end
+    end
+
+    if playSoundForCompletion then
+        PlaySound(6199) -- Sound for quest completion
+        soundCooldown = true
+        C_Timer.After(5, function() soundCooldown = false end)
+    elseif playSoundForObjectives then
+        PlaySound(6192) -- Sound for individual objective completion
+        soundCooldown = true
+        C_Timer.After(5, function() soundCooldown = false end)
+    end
+end
+
+eventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_LOGIN" then
+        InitializeQuestObjectiveCompletion()
+    elseif event == "QUEST_LOG_UPDATE" then
+        C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
+    end
+end)
+
+
 ---------------------------------------------------
 -- 19. Finalization
 ---------------------------------------------------
@@ -2573,59 +2650,59 @@ function RQE:UpdateFrameFromProfile()
 end
 
 
--- Create a frame for the timer
-local scenarioTimerFrame = CreateFrame("Frame", "ScenarioTimerFrame", RQEScenarioChildFrame)
-scenarioTimerFrame:SetSize(100, 30) -- Size of the frame
-scenarioTimerFrame:SetPoint("TOPRIGHT", RQEScenarioChildFrame, "TOPRIGHT") -- Position on the upper right of RQEScenarioChildFrame
-scenarioTimerFrame:Show()
+-- -- Create a frame for the timer
+-- local scenarioTimerFrame = CreateFrame("Frame", "ScenarioTimerFrame", RQEScenarioChildFrame)
+-- scenarioTimerFrame:SetSize(100, 30) -- Size of the frame
+-- scenarioTimerFrame:SetPoint("TOPRIGHT", RQEScenarioChildFrame, "TOPRIGHT") -- Position on the upper right of RQEScenarioChildFrame
+-- scenarioTimerFrame:Show()
 
--- Set the frame strata
-scenarioTimerFrame:SetFrameStrata("HIGH")
+-- -- Set the frame strata
+-- scenarioTimerFrame:SetFrameStrata("HIGH")
 
--- Set the frame level
-scenarioTimerFrame:SetFrameLevel(5)
+-- -- Set the frame level
+-- scenarioTimerFrame:SetFrameLevel(5)
 
--- Create a font string for the timer text
-scenarioTimerFrame.text = scenarioTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-scenarioTimerFrame.text:SetPoint("CENTER", scenarioTimerFrame, "CENTER")
-scenarioTimerFrame.text:SetText("00:00")
+-- -- Create a font string for the timer text
+-- scenarioTimerFrame.text = scenarioTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+-- scenarioTimerFrame.text:SetPoint("CENTER", scenarioTimerFrame, "CENTER")
+-- scenarioTimerFrame.text:SetText("")
 
 
--- Function to update the timer
-local function UpdateScenarioTimer()
-    -- Get the timer information
-    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-    if duration and elapsed then
-        local timeLeft = duration - elapsed
-        -- Format the time left as MM:SS
-        local minutes = math.floor(timeLeft / 60)
-        local seconds = timeLeft % 60
-        scenarioTimerFrame.text:SetText(string.format("%02d:%02d", minutes, seconds))
-    else
-        -- Hide the frame if there's no timer
-        scenarioTimerFrame:Hide()
-    end
-end
+-- -- Function to update the timer
+-- local function UpdateScenarioTimer()
+    -- -- Get the timer information
+    -- local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+    -- if duration and elapsed then
+        -- local timeLeft = duration - elapsed
+        -- -- Format the time left as MM:SS
+        -- local minutes = math.floor(timeLeft / 60)
+        -- local seconds = timeLeft % 60
+        -- scenarioTimerFrame.text:SetText(string.format("%02d:%02d", minutes, seconds))
+    -- else
+        -- -- Hide the frame if there's no timer
+        -- scenarioTimerFrame:Hide()
+    -- end
+-- end
 
--- Set up an OnUpdate script to update the timer every second
-scenarioTimerFrame:SetScript("OnUpdate", function(self, elapsed)
-    self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
-    if self.timeSinceLastUpdate >= 1 then
-        UpdateScenarioTimer()
-        self.timeSinceLastUpdate = 0
-    end
-end)
+-- -- Set up an OnUpdate script to update the timer every second
+-- scenarioTimerFrame:SetScript("OnUpdate", function(self, elapsed)
+    -- self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
+    -- if self.timeSinceLastUpdate >= 1 then
+        -- UpdateScenarioTimer()
+        -- self.timeSinceLastUpdate = 0
+    -- end
+-- end)
 
--- Function to start the timer when entering a scenario
-function RQE:StartScenarioTimer()
-    scenarioTimerFrame:Show()
-    UpdateScenarioTimer()
-end
+-- -- Function to start the timer when entering a scenario
+-- function RQE:StartScenarioTimer()
+    -- scenarioTimerFrame:Show()
+    -- UpdateScenarioTimer()
+-- end
 
--- Function to stop the timer when leaving a scenario
-function RQE:StopScenarioTimer()
-    scenarioTimerFrame:Hide()
-end
+-- -- Function to stop the timer when leaving a scenario
+-- function RQE:StopScenarioTimer()
+    -- scenarioTimerFrame:Hide()
+-- end
 
 
 ---------------------------------------------------
