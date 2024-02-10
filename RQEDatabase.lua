@@ -65,7 +65,7 @@ RQEDatabase = {
             },
             [2] = {
                 description = "Use O.D.I.E's Remote Control and follow the smoke until you get the First Clue (Trade District).",
-                coordinates = {x = 60.76, y = 68.58, mapID = 84}
+                coordinates = {x = 59.53, y = 70.23, mapID = 84}
             },
             [3] = {
                 description = "Use O.D.I.E's Remote Control and follow the smoke until you get the Second Clue.",
@@ -118,6 +118,52 @@ RQEDatabase = {
                 coordinates = {x = 34.34, y = 51.58, mapID = 37}
             },
         },
+        [78594] = { -- GETAWAY TO SCENIC FERALAS
+            [1] = {
+                description = "Take the portal to Feralas.",
+                coordinates = {x = 49.74, y = 46.28, mapID = 37}
+            },
+            [2] = {
+                description = "Pick up a Cask of Wine from the table.",
+                coordinates = {x = 69.45, y = 73.2, mapID = 69}
+            },
+            [3] = {
+                description = "Speak with Clarissa Buchannan.",
+                coordinates = {x = 69.17, y = 72.64, mapID = 69}
+            },
+            [4] = {
+                description = "Pick up a Shiny New Weapon from the table.",
+                coordinates = {x = 69.45, y = 73.2, mapID = 69}
+            },
+            [5] = {
+                description = "Speak with Bront Axecrusher.",
+                coordinates = {x = 69.45, y = 72.91, mapID = 69}
+            },
+            [6] = {
+                description = "Click the Lost Puppy near table.",
+                coordinates = {x = 69.45, y = 73.2, mapID = 69}
+            },
+            [7] = {
+                description = "Speak with Angus Flagonshot.",
+                coordinates = {x = 69.76, y = 74.08, mapID = 69}
+            },
+            [8] = {
+                description = "Click Sylandra's Gift on the table.",
+                coordinates = {x = 69.45, y = 73.2, mapID = 69}
+            },
+            [9] = {
+                description = "Click the portal to go back to Stormwind.",
+                coordinates = {x = 70.09, y = 74.58, mapID = 69}
+            },
+            [10] = {
+                description = "Speak with Sylandra Silverbreeze.",
+                coordinates = {x = 34.31, y = 48.78, mapID = 37}
+            },
+            [11] = {
+                description = "Turn in the quest to Gabbo Blinkwink.",
+                coordinates = {x = 34.34, y = 51.58, mapID = 37}
+            },
+        },
         [78328] = { -- TAKE A LOOK AROUND
             [1] = {
                 description = "Speak with Kiera Torres.",
@@ -148,7 +194,7 @@ RQEDatabase = {
                 coordinates = {x = 32.3, y = 49.44, mapID = 37}
             },
         },
-        [29508] = { -- Baby Needs Two Pairs of Shoes (Darkmoon Faire/Blacksmithing)
+        [29508] = { -- BABY NEEDS TWO PAIRS OF SHOES (Darkmoon Faire/Blacksmithing)
             [1] = {
                 description = "Place a Thermal Anvil on the ground, or locate one.",
                 coordinates = {x = 51.13, y = 81.76, mapID = 407} --nil
