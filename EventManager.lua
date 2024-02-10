@@ -552,8 +552,8 @@ function RQE.handleZoneChange(...)
 
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
-		if RQE.db.profile.showMapID and mapID then
-			RQEFrame.MapIDText:SetText("MapID: " .. mapID)
+		if RQE.db.profile.showMapID and currentMapID then
+			RQEFrame.MapIDText:SetText("MapID: " .. currentMapID)
 		else
 			RQEFrame.MapIDText:SetText("")
 		end
@@ -600,9 +600,11 @@ function RQE.handleQuestStatusUpdate(...)
 	end)
 	
 	RQE:ClearWQTracking()
+	--C_Map.ClearUserWaypoint()
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+	--RQE.UnknownQuestButtonCalcNTrack()
 end
 	
 
