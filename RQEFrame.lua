@@ -450,7 +450,7 @@ end
 RQE.DirectionTextFrame:SetJustifyH("LEFT")
 RQE.DirectionTextFrame:SetJustifyV("TOP")
 RQE.DirectionTextFrame:SetWordWrap(true)
-RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 20)
+RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.DirectionTextFrame:SetHeight(0)
 RQE.DirectionTextFrame:EnableMouse(true)
 
@@ -493,7 +493,7 @@ end
 RQE.QuestDescription:SetJustifyH("LEFT")
 RQE.QuestDescription:SetJustifyV("TOP")
 RQE.QuestDescription:SetWordWrap(true)
-RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 20)
+RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.QuestDescription:SetHeight(0)
 RQE.QuestDescription:EnableMouse(true)
 
@@ -793,8 +793,8 @@ function AdjustRQEFrameWidths(newWidth)
     -- Adjust width for each element
     RQE.QuestIDText:SetWidth(RQEFrame:GetWidth() - 25)	
     RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 80)
-    RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 25)
-    RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 25)
+    RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 30)
+    RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 40)
     RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 40)
 	
 	--RQE.OnFrameResized()
