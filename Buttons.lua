@@ -64,8 +64,10 @@ RQE.UnknownButtonTooltip = function()
         GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
         local questID = C_SuperTrack.GetSuperTrackedQuestID()
-        local mapID = GetQuestUiMapID(questID)
-        if mapID == 0 then mapID = nil end
+		if questID then  -- Add a check to ensure questID is not nil
+			local mapID = GetQuestUiMapID(questID)
+			if mapID == 0 then mapID = nil end
+		end
 		
         if not RQE.superX or not RQE.superY and RQE.superMapID then
             -- Open the quest log details for the super tracked quest to fetch the coordinates
