@@ -6,7 +6,7 @@
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
 ## SavedVariables: RQEDB
-## OptionalDeps: TomTom
+## OptionalDeps: TomTom, Carbonite
 
 ## Libraries
 Libs/LibStub/LibStub.lua

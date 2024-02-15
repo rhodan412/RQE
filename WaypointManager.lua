@@ -101,6 +101,19 @@ function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
 			RQE.debugLog("TomTom is not available.")
 			-- Code for your own waypoint system or an alternative action
 		end
+		
+		-- Check if Carbonite is loaded and enabled
+		if IsAddOnLoaded("Carbonite") then
+			RQE.debugLog("Carbonite is available.")
+			if mapID and x and y then  -- Check if x and y are not nil
+				Nx:TTAddWaypoint (mapID, x/100, y/100, {opt = waypointTitle})
+			else
+				RQE.debugLog("Could not create waypoint for unknown quest.")
+			end
+		else
+			RQE.debugLog("Carbonite is not available.")
+			-- Code for your own waypoint system or an alternative action
+		end
 	end)
 end
 
