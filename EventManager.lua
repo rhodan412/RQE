@@ -482,10 +482,11 @@ function RQE.handleSuperTracking(...)
 	RQE.superTrackingChanged = true
 	RQE:ClearFrameData()
 	RQE.SaveSuperTrackData()
-	RQE.UnknownQuestButtonCalcNTrack()
-	
+	--RQE.UnknownQuestButtonCalcNTrack()
+
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-					
+	RQE:CreateUnknownQuestWaypoint(questID, mapID)
+
 	local questName
 	if questID then
 		questName = C_QuestLog.GetTitleForQuestID(questID)
@@ -546,9 +547,11 @@ function RQE.handleZoneChange(...)
 	C_Timer.After(1.0, function()  -- Delay of 1 second
 
 		-- Get the current map ID
-		local currentMapID = C_Map.GetBestMapForUnit("player")			
-		local questInfo = RQEDatabase[currentQuestID]
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+		local mapID = C_Map.GetBestMapForUnit("player")			
+		local questInfo = RQEDatabase[questID]
+		-- local currentMapID = C_Map.GetBestMapForUnit("player")			
+		-- local questInfo = RQEDatabase[currentQuestID]
+		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
@@ -559,7 +562,8 @@ function RQE.handleZoneChange(...)
 		end
 			
 		-- Call the functions to update the frame
-		UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
+		UpdateFrame(cquestID, questInfo, StepsText, CoordsText, MapIDs)
+		--UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
 
 		-- -- Check if auto-tracking of quest progress is enabled and call the function
 		-- if RQE.db.profile.autoTrackProgress then
@@ -584,12 +588,15 @@ end
 function RQE.handleQuestStatusUpdate(...)
 	
 	-- Attempt to fetch the current super-tracked quest ID
-	local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	--local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	
 	-- Attempt to fetch other necessary information using the currentQuestID
-	local currentQuestInfo = RQEDatabase[currentQuestID]
-	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-
+	local questInfo = RQEDatabase[questID]
+	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+	-- local currentQuestInfo = RQEDatabase[currentQuestID]
+	-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+	
 	if not RQE.QuestLinesCached then
 		RQE.RequestAndCacheQuestLines()
 		RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
@@ -603,7 +610,8 @@ function RQE.handleQuestStatusUpdate(...)
 	--C_Map.ClearUserWaypoint()
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
-	UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	--UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 	--RQE.UnknownQuestButtonCalcNTrack()
 end
 	

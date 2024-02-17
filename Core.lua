@@ -393,18 +393,24 @@ function RQE:InitializeFrame()
     RQE.Buttons.CreateSearchButton(RQEFrame)
 
     -- Add logic to update frame with the current supertracked quest
-    local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    if currentQuestID then
-        local currentQuestInfo = RQEDatabase[currentQuestID]
-        if currentQuestInfo then
-            local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-			--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-				UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-			--else
-				--return
-			--end			
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    if questID then
+        local questInfo = RQEDatabase[questID]
+        if questInfo then
+            local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         end
     end
+	
+    -- -- Add logic to update frame with the current supertracked quest
+    -- local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- if currentQuestID then
+        -- local currentQuestInfo = RQEDatabase[currentQuestID]
+        -- if currentQuestInfo then
+            -- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
+			-- UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
+        -- end
+    -- end
 end
 
 
