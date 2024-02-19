@@ -232,7 +232,6 @@ RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "Worl
 RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
 
 
-
 -- ScenarioChildFrame header
 -- Function to create a unique header for the ScenarioChildFrame
 local function CreateUniqueScenarioHeader(scenarioFrame, title)
@@ -291,6 +290,7 @@ function UpdateFrameAnchors()
     RQE.CampaignFrame:ClearAllPoints()
     RQE.QuestsFrame:ClearAllPoints()
     RQE.WorldQuestsFrame:ClearAllPoints()
+	RQE.AchievementsFrame:ClearAllPoints()
     
     -- Anchor CampaignFrame
     if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
@@ -319,7 +319,7 @@ function UpdateFrameAnchors()
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
 
-    -- Anchor AchievementsFrame
+    -- Anchor AchievementsFrame based on visibility of other frames
     if RQE.WorldQuestsFrame:IsShown() then
         RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
     elseif RQE.QuestsFrame:IsShown() then
@@ -362,6 +362,19 @@ function ResetChildFramesToDefault()
     else
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
+
+    -- AchievementsFrame positioning
+    if RQE.WorldQuestsFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
+    elseif RQE.QuestsFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+    elseif RQE.CampaignFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
 end
 
 
@@ -380,7 +393,8 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
         -- If there are no campaign quests, anchor QuestsFrame to content
         RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
-	
+
+    -- Adjusting World Quests child frame position based on last campaign element
     if lastQuestElement then
         -- If there's a last element in the regular quests frame, anchor to it
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
@@ -399,6 +413,21 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
     else
         -- If neither Campaign nor Regular Quests frames have elements, anchor to the content
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+	
+    -- Adjust AchievementsFrame position based on the presence of WorldQuest elements
+    if RQE.WorldQuestsFrame:IsShown() and lastWorldQuestElement then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", -40, -15)
+    elseif not RQE.WorldQuestsFrame:IsShown() and lastQuestElement then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
+    elseif not RQE.WorldQuestsFrame:IsShown() and lastCampaignElement then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+    elseif RQE.WorldQuestsFrame:IsShown() or RQE.QuestsFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame or RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
+	elseif RQE.ScenarioChildFrame:IsShown() then
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -15)
+	else
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
 end
 
@@ -1110,6 +1139,7 @@ function UpdateRQEQuestFrame()
     -- Loop through all tracked quests to count campaign and world quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 	local worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+	
     for i = 1, numTrackedQuests do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if C_CampaignInfo.IsCampaignQuest(questID) then
@@ -1191,7 +1221,30 @@ function UpdateRQEQuestFrame()
         RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
-	
+
+	-- Create the Set Point for the World Quests Child Frame
+    if RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
+        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
+        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
+        -- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        -- If no other frames are present or shown, anchor WorldQuestsFrame to content
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+		
     -- Separate variables to track the last element in each child frame
     local lastCampaignElement, lastQuestElement, lastWorldQuestElement = nil, nil, nil
 		
@@ -1589,7 +1642,7 @@ function UpdateRQEQuestFrame()
     RQE.CampaignFrame:SetShown(campaignQuestCount > 0)
     RQE.QuestsFrame:SetShown(regularQuestCount > 0)
     RQE.WorldQuestsFrame:SetShown(worldQuestCount > 0)
-		
+	
     -- After adding all quest items, update the total height of the content frame
     content:SetHeight(totalHeight)
 
@@ -1611,7 +1664,6 @@ function UpdateRQEQuestFrame()
         RQE.QMQTslider:Hide()
     end
 end
-
 
 
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
@@ -2001,8 +2053,24 @@ function RQE.UpdateTrackedAchievementList()
 end
 
 
+-- Function to count the number of tracked achievements
+function GetNumTrackedAchievements()
+    -- Assuming RQE.TrackedAchievementIDs is a table that contains the achievement IDs that are being tracked
+    local count = 0
+    if RQE and RQE.TrackedAchievementIDs then
+        for _ in pairs(RQE.TrackedAchievementIDs) do
+            count = count + 1
+        end
+    end
+    return count
+end
+
+
 -- Function to Update Achievements Frame
 function UpdateRQEAchievementsFrame()
+	local achieveCount = 0
+	local achieveCount = GetNumTrackedAchievements()
+	
     -- Print the IDs of tracked achievements for debugging
     RQE.infoLog("Currently Tracked Achievements:")
     for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
@@ -2115,6 +2183,9 @@ function UpdateRQEAchievementsFrame()
 
     -- After creating each new FontString, insert it into RQE.AchievementsIDWidgets:
     table.insert(RQE.AchievementsIDWidgets, achievementHeader)
+
+	-- Check if any achievements in the Achievement Frame are being tracked/watched
+	RQE.AchievementsFrame:SetShown(achieveCount > 0)
 	
     -- Update the scroll frame range if necessary
     if RQE.AchievementsFrame.scrollFrame then
