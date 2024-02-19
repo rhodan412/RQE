@@ -48,8 +48,10 @@ end
 -- Register events to the frame
 -- Define a list of events to register
 local eventsToRegister = {
+	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
 	"BAG_UPDATE_COOLDOWN",
+	"CONTENT_TRACKING_UPDATE",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
 	"LEAVE_PARTY_CONFIRMATION",
@@ -98,6 +100,8 @@ local function HandleEvents(frame, event, ...)
 
     local handlers = {
 		ADDON_LOADED = RQE.handleAddonLoaded,
+		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
+		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		--CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,
 		LEAVE_PARTY_CONFIRMATION = handleScenario,
@@ -149,6 +153,15 @@ function RQE.UnregisterUnusedEvents()
 end
 
 
+-- Handles ACHIEVEMENT_EARNED and CONTENT_TRACKING_UPDATE Events
+function RQE.handleAchievementTracking(...)
+    local contentType, id, tracked = ...
+	if contentType == 2 then -- Assuming 2 indicates an achievement
+		RQE:ClearAchievementFrame()
+		RQE.UpdateTrackedAchievements(contentType, id, tracked)
+	end
+end
+
 -- Handling PLAYER_LOGIN Event
 function RQE.handlePlayerLogin(...)
 	
@@ -199,6 +212,14 @@ end
 function RQE.handleAddonLoaded(addonName)
     -- Only proceed if RQE is the addon being loaded
     if addonName ~= "Rhodan's Quest Explorer" then return end
+	
+    -- Initialize the saved variable if it doesn't exist
+    RQE_TrackedAchievements = RQE_TrackedAchievements or {}
+    -- Ensure your addon uses this saved variable for tracking
+    RQE.TrackedAchievementIDs = RQE_TrackedAchievements
+
+    -- Add this line to update tracked achievements as soon as the addon is loaded
+    RQE.UpdateTrackedAchievements()
 
     -- Hide the default objective tracker and make other UI adjustments after a short delay
     C_Timer.After(0.5, function()

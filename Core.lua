@@ -1537,7 +1537,8 @@ end
 
 -- InitializeAddon function
 function RQE:InitializeAddon()
-    -- Your code here
+    -- Initializes the Tracked Achievements
+	RQE.UpdateTrackedAchievements()
 end
 
 

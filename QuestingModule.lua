@@ -14,6 +14,7 @@ RQE = RQE or {}
 RQE.modules = RQE.modules or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQE.TrackedQuests = RQE.TrackedQuests or {}
+RQE.TrackedAchievementIDs = RQE.TrackedAchievementIDs or {}
 
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
@@ -172,11 +173,14 @@ RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -200, content:G
 -- Create the third child frame, anchored below the QuestsFrame
 RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -400, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
 
+-- Create the third child frame, anchored below the QuestsFrame
+RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -400, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
 
 -- Initialize with default values
 RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
 RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
 RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
+RQE.AchievementsFrame.achieveCount = RQE.AchievementsFrame.achieveCount or 0
 
 
 -- Function to create a header for a child frame
@@ -225,6 +229,8 @@ end
 RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
 RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Quests")
 RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+
 
 
 -- ScenarioChildFrame header
@@ -311,6 +317,19 @@ function UpdateFrameAnchors()
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
     else
         RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+    -- Anchor AchievementsFrame
+    if RQE.WorldQuestsFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
+    elseif RQE.QuestsFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+    elseif RQE.CampaignFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
 end
 
@@ -778,6 +797,34 @@ function RQE:ClearRQEWorldQuestFrame()
             end
         end
     end
+end
+
+
+-- Function to clear the Achievement Frame but preserve the header
+function RQE:ClearAchievementFrame()
+    -- Check if the achievements frame exists
+    if RQE.AchievementsFrame then
+        -- If there is a header that you want to preserve, reference it before clearing
+        local header = RQE.AchievementsFrame.header
+        
+        -- Iterate through all child frames and hide them
+        local children = {RQE.AchievementsFrame:GetChildren()}
+        for _, child in ipairs(children) do
+            if child ~= header then -- Skip the header if you want to preserve it
+                child:Hide()
+                child:SetParent(nil)
+            end
+        end
+        
+        -- Clear all font strings in the frame
+        local regions = {RQE.AchievementsFrame:GetRegions()}
+        for _, region in ipairs(regions) do
+            if region:GetObjectType() == "FontString" then
+                region:Hide()
+            end
+        end
+    end
+	RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
 end
 
 
@@ -1920,5 +1967,157 @@ function UpdateRQEWorldQuestFrame()
 				end
 			end
         end
+    end
+end
+
+
+-- Function to add/remove tracked achievements into table
+function RQE.UpdateTrackedAchievements(contentType, id, tracked)
+    if contentType == 2 then -- Assuming "2" signifies an achievement
+        if tracked then
+            if not tContains(RQE.TrackedAchievementIDs, id) then
+                table.insert(RQE.TrackedAchievementIDs, id)
+            end
+        else
+            for i, trackedID in ipairs(RQE.TrackedAchievementIDs) do
+                if trackedID == id then
+                    table.remove(RQE.TrackedAchievementIDs, i)
+                    break
+                end
+            end
+        end
+    end
+    -- Call the update function to refresh the UI
+    RQE.UpdateTrackedAchievementList()
+end
+
+
+-- Function to fetch and update the list of tracked achievements
+function RQE.UpdateTrackedAchievementList()
+    local achievementIDs = C_ContentTracking.GetTrackedIDs(Enum.ContentTrackingType.Achievement)
+    RQE.TrackedAchievementIDs = achievementIDs -- Assuming RQE.TrackedAchievementIDs is initialized as a table somewhere
+    -- Optionally, call a function to update your UI with the new list
+    UpdateRQEAchievementsFrame()
+end
+
+
+-- Function to Update Achievements Frame
+function UpdateRQEAchievementsFrame()
+    -- Print the IDs of tracked achievements for debugging
+    RQE.infoLog("Currently Tracked Achievements:")
+    for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
+        RQE.infoLog("- Achievement ID:", achievementID)
+    end
+
+    -- Clear the achievement ID list before updating
+    RQE:ClearAchievementFrame()
+	
+    -- Initialize or clear the table that keeps track of achievement ID widgets
+    RQE.AchievementsIDWidgets = RQE.AchievementsIDWidgets or {}
+	
+	-- Sets initial y-offset slightly below top of frame
+    local offsetY = -45 -- Starting offset for the first achievement
+    local spacing = 7 -- Space between achievements
+    local textPadding = 10 -- Adjust this value to control word wrap width
+
+    -- Loop through each tracked achievement ID and display it along with the description
+    for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
+        local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
+
+        if id then
+            -- Create the header for each achievement
+            local achievementHeader = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            achievementHeader:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
+            achievementHeader:SetText("[" .. id .. "] " .. name)
+            achievementHeader:SetTextColor(1, 0.5, 0.3) -- Tan color for the achievement ID and name
+            achievementHeader:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
+            achievementHeader:SetJustifyH("LEFT")
+            
+            -- Set up the tooltip for the achievement header
+			achievementHeader:SetScript("OnEnter", function(self)
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+				GameTooltip:SetText(name, 1, 1, 0, 1) -- Yellow title
+				if rewardText and rewardText ~= "" then
+					GameTooltip:AddLine(rewardText, 0, 0.5, 1, 1) -- Light Blue reward text
+					GameTooltip:AddLine(" ") -- Spacer
+				end
+				GameTooltip:AddLine(description, 1, 0.7, 0.7, true) -- Light Pink description
+				GameTooltip:AddLine(" ") -- Spacer
+				
+                -- Add criteria info
+                local numCriteria = GetAchievementNumCriteria(id)
+                for criteriaIndex = 1, numCriteria do
+                    local criteriaString, criteriaType, criteriaCompleted = GetAchievementCriteriaInfo(id, criteriaIndex)
+                    if criteriaCompleted then
+                        GameTooltip:AddLine("- " .. criteriaString, 0, 1, 0) -- Green for completed criteria
+                    else
+                        GameTooltip:AddLine("- " .. criteriaString, 1, 1, 1) -- White for incomplete criteria
+                    end
+                end
+
+				GameTooltip:AddLine(" ")
+                if wasEarnedByMe then
+					GameTooltip:AddLine("Achivement completed by " .. UnitName("player"), 0, 1, 0, true) -- Green Text
+				else
+                    GameTooltip:AddLine("In progress by " .. UnitName("player"), 0, 1, 0, true)
+                end
+                GameTooltip:AddLine("Achievement ID: " .. id, 1, 0.75, 0.35, true)
+                GameTooltip:Show()
+            end)
+            achievementHeader:SetScript("OnLeave", function(self)
+                GameTooltip:Hide()
+            end)
+
+			-- Set up the clickable action for the achievement header
+			achievementHeader:EnableMouse(true)
+			achievementHeader:SetScript("OnMouseUp", function(self, button)
+				if button == "LeftButton" then
+					if not IsAddOnLoaded("Blizzard_AchievementUI") then
+						LoadAddOn("Blizzard_AchievementUI")
+					end
+					if AchievementFrame then
+						if not AchievementFrame:IsShown() then
+							AchievementFrame_ToggleAchievementFrame()
+						end
+						AchievementFrame_SelectAchievement(id)
+					end
+				end
+			end)
+		
+            offsetY = offsetY - achievementHeader:GetStringHeight() - spacing -- Adjust offsetY for the header and additional spacing
+
+            -- Loop through criteria
+            local numCriteria = GetAchievementNumCriteria(id)
+            for criteriaIndex = 1, numCriteria do
+                local criteriaString, criteriaType, criteriaCompleted = GetAchievementCriteriaInfo(id, criteriaIndex)
+
+                -- Create a FontString for each criteria
+                local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                criteriaText:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
+                criteriaText:SetJustifyH("LEFT")
+                criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
+
+                -- Set color based on completion status
+                if criteriaCompleted then
+                    criteriaText:SetTextColor(0, 1, 0) -- Green color for completed criteria
+                else
+                    criteriaText:SetTextColor(1, 1, 1) -- White color for incomplete criteria
+                end
+
+                criteriaText:SetText("- " .. criteriaString)
+                offsetY = offsetY - criteriaText:GetStringHeight() - spacing -- Adjust offsetY for each criteria line and additional spacing
+            end
+
+            -- Add extra spacing between different achievements
+            offsetY = offsetY - spacing
+        end
+    end
+
+    -- After creating each new FontString, insert it into RQE.AchievementsIDWidgets:
+    table.insert(RQE.AchievementsIDWidgets, achievementHeader)
+	
+    -- Update the scroll frame range if necessary
+    if RQE.AchievementsFrame.scrollFrame then
+        RQE.AchievementsFrame.scrollFrame:SetVerticalScrollRange(math.abs(offsetY))
     end
 end

@@ -36,7 +36,7 @@
 RQEDatabase = {
 -- Dragonflight Expansion
 -- Dragonflight WQ/Dailies
-        [76520] = { -- A Shared Dream
+        [76520] = { -- A SHARED DREAM
             [1] = {
                 description = "Speak with Yvelyn (she will be your tank while attacking mobs on ground).",
                 coordinates = {x = 64.7, y = 73.1, mapID = 2200}
