@@ -162,13 +162,14 @@ function RQE.handleAchievementTracking(...)
 	end
 end
 
+
 -- Handling PLAYER_LOGIN Event
 function RQE.handlePlayerLogin(...)
 	
 	-- Initialize other components of your AddOn
 	RQE:InitializeAddon()
 	RQE:InitializeFrame()
-
+	
 	-- Add this line to update coordinates when player logs in
 	RQE:UpdateCoordinates()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -272,10 +273,8 @@ function RQE.handleScenario(self, event, ...)
         RQE.ScenarioChildFrame:Show()
         RQE.InitializeScenarioFrame()
         RQE.UpdateScenarioFrame()
-        --local duration = --[[ logic to determine duration based on the event data ]]
         RQE.StopTimer()
 		RQE.StartTimer()
-		--RQE.Timer_Start()
 		RQE.Timer_CheckTimers()
     else
 		RQE.StopTimer()
@@ -300,8 +299,6 @@ function RQE.handleTimerStop(self, event, ...)
 	local timerID = ...;
 	-- A world timer has stopped; you might want to stop your timer as well
     RQE.StopTimer()
-	--RQE.Timer_Stop()
-	--RQE.Timer_CheckTimers(timerID)
 end
 
 
@@ -570,8 +567,6 @@ function RQE.handleZoneChange(...)
 		-- Get the current map ID
 		local mapID = C_Map.GetBestMapForUnit("player")			
 		local questInfo = RQEDatabase[questID]
-		-- local currentMapID = C_Map.GetBestMapForUnit("player")			
-		-- local questInfo = RQEDatabase[currentQuestID]
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -583,7 +578,7 @@ function RQE.handleZoneChange(...)
 		end
 			
 		-- Call the functions to update the frame
-		UpdateFrame(cquestID, questInfo, StepsText, CoordsText, MapIDs)
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		--UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
 
 		-- -- Check if auto-tracking of quest progress is enabled and call the function
@@ -641,8 +636,10 @@ end
 function RQE.handleQuestComplete(...)
 	local questID = ...  -- Extract the questID from the event
 	RQE:QuestComplete(questID)
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearWQTracking()
+	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 end

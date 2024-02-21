@@ -401,16 +401,6 @@ function RQE:InitializeFrame()
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         end
     end
-	
-    -- -- Add logic to update frame with the current supertracked quest
-    -- local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    -- if currentQuestID then
-        -- local currentQuestInfo = RQEDatabase[currentQuestID]
-        -- if currentQuestInfo then
-            -- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)
-			-- UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
-        -- end
-    -- end
 end
 
 
@@ -541,7 +531,6 @@ function RQE.SaveSuperTrackData()
 			end
 		end)
 		
-		--RQE.UnknownQuestButtonCalcNTrack()
         -- Optional: Return the values for immediate use
         return posX, posY, mapID, questID, questTitle
     end
@@ -2100,7 +2089,7 @@ function RQE.BuildZoneQuestMenuList()
 
     -- Sort the zoneQuestMenuList by zoneID
     table.sort(zoneQuestMenuList, function(a, b)
-        return a.zoneID < b.zoneID
+        return a.zoneID > b.zoneID
     end)
 
     -- Remove the zoneID key from the menu items after sorting
@@ -2155,14 +2144,32 @@ function RQE.filterByQuestType(questType)
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
+            -- Fetch the current quest's type
             local currentQuestType = C_QuestLog.GetQuestType(questInfo.questID)
-            if currentQuestType == questType then
+
+            -- Determine if the current quest should be watched based on its type
+            local shouldWatch = false
+            if questType == "Misc" then
+                -- For "Misc", include quests of type 0 or 261
+                shouldWatch = (currentQuestType == 0 or currentQuestType == 261)
+            else
+                -- For other quest types, match the quest type directly
+                shouldWatch = (currentQuestType == questType)
+            end
+
+            -- Add or remove the quest from watch based on the shouldWatch flag
+            if shouldWatch then
                 C_QuestLog.AddQuestWatch(questInfo.questID)
             else
                 C_QuestLog.RemoveQuestWatch(questInfo.questID)
             end
         end
     end
+
+    -- -- Optionally, update the quest watch frame if necessary
+    -- if QuestWatch_Update then
+        -- QuestWatch_Update()
+    -- end
 end
 
 
@@ -2232,7 +2239,7 @@ function RQE.BuildCampaignMenuList()
 
     -- Sort the campaignMenuList by campaignID
     table.sort(campaignMenuList, function(a, b)
-        return a.campaignID < b.campaignID
+        return a.campaignID > b.campaignID
     end)
 
     -- Remove the campaignID key from the menu items after sorting
@@ -2269,55 +2276,114 @@ function RQE.filterByCampaign(campaignID)
     end
 end
 
+-- -- Function to print out the questline information for a specific quest
+-- function RQE.PrintQuestLineInfo(questID, uiMapID)
+    -- -- Ensure that the questID and uiMapID are valid numbers
+    -- if not questID or not uiMapID then
+        -- print("Invalid questID or uiMapID provided.")
+        -- return
+    -- end
 
+    -- -- Ensure that the questID and uiMapID are numbers
+    -- if type(questID) ~= "number" or type(uiMapID) ~= "number" then
+        -- print("questID and uiMapID must be numbers.")
+        -- return
+    -- end
+
+    -- -- Retrieve the quest line information for the given questID and uiMapID
+    -- local status, questLineInfo = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
+
+    -- if status and questLineInfo then
+        -- -- Print the quest line information to chat
+        -- print("Quest Line Information for Quest ID " .. questID .. ":")
+        -- print("Quest Line ID:", questLineInfo.questLineID)
+        -- print("Quest Line Name:", questLineInfo.questLineName)
+        -- print("Map ID:", uiMapID)
+        -- print("Quest Name:", questLineInfo.questName)
+        -- print("X Position:", questLineInfo.x)
+        -- print("Y Position:", questLineInfo.y)
+        -- print("Is Hidden:", questLineInfo.isHidden and "Yes" or "No")
+        -- print("Is Legendary:", questLineInfo.isLegendary and "Yes" or "No")
+        -- print("Is Daily:", questLineInfo.isDaily and "Yes" or "No")
+        -- print("Is Campaign:", questLineInfo.isCampaign and "Yes" or "No")
+        -- print("Floor Location:", questLineInfo.floorLocation)
+    -- else
+        -- -- No quest line info was found for the given questID and uiMapID, or an error occurred
+        -- print("No quest line information found for Quest ID " .. questID .. " and Map ID " .. uiMapID .. ", or an error occurred.")
+    -- end
+-- end
+
+-- -- Example usage:
+-- RQE.PrintQuestLineInfo(67100, 2022)
+
+
+-- Function to Request and Cache all quest lines in player's quest log
 function RQE.RequestAndCacheQuestLines()
-    local uiMapID = C_Map.GetBestMapForUnit("player")
-	RQE.QuestLines = RQE.QuestLines or {}
-    C_QuestLine.RequestQuestLinesForMap(uiMapID)
-    
-    -- Assuming this API call populates data that can be retrieved immediately, which may not be the case.
-    local questLinesInfo = C_QuestLine.GetAvailableQuestLines(uiMapID)
-	if questLinesInfo then
-		for _, info in pairs(questLinesInfo) do
-			local questLineQuests = C_QuestLine.GetQuestLineQuests(info.questLineID)
-			RQE.QuestLines[info.questLineID] = {
-				name = info.questLineName,
-				quests = questLineQuests
-			}
-		end
-	end
+    RQE.QuestLines = RQE.QuestLines or {}
+
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader then
+            -- Directly use the map ID associated with the quest for more accurate quest line retrieval
+            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints) -- Using fallback
+            if zoneID then
+                -- Fetch quest line information using the quest ID and its zoneID
+                local questLineInfo = C_QuestLine.GetQuestLineInfo(questInfo.questID, zoneID)
+                if questLineInfo and questLineInfo.questLineID then
+                    if not RQE.QuestLines[questLineInfo.questLineID] then
+                        RQE.QuestLines[questLineInfo.questLineID] = {
+                            name = questLineInfo.questLineName,
+                            quests = {}
+                        }
+                    end
+                    table.insert(RQE.QuestLines[questLineInfo.questLineID].quests, questInfo.questID)
+                end
+            end
+        end
+    end
 end
 
 
+-- Function to Build questline list for the menu based on cached questlines
 function RQE.BuildQuestLineMenuList()
     local questLineMenuList = {}
     for questLineID, questLineData in pairs(RQE.QuestLines) do
+        -- Include the questLineID before the quest line name
         table.insert(questLineMenuList, {
-            text = questLineData.name,
+            text = questLineID .. ": " .. questLineData.name,
             func = function() RQE.filterByQuestLine(questLineID) end,
         })
     end
-    
+
+    -- Sort the questLineMenuList by questLineID in descending order
+    table.sort(questLineMenuList, function(a, b)
+        local aID = tonumber(a.text:match("^(%d+):"))
+        local bID = tonumber(b.text:match("^(%d+):"))
+        return aID > bID -- Sort from larger to smaller questLineID
+    end)
+
     -- Check if the questLineMenuList is empty and add a placeholder item if it is
     if #questLineMenuList == 0 then
-        -- If there are no active quest lines, add a placeholder item
         table.insert(questLineMenuList, {
             text = "No active quest lines to filter.",
             func = function() print("No active quest lines to filter.") end,
             disabled = true  -- Make it non-selectable
         })
     end
-    
+
     return questLineMenuList
 end
 
 
+-- Menu Filter for Questline-specific
 function RQE.filterByQuestLine(questLineID)
     -- Get the quests for the selected questline
+    if not RQE.QuestLines[questLineID] then return end -- Early exit if no data for the quest line.
+
     local questIDsForLine = RQE.QuestLines[questLineID].quests
     local questIDSet = {}
 
-    -- Create a set for quick lookup and print out each questID
     for _, questID in ipairs(questIDsForLine) do
         questIDSet[questID] = true
     end
@@ -2329,7 +2395,7 @@ function RQE.filterByQuestLine(questLineID)
     for i = numQuestWatches, 1, -1 do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if not questIDSet[questID] then
-            -- -- --C_QuestLog.RemoveQuestWatch(questID)
+            C_QuestLog.RemoveQuestWatch(questID)
         end
     end
 
@@ -2345,6 +2411,7 @@ function RQE.filterByQuestLine(questLineID)
 end
 
 
+-- Scans Quest Log for the various Types that each quest is assigned to
 function RQE.ScanQuestTypes()
     if type(RQE.QuestTypes) ~= "table" then
         RQE.QuestTypes = {}  -- Initialize as an empty table if it's not already a table
@@ -2356,10 +2423,13 @@ function RQE.ScanQuestTypes()
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
             local questType = C_QuestLog.GetQuestType(questInfo.questID)
-            if questType then
+            -- Consolidate quest types 0 and 261 under a special key "Misc"
+            if questType == 0 or questType == 261 then
+                RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
+            else
                 local questTypeName = RQE.GetQuestTypeName(questType)
                 if questTypeName then
-                    RQE.QuestTypes[questType] = questTypeName  -- Store the quest type name
+                    RQE.QuestTypes[questType] = questTypeName
                 end
             end
         end
@@ -2396,30 +2466,40 @@ function RQE.GetQuestTypeName(questType)
 		[266] = "Combat Ally Quest",
 		[267] = "Professions",
     }
-    return questTypeNames[questType] or "Unknown Type"
+    -- Special handling for 0 and 261 to label them as "Misc"
+    if questType == 0 or questType == 261 then
+        return "Misc"
+    else
+        return questTypeNames[questType] or "Unknown Type"
+    end
 end
 
 
+-- Build Menu List for the QuestTypes in your QuestLog
 function RQE.BuildQuestTypeMenuList()
     local questTypeMenuList = {}
-    RQE.QuestTypes = RQE.QuestTypes or {}  -- Ensure RQE.QuestTypes is not nil
+    RQE.QuestTypes = RQE.QuestTypes or {}
+
+    -- Assign a high numeric value to "Misc" for sorting purposes
+    local miscSortValue = 9999
 
     for questType, questTypeName in pairs(RQE.QuestTypes) do
+        local sortKey = (questTypeName == "Misc") and miscSortValue or tonumber(questType)
         table.insert(questTypeMenuList, {
-            questType = questType,  -- Store questType for sorting
-            text = questType .. ": " .. questTypeName,
+            sortKey = sortKey,
+            text = (questTypeName == "Misc" and questTypeName) or (questType .. ": " .. questTypeName),
             func = function() RQE.filterByQuestType(questType) end,
         })
     end
 
-    -- Sort the questTypeMenuList by questType
+    -- Sort the questTypeMenuList by questType, explicitly handling "Misc"
     table.sort(questTypeMenuList, function(a, b)
-        return a.questType < b.questType
+        return a.sortKey < b.sortKey
     end)
 
-    -- Remove the questType key from the menu items after sorting
+    -- Remove the temporary sortKey from the menu items
     for _, menuItem in ipairs(questTypeMenuList) do
-        menuItem.questType = nil
+        menuItem.sortKey = nil
     end
 
     if #questTypeMenuList == 0 then
@@ -2432,6 +2512,8 @@ function RQE.BuildQuestTypeMenuList()
 
     return questTypeMenuList
 end
+
+
 
 
 ---------------------------------------------------
