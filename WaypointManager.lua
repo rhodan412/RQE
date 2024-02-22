@@ -88,6 +88,14 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
     end
 
 	C_Map.ClearUserWaypoint()
+	
+	if IsAddOnLoaded("TomTom") then
+		TomTom.waydb:ResetProfile()
+	end
+	
+	if IsAddOnLoaded("Carbonite") then
+		Nx.TTRemoveWaypoint()
+	end
 
 	C_Timer.After(0.5, function()
 		-- Construct the waypoint title
@@ -181,11 +189,21 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
     RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 
+    local questData = RQEDatabase[questID]
+    if not questData then
+        RQE.debugLog("Quest data not found for ID:", questID)
+        return -- Exit if no data found for the questID
+    end
+	
     local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
     local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
+    -- Fetch the description from the specific stepIndex, if available
+    local stepData = questData[stepIndex]
+    local description = stepData and stepData.description or "No step description available"
+	
     local directionText = RQEFrame.DirectionText
-    local description = RQEDatabase[questID].description
+    --local description = RQEDatabase[questID].description
 
     if directionText then
         title = title .. "\nDirection: " .. directionText

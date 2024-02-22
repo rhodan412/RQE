@@ -37,6 +37,7 @@ RQEDatabase = {
 -- Dragonflight Expansion
 -- Dragonflight WQ/Dailies
         [76520] = { -- A SHARED DREAM
+			title = "A Shared Dream", -- Add the quest title here
             [1] = {
                 description = "Speak with Yvelyn (she will be your tank while attacking mobs on ground).",
                 coordinates = {x = 64.7, y = 73.1, mapID = 2200}
@@ -6729,16 +6730,17 @@ RQEDatabase = {
             -- },
         -- },
 
-        -- [72481] = {
-            -- [1] = {
-                -- description = "This is Step One.",
-                -- coordinates = {x = 40.7, y = 64.1, mapID = 123}
-            -- },
-            -- [2] = {
-                -- description = "This is Step Two.",
-                -- coordinates = {x = 72.1, y = 38.6, mapID = 13}
-            -- },
-        -- },
+        [72481] = {
+			title = "The Waking Shores Tour",
+            [1] = {
+                description = "This is Step One.",
+                coordinates = {x = 40.7, y = 64.1, mapID = 2112}
+            },
+            [2] = {
+                description = "This is Step Two.",
+                coordinates = {x = 72.1, y = 38.6, mapID = 2112}
+            },
+        },
 
         -- [72482] = {
             -- [1] = {

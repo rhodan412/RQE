@@ -889,7 +889,6 @@ function RQE.SearchModule:FetchAndDisplayQuestData(questID)
 end
 
 
-
 -- Function to dynamically create StepsText and CoordsText elements
 function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights

@@ -448,10 +448,11 @@ function RQE.handleVariablesLoaded(...)
 
 	-- Clear frame data and waypoints
 	C_Map.ClearUserWaypoint()
+	
 	if IsAddOnLoaded("TomTom") then
 		TomTom.waydb:ResetProfile()
 	end
-	
+		
 	-- Initialize RQEQuestFrame position based on saved variables
 	local xPos = RQE.db.profile.QuestFramePosition.xPos
 	local yPos = RQE.db.profile.QuestFramePosition.yPos
@@ -501,7 +502,7 @@ function RQE.handleSuperTracking(...)
 	RQE:ClearFrameData()
 	RQE.SaveSuperTrackData()
 	--RQE.UnknownQuestButtonCalcNTrack()
-
+		
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	RQE:CreateUnknownQuestWaypoint(questID, mapID)
 
@@ -513,9 +514,15 @@ function RQE.handleSuperTracking(...)
 			local questLink = GetQuestLink(questID)  -- Generate the quest link
 			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
-			-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-			local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
-			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+            -- Adjusted to fetch quest info from RQEDatabase, use fallback if not present
+            local questInfo = RQEDatabase[questID]
+            local StepsText, CoordsText, MapIDs
+            if questInfo then
+                -- Ensure title line is bypassed when extracting steps, descriptions, and coordinates
+                StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+            else
+                questInfo = { questID = questID, name = questName }  -- Fallback if not present in database
+            end
 
 			if StepsText and CoordsText and MapIDs then
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -605,13 +612,10 @@ function RQE.handleQuestStatusUpdate(...)
 	
 	-- Attempt to fetch the current super-tracked quest ID
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	--local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	
 	-- Attempt to fetch other necessary information using the currentQuestID
 	local questInfo = RQEDatabase[questID]
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-	-- local currentQuestInfo = RQEDatabase[currentQuestID]
-	-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(currentQuestID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 	
 	if not RQE.QuestLinesCached then
 		RQE.RequestAndCacheQuestLines()
@@ -627,7 +631,6 @@ function RQE.handleQuestStatusUpdate(...)
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	--UpdateFrame(currentQuestID, currentQuestInfo, StepsText, CoordsText, MapIDs)
 	--RQE.UnknownQuestButtonCalcNTrack()
 end
 	

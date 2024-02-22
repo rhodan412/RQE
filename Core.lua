@@ -1464,60 +1464,91 @@ RQE.SearchModule = {}
 -- Function to create the Search Box with an Examine button
 function RQE.SearchModule:CreateSearchBox()
     local editBox = AceGUI:Create("EditBox")
-    editBox:SetLabel("Enter Quest ID:")
+    editBox:SetLabel("Enter Quest ID or Title:")
     editBox:SetWidth(200)
     editBox:SetCallback("OnEnterPressed", function(widget, event, text)
         local questID = tonumber(text)
-		if questID then
-			local questLink = GetQuestLink(questID)
-			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+        local foundQuestID = nil
+        local inputTextLower = string.lower(text) -- Convert input text to lowercase for case-insensitive comparison
+
+        -- If the input is not a number, search by title
+        if not questID then
+            for id, questData in pairs(RQEDatabase) do
+                if questData.title and string.find(string.lower(questData.title), inputTextLower) then
+                    foundQuestID = id
+                    break
+                end
+            end
+        else
+            foundQuestID = questID
+        end
+
+        if foundQuestID then
+            local questLink = GetQuestLink(foundQuestID)
+            local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
 
 			if questLink then
-				DEFAULT_CHAT_FRAME:AddMessage(questLink)
+				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
 			else
-				print("Quest link not available for Quest ID: " .. questID)
+				-- Fetch quest name using the API
+				local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+				-- Format the message to display in light blue text and print it
+				print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
 			end
 
-			if isQuestCompleted then
-				DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)  -- Green text
-			else
-				DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)  -- Red text
-			end
-		else
-			print("Invalid Quest ID")
-		end
-	end)
+            if isQuestCompleted then
+                DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)  -- Green text
+            else
+                DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)  -- Red text
+            end
+        end
+    end)
 
     -- Create the Examine button
     local examineButton = AceGUI:Create("Button")
     examineButton:SetText("Examine")
     examineButton:SetWidth(100)
-		
-	-- "Examine" button callback
+    
+    -- "Examine" button callback
 	examineButton:SetCallback("OnClick", function()
-		local questID = tonumber(editBox:GetText())
-		if questID then
-			-- Fetch the necessary data
-			local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
-			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Replace with your method to get this data
+		local inputText = editBox:GetText()
+		local questID = tonumber(inputText)
+		local foundQuestID = nil
+		local inputTextLower = string.lower(inputText) -- Convert input text to lowercase for case-insensitive comparison
 
-            -- Add the World Quest to the tracker
-			RQE.infoLog("Manual tracking " .. questID)
-			C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-			RQE.infoLog("Manual tracking " .. questID)
-			C_QuestLog.AddQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-			
-			-- Update the frame based on whether the quest is in the database
-			if questInfo then
-				RQE:ClearFrameData()
-				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		-- If the input is not a number, search by title for partial matches
+		if not questID then
+			for id, questData in pairs(RQEDatabase) do
+				if questData.title and string.find(string.lower(questData.title), inputTextLower) then
+					foundQuestID = id
+					break
+				end
 			end
 		else
-			print("Invalid Quest ID")
+			foundQuestID = questID
 		end
-	end)
+
+		if foundQuestID then
+			-- Add the quest to the tracker
+			C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
+			
+			local questLink = GetQuestLink(foundQuestID)
+			if questLink then
+				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+			else
+				-- Fetch quest name using the API
+				local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+				-- Format the message to display in light blue text and print it
+				print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+			end
+		else
+			print("Invalid Quest ID or Title for Examination")
+		end
+    end)
+
     return editBox, examineButton
 end
+
 
 
 ---------------------------------------------------
@@ -1729,15 +1760,29 @@ end
 function PrintQuestStepsToChat(questID)
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
     local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
-    if not questInfo then
+	
+    -- Check if questInfo is valid
+    if not questInfo or not next(questInfo) then
         return nil, nil, nil
     end
-    for i, step in ipairs(questInfo) do
-        StepsText[i] = step.description
-        CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
-        MapIDs[i] = step.coordinates.mapID
-        questHeader[i] = step.description:match("^(.-)\n") or step.description
+	
+    -- Iterate over questInfo, bypassing non-numeric keys like "title"
+    for stepIndex, stepDetails in pairs(questInfo) do
+        if type(stepIndex) == "number" then  -- This ensures we're only dealing with steps
+            StepsText[stepIndex] = stepDetails.description
+            CoordsText[stepIndex] = string.format("%.1f, %.1f", stepDetails.coordinates.x, stepDetails.coordinates.y)
+            MapIDs[stepIndex] = stepDetails.coordinates.mapID
+            -- Extract the first line of the description as the header, if needed
+            questHeader[stepIndex] = stepDetails.description:match("^(.-)\n") or stepDetails.description
+        end
     end
+
+    -- Ensure the steps are returned in the correct order
+    table.sort(StepsText, function(a, b) return a < b end)
+    table.sort(CoordsText, function(a, b) return a < b end)
+    table.sort(MapIDs, function(a, b) return a < b end)
+    table.sort(questHeader, function(a, b) return a < b end)
+
     return StepsText, CoordsText, MapIDs, questHeader
 end
 
@@ -2150,8 +2195,8 @@ function RQE.filterByQuestType(questType)
             -- Determine if the current quest should be watched based on its type
             local shouldWatch = false
             if questType == "Misc" then
-                -- For "Misc", include quests of type 0 or 261
-                shouldWatch = (currentQuestType == 0 or currentQuestType == 261)
+                -- For "Misc", include quests of type 0 or 261 or 270 or 282
+                shouldWatch = (currentQuestType == 0 or currentQuestType == 261 or currentQuestType == 270 or currentQuestType == 282)
             else
                 -- For other quest types, match the quest type directly
                 shouldWatch = (currentQuestType == questType)
@@ -2411,6 +2456,48 @@ function RQE.filterByQuestLine(questLineID)
 end
 
 
+-- Function to print quest IDs of a questline along with quest links
+function RQE.PrintQuestlineDetails(questLineID)
+    local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
+    local questDetails = {}
+    local questsToLoad = #questIDs -- Number of quests to load data for
+
+    if questsToLoad > 0 then
+        -- Orange color for the questline ID and name message
+        print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
+        for i, questID in ipairs(questIDs) do
+            -- Attempt to fetch quest title immediately, might not always work due to data loading
+            local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
+            C_Timer.After(0.5, function()
+                -- Fetch quest link, retry if not available yet
+                local questLink = GetQuestLink(questID)
+                if questLink then
+                    -- Store quest details in a table
+                    -- Light blue color for quest details
+                    questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
+                    questsToLoad = questsToLoad - 1
+                else
+                    -- Fallback if quest link is not available, attempt to use the title
+                    -- Light blue color for quest details
+                    questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
+                    questsToLoad = questsToLoad - 1
+                end
+
+                -- Check if all quests have been processed
+                if questsToLoad <= 0 then
+                    -- Print all quest details in order
+                    for j = 1, #questDetails do
+                        print(questDetails[j])
+                    end
+                end
+            end)
+        end
+    else
+        print("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
+    end
+end
+
+
 -- Scans Quest Log for the various Types that each quest is assigned to
 function RQE.ScanQuestTypes()
     if type(RQE.QuestTypes) ~= "table" then
@@ -2423,8 +2510,8 @@ function RQE.ScanQuestTypes()
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
             local questType = C_QuestLog.GetQuestType(questInfo.questID)
-            -- Consolidate quest types 0 and 261 under a special key "Misc"
-            if questType == 0 or questType == 261 then
+            -- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
+            if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
                 RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
             else
                 local questTypeName = RQE.GetQuestTypeName(questType)
@@ -2466,8 +2553,8 @@ function RQE.GetQuestTypeName(questType)
 		[266] = "Combat Ally Quest",
 		[267] = "Professions",
     }
-    -- Special handling for 0 and 261 to label them as "Misc"
-    if questType == 0 or questType == 261 then
+    -- Special handling for 0 and 261 and 270 or 282 to label them as "Misc"
+    if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
         return "Misc"
     else
         return questTypeNames[questType] or "Unknown Type"

@@ -557,6 +557,14 @@ function ShowQuestDropdown(self, questID)
     table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID) end })
     table.insert(menu, { text = "Abandon Quest", func = function() C_QuestLog.SetAbandonQuest(); C_QuestLog.AbandonQuest(); end })
 	table.insert(menu, { text = "View Quest", func = function() OpenQuestLogToQuestDetails(questID) end })
+	
+    -- Check if the quest is part of a questline
+    local uiMapID = C_Map.GetBestMapForUnit("player") -- Assuming questline relevance to the current map
+    local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
+    if questLineInfo and questLineInfo.questLineID then
+        table.insert(menu, { text = "Print Questline", func = function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end })
+    end
+	
 	table.insert(menu, { text = "Show Wowhead Link", func = function() RQE:ShowWowheadLink(questID) end })
 	table.insert(menu, { text = "Search Warcraft Wiki", func = function() RQE:ShowWowWikiLink(questID) end })
 	
