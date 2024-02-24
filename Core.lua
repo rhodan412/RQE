@@ -1468,39 +1468,45 @@ function RQE.SearchModule:CreateSearchBox()
     editBox:SetWidth(200)
     editBox:SetCallback("OnEnterPressed", function(widget, event, text)
         local questID = tonumber(text)
+		local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
         local foundQuestID = nil
         local inputTextLower = string.lower(text) -- Convert input text to lowercase for case-insensitive comparison
 
-        -- If the input is not a number, search by title
+        -- Search logic modified to accumulate all matching quest IDs
         if not questID then
             for id, questData in pairs(RQEDatabase) do
                 if questData.title and string.find(string.lower(questData.title), inputTextLower) then
-                    foundQuestID = id
-                    break
+                    table.insert(foundQuestIDs, id) -- No error here now, as foundQuestIDs is initialized
                 end
             end
         else
-            foundQuestID = questID
+            table.insert(foundQuestIDs, questID) -- This will also work without error
         end
 
-        if foundQuestID then
+        -- Handling multiple found quest IDs
+        for _, foundQuestID in ipairs(foundQuestIDs) do
             local questLink = GetQuestLink(foundQuestID)
             local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
 
-			if questLink then
-				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
-			else
-				-- Fetch quest name using the API
-				local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
-				-- Format the message to display in light blue text and print it
-				print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
-			end
+            if questLink then
+                print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+            else
+                local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+                print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+            end
 
             if isQuestCompleted then
                 DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)  -- Green text
             else
                 DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)  -- Red text
             end
+        end
+
+        -- Additional handling for no matches or multiple matches as needed
+        if #foundQuestIDs == 0 then
+            print("No matching quests found.")
+        elseif #foundQuestIDs > 1 then
+            print("Multiple matches found. Listing all.")
         end
     end)
 

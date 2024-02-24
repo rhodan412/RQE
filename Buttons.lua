@@ -207,9 +207,6 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 		if IsAddOnLoaded("TomTom") then
 			TomTom.waydb:ResetProfile()
 		end
-		-- if IsAddOnLoaded("Carbonite") then
-			-- Nx.TTRemoveWaypoint()
-		-- end
     end)
 	
     CreateTooltip(RWButton, "Remove Waypoints")

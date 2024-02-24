@@ -514,15 +514,9 @@ function RQE.handleSuperTracking(...)
 			local questLink = GetQuestLink(questID)  -- Generate the quest link
 			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
-            -- Adjusted to fetch quest info from RQEDatabase, use fallback if not present
-            local questInfo = RQEDatabase[questID]
-            local StepsText, CoordsText, MapIDs
-            if questInfo then
-                -- Ensure title line is bypassed when extracting steps, descriptions, and coordinates
-                StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-            else
-                questInfo = { questID = questID, name = questName }  -- Fallback if not present in database
-            end
+			-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
+			local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 			if StepsText and CoordsText and MapIDs then
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)

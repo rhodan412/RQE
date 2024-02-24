@@ -92,10 +92,6 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	if IsAddOnLoaded("TomTom") then
 		TomTom.waydb:ResetProfile()
 	end
-	
-	-- if IsAddOnLoaded("Carbonite") then
-		-- Nx.TTRemoveWaypoint()
-	-- end
 
 	C_Timer.After(0.5, function()
 		-- Construct the waypoint title
