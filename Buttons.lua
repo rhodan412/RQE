@@ -79,14 +79,13 @@ RQE.UnknownButtonTooltip = function()
                 --WorldMapFrame:Hide()
 
                 -- Update tooltip text based on new coordinates
-                if RQE.superX and RQE.superY then
-                    local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
-                    GameTooltip:SetText(tooltipText)
-                else
-                    GameTooltip:SetText("Coordinates: Calculating...")
-                end
-
-                GameTooltip:Show()
+				if RQE.superX and RQE.superY and RQE.superMapID then
+					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.superX, RQE.superY, tostring(RQE.superMapID))
+					GameTooltip:SetText(tooltipText)
+				else
+					GameTooltip:SetText("Coordinates: Not available.")
+				end
+				GameTooltip:Show()
             --end)
         else
             -- If coordinates are already available, just show them
@@ -179,6 +178,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     ClearButton:SetScript("OnClick", function() 
         -- Your code for ClearButton functionality here
 		RQE:ClearFrameData()
+		RQE.searchedQuestID = nil
     end)
 
     CreateTooltip(ClearButton, "Clear Window")  -- Tooltip
