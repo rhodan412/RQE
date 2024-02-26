@@ -606,10 +606,25 @@ function RQE.handleQuestStatusUpdate(...)
 	
 	-- Attempt to fetch the current super-tracked quest ID
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	--local questInfo, StepsText, CoordsText, MapIDs
 	
 	-- Attempt to fetch other necessary information using the currentQuestID
 	local questInfo = RQEDatabase[questID]
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+
+    -- Check if the current super-tracked quest is one we're interested in
+    if RQE.searchedQuestID and questID == RQE.searchedQuestID then
+        -- The super-tracked quest is the one we've set via search; proceed normally
+        questInfo = RQEDatabase[questID]
+        StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
+    elseif not RQE.searchedQuestID then
+        -- No specific searched quest; proceed with default logic
+        questInfo = RQEDatabase[questID]
+        StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
+    else
+        -- The super-tracked quest is not what we set; avoid changing focus
+        return  -- Optionally, you could revert the super-tracked quest here
+    end
 	
 	if not RQE.QuestLinesCached then
 		RQE.RequestAndCacheQuestLines()
@@ -620,12 +635,11 @@ function RQE.handleQuestStatusUpdate(...)
 		HideObjectiveTracker()
 	end)
 	
-	RQE:ClearWQTracking()
-	--C_Map.ClearUserWaypoint()
-	UpdateRQEQuestFrame()
-	SortQuestsByProximity()
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	--RQE.UnknownQuestButtonCalcNTrack()
+    RQE:ClearWQTracking()  -- Custom function to clear World Quest tracking if necessary
+    -- C_Map.ClearUserWaypoint()  -- Uncomment if you need to clear user waypoints
+    UpdateRQEQuestFrame()  -- Custom function to update your frame
+    SortQuestsByProximity()  -- Assuming this sorts quests displayed in RQEFrame by proximity
+    UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)  -- Update the main frame with quest details
 end
 	
 
