@@ -65,17 +65,18 @@ end
 -- Remove the extra functions and keep only this one
 function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 --function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
+    local effectiveQuestID = RQE.searchedQuestID or questID
     local posX = RQE.superX
     local posY = RQE.superY
     local mapID = RQE.superMapID
     local DirectionText = RQEFrame.DirectionText  -- Assuming DirectionText is stored in RQE table
 
-	if not questID then
+	if not effectiveQuestID then
 		RQE.debugLog("Quest ID is nil. Cannot retrieve quest title.")
 		return -- Early return to prevent the rest of the function from executing
 	end
 
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local questName = C_QuestLog.GetTitleForQuestID(effectiveQuestID) or "Unknown"
     --local questName = C_QuestLog.GetTitleForQuestID(unknownQuestID) or "Unknown"
     
     local x, y  -- Declare x and y here so they are accessible throughout the function
@@ -95,7 +96,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 
 	C_Timer.After(0.5, function()
 		-- Construct the waypoint title
-		local waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
+		local waypointTitle = "Quest ID: " .. effectiveQuestID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
 		--local waypointTitle = "Quest ID: " .. unknownQuestID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
 		
 		if DirectionText and DirectionText ~= "No direction available." then
