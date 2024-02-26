@@ -236,7 +236,7 @@ RQE.waypoints = {}
 
 -- Initialize lastSuperTrackedQuestID variable
 local lastSuperTrackedQuestID = nil
-
+RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 
 -- Addon Initialization
 function RQE:OnInitialize()
@@ -1096,6 +1096,18 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         -- Otherwise, hide the button
         RQE.SearchGroupButton:Hide()
     end
+	
+    -- Adjust description and objectives based on whether RQE.searchedQuestID matches questID
+    if RQE.searchedQuestID and RQE.searchedQuestID == questID then
+        -- When the RQEFrame is updated for a searched quest that is not in the player's quest log
+        if RQE.QuestDescription then
+            RQE.QuestDescription:SetText("")  -- Leave blank
+        end
+
+        if RQE.QuestObjectives then
+            RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")  -- Instructional text
+        end
+	end
 end
 
 
@@ -1468,8 +1480,7 @@ function RQE.SearchModule:CreateSearchBox()
     editBox:SetWidth(200)
     editBox:SetCallback("OnEnterPressed", function(widget, event, text)
         local questID = tonumber(text)
-		local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
-        local foundQuestID = nil
+        local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
         local inputTextLower = string.lower(text) -- Convert input text to lowercase for case-insensitive comparison
 
         -- Search logic modified to accumulate all matching quest IDs
@@ -1510,51 +1521,63 @@ function RQE.SearchModule:CreateSearchBox()
         end
     end)
 
-    -- Create the Examine button
     local examineButton = AceGUI:Create("Button")
     examineButton:SetText("Examine")
     examineButton:SetWidth(100)
-    
-    -- "Examine" button callback
-	examineButton:SetCallback("OnClick", function()
-		local inputText = editBox:GetText()
-		local questID = tonumber(inputText)
-		local foundQuestID = nil
-		local inputTextLower = string.lower(inputText) -- Convert input text to lowercase for case-insensitive comparison
 
-		-- If the input is not a number, search by title for partial matches
-		if not questID then
-			for id, questData in pairs(RQEDatabase) do
-				if questData.title and string.find(string.lower(questData.title), inputTextLower) then
-					foundQuestID = id
-					break
-				end
-			end
-		else
-			foundQuestID = questID
-		end
+    examineButton:SetCallback("OnClick", function()
+        local inputText = editBox:GetText()
+        local questID = tonumber(inputText)
+        local foundQuestID = nil
+        local inputTextLower = string.lower(inputText) -- Convert input text to lowercase for case-insensitive comparison
 
-		if foundQuestID then
-			-- Add the quest to the tracker
-			C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
-			
-			local questLink = GetQuestLink(foundQuestID)
-			if questLink then
-				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
-			else
-				-- Fetch quest name using the API
-				local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
-				-- Format the message to display in light blue text and print it
-				print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
-			end
-		else
-			print("Invalid Quest ID or Title for Examination")
+        if not questID then
+            for id, questData in pairs(RQEDatabase) do
+                if questData.title and string.find(string.lower(questData.title), inputTextLower) then
+                    foundQuestID = id
+                    break
+                end
+            end
+        else
+            foundQuestID = questID
+        end
+
+		-- This is where you place the logic for updating location data
+		if foundQuestID and RQEDatabase[foundQuestID] and RQEDatabase[foundQuestID].location then
+			-- Update the location data for the examined quest
+			RQE.superX = RQEDatabase[foundQuestID].location.x / 100
+			RQE.superY = RQEDatabase[foundQuestID].location.y / 100
+			RQE.superMapID = RQEDatabase[foundQuestID].location.mapID
 		end
+	
+        if foundQuestID then
+			-- Found a quest, now set it as the searchedQuestID
+			RQE.searchedQuestID = foundQuestID
+
+            -- Add the quest to the tracker
+            C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
+            
+            local questLink = GetQuestLink(foundQuestID)
+            if questLink then
+                print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+            else
+                local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+                print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+            end
+
+            -- Call UpdateFrame to populate RQEFrame with quest details, if the quest exists in RQEDatabase
+            -- This is the new line added to trigger the update based on the foundQuestID
+            if RQEDatabase[foundQuestID] then
+                local questInfo = RQEDatabase[foundQuestID]
+                UpdateFrame(foundQuestID, questInfo, {}, {}, {}) -- Assuming UpdateFrame handles empty tables gracefully
+            end
+        else
+            print("Invalid Quest ID or Title for Examination")
+        end
     end)
 
     return editBox, examineButton
 end
-
 
 
 ---------------------------------------------------
@@ -1766,29 +1789,15 @@ end
 function PrintQuestStepsToChat(questID)
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
     local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
-	
-    -- Check if questInfo is valid
-    if not questInfo or not next(questInfo) then
+    if not questInfo then
         return nil, nil, nil
     end
-	
-    -- Iterate over questInfo, bypassing non-numeric keys like "title"
-    for stepIndex, stepDetails in pairs(questInfo) do
-        if type(stepIndex) == "number" then  -- This ensures we're only dealing with steps
-            StepsText[stepIndex] = stepDetails.description
-            CoordsText[stepIndex] = string.format("%.1f, %.1f", stepDetails.coordinates.x, stepDetails.coordinates.y)
-            MapIDs[stepIndex] = stepDetails.coordinates.mapID
-            -- Extract the first line of the description as the header, if needed
-            questHeader[stepIndex] = stepDetails.description:match("^(.-)\n") or stepDetails.description
-        end
+    for i, step in ipairs(questInfo) do
+        StepsText[i] = step.description
+        CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+        MapIDs[i] = step.coordinates.mapID
+        questHeader[i] = step.description:match("^(.-)\n") or step.description
     end
-
-    -- Ensure the steps are returned in the correct order
-    table.sort(StepsText, function(a, b) return a < b end)
-    table.sort(CoordsText, function(a, b) return a < b end)
-    table.sort(MapIDs, function(a, b) return a < b end)
-    table.sort(questHeader, function(a, b) return a < b end)
-
     return StepsText, CoordsText, MapIDs, questHeader
 end
 
