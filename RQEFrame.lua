@@ -647,16 +647,17 @@ end
 
 -- Function to create tooltip for QuestID and QuestName
 local function CreateQuestTooltip(frame, questID)
+    local effectiveQuestID = RQE.searchedQuestID or questID
     GameTooltip:SetOwner(frame, "ANCHOR_LEFT", -50, -40)
     GameTooltip:SetMinimumWidth(350)
     GameTooltip:SetHeight(0)
     GameTooltip:SetPoint("BOTTOMLEFT", frame, "TOPLEFT")
-    GameTooltip:SetText(C_QuestLog.GetTitleForQuestID(questID))  -- Display quest name
+    GameTooltip:SetText(C_QuestLog.GetTitleForQuestID(effectiveQuestID))  -- Display quest name
 
     GameTooltip:AddLine(" ")  -- Add line break
 	
 	-- Add description
-	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(effectiveQuestID)  -- Use questID instead of self.questID
 	if questLogIndex then
 		local _, questObjectives = GetQuestLogQuestText(questLogIndex)
 		local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
@@ -674,7 +675,7 @@ local function CreateQuestTooltip(frame, questID)
 	-- end
 	
     -- Add objectives
-    local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
+    local objectivesInfo = C_QuestLog.GetQuestObjectives(effectiveQuestID)
     if objectivesInfo and #objectivesInfo > 0 then
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Objectives:")
@@ -691,12 +692,12 @@ local function CreateQuestTooltip(frame, questID)
 
     -- Add Rewards
 	GameTooltip:AddLine("Rewards: ")
-    RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
+    RQE:QuestRewardsTooltip(GameTooltip, effectiveQuestID)  -- Assuming RQE:QuestRewardsTooltip is defined
     GameTooltip:AddLine(" ")
 
 	-- Party Members' Quest Progress
 	if IsInGroup() then
-		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(effectiveQuestID)
 		if tooltipData and tooltipData.lines then
 			local player_name = UnitName("player")
 			local isFirstPartyMember = true
@@ -796,21 +797,6 @@ function AdjustRQEFrameWidths(newWidth)
     RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 55)
     RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 45)
     RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 45)
-	
-	--RQE.OnFrameResized()
-end
-
-
--- Function to reposition text elements upon frame resizing
-function RQE.OnFrameResized(self)
-    local newWidth = self:GetSize()
-    
-    -- Update the width for word wrapping
-    if self.StepsText then  -- Add this check
-        for i, textElement in ipairs(self.StepsText) do
-            textElement:SetWidth(newWidth - 30)  -- Adjust the width based on your preference
-        end
-    end
 end
 
 
@@ -930,6 +916,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		StepText:SetHeight(0)  -- Auto height
 		StepText:SetWordWrap(true)  -- Allow word wrap
 		StepText:SetText(StepsText[i] or "No description available.")
+		StepText:SetWidth(RQEFrame:GetWidth() - 80)
 		
 		-- Create CoordsText
 		local CoordText = content:CreateFontString(nil, "OVERLAY")
