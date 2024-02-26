@@ -1099,14 +1099,19 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
     -- Adjust description and objectives based on whether RQE.searchedQuestID matches questID
     if RQE.searchedQuestID and RQE.searchedQuestID == questID then
+		-- Check if the quest is in the player's quest log
+		local isQuestInLog = C_QuestLog.IsOnQuest(questID)
+		local isWorldQuest = C_QuestLog.IsQuestTask(questID)
         -- When the RQEFrame is updated for a searched quest that is not in the player's quest log
-        if RQE.QuestDescription then
-            RQE.QuestDescription:SetText("")  -- Leave blank
-        end
+		if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
+			if RQE.QuestDescription then
+				RQE.QuestDescription:SetText("")  -- Leave blank
+			end
 
-        if RQE.QuestObjectives then
-            RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")  -- Instructional text
-        end
+			if RQE.QuestObjectives then
+				RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")  -- Instructional text
+			end
+		end
 	end
 end
 
@@ -1522,7 +1527,7 @@ function RQE.SearchModule:CreateSearchBox()
     end)
 
     local examineButton = AceGUI:Create("Button")
-    examineButton:SetText("Examine")
+    examineButton:SetText("Track")
     examineButton:SetWidth(100)
 
     examineButton:SetCallback("OnClick", function()
@@ -1549,13 +1554,26 @@ function RQE.SearchModule:CreateSearchBox()
 			RQE.superY = RQEDatabase[foundQuestID].location.y / 100
 			RQE.superMapID = RQEDatabase[foundQuestID].location.mapID
 		end
-	
+
+		-- Local Variables for World Quest/Quest in Log
+		local isWorldQuest = C_QuestLog.IsQuestTask(foundQuestID)
+		local isQuestInLog = C_QuestLog.IsOnQuest(foundQuestID)
+
         if foundQuestID then
 			-- Found a quest, now set it as the searchedQuestID
 			RQE.searchedQuestID = foundQuestID
 
-            -- Add the quest to the tracker
-            C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
+			-- Super Track the Searched Quest if in the Quest Log
+			if isQuestInLog then
+				C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
+			end
+
+			-- Add the quest to the tracker		
+			if isWorldQuest then
+				C_QuestLog.AddWorldQuestWatch(foundQuestID, watchType or Enum.QuestWatchType.Manual)
+			else
+				C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
+			end
             
             local questLink = GetQuestLink(foundQuestID)
             if questLink then
@@ -2841,61 +2859,6 @@ function RQE:UpdateFrameFromProfile()
 end
 
 
--- -- Create a frame for the timer
--- local scenarioTimerFrame = CreateFrame("Frame", "ScenarioTimerFrame", RQEScenarioChildFrame)
--- scenarioTimerFrame:SetSize(100, 30) -- Size of the frame
--- scenarioTimerFrame:SetPoint("TOPRIGHT", RQEScenarioChildFrame, "TOPRIGHT") -- Position on the upper right of RQEScenarioChildFrame
--- scenarioTimerFrame:Show()
-
--- -- Set the frame strata
--- scenarioTimerFrame:SetFrameStrata("HIGH")
-
--- -- Set the frame level
--- scenarioTimerFrame:SetFrameLevel(5)
-
--- -- Create a font string for the timer text
--- scenarioTimerFrame.text = scenarioTimerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
--- scenarioTimerFrame.text:SetPoint("CENTER", scenarioTimerFrame, "CENTER")
--- scenarioTimerFrame.text:SetText("")
-
-
--- -- Function to update the timer
--- local function UpdateScenarioTimer()
-    -- -- Get the timer information
-    -- local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-    -- if duration and elapsed then
-        -- local timeLeft = duration - elapsed
-        -- -- Format the time left as MM:SS
-        -- local minutes = math.floor(timeLeft / 60)
-        -- local seconds = timeLeft % 60
-        -- scenarioTimerFrame.text:SetText(string.format("%02d:%02d", minutes, seconds))
-    -- else
-        -- -- Hide the frame if there's no timer
-        -- scenarioTimerFrame:Hide()
-    -- end
--- end
-
--- -- Set up an OnUpdate script to update the timer every second
--- scenarioTimerFrame:SetScript("OnUpdate", function(self, elapsed)
-    -- self.timeSinceLastUpdate = (self.timeSinceLastUpdate or 0) + elapsed
-    -- if self.timeSinceLastUpdate >= 1 then
-        -- UpdateScenarioTimer()
-        -- self.timeSinceLastUpdate = 0
-    -- end
--- end)
-
--- -- Function to start the timer when entering a scenario
--- function RQE:StartScenarioTimer()
-    -- scenarioTimerFrame:Show()
-    -- UpdateScenarioTimer()
--- end
-
--- -- Function to stop the timer when leaving a scenario
--- function RQE:StopScenarioTimer()
-    -- scenarioTimerFrame:Hide()
--- end
-
-
 ---------------------------------------------------
 -- 20. Experimental Testing Ground
 ---------------------------------------------------
@@ -2904,19 +2867,6 @@ end
 function RQE.LogScenarioInfo()
     if C_Scenario.IsInScenario() then
         local scenarioName, currentStage, numStages, flags, value5, value6, completed, xp, money, scenarioType, value11, textureKit = C_Scenario.GetInfo()
-        
-        -- print("Scenario Name: " .. tostring(scenarioName))
-        -- print("Current Stage: " .. tostring(currentStage))
-        -- print("Number of Stages: " .. tostring(numStages))
-        -- print("Flags: " .. tostring(flags))
-        -- print("Value 5: " .. tostring(value5))
-        -- print("Value 6: " .. tostring(value6))
-        -- print("Completed: " .. tostring(completed))
-        -- print("XP Reward: " .. tostring(xp))
-        -- print("Money Reward: " .. tostring(money))
-        -- print("Scenario Type: " .. tostring(scenarioType))
-        -- print("Value 11: " .. tostring(value11))
-        -- print("Texture Kit: " .. tostring(textureKit))
 		
         RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
         RQE.infoLog("Current Stage: " .. tostring(currentStage))
