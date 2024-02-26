@@ -583,7 +583,7 @@ end
 
 
 ----------------------------------------------------
--- 6. Finalization
+-- 7. Finalization
 ----------------------------------------------------
 
 -- Function to create and initialize the SearchBox

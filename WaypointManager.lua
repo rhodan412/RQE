@@ -233,8 +233,6 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
 end
 
 
-
-
 ---------------------------
 -- 4. Finalization
 ---------------------------

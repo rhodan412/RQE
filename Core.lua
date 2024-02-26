@@ -1101,7 +1101,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     if RQE.searchedQuestID and RQE.searchedQuestID == questID then
 		-- Check if the quest is in the player's quest log
 		local isQuestInLog = C_QuestLog.IsOnQuest(questID)
-		local isWorldQuest = C_QuestLog.IsQuestTask(questID)
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
         -- When the RQEFrame is updated for a searched quest that is not in the player's quest log
 		if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
 			if RQE.QuestDescription then
@@ -1554,12 +1554,12 @@ function RQE.SearchModule:CreateSearchBox()
 			RQE.superY = RQEDatabase[foundQuestID].location.y / 100
 			RQE.superMapID = RQEDatabase[foundQuestID].location.mapID
 		end
-
-		-- Local Variables for World Quest/Quest in Log
-		local isWorldQuest = C_QuestLog.IsQuestTask(foundQuestID)
-		local isQuestInLog = C_QuestLog.IsOnQuest(foundQuestID)
-
+		
         if foundQuestID then
+			-- Local Variables for World Quest/Quest in Log
+			local isWorldQuest = C_QuestLog.IsWorldQuest(foundQuestID)
+			local isQuestInLog = C_QuestLog.IsOnQuest(foundQuestID)
+		
 			-- Found a quest, now set it as the searchedQuestID
 			RQE.searchedQuestID = foundQuestID
 
@@ -2632,8 +2632,6 @@ function RQE.BuildQuestTypeMenuList()
 
     return questTypeMenuList
 end
-
-
 
 
 ---------------------------------------------------
