@@ -993,6 +993,25 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     RQE.debugLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
 	AdjustRQEFrameWidths(newWidth)
 	
+    -- Validate questID before proceeding
+    if not questID or type(questID) ~= "number" then
+        RQE.debugLog("Invalid or missing questID in UpdateFrame:", questID)
+        return
+    end
+	
+	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
+    local isQuestInLog = C_QuestLog.IsOnQuest(questID)
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	local isBeingSearched = RQE.searchedQuestID == questID
+	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+	
+    if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
+        -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
+        RQE:ClearFrameData()
+        print("Quest is not in player's log or does not match searchedQuestID, clearing RQEFrame.")
+        return -- Exit the function early
+    end
+	
     if not questID then  -- Check if questID is nil
         RQE.debugLog("questID is nil.")
         return  -- Exit the function
@@ -1175,7 +1194,7 @@ function UpdateWorldQuestTracking(questID)
 
     if isWorldQuest and not isManuallyTracked then
         C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-        C_SuperTrack.SetSuperTrackedQuestID(questID)
+        --C_SuperTrack.SetSuperTrackedQuestID(questID)
     end
 end
 
