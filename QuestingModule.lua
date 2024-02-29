@@ -16,6 +16,11 @@ RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQE.TrackedQuests = RQE.TrackedQuests or {}
 RQE.TrackedAchievementIDs = RQE.TrackedAchievementIDs or {}
 
+-- Initialization of RQE.ManuallyTrackedQuests
+if not RQE.ManuallyTrackedQuests then
+    RQE.ManuallyTrackedQuests = {}
+end
+
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
 else
@@ -1739,6 +1744,7 @@ function UpdateRQEWorldQuestFrame()
 				else
 					-- Existing code to set as super-tracked
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
+					RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
 				end
 			end)
 

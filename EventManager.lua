@@ -175,17 +175,18 @@ function RQE.handlePlayerLogin(...)
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	
 	-- Fetch current MapID to have option of appearing with Frame
-	local mapID = C_Map.GetBestMapForUnit("player")
-	RQE.infoLog("Current MAP ID: " .. mapID)
-	if RQEFrame.MapIDText then  -- Check if MapIDText is initialized
-		if RQE.db.profile.showMapID and mapID then
-			RQEFrame.MapIDText:SetText("MapID: " .. mapID)
-		else
-			RQEFrame.MapIDText:SetText("")
-		end
-	else
-		RQE.debugLog("RQEFrame.MapIDText is not initialized.")
-	end
+	RQE:UpdateMapIDDisplay()
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	-- RQE.infoLog("Current MAP ID: " .. mapID)
+	-- if RQEFrame.MapIDText then  -- Check if MapIDText is initialized
+		-- if RQE.db.profile.showMapID and mapID then
+			-- RQEFrame.MapIDText:SetText("MapID: " .. mapID)
+		-- else
+			-- RQEFrame.MapIDText:SetText("")
+		-- end
+	-- else
+		-- RQE.debugLog("RQEFrame.MapIDText is not initialized.")
+	-- end
 
 	-- Make sure RQE.db is initialized
 	if RQE.db == nil then
@@ -572,12 +573,13 @@ function RQE.handleZoneChange(...)
 
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
-		if RQE.db.profile.showMapID and currentMapID then
-			RQEFrame.MapIDText:SetText("MapID: " .. currentMapID)
-		else
-			RQEFrame.MapIDText:SetText("")
-		end
-			
+		-- if RQE.db.profile.showMapID and currentMapID then
+			-- RQEFrame.MapIDText:SetText("MapID: " .. currentMapID)
+		-- else
+			-- RQEFrame.MapIDText:SetText("")
+		-- end
+		RQE:UpdateMapIDDisplay()
+
 		-- Call the functions to update the frame
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		--UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)

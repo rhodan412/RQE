@@ -179,6 +179,12 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
         -- Your code for ClearButton functionality here
 		RQE:ClearFrameData()
 		RQE.searchedQuestID = nil
+        -- Reset manually tracked quests
+        if RQE.ManuallyTrackedQuests then
+            for questID in pairs(RQE.ManuallyTrackedQuests) do
+                RQE.ManuallyTrackedQuests[questID] = nil
+            end
+        end
     end)
 
     CreateTooltip(ClearButton, "Clear Window")  -- Tooltip

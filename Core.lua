@@ -613,19 +613,35 @@ end
 function RQE:HandleSuperTrackedQuestUpdate()
     -- Save the current super tracked quest ID
     local savedSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local isWorldQuest = C_QuestLog.IsWorldQuest(savedSuperTrackedQuestID)
+    -- Check if the quest was manually tracked
+	local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[savedSuperTrackedQuestID]
+    -- Check if the quest is completed
+    local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(savedSuperTrackedQuestID)
+	
+    -- Determine if the quest is being tracked due to a search and is not completed
+    local trackedViaSearchAndNotCompleted = RQE.searchedQuestID == savedSuperTrackedQuestID and not isQuestCompleted
 
-    -- Clear the current super tracked content
+    if isWorldQuest then
+        if not (manuallyTracked or trackedViaSearchAndNotCompleted) then
+            -- Clear the RQEFrame for this world quest if it's neither manually tracked nor searched and incomplete
+            RQE:ClearFrameData()
+            return
+        end
+    end
+
+    -- Clear the current super tracked content for non-world quests or allowed world quests
     C_SuperTrack.ClearSuperTrackedContent()
 
-    -- Restore the super tracked quest after a delay
+    -- Restore the super-tracked quest after a delay for non-world quests
     C_Timer.After(0.2, function()
         if savedSuperTrackedQuestID then
-            C_SuperTrack.SetSuperTrackedQuestID(savedSuperTrackedQuestID)
+            -- Fetch quest info from RQEDatabase if available
             local questInfo = RQEDatabase[savedSuperTrackedQuestID]
             if questInfo then
                 local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(savedSuperTrackedQuestID)
                 UpdateFrame(savedSuperTrackedQuestID, questInfo, StepsText, CoordsText, MapIDs)
-				AdjustRQEFrameWidths(newWidth)
+                AdjustRQEFrameWidths(newWidth)
             end
         end
     end)
@@ -1004,14 +1020,45 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 	local isBeingSearched = RQE.searchedQuestID == questID
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+    local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
 	
-    if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
-        -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
-        RQE:ClearFrameData()
-        print("Quest is not in player's log or does not match searchedQuestID, clearing RQEFrame.")
-        return -- Exit the function early
+    -- if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
+        -- -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
+        -- RQE:ClearFrameData()
+        -- print("Quest is not in player's log or does not match searchedQuestID, clearing RQEFrame.")
+        -- return -- Exit the function early
+    -- end
+
+    -- Compile a list of all watched quests (both regular and world)
+    local watchedQuests = {}
+    for i = 1, C_QuestLog.GetNumQuestWatches() do
+        local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        if watchedQuestID then
+            watchedQuests[watchedQuestID] = true
+        end
+    end
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if watchedWorldQuestID then
+            watchedQuests[watchedWorldQuestID] = true
+        end
     end
 	
+    if isWorldQuest then
+        if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
+            RQE:ClearFrameData()
+            RQE.debugLog("World Quest is not manually tracked or actively searched, clearing RQEFrame.")
+            return -- Exit the function early
+        end
+    else
+        -- For non-world quests, clear if not in quest log or not being actively searched
+		if not (isBeingSearched or manuallyTracked or watchedQuests[questID]) then
+            RQE:ClearFrameData()
+			print("Quest is not searched, manually tracked, or watched, clearing RQEFrame.")
+            return -- Exit the function early
+        end
+    end
+
     if not questID then  -- Check if questID is nil
         RQE.debugLog("questID is nil.")
         return  -- Exit the function
