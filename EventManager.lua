@@ -158,6 +158,7 @@ function RQE.handleAchievementTracking(...)
     local contentType, id, tracked = ...
 	if contentType == 2 then -- Assuming 2 indicates an achievement
 		RQE:ClearAchievementFrame()
+		UpdateRQEAchievementsFrame()
 		RQE.UpdateTrackedAchievements(contentType, id, tracked)
 	end
 end

@@ -15,7 +15,7 @@ RQE.modules = RQE.modules or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQE.TrackedQuests = RQE.TrackedQuests or {}
 RQE.TrackedAchievementIDs = RQE.TrackedAchievementIDs or {}
-
+	
 -- Initialization of RQE.ManuallyTrackedQuests
 if not RQE.ManuallyTrackedQuests then
     RQE.ManuallyTrackedQuests = {}
@@ -1169,14 +1169,16 @@ function UpdateRQEQuestFrame()
     local campaignHeight = baseHeight + (campaignQuestCount * questHeight)
     local regularHeight = baseHeight + (regularQuestCount * questHeight) + extraHeightForScenario
     local worldQuestHeight = baseHeight + (worldQuestCount * questHeight)
-
+	local achievementHeight = baseHeight + (RQE.AchievementsFrame.achieveCount * 40)
+	
     -- Update frame heights
     RQE.CampaignFrame:SetHeight(campaignHeight)
     RQE.QuestsFrame:SetHeight(regularHeight)
     RQE.WorldQuestsFrame:SetHeight(worldQuestHeight)
+	RQE.AchievementsFrame:SetHeight(achievementHeight)
 
     -- Update total content height
-    local totalHeight = campaignHeight + regularHeight + worldQuestHeight
+    local totalHeight = campaignHeight + regularHeight + worldQuestHeight + achievementHeight
     RQE.QTcontent:SetHeight(totalHeight)
 
     -- Store quest count in each frame for reference
@@ -2082,9 +2084,7 @@ end
 
 -- Function to Update Achievements Frame
 function UpdateRQEAchievementsFrame()
-	local achieveCount = 0
-	local achieveCount = GetNumTrackedAchievements()
-	
+	RQE.AchievementsFrame.achieveCount = GetNumTrackedAchievements()
     -- Print the IDs of tracked achievements for debugging
     RQE.infoLog("Currently Tracked Achievements:")
     for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
@@ -2199,7 +2199,7 @@ function UpdateRQEAchievementsFrame()
     table.insert(RQE.AchievementsIDWidgets, achievementHeader)
 
 	-- Check if any achievements in the Achievement Frame are being tracked/watched
-	RQE.AchievementsFrame:SetShown(achieveCount > 0)
+	RQE.AchievementsFrame:SetShown(RQE.AchievementsFrame.achieveCount > 0)
 	
     -- Update the scroll frame range if necessary
     if RQE.AchievementsFrame.scrollFrame then
