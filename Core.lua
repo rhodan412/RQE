@@ -159,6 +159,7 @@ local defaults = {
         showCoordinates = true,
 		autoQuestWatch = true,
 		autoQuestProgress = true,
+		removeWQatLogin = false,
         frameWidth = 400,
         frameHeight = 300,
         framePosition = {
@@ -1228,24 +1229,46 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 end
 
 
-function UpdateWorldQuestTracking(questID)
-    -- Check if questID is actually a quest ID and not a table or nil
-    if type(questID) == "table" then
-        RQE.infoLog("UpdateWorldQuestTracking was passed a table instead of a questID. Table contents:", questID)
-        return
-    elseif not questID then
-        RQE.infoLog("UpdateWorldQuestTracking was passed a nil value for questID.")
-        return
+-- function UpdateWorldQuestTracking(questID)
+    -- -- Check if questID is actually a quest ID and not a table or nil
+    -- if type(questID) == "table" then
+        -- RQE.infoLog("UpdateWorldQuestTracking was passed a table instead of a questID. Table contents:", questID)
+        -- return
+    -- elseif not questID then
+        -- RQE.infoLog("UpdateWorldQuestTracking was passed a nil value for questID.")
+        -- return
+    -- end
+
+    -- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+    -- local watchType = C_QuestLog.GetQuestWatchType(questID)
+    -- local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
+
+    -- if isWorldQuest and not isManuallyTracked then
+        -- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+        -- --C_SuperTrack.SetSuperTrackedQuestID(questID)
+    -- end
+-- end
+
+
+-- Remove Tracking of all World Quests
+function RemoveAllTrackedWorldQuests()
+    -- Get the number of currently tracked World Quests
+    local numWorldQuestWatches = C_QuestLog.GetNumWorldQuestWatches()
+
+    -- Loop backwards through the list of tracked World Quests
+    -- Backwards iteration is necessary because removing a quest changes the indices
+    for i = numWorldQuestWatches, 1, -1 do
+        -- Get the quest ID of the ith tracked World Quest
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID then
+            -- Remove the World Quest from being tracked
+            C_QuestLog.RemoveWorldQuestWatch(questID)
+        end
     end
 
-    local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-    local watchType = C_QuestLog.GetQuestWatchType(questID)
-    local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
-
-    if isWorldQuest and not isManuallyTracked then
-        C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-        --C_SuperTrack.SetSuperTrackedQuestID(questID)
-    end
+    -- Optional: Refresh the UI elements that display tracked quests, if necessary
+    -- This might depend on how your addon UI is set up
+    -- Example: C_QuestLog.SortQuestWatches() or triggering an update to your custom frame
 end
 
 

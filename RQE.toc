@@ -5,7 +5,7 @@
 ## Notes: A handy tool for questing.
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
-## SavedVariables: RQEDB
+## SavedVariables: RQEDB, RQE_TrackedWorldQuestsState
 ## OptionalDeps: TomTom, Carbonite
 
 ## Libraries

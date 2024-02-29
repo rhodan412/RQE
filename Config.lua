@@ -173,6 +173,16 @@ RQE.options = {
 						SetCVar("autoQuestProgress", newValue and "1" or "0")  -- Set the CVAR based on the new value
 					end,
 				},
+				removeWQatLogin = {
+					type = "toggle",
+					name = "Remove WQ after login",
+					desc = "Removes all of the WQ on player login",
+					order = 9,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.removeWQatLogin end,
+					set = function(_, newValue) 
+						RQE.db.profile.removeWQatLogin = newValue;
+					end,
+				},
 			},
 		},
         frame = {

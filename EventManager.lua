@@ -177,17 +177,6 @@ function RQE.handlePlayerLogin(...)
 	
 	-- Fetch current MapID to have option of appearing with Frame
 	RQE:UpdateMapIDDisplay()
-	-- local mapID = C_Map.GetBestMapForUnit("player")
-	-- RQE.infoLog("Current MAP ID: " .. mapID)
-	-- if RQEFrame.MapIDText then  -- Check if MapIDText is initialized
-		-- if RQE.db.profile.showMapID and mapID then
-			-- RQEFrame.MapIDText:SetText("MapID: " .. mapID)
-		-- else
-			-- RQEFrame.MapIDText:SetText("")
-		-- end
-	-- else
-		-- RQE.debugLog("RQEFrame.MapIDText is not initialized.")
-	-- end
 
 	-- Make sure RQE.db is initialized
 	if RQE.db == nil then
@@ -197,6 +186,10 @@ function RQE.handlePlayerLogin(...)
 	-- Make sure the profileKeys table is initialized
 	if RQE.db.profileKeys == nil then
 		RQE.db.profileKeys = {}
+	end
+
+	if RQE.db.profile.removeWQatLogin then
+		RemoveAllTrackedWorldQuests()
 	end
 	
 	RQE:ConfigurationChanged()
@@ -546,7 +539,7 @@ end
 -- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(...)
 	local questID = ...  -- Extract the questID from the event
-	
+	print("Quest ID: " .. questID .. " accepted")
 	if questID then
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -554,7 +547,8 @@ function RQE.handleQuestAccepted(...)
 
 		if isWorldQuest and not isManuallyTracked then
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-			RQE.infoLog("Automatically tracking " .. questID)
+		elseif isWorldQuest and isManuallyTracked then
+			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 		end
 		
 		local mapID = C_Map.GetBestMapForUnit("player")
@@ -679,7 +673,6 @@ end
 
 		
 -- Handling QUEST_REMOVED event
---function RQE.handleQuestRemoved(...)
 function RQE.handleQuestRemoved(questID, removedByUser)
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
@@ -694,7 +687,6 @@ function RQE.handleQuestRemoved(questID, removedByUser)
         C_QuestLog.RemoveWorldQuestWatch(questID)
         -- Clear the saved state for this quest
         RQE.TrackedQuests[questID] = nil
-        RQE.infoLog("Quest ID " .. questID .. " has been removed from automatic tracking.")
     end
 end
 	
