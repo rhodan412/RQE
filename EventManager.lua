@@ -50,6 +50,7 @@ end
 local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
+	"CRITERIA_UPDATE",
 	"BAG_UPDATE_COOLDOWN",
 	"CONTENT_TRACKING_UPDATE",
 	"CLIENT_SCENE_CLOSED",
@@ -102,6 +103,7 @@ local function HandleEvents(frame, event, ...)
 		ADDON_LOADED = RQE.handleAddonLoaded,
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
+		CRITERIA_UPDATE = RQE.handleAchievementTracking,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		--CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,
 		LEAVE_PARTY_CONFIRMATION = handleScenario,
@@ -157,8 +159,7 @@ end
 function RQE.handleAchievementTracking(...)
     local contentType, id, tracked = ...
 	if contentType == 2 then -- Assuming 2 indicates an achievement
-		RQE:ClearAchievementFrame()
-		UpdateRQEAchievementsFrame()
+		RQE.UpdateTrackedAchievementList()
 		RQE.UpdateTrackedAchievements(contentType, id, tracked)
 	end
 end
@@ -539,7 +540,6 @@ end
 -- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(...)
 	local questID = ...  -- Extract the questID from the event
-	print("Quest ID: " .. questID .. " accepted")
 	if questID then
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)

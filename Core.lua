@@ -1183,6 +1183,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 		end
 	end
+	RQE.UpdateTrackedAchievementList()
 end
 
 
