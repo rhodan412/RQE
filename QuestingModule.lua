@@ -242,7 +242,7 @@ RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Ac
 local function CreateUniqueScenarioHeader(scenarioFrame, title)
     local header = CreateFrame("Frame", nil, scenarioFrame, "BackdropTemplate")
 	header:SetFrameStrata("LOW") -- or "LOW" if you want it above the background but below medium elements
-    header:SetHeight(100)  -- Setting a custom height for the scenario header
+    header:SetHeight(115)  -- Setting a custom height for the scenario header
     header:SetBackdrop({
         bgFile = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -511,6 +511,18 @@ function AdjustQuestItemWidths(frameWidth)
         RQE.ScenarioChildFrame.body:SetWordWrap(true)  -- Ensure word wrap
         RQE.ScenarioChildFrame.body:SetHeight(0)
     end
+    -- Add a check to ensure RQE.ScenarioChildFrame.scenarioTitle is not nil
+    if RQE.ScenarioChildFrame.scenarioTitle then
+        RQE.ScenarioChildFrame.scenarioTitle:SetWidth(frameWidth - 55)  -- Adjust the padding as needed
+        RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)  -- Ensure word wrap
+        RQE.ScenarioChildFrame.scenarioTitle:SetHeight(0)
+    end
+    -- Add a check to ensure RQE.ScenarioChildFrame.title is not nil
+    if RQE.ScenarioChildFrame.title then
+        RQE.ScenarioChildFrame.title:SetWidth(frameWidth - 75)  -- Adjust the padding as needed
+        RQE.ScenarioChildFrame.title:SetWordWrap(true)  -- Ensure word wrap
+        RQE.ScenarioChildFrame.title:SetHeight(0)
+    end
 end
 
 
@@ -600,7 +612,8 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.scenarioTitle = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		RQE.ScenarioChildFrame.scenarioTitle:ClearAllPoints()
 		RQE.ScenarioChildFrame.scenarioTitle:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "TOPLEFT", 10, -10)
-		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 18, "THICKOUTLINE")
+		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
+		RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)
 		-- Ensure the text fits nicely and is readable
 		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyV("TOP")
@@ -611,7 +624,7 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.stage = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		RQE.ScenarioChildFrame.stage:ClearAllPoints()
 		RQE.ScenarioChildFrame.stage:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.scenarioTitle, "TOPLEFT", 0, -40)
-		RQE.ScenarioChildFrame.stage:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
+		RQE.ScenarioChildFrame.stage:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
 		-- Ensure the text fits nicely and is readable
 		RQE.ScenarioChildFrame.stage:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.stage:SetJustifyV("TOP")
@@ -623,7 +636,7 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.title = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		RQE.ScenarioChildFrame.title:ClearAllPoints()
         RQE.ScenarioChildFrame.title:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.stage, "TOPLEFT", 0, -25)
-		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 20, "OUTLINE")
+		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 17, "OUTLINE")
 		RQE.ScenarioChildFrame.title:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.title:SetJustifyV("TOP")
     end
@@ -710,9 +723,11 @@ function RQE.UpdateScenarioFrame()
     if scenarioName and scenarioStepInfo then
         -- Update the scenarioTitle with the scenario name
         RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
+		RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)
         
         -- Update the stage with the current stage and total stages
         RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
+		RQE.ScenarioChildFrame.stage:SetWordWrap(true)
         
         -- Update the title with the scenario step title
         RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo)--(scenarioStepInfo.title)
@@ -755,13 +770,14 @@ end
 
 local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
 timerFrame:SetSize(100, 10) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 85, -35)
+timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 95, -45)
 
 
 -- Create a FontString for the timer text
 local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 timerText:SetAllPoints(timerFrame)
-timerText:SetFont("Fonts\\FRIZQT__.TTF", 20, "OUTLINE")  -- Increase font size to 20, adjust as needed
+timerText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")  -- Increase font size to 20, adjust as needed
+timerText:SetTextColor(1, 1, 1, 1) -- Sets timerText color to white
 
 
 local startTime
