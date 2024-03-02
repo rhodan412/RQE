@@ -37,7 +37,7 @@ RQE.db.profile = RQE.db.profile or {}
 -- 2. ProfileManager Logic (Commented out for removal of profile management)
 ---------------------------
 
--- This section is responsible for initializing and handling the profile logic related to the Add-On's Options system.
+-- This section is responsible for initializing and handling the profile logic related to the Add-On Options system.
 -- Initialize profile options
 function RQE:InitializeProfileOptions()
     -- Additional logic related to profile options can go here
@@ -48,7 +48,7 @@ end
 -- 3. Settings Logic
 ---------------------------
 
--- This section controls the default settings if the Profile section for the Add-On's configuration doesn't contain that information
+-- This section controls the default settings if the Profile section for the Add-On configuration doesn't contain that information
 RQE.Settings = {}
 
 ---------------------------
