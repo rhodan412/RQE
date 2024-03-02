@@ -393,7 +393,7 @@ function RQE:InitializeFrame()
     -- Initialize search button (Now calling the function from Buttons.lua)
     RQE.Buttons.CreateSearchButton(RQEFrame)
 
-    -- Add logic to update frame with the current supertracked quest
+    -- Add logic to update frame with the current super tracked quest
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
     if questID then
         local questInfo = RQEDatabase[questID]
@@ -746,7 +746,7 @@ function RQE:SetProfileOnce()
 end
 
 
--- Function to gather character info if addon is set to default to player name instead of accountwide
+-- Function to gather character info if addon is set to default to player name instead of account wide
 function RQE:GetCharacterInfo()
     local characterName = UnitName("player")
     local characterRealm = GetRealmName()
