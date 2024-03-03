@@ -1025,6 +1025,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local isBeingSearched = RQE.searchedQuestID == questID
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
     local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
+
+	RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another
 	
     -- if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
