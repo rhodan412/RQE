@@ -56,6 +56,7 @@ local eventsToRegister = {
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
 	"LEAVE_PARTY_CONFIRMATION",
+	"JAILERS_TOWER_LEVEL_UPDATE",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
@@ -117,6 +118,7 @@ local function HandleEvents(frame, event, ...)
 		QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
 		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
+		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
 		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
@@ -296,6 +298,14 @@ function RQE.handleTimerStop(self, event, ...)
 	-- A world timer has stopped; you might want to stop your timer as well
     RQE.StopTimer()
 end
+
+
+-- Handles JAILERS_TOWER_LEVEL_UPDATE event
+function RQE.handleJailersUpdate(level, type)
+    RQE.UpdateTorghastDetails(level, type)
+    C_Timer.After(4, RQE.InitializeScenarioFrame) -- Wait 4 seconds before initializing the scenario frame
+end
+
 
 
 -- Handling for QUEST_DATA_LOAD_RESULT

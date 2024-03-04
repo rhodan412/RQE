@@ -682,6 +682,13 @@ function RQE.InitializeScenarioFrame()
 		-- Set the color of the body FontString to white (r, g, b, alpha)
 		RQE.ScenarioChildFrame.body:SetTextColor(1, 1, 1, 0.9) -- White color
 	end
+
+    -- Update scenarioTitle and stage based on Torghast information
+    if IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
+        local torghastTypeString = RQE.ConvertTorghastTypeToString(RQE.TorghastType)
+        RQE.ScenarioChildFrame.scenarioTitle:SetText("Torghast, Tower of the Damned\n" .. torghastTypeString)
+        RQE.ScenarioChildFrame.stage:SetText("Layer " .. RQE.TorghastLayerNum .. " - Floor " .. RQE.TorghastFloorID)
+    end
 end
 
 

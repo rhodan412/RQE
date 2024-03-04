@@ -1442,6 +1442,57 @@ function RQE.PrintScenarioCriteriaInfoByStep()
 end
 
 
+-- Function to map Torghast type enum to a readable string
+function RQE.ConvertTorghastTypeToString(eventType)
+    local typeMapping = {
+        [0] = "Twisting Corridors",
+        [1] = "Skoldus Halls",
+        [2] = "Fracture Chambers",
+        [3] = "Soulforges",
+        [4] = "Coldheart",
+        [5] = "Mortregar",
+        [6] = "Upper Reaches",
+        [7] = "Arkoban Hall",
+        [8] = "Torment Chamber: Jaina",
+        [9] = "Torment Chamber: Thrall",
+        [10] = "Torment Chamber: Anduin",
+        [11] = "Adamant Vaults",
+        [12] = "Forgotten Catacombs",
+        [13] = "Ossuary",
+        [14] = "Boss Rush",
+    }
+    return typeMapping[eventType] or "Unknown Type"
+end
+
+
+-- Function to update Torghast details in the RQE table
+function RQE.UpdateTorghastDetails(eventLevel, eventType)
+    local level = GetJailersTowerLevel()
+    local layerNum, floorID
+
+    -- Calculate the Torghast layer number and floor ID based on the level
+    if level then
+        layerNum = math.ceil(level / 6)
+        floorID = level % 6
+        floorID = floorID == 0 and 6 or floorID  -- Adjust for floors that are multiples of 6
+    else
+        return
+    end
+
+    -- Assuming the JAILERS_TOWER_LEVEL_UPDATE event provides 'level' and 'type' as parameters
+    -- Update only if eventType is provided, indicating the function was called via event
+    if eventType then
+        RQE.TorghastType = eventType
+        RQE.TorghastLayerNum = layerNum
+        RQE.TorghastFloorID = floorID
+
+        local typeString = RQE.ConvertTorghastTypeToString(eventType) -- Ensure this function exists
+        RQE.infoLog(string.format("You are in Torghast: %s, Layer: %d, Floor: %d",
+            typeString or "Unknown Type", layerNum, floorID))
+    end
+end
+
+
 ---------------------------------------------------
 -- 11. Maximize/Minimize/Opacity Change to Frames
 ---------------------------------------------------
