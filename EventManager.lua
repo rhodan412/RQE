@@ -278,6 +278,11 @@ function RQE.handleScenario(self, event, ...)
 		RQE.StopTimer()
         RQE.ScenarioChildFrame:Hide()
     end
+
+	-- -- Handles situation of being in Torghast
+    -- RQE.UpdateTorghastDetails(level, type)
+    -- C_Timer.After(4, RQE.InitializeScenarioFrame) -- Wait 4 seconds before re-initializing the scenario frame
+	
     RQE.UpdateCampaignFrameAnchor()
 end
 
@@ -610,9 +615,29 @@ end
 
 -- Handling multiple quest related events to update the main frame
 function RQE.handleQuestStatusUpdate(...)
+	isSuperTracking = C_SuperTrack.IsSuperTrackingContent()
 	
-	-- Attempt to fetch the current super-tracked quest ID
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- Check if questID is not provided, fallback to the current super-tracked quest ID
+	if not isSuperTracking and RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "" then
+		lastSuperTrackedQuestID = questID
+		C_SuperTrack.SetSuperTrackedQuestID(questID)
+    else
+        questID = C_SuperTrack.GetSuperTrackedQuestID()
+    end
+	
+	-- Add quest to watch list if progress has been made
+	if questID then
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		local isQuestInLog = C_QuestLog.IsOnQuest(questID)
+		
+		-- Add the quest to the tracker		
+		if isWorldQuest then
+			C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
+		elseif isQuestInLog then
+			C_QuestLog.AddQuestWatch(questID)
+		end		
+	end
+
 	--local questInfo, StepsText, CoordsText, MapIDs
 	
 	-- Attempt to fetch other necessary information using the currentQuestID
@@ -652,6 +677,16 @@ end
 
 -- Handling QUEST_COMPLETE event
 function RQE.handleQuestComplete(...)
+	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame
+	RQE:ClearFrameData()
+	RQE.searchedQuestID = nil
+	-- Reset manually tracked quests
+	if RQE.ManuallyTrackedQuests then
+		for questID in pairs(RQE.ManuallyTrackedQuests) do
+			RQE.ManuallyTrackedQuests[questID] = nil
+		end
+	end
+		
 	local questID = ...  -- Extract the questID from the event
 	RQE:QuestComplete(questID)
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)

@@ -1026,8 +1026,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
     local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
 
-	RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another
-	
+	--RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another...WILL NEED TO CORRECT REASON WHY THIS IS CASE RATHER THAN DOING A CLEAR FRAME "HACK JOB FIX" IN ORDER TO NOT CAUSE PROBLEMS WITH THE WORLD BOSS NOT CLEARING
+
+	-- -- Removed commented out section in these lines as it appears that some world quests that have been completed are repopulating the RQEFrame
     -- if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         -- RQE:ClearFrameData()
@@ -1174,14 +1175,21 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		-- Check if the quest is in the player's quest log
 		local isQuestInLog = C_QuestLog.IsOnQuest(questID)
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+		
         -- When the RQEFrame is updated for a searched quest that is not in the player's quest log
 		if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
 			if RQE.QuestDescription then
 				RQE.QuestDescription:SetText("")  -- Leave blank
 			end
 
-			if RQE.QuestObjectives then
-				RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")  -- Instructional text
+			if RQE.QuestObjectives and not isQuestCompleted then
+				RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")
+				RQE.QuestObjectives:SetTextColor(1, 1, 1) -- White color for completed criteria
+			end
+			if RQE.QuestObjectives and isQuestCompleted then
+				RQE.QuestObjectives:SetText("Quest has been marked as completed for player")
+				RQE.QuestObjectives:SetTextColor(0, 1, 0) -- Green color for completed criteria
 			end
 		end
 	end

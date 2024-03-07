@@ -929,6 +929,8 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
     local xp = GetQuestLogRewardXP(questID)
+	local rewardTitle = GetQuestLogRewardTitle()
+	local skillPoints = GetQuestLogRewardSkillPoints()
     local money = GetQuestLogRewardMoney(questID)
     local artifactXP = GetQuestLogRewardArtifactXP(questID)
     local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID)
@@ -936,7 +938,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local numQuestSpellRewards, questSpellRewards = C_QuestInfoSystem.GetQuestRewardSpells(questID)
     local numQuestChoices = GetNumQuestLogChoices(questID, true)
     local honor = GetQuestLogRewardHonor(questID)
-    local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
+    local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID) or C_QuestOffer.GetQuestOfferMajorFactionReputationRewards(questID)
     local rewardsTitle = REWARDS..":"
 
     if not isBonus then
