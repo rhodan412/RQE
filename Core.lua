@@ -1026,6 +1026,12 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
     local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
 
+	-- -- Check if questID is not provided, fallback to the current super-tracked quest ID
+	-- if not isSuperTracking and RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "" then
+		-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+		-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+    -- end
+	
 	--RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another...WILL NEED TO CORRECT REASON WHY THIS IS CASE RATHER THAN DOING A CLEAR FRAME "HACK JOB FIX" IN ORDER TO NOT CAUSE PROBLEMS WITH THE WORLD BOSS NOT CLEARING
 
 	-- -- Removed commented out section in these lines as it appears that some world quests that have been completed are repopulating the RQEFrame
