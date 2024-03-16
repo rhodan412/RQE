@@ -1205,6 +1205,11 @@ end
 
 -- Function for Tracking World Quests
 function UpdateWorldQuestTrackingForMap(uiMapID)
+    if not uiMapID then
+        RQE.errorLog("Invalid map ID provided to UpdateWorldQuestTrackingForMap")
+        return  -- Early exit if uiMapID is invalid
+    end
+	
     local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
     local trackedQuests = {}
     local maxTracked = 1

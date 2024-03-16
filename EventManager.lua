@@ -566,8 +566,10 @@ function RQE.handleQuestAccepted(...)
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 		end
 		
-		local mapID = C_Map.GetBestMapForUnit("player")
-		UpdateWorldQuestTrackingForMap(mapID)
+		local uiMapID = C_Map.GetBestMapForUnit("player")
+		if uiMapID then  -- Ensure mapID is not nil and valid
+			UpdateWorldQuestTrackingForMap(uiMapID)
+		end
 	end
 end
 
