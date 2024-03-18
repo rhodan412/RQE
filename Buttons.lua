@@ -176,9 +176,11 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     -- Nested functions
     ClearButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 6, -6)  -- Anchoring
     ClearButton:SetScript("OnClick", function() 
+	
         -- Your code for ClearButton functionality here
 		RQE:ClearFrameData()
 		RQE.searchedQuestID = nil
+		
         -- Reset manually tracked quests
         if RQE.ManuallyTrackedQuests then
             for questID in pairs(RQE.ManuallyTrackedQuests) do
