@@ -236,7 +236,7 @@ RQE.QToriginalHeight = RQE.QToriginalHeight or 0
 RQE.waypoints = {}
 
 -- Initialize lastSuperTrackedQuestID variable
-local lastSuperTrackedQuestID = nil
+RQE.lastSuperTrackedQuestID = nil
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 
 -- Addon Initialization
@@ -2890,7 +2890,9 @@ function PrintTrackedWorldQuestTypes()
     end
 end
 
-function UntrackAutomaticWorldQuests()
+
+-- Removes Automatic WQ when leaving area of WQ location
+function RQE.UntrackAutomaticWorldQuests()
     local playerMapID = C_Map.GetBestMapForUnit("player")
     local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 

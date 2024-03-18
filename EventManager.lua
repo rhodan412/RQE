@@ -520,8 +520,8 @@ function RQE.handleSuperTracking(...)
 	local questName
 	if questID then
 		questName = C_QuestLog.GetTitleForQuestID(questID)
-		if questID ~= lastSuperTrackedQuestID then
-			lastSuperTrackedQuestID = questID
+		if questID ~= RQE.lastSuperTrackedQuestID then
+			RQE.lastSuperTrackedQuestID = questID
 			local questLink = GetQuestLink(questID)  -- Generate the quest link
 			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
@@ -619,26 +619,26 @@ end
 function RQE.handleQuestStatusUpdate(...)
 	isSuperTracking = C_SuperTrack.IsSuperTrackingContent()
 	
-	-- Check if questID is not provided, fallback to the current super-tracked quest ID
-	if not isSuperTracking and RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "" then
-		lastSuperTrackedQuestID = questID
-		C_SuperTrack.SetSuperTrackedQuestID(questID)
-    else
+	-- Check if questID is provided, fallback to the current super-tracked quest ID if not
+	if isSuperTracking or not (RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "") then
         questID = C_SuperTrack.GetSuperTrackedQuestID()
+    else
+		RQE.lastSuperTrackedQuestID = questID
+		C_SuperTrack.SetSuperTrackedQuestID(questID)
     end
 	
-	-- Add quest to watch list if progress has been made
-	if questID then
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-		local isQuestInLog = C_QuestLog.IsOnQuest(questID)
+	-- -- Add quest to watch list if progress has been made --- NEEDS TO BE REDONE AS QUEST WAS BEING READDED AFTER BEING CLEARED FROM WATCH LIST REGARDLESS OF IF PROGRESS WAS MADE
+	-- if questID then
+		-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		-- local isQuestInLog = C_QuestLog.IsOnQuest(questID)
 		
-		-- Add the quest to the tracker		
-		if isWorldQuest then
-			C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-		elseif isQuestInLog then
-			C_QuestLog.AddQuestWatch(questID)
-		end		
-	end
+		-- -- Add the quest to the tracker		
+		-- if isWorldQuest then
+			-- C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
+		-- elseif isQuestInLog then
+			-- C_QuestLog.AddQuestWatch(questID)
+		-- end		
+	-- end
 
 	--local questInfo, StepsText, CoordsText, MapIDs
 	
@@ -727,6 +727,8 @@ function RQE.handleQuestRemoved(questID, removedByUser)
 	RQE:ClearWQTracking()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	
+	RQE.UntrackAutomaticWorldQuests()
 	
     -- Check if the questID is valid and if it was being tracked automatically
     if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
