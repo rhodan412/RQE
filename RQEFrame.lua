@@ -1192,11 +1192,6 @@ function RQE:UpdateContentSize()
 end
 
 
--- Dummy function for adding quest steps, to be populated later
-function AddQuestStepsToFrame(questSteps)
-    -- Add quest steps to RQEFrame
-end
-
 ---------------------------
 -- 8. Finalization
 ---------------------------
@@ -1205,17 +1200,20 @@ end
 CreateSearchFrame()
 
 -- Define the function to save frame position
-function SaveFramePosition()
-    
-    local yourProfile = RQE.db:GetCurrentProfile()
-  
-    -- Get the current frame position
-    local point, _, relativePoint, xOfs, yOfs = RQEFrame:GetPoint()
+function RQE:SaveFramePosition()
+	local yourProfile = RQE.db:GetCurrentProfile()
 
-    -- Save the frame position
-    RQE.db.profile.framePosition.xPos = xOfs
-    RQE.db.profile.framePosition.yPos = yOfs
+	-- Ensure framePosition table exists
+	if not RQE.db.profile.framePosition then
+		RQE.db.profile.framePosition = {}
+	end
 
+	-- Get the current frame position
+	local point, _, relativePoint, xOfs, yOfs = RQEFrame:GetPoint()
+
+	-- Save the frame position
+	RQE.db.profile.framePosition.xPos = xOfs
+	RQE.db.profile.framePosition.yPos = yOfs
 end
 
 
@@ -1229,7 +1227,7 @@ end)
 header:SetScript("OnMouseUp", function(self, button)
     if button == "LeftButton" then
         RQEFrame:StopMovingOrSizing()
-        SaveFramePosition()  -- Call the function to save the frame's position
+        RQE:SaveFramePosition()  -- Call the function to save the frame's position
     end
 end)
 
@@ -1269,7 +1267,7 @@ function RQE.ToggleFrameLock()
         RQEFrame:SetScript("OnDragStart", RQEFrame.StartMoving)
         RQEFrame:SetScript("OnDragStop", function()
             RQEFrame:StopMovingOrSizing()
-            SaveFramePosition()
+            RQE:SaveFramePosition()
         end)
         RQE.resizeGrip:Show()
     else
