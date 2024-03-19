@@ -1043,7 +1043,6 @@ function RQE:LFG_Search(questID)
 	local categoryID = 3
 	
     if not categoryID or categoryID == 0 then
-        print("Invalid category ID for the quest")
         return
     end
 
@@ -1052,8 +1051,6 @@ function RQE:LFG_Search(questID)
     -- Set the search to the quest ID
     if questID then
         C_LFGList.SetSearchToQuestID(questID)
-	else
-		print("Invalid questID in RQE:LFG_Search")
     end
 	
 	local filters = 0
