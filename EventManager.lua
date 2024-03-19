@@ -559,17 +559,24 @@ function RQE.handleQuestAccepted(...)
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
 		local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
-
+		local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID, ignoreWaypoints)
+		local playerMapID = C_Map.GetBestMapForUnit("player")
+		
 		if isWorldQuest and not isManuallyTracked then
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
 		elseif isWorldQuest and isManuallyTracked then
 			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 		end
 		
-		local uiMapID = C_Map.GetBestMapForUnit("player")
-		if uiMapID then  -- Ensure mapID is not nil and valid
-			UpdateWorldQuestTrackingForMap(uiMapID)
-		end
+		-- local uiMapID = C_Map.GetBestMapForUnit("player")
+		-- if uiMapID then  -- Ensure mapID is not nil and valid
+			-- UpdateWorldQuestTrackingForMap(uiMapID)
+		-- end
+		
+        if playerMapID and playerMapID == questMapID then  -- Ensure mapID matches the quest's map
+			RQE.infoLog("questMapID is " .. questMapID .. " and playerMapID is " .. playerMapID)
+			UpdateWorldQuestTrackingForMap(playerMapID)
+        end
 	end
 end
 
@@ -751,6 +758,10 @@ function RQE.handleQuestWatchUpdate(...)
 
 	if questID then
 		RQEQuestFrame:ClearAllPoints()
+		
+		-- Adds quest to watch list when progress made
+		C_QuestLog.AddQuestWatch(questID)
+		
 		UpdateRQEQuestFrame()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 

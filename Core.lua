@@ -2303,7 +2303,7 @@ function RQE.ScanAndCacheZoneQuests()
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
-            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)  -- Using fallback
+            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
             if zoneID then
                 RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
                 table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
@@ -2569,7 +2569,7 @@ function RQE.RequestAndCacheQuestLines()
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
             -- Directly use the map ID associated with the quest for more accurate quest line retrieval
-            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints) -- Using fallback
+            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
             if zoneID then
                 -- Fetch quest line information using the quest ID and its zoneID
                 local questLineInfo = C_QuestLine.GetQuestLineInfo(questInfo.questID, zoneID)
@@ -2879,7 +2879,7 @@ end
 
 
 -- Function to print the tracking type of all watched world quests
-function PrintTrackedWorldQuestTypes()
+function RQE.PrintTrackedWorldQuestTypes()
     for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
         local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
         if questID then
