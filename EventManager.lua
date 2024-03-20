@@ -549,6 +549,8 @@ function RQE.handleSuperTracking(...)
 	if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
 		RQE.RWButton:GetScript("OnClick")()
 	end
+	
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 		
 
