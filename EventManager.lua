@@ -327,7 +327,7 @@ function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
 		--AutoWatchQuestsWithProgress()
 		SortQuestsByProximity()
 	--end
-	
+
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 		
@@ -552,7 +552,9 @@ function RQE.handleSuperTracking(...)
 		RQE.RWButton:GetScript("OnClick")()
 	end
 	
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	C_Timer.After(0.5, function()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	end)
 end
 		
 
@@ -671,7 +673,10 @@ function RQE.handleQuestStatusUpdate(...)
     -- C_Map.ClearUserWaypoint()  -- Uncomment if you need to clear user waypoints
     UpdateRQEQuestFrame()  -- Custom function to update your frame
     SortQuestsByProximity()  -- Assuming this sorts quests displayed in RQEFrame by proximity
-    UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)  -- Update the main frame with quest details
+	
+	C_Timer.After(0.5, function()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)  -- Update the main frame with quest details
+	end)
 end
 	
 
@@ -754,7 +759,6 @@ function RQE.handleQuestWatchUpdate(...)
 		C_QuestLog.AddQuestWatch(questID)
 		
 		UpdateRQEQuestFrame()
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 		-- Update RQEFrame here if needed
 		-- UpdateRQEFrame() -- Pseudo-function, replace with actual function calls needed to update RQEFrame
@@ -763,6 +767,10 @@ function RQE.handleQuestWatchUpdate(...)
 		QuestType()
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		
+		C_Timer.After(0.5, function()
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		end)
 	end
 end
 		
@@ -808,14 +816,17 @@ function RQE.handleQuestWatchListChanged(...)
 				SortQuestsByProximity()
 			--end					
 		end
-	RQEQuestFrame:ClearAllPoints()
-	RQE:ClearRQEQuestFrame()
-	RQE:ClearWQTracking()
-	UpdateRQEQuestFrame()
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	SortQuestsByProximity()
-	UpdateFrameAnchors()
-	UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+		RQEQuestFrame:ClearAllPoints()
+		RQE:ClearRQEQuestFrame()
+		RQE:ClearWQTracking()
+		UpdateRQEQuestFrame()
+		SortQuestsByProximity()
+		UpdateFrameAnchors()
+		UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+		
+		C_Timer.After(0.5, function()
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		end)
 	end
 end
 		
