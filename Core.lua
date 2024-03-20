@@ -1008,16 +1008,9 @@ local function colorizeObjectives(objectivesText)
 end
 
 
--- UpdateFrame function
-function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-    RQE.debugLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
-	AdjustRQEFrameWidths(newWidth)
-	
-    -- Validate questID before proceeding
-    if not questID or type(questID) ~= "number" then
-        RQE.debugLog("Invalid or missing questID in UpdateFrame:", questID)
-        return
-    end
+-- Function check if RQEFrame frame should be cleared
+function RQE:ShouldClearFrame(questID)
+	local questID = questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
 	
 	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
     local isQuestInLog = C_QuestLog.IsOnQuest(questID)
@@ -1025,24 +1018,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local isBeingSearched = RQE.searchedQuestID == questID
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
     local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
-
-	-- -- Check if questID is not provided, fallback to the current super-tracked quest ID
-	-- if not isSuperTracking and RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "" then
-		-- C_SuperTrack.SetSuperTrackedQuestID(questID)
-		-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-    -- end
 	
-	--RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another...WILL NEED TO CORRECT REASON WHY THIS IS CASE RATHER THAN DOING A CLEAR FRAME "HACK JOB FIX" IN ORDER TO NOT CAUSE PROBLEMS WITH THE WORLD BOSS NOT CLEARING
-
-	-- -- Removed commented out section in these lines as it appears that some world quests that have been completed are repopulating the RQEFrame
-    -- if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
-        -- -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
-        -- RQE:ClearFrameData()
-        -- print("Quest is not in player's log or does not match searchedQuestID, clearing RQEFrame.")
-        -- return -- Exit the function early
-    -- end
-
-    -- Compile a list of all watched quests (both regular and world)
     local watchedQuests = {}
     for i = 1, C_QuestLog.GetNumQuestWatches() do
         local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
@@ -1056,22 +1032,81 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
             watchedQuests[watchedWorldQuestID] = true
         end
     end
+
+	-- Clears from RQEFrame searched world quests that have been completed
+	if isBeingSearched and isQuestCompleted and isWorldQuest then
+        RQE:ClearFrameData()
+		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID)
+        return -- Exit the function early
+	end
 	
+	if (isQuestCompleted and not isBeingSearched) or (not isQuestInLog and not manuallyTracked) then
+    --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
+        -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
+        RQE:ClearFrameData()
+		RQE.infoLog("Clearing the RQEFrame for questID: ", questID)
+        return -- Exit the function early
+    end
+
     if isWorldQuest then
-        if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
+		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[questID]) then
+        --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
-            RQE.debugLog("World Quest is not manually tracked or actively searched, clearing RQEFrame.")
+            RQE.infoLog("Clearing RQEFrame to questID: ", questID)
             return -- Exit the function early
         end
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
 		if not (isBeingSearched or manuallyTracked or watchedQuests[questID]) then
             RQE:ClearFrameData()
-			RQE.debugLog("Quest is not searched, manually tracked, or watched, clearing RQEFrame.")
+			RQE.infoLog("Clearing RQEFrame for questID: ", questID)
             return -- Exit the function early
         end
     end
+end
 
+
+-- UpdateFrame function
+function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+    RQE.debugLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
+	AdjustRQEFrameWidths(newWidth)
+	
+    -- Validate questID before proceeding
+    if not questID or type(questID) ~= "number" then
+        RQE.debugLog("Invalid or missing questID in UpdateFrame:", questID)
+        return
+    end
+	
+	-- -- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
+    -- local isQuestInLog = C_QuestLog.IsOnQuest(questID)
+	-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	-- local isBeingSearched = RQE.searchedQuestID == questID
+	-- local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+    -- local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
+
+	-- -- Check if questID is not provided, fallback to the current super-tracked quest ID
+	-- if not isSuperTracking and RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "" then
+		-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+		-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+    -- end
+	
+	--RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another...WILL NEED TO CORRECT REASON WHY THIS IS CASE RATHER THAN DOING A CLEAR FRAME "HACK JOB FIX" IN ORDER TO NOT CAUSE PROBLEMS WITH THE WORLD BOSS NOT CLEARING
+
+    -- -- Compile a list of all watched quests (both regular and world)
+    -- local watchedQuests = {}
+    -- for i = 1, C_QuestLog.GetNumQuestWatches() do
+        -- local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        -- if watchedQuestID then
+            -- watchedQuests[watchedQuestID] = true
+        -- end
+    -- end
+    -- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        -- local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        -- if watchedWorldQuestID then
+            -- watchedQuests[watchedWorldQuestID] = true
+        -- end
+    -- end
+	
     if not questID then  -- Check if questID is nil
         RQE.debugLog("questID is nil.")
         return  -- Exit the function
@@ -1200,6 +1235,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 	RQE.UpdateTrackedAchievementList()
+	RQE:ShouldClearFrame(questID)
 end
 
 

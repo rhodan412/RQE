@@ -36,7 +36,6 @@ local Frame = CreateFrame("Frame")
 
 local function HideObjectiveTracker()
     if ObjectiveTrackerFrame:IsShown() then
-        --RQE:ClearFrameData() -- clears frame data of first super tracked quest if super track done right after log in. commenting this out corrects that
         ObjectiveTrackerFrame:Hide()
     end
 end
@@ -51,7 +50,7 @@ local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
 	"CRITERIA_UPDATE",
-	"BAG_UPDATE_COOLDOWN",
+	--"BAG_UPDATE_COOLDOWN",
 	"CONTENT_TRACKING_UPDATE",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
@@ -99,14 +98,16 @@ local eventsToRegister = {
 -- On Event Handler
 local function HandleEvents(frame, event, ...)
 	--RQE.criticalLog("EventHandler triggered with event:", event)  -- Debug print here
+	--print("EventHandler triggered with event:", event)  -- Debug print here
 
     local handlers = {
-		ADDON_LOADED = RQE.handleAddonLoaded,
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
-		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
-		CRITERIA_UPDATE = RQE.handleAchievementTracking,
+		ADDON_LOADED = RQE.handleAddonLoaded,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		--CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,
+		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
+		CRITERIA_UPDATE = RQE.handleAchievementTracking,
+		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		--LEAVE_PARTY_CONFIRMATION = handleScenario,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
@@ -117,8 +118,8 @@ local function HandleEvents(frame, event, ...)
 		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
 		QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
+		--QUEST_DATA_LOAD_RESULT = RQE.handleQuestDataLoad,
 		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
-		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
 		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
@@ -313,23 +314,23 @@ end
 
 
 
--- Handling for QUEST_DATA_LOAD_RESULT
-function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-	end)
+-- -- Handling for QUEST_DATA_LOAD_RESULT
+-- function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
+	-- C_Timer.After(0.5, function()
+		-- HideObjectiveTracker()
+	-- end)
 
-	local questID, added = ...
-	local watchType = C_QuestLog.GetQuestWatchType(questID)
+	-- local questID, added = ...
+	-- local watchType = C_QuestLog.GetQuestWatchType(questID)
 
-	-- Check if auto-tracking of quest progress is enabled and call the function
-	--if questID and added and RQE.db.profile.autoTrackProgress then
-		--AutoWatchQuestsWithProgress()
-		SortQuestsByProximity()
-	--end
+	-- -- Check if auto-tracking of quest progress is enabled and call the function
+	-- --if questID and added and RQE.db.profile.autoTrackProgress then
+		-- --AutoWatchQuestsWithProgress()
+		-- SortQuestsByProximity()
+	-- --end
 
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-end
+	-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+-- end
 		
 
 -- Handling PLAYER_STARTED_MOVING Event
@@ -675,7 +676,7 @@ function RQE.handleQuestStatusUpdate(...)
     SortQuestsByProximity()  -- Assuming this sorts quests displayed in RQEFrame by proximity
 	
 	C_Timer.After(0.5, function()
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)  -- Update the main frame with quest details
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
 end
 	
@@ -748,9 +749,15 @@ function RQE.handleQuestWatchUpdate(...)
     -- Retrieve the current watched quest ID if needed
     local questID, added = ...
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+    local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
 	
     -- If you need details about the quest, fetch them here
     local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+	-- if isQuestCompleted or RQE.searchedQuestID == nil then
+		-- RQE:ClearFrameData()
+		-- print("Frame data cleared")
+	-- end
 
 	if questID then
 		RQEQuestFrame:ClearAllPoints()
@@ -810,10 +817,10 @@ function RQE.handleQuestWatchListChanged(...)
 		else
 		-- Handle regular quests
 		--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-			RQE.savedWorldQuestWatches[questID] = nil
+			--RQE.savedWorldQuestWatches[questID] = nil
 			--if RQE.db.profile.autoTrackProgress then
 				--AutoWatchQuestsWithProgress()
-				SortQuestsByProximity()
+				--SortQuestsByProximity()
 			--end					
 		end
 		RQEQuestFrame:ClearAllPoints()
@@ -840,8 +847,8 @@ function RQE.handleQuestTurnIn(...)
 	QuestType()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	
-	C_Timer.After(0.5, function() -- This clears the RQEFrame shortly after turning in a quest
-		RQE:ClearFrameData()
+	C_Timer.After(0.5, function()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
 end
 	
