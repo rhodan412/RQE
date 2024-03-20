@@ -327,6 +327,8 @@ function RQE.handleQuestDataLoad(...)  --(_, _, questIndex, questID)
 		--AutoWatchQuestsWithProgress()
 		SortQuestsByProximity()
 	--end
+	
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 		
 
@@ -591,24 +593,11 @@ function RQE.handleZoneChange(...)
 		local mapID = C_Map.GetBestMapForUnit("player")			
 		local questInfo = RQEDatabase[questID]
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
-		-- if RQE.db.profile.showMapID and currentMapID then
-			-- RQEFrame.MapIDText:SetText("MapID: " .. currentMapID)
-		-- else
-			-- RQEFrame.MapIDText:SetText("")
-		-- end
 		RQE:UpdateMapIDDisplay()
 
 		-- Call the functions to update the frame
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		--UpdateFrame(currentQuestID, questInfo, StepsText, CoordsText, MapIDs)
-
-		-- -- Check if auto-tracking of quest progress is enabled and call the function
-		-- if RQE.db.profile.autoTrackProgress then
-			-- AutoWatchQuestsWithProgress()
-		-- end
 		
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
