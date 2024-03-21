@@ -847,7 +847,8 @@ function RQE.handleQuestTurnIn(...)
 	QuestType()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	
-	C_Timer.After(0.5, function()
+	C_Timer.After(1, function()
+		RQE:ClearFrameData()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
 end
