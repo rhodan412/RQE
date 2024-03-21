@@ -829,7 +829,7 @@ function RQE:UpdateRQEFrameVisibility()
     local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
 	local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
 	
-	if self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking) then
+    if (self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking)) or self.isRQEFrameManuallyClosed then
         RQEFrame:Hide()
     else
         RQEFrame:Show()
@@ -862,8 +862,8 @@ function RQE:UpdateRQEQuestFrameVisibility()
         end
     end
 	
-    -- Use the stored quest counts from the RQE table
-    if self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario) then
+    -- Check conditions for showing/hiding the frame, including manual closure
+    if (self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario)) or self.isRQEQuestFrameManuallyClosed then
         RQEQuestFrame:Hide()
     else
         RQEQuestFrame:Show()

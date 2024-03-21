@@ -513,6 +513,9 @@ function RQE.handlePlayerEnterWorld(...)
 	
 	-- Check if still in a scenario (useful for relogs or loading screens)
 	RQE.isInScenario = C_Scenario.IsInScenario()
+	
+	-- Visibility Check for RQEFrame and RQEQuestFrame
+	RQE:UpdateRQEFrameVisibility()
 	RQE:UpdateRQEQuestFrameVisibility()
 end	
 		
@@ -880,7 +883,8 @@ function RQE.handleQuestTurnIn(...)
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
 	
-	-- Visibility Update Check for RQEQuestFrame
+	-- Visibility Check for RQEFrame and RQEQuestFrame
+	RQE:UpdateRQEFrameVisibility()
 	RQE:UpdateRQEQuestFrameVisibility()
 end
 	

@@ -79,6 +79,8 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 			if RQEFrame:IsShown() then
 				RQEFrame:Hide()
 				RQEQuestFrame:Hide()
+				RQE.isRQEFrameManuallyClosed = true
+				RQE.isRQEQuestFrameManuallyClosed = true
 			else
 				RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
 				RQEFrame:Show()
@@ -86,6 +88,9 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
                 if RQE.db.profile.enableQuestFrame then
                     RQEQuestFrame:Show()
                 end
+				
+				RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
+				RQE.isRQEQuestFrameManuallyClosed = false -- Resetting the manual close state
 			end
 			
 		elseif button == "RightButton" then
@@ -130,13 +135,23 @@ function RQE.ToggleBothFramesfromLDB()
 	if RQEFrame:IsShown() then
 		RQEFrame:Hide()
 		RQEQuestFrame:Hide()
-	else
+		RQE.isRQEFrameManuallyClosed = true
+		RQE.isRQEQuestFrameManuallyClosed = true
+    else	
 		RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
-		RQEFrame:Show()
+		
+		-- Check if enableFrame is true before showing RQEFrame
+		if RQE.db.profile.enableFrame then
+			RQEFrame:Show()
+		end
+		
 		-- Check if enableQuestFrame is true before showing RQEQuestFrame
 		if RQE.db.profile.enableQuestFrame then
 			RQEQuestFrame:Show()
 		end
+		
+        RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
+        RQE.isRQEQuestFrameManuallyClosed = false -- Resetting the manual close state
 	end
 end
 

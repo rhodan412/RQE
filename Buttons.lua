@@ -292,6 +292,7 @@ function RQE.Buttons.CreateCloseButton(RQEFrame)
     -- Nested functions
     CloseButton:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -6, -6)  -- Anchoring
     CloseButton:SetScript("OnClick", function(self, button)
+        RQE.isRQEFrameManuallyClosed = true -- Marking the frame as manually closed
         RQEFrame:Hide()
     end)
     CreateTooltip(CloseButton, "Close/Hide Frame")
@@ -398,6 +399,7 @@ function RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
 
     QTCloseButton:SetPoint("TOPRIGHT", RQEQuestFrame, "TOPRIGHT", -6, -6)
     QTCloseButton:SetScript("OnClick", function(self, button)
+        RQE.isRQEQuestFrameManuallyClosed = true -- Marking the frame as manually closed
         RQEQuestFrame:Hide()
     end)
     CreateTooltip(QTCloseButton, "Close/Hide Quest Tracker")
