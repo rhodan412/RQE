@@ -1077,36 +1077,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         return
     end
 	
-	-- -- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
-    -- local isQuestInLog = C_QuestLog.IsOnQuest(questID)
-	-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-	-- local isBeingSearched = RQE.searchedQuestID == questID
-	-- local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
-    -- local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
-
-	-- -- Check if questID is not provided, fallback to the current super-tracked quest ID
-	-- if not isSuperTracking and RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "" then
-		-- C_SuperTrack.SetSuperTrackedQuestID(questID)
-		-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-    -- end
-	
-	--RQE:ClearFrameData() -- might help solve issue if certain lines of one quest overlapping on another...WILL NEED TO CORRECT REASON WHY THIS IS CASE RATHER THAN DOING A CLEAR FRAME "HACK JOB FIX" IN ORDER TO NOT CAUSE PROBLEMS WITH THE WORLD BOSS NOT CLEARING
-
-    -- -- Compile a list of all watched quests (both regular and world)
-    -- local watchedQuests = {}
-    -- for i = 1, C_QuestLog.GetNumQuestWatches() do
-        -- local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-        -- if watchedQuestID then
-            -- watchedQuests[watchedQuestID] = true
-        -- end
-    -- end
-    -- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-        -- local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-        -- if watchedWorldQuestID then
-            -- watchedQuests[watchedWorldQuestID] = true
-        -- end
-    -- end
-	
     if not questID then  -- Check if questID is nil
         RQE.debugLog("questID is nil.")
         return  -- Exit the function
