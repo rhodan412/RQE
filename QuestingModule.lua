@@ -1161,11 +1161,15 @@ end
 -- Your function to update the RQEQuestFrame
 function UpdateRQEQuestFrame()
     local campaignQuestCount, regularQuestCount, worldQuestCount = 0, 0, 0
+	RQE.campaignQuestCount = campaignQuestCount
+	RQE.regularQuestCount = regularQuestCount
+	RQE.worldQuestCount = worldQuestCount
+	RQE.AchievementsFrame.achieveCount = 0
     local baseHeight = 175 -- Base height when no quests are present
     local questHeight = 65 -- Height per quest
     local spacingBetweenElements = 5
     local extraHeightForScenario = 50
-
+	
     -- Check if ScenarioChildFrame is present and visible
     if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
         -- Here you could access the numCriteria from the ScenarioChildFrame if it's stored there
@@ -1176,24 +1180,24 @@ function UpdateRQEQuestFrame()
 	
     -- Loop through all tracked quests to count campaign and world quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-	local worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+	RQE.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
 	
     for i = 1, numTrackedQuests do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if C_CampaignInfo.IsCampaignQuest(questID) then
-            campaignQuestCount = campaignQuestCount + 1
+            RQE.campaignQuestCount = RQE.campaignQuestCount + 1
         elseif C_QuestLog.IsWorldQuest(questID) then
 			worldQuestCounter = worldQuestCounter + 1
 		end
     end
 
     -- Calculate the number of regular quests
-    regularQuestCount = numTrackedQuests - campaignQuestCount
+    RQE.regularQuestCount = numTrackedQuests - RQE.campaignQuestCount
 
     -- Calculate frame heights
-    local campaignHeight = baseHeight + (campaignQuestCount * questHeight)
-    local regularHeight = baseHeight + (regularQuestCount * questHeight) + extraHeightForScenario
-    local worldQuestHeight = baseHeight + (worldQuestCount * questHeight)
+    local campaignHeight = baseHeight + (RQE.campaignQuestCount * questHeight)
+    local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + extraHeightForScenario
+    local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
 	local achievementHeight = baseHeight + (RQE.AchievementsFrame.achieveCount * 40)
 	
     -- Update frame heights
@@ -1679,9 +1683,9 @@ function UpdateRQEQuestFrame()
 	end
 
 	-- Check if any of the child frames should have their visibility removed as no quests being tracked
-    RQE.CampaignFrame:SetShown(campaignQuestCount > 0)
-    RQE.QuestsFrame:SetShown(regularQuestCount > 0)
-    RQE.WorldQuestsFrame:SetShown(worldQuestCount > 0)
+    RQE.CampaignFrame:SetShown(RQE.campaignQuestCount > 0)
+    RQE.QuestsFrame:SetShown(RQE.regularQuestCount > 0)
+    RQE.WorldQuestsFrame:SetShown(RQE.worldQuestCount > 0)
 	
     -- After adding all quest items, update the total height of the content frame
     content:SetHeight(totalHeight)
@@ -1691,10 +1695,14 @@ function UpdateRQEQuestFrame()
     UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 
 	--UpdateHeader(RQE.ScenarioChildFrame, "", RQE.ScenarioChildFrame.questCount)  -- Add this line
-    UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.CampaignFrame.questCount)
-    UpdateHeader(RQE.QuestsFrame, "Quests", RQE.QuestsFrame.questCount)
-    UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.WorldQuestsFrame.questCount)
+    -- UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.CampaignFrame.questCount)
+    -- UpdateHeader(RQE.QuestsFrame, "Quests", RQE.QuestsFrame.questCount)
+    -- UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.WorldQuestsFrame.questCount)
 
+    UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.campaignQuestCount)
+    UpdateHeader(RQE.QuestsFrame, "Quests", RQE.regularQuestCount)
+    UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.worldQuestCount)
+	
     -- Update scrollbar range and visibility
     local scrollFrameHeight = RQE.QTScrollFrame:GetHeight()
     if totalHeight > scrollFrameHeight then
@@ -1703,6 +1711,9 @@ function UpdateRQEQuestFrame()
     else
         RQE.QMQTslider:Hide()
     end
+	
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 
 
@@ -2095,7 +2106,7 @@ end
 
 
 -- Function to count the number of tracked achievements
-function GetNumTrackedAchievements()
+function RQE.GetNumTrackedAchievements()
     -- Assuming RQE.TrackedAchievementIDs is a table that contains the achievement IDs that are being tracked
     local count = 0
     if RQE and RQE.TrackedAchievementIDs then
@@ -2109,7 +2120,7 @@ end
 
 -- Function to Update Achievements Frame
 function UpdateRQEAchievementsFrame()
-	RQE.AchievementsFrame.achieveCount = GetNumTrackedAchievements()
+	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
     -- Print the IDs of tracked achievements for debugging
     RQE.infoLog("Currently Tracked Achievements:")
     for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
@@ -2230,4 +2241,7 @@ function UpdateRQEAchievementsFrame()
     if RQE.AchievementsFrame.scrollFrame then
         RQE.AchievementsFrame.scrollFrame:SetVerticalScrollRange(math.abs(offsetY))
     end
+	
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
 end

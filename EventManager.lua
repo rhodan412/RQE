@@ -285,6 +285,10 @@ function RQE.handleScenario(self, event, ...)
     -- C_Timer.After(4, RQE.InitializeScenarioFrame) -- Wait 4 seconds before re-initializing the scenario frame
 	
     RQE.UpdateCampaignFrameAnchor()
+	
+	-- Check if still in a scenario (useful for relogs or loading screens)
+	RQE.isInScenario = C_Scenario.IsInScenario()
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 
 
@@ -293,6 +297,10 @@ function RQE.handleScenarioComplete()
 	RQE.StopTimer()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE.HandleTimerStop(timerID)
+	
+	-- Check if still in a scenario (useful for relogs or loading screens)
+	RQE.isInScenario = C_Scenario.IsInScenario()
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 
 
@@ -502,6 +510,10 @@ function RQE.handlePlayerEnterWorld(...)
 			RQE.handleScenario()
 		end
     end
+	
+	-- Check if still in a scenario (useful for relogs or loading screens)
+	RQE.isInScenario = C_Scenario.IsInScenario()
+	RQE:UpdateRQEQuestFrameVisibility()
 end	
 		
 
@@ -585,6 +597,10 @@ function RQE.handleQuestAccepted(...)
 			UpdateWorldQuestTrackingForMap(playerMapID)
         end
 	end
+	
+	-- Visibility Update Check for RQEFrame & RQEQuestFrame
+	RQE:UpdateRQEFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 
 		
@@ -678,6 +694,9 @@ function RQE.handleQuestStatusUpdate(...)
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
+	
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 	
 
@@ -701,6 +720,9 @@ function RQE.handleQuestComplete(...)
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 		
 		
@@ -778,6 +800,9 @@ function RQE.handleQuestWatchUpdate(...)
 		C_Timer.After(0.5, function()
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
+			
+		-- Visibility Update Check for RQEQuestFrame
+		RQE:UpdateRQEQuestFrameVisibility()
 	end
 end
 		
@@ -834,6 +859,9 @@ function RQE.handleQuestWatchListChanged(...)
 		C_Timer.After(0.5, function()
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
+		
+		-- Visibility Update Check for RQEQuestFrame
+		RQE:UpdateRQEQuestFrameVisibility()
 	end
 end
 		
@@ -851,6 +879,9 @@ function RQE.handleQuestTurnIn(...)
 		RQE:ClearFrameData()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
+	
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 	
 	

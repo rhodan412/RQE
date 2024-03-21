@@ -153,7 +153,9 @@ local defaults = {
         debugMode = true,
         debugLevel = "INFO",
         enableFrame = true,
+		hideRQEFrameWhenEmpty = false,
 		enableQuestFrame = true,
+		hideRQEQuestFrameWhenEmpty = false,
         showMinimapIcon = false,
         showMapID = true,
         showCoordinates = true,
@@ -822,6 +824,53 @@ function RQE:ToggleMapIDCheckbox()
 end
 
 
+-- Function to Show/Hide RQEFrame when frames are empty
+function RQE:UpdateRQEFrameVisibility()
+    local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
+	local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
+	
+	if self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking) then
+        RQEFrame:Hide()
+    else
+        RQEFrame:Show()
+    end
+end
+
+
+-- Function to Show/Hide RQEQuestFrame when frames are empty
+function RQE:UpdateRQEQuestFrameVisibility()
+    -- Reset counts to 0
+    self.campaignQuestCount = 0
+    self.regularQuestCount = 0
+    self.worldQuestCount = 0
+	
+	-- Pull data of number of tracked achievements
+	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
+    self.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+	
+    -- Iterate through tracked quests to count them
+    for i = 1, C_QuestLog.GetNumQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        if questID then
+            if C_CampaignInfo.IsCampaignQuest(questID) then
+                self.campaignQuestCount = self.campaignQuestCount + 1
+            elseif C_QuestLog.IsWorldQuest(questID) then
+                self.worldQuestCount = self.worldQuestCount + 1
+            else
+                self.regularQuestCount = self.regularQuestCount + 1
+            end
+        end
+    end
+	
+    -- Use the stored quest counts from the RQE table
+    if self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario) then
+        RQEQuestFrame:Hide()
+    else
+        RQEQuestFrame:Show()
+    end
+end
+
+
 ---------------------------------------------------
 -- 9. Update Frames
 ---------------------------------------------------
@@ -1206,6 +1255,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 	RQE.UpdateTrackedAchievementList()
 	RQE:ShouldClearFrame(questID)
+	
+	-- Visibility Update Check for RQEFrame
+	RQE:UpdateRQEFrameVisibility()
 end
 
 

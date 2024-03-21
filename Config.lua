@@ -103,6 +103,17 @@ RQE.options = {
 						RQE:ToggleRQEFrame()
 					end,
 					order = 1,
+				},			
+				hideRQEFrameWhenEmpty = {
+					type = "toggle",
+					name = "Hide SuperTrack Frame When Empty",
+					desc = "Automatically hide the SuperTrack Frame when there are no quests being super tracked or searched.",
+					get = function(info) return RQE.db.profile.hideRQEFrameWhenEmpty end,
+					set = function(info, value)
+						RQE.db.profile.hideRQEFrameWhenEmpty = value
+						RQE:UpdateRQEFrameVisibility()
+					end,
+					order = 2, -- Adjust the order as needed
 				},
 				enableQuestFrame = {
 					type = "toggle",
@@ -113,8 +124,19 @@ RQE.options = {
 						RQE.db.profile.enableQuestFrame = value
 						RQE:ToggleRQEQuestFrame()
 					end,
-					order = 2,
-				},	
+					order = 3,
+				},
+				hideRQEQuestFrameWhenEmpty = {
+					type = "toggle",
+					name = "Hide Quest Frame When Empty",
+					desc = "Automatically hide the Quest Tracker when no quests or achievements are being watched.",
+					get = function(info) return RQE.db.profile.hideRQEQuestFrameWhenEmpty end,
+					set = function(info, value)
+						RQE.db.profile.hideRQEQuestFrameWhenEmpty = value
+						RQE:UpdateRQEQuestFrameVisibility()
+					end,
+					order = 4, -- Adjust the order as needed
+				},
 				minimapToggle = {
 					type = "toggle",
 					name = "Show Minimap Button",
@@ -125,13 +147,13 @@ RQE.options = {
 					set = function(_, newValue)
 						RQE:ToggleMinimapIcon()
 					end,
-					order = 3,
+					order = 5,
 				},
 				showMapID = {
 					type = "toggle",
 					name = "Show Current MapID",
 					desc = "Toggles the display of the current MapID on the frame.",
-					order = 5,  -- Adjust this based on where you want it in the order
+					order = 6,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.showMapID end,
 					set = function(_, newValue) 
 						RQE.db.profile.showMapID = newValue;
@@ -142,7 +164,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Show Current X, Y",
 					desc = "Toggles the display of the current coordinates on the frame.",
-					order = 6,  -- Adjust this based on where you want it in the order
+					order = 7,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.showCoordinates end,
 					set = function(_, newValue) 
 						RQE.db.profile.showCoordinates = newValue;
@@ -154,7 +176,7 @@ RQE.options = {
 					name = "Auto Quest Watch",
 					desc = "Automatically track quests as soon as you obtain them and after achieving an objective.\n\n" ..
 							"|cffff0000If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
-					order = 7,  -- Adjust this based on where you want it in the order
+					order = 8,  -- Adjust this based on where you want it in the order
 					get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
 					set = function(_, newValue) 
 						RQE.db.profile.autoQuestWatch = newValue;
@@ -166,7 +188,7 @@ RQE.options = {
 					name = "Auto Quest Progress",
 					desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n" ..
 							"|cffff0000If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
-					order = 8,  -- Adjust this based on where you want it in the order
+					order = 9,  -- Adjust this based on where you want it in the order
 					get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
 					set = function(_, newValue) 
 						RQE.db.profile.autoQuestProgress = newValue;
@@ -177,7 +199,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Remove WQ after login",
 					desc = "Removes all of the WQ on player login",
-					order = 9,  -- Adjust this based on where you want it in the order
+					order = 10,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.removeWQatLogin end,
 					set = function(_, newValue) 
 						RQE.db.profile.removeWQatLogin = newValue;
