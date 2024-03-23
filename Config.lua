@@ -273,7 +273,7 @@ RQE.options = {
 								RQE:UpdateFramePosition()
 							end,
 							order = 3,
-						},
+						},						
 						MainFrameOpacity = {
 							type = 'range',
 							name = 'Quest Helper Opacity',
@@ -288,6 +288,38 @@ RQE.options = {
 								RQE:UpdateFrameOpacity()  -- You will need to create this function
 							end,
 							order = 4,  -- Adjust this number to place it in your preferred order
+						},
+						frameWidth = {
+							type = 'range',
+							name = 'Frame Width',
+							desc = 'Adjust the width of the super tracking frame.',
+							min = 100,  -- Minimum height you allow
+							max = 800,  -- Maximum height you allow
+							step = 1,
+							get = function(info)
+								return RQE.db.profile.framePosition.frameWidth
+							end,
+							set = function(info, value)
+								RQE.db.profile.framePosition.frameWidth = value
+								RQE:UpdateFrameSize()  -- Function to update frame size
+							end,
+							order = 5,
+						},
+						frameHeight = {
+							type = 'range',
+							name = 'Frame Height',
+							desc = 'Adjust the height of the super tracking frame.',
+							min = 100,  -- Minimum height you allow
+							max = 800,  -- Maximum height you allow
+							step = 1,
+							get = function(info)
+								return RQE.db.profile.framePosition.frameHeight
+							end,
+							set = function(info, value)
+								RQE.db.profile.framePosition.frameHeight = value
+								RQE:UpdateFrameSize()  -- Function to update frame size
+							end,
+							order = 6,
 						},
 					},
 				},
@@ -368,6 +400,38 @@ RQE.options = {
 								RQE:UpdateFrameOpacity()  -- You will need to create this function
 							end,
 							order = 4,  -- Adjust this number to place it in your preferred order
+						},
+						frameWidth = {
+							type = 'range',
+							name = 'Frame Width',
+							desc = 'Adjust the width of the super tracking frame.',
+							min = 100,  -- Minimum height you allow
+							max = 800,  -- Maximum height you allow
+							step = 1,
+							get = function(info)
+								return RQE.db.profile.QuestFramePosition.frameWidth
+							end,
+							set = function(info, value)
+								RQE.db.profile.QuestFramePosition.frameWidth = value
+								RQE:UpdateQuestFrameSize()  -- Function to update frame size
+							end,
+							order = 5,
+						},
+						frameHeight = {
+							type = 'range',
+							name = 'Frame Height',
+							desc = 'Adjust the height of the super tracking frame.',
+							min = 100,  -- Minimum height you allow
+							max = 800,  -- Maximum height you allow
+							step = 1,
+							get = function(info)
+								return RQE.db.profile.QuestFramePosition.frameHeight
+							end,
+							set = function(info, value)
+								RQE.db.profile.QuestFramePosition.frameHeight = value
+								RQE:UpdateQuestFrameSize()  -- Function to update frame size
+							end,
+							order = 6,
 						},
 					},
 				},
@@ -904,6 +968,18 @@ RQE.options = {
 								return not (RQE.db.profile.debugMode and RQE.db.profile.debugLevel == "INFO")
 							end,
 							order = 2,
+						},
+						resetFrameSize = {
+							type = "execute",
+							name = "Reset Size",
+							desc = "Reset the size of the frame to its default coded size.",
+							func = function()
+								RQE:ResetFrameSizeToDBorDefault()
+							end,
+							hidden = function()
+								return not (RQE.db.profile.debugMode and RQE.db.profile.debugLevel == "INFO")
+							end,
+							order = 3,
 						},
 					},
 				},
