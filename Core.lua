@@ -162,12 +162,12 @@ local defaults = {
 		autoQuestWatch = true,
 		autoQuestProgress = true,
 		removeWQatLogin = false,
-        frameWidth = 400,
-        frameHeight = 300,
         framePosition = {
             xPos = -40,
             yPos = -270,
             anchorPoint = "TOPRIGHT",
+			frameWidth = 435,
+			frameHeight = 300,
 		},
 		MainFrameOpacity = 0.55, 
 		textSettings = {
@@ -176,7 +176,7 @@ local defaults = {
             xPos = -40,
             yPos = 150,
 			anchorPoint = "BOTTOMRIGHT",
-            frameWidth = 300,
+            frameWidth = 325,
             frameHeight = 450
 		},
 		QuestFrameOpacity = 0.55, 
@@ -943,6 +943,40 @@ function RQE:UpdateQuestFramePosition()
 end
 
 
+-- Function to update the RQEFrame size based on the current profile settings
+function RQE:UpdateFrameSize()
+    -- When reading from DB
+    local frameWidth = self.db.profile.framePosition.frameWidth or 400
+    local frameHeight = self.db.profile.framePosition.frameHeight or 300
+	
+    -- Error handling for main frame
+    local success, err = pcall(function()
+        RQEFrame:SetSize(frameWidth, frameHeight)
+    end)
+
+    if not success then
+        RQE.debugLog("Error setting main frame size: ", err)
+    end
+end
+
+
+-- Function to update the RQEQuestFrame size based on the current profile settings
+function RQE:UpdateQuestFrameSize()
+    -- Update the quest frame size similarly, using its respective profile settings
+    local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 300
+    local questFrameHeight = self.db.profile.QuestFramePosition.frameHeight or 450
+
+    -- Error handling for quest frame
+    local success, err = pcall(function()
+        RQEQuestFrame:SetSize(questFrameWidth, questFrameHeight)
+    end)
+
+    if not success then
+        RQE.debugLog("Error setting quest frame size: ", err)
+    end
+end
+
+
 -- ClearFrameData function
 function RQE:ClearFrameData()
 	-- Clear the Quest ID and Quest Name
@@ -1590,6 +1624,33 @@ function RQE:ResetFramePositionToDBorDefault()
 end
 
 
+-- Function for Button in Configuration that will reset the size of the RQEFrame and RQEQuestFrame to default values
+function RQE:ResetFrameSizeToDBorDefault()
+    local RQEWidth = 435
+    local RQEHeight = 300
+    local RQEQuestWidth = 325
+    local RQEQuestHeight = 450
+	
+    -- Update the database
+    RQE.db.profile.framePosition.frameWidth = RQEWidth
+    RQE.db.profile.framePosition.frameHeight = RQEHeight
+    RQE.db.profile.QuestFramePosition.frameWidth = RQEQuestWidth
+    RQE.db.profile.QuestFramePosition.frameHeight = RQEQuestHeight
+	
+    -- Update the frame position
+    SaveRQEFrameSize()
+	SaveQuestFrameSize()
+	
+    -- Directly update the frame sizes
+    if RQEFrame then
+        RQEFrame:SetSize(RQEWidth, RQEHeight)
+    end
+    if RQEQuestFrame then
+        RQEQuestFrame:SetSize(RQEQuestWidth, RQEQuestHeight)
+    end
+end
+
+
 -- When the frame is maximized
 function RQE:MaximizeFrame()
     local defaultWidth = RQE.db.profile.frameWidth or 400  -- Replace 400 with the default from Core.lua
@@ -1605,7 +1666,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeFrame()
-    RQEFrame:SetSize(400, 30)  -- If you want to make this configurable, you can use similar logic as above
+    RQEFrame:SetSize(435, 30)  -- If you want to make this configurable, you can use similar logic as above
     RQE.db.profile.isFrameMaximized = false
 end
 
