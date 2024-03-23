@@ -913,7 +913,7 @@ end
 
 local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
 timerFrame:SetSize(100, 10) -- Adjust size as needed
-timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 95, -45)
+timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 75, -45)
 
 
 -- Create a FontString for the timer text
