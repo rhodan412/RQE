@@ -351,8 +351,8 @@ end
 function RQE.handlePlayerStoppedMoving(...)
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
-	--AdjustRQEFrameWidths(RQEQuestFrame:GetWidth())
-	--AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustRQEFrameWidths()
+	AdjustQuestItemWidths()
 end	
 
 
@@ -454,7 +454,7 @@ function RQE.handleVariablesLoaded(...)
 
 	else
 		-- Code to minimize the frame
-		RQEFrame:SetSize(400, 30)
+		RQEFrame:SetSize(435, 30)
 		
 		if ScrollFrame then
 			ScrollFrame:Hide()
@@ -766,6 +766,10 @@ function RQE.handleQuestRemoved(questID, removedByUser)
         -- Clear the saved state for this quest
         RQE.TrackedQuests[questID] = nil
     end
+	
+	-- Visibility Check for RQEFrame and RQEQuestFrame
+	RQE:UpdateRQEFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 	
 		

@@ -101,6 +101,7 @@ resizeBtn:SetScript("OnMouseDown", function(self, button)
 end)
 resizeBtn:SetScript("OnMouseUp", function(self, button)
   frame:StopMovingOrSizing()
+  AdjustQuestItemWidths()
 end)
 RQE.QTResizeButton = resizeBtn
 
@@ -458,6 +459,7 @@ RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
 -- Event to update text widths when the frame is resized
 RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
     AdjustQuestItemWidths(width)
+	SaveQuestFrameSize()
 end)
 
 
@@ -477,51 +479,175 @@ function SaveQuestFramePosition()
 end
 
 
--- Calls function to save Quest Frame Position OnDragStop
-RQEQuestFrame:SetScript("OnDragStop", function()
-    RQEQuestFrame:StopMovingOrSizing()
-    SaveQuestFramePosition()  -- This will save the current frame position
-end)
-
-
--- Event to update text widths when the frame is resized
-RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
-	AdjustQuestItemWidths(width)
-end)
+-- Define the function to save frame position
+function SaveQuestFrameSize()
+    local width, height = RQEQuestFrame:GetSize()
+    RQE.db.profile.QuestFramePosition.frameWidth = width
+    RQE.db.profile.QuestFramePosition.frameHeight = height
+end
 
 
 -- Function used to adjust the Questing Frame width
 function AdjustQuestItemWidths(frameWidth)
+    -- Fallback: If frameWidth is not provided, use the width of a specific frame, e.g., RQEQuestFrame
+    if not frameWidth then
+        frameWidth = RQEQuestFrame:GetWidth() -- Adjust RQEQuestFrame to your specific frame
+    end
+	
+    -- Define base parameters for dynamic padding calculation
+    local baseWidth = 400
+    local paddingMultiplier = (frameWidth - baseWidth) / 400
+    
+    -- Define base padding for different elements
+    local basePadding = {
+		-- Quest Base Padding
+        QuestLevelAndName = 100,
+        QuestObjectives = 110,
+        QuestObjectivesOrDescription = 110,
+		QuestTypeLabel = 130,
+
+		-- World Quest Base Padding
+        WQuestLevelAndName = 100,  -- Specific to WQuestLevelAndName
+        WQuestObjectives = 110,  -- Specific to WQuestObjectives
+        WQuestObjectivesOrDescription = 110,  -- Specific to WQuestObjectivesOrDescription
+        WorldQuestTimeLeft = 45,
+        WorldQuestDistance = 65,
+		
+		-- Scenario Base Padding
+        ScenarioChildFrameBody = 75,  -- Added base padding for RQE.ScenarioChildFrame.body
+		ScenarioChildFrameScenarioTitle = 55,  -- Added base padding for RQE.ScenarioChildFrame.scenarioTitle
+		ScenarioChildFrameTitle = 75,  -- Added base padding for RQE.ScenarioChildFrame.title
+		ScenarioTimerFrame = 15,
+		
+		TextPadding = 90,
+        TimerFramePadding = 10, -- Additional padding for the timer frame if needed
+    }
+	
+	-- Adjust widths for elements in RQE.QuestLogIndexButtons
+	for i, button in ipairs(RQE.QuestLogIndexButtons or {}) do
+		if button.QuestLevelAndName then
+			button.QuestLevelAndName:SetWidth(frameWidth - (basePadding.QuestLevelAndName * (1 + paddingMultiplier)))
+		end
+
+		if button.QuestObjectives then
+			-- Adjust the width of QuestObjectives, considering the base padding and padding multiplier
+			local dynamicPadding = basePadding.QuestObjectives * (1 + paddingMultiplier)
+			button.QuestObjectives:SetWidth(frameWidth - dynamicPadding)
+		end
+
+		if button.QuestObjectivesOrDescription then
+			-- Adjust the width of QuestObjectivesOrDescription, considering the base padding and padding multiplier
+			local dynamicPadding = basePadding.QuestObjectivesOrDescription * (1 + paddingMultiplier)
+			button.QuestObjectivesOrDescription:SetWidth(frameWidth - dynamicPadding)
+		end
+	end
+	
+    -- Dynamic padding calculation for newly added elements
+    local textPadding = basePadding.TextPadding * (1 + paddingMultiplier)
+    local timerFramePadding = basePadding.TimerFramePadding * (1 + paddingMultiplier)
+	
+    -- Adjust widths for child frames and their headers
+    local childFrames = {
+        RQE.ScenarioChildFrame,
+        RQE.CampaignFrame,
+        RQE.QuestsFrame,
+        RQE.WorldQuestsFrame,
+        RQE.AchievementsFrame,
+    }
+	
+	-- Adjust width for each element
+    for _, WQuestLogIndexButton in pairs(WQuestLogIndexButtons or {}) do
+        -- Adjust WQuestLevelAndName width for each WQuestLogIndexButton
+        if WQuestLogIndexButton.WQuestLevelAndName then
+            local dynamicPadding = basePadding.WQuestLevelAndName * (1 + paddingMultiplier)
+            WQuestLogIndexButton.WQuestLevelAndName:SetWidth(frameWidth - dynamicPadding)
+        end
+		
+        -- Adjust WQuestObjectives width for each WQuestLogIndexButton
+        if WQuestLogIndexButton.QuestObjectives then
+            local dynamicPadding = basePadding.WQuestObjectives * (1 + paddingMultiplier)
+            WQuestLogIndexButton.QuestObjectives:SetWidth(frameWidth - dynamicPadding)
+        end	
+	
+        -- Adjust WQuestObjectivesOrDescription width for each WQuestLogIndexButton
+        if WQuestLogIndexButton.QuestObjectivesOrDescription then
+            local dynamicPadding = basePadding.WQuestObjectivesOrDescription * (1 + paddingMultiplier)
+            WQuestLogIndexButton.QuestObjectivesOrDescription:SetWidth(frameWidth - dynamicPadding)
+        end
+		
+        -- Adjust WorldQuestTimeLeft width for each WQuestLogIndexButton
+        if WQuestLogIndexButton.WQuestTimeLeft then
+            local dynamicPadding = basePadding.WorldQuestTimeLeft * (1 + paddingMultiplier)
+            WQuestLogIndexButton.WQuestTimeLeft:SetWidth(frameWidth - dynamicPadding)
+        end
+		
+        -- Adjust WorldQuestDistance width for each WQuestLogIndexButton
+        if WQuestLogIndexButton.WQuestDistance then
+            local dynamicPadding = basePadding.WorldQuestDistance * (1 + paddingMultiplier)
+            WQuestLogIndexButton.WQuestDistance:SetWidth(frameWidth - dynamicPadding)
+        end
+    end
+	
+    -- Adjust widths for elements in RQE.QuestLogIndexButtons
     for i, button in pairs(RQE.QuestLogIndexButtons or {}) do
-        if button.QuestLevelAndName then  -- Check if QuestLevelAndName is initialized
-            button.QuestLevelAndName:SetWidth(frameWidth - 80)  -- Adjust the padding as needed
-            button.QuestLevelAndName:SetWordWrap(true)  -- Ensure word wrap
-            button.QuestLevelAndName:SetHeight(0)
+        if button.QuestLevelAndName then
+            button.QuestLevelAndName:SetWidth(frameWidth - (basePadding.QuestLevelAndName * (1 + paddingMultiplier)))
         end
 
-        if button.QuestObjectivesOrDescription then  -- Check if QuestObjectivesOrDescription is initialized
-            button.QuestObjectivesOrDescription:SetWidth(frameWidth - 80)  -- Adjust the padding as needed
-            button.QuestObjectivesOrDescription:SetWordWrap(true)  -- Ensure word wrap
-            button.QuestObjectivesOrDescription:SetHeight(0)
+        if button.QuestObjectivesOrDescription then
+            button.QuestObjectivesOrDescription:SetWidth(frameWidth - (basePadding.QuestObjectivesOrDescription * (1 + paddingMultiplier)))
+        end
+		
+        if button.QuestTypeLabel then
+            button.QuestTypeLabel:SetWidth(frameWidth - (basePadding.QuestTypeLabel * (1 + paddingMultiplier)))
         end
     end
-    -- Add a check to ensure RQE.ScenarioChildFrame.body is not nil
+
+    -- Adjust width for RQE.ScenarioChildFrame.body using dynamic padding if not nil
     if RQE.ScenarioChildFrame.body then
-        RQE.ScenarioChildFrame.body:SetWidth(frameWidth - 75)  -- Adjust the padding as needed
-        RQE.ScenarioChildFrame.body:SetWordWrap(true)  -- Ensure word wrap
-        RQE.ScenarioChildFrame.body:SetHeight(0)
+        RQE.ScenarioChildFrame.body:SetWidth(frameWidth - (basePadding.ScenarioChildFrameBody * (1 + paddingMultiplier)))
     end
-    -- Add a check to ensure RQE.ScenarioChildFrame.scenarioTitle is not nil
+
+	-- Adjust width for RQE.ScenarioChildFrame.scenarioTitle using dynamic padding if not nil
     if RQE.ScenarioChildFrame.scenarioTitle then
-        RQE.ScenarioChildFrame.scenarioTitle:SetWidth(frameWidth - 55)  -- Adjust the padding as needed
-        RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)  -- Ensure word wrap
-        RQE.ScenarioChildFrame.scenarioTitle:SetHeight(0)
+        RQE.ScenarioChildFrame.scenarioTitle:SetWidth(frameWidth - (basePadding.ScenarioChildFrameScenarioTitle * (1 + paddingMultiplier)))
     end
-    -- Add a check to ensure RQE.ScenarioChildFrame.title is not nil
+	
+	-- Adjust width for RQE.ScenarioChildFrame.title using dynamic padding if not nil
     if RQE.ScenarioChildFrame.title then
-        RQE.ScenarioChildFrame.title:SetWidth(frameWidth - 75)  -- Adjust the padding as needed
-        RQE.ScenarioChildFrame.title:SetWordWrap(true)  -- Ensure word wrap
-        RQE.ScenarioChildFrame.title:SetHeight(0)
+        RQE.ScenarioChildFrame.title:SetWidth(frameWidth - (basePadding.ScenarioChildFrameTitle * (1 + paddingMultiplier)))
+    end
+
+	-- Adjust width for RQE.ScenarioChildFrame.timerFrame using dynamic padding if not nil
+    if RQE.ScenarioChildFrame.timerFrame then
+        RQE.ScenarioChildFrame.timerFrame:SetWidth(frameWidth - (basePadding.ScenarioTimerFrame * (1 + paddingMultiplier)))
+    end
+	
+    for _, childFrame in ipairs(childFrames) do
+        if childFrame then
+            -- Set the child frame's width
+            childFrame:SetWidth(frameWidth)
+            
+            -- Assuming each childFrame has a 'header' frame and 'headerText' as described
+            if childFrame.header then
+                -- Adjust the header frame's width to match the child frame
+                childFrame.header:SetWidth(frameWidth)
+
+                -- If there's a text element within the header, adjust its width considering padding
+                if childFrame.header.headerText then
+                    childFrame.header.headerText:SetWidth(frameWidth - textPadding)
+                end
+            end
+        end
+    end
+
+    -- Example adjustment for RQE.AchievementsFrame specific elements
+    -- Assuming criteriaText and achievementHeader are directly accessible here
+    if RQE.AchievementsFrame.criteriaText then
+        RQE.AchievementsFrame.criteriaText:SetWidth(frameWidth - textPadding)
+    end
+    if RQE.AchievementsFrame.achievementHeader then
+        RQE.AchievementsFrame.achievementHeader:SetWidth(frameWidth - textPadding)
     end
 end
 
@@ -613,10 +739,12 @@ function RQE.InitializeScenarioFrame()
 		RQE.ScenarioChildFrame.scenarioTitle:ClearAllPoints()
 		RQE.ScenarioChildFrame.scenarioTitle:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "TOPLEFT", 10, -10)
 		RQE.ScenarioChildFrame.scenarioTitle:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")
-		RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)
 		-- Ensure the text fits nicely and is readable
 		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.scenarioTitle:SetJustifyV("TOP")
+		RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)  -- Ensure word wrap
+		RQE.ScenarioChildFrame.scenarioTitle:SetHeight(0)
+
     end
 
     if not RQE.ScenarioChildFrame.stage then
@@ -628,6 +756,8 @@ function RQE.InitializeScenarioFrame()
 		-- Ensure the text fits nicely and is readable
 		RQE.ScenarioChildFrame.stage:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.stage:SetJustifyV("TOP")
+		RQE.ScenarioChildFrame.stage:SetWordWrap(true)  -- Ensure word wrap
+		RQE.ScenarioChildFrame.stage:SetHeight(0)
     end
 	
     -- Ensure that scenarioTitle is a valid FontString object before creating title
@@ -639,6 +769,8 @@ function RQE.InitializeScenarioFrame()
 		RQE.ScenarioChildFrame.title:SetFont("Fonts\\SKURRI.TTF", 17, "OUTLINE")
 		RQE.ScenarioChildFrame.title:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.title:SetJustifyV("TOP")
+		RQE.ScenarioChildFrame.title:SetWordWrap(true)  -- Ensure word wrap
+		RQE.ScenarioChildFrame.title:SetHeight(0)
     end
 	
 	-- Create a new frame for the timer
@@ -664,6 +796,8 @@ function RQE.InitializeScenarioFrame()
 	RQE.ScenarioChildFrame.timer:SetJustifyH("CENTER")
 	RQE.ScenarioChildFrame.timer:SetJustifyV("MIDDLE")
 	RQE.ScenarioChildFrame.timer:SetText("Initial Timer")
+	RQE.ScenarioChildFrame.timer:SetHeight(0)
+	RQE.ScenarioChildFrame.timer:SetWordWrap(true)
 	RQE.ScenarioChildFrame.timer:SetTextColor(1, 1, 0, 1)
 
     -- Show the timer frame and its text
@@ -679,6 +813,8 @@ function RQE.InitializeScenarioFrame()
         RQE.ScenarioChildFrame.body:SetText("Initial Body Text")
 		RQE.ScenarioChildFrame.body:SetJustifyH("LEFT")
 		RQE.ScenarioChildFrame.body:SetJustifyV("TOP")
+		RQE.ScenarioChildFrame.body:SetWordWrap(true)  -- Ensure word wrap
+		RQE.ScenarioChildFrame.body:SetHeight(0)
 		-- Set the color of the body FontString to white (r, g, b, alpha)
 		RQE.ScenarioChildFrame.body:SetTextColor(1, 1, 1, 0.9) -- White color
 	end
@@ -730,11 +866,11 @@ function RQE.UpdateScenarioFrame()
     if scenarioName and scenarioStepInfo then
         -- Update the scenarioTitle with the scenario name
         RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
-		RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)
+		--RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)
         
         -- Update the stage with the current stage and total stages
         RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
-		RQE.ScenarioChildFrame.stage:SetWordWrap(true)
+		--RQE.ScenarioChildFrame.stage:SetWordWrap(true)
         
         -- Update the title with the scenario step title
         RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo)--(scenarioStepInfo.title)
@@ -785,7 +921,6 @@ local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 timerText:SetAllPoints(timerFrame)
 timerText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")  -- Increase font size to 20, adjust as needed
 timerText:SetTextColor(1, 1, 1, 1) -- Sets timerText color to white
-
 
 local startTime
 local function UpdateTimer(self, elapsed)
@@ -1389,6 +1524,7 @@ function UpdateRQEQuestFrame()
 				QuestObjectives:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				QuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectives:SetWordWrap(true)
+				QuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
 				QuestObjectives:SetHeight(0)  -- Auto height
 				QuestObjectives:SetText(objectivesText)
 
@@ -1427,7 +1563,7 @@ function UpdateRQEQuestFrame()
 				QuestLevelAndName:SetJustifyH("LEFT")
 				QuestLevelAndName:SetJustifyV("TOP")
 				QuestLevelAndName:SetWordWrap(true)
-				QuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -10 for padding
+				QuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
 				QuestLevelAndName:SetHeight(0)  -- Auto height
 				QuestLevelAndName:EnableMouse(true)
 
@@ -1440,6 +1576,9 @@ function UpdateRQEQuestFrame()
 				local questZoneText = GetQuestZone(questID)
 				local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
+				QuestTypeLabel:SetWordWrap(true)
+				QuestTypeLabel:SetJustifyH("LEFT")
+				QuestTypeLabel:SetJustifyV("TOP")
 				QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
 				--QuestTypeLabel:SetTextColor(153/255, 255/255, 255/255)  -- Light Blue
 				QuestTypeLabel:SetTextColor(250/255, 128/255, 115/255)  -- Salmon
@@ -1454,7 +1593,9 @@ function UpdateRQEQuestFrame()
 				QuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectivesOrDescription:SetJustifyH("LEFT")
 				QuestObjectivesOrDescription:SetJustifyV("TOP")
+				QuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 110)
 				QuestObjectivesOrDescription:SetHeight(0)  -- Auto height
+				QuestObjectivesOrDescription:SetWordWrap(true)
 				QuestObjectivesOrDescription:EnableMouse(true)
 
 				-- Update the last element tracker for the correct type
@@ -1819,7 +1960,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetHeight(0)
 			WQuestLevelAndName:SetJustifyH("LEFT")
 			WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 70)  -- -70 for padding
+			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
 
 			-- Retrieve the quest title using the quest ID
 			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
@@ -1837,7 +1978,7 @@ function UpdateRQEWorldQuestFrame()
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
-			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 20)  -- -20 for padding
+			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
             WQuestObjectives:SetHeight(0)
             WQuestObjectives:SetJustifyH("LEFT")
             WQuestObjectives:SetJustifyV("TOP")
@@ -1885,7 +2026,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestTimeLeft:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQuestTimeLeft:SetTextColor(0.98, 0.5, 0.45)  -- Set the text color to Salmon
 			WQuestTimeLeft:SetJustifyH("LEFT")
-			WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 45)
+			--WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 45)
 			WQuestLogIndexButton.WQuestTimeLeft = WQuestTimeLeft
 	
 			-- Get the time left for the World Quest
@@ -1910,7 +2051,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestDistance:SetPoint("TOPLEFT", WQuestTimeLeft, "BOTTOMLEFT", 0, -5)
 			WQuestDistance:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQuestDistance:SetJustifyH("LEFT")
-			WQuestDistance:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 65)
+			--WQuestDistance:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 65)
 			WQuestDistance:SetText(questDistanceText)
 			WQuestLogIndexButton.WQuestDistance = WQuestDistance
 			WQuestDistance:Show()
@@ -1921,7 +2062,8 @@ function UpdateRQEWorldQuestFrame()
 			WQuestObjectivesOrDescription:SetJustifyH("LEFT")
 			WQuestObjectivesOrDescription:SetJustifyV("TOP")
 			WQuestObjectivesOrDescription:SetHeight(0)
-			WQuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 30)  -- -30 for padding
+			WQuestObjectivesOrDescription:SetWordWrap(true)
+			WQuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 110)
 			WQuestObjectivesOrDescription:SetText(questObjectivesText)
 			WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
@@ -2136,8 +2278,9 @@ function UpdateRQEAchievementsFrame()
 	-- Sets initial y-offset slightly below top of frame
     local offsetY = -45 -- Starting offset for the first achievement
     local spacing = 7 -- Space between achievements
-    local textPadding = 10 -- Adjust this value to control word wrap width
-
+    local textPadding = 55 -- Adjust this value to control word wrap width
+	local availableWidth = RQE.AchievementsFrame:GetWidth() - textPadding
+	
     -- Loop through each tracked achievement ID and display it along with the description
     for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
         local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
@@ -2148,7 +2291,7 @@ function UpdateRQEAchievementsFrame()
             achievementHeader:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
             achievementHeader:SetText("[" .. id .. "] " .. name)
             achievementHeader:SetTextColor(1, 0.5, 0.3) -- Tan color for the achievement ID and name
-            achievementHeader:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
+            --achievementHeader:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
             achievementHeader:SetJustifyH("LEFT")
             
             -- Set up the tooltip for the achievement header
@@ -2211,9 +2354,12 @@ function UpdateRQEAchievementsFrame()
 
                 -- Create a FontString for each criteria
                 local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                criteriaText:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
+                --criteriaText:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
+				criteriaText:SetWidth(availableWidth)
                 criteriaText:SetJustifyH("LEFT")
                 criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
+				criteriaText:SetHeight(criteriaText:GetStringHeight())
+				criteriaText:SetWordWrap(true)
 
                 -- Set color based on completion status
                 if criteriaCompleted then

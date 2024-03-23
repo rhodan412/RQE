@@ -597,10 +597,15 @@ end
 
 -- Event to update text widths when the frame is resized
 RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
-    local newWidth = width - 45  -- Adjust the padding as needed
-    RQE.debugLog("OnSizeChanged: New width is " .. newWidth)
+    local baseWidth = 400
+    local paddingIncrement = (width - baseWidth) / 20
+    local basePadding = 20 -- This is your base padding. Adjust as necessary.
+    local dynamicPadding = math.max(basePadding, paddingIncrement + basePadding)
+    
+    local newWidth = width - dynamicPadding  -- Use dynamic padding to adjust the width
+    RQE.debugLog("OnSizeChanged: New width is " .. newWidth .. ", Padding: " .. dynamicPadding)
 
-    --RQE.QuestIDText:SetWidth(newWidth)
+    -- Update text widths using newWidth based on dynamic padding
     if RQE.QuestNameText then
         RQE.QuestNameText:SetWidth(newWidth)
     else
@@ -621,6 +626,31 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
         end
     end
 end)
+-- RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
+    -- local newWidth = width - 45  -- Adjust the padding as needed
+    -- RQE.debugLog("OnSizeChanged: New width is " .. newWidth)
+
+    -- --RQE.QuestIDText:SetWidth(newWidth)
+    -- if RQE.QuestNameText then
+        -- RQE.QuestNameText:SetWidth(newWidth)
+    -- else
+        -- RQE.debugLog("RQE.QuestNameText is not initialized.")
+    -- end
+	    
+    -- if self.StepsText then
+        -- for i, stepsTextElement in ipairs(self.StepsText) do
+            -- stepsTextElement:SetWidth(newWidth)
+            -- RQE.debugLog("Setting StepsText " .. i .. " width to " .. newWidth)
+        -- end
+    -- end
+
+    -- if self.CoordsText then
+        -- for i, coordTextElement in ipairs(self.CoordsText) do
+            -- coordTextElement:SetWidth(newWidth)
+            -- RQE.debugLog("Setting CoordsText " .. i .. " width to " .. newWidth)
+        -- end
+    -- end
+-- end)
 
 
 -- Add a click event to open the quest details for the current QuestID
@@ -791,12 +821,20 @@ end
 
 -- Function used to adjust the RQE Frame width
 function AdjustRQEFrameWidths(newWidth)
+    -- Use the current frame width if newWidth is not provided
+    newWidth = newWidth or RQEFrame:GetWidth()
+	
+    local baseWidth = 400
+    local paddingIncrement = (RQEFrame:GetWidth() - baseWidth) / 20
+    local basePadding = 20 -- Adjust as needed
+    local dynamicPadding = math.max(basePadding, paddingIncrement + basePadding)
+	
     -- Adjust width for each element
-    RQE.QuestIDText:SetWidth(RQEFrame:GetWidth() - 25)	
-    RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 80)
-    RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 55)
-    RQE.QuestDescription:SetWidth(RQEFrame:GetWidth() - 45)
-    RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 45)
+    RQE.QuestIDText:SetWidth(newWidth - dynamicPadding - 25)	
+    RQE.QuestNameText:SetWidth(newWidth - dynamicPadding - 55)
+    RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
+    RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
+    RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
 end
 
 
@@ -1214,6 +1252,14 @@ function RQE:SaveFramePosition()
 end
 
 
+-- Define the function to save frame position
+function SaveRQEFrameSize()
+    local width, height = RQEFrame:GetSize()
+    RQE.db.profile.framePosition.frameWidth = width
+    RQE.db.profile.framePosition.frameHeight = height
+end
+
+
 -- Enable dragging the frame by the header
 header:SetScript("OnMouseDown", function(self, button)
     if button == "LeftButton" and RQEFrame:IsMovable() then
@@ -1250,6 +1296,8 @@ end)
 RQE.resizeGrip:SetScript("OnMouseUp", function(self, button)
     if button == "LeftButton" then
         RQEFrame:StopMovingOrSizing()
+		AdjustRQEFrameWidths()
+		SaveRQEFrameSize()
     end
 end)
 
