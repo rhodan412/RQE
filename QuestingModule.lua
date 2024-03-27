@@ -1482,8 +1482,8 @@ function UpdateRQEQuestFrame()
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
-						C_QuestLog.RemoveQuestWatch(questID)
 						RQE.ManualSuperTrack = nil
+						C_QuestLog.RemoveQuestWatch(questID)
 					else
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1493,8 +1493,8 @@ function UpdateRQEQuestFrame()
 
 						-- Super track the new quest
 						-- This will re-super track the quest even if it's the same as the currently super tracked quest
-						C_SuperTrack.SetSuperTrackedQuestID(questID)
 						RQE.ManualSuperTrack = true
+						C_SuperTrack.SetSuperTrackedQuestID(questID)
 						UpdateFrame()
 					end
 				end)
@@ -1920,14 +1920,14 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLogIndexButton:SetScript("OnClick", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
-					C_QuestLog.RemoveWorldQuestWatch(questID)
 					RQE.TrackedQuests[questID] = nil -- Update the tracking table
 					RQE.ManualSuperTrack = nil
+					C_QuestLog.RemoveWorldQuestWatch(questID)
 				else
 					-- Existing code to set as super-tracked
-					C_SuperTrack.SetSuperTrackedQuestID(questID)
-					RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
 					RQE.ManualSuperTrack = true
+					RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
+					C_SuperTrack.SetSuperTrackedQuestID(questID)
 				end
 			end)
 

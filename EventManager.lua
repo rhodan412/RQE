@@ -522,13 +522,8 @@ end
 
 -- Handling SUPER_TRACKING_CHANGED Event
 function RQE.handleSuperTracking(...)
-	-- C_Timer.After(0.5, function()
-		-- HideObjectiveTracker()
-	-- end)
-
     -- Early return if manual super tracking wasn't performed
     if not RQE.ManualSuperTrack then
-		--C_SuperTrack.ClearSuperTrackedContent()
         return
     end
 
@@ -537,12 +532,9 @@ function RQE.handleSuperTracking(...)
 	
 	QuestType()
 	RQE.superTrackingChanged = true
-
-	-- RQE:ClearFrameData()
-	--RQE.SaveSuperTrackData()
-	--RQE.UnknownQuestButtonCalcNTrack()
+	RQE:ClearFrameData()
 		
-	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	RQE.SaveSuperTrackData()
 	
