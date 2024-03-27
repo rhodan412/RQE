@@ -1095,6 +1095,23 @@ end
 -- Function check if RQEFrame frame should be cleared
 function RQE:ShouldClearFrame(questID)
 	local questID = questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
+
+    -- Check if we have a valid questID to proceed
+    if not questID or questID == 0 then
+        print("Invalid or missing questID in ShouldClearFrame.")
+        if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+            local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+            if extractedQuestID then
+                questID = extractedQuestID
+            else
+                print("Could not extract a valid questID from RQE.QuestIDText.")
+                return
+            end
+        else
+            print("RQE.QuestIDText is not available or has no text.")
+            return
+        end
+    end
 	
 	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
     local isQuestInLog = C_QuestLog.IsOnQuest(questID)
