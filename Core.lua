@@ -240,6 +240,7 @@ RQE.waypoints = {}
 -- Initialize lastSuperTrackedQuestID variable
 RQE.lastSuperTrackedQuestID = nil
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
+RQE.ManualSuperTrack = nil
 
 -- Addon Initialization
 function RQE:OnInitialize()
@@ -1094,6 +1095,7 @@ end
 -- Function check if RQEFrame frame should be cleared
 function RQE:ShouldClearFrame(questID)
 	local questID = questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
+	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	
 	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
     local isQuestInLog = C_QuestLog.IsOnQuest(questID)
@@ -1119,30 +1121,29 @@ function RQE:ShouldClearFrame(questID)
 	-- Clears from RQEFrame searched world quests that have been completed
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
-		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID)
+		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID .. " which is titled " .. questName)
         return -- Exit the function early
 	end
 	
-	if (isQuestCompleted and not isBeingSearched) or (not isQuestInLog and not manuallyTracked) then
+	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
     --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
-		RQE.infoLog("Clearing the RQEFrame for questID: ", questID)
+		RQE.infoLog("Clearing the RQEFrame for questID: ", questID .. " which is titled " .. questName)
         return -- Exit the function early
     end
 
     if isWorldQuest then
 		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[questID]) then
-        --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
-            RQE.infoLog("Clearing RQEFrame to questID: ", questID)
+            RQE.infoLog("Clearing RQEFrame to questID: ", questID .. " which is titled " .. questName)
             return -- Exit the function early
         end
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
 		if not (isBeingSearched or manuallyTracked or watchedQuests[questID]) then
             RQE:ClearFrameData()
-			RQE.infoLog("Clearing RQEFrame for questID: ", questID)
+			RQE.infoLog("Clearing RQEFrame for questID: ", questID .. " which is titled " .. questName)
             return -- Exit the function early
         end
     end
@@ -1602,6 +1603,37 @@ function RQE.UpdateTorghastDetails(eventLevel, eventType)
             typeString or "Unknown Type", layerNum, floorID))
     end
 end
+
+
+-- function RQE.JailersStage()
+    -- -- Assuming aura_env.GetBlock() and aura_env.GetStep() are accessible
+    -- -- If they're not, you'll need to replace these with your own methods to retrieve the block and step
+    -- local block = aura_env and aura_env.GetBlock() or 1 -- Placeholder for the actual block retrieval method
+    -- local step = aura_env and aura_env.GetStep() or 1 -- Placeholder for the actual step retrieval method
+    
+    -- local level, layer = GetJailersTowerLevel() -- This now also attempts to get 'layer', adjust if only 'level' is needed
+    
+    -- -- Checking if level is valid, assuming '0' means it's not in a Jailer's Tower scenario
+    -- if level == 0 then
+        -- print("Not currently in a Jailer's Tower scenario.")
+        -- return ""
+    -- end
+    
+    -- -- Construct the string with the current stage information
+    -- local stageInfo = "Layer " .. block .. " - F" .. step
+    
+    -- -- Print out each variable for debugging or information purposes
+    -- print("Block (Layer):", block)
+    -- print("Step (Floor):", step)
+    -- print("Level:", level)
+    -- -- Uncomment the following line if 'layer' is being used or is relevant
+    -- -- print("Layer:", layer)
+    -- print("Stage Info:", stageInfo)
+    
+    -- -- Return the constructed string
+    -- return stageInfo
+-- end
+
 
 
 ---------------------------------------------------

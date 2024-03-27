@@ -180,6 +180,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
         -- Your code for ClearButton functionality here
 		RQE:ClearFrameData()
 		RQE.searchedQuestID = nil
+		RQE.ManualSuperTrack = nil
 		C_SuperTrack.ClearSuperTrackedContent()
 		RQE:UpdateRQEFrameVisibility()
 		
