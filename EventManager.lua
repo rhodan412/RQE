@@ -108,7 +108,7 @@ local function HandleEvents(frame, event, ...)
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
 		CRITERIA_UPDATE = RQE.handleAchievementTracking,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
-		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenario,
+		--LEAVE_PARTY_CONFIRMATION = handleScenario,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
@@ -122,14 +122,14 @@ local function HandleEvents(frame, event, ...)
 		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
-		--QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
+		QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_REMOVED = RQE.handleQuestRemoved,
 		QUEST_TURNED_IN = RQE.handleQuestTurnIn,
 		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
 		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
 		QUESTLINE_UPDATE = RQE.handleQuestStatusUpdate,
-		--SCENARIO_COMPLETED = RQE.handleScenarioComplete,
-		--SCENARIO_CRITERIA_UPDATE = RQE.handleScenario,
+		--SCENARIO_COMPLETED = handleScenarioComplete,
+		--SCENARIO_CRITERIA_UPDATE = handleScenario,
 		SCENARIO_POI_UPDATE = RQE.handleScenario,
 		SCENARIO_UPDATE = RQE.handleScenario,
 		START_TIMER = RQE.HandleClientSceneOpened,
@@ -350,7 +350,7 @@ end
 -- Handling PLAYER_STOPPED_MOVING Event
 function RQE.handlePlayerStoppedMoving(...)
 	RQE:StopUpdatingCoordinates()
-	SortQuestsByProximity()
+	--SortQuestsByProximity()
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths()
 end	
@@ -521,11 +521,20 @@ end
 		
 
 -- Handling SUPER_TRACKING_CHANGED Event
-function RQE.handleSuperTracking(...)	
+function RQE.handleSuperTracking(...)
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
+
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
-		RQE:ShouldClearFrame()
+		--RQE:ShouldClearFrame()
         return
+    end
+
+    -- Early return if manual super tracking wasn't performed
+	if RQE.ManualSuperTrack then
+		RQE:ClearFrameData()
     end
 	
     -- Reset the manual super tracking flag now that we're handling it
@@ -534,17 +543,17 @@ function RQE.handleSuperTracking(...)
 	QuestType()
 	RQE.superTrackingChanged = true
 	
-	RQE:ClearFrameData()
+	RQE.SaveSuperTrackData()
+	--RQE.UnknownQuestButtonCalcNTrack()
 		
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	RQE:CreateUnknownQuestWaypoint(questID, mapID)
-	RQE.SaveSuperTrackData()
-	
+
 	local questName
 	if questID then
 		questName = C_QuestLog.GetTitleForQuestID(questID)
-		if questID ~= RQE.lastSuperTrackedQuestID then
-			RQE.lastSuperTrackedQuestID = questID
+		--if questID ~= RQE.lastSuperTrackedQuestID then
+			--RQE.lastSuperTrackedQuestID = questID
 			local questLink = GetQuestLink(questID)  -- Generate the quest link
 			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
@@ -556,7 +565,7 @@ function RQE.handleSuperTracking(...)
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		end
+		--end
 	else
 		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
 		--SortQuestsByProximity()
@@ -576,14 +585,14 @@ function RQE.handleSuperTracking(...)
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
-	
-	RQE:ShouldClearFrame()
 end
 		
 
 -- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(...)
 	local questID = ...  -- Extract the questID from the event
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	
 	if questID then
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -601,6 +610,14 @@ function RQE.handleQuestAccepted(...)
 		-- if uiMapID then  -- Ensure mapID is not nil and valid
 			-- UpdateWorldQuestTrackingForMap(uiMapID)
 		-- end
+
+        -- After the logic for the new quest, re-apply the last super-tracked questID
+        if RQE.ManualSuperTrack and RQE.lastSuperTrackedQuestID and currentSuperTrackedQuestID ~= RQE.lastSuperTrackedQuestID then
+            -- Reassert the last super-tracked quest
+            C_SuperTrack.SetSuperTrackedQuestID(RQE.lastSuperTrackedQuestID)
+		else
+			C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
+        end
 		
         if playerMapID and playerMapID == questMapID then  -- Ensure mapID matches the quest's map
 			RQE.infoLog("questMapID is " .. questMapID .. " and playerMapID is " .. playerMapID)
@@ -646,12 +663,12 @@ end
 function RQE.handleQuestStatusUpdate(...)
 	isSuperTracking = C_SuperTrack.IsSuperTrackingContent()
 	
-	-- Check if questID is provided, fallback to the current super-tracked quest ID if not
-	if isSuperTracking or not (RQE.QuestIDText:GetText() == "" and RQE.QuestNameText:GetText() == "") then
-        questID = C_SuperTrack.GetSuperTrackedQuestID()
-    else -- COMMENTED OUT AS RQEFRAME WAS CLEARING WHEN PICKING UP NEW QUEST AND THIS IS BAD/UNITENDED BEHAVIOR
-		RQE.lastSuperTrackedQuestID = questID
-		C_SuperTrack.SetSuperTrackedQuestID(questID)
+    if isSuperTracking then
+        local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+        if RQE.ManualSuperTrack and currentSuperTrackedQuestID ~= RQE.ManualSuperTrackedQuestID then
+            -- The addon has a different quest set for manual super-tracking
+            C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
+        end
     end
 	
 	-- -- Add quest to watch list if progress has been made --- NEEDS TO BE REDONE AS QUEST WAS BEING READDED AFTER BEING CLEARED FROM WATCH LIST REGARDLESS OF IF PROGRESS WAS MADE
@@ -692,9 +709,9 @@ function RQE.handleQuestStatusUpdate(...)
 		RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
 	end
 		
-	-- C_Timer.After(0.5, function()
-		-- HideObjectiveTracker()
-	-- end)
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
 	
     RQE:ClearWQTracking()  -- Custom function to clear World Quest tracking if necessary
     -- C_Map.ClearUserWaypoint()  -- Uncomment if you need to clear user waypoints
@@ -713,8 +730,7 @@ end
 -- Handling QUEST_COMPLETE event
 function RQE.handleQuestComplete(...)
 	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame
-	--RQE:ClearFrameData()   -- COMMENTING OUT BECAUSE WANT TO KEEP COMPLETED REG QUEST IN SUPER FRAME SO CAN CLICK WAYPOINT BUTTON FOR TURN IN (BUT COULD BE PROBLEM WITH WORLD QUESTS NOT CLEARING - NONE SO FAR)
-	
+	RQE:ClearFrameData()
 	RQE.searchedQuestID = nil
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
@@ -822,63 +838,42 @@ function RQE.handleQuestWatchUpdate(...)
 end
 		
 
--- Handling QUEST_WATCH_LIST_CHANGED event (If questID is nil, the event will be ignored)
+-- Handling QUEST_WATCH_LIST_CHANGED event
 function RQE.handleQuestWatchListChanged(...)
-	local questID, added = ...
-	RQE:ClearWQTracking()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-	local watchType
+    local questID, added = ...
+    RQE:ClearWQTracking()
+    AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+
     if questID then
-        local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-        local watchType = C_QuestLog.GetQuestWatchType(questID)
-        if isWorldQuest then
-            if added then
-                RQE.TrackedQuests[questID] = watchType -- Track the type of watch added
-            else
-                RQE.TrackedQuests[questID] = nil -- Remove the tracking if the quest is removed
+        if added then
+            -- Check if this is the quest we want to super-track manually
+            if questID == RQE.ManualSuperTrackedQuestID then
+                C_SuperTrack.SetSuperTrackedQuestID(questID)
+            end
+        else
+            -- If the removed quest was super-tracked, clear the super tracking
+            if questID == RQE.ManualSuperTrackedQuestID then
+                RQE.ManualSuperTrack = false
+                RQE.ManualSuperTrackedQuestID = nil
             end
         end
-	end
-	
-	if questID then
-		if C_QuestLog.IsWorldQuest(questID) then
-			-- Handle World Quests specifically
-			if added then
-				-- World Quest is added to the Watch List
-				-- Check if auto-tracking of quest progress is enabled and call the function
-				-- if RQE.db.profile.autoTrackProgress then
-					-- AutoWatchQuestsWithProgress()
-				-- end
-			else
-				-- World Quest is removed from the Watch List
-				RQE.savedWorldQuestWatches[questID] = nil
-				RQE:ClearWQTracking()
-			end
-		else
-		-- Handle regular quests
-		--if RQEFrame:IsShown() and RQEFrame.currentQuestID == questID and RQE.db.profile.autoSortRQEFrame then
-			--RQE.savedWorldQuestWatches[questID] = nil
-			--if RQE.db.profile.autoTrackProgress then
-				--AutoWatchQuestsWithProgress()
-				--SortQuestsByProximity()
-			--end					
-		end
-		RQEQuestFrame:ClearAllPoints()
-		RQE:ClearRQEQuestFrame()
-		RQE:ClearWQTracking()
-		UpdateRQEQuestFrame()
-		SortQuestsByProximity()
-		UpdateFrameAnchors()
-		UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
-		
-		C_Timer.After(0.5, function()
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		end)
-		
-		-- Visibility Update Check for RQEQuestFrame
-		RQE:UpdateRQEQuestFrameVisibility()
-	end
+    end
+
+    -- Update the frame if the watch list change is related to the current super-tracked quest
+    if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
+        C_Timer.After(0.5, function()
+            -- Make sure questInfo, StepsText, CoordsText, MapIDs are defined before using them
+            local questInfo = RQEDatabase[questID] -- Example lookup, replace with actual implementation
+            local StepsText, CoordsText, MapIDs = --[[ your logic to get these values ]]
+            UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+        end)
+    end
+
+    -- Visibility Update Check for RQEQuestFrame
+    RQE:UpdateRQEQuestFrameVisibility()
 end
+
+
 		
 
 -- Handling QUEST_TURNED_IN event
@@ -886,6 +881,7 @@ function RQE.handleQuestTurnIn(...)
 	RQE:QuestComplete(questID)
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
+	--RQE:ClearWQTracking()
 	QuestType()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
@@ -893,23 +889,13 @@ function RQE.handleQuestTurnIn(...)
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	if superTrackedQuestID == questID and RQE.QuestIDText == tostring(questID) then
 		C_Timer.After(1, function()
-			RQE.infoLog("Following quest turn in, clearing frame")
 			RQE:ClearFrameData()
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
-	else
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 	
-	-- -- Only proceed if the turned-in quest is the super tracked quest
-	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	-- if superTrackedQuestID == questID or RQE.QuestIDText == tostring(questID) then
-		-- C_Timer.After(1, function()
-			-- print("Following quest turn in, clearing frame")
-			-- RQE:ClearFrameData()
-			-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		-- end)
-	-- end
+	C_Timer.After(0.2, function()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	end)
 	
 	-- Visibility Check for RQEFrame and RQEQuestFrame
 	RQE:UpdateRQEFrameVisibility()

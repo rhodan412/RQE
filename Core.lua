@@ -632,7 +632,6 @@ function RQE:HandleSuperTrackedQuestUpdate()
     if isWorldQuest then
         if not (manuallyTracked or trackedViaSearchAndNotCompleted) then
             -- Clear the RQEFrame for this world quest if it's neither manually tracked nor searched and incomplete
-			print("[635] Clearing frame")
             RQE:ClearFrameData()
             return
         end
@@ -1096,7 +1095,6 @@ end
 -- Function check if RQEFrame frame should be cleared
 function RQE:ShouldClearFrame(questID)
 	local questID = questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	
 	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
     local isQuestInLog = C_QuestLog.IsOnQuest(questID)
@@ -1122,30 +1120,31 @@ function RQE:ShouldClearFrame(questID)
 	-- Clears from RQEFrame searched world quests that have been completed
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
-		RQE.infoLog("[1128] Clearing the RQEFrame for questID for searched and completed: ", questID)
+		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID)
         return -- Exit the function early
 	end
 	
-	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
+	if (isQuestCompleted and not isBeingSearched) or (not isQuestInLog and not manuallyTracked) then
     --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
-		RQE.infoLog("[1136] Clearing the RQEFrame for questID: ", questID)
-        return
+		RQE.infoLog("Clearing the RQEFrame for questID: ", questID)
+        return -- Exit the function early
     end
 
     if isWorldQuest then
 		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[questID]) then
+        --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
-			RQE.infoLog("[1143] Clearing RQEFrame to questID: ", questID)
-            return
+            RQE.infoLog("Clearing RQEFrame to questID: ", questID)
+            return -- Exit the function early
         end
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
 		if not (isBeingSearched or manuallyTracked or watchedQuests[questID]) then
             RQE:ClearFrameData()
-			RQE.infoLog("[1150] Clearing RQEFrame for questID: ", questID)
-            return
+			RQE.infoLog("Clearing RQEFrame for questID: ", questID)
+            return -- Exit the function early
         end
     end
 end
@@ -1153,7 +1152,11 @@ end
 
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-    RQE.debugLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
+    -- Retrieve the current super-tracked quest ID for debugging
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	questID = currentSuperTrackedQuestID
+	
+    RQE.infoLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
 	AdjustRQEFrameWidths(newWidth)
 	
     -- Validate questID before proceeding
@@ -1170,6 +1173,11 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     if not StepsText or not CoordsText or not MapIDs then
         RQE.debugLog("Exiting UpdateFrame due to missing data.")
         return
+    end
+
+    -- Only update super tracking if it's necessary
+    if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
+        C_SuperTrack.SetSuperTrackedQuestID(questID)
     end
 
     if RQE.QuestIDText then
@@ -1217,6 +1225,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			else
 				RQE.debugLog("RQE.QuestDescription is not initialized.")
 			end
+			
 		else
 			RQE.debugLog("questLogIndex is nil.")
 		end
@@ -1287,11 +1296,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 	RQE.UpdateTrackedAchievementList()
-	
-	C_Timer.After(0.2, function()
-		RQE:ShouldClearFrame()
-		--RQE:ShouldClearFrame(questID)
-	end)
+	RQE:ShouldClearFrame(questID)
 	
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
@@ -1605,37 +1610,6 @@ function RQE.UpdateTorghastDetails(eventLevel, eventType)
             typeString or "Unknown Type", layerNum, floorID))
     end
 end
-
-
--- function RQE.JailersStage()
-    -- -- Assuming aura_env.GetBlock() and aura_env.GetStep() are accessible
-    -- -- If they're not, you'll need to replace these with your own methods to retrieve the block and step
-    -- local block = aura_env and aura_env.GetBlock() or 1 -- Placeholder for the actual block retrieval method
-    -- local step = aura_env and aura_env.GetStep() or 1 -- Placeholder for the actual step retrieval method
-    
-    -- local level, layer = GetJailersTowerLevel() -- This now also attempts to get 'layer', adjust if only 'level' is needed
-    
-    -- -- Checking if level is valid, assuming '0' means it's not in a Jailer's Tower scenario
-    -- if level == 0 then
-        -- print("Not currently in a Jailer's Tower scenario.")
-        -- return ""
-    -- end
-    
-    -- -- Construct the string with the current stage information
-    -- local stageInfo = "Layer " .. block .. " - F" .. step
-    
-    -- -- Print out each variable for debugging or information purposes
-    -- print("Block (Layer):", block)
-    -- print("Step (Floor):", step)
-    -- print("Level:", level)
-    -- -- Uncomment the following line if 'layer' is being used or is relevant
-    -- -- print("Layer:", layer)
-    -- print("Stage Info:", stageInfo)
-    
-    -- -- Return the constructed string
-    -- return stageInfo
--- end
-
 
 
 ---------------------------------------------------
