@@ -590,45 +590,40 @@ end
 
 -- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(...)
-	local questID = ...  -- Extract the questID from the event
-    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	
-	if questID then
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-		local watchType = C_QuestLog.GetQuestWatchType(questID)
-		local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
-		local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID, ignoreWaypoints)
-		local playerMapID = C_Map.GetBestMapForUnit("player")
-		
-		if isWorldQuest and not isManuallyTracked then
-			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-		elseif isWorldQuest and isManuallyTracked then
-			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-		end
-		
-		-- local uiMapID = C_Map.GetBestMapForUnit("player")
-		-- if uiMapID then  -- Ensure mapID is not nil and valid
-			-- UpdateWorldQuestTrackingForMap(uiMapID)
-		-- end
+    local questID = ...  -- Extract the questID from the event
+    
+    if questID then
+        local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+        local watchType = C_QuestLog.GetQuestWatchType(questID)
+        local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
+        local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID, ignoreWaypoints)
+        local playerMapID = C_Map.GetBestMapForUnit("player")
+        
+        if isWorldQuest and not isManuallyTracked then
+            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+        elseif isWorldQuest and isManuallyTracked then
+            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+        end
 
-        -- After the logic for the new quest, re-apply the last super-tracked questID
-        if RQE.ManualSuperTrack and RQE.lastSuperTrackedQuestID and currentSuperTrackedQuestID ~= RQE.lastSuperTrackedQuestID then
-            -- Reassert the last super-tracked quest
-            C_SuperTrack.SetSuperTrackedQuestID(RQE.lastSuperTrackedQuestID)
-		else
-			C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
+        -- Reapply the manual super-tracked quest ID if it's set and different from the current one
+        if RQE.ManualSuperTrack then
+            local superTrackIDToApply = RQE.ManualSuperTrackedQuestID or RQE.lastSuperTrackedQuestID
+            if superTrackIDToApply and superTrackIDToApply ~= C_SuperTrack.GetSuperTrackedQuestID() then
+                C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
+            end
         end
-		
-        if playerMapID and playerMapID == questMapID then  -- Ensure mapID matches the quest's map
-			RQE.infoLog("questMapID is " .. questMapID .. " and playerMapID is " .. playerMapID)
-			UpdateWorldQuestTrackingForMap(playerMapID)
+        
+        if playerMapID and questMapID and playerMapID == questMapID then
+            RQE.infoLog("questMapID is " .. questMapID .. " and playerMapID is " .. playerMapID)
+            UpdateWorldQuestTrackingForMap(playerMapID)
         end
-	end
-	
-	-- Visibility Update Check for RQEFrame & RQEQuestFrame
-	RQE:UpdateRQEFrameVisibility()
-	RQE:UpdateRQEQuestFrameVisibility()
+    end
+    
+    -- Visibility Update Check for RQEFrame & RQEQuestFrame
+    RQE:UpdateRQEFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()
 end
+
 
 		
 -- Handling of several events for purpose of updating the DirectionText
