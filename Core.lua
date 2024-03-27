@@ -632,6 +632,7 @@ function RQE:HandleSuperTrackedQuestUpdate()
     if isWorldQuest then
         if not (manuallyTracked or trackedViaSearchAndNotCompleted) then
             -- Clear the RQEFrame for this world quest if it's neither manually tracked nor searched and incomplete
+			print("[635] Clearing frame")
             RQE:ClearFrameData()
             return
         end
@@ -1121,7 +1122,7 @@ function RQE:ShouldClearFrame(questID)
 	-- Clears from RQEFrame searched world quests that have been completed
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
-		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID .. " which is titled " .. questName)
+		RQE.infoLog("[1128] Clearing the RQEFrame for questID for searched and completed: ", questID)
         return -- Exit the function early
 	end
 	
@@ -1129,22 +1130,22 @@ function RQE:ShouldClearFrame(questID)
     --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
-		RQE.infoLog("Clearing the RQEFrame for questID: ", questID .. " which is titled " .. questName)
-        return -- Exit the function early
+		RQE.infoLog("[1136] Clearing the RQEFrame for questID: ", questID)
+        return
     end
 
     if isWorldQuest then
 		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[questID]) then
             RQE:ClearFrameData()
-            RQE.infoLog("Clearing RQEFrame to questID: ", questID .. " which is titled " .. questName)
-            return -- Exit the function early
+			RQE.infoLog("[1143] Clearing RQEFrame to questID: ", questID)
+            return
         end
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
 		if not (isBeingSearched or manuallyTracked or watchedQuests[questID]) then
             RQE:ClearFrameData()
-			RQE.infoLog("Clearing RQEFrame for questID: ", questID .. " which is titled " .. questName)
-            return -- Exit the function early
+			RQE.infoLog("[1150] Clearing RQEFrame for questID: ", questID)
+            return
         end
     end
 end
@@ -1206,22 +1207,19 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     -- For QuestDescription
 	if RQE.QuestDescription then  -- Check if QuestDescription is initialized
 		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-	if questLogIndex then
-		local _, questObjectives = GetQuestLogQuestText(questLogIndex)
-		local QuestDescription = questObjectives
-		local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
-		
-		if RQE.QuestDescription then  -- Check if QuestDescription is initialized
-			RQE.QuestDescription:SetText(descriptionText)
+		if questLogIndex then
+			local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+			local QuestDescription = questObjectives
+			local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
+			
+			if RQE.QuestDescription then  -- Check if QuestDescription is initialized
+				RQE.QuestDescription:SetText(descriptionText)
+			else
+				RQE.debugLog("RQE.QuestDescription is not initialized.")
+			end
 		else
-			RQE.debugLog("RQE.QuestDescription is not initialized.")
+			RQE.debugLog("questLogIndex is nil.")
 		end
-		
-	else
-		RQE.debugLog("questLogIndex is nil.")
-	end
-	else
-		RQE.debugLog("RQE.QuestDescription is not initialized.")
 	end
 
     -- For QuestObjectives
@@ -1289,7 +1287,11 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 	RQE.UpdateTrackedAchievementList()
-	RQE:ShouldClearFrame(questID)
+	
+	C_Timer.After(0.2, function()
+		RQE:ShouldClearFrame()
+		--RQE:ShouldClearFrame(questID)
+	end)
 	
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
