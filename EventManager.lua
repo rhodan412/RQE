@@ -284,6 +284,7 @@ function RQE.handleScenario(self, event, ...)
     -- RQE.UpdateTorghastDetails(level, type)
     -- C_Timer.After(4, RQE.InitializeScenarioFrame) -- Wait 4 seconds before re-initializing the scenario frame
 	
+	UpdateRQEQuestFrame()
     RQE.UpdateCampaignFrameAnchor()
 	
 	-- Check if still in a scenario (useful for relogs or loading screens)
@@ -297,6 +298,8 @@ function RQE.handleScenarioComplete()
 	RQE.StopTimer()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE.HandleTimerStop(timerID)
+	
+	UpdateRQEQuestFrame()
 	
 	-- Check if still in a scenario (useful for relogs or loading screens)
 	RQE.isInScenario = C_Scenario.IsInScenario()
