@@ -1094,23 +1094,19 @@ end
 
 -- Function check if RQEFrame frame should be cleared
 function RQE:ShouldClearFrame(questID)
-	local questID = questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
+    -- Attempt to directly extract questID from RQE.QuestIDText if available
+    local extractedQuestID
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+    end
+	
+    -- Use extractedQuestID if valid; otherwise, fall back to provided questID or other sources
+    questID = extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
 
-    -- Check if we have a valid questID to proceed
+    -- Early exit if there's still no valid questID
     if not questID or questID == 0 then
-        print("Invalid or missing questID in ShouldClearFrame.")
-        if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-            local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-            if extractedQuestID then
-                questID = extractedQuestID
-            else
-                print("Could not extract a valid questID from RQE.QuestIDText.")
-                return
-            end
-        else
-            print("RQE.QuestIDText is not available or has no text.")
-            return
-        end
+        print("No valid questID for ShouldClearFrame.")
+        return
     end
 	
 	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
@@ -1140,8 +1136,9 @@ function RQE:ShouldClearFrame(questID)
 		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID)
         return -- Exit the function early
 	end
-	
-	if (isQuestCompleted and not isBeingSearched) or (not isQuestInLog and not manuallyTracked) then
+
+	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
+	--if (isQuestCompleted and not isBeingSearched) or (not isQuestInLog and not manuallyTracked) then
     --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
@@ -1176,13 +1173,13 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     RQE.infoLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
 	AdjustRQEFrameWidths(newWidth)
 
-    -- -- Debug print the overridden questID and the content of RQE.QuestIDText
-    -- print("Overridden questID with current super-tracked questID:", questID)
-    -- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-        -- print("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
-    -- else
-        -- print("RQE.QuestIDText is not initialized or has no text.")
-    -- end
+    -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
+    RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
+    else
+        RQE.infoLog("RQE.QuestIDText is not initialized or has no text.")
+    end
 	
     -- Validate questID before proceeding
     if not questID or type(questID) ~= "number" then

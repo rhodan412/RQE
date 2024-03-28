@@ -594,7 +594,8 @@ end
 -- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(...)
     local questID = ...  -- Extract the questID from the event
-    
+	--local originalSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
     if questID then
         local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
         local watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -613,7 +614,11 @@ function RQE.handleQuestAccepted(...)
             local superTrackIDToApply = RQE.ManualSuperTrackedQuestID or RQE.lastSuperTrackedQuestID
             if superTrackIDToApply and superTrackIDToApply ~= C_SuperTrack.GetSuperTrackedQuestID() then
                 C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
-            end
+			end
+		-- else
+			-- C_Timer.After(0.5, function()
+				-- C_SuperTrack.SetSuperTrackedQuestID(RQE.lastSuperTrackedQuestID)
+			-- end)
         end
         
         if playerMapID and questMapID and playerMapID == questMapID then
