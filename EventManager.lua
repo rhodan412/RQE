@@ -876,12 +876,17 @@ end
 function RQE.handleQuestWatchListChanged(questID, added)
     -- Optionally log the event for debugging
     -- print("QUEST_WATCH_LIST_CHANGED event received", questID, added)
-    
+	local questInfo = RQEDatabase[questID] -- Example lookup, replace with actual implementation
+	local StepsText, CoordsText, MapIDs
+
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
     -- Immediate update to the visibility and content of the quest frames
     -- This ensures that any change in the watch list is reflected in your addon's UI
-    RQE:UpdateRQEQuestFrameVisibility()
-    UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
     
+    UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	RQE:ClearWQTracking()
+    RQE:UpdateRQEQuestFrameVisibility()
     -- If you need to refresh or update specific quest information based on questID,
     -- consider implementing that logic here or in the called functions.
 end
