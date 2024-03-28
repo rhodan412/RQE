@@ -836,69 +836,105 @@ function RQE.handleQuestWatchUpdate(...)
 end
 		
 
+-- -- Handling QUEST_WATCH_LIST_CHANGED event
+-- function RQE.handleQuestWatchListChanged(...)
+    -- local questID, added = ...
+    -- RQE:ClearWQTracking()
+    -- AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+
+    -- if questID then
+        -- if added then
+            -- -- Check if this is the quest we want to super-track manually
+            -- if questID == RQE.ManualSuperTrackedQuestID then
+                -- C_SuperTrack.SetSuperTrackedQuestID(questID)
+            -- end
+        -- else
+            -- -- If the removed quest was super-tracked, clear the super tracking
+            -- if questID == RQE.ManualSuperTrackedQuestID then
+                -- RQE.ManualSuperTrack = false
+                -- RQE.ManualSuperTrackedQuestID = nil
+            -- end
+        -- end
+    -- end
+
+    -- -- Update the frame if the watch list change is related to the current super-tracked quest
+    -- if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
+        -- C_Timer.After(0.5, function()
+            -- -- Make sure questInfo, StepsText, CoordsText, MapIDs are defined before using them
+            -- local questInfo = RQEDatabase[questID] -- Example lookup, replace with actual implementation
+            -- local StepsText, CoordsText, MapIDs = --[[ your logic to get these values ]]
+            -- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+        -- end)
+    -- end
+
+    -- -- Visibility Update Check for RQEQuestFrame
+    -- RQE:UpdateRQEQuestFrameVisibility()
+-- end
+
+
 -- Handling QUEST_WATCH_LIST_CHANGED event
-function RQE.handleQuestWatchListChanged(...)
-    local questID, added = ...
-    RQE:ClearWQTracking()
-    AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+function RQE.handleQuestWatchListChanged(questID, added)
+    -- Optionally log the event for debugging
+    -- print("QUEST_WATCH_LIST_CHANGED event received", questID, added)
+    
+    -- Immediate update to the visibility and content of the quest frames
+    -- This ensures that any change in the watch list is reflected in your addon's UI
+    RQE:UpdateRQEQuestFrameVisibility()
+    UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
+    
+    -- If you need to refresh or update specific quest information based on questID,
+    -- consider implementing that logic here or in the called functions.
+end
 
-    if questID then
-        if added then
-            -- Check if this is the quest we want to super-track manually
-            if questID == RQE.ManualSuperTrackedQuestID then
-                C_SuperTrack.SetSuperTrackedQuestID(questID)
-            end
-        else
-            -- If the removed quest was super-tracked, clear the super tracking
-            if questID == RQE.ManualSuperTrackedQuestID then
-                RQE.ManualSuperTrack = false
-                RQE.ManualSuperTrackedQuestID = nil
-            end
-        end
-    end
 
-    -- Update the frame if the watch list change is related to the current super-tracked quest
-    if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
+-- -- Handling QUEST_TURNED_IN event
+-- function RQE.handleQuestTurnIn(...)
+	-- RQE:QuestComplete(questID)
+	-- RQE:ClearRQEQuestFrame()
+	-- UpdateRQEQuestFrame()
+	-- QuestType()
+	-- AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+
+    -- -- Fetch the current super tracked quest ID
+    -- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- local displayedQuestID = tonumber(RQE.QuestIDText and RQE.QuestIDText:GetText())
+    
+    -- -- Only proceed if the turned-in quest is the super tracked quest or matches the displayed quest ID
+    -- if superTrackedQuestID == questID or displayedQuestID == questID then
+        -- C_Timer.After(0.5, function()
+            -- RQE:ClearFrameData()
+			-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+        -- end)
+    -- end
+	
+	-- -- Visibility Check for RQEFrame and RQEQuestFrame
+	-- RQE:UpdateRQEFrameVisibility()
+	-- RQE:UpdateRQEQuestFrameVisibility()
+-- end
+
+
+-- Handling QUEST_TURNED_IN event
+function RQE.handleQuestTurnIn(questID, ...)
+    if not questID then return end  -- Ensure there's a valid questID from the event
+    
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local displayedQuestID = RQE.QuestIDText and tonumber(strmatch(RQE.QuestIDText:GetText() or "", "%d+"))
+    
+    -- Verify if the turned-in quest matches the currently displayed or super tracked quest
+    if superTrackedQuestID == questID or displayedQuestID == questID then
+        -- Clear data and update frame after a brief delay to ensure quest log updates
         C_Timer.After(0.5, function()
-            -- Make sure questInfo, StepsText, CoordsText, MapIDs are defined before using them
-            local questInfo = RQEDatabase[questID] -- Example lookup, replace with actual implementation
-            local StepsText, CoordsText, MapIDs = --[[ your logic to get these values ]]
-            UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+            RQE:ClearFrameData()  -- This method should clear the content from the RQEFrame
+            -- Optionally, you might want to update the frame to show the next priority quest or clear visibility
         end)
     end
-
-    -- Visibility Update Check for RQEQuestFrame
+    
+    -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
+    -- This might involve checking if there are other quests to display or adjusting UI elements
+    RQE:UpdateRQEFrameVisibility()
     RQE:UpdateRQEQuestFrameVisibility()
 end
 
-
-		
-
--- Handling QUEST_TURNED_IN event
-function RQE.handleQuestTurnIn(...)
-	RQE:QuestComplete(questID)
-	RQE:ClearRQEQuestFrame()
-	UpdateRQEQuestFrame()
-	QuestType()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-
-    -- Fetch the current super tracked quest ID
-    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    local displayedQuestID = tonumber(RQE.QuestIDText and RQE.QuestIDText:GetText())
-    
-    -- Only proceed if the turned-in quest is the super tracked quest or matches the displayed quest ID
-    if superTrackedQuestID == questID or displayedQuestID == questID then
-        C_Timer.After(0.5, function()
-            RQE:ClearFrameData()
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-        end)
-    end
-	
-	-- Visibility Check for RQEFrame and RQEQuestFrame
-	RQE:UpdateRQEFrameVisibility()
-	RQE:UpdateRQEQuestFrameVisibility()
-end
-	
 	
 -- Handling PLAYER_LOGOUT event
 function RQE.handlePlayerLogout(...)

@@ -1175,6 +1175,14 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
     RQE.infoLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
 	AdjustRQEFrameWidths(newWidth)
+
+    -- -- Debug print the overridden questID and the content of RQE.QuestIDText
+    -- print("Overridden questID with current super-tracked questID:", questID)
+    -- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        -- print("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
+    -- else
+        -- print("RQE.QuestIDText is not initialized or has no text.")
+    -- end
 	
     -- Validate questID before proceeding
     if not questID or type(questID) ~= "number" then
