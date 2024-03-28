@@ -879,21 +879,20 @@ function RQE.handleQuestTurnIn(...)
 	RQE:QuestComplete(questID)
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
-	--RQE:ClearWQTracking()
 	QuestType()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
-	-- Only proceed if the turned-in quest is the super tracked quest
-	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	if superTrackedQuestID == questID and RQE.QuestIDText == tostring(questID) then
-		C_Timer.After(1, function()
-			RQE:ClearFrameData()
-		end)
-	end
-	
-	C_Timer.After(0.2, function()
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	end)
+    -- Fetch the current super tracked quest ID
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local displayedQuestID = tonumber(RQE.QuestIDText and RQE.QuestIDText:GetText())
+    
+    -- Only proceed if the turned-in quest is the super tracked quest or matches the displayed quest ID
+    if superTrackedQuestID == questID or displayedQuestID == questID then
+        C_Timer.After(0.5, function()
+            RQE:ClearFrameData()
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+        end)
+    end
 	
 	-- Visibility Check for RQEFrame and RQEQuestFrame
 	RQE:UpdateRQEFrameVisibility()

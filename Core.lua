@@ -1313,7 +1313,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 	RQE.UpdateTrackedAchievementList()
-	RQE:ShouldClearFrame(questID)
+	RQE:ShouldClearFrame()
+	--RQE:ShouldClearFrame(questID)
 	
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
