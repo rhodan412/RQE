@@ -1137,9 +1137,8 @@ function RQE:ShouldClearFrame()
         return -- Exit the function early
 	end
 
-	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
-	--if (isQuestCompleted and not isBeingSearched) or (not isQuestInLog and not manuallyTracked) then
-    --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
+	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked and not isBeingSearched) then
+	--if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
 		RQE.infoLog("Clearing the RQEFrame for questID: ", extractedQuestID)
@@ -1172,9 +1171,11 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
         extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     end
-    questID = extractedQuestID or questID or currentSuperTrackedQuestID
+	
+    -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
+    questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
-    -- Assuming questInfo needs to be updated as well
+    -- Fetch questInfo from RQEDatabase using the determined questID
     questInfo = RQEDatabase[questID] or questInfo
 	
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
@@ -1182,13 +1183,13 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	AdjustRQEFrameWidths(newWidth)
 
-    -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
-    RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
-    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-        RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
-    else
-        RQE.infoLog("RQE.QuestIDText is not initialized or has no text.")
-    end
+    -- -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
+    -- RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
+    -- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        -- RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
+    -- else
+        -- RQE.infoLog("RQE.QuestIDText is not initialized or has no text.")
+    -- end
 	
     -- Validate questID before proceeding
     if not questID or type(questID) ~= "number" then

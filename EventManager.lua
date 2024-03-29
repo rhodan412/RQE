@@ -744,7 +744,7 @@ end
 function RQE.handleQuestComplete(...)
 	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame (now handled through RQE:ShouldClearFrame)
 	--RQE:ClearFrameData()
-	RQE.searchedQuestID = nil
+	RQE.searchedQuestID = nil -- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
 		for questID in pairs(RQE.ManuallyTrackedQuests) do
