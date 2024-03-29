@@ -82,6 +82,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"UNIT_EXITING_VEHICLE",
+	"UPDATE_INSTANCE_INFO",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
@@ -136,6 +137,7 @@ local function HandleEvents(frame, event, ...)
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
+		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		WORLD_STATE_TIMER_START = RQE.handleScenario,
 		WORLD_STATE_TIMER_STOP = RQE.handleTimerStop,
@@ -250,6 +252,9 @@ function RQE.handleAddonLoaded(addonName)
     if RQE.handleScenario then
         RQE.handleScenario()
     end
+	
+	-- -- Updates frame with data from the super tracked quest (if any)
+	-- UpdateFrame()
 end
 
 
@@ -525,9 +530,9 @@ end
 
 -- Handling SUPER_TRACKING_CHANGED Event
 function RQE.handleSuperTracking(...)
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-	end)
+	-- C_Timer.After(0.5, function()
+		-- HideObjectiveTracker()
+	-- end)
 
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
@@ -611,7 +616,7 @@ function RQE.handleQuestAccepted(...)
 
         -- Reapply the manual super-tracked quest ID if it's set and different from the current one
         if RQE.ManualSuperTrack then
-            local superTrackIDToApply = RQE.ManualSuperTrackedQuestID or RQE.lastSuperTrackedQuestID
+            local superTrackIDToApply = RQE.ManualSuperTrackedQuestID --or RQE.lastSuperTrackedQuestID
             if superTrackIDToApply and superTrackIDToApply ~= C_SuperTrack.GetSuperTrackedQuestID() then
                 C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
 			end
@@ -659,6 +664,13 @@ function RQE.handleZoneChange(...)
 			RQE.handleScenario()
 		end
 	end)
+end
+
+
+-- Handles UPDATE_INSTANCE_INFO Event
+function RQE.handleInstanceInfoUpdate()
+	-- Updates the achievement list for criteria of tracked achievements
+	RQE.UpdateTrackedAchievementList()
 end
 
 
@@ -732,8 +744,8 @@ end
 
 -- Handling QUEST_COMPLETE event
 function RQE.handleQuestComplete(...)
-	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame
-	RQE:ClearFrameData()
+	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame (now handled through RQE:ShouldClearFrame)
+	--RQE:ClearFrameData()
 	RQE.searchedQuestID = nil
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
@@ -934,7 +946,8 @@ function RQE.handleQuestTurnIn(questID, ...)
     if superTrackedQuestID == questID or displayedQuestID == questID then
         -- Clear data and update frame after a brief delay to ensure quest log updates
         C_Timer.After(0.5, function()
-            RQE:ClearFrameData()  -- This method should clear the content from the RQEFrame
+            --RQE:ClearFrameData()  -- This method should clear the content from the RQEFrame
+			RQE:ShouldClearFrame()
             -- Optionally, you might want to update the frame to show the next priority quest or clear visibility
         end)
     end
