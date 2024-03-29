@@ -225,9 +225,7 @@ function RQE.handleAddonLoaded(addonName)
 
     -- Hide the default objective tracker and make other UI adjustments after a short delay
     C_Timer.After(0.5, function()
-        if RQE.HideObjectiveTracker then
-            RQE.HideObjectiveTracker()  -- Assuming you have a function defined to hide the tracker
-        end
+		HideObjectiveTracker()
 
         if RQE.AdjustQuestItemWidths then
             RQE.AdjustQuestItemWidths(RQEQuestFrame:GetWidth())  -- Adjust quest item widths based on frame width
@@ -253,8 +251,8 @@ function RQE.handleAddonLoaded(addonName)
         RQE.handleScenario()
     end
 	
-	-- -- Updates frame with data from the super tracked quest (if any)
-	-- UpdateFrame()
+	-- Updates frame with data from the super tracked quest (if any)
+	UpdateFrame()
 end
 
 
