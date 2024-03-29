@@ -1092,6 +1092,22 @@ local function colorizeObjectives(objectivesText)
 end
 
 
+-- Simulates pressing the "Clear Window" Button
+function RQE:PerformClearActions()
+    RQE:ClearFrameData()
+    RQE.searchedQuestID = nil
+    RQE.ManualSuperTrack = nil
+    C_SuperTrack.ClearSuperTrackedContent()
+    RQE:UpdateRQEFrameVisibility()
+    -- Reset manually tracked quests
+    if RQE.ManuallyTrackedQuests then
+        for questID in pairs(RQE.ManuallyTrackedQuests) do
+            RQE.ManuallyTrackedQuests[questID] = nil
+        end
+    end
+end
+
+
 -- Function check if RQEFrame frame should be cleared
 function RQE:ShouldClearFrame()
     -- Attempt to directly extract questID from RQE.QuestIDText if available
@@ -1860,7 +1876,10 @@ function RQE.SearchModule:CreateSearchBox()
         local questID = tonumber(inputText)
         local foundQuestID = nil
         local inputTextLower = string.lower(inputText) -- Convert input text to lowercase for case-insensitive comparison
-
+		
+		-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
+		RQE:PerformClearActions()
+		
         if not questID then
             for id, questData in pairs(RQEDatabase) do
                 if questData.title and string.find(string.lower(questData.title), inputTextLower) then

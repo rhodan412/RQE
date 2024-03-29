@@ -1491,6 +1491,9 @@ function UpdateRQEQuestFrame()
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 						
+						-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
+						RQE:PerformClearActions()
+						
 						-- Clear any existing super tracking
 						C_SuperTrack.ClearSuperTrackedContent()
 
@@ -1939,6 +1942,9 @@ function UpdateRQEWorldQuestFrame()
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					
+					-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
+					RQE:PerformClearActions()
+						
 					-- Existing code to set as super-tracked
 					RQE.ManualSuperTrack = true
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
