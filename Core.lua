@@ -1093,7 +1093,7 @@ end
 
 
 -- Function check if RQEFrame frame should be cleared
-function RQE:ShouldClearFrame(questID)
+function RQE:ShouldClearFrame()
     -- Attempt to directly extract questID from RQE.QuestIDText if available
     local extractedQuestID
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -1101,20 +1101,20 @@ function RQE:ShouldClearFrame(questID)
     end
 	
     -- Use extractedQuestID if valid; otherwise, fall back to provided questID or other sources
-    questID = extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
+    --questID = extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
 
     -- Early exit if there's still no valid questID
-    if not questID or questID == 0 then
+    if not extractedQuestID or extractedQuestID == 0 then
         print("No valid questID for ShouldClearFrame.")
         return
     end
 	
 	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
-    local isQuestInLog = C_QuestLog.IsOnQuest(questID)
-	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-	local isBeingSearched = RQE.searchedQuestID == questID
-	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
-    local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID]
+    local isQuestInLog = C_QuestLog.IsOnQuest(extractedQuestID)
+	local isWorldQuest = C_QuestLog.IsWorldQuest(extractedQuestID)
+	local isBeingSearched = RQE.searchedQuestID == extractedQuestID
+	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+    local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
 	
     local watchedQuests = {}
     for i = 1, C_QuestLog.GetNumQuestWatches() do
@@ -1133,7 +1133,7 @@ function RQE:ShouldClearFrame(questID)
 	-- Clears from RQEFrame searched world quests that have been completed
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
-		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", questID)
+		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", extractedQuestID)
         return -- Exit the function early
 	end
 
@@ -1142,22 +1142,22 @@ function RQE:ShouldClearFrame(questID)
     --if not isBeingSearched and ((not isQuestInLog and not isWorldQuest) or (isWorldQuest and isQuestCompleted)) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
-		RQE.infoLog("Clearing the RQEFrame for questID: ", questID)
+		RQE.infoLog("Clearing the RQEFrame for questID: ", extractedQuestID)
         return -- Exit the function early
     end
 
     if isWorldQuest then
-		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[questID]) then
+		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
-            RQE.infoLog("Clearing RQEFrame to questID: ", questID)
+            RQE.infoLog("Clearing RQEFrame to questID: ", extractedQuestID)
             return -- Exit the function early
         end
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
-		if not (isBeingSearched or manuallyTracked or watchedQuests[questID]) then
+		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
             RQE:ClearFrameData()
-			RQE.infoLog("Clearing RQEFrame for questID: ", questID)
+			RQE.infoLog("Clearing RQEFrame for questID: ", extractedQuestID)
             return -- Exit the function early
         end
     end
@@ -1168,9 +1168,18 @@ end
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     -- Retrieve the current super-tracked quest ID for debugging
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	questID = currentSuperTrackedQuestID
+    local extractedQuestID
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+    end
+    questID = extractedQuestID or questID
+
+    -- Assuming questInfo needs to be updated as well
+    questInfo = RQEDatabase[questID] or questInfo
 	
+	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
     RQE.infoLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
+	
 	AdjustRQEFrameWidths(newWidth)
 
     -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
@@ -1197,10 +1206,10 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         return
     end
 
-    -- Only update super tracking if it's necessary
-    if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
-        C_SuperTrack.SetSuperTrackedQuestID(questID)
-    end
+    -- -- Only update super tracking if it's necessary --- MIGHT HAVE TO REMOVE IF SUPER TRACK BEGINS MISBEHAVING!
+    -- if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
+        -- C_SuperTrack.SetSuperTrackedQuestID(questID)
+    -- end
 
     if RQE.QuestIDText then
         RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
