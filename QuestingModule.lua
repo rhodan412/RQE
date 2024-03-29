@@ -2342,7 +2342,7 @@ function UpdateRQEAchievementsFrame()
 
 				GameTooltip:AddLine(" ")
                 if wasEarnedByMe then
-					GameTooltip:AddLine("Achivement completed by " .. UnitName("player"), 0, 1, 0, true) -- Green Text
+					GameTooltip:AddLine("Achievement completed by " .. UnitName("player"), 0, 1, 0, true) -- Green Text
 				else
                     GameTooltip:AddLine("In progress by " .. UnitName("player"), 0, 1, 0, true)
                 end
