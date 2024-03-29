@@ -1172,7 +1172,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
         extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     end
-    questID = extractedQuestID or questID
+    questID = extractedQuestID or questID or currentSuperTrackedQuestID
 
     -- Assuming questInfo needs to be updated as well
     questInfo = RQEDatabase[questID] or questInfo
