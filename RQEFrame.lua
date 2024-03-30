@@ -1061,7 +1061,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Create CoordsText as a tooltip
 		StepText:SetScript("OnEnter", function(self)  -- changed to StepText from RQE.StepText
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText(CoordText[i] or "No coordinates available.")
+			GameTooltip:SetText(CoordsText[i] or "No coordinates available.")
 			GameTooltip:Show()
 		end)
 		StepText:SetScript("OnLeave", function(self)  -- changed to StepText from RQE.StepText
