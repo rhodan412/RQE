@@ -531,6 +531,9 @@ function RQE.handleSuperTracking(...)
 	-- C_Timer.After(0.5, function()
 		-- HideObjectiveTracker()
 	-- end)
+	
+	-- Reset the "Clicked" WaypointButton to nil
+	RQE.LastClickedIdentifier = nil
 
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then

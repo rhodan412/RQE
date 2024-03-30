@@ -992,7 +992,16 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Use the custom texture for the background
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
-		bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+		--bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+		
+		-- Determine if this button was the last clicked
+		if RQE.LastClickedIdentifier and RQE.LastClickedIdentifier == i then
+			-- This button was the last clicked one; apply the "lit" texture
+			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+		else
+			-- For all other buttons, apply the default texture
+			bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+		end
 
 		-- Get the height of the StepText element
 		local stepTextHeight = StepText:GetStringHeight()
@@ -1035,7 +1044,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-			
+
+			-- Save the identifier (could be the questID or any unique property tied to the button)
+			RQE.LastClickedIdentifier = i
+	
 			-- Update the reference to the last clicked button
 			RQE.LastClickedWaypointButton = WaypointButton
 			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
