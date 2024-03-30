@@ -768,6 +768,14 @@ local function CreateQuestTooltip(frame, questID)
 end
 
 
+-- Hide tooltip for the RQEFrame when moving out of the frame
+if RQEFrame then
+    RQEFrame:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+end
+
+
 -- Add mouseover event for QuestIDText
 RQE.QuestIDText:SetScript("OnEnter", function(self)
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1019,7 +1027,19 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
             
             -- Call your function to handle the coordinate click
             RQE:OnCoordinateClicked(x, y, mapID)
-        end)
+
+			-- Check if there's a last clicked button and reset its texture
+			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
+				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+			end
+			
+			-- Update the texture of the currently clicked button
+			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+			
+			-- Update the reference to the last clicked button
+			RQE.LastClickedWaypointButton = WaypointButton
+			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
+		end)
 
 		-- Add a mouse down event to simulate a button press
 		WaypointButton:SetScript("OnMouseDown", function(self, button)

@@ -70,6 +70,7 @@ ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
 RQE.QTScrollFrame = ScrollFrame
 
+
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
 content:SetSize(360, 600)  -- Set the content size here
@@ -77,12 +78,22 @@ ScrollFrame:SetScrollChild(content)
 content:SetAllPoints()
 RQE.QTcontent = content
 
+
 -- Make it draggable
 frame:SetMovable(true)
 frame:EnableMouse(true)
 frame:RegisterForDrag("LeftButton")
 frame:SetScript("OnDragStart", frame.StartMoving)
 frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+
+
+-- Hide tooltip for the RQEQuestFrame when moving out of the frame
+if RQEQuestFrame then
+    RQEQuestFrame:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+end
+
 
 -- Make it resizable
 frame:SetResizable(true)

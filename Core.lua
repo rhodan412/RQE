@@ -241,6 +241,7 @@ RQE.waypoints = {}
 RQE.lastSuperTrackedQuestID = nil
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.ManualSuperTrack = nil
+RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
 
 -- Addon Initialization
 function RQE:OnInitialize()
@@ -2549,6 +2550,9 @@ function RQE.filterByZone(zoneID)
         end
     end
 
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	
     -- Add the quests from the selected zone to the watch list
     for _, questID in ipairs(questIDsForZone) do
         C_QuestLog.AddQuestWatch(questID)
