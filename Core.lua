@@ -2423,6 +2423,11 @@ RQE.filterCompleteQuests = function()
             C_QuestLog.RemoveQuestWatch(questInfo.questID)
         end
     end
+	
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
 end
@@ -2503,6 +2508,10 @@ RQE.filterDailyWeeklyQuests = function()
     if QuestWatch_Update then
         QuestWatch_Update()
     end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
@@ -2595,6 +2604,10 @@ function RQE.filterByZone(zoneID)
     if QuestWatch_Update then
         QuestWatch_Update()
     end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
@@ -2632,6 +2645,10 @@ function RQE.filterByQuestType(questType)
     -- if QuestWatch_Update then
         -- QuestWatch_Update()
     -- end
+	
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
@@ -2739,6 +2756,10 @@ function RQE.filterByCampaign(campaignID)
             end
         end
     end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
@@ -2876,6 +2897,10 @@ function RQE.filterByQuestLine(questLineID)
     if QuestWatch_Update then
         QuestWatch_Update()
     end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
