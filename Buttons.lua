@@ -363,28 +363,28 @@ end
 -- 4. Button Initialization (RQEQuestFrame)
 ----------------------------------------------------
 
--- Parent function to Create ClearWQButton
-function RQE.Buttons.ClearWQButton(RQEQuestFrame)
-    local ClearWQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
-    ClearWQButton:SetSize(18, 18)
-    ClearWQButton:SetText("CT")
-	RQE.ClearWQButton = ClearWQButton  -- Store reference for later use
+-- Parent function to Create CQButton
+function RQE.Buttons.CQButton(RQEQuestFrame)
+    local CQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+    CQButton:SetSize(18, 18)
+    CQButton:SetText("CQ")
+	RQE.CQButton = CQButton  -- Store reference for later use
 
     -- Set the frame strata and level
-    ClearWQButton:SetFrameStrata("MEDIUM")
-    ClearWQButton:SetFrameLevel(3)
+    CQButton:SetFrameStrata("MEDIUM")
+    CQButton:SetFrameLevel(3)
 	
     -- Nested functions
-    ClearWQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
-    ClearWQButton:SetScript("OnClick", function() 
-        -- Your code for ClearWQButton functionality here
-		RQE:ClearWQTracking()
+    CQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
+    CQButton:SetScript("OnClick", function() 
+        -- Your code for showing completed quests functionality here
+		RQE.filterCompleteQuests()
     end)
 
-    CreateTooltip(ClearWQButton, "Reset WQ Tracking")  -- Tooltip
-    CreateBorder(ClearWQButton)  -- Border
+    CreateTooltip(CQButton, "Show Completed Quests \n in Quest Log")  -- Tooltip
+    CreateBorder(CQButton)  -- Border
     
-    return ClearWQButton
+    return CQButton
 end
 
 
@@ -543,7 +543,7 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
                 hasArrow = true,
                 menuList = zoneQuestMenuList,  -- Add zone quest menu list here
             },
-			{ text = "Complete Quests", func = RQE.filterCompleteQuests },
+			{ text = "Completed Quests", func = RQE.filterCompleteQuests },
             { text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
 			-- { text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
 
