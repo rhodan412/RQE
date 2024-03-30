@@ -357,7 +357,7 @@ function RQE.InitializeFilterDropdown(self, level)
 
     if level == 1 then
         -- First-level menu items
-        info.text = "Complete Quests"
+        info.text = "Completed Quests"
         info.func = RQE.filterCompleteQuests  -- Link to your filter function
         UIDropDownMenu_AddButton(info, level)
 
@@ -2423,6 +2423,8 @@ RQE.filterCompleteQuests = function()
             C_QuestLog.RemoveQuestWatch(questInfo.questID)
         end
     end
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
 end
 
 
@@ -2473,6 +2475,9 @@ RQE.filterDailyWeeklyQuests = function()
     if QuestWatch_Update then
         QuestWatch_Update()
     end
+	
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
 end
 
 
@@ -2562,6 +2567,9 @@ function RQE.filterByZone(zoneID)
     if QuestWatch_Update then
         QuestWatch_Update()
     end
+	
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
 end
 
 
@@ -2596,6 +2604,9 @@ function RQE.filterByQuestType(questType)
     -- if QuestWatch_Update then
         -- QuestWatch_Update()
     -- end
+	
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
 end
 
 
@@ -2700,6 +2711,9 @@ function RQE.filterByCampaign(campaignID)
             end
         end
     end
+	
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
 end
 
 -- -- Function to print out the questline information for a specific quest
@@ -2834,6 +2848,9 @@ function RQE.filterByQuestLine(questLineID)
     if QuestWatch_Update then
         QuestWatch_Update()
     end
+	
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
 end
 
 
