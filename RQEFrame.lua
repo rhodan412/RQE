@@ -344,7 +344,6 @@ end
 -- Create QuestID Text
 RQE.QuestIDText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
-
 -- Debug: Check if settings are properly initialized
 if settings then
     -- Debug: Check individual settings
@@ -372,7 +371,6 @@ if settings then
         RQE.QuestIDText:SetTextColor(unpack(RQE.db.profile.textSettings.QuestIDText.color))
     end
 end
-
 
 RQE.QuestIDText:SetJustifyH("LEFT")
 RQE.QuestIDText:SetJustifyV("TOP")
@@ -545,6 +543,7 @@ RQE.QuestObjectives:EnableMouse(true)
 -- Display MapID with Tracker Frame
 local MapIDText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 MapIDText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 15)  -- Adjust the offsets as needed (-15, 20 was a little too high on the Y)
+MapIDText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
 MapIDText:SetText("")
 RQEFrame.MapIDText = MapIDText
 
@@ -552,8 +551,17 @@ RQEFrame.MapIDText = MapIDText
 -- Create Font String for Coordinates
 local CoordinatesText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 CoordinatesText:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -15, 15)  -- Adjust the offsets as needed
+CoordinatesText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
 CoordinatesText:SetText("")
 RQEFrame.CoordinatesText = CoordinatesText
+
+
+-- Create Font String for Addon Memory Usage
+local MemoryUsageText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+MemoryUsageText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 35)  -- Position it right above the MapIDText
+MemoryUsageText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
+MemoryUsageText:SetTextColor(231/255, 120/255, 120/255)
+RQEFrame.MemoryUsageText = MemoryUsageText
 
 
 -- Create buttons using functions from Buttons.lua
