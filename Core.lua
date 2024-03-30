@@ -1039,18 +1039,8 @@ function RQE:ClearFrameData()
     else
         RQE.debugLog("QuestObjectives is not initialized.")
     end
-	
-    -- Clear Waypoint Buttons
-    if RQE.WaypointButtons then
-        for _, button in pairs(RQE.WaypointButtons) do
-            button:Hide()
-        end
-        RQE.debugLog("Hide WaypointButtons")
-    else
-        RQE.debugLog("WaypointButtons is not initialized.")
-    end
-	
-	-- Clear Waypoint Button from "Unknown Quests Button"
+		
+	-- Clear Unknown Quests Button
 	if RQE.UnknownQuestButton then
 		RQE.UnknownQuestButton:Hide()
 		RQE.debugLog("Hide Special WaypointButton")
@@ -1071,6 +1061,19 @@ function RQE:ClearFrameData()
 end
 
 
+-- Clear Waypoint Buttons
+function RQE:ClearWaypointButtonData()
+    if RQE.WaypointButtons then
+        for _, button in pairs(RQE.WaypointButtons) do
+            button:Hide()
+        end
+        RQE.debugLog("Hide WaypointButtons")
+    else
+        RQE.debugLog("WaypointButtons is not initialized.")
+    end
+end
+
+	
 -- Colorization of the RQEFrame
 local function colorizeObjectives(objectivesText)
     local objectives = { strsplit("\n", objectivesText) }

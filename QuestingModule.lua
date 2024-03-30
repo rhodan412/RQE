@@ -1507,6 +1507,9 @@ function UpdateRQEQuestFrame()
 						-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 						RQE:PerformClearActions()
 						
+						-- Reset the "Clicked" WaypointButton to nil
+						RQE.LastClickedIdentifier = nil
+						
 						-- Clear any existing super tracking
 						C_SuperTrack.ClearSuperTrackedContent()
 
@@ -1957,7 +1960,10 @@ function UpdateRQEWorldQuestFrame()
 					
 					-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 					RQE:PerformClearActions()
-						
+					
+					-- Reset the "Clicked" WaypointButton to nil
+					RQE.LastClickedIdentifier = nil
+					
 					-- Existing code to set as super-tracked
 					RQE.ManualSuperTrack = true
 					C_SuperTrack.SetSuperTrackedQuestID(questID)

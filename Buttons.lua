@@ -179,6 +179,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 	
         -- Your code for ClearButton functionality here
 		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil
 		C_SuperTrack.ClearSuperTrackedContent()
@@ -548,15 +549,13 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 		cursorX, cursorY = cursorX / uiScale, cursorY / uiScale
 
 		local menuItems = {
+			{ text = "Completed Quests", func = RQE.filterCompleteQuests },
+            { text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
+			-- { text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
 			{
                 text = "Camapaign Quests",
                 hasArrow = true,
                 menuList = campaignMenuList,
-			},
-			{
-				text = "Quest Line",
-				hasArrow = true,
-				menuList = RQE.BuildQuestLineMenuList()
 			},
             {
                 text = "Quest Type",
@@ -568,9 +567,11 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
                 hasArrow = true,
                 menuList = zoneQuestMenuList,  -- Add zone quest menu list here
             },
-			{ text = "Completed Quests", func = RQE.filterCompleteQuests },
-            { text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
-			-- { text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
+			{
+				text = "Quest Line",
+				hasArrow = true,
+				menuList = RQE.BuildQuestLineMenuList()
+			},
 
 			-- -- Add more filter options here...
 			--}

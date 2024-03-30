@@ -533,8 +533,9 @@ function RQE.handleSuperTracking(...)
 	-- end)
 	
 	-- Reset the "Clicked" WaypointButton to nil
-	RQE.LastClickedIdentifier = nil
-
+	--RQE.LastClickedIdentifier = nil
+	--RQE:ClearWaypointButtonData()
+	
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
 		--RQE:ShouldClearFrame()
