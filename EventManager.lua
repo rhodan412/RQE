@@ -252,6 +252,7 @@ function RQE.handleAddonLoaded(addonName)
     end
 	
 	-- Updates frame with data from the super tracked quest (if any)
+	RQE:ClearWaypointButtonData()
 	UpdateFrame()
 end
 
@@ -493,6 +494,11 @@ function RQE.handleVariablesLoaded(...)
 		RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
 	else
 		RQE.debugLog("Invalid quest frame position or anchor point.")
+	end
+	
+	-- In your panel showing or initialization code
+	if RQE.db.profile.displayRQEmemUsage then
+		RQE:CheckMemoryUsage()
 	end
 end
 		

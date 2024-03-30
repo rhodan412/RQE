@@ -162,6 +162,7 @@ local defaults = {
 		autoQuestWatch = true,
 		autoQuestProgress = true,
 		removeWQatLogin = false,
+		displayRQEmemUsage = false,
         framePosition = {
             xPos = -40,
             yPos = -270,
@@ -890,6 +891,16 @@ function RQE:UpdateMapIDDisplay()
 end
 
 
+-- Function to update Memory Usage display
+function RQE:UpdateMemUsageDisplay()
+    if RQE.db.profile.showMapID and mapID then
+        RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. mapID)
+    else
+        RQEFrame.MemoryUsageText:SetText("")
+    end
+end
+
+
 -- Function to update the frame based on the current profile settings
 function RQE:UpdateFramePosition()
     -- When reading from DB
@@ -1119,9 +1130,6 @@ function RQE:ShouldClearFrame()
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
         extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     end
-	
-    -- Use extractedQuestID if valid; otherwise, fall back to provided questID or other sources
-    --questID = extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID() or RQE.lastSuperTrackedQuestID
 
     -- Early exit if there's still no valid questID
     if not extractedQuestID or extractedQuestID == 0 then
@@ -1153,6 +1161,7 @@ function RQE:ShouldClearFrame()
 	-- Clears from RQEFrame searched world quests that have been completed
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
 		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", extractedQuestID)
         return -- Exit the function early
 	end
@@ -1161,6 +1170,7 @@ function RQE:ShouldClearFrame()
 	--if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
 		RQE.infoLog("Clearing the RQEFrame for questID: ", extractedQuestID)
         return -- Exit the function early
     end
@@ -1169,6 +1179,7 @@ function RQE:ShouldClearFrame()
 		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
             RQE.infoLog("Clearing RQEFrame to questID: ", extractedQuestID)
             return -- Exit the function early
         end
@@ -1176,6 +1187,7 @@ function RQE:ShouldClearFrame()
         -- For non-world quests, clear if not in quest log or not being actively searched
 		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
             RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
 			RQE.infoLog("Clearing RQEFrame for questID: ", extractedQuestID)
             return -- Exit the function early
         end
@@ -1348,11 +1360,17 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 	RQE.UpdateTrackedAchievementList()
+	
+	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
-	--RQE:ShouldClearFrame(questID)
 	
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
+	
+	-- Update Display of Memory Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		RQE:CheckMemoryUsage()
+	end
 end
 
 
@@ -3249,6 +3267,33 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
     end
 end)
+
+
+-- Function to check the memory usage of your addon
+function RQE:CheckMemoryUsage()
+    if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		-- Update the memory usage information
+		UpdateAddOnMemoryUsage()
+
+		-- Get the memory usage for the RQE addon
+		local memUsage = GetAddOnMemoryUsage("RQE")
+
+		-- Format the memory usage text
+		local memUsageText = string.format("RQE Memory usage: %.2f KB", memUsage)
+
+		-- Update the MemoryUsageText FontString with the new memory usage
+		if RQEFrame and RQEFrame.MemoryUsageText then
+			RQEFrame.MemoryUsageText:SetText(memUsageText)
+		end
+    else
+        -- User wants to hide memory usage or the setting is not available
+        if RQEFrame and RQEFrame.MemoryUsageText then
+            -- Hide or clear the text
+            RQEFrame.MemoryUsageText:SetText("")
+			RQEFrame.MemoryUsageText:SetTextColor(1, 1, 1)  -- White color
+        end
+    end
+end
 
 
 ---------------------------------------------------

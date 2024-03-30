@@ -934,11 +934,22 @@ RQE.options = {
 						end
 					end,
 				},
+				displayRQEmemUsage = {
+					type = "toggle",
+					name = "Display Memory Usage",
+					desc = "Displays the memory usage for the RQE addon",
+					order = 2,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.displayRQEmemUsage end,
+					set = function(_, newValue) 
+						RQE.db.profile.displayRQEmemUsage = newValue;
+						RQE:CheckMemoryUsage();  -- Immediately update the memory usage display
+					end,
+				},
 				debug = {
 					type = "group",
 					name = "Debug",
 					inline = true,
-					order = 2,  -- Set this order to wherever you want it to appear
+					order = 3,  -- Set this order to wherever you want it to appear
 					hidden = function()
 						return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
 					end,
