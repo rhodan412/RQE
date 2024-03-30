@@ -462,6 +462,8 @@ RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QTor
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
 RQE.Buttons.CQButton(RQEQuestFrame, "TOPLEFT")
 
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
+RQE.Buttons.HQButton(RQEQuestFrame, "TOPLEFT")
 
 ---------------------------
 -- 6. Event Handlers

@@ -367,7 +367,7 @@ end
 function RQE.Buttons.CQButton(RQEQuestFrame)
     local CQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
     CQButton:SetSize(18, 18)
-    CQButton:SetText("CQ")
+    CQButton:SetText("SC")
 	RQE.CQButton = CQButton  -- Store reference for later use
 
     -- Set the frame strata and level
@@ -385,6 +385,31 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
     CreateBorder(CQButton)  -- Border
     
     return CQButton
+end
+
+
+-- Parent function to Create HQButton
+function RQE.Buttons.HQButton(RQEQuestFrame)
+    local HQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+    HQButton:SetSize(18, 18)
+    HQButton:SetText("HC")
+	RQE.HQButton = HQButton  -- Store reference for later use
+
+    -- Set the frame strata and level
+    HQButton:SetFrameStrata("MEDIUM")
+    HQButton:SetFrameLevel(3)
+	
+    -- Nested functions
+    HQButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+    HQButton:SetScript("OnClick", function() 
+        -- Your code for hiding completed quests functionality here
+		RQE:HideCompletedWatchedQuests()
+    end)
+
+    CreateTooltip(HQButton, "Hide watched Completed Quests")  -- Tooltip
+    CreateBorder(HQButton)  -- Border
+    
+    return HQButton
 end
 
 

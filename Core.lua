@@ -2428,6 +2428,34 @@ RQE.filterCompleteQuests = function()
 end
 
 
+-- Function for Hiding Completed Watched Quests
+function RQE:HideCompletedWatchedQuests()
+    -- Iterate through all quests currently being watched
+    for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+        local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		local isQuestComplete = C_QuestLog.IsComplete(qID)
+        if qID then
+            -- Check if the quest is completed
+            if isQuestComplete then
+                -- Remove the quest from the watch list if it is completed
+				--RQE.infoLog("Removing questID " .. qID .. " from watch list")
+                C_QuestLog.RemoveQuestWatch(qID)
+
+                -- Optional: Update the UI if necessary
+                -- If you have a custom UI that depends on the watch list, refresh it here
+            end
+        end
+    end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+end
+
+
 function RQE.ScanAndCacheQuestFrequencies()
     RQE.DailyQuests = {}
     RQE.WeeklyQuests = {}
