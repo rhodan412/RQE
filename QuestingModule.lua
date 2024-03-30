@@ -460,7 +460,7 @@ RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QT
 RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.ClearWQButton(RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.CQButton(RQEQuestFrame, "TOPLEFT")
 
 
 ---------------------------
