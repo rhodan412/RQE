@@ -8,7 +8,7 @@ RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help ident
 -- Function to create or update a macro for a quest step
 function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
 	local macroName = "RQE Macro"  -- Fixed name for all macros created by this function
-    local iconFileID = "4640500"   --"INV_MISC_QUESTIONMARK"  -- Default icon, could be dynamic based on content or left as is
+    local iconFileID = "INV_MISC_QUESTIONMARK"  -- Default icon, could be dynamic based on content or left as is
 
     -- Directly use macroContent if it's already a string; no need for table.concat
     local macroBody = type(macroContent) == "table" and table.concat(macroContent, "\n") or macroContent
