@@ -77,7 +77,6 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	end
 
 	local questName = C_QuestLog.GetTitleForQuestID(effectiveQuestID) or "Unknown"
-    --local questName = C_QuestLog.GetTitleForQuestID(unknownQuestID) or "Unknown"
     
     local x, y  -- Declare x and y here so they are accessible throughout the function
     
