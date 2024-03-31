@@ -1503,26 +1503,26 @@ function UpdateRQEQuestFrame()
 					else					
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-						local questIDFromText
-						if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-							questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-						end
 						
 						-- Clears Macro Data
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 
-						-- Additional logic to create/update a macro for step 1 of the quest
+						-- Delay added to allow for UI refresh or other updates to complete
 						C_Timer.After(1, function()
-							local questData = RQEDatabase[questIDFromText]
-							if questData and questData[1] and questData[1].macro then
-								-- Assume questData[1].macro is a table of strings or a string for the macro commands
+							-- Fetch the updated quest ID from the most reliable source just before using it
+							local updatedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+							RQE.infoLog("Updated Quest ID for macro:", updatedQuestID) -- Debug message for the current operation
+
+							local questData = RQEDatabase[updatedQuestID]
+							if questData[1] and questData[1].macro then
 								local macroCommands = questData[1].macro
-								-- If macroCommands is a table, concatenate it into a string
 								if type(macroCommands) == "table" then
 									macroCommands = table.concat(macroCommands, "\n")
 								end
-								-- Create or update the macro for step 1 of this quest
-								RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false) -- false for global macro
+								RQE.infoLog("Macro commands to set:", macroCommands) -- Debug message
+								RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false)
+							else
+								RQE.infoLog("No macro data for step 1 or no quest data found for updated ID:", updatedQuestID)
 							end
 						end)
 		
@@ -1979,26 +1979,26 @@ function UpdateRQEWorldQuestFrame()
 				else	
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-					local questIDFromText
-					if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-						questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-					end
 
 					-- Clears Macro Data
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 
-					-- Additional logic to create/update a macro for step 1 of the quest
+					-- Delay added to allow for UI refresh or other updates to complete
 					C_Timer.After(1, function()
-						local questData = RQEDatabase[questIDFromText]
-						if questData and questData[1] and questData[1].macro then
-							-- Assume questData[1].macro is a table of strings or a string for the macro commands
+						-- Fetch the updated quest ID from the most reliable source just before using it
+						local updatedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+						RQE.infoLog("Updated Quest ID for macro:", updatedQuestID) -- Debug message for the current operation
+
+						local questData = RQEDatabase[updatedQuestID]
+						if questData[1] and questData[1].macro then
 							local macroCommands = questData[1].macro
-							-- If macroCommands is a table, concatenate it into a string
 							if type(macroCommands) == "table" then
 								macroCommands = table.concat(macroCommands, "\n")
 							end
-							-- Create or update the macro for step 1 of this quest
-							RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false) -- false for global macro
+							RQE.infoLog("Macro commands to set:", macroCommands) -- Debug message
+							RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false)
+						else
+							RQE.infoLog("No macro data for step 1 or no quest data found for updated ID:", updatedQuestID)
 						end
 					end)
 						

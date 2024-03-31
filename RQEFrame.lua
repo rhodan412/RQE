@@ -1046,7 +1046,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end
 
 			RQEMacro:ClearMacroContentByName("RQE Macro")
-
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
@@ -1072,24 +1071,31 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.LastClickedWaypointButton = WaypointButton
 			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
 			
+			local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))  -- Use RQE.QuestIDText to get the quest ID
+			RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
+	
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.infoLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
-			local questData = RQEDatabase[questID]
-
-			if questID and stepDescription and questData then				
+			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
+			local questData = RQEDatabase[questIDFromText]
+			if questData then
+				RQE.infoLog("Quest data found for ID:", questIDFromText)
 				for index, stepData in ipairs(questData) do
 					if stepData.description == stepDescription then
-						-- Once the matching step is found, check for macro data
-						-- Inside the WaypointButton OnClick function
+						RQE.infoLog("Matching step data found for description:", stepDescription)
 						if stepData and stepData.macro then
-							local macroCommands = table.concat(stepData.macro, "\n")  -- Join all commands into a single string
-							RQEMacro:SetQuestStepMacro(questID, index, macroCommands, false) -- Pass the commands as a string
+							local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+							RQE.infoLog("Macro commands to set:", macroCommands)
+							RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
+						else
+							RQE.infoLog("No macro data found for this step.")
 						end
 					end
 				end
 			else
-				RQE.debugLog("Invalid quest ID or step description.")
+				RQE.infoLog("Invalid quest ID or step description. Quest data not found.")
 			end
 		end)
 
