@@ -1500,16 +1500,32 @@ function UpdateRQEQuestFrame()
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
-					else
-						-- -- Clear Waypoint and Map Pin
-						-- C_Map.ClearUserWaypoint()
-						-- if IsAddOnLoaded("TomTom") then
-							-- TomTom.waydb:ResetProfile()
-						-- end
-					
+					else					
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+						local questIDFromText
+						if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+							questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+						end
 						
+						-- Clears Macro Data
+						RQEMacro:ClearMacroContentByName("RQE Macro")
+
+						-- Additional logic to create/update a macro for step 1 of the quest
+						C_Timer.After(1, function()
+							local questData = RQEDatabase[questIDFromText]
+							if questData and questData[1] and questData[1].macro then
+								-- Assume questData[1].macro is a table of strings or a string for the macro commands
+								local macroCommands = questData[1].macro
+								-- If macroCommands is a table, concatenate it into a string
+								if type(macroCommands) == "table" then
+									macroCommands = table.concat(macroCommands, "\n")
+								end
+								-- Create or update the macro for step 1 of this quest
+								RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false) -- false for global macro
+							end
+						end)
+		
 						-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 						RQE:PerformClearActions()
 						
@@ -1960,16 +1976,32 @@ function UpdateRQEWorldQuestFrame()
 					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
-				else
-					-- -- Clear Waypoint and Map Pin
-					-- C_Map.ClearUserWaypoint()
-					-- if IsAddOnLoaded("TomTom") then
-						-- TomTom.waydb:ResetProfile()
-					-- end
-	
+				else	
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-					
+					local questIDFromText
+					if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+						questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+					end
+
+					-- Clears Macro Data
+					RQEMacro:ClearMacroContentByName("RQE Macro")
+
+					-- Additional logic to create/update a macro for step 1 of the quest
+					C_Timer.After(1, function()
+						local questData = RQEDatabase[questIDFromText]
+						if questData and questData[1] and questData[1].macro then
+							-- Assume questData[1].macro is a table of strings or a string for the macro commands
+							local macroCommands = questData[1].macro
+							-- If macroCommands is a table, concatenate it into a string
+							if type(macroCommands) == "table" then
+								macroCommands = table.concat(macroCommands, "\n")
+							end
+							-- Create or update the macro for step 1 of this quest
+							RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false) -- false for global macro
+						end
+					end)
+						
 					-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 					RQE:PerformClearActions()
 					

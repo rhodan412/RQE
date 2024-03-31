@@ -83,6 +83,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 				RQE.isRQEQuestFrameManuallyClosed = true
 			else
 				RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
+				RQE:ClearWaypointButtonData()
 				RQEFrame:Show()
 				-- Check if enableQuestFrame is true before showing RQEQuestFrame
                 if RQE.db.profile.enableQuestFrame then
@@ -139,6 +140,7 @@ function RQE.ToggleBothFramesfromLDB()
 		RQE.isRQEQuestFrameManuallyClosed = true
     else	
 		RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
+		RQE:ClearWaypointButtonData()
 		
 		-- Check if enableFrame is true before showing RQEFrame
 		if RQE.db.profile.enableFrame then
