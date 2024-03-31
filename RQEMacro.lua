@@ -36,6 +36,20 @@ function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
     return macroIndex
 end
 
+
+-- Function to clear a specific macro by name
+function RQEMacro:ClearMacroContentByName(macroName)
+    local macroIndex = GetMacroIndexByName(macroName)
+    if macroIndex ~= 0 then
+        -- Macro found, clear its content
+        EditMacro(macroIndex, nil, nil, " ")
+    else
+        -- Macro not found, you could choose to log this or take no action
+        RQE.debugLog("Macro not found: " .. macroName)
+    end
+end
+
+
 -- Function to delete a macro by name
 function RQEMacro:DeleteMacroByName(name)
     local macroIndex = GetMacroIndexByName(name)

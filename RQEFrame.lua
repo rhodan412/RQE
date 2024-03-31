@@ -1044,7 +1044,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			if IsAddOnLoaded("TomTom") then
 				TomTom.waydb:ResetProfile()
 			end
-		
+
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
