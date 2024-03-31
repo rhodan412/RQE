@@ -933,6 +933,7 @@ end
 function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights
 	local stepTextHeights = {}
+	RQE.CurrentQuestSteps = {}
 	local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	local baseYOffset = -20
 	
@@ -1061,10 +1062,33 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- Save the identifier (could be the questID or any unique property tied to the button)
 			RQE.LastClickedIdentifier = i
-	
+
+			-- When creating the WaypointButton
+			WaypointButton.stepIndex = i
+
 			-- Update the reference to the last clicked button
 			RQE.LastClickedWaypointButton = WaypointButton
 			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
+			
+			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
+			local questData = RQEDatabase[questID]
+
+			if questID and stepDescription and questData then				
+				for index, stepData in ipairs(questData) do
+					if stepData.description == stepDescription then
+						-- Once the matching step is found, check for macro data
+						-- Inside the WaypointButton OnClick function
+						if stepData and stepData.macro then
+							local macroCommands = table.concat(stepData.macro, "\n")  -- Join all commands into a single string
+							RQEMacro:SetQuestStepMacro(questID, index, macroCommands, false) -- Pass the commands as a string
+						end
+					end
+				end
+			else
+				RQE.debugLog("Invalid quest ID or step description.")
+			end
 		end)
 
 		-- Add a mouse down event to simulate a button press

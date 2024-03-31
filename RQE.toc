@@ -40,6 +40,7 @@ Buttons.lua
 
 # User Interface
 Config.lua
+RQEMacro.lua
 
 # Utility Modules
 WPUtil.lua
