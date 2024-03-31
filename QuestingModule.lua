@@ -1501,6 +1501,12 @@ function UpdateRQEQuestFrame()
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
 					else
+						-- -- Clear Waypoint and Map Pin
+						-- C_Map.ClearUserWaypoint()
+						-- if IsAddOnLoaded("TomTom") then
+							-- TomTom.waydb:ResetProfile()
+						-- end
+					
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 						
@@ -1955,6 +1961,12 @@ function UpdateRQEWorldQuestFrame()
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
 				else
+					-- -- Clear Waypoint and Map Pin
+					-- C_Map.ClearUserWaypoint()
+					-- if IsAddOnLoaded("TomTom") then
+						-- TomTom.waydb:ResetProfile()
+					-- end
+	
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					

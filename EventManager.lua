@@ -495,11 +495,6 @@ function RQE.handleVariablesLoaded(...)
 	else
 		RQE.debugLog("Invalid quest frame position or anchor point.")
 	end
-	
-	-- In your panel showing or initialization code
-	if RQE.db.profile.displayRQEmemUsage then
-		RQE:CheckMemoryUsage()
-	end
 end
 		
 
@@ -529,19 +524,16 @@ function RQE.handlePlayerEnterWorld(...)
 	-- Visibility Check for RQEFrame and RQEQuestFrame
 	RQE:UpdateRQEFrameVisibility()
 	RQE:UpdateRQEQuestFrameVisibility()
+	
+	-- Update Display of Memory Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		RQE:CheckMemoryUsage()
+	end
 end	
 		
 
 -- Handling SUPER_TRACKING_CHANGED Event
 function RQE.handleSuperTracking(...)
-	-- C_Timer.After(0.5, function()
-		-- HideObjectiveTracker()
-	-- end)
-	
-	-- Reset the "Clicked" WaypointButton to nil
-	--RQE.LastClickedIdentifier = nil
-	--RQE:ClearWaypointButtonData()
-	
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
 		--RQE:ShouldClearFrame()
@@ -601,6 +593,11 @@ function RQE.handleSuperTracking(...)
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
+	
+	-- Update Display of Memory Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		RQE:CheckMemoryUsage()
+	end
 end
 		
 

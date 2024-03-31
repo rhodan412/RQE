@@ -1038,6 +1038,12 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
+			-- Your code for RWButton functionality here
+			C_Map.ClearUserWaypoint()
+			if IsAddOnLoaded("TomTom") then
+				TomTom.waydb:ResetProfile()
+			end
+		
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array

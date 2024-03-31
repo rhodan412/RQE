@@ -1366,11 +1366,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
-	
-	-- Update Display of Memory Usage of Addon
-	if RQE.db and RQE.db.profile.displayRQEmemUsage then
-		RQE:CheckMemoryUsage()
-	end
 end
 
 
@@ -3278,8 +3273,13 @@ function RQE:CheckMemoryUsage()
 		-- Get the memory usage for the RQE addon
 		local memUsage = GetAddOnMemoryUsage("RQE")
 
-		-- Format the memory usage text
-		local memUsageText = string.format("RQE Memory usage: %.2f KB", memUsage)
+        -- Check if memUsage is greater than 1000 KB, then convert to MB
+        local memUsageText
+        if memUsage > 1000 then
+            memUsageText = string.format("RQE Memory usage: %.2f MB", memUsage / 1024)
+        else
+            memUsageText = string.format("RQE Memory usage: %.2f KB", memUsage)
+        end
 
 		-- Update the MemoryUsageText FontString with the new memory usage
 		if RQEFrame and RQEFrame.MemoryUsageText then
@@ -3290,7 +3290,6 @@ function RQE:CheckMemoryUsage()
         if RQEFrame and RQEFrame.MemoryUsageText then
             -- Hide or clear the text
             RQEFrame.MemoryUsageText:SetText("")
-			RQEFrame.MemoryUsageText:SetTextColor(1, 1, 1)  -- White color
         end
     end
 end
