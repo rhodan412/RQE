@@ -37,10 +37,8 @@ local LSM = LibStub("LibSharedMedia-3.0")
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
 
-
 -- Blizzard Imports
 local ScenarioObjectiveTracker = RQE:NewModule("ScenarioObjectiveTracker", "AceEvent-3.0")
-
 
 ---------------------------------------------------
 -- 3. Debugging Functions
