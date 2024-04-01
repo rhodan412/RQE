@@ -160,6 +160,7 @@ local defaults = {
 		autoQuestWatch = true,
 		autoQuestProgress = true,
 		removeWQatLogin = false,
+		autoTrackZoneQuests = false,
 		displayRQEmemUsage = false,
         framePosition = {
             xPos = -40,
@@ -355,6 +356,17 @@ function RQE.InitializeFilterDropdown(self, level)
     info.notCheckable = true
 
     if level == 1 then
+		-- Auto Tracking for Zone Quests
+		info.text = "Auto-Track Zone Quests"
+		info.keepShownOnClick = true  -- Keeps the dropdown open after clicking
+		info.isNotRadio = true
+		info.func = function()
+			RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+			-- No need to call RQE.DisplayCurrentZoneQuests() here since it will be called on zone change
+		end
+		info.checked = RQE.db.profile.autoTrackZoneQuests
+		UIDropDownMenu_AddButton(info, level)
+	
         -- First-level menu items
         info.text = "Completed Quests"
         info.func = RQE.filterCompleteQuests  -- Link to your filter function
@@ -1248,13 +1260,13 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	AdjustRQEFrameWidths(newWidth)
 
-    -- -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
-    -- RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
-    -- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-        -- RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
-    -- else
-        -- RQE.infoLog("RQE.QuestIDText is not initialized or has no text.")
-    -- end
+    -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
+    RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
+    else
+        RQE.infoLog("RQE.QuestIDText is not initialized or has no text.")
+    end
 	
     -- Validate questID before proceeding
     if not questID or type(questID) ~= "number" then
@@ -1266,16 +1278,19 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         RQE.debugLog("questID is nil.")
         return  -- Exit the function
     end
+
+    -- Check if the currently super-tracked quest is different from the extractedQuestID and if manual tracking is enabled
+    if RQE.ManualSuperTrack ~= true and currentSuperTrackedQuestID ~= extractedQuestID and extractedQuestID then
+        -- Re-super-track the extractedQuestID
+		RQE.infoLog("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
+        C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
+		UpdateRQEQuestFrame()
+    end
 	
     if not StepsText or not CoordsText or not MapIDs then
         RQE.debugLog("Exiting UpdateFrame due to missing data.")
         return
     end
-
-    -- -- Only update super tracking if it's necessary --- MIGHT HAVE TO REMOVE IF SUPER TRACK BEGINS MISBEHAVING!
-    -- if RQE.ManualSuperTrack and questID == RQE.ManualSuperTrackedQuestID then
-        -- C_SuperTrack.SetSuperTrackedQuestID(questID)
-    -- end
 
     if RQE.QuestIDText then
         RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
