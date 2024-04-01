@@ -1514,13 +1514,13 @@ function UpdateRQEQuestFrame()
 							RQE.infoLog("Updated Quest ID for macro:", updatedQuestID) -- Debug message for the current operation
 
 							local questData = RQEDatabase[updatedQuestID]
-							if questData[1] and questData[1].macro then
+							if questData and questData[1] and questData[1].macro then
 								local macroCommands = questData[1].macro
 								if type(macroCommands) == "table" then
 									macroCommands = table.concat(macroCommands, "\n")
 								end
 								RQE.infoLog("Macro commands to set:", macroCommands) -- Debug message
-								RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false)
+								RQEMacro:SetQuestStepMacro(updatedQuestID, 1, macroCommands, false)
 							else
 								RQE.infoLog("No macro data for step 1 or no quest data found for updated ID:", updatedQuestID)
 							end
@@ -1545,6 +1545,11 @@ function UpdateRQEQuestFrame()
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
+						
+						-- Check if MagicButton should be visible based on macro body
+						C_Timer.After(1, function()
+							RQE.Buttons.UpdateMagicButtonVisibility()
+						end)
 					end
 				end)
 
@@ -2017,6 +2022,11 @@ function UpdateRQEWorldQuestFrame()
 					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
+					
+					-- Check if MagicButton should be visible based on macro body
+					C_Timer.After(1, function()
+						RQE.Buttons.UpdateMagicButtonVisibility()
+					end)
 				end
 			end)
 

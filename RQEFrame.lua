@@ -1101,6 +1101,11 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			else
 				RQE.infoLog("Invalid quest ID or step description. Quest data not found.")
 			end
+			
+			-- Check if MagicButton should be visible based on macro body
+			C_Timer.After(1, function()
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			end)
 		end)
 
 		-- Add a mouse down event to simulate a button press

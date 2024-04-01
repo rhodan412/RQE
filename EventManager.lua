@@ -392,9 +392,18 @@ function RQE.handleVariablesLoaded(...)
 	-- Initialize the frame based on saved settings
 	if RQE.db.profile.enableFrame then
 		RQEFrame:Show()
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
 	else
 		RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
 	end
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 		
 	-- Initialize the questing frame based on saved settings
 	if RQE.db.profile.enableQuestFrame then
@@ -598,6 +607,10 @@ function RQE.handleSuperTracking(...)
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
 		RQE:CheckMemoryUsage()
 	end
+	
+	C_Timer.After(1, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
 end
 		
 

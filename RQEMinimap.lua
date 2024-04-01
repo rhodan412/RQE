@@ -78,13 +78,22 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 			-- Existing code for left button click, likely toggling your main frame
 			if RQEFrame:IsShown() then
 				RQEFrame:Hide()
+				if RQE.MagicButton then
+					RQE.MagicButton:Hide()
+				end
 				RQEQuestFrame:Hide()
 				RQE.isRQEFrameManuallyClosed = true
 				RQE.isRQEQuestFrameManuallyClosed = true
+				
+				-- Check if MagicButton should be visible based on macro body
+				RQE.Buttons.UpdateMagicButtonVisibility()
 			else
 				RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
 				RQE:ClearWaypointButtonData()
 				RQEFrame:Show()
+				if RQE.MagicButton then
+					RQE.MagicButton:Show()
+				end
 				-- Check if enableQuestFrame is true before showing RQEQuestFrame
                 if RQE.db.profile.enableQuestFrame then
                     RQEQuestFrame:Show()
@@ -92,6 +101,9 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 				
 				RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
 				RQE.isRQEQuestFrameManuallyClosed = false -- Resetting the manual close state
+				
+				-- Check if MagicButton should be visible based on macro body
+				RQE.Buttons.UpdateMagicButtonVisibility()
 			end
 			
 		elseif button == "RightButton" then
@@ -135,6 +147,9 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 function RQE.ToggleBothFramesfromLDB()
 	if RQEFrame:IsShown() then
 		RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
 		RQEQuestFrame:Hide()
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
@@ -145,6 +160,9 @@ function RQE.ToggleBothFramesfromLDB()
 		-- Check if enableFrame is true before showing RQEFrame
 		if RQE.db.profile.enableFrame then
 			RQEFrame:Show()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
 		end
 		
 		-- Check if enableQuestFrame is true before showing RQEQuestFrame
@@ -154,6 +172,9 @@ function RQE.ToggleBothFramesfromLDB()
 		
         RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
         RQE.isRQEQuestFrameManuallyClosed = false -- Resetting the manual close state
+		
+		-- Check if MagicButton should be visible based on macro body
+		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
 end
 
@@ -183,10 +204,19 @@ RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
 RQE.MinimapButton:SetScript("OnClick", function()
     if RQEFrame:IsShown() then
         RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
     else
         RQEFrame:Show()
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
 		RQEQuestFrame:Show()
     end
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end)
 
 
