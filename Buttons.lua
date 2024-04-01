@@ -162,6 +162,42 @@ end
 -- 3. Button Initialization (RQEFrame)
 ----------------------------------------------------
 
+-- Parent function to Create Magic Button for Super Tracked quest (runs the RQE Macro)
+function RQE.Buttons.CreateMagicButton(RQEFrame)
+    local MagicButton = CreateFrame("Button", "RQEMagicButton", UIParent, "SecureActionButtonTemplate")
+    MagicButton:SetSize(32, 32)  -- Set the button size
+    MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
+
+    -- Set the button to execute the "RQE Macro"
+	MagicButton:SetAttribute("type", "macro")
+	MagicButton:SetAttribute("macro", "RQE Macro")
+	MagicButton:RegisterForClicks("AnyUp", "AnyDown")
+	
+    -- Set the button's appearance
+    MagicButton:SetNormalTexture(134400)  -- Example texture ID, replace with actual macro icon or path
+    MagicButton:SetHighlightTexture(134400, "ADD")
+
+    -- Tooltip
+    MagicButton:SetScript("OnEnter", function(self)
+        local macroIndex = GetMacroIndexByName("RQE Macro")
+        if macroIndex and macroIndex > 0 then
+            local _, _, body = GetMacroInfo(macroIndex)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(body, nil, nil, nil, nil, true)
+            GameTooltip:Show()
+        end
+    end)
+    MagicButton:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    -- Show the button
+    MagicButton:Show()
+
+    return MagicButton
+end
+
+
 -- Parent function to Create ClearButton
 function RQE.Buttons.CreateClearButton(RQEFrame)
     local ClearButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")

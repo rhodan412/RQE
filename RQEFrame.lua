@@ -574,6 +574,10 @@ RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight
 RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider, "MaximizeButton")
 
 
+-- Magic Button
+RQE.Buttons.CreateMagicButton(RQEFrame, "TOPRIGHT")
+
+
 -- Create the ">" button
 local searchExecuteButton = CreateFrame("Button", nil, SearchFrame, "UIPanelButtonTemplate")
 searchExecuteButton:SetSize(18, 18)
