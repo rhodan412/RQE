@@ -5,6 +5,31 @@ RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust t
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
 
 
+-- Function for Updating the RQE Magic Button Icon to match with RQE macro
+RQE.Buttons.UpdateMagicButtonIcon = function()
+    local macroIndex = GetMacroIndexByName("RQE Macro")
+    if macroIndex and macroIndex > 0 then
+        local _, iconID = GetMacroInfo(macroIndex)
+        if iconID then
+            local MagicButton = _G["RQEMagicButton"]
+            if MagicButton then
+                MagicButton:SetNormalTexture(iconID)
+                MagicButton:SetHighlightTexture(iconID, "ADD")
+            end
+        end
+    end
+end
+
+-- Event frame for capturing macro updates
+RQE.Buttons.EventFrame = CreateFrame("Frame")
+RQE.Buttons.EventFrame:RegisterEvent("UPDATE_MACROS")
+RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "UPDATE_MACROS" then
+        RQE.Buttons.UpdateMagicButtonIcon()
+    end
+end)
+
+
 -- Function to create or update a macro for a quest step
 function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
 	local macroName = "RQE Macro"  -- Fixed name for all macros created by this function
