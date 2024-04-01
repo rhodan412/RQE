@@ -871,6 +871,10 @@ end
 
 -- Function to Show/Hide RQEQuestFrame when frames are empty
 function RQE:UpdateRQEQuestFrameVisibility()
+    if InCombatLockdown() then
+        return
+    end
+	
     -- Reset counts to 0
     self.campaignQuestCount = 0
     self.regularQuestCount = 0
@@ -2670,6 +2674,31 @@ function RQE.filterByZone(zoneID)
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
+end
+
+
+-- Function to display quests for the current zone
+function RQE.DisplayCurrentZoneQuests()
+    -- Step 1: Determine the player's current zone
+    local mapID = C_Map.GetBestMapForUnit("player")
+    if not mapID then
+        RQE.debugLog("Unable to determine the player's current map ID.")
+        return
+    end
+
+    -- Ensure we have the latest zone quests data
+    RQE.ScanAndCacheZoneQuests()
+
+    -- Step 2: Retrieve quests for the current zone
+    local currentZoneQuests = RQE.ZoneQuests[mapID] or {}
+
+    if #currentZoneQuests == 0 then
+        print("No quests found for the current zone.")
+        return
+    end
+
+    -- Step 3: Display or update the quest frame with the current zone's quests
+    RQE.filterByZone(mapID)  -- Assuming filterByZone can handle filtering & displaying quests for a given zone
 end
 
 

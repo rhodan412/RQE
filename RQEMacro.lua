@@ -1,6 +1,8 @@
 -- RQEMacro.lua
 
-RQEMacro = {}
+RQEMacro = RQEMacro or {}
+RQEMacro.pendingMacroClears = RQEMacro.pendingMacroClears or {}  -- Queue to hold macro names pending clearance
+
 RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust these values according to the game's current limits
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
 
@@ -64,6 +66,10 @@ end
 
 -- Function to clear a specific macro by name
 function RQEMacro:ClearMacroContentByName(macroName)
+    if InCombatLockdown() then
+        return
+    end
+	
     local macroIndex = GetMacroIndexByName(macroName)
     if macroIndex ~= 0 then
         -- Macro found, clear its content
@@ -72,7 +78,41 @@ function RQEMacro:ClearMacroContentByName(macroName)
         -- Macro not found, you could choose to log this or take no action
         RQE.debugLog("Macro not found: " .. macroName)
     end
+end-- Function to clear a specific macro by name
+function RQEMacro:ClearMacroContentByName(macroName)
+    if InCombatLockdown() then
+        -- Queue the macro clear request for after combat
+        table.insert(self.pendingMacroClears, macroName)
+        return
+    end
+	
+    self:ActuallyClearMacroContentByName(macroName)
 end
+
+-- Internal function that actually clears the macro content
+function RQEMacro:ActuallyClearMacroContentByName(macroName)
+    local macroIndex = GetMacroIndexByName(macroName)
+    if macroIndex ~= 0 then
+        -- Macro found, clear its content
+        EditMacro(macroIndex, nil, nil, " ")
+    else
+        -- Macro not found, log this
+        RQE.debugLog("Macro not found: " .. macroName)
+    end
+end
+
+-- Handle the queued macro clear requests after combat
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_REGEN_ENABLED" then
+        for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
+            RQEMacro:ActuallyClearMacroContentByName(macroName)
+        end
+        -- Clear the queue
+        wipe(RQEMacro.pendingMacroClears)
+    end
+end)
 
 
 -- Function to delete a macro by name
