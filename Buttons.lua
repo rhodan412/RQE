@@ -167,34 +167,86 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
     local MagicButton = CreateFrame("Button", "RQEMagicButton", UIParent, "SecureActionButtonTemplate")
     MagicButton:SetSize(32, 32)  -- Set the button size
     MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
+	RQE.MagicButton = MagicButton
+	
+	-- Update the Icon of the Magic Button
+	RQE.Buttons.UpdateMagicButtonIcon()
+	
+    -- Default icon texture ID or path
+    local defaultIconID = 134400 -- This is just an example; replace with a valid default icon ID or path
+    local iconID = defaultIconID -- Initialize with default icon
 
+    local macroIndex = GetMacroIndexByName("RQE Macro")
+    if macroIndex > 0 then
+        local _, macroIconID = GetMacroInfo(macroIndex)
+        if macroIconID then
+            iconID = macroIconID -- Use the macro's icon if available
+        end
+    end
+	
     -- Set the button to execute the "RQE Macro"
 	MagicButton:SetAttribute("type", "macro")
 	MagicButton:SetAttribute("macro", "RQE Macro")
 	MagicButton:RegisterForClicks("AnyUp", "AnyDown")
 	
     -- Set the button's appearance
-    MagicButton:SetNormalTexture(134400)  -- Example texture ID, replace with actual macro icon or path
-    MagicButton:SetHighlightTexture(134400, "ADD")
+    MagicButton:SetNormalTexture(iconID)  -- Example texture ID, replace with actual macro icon or path
+    MagicButton:SetHighlightTexture(iconID, "ADD")
 
-    -- Tooltip
-    MagicButton:SetScript("OnEnter", function(self)
-        local macroIndex = GetMacroIndexByName("RQE Macro")
-        if macroIndex and macroIndex > 0 then
-            local _, _, body = GetMacroInfo(macroIndex)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetText(body, nil, nil, nil, nil, true)
-            GameTooltip:Show()
-        end
-    end)
+	-- Tooltip
+	MagicButton:SetScript("OnEnter", function(self)
+		local macroIndex = GetMacroIndexByName("RQE Macro")
+		if macroIndex and macroIndex > 0 then
+			local _, _, body = GetMacroInfo(macroIndex)
+			-- Check if the body has content (not nil and not an empty string)
+			if body and body:trim() ~= "" then
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+				GameTooltip:SetText(body, nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			else
+				-- Optionally, clear any existing tooltip since there's no content
+				GameTooltip:Hide()
+			end
+		end
+	end)
+
+	-- Helper function to trim strings (removes whitespace from the beginning and end of a string)
+	if not string.trim then
+		string.trim = function(s)
+			return s:match("^%s*(.-)%s*$")
+		end
+	end
     MagicButton:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
 
-    -- Show the button
-    MagicButton:Show()
-
     return MagicButton
+end
+
+
+-- Update MagicButton based on macro content
+function RQE.Buttons.UpdateMagicButtonVisibility()
+    local macroIndex = GetMacroIndexByName("RQE Macro")
+    local MagicButton = RQE.MagicButton -- Assuming you've stored MagicButton globally in RQE.MagicButton
+
+    -- Check if the RQEFrame is hidden first
+    if not RQEFrame or not RQEFrame:IsShown() then
+        if RQE.MagicButton then
+            RQE.MagicButton:Hide() -- Ensure MagicButton is hidden if RQEFrame is not shown
+        end
+        return -- Exit the function early if RQEFrame is hidden
+    end
+	
+    if macroIndex > 0 then
+        local _, _, body = GetMacroInfo(macroIndex)
+        if body and body:trim() ~= "" then
+            if MagicButton then MagicButton:Show() end
+        else
+            if MagicButton then MagicButton:Hide() end
+        end
+    else
+        if MagicButton then MagicButton:Hide() end
+    end
 end
 
 
