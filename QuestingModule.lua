@@ -465,6 +465,10 @@ RQE.Buttons.CQButton(RQEQuestFrame, "TOPLEFT")
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
 RQE.Buttons.HQButton(RQEQuestFrame, "TOPLEFT")
 
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
+RQE.Buttons.ZQButton(RQEQuestFrame, "TOPLEFT")
+
+
 ---------------------------
 -- 6. Event Handlers
 ---------------------------

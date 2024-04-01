@@ -226,6 +226,10 @@ end
 
 -- Update MagicButton based on macro content
 function RQE.Buttons.UpdateMagicButtonVisibility()
+    if InCombatLockdown() then
+        return
+    end
+	
     local macroIndex = GetMacroIndexByName("RQE Macro")
     local MagicButton = RQE.MagicButton -- Assuming you've stored MagicButton globally in RQE.MagicButton
 
@@ -499,6 +503,31 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
     CreateBorder(HQButton)  -- Border
     
     return HQButton
+end
+
+
+-- Parent function to Create ZQButton
+function RQE.Buttons.ZQButton(RQEQuestFrame)
+    local ZQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+    ZQButton:SetSize(18, 18)
+    ZQButton:SetText("ZQ")
+	RQE.ZQButton = ZQButton  -- Store reference for later use
+
+    -- Set the frame strata and level
+    ZQButton:SetFrameStrata("MEDIUM")
+    ZQButton:SetFrameLevel(3)
+	
+    -- Nested functions
+    ZQButton:SetPoint("TOPLEFT", RQE.HQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+    ZQButton:SetScript("OnClick", function() 
+        -- Your code for displaying quests in current zone
+		RQE.DisplayCurrentZoneQuests()
+    end)
+
+    CreateTooltip(ZQButton, "Show zone quests")  -- Tooltip
+    CreateBorder(ZQButton)  -- Border
+    
+    return ZQButton
 end
 
 
