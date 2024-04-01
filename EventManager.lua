@@ -657,7 +657,7 @@ end
 
 
 		
--- Handling of several events for purpose of updating the DirectionText
+-- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA
 function RQE.handleZoneChange(...)
 	C_Timer.After(1.0, function()  -- Delay of 1 second
 
@@ -680,6 +680,10 @@ function RQE.handleZoneChange(...)
 		else
 			RQE.ScenarioChildFrame:Hide()
 			RQE.handleScenario()
+		end
+		
+		if RQE.db.profile.autoTrackZoneQuests then
+			RQE.DisplayCurrentZoneQuests()
 		end
 	end)
 end

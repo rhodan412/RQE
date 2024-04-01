@@ -666,6 +666,21 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 		cursorX, cursorY = cursorX / uiScale, cursorY / uiScale
 
 		local menuItems = {
+			{
+				text = "Auto-Track Zone Quests",
+				checked = function() return RQE.db.profile.autoTrackZoneQuests end,
+				func = function(self, arg1, arg2, checked)
+					RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+					if RQE.db.profile.autoTrackZoneQuests then
+						-- If enabling, auto-track the quests for the current zone
+						RQE.DisplayCurrentZoneQuests()
+					else
+						-- If disabling, you may want to untrack all quests or perform another action
+					end
+				end,
+				isNotRadio = true, -- Allows this menu item to be a toggle (checkable) rather than a radio button
+				keepShownOnClick = true, -- Keeps the menu open after the item is clicked
+			},
 			{ text = "Completed Quests", func = RQE.filterCompleteQuests },
             { text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
 			-- { text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },

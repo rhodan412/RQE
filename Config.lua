@@ -205,6 +205,16 @@ RQE.options = {
 						RQE.db.profile.removeWQatLogin = newValue;
 					end,
 				},
+				autoTrackZoneQuests = {
+					type = "toggle",
+					name = "Auto Track Zone Quests",
+					desc = "Updates watch list on zone change to display quests specific to the player's zone",
+					order = 11,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.autoTrackZoneQuests end,
+					set = function(_, newValue) 
+						RQE.db.profile.autoTrackZoneQuests = newValue;
+					end,
+				},
 			},
 		},
         frame = {
