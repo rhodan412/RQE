@@ -674,8 +674,14 @@ function RQE:SlashCommand(input)
         -- Toggle the frame visibility
         if RQEFrame:IsShown() then  
             RQEFrame:Hide()
+			if RQE.MagicButton then
+				RQE.MagicButton:Hide()
+			end
         else
 			RQEFrame:Show()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
         end
         -- Refresh the config panel if it's open
         if YourConfigPanel and YourConfigPanel:IsVisible() then
@@ -686,6 +692,9 @@ function RQE:SlashCommand(input)
         RQE.debugLog("config - Opens the configuration panel")
         RQE.debugLog("frame, toggle - Toggles the RQE frame")
     end
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
@@ -791,9 +800,18 @@ function RQE:ToggleMainFrame()
     
     if newValue then
         RQEFrame:Show()
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
     else
         RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
     end
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
@@ -827,14 +845,27 @@ end
 
 -- Function to Show/Hide RQEFrame when frames are empty
 function RQE:UpdateRQEFrameVisibility()
+    if InCombatLockdown() then
+        return
+    end
+	
     local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
 	local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
 	
     if (self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking)) or self.isRQEFrameManuallyClosed then
         RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
     else
         RQEFrame:Show()
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
     end
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
@@ -1364,6 +1395,11 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
+	
+	-- Visibility Update Check for RQEMagic Button
+	C_Timer.After(1, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
 end
 
 
@@ -2008,12 +2044,21 @@ function RQE:ToggleRQEFrame()
     end
     if RQEFrame:IsShown() then
         RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
         self.db.profile.enableFrame = false
     else
         RQEFrame:Show()
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
         self.db.profile.enableFrame = true
     end
     LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE")
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
