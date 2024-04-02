@@ -2608,23 +2608,6 @@ function RQE.ScanAndCacheZoneQuests()
 end
 
 
--- function RQE.ScanAndCacheZoneQuests()
-    -- RQE.ZoneQuests = {}
-
-    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
-    -- for i = 1, numEntries do
-        -- local questInfo = C_QuestLog.GetInfo(i)
-        -- if questInfo and not questInfo.isHeader then
-            -- local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
-            -- if zoneID then
-                -- RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
-                -- table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
-            -- end
-        -- end
-    -- end
--- end
-
-
 function RQE.ScanAndCacheZoneQuests()
     RQE.ZoneQuests = {}
     local numEntries = C_QuestLog.GetNumQuestLogEntries()

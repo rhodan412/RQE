@@ -223,6 +223,22 @@ function RQE.handleAddonLoaded(addonName)
     -- Add this line to update tracked achievements as soon as the addon is loaded
     RQE.UpdateTrackedAchievements()
 
+	-- -- Scan and Update Filter with Zone Quests   -- THIS IS HANDLED WHEN THE FILTER BUTTON IS PRESSED
+	-- RQE.ScanAndCacheZoneQuests()
+	-- RQE.BuildZoneQuestMenuList()
+	
+	-- -- Scan and Update Filter with Campaigns
+	-- RQE.ScanAndCacheCampaigns()
+	-- RQE.BuildCampaignMenuList()
+	
+	-- -- Scan and Update Filter with Quest Lines
+	-- RQE.RequestAndCacheQuestLines()
+	-- RQE.BuildQuestLineMenuList()
+	
+	-- -- Scan and Update Filter with Quest Types
+	-- RQE.ScanQuestTypes()
+	-- RQE.BuildQuestTypeMenuList()
+
     -- Hide the default objective tracker and make other UI adjustments after a short delay
     C_Timer.After(0.5, function()
 		HideObjectiveTracker()
