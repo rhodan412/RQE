@@ -527,7 +527,7 @@ end
 function RQE.handlePlayerEnterWorld(...)
 	C_Timer.After(1, function()  -- Delay of 1 second
 		wipe(RQE.savedWorldQuestWatches)
-		RQE:HandleSuperTrackedQuestUpdate()
+		--RQE:HandleSuperTrackedQuestUpdate()
 	end)	
 	
 	local mapID = C_Map.GetBestMapForUnit("player")
@@ -707,6 +707,12 @@ end
 
 -- Handles UPDATE_INSTANCE_INFO Event
 function RQE.handleInstanceInfoUpdate()
+	-- Clears and Updates frame with data from the super tracked quest (if any)
+    C_Timer.After(0.5, function()
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+    end)
+	
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
 end
@@ -723,21 +729,6 @@ function RQE.handleQuestStatusUpdate(...)
             C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
         end
     end
-	
-	-- -- Add quest to watch list if progress has been made --- NEEDS TO BE REDONE AS QUEST WAS BEING READDED AFTER BEING CLEARED FROM WATCH LIST REGARDLESS OF IF PROGRESS WAS MADE
-	-- if questID then
-		-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-		-- local isQuestInLog = C_QuestLog.IsOnQuest(questID)
-		
-		-- -- Add the quest to the tracker		
-		-- if isWorldQuest then
-			-- C_QuestLog.AddWorldQuestWatch(questID, watchType or Enum.QuestWatchType.Manual)
-		-- elseif isQuestInLog then
-			-- C_QuestLog.AddQuestWatch(questID)
-		-- end		
-	-- end
-
-	--local questInfo, StepsText, CoordsText, MapIDs
 	
 	-- Attempt to fetch other necessary information using the currentQuestID
 	local questInfo = RQEDatabase[questID]
@@ -770,6 +761,9 @@ function RQE.handleQuestStatusUpdate(...)
     -- C_Map.ClearUserWaypoint()  -- Uncomment if you need to clear user waypoints
     UpdateRQEQuestFrame()  -- Custom function to update your frame
     SortQuestsByProximity()  -- Assuming this sorts quests displayed in RQEFrame by proximity
+
+	-- Check to advance to next step in quest
+    RQE:CheckAndAdvanceStep(questID)
 	
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
