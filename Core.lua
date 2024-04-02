@@ -1286,7 +1286,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
 		UpdateRQEQuestFrame()
     end
-	
+		
     if not StepsText or not CoordsText or not MapIDs then
         RQE.debugLog("Exiting UpdateFrame due to missing data.")
         return
@@ -2581,11 +2581,6 @@ RQE.filterDailyWeeklyQuests = function()
     for questID, _ in pairs(RQE.WeeklyQuests) do
         C_QuestLog.AddQuestWatch(questID)
     end
-    
-    -- Optionally, update the quest watch frame
-    if QuestWatch_Update then
-        QuestWatch_Update()
-    end
 
 	-- Update FrameUI
 	RQE:ClearRQEQuestFrame()
@@ -2612,6 +2607,73 @@ function RQE.ScanAndCacheZoneQuests()
     end
 end
 
+
+-- function RQE.ScanAndCacheZoneQuests()
+    -- RQE.ZoneQuests = {}
+
+    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    -- for i = 1, numEntries do
+        -- local questInfo = C_QuestLog.GetInfo(i)
+        -- if questInfo and not questInfo.isHeader then
+            -- local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
+            -- if zoneID then
+                -- RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
+                -- table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
+            -- end
+        -- end
+    -- end
+-- end
+
+
+function RQE.ScanAndCacheZoneQuests()
+    RQE.ZoneQuests = {}
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+	local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+	
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader then
+            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
+            if zoneID then
+                RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
+                table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
+            end
+        end
+    end
+
+    if currentPlayerMapID then
+        local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
+        RQE.ZoneQuests[currentPlayerMapID] = {} -- Reset or initialize the quests for the current player map ID
+
+        for _, questOnMap in ipairs(questsOnMap) do
+            if questOnMap.questID then
+                -- Only add quests that are also in the player's quest log to ensure relevance
+                local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questOnMap.questID)
+                if questLogIndex then
+                    table.insert(RQE.ZoneQuests[currentPlayerMapID], questOnMap.questID)
+                end
+            end
+        end
+    end
+end
+
+
+-- Function that when run will print out the Map that is associated with quests in the player's questlog
+function RQE.ShowQuestsforMap()
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    for i = 1, numEntries do
+		local questInfo = C_QuestLog.GetInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
+			if uiMapID ~= 0 then
+				print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. uiMapID)
+			else
+				local zoneID = GetQuestUiMapID(questInfo.questID, ignoreWaypoints) or C_TaskQuest.GetQuestZoneID(questInfo.questID)
+				print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. zoneID)
+			end
+		end
+	end
+end
 
 
 function RQE.BuildZoneQuestMenuList()
@@ -2669,18 +2731,13 @@ function RQE.filterByZone(zoneID)
             C_QuestLog.RemoveQuestWatch(questID)
         end
     end
-
+	
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
 	
     -- Add the quests from the selected zone to the watch list
     for _, questID in ipairs(questIDsForZone) do
         C_QuestLog.AddQuestWatch(questID)
-    end
-
-    -- Optionally, update the quest watch frame
-    if QuestWatch_Update then
-        QuestWatch_Update()
     end
 
 	-- Update FrameUI
@@ -2708,7 +2765,6 @@ function RQE.DisplayCurrentZoneQuests()
     local currentZoneQuests = RQE.ZoneQuests[mapID] or {}
 
     if #currentZoneQuests == 0 then
-        print("No quests found for the current zone.")
         return
     end
 
@@ -2743,11 +2799,6 @@ function RQE.filterByQuestType(questType)
             end
         end
     end
-
-    -- -- Optionally, update the quest watch frame if necessary
-    -- if QuestWatch_Update then
-        -- QuestWatch_Update()
-    -- end
 	
 	-- Update FrameUI
 	RQE:ClearRQEQuestFrame()
@@ -2996,11 +3047,6 @@ function RQE.filterByQuestLine(questLineID)
         C_QuestLog.AddQuestWatch(questID)
     end
 
-    -- Optionally, update the quest watch frame
-    if QuestWatch_Update then
-        QuestWatch_Update()
-    end
-
 	-- Update FrameUI
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
@@ -3047,7 +3093,7 @@ function RQE.PrintQuestlineDetails(questLineID)
             end)
         end
     else
-        print("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
+        RQE.debugLog("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
     end
 end
 
