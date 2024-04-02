@@ -1165,29 +1165,40 @@ function RQE:CheckAndAdvanceStep(questID)
         extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     end
 
+    -- Determine questID based on various fallbacks
     questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-	
-	if not questID or type(questID) ~= "number" then
-		RQE.debugLog("Invalid questID:", questID)
-		return
-	end
 
-	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
-	
-    local questData = RQEDatabase[questID]
-    if not questData then return end
-	
-	-- Checks if quest is complete and if so ends function
-	if isQuestCompleted then
-		return
-	end
+    if not questID or type(questID) ~= "number" then
+        RQE.debugLog("Invalid questID:", questID)
+        return
+    end
 
-    local highestCompletedObjectiveIndex = 0
+    -- Retrieve objectives for the questID
     local objectives = C_QuestLog.GetQuestObjectives(questID)
-    local totalObjectiveIndexes = self:GetTotalObjectiveIndexes(questData)
+    if not objectives or #objectives == 0 then
+        RQE.debugLog("Quest", questID, "has no objectives or failed to retrieve objectives.")
+        return
+    end
+
+    -- Check if all objectives are finished
+    local allObjectivesCompleted = true
+    for _, objective in ipairs(objectives) do
+        if not objective.finished then
+            allObjectivesCompleted = false
+            break
+        end
+    end
+
+    -- Calculate highestCompletedObjectiveIndex based on objectives completion
+    local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or 0
+    local questData = RQEDatabase[questID]
+    if not questData then
+        RQE.debugLog("Quest data not found for questID:", questID)
+        return
+    end
 
     for _, stepData in ipairs(questData) do
-        if stepData.objectiveIndex then
+        if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
             local objective = objectives[stepData.objectiveIndex]
             if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
                 highestCompletedObjectiveIndex = stepData.objectiveIndex
@@ -1195,14 +1206,19 @@ function RQE:CheckAndAdvanceStep(questID)
         end
     end
 
-    -- Moved the check here, after updating highestCompletedObjectiveIndex
-    if highestCompletedObjectiveIndex == totalObjectiveIndexes then
-        return
-    end
+    RQE.infoLog("QuestID: " .. tostring(questID) ..
+      ", All Objectives Completed: " .. tostring(allObjectivesCompleted) ..
+      ", Highest Completed Objective Index: " .. tostring(highestCompletedObjectiveIndex))
 
-    -- Proceed to click the button for the next step related to the next objectiveIndex
-    local nextObjectiveIndex = highestCompletedObjectiveIndex + 1
-    self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+	-- Before your if-else statement
+	local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
+
+    -- Handle quest completion and specific objectives
+	if allObjectivesCompleted then
+		nextObjectiveIndex = 99 -- Override if all objectives are completed
+	end
+	
+	self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
 end
 
 
@@ -1234,7 +1250,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
         if stepData.objectiveIndex == nextObjectiveIndex then
             local button = self.WaypointButtons[stepIndex]
             if button then
-                RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex-1 .. " is complete. Clicking WaypointButton for the next ObjectiveIndex: " .. nextObjectiveIndex .. " (Step " .. stepIndex .. ").")
+                print("ObjectiveIndex " .. nextObjectiveIndex-1 .. " is complete. Clicking WaypointButton for the next ObjectiveIndex: " .. nextObjectiveIndex .. " (Step " .. stepIndex .. ").")
                 
                 -- Perform the button click only if it's a new objectiveIndex.
                 button:Click()
@@ -1248,7 +1264,6 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
     RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
     UpdateRQEQuestFrame()
 end
-
 
 
 -- Function to handle button clicks

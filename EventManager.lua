@@ -143,7 +143,7 @@ local function HandleEvents(frame, event, ...)
 		WORLD_STATE_TIMER_STOP = RQE.handleTimerStop,
 		ZONE_CHANGED = RQE.handleZoneChange,
 		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
-		ZONE_CHANGED_NEW_AREA = RQE.handleZoneChange
+		ZONE_CHANGED_NEW_AREA = RQE.handleZoneNewAreaChange
     }
     
     if handlers[event] then
@@ -563,7 +563,7 @@ end
 		
 
 -- Handling SUPER_TRACKING_CHANGED Event
-function RQE.handleSuperTracking(...)
+function RQE.handleSuperTracking(...)	
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
 		--RQE:ShouldClearFrame()
@@ -573,6 +573,7 @@ function RQE.handleSuperTracking(...)
     -- Early return if manual super tracking wasn't performed
 	if RQE.ManualSuperTrack then
 		RQE:ClearFrameData()
+		RQE.lastClickedObjectiveIndex = 0
     end
 	
     -- Reset the manual super tracking flag now that we're handling it
@@ -695,9 +696,37 @@ end
 
 
 		
--- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA
+-- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS
 function RQE.handleZoneChange(...)
 	C_Timer.After(1.0, function()  -- Delay of 1 second
+
+		-- Get the current map ID
+		local mapID = C_Map.GetBestMapForUnit("player")			
+		local questInfo = RQEDatabase[questID]
+		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+		
+		--RQE:UpdateMapIDDisplay()
+
+		-- Call the functions to update the frame
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		
+		SortQuestsByProximity()
+		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		
+		if C_Scenario.IsInScenario() then
+			RQE.ScenarioChildFrame:Show()
+			RQE.handleScenario()
+		else
+			RQE.ScenarioChildFrame:Hide()
+			RQE.handleScenario()
+		end
+	end)
+end
+
+
+-- Handles the event ZONE_CHANGED_NEW_AREA
+function RQE.handleZoneNewAreaChange(...)
+	C_Timer.After(0.5, function()
 
 		-- Get the current map ID
 		local mapID = C_Map.GetBestMapForUnit("player")			
