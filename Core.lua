@@ -1115,6 +1115,9 @@ function RQE:ClearFrameData()
 	end
 
 	RQE:ClearStepsTextInFrame()
+	
+	-- Clears contents of Macro on clearing of RQEFrame
+	RQEMacro:ClearMacroContentByName("RQE Macro")
 end
 
 
