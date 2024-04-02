@@ -70,22 +70,6 @@ end
 -- Function to clear a specific macro by name
 function RQEMacro:ClearMacroContentByName(macroName)
     if InCombatLockdown() then
-        return
-    end
-	
-    local macroIndex = GetMacroIndexByName(macroName)
-    if macroIndex ~= 0 then
-        -- Macro found, clear its content
-        EditMacro(macroIndex, nil, nil, " ")
-    else
-        -- Macro not found, you could choose to log this or take no action
-        RQE.debugLog("Macro not found: " .. macroName)
-    end
-end
-
--- Function to clear a specific macro by name
-function RQEMacro:ClearMacroContentByName(macroName)
-    if InCombatLockdown() then
         -- Queue the macro clear request for after combat
         table.insert(self.pendingMacroClears, macroName)
         return
