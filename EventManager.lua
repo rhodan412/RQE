@@ -763,7 +763,9 @@ function RQE.handleQuestStatusUpdate(...)
     SortQuestsByProximity()  -- Assuming this sorts quests displayed in RQEFrame by proximity
 
 	-- Check to advance to next step in quest
-    RQE:CheckAndAdvanceStep(questID)
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:CheckAndAdvanceStep(questID)
+	end
 	
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)

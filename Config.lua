@@ -215,6 +215,16 @@ RQE.options = {
 						RQE.db.profile.autoTrackZoneQuests = newValue;
 					end,
 				},
+				autoClickWaypointButton = {
+					type = "toggle",
+					name = "Auto Click Waypoint Button",
+					desc = "Automatically click on the Waypoint Button in the Super Tracked frame when you progress through quest objectives",
+					order = 12,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.autoClickWaypointButton end,
+					set = function(_, newValue) 
+						RQE.db.profile.autoClickWaypointButton = newValue;
+					end,
+				},
 			},
 		},
         frame = {

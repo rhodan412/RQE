@@ -161,6 +161,7 @@ local defaults = {
 		autoQuestProgress = true,
 		removeWQatLogin = false,
 		autoTrackZoneQuests = false,
+		autoClickWaypointButton = false,
 		displayRQEmemUsage = false,
         framePosition = {
             xPos = -40,
