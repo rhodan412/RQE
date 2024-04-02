@@ -1,6 +1,7 @@
 -- RQEMacro.lua
 
 RQEMacro = RQEMacro or {}
+RQEMacro.pendingMacroOperations = RQEMacro.pendingMacroOperations or {}
 RQEMacro.pendingMacroClears = RQEMacro.pendingMacroClears or {}  -- Queue to hold macro names pending clearance
 
 RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust these values according to the game's current limits
@@ -22,15 +23,6 @@ RQE.Buttons.UpdateMagicButtonIcon = function()
     end
 end
 
--- Event frame for capturing macro updates
-RQE.Buttons.EventFrame = CreateFrame("Frame")
-RQE.Buttons.EventFrame:RegisterEvent("UPDATE_MACROS")
-RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "UPDATE_MACROS" then
-        RQE.Buttons.UpdateMagicButtonIcon()
-    end
-end)
-
 
 -- Function to create or update a macro for a quest step
 function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
@@ -46,6 +38,17 @@ end
 
 -- Updated to use the existing structure
 function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
+    if InCombatLockdown() then
+        -- Queue the macro operation for after combat
+        table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
+        return
+    end
+
+    self:ActuallySetMacro(name, iconFileID, body, perCharacter)
+end
+
+-- Internal function that actually creates the macro content
+function RQEMacro:ActuallySetMacro(name, iconFileID, body, perCharacter)
     local macroIndex = GetMacroIndexByName(name)
     if macroIndex == 0 then -- Macro doesn't exist, create a new one
         local numAccountMacros, numCharacterMacros = GetNumMacros()
@@ -78,7 +81,9 @@ function RQEMacro:ClearMacroContentByName(macroName)
         -- Macro not found, you could choose to log this or take no action
         RQE.debugLog("Macro not found: " .. macroName)
     end
-end-- Function to clear a specific macro by name
+end
+
+-- Function to clear a specific macro by name
 function RQEMacro:ClearMacroContentByName(macroName)
     if InCombatLockdown() then
         -- Queue the macro clear request for after combat
@@ -101,19 +106,6 @@ function RQEMacro:ActuallyClearMacroContentByName(macroName)
     end
 end
 
--- Handle the queued macro clear requests after combat
-local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-eventFrame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_REGEN_ENABLED" then
-        for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
-            RQEMacro:ActuallyClearMacroContentByName(macroName)
-        end
-        -- Clear the queue
-        wipe(RQEMacro.pendingMacroClears)
-    end
-end)
-
 
 -- Function to delete a macro by name
 function RQEMacro:DeleteMacroByName(name)
@@ -122,3 +114,39 @@ function RQEMacro:DeleteMacroByName(name)
         DeleteMacro(macroIndex)
     end
 end
+
+
+-- Event frame for capturing macro updates
+RQE.Buttons.EventFrame = CreateFrame("Frame")
+RQE.Buttons.EventFrame:RegisterEvent("UPDATE_MACROS")
+RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "UPDATE_MACROS" then
+        RQE.Buttons.UpdateMagicButtonIcon()
+    end
+end)
+
+
+-- Handle the queued macro creation and clear macro requests after combat
+RQEMacro.macroOperationEventFrame = CreateFrame("Frame")
+RQEMacro.macroOperationEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+RQEMacro.macroOperationEventFrame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_REGEN_ENABLED" then
+        for _, op in ipairs(RQEMacro.pendingMacroOperations) do
+            RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
+        end
+        wipe(RQEMacro.pendingMacroOperations)
+    end
+end)
+
+
+-- Handle the queued macro clear requests after combat
+RQEMacro.macroClearEventFrame = CreateFrame("Frame")
+RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_REGEN_ENABLED" then
+        for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
+            RQEMacro:ActuallyClearMacroContentByName(macroName)
+        end
+        wipe(RQEMacro.pendingMacroClears)
+    end
+end)
