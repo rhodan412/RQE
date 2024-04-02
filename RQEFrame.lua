@@ -1164,6 +1164,12 @@ function RQE:CheckAndAdvanceStep(questID)
     end
 
     questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+	
+	if not questID or type(questID) ~= "number" then
+		print("Invalid questID:", questID)
+		return
+	end
+
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
 	
     local questData = RQEDatabase[questID]
@@ -1197,7 +1203,6 @@ function RQE:CheckAndAdvanceStep(questID)
     local nextObjectiveIndex = highestCompletedObjectiveIndex + 1
     self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
 end
-
 
 
 -- Utility function to get the total number of unique objectiveIndexes in the quest
