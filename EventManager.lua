@@ -578,8 +578,20 @@ function RQE.handleSuperTracking(...)
 	
 	RQE.SaveSuperTrackData()
 	--RQE.UnknownQuestButtonCalcNTrack()
-		
+	
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local extractedQuestID
+	local mapID = C_Map.GetBestMapForUnit("player")
+
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+	
+	-- Resets RQE.LastClickedWaypointButton to nil after Manual Super Track occurred
+	if RQE.ManualSuperTrack == false and questID == extractedQuestID and extractedQuestID then
+		RQE.LastClickedWaypointButton = nil
+	end
+	
 	RQE:CreateUnknownQuestWaypoint(questID, mapID)
 
 	local questName
