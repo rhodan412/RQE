@@ -207,6 +207,11 @@ function RQE.handlePlayerLogin(...)
 
 	-- This will set the profile to "Default"
 	RQE.db:SetProfile("Default")
+	
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:CheckAndAdvanceStep()
+	end
 end
 		
 
@@ -636,9 +641,14 @@ function RQE.handleSuperTracking(...)
 		RQE:CheckMemoryUsage()
 	end
 	
-	C_Timer.After(1, function()
-		RQE.Buttons.UpdateMagicButtonVisibility()
-	end)
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:CheckAndAdvanceStep()
+	end
+	
+	-- C_Timer.After(1, function()
+		-- RQE.Buttons.UpdateMagicButtonVisibility()
+	-- end)
 end
 		
 
@@ -773,15 +783,15 @@ function RQE.handleQuestStatusUpdate(...)
     -- C_Map.ClearUserWaypoint()  -- Uncomment if you need to clear user waypoints
     UpdateRQEQuestFrame()  -- Custom function to update your frame
     SortQuestsByProximity()  -- Assuming this sorts quests displayed in RQEFrame by proximity
+	
+	C_Timer.After(0.5, function()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	end)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE:CheckAndAdvanceStep(questID)
 	end
-	
-	C_Timer.After(0.5, function()
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	end)
 	
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
@@ -862,6 +872,7 @@ end
 function RQE.handleQuestWatchUpdate(...)
     -- Retrieve the current watched quest ID if needed
     local questID, added = ...
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
     local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
 	
@@ -895,6 +906,11 @@ function RQE.handleQuestWatchUpdate(...)
 			
 		-- Visibility Update Check for RQEQuestFrame
 		RQE:UpdateRQEQuestFrameVisibility()
+	end
+	
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:CheckAndAdvanceStep()
 	end
 end
 		

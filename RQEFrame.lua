@@ -1049,7 +1049,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				TomTom.waydb:ResetProfile()
 			end
 
-			RQEMacro:ClearMacroContentByName("RQE Macro")
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
@@ -1075,7 +1074,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.LastClickedWaypointButton = WaypointButton
 			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
 			
-			local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))  -- Use RQE.QuestIDText to get the quest ID
+			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			end
+			
 			RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
 	
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
@@ -1166,7 +1168,7 @@ function RQE:CheckAndAdvanceStep(questID)
     questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 	
 	if not questID or type(questID) ~= "number" then
-		print("Invalid questID:", questID)
+		RQE.debugLog("Invalid questID:", questID)
 		return
 	end
 
@@ -1195,7 +1197,6 @@ function RQE:CheckAndAdvanceStep(questID)
 
     -- Moved the check here, after updating highestCompletedObjectiveIndex
     if highestCompletedObjectiveIndex == totalObjectiveIndexes then
-        RQE.infoLog("All objectives completed. No further automated WaypointButton clicks.")
         return
     end
 
@@ -1223,20 +1224,31 @@ end
 
 -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
 function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+    -- Check if this is a new objectiveIndex, not the same as the last clicked one.
+    if RQE.lastClickedObjectiveIndex == nextObjectiveIndex then
+        RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex .. " was already clicked. Skipping.")
+        return
+    end
+
     for stepIndex, stepData in ipairs(questData) do
         if stepData.objectiveIndex == nextObjectiveIndex then
-            -- Found the step for the next objectiveIndex, now click its waypoint button
             local button = self.WaypointButtons[stepIndex]
             if button then
                 RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex-1 .. " is complete. Clicking WaypointButton for the next ObjectiveIndex: " .. nextObjectiveIndex .. " (Step " .. stepIndex .. ").")
+                
+                -- Perform the button click only if it's a new objectiveIndex.
                 button:Click()
+                
+                -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
+                RQE.lastClickedObjectiveIndex = nextObjectiveIndex
                 return
             end
         end
     end
     RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
-	UpdateRQEQuestFrame()
+    UpdateRQEQuestFrame()
 end
+
 
 
 -- Function to handle button clicks

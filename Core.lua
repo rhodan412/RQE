@@ -243,6 +243,7 @@ RQE.lastSuperTrackedQuestID = nil
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.ManualSuperTrack = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
+RQE.lastClickedObjectiveIndex = nil
 
 -- Addon Initialization
 function RQE:OnInitialize()
@@ -1117,7 +1118,7 @@ function RQE:ClearFrameData()
 	RQE:ClearStepsTextInFrame()
 	
 	-- Clears contents of Macro on clearing of RQEFrame
-	RQEMacro:ClearMacroContentByName("RQE Macro")
+	--RQEMacro:ClearMacroContentByName("RQE Macro")
 end
 
 
@@ -1182,7 +1183,7 @@ function RQE:ShouldClearFrame()
 
     -- Early exit if there's still no valid questID
     if not extractedQuestID or extractedQuestID == 0 then
-        print("No valid questID for ShouldClearFrame.")
+        RQE.debugLog("No valid questID for ShouldClearFrame.")
         return
     end
 	
@@ -1419,10 +1420,10 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
 	
-	-- Visibility Update Check for RQEMagic Button
-	C_Timer.After(1, function()
-		RQE.Buttons.UpdateMagicButtonVisibility()
-	end)
+	-- -- Visibility Update Check for RQEMagic Button
+	-- C_Timer.After(1, function()
+		-- RQE.Buttons.UpdateMagicButtonVisibility()
+	-- end)
 end
 
 
