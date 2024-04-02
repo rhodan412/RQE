@@ -2603,47 +2603,98 @@ function RQE.ScanAndCacheZoneQuests()
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
-            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
-            if zoneID then
-                RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
-                table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
-            end
-        end
-    end
-end
-
-
-function RQE.ScanAndCacheZoneQuests()
-    RQE.ZoneQuests = {}
-    local numEntries = C_QuestLog.GetNumQuestLogEntries()
-	local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
-	
-    for i = 1, numEntries do
-        local questInfo = C_QuestLog.GetInfo(i)
-        if questInfo and not questInfo.isHeader then
-            local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
-            if zoneID then
-                RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
-                table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
-            end
-        end
-    end
-
-    if currentPlayerMapID then
-        local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
-        RQE.ZoneQuests[currentPlayerMapID] = {} -- Reset or initialize the quests for the current player map ID
-
-        for _, questOnMap in ipairs(questsOnMap) do
-            if questOnMap.questID then
-                -- Only add quests that are also in the player's quest log to ensure relevance
-                local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questOnMap.questID)
-                if questLogIndex then
-                    table.insert(RQE.ZoneQuests[currentPlayerMapID], questOnMap.questID)
+            -- Get the primary map ID associated with the quest
+            local uiMapID, _, _, _, _ = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
+            -- If the primary map ID is not available, fallback to the secondary options
+            if not uiMapID or uiMapID == 0 then
+                uiMapID = C_TaskQuest.GetQuestZoneID(questInfo.questID)
+                -- As a last resort, use the quest's UiMapID if available
+                if not uiMapID or uiMapID == 0 then
+                    uiMapID = GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
                 end
             end
+            -- If a valid map ID is found, add the quest to the corresponding zone's quest list
+            if uiMapID and uiMapID ~= 0 then
+                RQE.ZoneQuests[uiMapID] = RQE.ZoneQuests[uiMapID] or {}
+                table.insert(RQE.ZoneQuests[uiMapID], questInfo.questID)
+            end
         end
     end
 end
+
+
+
+
+
+
+function RQE.UpdateTrackedQuestsToCurrentZone()
+    -- Determine the player's current zone/mapID
+    local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+    if not currentPlayerMapID then
+        RQE.debugLog("Unable to determine the player's current map ID.")
+        return
+    end
+
+    -- Retrieve quests for the current zone using C_QuestLog.GetQuestsOnMap
+    local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
+    if not questsOnMap then
+        RQE.debugLog("No quests found for the current zone.")
+        return
+    end
+
+    -- Convert questsOnMap to a set for quicker lookups
+    local questIDSet = {}
+    for _, questInfo in ipairs(questsOnMap) do
+        questIDSet[questInfo.questID] = true
+    end
+
+    -- Iterate through all quests the player is currently watching
+    local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+    for i = numQuestWatches, 1, -1 do
+        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        -- If a watched quest is not on the current map, untrack it
+        if questID and not questIDSet[questID] then
+            C_QuestLog.RemoveQuestWatch(questID)
+        end
+    end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+end
+
+
+-- function RQE.ScanAndCacheZoneQuests()
+    -- RQE.ZoneQuests = {}
+    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
+	-- local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+	
+    -- for i = 1, numEntries do
+        -- local questInfo = C_QuestLog.GetInfo(i)
+        -- if questInfo and not questInfo.isHeader then
+            -- local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
+            -- if zoneID then
+                -- RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
+                -- table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
+            -- end
+        -- end
+    -- end
+
+    -- if currentPlayerMapID then
+        -- local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
+        -- RQE.ZoneQuests[currentPlayerMapID] = {} -- Reset or initialize the quests for the current player map ID
+
+        -- for _, questOnMap in ipairs(questsOnMap) do
+            -- if questOnMap.questID then
+                -- -- Only add quests that are also in the player's quest log to ensure relevance
+                -- local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questOnMap.questID)
+                -- if questLogIndex then
+                    -- table.insert(RQE.ZoneQuests[currentPlayerMapID], questOnMap.questID)
+                -- end
+            -- end
+        -- end
+    -- end
+-- end
 
 
 -- Function that when run will print out the Map that is associated with quests in the player's questlog
@@ -2734,6 +2785,23 @@ function RQE.filterByZone(zoneID)
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
+	
+	RQE.CheckAndUpdateForCurrentZone(zoneID)
+end
+
+
+function RQE.CheckAndUpdateForCurrentZone(zoneID)
+    local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+    if not currentPlayerMapID then
+        RQE.debugLog("Unable to determine the player's current map ID.")
+        return
+    end
+
+    -- Compare the chosen zone ID with the current player's map ID
+    if zoneID == currentPlayerMapID then
+        -- If they match, update the tracked quests to reflect the current zone
+        RQE.UpdateTrackedQuestsToCurrentZone()
+    end
 end
 
 

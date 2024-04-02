@@ -212,6 +212,14 @@ function RQE.handlePlayerLogin(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE:CheckAndAdvanceStep()
 	end
+		
+	if RQE.db.profile.autoTrackZoneQuests then
+		RQE.DisplayCurrentZoneQuests()
+		
+		C_Timer.After(0.1, function()
+			RQE.UpdateTrackedQuestsToCurrentZone()
+		end)
+	end
 end
 		
 
@@ -227,22 +235,6 @@ function RQE.handleAddonLoaded(addonName)
 
     -- Add this line to update tracked achievements as soon as the addon is loaded
     RQE.UpdateTrackedAchievements()
-
-	-- -- Scan and Update Filter with Zone Quests   -- THIS IS HANDLED WHEN THE FILTER BUTTON IS PRESSED
-	-- RQE.ScanAndCacheZoneQuests()
-	-- RQE.BuildZoneQuestMenuList()
-	
-	-- -- Scan and Update Filter with Campaigns
-	-- RQE.ScanAndCacheCampaigns()
-	-- RQE.BuildCampaignMenuList()
-	
-	-- -- Scan and Update Filter with Quest Lines
-	-- RQE.RequestAndCacheQuestLines()
-	-- RQE.BuildQuestLineMenuList()
-	
-	-- -- Scan and Update Filter with Quest Types
-	-- RQE.ScanQuestTypes()
-	-- RQE.BuildQuestTypeMenuList()
 
     -- Hide the default objective tracker and make other UI adjustments after a short delay
     C_Timer.After(0.5, function()
@@ -271,6 +263,14 @@ function RQE.handleAddonLoaded(addonName)
     if RQE.handleScenario then
         RQE.handleScenario()
     end
+
+	if RQE.db.profile.autoTrackZoneQuests then
+		RQE.DisplayCurrentZoneQuests()
+		
+		C_Timer.After(0.1, function()
+			RQE.UpdateTrackedQuestsToCurrentZone()
+		end)
+	end
 	
 	-- Updates frame with data from the super tracked quest (if any)
 	RQE:ClearWaypointButtonData()
@@ -687,7 +687,7 @@ function RQE.handleQuestAccepted(...)
             UpdateWorldQuestTrackingForMap(playerMapID)
         end
     end
-    
+	
     -- Visibility Update Check for RQEFrame & RQEQuestFrame
     RQE:UpdateRQEFrameVisibility()
     RQE:UpdateRQEQuestFrameVisibility()
@@ -722,6 +722,10 @@ function RQE.handleZoneChange(...)
 		
 		if RQE.db.profile.autoTrackZoneQuests then
 			RQE.DisplayCurrentZoneQuests()
+			
+			C_Timer.After(0.1, function()
+				RQE.UpdateTrackedQuestsToCurrentZone()
+			end)
 		end
 	end)
 end
