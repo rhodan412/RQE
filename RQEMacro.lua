@@ -1,6 +1,7 @@
 -- RQEMacro.lua
 
 RQEMacro = RQEMacro or {}
+RQEMacro.pendingMacroSets = {} -- Queue for macro set operations
 RQEMacro.pendingMacroOperations = RQEMacro.pendingMacroOperations or {}
 RQEMacro.pendingMacroClears = RQEMacro.pendingMacroClears or {}  -- Queue to hold macro names pending clearance
 
@@ -26,13 +27,22 @@ end
 
 -- Function to create or update a macro for a quest step
 function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
-	local macroName = "RQE Macro"  -- Fixed name for all macros created by this function
-    local iconFileID = "INV_MISC_QUESTIONMARK"  -- Default icon, could be dynamic based on content or left as is
-
-    -- Directly use macroContent if it's already a string; no need for table.concat
+    local macroName = "RQE Macro"
+    local iconFileID = "INV_MISC_QUESTIONMARK"
     local macroBody = type(macroContent) == "table" and table.concat(macroContent, "\n") or macroContent
 
-    return self:SetMacro(macroName, iconFileID, macroBody, perCharacter)
+    if InCombatLockdown() then
+        -- Queue the macro set operation for after combat
+        table.insert(self.pendingMacroSets, {
+            name = macroName,
+            iconFileID = iconFileID,
+            body = macroBody,
+            perCharacter = perCharacter
+        })
+    else
+        -- Not in combat, set the macro immediately
+        return self:SetMacro(macroName, iconFileID, macroBody, perCharacter)
+    end
 end
 
 
@@ -110,24 +120,23 @@ RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 
--- Handle the queued macro creation and clear macro requests after combat
-RQEMacro.macroOperationEventFrame = CreateFrame("Frame")
-RQEMacro.macroOperationEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-RQEMacro.macroOperationEventFrame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_REGEN_ENABLED" then
-        for _, op in ipairs(RQEMacro.pendingMacroOperations) do
-            RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
-        end
-        wipe(RQEMacro.pendingMacroOperations)
-    end
-end)
-
-
--- Handle the queued macro clear requests after combat
+-- Handle the queued macro creation and clear requests after combat
 RQEMacro.macroClearEventFrame = CreateFrame("Frame")
 RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_REGEN_ENABLED" then
+        -- Process queued macro set/update operations
+        for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
+            RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
+        end
+        wipe(RQEMacro.pendingMacroSets)
+		
+        for _, op in ipairs(RQEMacro.pendingMacroOperations) do
+            RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
+        end
+        wipe(RQEMacro.pendingMacroOperations)
+
+        -- Process queued macro clear operations
         for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
             RQEMacro:ActuallyClearMacroContentByName(macroName)
         end
