@@ -3510,6 +3510,35 @@ local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	end
 end
 
+function RQE:BuildQuestMacroBackup()
+	isSuperTracking = C_SuperTrack.IsSuperTrackingContent()
+	
+    if isSuperTracking then
+        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    end
+
+	-- Allow time for the UI to update and for the super track to register
+	C_Timer.After(1, function()
+		-- Fetch the quest data here
+		local questData = RQEDatabase[questID]
+		if not questData then
+			RQE.debugLog("Quest data not found for questID:", questID)
+			return
+		end
+
+		-- Check if the last clicked waypoint button's macro should be set
+		local waypointButton = RQE.LastClickedWaypointButton
+		if waypointButton and waypointButton.stepIndex then
+			local stepData = questData[waypointButton.stepIndex]
+			if stepData and stepData.macro then
+				-- Get macro commands from the step data
+				local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+				RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
+			end
+		end
+	end)
+end
+	
 ---------------------------------------------------
 -- 19. Finalization
 ---------------------------------------------------

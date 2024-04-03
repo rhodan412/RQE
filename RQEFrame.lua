@@ -1240,20 +1240,33 @@ end
 
 -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
 function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+    -- If the quest is completed, prioritize clicking the button for objectiveIndex 99
+    if nextObjectiveIndex == 99 then
+        for stepIndex, stepData in ipairs(questData) do
+            if stepData.objectiveIndex == 99 then
+                local button = RQE.WaypointButtons[stepIndex]
+                if button then
+                    RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
+                    button:Click()
+                    RQE.lastClickedObjectiveIndex = 99
+                    return
+                end
+            end
+        end
+    end
+	
     -- Check if this is a new objectiveIndex, not the same as the last clicked one.
     if RQE.lastClickedObjectiveIndex == nextObjectiveIndex then
         RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex .. " was already clicked. Skipping.")
         return
     end
 
-    for stepIndex, stepData in ipairs(questData) do
+    for _, stepData in ipairs(questData) do
         if stepData.objectiveIndex == nextObjectiveIndex then
-            local button = self.WaypointButtons[stepIndex]
+            local button = RQE.WaypointButtons[_] -- Assuming WaypointButtons are stored in a manner that mirrors questData
             if button then
-                RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex-1 .. " is complete. Clicking WaypointButton for the next ObjectiveIndex: " .. nextObjectiveIndex .. " (Step " .. stepIndex .. ").")
-                
-                -- Perform the button click only if it's a new objectiveIndex.
-                button:Click()
+                -- Simulate the click
+                button:Click() -- `OnClick` will now use the button's direct data
                 
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex

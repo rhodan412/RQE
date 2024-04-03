@@ -69,6 +69,7 @@ local eventsToRegister = {
 	"QUEST_LOG_UPDATE",
 	"QUEST_LOOT_RECEIVED",
 	--"QUEST_POI_UPDATE",
+	"PLAYER_MOUNT_DISPLAY_CHANGED",
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	"QUEST_WATCH_LIST_CHANGED",
@@ -116,7 +117,8 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
-		PLAYER_REGEN_ENABLED = RQE.handlePlayerEnterCombat,
+		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
+		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerRegenEnabled,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
 		QUEST_COMPLETE = RQE.handleQuestComplete,
@@ -171,7 +173,9 @@ function RQE.handleAchievementTracking(...)
 	end
 end
 
-function RQE.handlePlayerEnterCombat()
+
+-- Function that runs after leaving combat or PLAYER_REGEN_ENABLED, PLAYER_MOUNT_DISPLAY_CHANGED
+function RQE.handlePlayerRegenEnabled()
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
@@ -658,19 +662,6 @@ function RQE.handleSuperTracking(...)
 		RQE:CheckMemoryUsage()
 	end
 	
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-		
-		RQE:AdvanceNextStep(questID)
-	end
-	
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
@@ -863,6 +854,7 @@ function RQE.handleQuestComplete(...)
 	end
 		
 	local questID = ...  -- Extract the questID from the event
+	
 	RQE:QuestComplete(questID)
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	RQEQuestFrame:ClearAllPoints()
@@ -870,6 +862,19 @@ function RQE.handleQuestComplete(...)
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		RQE:CheckAndAdvanceStep(questID)
+	end
 	
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
