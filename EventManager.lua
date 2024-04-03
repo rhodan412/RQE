@@ -49,27 +49,29 @@ end
 local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
-	"CRITERIA_UPDATE",
 	--"BAG_UPDATE_COOLDOWN",
-	"CONTENT_TRACKING_UPDATE",
 	"CLIENT_SCENE_CLOSED",
 	--"CLIENT_SCENE_OPENED",
-	--"LEAVE_PARTY_CONFIRMATION",
+	"CONTENT_TRACKING_UPDATE",
+	"CRITERIA_UPDATE",
 	"JAILERS_TOWER_LEVEL_UPDATE",
+	--"LEAVE_PARTY_CONFIRMATION",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
+	"PLAYER_MOUNT_DISPLAY_CHANGED",
+	"PLAYER_REGEN_ENABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
 	"QUEST_AUTOCOMPLETE",
 	"QUEST_CURRENCY_LOOT_RECEIVED",
 	--"QUEST_DATA_LOAD_RESULT",
+	"QUEST_FINISHED",
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",
 	"QUEST_LOOT_RECEIVED",
 	--"QUEST_POI_UPDATE",
-	"PLAYER_MOUNT_DISPLAY_CHANGED",
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	"QUEST_WATCH_LIST_CHANGED",
@@ -89,8 +91,8 @@ local eventsToRegister = {
 	"WORLD_STATE_TIMER_STOP",
 	"ZONE_CHANGED",
 	"ZONE_CHANGED_INDOORS",
-	"ZONE_CHANGED_NEW_AREA",
-	"PLAYER_REGEN_ENABLED"
+	"ZONE_CHANGED_NEW_AREA"
+
 }
 
 
@@ -115,15 +117,16 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
+		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerRegenEnabled,
+		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
-		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
-		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerRegenEnabled,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
 		QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
 		--QUEST_DATA_LOAD_RESULT = RQE.handleQuestDataLoad,
+		QUEST_FINISHED = RQE.handleQuestFinished,
 		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_LOOT_RECEIVED = RQE.handleQuestStatusUpdate,
@@ -1114,6 +1117,35 @@ function RQE.handleQuestTurnIn(questID, ...)
             -- Optionally, you might want to update the frame to show the next priority quest or clear visibility
         end)
     end
+
+    -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
+    -- This might involve checking if there are other quests to display or adjusting UI elements
+    RQE:UpdateRQEFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()
+end
+
+
+-- Handling QUEST_FINISHED event
+function RQE.handleQuestFinished()
+	RQEMacro:ClearMacroContentByName("RQE Macro")
+
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local displayedQuestID = RQE.QuestIDText and tonumber(strmatch(RQE.QuestIDText:GetText() or "", "%d+"))
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
+		
+		C_Timer.After(1, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
+	end
 
     -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
     -- This might involve checking if there are other quests to display or adjusting UI elements
