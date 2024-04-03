@@ -48,3 +48,6 @@ RQEFrame.lua
 
 # Waypoint and Map Modules
 WaypointManager.lua
+
+# Quest Action Buttons
+#QuestButton.lua
