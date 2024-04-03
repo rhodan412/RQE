@@ -186,7 +186,9 @@ function RQE.handlePlayerRegenEnabled()
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
-		RQE:CheckAndAdvanceStep(questID)
+		C_Timer.After(1, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
 	end
 end
 
@@ -591,7 +593,24 @@ end
 		
 
 -- Handling SUPER_TRACKING_CHANGED Event
-function RQE.handleSuperTracking(...)	
+function RQE.handleSuperTracking(...)
+	RQEMacro:ClearMacroContentByName("RQE Macro")
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		C_Timer.After(1, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
+	end
+	
     -- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
 		--RQE:ShouldClearFrame()
@@ -1065,10 +1084,27 @@ end
 -- Handling QUEST_TURNED_IN event
 function RQE.handleQuestTurnIn(questID, ...)
     if not questID then return end  -- Ensure there's a valid questID from the event
-    
+
+	RQEMacro:ClearMacroContentByName("RQE Macro")
+
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
     local displayedQuestID = RQE.QuestIDText and tonumber(strmatch(RQE.QuestIDText:GetText() or "", "%d+"))
-    
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
+		
+		C_Timer.After(1, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
+	end
+	
     -- Verify if the turned-in quest matches the currently displayed or super tracked quest
     if superTrackedQuestID == questID or displayedQuestID == questID then
         -- Clear data and update frame after a brief delay to ensure quest log updates
@@ -1078,7 +1114,7 @@ function RQE.handleQuestTurnIn(questID, ...)
             -- Optionally, you might want to update the frame to show the next priority quest or clear visibility
         end)
     end
-    
+
     -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
     -- This might involve checking if there are other quests to display or adjusting UI elements
     RQE:UpdateRQEFrameVisibility()
