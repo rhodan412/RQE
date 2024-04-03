@@ -195,6 +195,7 @@ function RQE.handlePlayerRegenEnabled()
 	end
 end
 
+
 -- Handling PLAYER_LOGIN Event
 function RQE.handlePlayerLogin(...)
 	
@@ -799,11 +800,11 @@ end
 
 -- Handles UPDATE_INSTANCE_INFO Event
 function RQE.handleInstanceInfoUpdate()
-	-- Clears and Updates frame with data from the super tracked quest (if any)
-    C_Timer.After(0.5, function()
-		RQE:ClearFrameData()
-		RQE:ClearWaypointButtonData()
-    end)
+	-- -- Clears and Updates frame with data from the super tracked quest (if any)   -- COMMENTED OUT AS FRAME WAS CLEARING IN RAID GROUPS WHEN EVENT WOULD FIRE
+    -- C_Timer.After(0.5, function()
+		-- RQE:ClearFrameData()
+		-- RQE:ClearWaypointButtonData()
+    -- end)
 	
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
