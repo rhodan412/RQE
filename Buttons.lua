@@ -276,6 +276,8 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQE.ManualSuperTrack = nil
 		C_SuperTrack.ClearSuperTrackedContent()
 		RQE:UpdateRQEFrameVisibility()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
+		RQE.Buttons.UpdateMagicButtonVisibility()
 		
         -- Reset manually tracked quests
         if RQE.ManuallyTrackedQuests then

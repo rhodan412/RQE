@@ -88,7 +88,8 @@ local eventsToRegister = {
 	"WORLD_STATE_TIMER_STOP",
 	"ZONE_CHANGED",
 	"ZONE_CHANGED_INDOORS",
-	"ZONE_CHANGED_NEW_AREA"
+	"ZONE_CHANGED_NEW_AREA",
+	"PLAYER_REGEN_ENABLED"
 }
 
 
@@ -115,6 +116,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
+		PLAYER_REGEN_ENABLED = RQE.handlePlayerEnterCombat,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		QUEST_AUTOCOMPLETE = RQE.handleQuestComplete,
 		QUEST_COMPLETE = RQE.handleQuestComplete,
@@ -169,6 +171,20 @@ function RQE.handleAchievementTracking(...)
 	end
 end
 
+function RQE.handlePlayerEnterCombat()
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		RQE:CheckAndAdvanceStep(questID)
+	end
+end
 
 -- Handling PLAYER_LOGIN Event
 function RQE.handlePlayerLogin(...)
@@ -207,12 +223,7 @@ function RQE.handlePlayerLogin(...)
 
 	-- This will set the profile to "Default"
 	RQE.db:SetProfile("Default")
-	
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE:CheckAndAdvanceStep()
-	end
-		
+			
 	if RQE.db.profile.autoTrackZoneQuests then
 		RQE.DisplayCurrentZoneQuests()
 		
@@ -271,10 +282,23 @@ function RQE.handleAddonLoaded(addonName)
 			RQE.UpdateTrackedQuestsToCurrentZone()
 		end)
 	end
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		RQE:CheckAndAdvanceStep(questID)
+	end
 	
 	-- Updates frame with data from the super tracked quest (if any)
 	RQE:ClearWaypointButtonData()
-	UpdateFrame()
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 
 
@@ -586,12 +610,7 @@ function RQE.handleSuperTracking(...)
 	--RQE.UnknownQuestButtonCalcNTrack()
 	
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local extractedQuestID
 	local mapID = C_Map.GetBestMapForUnit("player")
-
-	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	end
 	
 	-- Resets RQE.LastClickedWaypointButton to nil after Manual Super Track occurred
 	if RQE.ManualSuperTrack == false and questID == extractedQuestID and extractedQuestID then
@@ -603,20 +622,17 @@ function RQE.handleSuperTracking(...)
 	local questName
 	if questID then
 		questName = C_QuestLog.GetTitleForQuestID(questID)
-		--if questID ~= RQE.lastSuperTrackedQuestID then
-			--RQE.lastSuperTrackedQuestID = questID
-			local questLink = GetQuestLink(questID)  -- Generate the quest link
-			RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
+		local questLink = GetQuestLink(questID)  -- Generate the quest link
+		RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
-			-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-			local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
-			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+		-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
+		local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
-			if StepsText and CoordsText and MapIDs then
-				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			end
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		--end
+		if StepsText and CoordsText and MapIDs then
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		end
+		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	else
 		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
 		--SortQuestsByProximity()
@@ -644,12 +660,20 @@ function RQE.handleSuperTracking(...)
 	
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
-		RQE:CheckAndAdvanceStep()
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		RQE:AdvanceNextStep(questID)
 	end
 	
-	-- C_Timer.After(1, function()
-		-- RQE.Buttons.UpdateMagicButtonVisibility()
-	-- end)
+	C_Timer.After(1, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
 end
 		
 
@@ -821,11 +845,6 @@ function RQE.handleQuestStatusUpdate(...)
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
 
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE:CheckAndAdvanceStep(questID)
-	end
-	
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
 end
@@ -943,7 +962,15 @@ function RQE.handleQuestWatchUpdate(...)
 	
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
-		RQE:CheckAndAdvanceStep()
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		RQE:CheckAndAdvanceStep(questID)
 	end
 end
 		

@@ -962,8 +962,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Create new step texts
 	for i = 1, #StepsText do
 		localstepTextHeight = 10
-		-- local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
-		-- local baseYOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	
 		-- Create StepsText
 		local StepText = content:CreateFontString(nil, "OVERLAY")
@@ -1081,13 +1079,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
 	
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+			RQE.debugLog("Attempting to create macro")
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
-			RQE.infoLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
 			local questData = RQEDatabase[questIDFromText]
 			if questData then
-				RQE.infoLog("Quest data found for ID:", questIDFromText)
+				local stepData = questData[stepIndex]
+				RQE.debugLog("Quest data found for ID:", questIDFromText)
 				for index, stepData in ipairs(questData) do
 					if stepData.description == stepDescription then
 						RQE.infoLog("Matching step data found for description:", stepDescription)
@@ -1096,20 +1096,20 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 							RQE.infoLog("Macro commands to set:", macroCommands)
 							RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
 						else
-							RQE.infoLog("No macro data found for this step.")
+							RQE.debugLog("No macro data found for this step.")
 						end
 					end
 				end
 			else
-				RQE.infoLog("Invalid quest ID or step description. Quest data not found.")
+				RQE.debugLog("Invalid quest ID or step description. Quest data not found.")
 			end
-			
+						
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
 			
-			UpdateFrame()
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
 
 		-- Add a mouse down event to simulate a button press
@@ -1166,7 +1166,7 @@ function RQE:CheckAndAdvanceStep(questID)
     end
 
     -- Determine questID based on various fallbacks
-    questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+    questID = RQE.searchedQuestID or extractedQuestID or questID --or currentSuperTrackedQuestID
 
     if not questID or type(questID) ~= "number" then
         RQE.debugLog("Invalid questID:", questID)
@@ -1250,7 +1250,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
         if stepData.objectiveIndex == nextObjectiveIndex then
             local button = self.WaypointButtons[stepIndex]
             if button then
-                print("ObjectiveIndex " .. nextObjectiveIndex-1 .. " is complete. Clicking WaypointButton for the next ObjectiveIndex: " .. nextObjectiveIndex .. " (Step " .. stepIndex .. ").")
+                RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex-1 .. " is complete. Clicking WaypointButton for the next ObjectiveIndex: " .. nextObjectiveIndex .. " (Step " .. stepIndex .. ").")
                 
                 -- Perform the button click only if it's a new objectiveIndex.
                 button:Click()

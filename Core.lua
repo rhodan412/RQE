@@ -625,8 +625,8 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	RQE.y = posY
 	RQE.mapID = mapID
 end
-
-
+			
+			
 -- Function controls the restoration of the quest that is super tracked to the RQEFrame
 function RQE:HandleSuperTrackedQuestUpdate()
     -- Save the current super tracked quest ID
@@ -1118,7 +1118,10 @@ function RQE:ClearFrameData()
 	RQE:ClearStepsTextInFrame()
 	
 	-- Clears contents of Macro on clearing of RQEFrame
-	--RQEMacro:ClearMacroContentByName("RQE Macro")
+	-- RQEMacro:ClearMacroContentByName("RQE Macro")
+	
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
@@ -1212,6 +1215,7 @@ function RQE:ShouldClearFrame()
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", extractedQuestID)
         return -- Exit the function early
 	end
@@ -1221,6 +1225,7 @@ function RQE:ShouldClearFrame()
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.infoLog("Clearing the RQEFrame for questID: ", extractedQuestID)
         return -- Exit the function early
     end
@@ -1230,6 +1235,7 @@ function RQE:ShouldClearFrame()
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
             RQE.infoLog("Clearing RQEFrame to questID: ", extractedQuestID)
             return -- Exit the function early
         end
@@ -1238,6 +1244,7 @@ function RQE:ShouldClearFrame()
 		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
 			RQE.infoLog("Clearing RQEFrame for questID: ", extractedQuestID)
             return -- Exit the function early
         end
@@ -3483,6 +3490,25 @@ function RQE:CheckMemoryUsage()
     end
 end
 
+
+function RQE:AdvanceNextStep(questID)
+local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		C_Timer.After(0.5, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
+	end
+end
 
 ---------------------------------------------------
 -- 19. Finalization

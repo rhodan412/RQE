@@ -1507,29 +1507,7 @@ function UpdateRQEQuestFrame()
 					else					
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-						
-						-- Clears Macro Data
-						RQEMacro:ClearMacroContentByName("RQE Macro")
-
-						-- Delay added to allow for UI refresh or other updates to complete
-						C_Timer.After(1, function()
-							-- Fetch the updated quest ID from the most reliable source just before using it
-							local updatedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-							RQE.infoLog("Updated Quest ID for macro:", updatedQuestID) -- Debug message for the current operation
-
-							local questData = RQEDatabase[updatedQuestID]
-							if questData and questData[1] and questData[1].macro then
-								local macroCommands = questData[1].macro
-								if type(macroCommands) == "table" then
-									macroCommands = table.concat(macroCommands, "\n")
-								end
-								RQE.infoLog("Macro commands to set:", macroCommands) -- Debug message
-								RQEMacro:SetQuestStepMacro(updatedQuestID, 1, macroCommands, false)
-							else
-								RQE.infoLog("No macro data for step 1 or no quest data found for updated ID:", updatedQuestID)
-							end
-						end)
-		
+							
 						-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 						RQE:PerformClearActions()
 						
@@ -1545,6 +1523,30 @@ function UpdateRQEQuestFrame()
 						RQE.ManualSuperTrackedQuestID = questID
 						RQE.lastSuperTrackedQuestID = questID
 						C_SuperTrack.SetSuperTrackedQuestID(questID)
+						
+						-- Clears Macro Data
+						RQEMacro:ClearMacroContentByName("RQE Macro")
+
+						-- Allow time for the UI to update and for the super track to register
+						C_Timer.After(1, function()
+							-- Fetch the quest data here
+							local questData = RQEDatabase[questID]
+							if not questData then
+								print("Quest data not found for questID:", questID)
+								return
+							end
+
+							-- Check if the last clicked waypoint button's macro should be set
+							local waypointButton = RQE.LastClickedWaypointButton
+							if waypointButton and waypointButton.stepIndex then
+								local stepData = questData[waypointButton.stepIndex]
+								if stepData and stepData.macro then
+									-- Get macro commands from the step data
+									local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+									RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
+								end
+							end
+						end)
 						
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
@@ -1988,29 +1990,7 @@ function UpdateRQEWorldQuestFrame()
 				else	
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-					-- Clears Macro Data
-					RQEMacro:ClearMacroContentByName("RQE Macro")
-
-					-- Delay added to allow for UI refresh or other updates to complete
-					C_Timer.After(1, function()
-						-- Fetch the updated quest ID from the most reliable source just before using it
-						local updatedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-						RQE.infoLog("Updated Quest ID for macro:", updatedQuestID) -- Debug message for the current operation
-
-						local questData = RQEDatabase[updatedQuestID]
-						if questData[1] and questData[1].macro then
-							local macroCommands = questData[1].macro
-							if type(macroCommands) == "table" then
-								macroCommands = table.concat(macroCommands, "\n")
-							end
-							RQE.infoLog("Macro commands to set:", macroCommands) -- Debug message
-							RQEMacro:SetQuestStepMacro(questIDFromText, 1, macroCommands, false)
-						else
-							RQE.infoLog("No macro data for step 1 or no quest data found for updated ID:", updatedQuestID)
-						end
-					end)
-						
+					
 					-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 					RQE:PerformClearActions()
 					
@@ -2022,6 +2002,30 @@ function UpdateRQEWorldQuestFrame()
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
 					RQE.ManualSuperTrackedQuestID = questID
 					RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
+					
+					-- Clears Macro Data
+					RQEMacro:ClearMacroContentByName("RQE Macro")
+
+					-- Allow time for the UI to update and for the super track to register
+					C_Timer.After(1, function()
+						-- Fetch the quest data here
+						local questData = RQEDatabase[questID]
+						if not questData then
+							print("Quest data not found for questID:", questID)
+							return
+						end
+
+						-- Check if the last clicked waypoint button's macro should be set
+						local waypointButton = RQE.LastClickedWaypointButton
+						if waypointButton and waypointButton.stepIndex then
+							local stepData = questData[waypointButton.stepIndex]
+							if stepData and stepData.macro then
+								-- Get macro commands from the step data
+								local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+								RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
+							end
+						end
+					end)
 					
 					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
