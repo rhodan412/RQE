@@ -2341,15 +2341,26 @@ end
 function PrintQuestStepsToChat(questID)
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
     local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
+	
     if not questInfo then
+        -- DEFAULT_CHAT_FRAME:AddMessage("QuestInfo not found for questID: " .. tostring(questID), 0, 1, 0) -- Green color
         return nil, nil, nil
     end
+	
     for i, step in ipairs(questInfo) do
         StepsText[i] = step.description
         CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
         MapIDs[i] = step.coordinates.mapID
         questHeader[i] = step.description:match("^(.-)\n") or step.description
+		
+        -- Debug messages
+        -- DEFAULT_CHAT_FRAME:AddMessage("Step " .. i .. ": " .. StepsText[i], 0, 1, 0) -- Green color
+        -- DEFAULT_CHAT_FRAME:AddMessage("Coordinates " .. i .. ": " .. CoordsText[i], 0, 1, 0) -- Green color
+        -- DEFAULT_CHAT_FRAME:AddMessage("MapID " .. i .. ": " .. tostring(MapIDs[i]), 0, 1, 0) -- Green color
+        -- DEFAULT_CHAT_FRAME:AddMessage("Header " .. i .. ": " .. questHeader[i], 0, 1, 0) -- Green color
     end
+
+    -- DEFAULT_CHAT_FRAME:AddMessage("Quest Steps Printed for QuestID: " .. tostring(questID), 0, 1, 0) -- Green color
     return StepsText, CoordsText, MapIDs, questHeader
 end
 
