@@ -3610,7 +3610,7 @@ local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 end
 
 function RQE:BuildQuestMacroBackup()
-	isSuperTracking = C_SuperTrack.IsSuperTrackingContent()
+	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	
     if isSuperTracking then
         local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -3689,4 +3689,29 @@ function RQE.LogScenarioInfo()
         RQE.infoLog("Value 11: " .. tostring(value11))
         RQE.infoLog("Texture Kit: " .. tostring(textureKit))
     end
+end
+
+
+function RQE.ScenarioTimer_CheckTimers(...)
+	-- only supporting 1 active timer
+	for i = 1, select("#", ...) do
+		local timerID = select(i, ...);
+		local _, elapsedTime, type = GetWorldElapsedTime(timerID);
+		if ( type == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE) then
+			local mapID = C_ChallengeMode.GetActiveChallengeMapID();
+			if ( mapID ) then
+				local _, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID);
+				Scenario_ChallengeMode_ShowBlock(timerID, elapsedTime, timeLimit);
+				return;
+			end
+		elseif ( type == LE_WORLD_ELAPSED_TIMER_TYPE_PROVING_GROUND ) then
+			local diffID, currWave, maxWave, duration = C_Scenario.GetProvingGroundsInfo()
+			if (duration > 0) then
+				Scenario_ProvingGrounds_ShowBlock(timerID, elapsedTime, duration, diffID, currWave, maxWave);
+				return;
+			end
+		end
+	end
+	-- we had an update but didn't find a valid timer, kill the timer if it's running
+	ScenarioTimer_Stop();
 end
