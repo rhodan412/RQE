@@ -1249,6 +1249,105 @@ function RQE:ShouldClearFrame()
             return -- Exit the function early
         end
     end
+	
+	-- Call the delayed clear check
+	RQE:DelayedClearCheck()
+end
+
+
+-- Function to initiate a delayed re-check and clear operation
+function RQE:DelayedClearCheck()
+    C_Timer.After(3, function()
+		-- Attempt to directly extract questID from RQE.QuestIDText if available
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Early exit if there's still no valid questID
+		if not extractedQuestID or extractedQuestID == 0 then
+			RQE.debugLog("No valid questID for ShouldClearFrame.")
+			return
+		end
+		
+		-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
+		local isQuestInLog = C_QuestLog.IsOnQuest(extractedQuestID)
+		local isWorldQuest = C_QuestLog.IsWorldQuest(extractedQuestID)
+		local isBeingSearched = RQE.searchedQuestID == extractedQuestID
+		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+		local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
+
+		local watchedQuests = {}
+		for i = 1, C_QuestLog.GetNumQuestWatches() do
+			local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			if watchedQuestID then
+				watchedQuests[watchedQuestID] = true
+			end
+		end
+		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			if watchedWorldQuestID then
+				watchedQuests[watchedWorldQuestID] = true
+			end
+		end
+	
+		-- Clears from RQEFrame searched world quests that have been completed
+		if isBeingSearched and isQuestCompleted and isWorldQuest then
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+			
+			-- Untrack the quest by setting a non-existent quest ID
+			C_SuperTrack.SetSuperTrackedQuestID(0)
+			
+			-- Optional: Log or notify that the frame was cleared on delayed check
+			RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
+			return -- Exit the function early
+		end
+
+		-- if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked and not isBeingSearched) then
+			-- -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
+			-- RQE:ClearFrameData()
+			-- RQE:ClearWaypointButtonData()
+			-- RQEMacro:ClearMacroContentByName("RQE Macro")
+			
+			-- -- Untrack the quest by setting a non-existent quest ID
+			-- C_SuperTrack.SetSuperTrackedQuestID(0)
+			
+			-- -- Optional: Log or notify that the frame was cleared on delayed check
+			-- RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
+			-- return -- Exit the function early
+		-- end
+
+		if isWorldQuest then
+			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
+				RQE:ClearFrameData()
+				RQE:ClearWaypointButtonData()
+				RQEMacro:ClearMacroContentByName("RQE Macro")
+				
+				-- Untrack the quest by setting a non-existent quest ID
+				C_SuperTrack.SetSuperTrackedQuestID(0)
+				
+				-- Optional: Log or notify that the frame was cleared on delayed check
+				RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
+				return -- Exit the function early
+			end
+		-- else
+			-- -- For non-world quests, clear if not in quest log or not being actively searched
+			-- if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
+				-- RQE:ClearFrameData()
+				-- RQE:ClearWaypointButtonData()
+				-- RQEMacro:ClearMacroContentByName("RQE Macro")
+				
+				-- -- Untrack the quest by setting a non-existent quest ID
+				-- C_SuperTrack.SetSuperTrackedQuestID(0)
+				
+				-- -- Optional: Log or notify that the frame was cleared on delayed check
+				-- RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
+				-- return -- Exit the function early
+			-- end
+        end
+    end)
 end
 
 
@@ -1427,10 +1526,10 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
 	
-	-- -- Visibility Update Check for RQEMagic Button
-	-- C_Timer.After(1, function()
-		-- RQE.Buttons.UpdateMagicButtonVisibility()
-	-- end)
+	-- Visibility Update Check for RQEMagic Button
+	C_Timer.After(1, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
 end
 
 
