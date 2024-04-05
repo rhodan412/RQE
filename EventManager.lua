@@ -67,7 +67,7 @@ local eventsToRegister = {
 	"QUEST_ACCEPTED",
 	"QUEST_AUTOCOMPLETE",
 	"QUEST_CURRENCY_LOOT_RECEIVED",
-	--"QUEST_DATA_LOAD_RESULT",
+	"QUEST_DATA_LOAD_RESULT",
 	"QUEST_FINISHED",
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",
@@ -534,11 +534,11 @@ function RQE.handlePlayerStoppedMoving()
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths()
 	
-	-- Update Display of Memory Usage of Addon
-	if RQE.db and RQE.db.profile.displayRQEmemUsage then
-		RQE:CheckMemoryUsage()
+	-- -- Update Display of Memory Usage of Addon
+	-- if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		-- RQE:CheckMemoryUsage()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 0.93, 0.82, 0.25)
-	end
+	-- end
 end	
 
 
@@ -795,6 +795,13 @@ function RQE.handleSuperTracking(...)
 	if questID then
 		questName = C_QuestLog.GetTitleForQuestID(questID)
 		local questLink = GetQuestLink(questID)  -- Generate the quest link
+		
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Super Tracking: ", questID .. " " .. questLink)
+		-- else
+			-- print("No info for you because of DEBUG LEVEL: " .. tostring(RQE.db.profile.debugLevel))
+		end
+		
 		RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
 		-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
@@ -967,6 +974,9 @@ end
 function RQE.handleInstanceInfoUpdate()
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
+	
+	-- Updates the RQEFrame with the appropriate super tracked quest
+	UpdateFrame()
 end
 
 
