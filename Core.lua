@@ -2394,12 +2394,6 @@ function RQE:ShowWowheadLink(questID)
     linkFrame:SetFrameStrata("HIGH")
 	RQE.linkFrame = linkFrame
 
-	-- -- After creating the linkFrame
-	-- local dialogButton = _G[linkFrame:GetName().."Button"]
-	-- if dialogButton then
-		--dialogButton:Hide()
-	-- end
-
     -- Create and configure the EditBox
     local wowHeadeditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
     wowHeadeditBox:SetSize(325, 20)
@@ -2517,12 +2511,6 @@ function RQE:ShowWowWikiLink(questID)
     linkFrame:SetPoint("CENTER")
     linkFrame:SetFrameStrata("HIGH")
 	RQE.wowWikiLinkFrame = linkFrame
-
-	-- -- After creating the linkFrame
-	-- local dialogButton = _G[linkFrame:GetName().."Button"]
-	-- if dialogButton then
-		--dialogButton:Hide()
-	-- end
 
     -- Create and configure the EditBox
     local wowWikieditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
