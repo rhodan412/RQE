@@ -162,6 +162,7 @@ local defaults = {
 		removeWQatLogin = false,
 		autoTrackZoneQuests = false,
 		autoClickWaypointButton = false,
+		enableQuestAbandonConfirm = false,
 		displayRQEmemUsage = false,
         framePosition = {
             xPos = -40,
@@ -2208,6 +2209,57 @@ end
 function RQE:ClearWQTracking()
 	RQE:ClearRQEWorldQuestFrame()
 	QuestType()
+end
+
+
+function RQE:AbandonQuest(questID)
+    if not questID then return end  -- Ensure questID is valid
+
+    local oldSelectedQuest = C_QuestLog.GetSelectedQuest()
+    C_QuestLog.SetSelectedQuest(questID)
+	local questLink = GetQuestLink(questID)  -- Generate the quest link
+	
+	if RQE.db.profile.debugLevel == "INFO" then
+		print("Abandoning QuestID:", questID .. " - Quest Name: " .. questLink)
+	end
+    C_QuestLog.SetAbandonQuest()
+
+    -- Check the addon settings to decide whether to show the confirmation dialogues
+    if not RQE.db.profile.enableQuestAbandonConfirm then
+        -- Quest name for the confirmation dialog
+        local title = QuestUtils_GetQuestName(C_QuestLog.GetAbandonQuest()) or "Unknown Quest"
+
+        -- Determine if there are items to be lost upon abandoning the quest
+        local items = C_QuestLog.GetAbandonQuestItems()
+        if items and #items > 0 then
+            -- If there are items, concatenate their names
+            local itemNames = BuildItemNames(items)
+            StaticPopup_Hide("ABANDON_QUEST")
+            StaticPopup_Show("ABANDON_QUEST_WITH_ITEMS", title, itemNames)
+        else
+            -- No items to be lost, show a simple confirmation
+            StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS")
+            StaticPopup_Show("ABANDON_QUEST", title)
+        end
+    else
+        -- If the setting is disabled, abandon the quest directly without confirmation
+        C_QuestLog.AbandonQuest()
+    end
+
+    -- Restore the previously selected quest
+    C_QuestLog.SetSelectedQuest(oldSelectedQuest)
+end
+
+
+
+function BuildItemNames(itemLinks)
+    if not itemLinks or #itemLinks == 0 then return nil end
+    local itemNames = {}
+    for _, itemLink in ipairs(itemLinks) do
+        local itemName = GetItemInfo(itemLink)
+        table.insert(itemNames, itemName)
+    end
+    return table.concat(itemNames, ", ")
 end
 
 

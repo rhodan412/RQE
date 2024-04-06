@@ -715,7 +715,7 @@ function ShowQuestDropdown(self, questID)
 
     -- Always include the other options
     table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end })
-    table.insert(menu, { text = "Abandon Quest", func = function() C_QuestLog.SetAbandonQuest(); C_QuestLog.AbandonQuest(); end })
+    table.insert(menu, { text = "Abandon Quest", func = function() RQE:AbandonQuest(questID); end })
 	table.insert(menu, { text = "View Quest", func = function() OpenQuestLogToQuestDetails(questID) end })
 	
     -- Check if the quest is part of a questline

@@ -225,6 +225,16 @@ RQE.options = {
 						RQE.db.profile.autoClickWaypointButton = newValue;
 					end,
 				},
+				enableQuestAbandonConfirm = {
+					type = "toggle",
+					name = "Auto Abandon Quest",
+					desc = "If enabled will hide confirmation pop up when abandoning quest via right-clicking quest in the addon. If disabled, pop up will appear with confirmation to abandon the selected quest",
+					order = 13,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.enableQuestAbandonConfirm end,
+					set = function(_, newValue) 
+						RQE.db.profile.enableQuestAbandonConfirm = newValue;
+					end,
+				},
 			},
 		},
         frame = {
