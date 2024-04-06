@@ -4,9 +4,21 @@ RQEMacro = RQEMacro or {}
 RQEMacro.pendingMacroSets = {} -- Queue for macro set operations
 RQEMacro.pendingMacroOperations = RQEMacro.pendingMacroOperations or {}
 RQEMacro.pendingMacroClears = RQEMacro.pendingMacroClears or {}  -- Queue to hold macro names pending clearance
+RQEMacro.clearedMacros = RQEMacro.clearedMacros or {} -- Initialize clearedMacros as an empty table
 
 RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust these values according to the game's current limits
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
+
+
+-- Function to check if a table contains a specific value
+function RQEMacro.tContains(table, item)
+    for index, value in ipairs(table) do
+        if value == item then
+            return true
+        end
+    end
+    return false
+end
 
 
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
@@ -80,12 +92,23 @@ end
 -- Function to clear a specific macro by name
 function RQEMacro:ClearMacroContentByName(macroName)
     if InCombatLockdown() then
-        -- Queue the macro clear request for after combat
-        table.insert(self.pendingMacroClears, macroName)
+        -- Queue the macro clear request for after combat if not already queued
+		if not RQEMacro.tContains(self.pendingMacroClears, macroName) then
+			table.insert(self.pendingMacroClears, macroName)
+		end
         return
     end
 	
-    self:ActuallyClearMacroContentByName(macroName)
+    -- Check if the macro is already cleared or scheduled for clearing and if the macro's body is not empty before clearing
+    local macroBody = GetMacroBody(macroName)
+    if macroBody and macroBody ~= "" and not self:HasBeenClearedOrScheduled(macroName) then
+        self:ActuallyClearMacroContentByName(macroName)
+    end
+end
+
+-- Helper function to check if a macro has been cleared or is scheduled for clearing
+function RQEMacro:HasBeenClearedOrScheduled(macroName)
+    return RQEMacro.tContains(self.clearedMacros, macroName) or RQEMacro.tContains(self.pendingMacroClears, macroName)
 end
 
 -- Internal function that actually clears the macro content
@@ -94,6 +117,10 @@ function RQEMacro:ActuallyClearMacroContentByName(macroName)
     if macroIndex ~= 0 then
         -- Macro found, clear its content
         EditMacro(macroIndex, nil, nil, " ")
+        -- Add the macro name to clearedMacros to mark it as cleared
+        if not RQEMacro.tContains(self.clearedMacros, macroName) then
+            table.insert(self.clearedMacros, macroName)
+        end
     else
         -- Macro not found, log this
         RQE.debugLog("Macro not found: " .. macroName)
