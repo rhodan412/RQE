@@ -889,7 +889,7 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
 	
     -- Update Frame
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 11 Debug: Updating Frame.", 0.46, 0.62, 1)
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	UpdateFrame()
 	
 	-- Visibility Update Check for RQEFrame & RQEQuestFrame
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 12 Debug: UpdateRQEFrameVisibility.", 0.46, 0.62, 1)
@@ -1064,7 +1064,7 @@ function RQE.handleQuestStatusUpdate(...)
 		end
 		
 		C_Timer.After(0.5, function()
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+			UpdateFrame()
 		end)
 	
     RQE:ClearWQTracking()
