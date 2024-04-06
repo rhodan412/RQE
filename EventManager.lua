@@ -1476,15 +1476,12 @@ end
 -- Handling QUEST_FINISHED event
 function RQE.handleQuestFinished()
     -- DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
-	
-	RQEMacro:ClearMacroContentByName("RQE Macro")
-	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Cleared RQE Macro.", 1, 0.75, 0.79)
-	
+		
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
     local displayedQuestID = RQE.QuestIDText and tonumber(strmatch(RQE.QuestIDText:GetText() or "", "%d+"))
 
-    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
-    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: DisplayedQuestID: " .. tostring(displayedQuestID), 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: DisplayedQuestID: " .. tostring(displayedQuestID), 1, 0.75, 0.79)
 	
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -1493,15 +1490,15 @@ function RQE.handleQuestFinished()
 			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
-		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
+		-- DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
 		
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
-		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
+		-- DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
 		
 		C_Timer.After(1, function()
 			RQE:CheckAndAdvanceStep(questID)
-			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
+			-- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
 	end
 
@@ -1511,10 +1508,10 @@ function RQE.handleQuestFinished()
     -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
     -- This might involve checking if there are other quests to display or adjusting UI elements
     RQE:UpdateRQEFrameVisibility()
-    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
 	
     RQE:UpdateRQEQuestFrameVisibility()
-    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 end
 
 	
