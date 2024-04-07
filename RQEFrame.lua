@@ -20,6 +20,7 @@ end
 
 RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
+RQE.lastKnownObjectiveIndex = RQE.lastKnownObjectiveIndex or {}
 
 RQE.content = content  -- Save it to the global RQE table
 RQEDatabase = RQEDatabase or {}
@@ -1210,9 +1211,21 @@ function RQE:CheckAndAdvanceStep(questID)
       ", All Objectives Completed: " .. tostring(allObjectivesCompleted) ..
       ", Highest Completed Objective Index: " .. tostring(highestCompletedObjectiveIndex))
 
+    -- Store the previous highestCompletedObjectiveIndex before calculations
+    local previousHighestCompletedObjectiveIndex = RQE.lastKnownObjectiveIndex[questID] or 0
+	
 	-- Before your if-else statement
 	local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
 
+    -- After calculations, compare the previous index to the current highestCompletedObjectiveIndex
+    if highestCompletedObjectiveIndex ~= previousHighestCompletedObjectiveIndex then
+        -- There has been progress, so call the function to click the super tracked quest button
+        RQE:ClickSuperTrackedQuestButton()
+        
+        -- Update the lastKnownObjectiveIndex for this quest
+        RQE.lastKnownObjectiveIndex[questID] = highestCompletedObjectiveIndex
+    end
+	
     -- Handle quest completion and specific objectives
 	if allObjectivesCompleted then
 		nextObjectiveIndex = 99 -- Override if all objectives are completed
@@ -1243,6 +1256,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
     -- Direct click for the first objective when transitioning from 0 to 1
     if nextObjectiveIndex == 1 and RQE.lastClickedObjectiveIndex == 0 then
 			RQE.infoLog("Quest is incomplete. Clicking WaypointButton(1).")
+			RQE.WaypointButtons[1]:Click()
 		return
     end
 	

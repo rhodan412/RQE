@@ -21,7 +21,6 @@ RQE.QuestTypes = RQE.QuestTypes or {}
 RQE.ZoneQuests = RQE.ZoneQuests or {}
 RQE.QuestLines = RQE.QuestLines or {}
 
-
 ---------------------------------------------------
 -- 2. Imports
 ---------------------------------------------------
@@ -2780,10 +2779,6 @@ function RQE.ScanAndCacheZoneQuests()
 end
 
 
-
-
-
-
 function RQE.UpdateTrackedQuestsToCurrentZone()
     -- Determine the player's current zone/mapID
     local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
@@ -3655,6 +3650,7 @@ local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
 		C_Timer.After(0.5, function()
+			RQE:ClickSuperTrackedQuestButton()
 			RQE:CheckAndAdvanceStep(questID)
 		end)
 	end
@@ -3688,7 +3684,27 @@ function RQE:BuildQuestMacroBackup()
 		end
 	end)
 end
-	
+
+
+function RQE:ClickSuperTrackedQuestButton()
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    if not superTrackedQuestID or superTrackedQuestID == 0 then
+        RQE.debugLog("No super tracked quest.")
+        return
+    end
+
+    for _, button in pairs(RQE.QuestLogIndexButtons) do
+        if button.questID == superTrackedQuestID then
+            RQE.debugLog("Clicking button for super tracked quest ID:", superTrackedQuestID)
+            button:Click()
+            return
+        end
+    end
+
+    RQE.debugLog("Button for super tracked quest ID not found:", superTrackedQuestID)
+end
+
+
 ---------------------------------------------------
 -- 19. Finalization
 ---------------------------------------------------

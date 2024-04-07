@@ -1571,6 +1571,7 @@ function UpdateRQEQuestFrame()
 
 				-- Save the button in the table for future reference
 				RQE.QuestLogIndexButtons[i] = QuestLogIndexButton
+				QuestLogIndexButton.questID = questID  -- Store the questID with its respective button
 
 				-- Fetch Quest Description
 				local _, questObjectivesText = GetQuestLogQuestText(questIndex)
