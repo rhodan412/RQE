@@ -745,8 +745,9 @@ end
 
 -- Handling SUPER_TRACKING_CHANGED Event
 function RQE.handleSuperTracking(...)
-	RQEMacro:ClearMacroContentByName("RQE Macro")
-
+	--RQEMacro:ClearMacroContentByName("RQE Macro")
+	RQE.SaveSuperTrackData()
+		
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
@@ -780,7 +781,6 @@ function RQE.handleSuperTracking(...)
 	QuestType()
 	RQE.superTrackingChanged = true
 	
-	RQE.SaveSuperTrackData()
 	--RQE.UnknownQuestButtonCalcNTrack()
 	
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1146,6 +1146,7 @@ end
 
 
 -- Handling QUEST_COMPLETE event
+-- Fired after the player hits the "Continue" button in the quest-information page, before the "Complete Quest" button. In other words, it fires when you are given the option to complete a quest, but just before you actually complete the quest. 
 function RQE.handleQuestComplete()
 	local extractedQuestID
 	
@@ -1177,17 +1178,17 @@ function RQE.handleQuestComplete()
 	end
 		
 	RQE:QuestComplete(questID)
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearWQTracking()
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then	
-		RQE:CheckAndAdvanceStep(questID)
-	end
+	-- -- Check to advance to next step in quest
+	-- if RQE.db.profile.autoClickWaypointButton then	
+		-- RQE:CheckAndAdvanceStep(questID)
+	-- end
 	
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
@@ -1437,7 +1438,7 @@ function RQE.handleQuestWatchListChanged(questID, added)
 		
 		C_Timer.After(1, function()
 			RQE:CheckAndAdvanceStep(questID)
-			RQE:ClickSuperTrackedQuestButton()
+			--RQE:ClickSuperTrackedQuestButton()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
 	end
@@ -1445,6 +1446,7 @@ end
 
 
 -- Handling QUEST_TURNED_IN event
+-- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button in a quest dialog window. 
 function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 	-- DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
     if not questID then return end  -- Ensure there's a valid questID from the event
@@ -1519,7 +1521,7 @@ function RQE.handleQuestFinished()
 		
 		C_Timer.After(1, function()
 			RQE:CheckAndAdvanceStep(questID)
-			RQE:ClickSuperTrackedQuestButton()
+			--RQE:ClickSuperTrackedQuestButton()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
 	end

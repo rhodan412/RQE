@@ -1504,7 +1504,7 @@ function UpdateRQEQuestFrame()
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
-					else					
+					else						
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 							
@@ -1514,12 +1514,12 @@ function UpdateRQEQuestFrame()
 						-- Clears Macro Data
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 						
-						-- Check for the existence of WaypointButton(1) and click it if it exists (assuming that autoClickWaypointButton is true/checked
-						if RQE.db.profile.autoClickWaypointButton then
-							if RQE.WaypointButtons and RQE.WaypointButtons[1] then
-								RQE.WaypointButtons[1]:Click()
-							end
-						end
+						-- -- Check for the existence of WaypointButton(1) and click it if it exists (assuming that autoClickWaypointButton is true/checked
+						-- if RQE.db.profile.autoClickWaypointButton then
+							-- if RQE.WaypointButtons and RQE.WaypointButtons[1] then
+								-- RQE.WaypointButtons[1]:Click()
+							-- end
+						-- end
 		
 						-- Reset the "Clicked" WaypointButton to nil
 						RQE.LastClickedIdentifier = nil

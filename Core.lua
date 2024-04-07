@@ -3705,6 +3705,24 @@ function RQE:ClickSuperTrackedQuestButton()
 end
 
 
+function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
+    -- Loop through all WaypointButtons
+    for i, button in ipairs(RQE.WaypointButtons) do
+        -- Check if the button's step index matches the current step index
+        if button.stepIndex == currentStepIndex then
+            -- This is the button for the current step, so highlight it
+            button.bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+            -- Store this button as the last highlighted button
+            self.LastHighlightedWaypointButton = button
+        elseif self.LastHighlightedWaypointButton == button then
+            -- This button was previously highlighted, but is no longer the current step
+            -- Reset its appearance to the default texture
+            button.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+        end
+    end
+end
+
+
 ---------------------------------------------------
 -- 19. Finalization
 ---------------------------------------------------
