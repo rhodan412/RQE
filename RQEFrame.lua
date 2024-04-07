@@ -1240,6 +1240,11 @@ end
 
 -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
 function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+    -- Direct click for the first objective when transitioning from 0 to 1
+    if nextObjectiveIndex == 1 and RQE.lastClickedObjectiveIndex == 0 then
+		return
+    end
+	
     -- If the quest is completed, prioritize clicking the button for objectiveIndex 99
     if nextObjectiveIndex == 99 then
         for stepIndex, stepData in ipairs(questData) do
