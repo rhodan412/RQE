@@ -1240,7 +1240,7 @@ end
 
 -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
 function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
-    -- Direct click for the first objective when transitioning from 0 to 1
+    -- Prevent button from clicking when it should be on step 1 and player didn't select different button associated with objectiveIndex 1
     if nextObjectiveIndex == 1 and RQE.lastClickedObjectiveIndex == 0 then
 		return
     end
@@ -1279,7 +1279,50 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
             end
         end
     end
+	
     RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
+	
+	-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+	RQE.debugLog("Attempting to create macro")
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+	
+	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
+	
+	if not questInfo then
+		return nil, nil, nil
+	end
+	
+	for i, step in ipairs(questInfo) do
+		StepsText[i] = step.description
+		CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+		MapIDs[i] = step.coordinates.mapID
+		questHeader[i] = step.description:match("^(.-)\n") or step.description
+	end
+	
+	local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
+	RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
+	local questData = RQEDatabase[questIDFromText]
+	if questData then
+		local stepData = questData[stepIndex]
+		RQE.debugLog("Quest data found for ID:", questIDFromText)
+		for index, stepData in ipairs(questData) do
+			if stepData.description == stepDescription then
+				RQE.infoLog("Matching step data found for description:", stepDescription)
+				if stepData and stepData.macro then
+					local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+					RQE.infoLog("Macro commands to set:", macroCommands)
+					RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
+				else
+					RQE.debugLog("No macro data found for this step.")
+				end
+			end
+		end
+	else
+		RQE.debugLog("Invalid quest ID or step description. Quest data not found.")
+	end
+	
     UpdateRQEQuestFrame()
 end
 
