@@ -1324,12 +1324,6 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
 end
 
 
-function RQE.ClickQuestLogIndexButton()
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-	QuestLogIndexButton.questID:Click()
-end
-
-
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
     local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID

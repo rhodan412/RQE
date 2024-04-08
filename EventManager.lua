@@ -1093,6 +1093,11 @@ function RQE.handleQuestStatusUpdate(...)
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Not SuperTracking or QuestID not found", 0, 1, 0)  -- Bright Green
     end
 	
+	C_Timer.After(2, function()
+		RQE.infoLog("Clicking QuestLogIndexButton following QUEST_LOG_UPDATE event")
+		RQE.ClickUnknownQuestButton()
+	end)
+	
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 	
@@ -1210,6 +1215,11 @@ function RQE.handleQuestComplete()
 	RQE:UpdateRQEQuestFrameVisibility()
 	
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
+	
+	C_Timer.After(2, function()
+		RQE.infoLog("Clicking QuestLogIndexButton following QUEST_COMPLETE event")
+		RQE.ClickUnknownQuestButton()
+	end)
 end
 		
 -- Handling QUEST_AUTOCOMPLETE events
@@ -1503,6 +1513,11 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
         end)
     end
 
+	C_Timer.After(2, function()
+		RQE.infoLog("Clicking QuestLogIndexButton following QUEST_TURNED_IN event")
+		RQE.ClickUnknownQuestButton()
+	end)
+	
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
