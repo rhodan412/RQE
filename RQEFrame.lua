@@ -1321,13 +1321,14 @@ end
 function RQE.ClickUnknownQuestButton()
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
 	
-	-- Untrack the quest by setting a non-existent quest ID
-	C_SuperTrack.SetSuperTrackedQuestID(questID)
 	if not questID then
 		RQE.debugLog("No QuestID found. Cannot proceed.")
 		return
 	end
 
+	-- Re-Track the quest being listed as super tracked
+	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	
 	-- Call your function to create a waypoint using stored coordinates and mapID
 	RQE:CreateUnknownQuestWaypoint(questID, mapID)
 end
