@@ -1324,6 +1324,12 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
 end
 
 
+function RQE.ClickQuestLogIndexButton()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+	QuestLogIndexButton.questID:Click()
+end
+
+
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
@@ -1333,6 +1339,15 @@ function RQE.ClickUnknownQuestButton()
 		return
 	end
 
+    -- Find the corresponding QuestLogIndexButton for the questID
+    for i, button in ipairs(RQE.QuestLogIndexButtons) do
+        if button.questID == questID then
+            -- Found the button, simulate the click
+            button:Click()
+            break  -- Exit the loop as we've found and clicked the right button
+        end
+    end
+	
 	-- Re-Track the quest being listed as super tracked
 	C_SuperTrack.SetSuperTrackedQuestID(questID)
 	
