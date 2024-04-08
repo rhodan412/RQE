@@ -1332,20 +1332,31 @@ end
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-	
-	if not questID then
-		RQE.debugLog("No QuestID found. Cannot proceed.")
-		return
-	end
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+
+    -- Check if the button has already been clicked
+    if RQE.hasClickedQuestButton then
+        return
+    end
+
+    if not questID then
+        RQE.debugLog("No QuestID found. Cannot proceed.")
+        return
+    end
 
     -- Find the corresponding QuestLogIndexButton for the questID
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
-        if button.questID == questID then
+        if button and button.questID == questID then
             -- Found the button, simulate the click
             button:Click()
+            RQE.hasClickedQuestButton = true  -- Set the flag to true after clicking the button
             break  -- Exit the loop as we've found and clicked the right button
         end
+    end
+
+    -- If the button wasn't found, print a message
+    if not RQE.hasClickedQuestButton then
+        RQE.debugLog("Did not find a button for questID:", questID)
     end
 	
 	-- Re-Track the quest being listed as super tracked

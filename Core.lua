@@ -244,6 +244,7 @@ RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.ManualSuperTrack = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
 RQE.lastClickedObjectiveIndex = nil
+RQE.hasClickedQuestButton = false
 
 -- Addon Initialization
 function RQE:OnInitialize()
