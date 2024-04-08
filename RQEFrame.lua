@@ -1181,6 +1181,13 @@ function RQE:CheckAndAdvanceStep(questID)
         return
     end
 
+    -- Handle quest completion and specific objectives
+    if allObjectivesCompleted then
+        nextObjectiveIndex = 99
+        self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+        return
+    end
+	
     -- Check if all objectives are finished
     local allObjectivesCompleted = true
     for _, objective in ipairs(objectives) do
