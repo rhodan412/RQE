@@ -1413,6 +1413,12 @@ function RQE.handleQuestWatchUpdate(questID)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QWU 11 Debug: Checking and advancing step for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 		end)
 	end
+	
+	
+	-- C_Timer.After(2, function()
+		-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_UPDATE event")
+		-- RQE.ClickUnknownQuestButton()
+	-- end)
 end
 
 
@@ -1469,6 +1475,12 @@ function RQE.handleQuestWatchListChanged(questID, added)
 			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
 	end
+	
+	
+	-- C_Timer.After(2, function()
+		-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_LIST_CHANGED event")
+		-- RQE.ClickUnknownQuestButton()
+	-- end)
 end
 
 
