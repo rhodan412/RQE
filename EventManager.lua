@@ -220,7 +220,7 @@ function RQE.handlePlayerRegenEnabled()
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
 		
-        C_Timer.After(1, function()
+        C_Timer.After(0.5, function()
             RQE:CheckAndAdvanceStep(questID)
             -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.65, 0.5)
         end)
@@ -344,7 +344,9 @@ function RQE.handleAddonLoaded(addonName)
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
-		RQE:CheckAndAdvanceStep(questID)
+		C_Timer.After(0.5, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
 	end
 	
 	-- Updates frame with data from the super tracked quest (if any)
@@ -760,7 +762,7 @@ function RQE.handleSuperTracking(...)
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
-		C_Timer.After(1, function()
+		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
 		end)
 	end
@@ -1251,8 +1253,10 @@ function RQE.handleQuestAutoComplete(...)
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 
 	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then	
-		RQE:CheckAndAdvanceStep(questID)
+	if RQE.db.profile.autoClickWaypointButton then
+		C_Timer.After(0.5, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
 	end
 	
 	-- Visibility Update Check for RQEQuestFrame
@@ -1394,8 +1398,10 @@ function RQE.handleQuestWatchUpdate(questID)
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
-		RQE:CheckAndAdvanceStep(questID)
+		C_Timer.After(1, function()
+			RQE:CheckAndAdvanceStep(questID)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QWU 11 Debug: Checking and advancing step for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
+		end)
 	end
 end
 
@@ -1448,7 +1454,7 @@ function RQE.handleQuestWatchListChanged(questID, added)
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
-		C_Timer.After(1, function()
+		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
 			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
@@ -1530,7 +1536,7 @@ function RQE.handleQuestFinished()
 		questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
 		-- DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
 		
-		C_Timer.After(1, function()
+		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
 			--RQE:ClickSuperTrackedQuestButton()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)

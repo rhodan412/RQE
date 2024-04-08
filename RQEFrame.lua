@@ -1274,7 +1274,9 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
                     RQE.lastClickedObjectiveIndex = 99
                     
                     -- Call to update the waypoint for the quest completion objective
-                    RQE.ClickUnknownQuestButton()
+					C_Timer.After(1, function()  -- Delay of 1 second
+						RQE.ClickUnknownQuestButton()
+					end)
                     return
                 end
             end
@@ -1298,22 +1300,29 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex
                 
-                -- Call to update the waypoint for the current objective
-                RQE.ClickUnknownQuestButton()
+				-- Call to update the waypoint for the quest completion objective
+				C_Timer.After(1, function()  -- Delay of 1 second
+					RQE.ClickUnknownQuestButton()
+				end)
                 return
             end
         end
     end
     RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
     UpdateRQEQuestFrame()
-	RQE.ClickUnknownQuestButton()
+	-- Call to update the waypoint for the quest completion objective
+	C_Timer.After(1, function()  -- Delay of 1 second
+		RQE.ClickUnknownQuestButton()
+	end)
 end
 
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-
+	
+	-- Untrack the quest by setting a non-existent quest ID
+	C_SuperTrack.SetSuperTrackedQuestID(questID)
 	if not questID then
 		RQE.debugLog("No QuestID found. Cannot proceed.")
 		return
