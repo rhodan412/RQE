@@ -1712,7 +1712,16 @@ function UpdateRQEQuestFrame()
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: [No additional information]", 0.81, 0.5, 1, true)
 					end
-					
+
+					if questID then
+						-- Check if the quest is completed
+						if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+							GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
+						else
+							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+						end
+					end
+	
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine(" ")
@@ -1796,6 +1805,15 @@ function UpdateRQEQuestFrame()
 					else
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: [No additional information]", 0.81, 0.5, 1, true)
+					end
+
+					if questID then
+						-- Check if the quest is completed
+						if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+							GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
+						else
+							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+						end
 					end
 	
 					-- Add objectives

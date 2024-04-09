@@ -696,19 +696,30 @@ local function CreateQuestTooltip(frame, questID)
     GameTooltip:SetHeight(0)
     GameTooltip:SetPoint("BOTTOMLEFT", frame, "TOPLEFT")
 
-    local questTitle
-    if RQEDatabase and RQEDatabase[effectiveQuestID] and RQEDatabase[effectiveQuestID].title then
-        questTitle = RQEDatabase[effectiveQuestID].title  -- Use title from RQEDatabase if available
+	local extractedQuestID
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+
+	questID = effectiveQuestID or extractedQuestID or currentSuperTrackedQuestID
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+    
+	local questTitle
+    if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
+        questTitle = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
     else
-        questTitle = C_QuestLog.GetTitleForQuestID(effectiveQuestID)  -- Fallback to game's API call
+        questTitle = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call
     end
     questTitle = questTitle or "N/A"  -- Default to "N/A" if no title found
     GameTooltip:SetText(questTitle)  -- Display quest name
 
-    GameTooltip:AddLine(" ")  -- Add line break
+	if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) and not isWorldQuest then
+		-- Add code for line break if this is a searched quest
+	else
+		GameTooltip:AddLine(" ")  -- Add line break
+	end
 	
 	-- Add description
-	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(effectiveQuestID)  -- Use questID instead of self.questID
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
 	if questLogIndex then
 		local _, questObjectives = GetQuestLogQuestText(questLogIndex)
 		local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
@@ -716,17 +727,17 @@ local function CreateQuestTooltip(frame, questID)
 		GameTooltip:AddLine(" ")
 	end
 
-	-- if questID then
-		-- -- Check if the quest is completed
-		-- if C_QuestLog.IsQuestFlaggedCompleted(questID) then
-			-- GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-		-- else
-			-- --GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-		-- end
-	-- end
+	if questID then
+		-- Check if the quest is completed
+		if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+			GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
+		else
+			GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+		end
+	end
 	
     -- Add objectives
-    local objectivesInfo = C_QuestLog.GetQuestObjectives(effectiveQuestID)
+    local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
     if objectivesInfo and #objectivesInfo > 0 then
         GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Objectives:")
@@ -741,14 +752,18 @@ local function CreateQuestTooltip(frame, questID)
         GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)  -- true for wrap
     end
 
-    -- Add Rewards
-	GameTooltip:AddLine("Rewards: ")
-    RQE:QuestRewardsTooltip(GameTooltip, effectiveQuestID)  -- Assuming RQE:QuestRewardsTooltip is defined
-    GameTooltip:AddLine(" ")
-
+	if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) and not isWorldQuest then
+		-- Add code for the Rewards tooltip if this is a searched quest
+	else
+		-- Add Rewards
+		GameTooltip:AddLine("Rewards: ")
+		RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
+		GameTooltip:AddLine(" ")
+	end
+	
 	-- Party Members' Quest Progress
 	if IsInGroup() then
-		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(effectiveQuestID)
+		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 		if tooltipData and tooltipData.lines then
 			local player_name = UnitName("player")
 			local isFirstPartyMember = true
