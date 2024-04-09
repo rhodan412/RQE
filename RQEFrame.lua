@@ -695,7 +695,15 @@ local function CreateQuestTooltip(frame, questID)
     GameTooltip:SetMinimumWidth(350)
     GameTooltip:SetHeight(0)
     GameTooltip:SetPoint("BOTTOMLEFT", frame, "TOPLEFT")
-    GameTooltip:SetText(C_QuestLog.GetTitleForQuestID(effectiveQuestID))  -- Display quest name
+
+    local questTitle
+    if RQEDatabase and RQEDatabase[effectiveQuestID] and RQEDatabase[effectiveQuestID].title then
+        questTitle = RQEDatabase[effectiveQuestID].title  -- Use title from RQEDatabase if available
+    else
+        questTitle = C_QuestLog.GetTitleForQuestID(effectiveQuestID)  -- Fallback to game's API call
+    end
+    questTitle = questTitle or "N/A"  -- Default to "N/A" if no title found
+    GameTooltip:SetText(questTitle)  -- Display quest name
 
     GameTooltip:AddLine(" ")  -- Add line break
 	
