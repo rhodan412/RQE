@@ -30,8 +30,10 @@ end
 RQE.UnknownQuestButtonCalcNTrack = function()
     RQE.UnknownQuestButton:SetScript("OnClick", function()
         local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-
-		if not questID then
+		local effectiveQuestID = RQE.searchedQuestID or questID
+		local questData = RQEDatabase[effectiveQuestID]
+		
+		if not effectiveQuestID then
             RQE.debugLog("No QuestID found. Cannot proceed.")
             return
         end
@@ -42,7 +44,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         if not posX or not posY then
             if not isMapOpen and RQE.superTrackingChanged then
                 -- If coordinates are not available, attempt to open the quest log to get them
-                OpenQuestLogToQuestDetails(questID)
+                OpenQuestLogToQuestDetails(effectiveQuestID)
 				if not isMapOpen then
 					WorldMapFrame:Hide()
 				end
@@ -53,6 +55,6 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         RQE.superTrackingChanged = false
 
         -- Call your function to create a waypoint using stored coordinates and mapID
-		RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		RQE:CreateUnknownQuestWaypoint(effectiveQuestID, mapID)
     end)
 end

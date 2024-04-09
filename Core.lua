@@ -2076,9 +2076,9 @@ function RQE.SearchModule:CreateSearchBox()
 		-- This is where you place the logic for updating location data
 		if foundQuestID and RQEDatabase[foundQuestID] and RQEDatabase[foundQuestID].location then
 			-- Update the location data for the examined quest
-			RQE.superX = RQEDatabase[foundQuestID].location.x / 100
-			RQE.superY = RQEDatabase[foundQuestID].location.y / 100
-			RQE.superMapID = RQEDatabase[foundQuestID].location.mapID
+			RQE.DatabaseSuperX = RQEDatabase[foundQuestID].location.x / 100
+			RQE.DatabaseSuperY = RQEDatabase[foundQuestID].location.y / 100
+			RQE.DatabaseSuperMapID = RQEDatabase[foundQuestID].location.mapID
 		end
 		
         if foundQuestID then

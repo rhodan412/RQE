@@ -63,41 +63,43 @@ end
 
 
 -- Remove the extra functions and keep only this one
-function RQE:CreateUnknownQuestWaypoint(questID, mapID)
---function RQE:CreateUnknownQuestWaypoint(unknownQuestID, mapID)
-    local effectiveQuestID = RQE.searchedQuestID or questID
-    local posX = RQE.superX
-    local posY = RQE.superY
-    local mapID = RQE.superMapID
-    local DirectionText = RQEFrame.DirectionText  -- Assuming DirectionText is stored in RQE table
+function RQE:CreateUnknownQuestWaypoint(effectiveQuestID)
+    local questData = RQEDatabase[effectiveQuestID]
+    local x, y, mapID
+    local questName = C_QuestLog.GetTitleForQuestID(effectiveQuestID) or "Unknown"
+    local waypointTitle
 
-	if not effectiveQuestID then
-		RQE.debugLog("Quest ID is nil. Cannot retrieve quest title.")
-		return -- Early return to prevent the rest of the function from executing
-	end
-
-	local questName = C_QuestLog.GetTitleForQuestID(effectiveQuestID) or "Unknown"
-    
-    local x, y  -- Declare x and y here so they are accessible throughout the function
-    
-    if posX and posY then
-        x = posX * 100
-        y = posY * 100
+    -- Determine coordinates and title based on quest presence in quest log and database
+    if questData and not C_QuestLog.IsOnQuest(effectiveQuestID) and questData.location then
+        x = questData.location.x
+        y = questData.location.y
+        mapID = questData.location.mapID
+        waypointTitle = "Quest Start: " .. questData.title
     else
-        return
+        x = RQE.superX or 0 -- Default to 0 if nil
+        y = RQE.superY or 0 -- Default to 0 if nil
+        mapID = RQE.superMapID
+        waypointTitle = "Quest ID: " .. effectiveQuestID .. ", Quest Name: " .. questName
+		
+		if x and y then
+			x = x * 100
+			y = y * 100
+		else
+			return
+		end
     end
 
+    -- Ensure x and y are numbers before attempting arithmetic
+    x = tonumber(x) or 0
+    y = tonumber(y) or 0
+	
 	C_Map.ClearUserWaypoint()
 	
 	if IsAddOnLoaded("TomTom") then
 		TomTom.waydb:ResetProfile()
 	end
 
-	C_Timer.After(0.5, function()
-		-- Construct the waypoint title
-		local waypointTitle = "Quest ID: " .. effectiveQuestID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
-		--local waypointTitle = "Quest ID: " .. unknownQuestID .. ", Quest Name: " .. questName  -- Default title with Quest ID and Name
-		
+	C_Timer.After(0.5, function()		
 		if DirectionText and DirectionText ~= "No direction available." then
 			waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
 		end
