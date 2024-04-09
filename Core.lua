@@ -493,11 +493,16 @@ end
 
 -- Function to open the quest log and show specific quest details
 function OpenQuestLogToQuestDetails(questID)
-    local mapID = GetQuestUiMapID(questID, ignoreWaypoints)
+	if RQE.searchedQuestID ~= nil then
+		return
+	end
+	
+    local mapID = GetQuestUiMapID(questID, ignoreWaypoints) or C_TaskQuest.GetQuestZoneID(questID)
     if mapID == 0 then mapID = nil end
     OpenQuestLog(mapID)
     QuestMapFrame_ShowQuestDetails(questID)
 end
+
 
 -- Function that saves data of the Super Tracked Quest
 function RQE.SaveSuperTrackData()
@@ -1411,17 +1416,19 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     end
 	
     local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-    local questName = C_QuestLog.GetTitleForQuestID(questID)
+	local questName
+	if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
+		questName = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
+	else
+		questName = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call
+	end
+	questName = questName or "N/A"  -- Default to "N/A" if no title found
 
-    if RQE.QuestNameText then
-        if questName then
-            RQE.QuestNameText:SetText("Quest Name: " .. questName)
-        else
-            RQE.QuestNameText:SetText("Quest Name: N/A")
-        end
-    else
-        RQE.debugLog("RQE.QuestNameText is not initialized.")
-    end
+	if RQE.QuestNameText then
+		RQE.QuestNameText:SetText("Quest Name: " .. questName)
+	else
+		RQE.debugLog("RQE.QuestNameText is not initialized.")
+	end
     
 	if questInfo then
 		RQE.debugLog("questInfo.description is ", questInfo.description)
