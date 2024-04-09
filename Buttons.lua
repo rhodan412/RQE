@@ -63,18 +63,23 @@ RQE.UnknownButtonTooltip = function()
     RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local extractedQuestID
+		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
 		if questID then  -- Add a check to ensure questID is not nil
 			local mapID = GetQuestUiMapID(questID)
 			local questData = RQEDatabase[questID]
 			if mapID == 0 then mapID = nil end
 		end
 
-		if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+		if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
 			-- If coordinates are already available, just show them
 			local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
 			GameTooltip:SetText(tooltipText)
-			GameTooltip:Show()		
+			GameTooltip:Show()
         elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
             -- Open the quest log details for the super tracked quest to fetch the coordinates
             OpenQuestLogToQuestDetails(questID)
