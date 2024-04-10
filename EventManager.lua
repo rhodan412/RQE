@@ -891,6 +891,7 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
         end
 	end
 	
+
     -- Update Frame
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 11 Debug: Updating Frame.", 0.46, 0.62, 1)
 	UpdateFrame()
@@ -898,8 +899,9 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
 	-- Visibility Update Check for RQEFrame & RQEQuestFrame
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 12 Debug: UpdateRQEFrameVisibility.", 0.46, 0.62, 1)
     RQE:UpdateRQEFrameVisibility()
+	
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 13 Debug: UpdateRQEQuestFrameVisibility.", 0.46, 0.62, 1)
-    RQE:UpdateRQEQuestFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()	
 	
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -1349,11 +1351,11 @@ function RQE.handleQuestWatchUpdate(questID)
 		UpdateFrame()
         return
     end
+	
+    -- DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
 
 	-- Adds quest to watch list when progress made
 	C_QuestLog.AddQuestWatch(questID)
-	
-    -- DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
 	
 	if questID then
 		-- Retrieve the current watched quest ID if needed
@@ -1366,11 +1368,18 @@ function RQE.handleQuestWatchUpdate(questID)
 
 	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	
+	-- Check if Super Tracking. If yes, gather info on ID and Name, else super track the progress quest
     if isSuperTracking then
         local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(questID)
-		-- DEFAULT_CHAT_FRAME:AddMessage("QWU 03 DebugDebug: Current super tracked quest ID/Name: " .. tostring(currentSuperTrackedQuestID) .. " " .. superTrackedQuestName, 0.56, 0.93, 0.56)
+	else
+		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(questID)
+		UpdateFrame() -- ensure that if nothing super tracked that once once is that it will update the RQEFrame with the data
     end
+	
+	-- DEFAULT_CHAT_FRAME:AddMessage("QWU 03 DebugDebug: Current super tracked quest ID/Name: " .. tostring(currentSuperTrackedQuestID) .. " " .. superTrackedQuestName, 0.56, 0.93, 0.56)
 	
 	if questID then
 		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
