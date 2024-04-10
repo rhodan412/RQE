@@ -1402,7 +1402,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.infoLog("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
         C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
 		UpdateRQEQuestFrame()
-    end
+    else
+		UpdateRQEQuestFrame()
+	end
 		
     if not StepsText or not CoordsText or not MapIDs then
         RQE.debugLog("Exiting UpdateFrame due to missing data.")
@@ -1587,27 +1589,6 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
         end
     end
 end
-
-
--- function UpdateWorldQuestTracking(questID)
-    -- -- Check if questID is actually a quest ID and not a table or nil
-    -- if type(questID) == "table" then
-        -- RQE.infoLog("UpdateWorldQuestTracking was passed a table instead of a questID. Table contents:", questID)
-        -- return
-    -- elseif not questID then
-        -- RQE.infoLog("UpdateWorldQuestTracking was passed a nil value for questID.")
-        -- return
-    -- end
-
-    -- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-    -- local watchType = C_QuestLog.GetQuestWatchType(questID)
-    -- local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)
-
-    -- if isWorldQuest and not isManuallyTracked then
-        -- C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-        -- --C_SuperTrack.SetSuperTrackedQuestID(questID)
-    -- end
--- end
 
 
 -- Remove Tracking of all World Quests
@@ -3767,19 +3748,19 @@ end
 -- Function to log scenario information, including previously ignored values
 function RQE.LogScenarioInfo()
     if C_Scenario.IsInScenario() then
-        local scenarioName, currentStage, numStages, flags, value5, value6, completed, xp, money, scenarioType, value11, textureKit = C_Scenario.GetInfo()
+        local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit = C_Scenario.GetInfo()
 		
         RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
         RQE.infoLog("Current Stage: " .. tostring(currentStage))
         RQE.infoLog("Number of Stages: " .. tostring(numStages))
         RQE.infoLog("Flags: " .. tostring(flags))
-        RQE.infoLog("Value 5: " .. tostring(value5))
-        RQE.infoLog("Value 6: " .. tostring(value6))
+        RQE.infoLog("HasBonusStep: " .. tostring(hasBonusStep))
+        RQE.infoLog("isBonusStepComplete: " .. tostring(isBonusStepComplete))
         RQE.infoLog("Completed: " .. tostring(completed))
         RQE.infoLog("XP Reward: " .. tostring(xp))
         RQE.infoLog("Money Reward: " .. tostring(money))
         RQE.infoLog("Scenario Type: " .. tostring(scenarioType))
-        RQE.infoLog("Value 11: " .. tostring(value11))
+        RQE.infoLog("areaName: " .. tostring(areaName))
         RQE.infoLog("Texture Kit: " .. tostring(textureKit))
     end
 end
