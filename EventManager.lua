@@ -1002,6 +1002,13 @@ function RQE.handleQuestStatusUpdate(...)
     local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
     local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
 
+	UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
+    RQE:ClearWQTracking()
+    SortQuestsByProximity()
+
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
+	
 	if questID == nil then
 		questID = currentSuperTrackedquestID
 	end
@@ -1060,6 +1067,7 @@ function RQE.handleQuestStatusUpdate(...)
 			-- The super-tracked quest is not what we set; avoid changing focus
 			return  -- Optionally, you could revert the super-tracked quest here
 		end
+	end
 		
 		if not RQE.QuestLinesCached then
 			RQE.RequestAndCacheQuestLines()
@@ -1087,17 +1095,7 @@ function RQE.handleQuestStatusUpdate(...)
 			RQE.ClickUnknownQuestButton()
 		end)
 	end
-	
-    RQE:ClearWQTracking()
-    UpdateRQEQuestFrame()
-    SortQuestsByProximity()
-
-	-- Visibility Update Check for RQEQuestFrame
-        RQE:UpdateRQEQuestFrameVisibility()
-    else
-        -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Not SuperTracking or QuestID not found", 0, 1, 0)  -- Bright Green
-    end
-	
+		
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 	
@@ -1335,11 +1333,26 @@ end
 function RQE.handleQuestWatchUpdate(questID)
     -- DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 	
+	UpdateRQEQuestFrame()
+	RQEQuestFrame:ClearAllPoints()
+	
+	-- Further processing
+	QuestType()
+	SortQuestsByProximity()
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		
+	-- Visibility Update Check for RQEQuestFrame
+	RQE:UpdateRQEQuestFrameVisibility()
+
     if type(questID) ~= "number" then
         -- DEFAULT_CHAT_FRAME:AddMessage("QWU 01 Error: questID is not a number.", 0.56, 0.93, 0.56)
+		UpdateFrame()
         return
     end
 
+	-- Adds quest to watch list when progress made
+	C_QuestLog.AddQuestWatch(questID)
+	
     -- DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
 	
 	if questID then
@@ -1380,25 +1393,6 @@ function RQE.handleQuestWatchUpdate(questID)
 		end
 	end
 	
-	RQEQuestFrame:ClearAllPoints()
-	
-	-- Adds quest to watch list when progress made
-	C_QuestLog.AddQuestWatch(questID)
-	
-	UpdateRQEQuestFrame()
-
-	-- Further processing
-	QuestType()
-	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-	
-	C_Timer.After(0.5, function()
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	end)
-		
-	-- Visibility Update Check for RQEQuestFrame
-	RQE:UpdateRQEQuestFrameVisibility()
-
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
@@ -1420,12 +1414,34 @@ function RQE.handleQuestWatchUpdate(questID)
 			-- RQE.ClickUnknownQuestButton()
 		-- end)
 	end
+	
+	C_Timer.After(0.5, function()
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	end)
 end
 
 
 -- Handling QUEST_WATCH_LIST_CHANGED event
 function RQE.handleQuestWatchListChanged(questID, added)
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_WATCH_LIST_CHANGED event triggered for questID: " .. tostring(questID) .. ", added: " .. tostring(added), 0.4, 0.6, 1.0)
+
+	-- Extract QuestID from super track and that which is displayed in RQEFrame
+	local extractedQuestID
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+
+	-- Determine questID based on various fallbacks
+	questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+
+	UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
+	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	RQE:ClearWQTracking()
+    RQE:UpdateRQEQuestFrameVisibility()
+
+    -- This ensures that any change in the watch list is reflected in your addon's UI
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
@@ -1445,15 +1461,7 @@ function RQE.handleQuestWatchListChanged(questID, added)
 			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 04 Debug: Header " .. i .. ": " .. questHeader[i], 0.56, 0.93, 0.56)
 		-- end
 	-- end
-	
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-	
-    -- This ensures that any change in the watch list is reflected in your addon's UI
-    UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	RQE:ClearWQTracking()
-    RQE:UpdateRQEQuestFrameVisibility()
-	
+		
     -- if questInfo then
         -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 05 Debug: Quest info found for questID: " .. tostring(questID), 0.4, 0.6, 1.0)
     -- else
@@ -1461,16 +1469,7 @@ function RQE.handleQuestWatchListChanged(questID, added)
     -- end
 	
 	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		local extractedQuestID
-		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-		
+	if RQE.db.profile.autoClickWaypointButton then		
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
 			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
@@ -1488,28 +1487,36 @@ end
 -- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button in a quest dialog window. 
 function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 	-- DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
-    if not questID then return end  -- Ensure there's a valid questID from the event
+    
+	if not questID then   -- Ensure there's a valid questID from the event
+		UpdateFrame()
+		return
+	end
 
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1.0, 0.08, 0.58)
+	
+	local displayedQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		displayedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+	
+	-- Determine questID based on various fallbacks
+	questID = RQE.searchedQuestID or displayedQuestID or questID or superTrackedQuestID
+
+    -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
+    -- This might involve checking if there are other quests to display or adjusting UI elements
+    RQE:UpdateRQEFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()
+	
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 
-    -- DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: QuestID: " .. tostring(questID), 1.0, 0.08, 0.58)
-	
-    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    -- DEFAULT_CHAT_FRAME:AddMessage("QTI 03 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1.0, 0.08, 0.58)
-	
-	local displayedQuestID = RQE.QuestIDText and tonumber(strmatch(RQE.QuestIDText:GetText() or "", "%d+"))
+    -- DEFAULT_CHAT_FRAME:AddMessage("QTI 03 Debug: QuestID: " .. tostring(questID), 1.0, 0.08, 0.58)
+		
     -- DEFAULT_CHAT_FRAME:AddMessage("QTI 04 Debug: DisplayedQuestID: " .. tostring(displayedQuestID), 1.0, 0.08, 0.58)
 	
 	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
-		
+	if RQE.db.profile.autoClickWaypointButton then		
 		C_Timer.After(1, function()
 			RQE:CheckAndAdvanceStep(questID)
 		end)
@@ -1532,11 +1539,6 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 	
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	
-    -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
-    -- This might involve checking if there are other quests to display or adjusting UI elements
-    RQE:UpdateRQEFrameVisibility()
-    RQE:UpdateRQEQuestFrameVisibility()
 end
 
 
@@ -1545,41 +1547,39 @@ function RQE.handleQuestFinished()
     -- DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
 		
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    local displayedQuestID = RQE.QuestIDText and tonumber(strmatch(RQE.QuestIDText:GetText() or "", "%d+"))
-
-    -- DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
-    -- DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: DisplayedQuestID: " .. tostring(displayedQuestID), 1, 0.75, 0.79)
-	
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		-- DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
-		
-		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
-		-- DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
-		
-		C_Timer.After(0.5, function()
-			RQE:CheckAndAdvanceStep(questID)
-			--RQE:ClickSuperTrackedQuestButton()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
-		end)
+	local extractedQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
+	-- DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
+
+	-- Determine questID based on various fallbacks
+	questID = RQE.searchedQuestID or extractedQuestID or questID or superTrackedQuestID
+	
+	-- DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: DisplayedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
+	
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
     -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
     -- This might involve checking if there are other quests to display or adjusting UI elements
     RQE:UpdateRQEFrameVisibility()
-    -- DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
 	
     RQE:UpdateRQEQuestFrameVisibility()
-    -- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
+    -- DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
+	
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then	
+		C_Timer.After(0.5, function()
+			RQE:CheckAndAdvanceStep(questID)
+			--RQE:ClickSuperTrackedQuestButton()
+			-- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
+		end)
+	end
 end
 
 	
