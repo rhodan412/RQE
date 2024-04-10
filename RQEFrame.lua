@@ -696,6 +696,11 @@ local function CreateQuestTooltip(frame, questID)
     GameTooltip:SetHeight(0)
     GameTooltip:SetPoint("BOTTOMLEFT", frame, "TOPLEFT")
 
+    if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
+        RQE.debugLog("QuestIDText is nil or empty. Cannot proceed.")
+        return
+    end
+	
 	local extractedQuestID
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -1340,48 +1345,78 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
     end
     RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
     UpdateRQEQuestFrame()
-	-- Call to update the waypoint for the quest completion objective
-	C_Timer.After(1, function()  -- Delay of 1 second
-		RQE.ClickUnknownQuestButton()
-	end)
+end
+
+
+-- Function to check if all objectives for a given quest are completed
+function RQE:AreAllObjectivesCompleted(questID)
+    -- Check if questID is valid
+    if not questID or type(questID) ~= "number" or questID <= 0 then
+        RQE.infoLog("Invalid or missing questID provided to AreAllObjectivesCompleted:", tostring(questID))
+        return false
+    end
+
+    local status, objectives = pcall(C_QuestLog.GetQuestObjectives, questID)
+    if not status or not objectives then
+        RQE.infoLog("Failed to retrieve objectives for questID:", questID, "Error:", objectives)
+        return false
+    end
+
+    for _, objective in ipairs(objectives) do
+        if not objective.finished then
+            RQE.infoLog("Not all objectives completed for questID:", questID)
+            return false
+        end
+    end
+
+    RQE.infoLog("All objectives completed for questID:", questID) -- Debug print for all objectives completed
+    return true
 end
 
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-
-    -- Check if the button has already been clicked
-    if RQE.hasClickedQuestButton then
+    if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
+        RQE.debugLog("QuestIDText is nil or empty. Cannot proceed.")
         return
     end
 
+    local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+
+    if not RQE:AreAllObjectivesCompleted(questID) then
+        return
+    end
+	
     if not questID then
         RQE.debugLog("No QuestID found. Cannot proceed.")
         return
     end
 
-    -- Find the corresponding QuestLogIndexButton for the questID
+    if RQE.hasClickedQuestButton then
+        return
+    end
+
+    local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
-            -- Found the button, simulate the click
             button:Click()
-            RQE.hasClickedQuestButton = true  -- Set the flag to true after clicking the button
-            break  -- Exit the loop as we've found and clicked the right button
+            RQE.hasClickedQuestButton = true
+            foundButton = true
+            break
         end
     end
 
-    -- If the button wasn't found, print a message
-    if not RQE.hasClickedQuestButton then
+    if not foundButton then
         RQE.debugLog("Did not find a button for questID:", questID)
+    else
+        -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
+        local mapID = C_Map.GetBestMapForUnit("player")
+        RQE:CreateUnknownQuestWaypoint(questID, mapID)
     end
-	
-	-- Re-Track the quest being listed as super tracked
-	C_SuperTrack.SetSuperTrackedQuestID(questID)
-	
-	-- Call your function to create a waypoint using stored coordinates and mapID
-	RQE:CreateUnknownQuestWaypoint(questID, mapID)
 end
+
 
 
 -- Function to handle button clicks
