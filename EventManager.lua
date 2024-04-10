@@ -1081,6 +1081,11 @@ function RQE.handleQuestStatusUpdate(...)
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
 		end)
+	else
+		C_Timer.After(2, function()
+			RQE.infoLog("Clicking QuestLogIndexButton following QUEST_LOG_UPDATE event")
+			RQE.ClickUnknownQuestButton()
+		end)
 	end
 	
     RQE:ClearWQTracking()
@@ -1092,11 +1097,6 @@ function RQE.handleQuestStatusUpdate(...)
     else
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Not SuperTracking or QuestID not found", 0, 1, 0)  -- Bright Green
     end
-	
-	C_Timer.After(2, function()
-		RQE.infoLog("Clicking QuestLogIndexButton following QUEST_LOG_UPDATE event")
-		RQE.ClickUnknownQuestButton()
-	end)
 	
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
@@ -1216,10 +1216,12 @@ function RQE.handleQuestComplete()
 	
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 	
-	C_Timer.After(2, function()
-		RQE.infoLog("Clicking QuestLogIndexButton following QUEST_COMPLETE event")
-		RQE.ClickUnknownQuestButton()
-	end)
+	if not RQE.db.profile.autoClickWaypointButton then
+		C_Timer.After(2, function()
+			RQE.infoLog("Clicking QuestLogIndexButton following QUEST_COMPLETE event")
+			RQE.ClickUnknownQuestButton()
+		end)
+	end
 end
 		
 -- Handling QUEST_AUTOCOMPLETE events
@@ -1337,7 +1339,7 @@ function RQE.handleQuestWatchUpdate(questID)
         -- DEFAULT_CHAT_FRAME:AddMessage("QWU 01 Error: questID is not a number.", 0.56, 0.93, 0.56)
         return
     end
-	
+
     -- DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
 	
 	if questID then
@@ -1412,13 +1414,12 @@ function RQE.handleQuestWatchUpdate(questID)
 			RQE:CheckAndAdvanceStep(questID)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QWU 11 Debug: Checking and advancing step for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 		end)
+	-- else
+		-- C_Timer.After(2, function()
+			-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_UPDATE event")
+			-- RQE.ClickUnknownQuestButton()
+		-- end)
 	end
-	
-	
-	-- C_Timer.After(2, function()
-		-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_UPDATE event")
-		-- RQE.ClickUnknownQuestButton()
-	-- end)
 end
 
 
@@ -1474,13 +1475,12 @@ function RQE.handleQuestWatchListChanged(questID, added)
 			RQE:CheckAndAdvanceStep(questID)
 			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
+	-- else
+		-- C_Timer.After(2, function()
+			-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_LIST_CHANGED event")
+			-- RQE.ClickUnknownQuestButton()
+		-- end)
 	end
-	
-	
-	-- C_Timer.After(2, function()
-		-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_LIST_CHANGED event")
-		-- RQE.ClickUnknownQuestButton()
-	-- end)
 end
 
 
@@ -1513,6 +1513,11 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 		C_Timer.After(1, function()
 			RQE:CheckAndAdvanceStep(questID)
 		end)
+	else
+		C_Timer.After(2, function()
+			RQE.infoLog("Clicking QuestLogIndexButton following QUEST_TURNED_IN event")
+			RQE.ClickUnknownQuestButton()
+		end)
 	end
 	
     -- Verify if the turned-in quest matches the currently displayed or super tracked quest
@@ -1524,11 +1529,6 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
             -- Optionally, you might want to update the frame to show the next priority quest or clear visibility
         end)
     end
-
-	C_Timer.After(2, function()
-		RQE.infoLog("Clicking QuestLogIndexButton following QUEST_TURNED_IN event")
-		RQE.ClickUnknownQuestButton()
-	end)
 	
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
