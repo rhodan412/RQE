@@ -1943,7 +1943,7 @@ function UpdateRQEQuestFrame()
     else
         RQE.QMQTslider:Hide()
     end
-	
+
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
 end
