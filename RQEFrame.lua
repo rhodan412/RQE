@@ -1410,7 +1410,7 @@ function RQE.ClickUnknownQuestButton()
 
     if not foundButton then
         RQE.debugLog("Did not find a button for questID:", questID)
-    else
+    else	
         -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
         local mapID = C_Map.GetBestMapForUnit("player")
         RQE:CreateUnknownQuestWaypoint(questID, mapID)
