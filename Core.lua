@@ -245,6 +245,7 @@ RQE.ManualSuperTrack = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
 RQE.lastClickedObjectiveIndex = nil
 RQE.hasClickedQuestButton = false
+RQE.alreadyPrintedSchematics = false
 
 -- Addon Initialization
 function RQE:OnInitialize()
@@ -3694,6 +3695,7 @@ function RQE:ClickSuperTrackedQuestButton()
 end
 
 
+
 function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
     -- Loop through all WaypointButtons
     for i, button in ipairs(RQE.WaypointButtons) do
@@ -3709,6 +3711,93 @@ function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
             button.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
         end
     end
+end
+
+
+-- Craft Specific Item for Quest
+function RQE:CraftSpecificItem(recipeSpellID)
+    -- Retrieve recipe information to check if it can be crafted
+    local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeSpellID)
+    if not recipeInfo or not recipeInfo.learned or not recipeInfo.craftable then
+        print("Recipe is not learned, not craftable, or doesn't exist.")
+        return
+    end
+	
+	if not (ProfessionsFrame and ProfessionsFrame:IsVisible()) then
+        print("Ready to craft:", recipeInfo.name, "x1. Please open the dedicated profession window to craft and press the macro again.")
+		return
+    end
+	
+    -- Check if we've already printed the reagents for this recipe
+    if not RQE.alreadyPrintedSchematics then
+        -- Print the reagents required for the recipe
+        RQE:PrintRecipeSchematic(recipeSpellID, false) -- Assuming isRecraft is false; adjust as needed
+        
+        -- Mark this recipe as having its reagents printed so we don't do it again
+        RQE.alreadyPrintedSchematics = true
+    end
+end
+
+
+-- Display an ItemLink for the required Reagents
+function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
+    local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
+    if not schematic then
+        print("Schematic not found for recipeSpellID:", recipeSpellID)
+        return
+    end
+
+    local reagentsString = "Reagent(s) Required: "
+    local firstReagent = true
+
+    -- Print basic recipe information
+    RQE.infoLog("Recipe ID:", schematic.recipeID)
+    RQE.infoLog("Name:", schematic.name)
+    RQE.infoLog("Quantity Min:", schematic.quantityMin, "Quantity Max:", schematic.quantityMax)
+    RQE.infoLog("Product Quality:", schematic.productQuality or "N/A")
+    RQE.infoLog("Output Item ID:", schematic.outputItemID or "N/A")
+    
+    -- Check if there are reagent slot schematics to iterate over
+    if schematic.reagentSlotSchematics then
+        for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
+            -- RQE.infoLog("Reagent Slot", i)
+            if slotSchematic.reagents then
+                for _, reagent in ipairs(slotSchematic.reagents) do
+                    local itemName = "Unknown"
+                    if reagent.itemID then
+                        itemName = GetItemInfo(reagent.itemID) or itemName
+                    end
+                    RQE.infoLog("  - Item:", itemName, "Item ID:", reagent.itemID or "N/A", "Quantity Required:", slotSchematic.quantityRequired)
+                end
+            end
+        end
+    else
+        RQE.infoLog("No reagent slot schematics available.")
+    end
+	
+	-- Print the required items including item link to chat
+    if schematic.reagentSlotSchematics then
+        for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
+            if slotSchematic.reagents then
+                for _, reagent in ipairs(slotSchematic.reagents) do
+                    local itemLink = select(2, GetItemInfo(reagent.itemID))
+                    local quantityRequired = slotSchematic.quantityRequired
+                    if itemLink and quantityRequired then
+                        if not firstReagent then
+                            reagentsString = reagentsString .. ", "
+                        else
+                            firstReagent = false
+                        end
+                        reagentsString = reagentsString .. itemLink .. " x" .. quantityRequired
+                    end
+                end
+            end
+        end
+    else
+        reagentsString = reagentsString .. "None."
+    end
+
+    print(reagentsString)
 end
 
 

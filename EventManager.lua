@@ -851,7 +851,10 @@ end
 -- Handling QUEST_ACCEPTED Event
 function RQE.handleQuestAccepted(questLogIndex, questID)
     -- DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)
-	
+
+	-- Reset Flag for printing schematics when quest accepted
+	RQE.alreadyPrintedSchematics = false
+
     if questID then
 		RQE.LastAcceptedQuest = questID
         local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
@@ -1169,6 +1172,9 @@ end
 -- Handling QUEST_COMPLETE event
 -- Fired after the player hits the "Continue" button in the quest-information page, before the "Complete Quest" button. In other words, it fires when you are given the option to complete a quest, but just before you actually complete the quest. 
 function RQE.handleQuestComplete()
+	-- Reset Flag for printing schematics when quest accepted
+	RQE.alreadyPrintedSchematics = false
+
 	local extractedQuestID
 	
 	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -1496,7 +1502,10 @@ end
 -- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button in a quest dialog window. 
 function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 	-- DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
-    
+
+	-- Reset Flag for printing schematics when quest accepted
+	RQE.alreadyPrintedSchematics = false
+	
 	if not questID then   -- Ensure there's a valid questID from the event
 		UpdateFrame()
 		return
