@@ -1208,6 +1208,7 @@ function RQE:CheckAndAdvanceStep(questID)
     if RQE.lastKnownObjectiveIndex[questID] ~= currentObjectiveIndex then
         -- Detected a change in objective, indicating progress
         RQE.hasClickedQuestButton = false  -- Reset the flag since there's actual progress
+		RQE.infoLog("RQE.hasClickedQuestButton flag is being reset for quest " .. questID)
         RQE.lastKnownObjectiveIndex[questID] = currentObjectiveIndex  -- Update the tracked index
         -- Potentially other logic to handle the change in objective
     end
@@ -1405,12 +1406,14 @@ end
 
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
-function RQE.ClickUnknownQuestButton()	
+function RQE.ClickUnknownQuestButton()
+	RQE.infoLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
+
 	-- Validation check
-    if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
-        RQE.infoLog("QuestIDText is nil or empty. Cannot proceed.")
-        return
-    end
+	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
+		RQE.infoLog("QuestIDText is nil or empty. Cannot proceed.")
+		return
+	end
 
     local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1426,6 +1429,7 @@ function RQE.ClickUnknownQuestButton()
     end
 
     if RQE.hasClickedQuestButton then
+		RQE.infoLog("hasClickedQuestButton already clicked, skipping")
         return
     end
 
