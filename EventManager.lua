@@ -931,31 +931,39 @@ function RQE.handleZoneChange(self, event, ...)
 		-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: UNIT_EXITING_VEHICLE triggered for " .. tostring(...) .. ".", 0, 1, 1)  -- Cyan
 	end
 
-    -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. SubZone Text: " .. tostring(GetSubZoneText()), 0, 1, 1)  -- Cyan
-	C_Timer.After(1.0, function()  -- Delay of 1 second
+	if not IsFlying("player") then
+		-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. SubZone Text: " .. tostring(GetSubZoneText()), 0, 1, 1)  -- Cyan
+		C_Timer.After(1.0, function()  -- Delay of 1 second
 
-		-- Get the current map ID
-		local mapID = C_Map.GetBestMapForUnit("player")
-        -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
-		local questInfo = RQEDatabase[questID]
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-		
-		--RQE:UpdateMapIDDisplay()
+			-- Get the current map ID
+			local mapID = C_Map.GetBestMapForUnit("player")
+			-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
+			
+			-- local questInfo = RQEDatabase[questID]  -- THIS IS HANDLED IN UPDATEFRAME
+			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+			
+			--RQE:UpdateMapIDDisplay()
 
-		-- Call the functions to update the frame
+			-- Call the functions to update the frame
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+			
+			SortQuestsByProximity()
+			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+			
+			if C_Scenario.IsInScenario() then
+				RQE.ScenarioChildFrame:Show()
+				RQE.handleScenario()
+			else
+				RQE.ScenarioChildFrame:Hide()
+				RQE.handleScenario()
+			end
+		end)
+	else
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
-		if C_Scenario.IsInScenario() then
-			RQE.ScenarioChildFrame:Show()
-			RQE.handleScenario()
-		else
-			RQE.ScenarioChildFrame:Hide()
-			RQE.handleScenario()
-		end
-	end)
+	end
 	
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -978,8 +986,9 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		-- Get the current map ID
 		local mapID = C_Map.GetBestMapForUnit("player")
         -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
-		local questInfo = RQEDatabase[questID]
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+		
+		-- local questInfo = RQEDatabase[questID]  -- HANDLED IN UPDATEFRAME
+		-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 		
 		RQE:UpdateMapIDDisplay()
 
