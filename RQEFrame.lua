@@ -298,8 +298,8 @@ end
 -- Setting up the tooltip for RQE.SearchGroupButton with all texts
 SetUpTooltip(RQE.SearchGroupButton, {
     "2x Lt Click: Search for Group",
-    "Rt Click: Create Group",
-    "Shift Lt Click: Delist Group"
+    "Rt Click: Create/Delist Group",
+    --"Shift Lt Click: Delist Group"
 })
 
 

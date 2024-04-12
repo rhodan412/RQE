@@ -135,6 +135,35 @@ RQE.UnknownQuestButtonMouseUp = function()
 end
 
 
+-- Handles the Raid Message Alert and sound when group is forming/no longer forming in LFG
+-- Prevents sound from playing on top of each other if switching between forming group and no longer forming group
+RQE.lastSoundTime = RQE.lastSoundTime or 0
+RQE.soundThrottle = 2 -- seconds between sounds
+
+function RQE:PlayThrottledSound(soundID)
+    local timeNow = GetTime() -- Get the current time in seconds
+    if (timeNow - self.lastSoundTime) >= self.soundThrottle then
+        PlaySound(soundID)
+        self.lastSoundTime = timeNow
+    end
+end
+
+
+-- Function that handles the alert/sound when LFG quest group no longer forming
+function RQE:StopFormingLFG()
+    local leavemessage = "LFG Group has been delisted."
+	self:PlayThrottledSound(9244)
+    RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+end
+
+
+-- Function that handles the alert/sound when LFG quest group is forming
+function RQE:FormLFG()
+	local createmessage = "Your quest group is forming."
+	RaidNotice_AddMessage(RaidWarningFrame, createmessage, ChatTypeInfo["RAID_WARNING"])
+end
+
+
 -- Add a mouse down event to simulate a button press
 RQE.SearchGroupButtonMouseDown = function()
 	RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
@@ -153,7 +182,13 @@ RQE.SearchGroupButtonMouseDown = function()
 		elseif button == "RightButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			-- Logic for creating a group
-			RQE:LFG_Create(questID)
+			if IsInGroup() then
+				RQE:LFG_Delist(questID)
+				RQE:StopFormingLFG()
+			else
+				RQE:LFG_Create(questID)
+				RQE:FormLFG()
+			end
 		end
 	end)
 
