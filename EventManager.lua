@@ -51,12 +51,12 @@ local eventsToRegister = {
 	"ADDON_LOADED",
 	--"BAG_UPDATE_COOLDOWN",
 	"CLIENT_SCENE_CLOSED",
-	--"CLIENT_SCENE_OPENED",
+	"CLIENT_SCENE_OPENED",
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	--"CRITERIA_UPDATE",
 	"JAILERS_TOWER_LEVEL_UPDATE",
-	--"LEAVE_PARTY_CONFIRMATION",
+	"LEAVE_PARTY_CONFIRMATION",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
@@ -78,9 +78,9 @@ local eventsToRegister = {
 	"QUEST_WATCH_LIST_CHANGED",
 	"QUEST_WATCH_UPDATE",
 	"QUESTLINE_UPDATE",
-	--"SCENARIO_COMPLETED",
-	--"SCENARIO_CRITERIA_UPDATE",
-	"SCENARIO_POI_UPDATE",
+	"SCENARIO_COMPLETED",
+	"SCENARIO_CRITERIA_UPDATE",
+	--"SCENARIO_POI_UPDATE",
 	"SCENARIO_UPDATE",
 	"START_TIMER",
 	"SUPER_TRACKING_CHANGED",
@@ -114,7 +114,7 @@ local function HandleEvents(frame, event, ...)
 		CLIENT_SCENE_OPENED = function(...) RQE.HandleClientSceneOpened(select(1, ...)) end,  -- MAY NEED TO COMMENT OUT AGAIN
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
-		CRITERIA_UPDATE = RQE.handleAchievementTracking,
+		-- CRITERIA_UPDATE = RQE.handleAchievementTracking,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		LEAVE_PARTY_CONFIRMATION = RQE.handleScenario,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
@@ -141,7 +141,7 @@ local function HandleEvents(frame, event, ...)
 		QUESTLINE_UPDATE = function(...) RQE.handleQuestlineUpdate(select(1, ...)) end,
 		SCENARIO_COMPLETED = function(...) RQE.handleScenarioComplete(select(1, ...), select(2, ...), select(3, ...)) end,
 		SCENARIO_CRITERIA_UPDATE = function(...) RQE.handleScenarioCriteriaUpdate(select(1, ...), select(2, ...), select(3, ...)) end,
-		SCENARIO_POI_UPDATE = RQE.handleScenario,
+		-- SCENARIO_POI_UPDATE = RQE.handleScenario,   -- MAY BE SLOWING SUPER BLOOM IN THE MIDDLE SECTION ON THE SOUTH ROUTE
 		SCENARIO_UPDATE = function(...) RQE.handleScenarioUpdate(select(1, ...), select(2, ...), select(3, ...)) end,
 		START_TIMER = function(...) RQE.handleStartTimer(select(1, ...), select(2, ...), select(3, ...)) end,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
@@ -1040,111 +1040,99 @@ end
 
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 function RQE.handleQuestStatusUpdate(...)
-	if not IsFlying("player") then
-		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+    local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-		UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
-		RQE:ClearWQTracking()
-		SortQuestsByProximity()
-
-		-- Visibility Update Check for RQEQuestFrame
-		RQE:UpdateRQEQuestFrameVisibility()
-		
-		if questID == nil then
-			questID = currentSuperTrackedquestID
-		end
-
-		-- Check for specific event data
-		if RQE.latestEventInfo then
-			local eventInfo = RQE.latestEventInfo
-			-- Proceed based on the type of event that was triggered
-			if eventInfo.eventType == "QUEST_CURRENCY_LOOT_RECEIVED" then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_CURRENCY_LOOT_RECEIVED", 0, 1, 0)  -- Bright Green
-				-- Use eventInfo.questID, eventInfo.currencyId, eventInfo.quantity as needed
-			elseif eventInfo.eventType == "QUEST_LOG_CRITERIA_UPDATE" then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_LOG_CRITERIA_UPDATE", 0, 1, 0)  -- Bright Green
-				-- Use eventInfo.questID, eventInfo.specificTreeID, eventInfo.description , eventInfo.numFulfilled, eventInfo.numRequired as needed			
-			elseif eventInfo.eventType == "QUEST_LOOT_RECEIVED" then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_LOOT_RECEIVED", 0, 1, 0)  -- Bright Green
-				-- Use eventInfo.questID, eventInfo.itemLink, eventInfo.quantity as needed			
-			elseif eventInfo.eventType == "QUESTLINE_UPDATE" then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUESTLINE_UPDATE", 0, 1, 0)  -- Bright Green
-				-- Use eventInfo.requestRequired as needed
-			end
-			-- Reset for next event call
-			RQE.latestEventInfo = nil
-		else
-			-- Your existing logic for handling quest status updates without specific event data
-		end
-		
-		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Status Update Triggered. SuperTracking: " .. tostring(isSuperTracking) .. ", QuestID: " .. tostring(questID) .. ", Super Tracked QuestID: " .. tostring(currentSuperTrackedquestID), 0, 1, 0)  -- Bright Green
-		
-		if questID then
-			if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
-				C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
-				-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Manual Super Tracking set for QuestID: " .. tostring(RQE.ManualSuperTrackedQuestID), 0, 1, 0)  -- Bright Green
-			end
-		
-			-- Attempt to fetch other necessary information using the currentQuestID
-			local questInfo = RQEDatabase[questID]
-			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-
-			-- Debug messages for the above variables
-			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: QuestInfo: " .. (questInfo and "Found" or "Not Found"), 0, 1, 0)  -- Bright Green
-			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: StepsText: " .. tostring(StepsText), 0, 1, 0)  -- Bright Green, assuming StepsText is properly defined
-			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: CoordsText: " .. tostring(CoordsText), 0, 1, 0)  -- Bright Green, assuming CoordsText is properly defined
-			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: MapIDs: " .. tostring(MapIDs), 0, 1, 0)  -- Bright Green, assuming MapIDs is properly defined
-				
-			-- Check if the current super-tracked quest is one we're interested in
-			if RQE.searchedQuestID and questID == RQE.searchedQuestID then
-				-- The super-tracked quest is the one we've set via search; proceed normally
-				questInfo = RQEDatabase[questID]
-				StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
-			elseif not RQE.searchedQuestID then
-				-- No specific searched quest; proceed with default logic
-				questInfo = RQEDatabase[questID]
-				StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
-			else
-				-- The super-tracked quest is not what we set; avoid changing focus
-				return  -- Optionally, you could revert the super-tracked quest here
-			end
-		end
-			
-			if not RQE.QuestLinesCached then
-				RQE.RequestAndCacheQuestLines()
-				RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
-				-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Lines Cached", 0, 1, 0)  -- Bright Green
-			end
-			
-		-- Check to advance to next step in quest
-		if RQE.db.profile.autoClickWaypointButton then
-			local extractedQuestID
-			
-			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-			end
-
-			-- Determine questID based on various fallbacks
-			questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-			
-			C_Timer.After(0.5, function()
-				RQE:CheckAndAdvanceStep(questID)
-			end)
-		else
-			C_Timer.After(2, function()
-				RQE.infoLog("Clicking QuestLogIndexButton following QUEST_LOG_UPDATE event")
-				RQE.ClickUnknownQuestButton()
-			end)
-		end
-	else	
-		UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
-		RQE:ClearWQTracking()
-		SortQuestsByProximity()
-
-		-- Visibility Update Check for RQEQuestFrame
-		RQE:UpdateRQEQuestFrameVisibility()
+	if questID == nil then
+		questID = currentSuperTrackedquestID
 	end
+
+    -- Check for specific event data
+    if RQE.latestEventInfo then
+        local eventInfo = RQE.latestEventInfo
+        -- Proceed based on the type of event that was triggered
+        if eventInfo.eventType == "QUEST_CURRENCY_LOOT_RECEIVED" then
+            -- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_CURRENCY_LOOT_RECEIVED", 0, 1, 0)  -- Bright Green
+            -- Use eventInfo.questID, eventInfo.currencyId, eventInfo.quantity as needed
+		elseif eventInfo.eventType == "QUEST_LOG_CRITERIA_UPDATE" then
+            -- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_LOG_CRITERIA_UPDATE", 0, 1, 0)  -- Bright Green
+            -- Use eventInfo.questID, eventInfo.specificTreeID, eventInfo.description , eventInfo.numFulfilled, eventInfo.numRequired as needed			
+		elseif eventInfo.eventType == "QUEST_LOOT_RECEIVED" then
+            -- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_LOOT_RECEIVED", 0, 1, 0)  -- Bright Green
+            -- Use eventInfo.questID, eventInfo.itemLink, eventInfo.quantity as needed			
+		elseif eventInfo.eventType == "QUESTLINE_UPDATE" then
+            -- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUESTLINE_UPDATE", 0, 1, 0)  -- Bright Green
+            -- Use eventInfo.requestRequired as needed
+        end
+        -- Reset for next event call
+        RQE.latestEventInfo = nil
+    else
+        -- Your existing logic for handling quest status updates without specific event data
+    end
+	
+    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Status Update Triggered. SuperTracking: " .. tostring(isSuperTracking) .. ", QuestID: " .. tostring(questID) .. ", Super Tracked QuestID: " .. tostring(currentSuperTrackedquestID), 0, 1, 0)  -- Bright Green
+    
+	if questID then
+        if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
+            C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
+            -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Manual Super Tracking set for QuestID: " .. tostring(RQE.ManualSuperTrackedQuestID), 0, 1, 0)  -- Bright Green
+        end
+	
+		-- Attempt to fetch other necessary information using the currentQuestID
+		local questInfo = RQEDatabase[questID]
+		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
+
+		-- Debug messages for the above variables
+		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: QuestInfo: " .. (questInfo and "Found" or "Not Found"), 0, 1, 0)  -- Bright Green
+		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: StepsText: " .. tostring(StepsText), 0, 1, 0)  -- Bright Green, assuming StepsText is properly defined
+		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: CoordsText: " .. tostring(CoordsText), 0, 1, 0)  -- Bright Green, assuming CoordsText is properly defined
+		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: MapIDs: " .. tostring(MapIDs), 0, 1, 0)  -- Bright Green, assuming MapIDs is properly defined
+			
+		-- Check if the current super-tracked quest is one we're interested in
+		if RQE.searchedQuestID and questID == RQE.searchedQuestID then
+			-- The super-tracked quest is the one we've set via search; proceed normally
+			questInfo = RQEDatabase[questID]
+			StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
+		elseif not RQE.searchedQuestID then
+			-- No specific searched quest; proceed with default logic
+			questInfo = RQEDatabase[questID]
+			StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
+		else
+			-- The super-tracked quest is not what we set; avoid changing focus
+			return  -- Optionally, you could revert the super-tracked quest here
+		end
+		
+		if not RQE.QuestLinesCached then
+			RQE.RequestAndCacheQuestLines()
+			RQE.QuestLinesCached = true -- Set a flag so we don't re-cache unnecessarily
+			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Lines Cached", 0, 1, 0)  -- Bright Green
+		end
+		
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		
+		C_Timer.After(0.5, function()
+			RQE:CheckAndAdvanceStep(questID)
+		end)
+	end
+	
+    RQE:ClearWQTracking()
+    UpdateRQEQuestFrame()
+    SortQuestsByProximity()
+
+	-- Visibility Update Check for RQEQuestFrame
+        RQE:UpdateRQEQuestFrameVisibility()
+    else
+        -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Not SuperTracking or QuestID not found", 0, 1, 0)  -- Bright Green
+    end
 	
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
@@ -1583,10 +1571,10 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 			RQE:CheckAndAdvanceStep(questID)
 		end)
 	else
-		C_Timer.After(2, function()
-			RQE.infoLog("Clicking QuestLogIndexButton following QUEST_TURNED_IN event")
-			RQE.ClickUnknownQuestButton()
-		end)
+		-- C_Timer.After(2, function()
+			-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_TURNED_IN event")
+			-- RQE.ClickUnknownQuestButton()
+		-- end)
 	end
 	
     -- Verify if the turned-in quest matches the currently displayed or super tracked quest

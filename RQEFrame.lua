@@ -1195,13 +1195,23 @@ function RQE:CheckAndAdvanceStep(questID)
     end
 
     -- Determine questID based on various fallbacks
-    questID = RQE.searchedQuestID or extractedQuestID or questID --or currentSuperTrackedQuestID
+    questID = RQE.searchedQuestID or extractedQuestID or questID
 
+	-- Validation Check
     if not questID or type(questID) ~= "number" then
         RQE.debugLog("Invalid questID:", questID)
         return
     end
 
+    local currentObjectiveIndex = self:GetCurrentObjectiveIndex(questID)
+    
+    if RQE.lastKnownObjectiveIndex[questID] ~= currentObjectiveIndex then
+        -- Detected a change in objective, indicating progress
+        RQE.hasClickedQuestButton = false  -- Reset the flag since there's actual progress
+        RQE.lastKnownObjectiveIndex[questID] = currentObjectiveIndex  -- Update the tracked index
+        -- Potentially other logic to handle the change in objective
+    end
+	
     -- Retrieve objectives for the questID
     local objectives = C_QuestLog.GetQuestObjectives(questID)
     if not objectives or #objectives == 0 then
@@ -1270,6 +1280,24 @@ function RQE:CheckAndAdvanceStep(questID)
 end
 
 
+-- Fetch the Objective Index for a particular quest
+function RQE:GetCurrentObjectiveIndex(questID)
+    local objectives = C_QuestLog.GetQuestObjectives(questID)
+    if not objectives or #objectives == 0 then
+        RQE.debugLog("No objectives found for questID:", questID)
+        return 0  -- Return 0 or an appropriate default value if no objectives are found
+    end
+    
+    local highestIndex = 0
+    for _, objective in ipairs(objectives) do
+        if objective.finished and objective.index and objective.index > highestIndex then
+            highestIndex = objective.index
+        end
+    end
+    return highestIndex
+end
+
+
 -- Utility function to get the total number of unique objectiveIndexes in the quest
 function RQE:GetTotalObjectiveIndexes(questData)
     local indexes = {}
@@ -1330,8 +1358,10 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
             if button then
                 -- Simulate the click
                 RQE.infoLog("objectiveIndex neither 1 or 99, clicking appropriate button")
+                RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
                 button:Click() -- `OnClick` will now use the button's direct data
-                
+                RQE.infoLog("WaypointButton clicked for objectiveIndex:", nextObjectiveIndex)
+				
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex
                 
@@ -1375,9 +1405,10 @@ end
 
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
-function RQE.ClickUnknownQuestButton()
+function RQE.ClickUnknownQuestButton()	
+	-- Validation check
     if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
-        RQE.debugLog("QuestIDText is nil or empty. Cannot proceed.")
+        RQE.infoLog("QuestIDText is nil or empty. Cannot proceed.")
         return
     end
 
@@ -1390,7 +1421,7 @@ function RQE.ClickUnknownQuestButton()
     end
 	
     if not questID then
-        RQE.debugLog("No QuestID found. Cannot proceed.")
+        RQE.infoLog("No QuestID found. Cannot proceed.")
         return
     end
 
@@ -1401,6 +1432,7 @@ function RQE.ClickUnknownQuestButton()
     local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
+			RQE.infoLog("Button successfully clicked")
             button:Click()
             RQE.hasClickedQuestButton = true
             foundButton = true
@@ -1409,14 +1441,27 @@ function RQE.ClickUnknownQuestButton()
     end
 
     if not foundButton then
-        RQE.debugLog("Did not find a button for questID:", questID)
+        RQE.infoLog("Did not find a button for questID:", questID)
     else	
         -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
-        local mapID = C_Map.GetBestMapForUnit("player")
-        RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		if not mapID then
+			local mapID = C_Map.GetBestMapForUnit("player")
+		else		
+			RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		end
     end
-end
 
+    -- If the button wasn't found, print a message
+    if not RQE.hasClickedQuestButton then
+        RQE.infoLog("Did not find a button for questID:", questID)
+    end
+	
+	-- Re-Track the quest being listed as super tracked
+	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	
+	-- Call your function to create a waypoint using stored coordinates and mapID
+	RQE:CreateUnknownQuestWaypoint(questID, mapID)
+end
 
 
 -- Function to handle button clicks
