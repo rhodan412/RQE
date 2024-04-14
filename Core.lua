@@ -1127,6 +1127,13 @@ function RQE:ClearFrameData()
 	-- Clears contents of Macro on clearing of RQEFrame
 	-- RQEMacro:ClearMacroContentByName("RQE Macro")
 	
+	-- -- After frame clears, will repopulate RQEFrame with super tracked quest -- POPULATES ALMOST IMMEDIATELY
+	-- C_Timer.After(3, function()
+		-- print("Updating frame following Frame Clearing")
+		-- RQE.infoLog("Updating frame following Frame Clearing")
+		-- UpdateFrame()
+	-- end)
+	
 	-- Check if MagicButton should be visible based on macro body
 	RQE.Buttons.UpdateMagicButtonVisibility()
 end
@@ -2006,14 +2013,18 @@ function RQE.SearchModule:CreateSearchBox()
         local inputTextLower = string.lower(text) -- Convert input text to lowercase for case-insensitive comparison
 
         -- Search logic modified to accumulate all matching quest IDs
-        if not questID then
-            for id, questData in pairs(RQEDatabase) do
-                if questData.title and string.find(string.lower(questData.title), inputTextLower) then
-                    table.insert(foundQuestIDs, id) -- No error here now, as foundQuestIDs is initialized
+        if questID then
+            -- Direct use of numeric ID
+            table.insert(foundQuestIDs, questID)
+        else
+            -- Search across all databases for matching quest titles
+            for dbName, db in pairs(RQEDatabase) do
+                for id, questData in pairs(db) do
+                    if questData.title and string.find(string.lower(questData.title), inputTextLower) then
+                        table.insert(foundQuestIDs, id) -- Add all matching IDs
+                    end
                 end
             end
-        else
-            table.insert(foundQuestIDs, questID) -- This will also work without error
         end
 
         -- Handling multiple found quest IDs
@@ -2055,6 +2066,7 @@ function RQE.SearchModule:CreateSearchBox()
 		
 		-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 		RQE:PerformClearActions()
+		RQE:ClearWaypointButtonData()
 		
         if not questID then
             for id, questData in pairs(RQEDatabase) do
@@ -2067,16 +2079,16 @@ function RQE.SearchModule:CreateSearchBox()
             foundQuestID = questID
         end
 
-		-- This is where you place the logic for updating location data
-        local questData = RQE.getQuestData(foundQuestID)
-        if questData and questData.location then
-            -- Update the location data for the examined quest
-            RQE.DatabaseSuperX = questData.location.x / 100
-            RQE.DatabaseSuperY = questData.location.y / 100
-            RQE.DatabaseSuperMapID = questData.location.mapID
-        end
-		
         if foundQuestID then
+			-- This is where you place the logic for updating location data
+			local questData = RQE.getQuestData(foundQuestID)
+			if questData and questData.location then
+				-- Update the location data for the examined quest
+				RQE.DatabaseSuperX = questData.location.x / 100
+				RQE.DatabaseSuperY = questData.location.y / 100
+				RQE.DatabaseSuperMapID = questData.location.mapID
+			end
+		
 			-- Local Variables for World Quest/Quest in Log
 			local isWorldQuest = C_QuestLog.IsWorldQuest(foundQuestID)
 			local isQuestInLog = C_QuestLog.IsOnQuest(foundQuestID)
@@ -2096,6 +2108,7 @@ function RQE.SearchModule:CreateSearchBox()
 				C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
 			end
             
+            -- Print quest link or name
             local questLink = GetQuestLink(foundQuestID)
             if questLink then
                 print("Quest ID: " .. foundQuestID .. " - " .. questLink)
