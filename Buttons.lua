@@ -71,7 +71,7 @@ RQE.UnknownButtonTooltip = function()
 		
 		if questID then  -- Add a check to ensure questID is not nil
 			local mapID = GetQuestUiMapID(questID)
-			local questData = RQEDatabase[questID]
+			local questData = RQE.getQuestData(questID)
 			if mapID == 0 then mapID = nil end
 		end
 

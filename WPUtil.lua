@@ -31,7 +31,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
     RQE.UnknownQuestButton:SetScript("OnClick", function()
         local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
 		local effectiveQuestID = RQE.searchedQuestID or questID
-		local questData = RQEDatabase[effectiveQuestID]
+		local questData = RQE.getQuestData(effectiveQuestID)
 		
 		if not effectiveQuestID then
             RQE.debugLog("No QuestID found. Cannot proceed.")

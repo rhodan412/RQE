@@ -33,6 +33,7 @@ Libs/LibSharedMedia-3.0/lib.xml
 Core.lua
 DebugLog.lua
 RQEMinimap.lua
+DatabaseMain.lua
 RQEDatabase.lua
 EventManager.lua
 Buttons.lua
@@ -48,6 +49,3 @@ RQEFrame.lua
 
 # Waypoint and Map Modules
 WaypointManager.lua
-
-# Quest Action Buttons
-#QuestButton.lua

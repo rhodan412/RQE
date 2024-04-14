@@ -1537,7 +1537,7 @@ function UpdateRQEQuestFrame()
 						-- Allow time for the UI to update and for the super track to register
 						C_Timer.After(1, function()
 							-- Fetch the quest data here
-							local questData = RQEDatabase[questID]
+							local questData = RQE.getQuestData(questID)
 							if not questData then
 								RQE.debugLog("Quest data not found for questID:", questID)
 								return
@@ -2045,7 +2045,7 @@ function UpdateRQEWorldQuestFrame()
 					-- Allow time for the UI to update and for the super track to register
 					C_Timer.After(1, function()
 						-- Fetch the quest data here
-						local questData = RQEDatabase[questID]
+						local questData = RQE.getQuestData(questID)
 						if not questData then
 							RQE.debugLog("Quest data not found for questID:", questID)
 							return

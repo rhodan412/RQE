@@ -64,7 +64,7 @@ end
 
 -- Remove the extra functions and keep only this one
 function RQE:CreateUnknownQuestWaypoint(effectiveQuestID)
-    local questData = RQEDatabase[effectiveQuestID]
+    local questData = RQE.getQuestData(effectiveQuestID)
     local x, y, mapID
     local questName = C_QuestLog.GetTitleForQuestID(effectiveQuestID) or "Unknown"
     local waypointTitle
@@ -187,7 +187,7 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
     RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 
-    local questData = RQEDatabase[questID]
+    local questData = RQE.getQuestData(questID)
     if not questData then
         RQE.debugLog("Quest data not found for ID:", questID)
         return -- Exit if no data found for the questID

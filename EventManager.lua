@@ -820,7 +820,7 @@ function RQE.handleSuperTracking(...)
 		RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
 		-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-		local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+		local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 		if StepsText and CoordsText and MapIDs then
@@ -939,7 +939,7 @@ function RQE.handleZoneChange(self, event, ...)
 			local mapID = C_Map.GetBestMapForUnit("player")
 			-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
 			
-			-- local questInfo = RQEDatabase[questID]  -- THIS IS HANDLED IN UPDATEFRAME
+			-- local questInfo = RQE.getQuestData(questID)  -- THIS IS HANDLED IN UPDATEFRAME
 			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 			
 			--RQE:UpdateMapIDDisplay()
@@ -987,7 +987,7 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		local mapID = C_Map.GetBestMapForUnit("player")
         -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
 		
-		-- local questInfo = RQEDatabase[questID]  -- HANDLED IN UPDATEFRAME
+		-- local questInfo = RQE.getQuestData(questID)  -- HANDLED IN UPDATEFRAME
 		-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 		
 		RQE:UpdateMapIDDisplay()
@@ -1079,7 +1079,7 @@ function RQE.handleQuestStatusUpdate(...)
         end
 	
 		-- Attempt to fetch other necessary information using the currentQuestID
-		local questInfo = RQEDatabase[questID]
+		local questInfo = RQE.getQuestData(questID)
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 
 		-- Debug messages for the above variables
@@ -1091,11 +1091,11 @@ function RQE.handleQuestStatusUpdate(...)
 		-- Check if the current super-tracked quest is one we're interested in
 		if RQE.searchedQuestID and questID == RQE.searchedQuestID then
 			-- The super-tracked quest is the one we've set via search; proceed normally
-			questInfo = RQEDatabase[questID]
+			questInfo = RQE.getQuestData(questID)
 			StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
 		elseif not RQE.searchedQuestID then
 			-- No specific searched quest; proceed with default logic
-			questInfo = RQEDatabase[questID]
+			questInfo = RQE.getQuestData(questID)
 			StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
 		else
 			-- The super-tracked quest is not what we set; avoid changing focus
@@ -1401,7 +1401,7 @@ function RQE.handleQuestWatchUpdate(questID)
 		local questName = C_QuestLog.GetTitleForQuestID(questID)
 		local questLink = GetQuestLink(questID)
 		
-		local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+		local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 		local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 	end
 
@@ -1490,7 +1490,7 @@ function RQE.handleQuestWatchListChanged(questID, added)
     -- This ensures that any change in the watch list is reflected in your addon's UI
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
-	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 	--local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 

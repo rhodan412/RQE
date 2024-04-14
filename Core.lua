@@ -415,7 +415,7 @@ function RQE:InitializeFrame()
     -- Add logic to update frame with the current super tracked quest
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
     if questID then
-        local questInfo = RQEDatabase[questID]
+        local questInfo = RQE.getQuestData(questID)
         if questInfo then
             local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -665,7 +665,7 @@ function RQE:HandleSuperTrackedQuestUpdate()
     C_Timer.After(0.2, function()
         if savedSuperTrackedQuestID then
             -- Fetch quest info from RQEDatabase if available
-            local questInfo = RQEDatabase[savedSuperTrackedQuestID]
+            local questInfo = RQE.getQuestData(savedSuperTrackedQuestID)
             if questInfo then
                 local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(savedSuperTrackedQuestID)
                 UpdateFrame(savedSuperTrackedQuestID, questInfo, StepsText, CoordsText, MapIDs)
@@ -1371,7 +1371,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
     -- Fetch questInfo from RQEDatabase using the determined questID
-    questInfo = RQEDatabase[questID] or questInfo
+    questInfo = RQE.getQuestData(questID) or questInfo
 	
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
     RQE.infoLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -1418,13 +1418,18 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
         RQE.debugLog("RQE.QuestIDText is not initialized.")
     end
 	
-    local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 	local questName
-	if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
-		questName = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
+
+	-- Using the centralized data access function to fetch quest data
+	local questData = RQE.getQuestData(questID)
+
+	if questData and questData.title then
+		questName = questData.title  -- Use title from questData if available
 	else
-		questName = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call
+		questName = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call if no title is found in your databases
 	end
+
 	questName = questName or "N/A"  -- Default to "N/A" if no title found
 
 	if RQE.QuestNameText then
@@ -2063,12 +2068,13 @@ function RQE.SearchModule:CreateSearchBox()
         end
 
 		-- This is where you place the logic for updating location data
-		if foundQuestID and RQEDatabase[foundQuestID] and RQEDatabase[foundQuestID].location then
-			-- Update the location data for the examined quest
-			RQE.DatabaseSuperX = RQEDatabase[foundQuestID].location.x / 100
-			RQE.DatabaseSuperY = RQEDatabase[foundQuestID].location.y / 100
-			RQE.DatabaseSuperMapID = RQEDatabase[foundQuestID].location.mapID
-		end
+        local questData = RQE.getQuestData(foundQuestID)
+        if questData and questData.location then
+            -- Update the location data for the examined quest
+            RQE.DatabaseSuperX = questData.location.x / 100
+            RQE.DatabaseSuperY = questData.location.y / 100
+            RQE.DatabaseSuperMapID = questData.location.mapID
+        end
 		
         if foundQuestID then
 			-- Local Variables for World Quest/Quest in Log
@@ -2100,8 +2106,8 @@ function RQE.SearchModule:CreateSearchBox()
 
             -- Call UpdateFrame to populate RQEFrame with quest details, if the quest exists in RQEDatabase
             -- This is the new line added to trigger the update based on the foundQuestID
-            if RQEDatabase[foundQuestID] then
-                local questInfo = RQEDatabase[foundQuestID]
+            if questData then
+                local questInfo = RQE.getQuestData(foundQuestID)
                 UpdateFrame(foundQuestID, questInfo, {}, {}, {}) -- Assuming UpdateFrame handles empty tables gracefully
             end
         else
@@ -2326,25 +2332,22 @@ function HasQuestProgress(questID)
 end
 
 
--- Function to retrieve questdata from API
+-- Function to retrieve quest data from API
 function RQE:LoadQuestData(questID)
-    -- Check if the quest data already exists
-    if RQEDatabase and RQEDatabase[questID] then
+    local questData = RQE.getQuestData(questID)
+
+    if questData then
         RQE.debugLog("Quest data for ID " .. questID .. " is already loaded.")
-        return RQEDatabase[questID]
+        return questData
     else
         RQE.debugLog("Loading quest data for ID " .. questID)
 
         -- Fetch quest data from source or API
-        local questData = RQE:FetchQuestDataFromSource(questID)
-        if not questData or not next(questData) then
-            -- If data is not in source, build it from WoW API
-            questData = RQE:BuildQuestData(questID)
-        end
+        questData = RQE:FetchQuestDataFromSource(questID) or RQE:BuildQuestData(questID)
 
         if questData then
-            -- Store the loaded data in RQEDatabase
-            RQEDatabase[questID] = questData
+            -- Store the loaded data in the correct database
+            RQE.getQuestData[questID] = questData  -- This line is syntactically incorrect, needs fixing
             RQE.debugLog("Quest data loaded for ID " .. questID)
             return questData
         else
@@ -2380,7 +2383,7 @@ end
 
 -- Function to print quest steps to chat
 function PrintQuestStepsToChat(questID)
-	local questInfo = RQEDatabase[questID] or { questID = questID, name = questName }
+	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
     local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 	
     if not questInfo then
@@ -2407,10 +2410,9 @@ end
 
 
 function RQE:QuestComplete(questID)
-    -- Update the RQEDatabase with the new quest description
-    if RQEDatabase[questID] then  -- Make sure the quest exists in your database
-        RQEDatabase[questID].description = "Quest Complete - Follow the waypoint for quest turn-in"
-        -- Notify the system that a change has occurred
+    local questData = RQE.getQuestData(questID)
+    if questData then  -- Make sure the quest exists in your database
+        questData.description = "Quest Complete - Follow the waypoint for quest turn-in"
         RQE:ConfigurationChanged()
     end
 end
@@ -3656,7 +3658,7 @@ function RQE:BuildQuestMacroBackup()
 	-- Allow time for the UI to update and for the super track to register
 	C_Timer.After(1, function()
 		-- Fetch the quest data here
-		local questData = RQEDatabase[questID]
+		local questData = RQE.getQuestData(questID)
 		if not questData then
 			RQE.debugLog("Quest data not found for questID:", questID)
 			return

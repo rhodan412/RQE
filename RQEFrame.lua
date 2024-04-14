@@ -708,15 +708,19 @@ local function CreateQuestTooltip(frame, questID)
 	questID = effectiveQuestID or extractedQuestID or currentSuperTrackedQuestID
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
     
-	local questTitle
-    if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
-        questTitle = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
-    else
-        questTitle = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call
-    end
-    questTitle = questTitle or "N/A"  -- Default to "N/A" if no title found
-    GameTooltip:SetText(questTitle)  -- Display quest name
+	-- local questTitle
+    -- if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
+        -- questTitle = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
+    -- else
+        -- questTitle = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call
+    -- end
+    -- questTitle = questTitle or "N/A"  -- Default to "N/A" if no title found
+    -- GameTooltip:SetText(questTitle)  -- Display quest name
 
+    local questData = RQE.getQuestData(effectiveQuestID)
+    local questTitle = questData and questData.title or "Unknown Quest"
+    GameTooltip:SetText(questTitle)
+	
 	if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) and not isWorldQuest then
 		-- Add code for line break if this is a searched quest
 	else
@@ -1238,7 +1242,7 @@ function RQE:CheckAndAdvanceStep(questID)
 
     -- Calculate highestCompletedObjectiveIndex based on objectives completion
     local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or 0
-    local questData = RQEDatabase[questID]
+    local questData = RQE.getQuestData(questID)
     if not questData then
         RQE.debugLog("Quest data not found for questID:", questID)
         return
