@@ -1360,6 +1360,16 @@ function RQE.handleQuestRemoved(questID, wasReplayQuest)
         RQE.TrackedQuests[questID] = nil
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed automatic World Quest watch for questID: " .. tostring(questID), 0.82, 0.70, 0.55) -- Light brown color
     end
+
+    -- Check if the removed quest is the currently super-tracked quest
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    if questID == currentSuperTrackedQuestID then
+        -- Clear user waypoint and reset TomTom if loaded
+        C_Map.ClearUserWaypoint()
+        if IsAddOnLoaded("TomTom") then
+            TomTom.waydb:ResetProfile()
+        end
+    end
 	
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
