@@ -1366,7 +1366,7 @@ end
 
 
 -- UpdateFrame function
-function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)	
     -- Retrieve the current super-tracked quest ID for debugging
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
     local extractedQuestID
