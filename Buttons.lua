@@ -319,6 +319,11 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.Buttons.UpdateMagicButtonVisibility()
 		
+        C_Map.ClearUserWaypoint()
+        if IsAddOnLoaded("TomTom") then
+            TomTom.waydb:ResetProfile()
+        end
+		
         -- Reset manually tracked quests
         if RQE.ManuallyTrackedQuests then
             for questID in pairs(RQE.ManuallyTrackedQuests) do
