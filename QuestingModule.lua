@@ -1504,7 +1504,7 @@ function UpdateRQEQuestFrame()
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
-					else						
+					else				
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 							
@@ -1514,16 +1514,15 @@ function UpdateRQEQuestFrame()
 						-- Clears Macro Data
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 						
-						-- -- Check for the existence of WaypointButton(1) and click it if it exists (assuming that autoClickWaypointButton is true/checked
-						-- if RQE.db.profile.autoClickWaypointButton then
-							-- if RQE.WaypointButtons and RQE.WaypointButtons[1] then
-								-- RQE.WaypointButtons[1]:Click()
-							-- end
-						-- end
+						-- Clicks Waypoint Button if autoClickWaypointButton is true
+						RQE:AutoClickQuestLogIndexWaypointButton()
 		
 						-- Reset the "Clicked" WaypointButton to nil
 						RQE.LastClickedIdentifier = nil
-						
+
+						-- Reset the Last Clicked WaypointButton to be "1"
+						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+					
 						-- Clear any existing super tracking
 						C_SuperTrack.ClearSuperTrackedContent()
 
@@ -1531,7 +1530,6 @@ function UpdateRQEQuestFrame()
 						-- This will re-super track the quest even if it's the same as the currently super tracked quest
 						RQE.ManualSuperTrack = true
 						RQE.ManualSuperTrackedQuestID = questID
-						RQE.lastSuperTrackedQuestID = questID
 						C_SuperTrack.SetSuperTrackedQuestID(questID)
 
 						-- Allow time for the UI to update and for the super track to register
@@ -2026,15 +2024,14 @@ function UpdateRQEWorldQuestFrame()
 					-- Clears Macro Data
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 					
-					-- Check for the existence of WaypointButton(1) and click it if it exists (assuming that autoClickWaypointButton is true/checked
-					if RQE.db.profile.autoClickWaypointButton then
-						if RQE.WaypointButtons and RQE.WaypointButtons[1] then
-							RQE.WaypointButtons[1]:Click()
-						end
-					end
+					-- Clicks Waypoint Button if autoClickWaypointButton is true
+					RQE:AutoClickQuestLogIndexWaypointButton()
 						
 					-- Reset the "Clicked" WaypointButton to nil
 					RQE.LastClickedIdentifier = nil
+
+					-- Reset the Last Clicked WaypointButton to be "1"
+					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 					
 					-- Existing code to set as super-tracked
 					RQE.ManualSuperTrack = true
