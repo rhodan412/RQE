@@ -853,10 +853,11 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
         end
 	end
 	
-
-    -- Update Frame
+    -- Update Frame with the newly accepted quest if nothing is super tracked
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 11 Debug: Updating Frame.", 0.46, 0.62, 1)
-	UpdateFrame()
+	C_Timer.After(1, function()  -- Delay of 1 second
+		UpdateFrame()
+	end)
 	
 	-- Visibility Update Check for RQEFrame & RQEQuestFrame
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 12 Debug: UpdateRQEFrameVisibility.", 0.46, 0.62, 1)
@@ -987,7 +988,7 @@ function RQE.updateScenarioUI()
 	end
 	
 	if C_Scenario.IsInScenario() then
-		print("Updating because in scenario")
+		RQE.infoLog("Updating because in scenario")
 		RQE.ScenarioChildFrame:Show()
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
@@ -1537,7 +1538,16 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
     -- DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1.0, 0.08, 0.58)
-	
+
+    -- Check if the removed quest is the currently super-tracked quest
+    if questID == superTrackedQuestID then
+        -- Clear user waypoint and reset TomTom if loaded
+        C_Map.ClearUserWaypoint()
+        if IsAddOnLoaded("TomTom") then
+            TomTom.waydb:ResetProfile()
+        end
+    end
+
 	local displayedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 		displayedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
