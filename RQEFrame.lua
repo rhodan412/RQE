@@ -1080,6 +1080,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				TomTom.waydb:ResetProfile()
 			end
 
+			-- Variables `CoordsText`, `MapIDs` need to be properly defined and accessible here
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
@@ -1117,7 +1118,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-			local questData = RQEDatabase[questIDFromText]
+			local questData = RQE.getQuestData(questIDFromText)
 			if questData then
 				local stepData = questData[stepIndex]
 				RQE.debugLog("Quest data found for ID:", questIDFromText)
