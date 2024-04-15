@@ -71,9 +71,9 @@ local eventsToRegister = {
 	--"QUEST_DATA_LOAD_RESULT",
 	"QUEST_FINISHED",
 	"QUEST_LOG_CRITERIA_UPDATE",
-	"QUEST_LOG_UPDATE",
+	--"QUEST_LOG_UPDATE",  -- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_LOOT_RECEIVED",
-	"QUEST_POI_UPDATE",
+	--"QUEST_POI_UPDATE",  -- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	"QUEST_WATCH_LIST_CHANGED",
@@ -366,26 +366,38 @@ function RQE.handleScenarioEvent(self, event, ...)
     assert(type(args) == "table", "Expected arguments to be passed as a table")
 	
     if event == "SCENARIO_COMPLETED" then
+		-- startTime = debugprofilestop()  -- Start timer
 		-- Extract specific arguments for SCENARIO_COMPLETED
 		local questID, xp, money = unpack(args)
 		-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
         RQE.saveScenarioCompletionData(self, questID, xp, money)
+		
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_COMPLETED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 	
     if event == "SCENARIO_UPDATE" then
+		-- startTime = debugprofilestop()  -- Start timer
         -- Extract specific argument for SCENARIO_UPDATE
         local newStep = unpack(args)
 		-- DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
         -- Call another function if necessary, for example:
         RQE.saveScenarioData(self, event, newStep)
+		
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 	
 	if event == "SCENARIO_CRITERIA_UPDATE" then
+		-- startTime = debugprofilestop()  -- Start timer
         -- Extract specific argument for SCENARIO_CRITERIA_UPDATE
         local criteriaID = unpack(args)
 		-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
         -- Call another function if necessary, for example:
         RQE.saveScenarioData(self, event, criteriaID)
+		
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 
 	RQE.updateScenarioUI()
@@ -461,6 +473,7 @@ end
 
 -- Handles JAILERS_TOWER_LEVEL_UPDATE event
 function RQE.handleJailersUpdate(level, type)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handleJailersUpdate function. Level: " .. tostring(level) .. ", Type: " .. tostring(type), 0.0, 1.0, 1.0)
 	
 	RQE.UpdateTorghastDetails(level, type)
@@ -470,6 +483,9 @@ function RQE.handleJailersUpdate(level, type)
         RQE.updateScenarioUI()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Initialized Scenario Frame.", 0.0, 1.0, 1.0)
     end)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed JAILERS_TOWER_LEVEL_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 	
 
@@ -706,6 +722,7 @@ end
 -- Handling SUPER_TRACKING_CHANGED Event
 -- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking(...)
+    -- startTime = debugprofilestop()  -- Start timer
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
 		
@@ -803,12 +820,16 @@ function RQE.handleSuperTracking(...)
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 		
 
 -- Handling QUEST_ACCEPTED Event
 -- Fires whenever the player accepts a quest
 function RQE.handleQuestAccepted(questLogIndex, questID)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)
 
 	-- Reset Flag for printing schematics when quest accepted
@@ -871,12 +892,16 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
 		RQE:CheckMemoryUsage()
         -- DEFAULT_CHAT_FRAME:AddMessage("QA 14 Debug: Checked memory usage.", 0.46, 0.62, 1)
 	end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_ACCEPTED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 		
 -- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS
 -- Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone
 function RQE.handleZoneChange(self, event, ...)
+    -- startTime = debugprofilestop()  -- Start timer
 	if event == "UNIT_EXITING_VEHICLE" then
 		-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: UNIT_EXITING_VEHICLE triggered for " .. tostring(...) .. ".", 0, 1, 1)  -- Cyan
 	end
@@ -892,7 +917,7 @@ function RQE.handleZoneChange(self, event, ...)
 			-- local questInfo = RQE.getQuestData(questID)  -- THIS IS HANDLED IN UPDATEFRAME
 			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 			
-			--RQE:UpdateMapIDDisplay()
+			RQE:UpdateMapIDDisplay()
 
 			-- Call the functions to update the frame
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -926,12 +951,16 @@ function RQE.handleZoneChange(self, event, ...)
 			RQE.debugLog("Player is flying or dragonriding")
 		end
 	end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handles the event ZONE_CHANGED_NEW_AREA
 -- Fires when the player enters a new zone
 function RQE.handleZoneNewAreaChange(self, event, ...)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	C_Timer.After(0.5, function()
 
@@ -977,6 +1006,9 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 			RQE.debugLog("Player is flying or dragonriding")
 		end
 	end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
@@ -1008,17 +1040,22 @@ end
 -- Handles UPDATE_INSTANCE_INFO Event
 -- Fired when data from RequestRaidInfo is available
 function RQE.handleInstanceInfoUpdate()
+    -- startTime = debugprofilestop()  -- Start timer
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
 	
 	-- Updates the RQEFrame with the appropriate super tracked quest
 	UpdateFrame()
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UPDATE_INSTANCE_INFO in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate(...)
+    -- startTime = debugprofilestop()  -- Start timer
     local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
     local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -1114,11 +1151,15 @@ function RQE.handleQuestStatusUpdate(...)
     end
 	
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 	
 
 -- Handling QUEST_CURRENCY_LOOT_RECEIVED event
 function RQE.handleQuestCurrencyLootReceived(questID, currencyId, quantity)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_CURRENCY_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", CurrencyID: " .. tostring(currencyId) .. ", Quantity: " .. tostring(quantity), 0, 1, 0)  -- Bright Green
 	
     -- Saving event specific information before calling the status update function
@@ -1129,12 +1170,16 @@ function RQE.handleQuestCurrencyLootReceived(questID, currencyId, quantity)
         quantity = quantity
     }
 	
-    RQE.handleQuestStatusUpdate()
+    --RQE.handleQuestStatusUpdate()
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_CURRENCY_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling QUEST_LOG_CRITERIA_UPDATE event
 function RQE.handleQuestLogCriteriaUpdate(questID, specificTreeID, description, numFulfilled, numRequired)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOG_CRITERIA_UPDATE for questID: " .. tostring(questID) .. ", SpecificTreeID: " .. tostring(specificTreeID) .. ", Description: " .. description .. ", Fulfilled: " .. tostring(numFulfilled) .. ", Required: " .. tostring(numRequired), 0, 1, 0)  -- Bright Green
 	
     -- Saving event specific information before calling the status update function
@@ -1147,12 +1192,16 @@ function RQE.handleQuestLogCriteriaUpdate(questID, specificTreeID, description, 
         numRequired = numRequired
     }
 	
-    RQE.handleQuestStatusUpdate()
+    --RQE.handleQuestStatusUpdate()
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling QUEST_LOOT_RECEIVED event
 function RQE.handleQuestLootReceived(questID, itemLink, quantity)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", ItemLink: " .. itemLink .. ", Quantity: " .. tostring(quantity), 0, 1, 0)  -- Bright Green
 	
     -- Saving event specific information before calling the status update function
@@ -1163,12 +1212,16 @@ function RQE.handleQuestLootReceived(questID, itemLink, quantity)
         quantity = quantity
     }
 	
-	RQE.handleQuestStatusUpdate()
+	--RQE.handleQuestStatusUpdate()
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling QUESTLINE_UPDATE event
 function RQE.handleQuestlineUpdate(requestRequired)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUESTLINE_UPDATE, Request Required: " .. tostring(requestRequired), 0, 1, 0)  -- Bright Green
 	
     -- Saving event specific information before calling the status update function
@@ -1177,13 +1230,17 @@ function RQE.handleQuestlineUpdate(requestRequired)
         requestRequired = requestRequired
     }
 	
-	RQE.handleQuestStatusUpdate()
+	--RQE.handleQuestStatusUpdate()
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUESTLINE_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling QUEST_COMPLETE event
 -- Fired after the player hits the "Continue" button in the quest-information page, before the "Complete Quest" button. In other words, it fires when you are given the option to complete a quest, but just before you actually complete the quest. 
 function RQE.handleQuestComplete()
+    -- startTime = debugprofilestop()  -- Start timer
 	-- Reset Flag for printing schematics when quest accepted
 	RQE.alreadyPrintedSchematics = false
 
@@ -1240,11 +1297,15 @@ function RQE.handleQuestComplete()
 			RQE.ClickUnknownQuestButton()
 		end)
 	end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_COMPLETE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 		
 -- Handling QUEST_AUTOCOMPLETE events
 -- Fires when a quest that can be auto-completed is completed
 function RQE.handleQuestAutoComplete(...)
+    -- startTime = debugprofilestop()  -- Start timer
 	local questID = ...  -- Extract the questID from the event
 	local extractedQuestID
 	
@@ -1294,20 +1355,28 @@ function RQE.handleQuestAutoComplete(...)
 	RQE:UpdateRQEQuestFrameVisibility()
 	
 	-- DEFAULT_CHAT_FRAME:AddMessage("QAC 04 Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_AUTOCOMPLETE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 	
 	
 -- Handling CLIENT_SCENE_OPENED event (saving of World Quests when event fires):
 function RQE.HandleClientSceneOpened(sceneType)
+    -- startTime = debugprofilestop()  -- Start timer
     -- Debug message indicating the type of scene opened
     -- DEFAULT_CHAT_FRAME:AddMessage("CSO 01 Debug: CLIENT_SCENE_OPENED event triggered. Scene Type: " .. tostring(sceneType), 0.95, 0.95, 0.7)  -- Faded Yellow Color
 
     RQE:SaveWorldQuestWatches()  -- Save the watch list when a scene is opened
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed CLIENT_SCENE_OPENED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling CLIENT_SCENE_CLOSED event (restoring of World Quests when event fires):
 function RQE.HandleClientSceneClosed()
+    -- startTime = debugprofilestop()  -- Start timer
     RQE.isRestoringWorldQuests = true
     C_Timer.After(1, function()
         RQE:RestoreSavedWorldQuestWatches()
@@ -1316,11 +1385,15 @@ function RQE.HandleClientSceneClosed()
             RQE.isRestoringWorldQuests = false
         end)
     end)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed CLIENT_SCENE_CLOSED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 		
 -- Handling QUEST_REMOVED event
 function RQE.handleQuestRemoved(questID, wasReplayQuest)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
 	
 	RQEQuestFrame:ClearAllPoints()
@@ -1357,6 +1430,9 @@ function RQE.handleQuestRemoved(questID, wasReplayQuest)
 		RQE:UpdateRQEFrameVisibility()
 		RQE:UpdateRQEQuestFrameVisibility()
     end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 	
 
@@ -1364,6 +1440,7 @@ end
 -- Fires each time the objectives of the quest with the supplied questID update, i.e. whenever a partial objective has been accomplished: killing a mob, looting a quest item etc
 -- UNIT_QUEST_LOG_CHANGED and QUEST_LOG_UPDATE both also seem to fire consistently – in that order – after each QUEST_WATCH_UPDATE.
 function RQE.handleQuestWatchUpdate(questID)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 	
 	UpdateRQEQuestFrame()
@@ -1457,11 +1534,15 @@ function RQE.handleQuestWatchUpdate(questID)
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling QUEST_WATCH_LIST_CHANGED event
 function RQE.handleQuestWatchListChanged(questID, added)
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_WATCH_LIST_CHANGED event triggered for questID: " .. tostring(questID) .. ", added: " .. tostring(added), 0.4, 0.6, 1.0)
 
 	-- Extract QuestID from super track and that which is displayed in RQEFrame
@@ -1484,10 +1565,10 @@ function RQE.handleQuestWatchListChanged(questID, added)
 	
 	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-	--local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
+	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
 	-- if questID then
-		-- -- Debug messages for the above variables
+		-- Debug messages for the above variables
 		-- for i, step in ipairs(questInfo) do
 			-- StepsText[i] = step.description
 			-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
@@ -1519,6 +1600,9 @@ function RQE.handleQuestWatchListChanged(questID, added)
 			-- RQE.ClickUnknownQuestButton()
 		-- end)
 	end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
@@ -1526,6 +1610,7 @@ end
 -- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button 
 -- in a quest dialog window. 
 function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
+    -- startTime = debugprofilestop()  -- Start timer
 	-- DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
 
 	-- Reset Flag for printing schematics when quest accepted
@@ -1591,12 +1676,16 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 	
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_TURNED_IN in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
 -- Handling QUEST_FINISHED event
 -- Fired whenever the quest frame changes (from Detail to Progress to Reward, etc.) or is closed
 function RQE.handleQuestFinished()
+    -- startTime = debugprofilestop()  -- Start timer
     -- DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
 		
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1633,6 +1722,9 @@ function RQE.handleQuestFinished()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
 	end
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_FINISHED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 	
