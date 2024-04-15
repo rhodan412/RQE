@@ -27,6 +27,7 @@ RQE.Frame = RQE.Frame or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQEDatabase = RQEDatabase or {}
 
+
 ---------------------------
 -- 2. Constants and Settings
 ---------------------------
@@ -116,7 +117,7 @@ local function HandleEvents(frame, event, ...)
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
 		-- CRITERIA_UPDATE = RQE.handleAchievementTracking,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
-		LEAVE_PARTY_CONFIRMATION = RQE.handleScenario,
+		LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
@@ -139,10 +140,10 @@ local function HandleEvents(frame, event, ...)
 		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
 		QUEST_WATCH_UPDATE = function(...) RQE.handleQuestWatchUpdate(select(1, ...)) end,
 		QUESTLINE_UPDATE = function(...) RQE.handleQuestlineUpdate(select(1, ...)) end,
-		SCENARIO_COMPLETED = function(...) RQE.handleScenarioComplete(select(1, ...), select(2, ...), select(3, ...)) end,
-		SCENARIO_CRITERIA_UPDATE = function(...) RQE.handleScenarioCriteriaUpdate(select(1, ...), select(2, ...), select(3, ...)) end,
-		-- SCENARIO_POI_UPDATE = RQE.handleScenario,   -- MAY BE SLOWING SUPER BLOOM IN THE MIDDLE SECTION ON THE SOUTH ROUTE
-		SCENARIO_UPDATE = function(...) RQE.handleScenarioUpdate(select(1, ...), select(2, ...), select(3, ...)) end,
+		-- SCENARIO_POI_UPDATE = RQE.handleScenarioEvent,,   -- MAY BE SLOWING SUPER BLOOM IN THE MIDDLE SECTION ON THE SOUTH ROUTE
+		SCENARIO_COMPLETED = RQE.handleScenarioEvent,
+		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioEvent,
+		SCENARIO_UPDATE = RQE.handleScenarioEvent,
 		START_TIMER = function(...) RQE.handleStartTimer(select(1, ...), select(2, ...), select(3, ...)) end,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
@@ -174,6 +175,7 @@ end
 
 
 -- Handles ACHIEVEMENT_EARNED and CONTENT_TRACKING_UPDATE Events
+-- Fired when an achievement is gained
 function RQE.handleAchievementTracking(...)
     local contentType, id, tracked = ...
 	if contentType == 2 then -- Assuming 2 indicates an achievement
@@ -195,6 +197,7 @@ end
 
 
 -- Handles TRACKED_ACHIEVEMENT_UPDATE event
+-- Fired when a timed event for an achievement begins or ends. The achievement does not have to be actively tracked for this to trigger
 function RQE.handleTrackedAchieveUpdate(achievementID, criteriaID, elapsed, duration)
     ---- DEFAULT_CHAT_FRAME:AddMessage("Debug: TRACKED_ACHIEVEMENT_UPDATE event triggered for achievementID: " .. tostring(achievementID) .. ", criteriaID: " .. tostring(criteriaID) .. ", elapsed: " .. tostring(elapsed) .. ", duration: " .. tostring(duration), 0xFA, 0x80, 0x72) -- Salmon color		
 	RQE.UpdateTrackedAchievementList()
@@ -202,6 +205,8 @@ end
 
 
 -- Function that runs after leaving combat or PLAYER_REGEN_ENABLED, PLAYER_MOUNT_DISPLAY_CHANGED
+-- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
+-- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 	
@@ -231,6 +236,7 @@ end
 
 
 -- Handling PLAYER_LOGIN Event
+-- Triggered immediately before PLAYER_ENTERING_WORLD on login and UI Reload, but NOT when entering/leaving instances
 function RQE.handlePlayerLogin()
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerLogin function.", 0.68, 0.85, 0.9)
 	
@@ -286,6 +292,7 @@ end
 		
 
 -- Function to handle ADDON_LOADED
+-- Fires after an AddOn has been loaded
 function RQE.handleAddonLoaded(addonName)
     -- Only proceed if RQE is the addon being loaded
     if addonName ~= "Rhodan's Quest Explorer" then return end
@@ -322,9 +329,7 @@ function RQE.handleAddonLoaded(addonName)
     end
 
     -- Handle scenario regardless of the condition
-    if RQE.handleScenario then
-        RQE.handleScenario()
-    end
+	RQE.updateScenarioUI()
 
 	if RQE.db.profile.autoTrackZoneQuests then
 		RQE.DisplayCurrentZoneQuests()
@@ -355,110 +360,164 @@ function RQE.handleAddonLoaded(addonName)
 end
 
 
--- Function to handle LEAVE_PARTY_CONFIRMATION and SCENARIO_POI_UPDATE events
-function RQE.handleScenario()
-	if not IsFlying("player") then
-		RQE.LogScenarioInfo()
-		RQE.PrintScenarioCriteriaInfoByStep()
-	end
+-- -- Event Handler for QUEST_LOG_CRITERIA_UPDATE, QUEST_LOG_UPDATE, QUEST_LOOT_RECEIVED, QUEST_POI_UPDATE, QUEST_REMOVED, QUEST_TURNED_IN, QUEST_WATCH_LIST_CHANGED, QUEST_WATCH_UPDATE, 
+-- -- QUESTLINE_UPDATE and TASK_PROGRESS_UPDATE
+-- function RQE.handleQuestEvent(self, event, ...)
+    -- -- DEFAULT_CHAT_FRAME:AddMessage("Handling quest event in handleQuestEvent: " .. tostring(event))  -- Debug message for visibility
+
+    -- local args = {...}  -- Proper unpacking of additional arguments
+	-- assert(type(args) == "table", "Expected arguments to be passed as a table")
+ 
+	-- if event == "QUEST_ACCEPTED" then
+		-- -- Extract specific arguments for QUEST_ACCEPTED
+		-- local questLogIndex, questID = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {questLogIndex = questLogIndex})
+		
+	-- elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_POI_UPDATE" or event == "TASK_PROGRESS_UPDATE" then
+		-- -- No additional data to pass
+		-- RQE.debugLog("Log/POI/Task Update Event Triggered: Nothing to pass to a table")
+		-- RQE.logEvent(eventType, eventData)
+
+	-- elseif event == "QUEST_LOG_CRITERIA_UPDATE" then
+		-- -- Extract specific arguments for QUEST_LOG_CRITERIA_UPDATE
+		-- local questID, specificTreeID, description, numFulfilled, numRequired = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOG_CRITERIA_UPDATE for questID: " .. tostring(questID) .. ", SpecificTreeID: " .. tostring(specificTreeID) .. ", Description: " .. description .. ", Fulfilled: " .. tostring(numFulfilled) .. ", Required: " .. tostring(numRequired), 0, 1, 0)  -- Bright Green
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {specificTreeID = specificTreeID, description = description, numFulfilled = numFulfilled, numRequired = numRequired})
+
+	-- elseif event == "QUEST_LOOT_RECEIVED" then
+		-- -- Extract specific arguments for QUEST_LOOT_RECEIVED
+		-- local questID, itemLink, quantity = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", ItemLink: " .. itemLink .. ", Quantity: " .. tostring(quantity), 0, 1, 0)
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {itemLink = itemLink, quantity = quantity})
+
+	-- elseif event == "QUEST_REMOVED" then
+		-- -- Extract specific arguments for QUEST_REMOVED
+		-- local questID, wasReplayQuest = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {wasReplayQuest = wasReplayQuest})
+		
+	-- elseif event == "QUEST_TURNED_IN" then
+		-- -- Extract specific arguments for QUEST_TURNED_IN
+		-- local questID, xpReward, moneyReward = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {xpReward = xpReward, moneyReward = moneyReward})
+		
+	-- elseif event == "QUESTLINE_UPDATE" then
+		-- -- Extract specific arguments for QUESTLINE_UPDATE
+		-- local requestRequired = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUESTLINE_UPDATE, Request Required: " .. tostring(requestRequired), 0, 1, 0)  -- Bright Green
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(nil, event, {requestRequired = requestRequired})
+		
+	-- elseif event == "QUEST_WATCH_LIST_CHANGED" then
+		-- -- Extract specific arguments for QUEST_WATCH_LIST_CHANGED
+		-- local questID, added = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_WATCH_LIST_CHANGED event triggered for questID: " .. tostring(questID) .. ", added: " .. tostring(added), 0.4, 0.6, 1.0)
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {added = added})
+		
+	-- elseif event == "QUEST_WATCH_UPDATE" then
+		-- -- Extract specific arguments for QUEST_WATCH_UPDATE
+		-- local questID = unpack(args)
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56)
+		-- RQE.logEvent(eventType, eventData)
+		-- RQE.saveQuestEventData(questID, event, {})
+	-- end
 	
-    -- Handle other events
-    if C_Scenario.IsInScenario() then
-        RQE.ScenarioChildFrame:Show()
-        RQE.InitializeScenarioFrame()
-        RQE.UpdateScenarioFrame()
-        RQE.StopTimer()
-		RQE.StartTimer()
-		RQE.Timer_CheckTimers()
-    else
-		RQE.StopTimer()
-        RQE.ScenarioChildFrame:Hide()
+	-- -- Handle common event tasks
+	-- RQE.updateQuestUI()
+-- end
+
+
+-- Save event data from the QUEST events
+function RQE.saveQuestEventData(questID, eventType, additionalData)
+    -- Ensure the storage table exists
+    RQE.QuestEventData = RQE.QuestEventData or {}
+
+    -- Validate input
+    if not questID and not additionalData then
+        -- DEFAULT_CHAT_FRAME:AddMessage("Error saving data: Missing questID and additionalData", 1, 0, 0)
+        return
     end
-	
-	UpdateRQEQuestFrame()
-    RQE.UpdateCampaignFrameAnchor()
-	
-	-- Check if still in a scenario (useful for relogs or loading screens)
-	RQE.isInScenario = C_Scenario.IsInScenario()
-	RQE:UpdateRQEQuestFrameVisibility()
+
+    -- Create a new entry in the event data table
+    local eventData = {
+        type = eventType,
+        questID = questID,
+        data = additionalData or {}
+    }
+    table.insert(RQE.QuestEventData, eventData)
+
+    -- Debug message to log what was saved
+    -- DEFAULT_CHAT_FRAME:AddMessage("Saved Quest Event Data: " .. eventType .. " for QuestID: " .. tostring(questID), 0.9, 0.8, 0.9)
 end
 
 
--- Function to handle SCENARIO_CRITERIA_UPDATE event:
-function RQE.handleScenarioCriteriaUpdate(self, event, criteriaID)
-    -- DEFAULT_CHAT_FRAME:AddMessage("SCU 01 Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
-
-	if not IsFlying("player") then
-		RQE.LogScenarioInfo()
-		RQE.PrintScenarioCriteriaInfoByStep()
+-- Function to handle SCENARIO_COMPLETED, SCENARIO_UPDATE, LEAVE_PARTY_CONFIRMATION, SCENARIO_POI_UPDATE:
+function RQE.handleScenarioEvent(self, event, ...)
+    local args = {...}  -- Proper unpacking of additional arguments
+    assert(type(args) == "table", "Expected arguments to be passed as a table")
+	
+    if event == "SCENARIO_COMPLETED" then
+		-- Extract specific arguments for SCENARIO_COMPLETED
+		local questID, xp, money = unpack(args)
+		-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+        RQE.saveScenarioCompletionData(self, questID, xp, money)
+	end
+	
+    if event == "SCENARIO_UPDATE" then
+        -- Extract specific argument for SCENARIO_UPDATE
+        local newStep = unpack(args)
+		-- DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
+        -- Call another function if necessary, for example:
+        RQE.saveScenarioData(self, event, newStep)
+	end
+	
+	if event == "SCENARIO_CRITERIA_UPDATE" then
+        -- Extract specific argument for SCENARIO_CRITERIA_UPDATE
+        local criteriaID = unpack(args)
+		-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
+        -- Call another function if necessary, for example:
+        RQE.saveScenarioData(self, event, criteriaID)
 	end
 
-    -- Handle other events
-    if C_Scenario.IsInScenario() then
-        RQE.ScenarioChildFrame:Show()
-        RQE.InitializeScenarioFrame()
-        RQE.UpdateScenarioFrame()
-        RQE.StopTimer()
-		RQE.StartTimer()
-		RQE.Timer_CheckTimers()
-    else
-		RQE.StopTimer()
-        RQE.ScenarioChildFrame:Hide()
-    end
-	
-	UpdateRQEQuestFrame()
-    RQE.UpdateCampaignFrameAnchor()
-	
-	-- Check if still in a scenario (useful for relogs or loading screens)
-	RQE.isInScenario = C_Scenario.IsInScenario()
-	RQE:UpdateRQEQuestFrameVisibility()
+	RQE.updateScenarioUI()
 end
 
 
--- Function to handle SCENARIO_UPDATE event:
-function RQE.handleScenarioUpdate(self, event, newStep)
-    -- DEFAULT_CHAT_FRAME:AddMessage("SU 01 Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+-- Function to save different types of scenario data
+function RQE.saveScenarioData(self, event, ...)
+    local args = {...}
 
-	if not IsFlying("player") then
-		RQE.LogScenarioInfo()
-		RQE.PrintScenarioCriteriaInfoByStep()
-	end
+    -- Initialize the storage table if it doesn't already exist
+    RQE.ScenarioData = RQE.ScenarioData or {}
 
-    -- Handle other events
-    if C_Scenario.IsInScenario() then
-        RQE.ScenarioChildFrame:Show()
-        RQE.InitializeScenarioFrame()
-        RQE.UpdateScenarioFrame()
-        RQE.StopTimer()
-		RQE.StartTimer()
-		RQE.Timer_CheckTimers()
-    else
-		RQE.StopTimer()
-        RQE.ScenarioChildFrame:Hide()
+    -- Handle data based on event type
+    if event == "SCENARIO_COMPLETED" then
+        local questID, xp, money = unpack(args)
+        if questID and xp and money then  -- Make sure all data is present
+            table.insert(RQE.ScenarioData, {type = event, questID = questID, xp = xp, money = money})
+			-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)
+        end
+    elseif event == "SCENARIO_UPDATE" then
+        local newStep = unpack(args)
+        if newStep then  -- Check if the step information is present
+            table.insert(RQE.ScenarioData, {type = event, newStep = newStep})
+			-- DEFAULT_CHAT_FRAME:AddMessage("SU 01 Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+        end
+    elseif event == "SCENARIO_CRITERIA_UPDATE" then
+        local criteriaID = unpack(args)
+        if criteriaID then
+            table.insert(RQE.ScenarioData, {type = event, criteriaID = criteriaID})
+            -- DEFAULT_CHAT_FRAME:AddMessage("Saved Criteria Update Data: Criteria ID=" .. tostring(criteriaID), 0.9, 0.7, 0.9)
+        end
     end
-	
-	UpdateRQEQuestFrame()
-	RQE:ClearWQTracking()
-    RQE.UpdateCampaignFrameAnchor()
-	
-	-- Check if still in a scenario (useful for relogs or loading screens)
-	RQE.isInScenario = C_Scenario.IsInScenario()
-	RQE:UpdateRQEQuestFrameVisibility()
-end
-
-
--- Function to handle SCENARIO_COMPLETED:
-function RQE.handleScenarioComplete(self, event, questID, xp, money)
-    -- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
-	RQE.StopTimer()
-	RQE.UpdateCampaignFrameAnchor()
-	RQE.handleWorldStateTimerStop(timerID)
-	
-	UpdateRQEQuestFrame()
-	
-	-- Check if still in a scenario (useful for relogs or loading screens)
-	RQE.isInScenario = C_Scenario.IsInScenario()
-	RQE:UpdateRQEQuestFrameVisibility()
 end
 
 
@@ -484,26 +543,8 @@ function RQE.handleWorldStateTimerStart(self, event, timerID)
 		RQE.StartTimer()
 		RQE.HandleTimerStart(timerID)
 	end
-
-    -- Handle other events
-    if C_Scenario.IsInScenario() then
-        RQE.ScenarioChildFrame:Show()
-        RQE.InitializeScenarioFrame()
-        RQE.UpdateScenarioFrame()
-        RQE.StopTimer()
-		RQE.StartTimer()
-		RQE.Timer_CheckTimers()
-    else
-		RQE.StopTimer()
-        RQE.ScenarioChildFrame:Hide()
-    end
 	
-	UpdateRQEQuestFrame()
-    RQE.UpdateCampaignFrameAnchor()
-	
-	-- Check if still in a scenario (useful for relogs or loading screens)
-	RQE.isInScenario = C_Scenario.IsInScenario()
-	RQE:UpdateRQEQuestFrameVisibility()
+	RQE.updateScenarioUI()
 end
 
 
@@ -525,7 +566,7 @@ function RQE.handleJailersUpdate(level, type)
 	
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Scheduled InitializeScenarioFrame after 4 seconds.", 0.0, 1.0, 1.0)
     C_Timer.After(4, function()
-        RQE.InitializeScenarioFrame()
+        RQE.updateScenarioUI()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Initialized Scenario Frame.", 0.0, 1.0, 1.0)
     end)
 end
@@ -557,6 +598,7 @@ end
 
 
 -- Handling VARIABLES_LOADED Event
+-- Fired in response to the CVars, Keybindings and other associated "Blizzard" variables being loaded
 function RQE.handleVariablesLoaded(...)
 	RQE:InitializeFrame()
 	isVariablesLoaded = true
@@ -566,11 +608,12 @@ function RQE.handleVariablesLoaded(...)
 
 	if C_Scenario.IsInScenario() then
 		RQE.ScenarioChildFrame:Show()
-		RQE.handleScenario()
 	else
 		RQE.ScenarioChildFrame:Hide()
-		RQE.handleScenario()
 	end
+	
+    -- Handle scenario regardless of the condition
+	RQE.updateScenarioUI()
 	
 	RQE:ClearWQTracking()
 	SortQuestsByProximity()
@@ -701,6 +744,7 @@ end
 		
 
 -- Handling PLAYER_ENTERING_WORLD Event
+-- Fires when the player logs in, /reloads the UI or zones between map instances. Basically whenever the loading screen appears
 function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
 	if isLogin then
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)
@@ -731,13 +775,14 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
     if isReloadingUi then
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
-			RQE.handleScenario()
             -- DEFAULT_CHAT_FRAME:AddMessage("PEW 08 Debug: In a scenario, showing ScenarioChildFrame.", 0.93, 0.51, 0.93)
 		else
 			RQE.ScenarioChildFrame:Hide()
-			RQE.handleScenario()
             -- DEFAULT_CHAT_FRAME:AddMessage("PEW 09 Debug: Not in a scenario, hiding ScenarioChildFrame.", 0.93, 0.51, 0.93)
 		end
+		
+		-- Handle scenario regardless of the condition
+		RQE.updateScenarioUI()
     end
 	
 	-- Check if still in a scenario (useful for relogs or loading screens)
@@ -758,6 +803,7 @@ end
 		
 
 -- Handling SUPER_TRACKING_CHANGED Event
+-- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking(...)
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
@@ -860,6 +906,7 @@ end
 		
 
 -- Handling QUEST_ACCEPTED Event
+-- Fires whenever the player accepts a quest
 function RQE.handleQuestAccepted(questLogIndex, questID)
     -- DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)
 
@@ -926,6 +973,7 @@ end
 
 		
 -- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS
+-- Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone
 function RQE.handleZoneChange(self, event, ...)
 	if event == "UNIT_EXITING_VEHICLE" then
 		-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: UNIT_EXITING_VEHICLE triggered for " .. tostring(...) .. ".", 0, 1, 1)  -- Cyan
@@ -952,14 +1000,15 @@ function RQE.handleZoneChange(self, event, ...)
 			
 			if C_Scenario.IsInScenario() then
 				RQE.ScenarioChildFrame:Show()
-				RQE.handleScenario()
 			else
 				RQE.ScenarioChildFrame:Hide()
-				RQE.handleScenario()
 			end
+			
+			-- Handle scenario regardless of the condition
+			RQE.updateScenarioUI()
 		end)
 	else
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
 		SortQuestsByProximity()
 		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -979,6 +1028,7 @@ end
 
 
 -- Handles the event ZONE_CHANGED_NEW_AREA
+-- Fires when the player enters a new zone
 function RQE.handleZoneNewAreaChange(self, event, ...)
     -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	C_Timer.After(0.5, function()
@@ -1000,10 +1050,10 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
-			RQE.handleScenario()
+			RQE.updateScenarioUI()
 		else
 			RQE.ScenarioChildFrame:Hide()
-			RQE.handleScenario()
+			RQE.updateScenarioUI()
 		end
 		
 		if RQE.db.profile.autoTrackZoneQuests then
@@ -1028,7 +1078,101 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 end
 
 
+-- function RQE.logEvent(eventType, eventData)
+    -- RQE.eventHistory = RQE.eventHistory or {}
+    -- table.insert(RQE.eventHistory, {type = eventType, data = eventData})
+-- end
+
+-- function RQE.getLastQuestEvent()
+    -- RQE.eventHistory = RQE.eventHistory or {}
+    -- if #RQE.eventHistory > 0 then
+        -- return RQE.eventHistory[#RQE.eventHistory]
+    -- end
+    -- return nil  -- Returns nil if there are no events in the history
+-- end
+
+
+
+-- -- Function for handling the QUEST events more universally
+-- function RQE.updateQuestUI()
+    -- -- Check the last event and handle specific UI updates
+    -- local lastEvent = RQE.getLastQuestEvent()  -- hypothetical function to get the last handled event
+    -- if lastEvent then
+        -- if lastEvent.type == "QUEST_ACCEPTED" then
+			-- RQE.handleQuestAccepted()
+		
+        -- elseif lastEvent.type == "QUEST_TURNED_IN" then
+			-- RQE.handleQuestTurnIn()
+		
+        -- elseif lastEvent.type == "QUEST_REMOVED" then
+			-- RQE.handleQuestRemoved()
+		
+        -- elseif lastEvent.type == "QUEST_LOG_CRITERIA_UPDATE" or "QUEST_CURRENCY_LOOT_RECEIVED" or "QUEST_LOOT_RECEIVED" or "QUESTLINE_UPDATE" then
+            -- RQE.handleQuestStatusUpdate()
+						
+        -- elseif lastEvent.type == "QUEST_AUTOCOMPLETE" then
+			-- RQE.handleQuestAutoComplete()
+				
+        -- elseif lastEvent.type == "QUEST_FINISHED" then
+			-- RQE.handleQuestFinished()
+				
+        -- elseif lastEvent.type == "QUEST_LOG_UPDATE" or "QUEST_POI_UPDATE" or "TASK_PROGRESS_UPDATE" then
+			-- RQE.handleQuestStatusUpdate()
+				
+        -- elseif lastEvent.type == "QUEST_WATCH_LIST_CHANGED" then
+			-- RQE.handleQuestWatchListChanged()
+			
+        -- elseif lastEvent.type == "QUEST_WATCH_UPDATE" then
+			-- RQE.handleQuestWatchUpdate()			
+        -- end
+    -- end
+
+    -- -- Perform common updates that might be needed after any event
+	-- -- DEFAULT_CHAT_FRAME:AddMessage("QA 11 Debug: Updating Frame.", 0.46, 0.62, 1)
+	-- UpdateFrame()
+	
+	-- -- Visibility Update Check for RQEFrame & RQEQuestFrame
+	-- -- DEFAULT_CHAT_FRAME:AddMessage("QA 12 Debug: UpdateRQEFrameVisibility.", 0.46, 0.62, 1)
+    -- RQE:UpdateRQEFrameVisibility()
+	
+	-- -- DEFAULT_CHAT_FRAME:AddMessage("QA 13 Debug: UpdateRQEQuestFrameVisibility.", 0.46, 0.62, 1)
+    -- RQE:UpdateRQEQuestFrameVisibility()	
+	
+	-- -- Update Display of Memory Usage of Addon
+	-- if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		-- RQE:CheckMemoryUsage()
+        -- -- DEFAULT_CHAT_FRAME:AddMessage("QA 14 Debug: Checked memory usage.", 0.46, 0.62, 1)
+	-- end
+-- end
+
+
+-- Function that handles the Scenario UI Updates
+function RQE.updateScenarioUI()
+	if not IsFlying("player") then
+		RQE.LogScenarioInfo()
+		RQE.PrintScenarioCriteriaInfoByStep()
+	end
+	
+	if C_Scenario.IsInScenario() then
+		print("Updating because in scenario")
+		RQE.ScenarioChildFrame:Show()
+		RQE.InitializeScenarioFrame()
+		RQE.UpdateScenarioFrame()
+		RQE.Timer_CheckTimers()
+		RQE.StartTimer()
+    else
+		RQE.ScenarioChildFrame:Hide()
+		RQE.StopTimer()
+    end
+	
+	UpdateRQEQuestFrame()
+	RQE.UpdateCampaignFrameAnchor()
+	RQE:UpdateRQEQuestFrameVisibility()
+end
+
+
 -- Handles UPDATE_INSTANCE_INFO Event
+-- Fired when data from RequestRaidInfo is available
 function RQE.handleInstanceInfoUpdate()
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
@@ -1039,6 +1183,7 @@ end
 
 
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
+-- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate(...)
     local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
     local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1264,6 +1409,7 @@ function RQE.handleQuestComplete()
 end
 		
 -- Handling QUEST_AUTOCOMPLETE events
+-- Fires when a quest that can be auto-completed is completed
 function RQE.handleQuestAutoComplete(...)
 	local questID = ...  -- Extract the questID from the event
 	local extractedQuestID
@@ -1369,18 +1515,20 @@ function RQE.handleQuestRemoved(questID, wasReplayQuest)
         if IsAddOnLoaded("TomTom") then
             TomTom.waydb:ResetProfile()
         end
+		
+		-- Update RQEFrame
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		
+		-- Visibility Check for RQEFrame and RQEQuestFrame
+		RQE:UpdateRQEFrameVisibility()
+		RQE:UpdateRQEQuestFrameVisibility()
     end
-	
-	-- Update RQEFrame
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-
-	-- Visibility Check for RQEFrame and RQEQuestFrame
-	RQE:UpdateRQEFrameVisibility()
-	RQE:UpdateRQEQuestFrameVisibility()
 end
 	
 
 -- Handling QUEST_WATCH_UPDATE event
+-- Fires each time the objectives of the quest with the supplied questID update, i.e. whenever a partial objective has been accomplished: killing a mob, looting a quest item etc
+-- UNIT_QUEST_LOG_CHANGED and QUEST_LOG_UPDATE both also seem to fire consistently – in that order – after each QUEST_WATCH_UPDATE.
 function RQE.handleQuestWatchUpdate(questID)
     -- DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 	
@@ -1541,7 +1689,8 @@ end
 
 
 -- Handling QUEST_TURNED_IN event
--- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button in a quest dialog window. 
+-- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button 
+-- in a quest dialog window. 
 function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 	-- DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
 
@@ -1603,6 +1752,7 @@ end
 
 
 -- Handling QUEST_FINISHED event
+-- Fired whenever the quest frame changes (from Detail to Progress to Reward, etc.) or is closed
 function RQE.handleQuestFinished()
     -- DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
 		
@@ -1644,6 +1794,7 @@ end
 
 	
 -- Handling PLAYER_LOGOUT event
+-- Sent when the player logs out or the UI is reloaded, just before SavedVariables are saved. The event fires after PLAYER_LEAVING_WORLD
 function RQE.handlePlayerLogout(...)
 	RQE:SaveFramePosition()  -- Custom function that saves frame's position
 end
