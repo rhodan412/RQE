@@ -239,11 +239,11 @@ RQE.QToriginalHeight = RQE.QToriginalHeight or 0
 RQE.waypoints = {}
 
 -- Initialize lastSuperTrackedQuestID variable
-RQE.lastSuperTrackedQuestID = nil
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.ManualSuperTrack = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
 RQE.lastClickedObjectiveIndex = nil
+RQE.LastClickedButtonRef = nil
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
 
@@ -3609,7 +3609,26 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
+-- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
+function RQE:AutoClickQuestLogIndexWaypointButton()
+    if RQE.db.profile.autoClickWaypointButton then
+        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+        if not questID then 
+            RQE.debugLog("No super tracked quest.")
+            return
+        end
 
+        -- Use the new LastClickedButtonRef for the operation
+        if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.Click then
+            RQE.LastClickedButtonRef:Click()
+        else
+            RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
+        end
+    end
+end
+
+
+	
 -- Function to check the memory usage of your addon
 function RQE:CheckMemoryUsage()
     if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -3661,6 +3680,8 @@ local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	end
 end
 
+
+-- Handles building the macro from the super tracked quest
 function RQE:BuildQuestMacroBackup()
 	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	
