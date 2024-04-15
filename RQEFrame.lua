@@ -1100,20 +1100,31 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- When creating the WaypointButton
 			WaypointButton.stepIndex = i
-
+			RQE.LastClickedButtonRef = WaypointButton
+			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
+			
 			-- Update the reference to the last clicked button
 			RQE.LastClickedWaypointButton = WaypointButton
 			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
 			
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				if not questIDFromText then
+					RQE.debugLog("Error: Invalid quest ID extracted from text")
+				else
+					RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
+				
+					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+					RQE.debugLog("Attempting to create macro")
+					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
+				end
 			end
 			
 			RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
 	
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 			RQE.debugLog("Attempting to create macro")
-			C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)
+			-- C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)
 			
 			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
 			local questData = RQE.getQuestData(questIDFromText)
