@@ -58,6 +58,7 @@ local eventsToRegister = {
 	--"CRITERIA_UPDATE",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	"LEAVE_PARTY_CONFIRMATION",
+	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
@@ -118,6 +119,7 @@ local function HandleEvents(frame, event, ...)
 		-- CRITERIA_UPDATE = RQE.handleAchievementTracking,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
+		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
@@ -487,7 +489,14 @@ function RQE.handleJailersUpdate(level, type)
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed JAILERS_TOWER_LEVEL_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
-	
+
+
+-- Handles PLAYER_CONTROL_GAINED event
+-- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
+function RQE.handlePlayerControlGained()
+	RQE:AutoClickQuestLogIndexWaypointButton()
+end
+
 
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving()
@@ -716,6 +725,9 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
 		RQE:CheckMemoryUsage()
         -- DEFAULT_CHAT_FRAME:AddMessage("PEW 12 Debug: Checked memory usage.", 0.93, 0.51, 0.93)
 	end
+	
+	-- Clicks Waypoint Button if autoClickWaypointButton is true
+	RQE:AutoClickQuestLogIndexWaypointButton()
 end	
 		
 
@@ -725,7 +737,7 @@ function RQE.handleSuperTracking(...)
     -- startTime = debugprofilestop()  -- Start timer
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
-		
+	
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
@@ -860,7 +872,7 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
 
         -- Reapply the manual super-tracked quest ID if it's set and different from the current one
         if RQE.ManualSuperTrack then
-            local superTrackIDToApply = RQE.ManualSuperTrackedQuestID --or RQE.lastSuperTrackedQuestID
+            local superTrackIDToApply = RQE.ManualSuperTrackedQuestID
             if superTrackIDToApply and superTrackIDToApply ~= C_SuperTrack.GetSuperTrackedQuestID() then
                 C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
                 -- DEFAULT_CHAT_FRAME:AddMessage("QA 09 Debug: Reapplied manual super-tracked QuestID: " .. tostring(superTrackIDToApply), 0.46, 0.62, 1)
@@ -951,6 +963,9 @@ function RQE.handleZoneChange(self, event, ...)
 			RQE.debugLog("Player is flying or dragonriding")
 		end
 	end
+	
+	-- Auto Clicks the QuestLogIndexButton when this event fires
+	RQE:AutoClickQuestLogIndexWaypointButton()
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
