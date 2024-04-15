@@ -1080,7 +1080,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				TomTom.waydb:ResetProfile()
 			end
 
-			-- Variables `CoordsText`, `MapIDs` need to be properly defined and accessible here
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
@@ -1114,11 +1113,12 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 			RQE.debugLog("Attempting to create macro")
-			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)
+			
 			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+			local questData = RQE.getQuestData(questIDFromText)
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-			local questData = RQE.getQuestData(questIDFromText)
 			if questData then
 				local stepData = questData[stepIndex]
 				RQE.debugLog("Quest data found for ID:", questIDFromText)
