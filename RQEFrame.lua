@@ -1397,6 +1397,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
     end
     RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
     UpdateRQEQuestFrame()
+	RQE:ClearWQTracking()
 end
 
 
@@ -1429,6 +1430,7 @@ end
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	RQE.infoLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
+	RQE:ClearWQTracking()
 
 	-- Validation check
 	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
