@@ -37,7 +37,9 @@ local Frame = CreateFrame("Frame")
 
 -- Hides the Objective Tracker (by default)
 function HideObjectiveTracker()
-	ObjectiveTrackerFrame:Hide()
+	if ObjectiveTrackerFrame:IsShown() then
+		ObjectiveTrackerFrame:Hide()
+	end
 end
 
 
@@ -319,7 +321,7 @@ function RQE.handleAddonLoaded(addonName)
 
     -- Hide the default objective tracker and make other UI adjustments after a short delay
     C_Timer.After(0.5, function()
-		-- HideObjectiveTracker()
+		HideObjectiveTracker()
 
         if RQE.AdjustQuestItemWidths then
             RQE.AdjustQuestItemWidths(RQEQuestFrame:GetWidth())  -- Adjust quest item widths based on frame width
