@@ -1972,30 +1972,31 @@ function UpdateRQEWorldQuestFrame()
     -- Loop through each tracked World Quest
     for i, questInfo in ipairs(sortedWorldQuests) do
         local questID = questInfo.questID
+		local button = RQE.WorldQuestsFrame["WQButton" .. questID]
 		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
 		
-		-- Define WQuestLogIndexButton outside the if block
-		local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
-
+		-- Retrieve or initialize the WQuestLogIndexButton for the current questID
+        local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
+		
 		if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
 			usedQuestIDs[questID] = true
 
-			if not WQuestLogIndexButton then
-				WQuestLogIndexButton = CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
-				WQuestLogIndexButton:SetSize(35, 35)
+            local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
+            RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
+            WQuestLogIndexButton:SetSize(35, 35)
 
-				-- Create or update the background texture
-				local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
-				WQbg = bg
-				WQbg:SetAllPoints()
-				if isSuperTracked then
-					bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-				else
-					bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
-				end
-				WQuestLogIndexButton.bg = WQbg  -- Save for future reference
-			end
+            -- Ensure the button always has the correct background texture based on its tracking state
+            local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
+            WQuestLogIndexButton.bg = bg
+            bg:SetAllPoints()
+            if isSuperTracked then
+                bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+            else
+                bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+            end
 			
+			WQuestLogIndexButton:Show()
+
             -- Create or update the number label
             local WQnumber = WQuestLogIndexButton.number or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
             WQnumber:SetPoint("CENTER", WQuestLogIndexButton, "CENTER")
@@ -2070,7 +2071,7 @@ function UpdateRQEWorldQuestFrame()
 					end)
 				end
 			end)
-
+				
 			-- Add a mouse down event to simulate a button press
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				if button == "LeftButton" then
@@ -2247,7 +2248,7 @@ function UpdateRQEWorldQuestFrame()
 					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
 				end
 			end
-			
+					
             -- Show the elements
             WQuestLevelAndName:Show()
             WQuestObjectivesOrDescription:Show()
@@ -2358,6 +2359,22 @@ function UpdateRQEWorldQuestFrame()
 			end
         end
     end
+end
+
+
+-- Functions to Force a Button Click
+function RQE:ClickWorldQuestButton(questID)
+    local button = self.WorldQuestsFrame["WQButton" .. questID]
+    if button then
+        button:Click()
+    end
+end
+
+function RQE:ForceRefreshAndClickWorldQuestButton(questID)
+    UpdateRQEWorldQuestFrame()  -- Force a refresh of all buttons
+    C_Timer.After(1, function()  -- Delay to ensure UI updates
+        self:ClickWorldQuestButton(questID)
+    end)
 end
 
 
