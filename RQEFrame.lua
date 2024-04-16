@@ -48,12 +48,8 @@ local frameMenu = {
         RQE.ToggleFrameLock()
         UpdateMenuText()
     end },
-    { text = "Show Objective Tracker", func = function()
-        if ObjectiveTrackerFrame:IsShown() then
-            HideObjectiveTracker()
-        else
-            ShowObjectiveTracker()
-        end
+    { text = "Toggle Objective Tracker", func = function()
+		RQE:ToggleObjectiveTracker()
         UpdateMenuText()  -- Update menu text after state change
     end },
 }
@@ -86,11 +82,7 @@ function UpdateMenuText()
         frameMenu[2].text = "Lock Frame"
     end
 	
-    if ObjectiveTrackerFrame:IsShown() then
-        frameMenu[3].text = "Hide Objective Tracker"
-    else
-        frameMenu[3].text = "Show Objective Tracker"
-    end
+	frameMenu[3].text = "Toggle Objective Tracker"
 end
 
 menuFrame:SetScript("OnShow", function()

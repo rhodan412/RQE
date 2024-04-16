@@ -37,15 +37,17 @@ local Frame = CreateFrame("Frame")
 
 -- Hides the Objective Tracker (by default)
 function HideObjectiveTracker()
-    if ObjectiveTrackerFrame:IsShown() then
-        ObjectiveTrackerFrame:Hide()
-    end
+	ObjectiveTrackerFrame:Hide()
 end
 
 
 -- Function to Display the Objective Tracker
-function ShowObjectiveTracker()
-	ObjectiveTrackerFrame:Show()
+function RQE:ToggleObjectiveTracker()
+    if ObjectiveTrackerFrame:IsShown() then
+        ObjectiveTrackerFrame:Hide()
+    else
+		ObjectiveTrackerFrame:Show()
+	end
 end
 
 
@@ -743,20 +745,28 @@ end
 -- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking(...)
     -- startTime = debugprofilestop()  -- Start timer
-	--RQEMacro:ClearMacroContentByName("RQE Macro")
+	RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
+		
+	local extractedQuestID
+	local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+
+	-- Handles situation where tracking changes from mode other than RQE, such another quest tracker addon that deals with Super Tracking
+    if ObjectiveTrackerFrame:IsShown() or not RQE.RQEQuestFrame:IsShown() then
+		extractedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
+		RQE:ClearFrameData()
+		UpdateFrame()
+		questID = extractedQuestID
+	else
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+	end
 	
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
-		local extractedQuestID
-		local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-		
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
 		end)
