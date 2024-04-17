@@ -1081,7 +1081,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		WaypointButton:SetScript("OnClick", function()
 			-- Your code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
-			if IsAddOnLoaded("TomTom") then
+			-- Check if TomTom is loaded and compatibility is enabled
+			if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 			end
 

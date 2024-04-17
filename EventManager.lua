@@ -661,7 +661,8 @@ function RQE.handleVariablesLoaded(...)
 	-- Clear frame data and waypoints
 	C_Map.ClearUserWaypoint()
 	
-	if IsAddOnLoaded("TomTom") then
+	-- Check if TomTom is loaded and compatibility is enabled
+	if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 		TomTom.waydb:ResetProfile()
 	end
 		
@@ -1455,7 +1456,8 @@ function RQE.handleQuestRemoved(questID, wasReplayQuest)
     if questID == currentSuperTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-        if IsAddOnLoaded("TomTom") then
+		-- Check if TomTom is loaded and compatibility is enabled
+		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
 		
@@ -1664,7 +1666,8 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
     if questID == superTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-        if IsAddOnLoaded("TomTom") then
+		-- Check if TomTom is loaded and compatibility is enabled
+		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
     end
