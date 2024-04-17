@@ -235,6 +235,26 @@ RQE.options = {
 						RQE.db.profile.enableQuestAbandonConfirm = newValue;
 					end,
 				},
+				enableTomTomCompatibility = {
+					type = "toggle",
+					name = "Enable TomTom Compatibility",
+					desc = "If enabled will create waypoints via TomTom addon (if you have this addon also installed)",
+					order = 14,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.enableTomTomCompatibility end,
+					set = function(_, newValue) 
+						RQE.db.profile.enableTomTomCompatibility = newValue;
+					end,
+				},
+				enableCarboniteCompatibility = {
+					type = "toggle",
+					name = "Enable Carbonite Compatibility",
+					desc = "If enabled will create waypoints via Carbonite addon (if you have this addon also installed)",
+					order = 15,  -- Adjust this based on where you want it in the order
+					get = function() return RQE.db.profile.enableCarboniteCompatibility end,
+					set = function(_, newValue) 
+						RQE.db.profile.enableCarboniteCompatibility = newValue;
+					end,
+				},
 			},
 		},
         frame = {
