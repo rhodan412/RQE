@@ -164,7 +164,7 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
         QMQTslider:SetValue(value + 50)
     end
 end)
-
+	
 
 ---------------------------
 -- 3. Child Frames

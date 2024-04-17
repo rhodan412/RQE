@@ -36,8 +36,23 @@ local LSM = LibStub("LibSharedMedia-3.0")
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
 
--- Blizzard Imports
-local ScenarioObjectiveTracker = RQE:NewModule("ScenarioObjectiveTracker", "AceEvent-3.0")
+-- Constants
+
+local floor = math.floor
+local fmod = math.fmod
+local format = string.format
+local gsub = string.gsub
+local ipairs = ipairs
+local max = math.max
+local pairs = pairs
+local strfind = string.find
+local tonumber = tonumber
+local tinsert = table.insert
+local tremove = table.remove
+local tContains = tContains
+local unpack = unpack
+local round = function(n) return floor(n + 0.5) end
+
 
 ---------------------------------------------------
 -- 3. Debugging Functions
