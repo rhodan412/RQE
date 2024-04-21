@@ -2691,25 +2691,27 @@ function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
     local questData = RQE.getQuestData(superTrackedQuestID)
     
-	if questData then
-		-- Assume waypointButton is globally accessible or passed somehow; need to define where it comes from
-		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		local stepData = questData[stepIndex]
+    if questData then
+        local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+        local stepData = questData[stepIndex]
+        
+        RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
+        
+        local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+        local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
 
-		RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
-
-		if stepData and stepData.funct then
-			local funct = self[stepData.funct]
-			if type(funct) == "function" then
-				funct(self, superTrackedQuestID, stepIndex)
-			else
-				RQE.infoLog("Function named", stepData.funct, "is not defined in RQE.")
-			end
-		else
-			RQE.infoLog("No function specified for current step", stepIndex, "of quest ID", superTrackedQuestID)
-		end
-	end
+        if funcResult then
+            RQE.infoLog("Function for current step executed successfully.")
+        elseif failFuncResult then
+            local failedIndex = stepData.failedIndex or 1
+            RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
+            self:ClickWaypointButtonForIndex(failedIndex)
+        else
+            RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+        end
+    end
 end
+
 
 
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.
@@ -2738,18 +2740,41 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
 end
 
 
+-- Function that handles if returns Failed stepIndex
+function RQE:ClickWaypointButtonForIndex(index)
+    local button = self.WaypointButtons[index]
+    if button then
+        button:Click()
+        self.LastClickedButtonRef = button  -- Update last clicked reference
+        self.CurrentStepIndex = index  -- Update current step index
+        RQE.infoLog("Clicked waypoint button for index:", index)
+    else
+        RQE.infoLog("No waypoint button found for index:", index)
+    end
+end
+
+
 -- Function will check if the player currently has any of the buffs specified in the quest's check field passed by the RQEDatabase.
-function RQE:CheckDBBuff(questID, stepIndex)
+function RQE:CheckDBBuff(questID, stepIndex, isFailureCheck)
     local questData = self.getQuestData(questID)
     local stepData = questData[stepIndex]
-    local buffs = stepData.check -- Assuming 'check' contains buff names now
-    for _, buffName in ipairs(buffs) do
+    local checkData = isFailureCheck and stepData.failedcheck or stepData.check
+
+    for _, buffName in ipairs(checkData) do
         local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
         if aura then
-            self:AdvanceQuestStep(questID, stepIndex)
-            RQE.infoLog("Buff " .. buffName .. " is active. Advancing quest step.")
+            if not isFailureCheck then
+                self:AdvanceQuestStep(questID, stepIndex)
+                return true  -- Buff is present and it's a regular check
+            else
+                return false  -- Buff is present but we're doing a failure check
+            end
         end
     end
+    if isFailureCheck then
+        return true  -- Buff is not present and it's a failure check
+    end
+    return false  -- Buff is not present but it's a regular check
 end
 
 
