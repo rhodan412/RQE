@@ -2742,6 +2742,9 @@ end
 
 -- Function that handles if returns Failed stepIndex
 function RQE:ClickWaypointButtonForIndex(index)
+	-- Clears Macro Data
+	RQEMacro:ClearMacroContentByName("RQE Macro")
+	
     local button = self.WaypointButtons[index]
     if button then
         button:Click()
