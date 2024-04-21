@@ -68,6 +68,7 @@ local eventsToRegister = {
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	--"CRITERIA_UPDATE",
+	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	"LEAVE_PARTY_CONFIRMATION",
 	"PLAYER_CONTROL_GAINED",
@@ -100,6 +101,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
+	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
 	"UPDATE_INSTANCE_INFO",
 	"VARIABLES_LOADED",
@@ -129,6 +131,7 @@ local function HandleEvents(frame, event, ...)
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
 		-- CRITERIA_UPDATE = RQE.handleAchievementTracking,
+		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
@@ -162,6 +165,7 @@ local function HandleEvents(frame, event, ...)
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
+		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
@@ -215,6 +219,15 @@ end
 function RQE.handleTrackedAchieveUpdate(achievementID, criteriaID, elapsed, duration)
     ---- DEFAULT_CHAT_FRAME:AddMessage("Debug: TRACKED_ACHIEVEMENT_UPDATE event triggered for achievementID: " .. tostring(achievementID) .. ", criteriaID: " .. tostring(criteriaID) .. ", elapsed: " .. tostring(elapsed) .. ", duration: " .. tostring(duration), 0xFA, 0x80, 0x72) -- Salmon color		
 	RQE.UpdateTrackedAchievementList()
+end
+
+
+-- Handles ITEM_COUNT_CHANGED event
+function RQE.handleItemCountChanged(self, event, itemID)
+    itemID = tostring(itemID)  -- Ensure the itemID is treated as a string if needed
+    RQE.infoLog("Item count changed for itemID:", itemID)
+    
+	RQE:StartPeriodicChecks()
 end
 
 
@@ -303,7 +316,7 @@ function RQE.handlePlayerLogin()
 		end)
 	end
 end
-		
+
 
 -- Function to handle ADDON_LOADED
 -- Fires after an AddOn has been loaded
@@ -365,9 +378,15 @@ function RQE.handleAddonLoaded(addonName)
 		
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
+			RQE:StartPeriodicChecks()
+		end)
+		
+		C_Timer.After(1, function()
+			-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+			RQE:StartPeriodicChecks()
 		end)
 	end
-	
+		
 	-- Updates frame with data from the super tracked quest (if any)
 	RQE:ClearWaypointButtonData()
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -772,6 +791,7 @@ function RQE.handleSuperTracking(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
+			RQE:StartPeriodicChecks()
 		end)
 	end
 	
@@ -849,7 +869,7 @@ function RQE.handleSuperTracking(...)
 		RQE:CheckMemoryUsage()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)
 	end
-	
+		
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
@@ -912,6 +932,11 @@ function RQE.handleQuestAccepted(questLogIndex, questID)
 	C_Timer.After(1, function()  -- Delay of 1 second
 		UpdateFrame()
 	end)
+
+	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
+	end
 	
 	-- Visibility Update Check for RQEFrame & RQEQuestFrame
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 12 Debug: UpdateRQEFrameVisibility.", 0.46, 0.62, 1)
@@ -1047,6 +1072,14 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
+
+-- Handles UNIT_AURA event:
+function RQE.handleUnitAura()
+	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
+	end
+end
 
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
@@ -1573,6 +1606,11 @@ function RQE.handleQuestWatchUpdate(questID)
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
 	
+	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
+	end
+	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -1637,6 +1675,11 @@ function RQE.handleQuestWatchListChanged(questID, added)
 			-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_LIST_CHANGED event")
 			-- RQE.ClickUnknownQuestButton()
 		-- end)
+	end
+	
+	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
 	end
 	
 	-- local duration = debugprofilestop() - startTime
