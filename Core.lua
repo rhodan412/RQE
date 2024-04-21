@@ -1167,7 +1167,7 @@ function RQE:ClearFrameData()
 		-- RQE.infoLog("Updating frame following Frame Clearing")
 		-- UpdateFrame()
 	-- end)
-	
+
 	-- Check if MagicButton should be visible based on macro body
 	RQE.Buttons.UpdateMagicButtonVisibility()
 end
@@ -1579,7 +1579,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
-	
+
 	-- Visibility Update Check for RQEFrame
 	RQE:UpdateRQEFrameVisibility()
 	
@@ -2686,6 +2686,142 @@ function RQE:ShowWowWikiLink(questID)
 end
 
 
+-- Periodic check setup
+function RQE:StartPeriodicChecks()
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local questData = RQE.getQuestData(superTrackedQuestID)
+    
+	if questData then
+		-- Assume waypointButton is globally accessible or passed somehow; need to define where it comes from
+		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		local stepData = questData[stepIndex]
+
+		RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
+
+		if stepData and stepData.funct then
+			local funct = self[stepData.funct]
+			if type(funct) == "function" then
+				funct(self, superTrackedQuestID, stepIndex)
+			else
+				RQE.infoLog("Function named", stepData.funct, "is not defined in RQE.")
+			end
+		else
+			RQE.infoLog("No function specified for current step", stepIndex, "of quest ID", superTrackedQuestID)
+		end
+	end
+end
+
+
+-- Function advances the quest step by simulating a click on the corresponding WaypointButton.
+function RQE:AdvanceQuestStep(questID, stepIndex)
+    RQE.infoLog("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
+    local questData = self.getQuestData(questID)
+    local nextIndex = stepIndex + 1
+    local nextStep = questData[nextIndex]
+
+    if nextStep then
+        local buttonIndex = nextIndex
+        local button = self.WaypointButtons[buttonIndex]
+        if button then
+            button:Click()
+            self.LastClickedButtonRef = button
+            RQE.infoLog("Advanced to next quest step: " .. buttonIndex)
+            -- Update stepIndex globally or within a managed scope
+            self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex is how you track the current step globally
+            self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
+        else
+            RQE.infoLog("No button found for next quest step:", buttonIndex)
+        end
+    else
+        RQE.infoLog("No next step found for quest:", questID)
+    end
+end
+
+
+-- Function will check if the player currently has any of the buffs specified in the quest's check field passed by the RQEDatabase.
+function RQE:CheckDBBuff(questID, stepIndex)
+    local questData = self.getQuestData(questID)
+    local stepData = questData[stepIndex]
+    local buffs = stepData.check -- Assuming 'check' contains buff names now
+    for _, buffName in ipairs(buffs) do
+        local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+        if aura then
+            self:AdvanceQuestStep(questID, stepIndex)
+            RQE.infoLog("Buff " .. buffName .. " is active. Advancing quest step.")
+        end
+    end
+end
+
+
+-- Function will check if the player currently has any of the debuffs specified in the quest's check field passed by the RQEDatabase.
+function RQE:CheckDBDebuff(questID, stepIndex)
+    local questData = self.getQuestData(questID)
+    local stepData = questData[stepIndex]
+    local debuffs = stepData.check -- Renamed from buffs to debuffs for clarity since it checks for debuffs
+
+    for _, debuffName in ipairs(debuffs) do
+        local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+        if aura then
+            self:AdvanceQuestStep(questID, stepIndex)
+            RQE.infoLog("Debuff " .. debuffName .. " is active. Advancing quest step.")
+        else
+            RQE.infoLog("Debuff " .. debuffName .. " is not active.")
+        end
+    end
+end
+
+
+-- Function will check the player's inventory for specific items.
+function RQE:CheckDBInventory(questID, stepIndex)
+    local questData = self.getQuestData(questID)
+    local stepData = questData[stepIndex]
+    local requiredItems = stepData.check or {}
+    local neededAmounts = stepData.neededAmt or {}
+
+    for index, itemID in ipairs(requiredItems) do
+        local requiredAmount = tonumber(neededAmounts[index]) or 1  -- Default to 1 if no amount specified
+        local itemCount = C_Item.GetItemCount(itemID)
+
+        RQE.infoLog("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
+        
+        if itemCount >= requiredAmount then
+            self:AdvanceQuestStep(questID, stepIndex)
+            return  -- Exit function after advancing step to avoid multiple advancements
+        end
+    end
+end
+
+
+-- Function will check the player's current map ID against the expected map ID stored in the check field in the RQEDatabase
+function RQE:CheckDBZoneChange(questID, stepIndex)
+    local currentMapID = C_Map.GetBestMapForUnit("player")
+    local questData = self.getQuestData(questID)
+    local stepData = questData[stepIndex]
+    local requiredMapIDs = stepData.check  -- This should be a list of mapIDs
+
+    RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+    -- Check if the current map ID is in the list of required IDs
+    if requiredMapIDs and #requiredMapIDs > 0 then
+        for _, mapID in ipairs(requiredMapIDs) do
+            if tostring(currentMapID) == tostring(mapID) then
+                self:AdvanceQuestStep(questID, stepIndex)
+                RQE.infoLog("Player is in the correct zone (MapID: " .. currentMapID .. "). Advancing to next quest step.")
+                return  -- Exit after advancing to avoid multiple advancements
+            end
+        end
+    end
+    RQE.infoLog("Player is not in the correct zone. Current MapID:", currentMapID, "Required MapID(s):", table.concat(requiredMapIDs, ", "))
+end
+
+
+
+-- Function will check if the quest is ready for turn-in from what is passed by the RQEDatabase.
+function RQE:CheckDBComplete(questID, stepIndex)
+    if C_QuestLog.ReadyForTurnIn(questID) then
+        self:AdvanceQuestStep(questID, stepIndex)
+    end
+end
+
 ---------------------------------------------------
 -- 17. Filtering Functions
 ---------------------------------------------------
@@ -3695,7 +3831,7 @@ end
 
 
 function RQE:AdvanceNextStep(questID)
-local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
