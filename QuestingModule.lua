@@ -1522,7 +1522,7 @@ function UpdateRQEQuestFrame()
 
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-					
+
 						-- Clear any existing super tracking
 						C_SuperTrack.ClearSuperTrackedContent()
 
@@ -1554,6 +1554,11 @@ function UpdateRQEQuestFrame()
 						-- C_Timer.After(1, function()
 							-- RQE:CheckAndAdvanceStep(questID)
 						-- end)
+						
+						-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+						-- if RQE.db.profile.autoClickWaypointButton then
+							-- RQE:StartPeriodicChecks()
+						-- end
 					end)
 						
 						-- Refresh the UI here to update the button state
@@ -2070,6 +2075,11 @@ function UpdateRQEWorldQuestFrame()
 						RQE.Buttons.UpdateMagicButtonVisibility()
 					end)
 				end
+				
+				-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+				-- if RQE.db.profile.autoClickWaypointButton then
+					-- RQE:StartPeriodicChecks()
+				-- end
 			end)
 				
 			-- Add a mouse down event to simulate a button press
