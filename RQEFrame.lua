@@ -1295,7 +1295,7 @@ function RQE:CheckAndAdvanceStep(questID)
     -- end
 	
     -- Handle quest completion and specific objectives
-	if allObjectivesCompleted then
+	if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
 		nextObjectiveIndex = 99 -- Override if all objectives are completed
 	end
 	
