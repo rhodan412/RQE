@@ -58,6 +58,23 @@ local round = function(n) return floor(n + 0.5) end
 -- 3. Debugging Functions
 ---------------------------------------------------
 
+-- Safe Print Function
+function RQE:SafePrint(...)
+    local args = {...}
+    local output = {}
+    for i, v in ipairs(args) do
+        if type(v) == "table" then
+            output[i] = "Table: Cannot display"
+        elseif type(v) == "boolean" then
+            output[i] = v and "True" or "False"  -- Convert boolean to "True" or "False"
+        else
+            output[i] = tostring(v)
+        end
+    end
+    DEFAULT_CHAT_FRAME:AddMessage(table.concat(output, " "))
+end
+
+
 -- Custom Debug Function
 function RQE:CustomDebugLog(index, color, message, ...)
     local output = "|c" .. color .. "[Line " .. tostring(index) .. "] " .. message
@@ -3890,7 +3907,7 @@ end
 -- Function to log scenario information, including previously ignored values
 function RQE.LogScenarioInfo()
     if C_Scenario.IsInScenario() then
-        local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit = C_Scenario.GetInfo()
+        local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit, scenarioID = C_Scenario.GetInfo()
 		
         RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
         RQE.infoLog("Current Stage: " .. tostring(currentStage))
@@ -3904,6 +3921,7 @@ function RQE.LogScenarioInfo()
         RQE.infoLog("Scenario Type: " .. tostring(scenarioType))
         RQE.infoLog("areaName: " .. tostring(areaName))
         RQE.infoLog("Texture Kit: " .. tostring(textureKit))
+		RQE.infoLog("scenarioID: " .. tostring(scenarioID))
     end
 end
 
