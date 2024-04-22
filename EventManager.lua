@@ -974,7 +974,7 @@ function RQE.handleZoneChange(self, event, ...)
 			-- local questInfo = RQE.getQuestData(questID)  -- THIS IS HANDLED IN UPDATEFRAME
 			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 			
-			-- RQE:UpdateMapIDDisplay()   -- SHOULD BE HANDLED THROUGH ZONE_CHANGED_NEW_AREA
+			RQE:UpdateMapIDDisplay()
 
 			-- Call the functions to update the frame
 			--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -1008,6 +1008,11 @@ function RQE.handleZoneChange(self, event, ...)
 	
 	-- Auto Clicks the QuestLogIndexButton when this event fires
 	--RQE:AutoClickQuestLogIndexWaypointButton()
+	
+	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
+	end
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)

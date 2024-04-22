@@ -2855,6 +2855,43 @@ function RQE:CheckDBComplete(questID, stepIndex)
     end
 end
 
+
+-- Function to check if the player's faction is Alliance and advance the quest step if true
+function RQE:CheckFactionGroupAlliance(questID, stepIndex)
+    local englishFaction = UnitFactionGroup("player")
+    
+    RQE.infoLog("Checking if player's faction is Alliance: " .. tostring(englishFaction))
+
+    -- Check if the player's faction is Alliance
+    if englishFaction == "Alliance" then
+        RQE.infoLog("Player is Alliance, advancing quest step.")
+        self:AdvanceQuestStep(questID, stepIndex)
+        return true
+    else
+        RQE.infoLog("Player is not Alliance, not advancing quest step.")
+        return false
+    end
+end
+
+
+-- Function to check if the player's faction is Horde and advance the quest step if true
+function RQE:CheckFactionGroupHorde(questID, stepIndex)
+    local englishFaction = UnitFactionGroup("player")
+    
+    RQE.infoLog("Checking if player's faction is Horde: " .. tostring(englishFaction))
+
+    -- Check if the player's faction is Horde
+    if englishFaction == "Horde" then
+        RQE.infoLog("Player is Horde, advancing quest step.")
+        self:AdvanceQuestStep(questID, stepIndex)
+        return true
+    else
+        RQE.infoLog("Player is not Horde, not advancing quest step.")
+        return false
+    end
+end
+
+
 ---------------------------------------------------
 -- 17. Filtering Functions
 ---------------------------------------------------

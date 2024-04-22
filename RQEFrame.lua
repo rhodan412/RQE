@@ -1210,96 +1210,96 @@ end
 
 -- Check and Advance Steps
 function RQE:CheckAndAdvanceStep(questID)
-    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    local extractedQuestID
-    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-    end
+    -- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()     -- TEMPORARILY COMMENTING OUT IN ORDER TO GET RQE:StartPeriodicChecks() OPERATIONAL
+    -- local extractedQuestID
+    -- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        -- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+    -- end
 
-    -- Determine questID based on various fallbacks
-    questID = RQE.searchedQuestID or extractedQuestID or questID
+    -- -- Determine questID based on various fallbacks
+    -- questID = RQE.searchedQuestID or extractedQuestID or questID
 
-	-- Validation Check
-    if not questID or type(questID) ~= "number" then
-        RQE.debugLog("Invalid questID:", questID)
-        return
-    end
+	-- -- Validation Check
+    -- if not questID or type(questID) ~= "number" then
+        -- RQE.debugLog("Invalid questID:", questID)
+        -- return
+    -- end
 
-    local currentObjectiveIndex = self:GetCurrentObjectiveIndex(questID)
+    -- local currentObjectiveIndex = self:GetCurrentObjectiveIndex(questID)
     
-    if RQE.lastKnownObjectiveIndex[questID] ~= currentObjectiveIndex then
-        -- Detected a change in objective, indicating progress
-        RQE.hasClickedQuestButton = false  -- Reset the flag since there's actual progress
-		RQE.infoLog("RQE.hasClickedQuestButton flag is being reset for quest " .. questID)
-        RQE.lastKnownObjectiveIndex[questID] = currentObjectiveIndex  -- Update the tracked index
-        -- Potentially other logic to handle the change in objective
-    end
-	
-    -- Retrieve objectives for the questID
-    local objectives = C_QuestLog.GetQuestObjectives(questID)
-    if not objectives or #objectives == 0 then
-        RQE.debugLog("Quest", questID, "has no objectives or failed to retrieve objectives.")
-        return
-    end
-
-    -- Handle quest completion and specific objectives
-    if allObjectivesCompleted then
-        nextObjectiveIndex = 99
-        self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
-        return
-    end
-	
-    -- Check if all objectives are finished
-    local allObjectivesCompleted = true
-    for _, objective in ipairs(objectives) do
-        if not objective.finished then
-            allObjectivesCompleted = false
-            break
-        end
-    end
-
-    -- Calculate highestCompletedObjectiveIndex based on objectives completion
-    local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or 0
-    local questData = RQE.getQuestData(questID)
-    if not questData then
-        RQE.debugLog("Quest data not found for questID:", questID)
-        return
-    end
-
-    for _, stepData in ipairs(questData) do
-        if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
-            local objective = objectives[stepData.objectiveIndex]
-            if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
-                highestCompletedObjectiveIndex = stepData.objectiveIndex
-            end
-        end
-    end
-
-    RQE.infoLog("QuestID: " .. tostring(questID) ..
-      ", All Objectives Completed: " .. tostring(allObjectivesCompleted) ..
-      ", Highest Completed Objective Index: " .. tostring(highestCompletedObjectiveIndex))
-
-    -- Store the previous highestCompletedObjectiveIndex before calculations
-    local previousHighestCompletedObjectiveIndex = RQE.lastKnownObjectiveIndex[questID] or 0
-	
-	-- Before your if-else statement
-	local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
-
-    -- -- After calculations, compare the previous index to the current highestCompletedObjectiveIndex
-    -- if highestCompletedObjectiveIndex ~= previousHighestCompletedObjectiveIndex then
-        -- -- There has been progress, so call the function to click the super tracked quest button
-        -- --RQE:ClickSuperTrackedQuestButton()
-        
-        -- -- Update the lastKnownObjectiveIndex for this quest
-        -- RQE.lastKnownObjectiveIndex[questID] = highestCompletedObjectiveIndex
+    -- if RQE.lastKnownObjectiveIndex[questID] ~= currentObjectiveIndex then
+        -- -- Detected a change in objective, indicating progress
+        -- RQE.hasClickedQuestButton = false  -- Reset the flag since there's actual progress
+		-- RQE.infoLog("RQE.hasClickedQuestButton flag is being reset for quest " .. questID)
+        -- RQE.lastKnownObjectiveIndex[questID] = currentObjectiveIndex  -- Update the tracked index
+        -- -- Potentially other logic to handle the change in objective
     -- end
 	
-    -- Handle quest completion and specific objectives
-	if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
-		nextObjectiveIndex = 99 -- Override if all objectives are completed
-	end
+    -- -- Retrieve objectives for the questID
+    -- local objectives = C_QuestLog.GetQuestObjectives(questID)
+    -- if not objectives or #objectives == 0 then
+        -- RQE.debugLog("Quest", questID, "has no objectives or failed to retrieve objectives.")
+        -- return
+    -- end
+
+    -- -- Handle quest completion and specific objectives
+    -- if allObjectivesCompleted then
+        -- nextObjectiveIndex = 99
+        -- self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+        -- return
+    -- end
 	
-	self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+    -- -- Check if all objectives are finished
+    -- local allObjectivesCompleted = true
+    -- for _, objective in ipairs(objectives) do
+        -- if not objective.finished then
+            -- allObjectivesCompleted = false
+            -- break
+        -- end
+    -- end
+
+    -- -- Calculate highestCompletedObjectiveIndex based on objectives completion
+    -- local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or 0
+    -- local questData = RQE.getQuestData(questID)
+    -- if not questData then
+        -- RQE.debugLog("Quest data not found for questID:", questID)
+        -- return
+    -- end
+
+    -- for _, stepData in ipairs(questData) do
+        -- if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
+            -- local objective = objectives[stepData.objectiveIndex]
+            -- if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
+                -- highestCompletedObjectiveIndex = stepData.objectiveIndex
+            -- end
+        -- end
+    -- end
+
+    -- RQE.infoLog("QuestID: " .. tostring(questID) ..
+      -- ", All Objectives Completed: " .. tostring(allObjectivesCompleted) ..
+      -- ", Highest Completed Objective Index: " .. tostring(highestCompletedObjectiveIndex))
+
+    -- -- Store the previous highestCompletedObjectiveIndex before calculations
+    -- local previousHighestCompletedObjectiveIndex = RQE.lastKnownObjectiveIndex[questID] or 0
+	
+	-- -- Before your if-else statement
+	-- local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
+
+    -- -- -- After calculations, compare the previous index to the current highestCompletedObjectiveIndex
+    -- -- if highestCompletedObjectiveIndex ~= previousHighestCompletedObjectiveIndex then
+        -- -- -- There has been progress, so call the function to click the super tracked quest button
+        -- -- --RQE:ClickSuperTrackedQuestButton()
+        
+        -- -- -- Update the lastKnownObjectiveIndex for this quest
+        -- -- RQE.lastKnownObjectiveIndex[questID] = highestCompletedObjectiveIndex
+    -- -- end
+	
+    -- -- Handle quest completion and specific objectives
+	-- if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
+		-- nextObjectiveIndex = 99 -- Override if all objectives are completed
+	-- end
+	
+	-- self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
 end
 
 
