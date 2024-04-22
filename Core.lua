@@ -2693,6 +2693,13 @@ function RQE:StartPeriodicChecks()
     
     if questData then
         local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		
+        -- Validate stepIndex
+        if stepIndex < 1 or stepIndex > #questData then
+            RQE.infoLog("Invalid step index:", stepIndex)
+            return  -- Exit the function if stepIndex is invalid
+        end
+
         local stepData = questData[stepIndex]
         
         RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
@@ -2711,7 +2718,6 @@ function RQE:StartPeriodicChecks()
         end
     end
 end
-
 
 
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.
@@ -2840,7 +2846,6 @@ function RQE:CheckDBZoneChange(questID, stepIndex)
     end
     RQE.infoLog("Player is not in the correct zone. Current MapID:", currentMapID, "Required MapID(s):", table.concat(requiredMapIDs, ", "))
 end
-
 
 
 -- Function will check if the quest is ready for turn-in from what is passed by the RQEDatabase.
