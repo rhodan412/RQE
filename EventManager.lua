@@ -378,7 +378,6 @@ function RQE.handleAddonLoaded(addonName)
 		
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
-			RQE:StartPeriodicChecks()
 		end)
 		
 		C_Timer.After(1, function()
@@ -791,7 +790,7 @@ function RQE.handleSuperTracking(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
 			RQE:CheckAndAdvanceStep(questID)
-			RQE:StartPeriodicChecks()
+			-- RQE:StartPeriodicChecks()
 		end)
 	end
 	
@@ -975,28 +974,25 @@ function RQE.handleZoneChange(self, event, ...)
 			-- local questInfo = RQE.getQuestData(questID)  -- THIS IS HANDLED IN UPDATEFRAME
 			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
 			
-			RQE:UpdateMapIDDisplay()
+			-- RQE:UpdateMapIDDisplay()   -- SHOULD BE HANDLED THROUGH ZONE_CHANGED_NEW_AREA
 
 			-- Call the functions to update the frame
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			
-			SortQuestsByProximity()
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-			
-			if C_Scenario.IsInScenario() then
-				RQE.ScenarioChildFrame:Show()
-			else
-				RQE.ScenarioChildFrame:Hide()
-			end
+			--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+						
+			-- if C_Scenario.IsInScenario() then
+				-- RQE.ScenarioChildFrame:Show()
+			-- else
+				-- RQE.ScenarioChildFrame:Hide()
+			-- end
 			
 			-- Handle scenario regardless of the condition
-			RQE.updateScenarioUI()
+			-- RQE.updateScenarioUI()
 		end)
 	else
 		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
-		SortQuestsByProximity()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		-- SortQuestsByProximity()   -- HANDLED THRU ZONE_CHANGED_NEW_AREA
+		-- AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	end
 	
 	-- Update Display of Memory Usage of Addon
@@ -1011,7 +1007,7 @@ function RQE.handleZoneChange(self, event, ...)
 	end
 	
 	-- Auto Clicks the QuestLogIndexButton when this event fires
-	RQE:AutoClickQuestLogIndexWaypointButton()
+	--RQE:AutoClickQuestLogIndexWaypointButton()
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -1036,17 +1032,14 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 
 		-- Call the functions to update the frame
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		
-		SortQuestsByProximity()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-		
-		if C_Scenario.IsInScenario() then
-			RQE.ScenarioChildFrame:Show()
-			RQE.updateScenarioUI()
-		else
-			RQE.ScenarioChildFrame:Hide()
-			RQE.updateScenarioUI()
-		end
+				
+		-- if C_Scenario.IsInScenario() then  -- SHOULD BE HANDLED THRU SOMETHING LIKE SCENARIO_UPDATE
+			-- RQE.ScenarioChildFrame:Show()
+			-- RQE.updateScenarioUI()
+		-- else
+			-- RQE.ScenarioChildFrame:Hide()
+			-- RQE.updateScenarioUI()
+		-- end
 		
 		if RQE.db.profile.autoTrackZoneQuests then
 			RQE.DisplayCurrentZoneQuests()
@@ -1055,6 +1048,9 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 				RQE.UpdateTrackedQuestsToCurrentZone()
 			end)
 		end
+		
+		SortQuestsByProximity()
+		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	end)
 	
 	-- Update Display of Memory Usage of Addon
@@ -1066,6 +1062,13 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		else
 			RQE.debugLog("Player is flying or dragonriding")
 		end
+	end
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		C_Timer.After(0.5, function()
+			RQE:StartPeriodicChecks()
+		end)
 	end
 	
 	-- local duration = debugprofilestop() - startTime
@@ -1088,16 +1091,20 @@ function RQE.updateScenarioUI()
 		RQE.PrintScenarioCriteriaInfoByStep()
 	end
 	
-	if C_Scenario.IsInScenario() then
-		RQE.infoLog("Updating because in scenario")
-		RQE.ScenarioChildFrame:Show()
-		RQE.InitializeScenarioFrame()
-		RQE.UpdateScenarioFrame()
-		RQE.Timer_CheckTimers()
-		RQE.StartTimer()
+    if C_Scenario.IsInScenario() then
+        RQE.infoLog("Updating because in scenario")
+        if not RQE.ScenarioChildFrame:IsVisible() then
+            RQE.ScenarioChildFrame:Show()
+            RQE.InitializeScenarioFrame()
+            RQE.UpdateScenarioFrame()
+        else
+            RQE.UpdateScenarioFrame()
+        end
+        RQE.Timer_CheckTimers()
+        RQE.StartTimer()
     else
-		RQE.ScenarioChildFrame:Hide()
-		RQE.StopTimer()
+        RQE.ScenarioChildFrame:Hide()
+        RQE.StopTimer()
     end
 	
 	UpdateRQEQuestFrame()
