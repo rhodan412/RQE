@@ -1078,6 +1078,9 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	
+	-- Clears World Quest that are Automatically Tracked when switching to a new area
+	RQE.UntrackAutomaticWorldQuests()
 end
 
 

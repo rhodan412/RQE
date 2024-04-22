@@ -3696,7 +3696,11 @@ function RQE:SaveWorldQuestWatches()
     for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
         local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
         if questID then
-            RQE.savedWorldQuestWatches[questID] = true
+            local watchType = C_QuestLog.GetQuestWatchType(questID)
+            if watchType == Enum.QuestWatchType.Manual then  -- Save only if the watch type is Manual
+				RQE.savedWorldQuestWatches[questID] = true
+				print("Saved manually tracked World Quest ID:", questID)
+			end
         end
     end
     -- Debug: Print the saved world quests
@@ -3751,27 +3755,38 @@ function RQE.UntrackAutomaticWorldQuests()
     local playerMapID = C_Map.GetBestMapForUnit("player")
     local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 
-    -- Convert the questsInArea to a lookup table for quicker access
+    -- Print the player's current map ID for debugging
+    RQE.infoLog("Current Player Map ID:", playerMapID)
+
+    -- Convert the questsInArea to a lookup table for quicker access and print them
     local questsInAreaLookup = {}
+    RQE.infoLog("Quests in the current area:")
     for _, taskPOI in ipairs(questsInArea) do
         questsInAreaLookup[taskPOI.questId] = true
+        RQE.infoLog(taskPOI.questId)  -- Print each quest ID found in the area
     end
 
+    -- Go through each watched world quest and check conditions
+    RQE.infoLog("Checking watched world quests:")
     for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
         local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
         if questID then
             local watchType = C_QuestLog.GetQuestWatchType(questID)
+            RQE.infoLog("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
+
             -- If the quest is not in the current area and it was tracked automatically, untrack it
-            if watchType == Enum.QuestWatchType.Automatic then --and not questsInAreaLookup[questID] then
+            if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
                 C_QuestLog.RemoveWorldQuestWatch(questID)
                 RQE.infoLog("Untracked automatic World Quest ID: " .. questID)
+            else
+                RQE.infoLog("Quest ID " .. questID .. " is still relevant or not automatic; not untracking.")
             end
+        else
+            RQE.infoLog("No quest ID found for watch index " .. i)
         end
     end
 end
 
-SLASH_UNTRACKAUTO1 = '/untrackauto'
-SlashCmdList["UNTRACKAUTO"] = UntrackAutomaticWorldQuests
 
 
 -- Create Event for the sound of Quest Progress/Completion
