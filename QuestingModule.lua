@@ -1513,6 +1513,9 @@ function UpdateRQEQuestFrame()
 
 						-- Clears Macro Data
 						RQEMacro:ClearMacroContentByName("RQE Macro")
+
+						-- Clear any existing super tracking
+						C_SuperTrack.ClearSuperTrackedContent()
 						
 						-- Clicks Waypoint Button if autoClickWaypointButton is true
 						RQE:AutoClickQuestLogIndexWaypointButton()
@@ -1524,7 +1527,7 @@ function UpdateRQEQuestFrame()
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 
 						-- Clear any existing super tracking
-						C_SuperTrack.ClearSuperTrackedContent()
+						--C_SuperTrack.ClearSuperTrackedContent()
 
 						-- Super track the new quest
 						-- This will re-super track the quest even if it's the same as the currently super tracked quest
