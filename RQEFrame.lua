@@ -1079,9 +1079,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
-			-- Clears Macro Data
-			RQEMacro:ClearMacroContentByName("RQE Macro")
-			
 			-- Your code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
 			-- Check if TomTom is loaded and compatibility is enabled
@@ -1089,6 +1086,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				TomTom.waydb:ResetProfile()
 			end
 
+			-- Clears Macro Data
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+	
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array

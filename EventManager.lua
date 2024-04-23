@@ -790,16 +790,7 @@ function RQE.handleSuperTracking(...)
 		
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(0.5, function()
-			-- Starts off by clicking initial WaypointButton for Super-Tracked Quest after brief delay
-			-- Ensure that the button exists to prevent nil errors
-			if RQE.WaypointButtons[1] then
-				RQE.WaypointButtons[1]:Click()
-			--else
-				-- Optionally log an error or handle the case where the button does not exist
-				--RQE.debugLog("Attempted to click the first WaypointButton, but it was nil.")
-			end
-		
+		C_Timer.After(0.5, function()	
 			RQE:CheckAndAdvanceStep(questID)
 			RQE:StartPeriodicChecks()
 		end)

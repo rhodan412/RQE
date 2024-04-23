@@ -2693,35 +2693,6 @@ function RQE:StartPeriodicChecks()
     
     if questData then
         local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-				
-        -- Validate stepIndex
-        if stepIndex < 1 or stepIndex > #questData then
-            RQE.infoLog("Invalid step index:", stepIndex)
-            return  -- Exit the function if stepIndex is invalid
-        end
-
-		if stepIndex == 1 then
-			if RQE.WaypointButtons[1] then
-				RQE.WaypointButtons[1]:Click()
-			end
-		end
-		
-        local stepData = questData[stepIndex]
-        
-        RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
-		
-        local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-        local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-
-        if funcResult then
-            RQE.infoLog("Function for current step executed successfully.")
-        elseif failFuncResult then
-            local failedIndex = stepData.failedIndex or 1
-            RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
-            self:ClickWaypointButtonForIndex(failedIndex)
-        else
-            RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-        end
 		
         -- Check if the quest is ready for turn-in and if there is a specific step to jump to for turn-in
         if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
@@ -2734,6 +2705,29 @@ function RQE:StartPeriodicChecks()
             end
             RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
             return
+        end
+		
+        -- Validate stepIndex
+        if stepIndex < 1 or stepIndex > #questData then
+            RQE.infoLog("Invalid step index:", stepIndex)
+            return  -- Exit the function if stepIndex is invalid
+        end
+
+        local stepData = questData[stepIndex]
+        
+        RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
+        
+        local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+        local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+
+        if funcResult then
+            RQE.infoLog("Function for current step executed successfully.")
+        elseif failFuncResult then
+            local failedIndex = stepData.failedIndex or 1
+            RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
+            self:ClickWaypointButtonForIndex(failedIndex)
+        else
+            RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
         end
     end
 end
@@ -2759,8 +2753,6 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
             -- Update stepIndex globally or within a managed scope
             self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex is how you track the current step globally
             self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
-			
-			--RQE:StartPeriodicChecks()
         else
             RQE.infoLog("No button found for next quest step:", buttonIndex)
         end
@@ -3896,15 +3888,13 @@ function RQE:AutoClickQuestLogIndexWaypointButton()
             RQE.debugLog("No super tracked quest.")
             return
         end
-		
-		C_Timer.After(2, function()
-			-- Use the new LastClickedButtonRef for the operation
-			if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.Click then
-				RQE.LastClickedButtonRef:Click()
-			else
-				RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
-			end
-		end)
+
+        -- Use the new LastClickedButtonRef for the operation
+        if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.Click then
+            RQE.LastClickedButtonRef:Click()
+        else
+            RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
+        end
     end
 end
 
@@ -4013,22 +4003,22 @@ end
 
 
 
-function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
-    -- Loop through all WaypointButtons
-    for i, button in ipairs(RQE.WaypointButtons) do
-        -- Check if the button's step index matches the current step index
-        if button.stepIndex == currentStepIndex then
-            -- This is the button for the current step, so highlight it
-            button.bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-            -- Store this button as the last highlighted button
-            self.LastHighlightedWaypointButton = button
-        elseif self.LastHighlightedWaypointButton == button then
-            -- This button was previously highlighted, but is no longer the current step
-            -- Reset its appearance to the default texture
-            button.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
-        end
-    end
-end
+-- function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
+    -- -- Loop through all WaypointButtons
+    -- for i, button in ipairs(RQE.WaypointButtons) do
+        -- -- Check if the button's step index matches the current step index
+        -- if button.stepIndex == currentStepIndex then
+            -- -- This is the button for the current step, so highlight it
+            -- button.bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+            -- -- Store this button as the last highlighted button
+            -- self.LastHighlightedWaypointButton = button
+        -- elseif self.LastHighlightedWaypointButton == button then
+            -- -- This button was previously highlighted, but is no longer the current step
+            -- -- Reset its appearance to the default texture
+            -- button.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+        -- end
+    -- end
+-- end
 
 
 -- Craft Specific Item for Quest

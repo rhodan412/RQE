@@ -1504,7 +1504,22 @@ function UpdateRQEQuestFrame()
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
-					else				
+					else
+						C_Map.ClearUserWaypoint()
+						-- Check if TomTom is loaded and compatibility is enabled
+						if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+							TomTom.waydb:ResetProfile()
+						end
+
+						-- Reset the "Clicked" WaypointButton to nil
+						RQE.LastClickedIdentifier = nil
+						
+						-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
+						RQE.WaypointButtons[1]:Click()
+						
+						-- Reset the Last Clicked WaypointButton to be "1"
+						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+						
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 							
@@ -1513,21 +1528,13 @@ function UpdateRQEQuestFrame()
 
 						-- Clears Macro Data
 						RQEMacro:ClearMacroContentByName("RQE Macro")
-
+						
 						-- Clear any existing super tracking
+						C_SuperTrack.SetSuperTrackedQuestID(0)
 						C_SuperTrack.ClearSuperTrackedContent()
 						
 						-- Clicks Waypoint Button if autoClickWaypointButton is true
-						RQE:AutoClickQuestLogIndexWaypointButton()
-		
-						-- Reset the "Clicked" WaypointButton to nil
-						RQE.LastClickedIdentifier = nil
-
-						-- Reset the Last Clicked WaypointButton to be "1"
-						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-
-						-- Clear any existing super tracking
-						--C_SuperTrack.ClearSuperTrackedContent()
+						--RQE:AutoClickQuestLogIndexWaypointButton()
 
 						-- Super track the new quest
 						-- This will re-super track the quest even if it's the same as the currently super tracked quest
@@ -2023,7 +2030,7 @@ function UpdateRQEWorldQuestFrame()
 					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
-				else	
+				else					
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					
@@ -2033,12 +2040,19 @@ function UpdateRQEWorldQuestFrame()
 					-- Clears Macro Data
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 					
+					-- -- Clear any existing super tracking
+					-- C_SuperTrack.SetSuperTrackedQuestID(0)
+					-- C_SuperTrack.ClearSuperTrackedContent()
+					
 					-- Clicks Waypoint Button if autoClickWaypointButton is true
-					RQE:AutoClickQuestLogIndexWaypointButton()
+					--RQE:AutoClickQuestLogIndexWaypointButton()
 						
 					-- Reset the "Clicked" WaypointButton to nil
 					RQE.LastClickedIdentifier = nil
-
+					
+					-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
+					RQE.WaypointButtons[1]:Click()
+					
 					-- Reset the Last Clicked WaypointButton to be "1"
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 					
