@@ -2693,7 +2693,6 @@ function RQE:StartPeriodicChecks()
     
     if questData then
         local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		
         -- Validate stepIndex
         if stepIndex < 1 or stepIndex > #questData then
             RQE.infoLog("Invalid step index:", stepIndex)

@@ -103,6 +103,7 @@ local eventsToRegister = {
 	"TRACKED_ACHIEVEMENT_UPDATE",
 	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
+	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
@@ -167,6 +168,7 @@ local function HandleEvents(frame, event, ...)
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
 		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
+		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		WORLD_STATE_TIMER_START = function(...) RQE.handleWorldStateTimerStart(select(1, ...), select(2, ...), select(3, ...)) end,
@@ -785,12 +787,21 @@ function RQE.handleSuperTracking(...)
 	else
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 	end
-	
+		
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
+			-- Starts off by clicking initial WaypointButton for Super-Tracked Quest after brief delay
+			-- Ensure that the button exists to prevent nil errors
+			if RQE.WaypointButtons[1] then
+				RQE.WaypointButtons[1]:Click()
+			--else
+				-- Optionally log an error or handle the case where the button does not exist
+				--RQE.debugLog("Attempted to click the first WaypointButton, but it was nil.")
+			end
+		
 			RQE:CheckAndAdvanceStep(questID)
-			-- RQE:StartPeriodicChecks()
+			RQE:StartPeriodicChecks()
 		end)
 	end
 	
@@ -989,7 +1000,7 @@ function RQE.handleZoneChange(self, event, ...)
 			-- RQE.updateScenarioUI()
 		end)
 	else
-		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		
 		-- SortQuestsByProximity()   -- HANDLED THRU ZONE_CHANGED_NEW_AREA
 		-- AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
@@ -1009,10 +1020,10 @@ function RQE.handleZoneChange(self, event, ...)
 	-- Auto Clicks the QuestLogIndexButton when this event fires
 	--RQE:AutoClickQuestLogIndexWaypointButton()
 	
-	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE:StartPeriodicChecks()
-	end
+	-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- RQE:StartPeriodicChecks()
+	-- end
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -1036,7 +1047,7 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		RQE:UpdateMapIDDisplay()
 
 		-- Call the functions to update the frame
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 				
 		-- if C_Scenario.IsInScenario() then  -- SHOULD BE HANDLED THRU SOMETHING LIKE SCENARIO_UPDATE
 			-- RQE.ScenarioChildFrame:Show()
@@ -1086,11 +1097,28 @@ end
 
 -- Handles UNIT_AURA event:
 function RQE.handleUnitAura()
-	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE:StartPeriodicChecks()
+    -- Only process the event if it's for the player
+    if unitTarget == "player" then
+        -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+        if RQE.db.profile.autoClickWaypointButton then
+            RQE:StartPeriodicChecks()
+        end
+    end
+end
+
+
+
+-- Handles UNIT_QUEST_LOG_CHANGED event:
+function RQE.handleUnitQuestLogChange()
+    -- Only process the event if it's for the player
+    if unitTarget == "player" then
+		-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+		if RQE.db.profile.autoClickWaypointButton then
+			RQE:StartPeriodicChecks()
+		end
 	end
 end
+
 
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
@@ -1122,11 +1150,18 @@ end
 
 
 -- Handles UPDATE_INSTANCE_INFO Event
--- Fired when data from RequestRaidInfo is available
+-- Fired when data from RequestRaidInfo is available and also when player uses portals
 function RQE.handleInstanceInfoUpdate()
     -- startTime = debugprofilestop()  -- Start timer
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
+	
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		C_Timer.After(0.5, function()
+			RQE:StartPeriodicChecks()
+		end)
+	end
 	
 	-- Updates the RQEFrame with the appropriate super tracked quest
 	UpdateFrame()
@@ -1208,20 +1243,22 @@ function RQE.handleQuestStatusUpdate(...)
 			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Lines Cached", 0, 1, 0)  -- Bright Green
 		end
 		
-	-- -- Check to advance to next step in quest
-	-- if RQE.db.profile.autoClickWaypointButton then
-		-- local extractedQuestID
-		
-		-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		-- end
+		-- -- Check to advance to next step in quest
+		-- if RQE.db.profile.autoClickWaypointButton then
+			-- local extractedQuestID
+			
+			-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			-- end
 
-		-- -- Determine questID based on various fallbacks
-		-- questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-		
-		-- C_Timer.After(0.5, function()
-			-- RQE:CheckAndAdvanceStep(questID)
-		-- end)
+			-- -- Determine questID based on various fallbacks
+			-- questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+			
+			-- C_Timer.After(0.5, function()
+				-- RQE:CheckAndAdvanceStep(questID)
+				-- RQE:StartPeriodicChecks()
+			-- end)
+		-- end
 	end
 	
     -- RQE:ClearWQTracking()
@@ -1380,6 +1417,7 @@ function RQE.handleQuestComplete()
 		C_Timer.After(2, function()
 			RQE.infoLog("Clicking QuestLogIndexButton following QUEST_COMPLETE event")
 			RQE.ClickUnknownQuestButton()
+			RQE:StartPeriodicChecks()
 		end)
 	end
 	
@@ -1817,6 +1855,7 @@ function RQE.handleQuestFinished()
 			RQE:CheckAndAdvanceStep(questID)
 			--RQE:ClickSuperTrackedQuestButton()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
+			RQE:StartPeriodicChecks()
 		end)
 	end
 	
