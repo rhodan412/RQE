@@ -2693,16 +2693,23 @@ function RQE:StartPeriodicChecks()
     
     if questData then
         local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+				
         -- Validate stepIndex
         if stepIndex < 1 or stepIndex > #questData then
             RQE.infoLog("Invalid step index:", stepIndex)
             return  -- Exit the function if stepIndex is invalid
         end
 
+		if stepIndex == 1 then
+			if RQE.WaypointButtons[1] then
+				RQE.WaypointButtons[1]:Click()
+			end
+		end
+		
         local stepData = questData[stepIndex]
         
         RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
-        
+		
         local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
         local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
 
@@ -2715,12 +2722,28 @@ function RQE:StartPeriodicChecks()
         else
             RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
         end
+		
+        -- Check if the quest is ready for turn-in and if there is a specific step to jump to for turn-in
+        if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
+            for index, step in ipairs(questData) do
+                if step.objectiveIndex == 99 then
+                    RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
+                    self:ClickWaypointButtonForIndex(index)
+                    return
+                end
+            end
+            RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
+            return
+        end
     end
 end
 
 
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.
 function RQE:AdvanceQuestStep(questID, stepIndex)
+	-- Clears Macro Data
+	RQEMacro:ClearMacroContentByName("RQE Macro")
+	
     RQE.infoLog("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
     local questData = self.getQuestData(questID)
     local nextIndex = stepIndex + 1
@@ -2736,6 +2759,8 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
             -- Update stepIndex globally or within a managed scope
             self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex is how you track the current step globally
             self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
+			
+			--RQE:StartPeriodicChecks()
         else
             RQE.infoLog("No button found for next quest step:", buttonIndex)
         end
@@ -3871,13 +3896,15 @@ function RQE:AutoClickQuestLogIndexWaypointButton()
             RQE.debugLog("No super tracked quest.")
             return
         end
-
-        -- Use the new LastClickedButtonRef for the operation
-        if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.Click then
-            RQE.LastClickedButtonRef:Click()
-        else
-            RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
-        end
+		
+		C_Timer.After(2, function()
+			-- Use the new LastClickedButtonRef for the operation
+			if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.Click then
+				RQE.LastClickedButtonRef:Click()
+			else
+				RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
+			end
+		end)
     end
 end
 
