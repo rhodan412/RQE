@@ -63,6 +63,7 @@ local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
 	--"BAG_UPDATE_COOLDOWN",
+	"BOSS_KILL",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
 	"CONTENT_TRACKING_UPDATE",
@@ -127,6 +128,7 @@ local function HandleEvents(frame, event, ...)
     local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
 		ADDON_LOADED = RQE.handleAddonLoaded,
+		BOSS_KILL = RQE.handleBossKill,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		CLIENT_SCENE_OPENED = function(...) RQE.HandleClientSceneOpened(select(1, ...)) end,  -- MAY NEED TO COMMENT OUT AGAIN
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
@@ -402,6 +404,14 @@ function RQE.handleAddonLoaded(addonName)
 	-- Updates frame with data from the super tracked quest (if any)
 	RQE:ClearWaypointButtonData()
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+end
+
+
+-- Function to handle BOSS_KILL event to update Scenario Frame
+function RQE.handleBossKill()
+	if C_Scenario.IsInScenario() then
+		RQE.UpdateScenarioFrame()
+	end
 end
 
 
@@ -1194,7 +1204,7 @@ function RQE.updateScenarioUI()
         if not RQE.ScenarioChildFrame:IsVisible() then
             RQE.ScenarioChildFrame:Show()
             RQE.InitializeScenarioFrame()
-            RQE.UpdateScenarioFrame()
+            --RQE.UpdateScenarioFrame()
         else
 			RQE.InitializeScenarioFrame()
             RQE.UpdateScenarioFrame()
@@ -1206,7 +1216,6 @@ function RQE.updateScenarioUI()
         RQE.ScenarioChildFrame:Hide()
         RQE.StopTimer()
     end
-	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE:UpdateRQEQuestFrameVisibility()
