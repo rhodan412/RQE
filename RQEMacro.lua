@@ -15,7 +15,7 @@ RQE.Buttons.UpdateMagicButtonIcon = function()
     if macroIndex and macroIndex > 0 then
         local _, iconID = GetMacroInfo(macroIndex)
         if iconID then
-            local MagicButton = _G["RQEMagicButton"]
+            local MagicButton = RQE.MagicButton --_G["RQEMagicButton"]
             if MagicButton then
                 MagicButton:SetNormalTexture(iconID)
                 MagicButton:SetHighlightTexture(iconID, "ADD")
