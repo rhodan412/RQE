@@ -221,6 +221,15 @@ RQEFrame:SetScript("OnMouseUp", function(self, button)
 end)
 
 
+-- Function that Scrolls the RQEFrame to the top
+function RQE.ScrollFrameToTop()
+    if ScrollFrame and slider then
+        ScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+        slider:SetValue(0)  -- Also set the slider to the top position
+    end
+end
+
+
 -- Create a button for unknown quests in the top-left corner of RQEFrame content
 -- Call the function from WPUtil.lua to create the button
 RQE.UnknownQuestButton = CreateFrame("Button", nil, content)
