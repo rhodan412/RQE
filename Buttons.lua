@@ -207,6 +207,8 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
     local MagicButton = CreateFrame("Button", "RQEMagicButton", UIParent, "SecureActionButtonTemplate")
     MagicButton:SetSize(32, 32)  -- Set the button size
     MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
+	
+    -- Storing MagicButton within the RQE table
 	RQE.MagicButton = MagicButton
 	
 	-- Update the Icon of the Magic Button

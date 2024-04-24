@@ -135,7 +135,6 @@ end
 
 -- Create the main frame
 RQEFrame = CreateFrame("Frame", "RQE.RQEFrame", UIParent, "BackdropTemplate")
---_G["RQEFrame"] = CreateFrame("Frame", "RQEFrame", UIParent, "BackdropTemplate")
 RQEFrame:SetSize(435, 300)
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.framePosition then
@@ -155,9 +154,6 @@ RQEFrame:SetBackdrop({
     insets = { left = 0, right = 0, top = 1, bottom = 0 }
 })
 RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
---RQEFrame:SetBackdropColor(0, 0, 0, 0.5)  -- this was before the change to allow the user to make the QuestingFrame opacity change
-
-
 RQE.OnCoordinateClicked = RQE.OnCoordinateClicked or function() end
 
 
