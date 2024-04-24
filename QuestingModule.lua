@@ -1510,7 +1510,10 @@ function UpdateRQEQuestFrame()
 						if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 							TomTom.waydb:ResetProfile()
 						end
-
+						
+						-- Scrolls the RQEFrame to top on super track
+						RQE.ScrollFrameToTop()
+						
 						-- Reset the "Clicked" WaypointButton to nil
 						RQE.LastClickedIdentifier = nil
 						
@@ -1527,12 +1530,12 @@ function UpdateRQEQuestFrame()
 						C_SuperTrack.SetSuperTrackedQuestID(0)
 						C_SuperTrack.ClearSuperTrackedContent()
 						
-						-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
-						C_Timer.After(2, function()
-							if RQE.WaypointButtons[1] then
-								RQE.WaypointButtons[1]:Click()
-							end
-						end)
+						-- -- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
+						-- C_Timer.After(2, function()
+							-- if RQE.WaypointButtons[1] then
+								-- RQE.WaypointButtons[1]:Click()
+							-- end
+						-- end)
 						
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
@@ -2034,7 +2037,7 @@ function UpdateRQEWorldQuestFrame()
 					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
-				else					
+				else			
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					
@@ -2054,10 +2057,13 @@ function UpdateRQEWorldQuestFrame()
 					-- Reset the "Clicked" WaypointButton to nil
 					RQE.LastClickedIdentifier = nil
 					
-					-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing WQuestLogIndexButton
-					if RQE.WaypointButtons[1] then
-						RQE.WaypointButtons[1]:Click()
-					end
+					-- -- Initially clicks the WaypointButton[1] after super tracking a quest via pressing WQuestLogIndexButton
+					-- if RQE.WaypointButtons[1] then
+						-- RQE.WaypointButtons[1]:Click()
+					-- end
+					
+					-- Scrolls the RQEFrame to top on super track
+					RQE.ScrollFrameToTop()
 					
 					-- Reset the Last Clicked WaypointButton to be "1"
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]

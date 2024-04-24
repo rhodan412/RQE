@@ -2697,50 +2697,137 @@ function RQE:ShowWowWikiLink(questID)
 end
 
 
+-- Variables to track the last known states
+RQE.lastKnownQuestID = nil
+RQE.lastKnownZoneID = nil
+RQE.lastKnownBuffStates = {}
+RQE.lastKnownInventory = {}
+
+function RQE.hasStateChanged()
+    local currentQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local currentZoneID = C_Map.GetBestMapForUnit("player")
+    local currentBuffs = RQE.getCurrentBuffs()
+    local currentInventory = RQE.getCurrentInventory()
+
+    -- Check if there's been a change in quest ID, zone ID, buffs, or inventory
+    if currentQuestID ~= RQE.lastKnownQuestID or
+       currentZoneID ~= RQE.lastKnownZoneID or
+       not RQE.compareTables(currentBuffs, RQE.lastKnownBuffStates) or
+       not RQE.compareTables(currentInventory, RQE.lastKnownInventory) then
+
+        -- Update last known states
+        RQE.lastKnownQuestID = currentQuestID
+        RQE.lastKnownZoneID = currentZoneID
+        RQE.lastKnownBuffStates = currentBuffs
+        RQE.lastKnownInventory = currentInventory
+
+        return true
+    end
+
+    return false
+end
+
+
+-- Compare Function Tables for Buffs and Inventory
+function RQE.compareTables(t1, t2)
+    if #t1 ~= #t2 then return false end
+    for key, value in pairs(t1) do
+        if t2[key] ~= value then return false end
+    end
+    return true
+end
+
+
+-- Function to place Current Buffs in table
+function RQE.getCurrentBuffs()
+    local buffs = {}
+    for i = 1, 40 do  -- Typically there are not more than 40 buffs
+        local name = UnitBuff("player", i)
+        if not name then break end
+        table.insert(buffs, name)
+    end
+    return buffs
+end
+
+
+-- Function to place Current Inventory in table
+function RQE.getCurrentInventory()
+    local inventory = {}
+    for bag = 0, 4 do  -- Main bags
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
+            local itemID = C_Container.GetContainerItemID(bag, slot)
+            if itemID then
+                local _, itemCount = C_Container.GetContainerItemInfo(bag, slot)
+                if not inventory[itemID] then
+                    inventory[itemID] = 0
+                end
+                inventory[itemID] = inventory[itemID] + (itemCount or 0)  -- Ensure itemCount is not nil before addition
+            end
+        end
+    end
+    return inventory
+end
+
+
 -- Periodic check setup
-function RQE:StartPeriodicChecks()	
-	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	local questData = RQE.getQuestData(superTrackedQuestID)
+function RQE:StartPeriodicChecks()
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	
+    if not superTrackedQuestID then
+        RQE.debugLog("No super tracked quest ID found, skipping checks.")
+        return
+    end
+	
+    local questData = RQE.getQuestData(superTrackedQuestID)
+    local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
 
-	if questData then
-		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		
-		-- Check if the quest is ready for turn-in and if there is a specific step to jump to for turn-in
-		if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-			for index, step in ipairs(questData) do
-				if step.objectiveIndex == 99 then
-					RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
-					self:ClickWaypointButtonForIndex(index)
-					return
-				end
-			end
-			RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
-			return
-		end
-		
-		-- Validate stepIndex
-		if stepIndex < 1 or stepIndex > #questData then
-			RQE.infoLog("Invalid step index:", stepIndex)
-			return  -- Exit the function if stepIndex is invalid
-		end
+    if questData then
+        local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+        local stepData = questData[stepIndex]
 
-		local stepData = questData[stepIndex]
-		
-		RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
-		
-		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-		local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+        -- Handle turn-in readiness
+        if isReadyTurnIn then
+            for index, step in ipairs(questData) do
+                if step.objectiveIndex == 99 then
+                    RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
+                    self:ClickWaypointButtonForIndex(index)
+                    return
+                end
+            end
+            RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
+        end
 
-		if funcResult then
-			RQE.infoLog("Function for current step executed successfully.")
-		elseif failFuncResult then
-			local failedIndex = stepData.failedIndex or 1
-			RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
-			self:ClickWaypointButtonForIndex(failedIndex)
+        -- Check if the specific functions related to the current step need to be triggered
+        if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
+            RQE.infoLog("No relevant changes detected for the current step, skipping periodic checks.")
+            return
 		else
-			RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-		end
-	end
+			RQE.infoLog("Possible relevant changes detected!")
+        end
+
+        RQE.infoLog("Relevant changes detected or required for the current step.")
+
+        -- Validate stepIndex
+        if stepIndex < 1 or stepIndex > #questData then
+            RQE.infoLog("Invalid step index:", stepIndex)
+            return  -- Exit if stepIndex is invalid
+        end
+
+        -- Process the current step
+        local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+        if funcResult then
+            RQE.infoLog("Function for current step executed successfully.")
+        else
+            local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+            if failFuncResult then
+                local failedIndex = stepData.failedIndex or 1
+                RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
+                self:ClickWaypointButtonForIndex(failedIndex)
+            else
+                RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+            end
+        end
+    end
 end
 
 
