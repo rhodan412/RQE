@@ -281,6 +281,17 @@ RQE.LastClickedButtonRef = nil
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
 
+local dragonMounts = {
+    "Cliffside Wylderdrake",
+    "Flourishing Whimsydrake",
+    "Grotto Netherwing Drake",
+    "Highland Drake",
+    "Renewed Proto-Drake",
+    "Windborne Velocidrake",
+    "Winding Slitherdrake"
+}
+
+
 -- Addon Initialization
 function RQE:OnInitialize()
 	-- Start the timer
@@ -2687,49 +2698,49 @@ end
 
 
 -- Periodic check setup
-function RQE:StartPeriodicChecks()
-    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    local questData = RQE.getQuestData(superTrackedQuestID)
-    
-    if questData then
-        local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		
-        -- Check if the quest is ready for turn-in and if there is a specific step to jump to for turn-in
-        if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-            for index, step in ipairs(questData) do
-                if step.objectiveIndex == 99 then
-                    RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
-                    self:ClickWaypointButtonForIndex(index)
-                    return
-                end
-            end
-            RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
-            return
-        end
-		
-        -- Validate stepIndex
-        if stepIndex < 1 or stepIndex > #questData then
-            RQE.infoLog("Invalid step index:", stepIndex)
-            return  -- Exit the function if stepIndex is invalid
-        end
+function RQE:StartPeriodicChecks()	
+	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questData = RQE.getQuestData(superTrackedQuestID)
 
-        local stepData = questData[stepIndex]
-        
-        RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
-        
-        local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-        local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+	if questData then
+		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		
+		-- Check if the quest is ready for turn-in and if there is a specific step to jump to for turn-in
+		if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
+			for index, step in ipairs(questData) do
+				if step.objectiveIndex == 99 then
+					RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
+					self:ClickWaypointButtonForIndex(index)
+					return
+				end
+			end
+			RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
+			return
+		end
+		
+		-- Validate stepIndex
+		if stepIndex < 1 or stepIndex > #questData then
+			RQE.infoLog("Invalid step index:", stepIndex)
+			return  -- Exit the function if stepIndex is invalid
+		end
 
-        if funcResult then
-            RQE.infoLog("Function for current step executed successfully.")
-        elseif failFuncResult then
-            local failedIndex = stepData.failedIndex or 1
-            RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
-            self:ClickWaypointButtonForIndex(failedIndex)
-        else
-            RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-        end
-    end
+		local stepData = questData[stepIndex]
+		
+		RQE.infoLog("Checking functions for quest ID:", superTrackedQuestID, "at step index:", stepIndex)
+		
+		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+		local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+
+		if funcResult then
+			RQE.infoLog("Function for current step executed successfully.")
+		elseif failFuncResult then
+			local failedIndex = stepData.failedIndex or 1
+			RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
+			self:ClickWaypointButtonForIndex(failedIndex)
+		else
+			RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+		end
+	end
 end
 
 
@@ -3898,7 +3909,6 @@ function RQE:AutoClickQuestLogIndexWaypointButton()
     end
 end
 
-
 	
 -- Function to check the memory usage of your addon
 function RQE:CheckMemoryUsage()
@@ -4105,6 +4115,23 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
     end
 
     print(reagentsString)
+end
+
+
+-- Function that checks to see if player has a DragonRiding Aura/Mount active
+function RQE.CheckForDragonMounts()
+    local i = 1
+    while true do
+        local name = UnitAura("player", i)
+        if not name then break end  -- No more auras to check, exit loop
+        for _, dragonName in ipairs(dragonMounts) do
+            if name == dragonName then
+                return true  -- Dragon mount aura found
+            end
+        end
+        i = i + 1
+    end
+    return false  -- No dragon mount aura found
 end
 
 
