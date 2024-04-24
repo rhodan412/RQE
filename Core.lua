@@ -3889,7 +3889,8 @@ function RQE.UntrackAutomaticWorldQuests()
             RQE.infoLog("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
 
             -- If the quest is not in the current area and it was tracked automatically, untrack it
-            if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
+            if watchType == Enum.QuestWatchType.Automatic then
+			-- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
                 C_QuestLog.RemoveWorldQuestWatch(questID)
                 RQE.infoLog("Untracked automatic World Quest ID: " .. questID)
             else
