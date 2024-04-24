@@ -1068,6 +1068,11 @@ function RQE.handleZoneChange(self, event, ...)
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+
+	-- Scrolls frame to top when changing to a new area
+	RQE.QuestScrollFrameToTop()
+	
+	RQE.UntrackAutomaticWorldQuests()
 end
 
 
@@ -1141,11 +1146,14 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		end
 	end
 	
-	-- local duration = debugprofilestop() - startTime
-	-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	-- Scrolls frame to top when changing to a new area
+	RQE.QuestScrollFrameToTop()
 	
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
@@ -1188,10 +1196,12 @@ function RQE.updateScenarioUI()
             RQE.InitializeScenarioFrame()
             RQE.UpdateScenarioFrame()
         else
+			RQE.InitializeScenarioFrame()
             RQE.UpdateScenarioFrame()
         end
         RQE.Timer_CheckTimers()
         RQE.StartTimer()
+		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
     else
         RQE.ScenarioChildFrame:Hide()
         RQE.StopTimer()
