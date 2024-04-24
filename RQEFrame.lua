@@ -221,12 +221,14 @@ RQEFrame:SetScript("OnMouseUp", function(self, button)
 end)
 
 
--- Function that Scrolls the RQEFrame to the top
+-- Function that Scrolls the RQEFrame to the top as long as player doesn't have mouse in RQEFrame window
 function RQE.ScrollFrameToTop()
-    if ScrollFrame and slider then
-        ScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
-        slider:SetValue(0)  -- Also set the slider to the top position
-    end
+	if RQEFrame and not RQEFrame:IsMouseOver() then
+		if ScrollFrame and slider then
+			ScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+			slider:SetValue(0)  -- Also set the slider to the top position
+		end
+	end
 end
 
 
