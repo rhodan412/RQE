@@ -175,7 +175,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Auto Quest Watch",
 					desc = "Automatically track quests as soon as you obtain them and after achieving an objective.\n\n" ..
-							"|cffff0000If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
+							"|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 					order = 8,  -- Adjust this based on where you want it in the order
 					get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
 					set = function(_, newValue) 
@@ -187,7 +187,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Auto Quest Progress",
 					desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n" ..
-							"|cffff0000If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
+							"|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 					order = 9,  -- Adjust this based on where you want it in the order
 					get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
 					set = function(_, newValue) 
