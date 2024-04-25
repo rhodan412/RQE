@@ -69,6 +69,7 @@ local eventsToRegister = {
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	--"CRITERIA_UPDATE",
+	"GROUP_ROSTER_UPDATE",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	"LEAVE_PARTY_CONFIRMATION",
@@ -129,6 +130,7 @@ local function HandleEvents(frame, event, ...)
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
 		ADDON_LOADED = RQE.handleAddonLoaded,
 		BOSS_KILL = RQE.handleBossKill,
+		GROUP_ROSTER_UPDATE = RQE.handleBossKill,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		CLIENT_SCENE_OPENED = function(...) RQE.HandleClientSceneOpened(select(1, ...)) end,  -- MAY NEED TO COMMENT OUT AGAIN
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
@@ -407,9 +409,13 @@ function RQE.handleAddonLoaded(addonName)
 end
 
 
--- Function to handle BOSS_KILL event to update Scenario Frame
+-- Function to handle BOSS_KILL or GROUP_ROSTER_UPDATE event to update Scenario Frame
 function RQE.handleBossKill()
-	if C_Scenario.IsInScenario() then
+	if C_Scenario.IsInScenario() then		
+        if not RQE.ScenarioChildFrame:IsVisible() then
+            RQE.ScenarioChildFrame:Show()
+		end
+		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
 	end
 end
