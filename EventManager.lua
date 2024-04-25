@@ -86,16 +86,16 @@ local eventsToRegister = {
 	"QUEST_AUTOCOMPLETE",
 	"QUEST_CURRENCY_LOOT_RECEIVED",
 	--"QUEST_DATA_LOAD_RESULT",
-	--"QUEST_FINISHED",   -- MAY BE REDUNDANT
+	--"QUEST_FINISHED",				-- MAY BE REDUNDANT
 	"QUEST_LOG_CRITERIA_UPDATE",
-	"QUEST_LOG_UPDATE",  -- Possible High Lag and unnecessary event firing/frequency, but necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
+	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	--"QUEST_LOOT_RECEIVED",
-	--"QUEST_POI_UPDATE",  -- Possible High Lag and unnecessary event firing/frequency
+	--"QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	"QUEST_WATCH_LIST_CHANGED",
 	"QUEST_WATCH_UPDATE",
-	-- "QUESTLINE_UPDATE",  -- Commenting out as this fires too often resulting in some lag
+	-- "QUESTLINE_UPDATE",			-- Commenting out as this fires too often resulting in some lag
 	"SCENARIO_COMPLETED",
 	"SCENARIO_CRITERIA_UPDATE",
 	--"SCENARIO_POI_UPDATE",
@@ -104,7 +104,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
-	--"UNIT_AURA",
+	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
@@ -1208,6 +1208,17 @@ end
 
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
+    -- Get the current scenario information
+    local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
+
+    -- Check if the scenario has been marked as completed
+    if completed then
+        print("Scenario is completed. Skipping updates.")
+        -- If the scenario is complete, avoid further updates or handle differently
+        return
+    end
+
+    -- If not completed, proceed with regular updates
 	if not IsFlying("player") and not UnitOnTaxi("player") then
 		RQE.LogScenarioInfo()
 		RQE.PrintScenarioCriteriaInfoByStep()
@@ -1259,9 +1270,19 @@ end
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate(...)
     -- startTime = debugprofilestop()  -- Start timer
+
+    -- Check for actual progress in the quest objectives of all watched quests
+    if not RQE.hasQuestProgressChanged() then
+        RQE.debugLog("No quest progress made across watched quests. Skipping update.")
+        return
+    else
+		-- Process updates only if there's actual progress detected
+		RQE.debugLog("Quest progress detected across watched quests. Processing update.")
+	end
+	
     local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
     local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
-
+	
 	-- if questID == nil then
 		-- questID = currentSuperTrackedquestID
 	-- end
@@ -1383,6 +1404,8 @@ function RQE.handleQuestCurrencyLootReceived(questID, currencyId, quantity)
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_CURRENCY_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	
+	RQE.QuestScrollFrameToTop()
 end
 
 
