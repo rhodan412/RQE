@@ -1198,25 +1198,27 @@ end
 
 	
 -- Colorization of the RQEFrame
-local function colorizeObjectives(objectivesText)
-    local objectives = { strsplit("\n", objectivesText) }
+local function colorizeObjectives(questID)
+    local objectivesData = C_QuestLog.GetQuestObjectives(questID)
     local colorizedText = ""
 
-    for _, objective in ipairs(objectives) do
-        local current, total = objective:match("(%d+)/(%d+)")  -- Extract current and total progress
-        current, total = tonumber(current), tonumber(total)
-
-        if current and total and current >= total then
+    for _, objective in ipairs(objectivesData) do
+        local description = objective.text
+        if objective.finished then
             -- Objective complete, colorize in green
-            colorizedText = colorizedText .. "|cff00ff00" .. objective .. "|r\n"
+            colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+        elseif objective.numFulfilled > 0 then
+            -- Objective partially complete, colorize in yellow
+            colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
         else
-            -- Objective incomplete, colorize in white
-            colorizedText = colorizedText .. "|cffffffff" .. objective .. "|r\n"
+            -- Objective has not started or no progress, leave as white
+            colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
         end
     end
 
     return colorizedText
 end
+
 
 
 -- Simulates pressing the "Clear Window" Button
@@ -1532,7 +1534,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     end
 	
     -- Apply colorization to objectivesText
-    objectivesText = colorizeObjectives(objectivesText)
+    objectivesText = colorizeObjectives(questID)
 
     if RQE.QuestObjectives then  -- Check if QuestObjectives is initialized
         RQE.QuestObjectives:SetText(objectivesText)
@@ -1675,24 +1677,24 @@ end
 -- 10. Scenario Functions
 ---------------------------------------------------
 
--- Define the slash command handler function for timer start
-local function HandleSlashCommands(msg, editbox)
-    local command = string.lower(msg)
+-- -- Define the slash command handler function for timer start
+-- local function HandleSlashCommands(msg, editbox)
+    -- local command = string.lower(msg)
 
-    if command == "start" then
-        StartTimer() -- Start the timer
-        print("Timer started.")
-    elseif command == "stop" then
-        StopTimer() -- Stop the timer
-        print("Timer stopped.")
-    else
-        print("Invalid command. Use '/rqetimer start' to start the timer or '/rqetimer stop' to stop it.")
-    end
-end
+    -- if command == "start" then
+        -- StartTimer() -- Start the timer
+        -- print("Timer started.")
+    -- elseif command == "stop" then
+        -- StopTimer() -- Stop the timer
+        -- print("Timer stopped.")
+    -- else
+        -- print("Invalid command. Use '/rqetimer start' to start the timer or '/rqetimer stop' to stop it.")
+    -- end
+-- end
 
--- Register the slash command
-SLASH_MYTIMER1 = "/rqetimer"
-SlashCmdList["MYTIMER"] = HandleSlashCommands
+-- -- Register the slash command
+-- SLASH_MYTIMER1 = "/rqetimer"
+-- SlashCmdList["MYTIMER"] = HandleSlashCommands
 
 
 -- Function to fetch/print Scenario Criteria information
@@ -2728,14 +2730,64 @@ function RQE.hasStateChanged()
 end
 
 
--- Compare Function Tables for Buffs and Inventory
-function RQE.compareTables(t1, t2)
-    if #t1 ~= #t2 then return false end
-    for key, value in pairs(t1) do
-        if t2[key] ~= value then return false end
+-- Function will compare the current objectives with the last known objectives stored
+function RQE.hasQuestProgressChanged()
+    local currentObjectives = RQE.getAllWatchedQuestsObjectives()
+    if not RQE.lastKnownObjectives then
+        RQE.lastKnownObjectives = currentObjectives
+        return true
     end
-    return true
+
+    -- Compare current objectives with last known objectives for all quests
+    for questID, objectives in pairs(currentObjectives) do
+        local lastObjectives = RQE.lastKnownObjectives[questID]
+        if not lastObjectives or #objectives ~= #lastObjectives then
+            RQE.lastKnownObjectives = currentObjectives
+            return true
+        end
+
+        for index, objective in ipairs(objectives) do
+            local lastObjective = lastObjectives[index]
+            if not lastObjective or objective.description ~= lastObjective.description or objective.completed ~= lastObjective.completed then
+                RQE.lastKnownObjectives = currentObjectives
+                return true
+            end
+        end
+    end
+
+    return false
 end
+
+function RQE.getAllWatchedQuestsObjectives()
+    local objectives = {}
+    local watchedQuests = C_QuestLog.GetNumQuestWatches()
+    for i = 1, watchedQuests do
+        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        if questID then
+            objectives[questID] = RQE.getCurrentQuestObjectives(questID)
+        end
+    end
+    return objectives
+end
+
+
+-- Function to place Current Objectives in table
+function RQE.getCurrentQuestObjectives(questID)
+    local objectives = {}
+    local numObjectives = C_QuestLog.GetNumQuestObjectives(questID)
+    for i = 1, numObjectives do
+        local description, _, completed, fulfilled, required = GetQuestObjectiveInfo(questID, i, false)
+        table.insert(objectives, {
+            description = description,
+            completed = completed,
+            fulfilled = fulfilled,
+            required = required
+        })
+    end
+    return objectives
+end
+
+
 
 
 -- Function to place Current Buffs in table
@@ -2766,6 +2818,16 @@ function RQE.getCurrentInventory()
         end
     end
     return inventory
+end
+
+
+-- Compare Function Tables for Buffs and Inventory
+function RQE.compareTables(t1, t2)
+    if #t1 ~= #t2 then return false end
+    for key, value in pairs(t1) do
+        if t2[key] ~= value then return false end
+    end
+    return true
 end
 
 
@@ -3903,7 +3965,6 @@ function RQE.UntrackAutomaticWorldQuests()
 end
 
 
-
 -- Create Event for the sound of Quest Progress/Completion
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("QUEST_LOG_UPDATE")
@@ -3978,6 +4039,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
     end
 end)
+
 
 -- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
 function RQE:AutoClickQuestLogIndexWaypointButton()
