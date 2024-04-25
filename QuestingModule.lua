@@ -1055,34 +1055,29 @@ function RQE:ClearAchievementFrame()
 end
 
 
--- Function to Colorize the Quest Tracker Module
-local function colorizeObjectives(objectivesText)
-    local objectives = { strsplit("\n", objectivesText) }
+-- Function to Colorize the Quest Tracker Module based on objective progress using the API
+local function colorizeObjectives(questID)
+    local objectivesData = C_QuestLog.GetQuestObjectives(questID)
     local colorizedText = ""
 
-    for _, objective in ipairs(objectives) do
-        local current, total = objective:match("(%d+)/(%d+)")  -- Extract current and total progress
-        current, total = tonumber(current), tonumber(total)
-
-        if current and total then
-            if current >= total then
-                -- Objective complete, colorize in green
-                colorizedText = colorizedText .. "|cff00ff00" .. objective .. "|r\n"
-            elseif current > 0 then
-                -- Objective partially complete, colorize in yellow
-                colorizedText = colorizedText .. "|cffffff00" .. objective .. "|r\n"
-            else
-                -- Objective has not started or no progress, leave as white
-                colorizedText = colorizedText .. "|cffffffff" .. objective .. "|r\n"
-            end
+    for _, objective in ipairs(objectivesData) do
+        local description = objective.text
+        if objective.finished then
+            -- Objective complete, colorize in green
+            colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+        elseif objective.numFulfilled > 0 then
+            -- Objective partially complete, colorize in yellow
+            colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
         else
-            -- Objective text without progress numbers, leave as is
-            colorizedText = colorizedText .. objective .. "\n"
+            -- Objective has not started or no progress, leave as white
+            colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
         end
     end
 
     return colorizedText
 end
+
+
 
 
 -- Function to Add Reward Data to the Game Tooltip
@@ -1610,12 +1605,14 @@ function UpdateRQEQuestFrame()
 				local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
 				local objectivesText = objectivesTable and "" or "No objectives available."
 
-				if objectivesTable then
-					for _, objective in pairs(objectivesTable) do
-						objectivesText = objectivesText .. objective.text .. "\n"
-					end
-				end
+if objectivesTable then
+    for _, objective in pairs(objectivesTable) do
+        -- Simply append the objective text without any additional progress information
+        objectivesText = objectivesText .. objective.text .. "\n"
+    end
+end
 
+				
 				local questTitle, questLevel
 			
 				-- Use the regular quest title and level
@@ -1744,8 +1741,11 @@ function UpdateRQEQuestFrame()
 					end
 
 					if questID then
+						-- Check if the quest is ready to be turned in
+						if C_QuestLog.ReadyForTurnIn(questID) then
+							GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
 						-- Check if the quest is completed
-						if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+						elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
 							GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
 						else
 							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
@@ -1757,7 +1757,7 @@ function UpdateRQEQuestFrame()
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Objectives:")
 
-						local colorizedObjectives = colorizeObjectives(objectivesText)
+						local colorizedObjectives = colorizeObjectives(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 					end
 
@@ -1838,8 +1838,11 @@ function UpdateRQEQuestFrame()
 					end
 
 					if questID then
+						-- Check if the quest is ready to be turned in
+						if C_QuestLog.ReadyForTurnIn(questID) then
+							GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
 						-- Check if the quest is completed
-						if C_QuestLog.IsQuestFlaggedCompleted(questID) then
+						elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
 							GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
 						else
 							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
@@ -1851,7 +1854,7 @@ function UpdateRQEQuestFrame()
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Objectives:")
 
-						local colorizedObjectives = colorizeObjectives(objectivesText)
+						local colorizedObjectives = colorizeObjectives(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 					end
 
@@ -1913,7 +1916,7 @@ function UpdateRQEQuestFrame()
 				-- Check if objectivesText is blank
 				if objectivesText and objectivesText ~= "" then
 					-- Colorize each objective individually
-					local colorizedObjectives = colorizeObjectives(objectivesText)
+					local colorizedObjectives = colorizeObjectives(questID)
 					QuestObjectivesOrDescription:SetText(colorizedObjectives)
 				else
 					-- If there are no objectives, set the text as is (fallback)
@@ -2146,7 +2149,7 @@ function UpdateRQEWorldQuestFrame()
 			end
 
 			-- Apply colorization to objectivesText
-			objectivesText = colorizeObjectives(objectivesText)
+			objectivesText = colorizeObjectives(questID)
 
 			-- Create or update the quest title label
 			local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2329,7 +2332,7 @@ function UpdateRQEWorldQuestFrame()
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Objectives:")
 
-						local colorizedObjectives = colorizeObjectives(objectivesText)
+						local colorizedObjectives = colorizeObjectives(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 					end
 
