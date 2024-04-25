@@ -413,51 +413,19 @@ end
 
 -- Function to handle BOSS_KILL, ENCOUNTER_END, or GROUP_ROSTER_UPDATE events to update Scenario Frame
 function RQE.handleBossKill(self, event, ...)
-    -- Print messages based on the event
-    if event == "BOSS_KILL" then
-        local encounterID, encounterName = ...
-        print("BOSS_KILL event called for", encounterName, "with ID", encounterID)
-    elseif event == "ENCOUNTER_END" then
-        local encounterID, encounterName, difficultyID, groupSize, success = ...
-        print("ENCOUNTER_END event called for", encounterName, "with ID", encounterID, "Success:", success)
-    elseif event == "GROUP_ROSTER_UPDATE" then
-        print("GROUP_ROSTER_UPDATE event called")
-    end
+    -- -- Print messages based on the event
+    -- if event == "BOSS_KILL" then
+        -- local encounterID, encounterName = ...
+        -- print("BOSS_KILL event called for", encounterName, "with ID", encounterID)
+    -- elseif event == "ENCOUNTER_END" then
+        -- local encounterID, encounterName, difficultyID, groupSize, success = ...
+        -- print("ENCOUNTER_END event called for", encounterName, "with ID", encounterID, "Success:", success)
+    -- elseif event == "GROUP_ROSTER_UPDATE" then
+        -- print("GROUP_ROSTER_UPDATE event called")
+    -- end
 	
-	print("Attempting to update scenario frame")
-	RQE.UpdateScenarioFrame()
-    
-	C_Timer.After(1, function()
-		print("After 1 second delay...")
-		print("Initializing frame for scenario")
-        RQE.InitializeScenarioFrame()
-		print("Updating scenario frame")
-        RQE.UpdateScenarioFrame()
-	end)
-	
-	C_Timer.After(1, function()
-		print("After 2 second delay...")
-		print("Initializing frame for scenario")
-        RQE.InitializeScenarioFrame()
-		print("Updating scenario frame")
-        RQE.UpdateScenarioFrame()
-	end)
-	
-	C_Timer.After(1, function()
-		print("After 3 second delay...")
-		print("Initializing frame for scenario")
-        RQE.InitializeScenarioFrame()
-		print("Updating scenario frame")
-        RQE.UpdateScenarioFrame()
-	end)
-	
-	C_Timer.After(4, function()
-		print("After 4 second delay...")
-		print("Initializing frame for scenario")
-        RQE.InitializeScenarioFrame()
-		print("Updating scenario frame")
-        RQE.UpdateScenarioFrame()
-	end)
+	-- RQE.InitializeScenarioFrame()
+	-- RQE.UpdateScenarioFrame()
 end
 
 
@@ -1258,9 +1226,7 @@ function RQE.updateScenarioUI()
     else
         RQE.ScenarioChildFrame:Hide()
         RQE.StopTimer()
-    end
-	RQE.UpdateScenarioFrame()
-	
+    end	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE:UpdateRQEQuestFrameVisibility()
