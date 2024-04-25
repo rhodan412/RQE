@@ -63,13 +63,14 @@ local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
 	--"BAG_UPDATE_COOLDOWN",
-	"BOSS_KILL",
+	--"BOSS_KILL",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	--"CRITERIA_UPDATE",
-	"GROUP_ROSTER_UPDATE",
+	--"ENCOUNTER_END",
+	--"GROUP_ROSTER_UPDATE",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	"LEAVE_PARTY_CONFIRMATION",
@@ -96,14 +97,14 @@ local eventsToRegister = {
 	"QUEST_WATCH_UPDATE",
 	-- "QUESTLINE_UPDATE",  -- Commenting out as this fires too often resulting in some lag
 	"SCENARIO_COMPLETED",
-	--"SCENARIO_CRITERIA_UPDATE",  -- IT SEEMS TO CAUSE SIGNIFICANT LAG BETWEEN STAGES
+	"SCENARIO_CRITERIA_UPDATE",
 	--"SCENARIO_POI_UPDATE",
 	"SCENARIO_UPDATE",
 	"START_TIMER",
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
-	"UNIT_AURA",
+	--"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
@@ -135,6 +136,7 @@ local function HandleEvents(frame, event, ...)
 		CLIENT_SCENE_OPENED = function(...) RQE.HandleClientSceneOpened(select(1, ...)) end,  -- MAY NEED TO COMMENT OUT AGAIN
 		CONTENT_TRACKING_UPDATE = RQE.handleAchievementTracking,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
+		ENCOUNTER_END = RQE.handleBossKill,
 		-- CRITERIA_UPDATE = RQE.handleAchievementTracking,
 		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
@@ -409,15 +411,53 @@ function RQE.handleAddonLoaded(addonName)
 end
 
 
--- Function to handle BOSS_KILL or GROUP_ROSTER_UPDATE event to update Scenario Frame
-function RQE.handleBossKill()
-	if C_Scenario.IsInScenario() then		
-        if not RQE.ScenarioChildFrame:IsVisible() then
-            RQE.ScenarioChildFrame:Show()
-		end
-		RQE.InitializeScenarioFrame()
-		RQE.UpdateScenarioFrame()
-	end
+-- Function to handle BOSS_KILL, ENCOUNTER_END, or GROUP_ROSTER_UPDATE events to update Scenario Frame
+function RQE.handleBossKill(self, event, ...)
+    -- Print messages based on the event
+    if event == "BOSS_KILL" then
+        local encounterID, encounterName = ...
+        print("BOSS_KILL event called for", encounterName, "with ID", encounterID)
+    elseif event == "ENCOUNTER_END" then
+        local encounterID, encounterName, difficultyID, groupSize, success = ...
+        print("ENCOUNTER_END event called for", encounterName, "with ID", encounterID, "Success:", success)
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        print("GROUP_ROSTER_UPDATE event called")
+    end
+	
+	print("Attempting to update scenario frame")
+	RQE.UpdateScenarioFrame()
+    
+	C_Timer.After(1, function()
+		print("After 1 second delay...")
+		print("Initializing frame for scenario")
+        RQE.InitializeScenarioFrame()
+		print("Updating scenario frame")
+        RQE.UpdateScenarioFrame()
+	end)
+	
+	C_Timer.After(1, function()
+		print("After 2 second delay...")
+		print("Initializing frame for scenario")
+        RQE.InitializeScenarioFrame()
+		print("Updating scenario frame")
+        RQE.UpdateScenarioFrame()
+	end)
+	
+	C_Timer.After(1, function()
+		print("After 3 second delay...")
+		print("Initializing frame for scenario")
+        RQE.InitializeScenarioFrame()
+		print("Updating scenario frame")
+        RQE.UpdateScenarioFrame()
+	end)
+	
+	C_Timer.After(4, function()
+		print("After 4 second delay...")
+		print("Initializing frame for scenario")
+        RQE.InitializeScenarioFrame()
+		print("Updating scenario frame")
+        RQE.UpdateScenarioFrame()
+	end)
 end
 
 
@@ -1209,12 +1249,9 @@ function RQE.updateScenarioUI()
         RQE.infoLog("Updating because in scenario")
         if not RQE.ScenarioChildFrame:IsVisible() then
             RQE.ScenarioChildFrame:Show()
-            RQE.InitializeScenarioFrame()
-            --RQE.UpdateScenarioFrame()
-        else
-			RQE.InitializeScenarioFrame()
-            RQE.UpdateScenarioFrame()
-        end
+        end	
+		RQE.InitializeScenarioFrame()
+		RQE.UpdateScenarioFrame()
         RQE.Timer_CheckTimers()
         RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
@@ -1222,6 +1259,8 @@ function RQE.updateScenarioUI()
         RQE.ScenarioChildFrame:Hide()
         RQE.StopTimer()
     end
+	RQE.UpdateScenarioFrame()
+	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE:UpdateRQEQuestFrameVisibility()
