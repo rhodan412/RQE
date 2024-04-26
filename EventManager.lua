@@ -1218,6 +1218,23 @@ end
 
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
+    -- Check to see if player in scenario, if not it will end
+    if not C_Scenario.IsInScenario() then
+        if RQE.ScenarioChildFrame:IsVisible() then
+            print("Hiding Scenario Frame that is visible")
+            RQE.ScenarioChildFrame:Hide()
+        end
+
+        if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
+            print("Hiding Timer that is visible")
+            RQE.StopTimer()
+        end
+
+        return
+    end
+
+	startTime = debugprofilestop()  -- Start timer
+	
     -- Get the current scenario information
     local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
 
@@ -1225,6 +1242,9 @@ function RQE.updateScenarioUI()
     if completed then
         print("Scenario is completed. Skipping updates.")
         -- If the scenario is complete, avoid further updates or handle differently
+		
+		local duration = debugprofilestop() - startTime
+		DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
         return
     end
 
@@ -1238,19 +1258,22 @@ function RQE.updateScenarioUI()
         RQE.infoLog("Updating because in scenario")
         if not RQE.ScenarioChildFrame:IsVisible() then
             RQE.ScenarioChildFrame:Show()
-        end	
+        end
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
         RQE.Timer_CheckTimers()
         RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
-    else
-        RQE.ScenarioChildFrame:Hide()
-        RQE.StopTimer()
+    -- else
+        -- RQE.ScenarioChildFrame:Hide()
+        -- RQE.StopTimer()
     end	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE:UpdateRQEQuestFrameVisibility()
+	
+	local duration = debugprofilestop() - startTime
+	DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 

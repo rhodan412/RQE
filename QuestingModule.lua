@@ -177,14 +177,6 @@ function RQE.QuestScrollFrameToTop()
 end
 
 
--- Function that Scrolls the RQEQuestFrame to the top as long as player doesn't have mouse in RQEQuestFrame window
-function RQE.QuestScrollFrameToTopEvenOnMouseover()
-	if RQE.QTScrollFrame and QMQTslider then
-		RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
-		QMQTslider:SetValue(0)  -- Also set the slider to the top position
-	end
-end
-
 ---------------------------
 -- 3. Child Frames
 ---------------------------
