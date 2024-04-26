@@ -752,12 +752,12 @@ local function CreateQuestTooltip(frame, questID)
 		else
 			GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
 		end
+		GameTooltip:AddLine(" ")
 	end
 	
     -- Add objectives
     local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
     if objectivesInfo and #objectivesInfo > 0 then
-        GameTooltip:AddLine(" ")
         GameTooltip:AddLine("Objectives:")
 
         -- Concatenate objectives into a string and colorize
@@ -777,7 +777,6 @@ local function CreateQuestTooltip(frame, questID)
 		-- Add Rewards
 		GameTooltip:AddLine("Rewards: ")
 		RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
-		GameTooltip:AddLine(" ")
 	end
 	
 	-- Party Members' Quest Progress
@@ -1046,7 +1045,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Use the custom texture for the background
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
-		--bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
 		
 		-- Determine if this button was the last clicked
 		if RQE.LastClickedIdentifier and RQE.LastClickedIdentifier == i then
