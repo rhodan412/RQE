@@ -710,12 +710,20 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 		local campaignMenuList = RQE.BuildCampaignMenuList() --RQE.GetDynamicCampaignMenuList()
 		-- Print the campaign menu list for debugging
 		RQE.debugLog("Campaign Menu List: ", campaignMenuList)
-
+		
 		-- Fetch the cursor position
 		local cursorX, cursorY = GetCursorPosition()
 		local uiScale = UIParent:GetScale()
 		cursorX, cursorY = cursorX / uiScale, cursorY / uiScale
 
+		-- Define a local function to reset the scroll position
+		local function resetScroll()
+			if RQE.QTScrollFrame and RQE.QMQTslider then
+				RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+				RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
+			end
+		end
+	
 		local menuItems = {
 			{
 				text = "Auto-Track Zone Quests",
@@ -732,9 +740,8 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 				isNotRadio = true, -- Allows this menu item to be a toggle (checkable) rather than a radio button
 				keepShownOnClick = true, -- Keeps the menu open after the item is clicked
 			},
-			{ text = "Completed Quests", func = RQE.filterCompleteQuests },
-            { text = "Daily / Weekly Quests", func = RQE.filterDailyWeeklyQuests },
-			-- { text = "Zone Quests by POI", func = RQE.filterZoneQuestsWithPOI },
+			{ text = "Completed Quests", func = function() RQE.filterCompleteQuests(); resetScroll() end },
+			{ text = "Daily / Weekly Quests", func = function() RQE.filterDailyWeeklyQuests(); resetScroll() end },
 			{
                 text = "Camapaign Quests",
                 hasArrow = true,
@@ -753,13 +760,13 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 			{
 				text = "Quest Line",
 				hasArrow = true,
-				menuList = RQE.BuildQuestLineMenuList()
+				menuList = RQE.BuildQuestLineMenuList(),
 			},
 
 			-- -- Add more filter options here...
 			--}
 		}
-
+	
 		-- Set up the anchor point for the dropdown menu
 		local menuAnchor = {
 			point = "TOPLEFT", -- Point on the dropdown
