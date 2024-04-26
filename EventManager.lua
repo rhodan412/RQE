@@ -84,9 +84,10 @@ local eventsToRegister = {
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
 	"QUEST_AUTOCOMPLETE",
+	"QUEST_COMPLETE",
 	"QUEST_CURRENCY_LOOT_RECEIVED",
 	--"QUEST_DATA_LOAD_RESULT",
-	--"QUEST_FINISHED",				-- MAY BE REDUNDANT
+	"QUEST_FINISHED",				-- MAY BE REDUNDANT
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	--"QUEST_LOOT_RECEIVED",
@@ -124,8 +125,17 @@ local eventsToRegister = {
 
 -- On Event Handler
 local function HandleEvents(frame, event, ...)
-	--RQE.criticalLog("EventHandler triggered with event:", event)  -- Debug print here
-	--print("EventHandler triggered with event:", event)  -- Debug print here
+    -- List of events to exclude from printing
+    -- local excludeEvents = {
+        -- ["UNIT_AURA"] = true,
+        -- ["PLAYER_STARTED_MOVING"] = true,
+        -- ["PLAYER_STOPPED_MOVING"] = true
+    -- }
+
+    -- -- Check if the event is not in the exclude list before printing
+    -- if not excludeEvents[event] then
+        -- print("EventHandler triggered with event:", event)  -- Print the event name
+    -- end
 
     local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
@@ -1873,6 +1883,10 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
+		-- Set Super Track to 0 after turning in super tracked quest
+		C_SuperTrack.SetSuperTrackedQuestID(0)
+		C_SuperTrack.ClearSuperTrackedContent()
+		UpdateRQEQuestFrame()
     end
 
 	local displayedQuestID
