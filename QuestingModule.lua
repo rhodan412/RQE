@@ -1607,14 +1607,13 @@ function UpdateRQEQuestFrame()
 				local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
 				local objectivesText = objectivesTable and "" or "No objectives available."
 
-if objectivesTable then
-    for _, objective in pairs(objectivesTable) do
-        -- Simply append the objective text without any additional progress information
-        objectivesText = objectivesText .. objective.text .. "\n"
-    end
-end
-
-				
+				if objectivesTable then
+					for _, objective in pairs(objectivesTable) do
+						-- Simply append the objective text without any additional progress information
+						objectivesText = objectivesText .. objective.text .. "\n"
+					end
+				end
+	
 				local questTitle, questLevel
 			
 				-- Use the regular quest title and level
