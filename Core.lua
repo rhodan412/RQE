@@ -280,6 +280,7 @@ RQE.lastClickedObjectiveIndex = nil
 RQE.LastClickedButtonRef = nil
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
+RQE.canUpdateFromCriteria = true
 
 local dragonMounts = {
     "Cliffside Wylderdrake",
@@ -643,10 +644,15 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	
 	-- If POI info is not available, try using GetNextWaypointForMap
 	if not posX or not posY then
-		if not isMapOpen and RQE.superTrackingChanged then
+		if not isMapOpen and RQE.superTrackingChanged and not InCombatLockdown() then
+		-- if not isMapOpen and RQE.superTrackingChanged then  --  [commented out for above fix for Frame:SetPassThroughButtons() error]
 			-- Call the function to open the quest log with the details of the super tracked quest
 			OpenQuestLogToQuestDetails(questID)
-		end
+        else
+            -- Either map is open, or we are in combat, or another secure operation is in progress [fix for Frame:SetPassThroughButtons() error]
+            print("Cannot open quest details due to combat lockdown or other restrictions.")
+            return
+        end
 		
 		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
 		
@@ -970,6 +976,8 @@ function RQE:UpdateRQEQuestFrameVisibility()
     else
         RQEQuestFrame:Show()
     end
+	
+	RQE.canUpdateFromCriteria = true
 end
 
 
@@ -3873,7 +3881,7 @@ function RQE:SaveWorldQuestWatches()
             local watchType = C_QuestLog.GetQuestWatchType(questID)
             if watchType == Enum.QuestWatchType.Manual then  -- Save only if the watch type is Manual
 				RQE.savedWorldQuestWatches[questID] = true
-				print("Saved manually tracked World Quest ID:", questID)
+				RQE.infoLog("Saved manually tracked World Quest ID:", questID)
 			end
         end
     end
@@ -4141,13 +4149,18 @@ function RQE:BuildQuestMacroBackup()
 end
 
 
-function RQE:ClickSuperTrackedQuestButton()
+function RQE:ClickSuperTrackedQuestButton()		
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
     if not superTrackedQuestID or superTrackedQuestID == 0 then
         RQE.debugLog("No super tracked quest.")
         return
     end
 
+    if not RQE.QuestLogIndexButtons then
+        RQE.debugLog("QuestLogIndexButtons table is not initialized.")
+        return
+    end
+	
     for _, button in pairs(RQE.QuestLogIndexButtons) do
         if button.questID == superTrackedQuestID then
             RQE.debugLog("Clicking button for super tracked quest ID:", superTrackedQuestID)
@@ -4155,10 +4168,9 @@ function RQE:ClickSuperTrackedQuestButton()
             return
         end
     end
-
+	
     RQE.debugLog("Button for super tracked quest ID not found:", superTrackedQuestID)
 end
-
 
 
 -- function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
