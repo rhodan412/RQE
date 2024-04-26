@@ -176,6 +176,15 @@ function RQE.QuestScrollFrameToTop()
 	end
 end
 
+
+-- Function that Scrolls the RQEQuestFrame to the top as long as player doesn't have mouse in RQEQuestFrame window
+function RQE.QuestScrollFrameToTopEvenOnMouseover()
+	if RQE.QTScrollFrame and QMQTslider then
+		RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+		QMQTslider:SetValue(0)  -- Also set the slider to the top position
+	end
+end
+
 ---------------------------
 -- 3. Child Frames
 ---------------------------
@@ -1078,8 +1087,6 @@ local function colorizeObjectives(questID)
 end
 
 
-
-
 -- Function to Add Reward Data to the Game Tooltip
 function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local SelectedQuestID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
@@ -1099,15 +1106,18 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local rewardsTitle = REWARDS..":"
 
     if not isBonus then
-        if numQuestChoices == 1 then
-            tooltip:AddLine(" ")
-            tooltip:AddLine(rewardsTitle)
-        elseif numQuestChoices > 1 then
-            tooltip:AddLine(" ")
+        if numQuestChoices > 1 then
             tooltip:AddLine(CHOOSE_ONE_REWARD..":")
-            rewardsTitle = OTHER.." "..rewardsTitle
         end
 
+    -- if not isBonus then
+        -- if numQuestChoices == 1 then
+            -- tooltip:AddLine(rewardsTitle)
+        -- elseif numQuestChoices > 1 then
+            -- tooltip:AddLine(CHOOSE_ONE_REWARD..":")
+            -- rewardsTitle = OTHER.." "..rewardsTitle
+        -- end
+		
         -- choices
         for i = 1, numQuestChoices do
             local lootType = GetQuestLogChoiceInfoLootType(i)
@@ -1735,9 +1745,11 @@ end
 					if directionText and directionText ~= "" then
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: " .. directionText, 0.81, 0.5, 1, true)
+						GameTooltip:AddLine(" ")
 					else
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: [No additional information]", 0.81, 0.5, 1, true)
+						GameTooltip:AddLine(" ")
 					end
 
 					if questID then
@@ -1750,22 +1762,21 @@ end
 						else
 							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
 						end
+						GameTooltip:AddLine(" ")
 					end
 	
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
-						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Objectives:")
 
 						local colorizedObjectives = colorizeObjectives(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
+						GameTooltip:AddLine(" ")
 					end
 
 					-- Add Rewards
-					GameTooltip:AddLine(" ")
 					GameTooltip:AddLine("Rewards: ")
 					RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
-					GameTooltip:AddLine(" ")
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
@@ -1847,22 +1858,21 @@ end
 						else
 							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
 						end
+						GameTooltip:AddLine(" ")
 					end
 	
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
-						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Objectives:")
 
 						local colorizedObjectives = colorizeObjectives(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
+						GameTooltip:AddLine(" ")
 					end
 
 					-- Add Rewards
-					GameTooltip:AddLine(" ")
 					GameTooltip:AddLine("Rewards: ")
 					RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
-					GameTooltip:AddLine(" ")
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
@@ -2325,21 +2335,21 @@ function UpdateRQEWorldQuestFrame()
 						local _, questObjectives = GetQuestLogQuestText(questLogIndex)
 						local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 						GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+						GameTooltip:AddLine(" ")
 					end
 
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
-						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Objectives:")
 
 						local colorizedObjectives = colorizeObjectives(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
+						GameTooltip:AddLine(" ")
 					end
 
 					-- Add Rewards
 					GameTooltip:AddLine("Rewards: ")
 					RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
-					GameTooltip:AddLine(" ")
 
 				-- Add time left
 				local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
