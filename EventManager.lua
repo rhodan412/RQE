@@ -63,13 +63,13 @@ local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
 	--"BAG_UPDATE_COOLDOWN",
-	--"BOSS_KILL",
+	"BOSS_KILL",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	--"CRITERIA_UPDATE",
-	--"ENCOUNTER_END",
+	"ENCOUNTER_END",
 	--"GROUP_ROSTER_UPDATE",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
@@ -176,7 +176,7 @@ local function HandleEvents(frame, event, ...)
 		QUESTLINE_UPDATE = function(...) RQE.handleQuestlineUpdate(select(1, ...)) end,
 		-- SCENARIO_POI_UPDATE = RQE.handleScenarioEvent,,   -- MAY BE SLOWING SUPER BLOOM IN THE MIDDLE SECTION ON THE SOUTH ROUTE
 		SCENARIO_COMPLETED = RQE.handleScenarioEvent,
-		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioEvent,
+		SCENARIO_CRITERIA_UPDATE = RQE.updateScenarioCriteriaUI,
 		SCENARIO_UPDATE = RQE.handleScenarioEvent,
 		START_TIMER = function(...) RQE.handleStartTimer(select(1, ...), select(2, ...), select(3, ...)) end,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
@@ -433,7 +433,7 @@ function RQE.handleBossKill(self, event, ...)
     -- elseif event == "GROUP_ROSTER_UPDATE" then
         -- print("GROUP_ROSTER_UPDATE event called")
     -- end
-	
+	RQE.canUpdateFromCriteria = true
 	-- RQE.InitializeScenarioFrame()
 	-- RQE.UpdateScenarioFrame()
 end
@@ -453,18 +453,24 @@ function RQE.handleScenarioEvent(self, event, ...)
 		
 		-- local duration = debugprofilestop() - startTime
 		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_COMPLETED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		
+		RQE.updateScenarioUI()
 	end
 	
     if event == "SCENARIO_UPDATE" then
 		-- startTime = debugprofilestop()  -- Start timer
         -- Extract specific argument for SCENARIO_UPDATE
         local newStep = unpack(args)
+		
+		RQE.canUpdateFromCriteria = true
 		-- DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
         -- Call another function if necessary, for example:
         RQE.saveScenarioData(self, event, newStep)
 		
 		-- local duration = debugprofilestop() - startTime
 		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		
+		RQE.updateScenarioUI()
 	end
 	
 	if event == "SCENARIO_CRITERIA_UPDATE" then
@@ -474,12 +480,13 @@ function RQE.handleScenarioEvent(self, event, ...)
 		-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
         -- Call another function if necessary, for example:
         RQE.saveScenarioData(self, event, criteriaID)
+		RQE.scenarioCriteriaUpdate = true
 		
 		-- local duration = debugprofilestop() - startTime
 		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		
+		RQE.updateScenarioCriteriaUI()
 	end
-
-	RQE.updateScenarioUI()
 end
 
 
@@ -756,6 +763,7 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
 		RQE:ClickSuperTrackedQuestButton()
 	elseif isReload then
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 02 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)
+		
 		RQE.RequestAndCacheQuestLines()
 		RQE:ClickSuperTrackedQuestButton()
 	else
@@ -812,7 +820,7 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
 	RQE:UpdateRQEFrameVisibility()
 	RQE:UpdateRQEQuestFrameVisibility()
     -- DEFAULT_CHAT_FRAME:AddMessage("PEW 11 Debug: Updated frame visibility.", 0.93, 0.51, 0.93)
-	
+		
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
 		RQE:CheckMemoryUsage()
@@ -1203,9 +1211,8 @@ function RQE.handleUnitAura()
 end
 
 
-
 -- Handles UNIT_QUEST_LOG_CHANGED event:
-function RQE.handleUnitQuestLogChange()
+function RQE.handleUnitQuestLogChange(self, event, unitTarget)
     -- Only process the event if it's for the player
     if unitTarget == "player" and not UnitOnTaxi("player") then
 		-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
@@ -1213,41 +1220,63 @@ function RQE.handleUnitQuestLogChange()
 			RQE:StartPeriodicChecks()
 		end
 	end
+	
+	-- Only process the event if the achievements frame is shown
+	if RQE.AchievementsFrame:IsShown() then
+		C_Timer.After(2, function()
+			-- Ensure that the RQEQuestFrame updates when the quest is accepted (including World Quests)
+			UpdateRQEQuestFrame()
+			UpdateRQEWorldQuestFrame()
+		end)
+	end
 end
 
 
--- Function that handles the Scenario UI Updates
-function RQE.updateScenarioUI()
+-- Function that handles the Scenario UI Updates coming from SCENARIO_CRITERA_UPDATE
+function RQE.updateScenarioCriteriaUI()
     -- Check to see if player in scenario, if not it will end
     if not C_Scenario.IsInScenario() then
         if RQE.ScenarioChildFrame:IsVisible() then
-            print("Hiding Scenario Frame that is visible")
+            --print("Hiding Scenario Frame that is visible")
             RQE.ScenarioChildFrame:Hide()
         end
 
         if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
-            print("Hiding Timer that is visible")
+            --print("Hiding Timer that is visible")
             RQE.StopTimer()
         end
 
         return
     end
 
-	startTime = debugprofilestop()  -- Start timer
+	--startTime = debugprofilestop()  -- Start timer
 	
     -- Get the current scenario information
     local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
 
     -- Check if the scenario has been marked as completed
     if completed then
-        print("Scenario is completed. Skipping updates.")
+        --print("Scenario is completed. Skipping updates.")
         -- If the scenario is complete, avoid further updates or handle differently
+        if RQE.ScenarioChildFrame:IsVisible() then
+            --print("Hiding Scenario Frame that is visible")
+            RQE.ScenarioChildFrame:Hide()
+        end
+
+        if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
+            --print("Hiding Timer that is visible")
+            RQE.StopTimer()
+        end
 		
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		--local duration = debugprofilestop() - startTime
+		--DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioCriteriaUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
         return
     end
 
+    if not RQE.canUpdateFromCriteria then
+        return  -- Skip processing if the flag is false
+    end
+	
     -- If not completed, proceed with regular updates
 	if not IsFlying("player") and not UnitOnTaxi("player") then
 		RQE.LogScenarioInfo()
@@ -1264,16 +1293,93 @@ function RQE.updateScenarioUI()
         RQE.Timer_CheckTimers()
         RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
-    -- else
-        -- RQE.ScenarioChildFrame:Hide()
-        -- RQE.StopTimer()
-    end	
+    else
+        RQE.ScenarioChildFrame:Hide()
+        RQE.StopTimer()
+    end
+	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
 	RQE:UpdateRQEQuestFrameVisibility()
 	
-	local duration = debugprofilestop() - startTime
-	DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	RQE.canUpdateFromCriteria = false
+	RQE.scenarioCriteriaUpdate = false   -- Flag that denotes if the event that was run prior to this was SCENARIO_CRITERIA_UPDATE
+	
+	--local duration = debugprofilestop() - startTime
+	--DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+end
+
+-- Function that handles the Scenario UI Updates
+function RQE.updateScenarioUI()
+    -- Check to see if player in scenario, if not it will end
+    if not C_Scenario.IsInScenario() then
+        if RQE.ScenarioChildFrame:IsVisible() then
+            --print("Hiding Scenario Frame that is visible")
+            RQE.ScenarioChildFrame:Hide()
+        end
+
+        if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
+            --print("Hiding Timer that is visible")
+            RQE.StopTimer()
+        end
+
+		UpdateRQEQuestFrame()
+        return
+    end
+
+	--startTime = debugprofilestop()  -- Start timer
+	
+    -- Get the current scenario information
+    local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
+
+    -- Check if the scenario has been marked as completed
+    if completed then
+        --print("Scenario is completed. Skipping updates.")
+        -- If the scenario is complete, avoid further updates or handle differently
+        if RQE.ScenarioChildFrame:IsVisible() then
+            --print("Hiding Scenario Frame that is visible")
+            RQE.ScenarioChildFrame:Hide()
+        end
+
+        if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
+            --print("Hiding Timer that is visible")
+            RQE.StopTimer()
+        end
+		
+		UpdateRQEQuestFrame()
+		
+		--local duration = debugprofilestop() - startTime
+		--DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+        return
+    end
+	
+    -- If not completed, proceed with regular updates
+	if not IsFlying("player") and not UnitOnTaxi("player") then
+		RQE.LogScenarioInfo()
+		RQE.PrintScenarioCriteriaInfoByStep()
+	end
+	
+    if C_Scenario.IsInScenario() then
+        RQE.infoLog("Updating because in scenario")
+        if not RQE.ScenarioChildFrame:IsVisible() then
+            RQE.ScenarioChildFrame:Show()
+        end
+		RQE.InitializeScenarioFrame()
+		RQE.UpdateScenarioFrame()
+        RQE.Timer_CheckTimers()
+        RQE.StartTimer()
+		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
+    else
+        RQE.ScenarioChildFrame:Hide()
+        RQE.StopTimer()
+    end
+	
+	UpdateRQEQuestFrame()
+	RQE.UpdateCampaignFrameAnchor()
+	RQE:UpdateRQEQuestFrameVisibility()
+		
+	--local duration = debugprofilestop() - startTime
+	--DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioCriteriaUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
@@ -1290,7 +1396,7 @@ function RQE.handleInstanceInfoUpdate()
 			RQE:StartPeriodicChecks()
 		end)
 	end
-	
+		
 	-- Updates the RQEFrame with the appropriate super tracked quest
 	UpdateFrame()
 	
@@ -1828,7 +1934,8 @@ function RQE.handleQuestWatchListChanged(questID, added)
 	-- Determine questID based on various fallbacks
 	questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
-	UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list
+	RQE:ClearRQEQuestFrame()
+	--UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list -- CALLED AT BOTTOM OF FUNCTION
 	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
 	RQE:ClearWQTracking()
     RQE:UpdateRQEQuestFrameVisibility()
@@ -1873,6 +1980,18 @@ function RQE.handleQuestWatchListChanged(questID, added)
 			-- RQE.infoLog("Clicking QuestLogIndexButton following QUEST_WATCH_LIST_CHANGED event")
 			-- RQE.ClickUnknownQuestButton()
 		-- end)
+	end
+	
+	-- Only process the event if the achievements frame is shown
+	if RQE.AchievementsFrame:IsShown() then
+		C_Timer.After(0.1, function()
+			-- Ensure that the RQEQuestFrame updates when the quest is accepted (including World Quests)
+			UpdateRQEQuestFrame()
+			
+			C_Timer.After(0.5, function()
+				UpdateRQEWorldQuestFrame()
+			end)
+		end)
 	end
 	
 	-- local duration = debugprofilestop() - startTime
