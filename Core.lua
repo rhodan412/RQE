@@ -1220,7 +1220,6 @@ local function colorizeObjectives(questID)
 end
 
 
-
 -- Simulates pressing the "Clear Window" Button
 function RQE:PerformClearActions()
     RQE:ClearFrameData()
@@ -3520,7 +3519,6 @@ function RQE.BuildCampaignMenuList()
             disabled = true
         })
     end
-
     return campaignMenuList
 end
 
