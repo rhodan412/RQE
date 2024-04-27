@@ -650,7 +650,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
 			OpenQuestLogToQuestDetails(questID)
         else
             -- Either map is open, or we are in combat, or another secure operation is in progress [fix for Frame:SetPassThroughButtons() error]
-            print("Cannot open quest details due to combat lockdown or other restrictions.")
+            RQE.debugLog("Cannot open quest details due to combat lockdown or other restrictions.")
             return
         end
 		

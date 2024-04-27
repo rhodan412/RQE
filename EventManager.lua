@@ -254,7 +254,14 @@ end
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
-		
+
+    -- -- Check and execute any deferred scenario updates
+    -- if RQE.deferredScenarioCriteriaUpdate then
+		-- RQE.canUpdateFromCriteria = true
+        -- RQE.updateScenarioCriteriaUI()
+        -- RQE.deferredScenarioCriteriaUpdate = false
+    -- end
+	
     -- Check for Dragonriding & Capture and print the current states for debugging purposes
 	if RQE.CheckForDragonMounts() then
 		RQE.isDragonRiding = true
@@ -1234,6 +1241,12 @@ end
 
 -- Function that handles the Scenario UI Updates coming from SCENARIO_CRITERA_UPDATE
 function RQE.updateScenarioCriteriaUI()
+    -- -- If we're in combat, defer the update
+    -- if InCombatLockdown() then
+        -- RQE.deferredScenarioCriteriaUpdate = true
+        -- return
+    -- end
+	
     -- Check to see if player in scenario, if not it will end
     if not C_Scenario.IsInScenario() then
         if RQE.ScenarioChildFrame:IsVisible() then
@@ -1290,7 +1303,7 @@ function RQE.updateScenarioCriteriaUI()
         end
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
-        RQE.Timer_CheckTimers()
+        --RQE.Timer_CheckTimers()
         RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
     else
@@ -1366,7 +1379,7 @@ function RQE.updateScenarioUI()
         end
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
-        RQE.Timer_CheckTimers()
+        --RQE.Timer_CheckTimers()
         RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
     else
@@ -2025,10 +2038,10 @@ function RQE.handleQuestTurnIn(questID, xpReward, moneyReward)
 		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
-		-- Set Super Track to 0 after turning in super tracked quest
-		C_SuperTrack.SetSuperTrackedQuestID(0)
-		C_SuperTrack.ClearSuperTrackedContent()
-		UpdateRQEQuestFrame()
+		-- -- Set Super Track to 0 after turning in super tracked quest
+		-- C_SuperTrack.SetSuperTrackedQuestID(0)
+		-- C_SuperTrack.ClearSuperTrackedContent()
+		-- UpdateRQEQuestFrame()
     end
 
 	local displayedQuestID
