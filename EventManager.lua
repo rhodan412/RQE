@@ -216,12 +216,9 @@ function RQE.handleAchievementTracking(...)
     local contentType, id, tracked = ...
 	if contentType == 2 then -- Assuming 2 indicates an achievement
 		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(type) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
-			
-		RQE.UpdateTrackedAchievementList()
 		RQE.UpdateTrackedAchievements(contentType, id, tracked)
-	else
-		RQE.UpdateTrackedAchievementList()
 	end
+	RQE.UpdateTrackedAchievementList()
 end
 
 
@@ -255,12 +252,12 @@ end
 function RQE.handlePlayerRegenEnabled()
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 
-    -- -- Check and execute any deferred scenario updates
-    -- if RQE.deferredScenarioCriteriaUpdate then
-		-- RQE.canUpdateFromCriteria = true
-        -- RQE.updateScenarioCriteriaUI()
-        -- RQE.deferredScenarioCriteriaUpdate = false
-    -- end
+    -- Check and execute any deferred scenario updates
+    if RQE.deferredScenarioCriteriaUpdate then
+		RQE.canUpdateFromCriteria = true
+        RQE.updateScenarioCriteriaUI()
+        RQE.deferredScenarioCriteriaUpdate = false
+    end
 	
     -- Check for Dragonriding & Capture and print the current states for debugging purposes
 	if RQE.CheckForDragonMounts() then
@@ -367,7 +364,8 @@ function RQE.handleAddonLoaded(addonName)
 
     -- Add this line to update tracked achievements as soon as the addon is loaded
     RQE.UpdateTrackedAchievements()
-
+	RQE.UpdateTrackedAchievementList()
+	
     -- Hide the default objective tracker and make other UI adjustments after a short delay
     C_Timer.After(0.5, function()
 		HideObjectiveTracker()
@@ -1241,11 +1239,11 @@ end
 
 -- Function that handles the Scenario UI Updates coming from SCENARIO_CRITERA_UPDATE
 function RQE.updateScenarioCriteriaUI()
-    -- -- If we're in combat, defer the update
-    -- if InCombatLockdown() then
-        -- RQE.deferredScenarioCriteriaUpdate = true
-        -- return
-    -- end
+    -- If we're in combat, defer the update
+    if InCombatLockdown() then
+        RQE.deferredScenarioCriteriaUpdate = true
+        return
+    end
 	
     -- Check to see if player in scenario, if not it will end
     if not C_Scenario.IsInScenario() then

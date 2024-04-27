@@ -1595,13 +1595,13 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 		end
 	end
-	RQE.UpdateTrackedAchievementList()
+	--RQE.UpdateTrackedAchievementList()
 	
 	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
 
 	-- Visibility Update Check for RQEFrame
-	RQE:UpdateRQEFrameVisibility()
+	-- RQE:UpdateRQEFrameVisibility()  -- HANDLED IN FUNCTIONS THAT CALL UPDATEFRAME
 	
 	-- Visibility Update Check for RQEMagic Button
 	C_Timer.After(1, function()
@@ -2194,6 +2194,7 @@ end
 function RQE:InitializeAddon()
     -- Initializes the Tracked Achievements
 	RQE.UpdateTrackedAchievements()
+	RQE.UpdateTrackedAchievementList()
 end
 
 
