@@ -2705,24 +2705,24 @@ function RQE.compareTables(t1, t2)
 end
 
 
--- Function to determine the current step based on quest objectives
-function RQE:DetermineCurrentStepIndex(questID)
-    local questData = RQE.getQuestData(questID)
-    if not questData then
-        RQE.infoLog("No quest data available for quest ID:", questID)
-        return 1  -- Default to the first step if no data is available
-    end
+-- -- Function to determine the current step based on quest objectives
+-- function RQE:DetermineCurrentStepIndex(questID)
+    -- local questData = RQE.getQuestData(questID)
+    -- if not questData then
+        -- RQE.infoLog("No quest data available for quest ID:", questID)
+        -- return 1  -- Default to the first step if no data is available
+    -- end
 
-    for index, step in ipairs(questData) do
-        if not C_QuestLog.ReadyForTurnIn(questID) then
-            if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
-                return index  -- Return the index of the first incomplete objective
-            end
-        end
-    end
+    -- for index, step in ipairs(questData) do
+        -- if not C_QuestLog.ReadyForTurnIn(questID) then
+            -- if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
+                -- return index  -- Return the index of the first incomplete objective
+            -- end
+        -- end
+    -- end
 
-    return #questData  -- Return the last step if all objectives are complete or ready for turn-in
-end
+    -- return #questData  -- Return the last step if all objectives are complete or ready for turn-in
+-- end
 
 
 -- Periodic check setup
