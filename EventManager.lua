@@ -166,9 +166,9 @@ local function HandleEvents(frame, event, ...)
 		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
 		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
 		QUESTLINE_UPDATE = RQE.handleQuestlineUpdate,
-		SCENARIO_COMPLETED = RQE.handleScenarioEvent,
-		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioEvent, -- RQE.updateScenarioCriteriaUI,  -- DIVERGES TO SEPARATE FUNCTION LATER
-		SCENARIO_UPDATE = RQE.handleScenarioEvent,
+		SCENARIO_COMPLETED = RQE.handleScenarioComplete,
+		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioCriteriaUpdate, -- RQE.updateScenarioCriteriaUI,  -- DIVERGES TO SEPARATE FUNCTION LATER
+		SCENARIO_UPDATE = RQE.handleScenarioUpdate,
 		START_TIMER = RQE.handleStartTimer,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
@@ -448,54 +448,59 @@ function RQE.handleBossKill(self, event, ...)
 end
 
 
--- Function to handle SCENARIO_COMPLETED, SCENARIO_UPDATE, LEAVE_PARTY_CONFIRMATION, SCENARIO_POI_UPDATE:
-function RQE.handleScenarioEvent(self, event, ...)
-    local args = {...}  -- Proper unpacking of additional arguments
-    assert(type(args) == "table", "Expected arguments to be passed as a table")
+-- Function to handle SCENARIO_COMPLETED event
+function RQE.handleScenarioComplete(...)
+	-- startTime = debugprofilestop()  -- Start timer
 	
-    if event == "SCENARIO_COMPLETED" then
-		-- startTime = debugprofilestop()  -- Start timer
-		-- Extract specific arguments for SCENARIO_COMPLETED
-		local questID, xp, money = unpack(args)
-		-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
-        RQE.saveScenarioData(self, questID, xp, money)
-		
-		-- local duration = debugprofilestop() - startTime
-		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_COMPLETED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-		
-		RQE.updateScenarioUI()
-	end
+	local event = select(2, ...)
+	local questID = select(3, ...)
+	local xp = select(4, ...)
+	local money = select(5, ...)
 	
-    if event == "SCENARIO_UPDATE" then
-		-- startTime = debugprofilestop()  -- Start timer
-        -- Extract specific argument for SCENARIO_UPDATE
-        local newStep = unpack(args)
-		
-		RQE.canUpdateFromCriteria = true
-		-- DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
-        -- Call another function if necessary, for example:
-        RQE.saveScenarioData(self, event, newStep)
-		
-		-- local duration = debugprofilestop() - startTime
-		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-		
-		RQE.updateScenarioUI()
-	end
+	-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+	RQE.saveScenarioData(self, event, questID, xp, money)
 	
-	if event == "SCENARIO_CRITERIA_UPDATE" then
-		-- startTime = debugprofilestop()  -- Start timer
-        -- Extract specific argument for SCENARIO_CRITERIA_UPDATE
-        local criteriaID = unpack(args)
-		-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
-        -- Call another function if necessary, for example:
-        RQE.saveScenarioData(self, event, criteriaID)
-		RQE.scenarioCriteriaUpdate = true
-		
-		-- local duration = debugprofilestop() - startTime
-		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-		
-		RQE.updateScenarioCriteriaUI()
-	end
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_COMPLETED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	
+	RQE.updateScenarioUI()
+end
+
+-- Function to handle SCENARIO_UPDATE event
+function RQE.handleScenarioUpdate(...)
+	-- startTime = debugprofilestop()  -- Start timer
+	
+	local event = select(2, ...)
+	local newStep = select(3, ...)
+	
+	-- DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
+	
+	RQE.canUpdateFromCriteria = true
+	-- Call another function if necessary, for example:
+	RQE.saveScenarioData(self, event, newStep)
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	
+	RQE.updateScenarioUI()
+end
+
+-- Function to handle SCENARIO_CRITERIA_UPDATE event
+function RQE.handleScenarioCriteriaUpdate(...)
+	-- startTime = debugprofilestop()  -- Start timer
+	
+	local event = select(2, ...)
+	local criteriaID = select(3, ...)
+	
+	-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
+	-- Call another function if necessary, for example:
+	RQE.saveScenarioData(self, event, criteriaID)
+	RQE.scenarioCriteriaUpdate = true
+	
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	
+	RQE.updateScenarioCriteriaUI()
 end
 
 
@@ -545,6 +550,7 @@ function RQE.handleStartTimer(...)
         end
     end
 	
+	local event = select(2, ...)
 	local timerType = select(3, ...)
 	local timeRemaining = select(4, ...)
 	local totalTime = select(5, ...)
@@ -570,6 +576,7 @@ function RQE.handleWorldStateTimerStart(...)
         end
     end
 	
+	local event = select(2, ...)
 	local timerID = select(3, ...)
 	
     DEFAULT_CHAT_FRAME:AddMessage("WSTS 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
@@ -603,6 +610,7 @@ function RQE.handleWorldStateTimerStop(...)
         end
     end
 	
+	local event = select(2, ...)
 	local timerID = select(3, ...)
 	
 	DEFAULT_CHAT_FRAME:AddMessage("WSTST 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
@@ -1015,6 +1023,7 @@ end
 function RQE.handleQuestAccepted(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
+	local event = select(2, ...)
     local questID = select(3, ...)
 	local superTrackQuest = C_SuperTrack.GetSuperTrackedQuestID()
 	
@@ -1279,7 +1288,8 @@ end
 
 
 -- Handles UNIT_QUEST_LOG_CHANGED event:
-function RQE.handleUnitQuestLogChange(...)	
+function RQE.handleUnitQuestLogChange(...)
+	local event = select(2, ...)
 	local unitTarget = select(3, ...)
 	
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1617,6 +1627,7 @@ end
 function RQE.handleQuestCurrencyLootReceived(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
+	local event = select(2, ...)
 	local questID = select(3, ...)
 	local currencyId = select(4, ...)
 	local quantity = select(5, ...)
@@ -1672,28 +1683,16 @@ end
 
 
 -- Handling QUEST_LOOT_RECEIVED event
--- Fires when player receives loot from quest turn in
+-- Fires when player receives loot from quest turn in (Runs once per quest loot received)
 function RQE.handleQuestLootReceived(...)
-	print("** RUNNING QUEST_LOOT_RECEIVED **")
     -- startTime = debugprofilestop()  -- Start timer
 	
-    local args = {...}  -- Capture all arguments into a table
-    for i, arg in ipairs(args) do
-        if type(arg) == "table" then
-            print("Arg " .. i .. ": (table)")
-            for k, v in pairs(arg) do
-                print("  " .. tostring(k) .. ": " .. tostring(v))
-            end
-        else
-            print("Arg " .. i .. ": " .. tostring(arg))
-        end
-    end
-	
+	local event = select(2, ...)
 	local questID = select(3, ...)
 	local itemLink = select(4, ...)
 	local quantity = select(5, ...)
 	
-    DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", ItemLink: " .. itemLink .. ", Quantity: " .. tostring(quantity), 0, 1, 0)  -- Bright Green
+    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", ItemLink: " .. itemLink .. ", Quantity: " .. tostring(quantity), 0, 1, 0)  -- Bright Green
 	
     -- Saving event specific information before calling the status update function
     RQE.latestEventInfo = {
@@ -1715,6 +1714,7 @@ function RQE.handleQuestlineUpdate(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
     -- Extracting the third argument as 'requestRequired'
+	local event = select(2, ...)
     local requestRequired = select(3, ...)
 	
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUESTLINE_UPDATE, Request Required: " .. tostring(requestRequired), 0, 1, 0)  -- Bright Green
@@ -1860,6 +1860,7 @@ end
 function RQE.HandleClientSceneOpened(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
+	local event = select(2, ...)
 	local sceneType = select(3, ...)
 	
     -- Debug message indicating the type of scene opened
@@ -1897,6 +1898,7 @@ function RQE.handleQuestRemoved(...)
 	RQE.ReadyToRestoreAutoWorldQuests = true
 	
     -- Extract questID and wasReplayQuest from the correct argument positions
+	local event = select(2, ...)
     local questID = select(3, ...)
     local wasReplayQuest = select(4, ...)
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1957,6 +1959,7 @@ end
 function RQE.handleQuestWatchUpdate(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
+	local event = select(2, ...)
 	local questID = select(3, ...)
 	
     -- DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
@@ -2069,6 +2072,7 @@ end
 function RQE.handleQuestWatchListChanged(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
+	local event = select(2, ...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
 	
@@ -2153,6 +2157,7 @@ end
 function RQE.handleQuestTurnIn(...)
     -- startTime = debugprofilestop()  -- Start timer
 	
+	local event = select(2, ...)
     local questID = select(3, ...)
     local xpReward = select(4, ...)
     local moneyReward = select(5, ...)
