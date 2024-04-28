@@ -71,6 +71,6 @@ function RQE.getQuestData(questID)
 		end
 	end
 
-    RQE.infoLog("Quest ID " .. questID .. " not found in any database.")
+    RQE.debugLog("Quest ID " .. questID .. " not found in any database.")
     return nil
 end
