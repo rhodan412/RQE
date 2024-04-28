@@ -318,6 +318,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQE.ManualSuperTrack = nil
 		C_SuperTrack.ClearSuperTrackedContent()
 		RQE:UpdateRQEFrameVisibility()
+		RQE.infoLog("Cleared Macro Content at 321")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.Buttons.UpdateMagicButtonVisibility()
 		

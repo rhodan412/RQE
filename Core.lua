@@ -1229,6 +1229,7 @@ function RQE:ShouldClearFrame()
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
+		RQE.infoLog("Cleared Macro Content at 1232")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
         return -- Exit the function early
 	end
@@ -1238,6 +1239,7 @@ function RQE:ShouldClearFrame()
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
+		RQE.infoLog("Cleared Macro Content at 1242")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
         return -- Exit the function early
     end
@@ -1247,6 +1249,7 @@ function RQE:ShouldClearFrame()
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
+			RQE.infoLog("Cleared Macro Content at 1252")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
             return -- Exit the function early
         end
@@ -1255,6 +1258,7 @@ function RQE:ShouldClearFrame()
 		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
+			RQE.infoLog("Cleared Macro Content at 1261")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
             return -- Exit the function early
         end
@@ -1304,6 +1308,7 @@ function RQE:DelayedClearCheck()
 		if isBeingSearched and isQuestCompleted and isWorldQuest then
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
+			RQE.infoLog("Cleared Macro Content at 1311")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
 			
 			-- Untrack the quest by setting a non-existent quest ID
@@ -1316,6 +1321,7 @@ function RQE:DelayedClearCheck()
 			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
 				RQE:ClearFrameData()
 				RQE:ClearWaypointButtonData()
+				RQE.infoLog("Cleared Macro Content at 1324")
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 				
 				-- Untrack the quest by setting a non-existent quest ID
@@ -2699,6 +2705,26 @@ function RQE.compareTables(t1, t2)
 end
 
 
+-- Function to determine the current step based on quest objectives
+function RQE:DetermineCurrentStepIndex(questID)
+    local questData = RQE.getQuestData(questID)
+    if not questData then
+        RQE.infoLog("No quest data available for quest ID:", questID)
+        return 1  -- Default to the first step if no data is available
+    end
+
+    for index, step in ipairs(questData) do
+        if not C_QuestLog.ReadyForTurnIn(questID) then
+            if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
+                return index  -- Return the index of the first incomplete objective
+            end
+        end
+    end
+
+    return #questData  -- Return the last step if all objectives are complete or ready for turn-in
+end
+
+
 -- Periodic check setup
 function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2758,12 +2784,14 @@ function RQE:StartPeriodicChecks()
             end
         end
     end
+	RQE:CheckAndAdvanceStep(questID)
 end
 
 
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.
 function RQE:AdvanceQuestStep(questID, stepIndex)
 	-- Clears Macro Data
+	RQE.infoLog("Cleared Macro Content at 2793")
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 	
     RQE.infoLog("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
@@ -2789,7 +2817,8 @@ end
 -- Function that handles if returns Failed stepIndex
 function RQE:ClickWaypointButtonForIndex(index)
 	-- Clears Macro Data
-	RQEMacro:ClearMacroContentByName("RQE Macro")
+	--RQE.infoLog("Cleared Macro Content at 2819")
+	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	
     local button = self.WaypointButtons[index]
     if button then
