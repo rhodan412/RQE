@@ -878,7 +878,8 @@ function RQE.UpdateScenarioFrame()
         local timeLeft = duration - elapsed
         RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
     else
-        RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+		RQE.ScenarioChildFrame.timer:SetText("")
+		--RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
     end
 
     -- Check if we have valid scenario information
@@ -923,7 +924,8 @@ function RQE.UpdateScenarioFrame()
             local timeLeft = duration - elapsed
             RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
         else
-            RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+			RQE.ScenarioChildFrame.timer:SetText("")
+            --RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
         end
         
         -- Display the frame if it's not already shown
