@@ -63,14 +63,22 @@ end
 
 
 -- Remove the extra functions and keep only this one
-function RQE:CreateUnknownQuestWaypoint(effectiveQuestID)
-    local questData = RQE.getQuestData(effectiveQuestID)
+function RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	if not questID then
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		else
+			return
+		end
+	end
+	
+    local questData = RQE.getQuestData(questID)
     local x, y, mapID
-    local questName = C_QuestLog.GetTitleForQuestID(effectiveQuestID) or "Unknown"
+    local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
     local waypointTitle
 
     -- Determine coordinates and title based on quest presence in quest log and database
-    if questData and not C_QuestLog.IsOnQuest(effectiveQuestID) and questData.location then
+    if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
         x = questData.location.x
         y = questData.location.y
         mapID = questData.location.mapID
@@ -79,7 +87,7 @@ function RQE:CreateUnknownQuestWaypoint(effectiveQuestID)
         x = RQE.superX or 0 -- Default to 0 if nil
         y = RQE.superY or 0 -- Default to 0 if nil
         mapID = RQE.superMapID
-        waypointTitle = "Quest ID: " .. effectiveQuestID .. ", Quest Name: " .. questName
+        waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 		
 		if x and y then
 			x = x * 100
