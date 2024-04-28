@@ -1577,13 +1577,13 @@ function UpdateRQEQuestFrame()
 							end
 						-- C_Timer.After(1, function()
 							-- RQE:CheckAndAdvanceStep(questID)
-						-- end)
+						end)
 						
 						-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
 						-- if RQE.db.profile.autoClickWaypointButton then
 							-- RQE:StartPeriodicChecks()
 						-- end
-					end)
+					--end)
 						
 						-- Refresh the UI here to update the button state
 						RQE:ClearRQEQuestFrame()
@@ -2477,11 +2477,9 @@ end
 -- Function to Update Achievements Frame
 function UpdateRQEAchievementsFrame()
 	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
+	
     -- Print the IDs of tracked achievements for debugging
     RQE.infoLog("Currently Tracked Achievements:")
-    for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
-        RQE.infoLog("- Achievement ID:", achievementID)
-    end
 
     -- Clear the achievement ID list before updating
     RQE:ClearAchievementFrame()
@@ -2498,6 +2496,7 @@ function UpdateRQEAchievementsFrame()
     -- Loop through each tracked achievement ID and display it along with the description
     for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
         local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
+		RQE.infoLog("- Achievement ID:", achievementID)
 
         if id then
             -- Create the header for each achievement
