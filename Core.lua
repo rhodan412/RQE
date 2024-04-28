@@ -272,12 +272,18 @@ RQE.QToriginalHeight = RQE.QToriginalHeight or 0
 -- Initialize Waypoint System
 RQE.waypoints = {}
 
+-- Initialize the savedAutomaticWorldQuestWatches table within your addon's initialization logic
+if not RQE.savedAutomaticWorldQuestWatches then
+    RQE.savedAutomaticWorldQuestWatches = {}
+end
+
 -- Initialize lastSuperTrackedQuestID variable
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.ManualSuperTrack = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
 RQE.lastClickedObjectiveIndex = nil
 RQE.LastClickedButtonRef = nil
+RQE.AddedQuestID = nil
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
 RQE.canUpdateFromCriteria = true
@@ -472,15 +478,11 @@ end
 
 -- Function Check to Initialize RQEFrame sections not yet initialized
 function RQE:ConfigurationChanged()
-    RQE.debugLog("Entered RQE:ConfigurationChanged")
-
     if RQE.headerText then
         local headerSettings = RQE.db.profile.textSettings.headerText
 		
         RQE.headerText:SetFont(headerSettings.font, headerSettings.size)
         RQE.headerText:SetTextColor(unpack(headerSettings.color))
-    else
-        RQE.debugLog("RQE.headerText is nil")
     end
 	
     if RQE.QuestIDText then
@@ -488,8 +490,6 @@ function RQE:ConfigurationChanged()
 		
         RQE.QuestIDText:SetFont(QuestIDTextSettings.font, QuestIDTextSettings.size)
         RQE.QuestIDText:SetTextColor(unpack(QuestIDTextSettings.color))
-    else
-        RQE.debugLog("RQE.QuestIDText is nil")
     end
 	
     if RQE.QuestNameText then
@@ -497,8 +497,6 @@ function RQE:ConfigurationChanged()
 		
         RQE.QuestNameText:SetFont(QuestNameTextSettings.font, QuestNameTextSettings.size)
         RQE.QuestNameText:SetTextColor(unpack(QuestNameTextSettings.color))
-    else
-        RQE.debugLog("RQE.QuestNameText is nil")
     end
 	
     if RQE.DirectionTextFrame then
@@ -506,8 +504,6 @@ function RQE:ConfigurationChanged()
 		
         RQE.DirectionTextFrame:SetFont(DirectionTextFrameSettings.font, DirectionTextFrameSettings.size)
         RQE.DirectionTextFrame:SetTextColor(unpack(DirectionTextFrameSettings.color))
-    else
-        RQE.debugLog("RQE.DirectionTextFrame is nil")
     end
 	
     if RQE.QuestDescription then
@@ -515,8 +511,6 @@ function RQE:ConfigurationChanged()
 		
         RQE.QuestDescription:SetFont(QuestDescriptionSettings.font, QuestDescriptionSettings.size)
         RQE.QuestDescription:SetTextColor(unpack(QuestDescriptionSettings.color))
-    else
-        RQE.debugLog("RQE.QuestDescription is nil")
     end
 	
     if RQE.QuestObjectives then
@@ -524,8 +518,6 @@ function RQE:ConfigurationChanged()
 		
         RQE.QuestObjectives:SetFont(QuestObjectivesSettings.font, QuestObjectivesSettings.size)
         RQE.QuestObjectives:SetTextColor(unpack(QuestObjectivesSettings.color))
-    else
-        RQE.debugLog("RQE.QuestObjectives is nil")
     end
  	    -- You can add more configuration updates here
 
@@ -572,8 +564,6 @@ function RQE.SaveSuperTrackData()
 				local questID = C_SuperTrack.GetSuperTrackedQuestID()
 				local mapID = GetQuestUiMapID(questID, ignoreWaypoints)
 				if mapID == 0 then mapID = nil end
-				--OpenQuestLog(mapID)
-				--QuestMapFrame_ShowQuestDetails(questID)
 			else
 				posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
 			end
@@ -638,7 +628,6 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	end
 
 	if not mapID then
-		RQE.debugLog("MapID not found for QuestID:", questID)
 		return
 	end
 	
@@ -731,9 +720,6 @@ end
 function ResetLFGRoles()
     -- Set default roles DAMAGE only: (leader, tank, healer, damage)
     SetLFGRoles(false, false, false, true)
-
-    -- Optionally, print a confirmation message to the chat window
-    RQE.infoLog("LFG roles have been reset.")
 end
 
 
@@ -760,9 +746,9 @@ function RQE:SlashCommand(input)
             YourConfigPanel:UpdateCheckboxState(RQE.Settings.frameVisibility)
         end
     else
-        RQE.debugLog("Available commands for /rqe:")
-        RQE.debugLog("config - Opens the configuration panel")
-        RQE.debugLog("frame, toggle - Toggles the RQE frame")
+        print("Available commands for /rqe:")
+        print("config - Opens the configuration panel")
+        print("frame, toggle - Toggles the RQE frame")
     end
 	
 	-- Check if MagicButton should be visible based on macro body
@@ -821,9 +807,7 @@ function RQE:SetProfileOnce()
         local profileToSet = chosenProfile or (UnitName("player") .. " - " .. GetRealmName())
         
         if type(profileToSet) == "string" then
-            RQE.debugLog("Profile set to", profileToSet)
-        else
-            RQE.debugLog("Error: profileToSet is not a string.")
+            RQE.infoLog("Profile set to", profileToSet)
         end
         RQE.profileHasBeenSet = true
     end
@@ -1023,7 +1007,7 @@ function RQE:UpdateFramePosition()
     local xPos = self.db.profile.framePosition.xPos or -40
     local yPos = self.db.profile.framePosition.yPos or -270
 
-    RQE.debugLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
+    RQE.infoLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
 
     -- Error handling
     local success, err = pcall(function()
@@ -1102,20 +1086,14 @@ function RQE:ClearFrameData()
 	-- Clear the Quest ID and Quest Name
     if RQE.QuestIDText then
         RQE.QuestIDText:SetText("")
-    else
-        RQE.debugLog("QuestIDText is not initialized.")
     end
 
     if RQE.QuestNameText then
         RQE.QuestNameText:SetText("")
-    else
-        RQE.debugLog("QuestNameText is not initialized.")
     end
 
 	if RQE.QuestNameText then
 		RQE.debugLog("QuestNameText current text:", RQE.QuestNameText:GetText())
-	else
-		RQE.debugLog("Warning - QuestNameText has NOT been initialized.")
 	end
    
 	-- Clear StepsText elements
@@ -1123,9 +1101,6 @@ function RQE:ClearFrameData()
 	  for _, text in pairs(RQE.StepsTexts) do
 		text:SetText("")  -- Clear the text of each element
 	  end
-	  RQE.debugLog("Cleared StepsTexts")
-	else
-	  RQE.debugLog("StepsTexts is not initialized.")
 	end
 
     -- Clear CoordsText elements
@@ -1133,60 +1108,35 @@ function RQE:ClearFrameData()
         for _, text in pairs(RQE.CoordsTexts) do
             text:SetText("")
         end
-    else
-        RQE.debugLog("CoordsTexts is not initialized.")
     end
 
 	-- Clear QuestDirection Text
 	if RQE.DirectionTextFrame then
 		RQE.DirectionTextFrame:SetText("")
-	else
-		RQE.debugLog("DirectionTextFrame is not initialized.")
 	end
 
     -- Clear QuestDescription Text
     if RQE.QuestDescription then
         RQE.QuestDescription:SetText("")
-    else
-        RQE.debugLog("QuestObjectives is not initialized.")
     end
 	
     -- Clear QuestObjectives Text
     if RQE.QuestObjectives then
         RQE.QuestObjectives:SetText("")
-    else
-        RQE.debugLog("QuestObjectives is not initialized.")
     end
 		
 	-- Clear Unknown Quests Button
 	if RQE.UnknownQuestButton then
 		RQE.UnknownQuestButton:Hide()
-		RQE.debugLog("Hide Special WaypointButton")
-	else
-		RQE.debugLog("Special WaypointButton is not initialized.")
 	end
 
 	-- Clear SearchGroup Button
 	if RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
-	--if RQE.SearchGroupButton then
 		RQE.SearchGroupButton:Hide()
-		RQE.debugLog("Hide SearchGroup Button")
-	else
-		RQE.debugLog("SearchGroup Button is not initialized.")
 	end
 
 	RQE:ClearStepsTextInFrame()
 	
-	-- Clears contents of Macro on clearing of RQEFrame
-	-- RQEMacro:ClearMacroContentByName("RQE Macro")
-	
-	-- -- After frame clears, will repopulate RQEFrame with super tracked quest -- POPULATES ALMOST IMMEDIATELY
-	-- C_Timer.After(3, function()
-		-- print("Updating frame following Frame Clearing")
-		-- RQE.infoLog("Updating frame following Frame Clearing")
-		-- UpdateFrame()
-	-- end)
-
 	-- Check if MagicButton should be visible based on macro body
 	RQE.Buttons.UpdateMagicButtonVisibility()
 end
@@ -1198,9 +1148,6 @@ function RQE:ClearWaypointButtonData()
         for _, button in pairs(RQE.WaypointButtons) do
             button:Hide()
         end
-        RQE.debugLog("Hide WaypointButtons")
-    else
-        RQE.debugLog("WaypointButtons is not initialized.")
     end
 end
 
@@ -1254,7 +1201,6 @@ function RQE:ShouldClearFrame()
 
     -- Early exit if there's still no valid questID
     if not extractedQuestID or extractedQuestID == 0 then
-        RQE.debugLog("No valid questID for ShouldClearFrame.")
         return
     end
 	
@@ -1284,7 +1230,6 @@ function RQE:ShouldClearFrame()
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
-		RQE.infoLog("Clearing the RQEFrame for questID for searched and completed: ", extractedQuestID)
         return -- Exit the function early
 	end
 
@@ -1294,7 +1239,6 @@ function RQE:ShouldClearFrame()
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
-		RQE.infoLog("Clearing the RQEFrame for questID: ", extractedQuestID)
         return -- Exit the function early
     end
 
@@ -1304,7 +1248,6 @@ function RQE:ShouldClearFrame()
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
-            RQE.infoLog("Clearing RQEFrame to questID: ", extractedQuestID)
             return -- Exit the function early
         end
     else
@@ -1313,7 +1256,6 @@ function RQE:ShouldClearFrame()
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
-			RQE.infoLog("Clearing RQEFrame for questID: ", extractedQuestID)
             return -- Exit the function early
         end
     end
@@ -1334,7 +1276,6 @@ function RQE:DelayedClearCheck()
 
 		-- Early exit if there's still no valid questID
 		if not extractedQuestID or extractedQuestID == 0 then
-			RQE.debugLog("No valid questID for ShouldClearFrame.")
 			return
 		end
 		
@@ -1368,24 +1309,8 @@ function RQE:DelayedClearCheck()
 			-- Untrack the quest by setting a non-existent quest ID
 			C_SuperTrack.SetSuperTrackedQuestID(0)
 			
-			-- Optional: Log or notify that the frame was cleared on delayed check
-			RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
 			return -- Exit the function early
 		end
-
-		-- if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked and not isBeingSearched) then
-			-- -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
-			-- RQE:ClearFrameData()
-			-- RQE:ClearWaypointButtonData()
-			-- RQEMacro:ClearMacroContentByName("RQE Macro")
-			
-			-- -- Untrack the quest by setting a non-existent quest ID
-			-- C_SuperTrack.SetSuperTrackedQuestID(0)
-			
-			-- -- Optional: Log or notify that the frame was cleared on delayed check
-			-- RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
-			-- return -- Exit the function early
-		-- end
 
 		if isWorldQuest then
 			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
@@ -1396,24 +1321,8 @@ function RQE:DelayedClearCheck()
 				-- Untrack the quest by setting a non-existent quest ID
 				C_SuperTrack.SetSuperTrackedQuestID(0)
 				
-				-- Optional: Log or notify that the frame was cleared on delayed check
-				RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
 				return -- Exit the function early
 			end
-		-- else
-			-- -- For non-world quests, clear if not in quest log or not being actively searched
-			-- if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
-				-- RQE:ClearFrameData()
-				-- RQE:ClearWaypointButtonData()
-				-- RQEMacro:ClearMacroContentByName("RQE Macro")
-				
-				-- -- Untrack the quest by setting a non-existent quest ID
-				-- C_SuperTrack.SetSuperTrackedQuestID(0)
-				
-				-- -- Optional: Log or notify that the frame was cleared on delayed check
-				-- RQE.infoLog("Delayed clear executed for questID: ", extractedQuestID)
-				-- return -- Exit the function early
-			-- end
         end
     end)
 end
@@ -1435,26 +1344,21 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     questInfo = RQE.getQuestData(questID) or questInfo
 	
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-    RQE.infoLog("UpdateFrame: Received QuestID, QuestInfo, StepsText, CoordsText, MapIDs: ", questID, questInfo, StepsText, CoordsText, MapIDs)
 	
 	AdjustRQEFrameWidths(newWidth)
 
-    -- Debug print the overridden questID and the content of RQE.QuestIDText -- DON'T DELETE!! RESPONSIBLE FOR MAINTAINING SUPER TRACK MATCH WITH RQEFRAME TEXT!!
+    -- Debug print the overridden questID and the content of RQE.QuestIDText
     RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
         RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
-    else
-        RQE.infoLog("RQE.QuestIDText is not initialized or has no text.")
     end
 	
     -- Validate questID before proceeding
     if not questID or type(questID) ~= "number" then
-        RQE.debugLog("Invalid or missing questID in UpdateFrame:", questID)
         return
     end
 	
     if not questID then  -- Check if questID is nil
-        RQE.debugLog("questID is nil.")
         return  -- Exit the function
     end
 
@@ -1469,14 +1373,11 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 		
     if not StepsText or not CoordsText or not MapIDs then
-        RQE.debugLog("Exiting UpdateFrame due to missing data.")
         return
     end
 
     if RQE.QuestIDText then
         RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
-    else
-        RQE.debugLog("RQE.QuestIDText is not initialized.")
     end
 	
 	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
@@ -1495,21 +1396,15 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	if RQE.QuestNameText then
 		RQE.QuestNameText:SetText("Quest Name: " .. questName)
-	else
-		RQE.debugLog("RQE.QuestNameText is not initialized.")
 	end
     
 	if questInfo then
-		RQE.debugLog("questInfo.description is ", questInfo.description)
-		RQE.debugLog("questInfo.objectives is ", questInfo.objectives)
+		RQE.infoLog("questInfo.description is ", questInfo.description)
+		RQE.infoLog("questInfo.objectives is ", questInfo.objectives)
 		
 		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
-		else
-			RQE.debugLog("RQEFrame.CreateStepsText is not initialized.")
 		end
-	else
-		RQE.debugLog("Quest information not found in database for quest ID: " .. questID)
 	end
 
     -- For QuestDescription
@@ -1522,12 +1417,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			
 			if RQE.QuestDescription then  -- Check if QuestDescription is initialized
 				RQE.QuestDescription:SetText(descriptionText)
-			else
-				RQE.debugLog("RQE.QuestDescription is not initialized.")
 			end
-			
-		else
-			RQE.debugLog("questLogIndex is nil.")
 		end
 	end
 
@@ -1595,13 +1485,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 		end
 	end
-	--RQE.UpdateTrackedAchievementList()
 	
 	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
-
-	-- Visibility Update Check for RQEFrame
-	-- RQE:UpdateRQEFrameVisibility()  -- HANDLED IN FUNCTIONS THAT CALL UPDATEFRAME
 	
 	-- Visibility Update Check for RQEMagic Button
 	C_Timer.After(1, function()
@@ -1673,36 +1559,12 @@ function RemoveAllTrackedWorldQuests()
             C_QuestLog.RemoveWorldQuestWatch(questID)
         end
     end
-
-    -- Optional: Refresh the UI elements that display tracked quests, if necessary
-    -- This might depend on how your addon UI is set up
-    -- Example: C_QuestLog.SortQuestWatches() or triggering an update to your custom frame
 end
 
 
 ---------------------------------------------------
 -- 10. Scenario Functions
 ---------------------------------------------------
-
--- -- Define the slash command handler function for timer start
--- local function HandleSlashCommands(msg, editbox)
-    -- local command = string.lower(msg)
-
-    -- if command == "start" then
-        -- StartTimer() -- Start the timer
-        -- print("Timer started.")
-    -- elseif command == "stop" then
-        -- StopTimer() -- Stop the timer
-        -- print("Timer stopped.")
-    -- else
-        -- print("Invalid command. Use '/rqetimer start' to start the timer or '/rqetimer stop' to stop it.")
-    -- end
--- end
-
--- -- Register the slash command
--- SLASH_MYTIMER1 = "/rqetimer"
--- SlashCmdList["MYTIMER"] = HandleSlashCommands
-
 
 -- Function to fetch/print Scenario Criteria information
 function RQE.PrintScenarioCriteriaInfo()
@@ -1726,7 +1588,37 @@ function RQE.PrintScenarioCriteriaInfo()
         RQE.infoLog("Elapsed:", elapsed or "N/A")
         RQE.infoLog("Criteria Failed:", criteriaFailed)
         RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
-        RQE.infoLog("---")
+    end
+end
+
+
+-- Function to fetch/print Scenario Criteria Step by Step
+function RQE.PrintScenarioCriteriaInfoByStep()
+    local currentStep, numSteps = C_Scenario.GetInfo()
+    for stepID = 1, numSteps do
+        local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
+        if not numCriteria or numCriteria == 0 then
+            RQE.debugLog("No criteria info available for step", stepID)
+        else
+            for criteriaIndex = 1, numCriteria do
+                local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex)
+                RQE.infoLog("Step ID:", stepID)
+                RQE.infoLog("Criteria Index:", criteriaIndex)
+                RQE.infoLog("Criteria String:", criteriaString or "N/A")
+                RQE.infoLog("Criteria Type:", criteriaType or "N/A")
+                RQE.infoLog("Completed:", completed)
+                RQE.infoLog("Quantity:", quantity or "N/A")
+                RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
+                RQE.infoLog("Flags:", flags or "N/A")
+                RQE.infoLog("Asset ID:", assetID or "N/A")
+                RQE.infoLog("Quantity String:", quantityString or "N/A")
+                RQE.infoLog("Criteria ID:", criteriaID or "N/A")
+                RQE.infoLog("Duration:", duration or "N/A")
+                RQE.infoLog("Elapsed:", elapsed or "N/A")
+                RQE.infoLog("Criteria Failed:", criteriaFailed)
+                RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
+            end
+        end
     end
 end
 
@@ -1810,38 +1702,6 @@ function RQE.Timer_CheckTimers()
         end
         if not elapsed then
             RQE.infoLog("Elapsed is nil")
-        end
-    end
-end
-
-
--- Function to fetch/print Scenario Criteria Step by Step
-function RQE.PrintScenarioCriteriaInfoByStep()
-    local currentStep, numSteps = C_Scenario.GetInfo()
-    for stepID = 1, numSteps do
-        local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
-        if not numCriteria or numCriteria == 0 then
-            RQE.debugLog("No criteria info available for step", stepID)
-        else
-            for criteriaIndex = 1, numCriteria do
-                local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex)
-                RQE.infoLog("Step ID:", stepID)
-                RQE.infoLog("Criteria Index:", criteriaIndex)
-                RQE.infoLog("Criteria String:", criteriaString or "N/A")
-                RQE.infoLog("Criteria Type:", criteriaType or "N/A")
-                RQE.infoLog("Completed:", completed)
-                RQE.infoLog("Quantity:", quantity or "N/A")
-                RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
-                RQE.infoLog("Flags:", flags or "N/A")
-                RQE.infoLog("Asset ID:", assetID or "N/A")
-                RQE.infoLog("Quantity String:", quantityString or "N/A")
-                RQE.infoLog("Criteria ID:", criteriaID or "N/A")
-                RQE.infoLog("Duration:", duration or "N/A")
-                RQE.infoLog("Elapsed:", elapsed or "N/A")
-                RQE.infoLog("Criteria Failed:", criteriaFailed)
-                RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
-                RQE.infoLog("---")
-            end
         end
     end
 end
@@ -2283,7 +2143,7 @@ function RQE:AbandonQuest(questID)
 	local questLink = GetQuestLink(questID)  -- Generate the quest link
 	
 	if RQE.db.profile.debugLevel == "INFO" then
-		print("Abandoning QuestID:", questID .. " - Quest Name: " .. questLink)
+		print("Abandoning QuestID:", questID .. " - " .. questLink)
 	end
     C_QuestLog.SetAbandonQuest()
 
@@ -2921,11 +2781,7 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
             -- Update stepIndex globally or within a managed scope
             self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex is how you track the current step globally
             self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
-        else
-            RQE.infoLog("No button found for next quest step:", buttonIndex)
         end
-    else
-        RQE.infoLog("No next step found for quest:", questID)
     end
 end
 
@@ -3028,7 +2884,7 @@ function RQE:CheckDBZoneChange(questID, stepIndex)
             end
         end
     end
-    RQE.infoLog("Player is not in the correct zone. Current MapID:", currentMapID, "Required MapID(s):", table.concat(requiredMapIDs, ", "))
+    RQE.debugLog("Player is not in the correct zone. Current MapID:", currentMapID, "Required MapID(s):", table.concat(requiredMapIDs, ", "))
 end
 
 
@@ -3111,7 +2967,6 @@ function RQE:HideCompletedWatchedQuests()
             -- Check if the quest is completed
             if isQuestComplete then
                 -- Remove the quest from the watch list if it is completed
-				--RQE.infoLog("Removing questID " .. qID .. " from watch list")
                 C_QuestLog.RemoveQuestWatch(qID)
 
                 -- Optional: Update the UI if necessary
@@ -3890,7 +3745,26 @@ function RQE:SaveWorldQuestWatches()
     for questID, _ in pairs(RQE.savedWorldQuestWatches) do
         RQE.infoLog("Saved World Quest ID:", questID)
     end
-    RQE.infoLog("World Quest Saving complete")
+end
+
+
+-- Function to save the currently watched world quests with Automatic watch type
+function RQE:SaveAutomaticWorldQuestWatches()
+    wipe(RQE.savedAutomaticWorldQuestWatches)
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID then
+            local watchType = C_QuestLog.GetQuestWatchType(questID)
+            if watchType == Enum.QuestWatchType.Automatic then  -- Save only if the watch type is Automatic
+                RQE.savedAutomaticWorldQuestWatches[questID] = true
+                RQE.infoLog("Saved automatically tracked World Quest ID:", questID)
+            end
+        end
+    end
+    -- Debug: Print the saved world quests
+    for questID, _ in pairs(RQE.savedAutomaticWorldQuestWatches) do
+        RQE.infoLog("Saved World Quest ID:", questID)
+    end
 end
 
 
@@ -3904,7 +3778,6 @@ function RQE:RestoreSavedWorldQuestWatches()
     local function restoreNext()
         if #questsToRestore == 0 then
             wipe(RQE.savedWorldQuestWatches)
-            RQE.infoLog("Restoration Complete")
             return
         end
         local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
@@ -3913,6 +3786,31 @@ function RQE:RestoreSavedWorldQuestWatches()
             RQE.infoLog("Manually tracking World Quest ID " .. questID)
         end
         C_Timer.After(1, restoreNext) -- Call the next restoration after 1 second
+    end
+
+    -- Start the restoration process
+    restoreNext()
+end
+
+
+-- Function to restore saved automatically watched world quests
+function RQE:RestoreSavedAutomaticWorldQuestWatches()
+    local questsToRestore = {}
+    for questID, _ in pairs(RQE.savedAutomaticWorldQuestWatches) do
+        questsToRestore[#questsToRestore + 1] = questID
+    end
+
+    local function restoreNext()
+        if #questsToRestore == 0 then
+            wipe(RQE.savedAutomaticWorldQuestWatches)
+            return
+        end
+        local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
+        if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+            RQE.infoLog("Automatically tracking World Quest ID " .. questID)
+        end
+        C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
     end
 
     -- Start the restoration process
@@ -3938,12 +3836,8 @@ function RQE.UntrackAutomaticWorldQuests()
     local playerMapID = C_Map.GetBestMapForUnit("player")
     local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 
-    -- Print the player's current map ID for debugging
-    RQE.infoLog("Current Player Map ID:", playerMapID)
-
     -- Convert the questsInArea to a lookup table for quicker access and print them
     local questsInAreaLookup = {}
-    RQE.infoLog("Quests in the current area:")
     for _, taskPOI in ipairs(questsInArea) do
         questsInAreaLookup[taskPOI.questId] = true
         RQE.infoLog(taskPOI.questId)  -- Print each quest ID found in the area
@@ -3961,12 +3855,7 @@ function RQE.UntrackAutomaticWorldQuests()
             if watchType == Enum.QuestWatchType.Automatic then
 			-- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
                 C_QuestLog.RemoveWorldQuestWatch(questID)
-                RQE.infoLog("Untracked automatic World Quest ID: " .. questID)
-            else
-                RQE.infoLog("Quest ID " .. questID .. " is still relevant or not automatic; not untracking.")
             end
-        else
-            RQE.infoLog("No quest ID found for watch index " .. i)
         end
     end
 end
@@ -4238,7 +4127,6 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
     -- Check if there are reagent slot schematics to iterate over
     if schematic.reagentSlotSchematics then
         for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
-            -- RQE.infoLog("Reagent Slot", i)
             if slotSchematic.reagents then
                 for _, reagent in ipairs(slotSchematic.reagents) do
                     local itemName = "Unknown"
@@ -4331,6 +4219,7 @@ end
 
 -- Function to log scenario information, including previously ignored values
 function RQE.LogScenarioInfo()
+    if not RQE.debugMode then return end  -- Only log if debugging is explicitly enabled
     if C_Scenario.IsInScenario() then
         local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit, scenarioID = C_Scenario.GetInfo()
 		
