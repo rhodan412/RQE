@@ -1124,27 +1124,18 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				if not questIDFromText then
 					RQE.debugLog("Error: Invalid quest ID extracted from text")
 				else
-					RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
-				
 					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
-					RQE.debugLog("Attempting to create macro")
 					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
 				end
 			end
-			
-			RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
-	
-			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
-			RQE.debugLog("Attempting to create macro")
-			-- C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)
-			
+				
+			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
 			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
 			local questData = RQE.getQuestData(questIDFromText)
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
 			if questData then
 				local stepData = questData[stepIndex]
-				RQE.debugLog("Quest data found for ID:", questIDFromText)
 				for index, stepData in ipairs(questData) do
 					if stepData.description == stepDescription then
 						RQE.infoLog("Matching step data found for description:", stepDescription)
@@ -1152,13 +1143,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 							local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
 							RQE.infoLog("Macro commands to set:", macroCommands)
 							RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
-						else
-							RQE.debugLog("No macro data found for this step.")
 						end
 					end
 				end
-			else
-				RQE.debugLog("Invalid quest ID or step description. Quest data not found.")
 			end
 						
 			-- Check if MagicButton should be visible based on macro body
@@ -1386,10 +1373,8 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
             local button = RQE.WaypointButtons[_] -- Assuming WaypointButtons are stored in a manner that mirrors questData
             if button then
                 -- Simulate the click
-                RQE.infoLog("objectiveIndex neither 1 or 99, clicking appropriate button")
                 RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
                 button:Click() -- `OnClick` will now use the button's direct data
-                RQE.infoLog("WaypointButton clicked for objectiveIndex:", nextObjectiveIndex)
 				
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex
@@ -1402,7 +1387,6 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
             end
         end
     end
-    RQE.infoLog("No WaypointButton found for ObjectiveIndex " .. nextObjectiveIndex .. ".")
     UpdateRQEQuestFrame()
 	RQE:ClearWQTracking()
 end
@@ -1412,13 +1396,11 @@ end
 function RQE:AreAllObjectivesCompleted(questID)
     -- Check if questID is valid
     if not questID or type(questID) ~= "number" or questID <= 0 then
-        RQE.infoLog("Invalid or missing questID provided to AreAllObjectivesCompleted:", tostring(questID))
         return false
     end
 
     local status, objectives = pcall(C_QuestLog.GetQuestObjectives, questID)
     if not status or not objectives then
-        RQE.infoLog("Failed to retrieve objectives for questID:", questID, "Error:", objectives)
         return false
     end
 
@@ -1434,14 +1416,32 @@ function RQE:AreAllObjectivesCompleted(questID)
 end
 
 
+-- Function that simulates a click of the QuestLogIndexButton
+function RQE.ClickQuestLogIndexButton(questID)
+    local found = false
+    for i, button in ipairs(RQE.QuestLogIndexButtons) do
+        if button and button.questID == questID then
+            if button:IsVisible() and button:IsEnabled() then
+                button:Click()
+                found = true
+                break
+            end
+        end
+    end
+    if not found then
+        RQE.debugLog("No button found for questID: " .. tostring(questID))
+    end
+end
+
+
+
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
-	RQE.infoLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
+	RQE.debugLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
 	RQE:ClearWQTracking()
 
 	-- Validation check
 	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
-		RQE.infoLog("QuestIDText is nil or empty. Cannot proceed.")
 		return
 	end
 
@@ -1454,19 +1454,16 @@ function RQE.ClickUnknownQuestButton()
     end
 	
     if not questID then
-        RQE.infoLog("No QuestID found. Cannot proceed.")
         return
     end
 
     if RQE.hasClickedQuestButton then
-		RQE.infoLog("hasClickedQuestButton already clicked, skipping")
         return
     end
 
     local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
-			RQE.infoLog("Button successfully clicked")
             button:Click()
             RQE.hasClickedQuestButton = true
             foundButton = true
@@ -1475,7 +1472,7 @@ function RQE.ClickUnknownQuestButton()
     end
 
     if not foundButton then
-        RQE.infoLog("Did not find a button for questID:", questID)
+        RQE.debugLog("Did not find a button for questID:", questID)
     else	
         -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
 		if not mapID then
@@ -1487,7 +1484,6 @@ function RQE.ClickUnknownQuestButton()
 
     -- If the button wasn't found, print a message
     if not RQE.hasClickedQuestButton then
-        RQE.infoLog("Did not find a button for questID:", questID)
     end
 	
 	-- Re-Track the quest being listed as super tracked
