@@ -293,7 +293,7 @@ function RQE.handlePlayerRegenEnabled()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
 		
         C_Timer.After(0.5, function()
-            RQE:CheckAndAdvanceStep(questID)
+            --RQE:CheckAndAdvanceStep(questID)
             -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.65, 0.5)
         end)
     else
@@ -418,7 +418,7 @@ function RQE.handleAddonLoaded(addonName)
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
 		C_Timer.After(0.5, function()
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 		end)
 		
 		C_Timer.After(1, function()
@@ -890,8 +890,8 @@ end
 -- Handling SUPER_TRACKING_CHANGED Event
 -- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking(...)
-    startTime = debugprofilestop()  -- Start timer
-	RQEMacro:ClearMacroContentByName("RQE Macro")
+    -- startTime = debugprofilestop()  -- Start timer
+	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
 		
     local extractedQuestID
@@ -924,7 +924,7 @@ function RQE.handleSuperTracking(...)
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()	
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 			RQE:StartPeriodicChecks()
 		end)
 	end
@@ -1003,8 +1003,8 @@ function RQE.handleSuperTracking(...)
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
 	
-	local duration = debugprofilestop() - startTime
-	DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	
 	RQE.LastSuperTrackedQuestID = questID
 end
@@ -1063,7 +1063,7 @@ function RQE.handleQuestAccepted(...)
 	end
 	
 	-- Condition to handle nil questID more robustly
-	C_Timer.After(1, function()
+	C_Timer.After(2, function()
 		if questID then
 			RQE.infoLog("Attempting to click QuestLogIndexButton for extracted questID:", questID)
 			RQE.ClickQuestLogIndexButton(questID)
@@ -1842,7 +1842,7 @@ function RQE.handleQuestAutoComplete(...)
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 		end)
 	end
 	
@@ -2120,7 +2120,7 @@ function RQE.handleQuestWatchListChanged(...)
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then		
 		C_Timer.After(0.5, function()
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 			RQE:StartPeriodicChecks()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 		end)
@@ -2197,6 +2197,7 @@ function RQE.handleQuestTurnIn(...)
     RQE:UpdateRQEFrameVisibility()
     RQE:UpdateRQEQuestFrameVisibility()
 	
+	RQE.infoLog("Cleared Macro Content at 2200")
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 
     -- DEFAULT_CHAT_FRAME:AddMessage("QTI 03 Debug: QuestID: " .. tostring(questID), 1.0, 0.08, 0.58)
@@ -2206,7 +2207,7 @@ function RQE.handleQuestTurnIn(...)
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then		
 		C_Timer.After(1, function()
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 		end)
 	else
 		-- C_Timer.After(2, function()
@@ -2267,7 +2268,7 @@ function RQE.handleQuestFinished()
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then	
 		C_Timer.After(0.5, function()
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 			--RQE:ClickSuperTrackedQuestButton()
 			-- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 			RQE:StartPeriodicChecks()

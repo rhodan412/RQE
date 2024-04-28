@@ -1089,8 +1089,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				TomTom.waydb:ResetProfile()
 			end
 
-			-- Clears Macro Data
-			RQEMacro:ClearMacroContentByName("RQE Macro")
+			-- -- Clears Macro Data
+			-- RQE.infoLog("Cleared Macro Content at 1093")
+			-- RQEMacro:ClearMacroContentByName("RQE Macro")
 	
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)

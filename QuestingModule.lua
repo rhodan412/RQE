@@ -1531,18 +1531,19 @@ function UpdateRQEQuestFrame()
 						RQE:PerformClearActions()
 
 						-- Clears Macro Data
+						RQE.infoLog("Cleared Macro Content at 1534")
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 						
 						-- Clear any existing super tracking
 						C_SuperTrack.SetSuperTrackedQuestID(0)
 						C_SuperTrack.ClearSuperTrackedContent()
 						
-						-- -- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
-						-- C_Timer.After(2, function()
-							-- if RQE.WaypointButtons[1] then
-								-- RQE.WaypointButtons[1]:Click()
-							-- end
-						-- end)
+						-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
+						C_Timer.After(2, function()
+							if RQE.WaypointButtons[1] then
+								RQE.WaypointButtons[1]:Click()
+							end
+						end)
 						
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
@@ -2059,6 +2060,7 @@ function UpdateRQEWorldQuestFrame()
 					RQE:PerformClearActions()
 
 					-- Clears Macro Data
+					RQE.infoLog("Cleared Macro Content at 2063")
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 					
 					-- -- Clear any existing super tracking
