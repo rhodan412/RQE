@@ -2679,7 +2679,7 @@ end
 -- Function to place Current Inventory in table
 function RQE.getCurrentInventory()
     local inventory = {}
-    for bag = 0, 4 do  -- Main bags
+    for bag = 1, 5 do  -- Main bags + Reagent Bag (doesn't count items in Bank or Reagent Bank)
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local itemID = C_Container.GetContainerItemID(bag, slot)
             if itemID then
@@ -4193,6 +4193,52 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
     end
 
     print(reagentsString)
+end
+
+
+-- Function to confirm and buy an item from a merchant
+function RQE:ConfirmAndBuyMerchantItem(index, quantity)
+    local itemName, _, _, _, _, _, _, maxStack = GetMerchantItemInfo(index)
+    local itemLink = GetMerchantItemLink(index)
+    quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
+    maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
+
+    StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
+        text = "Do you want to buy " .. quantity .. " of " .. (itemLink or itemName) .. "?",
+        button1 = "Yes",
+        button2 = "No",
+        OnShow = function(self)
+            local itemFrame = CreateFrame("Frame", nil, self)
+            itemFrame:SetAllPoints(self.text)
+            itemFrame:SetScript("OnEnter", function()
+                GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
+                GameTooltip:SetHyperlink(itemLink)
+                GameTooltip:Show()
+            end)
+            itemFrame:SetScript("OnLeave", function()
+                GameTooltip:Hide()
+            end)
+        end,
+        OnAccept = function()
+            if quantity > maxStack then
+                local fullStacks = math.floor(quantity / maxStack)
+                local remainder = quantity % maxStack
+                for i = 1, fullStacks do
+                    BuyMerchantItem(index, maxStack)
+                end
+                if remainder > 0 then
+                    BuyMerchantItem(index, remainder)
+                end
+            else
+                BuyMerchantItem(index, quantity)
+            end
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,  -- Avoid taint from UIParent
+    }
+    StaticPopup_Show("RQE_CONFIRM_PURCHASE")
 end
 
 
