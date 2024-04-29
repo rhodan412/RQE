@@ -1582,10 +1582,12 @@ function UpdateRQEQuestFrame()
 							-- RQE:CheckAndAdvanceStep(questID)
 						end)
 						
-						-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-						-- if RQE.db.profile.autoClickWaypointButton then
-							-- RQE:StartPeriodicChecks()
-						-- end
+						-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+						C_Timer.After(1, function()
+							if RQE.db.profile.autoClickWaypointButton then
+								RQE:StartPeriodicChecks()  -- MIGHT NEED TO COMMENT OUT IF MISBEHAVING
+							end
+						end)
 					--end)
 						
 						-- Refresh the UI here to update the button state
