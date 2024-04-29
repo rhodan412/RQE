@@ -872,6 +872,9 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
             -- DEFAULT_CHAT_FRAME:AddMessage("PEW 09 Debug: Not in a scenario, hiding ScenarioChildFrame.", 0.93, 0.51, 0.93)
 		end
 		
+		UpdateFrame()
+		UpdateRQEQuestFrame()
+		
 		-- Handle scenario regardless of the condition
 		RQE.updateScenarioUI()
     end
