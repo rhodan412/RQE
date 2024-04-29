@@ -451,7 +451,7 @@ end
 -- Function to handle SCENARIO_COMPLETED event
 function RQE.handleScenarioComplete(...)
 	-- startTime = debugprofilestop()  -- Start timer
-	
+		
 	local event = select(2, ...)
 	local questID = select(3, ...)
 	local xp = select(4, ...)
@@ -642,6 +642,7 @@ end
 -- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 function RQE.handlePlayerControlGained()
 	RQE:AutoClickQuestLogIndexWaypointButton()
+	RQE:StartPeriodicChecks() -- Needed for updating WaypointButton presses when getting off taxi
 end
 
 
@@ -1071,16 +1072,15 @@ function RQE.handleQuestAccepted(...)
         end
 	end
 	
-	-- Condition to handle nil questID more robustly
-	C_Timer.After(2, function()
-		if questID then
-			RQE.infoLog("Attempting to click QuestLogIndexButton for extracted questID:", questID)
-			RQE.ClickQuestLogIndexButton(questID)
-		else
-			RQE.infoLog("No valid questID extracted, exiting function.")
-			return -- Exit the function early if no valid questID can be extracted
-		end
-	end)
+    -- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
+	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
+		C_Timer.After(2, function()
+            RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
+            RQE.ClickQuestLogIndexButton(questID)
+		end)
+	else
+		RQE.infoLog("RQEFrame is not blank, skipping QuestLogIndexButton click.")
+	end
 		
     -- Update Frame with the newly accepted quest if nothing is super tracked
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 11 Debug: Updating Frame.", 0.46, 0.62, 1)
@@ -1324,12 +1324,10 @@ function RQE.updateScenarioCriteriaUI()
     -- Check to see if player in scenario, if not it will end
     if not C_Scenario.IsInScenario() then
         if RQE.ScenarioChildFrame:IsVisible() then
-            --print("Hiding Scenario Frame that is visible")
             RQE.ScenarioChildFrame:Hide()
         end
 
         if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
-            --print("Hiding Timer that is visible")
             RQE.StopTimer()
         end
 
@@ -1343,15 +1341,12 @@ function RQE.updateScenarioCriteriaUI()
 
     -- Check if the scenario has been marked as completed
     if completed then
-        --print("Scenario is completed. Skipping updates.")
         -- If the scenario is complete, avoid further updates or handle differently
         if RQE.ScenarioChildFrame:IsVisible() then
-            --print("Hiding Scenario Frame that is visible")
             RQE.ScenarioChildFrame:Hide()
         end
 
         if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
-            --print("Hiding Timer that is visible")
             RQE.StopTimer()
         end
 		
@@ -1490,6 +1485,7 @@ function RQE.handleInstanceInfoUpdate()
 		
 	-- Updates the RQEFrame with the appropriate super tracked quest
 	UpdateFrame()
+	UpdateRQEQuestFrame()
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UPDATE_INSTANCE_INFO in: " .. duration .. "ms", 0.25, 0.75, 0.85)
