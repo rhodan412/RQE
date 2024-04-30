@@ -4333,7 +4333,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 
     local itemName = C_Item.GetItemNameByID(itemID)  -- Fetch the item name directly from the item ID
     if not itemName then
-        print("Failed to retrieve item name for ID:", itemID)
+        print("Failed to retrieve item name for ID:".. itemID .. ". Please try search again.")
         return
     end
 
@@ -4362,14 +4362,18 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
             if totalQuantityNeeded > 0 then
                 print("Not enough quantity available to meet the requested purchase.")
             else
-                print("Total cost for", quantity, "units will be", GetCoinTextureString(totalCost))
+                local itemLink = C_AuctionHouse.GetReplicateItemLink(1) or select(2, GetItemInfo(itemID))
+                if not itemLink then
+                    itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
+                end
+                print("Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
                 -- Here you might want to display the confirmation popup with the total cost
                 StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
-                    text = string.format("Confirm your purchase of %d x %s for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
+                    text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
                     button1 = "Yes",
                     button2 = "No",
                     OnAccept = function()
-                        C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+                        C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity, unitPrice)
                         C_Timer.After(0.5, function()  -- Allow for server response time
                             C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
                         end)
@@ -4378,11 +4382,22 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
                     whileDead = true,
                     hideOnEscape = true,
                     preferredIndex = 3,  -- Avoid taint from UIParent
+                OnShow = function(self)
+                    self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+                    local itemFrame = CreateFrame("Frame", nil, self)
+                    itemFrame:SetAllPoints(self.text)
+                    itemFrame:SetScript("OnEnter", function()
+                        GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
+                        GameTooltip:SetHyperlink(itemLink)
+                        GameTooltip:Show()
+                    end)
+                    itemFrame:SetScript("OnLeave", function()
+                        GameTooltip:Hide()
+                    end)
+                end,
                 }
                 StaticPopup_Show("RQE_CONFIRM_PURCHASE_COMMODITY")
             end
-        else
-            print("No results found for itemID:", itemID)
         end
     end)
 end
