@@ -4244,9 +4244,15 @@ end
 
 -- Function that handles a series of functions related to purchasing an item from the AH
 function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
-	RQE:SearchAndPrepareAuctionItem(itemID, quantity)
-	--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
-	RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
+	-- Check if either TomTom or TradeSkillMaster is loaded
+	if IsAddOnLoaded("CraftSim") or IsAddOnLoaded("TradeSkillMaster") then
+		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
+		--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
+	else
+		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
+		--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
+		RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
+	end
 end 
 
 
