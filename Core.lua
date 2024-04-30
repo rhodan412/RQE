@@ -4242,6 +4242,152 @@ function RQE:ConfirmAndBuyMerchantItem(index, quantity)
 end
 
 
+-- Function that handles a series of functions related to purchasing an item from the AH
+function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
+	RQE:SearchAndPrepareAuctionItem(itemID, quantity)
+	--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
+	RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
+end 
+
+
+-- Function to search an item in the auction house and prepare for manual review
+function RQE:SearchAndPrepareAuctionItem(itemID, quantity)
+    if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+        print("Auction House is not open.")
+        return
+    end
+
+    local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+    RQE.debugLog("Created ItemKey for itemID:", itemID, "Item Level:", itemKey.itemLevel, "Item Suffix:", itemKey.itemSuffix)
+
+    -- Array of itemKeys to search
+    local itemKeys = {itemKey}
+
+    -- Search for the item using ItemKeys
+    C_AuctionHouse.SearchForItemKeys(itemKeys, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false})
+    RQE.infoLog("Search query sent for ItemID:", itemID, "with quantity:", quantity)
+
+    -- Check and display search results after a short delay to allow data to load
+    C_Timer.After(1, function()
+        local numResults = C_AuctionHouse.GetNumItemSearchResults(itemKey)
+
+        if numResults > 0 then
+            for index = 1, numResults do
+                local resultInfo = C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
+                if resultInfo then
+                    print("Result", index, ": Price =", resultInfo.buyoutPrice or "No buyout", "Quantity =", resultInfo.quantity)
+                end
+            end
+        else
+            print("No results found for itemID:", itemID)
+        end
+    end)
+end
+
+
+-- Function that searches for and prints out the prices for an item
+function RQE:SearchAndDisplayCommodityResults(itemID, quantity)
+    if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+        print("Auction House is not open.")
+        return
+    end
+
+    -- Creating the item key for the commodity
+    local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+    local searchQuery = {
+        itemKey = itemKey,
+        sorts = { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false }
+    }
+
+    -- Sending the search query
+    C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
+
+    C_Timer.After(1, function()
+        if C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
+            local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+            if numResults > 0 then
+                -- Iterate through results and display them
+                for index = 1, numResults do
+                    local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+                    if result then
+                        print("Result " .. index .. ": Price per unit: " .. GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
+                    end
+                end
+            else
+                print("No results found for itemID: ", itemID)
+            end
+        else
+            -- Not all results may be loaded immediately; consider requesting more results or retrying
+            C_AuctionHouse.RequestMoreCommoditySearchResults(itemID)
+        end
+    end)
+end
+
+
+-- Function to confirm and purchase a commodity from the auction house
+function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
+    if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+        print("Auction House is not open.")
+        return
+    end
+
+    local itemName = C_Item.GetItemNameByID(itemID)  -- Fetch the item name directly from the item ID
+    if not itemName then
+        print("Failed to retrieve item name for ID:", itemID)
+        return
+    end
+
+    local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+    -- Sending the search query
+    C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
+
+    C_Timer.After(1, function()
+        local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+        if numResults > 0 then
+            local totalQuantityNeeded = quantity
+            local totalCost = 0
+            local index = 1
+            while totalQuantityNeeded > 0 and index <= numResults do
+                local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+                if result then
+                    local quantityAvailable = result.quantity
+                    local unitPrice = result.unitPrice
+                    local quantityToBuy = min(quantityAvailable, totalQuantityNeeded)
+                    totalCost = totalCost + (quantityToBuy * unitPrice)
+                    totalQuantityNeeded = totalQuantityNeeded - quantityToBuy
+                    print("Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
+                end
+                index = index + 1
+            end
+            if totalQuantityNeeded > 0 then
+                print("Not enough quantity available to meet the requested purchase.")
+            else
+                print("Total cost for", quantity, "units will be", GetCoinTextureString(totalCost))
+                -- Here you might want to display the confirmation popup with the total cost
+                StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
+                    text = string.format("Confirm your purchase of %d x %s for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
+                    button1 = "Yes",
+                    button2 = "No",
+                    OnAccept = function()
+                        C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+                        C_Timer.After(0.5, function()  -- Allow for server response time
+                            C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
+                        end)
+                    end,
+                    timeout = 0,
+                    whileDead = true,
+                    hideOnEscape = true,
+                    preferredIndex = 3,  -- Avoid taint from UIParent
+                }
+                StaticPopup_Show("RQE_CONFIRM_PURCHASE_COMMODITY")
+            end
+        else
+            print("No results found for itemID:", itemID)
+        end
+    end)
+end
+
+
 -- Function that checks to see if player has a DragonRiding Aura/Mount active
 function RQE.CheckForDragonMounts()
     local i = 1
