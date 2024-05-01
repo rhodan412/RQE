@@ -71,6 +71,7 @@ local eventsToRegister = {
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	"LEAVE_PARTY_CONFIRMATION",
+	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
 	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_LOGIN",
@@ -144,6 +145,7 @@ local function HandleEvents(frame, event, ...)
 		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
+		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
@@ -417,9 +419,9 @@ function RQE.handleAddonLoaded(addonName)
 		-- Determine questID based on various fallbacks
 		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 		
-		C_Timer.After(0.5, function()
-			--RQE:CheckAndAdvanceStep(questID)
-		end)
+		-- C_Timer.After(0.5, function()
+			-- RQE:CheckAndAdvanceStep(questID)
+		-- end)
 		
 		C_Timer.After(1, function()
 			-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
@@ -445,6 +447,22 @@ function RQE.handleBossKill(self, event, ...)
 	RQE.canUpdateFromCriteria = true
 	-- RQE.InitializeScenarioFrame()
 	-- RQE.UpdateScenarioFrame()
+end
+
+
+
+-- Function to handle LFG_LIST_ACTIVE_ENTRY_UPDATE event
+function RQE.handleLFGActive(...)	
+	local event = select(2, ...)
+	local created = select(3, ...)
+
+	if created == true then
+		RQE.LFGActive = true
+	else
+		RQE.LFGActive = false
+	end
+	
+	-- DEFAULT_CHAT_FRAME:AddMessage("LFG-A Debug: " .. tostring(event) .. ". Created: " .. tostring(created), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
 end
 
 
@@ -535,28 +553,14 @@ end
 
 
 -- Function to handle START_TIMER event, logging the timer details:
-function RQE.handleStartTimer(...)
-	print("** RUNNING START_TIMER **")
-	
-    local args = {...}  -- Capture all arguments into a table
-    for i, arg in ipairs(args) do
-        if type(arg) == "table" then
-            print("Arg " .. i .. ": (table)")
-            for k, v in pairs(arg) do
-                print("  " .. tostring(k) .. ": " .. tostring(v))
-            end
-        else
-            print("Arg " .. i .. ": " .. tostring(arg))
-        end
-    end
-	
+function RQE.handleStartTimer(...)	
 	local event = select(2, ...)
 	local timerType = select(3, ...)
 	local timeRemaining = select(4, ...)
 	local totalTime = select(5, ...)
 	
 	-- Debug message indicating the timer details in a fuchsia color
-    DEFAULT_CHAT_FRAME:AddMessage("ST 01 Debug: START_TIMER event triggered. Timer Type: " .. tostring(timerType) .. ", Time Remaining: " .. tostring(timeRemaining) .. "s, Total Time: " .. tostring(totalTime) .. "s", 0.85, 0.33, 0.83)  -- Fuchsia Color
+    -- DEFAULT_CHAT_FRAME:AddMessage("ST 01 Debug: START_TIMER event triggered. Timer Type: " .. tostring(timerType) .. ", Time Remaining: " .. tostring(timeRemaining) .. "s, Total Time: " .. tostring(totalTime) .. "s", 0.85, 0.33, 0.83)  -- Fuchsia Color
     RQE:SaveWorldQuestWatches()
 end
 
@@ -872,13 +876,27 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
             -- DEFAULT_CHAT_FRAME:AddMessage("PEW 09 Debug: Not in a scenario, hiding ScenarioChildFrame.", 0.93, 0.51, 0.93)
 		end
 		
-		UpdateFrame()
 		UpdateRQEQuestFrame()
+		UpdateRQEWorldQuestFrame()
+		UpdateFrame()
 		
 		-- Handle scenario regardless of the condition
 		RQE.updateScenarioUI()
     end
 	
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    if questID then
+        if C_QuestLog.IsWorldQuest(questID) then
+            -- This is a World Quest that is currently super tracked
+            RQE.infoLog("Super tracked quest is a World Quest:", questID)
+            RQE:ClickWorldQuestButton(questID)
+        else
+            -- This is a regular quest or other content that is super tracked
+            RQE.infoLog("Super tracked content is not a World Quest:", questID)
+            -- Handle regular quest or other actions if necessary
+        end
+    end
+
 	-- Check if still in a scenario (useful for relogs or loading screens)
 	RQE.isInScenario = C_Scenario.IsInScenario()
     -- DEFAULT_CHAT_FRAME:AddMessage("PEW 10 Debug: isInScenario status updated.", 0.93, 0.51, 0.93)
@@ -1768,7 +1786,7 @@ function RQE.handleQuestComplete()
 	end
 		
 	RQE:QuestComplete(questID)
-	--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
 	RQEQuestFrame:ClearAllPoints()
 	RQE:ClearWQTracking()
 	UpdateRQEQuestFrame()
@@ -1787,7 +1805,7 @@ function RQE.handleQuestComplete()
 	
 	if not RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(2, function()
-			RQE.ClickUnknownQuestButton()
+			--RQE.ClickUnknownQuestButton()
 			RQE:StartPeriodicChecks()
 		end)
 	end
