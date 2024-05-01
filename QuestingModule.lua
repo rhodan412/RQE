@@ -1540,12 +1540,12 @@ function UpdateRQEQuestFrame()
 						C_SuperTrack.SetSuperTrackedQuestID(0)
 						C_SuperTrack.ClearSuperTrackedContent()
 						
-						-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
-						C_Timer.After(2, function()
-							if RQE.WaypointButtons[1] then
-								RQE.WaypointButtons[1]:Click()
-							end
-						end)
+						-- -- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
+						-- C_Timer.After(2, function()
+							-- if RQE.WaypointButtons[1] then
+								-- RQE.WaypointButtons[1]:Click()
+							-- end
+						-- end)
 						
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
