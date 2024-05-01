@@ -311,7 +311,7 @@ end
 SetUpTooltip(RQE.SearchGroupButton, {
     "2x Lt Click: Search for Group",
     "Rt Click: Create/Delist Group",
-    --"Shift Lt Click: Delist Group"
+    "Shift Lt Click: Delist Group"
 })
 
 
@@ -1435,6 +1435,22 @@ function RQE.ClickQuestLogIndexButton(questID)
 end
 
 
+-- Function that simulates a click of the WQuestLogIndexButton
+function RQE.ClickQuestLogIndexButton(questID)
+    local found = false
+    for i, button in ipairs(RQE.QuestLogIndexButtons) do
+        if button and button.questID == questID then
+            if button:IsVisible() and button:IsEnabled() then
+                button:Click()
+                found = true
+                break
+            end
+        end
+    end
+    if not found then
+        RQE.debugLog("No button found for questID: " .. tostring(questID))
+    end
+end
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()

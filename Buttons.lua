@@ -182,7 +182,7 @@ RQE.SearchGroupButtonMouseDown = function()
 		elseif button == "RightButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			-- Logic for creating a group
-			if IsInGroup() then
+			if RQE.LFGActive then
 				RQE:LFG_Delist(questID)
 				RQE:StopFormingLFG()
 			else
