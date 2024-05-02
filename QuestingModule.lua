@@ -117,7 +117,8 @@ end)
 RQE.QTResizeButton = resizeBtn
 
 -- Title text in a custom header
-local header = CreateFrame("Frame", "RQEQuestFrameHeader", RQEQuestFrame, "BackdropTemplate")
+local header = CreateFrame("Frame", "RQEQuestFrameHeader", RQE.RQEQuestFrame, "BackdropTemplate")
+RQE.RQEQuestFrameHeader = header
 header:SetHeight(30)
 header:SetBackdrop({
     bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -143,8 +144,8 @@ RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. fram
 
 -- Create the Slider (Scrollbar)
 local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
-QMQTslider:SetPoint("TOPLEFT", RQEQuestFrame, "TOPRIGHT", -20, -20)
-QMQTslider:SetPoint("BOTTOMLEFT", RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
+QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -20)
+QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
 QMQTslider:SetMinMaxValues(0, content:GetHeight())
 QMQTslider:SetValueStep(1)
 QMQTslider.scrollStep = 1
@@ -465,19 +466,19 @@ end
 ---------------------------
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Right Side)
-RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
-RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
-RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
-RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
+RQE.Buttons.CreateQuestCloseButton(RQE.RQEQuestFrame)
+RQE.Buttons.CreateQuestMaximizeButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
+RQE.Buttons.CreateQuestMinimizeButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
+RQE.Buttons.CreateQuestFilterButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.CQButton(RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.CQButton(RQE.RQEQuestFrame) --, "TOPLEFT")
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.HQButton(RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.HQButton(RQE.RQEQuestFrame) --, "TOPLEFT")
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.ZQButton(RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.ZQButton(RQE.RQEQuestFrame) --, "TOPLEFT")
 
 
 ---------------------------
@@ -485,22 +486,22 @@ RQE.Buttons.ZQButton(RQEQuestFrame, "TOPLEFT")
 ---------------------------
 
 -- Event to update text widths when the frame is resized
-RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
+RQE.RQEQuestFrame:SetScript("OnSizeChanged", function(self, width, height)
     AdjustQuestItemWidths(width)
 	SaveQuestFrameSize()
 end)
 
 
 -- Calls function to save Quest Frame Position OnDragStop
-RQEQuestFrame:SetScript("OnDragStop", function()
-    RQEQuestFrame:StopMovingOrSizing()
+RQE.RQEQuestFrame:SetScript("OnDragStop", function()
+    RQE.RQEQuestFrame:StopMovingOrSizing()
     SaveQuestFramePosition()  -- This will save the current frame position
 end)
 
 
 -- Define the function to save frame position
 function SaveQuestFramePosition()
-    local point, relativeTo, relativePoint, xOfs, yOfs = RQEQuestFrame:GetPoint()
+    local point, relativeTo, relativePoint, xOfs, yOfs = RQE.RQEQuestFrame:GetPoint()
     RQE.db.profile.QuestFramePosition.xPos = xOfs
     RQE.db.profile.QuestFramePosition.yPos = yOfs
     RQE.db.profile.QuestFramePosition.anchorPoint = relativePoint
@@ -509,7 +510,7 @@ end
 
 -- Define the function to save frame position
 function SaveQuestFrameSize()
-    local width, height = RQEQuestFrame:GetSize()
+    local width, height = RQE.RQEQuestFrame:GetSize()
     RQE.db.profile.QuestFramePosition.frameWidth = width
     RQE.db.profile.QuestFramePosition.frameHeight = height
 end
@@ -519,7 +520,7 @@ end
 function AdjustQuestItemWidths(frameWidth)
     -- Fallback: If frameWidth is not provided, use the width of a specific frame, e.g., RQEQuestFrame
     if not frameWidth then
-        frameWidth = RQEQuestFrame:GetWidth() -- Adjust RQEQuestFrame to your specific frame
+        frameWidth = RQE.RQEQuestFrame:GetWidth() -- Adjust RQEQuestFrame to your specific frame
     end
 	
     -- Define base parameters for dynamic padding calculation
@@ -1377,11 +1378,11 @@ function UpdateRQEQuestFrame()
     RQE.WorldQuestsFrame.questCount = worldQuestCount
 
     -- Let's assume you have stored your quest title FontStrings in a table
-    for _, fontString in pairs(RQEQuestFrame.questTitles or {}) do
+    for _, fontString in pairs(RQE.RQEQuestFrame.questTitles or {}) do
         fontString:Hide()
     end
 
-    RQEQuestFrame.questTitles = RQEQuestFrame.questTitles or {}
+    RQE.RQEQuestFrame.questTitles = RQE.RQEQuestFrame.questTitles or {}
 
     -- Get the number of tracked quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
@@ -1630,7 +1631,7 @@ function UpdateRQEQuestFrame()
 				QuestObjectives:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				QuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectives:SetWordWrap(true)
-				QuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
+				QuestObjectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
 				QuestObjectives:SetHeight(0)  -- Auto height
 				QuestObjectives:SetText(objectivesText)
 
@@ -1669,7 +1670,7 @@ function UpdateRQEQuestFrame()
 				QuestLevelAndName:SetJustifyH("LEFT")
 				QuestLevelAndName:SetJustifyV("TOP")
 				QuestLevelAndName:SetWordWrap(true)
-				QuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
+				QuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
 				QuestLevelAndName:SetHeight(0)  -- Auto height
 				QuestLevelAndName:EnableMouse(true)
 
@@ -1699,7 +1700,7 @@ function UpdateRQEQuestFrame()
 				QuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectivesOrDescription:SetJustifyH("LEFT")
 				QuestObjectivesOrDescription:SetJustifyV("TOP")
-				QuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 110)
+				QuestObjectivesOrDescription:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
 				QuestObjectivesOrDescription:SetHeight(0)  -- Auto height
 				QuestObjectivesOrDescription:SetWordWrap(true)
 				QuestObjectivesOrDescription:EnableMouse(true)
@@ -2164,7 +2165,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetHeight(0)
 			WQuestLevelAndName:SetJustifyH("LEFT")
 			WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
+			WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
 
 			-- Retrieve the quest title using the quest ID
 			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
@@ -2182,7 +2183,7 @@ function UpdateRQEWorldQuestFrame()
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
-			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
+			WQuestObjectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
             WQuestObjectives:SetHeight(0)
             WQuestObjectives:SetJustifyH("LEFT")
             WQuestObjectives:SetJustifyV("TOP")
@@ -2552,8 +2553,9 @@ function UpdateRQEAchievementsFrame()
 			achievementHeader:EnableMouse(true)
 			achievementHeader:SetScript("OnMouseUp", function(self, button)
 				if button == "LeftButton" then
-					if not IsAddOnLoaded("Blizzard_AchievementUI") then
-						LoadAddOn("Blizzard_AchievementUI")
+					local _, isBlizzAchieveLoaded = C_AddOns.IsAddOnLoaded("Blizzard_AchievementUI")
+					if not isBlizzAchieveLoaded then
+						C_AddOns.LoadAddOn("Blizzard_AchievementUI")
 					end
 					if AchievementFrame then
 						if not AchievementFrame:IsShown() then

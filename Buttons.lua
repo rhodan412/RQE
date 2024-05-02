@@ -312,7 +312,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     ClearButton:SetScript("OnClick", function() 
 	
         -- Your code for ClearButton functionality here
-		RQE:ClearFrameData()
+		RQE.ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil
@@ -324,7 +324,8 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		
         C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
-		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
 		
@@ -360,7 +361,8 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
         -- Your code for RWButton functionality here
         C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
-		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 		end
     end)
@@ -771,7 +773,7 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 		-- Set up the anchor point for the dropdown menu
 		local menuAnchor = {
 			point = "TOPLEFT", -- Point on the dropdown
-			relativeFrame = RQEQuestFrameHeader, -- Frame to anchor the dropdown to
+			relativeFrame = RQE.RQEQuestFrameHeader, -- Frame to anchor the dropdown to
 			relativePoint = "TOPLEFT", -- Point on RQEQuestFrame
 			offsetX = 0, -- X offset from the anchor point
 			offsetY = 0, -- Y offset from the anchor point

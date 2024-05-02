@@ -699,7 +699,7 @@ function RQE:HandleSuperTrackedQuestUpdate()
     if isWorldQuest then
         if not (manuallyTracked or trackedViaSearchAndNotCompleted) then
             -- Clear the RQEFrame for this world quest if it's neither manually tracked nor searched and incomplete
-            RQE:ClearFrameData()
+            RQE.ClearFrameData()
             return
         end
     end
@@ -1088,7 +1088,7 @@ end
 
 
 -- ClearFrameData function
-function RQE:ClearFrameData()
+function RQE.ClearFrameData()
 	-- Clear the Quest ID and Quest Name
     if RQE.QuestIDText then
         RQE.QuestIDText:SetText("")
@@ -1183,7 +1183,7 @@ end
 
 -- Simulates pressing the "Clear Window" Button
 function RQE:PerformClearActions()
-    RQE:ClearFrameData()
+    RQE.ClearFrameData()
     RQE.searchedQuestID = nil
     RQE.ManualSuperTrack = nil
     C_SuperTrack.ClearSuperTrackedContent()
@@ -1233,7 +1233,7 @@ function RQE:ShouldClearFrame()
 
 	-- Clears from RQEFrame searched world quests that have been completed
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
-        RQE:ClearFrameData()
+        RQE.ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE.infoLog("Cleared Macro Content at 1232")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -1243,7 +1243,7 @@ function RQE:ShouldClearFrame()
 	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked and not isBeingSearched) then
 	--if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
-        RQE:ClearFrameData()
+        RQE.ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE.infoLog("Cleared Macro Content at 1242")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -1253,7 +1253,7 @@ function RQE:ShouldClearFrame()
     if isWorldQuest then
 		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
-            RQE:ClearFrameData()
+            RQE.ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQE.infoLog("Cleared Macro Content at 1252")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -1262,7 +1262,7 @@ function RQE:ShouldClearFrame()
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
 		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
-            RQE:ClearFrameData()
+            RQE.ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQE.infoLog("Cleared Macro Content at 1261")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -1312,7 +1312,7 @@ function RQE:DelayedClearCheck()
 	
 		-- Clears from RQEFrame searched world quests that have been completed
 		if isBeingSearched and isQuestCompleted and isWorldQuest then
-			RQE:ClearFrameData()
+			RQE.ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQE.infoLog("Cleared Macro Content at 1311")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -1325,7 +1325,7 @@ function RQE:DelayedClearCheck()
 
 		if isWorldQuest then
 			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
-				RQE:ClearFrameData()
+				RQE.ClearFrameData()
 				RQE:ClearWaypointButtonData()
 				RQE.infoLog("Cleared Macro Content at 1324")
 				RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -4251,7 +4251,9 @@ end
 -- Function that handles a series of functions related to purchasing an item from the AH
 function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	-- Check if either TomTom or TradeSkillMaster is loaded
-	if IsAddOnLoaded("CraftSim") or IsAddOnLoaded("TradeSkillMaster") then
+	local _, isCraftSimLoaded = C_AddOns.IsAddOnLoaded("CraftSim")
+	local _, isTSMLoaded = C_AddOns.IsAddOnLoaded("TradeSkillMaster")
+	if isCraftSimLoaded and isTSMLoaded then
 		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
 		--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
 	else
