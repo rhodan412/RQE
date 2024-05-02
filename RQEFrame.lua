@@ -1555,22 +1555,25 @@ function RQE:LFG_Search(questID)
 
 	-- Logic for searching for groups
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local questName = C_QuestLog.GetTitleForQuestID(questID)
-	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+
+    if questID then
+        local questName = C_QuestLog.GetTitleForQuestID(questID)
+        local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+    end
 
 	local categoryID = 3
-	
+
     if not categoryID or categoryID == 0 then
         return
     end
 
 	local languages = C_LFGList.GetLanguageSearchFilter()
-	
+
     -- Set the search to the quest ID
     if questID then
         C_LFGList.SetSearchToQuestID(questID)
     end
-	
+
 	local filters = 0
 	local preferredFilters = 0
 
@@ -1585,11 +1588,17 @@ end
 -- Function to handle button clicks
 function RQE:LFG_Create(questID)
 	-- Logic for creating a group
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questName = C_QuestLog.GetTitleForQuestID(questID)
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-	local activityInfo = C_LFGList.GetActivityInfoTable(activityID)
-	local currentAreaActivities = C_LFGList.GetActivityInfoExpensive(activityID)
+
+    if activityID then
+        local activityInfo = C_LFGList.GetActivityInfoTable(activityID)
+        local currentAreaActivities = C_LFGList.GetActivityInfoExpensive(activityID)
+    else
+        return
+    end
+
 	local playerIlvl = GetAverageItemLevel()
 	local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
 	local itemLevel = minIlvlReq > playerIlvl and math.floor(playerIlvl) or minIlvlReq
@@ -1653,13 +1662,14 @@ function RQEOnGroupRosterUpdate()
     local isInGroup = IsInGroup()
     local isInRaid = IsInRaid()
     local isInstanceGroup = IsInInstance()
-	
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
     -- Trigger the role selection only if the player was in an outdoor raid group
 	if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
     --if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup and (availTank or availHealer or (availDPS and not (availTank and availHealer))) then
         -- The player has left an outdoor raid group, show the role selection dialog
-		--local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-        RQEShowRoleSelection(C_LFGList.GetActivityIDForQuestID(questID))
+		local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+        RQEShowRoleSelection(C_LFGList.GetActivityIDForQuestID(activityID))
     end
 
     -- Update the group size and type for the next check
@@ -1685,8 +1695,8 @@ function RQE:ClearStepsTextInFrame()
 		end
 	end
 end
-	
-	
+
+
 -- Function to initialize dropdown items
 function RQEFrame:InitializeDropdown()
     self.searchResults = self.searchResults or {}
