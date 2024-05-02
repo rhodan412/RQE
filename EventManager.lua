@@ -19,6 +19,8 @@ else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
 
+---@class RQEDatabase
+---@field public profileKeys table
 RQE.db = RQE.db or {}
 RQE.db.profile = RQE.db.profile or {}
 
@@ -195,10 +197,10 @@ local function HandleEvents(frame, event, ...)
 end
 
 
-function RQE.UnregisterUnusedEvents()
+--function RQE.UnregisterUnusedEvents()
     -- Example: Unregister events that are no longer needed
-    Frame:UnregisterEvent("EVENT_NAME")
-end
+    --Frame:UnregisterEvent("EVENT_NAME")
+--end
 
 
 -- Handles ACHIEVEMENT_EARNED and CONTENT_TRACKING_UPDATE Events
@@ -307,15 +309,15 @@ end
 -- Triggered immediately before PLAYER_ENTERING_WORLD on login and UI Reload, but NOT when entering/leaving instances
 function RQE.handlePlayerLogin()
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerLogin function.", 0.68, 0.85, 0.9)
-	
+
 	-- Initialize other components of your AddOn
 	RQE:InitializeAddon()
 	RQE:InitializeFrame()
-	
+
 	-- Add this line to update coordinates when player logs in
 	RQE:UpdateCoordinates()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
-	
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+
 	-- Fetch current MapID to have option of appearing with Frame
 	RQE:UpdateMapIDDisplay()
 
@@ -324,9 +326,9 @@ function RQE.handlePlayerLogin()
 		RQE.db = {}
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: RQE.db initialized.", 0.68, 0.85, 0.9)
 	end
-	
+
 	-- Make sure the profileKeys table is initialized
-	if RQE.db.profileKeys == nil then
+	if not RQE.db.profileKeys then
 		RQE.db.profileKeys = {}
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: RQE.db.profileKeys initialized.", 0.68, 0.85, 0.9)
 	end
@@ -335,22 +337,22 @@ function RQE.handlePlayerLogin()
 		RemoveAllTrackedWorldQuests()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed all tracked World Quests.", 0.68, 0.85, 0.9)
 	end
-	
+
 	RQE:ConfigurationChanged()
 
 	local charKey = UnitName("player") .. " - " .. GetRealmName()
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Current charKey is: " .. tostring(charKey), 0.68, 0.85, 0.9)
-	
+
 	-- Debugging: Print the current charKey
 	RQE.debugLog("Current charKey is:", charKey)
-	
+
 	-- This will set the profile to "Default"
 	RQE.db:SetProfile("Default")
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Profile set to Default.", 0.68, 0.85, 0.9)
-	
+
 	if RQE.db.profile.autoTrackZoneQuests then
 		RQE.DisplayCurrentZoneQuests()
-		
+
 		C_Timer.After(0.1, function()
 			RQE.UpdateTrackedQuestsToCurrentZone()
             -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Updated tracked quests to current zone.", 0.68, 0.85, 0.9)
@@ -1313,7 +1315,11 @@ end
 
 
 -- Handles UNIT_AURA event:
-function RQE.handleUnitAura()
+function RQE.handleUnitAura(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+	local updateInfo = select(4, ...)
+
     -- Only process the event if it's for the player
     if unitTarget == "player" and not UnitOnTaxi("player") then
         -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
@@ -2027,19 +2033,23 @@ function RQE.handleQuestWatchUpdate(...)
 
 	if isSuperTracking then
 		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-		local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(currentSuperTrackedQuestID) or "Unknown Quest"
-		
+		local superTrackedQuestName = "Unknown Quest"  -- Default if ID is nil or no title found
+
+		if currentSuperTrackedQuestID then
+			superTrackedQuestName = C_QuestLog.GetTitleForQuestID(currentSuperTrackedQuestID) or "Unknown Quest"
+		end
+
 		if currentSuperTrackedQuestID == questID then
 			-- DEFAULT_CHAT_FRAME:AddMessage("Quest is already super tracked: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
 			questID = currentSuperTrackedQuestID
 		end
-    else
-        C_SuperTrack.SetSuperTrackedQuestID(questID)
-        -- DEFAULT_CHAT_FRAME:AddMessage("Now super tracking quest: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
-    end
+	else
+		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		-- DEFAULT_CHAT_FRAME:AddMessage("Now super tracking quest: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
+	end
 
     -- DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(currentSuperTrackedQuestID) .. " / " .. superTrackedQuestName, 0.56, 0.93, 0.56)
-	
+
 	UpdateRQEQuestFrame()
 	RQE.RQEQuestFrame:ClearAllPoints()
 	
