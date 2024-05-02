@@ -62,9 +62,9 @@ RQE.RQEQuestFrame:SetBackdrop({
 RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
 
 -- Create the ScrollFrame
-local ScrollFrame = CreateFrame("ScrollFrame", nil, RQEQuestFrame)
-ScrollFrame:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-position
-ScrollFrame:SetPoint("BOTTOMRIGHT", RQEQuestFrame, "BOTTOMRIGHT", -30, 10)
+local ScrollFrame = CreateFrame("ScrollFrame", nil, RQE.RQEQuestFrame)
+ScrollFrame:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-position
+ScrollFrame:SetPoint("BOTTOMRIGHT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
@@ -144,8 +144,8 @@ RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. fram
 
 -- Create the Slider (Scrollbar)
 local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
-QMQTslider:SetPoint("TOPLEFT", RQEQuestFrame, "TOPRIGHT", -20, -20)
-QMQTslider:SetPoint("BOTTOMLEFT", RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
+QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -20)
+QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
 QMQTslider:SetMinMaxValues(0, content:GetHeight())
 QMQTslider:SetValueStep(1)
 QMQTslider.scrollStep = 1
@@ -1087,6 +1087,9 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local SelectedQuestID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
     C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	local questHasWarModeBonus = C_QuestLog.QuestHasWarModeBonus(questID)
+
     local xp = GetQuestLogRewardXP(questID)
 	local rewardTitle = GetQuestLogRewardTitle()
 	local skillPoints = GetQuestLogRewardSkillPoints()
@@ -1142,7 +1145,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	-- xp
 	if xp > 0 then
 		tooltip:AddLine(format(BONUS_OBJECTIVE_EXPERIENCE_FORMAT, FormatLargeNumber(xp).."|c0000ff00"), 1, 1, 1)
-		if isWarModeDesired and isQuestWorldQuest and questHasWarModeBonus then
+		if isWarModeDesired and isWorldQuest and questHasWarModeBonus then
 			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
 		end
 	end
@@ -1155,7 +1158,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	-- money
 	if money > 0 then
 		tooltip:AddLine(GetCoinTextureString(money, 12), 1, 1, 1)
-		if isWarModeDesired and isQuestWorldQuest and questHasWarModeBonus then
+		if isWarModeDesired and isWorldQuest and questHasWarModeBonus then
 			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
 		end
 	end
@@ -1208,7 +1211,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	end
 
 	-- war mode bonus (quest only)
-	if isWarModeDesired and not isQuestWorldQuest and questHasWarModeBonus then
+	if isWarModeDesired and not isWorldQuest and questHasWarModeBonus then
 		tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
 	end
 
@@ -1462,7 +1465,8 @@ function UpdateRQEQuestFrame()
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 		local isQuestComplete = C_QuestLog.IsComplete(questID)
 		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
-			
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		
 		if questIndex and not C_QuestLog.IsWorldQuest(questID) then
 			local info = C_QuestLog.GetInfo(questIndex)
 		
@@ -2017,6 +2021,7 @@ function UpdateRQEWorldQuestFrame()
         local questID = questInfo.questID
 		local button = RQE.WorldQuestsFrame["WQButton" .. questID]
 		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		
 		-- Retrieve or initialize the WQuestLogIndexButton for the current questID
         local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]

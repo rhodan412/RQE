@@ -161,7 +161,7 @@ ScrollFrame:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-pos
 ScrollFrame:SetPoint("BOTTOMRIGHT", RQEFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Enable clipping
-
+RQE.ScrollFrame = ScrollFrame
 
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
@@ -352,7 +352,9 @@ end
 RQE.QuestIDText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
 -- Debug: Check if settings are properly initialized
-if settings then
+if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
+    local QuestIDText_settings = RQE.db.profile.textSettings.QuestIDText
+
     -- Debug: Check individual settings
     if RQE.db.profile.textSettings.QuestIDText.font then
         RQE.debugLog("Font setting exists.")
@@ -946,10 +948,12 @@ function CreateSearchFrame(showFrame)
         return
     end
 
-    -- Use the search box and examine button from Core.lua
-    local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
-
     local SearchFrame = AceGUI:Create("Frame")
+    if not SearchFrame then
+        RQE.debugLog("Failed to create a GUI frame via AceGUI")
+        return
+    end
+
     SearchFrame:SetTitle("Search Frame")
     SearchFrame:SetWidth(400)
     SearchFrame:SetHeight(200)
@@ -960,12 +964,17 @@ function CreateSearchFrame(showFrame)
         RQEFrame.SearchFrame = nil
     end)
 
-    -- Add the edit box and examine button to the SearchFrame
+    -- Assuming editBox and examineButton are created correctly
+    local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
     SearchFrame:AddChild(searchBox)
     SearchFrame:AddChild(examineButton)
 
+    -- Fixing the positioning issue
     SearchFrame.frame:ClearAllPoints()
     SearchFrame.frame:SetPoint("TOPRIGHT", RQEFrame, "TOPLEFT", 0, 0)
+
+    -- Save reference to SearchFrame
+    RQEFrame.SearchFrame = SearchFrame
 end
 
 
@@ -984,7 +993,6 @@ function RQE.SearchModule:FetchAndDisplayQuestData(questID)
         self:DisplayQuestDataInRQEFrame(questTitle, questDetail, questObjectives)
     end)
 end
-
 
 -- Function to dynamically create StepsText and CoordsText elements
 function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
@@ -1014,7 +1022,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 	-- Create new step texts
 	for i = 1, #StepsText do
-		local stepTextHeight = 10
+		localstepTextHeight = 10
 	
 		-- Create StepsText
 		local StepText = content:CreateFontString(nil, "OVERLAY")
@@ -1057,10 +1065,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
 		
-		-- Insert it into the RQE.WaypointButtons table
-		table.insert(RQE.WaypointButtons, WaypointButton)
-        RQE.WaypointButtonIndices[WaypointButton] = i  -- Store the index associated with the button
-
 		-- Determine if this button was the last clicked
 		if RQE.LastClickedIdentifier and RQE.LastClickedIdentifier == i then
 			-- This button was the last clicked one; apply the "lit" texture
@@ -1086,6 +1090,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)  -- Adjust the x, y offsets as needed
 			GameTooltip:Show()
 		end)
+		
+		-- Insert it into the RQE.WaypointButtons table
+		table.insert(RQE.WaypointButtons, WaypointButton)
 
 		-- Hide the tooltip when the mouse leaves
 		WaypointButton:SetScript("OnLeave", function()
@@ -1096,9 +1103,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		WaypointButton:SetScript("OnClick", function()
 			-- Your code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
-			-- Check if TomTom is loaded and compatibility is enabled
+
+            -- Check if TomTom is loaded and compatibility is enabled
             local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-            if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 			end
 
@@ -1125,21 +1133,13 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.LastClickedIdentifier = i
 
 			-- When creating the WaypointButton
-			--WaypointButton.stepIndex = i
+			WaypointButton.stepIndex = i
 			RQE.LastClickedButtonRef = WaypointButton
-			RQE.infoLog("New LastClickedButton set:", RQE.WaypointButtonIndices[WaypointButton] or "Unnamed")
+			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
 			
-			---@class LastClickedWaypointButtonClass
-			---@field bg Texture
-
 			-- Update the reference to the last clicked button
-			---@type LastClickedWaypointButtonClass
-			RQE.LastClickedWaypointButton = {
-				button = WaypointButton,
-				bg = bg
-			}
-			-- RQE.LastClickedWaypointButton = WaypointButton
-			-- RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
+			RQE.LastClickedWaypointButton = WaypointButton
+			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
 			
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -1151,14 +1151,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				end
 			end
 				
-			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
-			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				RQE.questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-                print (RQE.questIDFromText)
-			end
-            local stepIndex = i
-			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
-			local questData = RQE.getQuestData(RQE.questIDFromText)
+			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
+			local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+            RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+			local questData = RQE.getQuestData(questIDFromText)
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
 			if questData then
@@ -1169,7 +1165,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 						if stepData and stepData.macro then
 							local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
 							RQE.infoLog("Macro commands to set:", macroCommands)
-							RQEMacro:SetQuestStepMacro(RQE.questIDFromText, index, macroCommands, false)
+							RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
 						end
 					end
 				end
@@ -1180,7 +1176,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
 			
-			UpdateFrame(questID, questData, StepsText, CoordsText, MapIDs)
+            -- Attempt to fetch quest info from RQEDatabase, use fallback if not present
+            local questInfo = RQE.getQuestData(questID)
+
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
 
 		-- Add a mouse down event to simulate a button press
