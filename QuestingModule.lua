@@ -114,7 +114,7 @@ resizeBtn:SetScript("OnMouseUp", function(self, button)
   frame:StopMovingOrSizing()
   AdjustQuestItemWidths()
 end)
-RQE.QTResizeButton = resizeBtn
+RQE.QMQTResizeButton = resizeBtn
 
 -- Title text in a custom header
 local header = CreateFrame("Frame", "RQEQuestFrameHeader", RQE.RQEQuestFrame, "BackdropTemplate")
