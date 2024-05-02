@@ -42,23 +42,6 @@ local LSM = LibStub("LibSharedMedia-3.0")
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
 
--- Constants
-
-local floor = math.floor
-local fmod = math.fmod
-local format = string.format
-local gsub = string.gsub
-local ipairs = ipairs
-local max = math.max
-local pairs = pairs
-local strfind = string.find
-local tonumber = tonumber
-local tinsert = table.insert
-local tremove = table.remove
-local tContains = tContains
-local unpack = unpack
-local round = function(n) return floor(n + 0.5) end
-
 
 ---------------------------------------------------
 -- 3. Debugging Functions
@@ -220,9 +203,7 @@ local defaults = {
             frameWidth = 325,
             frameHeight = 450
 		},
-		QuestFrameOpacity = 0.55, 
-		textSettings = {
-		},
+		QuestFrameOpacity = 0.55,
         textSettings = {
             headerText = {
                 font = "Fonts\\SKURRI.TTF",
@@ -1838,7 +1819,7 @@ end
 
 
 -- Function to Update the Opacity of Main Frame and Quest Tracker
-function RQE:UpdateFrameOpacity()
+function RQE.UpdateFrameOpacity()
     if RQEFrame then
         RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
     end
