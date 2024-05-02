@@ -19,10 +19,10 @@ else
 end
 
 RQE.Buttons = RQE.Buttons or {}
+RQE.WaypointButtonIndices = {}
 RQE.Frame = RQE.Frame or {}
 RQE.lastKnownObjectiveIndex = RQE.lastKnownObjectiveIndex or {}
 
-RQE.content = content  -- Save it to the global RQE table
 RQEDatabase = RQEDatabase or {}
 
 RQE.db = RQE.db or {}
@@ -62,8 +62,6 @@ local frameMenu = {
 -- Variable to keep track of the last known group size and type
 local lastGroupSize = 0
 local lastGroupType = "none" -- "none", "party", "raid", "instance"
-
-
 
 
 ---------------------------------
@@ -163,10 +161,11 @@ ScrollFrame:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-pos
 ScrollFrame:SetPoint("BOTTOMRIGHT", RQEFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Enable clipping
-
+RQE.ScrollFrame = ScrollFrame
 
 -- Create the content frame
-content = CreateFrame("Frame", nil, ScrollFrame)  -- Made global
+local content = CreateFrame("Frame", nil, ScrollFrame)
+RQE.content = content
 content:SetSize(360, 600)  -- Set the content size here
 ScrollFrame:SetScrollChild(content)
 content:SetAllPoints()
@@ -199,14 +198,15 @@ RQE.headerText = headerText
 
 
 -- Create the Slider (Scrollbar)
-slider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
+---@class RQESlider : Slider
+---@field slider.scrollStep number
+local slider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
+RQE.slider = slider
 slider:SetPoint("TOPLEFT", RQEFrame, "TOPRIGHT", -20, -20)
 slider:SetPoint("BOTTOMLEFT", RQEFrame, "BOTTOMRIGHT", -20, 20)
 slider:SetMinMaxValues(0, content:GetHeight())
 slider:SetValueStep(1)
 slider.scrollStep = 1
-
-RQE.slider = slider
 
 slider:SetScript("OnValueChanged", function(self, value)
     ScrollFrame:SetVerticalScroll(value)
@@ -352,7 +352,9 @@ end
 RQE.QuestIDText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
 -- Debug: Check if settings are properly initialized
-if settings then
+if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
+    local QuestIDText_settings = RQE.db.profile.textSettings.QuestIDText
+
     -- Debug: Check individual settings
     if RQE.db.profile.textSettings.QuestIDText.font then
         RQE.debugLog("Font setting exists.")
@@ -375,7 +377,7 @@ if settings then
     RQE.QuestIDText:SetFont(RQE.db.profile.textSettings.QuestIDText.font or "Fonts\\FRIZQT__.TTF", RQE.db.profile.textSettings.QuestIDText.size or 15)
     
     if RQE.db.profile.textSettings.QuestIDText.color then
-        RQE.QuestIDText:SetTextColor(unpack(RQE.db.profile.textSettings.QuestIDText.color))
+        RQE.QuestIDText:SetTextColor(table.unpack(RQE.db.profile.textSettings.QuestIDText.color))
     end
 end
 
@@ -407,7 +409,7 @@ if QuestNameText_settings then
     RQE.QuestNameText:SetFont(QuestNameText_settings.font or "Fonts\\FRIZQT__.TTF", QuestNameText_settings.size or 15)
     
     if QuestNameText_settings.color then
-        RQE.QuestNameText:SetTextColor(unpack(QuestNameText_settings.color))
+        RQE.QuestNameText:SetTextColor(table.unpack(QuestNameText_settings.color))
     end
 end
 
@@ -448,7 +450,7 @@ if DirectionTextFrame_settings then
     RQE.DirectionTextFrame:SetFont(DirectionTextFrame_settings.font or "Fonts\\FRIZQT__.TTF", DirectionTextFrame_settings.size or 13)
     
     if DirectionTextFrame_settings.color then
-        RQE.DirectionTextFrame:SetTextColor(unpack(DirectionTextFrame_settings.color or {1, 1, 0.85}))
+        RQE.DirectionTextFrame:SetTextColor(table.unpack(DirectionTextFrame_settings.color or {1, 1, 0.85}))
     end
 end
 
@@ -491,7 +493,7 @@ if QuestDescription_settings then
     RQE.QuestDescription:SetFont(QuestDescription_settings.font or "Fonts\\FRIZQT__.TTF", QuestDescription_settings.size or 14)
     
     if QuestDescription_settings.color then
-        RQE.QuestDescription:SetTextColor(unpack(QuestDescription_settings.color or {0, 1, 0.6}))
+        RQE.QuestDescription:SetTextColor(table.unpack(QuestDescription_settings.color or {0, 1, 0.6}))
     end
 end
 
@@ -504,8 +506,8 @@ RQE.QuestDescription:EnableMouse(true)
 
 
 -- Create QuestObjectives Text
-RQEFrame.QuestObjectives = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-RQE.QuestObjectives = RQEFrame.QuestObjectives
+local QuestObjectives = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+RQE.QuestObjectives = QuestObjectives
 
 
 -- Check if QuestDescription is empty
@@ -535,7 +537,7 @@ if QuestObjectives_settings then
     RQE.QuestObjectives:SetFont(QuestObjectives_settings.font or "Fonts\\FRIZQT__.TTF", QuestObjectives_settings.size or 13)
     
     if QuestObjectives_settings.color then
-        RQE.QuestObjectives:SetTextColor(unpack(QuestObjectives_settings.color or {0, 1, 0.6}))
+        RQE.QuestObjectives:SetTextColor(table.unpack(QuestObjectives_settings.color or {0, 1, 0.6}))
     end
 end
 
@@ -548,47 +550,58 @@ RQE.QuestObjectives:EnableMouse(true)
 
 
 -- Display MapID with Tracker Frame
+---@class RQEFrame : Frame
+---@field MapIDText FontString
+RQEFrame = RQEFrame or CreateFrame("Frame", "RQEFrame", UIParent, "BackdropTemplate")
+
 local MapIDText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-MapIDText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 15)  -- Adjust the offsets as needed (-15, 20 was a little too high on the Y)
-MapIDText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
-MapIDText:SetText("")
+if MapIDText then
+    MapIDText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 15)
+    MapIDText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
+    MapIDText:SetText("Map ID: " .. tostring(C_Map.GetBestMapForUnit("player")))
+    --MapIDText:SetText("Map ID: " .. (C_Map.GetBestMapForUnit("player") or "N/A"))
+end
 RQEFrame.MapIDText = MapIDText
 
 
 -- Create Font String for Coordinates
 local CoordinatesText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-CoordinatesText:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -15, 15)  -- Adjust the offsets as needed
-CoordinatesText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
-CoordinatesText:SetText("")
+if CoordinatesText then
+    CoordinatesText:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -15, 15)  -- Adjust the offsets as needed
+    CoordinatesText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
+    CoordinatesText:SetText("")
+end
 RQEFrame.CoordinatesText = CoordinatesText
 
 
 -- Create Font String for Addon Memory Usage
 local MemoryUsageText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-MemoryUsageText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 35)  -- Position it right above the MapIDText
-MemoryUsageText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
-MemoryUsageText:SetTextColor(231/255, 120/255, 120/255)
+if MemoryUsageText then
+    MemoryUsageText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 35)  -- Position it right above the MapIDText
+    MemoryUsageText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
+    MemoryUsageText:SetTextColor(231/255, 120/255, 120/255)
+end
 RQEFrame.MemoryUsageText = MemoryUsageText
 
 
 -- Create buttons using functions from Buttons.lua
-RQE.Buttons.CreateClearButton(RQEFrame, "TOPLEFT")
-RQE.Buttons.CreateRWButton(RQEFrame, "ClearButton")
-RQE.Buttons.CreateSearchButton(RQEFrame, "RWButton")
-RQE.Buttons.CreateQMButton(RQEFrame, "SearchButton")
-RQE.Buttons.CreateCloseButton(RQEFrame, "TOPRIGHT")
-RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider, "CloseButton")
-RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider, "MaximizeButton")
+RQE.Buttons.CreateClearButton(RQEFrame) --, "TOPLEFT")
+RQE.Buttons.CreateRWButton(RQEFrame) --, "ClearButton")
+RQE.Buttons.CreateSearchButton(RQEFrame) --, "RWButton")
+RQE.Buttons.CreateQMButton(RQEFrame) --, "SearchButton")
+RQE.Buttons.CreateCloseButton(RQEFrame) --, "TOPRIGHT")
+RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider) --, "CloseButton")
+RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider) --, "MaximizeButton")
 
 
 -- Magic Button
-RQE.Buttons.CreateMagicButton(RQEFrame, "TOPRIGHT")
+RQE.Buttons.CreateMagicButton(RQEFrame) --, "TOPRIGHT")
 
 
 -- Create the ">" button
-local searchExecuteButton = CreateFrame("Button", nil, SearchFrame, "UIPanelButtonTemplate")
+local searchExecuteButton = CreateFrame("Button", nil, RQEFrame.SearchFrame, "UIPanelButtonTemplate")
 searchExecuteButton:SetSize(18, 18)
-searchExecuteButton:SetPoint("LEFT", searchEditBox, "RIGHT", 5, 0)
+searchExecuteButton:SetPoint("LEFT", SearchEditBox, "RIGHT", 5, 0)
 searchExecuteButton:SetText(">")
 
 ---------------------------
@@ -597,7 +610,7 @@ searchExecuteButton:SetText(">")
 
 -- Function for Update Button Visibility
 function UpdateButtonVisibility()
-    if RQEFrame.isMinimized then
+    if RQE.db.profile.isMinimized then
         RQE.MinimizeButton:Hide()
         RQE.MaximizeButton:Show()
     else
@@ -606,6 +619,7 @@ function UpdateButtonVisibility()
     end
     
     -- Save the current minimized state to the SavedVariables
+    RQEFrame.isMinimized = not RQEFrame.isMinimized
     RQE.db.profile.isMinimized = RQEFrame.isMinimized
 
     -- Add these lines for debugging
@@ -928,16 +942,18 @@ RQE.isSearchFrameShown = false
 function CreateSearchFrame(showFrame)
     if not showFrame then
         if RQEFrame.SearchFrame then
-            RQEFrame.SearchFrame:Hide()
+            --RQEFrame.SearchFrame:Hide()  -- COMMENTING OUT DUE TO API ERROR
             RQEFrame.SearchFrame = nil
         end
         return
     end
 
-    -- Use the search box and examine button from Core.lua
-    local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
-
     local SearchFrame = AceGUI:Create("Frame")
+    if not SearchFrame then
+        RQE.debugLog("Failed to create a GUI frame via AceGUI")
+        return
+    end
+
     SearchFrame:SetTitle("Search Frame")
     SearchFrame:SetWidth(400)
     SearchFrame:SetHeight(200)
@@ -948,13 +964,17 @@ function CreateSearchFrame(showFrame)
         RQEFrame.SearchFrame = nil
     end)
 
-    -- Add the edit box and examine button to the SearchFrame
+    -- Assuming editBox and examineButton are created correctly
+    local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
     SearchFrame:AddChild(searchBox)
     SearchFrame:AddChild(examineButton)
 
-    RQEFrame.SearchFrame = SearchFrame
+    -- Fixing the positioning issue
     SearchFrame.frame:ClearAllPoints()
     SearchFrame.frame:SetPoint("TOPRIGHT", RQEFrame, "TOPLEFT", 0, 0)
+
+    -- Save reference to SearchFrame
+    RQEFrame.SearchFrame = SearchFrame
 end
 
 
@@ -974,7 +994,6 @@ function RQE.SearchModule:FetchAndDisplayQuestData(questID)
     end)
 end
 
-
 -- Function to dynamically create StepsText and CoordsText elements
 function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights
@@ -982,7 +1001,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	RQE.CurrentQuestSteps = {}
 	local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	local baseYOffset = -20
-	
+
 	if self.CoordsText then
 		for i, textElement in ipairs(self.CoordsText) do
 			textElement:Hide()
@@ -1003,8 +1022,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 	-- Create new step texts
 	for i = 1, #StepsText do
-		localstepTextHeight = 10
-	
+		local stepTextHeight = 10
+
 		-- Create StepsText
 		local StepText = content:CreateFontString(nil, "OVERLAY")
 		table.insert(RQE.StepsText, StepText)
@@ -1016,11 +1035,11 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		StepText:SetWordWrap(true)  -- Allow word wrap
 		StepText:SetText(StepsText[i] or "No description available.")
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
-		
+
 		-- Create CoordsText
 		local CoordText = content:CreateFontString(nil, "OVERLAY")
 		table.insert(RQE.CoordsText, CoordText)
-		
+
 		if i == 1 then
 			if self.QuestObjectives then
 				StepText:SetPoint("TOPLEFT", self.QuestObjectives, "BOTTOMLEFT", 35, yOffset)
@@ -1032,12 +1051,12 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				StepText:SetPoint("TOPLEFT", prevText, "BOTTOMLEFT", 0, yOffset)
 			end
 		end
-		
+
         StepText:Show()
 
         -- Update previous text for anchoring
         prevText = StepText
-		
+
 		-- Create the WaypointButton
 		local WaypointButton = CreateFrame("Button", nil, content)
 		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
@@ -1045,7 +1064,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Use the custom texture for the background
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
-		
+
 		-- Determine if this button was the last clicked
 		if RQE.LastClickedIdentifier and RQE.LastClickedIdentifier == i then
 			-- This button was the last clicked one; apply the "lit" texture
@@ -1057,7 +1076,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Get the height of the StepText element
 		local stepTextHeight = StepText:GetStringHeight()
-	
+
 		-- Create the number label
 		local number = WaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		number:SetPoint("CENTER", WaypointButton, "CENTER")
@@ -1071,9 +1090,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)  -- Adjust the x, y offsets as needed
 			GameTooltip:Show()
 		end)
-		
+
 		-- Insert it into the RQE.WaypointButtons table
 		table.insert(RQE.WaypointButtons, WaypointButton)
+        RQE.WaypointButtonIndices[WaypointButton] = i  -- Store the index associated with the button
 
 		-- Hide the tooltip when the mouse leaves
 		WaypointButton:SetScript("OnLeave", function()
@@ -1084,19 +1104,21 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		WaypointButton:SetScript("OnClick", function()
 			-- Your code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
-			-- Check if TomTom is loaded and compatibility is enabled
-			if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+
+            -- Check if TomTom is loaded and compatibility is enabled
+            local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 			end
 
 			-- -- Clears Macro Data
 			-- RQE.infoLog("Cleared Macro Content at 1093")
 			-- RQEMacro:ClearMacroContentByName("RQE Macro")
-	
+
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
-            
+
             -- Call your function to handle the coordinate click
             RQE:OnCoordinateClicked(x, y, mapID)
 
@@ -1104,24 +1126,33 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
 			end
-			
+
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
 			-- Save the identifier (could be the questID or any unique property tied to the button)
 			RQE.LastClickedIdentifier = i
 
-			-- When creating the WaypointButton
-			WaypointButton.stepIndex = i
+            -- When creating the WaypointButton
+			--WaypointButton.stepIndex = i
 			RQE.LastClickedButtonRef = WaypointButton
-			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
-			
+			RQE.infoLog("New LastClickedButton set:", RQE.WaypointButtonIndices[WaypointButton] or "Unnamed")
+
 			-- Update the reference to the last clicked button
-			RQE.LastClickedWaypointButton = WaypointButton
-			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
-			
+			-- RQE.LastClickedWaypointButton = WaypointButton
+			-- RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
+
+            ---@class LastClickedWaypointButtonClass
+            ---@field bg Texture
+            -- Update the reference to the last clicked button
+            ---@type LastClickedWaypointButtonClass
+            RQE.LastClickedWaypointButton = {
+                button = WaypointButton,
+                bg = bg
+            }
+
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				if not questIDFromText then
 					RQE.debugLog("Error: Invalid quest ID extracted from text")
 				else
@@ -1129,13 +1160,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
 				end
 			end
-				
+
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
-			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+			local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+            RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
 			local questData = RQE.getQuestData(questIDFromText)
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
 			if questData then
+                local stepIndex = i
 				local stepData = questData[stepIndex]
 				for index, stepData in ipairs(questData) do
 					if stepData.description == stepDescription then
@@ -1147,14 +1180,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 						end
 					end
 				end
+				UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
 			end
-						
+
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
-			
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+
+			--UpdateFrame()
 		end)
 
 		-- Add a mouse down event to simulate a button press
@@ -1297,22 +1331,40 @@ function RQE:CheckAndAdvanceStep(questID)
 end
 
 
+-- -- Fetch the Objective Index for a particular quest
+-- function RQE:GetCurrentObjectiveIndex(questID)
+    -- local objectives = C_QuestLog.GetQuestObjectives(questID)
+    -- if not objectives or #objectives == 0 then
+        -- RQE.debugLog("No objectives found for questID:", questID)
+        -- return 0  -- Return 0 or an appropriate default value if no objectives are found
+    -- end
+    
+    -- local highestIndex = 0
+    -- for _, objective in ipairs(objectives) do
+        -- if objective.finished and objective.index and objective.index > highestIndex then
+            -- highestIndex = objective.index
+        -- end
+    -- end
+    -- return highestIndex
+-- end
+
 -- Fetch the Objective Index for a particular quest
 function RQE:GetCurrentObjectiveIndex(questID)
-    local objectives = C_QuestLog.GetQuestObjectives(questID)
-    if not objectives or #objectives == 0 then
-        RQE.debugLog("No objectives found for questID:", questID)
-        return 0  -- Return 0 or an appropriate default value if no objectives are found
+    local questData = RQEDatabase[questID]
+    if not questData then
+        RQE.infoLog("No data found for questID:", questID)
+        return 0  -- Return 0 or an appropriate default value if no data is found
     end
     
     local highestIndex = 0
-    for _, objective in ipairs(objectives) do
-        if objective.finished and objective.index and objective.index > highestIndex then
-            highestIndex = objective.index
+    for _, objectiveData in ipairs(questData) do
+        if objectiveData.objectiveIndex and objectiveData.objectiveIndex > highestIndex then
+            highestIndex = objectiveData.objectiveIndex
         end
     end
     return highestIndex
 end
+
 
 
 -- Utility function to get the total number of unique objectiveIndexes in the quest
@@ -1435,23 +1487,6 @@ function RQE.ClickQuestLogIndexButton(questID)
 end
 
 
--- Function that simulates a click of the WQuestLogIndexButton
-function RQE.ClickQuestLogIndexButton(questID)
-    local found = false
-    for i, button in ipairs(RQE.QuestLogIndexButtons) do
-        if button and button.questID == questID then
-            if button:IsVisible() and button:IsEnabled() then
-                button:Click()
-                found = true
-                break
-            end
-        end
-    end
-    if not found then
-        RQE.debugLog("No button found for questID: " .. tostring(questID))
-    end
-end
-
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	RQE.debugLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
@@ -1492,10 +1527,10 @@ function RQE.ClickUnknownQuestButton()
         RQE.debugLog("Did not find a button for questID:", questID)
     else	
         -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
-		if not mapID then
+		if not RQE.mapID then
 			local mapID = C_Map.GetBestMapForUnit("player")
 		else		
-			RQE:CreateUnknownQuestWaypoint(questID, mapID)
+			RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 		end
     end
 
@@ -1507,7 +1542,7 @@ function RQE.ClickUnknownQuestButton()
 	C_SuperTrack.SetSuperTrackedQuestID(questID)
 	
 	-- Call your function to create a waypoint using stored coordinates and mapID
-	RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 end
 
 
@@ -1572,8 +1607,8 @@ function RQE:LFG_Delist(questID)
 end
 
 
--- Set the script for the button
-RQE.SearchGroupButton:SetScript("OnClick", SearchGroupButton_OnClick)
+-- -- Set the script for the button
+-- RQE.SearchGroupButton:SetScript("OnClick", SearchGroupButton_OnClick)  -- HANDLED THRU ONMOUSEDOWN
 
 
 -- Register frame for event handling
@@ -1610,7 +1645,7 @@ function RQEUpdateGroupSizeAndType()
         lastGroupType = "none"
     end
 
-    lastGroupSize = groupSize
+    local lastGroupSize = groupSize
 end
 
 -- Define the function to handle GROUP_ROSTER_UPDATE event
@@ -1618,13 +1653,13 @@ function RQEOnGroupRosterUpdate()
     local isInGroup = IsInGroup()
     local isInRaid = IsInRaid()
     local isInstanceGroup = IsInInstance()
-
+	
     -- Trigger the role selection only if the player was in an outdoor raid group
 	if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
     --if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup and (availTank or availHealer or (availDPS and not (availTank and availHealer))) then
         -- The player has left an outdoor raid group, show the role selection dialog
-        -- Ensure 'activityID' is defined appropriately
-        RQEShowRoleSelection(activityID)
+		--local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+        RQEShowRoleSelection(C_LFGList.GetActivityIDForQuestID(questID))
     end
 
     -- Update the group size and type for the next check
@@ -1654,6 +1689,7 @@ end
 	
 -- Function to initialize dropdown items
 function RQEFrame:InitializeDropdown()
+    self.searchResults = self.searchResults or {}
     local info = UIDropDownMenu_CreateInfo()
     for i, result in ipairs(self.searchResults or {}) do
         info.text = result

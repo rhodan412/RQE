@@ -7,6 +7,7 @@ Core file linking all other modules
 -- 1. Global Declarations
 ---------------------------------------------------
 
+---@class RQE
 RQE = RQE or {}
 
 RQE.db = RQE.db or {}
@@ -20,6 +21,11 @@ RQE.Campaigns = RQE.Campaigns or {}
 RQE.QuestTypes = RQE.QuestTypes or {}
 RQE.ZoneQuests = RQE.ZoneQuests or {}
 RQE.QuestLines = RQE.QuestLines or {}
+RQE.TimerProperties = {}
+
+if not table.unpack then
+    table.unpack = unpack
+end
 
 ---------------------------------------------------
 -- 2. Imports
@@ -926,36 +932,36 @@ end
 
 
 -- Function to Show/Hide RQEQuestFrame when frames are empty
-function RQE:UpdateRQEQuestFrameVisibility()
+function RQE.UpdateRQEQuestFrameVisibility()
     if InCombatLockdown() then
         return
     end
 	
     -- Reset counts to 0
-    self.campaignQuestCount = 0
-    self.regularQuestCount = 0
-    self.worldQuestCount = 0
+    RQE.campaignQuestCount = 0
+    RQE.regularQuestCount = 0
+    RQE.worldQuestCount = 0
 	
 	-- Pull data of number of tracked achievements
 	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
-    self.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+    RQE.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
 	
     -- Iterate through tracked quests to count them
     for i = 1, C_QuestLog.GetNumQuestWatches() do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if questID then
             if C_CampaignInfo.IsCampaignQuest(questID) then
-                self.campaignQuestCount = self.campaignQuestCount + 1
+                RQE.campaignQuestCount = RQE.campaignQuestCount + 1
             elseif C_QuestLog.IsWorldQuest(questID) then
-                self.worldQuestCount = self.worldQuestCount + 1
+                RQE.worldQuestCount = RQE.worldQuestCount + 1
             else
-                self.regularQuestCount = self.regularQuestCount + 1
+                RQE.regularQuestCount = RQE.regularQuestCount + 1
             end
         end
     end
 	
     -- Check conditions for showing/hiding the frame, including manual closure
-    if (self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario)) or self.isRQEQuestFrameManuallyClosed then
+    if (RQE.db.profile.hideRQEQuestFrameWhenEmpty and (RQE.campaignQuestCount + RQE.regularQuestCount + RQE.worldQuestCount + RQE.AchievementsFrame.achieveCount == 0 and not RQE.isInScenario)) or RQE.isRQEQuestFrameManuallyClosed then
         RQEQuestFrame:Hide()
     else
         RQEQuestFrame:Show()
