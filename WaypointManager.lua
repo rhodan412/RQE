@@ -13,11 +13,6 @@ This add-on file handles the creation logic of the Waypoint and Map Pin creation
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 RQE.Frame = RQE.Frame or {}
 
----@type any
-TomTom = TomTom or {}
----@type any
-Nx = Nx or {}
-
 if RQE and RQE.debugLog then
     RQE.debugLog("Your message here")
 else
@@ -108,23 +103,18 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	
 	C_Map.ClearUserWaypoint()
 	
-    -- Check if TomTom is loaded and compatibility is enabled
-    local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-    if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-        TomTom.waydb:ResetProfile()
-    end
+	-- Check if TomTom is loaded and compatibility is enabled
+	if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+		TomTom.waydb:ResetProfile()
+	end
 
-	C_Timer.After(0.5, function()
-		if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
-			waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText  -- Append DirectionText on a new line if available
+	C_Timer.After(0.5, function()		
+		if DirectionText and DirectionText ~= "No direction available." then
+			waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
 		end
-		-- if DirectionText and DirectionText ~= "No direction available." then
-			-- waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
-		-- end
 
 		-- Check if TomTom is loaded and compatibility is enabled
-        local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-        if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 			RQE.debugLog("TomTom is available.")
 			if mapID and x and y then  -- Check if x and y are not nil
 				TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
@@ -136,9 +126,8 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 			-- Code for your own waypoint system or an alternative action
 		end
 		
-        -- Check if Carbonite is loaded and compatibility is enabled
-        local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
-        if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
+		-- Check if Carbonite is loaded and compatibility is enabled
+		if IsAddOnLoaded("Carbonite") and RQE.db.profile.enableCarboniteCompatibility then
 			RQE.debugLog("Carbonite is available.")
 			if mapID and x and y then  -- Check if x and y are not nil
 				Nx:TTAddWaypoint (mapID, x/100, y/100, {opt = waypointTitle})
@@ -205,11 +194,6 @@ end
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
-    if not questID then
-        RQE.debugLog("No super-tracked quest.")
-        return -- Exit the function if questID is nil
-    end
-    
     RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 
     local questData = RQE.getQuestData(questID)
@@ -225,7 +209,7 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
     local stepData = questData[stepIndex]
     local description = stepData and stepData.description or "No step description available"
 	
-    local directionText = RQE.DirectionText
+    local directionText = RQEFrame.DirectionText
     --local description = RQEDatabase[questID].description
 
     if directionText then
@@ -235,8 +219,7 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
     end
 
 	-- Check if TomTom is loaded and compatibility is enabled
-    local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-    if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+	if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
         RQE.debugLog("TomTom is available.")
 
         -- Add waypoint using TomTom

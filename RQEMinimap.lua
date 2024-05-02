@@ -8,11 +8,7 @@
 
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 RQE.Frame = RQE.Frame or {}
-RQE.hoverTimers = {}
 
----@class RQEMinimapButton : Frame
----@field hoverTimer any
-local RQEMinimapButton = {}
 
 ---------------------------
 -- 2. Debug Logic
@@ -51,15 +47,14 @@ end
 
 -- Create the dropdown menu
 local function CreateDropdownMenu()
-    local infoDebugLog = UIDropDownMenu_CreateInfo()
-    infoDebugLog.text = "Debug Log"
-    infoDebugLog.func = function() RQE:ToggleDebugLog() end
-    UIDropDownMenu_AddButton(infoDebugLog)
+    local info = UIDropDownMenu_CreateInfo()
+    info.text = "Debug Log"
+    info.func = ToggleDebugLog
+    UIDropDownMenu_AddButton(info)
 
-    local infoSettings = UIDropDownMenu_CreateInfo()
-    infoSettings.text = "Settings"
-    infoSettings.func = function() RQE:OpenSettings() end
-    UIDropDownMenu_AddButton(infoSettings)
+    info.text = "Settings"
+    info.func = OpenSettings
+    UIDropDownMenu_AddButton(info)
 end
 
 
@@ -86,7 +81,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 				if RQE.MagicButton then
 					RQE.MagicButton:Hide()
 				end
-				RQE.RQEQuestFrame:Hide()
+				RQEQuestFrame:Hide()
 				RQE.isRQEFrameManuallyClosed = true
 				RQE.isRQEQuestFrameManuallyClosed = true
 				
@@ -96,13 +91,12 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 				RQE:ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
 				RQE:ClearWaypointButtonData()
 				RQEFrame:Show()
-				UpdateFrame()
 				if RQE.MagicButton then
 					RQE.MagicButton:Show()
 				end
 				-- Check if enableQuestFrame is true before showing RQEQuestFrame
                 if RQE.db.profile.enableQuestFrame then
-                    RQE.RQEQuestFrame:Show()
+                    RQEQuestFrame:Show()
                 end
 				
 				RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
@@ -117,14 +111,13 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 		end
 	end,
 	
-
-	OnEnter = function(display)
-		if RQE.hoverTimers[display] then
-			RQE:CancelTimer(RQE.hoverTimers[display])
-		end
-		RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
-			RQE:ShowLDBDropdownMenu()
-		end, 1.5)  -- 1.5 seconds hover delay
+    OnEnter = function(display)
+        if display.hoverTimer then
+            RQE:CancelTimer(display.hoverTimer)
+        end
+        display.hoverTimer = RQE:ScheduleTimer(function()
+            RQE:ShowLDBDropdownMenu()
+        end, 1.5)  -- 1.5 seconds hover delay
 		
 	GameTooltip:SetOwner(display, "ANCHOR_NONE")  -- You can change ANCHOR_NONE to another anchor type if needed.
 	GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")  -- Adjust this to position the tooltip as desired.
@@ -132,13 +125,13 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 	GameTooltip:Show()
     end,
 	
-	OnLeave = function(display)
-		if RQE.hoverTimers[display] then
-			RQE:CancelTimer(RQE.hoverTimers[display])
-			RQE.hoverTimers[display] = nil
-		end
-		GameTooltip:Hide()
-	end,
+    OnLeave = function(display)
+        if display.hoverTimer then
+            RQE:CancelTimer(display.hoverTimer)
+            display.hoverTimer = nil
+        end
+	GameTooltip:Hide()
+    end,
 	
     OnTooltipShow = function(tooltip)
         if not tooltip or not tooltip.AddLine then return end
@@ -157,7 +150,7 @@ function RQE.ToggleBothFramesfromLDB()
 		if RQE.MagicButton then
 			RQE.MagicButton:Hide()
 		end
-		RQE.RQEQuestFrame:Hide()
+		RQEQuestFrame:Hide()
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
     else	
@@ -174,7 +167,7 @@ function RQE.ToggleBothFramesfromLDB()
 		
 		-- Check if enableQuestFrame is true before showing RQEQuestFrame
 		if RQE.db.profile.enableQuestFrame then
-			RQE.RQEQuestFrame:Show()
+			RQEQuestFrame:Show()
 		end
 		
         RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
@@ -219,7 +212,7 @@ RQE.MinimapButton:SetScript("OnClick", function()
 		if RQE.MagicButton then
 			RQE.MagicButton:Show()
 		end
-		RQE.RQEQuestFrame:Show()
+		RQEQuestFrame:Show()
     end
 	
 	-- Check if MagicButton should be visible based on macro body

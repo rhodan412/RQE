@@ -506,7 +506,7 @@ RQE.options = {
 									name = "Font Size",
 									desc = "Default: 18",
 									type = "range",
-									min = 8, max = 24, -- step = 1,   COMMENTING OUT AS REDUNDANT
+									min = 8, max = 24, step = 1,
 									step = 1,
 									get = function(info) return RQE.db.profile.textSettings.headerText.size end,
 									set = function(info, val) RQE.db.profile.textSettings.headerText.size = val

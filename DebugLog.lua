@@ -87,21 +87,19 @@ scrollFrame:SetPoint("BOTTOMRIGHT", logFrame, "BOTTOMRIGHT", -10, 10)
 
 -- Replace ScrollingMessageFrame with a MultiLineEditBox
 local editBox = CreateFrame("EditBox", nil, logFrame, "InputBoxTemplate")
+-- Replace ScrollingMessageFrame with a MultiLineEditBox
 editBox:SetMultiLine(true)
 editBox:SetSize(280, 380)  -- Adjust the height as needed
-
+-- Now we set the editBox to fill the scrollFrame completely
 editBox:SetPoint("TOPLEFT")
 editBox:SetPoint("BOTTOMRIGHT", scrollFrame, "BOTTOMRIGHT")
 editBox:SetFontObject("ChatFontNormal")
-editBox:SetAutoFocus(false)
-editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-
+editBox:SetAutoFocus(false)  -- don't automatically focus
+editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)  -- lose focus on Esc
 scrollFrame:SetScrollChild(editBox)
 
 
 -- Add a scroll bar to the edit box
----@class RQESlider : Slider
----@field scrollStep number
 local scrollBar = CreateFrame("Slider", nil, scrollFrame) -- Parent changed to scrollFrame
 scrollBar:SetPoint("TOPRIGHT", logFrame, "TOPRIGHT", -10, -30)
 scrollBar:SetPoint("BOTTOMRIGHT", logFrame, "BOTTOMRIGHT", -10, 10)
@@ -220,8 +218,8 @@ editBox:SetScript("OnTextChanged", function(self)
 end)
 
 
--- SLASH_LOGTOGGLE1 = "/logtoggle"
--- SlashCmdList["LOGTOGGLE"] = RQE.ToggleLogFrame
+SLASH_LOGTOGGLE1 = "/logtoggle"
+SlashCmdList["LOGTOGGLE"] = ToggleLogFrame
 
 
 -- -- Ensure the RQE.Buttons.CreateDebugLogCloseButton function is loaded and available before calling it
