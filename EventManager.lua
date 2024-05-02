@@ -70,7 +70,7 @@ local eventsToRegister = {
 	"ENCOUNTER_END",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
-	"LEAVE_PARTY_CONFIRMATION",
+	--"LEAVE_PARTY_CONFIRMATION",
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
 	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
@@ -144,7 +144,7 @@ local function HandleEvents(frame, event, ...)
 		ENCOUNTER_END = RQE.handleBossKill,
 		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
-		LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
+		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
 		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
@@ -188,7 +188,7 @@ local function HandleEvents(frame, event, ...)
     }
     
     if handlers[event] then
-        handlers[event](frame, event, unpack({...}))
+        handlers[event](frame, event, table.unpack({...}))
     else
         RQE.debugLog("Unhandled event:", event)
     end
@@ -282,7 +282,7 @@ function RQE.handlePlayerRegenEnabled()
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
-		local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
+		--local currentSuperTrackedquestID = C_SuperTrack.GetSuperTrackedQuestID()
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
             -- DEFAULT_CHAT_FRAME:AddMessage("Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.65, 0.5)
@@ -291,7 +291,7 @@ function RQE.handlePlayerRegenEnabled()
 		end
 
 		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
         -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
 		
         C_Timer.After(0.5, function()
@@ -315,7 +315,7 @@ function RQE.handlePlayerLogin()
 	
 	-- Add this line to update coordinates when player logs in
 	RQE:UpdateCoordinates()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 	
 	-- Fetch current MapID to have option of appearing with Frame
 	RQE:UpdateMapIDDisplay()
@@ -380,7 +380,7 @@ function RQE.handleAddonLoaded(addonName)
 		HideObjectiveTracker()
 
         if RQE.AdjustQuestItemWidths then
-            RQE.AdjustQuestItemWidths(RQEQuestFrame:GetWidth())  -- Adjust quest item widths based on frame width
+            RQE.AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())  -- Adjust quest item widths based on frame width
         end
 
         if RQE.UpdateFrameOpacity then
@@ -417,7 +417,7 @@ function RQE.handleAddonLoaded(addonName)
 		end
 
 		-- Determine questID based on various fallbacks
-		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
 		
 		-- C_Timer.After(0.5, function()
 			-- RQE:CheckAndAdvanceStep(questID)
@@ -531,19 +531,19 @@ function RQE.saveScenarioData(self, event, ...)
 
     -- Handle data based on event type
     if event == "SCENARIO_COMPLETED" then
-        local questID, xp, money = unpack(args)
+        local questID, xp, money = table.unpack(args)
         if questID and xp and money then  -- Make sure all data is present
             table.insert(RQE.ScenarioData, {type = event, questID = questID, xp = xp, money = money})
 			-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)
         end
     elseif event == "SCENARIO_UPDATE" then
-        local newStep = unpack(args)
+        local newStep = table.unpack(args)
         if newStep then  -- Check if the step information is present
             table.insert(RQE.ScenarioData, {type = event, newStep = newStep})
 			-- DEFAULT_CHAT_FRAME:AddMessage("SU 01 Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
         end
     elseif event == "SCENARIO_CRITERIA_UPDATE" then
-        local criteriaID = unpack(args)
+        local criteriaID = table.unpack(args)
         if criteriaID then
             table.insert(RQE.ScenarioData, {type = event, criteriaID = criteriaID})
             -- DEFAULT_CHAT_FRAME:AddMessage("Saved Criteria Update Data: Criteria ID=" .. tostring(criteriaID), 0.9, 0.7, 0.9)
@@ -679,7 +679,7 @@ end
 -- Fired in response to the CVars, Keybindings and other associated "Blizzard" variables being loaded
 function RQE.handleVariablesLoaded(...)
 	RQE:InitializeFrame()
-	isVariablesLoaded = true
+	--isVariablesLoaded = true
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)
@@ -695,7 +695,7 @@ function RQE.handleVariablesLoaded(...)
 	
 	RQE:ClearWQTracking()
 	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 	-- Load time End timer
 	RQE.endTime = debugprofilestop()
@@ -721,9 +721,9 @@ function RQE.handleVariablesLoaded(...)
 		
 	-- Initialize the questing frame based on saved settings
 	if RQE.db.profile.enableQuestFrame then
-		RQEQuestFrame:Show()
+		RQE.RQEQuestFrame:Show()
 	else
-		RQEQuestFrame:Hide()
+		RQE.RQEQuestFrame:Hide()
 	end
 	
 	-- Initialize QuestNameText (or other fields that need early initialization)
@@ -802,7 +802,8 @@ function RQE.handleVariablesLoaded(...)
 	C_Map.ClearUserWaypoint()
 	
 	-- Check if TomTom is loaded and compatibility is enabled
-	if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		TomTom.waydb:ResetProfile()
 	end
 		
@@ -814,8 +815,8 @@ function RQE.handleVariablesLoaded(...)
 	local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
 
 	if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
-		RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
-		RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+		RQE.RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
+		RQE.RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
 	else
 		RQE.debugLog("Invalid quest frame position or anchor point.")
 	end
@@ -867,7 +868,7 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
 	RQE.Timer_CheckTimers(GetWorldElapsedTimers())
     -- DEFAULT_CHAT_FRAME:AddMessage("PEW 07 Debug: Checked timers.", 0.93, 0.51, 0.93)
 	
-    if isReloadingUi then
+    if isReload then
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
             -- DEFAULT_CHAT_FRAME:AddMessage("PEW 08 Debug: In a scenario, showing ScenarioChildFrame.", 0.93, 0.51, 0.93)
@@ -893,7 +894,6 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
         else
             -- This is a regular quest or other content that is super tracked
             RQE.infoLog("Super tracked content is not a World Quest:", questID)
-            -- Handle regular quest or other actions if necessary
         end
     end
 
@@ -1007,11 +1007,11 @@ function RQE.handleSuperTracking(...)
 		if StepsText and CoordsText and MapIDs then
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 	else
 		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
 		--SortQuestsByProximity()
-		AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+		AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 	end
 
 	-- Simulate clicking the RWButton
@@ -1059,7 +1059,7 @@ function RQE.handleQuestAccepted(...)
         local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
         local watchType = C_QuestLog.GetQuestWatchType(questID)
         local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)  -- Applies when world quest is manually watched and then accepted when player travels to world quest spot
-        local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID, ignoreWaypoints)
+        local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
         local playerMapID = C_Map.GetBestMapForUnit("player")
 
 		-- Debug Messages
@@ -1252,7 +1252,7 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 			end
 			
 			SortQuestsByProximity()
-			AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+			AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 		end)
 		
 		-- Check to advance to next step in quest
@@ -1791,7 +1791,7 @@ function RQE.handleQuestComplete()
 	RQE:ClearWQTracking()
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 	-- -- Check to advance to next step in quest
 	-- if RQE.db.profile.autoClickWaypointButton then	
@@ -1821,11 +1821,11 @@ function RQE.handleQuestAutoComplete(...)
 	local questID = ...  -- Extract the questID from the event
 	local extractedQuestID
 	
-	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	
-    if isSuperTracking then
-        local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-    end
+    --if isSuperTracking then
+        --local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    --end
 	
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -1834,7 +1834,7 @@ function RQE.handleQuestAutoComplete(...)
 	end
 
 	-- Determine questID based on various fallbacks
-	questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+	questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
 	
     -- DEFAULT_CHAT_FRAME:AddMessage("QAC 03 Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 	
@@ -1850,11 +1850,11 @@ function RQE.handleQuestAutoComplete(...)
 		
 	RQE:QuestComplete(questID)
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	RQEQuestFrame:ClearAllPoints()
+	RQE.RQEQuestFrame:ClearAllPoints()
 	RQE:ClearWQTracking()
 	UpdateRQEQuestFrame()
 	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -1926,12 +1926,12 @@ function RQE.handleQuestRemoved(...)
 
     -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
 	
-	RQEQuestFrame:ClearAllPoints()
+	RQE.RQEQuestFrame:ClearAllPoints()
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
 	QuestType()
 	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 	
 	RQE.UntrackAutomaticWorldQuests()
 	
@@ -1948,8 +1948,10 @@ function RQE.handleQuestRemoved(...)
     if questID == RQE.LastSuperTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-		-- Check if TomTom is loaded and compatibility is enabled
-		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+
+        -- Check if TomTom is loaded and compatibility is enabled
+        local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+        if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
 		
@@ -1982,7 +1984,7 @@ function RQE.handleQuestWatchUpdate(...)
     -- DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
 	
     -- Initialize variables
-	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	
     if type(questID) ~= "number" then
         -- DEFAULT_CHAT_FRAME:AddMessage("QWU 01 Error: questID is not a number.", 0.56, 0.93, 0.56)
@@ -2008,12 +2010,12 @@ function RQE.handleQuestWatchUpdate(...)
     -- DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(currentSuperTrackedQuestID) .. " / " .. superTrackedQuestName, 0.56, 0.93, 0.56)
 	
 	UpdateRQEQuestFrame()
-	RQEQuestFrame:ClearAllPoints()
+	RQE.RQEQuestFrame:ClearAllPoints()
 	
 	-- Further processing
 	QuestType()
 	SortQuestsByProximity()
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 		
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
@@ -2057,7 +2059,7 @@ function RQE.handleQuestWatchUpdate(...)
 		end
 
 		-- Determine questID based on various fallbacks
-		advanceQuestID = RQE.searchedQuestID or extractedQuestID
+		local advanceQuestID = RQE.searchedQuestID or extractedQuestID
 
 		if questID == advanceQuestID then
 			C_Timer.After(1, function()
@@ -2108,7 +2110,7 @@ function RQE.handleQuestWatchListChanged(...)
 
 	RQE:ClearRQEQuestFrame()
 	--UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list -- CALLED AT BOTTOM OF FUNCTION
-	AdjustQuestItemWidths(RQEQuestFrame:GetWidth())
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 	RQE:ClearWQTracking()
     RQE:UpdateRQEQuestFrameVisibility()
 	
@@ -2196,8 +2198,10 @@ function RQE.handleQuestTurnIn(...)
     if questID == superTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-		-- Check if TomTom is loaded and compatibility is enabled
-		if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+		
+        -- Check if TomTom is loaded and compatibility is enabled
+        local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+        if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
 		-- -- Set Super Track to 0 after turning in super tracked quest

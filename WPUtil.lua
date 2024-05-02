@@ -41,7 +41,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         -- Check if World Map is open
         local isMapOpen = WorldMapFrame:IsShown()
 
-        if not posX or not posY then
+        if not RQE.posX or not RQE.posY then
             if not isMapOpen and RQE.superTrackingChanged then
                 -- If coordinates are not available, attempt to open the quest log to get them
                 OpenQuestLogToQuestDetails(questID)
@@ -55,6 +55,6 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         RQE.superTrackingChanged = false
 
         -- Call your function to create a waypoint using stored coordinates and mapID
-		RQE:CreateUnknownQuestWaypoint(questID, mapID)
+		RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
     end)
 end
