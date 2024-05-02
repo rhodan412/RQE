@@ -67,7 +67,7 @@ RQE.UnknownButtonTooltip = function()
 		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
-		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 		
 		if questID then  -- Add a check to ensure questID is not nil
 			local mapID = GetQuestUiMapID(questID)
@@ -170,6 +170,7 @@ RQE.SearchGroupButtonMouseDown = function()
 		RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
 		if IsShiftKeyDown() and button == "LeftButton" then
+            local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			-- Show settings for delisting group
 			RQE:LFG_Delist(questID)
 			
@@ -282,7 +283,7 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
         end
         return -- Exit the function early if RQEFrame is hidden
     end
-	
+
     if macroIndex > 0 then
         local _, _, body = GetMacroInfo(macroIndex)
         if body and body:trim() ~= "" then
@@ -306,11 +307,11 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     -- Set the frame strata and level
     ClearButton:SetFrameStrata("MEDIUM")
     ClearButton:SetFrameLevel(3)
-	
+
     -- Nested functions
     ClearButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 6, -6)  -- Anchoring
-    ClearButton:SetScript("OnClick", function() 
-	
+    ClearButton:SetScript("OnClick", function()
+
         -- Your code for ClearButton functionality here
 		RQE.ClearFrameData()
 		RQE:ClearWaypointButtonData()
@@ -321,14 +322,14 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQE.infoLog("Cleared Macro Content at 321")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.Buttons.UpdateMagicButtonVisibility()
-		
+
         C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
-		
+
         -- Reset manually tracked quests
         if RQE.ManuallyTrackedQuests then
             for questID in pairs(RQE.ManuallyTrackedQuests) do
@@ -339,7 +340,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 
     CreateTooltip(ClearButton, "Clear Window")  -- Tooltip
     CreateBorder(ClearButton)  -- Border
-    
+
     return ClearButton
 end
 
@@ -354,7 +355,7 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
     -- Set the frame strata and level
     RWButton:SetFrameStrata("MEDIUM")
     RWButton:SetFrameLevel(3)
-	
+
     -- Nested functions
     RWButton:SetPoint("TOPLEFT", RQE.ClearButton, "TOPRIGHT", 3, 0)  -- Anchoring
     RWButton:SetScript("OnClick", function() 
@@ -366,10 +367,10 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 			TomTom.waydb:ResetProfile()
 		end
     end)
-	
+
     CreateTooltip(RWButton, "Remove Waypoints")
     CreateBorder(RWButton)
-	
+
     return RWButton
 end
 
@@ -485,23 +486,23 @@ function RQE.Buttons.CreateMinimizeButton(RQEFrame, originalWidth, originalHeigh
     MinimizeButton:SetSize(18, 18)
     MinimizeButton:SetText("-")
     RQE.MinimizeButton = MinimizeButton  -- Store the reference in the RQE table
-	
+
     -- Set the frame strata and level
     MinimizeButton:SetFrameStrata("MEDIUM")
     MinimizeButton:SetFrameLevel(3)
-	
+
     MinimizeButton:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
-	
+
     MinimizeButton:SetScript("OnClick", function()
 		RQE.debugLog("RQE.content inside button click: " .. tostring(RQE.content ~= nil))
 		RQE.db.profile.enableFrame = false
 		RQE:ToggleRQEFrame()
     end)
-    
+
     CreateTooltip(MinimizeButton, "Minimize")
     CreateBorder(MinimizeButton)
-	
-    RQE.debugLog("CreateMinimizeButton: Function exited.")    
+
+    RQE.debugLog("CreateMinimizeButton: Function exited.")
     return MinimizeButton
 end
 
@@ -629,7 +630,7 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
         -- Restore the frame to its original size
         RQEQuestFrame:SetSize(RQE.QToriginalWidth, RQE.QToriginalHeight)
 		RQE.QTScrollFrame:Show()
-		RQE.QTResizeButton:Show()
+		RQE.QMQTResizeButton:Show()
     end)
     CreateTooltip(QTMaximizeButton, "Maximize Quest Tracker")
     CreateBorder(QTMaximizeButton)
@@ -664,13 +665,13 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 		end
 		
 		-- Hide the Slider if they exist
-		if RQE.QTslider then
-			RQE.QTslider:Hide()
+		if RQE.QMQTslider then
+			RQE.QMQTslider:Hide()
 		end
 		
 		-- Hide the resize button
-		if RQE.QTResizeButton then
-			RQE.QTResizeButton:Hide()
+		if RQE.QMQTResizeButton then
+			RQE.QMQTResizeButton:Hide()
 		end	
     end)
     CreateTooltip(QTMinimizeButton, "Minimize Quest Tracker")
