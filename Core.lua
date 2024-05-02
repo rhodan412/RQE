@@ -2343,7 +2343,17 @@ end
 
 -- Function to print quest steps to chat
 function PrintQuestStepsToChat(questID)
+    if not questID then
+        RQE.debugLog("Invalid or missing quest ID provided.")
+        return nil, nil, nil
+    end
+
     local questName = C_QuestLog.GetTitleForQuestID(questID)
+    if not questName then
+        RQE.debugLog("No quest found for the given ID:", questID)
+        return nil, nil, nil
+    end
+	
 	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
     local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 	
@@ -2438,7 +2448,7 @@ function RQE:ShowWowheadLink(questID)
     copyButton:SetPoint("TOP", wowHeadeditBox, "BOTTOM", 0, -10)  -- Adjust the Y-offset as needed
 	copyButton:SetText("Copy to Clipboard")
 	copyButton:SetScript("OnClick", HighlightTextForCopy)
-	
+
     -- Create and configure the Close button
     local wowHeadcloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
 	wowHeadeditBox:ClearAllPoints()
@@ -2455,7 +2465,7 @@ function RQE:ShowWowheadLink(questID)
 
     -- Configure the EditBox font
     wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
-	
+
     -- Resize and reposition the close button
     wowHeadcloseButton:SetSize(20, 20)
     wowHeadcloseButton:ClearAllPoints()
@@ -2484,10 +2494,9 @@ local f = CreateFrame("Frame")
 f:RegisterEvent("CHAT_MSG_ADDON")
 f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
     if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == UnitName("player") then
-        -- Attempt to use the hidden chat frame method to copy text
         local editBox = ChatFrame1EditBox or ChatEdit_ChooseBoxForSend() -- Fallback to an existing chat edit box
         editBox:Show()
-        editBox:SetText(wowHeadeditBox:GetText())
+        editBox:SetText(RQE.wowHeadeditBox:GetText())  -- Accessing wowHeadeditBox via RQE
         editBox:HighlightText()
         editBox:SetFocus()
         editBox:CopyChatFrame(editBox)
@@ -2750,12 +2759,12 @@ end
 -- Periodic check setup
 function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	
+
     if not superTrackedQuestID then
         RQE.debugLog("No super tracked quest ID found, skipping checks.")
         return
     end
-	
+
     local questData = RQE.getQuestData(superTrackedQuestID)
     local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
 
@@ -2776,7 +2785,8 @@ function RQE:StartPeriodicChecks()
         end
 
         -- Check if the specific functions related to the current step need to be triggered
-        if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
+        if not RQE.hasStateChanged() and not isReadyTurnIn then
+        --if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
             RQE.infoLog("No relevant changes detected for the current step, skipping periodic checks.")
             return
 		else
@@ -2806,7 +2816,7 @@ function RQE:StartPeriodicChecks()
             end
         end
     end
-	RQE:CheckAndAdvanceStep(questID)
+	RQE:CheckAndAdvanceStep(superTrackedQuestID)
 end
 
 
@@ -3432,10 +3442,11 @@ function RQE.GetCampaignsFromQuestLog()
 
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
-        local campaignID = C_CampaignInfo.GetCampaignID(questID)
-        local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
-
         if questInfo and not questInfo.isHeader then
+            local questID = questInfo.questID  -- Correctly assign questID from questInfo
+            local campaignID = C_CampaignInfo.GetCampaignID(questID)
+            local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+
             if campaignInfo and campaignInfo.campaignID then  -- Ensure campaignID is not nil
                 -- If this campaign is not yet in the table, add it
                 if not campaigns[campaignInfo.campaignID] then
@@ -3664,32 +3675,7 @@ function RQE.PrintQuestlineDetails(questLineID)
 end
 
 
--- Scans Quest Log for the various Types that each quest is assigned to
-function RQE.ScanQuestTypes()
-    if type(RQE.QuestTypes) ~= "table" then
-        RQE.QuestTypes = {}  -- Initialize as an empty table if it's not already a table
-    end
-    wipe(RQE.QuestTypes)  -- Clear the table to prevent duplications
-    local numEntries = C_QuestLog.GetNumQuestLogEntries()
-    
-    for i = 1, numEntries do
-        local questInfo = C_QuestLog.GetInfo(i)
-        if questInfo and not questInfo.isHeader then
-            local questType = C_QuestLog.GetQuestType(questInfo.questID)
-            -- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
-            if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
-                RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
-            else
-                local questTypeName = RQE.GetQuestTypeName(questType)
-                if questTypeName then
-                    RQE.QuestTypes[questType] = questTypeName
-                end
-            end
-        end
-    end
-end
-
-
+-- Function containing list of QuestTypes that addon fetches
 function RQE.GetQuestTypeName(questType)
     local questTypeNames = {
 		[1] = "Group",
@@ -3724,6 +3710,32 @@ function RQE.GetQuestTypeName(questType)
         return "Misc"
     else
         return questTypeNames[questType] or "Unknown Type"
+    end
+end
+
+
+-- Scans Quest Log for the various Types that each quest is assigned to
+function RQE.ScanQuestTypes()
+    if type(RQE.QuestTypes) ~= "table" then
+        RQE.QuestTypes = {}  -- Initialize as an empty table if it's not already a table
+    end
+    wipe(RQE.QuestTypes)  -- Clear the table to prevent duplications
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+
+    for i = 1, numEntries do
+        local questInfo = C_QuestLog.GetInfo(i)
+        if questInfo and not questInfo.isHeader then
+            local questType = C_QuestLog.GetQuestType(questInfo.questID)
+            if questType then  -- Ensure questType is not nil
+                -- Consolidate certain quest types under a special key "Misc"
+                if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
+                    RQE.QuestTypes["Misc"] = "Misc"
+                else
+                    local questTypeName = RQE.GetQuestTypeName(questType)
+                    RQE.QuestTypes[questType] = questTypeName
+                end
+            end
+        end
     end
 end
 
@@ -4085,11 +4097,15 @@ end
 
 -- Handles building the macro from the super tracked quest
 function RQE:BuildQuestMacroBackup()
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	
-    if isSuperTracking then
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest
+
+    local extractedQuestID
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     end
+
+    -- Determine questID based on various fallbacks
+    local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Allow time for the UI to update and for the super track to register
 	C_Timer.After(1, function()
@@ -4206,7 +4222,7 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
                 for _, reagent in ipairs(slotSchematic.reagents) do
                     local itemName = "Unknown"
                     if reagent.itemID then
-                        itemName = GetItemInfo(reagent.itemID) or itemName
+                        itemName = C_Item.GetItemInfo(reagent.itemID) or itemName
                     end
                     RQE.infoLog("  - Item:", itemName, "Item ID:", reagent.itemID or "N/A", "Quantity Required:", slotSchematic.quantityRequired)
                 end
@@ -4221,7 +4237,7 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
         for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
             if slotSchematic.reagents then
                 for _, reagent in ipairs(slotSchematic.reagents) do
-                    local itemLink = select(2, GetItemInfo(reagent.itemID))
+                    local itemLink = select(2, C_Item.GetItemInfo(reagent.itemID))
                     local quantityRequired = slotSchematic.quantityRequired
                     if itemLink and quantityRequired then
                         if not firstReagent then
@@ -4429,7 +4445,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
                     button1 = "Yes",
                     button2 = "No",
                     OnAccept = function()
-                        C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity, unitPrice)
+                        C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
                         C_Timer.After(0.5, function()  -- Allow for server response time
                             C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
                         end)

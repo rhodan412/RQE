@@ -30,7 +30,13 @@ end
 RQE.UnknownQuestButtonCalcNTrack = function()
     RQE.UnknownQuestButton:SetScript("OnClick", function()
         local superQuest = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-		local questID = RQE.searchedQuestID or questID or superQuest
+        local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		local questID = RQE.searchedQuestID or extractedQuestID or superQuest
 		local questData = RQE.getQuestData(questID)
 		
 		if not questID then

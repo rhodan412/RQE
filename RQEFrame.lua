@@ -1001,7 +1001,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	RQE.CurrentQuestSteps = {}
 	local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	local baseYOffset = -20
-	
+
 	if self.CoordsText then
 		for i, textElement in ipairs(self.CoordsText) do
 			textElement:Hide()
@@ -1022,8 +1022,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 	-- Create new step texts
 	for i = 1, #StepsText do
-		localstepTextHeight = 10
-	
+		local stepTextHeight = 10
+
 		-- Create StepsText
 		local StepText = content:CreateFontString(nil, "OVERLAY")
 		table.insert(RQE.StepsText, StepText)
@@ -1035,11 +1035,11 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		StepText:SetWordWrap(true)  -- Allow word wrap
 		StepText:SetText(StepsText[i] or "No description available.")
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
-		
+
 		-- Create CoordsText
 		local CoordText = content:CreateFontString(nil, "OVERLAY")
 		table.insert(RQE.CoordsText, CoordText)
-		
+
 		if i == 1 then
 			if self.QuestObjectives then
 				StepText:SetPoint("TOPLEFT", self.QuestObjectives, "BOTTOMLEFT", 35, yOffset)
@@ -1051,12 +1051,12 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				StepText:SetPoint("TOPLEFT", prevText, "BOTTOMLEFT", 0, yOffset)
 			end
 		end
-		
+
         StepText:Show()
 
         -- Update previous text for anchoring
         prevText = StepText
-		
+
 		-- Create the WaypointButton
 		local WaypointButton = CreateFrame("Button", nil, content)
 		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
@@ -1064,7 +1064,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Use the custom texture for the background
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
-		
+
 		-- Determine if this button was the last clicked
 		if RQE.LastClickedIdentifier and RQE.LastClickedIdentifier == i then
 			-- This button was the last clicked one; apply the "lit" texture
@@ -1076,7 +1076,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Get the height of the StepText element
 		local stepTextHeight = StepText:GetStringHeight()
-	
+
 		-- Create the number label
 		local number = WaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 		number:SetPoint("CENTER", WaypointButton, "CENTER")
@@ -1090,9 +1090,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)  -- Adjust the x, y offsets as needed
 			GameTooltip:Show()
 		end)
-		
+
 		-- Insert it into the RQE.WaypointButtons table
 		table.insert(RQE.WaypointButtons, WaypointButton)
+        RQE.WaypointButtonIndices[WaypointButton] = i  -- Store the index associated with the button
 
 		-- Hide the tooltip when the mouse leaves
 		WaypointButton:SetScript("OnLeave", function()
@@ -1113,11 +1114,11 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- -- Clears Macro Data
 			-- RQE.infoLog("Cleared Macro Content at 1093")
 			-- RQEMacro:ClearMacroContentByName("RQE Macro")
-	
+
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
-            
+
             -- Call your function to handle the coordinate click
             RQE:OnCoordinateClicked(x, y, mapID)
 
@@ -1125,22 +1126,31 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
 			end
-			
+
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
 			-- Save the identifier (could be the questID or any unique property tied to the button)
 			RQE.LastClickedIdentifier = i
 
-			-- When creating the WaypointButton
-			WaypointButton.stepIndex = i
+            -- When creating the WaypointButton
+			--WaypointButton.stepIndex = i
 			RQE.LastClickedButtonRef = WaypointButton
-			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
-			
+			RQE.infoLog("New LastClickedButton set:", RQE.WaypointButtonIndices[WaypointButton] or "Unnamed")
+
 			-- Update the reference to the last clicked button
-			RQE.LastClickedWaypointButton = WaypointButton
-			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
-			
+			-- RQE.LastClickedWaypointButton = WaypointButton
+			-- RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
+
+            ---@class LastClickedWaypointButtonClass
+            ---@field bg Texture
+            -- Update the reference to the last clicked button
+            ---@type LastClickedWaypointButtonClass
+            RQE.LastClickedWaypointButton = {
+                button = WaypointButton,
+                bg = bg
+            }
+
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				if not questIDFromText then
@@ -1150,14 +1160,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
 				end
 			end
-				
+
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
 			local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-            RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+            RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
 			local questData = RQE.getQuestData(questIDFromText)
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
 			if questData then
+                local stepIndex = i
 				local stepData = questData[stepIndex]
 				for index, stepData in ipairs(questData) do
 					if stepData.description == stepDescription then
@@ -1169,17 +1180,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 						end
 					end
 				end
+				UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
 			end
-						
+
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
-			
-            -- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-            local questInfo = RQE.getQuestData(questID)
 
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+			--UpdateFrame()
 		end)
 
 		-- Add a mouse down event to simulate a button press
@@ -1641,17 +1650,16 @@ end
 
 -- Define the function to handle GROUP_ROSTER_UPDATE event
 function RQEOnGroupRosterUpdate()
-    local activityID = C_LFGList.GetActivityIDForQuestID(questID)
     local isInGroup = IsInGroup()
     local isInRaid = IsInRaid()
     local isInstanceGroup = IsInInstance()
-
+	
     -- Trigger the role selection only if the player was in an outdoor raid group
 	if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
     --if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup and (availTank or availHealer or (availDPS and not (availTank and availHealer))) then
         -- The player has left an outdoor raid group, show the role selection dialog
-        -- Ensure 'activityID' is defined appropriately
-        RQEShowRoleSelection(activityID)
+		--local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+        RQEShowRoleSelection(C_LFGList.GetActivityIDForQuestID(questID))
     end
 
     -- Update the group size and type for the next check

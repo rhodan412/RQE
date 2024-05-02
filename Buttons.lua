@@ -67,7 +67,7 @@ RQE.UnknownButtonTooltip = function()
 		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
-		local questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+		local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
 		if questID then  -- Add a check to ensure questID is not nil
 			local mapID = GetQuestUiMapID(questID)
@@ -171,8 +171,10 @@ RQE.SearchGroupButtonMouseDown = function()
 
 		if IsShiftKeyDown() and button == "LeftButton" then
 			-- Show settings for delisting group
-			RQE:LFG_Delist(questID)
-
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			if questID then
+			    RQE:LFG_Delist(questID)
+            end
 		elseif button == "LeftButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			if questID then

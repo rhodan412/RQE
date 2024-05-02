@@ -15,7 +15,8 @@ RQE.modules = RQE.modules or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQE.TrackedQuests = RQE.TrackedQuests or {}
 RQE.TrackedAchievementIDs = RQE.TrackedAchievementIDs or {}
-	
+RQE.CustomProperties = {}
+
 -- Initialization of RQE.ManuallyTrackedQuests
 if not RQE.ManuallyTrackedQuests then
     RQE.ManuallyTrackedQuests = {}
@@ -143,6 +144,8 @@ headerText:SetWordWrap(true)
 RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. frame:GetHeight())
 
 -- Create the Slider (Scrollbar)
+---@class QMQTSlider : Slider
+---@field public scrollStep number
 local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
 QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -20)
 QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
@@ -205,11 +208,28 @@ RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -400,
 -- Create the third child frame, anchored below the QuestsFrame
 RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -400, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
 
+
+-- Function to set the child frame properties for the questCount and achieveCount
+function RQE.SetFrameProperty(frame, propName, defaultValue)
+    if not RQE.CustomProperties[frame] then
+        RQE.CustomProperties[frame] = {}
+    end
+    if RQE.CustomProperties[frame][propName] == nil then
+        RQE.CustomProperties[frame][propName] = defaultValue
+    end
+end
+
 -- Initialize with default values
-RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
-RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
-RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
-RQE.AchievementsFrame.achieveCount = RQE.AchievementsFrame.achieveCount or 0
+RQE.SetFrameProperty(RQE.CampaignFrame, "questCount", 0)
+RQE.SetFrameProperty(RQE.QuestsFrame, "questCount", 0)
+RQE.SetFrameProperty(RQE.WorldQuestsFrame, "questCount", 0)
+RQE.SetFrameProperty(RQE.AchievementsFrame, "achieveCount", 0)
+
+-- Initialize with default values
+--RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
+--RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
+--RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
+--RQE.AchievementsFrame.achieveCount = RQE.AchievementsFrame.achieveCount or 0
 
 
 -- Function to create a header for a child frame
@@ -255,10 +275,18 @@ end
 
 
 -- Create headers for each child frame
-RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
-RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Quests")
-RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
-RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+RQE.CampaignFrame = RQE.CampaignFrame or {}
+RQE.CampaignFrame["header"] = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
+
+RQE.QuestsFrame = RQE.QuestsFrame or {}
+RQE.QuestsFrame["header"] = CreateChildFrameHeader(RQE.QuestsFrame, "Quests")
+
+RQE.WorldQuestsFrame = RQE.WorldQuestsFrame or {}
+RQE.WorldQuestsFrame["header"] = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+
+RQE.AchievementsFrame = RQE.AchievementsFrame or {}
+RQE.AchievementsFrame["header"] = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+
 
 
 -- ScenarioChildFrame header
@@ -472,13 +500,13 @@ RQE.Buttons.CreateQuestMinimizeButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQ
 RQE.Buttons.CreateQuestFilterButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.CQButton(RQE.RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.CQButton(RQE.RQEQuestFrame) -- , "TOPLEFT")
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.HQButton(RQE.RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.HQButton(RQE.RQEQuestFrame) -- , "TOPLEFT")
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.ZQButton(RQE.RQEQuestFrame, "TOPLEFT")
+RQE.Buttons.ZQButton(RQE.RQEQuestFrame) -- , "TOPLEFT")
 
 
 ---------------------------
@@ -583,9 +611,9 @@ function AdjustQuestItemWidths(frameWidth)
         RQE.WorldQuestsFrame,
         RQE.AchievementsFrame,
     }
-	
+
 	-- Adjust width for each element
-    for _, WQuestLogIndexButton in pairs(WQuestLogIndexButtons or {}) do
+	for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
         -- Adjust WQuestLevelAndName width for each WQuestLogIndexButton
         if WQuestLogIndexButton.WQuestLevelAndName then
             local dynamicPadding = basePadding.WQuestLevelAndName * (1 + paddingMultiplier)
