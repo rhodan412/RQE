@@ -2864,6 +2864,13 @@ end
 -- Function will check the player's inventory for specific items.
 function RQE:CheckDBInventory(questID, stepIndex)
     local questData = self.getQuestData(questID)
+
+    -- Check if questData is nil and return if it is
+    if not questData then
+        RQE.infoLog("No quest data found for quest ID:", questID)
+        return  -- Exit the function as there is no data to process
+    end
+
     local stepData = questData[stepIndex]
     local requiredItems = stepData.check or {}
     local neededAmounts = stepData.neededAmt or {}
@@ -2873,7 +2880,7 @@ function RQE:CheckDBInventory(questID, stepIndex)
         local itemCount = C_Item.GetItemCount(itemID)
 
         RQE.infoLog("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
-        
+
         if itemCount >= requiredAmount then
             self:AdvanceQuestStep(questID, stepIndex)
             return  -- Exit function after advancing step to avoid multiple advancements
@@ -2886,6 +2893,13 @@ end
 function RQE:CheckDBZoneChange(questID, stepIndex)
     local currentMapID = C_Map.GetBestMapForUnit("player")
     local questData = self.getQuestData(questID)
+
+    -- Check if questData is nil and return if it is
+    if not questData then
+        RQE.infoLog("No quest data found for quest ID:", questID)
+        return  -- Exit the function as there is no data to process
+    end
+
     local stepData = questData[stepIndex]
     local requiredMapIDs = stepData.check  -- This should be a list of mapIDs
 
@@ -3062,17 +3076,18 @@ function RQE.ScanAndCacheZoneQuests()
             -- Get the primary map ID associated with the quest
             local uiMapID, _, _, _, _ = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
             -- If the primary map ID is not available, fallback to the secondary options
-            if not uiMapID or uiMapID == 0 then
-                uiMapID = C_TaskQuest.GetQuestZoneID(questInfo.questID)
-                -- As a last resort, use the quest's UiMapID if available
-                if not uiMapID or uiMapID == 0 then
-                    uiMapID = GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
-                end
+            if uiMapID == 0 then
+                uiMapID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or 0
             end
-            -- If a valid map ID is found, add the quest to the corresponding zone's quest list
-            if uiMapID and uiMapID ~= 0 then
+            if uiMapID == 0 then
+                uiMapID = GetQuestUiMapID(questInfo.questID) or 0
+            end
+
+            if uiMapID ~= 0 then
                 RQE.ZoneQuests[uiMapID] = RQE.ZoneQuests[uiMapID] or {}
                 table.insert(RQE.ZoneQuests[uiMapID], questInfo.questID)
+            else
+                RQE.debugLog("No valid uiMapID found for questID:", questInfo.questID)
             end
         end
     end
@@ -3159,7 +3174,7 @@ function RQE.ShowQuestsforMap()
 			if uiMapID ~= 0 then
 				print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. uiMapID)
 			else
-				local zoneID = GetQuestUiMapID(questInfo.questID, ignoreWaypoints) or C_TaskQuest.GetQuestZoneID(questInfo.questID)
+				local zoneID = GetQuestUiMapID(questInfo.questID) or C_TaskQuest.GetQuestZoneID(questInfo.questID)
 				print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. zoneID)
 			end
 		end
@@ -3170,7 +3185,7 @@ end
 function RQE.BuildZoneQuestMenuList()
     local zoneQuestMenuList = {}
     RQE.ZoneQuests = RQE.ZoneQuests or {}  -- Ensure RQE.ZoneQuests is not nil
-    
+
     for zoneID, quests in pairs(RQE.ZoneQuests) do
         local mapInfo = C_Map.GetMapInfo(zoneID)
         if mapInfo then
@@ -3205,6 +3220,7 @@ function RQE.BuildZoneQuestMenuList()
 end
 
 
+-- Function that runs when Auto-Track Zone Quests is enabled from the Filter Menu
 function RQE.filterByZone(zoneID)
     local questIDsForZone = RQE.ZoneQuests[zoneID] or {}
 
@@ -3218,14 +3234,11 @@ function RQE.filterByZone(zoneID)
     local numQuestWatches = C_QuestLog.GetNumQuestWatches()
     for i = numQuestWatches, 1, -1 do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-        if not questIDSet[questID] then
+        if questID and not questIDSet[questID] then
             C_QuestLog.RemoveQuestWatch(questID)
         end
     end
-	
-	RQE:ClearRQEQuestFrame()
-	UpdateRQEQuestFrame()
-	
+
     -- Add the quests from the selected zone to the watch list
     for _, questID in ipairs(questIDsForZone) do
         C_QuestLog.AddQuestWatch(questID)
@@ -3238,11 +3251,12 @@ function RQE.filterByZone(zoneID)
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
 	
-	RQE.CheckAndUpdateForCurrentZone(zoneID)
+	RQE.CheckAndUpdateForCurrentZone()
 end
 
 
-function RQE.CheckAndUpdateForCurrentZone(zoneID)
+
+function RQE.CheckAndUpdateForCurrentZone()
     local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
     if not currentPlayerMapID then
         RQE.debugLog("Unable to determine the player's current map ID.")
@@ -3250,7 +3264,7 @@ function RQE.CheckAndUpdateForCurrentZone(zoneID)
     end
 
     -- Compare the chosen zone ID with the current player's map ID
-    if zoneID == currentPlayerMapID then
+    if currentPlayerMapID then
         -- If they match, update the tracked quests to reflect the current zone
         RQE.UpdateTrackedQuestsToCurrentZone()
     end
@@ -3307,11 +3321,11 @@ function RQE.filterByQuestType(questType)
             end
         end
     end
-	
+
 	-- Update FrameUI
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
-	
+
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
 	SortQuestsByProximity()
 end
@@ -3329,6 +3343,7 @@ function RQE.GetQuestCampaignInfo(questID)
 end
 
 
+-- Populates the Campaign Quests Tier 2 drop-down Filter Button
 function RQE.GetCampaignsFromQuestLog()
     local campaigns = {}
     local numEntries = C_QuestLog.GetNumQuestLogEntries()
@@ -3336,11 +3351,13 @@ function RQE.GetCampaignsFromQuestLog()
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
-            local campaignInfo = RQE.GetQuestCampaignInfo(questInfo.questID)
-            if campaignInfo and campaignInfo.campaignID then  -- Ensure campaignID is not nil
-                -- If this campaign is not yet in the table, add it
-                if not campaigns[campaignInfo.campaignID] then
-                    campaigns[campaignInfo.campaignID] = campaignInfo.name
+            local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+            if campaignID then
+                local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+                if campaignInfo then  -- Check campaignInfo is not nil
+                    if not campaigns[campaignID] then
+                        campaigns[campaignID] = campaignInfo.name  -- Using campaignID from the direct API call
+                    end
                 end
             end
         end
@@ -3544,7 +3561,7 @@ function RQE.filterByQuestLine(questLineID)
     -- Loop through the current quest watches and remove those not in the selected questline
     for i = numQuestWatches, 1, -1 do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-        if not questIDSet[questID] then
+        if questID and not questIDSet[questID] then
             C_QuestLog.RemoveQuestWatch(questID)
         end
     end
@@ -3607,24 +3624,33 @@ end
 
 -- Scans Quest Log for the various Types that each quest is assigned to
 function RQE.ScanQuestTypes()
-    if type(RQE.QuestTypes) ~= "table" then
+    if not RQE.QuestTypes then
         RQE.QuestTypes = {}  -- Initialize as an empty table if it's not already a table
     end
     wipe(RQE.QuestTypes)  -- Clear the table to prevent duplications
     local numEntries = C_QuestLog.GetNumQuestLogEntries()
-    
+
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
             local questType = C_QuestLog.GetQuestType(questInfo.questID)
-            -- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
+            local questTypeName = "Unknown Type"  -- Default type if no specific type is found
+            
             if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
-                RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
-            else
-                local questTypeName = RQE.GetQuestTypeName(questType)
-                if questTypeName then
-                    RQE.QuestTypes[questType] = questTypeName
+                questTypeName = "Misc"  -- Consolidate certain quest types under "Misc"
+            elseif RQE.GetQuestTypeName then
+                local customName = RQE.GetQuestTypeName(questType)
+                if customName then
+                    questTypeName = customName
                 end
+            end
+
+            if type(questType) ~= "number" then
+                RQE.debugLog("Error: questType is not a number, it is: ", tostring(questType))
+                -- Further diagnostics to identify the caller or source of the error
+                return nil
+            else
+                RQE.QuestTypes[questType] = questTypeName
             end
         end
     end
@@ -3850,7 +3876,11 @@ end
 -- Removes Automatic WQ when leaving area of WQ location
 function RQE.UntrackAutomaticWorldQuests()
     local playerMapID = C_Map.GetBestMapForUnit("player")
-    local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+    local questsInArea = {}  -- Initialize as an empty table
+
+    if playerMapID then
+        questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID) or {}
+    end
 
     -- Convert the questsInArea to a lookup table for quicker access and print them
     local questsInAreaLookup = {}
@@ -3868,8 +3898,7 @@ function RQE.UntrackAutomaticWorldQuests()
             RQE.infoLog("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
 
             -- If the quest is not in the current area and it was tracked automatically, untrack it
-            if watchType == Enum.QuestWatchType.Automatic then
-			-- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
+            if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
                 C_QuestLog.RemoveWorldQuestWatch(questID)
             end
         end
@@ -4026,11 +4055,8 @@ end
 
 -- Handles building the macro from the super tracked quest
 function RQE:BuildQuestMacroBackup()
-	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	
-    if isSuperTracking then
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
-    end
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Allow time for the UI to update and for the super track to register
 	C_Timer.After(1, function()
@@ -4147,7 +4173,7 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
                 for _, reagent in ipairs(slotSchematic.reagents) do
                     local itemName = "Unknown"
                     if reagent.itemID then
-                        itemName = GetItemInfo(reagent.itemID) or itemName
+                        itemName = C_Item.GetItemInfo(reagent.itemID) or itemName
                     end
                     RQE.infoLog("  - Item:", itemName, "Item ID:", reagent.itemID or "N/A", "Quantity Required:", slotSchematic.quantityRequired)
                 end
@@ -4162,7 +4188,7 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
         for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
             if slotSchematic.reagents then
                 for _, reagent in ipairs(slotSchematic.reagents) do
-                    local itemLink = select(2, GetItemInfo(reagent.itemID))
+                    local itemLink = select(2, C_Item.GetItemInfo(reagent.itemID))
                     local quantityRequired = slotSchematic.quantityRequired
                     if itemLink and quantityRequired then
                         if not firstReagent then
@@ -4305,7 +4331,7 @@ function RQE:SearchAndDisplayCommodityResults(itemID, quantity)
                 for index = 1, numResults do
                     local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
                     if result then
-                        print("Result " .. index .. ": Price per unit: " .. GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
+                        print("Result " .. index .. ": Price per unit: " .. C_CurrencyInfo.GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
                     end
                 end
             else
@@ -4350,21 +4376,21 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
                     local quantityToBuy = min(quantityAvailable, totalQuantityNeeded)
                     totalCost = totalCost + (quantityToBuy * unitPrice)
                     totalQuantityNeeded = totalQuantityNeeded - quantityToBuy
-                    print("Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
+                    print("Buying", quantityToBuy, "units at", C_CurrencyInfo.GetCoinTextureString(unitPrice), "each.")
                 end
                 index = index + 1
             end
             if totalQuantityNeeded > 0 then
                 print("Not enough quantity available to meet the requested purchase.")
             else
-                local itemLink = C_AuctionHouse.GetReplicateItemLink(1) or select(2, GetItemInfo(itemID))
+                local itemLink = C_AuctionHouse.GetReplicateItemLink(1) or select(2, C_Item.GetItemInfo(itemID))
                 if not itemLink then
                     itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
                 end
-                print("Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
+                print("Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. C_CurrencyInfo.GetCoinTextureString(totalCost))
                 -- Here you might want to display the confirmation popup with the total cost
                 StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
-                    text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
+                    text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), C_CurrencyInfo.GetCoinTextureString(totalCost)),
                     button1 = "Yes",
                     button2 = "No",
                     OnAccept = function()
@@ -4378,7 +4404,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
                     hideOnEscape = true,
                     preferredIndex = 3,  -- Avoid taint from UIParent
                 OnShow = function(self)
-                    self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+                    self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, C_CurrencyInfo.GetCoinTextureString(totalCost))
                     local itemFrame = CreateFrame("Frame", nil, self)
                     itemFrame:SetAllPoints(self.text)
                     itemFrame:SetScript("OnEnter", function()
@@ -4402,7 +4428,7 @@ end
 function RQE.CheckForDragonMounts()
     local i = 1
     while true do
-        local name = UnitAura("player", i)
+        local name = C_UnitAuras.GetAuraDataByIndex("player", i)
         if not name then break end  -- No more auras to check, exit loop
         for _, dragonName in ipairs(dragonMounts) do
             if name == dragonName then

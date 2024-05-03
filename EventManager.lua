@@ -1303,6 +1303,12 @@ function RQE.handleZoneNewAreaChange(self, event, ...)
 		end
 	end
 	
+	-- Calls an
+	if RQE.db and RQE.db.profile.autoTrackZoneQuests then
+		local mapID = C_Map.GetBestMapForUnit("player")
+		RQE.filterByZone(mapID)
+	end
+
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
 	
