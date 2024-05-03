@@ -335,7 +335,7 @@ RQE.options = {
 							get = function(info) return RQE.db.profile.MainFrameOpacity end,
 							set = function(info, value)
 								RQE.db.profile.MainFrameOpacity = value
-								RQE.UpdateFrameOpacity()  -- You will need to create this function
+								RQE:UpdateFrameOpacity()  -- You will need to create this function
 							end,
 							order = 4,  -- Adjust this number to place it in your preferred order
 						},
@@ -447,7 +447,7 @@ RQE.options = {
 							get = function(info) return RQE.db.profile.QuestFrameOpacity end,
 							set = function(info, value)
 								RQE.db.profile.QuestFrameOpacity = value
-								RQE.UpdateFrameOpacity()  -- You will need to create this function
+								RQE:UpdateFrameOpacity()  -- You will need to create this function
 							end,
 							order = 4,  -- Adjust this number to place it in your preferred order
 						},

@@ -9,6 +9,8 @@
 RQE = RQE or {}
 RQE.Frame = RQE.Frame or {}
 
+RQE.posX = nil
+RQE.posY = nil
 
 ---------------------------
 -- 2. Debug Logic
