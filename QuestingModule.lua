@@ -1985,7 +1985,7 @@ function UpdateRQEQuestFrame()
     end
 
 	-- Visibility Update Check for RQEQuestFrame
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 end
 
 
@@ -2610,5 +2610,5 @@ function UpdateRQEAchievementsFrame()
     end
 	
 	-- Visibility Update Check for RQEQuestFrame
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 end

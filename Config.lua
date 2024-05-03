@@ -133,7 +133,7 @@ RQE.options = {
 					get = function(info) return RQE.db.profile.hideRQEQuestFrameWhenEmpty end,
 					set = function(info, value)
 						RQE.db.profile.hideRQEQuestFrameWhenEmpty = value
-						RQE.UpdateRQEQuestFrameVisibility()
+						RQE:UpdateRQEQuestFrameVisibility()
 					end,
 					order = 4, -- Adjust the order as needed
 				},

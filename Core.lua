@@ -913,7 +913,7 @@ end
 
 
 -- Function to Show/Hide RQEQuestFrame when frames are empty
-function RQE.UpdateRQEQuestFrameVisibility()
+function RQE:UpdateRQEQuestFrameVisibility()
     if InCombatLockdown() then
         return
     end
@@ -943,9 +943,9 @@ function RQE.UpdateRQEQuestFrameVisibility()
 	
     -- Check conditions for showing/hiding the frame, including manual closure
     if (RQE.db.profile.hideRQEQuestFrameWhenEmpty and (RQE.campaignQuestCount + RQE.regularQuestCount + RQE.worldQuestCount + RQE.AchievementsFrame.achieveCount == 0 and not RQE.isInScenario)) or RQE.isRQEQuestFrameManuallyClosed then
-        RQEQuestFrame:Hide()
+        RQE.RQEQuestFrame:Hide()
     else
-        RQEQuestFrame:Show()
+        RQE.RQEQuestFrame:Show()
     end
 	
 	RQE.canUpdateFromCriteria = true

@@ -911,7 +911,7 @@ function RQE.handlePlayerEnterWorld(self, event, isLogin, isReload)
 
 	-- Visibility Check for RQEFrame and RQEQuestFrame
 	RQE:UpdateRQEFrameVisibility()
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
     -- DEFAULT_CHAT_FRAME:AddMessage("PEW 11 Debug: Updated frame visibility.", 0.93, 0.51, 0.93)
 
 	-- Update Display of Memory Usage of Addon
@@ -1127,7 +1127,7 @@ function RQE.handleQuestAccepted(...)
     RQE:UpdateRQEFrameVisibility()
 	
 	-- DEFAULT_CHAT_FRAME:AddMessage("QA 13 Debug: UpdateRQEQuestFrameVisibility.", 0.46, 0.62, 1)
-    RQE.UpdateRQEQuestFrameVisibility()	
+    RQE:UpdateRQEQuestFrameVisibility()	
 	
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -1430,7 +1430,7 @@ function RQE.updateScenarioCriteriaUI()
 	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 	
 	RQE.canUpdateFromCriteria = false
 	RQE.scenarioCriteriaUpdate = false   -- Flag that denotes if the event that was run prior to this was SCENARIO_CRITERIA_UPDATE
@@ -1481,9 +1481,7 @@ function RQE.updateScenarioUI()
             --print("Hiding Timer that is visible")
             RQE.StopTimer()
         end
-		
-		UpdateRQEQuestFrame()
-		
+
 		--local duration = debugprofilestop() - startTime
 		-- DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
         return
@@ -1511,7 +1509,7 @@ function RQE.updateScenarioUI()
 	
 	UpdateRQEQuestFrame()
 	RQE.UpdateCampaignFrameAnchor()
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 		
 	--local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioCriteriaUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -1660,7 +1658,7 @@ function RQE.handleQuestStatusUpdate(...)
 			-- SortQuestsByProximity()
 
 			-- -- Visibility Update Check for RQEQuestFrame
-				-- RQE.UpdateRQEQuestFrameVisibility()
+				-- RQE:UpdateRQEQuestFrameVisibility()
 			-- else
 				-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Not SuperTracking or QuestID not found", 0, 1, 0)  -- Bright Green
 			-- end
@@ -1832,7 +1830,7 @@ function RQE.handleQuestComplete()
 	-- end
 
 	-- Visibility Update Check for RQEQuestFrame
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 
@@ -1898,7 +1896,7 @@ function RQE.handleQuestAutoComplete(...)
 	end
 
 	-- Visibility Update Check for RQEQuestFrame
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("QAC 04 Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 
@@ -2003,7 +2001,7 @@ function RQE.handleQuestRemoved(...)
 
 		-- Visibility Check for RQEFrame and RQEQuestFrame
 		RQE:UpdateRQEFrameVisibility()
-		RQE.UpdateRQEQuestFrameVisibility()
+		RQE:UpdateRQEQuestFrameVisibility()
 	end
 
 	-- Resets Quest Progress
@@ -2065,7 +2063,7 @@ function RQE.handleQuestWatchUpdate(...)
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 	-- Visibility Update Check for RQEQuestFrame
-	RQE.UpdateRQEQuestFrameVisibility()
+	RQE:UpdateRQEQuestFrameVisibility()
 
 	-- Adds quest to watch list when progress made
 	C_QuestLog.AddQuestWatch(questID)
@@ -2173,7 +2171,7 @@ function RQE.handleQuestWatchListChanged(...)
 	--UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list -- CALLED AT BOTTOM OF FUNCTION
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 	RQE:ClearWQTracking()
-    RQE.UpdateRQEQuestFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()
 	
     -- This ensures that any change in the watch list is reflected in your addon's UI
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -2280,7 +2278,7 @@ function RQE.handleQuestTurnIn(...)
     -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
     -- This might involve checking if there are other quests to display or adjusting UI elements
     RQE:UpdateRQEFrameVisibility()
-    RQE.UpdateRQEQuestFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()
 	
 	RQE.infoLog("Cleared Macro Content at 2200")
 	RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -2349,7 +2347,7 @@ function RQE.handleQuestFinished()
     RQE:UpdateRQEFrameVisibility()
     -- DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
 	
-    RQE.UpdateRQEQuestFrameVisibility()
+    RQE:UpdateRQEQuestFrameVisibility()
     -- DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 	
 	-- Check to advance to next step in quest
