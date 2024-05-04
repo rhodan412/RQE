@@ -688,10 +688,50 @@ end
 -- [Utility functions like AdjustQuestItemWidths, SaveQuestFramePosition, colorizeObjectives, RQE:QuestRewardsTooltip, etc.]
 
 -- Function to create and position the ScrollFrame's child frames
+local function shouldSortQuests()
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local position = C_Map.GetPlayerMapPosition(mapID, "player")
+    if not position then return false end
+
+    local x, y = position:GetXY()
+    if not RQE.lastX or not RQE.lastY or (abs(x - RQE.lastX) > 0.08 or abs(y - RQE.lastY) > 0.08) then
+        RQE.lastX, RQE.lastY = x, y
+		--print("X:" .. x .. ", Y:" .. y)
+        return true
+    end
+    return false
+end
+
+local function shouldSortQuestsWhileDragonRiding()
+    local mapID = C_Map.GetBestMapForUnit("player")
+    local position = C_Map.GetPlayerMapPosition(mapID, "player")
+    if not position then return false end
+
+    local x, y = position:GetXY()
+    if not RQE.lastX or not RQE.lastY or (abs(x - RQE.lastX) > 0.05 or abs(y - RQE.lastY) > 0.05) then
+        RQE.lastX, RQE.lastY = x, y
+		--print("X:" .. x .. ", Y:" .. y)
+        return true
+    end
+    return false
+end
+
 function SortQuestsByProximity()
-    -- Logic to sort quests based on proximity
-    C_QuestLog.SortQuestWatches()
-	GatherAndSortWorldQuestsByProximity()
+	if RQE.PlayerMountStatus == "Dragonriding" then
+		if shouldSortQuestsWhileDragonRiding() or RQE.canSortQuests then
+			-- Logic to sort quests based on proximity
+			C_QuestLog.SortQuestWatches()
+			GatherAndSortWorldQuestsByProximity()
+			RQE.canSortQuests = false
+		end
+    else
+		if shouldSortQuests() or RQE.canSortQuests then
+			-- Logic to sort quests based on proximity
+			C_QuestLog.SortQuestWatches()
+			GatherAndSortWorldQuestsByProximity()
+			RQE.canSortQuests = false
+		end
+	end
 end
 
 
@@ -1288,7 +1328,7 @@ end
 
 
 -- Function to determine if each quest belongs to World Quest or Non-World Quest
-function QuestType()
+function RQE:QuestType()
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
     local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
     local regularQuestUpdated = false
@@ -1322,6 +1362,8 @@ end
 
 -- Your function to update the RQEQuestFrame
 function UpdateRQEQuestFrame()
+	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
+	
     local campaignQuestCount, regularQuestCount, worldQuestCount = 0, 0, 0
 	RQE.campaignQuestCount = campaignQuestCount
 	RQE.regularQuestCount = regularQuestCount
@@ -1511,8 +1553,18 @@ function UpdateRQEQuestFrame()
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
 						
+						local extractedQuestID
+						if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+							extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+						end
+						
+						if questID == extractedQuestID then
+							RQE.ClearFrameData()
+							RQE:ClearWaypointButtonData()
+						end
+						
 						-- Refresh the UI here to update the button state
-						RQE:ClearRQEQuestFrame()
+						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 					else
 						C_Map.ClearUserWaypoint()
@@ -1534,7 +1586,6 @@ function UpdateRQEQuestFrame()
 						RQE:PerformClearActions()
 
 						-- Clears Macro Data
-						RQE.infoLog("Cleared Macro Content at 1534")
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 						
 						-- Clear any existing super tracking
@@ -1592,7 +1643,7 @@ function UpdateRQEQuestFrame()
 					--end)
 						
 						-- Refresh the UI here to update the button state
-						RQE:ClearRQEQuestFrame()
+						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 						
 						-- Check if MagicButton should be visible based on macro body
@@ -1651,6 +1702,7 @@ function UpdateRQEQuestFrame()
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
+						RQE:QuestType() -- Refreshes the Quest Tracking Frame as it redraws the Quest Tracker
 					elseif button == "LeftButton" then
 						OpenQuestLogToQuestDetails(questID)
 					elseif button == "RightButton" then
@@ -1991,6 +2043,8 @@ end
 
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
+	RQE:ClearRQEWorldQuestFrame() -- Clears the World Quest Frame in preparation for refreshing it
+	
     -- Define padding value
     local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
@@ -2052,11 +2106,23 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveWorldQuestWatch(questID)
+					
+					local extractedQuestID
+					if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+						extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+					end
+
+					if questID == extractedQuestID then
+						RQE.ClearFrameData()
+						RQE:ClearWaypointButtonData()
+					end
+					
 					RQE.TrackedQuests[questID] = nil -- Update the tracking table
 					
 					-- Refresh the UI here to update the button state
-					RQE:ClearRQEQuestFrame()
-					UpdateRQEQuestFrame()
+					--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
+					--UpdateRQEQuestFrame()
+					UpdateRQEWorldQuestFrame()
 				else			
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2065,7 +2131,6 @@ function UpdateRQEWorldQuestFrame()
 					RQE:PerformClearActions()
 
 					-- Clears Macro Data
-					RQE.infoLog("Cleared Macro Content at 2063")
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 					
 					-- -- Clear any existing super tracking
@@ -2126,10 +2191,12 @@ function UpdateRQEWorldQuestFrame()
 					end)
 				end
 				
-				-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-				-- if RQE.db.profile.autoClickWaypointButton then
-					-- RQE:StartPeriodicChecks()
-				-- end
+				-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+				C_Timer.After(1, function()
+					if RQE.db.profile.autoClickWaypointButton then
+						RQE:StartPeriodicChecks()  -- MIGHT NEED TO COMMENT OUT IF MISBEHAVING
+					end
+				end)
 			end)
 				
 			-- Add a mouse down event to simulate a button press
@@ -2195,8 +2262,9 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveQuestWatch(questID)
-					RQE:ClearRQEQuestFrame()
-					RQE:ClearWQTracking()
+					--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
+					--UpdateRQEWorldQuestFrame()
+					RQE:QuestType() -- Refreshes the Quest Tracking Frame as it redraws the Quest Tracker
 				elseif button == "RightButton" then
 					ShowQuestDropdown(self, questID)
 				end
