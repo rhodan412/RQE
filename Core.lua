@@ -265,6 +265,7 @@ if not RQE.savedAutomaticWorldQuestWatches then
 end
 
 -- Initialize lastSuperTrackedQuestID variable
+RQE.lastX, RQE.lastY = nil, nil
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.ManualSuperTrack = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
@@ -274,8 +275,9 @@ RQE.AddedQuestID = nil
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
 RQE.canUpdateFromCriteria = true
+RQE.canSortQuests = false
 
-local dragonMounts = {
+RQE.dragonMounts = {
     "Cliffside Wylderdrake",
     "Flourishing Whimsydrake",
     "Grotto Netherwing Drake",
@@ -892,11 +894,12 @@ function RQE:UpdateRQEFrameVisibility()
         return
     end
 	
-    local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
-	local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
-	
     if (self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking)) or self.isRQEFrameManuallyClosed then
+		local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
+		local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
+
         RQEFrame:Hide()
+
 		if RQE.MagicButton then
 			RQE.MagicButton:Hide()
 		end
@@ -947,8 +950,6 @@ function RQE:UpdateRQEQuestFrameVisibility()
     else
         RQE.RQEQuestFrame:Show()
     end
-	
-	RQE.canUpdateFromCriteria = true
 end
 
 
@@ -1216,7 +1217,6 @@ function RQE:ShouldClearFrame()
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE.ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		RQE.infoLog("Cleared Macro Content at 1232")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
         return -- Exit the function early
 	end
@@ -1226,7 +1226,6 @@ function RQE:ShouldClearFrame()
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE.ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		RQE.infoLog("Cleared Macro Content at 1242")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
         return -- Exit the function early
     end
@@ -1236,7 +1235,6 @@ function RQE:ShouldClearFrame()
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE.ClearFrameData()
 			RQE:ClearWaypointButtonData()
-			RQE.infoLog("Cleared Macro Content at 1252")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
             return -- Exit the function early
         end
@@ -1245,7 +1243,6 @@ function RQE:ShouldClearFrame()
 		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
             RQE.ClearFrameData()
 			RQE:ClearWaypointButtonData()
-			RQE.infoLog("Cleared Macro Content at 1261")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
             return -- Exit the function early
         end
@@ -1295,7 +1292,6 @@ function RQE:DelayedClearCheck()
 		if isBeingSearched and isQuestCompleted and isWorldQuest then
 			RQE.ClearFrameData()
 			RQE:ClearWaypointButtonData()
-			RQE.infoLog("Cleared Macro Content at 1311")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
 			
 			-- Untrack the quest by setting a non-existent quest ID
@@ -1308,7 +1304,6 @@ function RQE:DelayedClearCheck()
 			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
 				RQE.ClearFrameData()
 				RQE:ClearWaypointButtonData()
-				RQE.infoLog("Cleared Macro Content at 1324")
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 				
 				-- Untrack the quest by setting a non-existent quest ID
@@ -2054,6 +2049,7 @@ end
 -- Function to update Coordinates display
 function RQE:UpdateCoordinates()
     local mapID = C_Map.GetBestMapForUnit("player")
+	SortQuestsByProximity()
 
     -- Check if the mapID is valid before proceeding
     if mapID then
@@ -2118,13 +2114,6 @@ function RQE:ToggleRQEQuestFrame()
         -- Code to hide the Quest Frame
         RQEQuestFrame:Hide()
     end
-end
-
-
--- Clears RQEQuestFrame World Quest Scenario before refreshing Entire Quest Tracker
-function RQE:ClearWQTracking()
-	RQE:ClearRQEWorldQuestFrame()
-	QuestType()
 end
 
 
@@ -2778,7 +2767,6 @@ end
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.
 function RQE:AdvanceQuestStep(questID, stepIndex)
 	-- Clears Macro Data
-	RQE.infoLog("Cleared Macro Content at 2793")
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 	
     RQE.infoLog("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
@@ -2804,7 +2792,6 @@ end
 -- Function that handles if returns Failed stepIndex
 function RQE:ClickWaypointButtonForIndex(index)
 	-- Clears Macro Data
-	--RQE.infoLog("Cleared Macro Content at 2819")
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	
     local button = self.WaypointButtons[index]
@@ -2826,7 +2813,7 @@ function RQE:CheckDBBuff(questID, stepIndex, isFailureCheck)
     local checkData = isFailureCheck and stepData.failedcheck or stepData.check
 
     for _, buffName in ipairs(checkData) do
-        local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+        local aura = UnitAura("player", buffName, "HELPFUL")
         if aura then
             if not isFailureCheck then
                 self:AdvanceQuestStep(questID, stepIndex)
@@ -2850,7 +2837,7 @@ function RQE:CheckDBDebuff(questID, stepIndex)
     local debuffs = stepData.check -- Renamed from buffs to debuffs for clarity since it checks for debuffs
 
     for _, debuffName in ipairs(debuffs) do
-        local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+        local aura = UnitAura("player", debuffName, "HARMFUL")
         if aura then
             self:AdvanceQuestStep(questID, stepIndex)
             RQE.infoLog("Debuff " .. debuffName .. " is active. Advancing quest step.")
@@ -2979,7 +2966,7 @@ RQE.filterCompleteQuests = function()
     end
 	
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3006,7 +2993,7 @@ function RQE:HideCompletedWatchedQuests()
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3058,7 +3045,7 @@ RQE.filterDailyWeeklyQuests = function()
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3126,7 +3113,7 @@ function RQE.UpdateTrackedQuestsToCurrentZone()
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 end
 
@@ -3245,7 +3232,7 @@ function RQE.filterByZone(zoneID)
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3323,7 +3310,7 @@ function RQE.filterByQuestType(questType)
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3436,7 +3423,7 @@ function RQE.filterByCampaign(campaignID)
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3572,7 +3559,7 @@ function RQE.filterByQuestLine(questLineID)
     end
 
 	-- Update FrameUI
-	RQE:ClearRQEQuestFrame()
+	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 	UpdateRQEQuestFrame()
 	
 	-- Sort Quest List by Proximity after populating RQEQuestFrame
@@ -3985,7 +3972,13 @@ end)
 -- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
 function RQE:AutoClickQuestLogIndexWaypointButton()
     if RQE.db.profile.autoClickWaypointButton then
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+		
+		local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+		
         if not questID then 
             RQE.debugLog("No super tracked quest.")
             return
@@ -4428,9 +4421,9 @@ end
 function RQE.CheckForDragonMounts()
     local i = 1
     while true do
-        local name = C_UnitAuras.GetAuraDataByIndex("player", i)
+        local name = UnitAura("player", i)
         if not name then break end  -- No more auras to check, exit loop
-        for _, dragonName in ipairs(dragonMounts) do
+        for _, dragonName in ipairs(RQE.dragonMounts) do
             if name == dragonName then
                 return true  -- Dragon mount aura found
             end
