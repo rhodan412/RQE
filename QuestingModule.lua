@@ -1575,6 +1575,8 @@ function UpdateRQEQuestFrame()
 						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 					else
+						RQE.lastKnownInventory = {}
+
 						C_Map.ClearUserWaypoint()
 						-- Check if TomTom is loaded and compatibility is enabled
 						if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
@@ -1583,9 +1585,15 @@ function UpdateRQEQuestFrame()
 						
 						-- Scrolls the RQEFrame to top on super track
 						RQE.ScrollFrameToTop()
-						
+
 						-- Reset the "Clicked" WaypointButton to nil
 						RQE.LastClickedIdentifier = nil
+
+						-- Reset the Last Clicked WaypointButton to be "1"
+						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+						
+						-- Clicks Waypoint Button if autoClickWaypointButton is true
+						RQE:AutoClickQuestLogIndexWaypointButton()
 						
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1607,12 +1615,6 @@ function UpdateRQEQuestFrame()
 							-- end
 						-- end)
 						
-						-- Reset the Last Clicked WaypointButton to be "1"
-						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-						
-						-- Clicks Waypoint Button if autoClickWaypointButton is true
-						--RQE:AutoClickQuestLogIndexWaypointButton()
-
 						-- Super track the new quest
 						-- This will re-super track the quest even if it's the same as the currently super tracked quest
 						RQE.ManualSuperTrack = true
