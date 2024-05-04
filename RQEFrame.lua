@@ -1112,7 +1112,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end
 
 			-- -- Clears Macro Data
-			-- RQE.infoLog("Cleared Macro Content at 1093")
 			-- RQEMacro:ClearMacroContentByName("RQE Macro")
 
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
@@ -1441,7 +1440,8 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
         end
     end
     UpdateRQEQuestFrame()
-	RQE:ClearWQTracking()
+	UpdateRQEWorldQuestFrame()
+	--RQE:QuestType()
 end
 
 
@@ -1490,7 +1490,7 @@ end
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	RQE.debugLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
-	RQE:ClearWQTracking()
+	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
 
 	-- Validation check
 	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
