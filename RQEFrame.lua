@@ -1104,6 +1104,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		WaypointButton:SetScript("OnClick", function()
 			-- Your code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
+			RQE.WaypointButtonReadyTurnIn = false
 
             -- Check if TomTom is loaded and compatibility is enabled
             local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
@@ -1112,7 +1113,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end
 
 			-- -- Clears Macro Data
-			-- RQEMacro:ClearMacroContentByName("RQE Macro")
+			RQEMacro:ClearMacroContentByName("RQE Macro")
 
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
@@ -1161,7 +1162,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end
 
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
-			local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
             RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
 			local questData = RQE.getQuestData(questIDFromText)
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
