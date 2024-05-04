@@ -690,6 +690,10 @@ end
 -- Function to create and position the ScrollFrame's child frames
 local function shouldSortQuests()
     local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		return false  -- If no valid mapID, return false to prevent sorting
+	end
+
     local position = C_Map.GetPlayerMapPosition(mapID, "player")
     if not position then return false end
 
@@ -704,6 +708,10 @@ end
 
 local function shouldSortQuestsWhileDragonRiding()
     local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		return false  -- If no valid mapID, return false to prevent sorting
+	end
+
     local position = C_Map.GetPlayerMapPosition(mapID, "player")
     if not position then return false end
 
