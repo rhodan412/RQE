@@ -2361,14 +2361,16 @@ function RQE.handleQuestWatchListChanged(...)
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
-	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-	
-	if isWorldQuest then
-		UpdateRQEWorldQuestFrame()
-		-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2230).", 1, 0.75, 0.79)
-	else
-		UpdateRQEQuestFrame()
-		-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2233).", 1, 0.75, 0.79)
+	if questID then
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		
+		if isWorldQuest then
+			UpdateRQEWorldQuestFrame()
+			-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2369).", 1, 0.75, 0.79)
+		else
+			UpdateRQEQuestFrame()
+			-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2372).", 1, 0.75, 0.79)
+		end
 	end
 	
 	-- if added == nil then
