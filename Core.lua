@@ -275,6 +275,7 @@ RQE.AddedQuestID = nil
 RQE.UpdateInstanceInfoOkay = true
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
+RQE.AutoWaypointHasBeenClicked = true
 RQE.canUpdateFromCriteria = true
 RQE.canSortQuests = false
 
@@ -2719,26 +2720,29 @@ function RQE:StartPeriodicChecks()
         local stepData = questData[stepIndex]
 
         -- Handle turn-in readiness
-        if isReadyTurnIn then
-            for index, step in ipairs(questData) do
-                if step.objectiveIndex == 99 then
-                    RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
-                    self:ClickWaypointButtonForIndex(index)
-                    return
-                end
-            end
-            RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
-        end
+		if not RQE.WaypointButtonReadyTurnIn then
+			if isReadyTurnIn then
+				for index, step in ipairs(questData) do
+					if step.objectiveIndex == 99 then
+						RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
+						self:ClickWaypointButtonForIndex(index)
+						RQE.WaypointButtonReadyTurnIn = true
+						return
+					end
+				end
+				RQE.debugLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
+			end
+		end
 
         -- Check if the specific functions related to the current step need to be triggered
-        if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
-            RQE.infoLog("No relevant changes detected for the current step, skipping periodic checks.")
+        if not RQE.hasStateChanged() and not isReadyTurnIn then
+            RQE.debugLog("No relevant changes detected for the current step, skipping periodic checks.")
             return
+		elseif isReadyTurnIn then
+			return
 		else
-			RQE.infoLog("Possible relevant changes detected!")
+			RQE.debugLog("Possible relevant changes detected!")
         end
-
-        RQE.infoLog("Relevant changes detected or required for the current step.")
 
         -- Validate stepIndex
         if stepIndex < 1 or stepIndex > #questData then
@@ -2782,6 +2786,7 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
             button:Click()
             self.LastClickedButtonRef = button
             RQE.infoLog("Advanced to next quest step: " .. buttonIndex)
+			RQE:ClickWaypointButtonForIndex(buttonIndex)
             -- Update stepIndex globally or within a managed scope
             self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex is how you track the current step globally
             self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
@@ -2795,11 +2800,12 @@ function RQE:ClickWaypointButtonForIndex(index)
 	-- Clears Macro Data
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	
-    local button = self.WaypointButtons[index]
+	local button = self.WaypointButtons[index]
     if button then
         button:Click()
         self.LastClickedButtonRef = button  -- Update last clicked reference
         self.CurrentStepIndex = index  -- Update current step index
+		RQE.AutoWaypointHasBeenClicked = true
         RQE.infoLog("Clicked waypoint button for index:", index)
     else
         RQE.infoLog("No waypoint button found for index:", index)
@@ -4432,6 +4438,22 @@ function RQE.CheckForDragonMounts()
         i = i + 1
     end
     return false  -- No dragon mount aura found
+end
+
+
+-- Function that checks if the player has the Dragon Racing Aura up
+function RQE.HasDragonraceAura()
+    local i = 1
+    while true do
+        local name = UnitAura("player", i)
+        if not name then
+            return false  -- No more auras, aura not found
+        end
+        if name == "Racing" then
+            return true  -- Aura found
+        end
+        i = i + 1
+    end
 end
 
 
