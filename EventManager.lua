@@ -1051,6 +1051,20 @@ function RQE.handleSuperTracking()
         -- end
     -- end
 
+	if not RQE.AutoWaypointHasBeenClicked then
+		-- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
+		C_Timer.After(2, function()
+			if RQE.WaypointButtons[1] then
+				RQE.WaypointButtons[1]:Click()
+			end
+		end)
+		
+		-- Reset the Last Clicked WaypointButton to be "1"
+		RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+	end
+
+	RQE.AutoWaypointHasBeenClicked = true
+						
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()	
@@ -1240,6 +1254,11 @@ function RQE.handleZoneChange(...)
 	
 	local event = select(2, ...)
 
+	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+	if RQE.HasDragonraceAura() then
+		return
+	end
+	
 	RQE.canSortQuests = true
 	
 	C_Timer.After(2, function()
@@ -1360,6 +1379,11 @@ function RQE.handleZoneNewAreaChange()
     -- startTime = debugprofilestop()  -- Start timer
    -- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 
+	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+	if RQE.HasDragonraceAura() then
+		return
+	end
+	
 	if RQE.PlayerMountStatus == "Flying" then
 	-- if not UnitOnTaxi("player") and not RQE.isDragonRiding then
 		C_Timer.After(1.5, function()
@@ -1710,6 +1734,11 @@ function RQE.handleQuestStatusUpdate()
     else
 		-- Process updates only if there's actual progress detected
 		RQE.debugLog("Quest progress detected across watched quests. Processing update.")
+	end
+	
+	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+	if RQE.HasDragonraceAura() then
+		return
 	end
 	
     local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -2144,6 +2173,7 @@ function RQE.handleQuestRemoved(...)
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
+	RQE:ShouldClearFrame() -- Clears RQEFrame of WQ that is no longer being tracked
 	--RQE.UntrackAutomaticWorldQuests()
 
     -- Check if the questID is valid and if it was being tracked automatically
@@ -2332,6 +2362,11 @@ function RQE.handleQuestWatchListChanged(...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
 	
+	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+	if RQE.HasDragonraceAura() then
+		return
+	end
+
 	RQE.UpdateInstanceInfoOkay = true -- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
 	
 	RQE:QuestType() -- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated
