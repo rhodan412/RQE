@@ -1667,6 +1667,11 @@ end
 -- Fired when data from RequestRaidInfo is available and also when player uses portals
 function RQE.handleInstanceInfoUpdate()
     -- startTime = debugprofilestop()  -- Start timer
+	
+	if not RQE.UpdateInstanceInfoOkay then
+		return
+	end
+	
 	-- Updates the achievement list for criteria of tracked achievements
 	RQE.UpdateTrackedAchievementList()
 	
@@ -1681,6 +1686,7 @@ function RQE.handleInstanceInfoUpdate()
 	UpdateFrame()
 	RQE:QuestType()
 	
+	RQE.UpdateInstanceInfoOkay = false
 	-- local duration = debugprofilestop() - startTime
 	-- -- DEFAULT_CHAT_FRAME:AddMessage("Processed UPDATE_INSTANCE_INFO in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -2325,6 +2331,8 @@ function RQE.handleQuestWatchListChanged(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
+	
+	RQE.UpdateInstanceInfoOkay = true -- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
 	
 	RQE:QuestType() -- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated
 	

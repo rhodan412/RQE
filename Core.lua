@@ -272,6 +272,7 @@ RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button
 RQE.lastClickedObjectiveIndex = nil
 RQE.LastClickedButtonRef = nil
 RQE.AddedQuestID = nil
+RQE.UpdateInstanceInfoOkay = true
 RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
 RQE.canUpdateFromCriteria = true
