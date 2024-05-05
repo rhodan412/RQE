@@ -1134,7 +1134,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.LastClickedIdentifier = i
 
             -- When creating the WaypointButton
-			--WaypointButton.stepIndex = i
+			WaypointButton.stepIndex = i
 			RQE.LastClickedButtonRef = WaypointButton
 			RQE.infoLog("New LastClickedButton set:", RQE.WaypointButtonIndices[WaypointButton] or "Unnamed")
 
@@ -1159,28 +1159,29 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
 				end
-			end
+			--end
 
-			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
-            RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
-			local questData = RQE.getQuestData(questIDFromText)
-			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
-			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-			if questData then
-                local stepIndex = i
-				local stepData = questData[stepIndex]
-				for index, stepData in ipairs(questData) do
-					if stepData.description == stepDescription then
-						RQE.infoLog("Matching step data found for description:", stepDescription)
-						if stepData and stepData.macro then
-							local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-							RQE.infoLog("Macro commands to set:", macroCommands)
-							RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
-						end
-					end
-				end
-				UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
-			end
+                -- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
+                RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
+                local questData = RQE.getQuestData(questIDFromText)
+                local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
+                RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
+                if questData then
+                    local stepIndex = i
+                    local stepData = questData[stepIndex]
+                    for index, stepData in ipairs(questData) do
+                        if stepData.description == stepDescription then
+                            RQE.infoLog("Matching step data found for description:", stepDescription)
+                            if stepData and stepData.macro then
+                                local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+                                RQE.infoLog("Macro commands to set:", macroCommands)
+                                RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
+                            end
+                        end
+                    end
+                    UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
+                end
+            end
 
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
@@ -1203,10 +1204,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				bg:SetAlpha(1)  -- Reset the alpha
 			end
 		end)
-		
+
 		-- Show the Elements
 		WaypointButton:Show()  -- Make sure to show the button
-			
+
 		-- Create CoordsText as a tooltip
 		StepText:SetScript("OnEnter", function(self)  -- changed to StepText from RQE.StepText
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
