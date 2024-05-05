@@ -4533,33 +4533,25 @@ end
 
 -- Function that checks to see if player has a DragonRiding Aura/Mount active
 function RQE.CheckForDragonMounts()
-    local i = 1
-    while true do
-        local name = C_UnitAuras.GetAuraDataBySpellName("player", i)
-        if not name then break end  -- No more auras to check, exit loop
-        for _, dragonName in ipairs(RQE.dragonMounts) do
-            if name == dragonName then
-                return true  -- Dragon mount aura found
-            end
+    for _, dragonName in ipairs(RQE.dragonMounts) do
+        local aura = C_UnitAuras.GetAuraDataBySpellName("player", dragonName)
+        if aura then
+            RQE.infoLog("Dragon riding with:", dragonName)
+            return true  -- Dragon mount aura found
         end
-        i = i + 1
     end
+    RQE.infoLog("No dragon mount found.")
     return false  -- No dragon mount aura found
 end
 
 
 -- Function that checks if the player has the Dragon Racing Aura up
 function RQE.HasDragonraceAura()
-    local i = 1
-    while true do
-        local name = C_UnitAuras.GetAuraDataBySpellName("player", i)
-        if not name then
-            return false  -- No more auras, aura not found
-        end
-        if name == "Racing" then
-            return true  -- Aura found
-        end
-        i = i + 1
+    local aura = C_UnitAuras.GetAuraDataBySpellName("player", "Racing", "HELPFUL")  -- Assuming "Racing" is the correct aura name and it's a buff
+    if aura then
+        return true
+    else
+        return false
     end
 end
 
