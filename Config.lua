@@ -98,12 +98,12 @@ RQE.options = {
 					name = "Enable Frame",
 					desc = "Enable or disable the frame.",
 					get = function(info) return RQE.db.profile.enableFrame end,
-					set = function(info, value) 
+					set = function(info, value)
 						RQE.db.profile.enableFrame = value
 						RQE:ToggleRQEFrame()
 					end,
 					order = 1,
-				},			
+				},
 				hideRQEFrameWhenEmpty = {
 					type = "toggle",
 					name = "Hide SuperTrack Frame When Empty",
@@ -120,7 +120,7 @@ RQE.options = {
 					name = "Enable Quest Frame",
 					desc = "Enable or disable the Quest Frame.",
 					get = function(info) return RQE.db.profile.enableQuestFrame end,
-					set = function(info, value) 
+					set = function(info, value)
 						RQE.db.profile.enableQuestFrame = value
 						RQE:ToggleRQEQuestFrame()
 					end,
@@ -142,7 +142,7 @@ RQE.options = {
 					name = "Show Minimap Button",
 					desc = "Toggle the minimap button on or off",
 					get = function()
-						return RQE.db.profile.showMinimapIcon 
+						return RQE.db.profile.showMinimapIcon
 					end,
 					set = function(_, newValue)
 						RQE:ToggleMinimapIcon()
@@ -155,7 +155,7 @@ RQE.options = {
 					desc = "Toggles the display of the current MapID on the frame.",
 					order = 6,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.showMapID end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.showMapID = newValue;
 						RQE:UpdateMapIDDisplay();  -- Immediately update the MapID display
 					end,
@@ -166,7 +166,7 @@ RQE.options = {
 					desc = "Toggles the display of the current coordinates on the frame.",
 					order = 7,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.showCoordinates end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.showCoordinates = newValue;
 						RQE:UpdateCoordinates();  -- Immediately update the coordinates display
 					end,
@@ -178,7 +178,7 @@ RQE.options = {
 							"|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 					order = 8,  -- Adjust this based on where you want it in the order
 					get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.autoQuestWatch = newValue;
 						SetCVar("autoQuestWatch", newValue and "1" or "0")  -- Set the CVAR based on the new value
 					end,
@@ -190,7 +190,7 @@ RQE.options = {
 							"|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 					order = 9,  -- Adjust this based on where you want it in the order
 					get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.autoQuestProgress = newValue;
 						SetCVar("autoQuestProgress", newValue and "1" or "0")  -- Set the CVAR based on the new value
 					end,
@@ -201,7 +201,7 @@ RQE.options = {
 					desc = "Removes all of the WQ on player login",
 					order = 10,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.removeWQatLogin end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.removeWQatLogin = newValue;
 					end,
 				},
@@ -211,7 +211,7 @@ RQE.options = {
 					desc = "Updates watch list on zone change to display quests specific to the player's zone",
 					order = 11,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.autoTrackZoneQuests end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.autoTrackZoneQuests = newValue;
 					end,
 				},
@@ -221,7 +221,7 @@ RQE.options = {
 					desc = "Automatically click on the Waypoint Button in the Super Tracked frame when you progress through quest objectives",
 					order = 12,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.autoClickWaypointButton end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.autoClickWaypointButton = newValue;
 					end,
 				},
@@ -231,7 +231,7 @@ RQE.options = {
 					desc = "If enabled will hide confirmation pop up when abandoning quest via right-clicking quest in the addon. If disabled, pop up will appear with confirmation to abandon the selected quest",
 					order = 13,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.enableQuestAbandonConfirm end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.enableQuestAbandonConfirm = newValue;
 					end,
 				},
@@ -241,7 +241,7 @@ RQE.options = {
 					desc = "If enabled will create waypoints via TomTom addon (if you have this addon also installed)",
 					order = 14,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.enableTomTomCompatibility end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.enableTomTomCompatibility = newValue;
 					end,
 				},
@@ -251,7 +251,7 @@ RQE.options = {
 					desc = "If enabled will create waypoints via Carbonite addon (if you have this addon also installed)",
 					order = 15,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.enableCarboniteCompatibility end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.enableCarboniteCompatibility = newValue;
 					end,
 				},
@@ -323,7 +323,7 @@ RQE.options = {
 								RQE:UpdateFramePosition()
 							end,
 							order = 3,
-						},						
+						},
 						MainFrameOpacity = {
 							type = 'range',
 							name = 'Quest Helper Opacity',
@@ -496,7 +496,7 @@ RQE.options = {
 					name = "Font Size and Color",
 					inline = true,
 					order = 12,  -- Set this order to wherever you want it to appear
-					args = {						
+					args = {
 						headerText = {
 							name = "Header Text",
 							type = "group",
@@ -550,7 +550,7 @@ RQE.options = {
 									get = function(info)
 										local color = RQE.db.profile.textSettings.headerText.color
 										local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-										
+
 										if hexColor == "ffff00" then
 											return "Yellow"
 										elseif hexColor == "00ff00" then
@@ -558,7 +558,7 @@ RQE.options = {
 										elseif hexColor == "00ff99" then
 											return "Cyan"
 										elseif hexColor == "ffffd9" then
-											return "Canary"						
+											return "Canary"
 										elseif hexColor == "edbf59" then
 											return "Cream Can"
 										end
@@ -576,12 +576,12 @@ RQE.options = {
 										elseif val == "Cream Can" then
 											hexColor = "edbf59"
 										end
-										
+
 										local r = tonumber(hexColor:sub(1,2), 16) / 255
 										local g = tonumber(hexColor:sub(3,4), 16) / 255
 										local b = tonumber(hexColor:sub(5,6), 16) / 255
 										RQE.db.profile.textSettings.headerText.color = {r, g, b}
-										
+
 										local new_value = val
 										RQE:ConfigurationChanged()
 									end,
@@ -602,7 +602,7 @@ RQE.options = {
 									max = 24,
 									step = 1,
 									get = function(info) return RQE.db.profile.textSettings.QuestIDText.size end,
-									set = function(info, val) RQE.db.profile.textSettings.QuestIDText.size = val 
+									set = function(info, val) RQE.db.profile.textSettings.QuestIDText.size = val
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 									order = 1,
@@ -623,7 +623,7 @@ RQE.options = {
 										end
 									end,
 									set = function(info, val)
-										RQE.db.profile.textSettings.QuestIDText.font = "Fonts\\" .. val .. ".TTF" 
+										RQE.db.profile.textSettings.QuestIDText.font = "Fonts\\" .. val .. ".TTF"
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 								order = 2,
@@ -643,7 +643,7 @@ RQE.options = {
 									get = function(info)
 										local color = RQE.db.profile.textSettings.QuestIDText.color
 										local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-										
+
 										if hexColor == "ffff00" then
 											return "Yellow"
 										elseif hexColor == "00ff00" then
@@ -669,12 +669,12 @@ RQE.options = {
 										elseif val == "Cream Can" then
 											hexColor = "edbf59"
 										end
-										
+
 										local r = tonumber(hexColor:sub(1,2), 16) / 255
 										local g = tonumber(hexColor:sub(3,4), 16) / 255
 										local b = tonumber(hexColor:sub(5,6), 16) / 255
 										RQE.db.profile.textSettings.QuestIDText.color = {r, g, b}
-										
+
 										local new_value = val
 										RQE:ConfigurationChanged()
 									end,
@@ -695,7 +695,7 @@ RQE.options = {
 									max = 24,
 									step = 1,
 									get = function(info) return RQE.db.profile.textSettings.QuestNameText.size end,
-									set = function(info, val) RQE.db.profile.textSettings.QuestNameText.size = val 
+									set = function(info, val) RQE.db.profile.textSettings.QuestNameText.size = val
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 									order = 1,
@@ -715,8 +715,8 @@ RQE.options = {
 											return nil
 										end
 									end,
-									set = function(info, val) 
-										RQE.db.profile.textSettings.QuestNameText.font = "Fonts\\" .. val .. ".TTF"  
+									set = function(info, val)
+										RQE.db.profile.textSettings.QuestNameText.font = "Fonts\\" .. val .. ".TTF"
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 								order = 2,
@@ -736,7 +736,7 @@ RQE.options = {
 									get = function(info)
 										local color = RQE.db.profile.textSettings.QuestNameText.color
 										local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-										
+
 										if hexColor == "ffff00" then
 											return "Yellow"
 										elseif hexColor == "00ff00" then
@@ -762,12 +762,12 @@ RQE.options = {
 										elseif val == "Cream Can" then
 											hexColor = "edbf59"
 										end
-										
+
 										local r = tonumber(hexColor:sub(1,2), 16) / 255
 										local g = tonumber(hexColor:sub(3,4), 16) / 255
 										local b = tonumber(hexColor:sub(5,6), 16) / 255
 										RQE.db.profile.textSettings.QuestNameText.color = {r, g, b}
-										
+
 										local new_value = val
 										RQE:ConfigurationChanged()
 									end,
@@ -788,7 +788,7 @@ RQE.options = {
 									max = 24,
 									step = 1,
 									get = function(info) return RQE.db.profile.textSettings.DirectionTextFrame.size end,
-									set = function(info, val) RQE.db.profile.textSettings.DirectionTextFrame.size = val 
+									set = function(info, val) RQE.db.profile.textSettings.DirectionTextFrame.size = val
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 									order = 1,
@@ -808,8 +808,8 @@ RQE.options = {
 											return nil
 										end
 									end,
-									set = function(info, val) 
-										RQE.db.profile.textSettings.DirectionTextFrame.font = "Fonts\\" .. val .. ".TTF" 
+									set = function(info, val)
+										RQE.db.profile.textSettings.DirectionTextFrame.font = "Fonts\\" .. val .. ".TTF"
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 								order = 2,
@@ -829,7 +829,7 @@ RQE.options = {
 									get = function(info)
 										local color = RQE.db.profile.textSettings.DirectionTextFrame.color
 										local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-										
+
 										if hexColor == "ffff00" then
 											return "Yellow"
 										elseif hexColor == "00ff00" then
@@ -855,12 +855,12 @@ RQE.options = {
 										elseif val == "Cream Can" then
 											hexColor = "edbf59"
 										end
-										
+
 										local r = tonumber(hexColor:sub(1,2), 16) / 255
 										local g = tonumber(hexColor:sub(3,4), 16) / 255
 										local b = tonumber(hexColor:sub(5,6), 16) / 255
 										RQE.db.profile.textSettings.DirectionTextFrame.color = {r, g, b}
-										
+
 										local new_value = val
 										RQE:ConfigurationChanged()
 									end,
@@ -881,7 +881,7 @@ RQE.options = {
 									max = 24,
 									step = 1,
 									get = function(info) return RQE.db.profile.textSettings.QuestDescription.size end,
-									set = function(info, val) RQE.db.profile.textSettings.QuestDescription.size = val 
+									set = function(info, val) RQE.db.profile.textSettings.QuestDescription.size = val
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 									order = 1,
@@ -901,8 +901,8 @@ RQE.options = {
 											return nil
 										end
 									end,
-									set = function(info, val) 
-										RQE.db.profile.textSettings.QuestDescription.font = "Fonts\\" .. val .. ".TTF"  
+									set = function(info, val)
+										RQE.db.profile.textSettings.QuestDescription.font = "Fonts\\" .. val .. ".TTF"
 										RQE:ConfigurationChanged()  -- Notify the system that a change has occurred
 									end,
 								order = 2,
@@ -922,7 +922,7 @@ RQE.options = {
 									get = function(info)
 										local color = RQE.db.profile.textSettings.QuestDescription.color
 										local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-										
+
 										if hexColor == "ffff00" then
 											return "Yellow"
 										elseif hexColor == "00ff00" then
@@ -948,12 +948,12 @@ RQE.options = {
 										elseif val == "Cream Can" then
 											hexColor = "edbf59"
 										end
-										
+
 										local r = tonumber(hexColor:sub(1,2), 16) / 255
 										local g = tonumber(hexColor:sub(3,4), 16) / 255
 										local b = tonumber(hexColor:sub(5,6), 16) / 255
 										RQE.db.profile.textSettings.QuestDescription.color = {r, g, b}
-										
+
 										local new_value = val
 										RQE:ConfigurationChanged()
 									end,
@@ -990,7 +990,7 @@ RQE.options = {
 					desc = "Displays the memory usage for the RQE addon",
 					order = 2,  -- Adjust this based on where you want it in the order
 					get = function() return RQE.db.profile.displayRQEmemUsage end,
-					set = function(_, newValue) 
+					set = function(_, newValue)
 						RQE.db.profile.displayRQEmemUsage = newValue;
 						RQE:CheckMemoryUsage();  -- Immediately update the memory usage display
 					end,

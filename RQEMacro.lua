@@ -84,7 +84,7 @@ function RQEMacro:ClearMacroContentByName(macroName)
         table.insert(self.pendingMacroClears, macroName)
         return
     end
-	
+
     self:ActuallyClearMacroContentByName(macroName)
 end
 
@@ -130,7 +130,7 @@ RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
             RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
         end
         wipe(RQEMacro.pendingMacroSets)
-		
+
         for _, op in ipairs(RQEMacro.pendingMacroOperations) do
             RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
         end

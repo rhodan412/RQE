@@ -213,7 +213,7 @@ editBox:SetScript("OnTextChanged", function(self)
     -- Since GetStringHeight is not available, we'll use GetHeight instead
     local textHeight = self:GetHeight()
     self:SetHeight(textHeight)
-	
+
     local maxScroll = math.max(textHeight - scrollFrame:GetHeight(), 0)
     --scrollBar:SetMinMaxValues(1, maxScroll)
     scrollBar:SetValue(maxScroll) -- Set to the bottom of the scroll area

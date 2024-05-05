@@ -78,7 +78,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 		if IsShiftKeyDown() and button == "LeftButton" then
 			-- Show config settings
 			RQE:ToggleDebugLog()
-			
+
 		elseif button == "LeftButton" then
 			-- Existing code for left button click, likely toggling your main frame
 			if RQEFrame:IsShown() then
@@ -89,7 +89,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 				RQE.RQEQuestFrame:Hide()
 				RQE.isRQEFrameManuallyClosed = true
 				RQE.isRQEQuestFrameManuallyClosed = true
-				
+
 				-- Check if MagicButton should be visible based on macro body
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			else
@@ -104,19 +104,19 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
                 if RQE.db.profile.enableQuestFrame then
                     RQE.RQEQuestFrame:Show()
                 end
-				
+
 				RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
 				RQE.isRQEQuestFrameManuallyClosed = false -- Resetting the manual close state
-				
+
 				-- Check if MagicButton should be visible based on macro body
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end
-			
+
 		elseif button == "RightButton" then
 			RQE:OpenSettings()
 		end
 	end,
-	
+
 
 	OnEnter = function(display)
 		if RQE.hoverTimers[display] then
@@ -125,13 +125,13 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 		RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
 			RQE:ShowLDBDropdownMenu()
 		end, 1.5)  -- 1.5 seconds hover delay
-		
+
 	GameTooltip:SetOwner(display, "ANCHOR_NONE")  -- You can change ANCHOR_NONE to another anchor type if needed.
 	GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")  -- Adjust this to position the tooltip as desired.
 	RQE.dataBroker.OnTooltipShow(GameTooltip)
 	GameTooltip:Show()
     end,
-	
+
 	OnLeave = function(display)
 		if RQE.hoverTimers[display] then
 			RQE:CancelTimer(RQE.hoverTimers[display])
@@ -139,7 +139,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 		end
 		GameTooltip:Hide()
 	end,
-	
+
     OnTooltipShow = function(tooltip)
         if not tooltip or not tooltip.AddLine then return end
         tooltip:AddLine("Rhodan's Quest Explorer")
@@ -160,10 +160,10 @@ function RQE.ToggleBothFramesfromLDB()
 		RQE.RQEQuestFrame:Hide()
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
-    else	
+    else
 		RQE.ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
 		RQE:ClearWaypointButtonData()
-		
+
 		-- Check if enableFrame is true before showing RQEFrame
 		if RQE.db.profile.enableFrame then
 			RQEFrame:Show()
@@ -171,15 +171,15 @@ function RQE.ToggleBothFramesfromLDB()
 				RQE.MagicButton:Show()
 			end
 		end
-		
+
 		-- Check if enableQuestFrame is true before showing RQEQuestFrame
 		if RQE.db.profile.enableQuestFrame then
 			RQE.RQEQuestFrame:Show()
 		end
-		
+
         RQE.isRQEFrameManuallyClosed = false -- Resetting the manual close state
         RQE.isRQEQuestFrameManuallyClosed = false -- Resetting the manual close state
-		
+
 		-- Check if MagicButton should be visible based on macro body
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
@@ -221,7 +221,7 @@ RQE.MinimapButton:SetScript("OnClick", function()
 		end
 		RQE.RQEQuestFrame:Show()
     end
-	
+
 	-- Check if MagicButton should be visible based on macro body
 	RQE.Buttons.UpdateMagicButtonVisibility()
 end)
@@ -255,7 +255,7 @@ function RQE:ShowLDBDropdownMenu()
         { text = "Settings", func = function() RQE:OpenSettings() end },
         { text = "Debug Log", func = function() RQE:ToggleDebugLog() end }
     }
-    
+
     EasyMenu(menuList, menuFrame, "cursor", 0 , 0, "MENU")
 end
 

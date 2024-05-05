@@ -40,7 +40,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 		-- Determine questID based on various fallbacks
 		local questID = RQE.searchedQuestID or extractedQuestID or superQuest
 		local questData = RQE.getQuestData(questID)
-		
+
 		if not questID then
             RQE.debugLog("No QuestID found. Cannot proceed.")
             return

@@ -44,11 +44,11 @@ end
 -- @param title: Title of the waypoint
 -- @return: Returns the created waypoint object
 function RQE:CreateWaypoint(x, y, mapID, title)
-    
+
     -- If x and y are nil, use stored values from RQE.x and RQE.y
     x = x or RQE.x
     y = y or RQE.y
-	
+
     -- Create the waypoint data
     local waypoint = {}
     waypoint.x = x
@@ -61,7 +61,7 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 
     -- Create a Map Pin to represent the waypoint
     self:CreateMapPin(waypoint.mapID, waypoint.x, waypoint.y)
-	
+
 	RQE.debugLog("Exiting CreateWaypoint Function")
     return waypoint
 end
@@ -76,7 +76,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 			return
 		end
 	end
-	
+
     local questData = RQE.getQuestData(questID)
     local x, y, mapID
     local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
@@ -93,7 +93,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
         y = RQE.superY or 0 -- Default to 0 if nil
         mapID = RQE.superMapID
         waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
-		
+
 		if x and y then
 			x = x * 100
 			y = y * 100
@@ -105,9 +105,9 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
     -- Ensure x and y are numbers before attempting arithmetic
     x = tonumber(x) or 0
     y = tonumber(y) or 0
-	
+
 	C_Map.ClearUserWaypoint()
-	
+
     -- Check if TomTom is loaded and compatibility is enabled
     local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
     if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
@@ -135,7 +135,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 			RQE.debugLog("TomTom is not available.")
 			-- Code for your own waypoint system or an alternative action
 		end
-		
+
         -- Check if Carbonite is loaded and compatibility is enabled
         local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
         if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
@@ -209,7 +209,7 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
         RQE.debugLog("No super-tracked quest.")
         return -- Exit the function if questID is nil
     end
-    
+
     RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 
     local questData = RQE.getQuestData(questID)
@@ -217,14 +217,14 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
         RQE.debugLog("Quest data not found for ID:", questID)
         return -- Exit if no data found for the questID
     end
-	
+
     local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
     local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
     -- Fetch the description from the specific stepIndex, if available
     local stepData = questData[stepIndex]
     local description = stepData and stepData.description or "No step description available"
-	
+
     local directionText = RQE.DirectionText
     --local description = RQEDatabase[questID].description
 

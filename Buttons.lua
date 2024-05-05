@@ -68,7 +68,7 @@ RQE.UnknownButtonTooltip = function()
 		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
 		local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
-		
+
 		if questID then  -- Add a check to ensure questID is not nil
 			local mapID = GetQuestUiMapID(questID)
 			local questData = RQE.getQuestData(questID)
@@ -173,13 +173,13 @@ RQE.SearchGroupButtonMouseDown = function()
             local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			-- Show settings for delisting group
 			RQE:LFG_Delist(questID)
-			
+
 		elseif button == "LeftButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			if questID then
 				RQE:LFG_Search(questID)
 			end
-			
+
 		elseif button == "RightButton" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			-- Logic for creating a group
@@ -208,13 +208,13 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
     local MagicButton = CreateFrame("Button", "RQEMagicButton", UIParent, "SecureActionButtonTemplate")
     MagicButton:SetSize(32, 32)  -- Set the button size
     MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
-	
+
     -- Storing MagicButton within the RQE table
 	RQE.MagicButton = MagicButton
-	
+
 	-- Update the Icon of the Magic Button
 	RQE.Buttons.UpdateMagicButtonIcon()
-	
+
     -- Default icon texture ID or path
     local defaultIconID = 134400 -- This is just an example; replace with a valid default icon ID or path
     local iconID = defaultIconID -- Initialize with default icon
@@ -226,12 +226,12 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
             iconID = macroIconID -- Use the macro's icon if available
         end
     end
-	
+
     -- Set the button to execute the "RQE Macro"
 	MagicButton:SetAttribute("type", "macro")
 	MagicButton:SetAttribute("macro", "RQE Macro")
 	MagicButton:RegisterForClicks("AnyUp", "AnyDown")
-	
+
     -- Set the button's appearance
     MagicButton:SetNormalTexture(iconID)  -- Example texture ID, replace with actual macro icon or path
     MagicButton:SetHighlightTexture(iconID, "ADD")
@@ -357,7 +357,7 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 
     -- Nested functions
     RWButton:SetPoint("TOPLEFT", RQE.ClearButton, "TOPRIGHT", 3, 0)  -- Anchoring
-    RWButton:SetScript("OnClick", function() 
+    RWButton:SetScript("OnClick", function()
         -- Your code for RWButton functionality here
         C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
@@ -384,14 +384,14 @@ function RQE.Buttons.CreateSearchButton(RQEFrame)
     -- Set the frame strata and level
     SearchButton:SetFrameStrata("MEDIUM")
     SearchButton:SetFrameLevel(3)
-    
+
     -- Nested functions
     SearchButton:SetPoint("TOPLEFT", RQE.RWButton, "TOPRIGHT", 3, 0)  -- Anchoring
-    SearchButton:SetScript("OnClick", function() 
+    SearchButton:SetScript("OnClick", function()
         RQE.isSearchFrameShown = not RQE.isSearchFrameShown  -- Toggle the variable
         CreateSearchFrame(RQE.isSearchFrameShown)  -- Pass the updated variable
     end)
-    
+
     CreateTooltip(SearchButton, "Search by Quest ID")
     CreateBorder(SearchButton)
 
@@ -409,7 +409,7 @@ function RQE.Buttons.CreateQMButton(RQEFrame)
     -- Set the frame strata and level
     QMButton:SetFrameStrata("MEDIUM")
     QMButton:SetFrameLevel(3)
-    
+
     -- Nested functions
     QMButton:SetPoint("TOPLEFT", RQE.SearchButton, "TOPRIGHT", 3, 0)  -- Anchoring
     QMButton:SetScript("OnClick", function()
@@ -419,7 +419,7 @@ function RQE.Buttons.CreateQMButton(RQEFrame)
             RQE.RQEQuestFrame:Show()
         end
     end)
-    
+
     CreateTooltip(QMButton, "Show/Hide Quest Tracker")
     CreateBorder(QMButton)
 
@@ -436,7 +436,7 @@ function RQE.Buttons.CreateCloseButton(RQEFrame)
     -- Set the frame strata and level
     CloseButton:SetFrameStrata("MEDIUM") -- Strata makes it appear behind most frames except actionbars, but actionbars remain clickable despite appearance of UIPanelCloseButton icon "in front" of action bar
     CloseButton:SetFrameLevel(3)
-	
+
     -- Nested functions
     CloseButton:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -6, -6)  -- Anchoring
     CloseButton:SetScript("OnClick", function(self, button)
@@ -445,7 +445,7 @@ function RQE.Buttons.CreateCloseButton(RQEFrame)
     end)
     CreateTooltip(CloseButton, "Close/Hide Frame")
     CreateBorder(CloseButton)
- 
+
     return CloseButton
 end
 
@@ -461,18 +461,18 @@ function RQE.Buttons.CreateMaximizeButton(RQEFrame, originalWidth, originalHeigh
     -- Set the frame strata and level
     MaximizeButton:SetFrameStrata("MEDIUM")
     MaximizeButton:SetFrameLevel(3)
-	
+
     MaximizeButton:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
-	
+
     MaximizeButton:SetScript("OnClick", function()
 		RQE.debugLog("RQE.content after setting up MaximizeButton: " .. tostring(RQE.content ~= nil))
 		RQE.debugLog("RQE.content inside button click: " .. tostring(RQE.content ~= nil))
         RQE.debugLog("Maximize button clicked")
     end)
-    
+
     CreateTooltip(MaximizeButton, "Maximize")
     CreateBorder(MaximizeButton)
-	
+
     RQE.debugLog("CreateMaximizeButton: Function exited.")
     return MaximizeButton
 end
@@ -520,17 +520,17 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
     -- Set the frame strata and level
     CQButton:SetFrameStrata("MEDIUM")
     CQButton:SetFrameLevel(3)
-	
+
     -- Nested functions
     CQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
-    CQButton:SetScript("OnClick", function() 
+    CQButton:SetScript("OnClick", function()
         -- Your code for showing completed quests functionality here
 		RQE.filterCompleteQuests()
     end)
 
     CreateTooltip(CQButton, "Show Completed Quests \n in Quest Log")  -- Tooltip
     CreateBorder(CQButton)  -- Border
-    
+
     return CQButton
 end
 
@@ -545,17 +545,17 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
     -- Set the frame strata and level
     HQButton:SetFrameStrata("MEDIUM")
     HQButton:SetFrameLevel(3)
-	
+
     -- Nested functions
     HQButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
-    HQButton:SetScript("OnClick", function() 
+    HQButton:SetScript("OnClick", function()
         -- Your code for hiding completed quests functionality here
 		RQE:HideCompletedWatchedQuests()
     end)
 
     CreateTooltip(HQButton, "Hide watched Completed Quests")  -- Tooltip
     CreateBorder(HQButton)  -- Border
-    
+
     return HQButton
 end
 
@@ -570,17 +570,17 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
     -- Set the frame strata and level
     ZQButton:SetFrameStrata("MEDIUM")
     ZQButton:SetFrameLevel(3)
-	
+
     -- Nested functions
     ZQButton:SetPoint("TOPLEFT", RQE.HQButton, "TOPRIGHT", 4, 0)  -- Anchoring
-    ZQButton:SetScript("OnClick", function() 
+    ZQButton:SetScript("OnClick", function()
         -- Your code for displaying quests in current zone
 		RQE.DisplayCurrentZoneQuests()
     end)
 
     CreateTooltip(ZQButton, "Show zone quests")  -- Tooltip
     CreateBorder(ZQButton)  -- Border
-    
+
     return ZQButton
 end
 
@@ -622,10 +622,10 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
     QTMaximizeButton:SetScript("OnClick", function()
 		RQE.db.profile.enableQuestFrame = false
 		RQE.RQEQuestFrame:Show()
-		
+
 		-- Set RQE.QTMinimized to false since we're maximizing the frame
 		RQE.QTMinimized = false
-		
+
         -- Restore the frame to its original size
         RQEQuestFrame:SetSize(RQE.QToriginalWidth, RQE.QToriginalHeight)
 		RQE.QTScrollFrame:Show()
@@ -652,26 +652,26 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
     QTMinimizeButton:SetPoint("TOPRIGHT", RQE.QTQuestMaximizeButton, "TOPLEFT", -3, 0)
     QTMinimizeButton:SetScript("OnClick", function()
 		RQE.QToriginalWidth, RQE.QToriginalHeight = RQEQuestFrame:GetWidth(), RQEQuestFrame:GetHeight()
-		
+
 		-- Set RQE.QTMinimized to false since we're maximizing the frame
 		RQE.QTMinimized = true
-		
+
 		RQEQuestFrame:SetSize(300, 30)
-		
+
 		-- Hide the ScrollFrame if they exist
 		if RQE.QTScrollFrame then
 			RQE.QTScrollFrame:Hide()
 		end
-		
+
 		-- Hide the Slider if they exist
 		if RQE.QMQTslider then
 			RQE.QMQTslider:Hide()
 		end
-		
+
 		-- Hide the resize button
 		if RQE.QMQTResizeButton then
 			RQE.QMQTResizeButton:Hide()
-		end	
+		end
     end)
     CreateTooltip(QTMinimizeButton, "Minimize Quest Tracker")
     CreateBorder(QTMinimizeButton)
@@ -689,10 +689,10 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 
     -- Define cursorX and cursorY outside the OnClick function
     local cursorX, cursorY
-	
+
     -- Position the button next to your minimize/maximize buttons
     QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMinimizeButton, "TOPLEFT", -3, 0)
-    
+
     -- Set the frame strata and level
     QTFilterButton:SetFrameStrata("MEDIUM")
     QTFilterButton:SetFrameLevel(3)
@@ -700,20 +700,20 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
     QTFilterButton:SetScript("OnClick", function(self, button, down)
         RQE.debugLog("RQE.FilterDropDownMenu:", RQE.FilterDropDownMenu)  -- Should not be nil
         RQE.ScanQuestTypes()  -- Ensure quest types are up-to-date
-        
+
         -- Build the sorted quest type menu list
         local questTypeMenuList = RQE.BuildQuestTypeMenuList()
 
         RQE.ScanAndCacheZoneQuests()  -- Scan and cache zone quests
         local zoneQuestMenuList = RQE.BuildZoneQuestMenuList()  -- Get the dynamically built zone quest menu list
-		
+
 		RQE.ScanAndCacheCampaigns()
-		
+
 		-- Get the dynamically built campaign menu list
 		local campaignMenuList = RQE.BuildCampaignMenuList() --RQE.GetDynamicCampaignMenuList()
 		-- Print the campaign menu list for debugging
 		RQE.debugLog("Campaign Menu List: ", campaignMenuList)
-		
+
 		-- Fetch the cursor position
 		local cursorX, cursorY = GetCursorPosition()
 		local uiScale = UIParent:GetScale()
@@ -726,7 +726,7 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 				RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
 			end
 		end
-	
+
 		local menuItems = {
 			{
 				text = "Auto-Track Zone Quests",
@@ -769,7 +769,7 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 			-- -- Add more filter options here...
 			--}
 		}
-	
+
 		-- Set up the anchor point for the dropdown menu
 		local menuAnchor = {
 			point = "TOPLEFT", -- Point on the dropdown

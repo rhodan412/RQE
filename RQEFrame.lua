@@ -79,7 +79,7 @@ function UpdateMenuText()
     else
         frameMenu[2].text = "Lock Frame"
     end
-	
+
 	frameMenu[3].text = "Toggle Objective Tracker"
 end
 
@@ -95,7 +95,7 @@ function ShowQuestDropdownRQEFrame(self, questID)
     -- Check if the player is in a group and the quest is shareable
     local isPlayerInGroup = IsInGroup()
     local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
-    
+
     if isPlayerInGroup and isQuestShareable then
         table.insert(menu, { text = "Share Quest", func = function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end })
     end
@@ -106,7 +106,7 @@ function ShowQuestDropdownRQEFrame(self, questID)
     table.insert(menu, { text = "Abandon Quest", func = function() RQE:AbandonQuest(questID); end })
 	table.insert(menu, { text = "Show Wowhead Link", func = function() RQE:ShowWowheadLink(questID) end })
 	table.insert(menu, { text = "Search Warcraft Wiki", func = function() RQE:ShowWowWikiLink(questID) end })
-	
+
     local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
     EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
 end
@@ -361,13 +361,13 @@ if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
     else
         RQE.debugLog("Warning - Font setting does NOT exist.")
     end
-    
+
     if RQE.db.profile.textSettings.QuestIDText.size then
         RQE.debugLog("Size setting exists.")
     else
         RQE.debugLog("Warning - Size setting does NOT exist.")
     end
-    
+
     if RQE.db.profile.textSettings.QuestIDText.color then
         RQE.debugLog("Color setting exists.")
     else
@@ -375,7 +375,7 @@ if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
     end
 
     RQE.QuestIDText:SetFont(RQE.db.profile.textSettings.QuestIDText.font or "Fonts\\FRIZQT__.TTF", RQE.db.profile.textSettings.QuestIDText.size or 15)
-    
+
     if RQE.db.profile.textSettings.QuestIDText.color then
         RQE.QuestIDText:SetTextColor(table.unpack(RQE.db.profile.textSettings.QuestIDText.color))
     end
@@ -407,7 +407,7 @@ end
 if QuestNameText_settings then
 
     RQE.QuestNameText:SetFont(QuestNameText_settings.font or "Fonts\\FRIZQT__.TTF", QuestNameText_settings.size or 15)
-    
+
     if QuestNameText_settings.color then
         RQE.QuestNameText:SetTextColor(table.unpack(QuestNameText_settings.color))
     end
@@ -448,7 +448,7 @@ end
 if DirectionTextFrame_settings then
 
     RQE.DirectionTextFrame:SetFont(DirectionTextFrame_settings.font or "Fonts\\FRIZQT__.TTF", DirectionTextFrame_settings.size or 13)
-    
+
     if DirectionTextFrame_settings.color then
         RQE.DirectionTextFrame:SetTextColor(table.unpack(DirectionTextFrame_settings.color or {1, 1, 0.85}))
     end
@@ -491,7 +491,7 @@ end
 -- Debug: Check if settings are properly initialized
 if QuestDescription_settings then
     RQE.QuestDescription:SetFont(QuestDescription_settings.font or "Fonts\\FRIZQT__.TTF", QuestDescription_settings.size or 14)
-    
+
     if QuestDescription_settings.color then
         RQE.QuestDescription:SetTextColor(table.unpack(QuestDescription_settings.color or {0, 1, 0.6}))
     end
@@ -535,7 +535,7 @@ end
 -- Debug: Check if settings are properly initialized
 if QuestObjectives_settings then
     RQE.QuestObjectives:SetFont(QuestObjectives_settings.font or "Fonts\\FRIZQT__.TTF", QuestObjectives_settings.size or 13)
-    
+
     if QuestObjectives_settings.color then
         RQE.QuestObjectives:SetTextColor(table.unpack(QuestObjectives_settings.color or {0, 1, 0.6}))
     end
@@ -617,7 +617,7 @@ function UpdateButtonVisibility()
         RQE.MinimizeButton:Show()
         RQE.MaximizeButton:Hide()
     end
-    
+
     -- Save the current minimized state to the SavedVariables
     RQEFrame.isMinimized = not RQEFrame.isMinimized
     RQE.db.profile.isMinimized = RQEFrame.isMinimized
@@ -634,7 +634,7 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
     local paddingIncrement = (width - baseWidth) / 20
     local basePadding = 20 -- This is your base padding. Adjust as necessary.
     local dynamicPadding = math.max(basePadding, paddingIncrement + basePadding)
-    
+
     local newWidth = width - dynamicPadding  -- Use dynamic padding to adjust the width
     RQE.debugLog("OnSizeChanged: New width is " .. newWidth .. ", Padding: " .. dynamicPadding)
 
@@ -644,7 +644,7 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
     else
         RQE.debugLog("RQE.QuestNameText is not initialized.")
     end
-	    
+
     if self.StepsText then
         for i, stepsTextElement in ipairs(self.StepsText) do
             stepsTextElement:SetWidth(newWidth)
@@ -669,7 +669,7 @@ end)
     -- else
         -- RQE.debugLog("RQE.QuestNameText is not initialized.")
     -- end
-	    
+
     -- if self.StepsText then
         -- for i, stepsTextElement in ipairs(self.StepsText) do
             -- stepsTextElement:SetWidth(newWidth)
@@ -720,14 +720,14 @@ local function CreateQuestTooltip(frame, questID)
         RQE.debugLog("QuestIDText is nil or empty. Cannot proceed.")
         return
     end
-	
+
 	local extractedQuestID
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
 	questID = effectiveQuestID or extractedQuestID or currentSuperTrackedQuestID
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-    
+
 	-- local questTitle
     -- if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
         -- questTitle = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
@@ -740,13 +740,13 @@ local function CreateQuestTooltip(frame, questID)
     local questData = RQE.getQuestData(effectiveQuestID)
     local questTitle = questData and questData.title or "Unknown Quest"
     GameTooltip:SetText(questTitle)
-	
+
 	if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) and not isWorldQuest then
 		-- Add code for line break if this is a searched quest
 	else
 		GameTooltip:AddLine(" ")  -- Add line break
 	end
-	
+
 	-- Add description
 	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
 	if questLogIndex then
@@ -768,7 +768,7 @@ local function CreateQuestTooltip(frame, questID)
 		end
 		GameTooltip:AddLine(" ")
 	end
-	
+
     -- Add objectives
     local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
     if objectivesInfo and #objectivesInfo > 0 then
@@ -792,7 +792,7 @@ local function CreateQuestTooltip(frame, questID)
 		GameTooltip:AddLine("Rewards: ")
 		RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
 	end
-	
+
 	-- Party Members' Quest Progress
 	if IsInGroup() then
 		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -899,14 +899,14 @@ end
 function AdjustRQEFrameWidths(newWidth)
     -- Use the current frame width if newWidth is not provided
     newWidth = newWidth or RQEFrame:GetWidth()
-	
+
     local baseWidth = 400
     local paddingIncrement = (RQEFrame:GetWidth() - baseWidth) / 20
     local basePadding = 20 -- Adjust as needed
     local dynamicPadding = math.max(basePadding, paddingIncrement + basePadding)
-	
+
     -- Adjust width for each element
-    RQE.QuestIDText:SetWidth(newWidth - dynamicPadding - 25)	
+    RQE.QuestIDText:SetWidth(newWidth - dynamicPadding - 25)
     RQE.QuestNameText:SetWidth(newWidth - dynamicPadding - 55)
     RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
     RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
@@ -1224,13 +1224,13 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 				x, y = tonumber(x), tonumber(y)
 				local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
-                
+
                 -- Call your function to handle the coordinate click
                 RQE:OnCoordinateClicked(x, y, mapID)
             end
         end)
     end
-    
+
     -- Call UpdateContentSize at the end
     RQE:UpdateContentSize()
 end
@@ -1254,7 +1254,7 @@ function RQE:CheckAndAdvanceStep(questID)
     -- end
 
     -- local currentObjectiveIndex = self:GetCurrentObjectiveIndex(questID)
-    
+
     -- if RQE.lastKnownObjectiveIndex[questID] ~= currentObjectiveIndex then
         -- -- Detected a change in objective, indicating progress
         -- RQE.hasClickedQuestButton = false  -- Reset the flag since there's actual progress
@@ -1262,7 +1262,7 @@ function RQE:CheckAndAdvanceStep(questID)
         -- RQE.lastKnownObjectiveIndex[questID] = currentObjectiveIndex  -- Update the tracked index
         -- -- Potentially other logic to handle the change in objective
     -- end
-	
+
     -- -- Retrieve objectives for the questID
     -- local objectives = C_QuestLog.GetQuestObjectives(questID)
     -- if not objectives or #objectives == 0 then
@@ -1276,7 +1276,7 @@ function RQE:CheckAndAdvanceStep(questID)
         -- self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
         -- return
     -- end
-	
+
     -- -- Check if all objectives are finished
     -- local allObjectivesCompleted = true
     -- for _, objective in ipairs(objectives) do
@@ -1309,7 +1309,7 @@ function RQE:CheckAndAdvanceStep(questID)
 
     -- -- Store the previous highestCompletedObjectiveIndex before calculations
     -- local previousHighestCompletedObjectiveIndex = RQE.lastKnownObjectiveIndex[questID] or 0
-	
+
 	-- -- Before your if-else statement
 	-- local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
 
@@ -1317,16 +1317,16 @@ function RQE:CheckAndAdvanceStep(questID)
     -- -- if highestCompletedObjectiveIndex ~= previousHighestCompletedObjectiveIndex then
         -- -- -- There has been progress, so call the function to click the super tracked quest button
         -- -- --RQE:ClickSuperTrackedQuestButton()
-        
+
         -- -- -- Update the lastKnownObjectiveIndex for this quest
         -- -- RQE.lastKnownObjectiveIndex[questID] = highestCompletedObjectiveIndex
     -- -- end
-	
+
     -- -- Handle quest completion and specific objectives
 	-- if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
 		-- nextObjectiveIndex = 99 -- Override if all objectives are completed
 	-- end
-	
+
 	-- self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
 end
 
@@ -1338,7 +1338,7 @@ end
         -- RQE.debugLog("No objectives found for questID:", questID)
         -- return 0  -- Return 0 or an appropriate default value if no objectives are found
     -- end
-    
+
     -- local highestIndex = 0
     -- for _, objective in ipairs(objectives) do
         -- if objective.finished and objective.index and objective.index > highestIndex then
@@ -1355,7 +1355,7 @@ function RQE:GetCurrentObjectiveIndex(questID)
         RQE.infoLog("No data found for questID:", questID)
         return 0  -- Return 0 or an appropriate default value if no data is found
     end
-    
+
     local highestIndex = 0
     for _, objectiveData in ipairs(questData) do
         if objectiveData.objectiveIndex and objectiveData.objectiveIndex > highestIndex then
@@ -1375,10 +1375,10 @@ function RQE:GetTotalObjectiveIndexes(questData)
             indexes[stepData.objectiveIndex] = true
         end
     end
-    
+
     local count = 0
     for _ in pairs(indexes) do count = count + 1 end
-    
+
     return count
 end
 
@@ -1389,12 +1389,12 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
     -- if nextObjectiveIndex == 1 and RQE.lastClickedObjectiveIndex == 0 then
         -- RQE.infoLog("Quest is incomplete. Clicking WaypointButton(1).")
         -- RQE.WaypointButtons[1]:Click()
-        
+
         -- -- Call to update the waypoint for the first objective
         -- RQE.ClickUnknownQuestButton()
         -- return
     -- end
-    
+
     -- If the quest is completed, prioritize clicking the button for objectiveIndex 99
     if nextObjectiveIndex == 99 then
         for stepIndex, stepData in ipairs(questData) do
@@ -1404,7 +1404,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
                     RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
                     button:Click()
                     RQE.lastClickedObjectiveIndex = 99
-                    
+
                     -- Call to update the waypoint for the quest completion objective
 					C_Timer.After(1, function()  -- Delay of 1 second
 						RQE.ClickUnknownQuestButton()
@@ -1414,7 +1414,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
             end
         end
     end
-    
+
     -- Check if this is a new objectiveIndex, not the same as the last clicked one.
     if RQE.lastClickedObjectiveIndex == nextObjectiveIndex then
         RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex .. " was already clicked. Skipping.")
@@ -1428,10 +1428,10 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
                 -- Simulate the click
                 RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
                 button:Click() -- `OnClick` will now use the button's direct data
-				
+
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex
-                
+
 				-- Call to update the waypoint for the quest completion objective
 				C_Timer.After(1, function()  -- Delay of 1 second
 					RQE.ClickUnknownQuestButton()
@@ -1505,7 +1505,7 @@ function RQE.ClickUnknownQuestButton()
     if not RQE:AreAllObjectivesCompleted(questID) then
         return
     end
-	
+
     if not questID then
         return
     end
@@ -1526,11 +1526,11 @@ function RQE.ClickUnknownQuestButton()
 
     if not foundButton then
         RQE.debugLog("Did not find a button for questID:", questID)
-    else	
+    else
         -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
 		if not RQE.mapID then
 			local mapID = C_Map.GetBestMapForUnit("player")
-		else		
+		else
 			RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 		end
     end
@@ -1538,10 +1538,10 @@ function RQE.ClickUnknownQuestButton()
     -- If the button wasn't found, print a message
     if not RQE.hasClickedQuestButton then
     end
-	
+
 	-- Re-Track the quest being listed as super tracked
 	C_SuperTrack.SetSuperTrackedQuestID(questID)
-	
+
 	-- Call your function to create a waypoint using stored coordinates and mapID
 	RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 end

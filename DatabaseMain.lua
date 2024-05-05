@@ -49,7 +49,7 @@ function RQE.getQuestData(questID)
         dbOrder = { "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
     elseif majorVersion == 5 then
         dbOrder = { "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
-		
+
     elseif majorVersion == 4 then
         dbOrder = { "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
     elseif majorVersion == 3 then
