@@ -2803,53 +2803,52 @@ function RQE:StartPeriodicChecks()
 end
 
 
--- Function to evaluate conditions for previous step
-function RQE.evaluateStepConditions(questData, currentStepIndex)
-    local stepData = questData[currentStepIndex]
+-- -- Function to evaluate conditions for previous step
+-- function RQE.evaluateStepConditions(questData, currentStepIndex)
+    -- local stepData = questData[currentStepIndex]
 
-    -- Check required items
-    if stepData.requiredItems then
-        for itemID, requiredAmount in pairs(stepData.requiredItems) do
-            local itemCount = C_Item.GetItemCount(itemID)
-            if itemCount < requiredAmount then
-                print("Not enough items:", itemID, "Needed:", requiredAmount, "Have:", itemCount)
-                return false
-            end
-        end
-    end
+    -- -- Check required items
+    -- if stepData.requiredItems then
+        -- for itemID, requiredAmount in pairs(stepData.requiredItems) do
+            -- local itemCount = C_Item.GetItemCount(itemID)
+            -- if itemCount < requiredAmount then
+                -- print("Not enough items:", itemID, "Needed:", requiredAmount, "Have:", itemCount)
+                -- return false
+            -- end
+        -- end
+    -- end
 
-    -- Check for required aura
-    if stepData.requiredAura then
-        local aura = C_UnitAuras.GetAuraDataBySpellName("player", stepData.requiredAura, "HELPFUL")
-        if not aura then
-            print("Required aura not present:", stepData.requiredAura)
-            return false
-        end
-    end
+    -- -- Check for required aura
+    -- if stepData.requiredAura then
+        -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", stepData.requiredAura, "HELPFUL")
+        -- if not aura then
+            -- print("Required aura not present:", stepData.requiredAura)
+            -- return false
+        -- end
+    -- end
 
-    -- Check if the player is in the required zone
-    if stepData.requiredZoneID then
-        local playerZoneID = C_Map.GetBestMapForUnit("player")
-        if playerZoneID ~= stepData.requiredZoneID then
-            print("Player is not in the required zone:", stepData.requiredZoneID)
-            return false
-        end
-    end
+    -- -- Check if the player is in the required zone
+    -- if stepData.requiredZoneID then
+        -- local playerZoneID = C_Map.GetBestMapForUnit("player")
+        -- if playerZoneID ~= stepData.requiredZoneID then
+            -- print("Player is not in the required zone:", stepData.requiredZoneID)
+            -- return false
+        -- end
+    -- end
 
-    -- If current step index is greater than 1, check the condition of the previous step
-    if currentStepIndex > 1 then
-        local previousStepData = questData[currentStepIndex - 1]
-        -- Check if the previous step's conditions are still satisfied
-        if previousStepData and previousStepData.funct and not RQE[previousStepData.funct](questID, currentStepIndex - 1) then
-            print("Previous step's conditions are no longer satisfied, no need to revert.")
-            return true  -- No need to revert as previous conditions are unsatisfied
-        end
-    end
+    -- -- If current step index is greater than 1, check the condition of the previous step
+    -- if currentStepIndex > 1 then
+        -- local previousStepData = questData[currentStepIndex - 1]
+        -- -- Check if the previous step's conditions are still satisfied
+        -- if previousStepData and previousStepData.funct and not RQE[previousStepData.funct](questID, currentStepIndex - 1) then
+            -- print("Previous step's conditions are no longer satisfied, no need to revert.")
+            -- return true  -- No need to revert as previous conditions are unsatisfied
+        -- end
+    -- end
 
-    -- All conditions met
-    return true
-end
-
+    -- -- All conditions met
+    -- return true
+-- end
 
 
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.

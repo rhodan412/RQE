@@ -374,26 +374,29 @@ function RQE.ReagentBagUpdate(...)
 		if questData then
 			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
-			local requiredItems = stepData.failedcheck or {}
-			local neededAmounts = stepData.neededAmt or {}
-			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
-			if stepData.failedfunc == "CheckDBInventory" then			
-				local previousStepData = questData[currentStepIndex - 1]
-				if previousStepData.funct == "CheckDBZoneChange" then
-					local currentMapID = C_Map.GetBestMapForUnit("player")
-					local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
+			
+			if stepData then
+				local requiredItems = stepData.failedcheck or {}
+				local neededAmounts = stepData.neededAmt or {}
+				local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
+				if stepData.failedfunc == "CheckDBInventory" then			
+					local previousStepData = questData[currentStepIndex - 1]
+					if previousStepData.funct == "CheckDBZoneChange" then
+						local currentMapID = C_Map.GetBestMapForUnit("player")
+						local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
-					RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
-					-- Check if the current map ID is in the list of required IDs
-					if requiredMapIDs and #requiredMapIDs > 0 then
-						for _, mapID in ipairs(requiredMapIDs) do
-							if tostring(currentMapID) == tostring(mapID) then
-								return
+						RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+						-- Check if the current map ID is in the list of required IDs
+						if requiredMapIDs and #requiredMapIDs > 0 then
+							for _, mapID in ipairs(requiredMapIDs) do
+								if tostring(currentMapID) == tostring(mapID) then
+									return
+								end
 							end
 						end
+					else
+						RQE.ClickQuestLogIndexButton(questID)
 					end
-				else
-					RQE.ClickQuestLogIndexButton(questID)
 				end
 			end
 		end
@@ -459,6 +462,12 @@ function RQE.handleUnitInventoryChange(...)
 		if questData then
 			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
+			
+			if not stepData then
+				RQE.debugLog("No step data available for quest ID:", questID)
+				return
+			end
+			
 			local requiredItems = stepData.failedcheck or {}
 			local neededAmounts = stepData.neededAmt or {}
 			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
@@ -1599,21 +1608,24 @@ function RQE.handleZoneNewAreaChange()
 		if questData then
 			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
-			local failedIndex = stepData.failedIndex or stepIndex -- Default to current step if no failedIndex is provided
+			
+			if stepData then
+				local failedIndex = stepData.failedIndex or stepIndex -- Default to current step if no failedIndex is provided
 
-			-- Log the failed check details if available
-			if stepData.failedfunc then
-				RQE.infoLog(tostring(stepData.failedfunc) .. " " .. table.concat(stepData.failedcheck or {}, ", "))
-			end
+				-- Log the failed check details if available
+				if stepData.failedfunc then
+					RQE.infoLog(tostring(stepData.failedfunc) .. " " .. table.concat(stepData.failedcheck or {}, ", "))
+				end
 
-			if stepData.failedfunc == "CheckDBZoneChange" and not table.includes(stepData.failedcheck, tostring(playerMapID)) then
-				C_Timer.After(0.5, function()
-					if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-						RQE.WaypointButtons[failedIndex]:Click()
-					else
-						RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
-					end
-				end)
+				if stepData.failedfunc == "CheckDBZoneChange" and not table.includes(stepData.failedcheck, tostring(playerMapID)) then
+					C_Timer.After(0.5, function()
+						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
+							RQE.WaypointButtons[failedIndex]:Click()
+						else
+							RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
+						end
+					end)
+				end
 			end
 		end
 	end
@@ -1731,6 +1743,11 @@ function RQE.handleUnitAura(...)
 			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
+			if not stepData then
+				RQE.debugLog("No step data available for quest ID:", questID)
+				return
+			end
+			
 			-- Process 'funct' for buffs or debuffs if specified
 			if stepData and stepData.funct then
 				if string.find(stepData.funct, "CheckDBBuff") or string.find(stepData.funct, "CheckDBDebuff") then
