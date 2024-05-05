@@ -272,7 +272,7 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
     if InCombatLockdown() then
         return
     end
-	
+
     local macroIndex = GetMacroIndexByName("RQE Macro")
     local MagicButton = RQE.MagicButton -- Assuming you've stored MagicButton globally in RQE.MagicButton
 
