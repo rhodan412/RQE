@@ -1132,10 +1132,14 @@ end
 
 -- Function to Add Reward Data to the Game Tooltip
 function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
-    local SelectedQuestID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
-    C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
+	C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
-    local xp = GetQuestLogRewardXP(questID)
+	local questID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	local warModeDesired = C_PvP.IsWarModeDesired()
+	local hasWarModeBonus = C_QuestLog.QuestHasWarModeBonus(questID)
+
+	local xp = GetQuestLogRewardXP(questID)
 	local rewardTitle = GetQuestLogRewardTitle()
 	local skillPoints = GetQuestLogRewardSkillPoints()
     local money = GetQuestLogRewardMoney(questID)
@@ -1143,7 +1147,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID)
     local numQuestRewards = GetNumQuestLogRewards(questID)
     local numQuestSpellRewards, questSpellRewards = C_QuestInfoSystem.GetQuestRewardSpells(questID)
-    local numQuestChoices = GetNumQuestLogChoices(questID, true)
+    local numQuestChoices = GetNumQuestLogChoices(questID)
     local honor = GetQuestLogRewardHonor(questID)
     local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID) or C_QuestOffer.GetQuestOfferMajorFactionReputationRewards(questID)
     local rewardsTitle = REWARDS..":"
@@ -1153,14 +1157,6 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
             tooltip:AddLine(CHOOSE_ONE_REWARD..":")
         end
 
-    -- if not isBonus then
-        -- if numQuestChoices == 1 then
-            -- tooltip:AddLine(rewardsTitle)
-        -- elseif numQuestChoices > 1 then
-            -- tooltip:AddLine(CHOOSE_ONE_REWARD..":")
-            -- rewardsTitle = OTHER.." "..rewardsTitle
-        -- end
-		
         -- choices
         for i = 1, numQuestChoices do
             local lootType = GetQuestLogChoiceInfoLootType(i)
@@ -1176,7 +1172,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
                 color = isUsable and ITEM_QUALITY_COLORS[quality] or colorNotUsable
             elseif lootType == 1 then
                 -- currency
-                local name, texture, amount, currencyID, quality = GetQuestLogRewardCurrencyInfo(i, questID, true)
+				local name, texture, amount, currencyID, quality = GetQuestLogRewardCurrencyInfo(i, questID)
                 amount = FormatLargeNumber(amount)
                 text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(amount), name)
                 color = ITEM_QUALITY_COLORS[quality]
@@ -1190,7 +1186,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	-- xp
 	if xp > 0 then
 		tooltip:AddLine(format(BONUS_OBJECTIVE_EXPERIENCE_FORMAT, FormatLargeNumber(xp).."|c0000ff00"), 1, 1, 1)
-		if isWarModeDesired and isQuestWorldQuest and questHasWarModeBonus then
+		if warModeDesired and isWorldQuest and hasWarModeBonus then
 			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
 		end
 	end
@@ -1203,7 +1199,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	-- money
 	if money > 0 then
 		tooltip:AddLine(C_CurrencyInfo.GetCoinTextureString(money, 12), 1, 1, 1)
-		if isWarModeDesired and isQuestWorldQuest and questHasWarModeBonus then
+		if warModeDesired and isWorldQuest and hasWarModeBonus then
 			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
 		end
 	end
@@ -1256,11 +1252,11 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	end
 
 	-- war mode bonus (quest only)
-	if isWarModeDesired and not isQuestWorldQuest and questHasWarModeBonus then
+	if warModeDesired and not isWorldQuest and hasWarModeBonus then
 		tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
 	end
 
-    C_QuestLog.SetSelectedQuest(SelectedQuestID)  -- restore selected Quest
+    C_QuestLog.SetSelectedQuest(questID)  -- restore selected Quest
 end
 
 
@@ -1278,9 +1274,9 @@ function GetQuestType(questID)
         return "Bonus Quest"
     elseif C_QuestLog.IsRepeatableQuest(questID) then
         return "Repeatable"
-    elseif QuestIsWeekly(questID) then
+    elseif QuestIsWeekly() then
         return "Weekly Quest"
-    elseif QuestIsDaily(questID) then
+    elseif QuestIsDaily() then
         return "Daily Quest"
     elseif C_QuestLog.IsThreatQuest(questID) then
         return "Threat Quest"
@@ -1292,7 +1288,7 @@ end
 
 -- Function to get the zone name for a given quest
 function GetQuestZone(questID)
-    local mapID = GetQuestUiMapID(questID, ignoreWaypoints)
+    local mapID = GetQuestUiMapID(questID)
     if mapID then
         local mapInfo = C_Map.GetMapInfo(mapID)
         if mapInfo and mapInfo.name then
@@ -1301,7 +1297,7 @@ function GetQuestZone(questID)
 	elseif ( mapID ~= 0 ) then
 		QuestMapFrame:GetParent():SetMapID(mapID)
     end	
-	
+
     local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questID)
     if uiMapID then
         local mapInfo = C_Map.GetMapInfo(uiMapID)
@@ -1349,7 +1345,7 @@ function RQE:QuestType()
             regularQuestUpdated = true
         end
     end
-	
+
     -- Loop through all tracked World Quests
     for i = 1, numTrackedWorldQuests do
         local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
@@ -1371,7 +1367,7 @@ end
 -- Your function to update the RQEQuestFrame
 function UpdateRQEQuestFrame()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
-	
+
     local campaignQuestCount, regularQuestCount, worldQuestCount = 0, 0, 0
 	RQE.campaignQuestCount = campaignQuestCount
 	RQE.regularQuestCount = regularQuestCount
@@ -1381,7 +1377,7 @@ function UpdateRQEQuestFrame()
     local questHeight = 65 -- Height per quest
     local spacingBetweenElements = 5
     local extraHeightForScenario = 50
-	
+
     -- Check if ScenarioChildFrame is present and visible
     if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
         -- Here you could access the numCriteria from the ScenarioChildFrame if it's stored there
@@ -1389,11 +1385,11 @@ function UpdateRQEQuestFrame()
         local numCriteria = RQE.ScenarioChildFrame.numCriteria or 0
         extraHeightForScenario = numCriteria * questHeight
     end
-	
+
     -- Loop through all tracked quests to count campaign and world quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 	RQE.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
-	
+
     for i = 1, numTrackedQuests do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
         if C_CampaignInfo.IsCampaignQuest(questID) then
@@ -1411,7 +1407,7 @@ function UpdateRQEQuestFrame()
     local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + extraHeightForScenario
     local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
 	local achievementHeight = baseHeight + (RQE.AchievementsFrame.achieveCount * 40)
-	
+
     -- Update frame heights
     RQE.CampaignFrame:SetHeight(campaignHeight)
     RQE.QuestsFrame:SetHeight(regularHeight)
@@ -1437,7 +1433,7 @@ function UpdateRQEQuestFrame()
     -- Get the number of tracked quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 	--local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
- 
+
     -- Initialize the table to hold the QuestLogIndexButtons if it doesn't exist
     RQE.QuestLogIndexButtons = RQE.QuestLogIndexButtons or {}
 
@@ -1458,7 +1454,7 @@ function UpdateRQEQuestFrame()
         RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
         RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
-		
+
 	-- Create the Set Point for the World Quests Child Frame
     if RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
         -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
@@ -1500,10 +1496,10 @@ function UpdateRQEQuestFrame()
         RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
         RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
-		
+
     -- Separate variables to track the last element in each child frame
     local lastCampaignElement, lastQuestElement, lastWorldQuestElement = nil, nil, nil
-		
+
 		-- Loop through all tracked quests
 		for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
@@ -1512,14 +1508,15 @@ function UpdateRQEQuestFrame()
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 		local isQuestComplete = C_QuestLog.IsComplete(questID)
 		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
-			
+
 		if questIndex and not C_QuestLog.IsWorldQuest(questID) then
 			local info = C_QuestLog.GetInfo(questIndex)
-		
+
 			if info and not info.isHeader then
 				-- Determine the type of the quest (Campaign, World Quest, or Regular)
 				local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID)
-			
+				local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+
 				local parentFrame
 				local lastElement
 				if isCampaignQuest then
@@ -1575,8 +1572,10 @@ function UpdateRQEQuestFrame()
 						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 					else
-						RQE.lastKnownInventory = {}
-
+						--RQE.lastKnownInventory = {}
+						RQE.OverrideHasProgress = true
+						RQE.AutoWaypointHasBeenClicked = false
+						
 						C_Map.ClearUserWaypoint()
 						-- Check if TomTom is loaded and compatibility is enabled
 						if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
@@ -1644,13 +1643,13 @@ function UpdateRQEQuestFrame()
 							-- RQE:CheckAndAdvanceStep(questID)
 						end)
 						
-						-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-						C_Timer.After(1, function()
-							if RQE.db.profile.autoClickWaypointButton then
-								RQE:StartPeriodicChecks()  -- MIGHT NEED TO COMMENT OUT IF MISBEHAVING
-							end
-						end)
-					--end)
+						-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+						-- C_Timer.After(1, function()
+							-- if RQE.db.profile.autoClickWaypointButton then
+								-- RQE:StartPeriodicChecks()  -- MIGHT NEED TO COMMENT OUT IF MISBEHAVING
+							-- end
+						-- end)
+					-- --end)
 						
 						-- Refresh the UI here to update the button state
 						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
@@ -1823,7 +1822,7 @@ function UpdateRQEQuestFrame()
 						end
 						GameTooltip:AddLine(" ")
 					end
-	
+
 					-- Add objectives
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine("Objectives:")
@@ -2100,7 +2099,7 @@ function UpdateRQEWorldQuestFrame()
             else
                 bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
             end
-			
+
 			WQuestLogIndexButton:Show()
 
             -- Create or update the number label
@@ -2116,7 +2115,7 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveWorldQuestWatch(questID)
-					
+
 					local extractedQuestID
 					if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 						extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -2126,9 +2125,9 @@ function UpdateRQEWorldQuestFrame()
 						RQE.ClearFrameData()
 						RQE:ClearWaypointButtonData()
 					end
-					
+
 					RQE.TrackedQuests[questID] = nil -- Update the tracking table
-					
+
 					-- Refresh the UI here to update the button state
 					--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 					--UpdateRQEQuestFrame()
@@ -2136,40 +2135,40 @@ function UpdateRQEWorldQuestFrame()
 				else			
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-					
+
 					-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 					RQE:PerformClearActions()
 
 					-- Clears Macro Data
 					RQEMacro:ClearMacroContentByName("RQE Macro")
-					
+
 					-- -- Clear any existing super tracking
 					-- C_SuperTrack.SetSuperTrackedQuestID(0)
 					-- C_SuperTrack.ClearSuperTrackedContent()
-					
+
 					-- Clicks Waypoint Button if autoClickWaypointButton is true
 					--RQE:AutoClickQuestLogIndexWaypointButton()
-						
+
 					-- Reset the "Clicked" WaypointButton to nil
 					RQE.LastClickedIdentifier = nil
-					
+
 					-- -- Initially clicks the WaypointButton[1] after super tracking a quest via pressing WQuestLogIndexButton
 					-- if RQE.WaypointButtons[1] then
 						-- RQE.WaypointButtons[1]:Click()
 					-- end
-					
+
 					-- Scrolls the RQEFrame to top on super track
 					RQE.ScrollFrameToTop()
-					
+
 					-- Reset the Last Clicked WaypointButton to be "1"
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-					
+
 					-- Existing code to set as super-tracked
 					RQE.ManualSuperTrack = true
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
 					RQE.ManualSuperTrackedQuestID = questID
 					RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
-					
+
 					-- Allow time for the UI to update and for the super track to register
 					C_Timer.After(1, function()
 						-- Fetch the quest data here
@@ -2190,17 +2189,17 @@ function UpdateRQEWorldQuestFrame()
 							end
 						end
 					end)
-					
+
 					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
-					
+
 					-- Check if MagicButton should be visible based on macro body
 					C_Timer.After(1, function()
 						RQE.Buttons.UpdateMagicButtonVisibility()
 					end)
 				end
-				
+
 				-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
 				C_Timer.After(1, function()
 					if RQE.db.profile.autoClickWaypointButton then
@@ -2208,7 +2207,7 @@ function UpdateRQEWorldQuestFrame()
 					end
 				end)
 			end)
-				
+
 			-- Add a mouse down event to simulate a button press
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				if button == "LeftButton" then
@@ -2266,7 +2265,7 @@ function UpdateRQEWorldQuestFrame()
             WQuestObjectives:SetJustifyV("TOP")
             WQuestObjectives:SetText(objectivesText)
             WQuestLogIndexButton.QuestObjectives = WQuestObjectives
-			
+
 			-- Untrack World Quest
 			WQuestLevelAndName:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
@@ -2279,7 +2278,7 @@ function UpdateRQEWorldQuestFrame()
 					ShowQuestDropdown(self, questID)
 				end
 			end)
-				
+
 			-- Position WQuestLogIndexButton relative to WQuestLevelAndName
 			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
 
@@ -2303,7 +2302,7 @@ function UpdateRQEWorldQuestFrame()
 
 				return table.concat(timeStrings, ", ")
 			end
-		
+
 			local WQuestTimeLeft = WQuestLogIndexButton.WQuestTimeLeft or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			WQuestTimeLeft:SetPoint("TOPLEFT", WQuestLevelAndName, "BOTTOMLEFT", 0, -5)
 			WQuestTimeLeft:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
@@ -2311,13 +2310,13 @@ function UpdateRQEWorldQuestFrame()
 			WQuestTimeLeft:SetJustifyH("LEFT")
 			--WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 45)
 			WQuestLogIndexButton.WQuestTimeLeft = WQuestTimeLeft
-	
+
 			-- Get the time left for the World Quest
 			local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(questID)
 			local timeLeftString = FormatTimeLeft(secondsLeft)  -- Ensure it always returns a string
 			WQuestTimeLeft:SetText(timeLeftString)
 			WQuestTimeLeft:Show()
-			
+
 			-- Inside your loop for updating World Quest frames:
 			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
 			RQE.debugLog("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
@@ -2355,15 +2354,16 @@ function UpdateRQEWorldQuestFrame()
 					ShowQuestDropdown(self, questID)
 				end
 			end)
-				
+
 			-- Update the last element tracker for the correct type
+			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 			if isWorldQuest then
 				lastWorldQuestElement = WQuestObjectivesOrDescription
 			end
-				
+
 			-- Set position of the WQuestObjectives based on TimeLeft
 			WQuestObjectives:SetPoint("TOPLEFT", WQuestDistance, "BOTTOMLEFT", 0, -5)
-						
+
 			-- Untrack World Quest
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
@@ -2386,16 +2386,16 @@ function UpdateRQEWorldQuestFrame()
 					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
 				end
 			end
-					
+
             -- Show the elements
             WQuestLevelAndName:Show()
             WQuestObjectivesOrDescription:Show()
             WQuestLogIndexButton:Show()
 			WQuestObjectives:Show()
-			
+
             --lastElement = WQuestObjectives  -- Update the last element for next iteration
 			lastWorldQuestElement = WQuestObjectives  -- Update the last element for next iteration
-			
+
 			-- Set the mouseover tooltip for the World Quest button
 			WQuestLevelAndName:SetScript("OnEnter", function(self)
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- Anchor the tooltip to the cursor
@@ -2433,7 +2433,7 @@ function UpdateRQEWorldQuestFrame()
 					GameTooltip:AddLine("Time Left: " .. timeLeftString, 1, 0.08, 0.58) -- Pink color
 					GameTooltip:AddLine(" ")  -- Blank line
 				end
-				
+
 				-- Add the quest ID
 				GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
 
@@ -2476,11 +2476,11 @@ function UpdateRQEWorldQuestFrame()
 					end
 				end
 			end
-	
+
 			WQuestLevelAndName:SetScript("OnLeave", function(self)
 				GameTooltip:Hide()  -- Hide the tooltip when the mouse leaves the button
 			end)
-		
+
             -- Save the button in a table for future reference
             RQE.WorldQuestsFrame["WQButton" .. i] = WQuestLogIndexButton
 
@@ -2562,22 +2562,22 @@ end
 -- Function to Update Achievements Frame
 function UpdateRQEAchievementsFrame()
 	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
-	
+
     -- Print the IDs of tracked achievements for debugging
     RQE.infoLog("Currently Tracked Achievements:")
 
     -- Clear the achievement ID list before updating
     RQE:ClearAchievementFrame()
-	
+
     -- Initialize or clear the table that keeps track of achievement ID widgets
     RQE.AchievementsIDWidgets = RQE.AchievementsIDWidgets or {}
-	
+
 	-- Sets initial y-offset slightly below top of frame
     local offsetY = -45 -- Starting offset for the first achievement
     local spacing = 7 -- Space between achievements
     local textPadding = 55 -- Adjust this value to control word wrap width
 	local availableWidth = RQE.AchievementsFrame:GetWidth() - textPadding
-	
+
     -- Loop through each tracked achievement ID and display it along with the description
     for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
         local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
@@ -2591,7 +2591,7 @@ function UpdateRQEAchievementsFrame()
             achievementHeader:SetTextColor(1, 0.5, 0.3) -- Tan color for the achievement ID and name
             --achievementHeader:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
             achievementHeader:SetJustifyH("LEFT")
-            
+
             -- Set up the tooltip for the achievement header
 			achievementHeader:SetScript("OnEnter", function(self)
 				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -2602,7 +2602,7 @@ function UpdateRQEAchievementsFrame()
 				end
 				GameTooltip:AddLine(description, 1, 0.7, 0.7, true) -- Light Pink description
 				GameTooltip:AddLine(" ") -- Spacer
-				
+
                 -- Add criteria info
                 local numCriteria = GetAchievementNumCriteria(id)
                 for criteriaIndex = 1, numCriteria do
@@ -2643,7 +2643,7 @@ function UpdateRQEAchievementsFrame()
 					end
 				end
 			end)
-		
+
             offsetY = offsetY - achievementHeader:GetStringHeight() - spacing -- Adjust offsetY for the header and additional spacing
 
             -- Loop through criteria
@@ -2681,12 +2681,12 @@ function UpdateRQEAchievementsFrame()
 
 	-- Check if any achievements in the Achievement Frame are being tracked/watched
 	RQE.AchievementsFrame:SetShown(RQE.AchievementsFrame.achieveCount > 0)
-	
+
     -- Update the scroll frame range if necessary
     if RQE.AchievementsFrame.scrollFrame then
         RQE.AchievementsFrame.scrollFrame:SetVerticalScrollRange(math.abs(offsetY))
     end
-	
+
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
 end
