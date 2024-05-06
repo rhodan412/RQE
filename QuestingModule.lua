@@ -2533,7 +2533,7 @@ function RQE.UpdateTrackedAchievements(contentType, id, tracked)
         end
     end
     -- Call the update function to refresh the UI
-    --RQE.UpdateTrackedAchievementList()
+    RQE.UpdateTrackedAchievementList()
 end
 
 

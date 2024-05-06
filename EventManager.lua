@@ -215,34 +215,32 @@ local function HandleEvents(frame, event, ...)
 end
 
 
---function RQE.UnregisterUnusedEvents()
-    -- Example: Unregister events that are no longer needed
-    --Frame:UnregisterEvent("EVENT_NAME")
---end
+-- Example: Unregister events that are no longer needed
+function RQE.UnregisterUnusedEvents()
+    Frame:UnregisterEvent("EVENT_NAME")
+end
 
 
 -- Handles ACHIEVEMENT_EARNED events
 -- Fired when an achievement is gained
 function RQE.handleAchievementTracking(...)
-	print("** RUNNING ACHIEVEMENT_EARNED **")
-
-    local args = {...}  -- Capture all arguments into a table
-    for i, arg in ipairs(args) do
-        if type(arg) == "table" then
-            print("Arg " .. i .. ": (table)")
-            for k, v in pairs(arg) do
-                print("  " .. tostring(k) .. ": " .. tostring(v))
-            end
-        else
-            print("Arg " .. i .. ": " .. tostring(arg))
-        end
-    end
+    -- local args = {...}  -- Capture all arguments into a table
+    -- for i, arg in ipairs(args) do
+        -- if type(arg) == "table" then
+            -- print("Arg " .. i .. ": (table)")
+            -- for k, v in pairs(arg) do
+                -- print("  " .. tostring(k) .. ": " .. tostring(v))
+            -- end
+        -- else
+            -- print("Arg " .. i .. ": " .. tostring(arg))
+        -- end
+    -- end
 
 	local event = select(2, ...)
 	local achievementID = select(3, ...)
 	local alreadyEarned = select(4, ...)
 
-	DEFAULT_CHAT_FRAME:AddMessage("Debug: ACHIEVEMENT_EARNED event triggered for achivementID: " .. achievementID .. ", Already Earned Check: " .. tostring(alreadyEarned), 0xFA, 0x80, 0x72) -- Salmon color
+	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: ACHIEVEMENT_EARNED event triggered for achivementID: " .. achievementID .. ", Already Earned Check: " .. tostring(alreadyEarned), 0xFA, 0x80, 0x72) -- Salmon color
 
 	RQE.UpdateTrackedAchievementList()
 end
@@ -250,28 +248,17 @@ end
 
 -- Handles CONTENT_TRACKING_UPDATE Events
 function RQE.handleContentUpdate(...)
-	print("** RUNNING CONTENT_TRACKING_UPDATE **")
-
-    local args = {...}  -- Capture all arguments into a table
-    for i, arg in ipairs(args) do
-        if type(arg) == "table" then
-            print("Arg " .. i .. ": (table)")
-            for k, v in pairs(arg) do
-                print("  " .. tostring(k) .. ": " .. tostring(v))
-            end
-        else
-            print("Arg " .. i .. ": " .. tostring(arg))
-        end
-    end
-
 	local event = select(2, ...)
 	local type = select(3, ...)
 	local id = select(4, ...)
 	local isTracked = select(4, ...)
 
-	DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(type) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
-
-	RQE.UpdateTrackedAchievements()
+	if type == 2 then -- Assuming 2 indicates an achievement
+		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(type) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
+		
+		RQE.UpdateTrackedAchievementList()
+		RQE.UpdateTrackedAchievements(contentType, id, tracked)
+	end
 end
 
 
