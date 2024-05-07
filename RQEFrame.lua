@@ -1151,37 +1151,42 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
                 bg = bg
             }
 
-			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-				if not questIDFromText then
-					RQE.debugLog("Error: Invalid quest ID extracted from text")
-				else
-					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
-					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
-				end
-			--end
+			C_Timer.After(1, function()
+				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+					local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+					if not questIDFromText then
+						RQE.infoLog("Error: Invalid quest ID extracted from text")
+					else
+						-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+						C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
+					end
 
-                -- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
-                RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
-                local questData = RQE.getQuestData(questIDFromText)
-                local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
-                RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-                if questData then
-                    local stepIndex = i
-                    local stepData = questData[stepIndex]
-                    for index, stepData in ipairs(questData) do
-                        if stepData.description == stepDescription then
-                            RQE.infoLog("Matching step data found for description:", stepDescription)
-                            if stepData and stepData.macro then
-                                local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-                                RQE.infoLog("Macro commands to set:", macroCommands)
-                                RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
+                    --local questID = questIDFromText
+				--end
+
+					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
+					RQE.infoLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
+					local questData = RQE.getQuestData(questIDFromText)
+					local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
+					RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
+					if questData then
+						local stepIndex = i
+						local stepData = questData[stepIndex]
+						for index, stepData in ipairs(questData) do
+							if stepData.description == stepDescription then
+								RQE.infoLog("Matching step data found for description:", stepDescription)
+								if stepData and stepData.macro then
+									local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+									RQE.infoLog("Macro commands to set:", macroCommands)
+									RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
+								end
                             end
-                        end
+						end
+						--UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
                     end
-                    UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
-                end
-            end
+				end
+				UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
+			end)
 
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()

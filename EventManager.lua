@@ -1212,6 +1212,9 @@ function RQE.handleSuperTracking()
     -- startTime = debugprofilestop()  -- Start timer
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
+	
+	RQE:ClearWaypointButtonData()
+	UpdateFrame()
 
     local extractedQuestID
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1556,6 +1559,17 @@ function RQE.handleZoneChange(...)
 			RQE.debugLog("Player is flying or dragonriding")
 		end
 	end
+
+	-- -- Fail safe that will hide Scenario Frame on ZONE_CHANGE 
+	-- if RQE.ScenarioChildFrame:IsShown then
+		-- if C_Scenario.IsInScenario() then
+			-- RQE.ScenarioChildFrame:Show()
+			-- RQE.updateScenarioUI()
+		-- else
+			-- RQE.ScenarioChildFrame:Hide()
+			-- RQE.updateScenarioUI()
+		-- end
+	-- end
 
 	-- Auto Clicks the QuestLogIndexButton when this event fires
 	--RQE:AutoClickQuestLogIndexWaypointButton()
