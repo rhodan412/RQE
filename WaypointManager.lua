@@ -83,18 +83,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
     local waypointTitle
 
     -- Determine coordinates and title based on quest presence in quest log and database
-    if questData then
-        local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-        local stepData = questData[stepIndex]
-		if questData and questData[stepIndex] and questData[stepIndex].coordinates then
-			x = questData[stepIndex].coordinates.x
-			y = questData[stepIndex].coordinates.y
-			mapID = questData[stepIndex].coordinates.mapID
-			waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName .. ", Step: " .. stepIndex
-		end
-	end
-
-	if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+    if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
         x = questData.location.x
         y = questData.location.y
         mapID = questData.location.mapID
@@ -116,7 +105,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
     -- Ensure x and y are numbers before attempting arithmetic
     x = tonumber(x) or 0
     y = tonumber(y) or 0
-	
+
 	C_Map.ClearUserWaypoint()
 
     -- Check if TomTom is loaded and compatibility is enabled
@@ -161,17 +150,6 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 			-- Code for your own waypoint system or an alternative action
 		end
 	end)
-end
-
-
--- Function to retrieve step coordinates from RQEDatabase
-function RQE.getStepCoordinates(questID)
-    local questData = RQE.getQuestData(questID)
-    if questData and questData[1] and questData[1].coordinates then
-        return questData[1].coordinates, questData[1].coordinates.mapID
-    else
-        return {x = 0, y = 0}, 0  -- Default values if no data found
-    end
 end
 
 

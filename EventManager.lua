@@ -295,47 +295,58 @@ function RQE.handleItemCountChanged(...)
 			local questData = RQE.getQuestData(questID)
 			if questData then
 				local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-				local stepData = questData[stepIndex]
-				local requiredItems = stepData.failedcheck or {}
-				local neededAmounts = stepData.neededAmt or {}
-				local failedAmounts = stepData.failedAmt or {}
-				local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
+				
+				-- Ensure stepIndex is within the bounds of questData
+				if stepIndex >= 1 and stepIndex <= #questData then
+					local stepData = questData[stepIndex]
+					if stepData then
+						local requiredItems = stepData.failedcheck or {}
+						local neededAmounts = stepData.neededAmt or {}
+						local failedAmounts = stepData.failedAmt or {}
+						local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
 
-				for index, reqItemID in ipairs(requiredItems) do
-					if tostring(reqItemID) == itemID then
-						local requiredAmount = tonumber(neededAmounts[index]) or 1
-						if itemCount < requiredAmount and stepData.failedfunc == "CheckDBInventory" then
-							C_Timer.After(0.5, function()
-								if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
+						for index, reqItemID in ipairs(requiredItems) do
+							if tostring(reqItemID) == itemID then
+								local requiredAmount = tonumber(neededAmounts[index]) or 1
+								if itemCount < requiredAmount and stepData.failedfunc == "CheckDBInventory" then
+									C_Timer.After(0.5, function()
+										if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
 
-									local previousStepData = questData[stepIndex - 1]
-									if previousStepData.funct == "CheckDBZoneChange" then
-										local currentMapID = C_Map.GetBestMapForUnit("player")
-										local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
+											local previousStepData = questData[stepIndex - 1]
+											if previousStepData and previousStepData.funct == "CheckDBZoneChange" then
+												local currentMapID = C_Map.GetBestMapForUnit("player")
+												local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
-										RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
-										-- Check if the current map ID is in the list of required IDs
-										if requiredMapIDs and #requiredMapIDs > 0 then
-											for _, mapID in ipairs(requiredMapIDs) do
-												if tostring(currentMapID) == tostring(mapID) then
-													return
+												RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+												-- Check if the current map ID is in the list of required IDs
+												if requiredMapIDs and #requiredMapIDs > 0 then
+													for _, mapID in ipairs(requiredMapIDs) do
+														if tostring(currentMapID) == tostring(mapID) then
+															return
+														end
+													end
 												end
+											else
+												RQE.WaypointButtons[failedIndex]:Click()
+												RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
 											end
+										else
+											RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
 										end
-									else
-										RQE.WaypointButtons[failedIndex]:Click()
-										RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
-									end
-								else
-									RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
+									end)
+									return
 								end
-							end)
-							return
+							end
 						end
+					else
+						RQE.debugLog("No stepData found for stepIndex:", stepIndex)
 					end
+				else
+					RQE.debugLog("Invalid stepIndex:", stepIndex)
 				end
 			end
 		end
+
 		C_Timer.After(1, function()
 			RQE:StartPeriodicChecks()
 		end)

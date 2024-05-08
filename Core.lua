@@ -2878,69 +2878,19 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
 end
 
 
--- -- Function that handles if returns Failed stepIndex
--- function RQE:ClickWaypointButtonForIndex(index)
-	-- -- Clears Macro Data
-	-- --RQEMacro:ClearMacroContentByName("RQE Macro")
-
-	-- local button = self.WaypointButtons[index]
-    -- if button then
-        -- button:Click()
-        -- self.LastClickedButtonRef = button  -- Update last clicked reference
-        -- self.CurrentStepIndex = index  -- Update current step index
-		-- RQE.OverrideHasProgress = false
-		-- RQE.AutoWaypointHasBeenClicked = true
-        -- RQE.infoLog("Clicked waypoint button for index:", index)
-    -- else
-        -- RQE.infoLog("No waypoint button found for index:", index)
-    -- end
--- end
-
-
--- Function that handles clicking the WaypointButton and setting macros
+-- Function that handles if returns Failed stepIndex
 function RQE:ClickWaypointButtonForIndex(index)
-    -- Clears previous macro data
-    RQEMacro:ClearMacroContentByName("RQE Macro")
+	-- Clears Macro Data
+	--RQEMacro:ClearMacroContentByName("RQE Macro")
 
-    local button = self.WaypointButtons[index]
+	local button = self.WaypointButtons[index]
     if button then
-        -- Clear any old data specific to this button before processing
-        button.questID = nil
-        button.stepIndex = nil
-
-        -- Click the button to update the location
         button:Click()
         self.LastClickedButtonRef = button  -- Update last clicked reference
         self.CurrentStepIndex = index  -- Update current step index
-        RQE.OverrideHasProgress = false
-        RQE.AutoWaypointHasBeenClicked = true
+		RQE.OverrideHasProgress = false
+		RQE.AutoWaypointHasBeenClicked = true
         RQE.infoLog("Clicked waypoint button for index:", index)
-
-        -- Retrieve the quest ID and set the macro
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
-        if questID then
-            local questData = RQE.getQuestData(questID)
-            if questData then
-                local stepData = questData[index]
-                if stepData then
-                    -- Set the new data for the button
-                    button.questID = questID
-                    button.stepIndex = index
-
-                    if stepData.macro then
-                        local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-                        RQE.infoLog("Macro commands to set:", macroCommands)
-                        RQEMacro:SetQuestStepMacro(questID, index, macroCommands, false)
-                    else
-                        RQE.debugLog("No macro data found for step:", index)
-                    end
-                end
-            else
-                RQE.debugLog("No quest data found for quest ID:", questID)
-            end
-        else
-            RQE.debugLog("No super tracked quest ID found.")
-        end
     else
         RQE.infoLog("No waypoint button found for index:", index)
     end
