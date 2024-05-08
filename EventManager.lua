@@ -188,7 +188,7 @@ local function HandleEvents(frame, event, ...)
 		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
 		QUESTLINE_UPDATE = RQE.handleQuestlineUpdate,
 		SCENARIO_COMPLETED = RQE.handleScenarioComplete,
-		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioCriteriaUpdate, -- RQE.updateScenarioCriteriaUI,  -- DIVERGES TO SEPARATE FUNCTION LATER
+		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioCriteriaUpdate,
 		SCENARIO_UPDATE = RQE.handleScenarioUpdate,
 		START_TIMER = RQE.handleStartTimer,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
@@ -208,7 +208,7 @@ local function HandleEvents(frame, event, ...)
     }
 
     if handlers[event] then
-        handlers[event](frame, event, table.unpack({...}))
+        handlers[event](frame, event, unpack({...}))
     else
         RQE.debugLog("Unhandled event:", event)
     end
@@ -255,9 +255,9 @@ function RQE.handleContentUpdate(...)
 
 	if type == 2 then -- Assuming 2 indicates an achievement
 		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(type) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
-		
+
 		RQE.UpdateTrackedAchievementList()
-		RQE.UpdateTrackedAchievements(contentType, id, tracked)
+		RQE.UpdateTrackedAchievements(type, id, isTracked)
 	end
 end
 
@@ -294,8 +294,10 @@ function RQE.handleItemCountChanged(...)
 			RQE.infoLog("Current super tracked questID:", questID)
 			local questData = RQE.getQuestData(questID)
 			if questData then
-				local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-				
+				if RQE.LastClickedButtonRef == nil then return end
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+
 				-- Ensure stepIndex is within the bounds of questData
 				if stepIndex >= 1 and stepIndex <= #questData then
 					local stepData = questData[stepIndex]
@@ -370,7 +372,9 @@ function RQE.ReagentBagUpdate(...)
 		RQE.infoLog("Current super tracked questID:", questID)
 		local questData = RQE.getQuestData(questID)
 		if questData then
-			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef == nil then return end
+			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if stepData then
@@ -412,8 +416,17 @@ function RQE.handleMerchantUpdate()
 		RQE.infoLog("Current super tracked questID:", questID)
 		local questData = RQE.getQuestData(questID)
 		if questData then
-			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef == nil then return end
+			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
+			
+            -- Validate that stepData exists before continuing
+            if not stepData then
+                RQE.infoLog("No step data found for step index:", stepIndex, "in quest ID:", questID)
+                return
+            end
+
 			local requiredItems = stepData.failedcheck or {}
 			local neededAmounts = stepData.neededAmt or {}
 			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
@@ -458,7 +471,9 @@ function RQE.handleUnitInventoryChange(...)
 		RQE.infoLog("Current super tracked questID:", questID)
 		local questData = RQE.getQuestData(questID)
 		if questData then
-			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef == nil then return end
+			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if not stepData then
@@ -501,7 +516,7 @@ function RQE.handlePlayerRegenEnabled()
 
     -- Check and execute any deferred scenario updates
     if RQE.deferredScenarioCriteriaUpdate then
-		RQE.canUpdateFromCriteria = true
+		--RQE.canUpdateFromCriteria = true
         RQE.updateScenarioCriteriaUI()
         RQE.deferredScenarioCriteriaUpdate = false
     end
@@ -683,7 +698,7 @@ function RQE.handleBossKill(...)
 		-- DEFAULT_CHAT_FRAME:AddMessage("ENCOUNTER_END event triggered: EncounterID: " .. tostring(encounterID) .. ", Encounter Name: " .. tostring(encounterName) .. ", DifficultyID: " .. difficultyID .. ", Group Size: " .. tostring(groupSize) .. ", Success Check: " .. tostring(success), 0, 1, 0)  -- Bright Green
 	end
 
-	RQE.canUpdateFromCriteria = true
+	--RQE.canUpdateFromCriteria = true
 end
 
 
@@ -730,7 +745,7 @@ function RQE.handleScenarioUpdate(...)
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
 
-	RQE.canUpdateFromCriteria = true
+	--RQE.canUpdateFromCriteria = true
 	-- Call another function if necessary, for example:
 	RQE.saveScenarioData(RQE, event, newStep)
 
@@ -768,21 +783,21 @@ function RQE.saveScenarioData(self, event, ...)
 
     -- Handle data based on event type
     if event == "SCENARIO_COMPLETED" then
-        local questID, xp, money = table.unpack(args)
+        local questID, xp, money = unpack(args)
         if questID and xp and money then  -- Make sure all data is present
             table.insert(RQE.ScenarioData, {type = event, questID = questID, xp = xp, money = money})
 			-- DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)
         end
 
     elseif event == "SCENARIO_UPDATE" then
-        local newStep = table.unpack(args)
+        local newStep = unpack(args)
         if newStep then  -- Check if the step information is present
             table.insert(RQE.ScenarioData, {type = event, newStep = newStep})
 			-- DEFAULT_CHAT_FRAME:AddMessage("SU 01 Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
         end
 
     elseif event == "SCENARIO_CRITERIA_UPDATE" then
-        local criteriaID = table.unpack(args)
+        local criteriaID = unpack(args)
         if criteriaID then
             table.insert(RQE.ScenarioData, {type = event, criteriaID = criteriaID})
            -- DEFAULT_CHAT_FRAME:AddMessage("Saved Criteria Update Data: Criteria ID=" .. tostring(criteriaID), 0.9, 0.7, 0.9)
@@ -1223,7 +1238,7 @@ function RQE.handleSuperTracking()
     -- startTime = debugprofilestop()  -- Start timer
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
-	
+
 	RQE:ClearWaypointButtonData()
 	UpdateFrame()
 
@@ -1300,9 +1315,9 @@ function RQE.handleSuperTracking()
 	local mapID = C_Map.GetBestMapForUnit("player")
 
 	-- Resets RQE.LastClickedWaypointButton to nil after Manual Super Track occurred
-	if RQE.ManualSuperTrack == false and questID == extractedQuestID and extractedQuestID then
-		RQE.LastClickedWaypointButton = nil
-	end
+	--if RQE.ManualSuperTrack == false and questID == extractedQuestID and extractedQuestID then
+		--RQE.LastClickedWaypointButton = nil
+	--end
 
 	RQE:CreateUnknownQuestWaypoint(questID, mapID)
 
@@ -1368,17 +1383,17 @@ function RQE.handleQuestAccepted(...)
     local questID = select(3, ...)
 	local superTrackQuest = C_SuperTrack.GetSuperTrackedQuestID()
 
-	if questID == superTrackQuest then
-		C_Timer.After(2, function()
-			if RQE.WaypointButtons[1] then
-				RQE.WaypointButtons[1]:Click()
-				RQE.AutoWaypointHasBeenClicked = true
-			end
-		end)
+	-- if questID == superTrackQuest then
+		-- C_Timer.After(2, function()
+			-- if RQE.WaypointButtons[1] then
+				-- RQE.WaypointButtons[1]:Click()
+				-- RQE.AutoWaypointHasBeenClicked = true
+			-- end
+		-- end)
 
-		-- Reset the Last Clicked WaypointButton to be "1"
-		RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-	end
+		-- -- Reset the Last Clicked WaypointButton to be "1"
+		-- RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+	-- end
 
    -- DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)
 
@@ -1618,7 +1633,9 @@ function RQE.handleZoneNewAreaChange()
 		local questData = RQE.getQuestData(questID)
 
 		if questData then
-			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef == nil then return end
+			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if stepData then
@@ -1751,7 +1768,9 @@ function RQE.handleUnitAura(...)
 				return
 			end
 
-			local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef == nil then return end
+			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if not stepData then
@@ -1865,9 +1884,9 @@ function RQE.updateScenarioCriteriaUI()
         return
     end
 
-    if not RQE.canUpdateFromCriteria then
-        return  -- Skip processing if the flag is false
-    end
+    -- if not RQE.canUpdateFromCriteria then
+        -- return  -- Skip processing if the flag is false
+    -- end
 
     -- If not completed, proceed with regular updates
 	-- if not IsFlying("player") and not UnitOnTaxi("player") then
@@ -1900,7 +1919,7 @@ function RQE.updateScenarioCriteriaUI()
 	RQE:UpdateRQEFrameVisibility()
     RQE:UpdateRQEQuestFrameVisibility()
 
-	RQE.canUpdateFromCriteria = false
+	--RQE.canUpdateFromCriteria = false
 	RQE.scenarioCriteriaUpdate = false   -- Flag that denotes if the event that was run prior to this was SCENARIO_CRITERIA_UPDATE
 
 	--local duration = debugprofilestop() - startTime
@@ -2036,14 +2055,14 @@ function RQE.handleQuestStatusUpdate()
 		RQE.ReadyToRestoreAutoWorldQuests = false
 	end
 
-    -- Check for actual progress in the quest objectives of all watched quests
-    if not RQE.hasQuestProgressChanged() then
-        RQE.debugLog("No quest progress made across watched quests. Skipping update.")
-        return
-    else
-		-- Process updates only if there's actual progress detected
-		RQE.debugLog("Quest progress detected across watched quests. Processing update.")
-	end
+    -- -- Check for actual progress in the quest objectives of all watched quests ***
+    -- if not RQE.hasQuestProgressChanged() then
+        -- RQE.debugLog("No quest progress made across watched quests. Skipping update.")
+        -- return
+    -- else
+		-- -- Process updates only if there's actual progress detected
+		-- RQE.debugLog("Quest progress detected across watched quests. Processing update.")
+	-- end
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -2526,13 +2545,13 @@ function RQE.handleQuestRemoved(...)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QR 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 	end
 
-	-- Resets Quest Progress
-	RQE.hasStateChanged()
-	RQE.hasQuestProgressChanged()
+	-- -- Resets Quest Progress ***
+	-- RQE.hasStateChanged()
+	-- RQE.hasQuestProgressChanged()
 
-	if questID == RQE.LastSuperTrackedQuestID then
-		RQE.AutoWaypointHasBeenClicked = false
-	end
+	-- if questID == RQE.LastSuperTrackedQuestID then
+		-- RQE.AutoWaypointHasBeenClicked = false
+	-- end
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)

@@ -1104,21 +1104,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		WaypointButton:SetScript("OnClick", function()
 			-- Your code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
-			RQE.WaypointButtonReadyTurnIn = false
-
-            -- Check if TomTom is loaded and compatibility is enabled
-            local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+			-- Check if TomTom is loaded and compatibility is enabled
+			if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 			end
-
-			-- -- Clears Macro Data
-			RQEMacro:ClearMacroContentByName("RQE Macro")
 
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
-
+            
             -- Call your function to handle the coordinate click
             RQE:OnCoordinateClicked(x, y, mapID)
 
@@ -1126,69 +1120,70 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
 			end
-
+			
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
 			-- Save the identifier (could be the questID or any unique property tied to the button)
 			RQE.LastClickedIdentifier = i
 
-            -- When creating the WaypointButton
+			-- When creating the WaypointButton
 			WaypointButton.stepIndex = i
 			RQE.LastClickedButtonRef = WaypointButton
-			RQE.infoLog("New LastClickedButton set:", RQE.WaypointButtonIndices[WaypointButton] or "Unnamed")
-
+			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
+			
 			-- Update the reference to the last clicked button
-			-- RQE.LastClickedWaypointButton = WaypointButton
-			-- RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
-
-            ---@class LastClickedWaypointButtonClass
-            ---@field bg Texture
-            -- Update the reference to the last clicked button
-            ---@type LastClickedWaypointButtonClass
-            RQE.LastClickedWaypointButton = {
-                button = WaypointButton,
-                bg = bg
-            }
-
+			RQE.LastClickedWaypointButton = WaypointButton
+			RQE.LastClickedWaypointButton.bg = bg -- Store the bg texture so it can be modified later
+			
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				local questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				if not questIDFromText then
 					RQE.debugLog("Error: Invalid quest ID extracted from text")
 				else
+					RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
+				
 					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+					RQE.debugLog("Attempting to create macro")
 					C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)  -- This call is now inside the else clause
 				end
-			--end
-
-                -- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button			
-                RQE.debugLog("Super Tracked Quest ID:", questIDFromText)  -- Debug message for the super tracked quest ID
-                local questData = RQE.getQuestData(questIDFromText)
-                local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
-                RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-                if questData then
-                    local stepIndex = i
-                    local stepData = questData[stepIndex]
-                    for index, stepData in ipairs(questData) do
-                        if stepData.description == stepDescription then
-                            RQE.infoLog("Matching step data found for description:", stepDescription)
-                            if stepData and stepData.macro then
-                                local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-                                RQE.infoLog("Macro commands to set:", macroCommands)
-                                RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
-                            end
-                        end
-                    end
-                    UpdateFrame(questIDFromText, questData, StepsText, CoordsText, MapIDs)
-                end
-            end
-
+			end
+			
+			RQE.infoLog("Quest ID from text for macro:", questIDFromText)  -- Debug message for the current operation
+	
+			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+			RQE.debugLog("Attempting to create macro")
+			-- C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)
+			
+			RQE.debugLog("Super Tracked Quest ID:", questID)  -- Debug message for the super tracked quest ID
+			local questData = RQE.getQuestData(questIDFromText)
+			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
+			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
+			if questData then
+				local stepData = questData[stepIndex]
+				RQE.debugLog("Quest data found for ID:", questIDFromText)
+				for index, stepData in ipairs(questData) do
+					if stepData.description == stepDescription then
+						RQE.infoLog("Matching step data found for description:", stepDescription)
+						if stepData and stepData.macro then
+							local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+							RQE.infoLog("Macro commands to set:", macroCommands)
+							RQEMacro:SetQuestStepMacro(questIDFromText, index, macroCommands, false)
+						else
+							RQE.debugLog("No macro data found for this step.")
+						end
+					end
+				end
+			else
+				RQE.debugLog("Invalid quest ID or step description. Quest data not found.")
+			end
+						
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
-
-			--UpdateFrame()
+			
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
 
 		-- Add a mouse down event to simulate a button press
@@ -1490,7 +1485,7 @@ end
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
-	RQE.debugLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
+	--RQE.debugLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
 	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
 
 	-- Validation check
@@ -1510,15 +1505,15 @@ function RQE.ClickUnknownQuestButton()
         return
     end
 
-    if RQE.hasClickedQuestButton then
-        return
-    end
+    -- if RQE.hasClickedQuestButton then
+        -- return
+    -- end
 
     local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
             button:Click()
-            RQE.hasClickedQuestButton = true
+            --RQE.hasClickedQuestButton = true
             foundButton = true
             break
         end
@@ -1535,9 +1530,9 @@ function RQE.ClickUnknownQuestButton()
 		end
     end
 
-    -- If the button wasn't found, print a message
-    if not RQE.hasClickedQuestButton then
-    end
+    -- -- If the button wasn't found, print a message
+    -- if not RQE.hasClickedQuestButton then
+    -- end
 
 	-- Re-Track the quest being listed as super tracked
 	C_SuperTrack.SetSuperTrackedQuestID(questID)
@@ -1666,13 +1661,19 @@ function RQEOnGroupRosterUpdate()
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
     -- Trigger the role selection only if the player was in an outdoor raid group
-	if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
-    --if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup and (availTank or availHealer or (availDPS and not (availTank and availHealer))) then
-        -- The player has left an outdoor raid group, show the role selection dialog
-		local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-        RQEShowRoleSelection(C_LFGList.GetActivityIDForQuestID(activityID))
+    if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
+        -- Ensure the questID is valid before proceeding
+        if questID and questID > 0 then
+            local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+            if activityID then
+                RQEShowRoleSelection(activityID)
+            else
+                RQE.debugLog("No activity ID found for questID:", questID)
+            end
+        else
+            RQE.debugLog("Invalid or missing questID:", questID)
+        end
     end
-
     -- Update the group size and type for the next check
     RQEUpdateGroupSizeAndType()
 end

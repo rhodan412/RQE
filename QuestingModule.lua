@@ -1573,8 +1573,8 @@ function UpdateRQEQuestFrame()
 						UpdateRQEQuestFrame()
 					else
 						--RQE.lastKnownInventory = {}
-						RQE.OverrideHasProgress = true
-						RQE.AutoWaypointHasBeenClicked = false
+						--RQE.OverrideHasProgress = true
+						--RQE.AutoWaypointHasBeenClicked = false
 
 						C_Map.ClearUserWaypoint()
 						-- Check if TomTom is loaded and compatibility is enabled
