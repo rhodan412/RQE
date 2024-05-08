@@ -21,6 +21,10 @@ RQE.QuestTypes = RQE.QuestTypes or {}
 RQE.ZoneQuests = RQE.ZoneQuests or {}
 RQE.QuestLines = RQE.QuestLines or {}
 
+if not table.unpack then
+    table.unpack = unpack
+end
+
 ---------------------------------------------------
 -- 2. Imports
 ---------------------------------------------------
