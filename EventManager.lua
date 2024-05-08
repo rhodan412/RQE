@@ -2832,6 +2832,12 @@ function RQE.handleQuestTurnIn(...)
     if questID == superTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
+		
+		RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
+		RQE.lastClickedObjectiveIndex = nil
+		RQE.LastClickedButtonRef = nil
+		print("Setting stuff to nil for correct waypoint button on new quest track")
+		
 		-- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
         if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
@@ -2871,6 +2877,7 @@ function RQE.handleQuestTurnIn(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			--RQE:CheckAndAdvanceStep(questID)
+			RQE:StartPeriodicChecks()
 		end)
 	else
 		-- C_Timer.After(2, function()
