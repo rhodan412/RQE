@@ -2761,15 +2761,15 @@ function RQE:StartPeriodicChecks()
             RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
         end
 
-        -- Check if the specific functions related to the current step need to be triggered
-        if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
-            RQE.infoLog("No relevant changes detected for the current step, skipping periodic checks.")
-            return
-		else
-			RQE.infoLog("Possible relevant changes detected!")
-        end
+        -- -- Check if the specific functions related to the current step need to be triggered    -- KEEPING THIS MEANS THAT IT WONT COUNT THE ITEMS IN THE INVENTORY CORRECTLY AND POSSIBLY OTHER ISSUES SIMILARLY
+        -- if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
+            -- RQE.infoLog("No relevant changes detected for the current step, skipping periodic checks.")
+            -- return
+		-- else
+			-- RQE.infoLog("Possible relevant changes detected!")
+        -- end
 
-        RQE.infoLog("Relevant changes detected or required for the current step.")
+        -- RQE.infoLog("Relevant changes detected or required for the current step.")
 
         -- Validate stepIndex
         if stepIndex < 1 or stepIndex > #questData then
@@ -2792,7 +2792,7 @@ function RQE:StartPeriodicChecks()
             end
         end
     end
-	RQE:CheckAndAdvanceStep(questID)
+	--RQE:CheckAndAdvanceStep(questID)
 end
 
 
@@ -4039,7 +4039,7 @@ function RQE:AdvanceNextStep(questID)
 		
 		C_Timer.After(0.5, function()
 			RQE:ClickSuperTrackedQuestButton()
-			RQE:CheckAndAdvanceStep(questID)
+			--RQE:CheckAndAdvanceStep(questID)
 		end)
 	end
 end

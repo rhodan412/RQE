@@ -1239,6 +1239,9 @@ function RQE.handleSuperTracking()
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
 
+	-- Reset the "Clicked" WaypointButton to nil
+	RQE.LastClickedIdentifier = nil
+		
 	RQE:ClearWaypointButtonData()
 	UpdateFrame()
 
@@ -2833,10 +2836,11 @@ function RQE.handleQuestTurnIn(...)
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
 		
-		RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
-		RQE.lastClickedObjectiveIndex = nil
-		RQE.LastClickedButtonRef = nil
-		print("Setting stuff to nil for correct waypoint button on new quest track")
+		-- Reset the "Clicked" WaypointButton to nil
+		RQE.LastClickedIdentifier = nil
+
+		-- Reset the Last Clicked WaypointButton to be "1"
+		RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 		
 		-- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
