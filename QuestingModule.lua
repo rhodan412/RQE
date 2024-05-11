@@ -2052,64 +2052,61 @@ end
 
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
-	RQE:ClearRQEWorldQuestFrame() -- Clears the World Quest Frame in preparation for refreshing it
-
     -- Define padding value
     local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
 	local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
 
-    -- Initialize the table to hold the WQuestLogIndexButtons if it doesn't exist
-    RQE.WQuestLogIndexButtons = RQE.WQuestLogIndexButtons or {}
+    -- Hide all existing World Quest buttons first
+    for i = 1, 50 do -- Assuming you won't have more than 50 World Quests tracked at once
+        local button = RQE.WorldQuestsFrame["WQButton" .. i]
+        if button then
+            button:Hide()
+            button.WQuestLevelAndName:Hide()
+            button.QuestObjectivesOrDescription:Hide()
+        end
+    end
 
-    -- Efficiently hide existing World Quest buttons
-	for questID, button in pairs(RQE.WQuestLogIndexButtons) do
-		if button and button:IsVisible() then
-			button:Hide()
-			if button.WQuestLevelAndName then button.WQuestLevelAndName:Hide() end
-			if button.QuestObjectivesOrDescription then button.QuestObjectivesOrDescription:Hide() end
-		end
-	end
-
-    -- Track used quest IDs to avoid duplicate handling
-    local usedQuestIDs = {}  -- Table to keep track of used quest IDs
-
-    -- Check the actual number of tracked World Quests
+    -- Get the number of tracked World Quests
     local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
-
-    -- Placeholder for tracking the last positioned UI element
     local lastWorldQuestElement = nil
+	local usedQuestIDs = {}  -- Table to keep track of used quest IDs
 
-	-- Loop through each tracked World Quest from the sorted list
-	for i, questInfo in ipairs(sortedWorldQuests) do
-		local questID = questInfo.questID
+    -- Loop through each tracked World Quest
+    for i, questInfo in ipairs(sortedWorldQuests) do
+        local questID = questInfo.questID
+		local button = RQE.WorldQuestsFrame["WQButton" .. questID]
+		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+
+		-- Retrieve or initialize the WQuestLogIndexButton for the current questID
+        local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
+
 		if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
 			usedQuestIDs[questID] = true
-			local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
 
-			-- Retrieve or initialize the WQuestLogIndexButton for the current questID
-			if not RQE.WQuestLogIndexButtons[questID] then
-				RQE.WQuestLogIndexButtons[questID] = CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
-			end
-			local WQuestLogIndexButton = RQE.WQuestLogIndexButtons[questID]
-			WQuestLogIndexButton:SetSize(35, 35)
+            local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
+            RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
+            WQuestLogIndexButton:SetSize(35, 35)
 
-			-- Ensure the button always has the correct background texture based on its tracking state
-			local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
-			WQuestLogIndexButton.bg = bg
-			bg:SetAllPoints()
-			bg:SetTexture(isSuperTracked and "Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp" or "Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+            -- Ensure the button always has the correct background texture based on its tracking state
+            local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
+            WQuestLogIndexButton.bg = bg
+            bg:SetAllPoints()
+            if isSuperTracked then
+                bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+            else
+                bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+            end
 
 			WQuestLogIndexButton:Show()
-			print("Number of World Quest buttons:", countTableElements(RQE.WQuestLogIndexButtons))
 
-			-- Create or update the number label
-			local WQnumber = WQuestLogIndexButton.number or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-			WQnumber:SetPoint("CENTER", WQuestLogIndexButton, "CENTER")
-			WQnumber:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-			WQnumber:SetTextColor(1, 0.7, 0.2)
-			WQnumber:SetText("WQ")
-			WQuestLogIndexButton.number = WQnumber  -- Save for future reference
+            -- Create or update the number label
+            local WQnumber = WQuestLogIndexButton.number or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+            WQnumber:SetPoint("CENTER", WQuestLogIndexButton, "CENTER")
+            WQnumber:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+            WQnumber:SetTextColor(1, 0.7, 0.2)
+            WQnumber:SetText("WQ")
+            WQuestLogIndexButton.number = WQnumber
 
 			-- Modify the OnClick event
 			WQuestLogIndexButton:SetScript("OnClick", function(self, button)
@@ -2201,12 +2198,10 @@ function UpdateRQEWorldQuestFrame()
 					end)
 				end
 
-				-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-				C_Timer.After(1, function()
-					if RQE.db.profile.autoClickWaypointButton then
-						RQE:StartPeriodicChecks()  -- MIGHT NEED TO COMMENT OUT IF MISBEHAVING
-					end
-				end)
+				-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+				-- if RQE.db.profile.autoClickWaypointButton then
+					-- RQE:StartPeriodicChecks()
+				-- end
 			end)
 
 			-- Add a mouse down event to simulate a button press
@@ -2242,7 +2237,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetHeight(0)
 			WQuestLevelAndName:SetJustifyH("LEFT")
 			WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
+			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
 
 			-- Retrieve the quest title using the quest ID
 			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
@@ -2260,7 +2255,7 @@ function UpdateRQEWorldQuestFrame()
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
-			WQuestObjectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
+			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
             WQuestObjectives:SetHeight(0)
             WQuestObjectives:SetJustifyH("LEFT")
             WQuestObjectives:SetJustifyV("TOP")
@@ -2272,9 +2267,8 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveQuestWatch(questID)
-					--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
-					--UpdateRQEWorldQuestFrame()
-					RQE:QuestType() -- Refreshes the Quest Tracking Frame as it redraws the Quest Tracker
+					RQE:ClearRQEQuestFrame()
+					RQE:ClearWQTracking()
 				elseif button == "RightButton" then
 					ShowQuestDropdown(self, questID)
 				end
@@ -2357,7 +2351,6 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Update the last element tracker for the correct type
-			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 			if isWorldQuest then
 				lastWorldQuestElement = WQuestObjectivesOrDescription
 			end
