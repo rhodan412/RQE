@@ -101,7 +101,7 @@ function ShowQuestDropdownRQEFrame(self, questID)
     end
 
     -- Always include the other options
-    table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID); RQE.ClearFrameData(); end })
+    table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end })
 	-- Even though no error it can be glitchy with abandoning this from anything other than the world map/official quest log
     table.insert(menu, { text = "Abandon Quest", func = function() RQE:AbandonQuest(questID); end })
 	table.insert(menu, { text = "Show Wowhead Link", func = function() RQE:ShowWowheadLink(questID) end })

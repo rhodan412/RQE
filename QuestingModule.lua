@@ -2268,7 +2268,7 @@ function UpdateRQEWorldQuestFrame()
 					-- Untrack the quest
 					C_QuestLog.RemoveQuestWatch(questID)
 					RQE:ClearRQEQuestFrame()
-					RQE:ClearWQTracking()
+					RQE:QuestType()
 				elseif button == "RightButton" then
 					ShowQuestDropdown(self, questID)
 				end

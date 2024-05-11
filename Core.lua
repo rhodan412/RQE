@@ -338,8 +338,8 @@ function RQE:OnInitialize()
 	end
 
     -- Initialize checkbox state for MapID
-    if MapIDCheckbox then  -- replace with your actual checkbox frame name
-        MapIDCheckbox:SetChecked(RQE.db.profile.showMapID)
+    if RQE.MapIDCheckbox then  -- replace with your actual checkbox frame name
+        RQE.MapIDCheckbox:SetChecked(RQE.db.profile.showMapID)
     end
 
 	-- Register the profile changed callback
@@ -632,7 +632,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
 		end
 	else
 		-- Not a world quest, use the existing logic
-		mapID = GetQuestUiMapID(questID, ignoreWaypoints)
+		mapID = GetQuestUiMapID(questID)
 		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
 	end
 
@@ -902,8 +902,8 @@ function RQE:ToggleMapIDCheckbox()
     RQE.db.profile.showMapID = newValue
 
     -- Add logic here to update your checkbox UI element
-    if MapIDCheckbox then
-        MapIDCheckbox:SetChecked(newValue)
+    if RQE.MapIDCheckbox then
+        RQE.MapIDCheckbox:SetChecked(newValue)
     end
 end
 
@@ -965,9 +965,9 @@ function RQE:UpdateRQEQuestFrameVisibility()
 
     -- Check conditions for showing/hiding the frame, including manual closure
     if (self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario)) or self.isRQEQuestFrameManuallyClosed then
-        RQEQuestFrame:Hide()
+        RQE.RQEQuestFrame:Hide()
     else
-        RQEQuestFrame:Show()
+        RQE.RQEQuestFrame:Show()
     end
 
 	--RQE.canUpdateFromCriteria = true
@@ -993,6 +993,7 @@ end
 
 -- Function to update Memory Usage display
 function RQE:UpdateMemUsageDisplay()
+    local mapID = C_Map.GetBestMapForUnit("player")
     if RQE.db.profile.showMapID and mapID then
         RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. mapID)
     else
@@ -1046,8 +1047,8 @@ function RQE:UpdateQuestFramePosition()
 
     -- Error handling
     local success, err = pcall(function()
-        RQEQuestFrame:ClearAllPoints()
-        RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+        RQE.RQEQuestFrame:ClearAllPoints()
+        RQE.RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
     end)
 
     if not success then
@@ -1081,7 +1082,7 @@ function RQE:UpdateQuestFrameSize()
 
     -- Error handling for quest frame
     local success, err = pcall(function()
-        RQEQuestFrame:SetSize(questFrameWidth, questFrameHeight)
+        RQE.RQEQuestFrame:SetSize(questFrameWidth, questFrameHeight)
     end)
 
     if not success then
@@ -1517,7 +1518,7 @@ end
 -- Function for Tracking World Quests
 function UpdateWorldQuestTrackingForMap(uiMapID)
     if not uiMapID then
-        RQE.errorLog("Invalid map ID provided to UpdateWorldQuestTrackingForMap")
+        RQE.debugLog("Invalid map ID provided to UpdateWorldQuestTrackingForMap")
         return  -- Early exit if uiMapID is invalid
     end
 
@@ -1817,8 +1818,8 @@ function RQE:ResetFrameSizeToDBorDefault()
     if RQEFrame then
         RQEFrame:SetSize(RQEWidth, RQEHeight)
     end
-    if RQEQuestFrame then
-        RQEQuestFrame:SetSize(RQEQuestWidth, RQEQuestHeight)
+    if RQE.RQEQuestFrame then
+        RQE.RQEQuestFrame:SetSize(RQEQuestWidth, RQEQuestHeight)
     end
 end
 
@@ -1878,14 +1879,14 @@ function RQE:MaximizeQuestFrame()
     local width = RQE.db.profile.QuestFramePosition.originalWidth or defaultWidth
     local height = RQE.db.profile.QuestFramePosition.originalHeight or defaultHeight
 
-    RQEQuestFrame:SetSize(width, height)
+    RQE.RQEQuestFrame:SetSize(width, height)
     RQE.db.profile.isQuestFrameMaximized = true
 end
 
 
 -- When the frame is minimized
 function RQE:MinimizeQuestFrame()
-    RQEQuestFrame:SetSize(300, 30)  -- If you want to make this configurable, you can use similar logic as above
+    RQE.RQEQuestFrame:SetSize(300, 30)  -- If you want to make this configurable, you can use similar logic as above
     RQE.db.profile.isQuestFrameMaximized = false
 end
 
@@ -2138,18 +2139,11 @@ end
 function RQE:ToggleRQEQuestFrame()
     if self.db.profile.enableQuestFrame then
         -- Code to show the Quest Frame
-        RQEQuestFrame:Show()
+        RQE.RQEQuestFrame:Show()
     else
         -- Code to hide the Quest Frame
-        RQEQuestFrame:Hide()
+        RQE.RQEQuestFrame:Hide()
     end
-end
-
-
--- Clears RQEQuestFrame World Quest Scenario before refreshing Entire Quest Tracker
-function RQE:ClearWQTracking()
-	RQE:ClearRQEWorldQuestFrame()
-	QuestType()
 end
 
 
@@ -4059,32 +4053,32 @@ end
 
 -- Handles building the macro from the super tracked quest
 function RQE:BuildQuestMacroBackup()
-	isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
     if isSuperTracking then
         local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+        -- Allow time for the UI to update and for the super track to register
+        C_Timer.After(1, function()
+            -- Fetch the quest data here
+            local questData = RQE.getQuestData(questID)
+            if not questData then
+                RQE.debugLog("Quest data not found for questID:", questID)
+                return
+            end
+
+            -- Check if the last clicked waypoint button's macro should be set
+            local waypointButton = RQE.LastClickedWaypointButton
+            if waypointButton and waypointButton.stepIndex then
+                local stepData = questData[waypointButton.stepIndex]
+                if stepData and stepData.macro then
+                    -- Get macro commands from the step data
+                    local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+                    RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
+                end
+            end
+        end)
     end
-
-	-- Allow time for the UI to update and for the super track to register
-	C_Timer.After(1, function()
-		-- Fetch the quest data here
-		local questData = RQE.getQuestData(questID)
-		if not questData then
-			RQE.debugLog("Quest data not found for questID:", questID)
-			return
-		end
-
-		-- Check if the last clicked waypoint button's macro should be set
-		local waypointButton = RQE.LastClickedWaypointButton
-		if waypointButton and waypointButton.stepIndex then
-			local stepData = questData[waypointButton.stepIndex]
-			if stepData and stepData.macro then
-				-- Get macro commands from the step data
-				local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-				RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
-			end
-		end
-	end)
 end
 
 
