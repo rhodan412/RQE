@@ -182,6 +182,8 @@ end
 -- 3. Child Frames
 ---------------------------
 
+---@class RQEChildFrame : Frame
+---@field questCount number
 local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
     local frame = CreateFrame("Frame", name, parent)
     frame:SetSize(width, height)
@@ -195,20 +197,18 @@ RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0
 
 -- Create the Campaign Child frame, anchored to the content frame/Scenario Frame if available
 RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, 0, content:GetWidth(), 200)
+RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
 
 -- Create the second child frame, anchored below the CampaignFrame
 RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -200, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
+RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
 
 -- Create the third child frame, anchored below the QuestsFrame
 RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -400, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
+RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 
 -- Create the third child frame, anchored below the QuestsFrame
 RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -400, content:GetWidth(), 200) -- Adjust the Y-offset based on your layout
-
--- Initialize with default values
-RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
-RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
-RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 RQE.AchievementsFrame.achieveCount = RQE.AchievementsFrame.achieveCount or 0
 
 
