@@ -2204,6 +2204,16 @@ function BuildItemNames(itemLinks)
 end
 
 
+-- Define this function at the beginning of your script or in a utilities module
+function countTableElements(tbl)
+    local count = 0
+    for _ in pairs(tbl) do
+        count = count + 1
+    end
+    return count
+end
+
+
 ---------------------------------------------------
 -- 16. Quest Info Functions
 ---------------------------------------------------

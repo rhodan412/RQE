@@ -49,9 +49,9 @@ else
     yPos = 150  -- Default y position if db is not available
 end
 
-RQEQuestFrame:SetSize(325, 450)
-RQEQuestFrame:SetPoint("CENTER", UIParent, "CENTER", xPos, yPos)
-RQEQuestFrame:SetBackdrop({
+RQE.RQEQuestFrame:SetSize(325, 450)
+RQE.RQEQuestFrame:SetPoint("CENTER", UIParent, "CENTER", xPos, yPos)
+RQE.RQEQuestFrame:SetBackdrop({
     bgFile = "Interface/Tooltips/UI-Tooltip-Background",
     edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
     tile = true,
@@ -59,12 +59,12 @@ RQEQuestFrame:SetBackdrop({
     edgeSize = 5,
     insets = { left = 0, right = 0, top = 1, bottom = 0 }
 })
-RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
+RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
 
 -- Create the ScrollFrame
-local ScrollFrame = CreateFrame("ScrollFrame", nil, RQEQuestFrame)
-ScrollFrame:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-position
-ScrollFrame:SetPoint("BOTTOMRIGHT", RQEQuestFrame, "BOTTOMRIGHT", -30, 10)
+local ScrollFrame = CreateFrame("ScrollFrame", nil, RQE.RQEQuestFrame)
+ScrollFrame:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-position
+ScrollFrame:SetPoint("BOTTOMRIGHT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
@@ -88,8 +88,8 @@ frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 
 
 -- Hide tooltip for the RQEQuestFrame when moving out of the frame
-if RQEQuestFrame then
-    RQEQuestFrame:SetScript("OnLeave", function()
+if RQE.RQEQuestFrame then
+    RQE.RQEQuestFrame:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
 end
@@ -585,7 +585,7 @@ function AdjustQuestItemWidths(frameWidth)
     }
 
 	-- Adjust width for each element
-    for _, WQuestLogIndexButton in pairs(WQuestLogIndexButtons or {}) do
+	for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
         -- Adjust WQuestLevelAndName width for each WQuestLogIndexButton
         if WQuestLogIndexButton.WQuestLevelAndName then
             local dynamicPadding = basePadding.WQuestLevelAndName * (1 + paddingMultiplier)
@@ -2052,8 +2052,6 @@ end
 
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
-	RQE:ClearRQEWorldQuestFrame() -- Clears the World Quest Frame in preparation for refreshing it
-
     -- Define padding value
     local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
@@ -2200,12 +2198,10 @@ function UpdateRQEWorldQuestFrame()
 					end)
 				end
 
-				-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-				C_Timer.After(1, function()
-					if RQE.db.profile.autoClickWaypointButton then
-						RQE:StartPeriodicChecks()  -- MIGHT NEED TO COMMENT OUT IF MISBEHAVING
-					end
-				end)
+				-- -- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
+				-- if RQE.db.profile.autoClickWaypointButton then
+					-- RQE:StartPeriodicChecks()
+				-- end
 			end)
 
 			-- Add a mouse down event to simulate a button press
@@ -2241,7 +2237,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetHeight(0)
 			WQuestLevelAndName:SetJustifyH("LEFT")
 			WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
+			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
 
 			-- Retrieve the quest title using the quest ID
 			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
@@ -2259,7 +2255,7 @@ function UpdateRQEWorldQuestFrame()
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
-			WQuestObjectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
+			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
             WQuestObjectives:SetHeight(0)
             WQuestObjectives:SetJustifyH("LEFT")
             WQuestObjectives:SetJustifyV("TOP")
@@ -2271,9 +2267,8 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveQuestWatch(questID)
-					--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
-					--UpdateRQEWorldQuestFrame()
-					RQE:QuestType() -- Refreshes the Quest Tracking Frame as it redraws the Quest Tracker
+					RQE:ClearRQEQuestFrame()
+					RQE:ClearWQTracking()
 				elseif button == "RightButton" then
 					ShowQuestDropdown(self, questID)
 				end
@@ -2356,7 +2351,6 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Update the last element tracker for the correct type
-			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 			if isWorldQuest then
 				lastWorldQuestElement = WQuestObjectivesOrDescription
 			end

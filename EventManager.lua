@@ -665,7 +665,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
         end
 
         if RQE.UpdateFrameOpacity then
-            RQE.UpdateFrameOpacity()  -- Update the frame opacity
+            RQE:UpdateFrameOpacity()  -- Update the frame opacity
         end
     end)
 
