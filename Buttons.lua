@@ -242,7 +242,8 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
 		if macroIndex and macroIndex > 0 then
 			local _, _, body = GetMacroInfo(macroIndex)
 			-- Check if the body has content (not nil and not an empty string)
-			if body and body:trim() ~= "" then
+			if body and string.trim(body) ~= "" then
+			--if body and body:trim() ~= "" then
 				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 				GameTooltip:SetText(body, nil, nil, nil, nil, true)
 				GameTooltip:Show()
@@ -294,6 +295,35 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
     else
         if MagicButton then MagicButton:Hide() end
     end
+end
+
+
+-- Function to set up an override key binding for your macro
+function RQE:SetupOverrideMacroBinding()
+    local ownerFrame = RQE.MagicButton
+    local macroName = "RQE Macro"
+    local bindingKey = RQE.db.profile.keyBindSetting or "CTRL-SHIFT-Y"  -- Use the stored setting or default
+
+    local macroIndex = GetMacroIndexByName(macroName)
+    if macroIndex and macroIndex > 0 then
+		-- Sets an override binding that runs the specified macro by index
+        ClearOverrideBindings(ownerFrame)
+        SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
+		-- Optional: Provide feedback that the binding was set
+        -- print("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
+    else
+		-- Provide feedback if the macro does not exist
+        RQE.debugLog("Macro '" .. macroName .. "' not found.")
+    end
+end
+
+
+-- Remember to clear the override binding when it's no longer needed or when your UI is hidden
+local function ClearOverrideMacroBinding()
+    local ownerFrame = RQE.MagicButton -- The same frame you set the binding on
+
+    -- This will clear all override bindings associated with the ownerFrame
+    ClearOverrideBindings(ownerFrame)
 end
 
 

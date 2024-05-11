@@ -636,6 +636,10 @@ function RQE.handlePlayerLogin()
 		RQE.DisplayCurrentZoneQuests()
 		-- DEFAULT_CHAT_FRAME:AddMessage("Debug (From PLAYER_LOGIN): Updated tracked quests to current zone.", 0.68, 0.85, 0.9)
 	end
+	
+    if RQE.MagicButton then
+        RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
+    end
 end
 
 

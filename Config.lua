@@ -255,6 +255,19 @@ RQE.options = {
 						RQE.db.profile.enableCarboniteCompatibility = newValue;
 					end,
 				},
+				keyBindSetting = {
+					type = "keybinding",
+					name = "Key Binding for Macro",
+					desc = "Specify the key combination for triggering the RQE Macro MagicButton",
+					get = function()
+						return RQE.db.profile.keyBindSetting
+					end,
+					set = function(_, value)
+						RQE.db.profile.keyBindSetting = value
+						RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
+					end,
+					order = 16,
+				},
 			},
 		},
         frame = {
