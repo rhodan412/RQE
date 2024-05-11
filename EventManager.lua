@@ -551,14 +551,7 @@ function RQE.handlePlayerRegenEnabled()
 		else
 			RQE.PlayerMountStatus = "None"
 		end
-
-		-- Print the current status
-		-- print("Current Mount Status:", RQE.PlayerMountStatus)
 	end)
-
-	-- print("Debug: Flying status -", tostring(isFlying))
-	-- print("Debug: Taxi status -", tostring(onTaxi))
-	-- print("Debug: Dragonriding status -", tostring(RQE.isDragonRiding))
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -841,11 +834,6 @@ function RQE.handleWorldStateTimerStart(...)
 	local timerID = select(3, ...)
 
     DEFAULT_CHAT_FRAME:AddMessage("WSTS 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
-
-	-- if not IsFlying("player") and not UnitOnTaxi("player") then
-		-- RQE.LogScenarioInfo()
-		-- RQE.PrintScenarioCriteriaInfoByStep()
-	-- end
 
 	RQE.StopTimer()
 	RQE.StartTimer()
@@ -1131,14 +1119,7 @@ function RQE.handlePlayerEnterWorld(...)
 		else
 			RQE.PlayerMountStatus = "None"
 		end
-
-		-- Print the current status
-		-- print("Current Mount Status:", RQE.PlayerMountStatus)
 	end)
-
-	-- print("Debug: Flying status -", tostring(isFlying))
-	-- print("Debug: Taxi status -", tostring(onTaxi))
-	-- print("Debug: Dragonriding status -", tostring(RQE.isDragonRiding))
 
    -- DEFAULT_CHAT_FRAME:AddMessage("PEW 04 Debug: Entering handlePlayerEnterWorld function.", 0.93, 0.51, 0.93)
 
@@ -1390,18 +1371,6 @@ function RQE.handleQuestAccepted(...)
     local questID = select(3, ...)
 	local superTrackQuest = C_SuperTrack.GetSuperTrackedQuestID()
 
-	-- if questID == superTrackQuest then
-		-- C_Timer.After(2, function()
-			-- if RQE.WaypointButtons[1] then
-				-- RQE.WaypointButtons[1]:Click()
-				-- RQE.AutoWaypointHasBeenClicked = true
-			-- end
-		-- end)
-
-		-- -- Reset the Last Clicked WaypointButton to be "1"
-		-- RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-	-- end
-
    -- DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)
 
 	-- Reset Flag for printing schematics when quest accepted
@@ -1523,14 +1492,7 @@ function RQE.handleZoneChange(...)
 		else
 			RQE.PlayerMountStatus = "None"
 		end
-
-		-- Print the current status
-		-- print("Current Mount Status:", RQE.PlayerMountStatus)
 	end)
-
-	-- print("Debug: Flying status -", tostring(isFlying))
-	-- print("Debug: Taxi status -", tostring(onTaxi))
-	-- print("Debug: Dragonriding status -", tostring(RQE.isDragonRiding))
 
 	if event == "UNIT_EXITING_VEHICLE" then
 		local unitTarget = select(3, ...)
@@ -1618,6 +1580,7 @@ function RQE.handleZoneChange(...)
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
 
+	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
 end
 
@@ -2747,12 +2710,6 @@ function RQE.handleQuestWatchListChanged(...)
 		end
 	end
 
-	-- if added == nil then
-		-- return
-	-- end
-
-	-- RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
-	--UpdateRQEQuestFrame()  -- Ensure this function is defined to refresh the content based on current quest watch list -- CALLED AT BOTTOM OF FUNCTION
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
@@ -2851,10 +2808,6 @@ function RQE.handleQuestTurnIn(...)
         if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
-		-- -- Set Super Track to 0 after turning in super tracked quest
-		-- C_SuperTrack.SetSuperTrackedQuestID(0)
-		-- C_SuperTrack.ClearSuperTrackedContent()
-		-- UpdateRQEQuestFrame()
     end
 
 	local displayedQuestID
@@ -2887,10 +2840,6 @@ function RQE.handleQuestTurnIn(...)
 			--RQE:CheckAndAdvanceStep(questID)
 			RQE:StartPeriodicChecks()
 		end)
-	else
-		-- C_Timer.After(2, function()
-			-- RQE.ClickUnknownQuestButton()
-		-- end)
 	end
 
     -- -- Verify if the turned-in quest matches the currently displayed or super tracked quest   -- RQE:SHOULDCLEARFRAME() RUNS AT END OF UPDATEFRAME FUNCTION BELOW

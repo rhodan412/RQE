@@ -218,16 +218,3 @@ editBox:SetScript("OnTextChanged", function(self)
     --scrollBar:SetMinMaxValues(1, maxScroll)
     scrollBar:SetValue(maxScroll) -- Set to the bottom of the scroll area
 end)
-
-
--- SLASH_LOGTOGGLE1 = "/logtoggle"
--- SlashCmdList["LOGTOGGLE"] = RQE.ToggleLogFrame
-
-
--- -- Ensure the RQE.Buttons.CreateDebugLogCloseButton function is loaded and available before calling it
--- if RQE.Buttons and RQE.Buttons.CreateDebugLogCloseButton then
-    -- -- Creates button for Closing Debug Log Frame
-    -- RQE.Buttons.CreateDebugLogCloseButton(logFrame)
--- else
-    -- RQE.debugLog("RQE Debug Log Close Button creation function is not available.")
--- end

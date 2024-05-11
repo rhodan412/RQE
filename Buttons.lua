@@ -243,7 +243,6 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
 			local _, _, body = GetMacroInfo(macroIndex)
 			-- Check if the body has content (not nil and not an empty string)
 			if body and string.trim(body) ~= "" then
-			--if body and body:trim() ~= "" then
 				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 				GameTooltip:SetText(body, nil, nil, nil, nil, true)
 				GameTooltip:Show()

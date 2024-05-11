@@ -9,108 +9,6 @@ RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust t
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
 
 
-
-
-
-
-
-
-
-
--- -- Define or update the macro text based on the existing macro
--- local function updateMacroText()
-    -- local macroName = "RQE Macro"
-    -- local macroIndex = GetMacroIndexByName(macroName)
-    -- local macroText = "/run print('Macro not found!')" -- Default message if macro doesn't exist
-    -- if macroIndex and macroIndex ~= 0 then
-        -- local _, _, macroBody = GetMacroInfo(macroIndex)
-        -- macroText = macroBody
-    -- end
-    -- return macroText
--- end
-
--- -- Create the secure frame to activate the macro
--- local frame = CreateFrame("Button", "RQEMacroButton", UIParent, "SecureActionButtonTemplate")
--- frame:SetPoint("CENTER") -- Position at the center of the screen
--- frame:SetSize(100, 100) -- Set the size of the button
--- frame:SetAttribute("type", "macro")
--- frame:SetAttribute("macro", "RQE Macro")
--- frame:RegisterForClicks("AnyUp", "AnyDown")
-
-
-
--- -- Update macro text and attribute
--- local function refreshMacroButton()
-    -- local macroText = updateMacroText()
-    -- frame:SetAttribute("macrotext", macroText)
-
-    -- -- Update tooltip to show current macro
-    -- frame:SetScript("OnEnter", function(self)
-        -- GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        -- GameTooltip:SetText("Click to execute the RQE Macro:\n" .. macroText)
-        -- GameTooltip:Show()
-    -- end)
--- end
-
--- -- Initial refresh of the button macro text
--- refreshMacroButton()
-
--- -- Optional: Add a visual appearance
-    -- -- Set the button's appearance
-    -- frame:SetNormalTexture(iconID)  -- Example texture ID, replace with actual macro icon or path
-    -- farme:SetHighlightTexture(iconID, "ADD")
-	
--- frame:SetScript("OnLeave", function(self)
-    -- GameTooltip:Hide()
--- end)
-
--- -- Refresh the macro button whenever macros are updated
--- local updateFrame = CreateFrame("Frame")
--- updateFrame:RegisterEvent("UPDATE_MACROS")
--- updateFrame:SetScript("OnEvent", refreshMacroButton)
-
-
-
--- -- Create the main frame for the button
--- local button = CreateFrame("Button", "RQEMacroButton", UIParent, "GameMenuButtonTemplate")
--- button:SetPoint("CENTER", UIParent, "CENTER", 0, 0) -- You can adjust the position as needed
--- button:SetSize(140, 40) -- Set the width and height of the button
--- button:SetText("Run RQE Macro") -- Set the text you want on the button
-
--- -- Optional: Add a tooltip
--- button:SetScript("OnEnter", function(self)
-    -- GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    -- GameTooltip:SetText("Click to execute the RQE Macro")
-    -- GameTooltip:Show()
--- end)
--- button:SetScript("OnLeave", function(self)
-    -- GameTooltip:Hide()
--- end)
-
--- -- The script that runs when the button is clicked
--- button:SetScript("OnClick", function()
-    -- -- Execute the macro named "RQE Macro"
-    -- local macroIndex = GetMacroIndexByName("RQE Macro")
-    -- if macroIndex and macroIndex > 0 then
-        -- RunMacro(macroIndex)
-    -- else
-        -- print("Macro 'RQE Macro' not found.")
-    -- end
--- end)
-
-
--- -- Making the button more visible and interactive
--- button:EnableMouse(true)
--- button:SetMovable(true)
--- button:RegisterForDrag("LeftButton")
--- button:SetScript("OnDragStart", button.StartMoving)
--- button:SetScript("OnDragStop", button.StopMovingOrSizing)
-
-
-
-
-
-
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
 RQE.Buttons.UpdateMagicButtonIcon = function()
     local macroIndex = GetMacroIndexByName("RQE Macro")
@@ -159,6 +57,7 @@ function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
     self:ActuallySetMacro(name, iconFileID, body, perCharacter)
 end
 
+
 -- Internal function that actually creates the macro content
 function RQEMacro:ActuallySetMacro(name, iconFileID, body, perCharacter)
     local macroIndex = GetMacroIndexByName(name)
@@ -189,6 +88,7 @@ function RQEMacro:ClearMacroContentByName(macroName)
 
     self:ActuallyClearMacroContentByName(macroName)
 end
+
 
 -- Internal function that actually clears the macro content
 function RQEMacro:ActuallyClearMacroContentByName(macroName)

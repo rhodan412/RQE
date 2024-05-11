@@ -118,9 +118,6 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 		if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
 			waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText  -- Append DirectionText on a new line if available
 		end
-		-- if DirectionText and DirectionText ~= "No direction available." then
-			-- waypointTitle = waypointTitle .. "\n" .. DirectionText  -- Append DirectionText on a new line if available
-		-- end
 
 		-- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
