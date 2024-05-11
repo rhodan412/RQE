@@ -1564,7 +1564,7 @@ function UpdateRQEQuestFrame()
 						end
 
 						if questID == extractedQuestID then
-							RQE.ClearFrameData()
+							RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
 							RQE:ClearWaypointButtonData()
 						end
 
@@ -2122,7 +2122,7 @@ function UpdateRQEWorldQuestFrame()
 					end
 
 					if questID == extractedQuestID then
-						RQE.ClearFrameData()
+						RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
 						RQE:ClearWaypointButtonData()
 					end
 

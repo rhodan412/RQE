@@ -342,7 +342,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     ClearButton:SetScript("OnClick", function()
 
         -- Your code for ClearButton functionality here
-		RQE.ClearFrameData()
+		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
 		RQE:ClearWaypointButtonData()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil

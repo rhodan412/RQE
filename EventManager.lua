@@ -1243,7 +1243,7 @@ function RQE.handleSuperTracking()
         -- extractedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
         -- if extractedQuestID then  -- Ensure extractedQuestID is not nil before setting it
             -- C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
-            -- --RQE.ClearFrameData()
+            -- --RQE:ClearFrameData()
             -- UpdateFrame()
         -- else
             -- RQE.infoLog("Extracted questID is nil when trying to set super tracked quest.")
@@ -1287,7 +1287,7 @@ function RQE.handleSuperTracking()
 
     -- Early return if manual super tracking wasn't performed
 	if RQE.ManualSuperTrack then
-		RQE.ClearFrameData()
+		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
 		RQE.lastClickedObjectiveIndex = 0
     end
 
@@ -2286,7 +2286,7 @@ function RQE.handleQuestComplete()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 
 	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame (now handled through RQE:ShouldClearFrame)
-	--RQE.ClearFrameData()
+	--RQE:ClearFrameData()
 	RQE.searchedQuestID = nil -- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
@@ -2363,7 +2363,7 @@ function RQE.handleQuestAutoComplete(...)
    -- DEFAULT_CHAT_FRAME:AddMessage("QAC 03 Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 
 	-- Clears the RQEFrame when a quest is completed so that it stops reappearing in this frame (now handled through RQE:ShouldClearFrame)
-	--RQE.ClearFrameData()
+	--RQE:ClearFrameData()
 	RQE.searchedQuestID = nil -- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
@@ -2846,7 +2846,7 @@ function RQE.handleQuestTurnIn(...)
     -- if superTrackedQuestID == questID or displayedQuestID == questID then
         -- -- Clear data and update frame after a brief delay to ensure quest log updates
         -- C_Timer.After(0.5, function()
-            -- --RQE.ClearFrameData()  -- This method should clear the content from the RQEFrame
+            -- --RQE:ClearFrameData()  -- This method should clear the content from the RQEFrame
 			-- RQE:ShouldClearFrame()
             -- -- Optionally, you might want to update the frame to show the next priority quest or clear visibility
         -- end)

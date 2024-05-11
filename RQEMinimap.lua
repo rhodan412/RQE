@@ -93,7 +93,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
 				-- Check if MagicButton should be visible based on macro body
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			else
-				RQE.ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
+				RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing -- Clears frame data when showing the RQEFrame from a hidden setting
 				RQE:ClearWaypointButtonData()
 				RQEFrame:Show()
 				UpdateFrame()
@@ -161,7 +161,7 @@ function RQE.ToggleBothFramesfromLDB()
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
     else
-		RQE.ClearFrameData() -- Clears frame data when showing the RQEFrame from a hidden setting
+		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing -- Clears frame data when showing the RQEFrame from a hidden setting
 		RQE:ClearWaypointButtonData()
 
 		-- Check if enableFrame is true before showing RQEFrame
