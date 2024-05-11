@@ -994,6 +994,7 @@ function RQE.SearchModule:FetchAndDisplayQuestData(questID)
     end)
 end
 
+
 -- Function to dynamically create StepsText and CoordsText elements
 function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights
@@ -1064,6 +1065,13 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Use the custom texture for the background
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
+
+		-- Check if autoClickWaypointButton is enabled and LastClickedIdentifier is nil and set to 1 if so
+		if RQE.db.profile.autoClickWaypointButton then
+			if not RQE.LastClickedIdentifier then
+				RQE.LastClickedIdentifier = 1
+			end
+		end
 
 		-- Determine if this button was the last clicked
 		if RQE.LastClickedIdentifier and RQE.LastClickedIdentifier == i then
