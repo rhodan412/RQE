@@ -200,6 +200,7 @@ local defaults = {
 		enableQuestAbandonConfirm = false,
 		enableTomTomCompatibility = true,
 		enableCarboniteCompatibility = true,
+		keyBindSetting = nil,
 		displayRQEmemUsage = false,
         framePosition = {
             xPos = -40,
@@ -1162,21 +1163,30 @@ end
 	
 -- Colorization of the RQEFrame
 local function colorizeObjectives(questID)
+	if not questID then
+		return
+	end
+
     local objectivesData = C_QuestLog.GetQuestObjectives(questID)
     local colorizedText = ""
 
-    for _, objective in ipairs(objectivesData) do
-        local description = objective.text
-        if objective.finished then
-            -- Objective complete, colorize in green
-            colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-        elseif objective.numFulfilled > 0 then
-            -- Objective partially complete, colorize in yellow
-            colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-        else
-            -- Objective has not started or no progress, leave as white
-            colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+    if objectivesData then  -- Check if the data is not nil
+		for _, objective in ipairs(objectivesData) do
+			local description = objective.text
+			if objective.finished then
+				-- Objective complete, colorize in green
+				colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+			elseif objective.numFulfilled > 0 then
+				-- Objective partially complete, colorize in yellow
+				colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+			else
+				-- Objective has not started or no progress, leave as white
+				colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+			end
         end
+    else
+        -- Handle the case where objectivesData is nil
+        colorizedText = "No objectives data available."
     end
 
     return colorizedText
@@ -1237,7 +1247,6 @@ function RQE:ShouldClearFrame()
 	if isBeingSearched and isQuestCompleted and isWorldQuest then
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		RQE.infoLog("Cleared Macro Content at 1232")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
         return -- Exit the function early
 	end
@@ -1247,7 +1256,6 @@ function RQE:ShouldClearFrame()
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		RQE.infoLog("Cleared Macro Content at 1242")
 		RQEMacro:ClearMacroContentByName("RQE Macro")
         return -- Exit the function early
     end
@@ -1257,7 +1265,6 @@ function RQE:ShouldClearFrame()
         --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
-			RQE.infoLog("Cleared Macro Content at 1252")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
             return -- Exit the function early
         end
@@ -1266,7 +1273,6 @@ function RQE:ShouldClearFrame()
 		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
-			RQE.infoLog("Cleared Macro Content at 1261")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
             return -- Exit the function early
         end
@@ -1316,7 +1322,6 @@ function RQE:DelayedClearCheck()
 		if isBeingSearched and isQuestCompleted and isWorldQuest then
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
-			RQE.infoLog("Cleared Macro Content at 1311")
 			RQEMacro:ClearMacroContentByName("RQE Macro")
 			
 			-- Untrack the quest by setting a non-existent quest ID
@@ -1329,7 +1334,6 @@ function RQE:DelayedClearCheck()
 			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
 				RQE:ClearFrameData()
 				RQE:ClearWaypointButtonData()
-				RQE.infoLog("Cleared Macro Content at 1324")
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 				
 				-- Untrack the quest by setting a non-existent quest ID
@@ -2799,7 +2803,6 @@ end
 -- Function advances the quest step by simulating a click on the corresponding WaypointButton.
 function RQE:AdvanceQuestStep(questID, stepIndex)
 	-- Clears Macro Data
-	RQE.infoLog("Cleared Macro Content at 2793")
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 	
     RQE.infoLog("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
@@ -2825,7 +2828,6 @@ end
 -- Function that handles if returns Failed stepIndex
 function RQE:ClickWaypointButtonForIndex(index)
 	-- Clears Macro Data
-	--RQE.infoLog("Cleared Macro Content at 2819")
 	--RQEMacro:ClearMacroContentByName("RQE Macro")
 	
     local button = self.WaypointButtons[index]
