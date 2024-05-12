@@ -36,6 +36,9 @@ local AceGUI = LibStub("AceGUI-3.0")
 ---------------------------
 
 -- Create the frame
+--- @class RQE.RQEQuestFrame : Frame
+--- @field questTitles table<number, FontString>
+--- @field questCount number
 RQE.RQEQuestFrame = CreateFrame("Frame", "RQEQuestFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
 local frame = RQE.RQEQuestFrame
 
@@ -143,6 +146,8 @@ headerText:SetWordWrap(true)
 RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. frame:GetHeight())
 
 -- Create the Slider (Scrollbar)
+---@class RQE.QMQTslider : Slider
+---@field QMQTslider.scrollStep number
 local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
 QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -20)
 QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
@@ -800,10 +805,18 @@ end
 -- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
 
 -- Function to initiate the Scenario Frame
+---@class RQE.ScenarioChildFrame : Frame
+---@field scenarioTitle FontString
+---@field stage FontString
+---@field title FontString
+---@field timerFrame Frame
+---@field timer FontString
+---@field body FontString
 function RQE.InitializeScenarioFrame()
     -- Create the ScenarioChildFrame if not already done
     -- Only create the ScenarioChildFrame if it does not already exist
     if not RQE.ScenarioChildFrame then
+		---@type RQE.ScenarioChildFrame
         -- Create the ScenarioChildFrame if it does not already exist
         RQE.ScenarioChildFrame = CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
         RQE.ScenarioChildFrame:SetSize(400, 200) -- Set the size as needed
@@ -851,6 +864,7 @@ function RQE.InitializeScenarioFrame()
     end
 
 	-- Create a new frame for the timer
+	---@type TimerFrame
     RQE.ScenarioChildFrame.timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame, "BackdropTemplate")
     RQE.ScenarioChildFrame.timerFrame:SetSize(100, 50)
     RQE.ScenarioChildFrame.timerFrame:SetPoint("BOTTOMRIGHT", RQE.ScenarioChildFrame.header, "BOTTOMRIGHT", -10, 10)
@@ -1131,7 +1145,8 @@ end
 
 
 -- Function to Add Reward Data to the Game Tooltip
-function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
+function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
+	local colorNotUsable = { r = 1, g = 0, b = 0 }
 	C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
 	local questID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
@@ -1139,20 +1154,26 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	local warModeDesired = C_PvP.IsWarModeDesired()
 	local hasWarModeBonus = C_QuestLog.QuestHasWarModeBonus(questID)
 
-	local xp = GetQuestLogRewardXP(questID)
+	local xp = GetQuestLogRewardXP()
+	--local xp = GetQuestLogRewardXP(questID)
 	local rewardTitle = GetQuestLogRewardTitle()
 	local skillPoints = GetQuestLogRewardSkillPoints()
-    local money = GetQuestLogRewardMoney(questID)
-    local artifactXP = GetQuestLogRewardArtifactXP(questID)
-    local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID)
-    local numQuestRewards = GetNumQuestLogRewards(questID)
+	local money = GetQuestLogRewardMoney()
+    --local money = GetQuestLogRewardMoney(questID)
+	local artifactXP = GetQuestLogRewardArtifactXP()
+    --local artifactXP = GetQuestLogRewardArtifactXP(questID)
+	local numQuestCurrencies = GetNumQuestLogRewardCurrencies()
+    --local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID)
+    local numQuestRewards = GetNumQuestLogRewards()
+	--local numQuestRewards = GetNumQuestLogRewards(questID)
     local numQuestSpellRewards, questSpellRewards = C_QuestInfoSystem.GetQuestRewardSpells(questID)
     local numQuestChoices = GetNumQuestLogChoices(questID)
-    local honor = GetQuestLogRewardHonor(questID)
-    local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID) or C_QuestOffer.GetQuestOfferMajorFactionReputationRewards(questID)
+	local honor = GetQuestLogRewardHonor()
+    --local honor = GetQuestLogRewardHonor(questID)
+    local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID) or C_QuestOffer.GetQuestOfferMajorFactionReputationRewards() --C_QuestOffer.GetQuestOfferMajorFactionReputationRewards(questID)
     local rewardsTitle = REWARDS..":"
 
-    if not isBonus then
+    --if not isBonus then
         if numQuestChoices > 1 then
             tooltip:AddLine(CHOOSE_ONE_REWARD..":")
         end
@@ -1163,7 +1184,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
             local text, color
             if lootType == 0 then
                 -- item
-                local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo(i)
+                local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo() --GetQuestLogChoiceInfo(i)
                 if numItems > 1 then
                     text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
                 elseif name and texture then
@@ -1181,7 +1202,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
                 tooltip:AddLine(text, color.r, color.g, color.b)
             end
         end
-    end
+    --end
 
 	-- xp
 	if xp > 0 then
@@ -1246,9 +1267,14 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
 	if majorFactionRepRewards then
 		for i, rewardInfo in ipairs(majorFactionRepRewards) do
 			local majorFactionData = C_MajorFactions.GetMajorFactionData(rewardInfo.factionID)
-			local text = FormatLargeNumber(rewardInfo.rewardAmount).." "..format(QUEST_REPUTATION_REWARD_TITLE, majorFactionData.name)
-			tooltip:AddLine(text, 1, 1, 1)
-		end
+			if majorFactionData then
+				local text = FormatLargeNumber(rewardInfo.rewardAmount).." "..format(QUEST_REPUTATION_REWARD_TITLE, majorFactionData.name)
+				tooltip:AddLine(text, 1, 1, 1)
+        	else
+				-- Handle the case where majorFactionData is nil, perhaps log this or use a default value
+				tooltip:AddLine("Reputation information not available", 1, 0, 0)  -- Red text indicating missing data
+			end
+        end
 	end
 
 	-- war mode bonus (quest only)
@@ -1395,7 +1421,7 @@ function UpdateRQEQuestFrame()
         if C_CampaignInfo.IsCampaignQuest(questID) then
             RQE.campaignQuestCount = RQE.campaignQuestCount + 1
         elseif C_QuestLog.IsWorldQuest(questID) then
-			worldQuestCounter = worldQuestCounter + 1
+			RQE.worldQuestCounter = RQE.worldQuestCounter + 1
 		end
     end
 
@@ -1432,7 +1458,6 @@ function UpdateRQEQuestFrame()
 
     -- Get the number of tracked quests
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-	--local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
 
     -- Initialize the table to hold the QuestLogIndexButtons if it doesn't exist
     RQE.QuestLogIndexButtons = RQE.QuestLogIndexButtons or {}
@@ -1531,6 +1556,9 @@ function UpdateRQEQuestFrame()
 				end
 
 				-- Create or reuse the QuestLogIndexButton
+				---@class QuestLogIndexButton : Button
+				---@field bg Texture
+				---@field number FontString
 				local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)
 				QuestLogIndexButton:SetSize(35, 35)
 
@@ -1686,9 +1714,18 @@ function UpdateRQEQuestFrame()
 				questTitle = info.title
 				questLevel = info.level
 
+				-- Create or reuse the QuestLevelAndName label
+				local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")--, content)
+				QuestLogIndexButton.QuestLevelAndName = QuestLevelAndName
+				QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+				--QuestLevelAndName:SetTextColor(209/255, 125/255, 255/255)  -- Heliotrope
+				QuestLevelAndName:SetTextColor(137/255, 95/255, 221/255)  -- Medium Purple
+				--QuestLevelAndName:SetText("[" .. info.level .. "] " .. info.title)  -- Concatenated quest level and name
+				QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
+
 				-- Create or reuse the QuestObjectives label
 				local QuestObjectives = RQE.QuestLogIndexButtons[i].QuestObjectives or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				QuestObjectives:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
+				--QuestObjectives:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 				QuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectives:SetWordWrap(true)
 				QuestObjectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
@@ -1696,15 +1733,6 @@ function UpdateRQEQuestFrame()
 				QuestObjectives:SetText(objectivesText)
 
 				RQE.QuestLogIndexButtons[i].QuestObjectives = QuestObjectives
-
-				-- Create or reuse the QuestLevelAndName label
-				local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal", content)
-				QuestLogIndexButton.QuestLevelAndName = QuestLevelAndName
-				QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-				--QuestLevelAndName:SetTextColor(209/255, 125/255, 255/255)  -- Heliotrope
-				QuestLevelAndName:SetTextColor(137/255, 95/255, 221/255)  -- Medium Purple
-				--QuestLevelAndName:SetText("[" .. info.level .. "] " .. info.title)  -- Concatenated quest level and name
-				QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
 				-- Quest Details and Menu
 				QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
@@ -1834,7 +1862,8 @@ function UpdateRQEQuestFrame()
 
 					-- Add Rewards
 					GameTooltip:AddLine("Rewards: ")
-					RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
+					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
@@ -1930,7 +1959,8 @@ function UpdateRQEQuestFrame()
 
 					-- Add Rewards
 					GameTooltip:AddLine("Rewards: ")
-					RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
+					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
@@ -2084,6 +2114,10 @@ function UpdateRQEWorldQuestFrame()
 		if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
 			usedQuestIDs[questID] = true
 
+			-- Create or reuse the WQuestLogIndexButton
+			---@class WQuestLogIndexButton : Button
+			---@field bg Texture
+			---@field number FontString
             local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
             RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
             WQuestLogIndexButton:SetSize(35, 35)
@@ -2237,7 +2271,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetHeight(0)
 			WQuestLevelAndName:SetJustifyH("LEFT")
 			WQuestLevelAndName:SetJustifyV("TOP")
-			WQuestLevelAndName:SetWidth(RQEQuestFrame:GetWidth() - 100)
+			WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
 
 			-- Retrieve the quest title using the quest ID
 			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
@@ -2255,7 +2289,7 @@ function UpdateRQEWorldQuestFrame()
             local WQuestObjectives = WQuestLogIndexButton.QuestObjectives or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             WQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
             WQuestObjectives:SetWordWrap(true)
-			WQuestObjectives:SetWidth(RQEQuestFrame:GetWidth() - 110)
+			WQuestObjectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
             WQuestObjectives:SetHeight(0)
             WQuestObjectives:SetJustifyH("LEFT")
             WQuestObjectives:SetJustifyV("TOP")
@@ -2340,7 +2374,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestObjectivesOrDescription:SetJustifyV("TOP")
 			WQuestObjectivesOrDescription:SetHeight(0)
 			WQuestObjectivesOrDescription:SetWordWrap(true)
-			WQuestObjectivesOrDescription:SetWidth(RQEQuestFrame:GetWidth() - 110)
+			WQuestObjectivesOrDescription:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
 			WQuestObjectivesOrDescription:SetText(questObjectivesText)
 			WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
@@ -2351,6 +2385,7 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Update the last element tracker for the correct type
+			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 			if isWorldQuest then
 				lastWorldQuestElement = WQuestObjectivesOrDescription
 			end
@@ -2419,7 +2454,8 @@ function UpdateRQEWorldQuestFrame()
 
 					-- Add Rewards
 					GameTooltip:AddLine("Rewards: ")
-					RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
+					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
 
 				-- Add time left
 				local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
@@ -2585,6 +2621,7 @@ function UpdateRQEAchievementsFrame()
             achievementHeader:SetTextColor(1, 0.5, 0.3) -- Tan color for the achievement ID and name
             --achievementHeader:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
             achievementHeader:SetJustifyH("LEFT")
+			RQE.AchievementHeader = achievementHeader  -- Save for future reference
 
             -- Set up the tooltip for the achievement header
 			achievementHeader:SetScript("OnEnter", function(self)
@@ -2671,7 +2708,8 @@ function UpdateRQEAchievementsFrame()
     end
 
     -- After creating each new FontString, insert it into RQE.AchievementsIDWidgets:
-    table.insert(RQE.AchievementsIDWidgets, achievementHeader)
+	table.insert(RQE.AchievementsIDWidgets, RQE.AchievementHeader)
+	--table.insert(RQE.AchievementsIDWidgets, achievementHeader)
 
 	-- Check if any achievements in the Achievement Frame are being tracked/watched
 	RQE.AchievementsFrame:SetShown(RQE.AchievementsFrame.achieveCount > 0)

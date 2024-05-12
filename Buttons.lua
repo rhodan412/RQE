@@ -253,12 +253,18 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
 		end
 	end)
 
-	-- Helper function to trim strings (removes whitespace from the beginning and end of a string)
-	if not string.trim then
-		string.trim = function(s)
-			return s:match("^%s*(.-)%s*$")
-		end
+	-- -- Helper function to trim strings (removes whitespace from the beginning and end of a string)
+	-- if not string.trim then
+		-- string.trim = function(s)
+			-- return s:match("^%s*(.-)%s*$")
+		-- end
+	-- end
+
+	-- Local helper function to trim strings (removes whitespace from the beginning and end of a string)
+	local function trim(s)
+		return s:match("^%s*(.-)%s*$")
 	end
+
     MagicButton:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
@@ -301,7 +307,7 @@ end
 function RQE:SetupOverrideMacroBinding()
     local ownerFrame = RQE.MagicButton
     local macroName = "RQE Macro"
-    local bindingKey = RQE.db.profile.keyBindSetting or "CTRL-SHIFT-Y"  -- Use the stored setting or default
+    local bindingKey = RQE.db.profile.keyBindSetting   -- Use the stored setting or default
 
     local macroIndex = GetMacroIndexByName(macroName)
     if macroIndex and macroIndex > 0 then
@@ -309,7 +315,7 @@ function RQE:SetupOverrideMacroBinding()
         ClearOverrideBindings(ownerFrame)
         SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
 		-- Optional: Provide feedback that the binding was set
-        -- print("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
+        RQE.infoLog("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
     else
 		-- Provide feedback if the macro does not exist
         RQE.debugLog("Macro '" .. macroName .. "' not found.")

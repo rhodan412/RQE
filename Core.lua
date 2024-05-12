@@ -222,8 +222,6 @@ local defaults = {
 			frameHeight = 300,
 		},
 		MainFrameOpacity = 0.55,
-		textSettings = {
-		},
         QuestFramePosition = {
             xPos = -40,
             yPos = 150,
@@ -232,8 +230,6 @@ local defaults = {
             frameHeight = 450
 		},
 		QuestFrameOpacity = 0.55,
-		textSettings = {
-		},
         textSettings = {
             headerText = {
                 font = "Fonts\\SKURRI.TTF",
@@ -334,25 +330,25 @@ function RQE:OnInitialize()
 	RQE.CoordsText = RQE.CoordsText or {}
 	RQE.WaypointButtons = RQE.WaypointButtons or {}
 
-	-- Initialize checkbox state for Coordinates
-	if showCoordinates then  -- replace with your actual checkbox frame name
-		showCoordinates:SetChecked(RQE.db.profile.showCoordinates)
-	end
+	-- -- Initialize checkbox state for Coordinates  -- NOT USED HERE - HANDLED IN CONFIG.LUA
+	-- if showCoordinates then  -- replace with your actual checkbox frame name
+		-- showCoordinates:SetChecked(RQE.db.profile.showCoordinates)
+	-- end
 
-	-- Initialize checkbox state for Auto Sort Frame
-	if autoQuestWatch then  -- replace with your actual checkbox frame name
-		autoQuestWatch:SetChecked(RQE.db.profile.autoQuestWatch)
-	end
+	-- -- Initialize checkbox state for Auto Sort Frame
+	-- if autoQuestWatch then  -- replace with your actual checkbox frame name
+		-- autoQuestWatch:SetChecked(RQE.db.profile.autoQuestWatch)
+	-- end
 
-	-- Initialize checkbox state for Auto Progress Update
-	if autoQuestProgress then  -- replace with your actual checkbox frame name
-		autoQuestProgress:SetChecked(RQE.db.profile.autoQuestProgress)
-	end
+	-- -- Initialize checkbox state for Auto Progress Update
+	-- if autoQuestProgress then  -- replace with your actual checkbox frame name
+		-- autoQuestProgress:SetChecked(RQE.db.profile.autoQuestProgress)
+	-- end
 
-    -- Initialize checkbox state for MapID
-    if RQE.MapIDCheckbox then  -- replace with your actual checkbox frame name
-        RQE.MapIDCheckbox:SetChecked(RQE.db.profile.showMapID)
-    end
+    -- -- Initialize checkbox state for MapID
+    -- if MapIDCheckbox then  -- replace with your actual checkbox frame name
+        -- MapIDCheckbox:SetChecked(RQE.db.profile.showMapID)
+    -- end
 
 	-- Register the profile changed callback
 	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
@@ -410,7 +406,7 @@ function RQE:OnInitialize()
     local MainOpacity = RQE.db.profile.MainFrameOpacity
 	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
     RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
-    RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+    RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
 
     -- Override the print function
     local originalPrint = print
@@ -463,7 +459,8 @@ function RQE.InitializeFilterDropdown(self, level)
         info.hasArrow = true  -- Important for creating a submenu
         info.value = "campaign_submenu"  -- Used to identify this item in the next level
         UIDropDownMenu_AddButton(info, level)
-    elseif level == 2 and UIDROPDOWNMENU_MENU_VALUE == "campaign_submenu" then
+
+    elseif level == 2 and _G.UIDROPDOWNMENU_MENU_VALUE == "campaign_submenu" then
         local campaigns = RQE.GetCampaignsFromQuestLog()
         for campaignID, campaignName in pairs(campaigns) do
             info.text = campaignName
@@ -1697,9 +1694,8 @@ end
 --- @class TimerFrame : Frame
 --- @field timeSinceLastUpdate number
 --- @field endTime number
-function RQE.Timer_Start(duration)
-    ---@type TimerFrame
-    local timerFrame = RQE.ScenarioChildFrame.timerFrame
+--- @param timerFrame TimerFrame
+function RQE.Timer_Start(timerFrame, duration)
     if not timerFrame then
         return
     end
@@ -1714,7 +1710,6 @@ end
 -- Stops the timer and hides the UI elements
 function RQE.Timer_Stop()
     local timerFrame = RQE.ScenarioChildFrame.timerFrame  -- Your custom timer frame
-
     if not timerFrame then
         return  -- Ensure the frame exists
     end
@@ -2230,14 +2225,14 @@ function BuildItemNames(itemLinks)
 end
 
 
--- Define this function at the beginning of your script or in a utilities module
-function countTableElements(tbl)
-    local count = 0
-    for _ in pairs(tbl) do
-        count = count + 1
-    end
-    return count
-end
+-- -- Define this function at the beginning of your script or in a utilities module
+-- function countTableElements(tbl)
+    -- local count = 0
+    -- for _ in pairs(tbl) do
+        -- count = count + 1
+    -- end
+    -- return count
+-- end
 
 
 ---------------------------------------------------
@@ -2365,6 +2360,12 @@ end
 
 -- Function to print quest steps to chat
 function PrintQuestStepsToChat(questID)
+    if not questID or type(questID) ~= "number" then
+        -- Handle the case where questID is invalid
+        RQE.debugLog("Invalid or missing questID provided.")
+        return nil, nil, nil
+    end
+
     local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
 	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
     local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
@@ -2475,8 +2476,8 @@ function RQE:ShowWowheadLink(questID)
     linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
     linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
 
-    -- Apply the border to the frame
-    linkFrame:SetBackdrop(borderBackdrop)
+    -- Apply the border to the frame -- DUPLICATE
+    --linkFrame:SetBackdrop(borderBackdrop)
 
     -- Configure the EditBox font
     wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
@@ -2511,7 +2512,7 @@ f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
         -- Attempt to use the hidden chat frame method to copy text
         local editBox = ChatFrame1EditBox or ChatEdit_ChooseBoxForSend() -- Fallback to an existing chat edit box
         editBox:Show()
-        editBox:SetText(wowHeadeditBox:GetText())
+        editBox:SetText(RQE.wowHeadeditBox:GetText())
         editBox:HighlightText()
         editBox:SetFocus()
         editBox:CopyChatFrame(editBox)
@@ -2593,8 +2594,8 @@ function RQE:ShowWowWikiLink(questID)
     linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
     linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
 
-    -- Apply the border to the frame
-    linkFrame:SetBackdrop(borderBackdrop)
+    -- Apply the border to the frame -- DUPLICATE
+    --linkFrame:SetBackdrop(borderBackdrop)
 
     -- Configure the EditBox font
     wowWikieditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
@@ -2918,6 +2919,12 @@ end
 -- Function will check if the player currently has any of the debuffs specified in the quest's check field passed by the RQEDatabase.
 function RQE:CheckDBDebuff(questID, stepIndex)
     local questData = self.getQuestData(questID)
+
+    if not questData then
+        RQE.debugLog("Quest data not found for questID:", questID)
+        return
+    end
+
     local stepData = questData[stepIndex]
     local debuffs = stepData.check -- Renamed from buffs to debuffs for clarity since it checks for debuffs
 
@@ -2936,6 +2943,12 @@ end
 -- Function will check the player's inventory for specific items.
 function RQE:CheckDBInventory(questID, stepIndex)
     local questData = self.getQuestData(questID)
+
+    if not questData then
+        RQE.debugLog("Quest data not found for questID:", questID)
+        return
+    end
+
     local stepData = questData[stepIndex]
     local requiredItems = stepData.check or {}
     local neededAmounts = stepData.neededAmt or {}
@@ -2958,6 +2971,12 @@ end
 function RQE:CheckDBZoneChange(questID, stepIndex)
     local currentMapID = C_Map.GetBestMapForUnit("player")
     local questData = self.getQuestData(questID)
+
+    if not questData then
+        RQE.debugLog("Quest data not found for questID:", questID)
+        return
+    end
+
     local stepData = questData[stepIndex]
     local requiredMapIDs = stepData.check  -- This should be a list of mapIDs
 
@@ -3030,10 +3049,12 @@ RQE.filterCompleteQuests = function()
 
     for i = 1, numEntries do
         local questInfo = C_QuestLog.GetInfo(i)
-        if questInfo and not questInfo.isHeader and C_QuestLog.IsComplete(questInfo.questID) then
-            C_QuestLog.AddQuestWatch(questInfo.questID)
-        else
-            C_QuestLog.RemoveQuestWatch(questInfo.questID)
+        if questInfo and not questInfo.isHeader then
+            if C_QuestLog.IsComplete(questInfo.questID) then
+                C_QuestLog.AddQuestWatch(questInfo.questID)
+            elseif questInfo.questID then
+                C_QuestLog.RemoveQuestWatch(questInfo.questID)
+            end
         end
     end
 
@@ -3691,13 +3712,16 @@ function RQE.ScanQuestTypes()
         local questInfo = C_QuestLog.GetInfo(i)
         if questInfo and not questInfo.isHeader then
             local questType = C_QuestLog.GetQuestType(questInfo.questID)
-            -- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
-            if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
-                RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
-            else
-                local questTypeName = RQE.GetQuestTypeName(questType)
-                if questTypeName then
-                    RQE.QuestTypes[questType] = questTypeName
+            -- Check if questType is a valid number
+            if questType and type(questType) == "number" then
+                -- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
+                if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
+                    RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
+                else
+                    local questTypeName = RQE.GetQuestTypeName(questType)
+                    if questTypeName then
+                        RQE.QuestTypes[questType] = questTypeName
+                    end
                 end
             end
         end

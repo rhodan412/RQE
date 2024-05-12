@@ -996,6 +996,9 @@ end
 
 
 -- Function to dynamically create StepsText and CoordsText elements
+--- @class WaypointButton : Button
+--- @field stepIndex number
+--- @field bg Texture
 function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights
 	local stepTextHeights = {}
@@ -1059,9 +1062,11 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
         prevText = StepText
 
 		-- Create the WaypointButton
+        ---@type WaypointButton
 		local WaypointButton = CreateFrame("Button", nil, content)
 		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
 		WaypointButton:SetSize(30, 30)  -- Set size to 30x30
+
 		-- Use the custom texture for the background
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
