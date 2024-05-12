@@ -1449,6 +1449,9 @@ function RQE.handleQuestAccepted(...)
        -- DEFAULT_CHAT_FRAME:AddMessage("QA 14 Debug: Checked memory usage.", 0.46, 0.62, 1)
 	end
 
+	-- Calls for an update to the special Quest Item Buttons
+	RQE:UpdateQuestItemButtons()
+
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_ACCEPTED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -2523,6 +2526,9 @@ function RQE.handleQuestRemoved(...)
 		-- RQE.AutoWaypointHasBeenClicked = false
 	-- end
 
+	-- Calls for an update to the special Quest Item Buttons
+	RQE:UpdateQuestItemButtons()
+	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -2651,6 +2657,9 @@ function RQE.handleQuestWatchUpdate(...)
 		-- RQE:StartPeriodicChecks()
 	-- end
 
+	-- Calls for an update to the special Quest Item Buttons
+	RQE:UpdateQuestItemButtons()
+
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -2761,6 +2770,9 @@ function RQE.handleQuestWatchListChanged(...)
 			-- end)
 		-- end)
 	-- end
+
+	-- Calls for an update to the special Quest Item Buttons
+	RQE:UpdateQuestItemButtons()
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)

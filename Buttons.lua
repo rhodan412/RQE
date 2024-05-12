@@ -826,14 +826,80 @@ end
 
 
 ----------------------------------------------------
--- 5. Button Initialization (QuestFrame headers)
+-- 5. Special Quest Item Buttons
+----------------------------------------------------
+
+-- Creates or Updates the Special Quest Item to be placed in line with its quest within the RQEQuestFrame
+function RQE:CreateOrUpdateQuestItemButton(questID, index)
+    local buttonName = "RQEQuestItemButton" .. questID
+    local questButton = _G[buttonName] or CreateFrame("Button", buttonName, RQE.RQEQuestFrame, "SecureActionButtonTemplate")
+    local link, itemID, charges, showItemWhenComplete = GetQuestLogSpecialItemInfo(index)
+
+    if itemID then
+        C_Item.RequestLoadItemDataByID(itemID)  -- Ensure the item data is loaded
+
+        local function SetItemButtonTexture()
+            local itemInfo = C_Item.GetItemInfo(itemID)
+            if itemInfo and itemInfo.iconFileID then
+                questButton:SetNormalTexture(itemInfo.iconFileID)
+            else
+                -- Optionally set a default texture if the real one isn't loaded
+                questButton:SetNormalTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+            end
+        end
+
+        SetItemButtonTexture() -- Try to set it immediately
+
+        -- Cooldown handling
+        local start, duration, enable = GetQuestLogSpecialItemCooldown(index)
+        if start and duration > 0 then
+            questButton.cooldown:SetCooldown(start, duration)
+        end
+
+        -- Tooltip
+        questButton:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if link then
+                GameTooltip:SetHyperlink(link)
+            end
+            GameTooltip:Show()
+        end)
+        questButton:SetScript("OnLeave", GameTooltip_Hide)
+
+        -- Handle the click to use the item
+        questButton:SetScript("OnClick", function()
+            UseQuestLogSpecialItem(index)
+        end)
+
+        questButton:Show()
+    else
+        questButton:Hide()
+    end
+end
+
+
+-- Call this function whenever quest tracking is updated
+function RQE:UpdateQuestItemButtons()
+    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    for i = 1, numEntries do
+        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        if questID then
+            RQE:CreateOrUpdateQuestItemButton(questID, i)
+        end
+    end
+end
+
+
+
+----------------------------------------------------
+-- 6. Button Initialization (QuestFrame headers)
 ----------------------------------------------------
 
 -- Code to be used for any buttons that are placed on the child headers of RQEQuestFrame
 
 
 ----------------------------------------------------
--- 6. Button Initialization (DebugFrame)
+-- 7. Button Initialization (DebugFrame)
 ----------------------------------------------------
 
 function RQE.Buttons.CreateDebugLogCloseButton(logFrame)
@@ -850,7 +916,7 @@ end
 
 
 ----------------------------------------------------
--- 7. Finalization
+-- 8. Finalization
 ----------------------------------------------------
 
 -- Function to create and initialize the SearchBox
