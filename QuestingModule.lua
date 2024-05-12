@@ -687,7 +687,7 @@ end
 
 
 ---------------------------
--- 8. Utility Functions
+-- 7. Utility Functions
 ---------------------------
 
 -- [Utility functions like AdjustQuestItemWidths, SaveQuestFramePosition, colorizeObjectives, RQE:QuestRewardsTooltip, etc.]
@@ -799,7 +799,7 @@ end
 
 
 ---------------------------
--- 9. Scenario Frame Handling
+-- 8. Scenario Frame Handling
 ---------------------------
 
 -- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
@@ -1001,7 +1001,7 @@ function RQE.UpdateScenarioFrame()
 end
 
 ---------------------------
--- 10. Timer Functionality
+-- 9. Timer Functionality
 ---------------------------
 
 local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
@@ -1046,7 +1046,7 @@ end
 
 
 ---------------------------
--- 11. Quest Frame Updates
+-- 10. Quest Frame Updates
 ---------------------------
 
 -- [Functions for updating the quest frames, such as UpdateRQEQuestFrame, UpdateRQEWorldQuestFrame, RQE:ClearRQEQuestFrame, etc.]
