@@ -1126,18 +1126,22 @@ local function colorizeObjectives(questID)
     local objectivesData = C_QuestLog.GetQuestObjectives(questID)
     local colorizedText = ""
 
-    for _, objective in ipairs(objectivesData) do
-        local description = objective.text
-        if objective.finished then
-            -- Objective complete, colorize in green
-            colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-        elseif objective.numFulfilled > 0 then
-            -- Objective partially complete, colorize in yellow
-            colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-        else
-            -- Objective has not started or no progress, leave as white
-            colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+    if objectivesData then  -- Check if the data is not nil
+        for _, objective in ipairs(objectivesData) do
+            local description = objective.text
+            if objective.finished then
+                -- Objective complete, colorize in green
+                colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+            elseif objective.numFulfilled > 0 then
+                -- Objective partially complete, colorize in yellow
+                colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+            else
+                -- Objective has not started or no progress, leave as white
+                colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+            end
         end
+    else
+        colorizedText = "Objective data unavailable."  -- Default text or handle as needed
     end
 
     return colorizedText
