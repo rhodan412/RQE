@@ -830,25 +830,44 @@ end
 ----------------------------------------------------
 
 -- Creates or Updates the Special Quest Item to be placed in line with its quest within the RQEQuestFrame
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")  -- Fires when player leaves combat
+frame:RegisterEvent("PLAYER_REGEN_DISABLED") -- Fires when player enters combat
+frame.actionsPending = false
+
+frame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_REGEN_ENABLED" then
+        if self.actionsPending then
+            -- Perform the pending updates when it is safe to do so
+            RQE:UpdateQuestItemButtons()
+            self.actionsPending = false
+        end
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        self.actionsPending = false  -- Reset any pending actions if combat starts
+    end
+end)
+
 function RQE:CreateOrUpdateQuestItemButton(questID, index)
     local buttonName = "RQEQuestItemButton" .. questID
-    local questButton = _G[buttonName] or CreateFrame("Button", buttonName, RQE.RQEQuestFrame, "SecureActionButtonTemplate")
+    local questButton = _G[buttonName]
+
+    if not questButton then
+        questButton = CreateFrame("Button", buttonName, RQE.RQEQuestFrame, "SecureActionButtonTemplate")
+        questButton:SetSize(36, 36)  -- Set size only during creation to avoid taint
+    end
+
     local link, itemID, charges, showItemWhenComplete = GetQuestLogSpecialItemInfo(index)
 
     if itemID then
         C_Item.RequestLoadItemDataByID(itemID)  -- Ensure the item data is loaded
+        local itemInfo = C_Item.GetItemInfo(itemID)
+        questButton:SetNormalTexture(itemInfo and itemInfo.iconFileID or "Interface\\Icons\\INV_Misc_QuestionMark")
 
-        local function SetItemButtonTexture()
-            local itemInfo = C_Item.GetItemInfo(itemID)
-            if itemInfo and itemInfo.iconFileID then
-                questButton:SetNormalTexture(itemInfo.iconFileID)
-            else
-                -- Optionally set a default texture if the real one isn't loaded
-                questButton:SetNormalTexture("Interface\\Icons\\INV_Misc_QuestionMark")
-            end
+        -- Ensure cooldown frame exists
+        if not questButton.cooldown then
+            questButton.cooldown = CreateFrame("Cooldown", nil, questButton, "CooldownFrameTemplate")
+            questButton.cooldown:SetAllPoints()
         end
-
-        SetItemButtonTexture() -- Try to set it immediately
 
         -- Cooldown handling
         local start, duration, enable = GetQuestLogSpecialItemCooldown(index)
@@ -856,30 +875,36 @@ function RQE:CreateOrUpdateQuestItemButton(questID, index)
             questButton.cooldown:SetCooldown(start, duration)
         end
 
-        -- Tooltip
+        -- Tooltip and Click Handling
         questButton:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            if link then
-                GameTooltip:SetHyperlink(link)
-            end
+            if link then GameTooltip:SetHyperlink(link) end
             GameTooltip:Show()
         end)
         questButton:SetScript("OnLeave", GameTooltip_Hide)
-
-        -- Handle the click to use the item
-        questButton:SetScript("OnClick", function()
-            UseQuestLogSpecialItem(index)
-        end)
-
-        questButton:Show()
+        questButton:SetScript("OnClick", function() UseQuestLogSpecialItem(index) end)
+        if not InCombatLockdown() then  -- Only hide if not in combat
+            questButton:Show()
+        else
+            frame.actionsPending = true  -- Mark that actions are pending due to combat
+        end
     else
-        questButton:Hide()
+        if not InCombatLockdown() then  -- Only hide if not in combat
+            questButton:Hide()
+        else
+            frame.actionsPending = true  -- Mark that actions are pending due to combat
+        end
     end
 end
 
 
 -- Call this function whenever quest tracking is updated
 function RQE:UpdateQuestItemButtons()
+    if InCombatLockdown() then
+        frame.actionsPending = true  -- Defer updates if in combat
+        return
+    end
+
     local numEntries = C_QuestLog.GetNumQuestLogEntries()
     for i = 1, numEntries do
         local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
