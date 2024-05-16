@@ -1150,16 +1150,16 @@ end
 
 -- Function to Add Reward Data to the Game Tooltip
 function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
-	local colorNotUsable = { r = 1, g = 0, b = 0 }
+    local colorNotUsable = { r = 1, g = 0, b = 0 }
     C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
-	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-	local warModeDesired = C_PvP.IsWarModeDesired()
-	local hasWarModeBonus = C_QuestLog.QuestHasWarModeBonus(questID)
+    local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+    local warModeDesired = C_PvP.IsWarModeDesired()
+    local hasWarModeBonus = C_QuestLog.QuestHasWarModeBonus(questID)
 
     local xp = GetQuestLogRewardXP(questID)
-	local rewardTitle = GetQuestLogRewardTitle()
-	local skillPoints = GetQuestLogRewardSkillPoints()
+    local rewardTitle = GetQuestLogRewardTitle()
+    local skillPoints = GetQuestLogRewardSkillPoints()
     local money = GetQuestLogRewardMoney(questID)
     local artifactXP = GetQuestLogRewardArtifactXP()--questID)
     local numQuestCurrencies = GetNumQuestLogRewardCurrencies()--questID)
@@ -1181,7 +1181,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
             local text, color
             if lootType == 0 then
                 -- item
-                local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo()
+                local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo(i)
                 if numItems > 1 then
                     text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
                 elseif name and texture then
@@ -1201,83 +1201,83 @@ function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
         end
     --end
 
-	-- xp
-	if xp > 0 then
-		tooltip:AddLine(format(BONUS_OBJECTIVE_EXPERIENCE_FORMAT, FormatLargeNumber(xp).."|c0000ff00"), 1, 1, 1)
-		if warModeDesired and isWorldQuest and hasWarModeBonus then
-			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
-		end
-	end
-
-	-- honor
-	if honor > 0 then
-		tooltip:AddLine(format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, "Interface\\ICONS\\Achievement_LegionPVPTier4", honor, HONOR), 1, 1, 1)
-	end
-
-	-- money
-	if money > 0 then
-		tooltip:AddLine(GetCoinTextureString(money, 12), 1, 1, 1)
-		if warModeDesired and isWorldQuest and hasWarModeBonus then
-			tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
-		end
-	end
-
-	-- spells	
-	if questSpellRewards then     -- Check if questSpellRewards is not nil
-		if #questSpellRewards > 0 then
-			for _, spellID in ipairs(questSpellRewards) do
-				local spellInfo = C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
-				local knownSpell = IsSpellKnownOrOverridesKnown(spellID)
-				if spellInfo and spellInfo.texture and spellInfo.name and not knownSpell and (not spellInfo.isBoostSpell or IsCharacterNewlyBoosted()) and (not spellInfo.garrFollowerID or not C_Garrison.IsFollowerCollected(spellInfo.garrFollowerID)) then
-					tooltip:AddLine(format(BONUS_OBJECTIVE_REWARD_FORMAT, spellInfo.texture, spellInfo.name), 1, 1, 1)
-				end
-			end
-		end
-	end
-
-	-- items
-	for i = 1, numQuestRewards do
-		local name, texture, numItems, quality, isUsable = GetQuestLogRewardInfo(i, questID)
-		local text
-		if numItems > 1 then
-			text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
-		elseif texture and name then
-			text = format(BONUS_OBJECTIVE_REWARD_FORMAT, texture, name)
-		end
-		if text then
-			local color = isUsable and ITEM_QUALITY_COLORS[quality] or colorNotUsable
-			tooltip:AddLine(text, color.r, color.g, color.b)
-		end
-	end
-
-	-- artifact power
-	if artifactXP > 0 then
-		tooltip:AddLine(format(BONUS_OBJECTIVE_ARTIFACT_XP_FORMAT, FormatLargeNumber(artifactXP)), 1, 1, 1)
-	end
-
-	-- currencies
-	if numQuestCurrencies > 0 then
-		QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip)
-	end
-
-	-- reputation
-	if majorFactionRepRewards then
-		for i, rewardInfo in ipairs(majorFactionRepRewards) do
-			local majorFactionData = C_MajorFactions.GetMajorFactionData(rewardInfo.factionID)
-			if majorFactionData then
-				local text = FormatLargeNumber(rewardInfo.rewardAmount).." "..format(QUEST_REPUTATION_REWARD_TITLE, majorFactionData.name)
-				tooltip:AddLine(text, 1, 1, 1)
-        	else
-				-- Handle the case where majorFactionData is nil, perhaps log this or use a default value
-				tooltip:AddLine("Reputation information not available", 1, 0, 0)  -- Red text indicating missing data
-			end
+    -- xp
+    if xp > 0 then
+        tooltip:AddLine(format(BONUS_OBJECTIVE_EXPERIENCE_FORMAT, FormatLargeNumber(xp).."|c0000ff00"), 1, 1, 1)
+        if warModeDesired and isWorldQuest and hasWarModeBonus then
+            tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
         end
-	end
+    end
 
-	-- war mode bonus (quest only)
-	if warModeDesired and not isWorldQuest and hasWarModeBonus then
-		tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
-	end
+    -- honor
+    if honor > 0 then
+        tooltip:AddLine(format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, "Interface\\ICONS\\Achievement_LegionPVPTier4", honor, HONOR), 1, 1, 1)
+    end
+
+    -- money
+    if money > 0 then
+        tooltip:AddLine(GetCoinTextureString(money, 12), 1, 1, 1)
+        if warModeDesired and isWorldQuest and hasWarModeBonus then
+            tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+        end
+    end
+
+    -- spells    
+    if questSpellRewards then     -- Check if questSpellRewards is not nil
+        if #questSpellRewards > 0 then
+            for _, spellID in ipairs(questSpellRewards) do
+                local spellInfo = C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
+                local knownSpell = IsSpellKnownOrOverridesKnown(spellID)
+                if spellInfo and spellInfo.texture and spellInfo.name and not knownSpell and (not spellInfo.isBoostSpell or IsCharacterNewlyBoosted()) and (not spellInfo.garrFollowerID or not C_Garrison.IsFollowerCollected(spellInfo.garrFollowerID)) then
+                    tooltip:AddLine(format(BONUS_OBJECTIVE_REWARD_FORMAT, spellInfo.texture, spellInfo.name), 1, 1, 1)
+                end
+            end
+        end
+    end
+
+    -- items
+    for i = 1, numQuestRewards do
+        local name, texture, numItems, quality, isUsable = GetQuestLogRewardInfo(i, questID)
+        local text
+        if numItems > 1 then
+            text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
+        elseif texture and name then
+            text = format(BONUS_OBJECTIVE_REWARD_FORMAT, texture, name)
+        end
+        if text then
+            local color = isUsable and ITEM_QUALITY_COLORS[quality] or colorNotUsable
+            tooltip:AddLine(text, color.r, color.g, color.b)
+        end
+    end
+
+    -- artifact power
+    if artifactXP > 0 then
+        tooltip:AddLine(format(BONUS_OBJECTIVE_ARTIFACT_XP_FORMAT, FormatLargeNumber(artifactXP)), 1, 1, 1)
+    end
+
+    -- currencies
+    if numQuestCurrencies > 0 then
+        QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip)
+    end
+
+    -- reputation
+    if majorFactionRepRewards then
+        for i, rewardInfo in ipairs(majorFactionRepRewards) do
+            local majorFactionData = C_MajorFactions.GetMajorFactionData(rewardInfo.factionID)
+            if majorFactionData then
+                local text = FormatLargeNumber(rewardInfo.rewardAmount).." "..format(QUEST_REPUTATION_REWARD_TITLE, majorFactionData.name)
+                tooltip:AddLine(text, 1, 1, 1)
+            else
+                -- Handle the case where majorFactionData is nil, perhaps log this or use a default value
+                tooltip:AddLine("Reputation information not available", 1, 0, 0)  -- Red text indicating missing data
+            end
+        end
+    end
+
+    -- war mode bonus (quest only)
+    if warModeDesired and not isWorldQuest and hasWarModeBonus then
+        tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+    end
 end
 
 
