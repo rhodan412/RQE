@@ -633,6 +633,8 @@ function RQE.handlePlayerLogin()
     if RQE.MagicButton then
         RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
     end
+	
+	RQE.UntrackAutomaticWorldQuests()
 end
 
 
