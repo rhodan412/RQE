@@ -1452,7 +1452,7 @@ function RQE.handleQuestAccepted(...)
 	end
 
 	-- Calls for an update to the special Quest Item Buttons
-	RQE:UpdateQuestItemButtons()
+	--RQE:UpdateQuestItemButtons()
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_ACCEPTED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -2529,7 +2529,7 @@ function RQE.handleQuestRemoved(...)
 	-- end
 
 	-- Calls for an update to the special Quest Item Buttons
-	RQE:UpdateQuestItemButtons()
+	--RQE:UpdateQuestItemButtons()
 	
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -2660,7 +2660,7 @@ function RQE.handleQuestWatchUpdate(...)
 	-- end
 
 	-- Calls for an update to the special Quest Item Buttons
-	RQE:UpdateQuestItemButtons()
+	--RQE:UpdateQuestItemButtons()
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -2774,7 +2774,7 @@ function RQE.handleQuestWatchListChanged(...)
 	-- end
 
 	-- Calls for an update to the special Quest Item Buttons
-	RQE:UpdateQuestItemButtons()
+	--RQE:UpdateQuestItemButtons()
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
