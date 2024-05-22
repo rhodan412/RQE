@@ -3948,6 +3948,13 @@ end
 -- Removes Automatic WQ when leaving area of WQ location
 function RQE.UntrackAutomaticWorldQuests()
     local playerMapID = C_Map.GetBestMapForUnit("player")
+    
+    -- Check if playerMapID is valid
+    if not playerMapID then
+        RQE.infoLog("Unable to get player's map ID.")
+        return
+    end
+
     local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 
     -- Convert the questsInArea to a lookup table for quicker access and print them
@@ -3967,7 +3974,7 @@ function RQE.UntrackAutomaticWorldQuests()
 
             -- If the quest is not in the current area and it was tracked automatically, untrack it
             if watchType == Enum.QuestWatchType.Automatic then
-			-- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
+                -- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
                 C_QuestLog.RemoveWorldQuestWatch(questID)
             end
         end
