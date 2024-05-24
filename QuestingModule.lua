@@ -2036,9 +2036,13 @@ function UpdateRQEQuestFrame()
 
 				local elementHeight = QuestLogIndexButton:GetHeight()
 				totalHeight = totalHeight + elementHeight + spacingBetweenElements
-			end
-		end
-	end
+            end
+
+            -- Create or update the quest item button
+            -- print("Calling CreateOrUpdateQuestItemButton for questID:", questID, "index:", i)
+            -- RQE:CreateOrUpdateQuestItemButton(questID, i, QuestLogIndexButton)
+        end
+    end
 
 	-- Check if any of the child frames should have their visibility removed as no quests being tracked
     RQE.CampaignFrame:SetShown(RQE.campaignQuestCount > 0)
@@ -2521,6 +2525,68 @@ function UpdateRQEWorldQuestFrame()
 			end
         end
     end
+end
+
+
+-- Create Special Quest Button for item/spell associated with tracked quest -- BUTTON IS CREATED BUT IS SECURECMD AND IMPROPERLY ANCHORED
+function RQE:CreateOrUpdateQuestItemButton(questID, questLogIndex, parent)
+    -- Debug: print the inputs to the function
+    print("Creating/updating quest item button for questID:", questID, "questLogIndex:", questLogIndex)
+
+    -- Fetch the special quest item info using the correct quest log index
+    local itemLink, itemIcon, charges, showItemWhenComplete = GetQuestLogSpecialItemInfo(questLogIndex)
+    if not itemLink then
+        print("No item link found for questID:", questID, "questLogIndex:", questLogIndex)
+        return
+    end
+
+    -- Debug: print the retrieved item link and icon
+    print("Retrieved item link:", itemLink, "itemIcon:", itemIcon)
+
+    -- Fetch detailed item info
+    local itemName, itemID = GetItemInfo(itemLink)
+    if not itemIcon then
+        print("Item icon not found for questID:", questID, "questLogIndex:", questLogIndex)
+        return
+    end
+
+    local buttonName = "RQEQuestItemButton" .. questID
+    local itemButton = _G[buttonName]
+    if not itemButton then
+        print("Creating new item button:", buttonName)
+        itemButton = CreateFrame("Button", buttonName, parent, "SecureActionButtonTemplate, ActionButtonTemplate")
+        itemButton:SetSize(40, 40)
+        itemButton:SetPoint("CENTER", parent, "CENTER", 0, 0)
+        itemButton.icon = itemButton:CreateTexture(buttonName .. "Icon", "BACKGROUND")
+        itemButton.icon:SetAllPoints()
+        itemButton.icon:SetTexture(itemIcon)
+        -- Set up the secure attributes for item usage
+        itemButton:SetAttribute("type", "item")
+        itemButton:SetAttribute("item", itemLink)
+        -- Register the button for clicks
+        itemButton:RegisterForClicks("AnyUp")
+        itemButton:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetHyperlink(itemLink)
+            GameTooltip:Show()
+        end)
+        itemButton:SetScript("OnLeave", function(self)
+            GameTooltip:Hide()
+        end)
+        itemButton:SetScript("PreClick", function(self)
+            -- Use the quest log special item function to ensure the correct usage
+            UseQuestLogSpecialItem(self:GetAttribute("questLogIndex"))
+        end)
+    else
+        print("Updating existing item button:", buttonName)
+        itemButton.icon:SetTexture(itemIcon)
+        -- Update the secure attributes for item usage
+        itemButton:SetAttribute("item", itemLink)
+    end
+
+    itemButton:SetAttribute("questLogIndex", questLogIndex)
+    itemButton:Show()
+    print("Button created or updated for questID:", questID, "questLogIndex:", questLogIndex, "with item:", itemName, itemLink)
 end
 
 
