@@ -1466,6 +1466,10 @@ function RQE.handleZoneChange(...)
 
 	local event = select(2, ...)
 
+	if C_Scenario.IsInScenario() then
+		RQE.updateScenarioUI()
+	end
+
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
 		return
