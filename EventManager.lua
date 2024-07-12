@@ -2154,6 +2154,9 @@ function RQE.handleQuestStatusUpdate()
 			-- DEFAULT_CHAT_FRAME:AddMessage("handleQuestStatusUpdate: Called UpdateRQEQuestFrame (1686).", 1, 0.75, 0.79)
 		end)
 	end
+	
+	UpdateRQEQuestFrame()
+	UpdateRQEWorldQuestFrame()
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
