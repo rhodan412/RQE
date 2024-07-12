@@ -3821,6 +3821,7 @@ local isMoving = false
 -- OnUpdate function to be triggered while moving
 local function OnPlayerMoving(self, elapsed)
     RQE:UpdateCoordinates()
+	RQE:UpdateMapIDDisplay()
 end
 
 
