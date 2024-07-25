@@ -768,33 +768,27 @@ end
 
 -- Function to Show Right-Click Dropdown Menu
 function ShowQuestDropdown(self, questID)
-    local menu = {}
+    MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+        local isPlayerInGroup = IsInGroup()
+        local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 
-    -- Check if the player is in a group and the quest is shareable
-    local isPlayerInGroup = IsInGroup()
-    local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+        if isPlayerInGroup and isQuestShareable then
+            rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+        end
 
-    if isPlayerInGroup and isQuestShareable then
-        table.insert(menu, { text = "Share Quest", func = function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end })
-    end
+        rootDescription:CreateButton("Stop Tracking", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
+        rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
+        rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
-    -- Always include the other options
-    table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end })
-    table.insert(menu, { text = "Abandon Quest", func = function() RQE:AbandonQuest(questID); end })
-	table.insert(menu, { text = "View Quest", func = function() OpenQuestLogToQuestDetails(questID) end })
+        local uiMapID = C_Map.GetBestMapForUnit("player")
+        local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
+        if questLineInfo and questLineInfo.questLineID then
+            rootDescription:CreateButton("Print Questline", function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end)
+        end
 
-    -- Check if the quest is part of a questline
-    local uiMapID = C_Map.GetBestMapForUnit("player") -- Assuming questline relevance to the current map
-    local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
-    if questLineInfo and questLineInfo.questLineID then
-        table.insert(menu, { text = "Print Questline", func = function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end })
-    end
-
-	table.insert(menu, { text = "Show Wowhead Link", func = function() RQE:ShowWowheadLink(questID) end })
-	table.insert(menu, { text = "Search Warcraft Wiki", func = function() RQE:ShowWowWikiLink(questID) end })
-
-    local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
-    EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
+        rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
+        rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+    end)
 end
 
 
@@ -1147,32 +1141,30 @@ local function colorizeObjectives(questID)
     return colorizedText
 end
 
-
--- Function to Add Reward Data to the Game Tooltip
-function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
+function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local colorNotUsable = { r = 1, g = 0, b = 0 }
+    local questID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
     C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
-    local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-    local warModeDesired = C_PvP.IsWarModeDesired()
-    local hasWarModeBonus = C_QuestLog.QuestHasWarModeBonus(questID)
-
     local xp = GetQuestLogRewardXP(questID)
-    local rewardTitle = GetQuestLogRewardTitle()
-    local skillPoints = GetQuestLogRewardSkillPoints()
     local money = GetQuestLogRewardMoney(questID)
-    local artifactXP = GetQuestLogRewardArtifactXP()--questID)
-    local numQuestCurrencies = GetNumQuestLogRewardCurrencies()--questID)
-    local numQuestRewards = GetNumQuestLogRewards()--questID)
+    local artifactXP = GetQuestLogRewardArtifactXP(questID)
+    local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID)
+    local numQuestRewards = GetNumQuestLogRewards(questID)
     local numQuestSpellRewards, questSpellRewards = C_QuestInfoSystem.GetQuestRewardSpells(questID)
     local numQuestChoices = GetNumQuestLogChoices(questID, true)
-    local honor = GetQuestLogRewardHonor()--questID)
-    local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID) or C_QuestOffer.GetQuestOfferMajorFactionReputationRewards()--questID)
+    local honor = GetQuestLogRewardHonor(questID)
+    local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
     local rewardsTitle = REWARDS..":"
 
-    --if not isBonus then
-        if numQuestChoices > 1 then
+    if not isBonus then
+        if numQuestChoices == 1 then
+            tooltip:AddLine(" ")
+            tooltip:AddLine(rewardsTitle)
+        elseif numQuestChoices > 1 then
+            tooltip:AddLine(" ")
             tooltip:AddLine(CHOOSE_ONE_REWARD..":")
+            rewardsTitle = OTHER.." "..rewardsTitle
         end
 
         -- choices
@@ -1199,32 +1191,41 @@ function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
                 tooltip:AddLine(text, color.r, color.g, color.b)
             end
         end
-    --end
+    end
 
-    -- xp
-    if xp > 0 then
-        tooltip:AddLine(format(BONUS_OBJECTIVE_EXPERIENCE_FORMAT, FormatLargeNumber(xp).."|c0000ff00"), 1, 1, 1)
-        if warModeDesired and isWorldQuest and hasWarModeBonus then
-            tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+    if xp > 0 or money > 0 or artifactXP > 0 or numQuestCurrencies > 0 or numQuestRewards > 0 or numQuestSpellRewards > 0 or honor > 0 or majorFactionRepRewards then
+        local isQuestWorldQuest = QuestUtils_IsQuestWorldQuest(questID)
+        local isWarModeDesired = C_PvP.IsWarModeDesired()
+        local questHasWarModeBonus = C_QuestLog.QuestCanHaveWarModeBonus(questID)
+
+        if numQuestChoices ~= 1 then
+            tooltip:AddLine(" ")
+            tooltip:AddLine(rewardsTitle)
         end
-    end
 
-    -- honor
-    if honor > 0 then
-        tooltip:AddLine(format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, "Interface\\ICONS\\Achievement_LegionPVPTier4", honor, HONOR), 1, 1, 1)
-    end
-
-    -- money
-    if money > 0 then
-        tooltip:AddLine(GetCoinTextureString(money, 12), 1, 1, 1)
-        if warModeDesired and isWorldQuest and hasWarModeBonus then
-            tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+        -- xp
+        if xp > 0 then
+            tooltip:AddLine(format(BONUS_OBJECTIVE_EXPERIENCE_FORMAT, FormatLargeNumber(xp).."|c0000ff00"), 1, 1, 1)
+            if isWarModeDesired and isQuestWorldQuest and questHasWarModeBonus then
+                tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_XP_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+            end
         end
-    end
 
-    -- spells    
-    if questSpellRewards then     -- Check if questSpellRewards is not nil
-        if #questSpellRewards > 0 then
+        -- honor
+        if honor > 0 then
+            tooltip:AddLine(format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, "Interface\\ICONS\\Achievement_LegionPVPTier4", honor, HONOR), 1, 1, 1)
+        end
+
+        -- money
+        if money > 0 then
+            tooltip:AddLine(GetCoinTextureString(money, 12), 1, 1, 1)
+            if isWarModeDesired and isQuestWorldQuest and questHasWarModeBonus then
+                tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+            end
+        end
+
+        -- spells
+        if numQuestSpellRewards > 0 then
             for _, spellID in ipairs(questSpellRewards) do
                 local spellInfo = C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
                 local knownSpell = IsSpellKnownOrOverridesKnown(spellID)
@@ -1233,52 +1234,52 @@ function RQE:QuestRewardsTooltip(tooltip, questID) --, isBonus)
                 end
             end
         end
-    end
 
-    -- items
-    for i = 1, numQuestRewards do
-        local name, texture, numItems, quality, isUsable = GetQuestLogRewardInfo(i, questID)
-        local text
-        if numItems > 1 then
-            text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
-        elseif texture and name then
-            text = format(BONUS_OBJECTIVE_REWARD_FORMAT, texture, name)
-        end
-        if text then
-            local color = isUsable and ITEM_QUALITY_COLORS[quality] or colorNotUsable
-            tooltip:AddLine(text, color.r, color.g, color.b)
-        end
-    end
-
-    -- artifact power
-    if artifactXP > 0 then
-        tooltip:AddLine(format(BONUS_OBJECTIVE_ARTIFACT_XP_FORMAT, FormatLargeNumber(artifactXP)), 1, 1, 1)
-    end
-
-    -- currencies
-    if numQuestCurrencies > 0 then
-        QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip)
-    end
-
-    -- reputation
-    if majorFactionRepRewards then
-        for i, rewardInfo in ipairs(majorFactionRepRewards) do
-            local majorFactionData = C_MajorFactions.GetMajorFactionData(rewardInfo.factionID)
-            if majorFactionData then
-                local text = FormatLargeNumber(rewardInfo.rewardAmount).." "..format(QUEST_REPUTATION_REWARD_TITLE, majorFactionData.name)
-                tooltip:AddLine(text, 1, 1, 1)
-            else
-                -- Handle the case where majorFactionData is nil, perhaps log this or use a default value
-                tooltip:AddLine("Reputation information not available", 1, 0, 0)  -- Red text indicating missing data
+        -- items
+        for i = 1, numQuestRewards do
+            local name, texture, numItems, quality, isUsable = GetQuestLogRewardInfo(i, questID)
+            local text
+            if numItems > 1 then
+                text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
+            elseif texture and name then
+                text = format(BONUS_OBJECTIVE_REWARD_FORMAT, texture, name)
+            end
+            if text then
+                local color = isUsable and ITEM_QUALITY_COLORS[quality] or colorNotUsable
+                tooltip:AddLine(text, color.r, color.g, color.b)
             end
         end
+
+        -- artifact power
+        if artifactXP > 0 then
+            tooltip:AddLine(format(BONUS_OBJECTIVE_ARTIFACT_XP_FORMAT, FormatLargeNumber(artifactXP)), 1, 1, 1)
+        end
+
+        -- currencies
+        if numQuestCurrencies > 0 then
+            QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip)
+        end
+
+        -- reputation
+        if majorFactionRepRewards then
+            for i, rewardInfo in ipairs(majorFactionRepRewards) do
+                local majorFactionData = C_MajorFactions.GetMajorFactionData(rewardInfo.factionID)
+                local text = FormatLargeNumber(rewardInfo.rewardAmount).." "..format(QUEST_REPUTATION_REWARD_TITLE, majorFactionData.name)
+                tooltip:AddLine(text, 1, 1, 1)
+            end
+        end
+
+        -- war mode bonus (quest only)
+        if isWarModeDesired and not isQuestWorldQuest and questHasWarModeBonus then
+            tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
+        end
     end
 
-    -- war mode bonus (quest only)
-    if warModeDesired and not isWorldQuest and hasWarModeBonus then
-        tooltip:AddLine(WAR_MODE_BONUS_PERCENTAGE_FORMAT:format(C_PvP.GetWarModeRewardBonus()))
-    end
+    C_QuestLog.SetSelectedQuest(bckSelectedQuestID)  -- restore selected Quest
 end
+
+
+
 
 
 -- Determine QuestType Function
@@ -1856,8 +1857,8 @@ function UpdateRQEQuestFrame()
 					end
 
 					-- Add Rewards
-					GameTooltip:AddLine("Rewards: ")
-					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					--GameTooltip:AddLine("Rewards: ")
+					--RQE:QuestRewardsTooltip(GameTooltip, questID)
 					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
 
 					-- Party Members' Quest Progress
@@ -1953,8 +1954,8 @@ function UpdateRQEQuestFrame()
 					end
 
 					-- Add Rewards
-					GameTooltip:AddLine("Rewards: ")
-					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					--GameTooltip:AddLine("Rewards: ")
+					--RQE:QuestRewardsTooltip(GameTooltip, questID)
 					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
 
 					-- Party Members' Quest Progress
@@ -2301,7 +2302,7 @@ function UpdateRQEWorldQuestFrame()
 					-- Untrack the quest
 					C_QuestLog.RemoveQuestWatch(questID)
 					RQE:ClearRQEQuestFrame()
-					RQE:ClearWQTracking()
+					--RQE:ClearWQTracking()
 				elseif button == "RightButton" then
 					ShowQuestDropdown(self, questID)
 				end
@@ -2451,8 +2452,8 @@ function UpdateRQEWorldQuestFrame()
 					end
 
 					-- Add Rewards
-					GameTooltip:AddLine("Rewards: ")
-					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					--GameTooltip:AddLine("Rewards: ")
+					--RQE:QuestRewardsTooltip(GameTooltip, questID)
 					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
 
 				-- Add time left
