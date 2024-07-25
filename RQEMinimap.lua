@@ -249,14 +249,12 @@ end
 
 -- Function to show dropdown menu
 function RQE:ShowLDBDropdownMenu()
-    local menuFrame = CreateFrame("Frame", "RQE_LDBDropdownMenu", UIParent, "UIDropDownMenuTemplate")
-    local menuList = {
-        { text = "Toggle Frame(s)", func = function() RQE.ToggleBothFramesfromLDB() end },
-        { text = "Settings", func = function() RQE:OpenSettings() end },
-        { text = "Debug Log", func = function() RQE:ToggleDebugLog() end }
-    }
-
-    EasyMenu(menuList, menuFrame, "cursor", 0 , 0, "MENU")
+    MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+        rootDescription:CreateTitle("Menu")
+        rootDescription:CreateButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end)
+        rootDescription:CreateButton("Settings", function() RQE:OpenSettings() end)
+        rootDescription:CreateButton("Debug Log", function() RQE:ToggleDebugLog() end)
+    end)
 end
 
 
