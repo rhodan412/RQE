@@ -729,9 +729,6 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
     QTFilterButton:SetText("F")
     RQE.QTQuestFilterButton = QTFilterButton  -- Store the reference in the RQE table
 
-    -- Define cursorX and cursorY outside the OnClick function
-    local cursorX, cursorY
-
     -- Position the button next to your minimize/maximize buttons
     QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMinimizeButton, "TOPLEFT", -3, 0)
 
@@ -749,49 +746,38 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
         RQE.ScanAndCacheZoneQuests()  -- Scan and cache zone quests
         local zoneQuestMenuList = RQE.BuildZoneQuestMenuList()  -- Get the dynamically built zone quest menu list
 
-		RQE.ScanAndCacheCampaigns()
+        RQE.ScanAndCacheCampaigns()
+        local campaignMenuList = RQE.BuildCampaignMenuList() -- Get the dynamically built campaign menu list
+        RQE.debugLog("Campaign Menu List: ", campaignMenuList)
 
-		-- Get the dynamically built campaign menu list
-		local campaignMenuList = RQE.BuildCampaignMenuList() --RQE.GetDynamicCampaignMenuList()
-		-- Print the campaign menu list for debugging
-		RQE.debugLog("Campaign Menu List: ", campaignMenuList)
+        local function resetScroll()
+            if RQE.QTScrollFrame and RQE.QMQTslider then
+                RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+                RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
+            end
+        end
 
-		-- Fetch the cursor position
-		local cursorX, cursorY = GetCursorPosition()
-		local uiScale = UIParent:GetScale()
-		cursorX, cursorY = cursorX / uiScale, cursorY / uiScale
-
-		-- Define a local function to reset the scroll position
-		local function resetScroll()
-			if RQE.QTScrollFrame and RQE.QMQTslider then
-				RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
-				RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
-			end
-		end
-
-		local menuItems = {
-			{
-				text = "Auto-Track Zone Quests",
-				checked = function() return RQE.db.profile.autoTrackZoneQuests end,
-				func = function(self, arg1, arg2, checked)
-					RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
-					if RQE.db.profile.autoTrackZoneQuests then
-						-- If enabling, auto-track the quests for the current zone
-						RQE.DisplayCurrentZoneQuests()
-					else
-						-- If disabling, you may want to untrack all quests or perform another action
-					end
-				end,
-				isNotRadio = true, -- Allows this menu item to be a toggle (checkable) rather than a radio button
-				keepShownOnClick = true, -- Keeps the menu open after the item is clicked
-			},
-			{ text = "Completed Quests", func = function() RQE.filterCompleteQuests(); resetScroll() end },
-			{ text = "Daily / Weekly Quests", func = function() RQE.filterDailyWeeklyQuests(); resetScroll() end },
-			{
-                text = "Camapaign Quests",
+        -- Define the menu items
+        local menuItems = {
+            {
+                text = "Auto-Track Zone Quests",
+                checked = function() return RQE.db.profile.autoTrackZoneQuests end,
+                func = function()
+                    RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+                    if RQE.db.profile.autoTrackZoneQuests then
+                        RQE.DisplayCurrentZoneQuests()
+                    end
+                end,
+                isNotRadio = true, -- Allows this menu item to be a toggle (checkable) rather than a radio button
+                keepShownOnClick = true, -- Keeps the menu open after the item is clicked
+            },
+            { text = "Completed Quests", func = function() RQE.filterCompleteQuests(); resetScroll() end },
+            { text = "Daily / Weekly Quests", func = function() RQE.filterDailyWeeklyQuests(); resetScroll() end },
+            {
+                text = "Campaign Quests",
                 hasArrow = true,
                 menuList = campaignMenuList,
-			},
+            },
             {
                 text = "Quest Type",
                 hasArrow = true,
@@ -802,34 +788,34 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
                 hasArrow = true,
                 menuList = zoneQuestMenuList,  -- Add zone quest menu list here
             },
-			{
-				text = "Quest Line",
-				hasArrow = true,
-				menuList = RQE.BuildQuestLineMenuList(),
-			},
+            {
+                text = "Quest Line",
+                hasArrow = true,
+                menuList = RQE.BuildQuestLineMenuList(),
+            },
+        }
 
-			-- -- Add more filter options here...
-			--}
-		}
-
-		-- Set up the anchor point for the dropdown menu
-		local menuAnchor = {
-			point = "TOPLEFT", -- Point on the dropdown
-			relativeFrame = RQE.RQEQuestFrameHeader, -- Frame to anchor the dropdown to
-			relativePoint = "TOPLEFT", -- Point on RQEQuestFrame
-			offsetX = 0, -- X offset from the anchor point
-			offsetY = 0, -- Y offset from the anchor point
-		}
-
-		-- Open the dropdown menu at the specified position
-	    EasyMenu(menuItems, RQE.FilterDropDownMenu, menuAnchor.relativeFrame, menuAnchor.offsetX, menuAnchor.offsetY, "MENU", 2)
-	end)
+        -- Create the context menu
+        MenuUtil.CreateContextMenu(QTFilterButton, function(ownerRegion, rootDescription)
+            for _, item in ipairs(menuItems) do
+                if item.hasArrow then
+                    rootDescription:CreateTitle(item.text)
+                    for _, subitem in ipairs(item.menuList) do
+                        rootDescription:CreateButton(subitem.text, subitem.func)
+                    end
+                else
+                    rootDescription:CreateButton(item.text, item.func)
+                end
+            end
+        end)
+    end)
 
     CreateTooltip(QTFilterButton, "Filter Quests")  -- Tooltip function from your code
     CreateBorder(QTFilterButton)  -- Border function from your code
 
     return QTFilterButton
 end
+
 
 
 -- ----------------------------------------------------
