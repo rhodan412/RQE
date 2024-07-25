@@ -644,7 +644,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	else
 		-- Not a world quest, use the existing logic
 		mapID = GetQuestUiMapID(questID)
-		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
+		--completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
 	end
 
 	if not mapID then
@@ -663,7 +663,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
             return
         end
 
-		completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
+		--completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
 
 		if not posX or not posY then
 			local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
@@ -1723,7 +1723,7 @@ end
 --Checks active timers and starts/stops the timer as necessary
 function RQE.Timer_CheckTimers()
     -- Retrieve the timer information (example: for the first criteria)
-    local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+    local duration, elapsed = select(10, C_ScenarioInfo.GetCriteriaInfo(1))
 	RQE.infoLog("[CheckTimers] Duration is " .. tostring(duration))
 	RQE.infoLog("[CheckTimers] Elapsed is " .. tostring(elapsed))
 
