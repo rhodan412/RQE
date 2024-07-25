@@ -69,85 +69,86 @@ end
 
 -- Remove the extra functions and keep only this one
 function RQE:CreateUnknownQuestWaypoint(questID, mapID)
-	if not questID then
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		else
-			return
-		end
-	end
+	-- if not questID then
+		-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		-- else
+			-- return
+		-- end
+	-- end
 
-    local questData = RQE.getQuestData(questID)
-    local x, y, mapID
-    local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-    local waypointTitle
+    -- local questData = RQE.getQuestData(questID)
+    -- local x, y, mapID
+    -- local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+    -- local waypointTitle
 
-    -- Determine coordinates and title based on quest presence in quest log and database
-    if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
-        x = questData.location.x
-        y = questData.location.y
-        mapID = questData.location.mapID
-        waypointTitle = "Quest Start: " .. questData.title
-    else
-        x = RQE.superX or 0 -- Default to 0 if nil
-        y = RQE.superY or 0 -- Default to 0 if nil
-        mapID = RQE.superMapID
-        waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
+    -- -- Determine coordinates and title based on quest presence in quest log and database
+    -- if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+        -- x = questData.location.x
+        -- y = questData.location.y
+        -- mapID = questData.location.mapID
+        -- waypointTitle = "Quest Start: " .. questData.title
+    -- else
+        -- x = RQE.superX or 0 -- Default to 0 if nil
+        -- y = RQE.superY or 0 -- Default to 0 if nil
+        -- mapID = RQE.superMapID
+        -- waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
-		if x and y then
-			x = x * 100
-			y = y * 100
-		else
-			return
-		end
-    end
+		-- if x and y then
+			-- x = x * 100
+			-- y = y * 100
+		-- else
+			-- return
+		-- end
+    -- end
 
-    -- Ensure x and y are numbers before attempting arithmetic
-    x = tonumber(x) or 0
-    y = tonumber(y) or 0
+    -- -- Ensure x and y are numbers before attempting arithmetic
+    -- x = tonumber(x) or 0
+    -- y = tonumber(y) or 0
 
-	C_Map.ClearUserWaypoint()
+	-- C_Map.ClearUserWaypoint()
 
-    -- Check if TomTom is loaded and compatibility is enabled
-    local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-    if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-        TomTom.waydb:ResetProfile()
-    end
+    -- -- Check if TomTom is loaded and compatibility is enabled
+    -- local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+    -- if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+        -- TomTom.waydb:ResetProfile()
+    -- end
 
-	C_Timer.After(0.5, function()
-		if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
-			waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText  -- Append DirectionText on a new line if available
-		end
+	-- C_Timer.After(0.5, function()
+		-- if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
+			-- waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText  -- Append DirectionText on a new line if available
+		-- end
 
-		-- Check if TomTom is loaded and compatibility is enabled
-        local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-        if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			RQE.debugLog("TomTom is available.")
-			if mapID and x and y then  -- Check if x and y are not nil
-				TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
-			else
-				RQE.debugLog("Could not create waypoint for unknown quest.")
-			end
-		else
-			RQE.debugLog("TomTom is not available.")
-			-- Code for your own waypoint system or an alternative action
-		end
+		-- -- Check if TomTom is loaded and compatibility is enabled
+        -- local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+        -- if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			-- RQE.debugLog("TomTom is available.")
+			-- if mapID and x and y then  -- Check if x and y are not nil
+				-- TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
+			-- else
+				-- RQE.debugLog("Could not create waypoint for unknown quest.")
+			-- end
+		-- else
+			-- RQE.debugLog("TomTom is not available.")
+			-- -- Code for your own waypoint system or an alternative action
+		-- end
 
-        -- Check if Carbonite is loaded and compatibility is enabled
-        local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
-        if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
-			RQE.debugLog("Carbonite is available.")
-			if mapID and x and y then  -- Check if x and y are not nil
-				Nx:TTAddWaypoint (mapID, x/100, y/100, {opt = waypointTitle})
-			else
-				RQE.debugLog("Could not create waypoint for unknown quest.")
-			end
-		else
-			RQE.debugLog("Carbonite is not available.")
-			-- Code for your own waypoint system or an alternative action
-		end
-	end)
+        -- -- Check if Carbonite is loaded and compatibility is enabled
+        -- local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+        -- if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
+			-- RQE.debugLog("Carbonite is available.")
+			-- if mapID and x and y then  -- Check if x and y are not nil
+				-- Nx:TTAddWaypoint (mapID, x/100, y/100, {opt = waypointTitle})
+			-- else
+				-- RQE.debugLog("Could not create waypoint for unknown quest.")
+			-- end
+		-- else
+			-- RQE.debugLog("Carbonite is not available.")
+			-- -- Code for your own waypoint system or an alternative action
+		-- end
+	-- end)
 end
+
 
 
 -- Function: RemoveWaypoint
