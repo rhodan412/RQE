@@ -39,9 +39,9 @@ local Frame = CreateFrame("Frame")
 
 -- Hides the Objective Tracker (by default)
 function HideObjectiveTracker()
-	if ObjectiveTrackerFrame:IsShown() then
+	--if ObjectiveTrackerFrame:IsShown() then
 		ObjectiveTrackerFrame:Hide()
-	end
+	--end
 end
 
 
