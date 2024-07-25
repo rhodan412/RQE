@@ -90,25 +90,19 @@ end)
 
 -- Function to Show Right-Click Dropdown Menu
 function ShowQuestDropdownRQEFrame(self, questID)
-    local menu = {}
+    MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+        local isPlayerInGroup = IsInGroup()
+        local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 
-    -- Check if the player is in a group and the quest is shareable
-    local isPlayerInGroup = IsInGroup()
-    local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+        if isPlayerInGroup and isQuestShareable then
+            rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+        end
 
-    if isPlayerInGroup and isQuestShareable then
-        table.insert(menu, { text = "Share Quest", func = function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end })
-    end
-
-    -- Always include the other options
-    table.insert(menu, { text = "Stop Tracking", func = function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end })
-	-- Even though no error it can be glitchy with abandoning this from anything other than the world map/official quest log
-    table.insert(menu, { text = "Abandon Quest", func = function() RQE:AbandonQuest(questID); end })
-	table.insert(menu, { text = "Show Wowhead Link", func = function() RQE:ShowWowheadLink(questID) end })
-	table.insert(menu, { text = "Search Warcraft Wiki", func = function() RQE:ShowWowWikiLink(questID) end })
-
-    local menuFrame = CreateFrame("Frame", "RQEQuestDropdown", UIParent, "UIDropDownMenuTemplate")
-    EasyMenu(menu, menuFrame, "cursor", 0, 0, "MENU")
+        rootDescription:CreateButton("Stop Tracking", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
+        rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
+        rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
+        rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+    end)
 end
 
 
@@ -215,9 +209,9 @@ end)
 
 -- Right-Click Event Logic
 RQEFrame:SetScript("OnMouseUp", function(self, button)
-    if button == "RightButton" then
-        EasyMenu(frameMenu, menuFrame, "cursor", 0 , 0, "MENU")
-    end
+    -- if button == "RightButton" then
+        -- EasyMenu(frameMenu, menuFrame, "cursor", 0 , 0, "MENU")
+    -- end
 end)
 
 
@@ -789,8 +783,8 @@ local function CreateQuestTooltip(frame, questID)
 		-- Add code for the Rewards tooltip if this is a searched quest
 	else
 		-- Add Rewards
-		GameTooltip:AddLine("Rewards: ")
-		RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
+		--GameTooltip:AddLine("Rewards: ")
+		--RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
 	end
 
 	-- Party Members' Quest Progress
