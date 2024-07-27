@@ -1494,13 +1494,13 @@ end
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
-	--RQE.debugLog("Current state of RQE.hasClickedQuestButton: " .. tostring(RQE.hasClickedQuestButton))
-	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
+    print("ClickUnknownQuestButton called.")
+    RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
 
-	-- Validation check
-	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
-		return
-	end
+    -- Validation check
+    if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
+        return
+    end
 
     local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1514,15 +1514,10 @@ function RQE.ClickUnknownQuestButton()
         return
     end
 
-    -- if RQE.hasClickedQuestButton then
-        -- return
-    -- end
-
     local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
             button:Click()
-            --RQE.hasClickedQuestButton = true
             foundButton = true
             break
         end
@@ -1532,22 +1527,16 @@ function RQE.ClickUnknownQuestButton()
         RQE.debugLog("Did not find a button for questID:", questID)
     else
         -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
-		if not RQE.mapID then
-			local mapID = C_Map.GetBestMapForUnit("player")
-		else
-			RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-		end
+        if not RQE.mapID then
+            RQE.mapID = C_Map.GetBestMapForUnit("player")
+        end
+        RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
     end
 
-    -- -- If the button wasn't found, print a message
-    -- if not RQE.hasClickedQuestButton then
-    -- end
+    C_SuperTrack.SetSuperTrackedQuestID(questID)
 
-	-- Re-Track the quest being listed as super tracked
-	C_SuperTrack.SetSuperTrackedQuestID(questID)
-
-	-- Call your function to create a waypoint using stored coordinates and mapID
-	RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+    -- Call your function to create a waypoint using stored coordinates and mapID
+    RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 end
 
 
