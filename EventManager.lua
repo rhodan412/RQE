@@ -39,9 +39,11 @@ local Frame = CreateFrame("Frame")
 
 -- Hides the Objective Tracker (by default)
 function HideObjectiveTracker()
-	if ObjectiveTrackerFrame:IsShown() then
-		ObjectiveTrackerFrame:Hide()
-	end
+	C_Timer.After(0.1, function()
+		if ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+		end
+	end)
 end
 
 
@@ -907,6 +909,7 @@ end
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
+	HideObjectiveTracker()
 	RQE:StartUpdatingCoordinates()
 end
 
@@ -1466,6 +1469,8 @@ function RQE.handleZoneChange(...)
 
 	local event = select(2, ...)
 
+	HideObjectiveTracker()
+
 	if C_Scenario.IsInScenario() then
 		RQE.updateScenarioUI()
 	end
@@ -1599,6 +1604,8 @@ end
 function RQE.handleZoneNewAreaChange()
 	-- startTime = debugprofilestop()  -- Start timer
 	-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
+
+	HideObjectiveTracker()
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -2027,6 +2034,8 @@ end
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
+
+	HideObjectiveTracker()
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
