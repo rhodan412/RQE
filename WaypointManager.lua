@@ -149,7 +149,6 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
         -- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
         if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-            print("TomTom is available.")
             if mapID and x and y then  -- Check if x and y are not nil
                 local uid = TomTom:AddWaypoint(mapID, x/100, y/100, {title = waypointTitle})
                 --print("Waypoint added with UID:", uid)
@@ -164,15 +163,14 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
         -- Check if Carbonite is loaded and compatibility is enabled
         local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
         if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
-            print("Carbonite is available.")
             if mapID and x and y then  -- Check if x and y are not nil
                 Nx:TTAddWaypoint(mapID, x/100, y/100, {opt = waypointTitle})
                 print("Carbonite waypoint added.")
             else
-                print("Could not create waypoint for unknown quest.")
+                --print("Could not create waypoint for unknown quest.")
             end
         else
-            print("Carbonite is not available.")
+            --print("Carbonite is not available.")
             -- Code for your own waypoint system or an alternative action
         end
     end)
