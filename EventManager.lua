@@ -131,9 +131,11 @@ local function HandleEvents(frame, event, ...)
     -- List of events to exclude from printing
 	-- local excludeEvents = {
 		-- ["ADDON_LOADED"] = true,
+		-- ["BAG_UPDATE"] = true,
 		-- ["PLAYER_STARTED_MOVING"] = true,
 		-- ["PLAYER_STOPPED_MOVING"] = true,
 		-- ["UNIT_AURA"] = true,
+		-- ["UNIT_INVENTORY_CHANGED"] = true,
 	-- }
 
 	-- -- Check if the event is not in the exclude list before printing
@@ -636,7 +638,10 @@ function RQE.handlePlayerLogin()
         RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
     end
 	
-	RQE.UntrackAutomaticWorldQuests()
+	-- Clears World Quest that are Automatically Tracked when PLAYER_ENTERING_WORLD
+	C_Timer.After(0.5, function()
+		RQE.UntrackAutomaticWorldQuests()
+	end)
 end
 
 
@@ -917,6 +922,10 @@ end
 -- Handling PLAYER_STOPPED_MOVING Event
 function RQE.handlePlayerStoppedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player stopped moving.", 0.93, 0.82, 0.25)
+	C_Timer.After(0.25, function()
+		HideObjectiveTracker()
+	end)
+   
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
 
@@ -1471,6 +1480,9 @@ function RQE.handleZoneChange(...)
 
 	HideObjectiveTracker()
 
+	-- Clears World Quest that are Automatically Tracked when switching to a new area
+	RQE.UntrackAutomaticWorldQuests()
+
 	if C_Scenario.IsInScenario() then
 		RQE.updateScenarioUI()
 	end
@@ -1593,9 +1605,6 @@ function RQE.handleZoneChange(...)
 
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
-
-	-- Clears World Quest that are Automatically Tracked when switching to a new area
-	RQE.UntrackAutomaticWorldQuests()
 end
 
 
@@ -1606,6 +1615,9 @@ function RQE.handleZoneNewAreaChange()
 	-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 
 	HideObjectiveTracker()
+
+	-- Clears World Quest that are Automatically Tracked when switching to a new area
+	RQE.UntrackAutomaticWorldQuests()
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -1719,9 +1731,6 @@ function RQE.handleZoneNewAreaChange()
 
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
-
-	-- Clears World Quest that are Automatically Tracked when switching to a new area
-	RQE.UntrackAutomaticWorldQuests()
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -2006,12 +2015,12 @@ end
 function RQE.handleInstanceInfoUpdate()
     -- startTime = debugprofilestop()  -- Start timer
 
+	-- Updates the achievement list for criteria of tracked achievements
+	RQE.UpdateTrackedAchievementList()
+
 	if not RQE.UpdateInstanceInfoOkay then
 		return
 	end
-
-	-- Updates the achievement list for criteria of tracked achievements
-	RQE.UpdateTrackedAchievementList()
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -2035,7 +2044,9 @@ end
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
 
-	HideObjectiveTracker()
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -2493,7 +2504,6 @@ function RQE.handleQuestRemoved(...)
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 	RQE:ShouldClearFrame() -- Clears RQEFrame of WQ that is no longer being tracked
-	--RQE.UntrackAutomaticWorldQuests()
 
     -- Check if the questID is valid and if it was being tracked automatically
     if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
@@ -2690,6 +2700,10 @@ function RQE.handleQuestWatchListChanged(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
+
+	C_Timer.After(0.5, function()
+		HideObjectiveTracker()
+	end)
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
