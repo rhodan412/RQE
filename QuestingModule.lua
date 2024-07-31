@@ -917,26 +917,24 @@ end
 function RQE.UpdateScenarioFrame()
     -- Get the full scenario information once at the beginning of the function
     local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
-	--local scenarioName, currentStage, numStages, isComplete = C_Scenario.GetInfo()
     local scenarioStepInfo = C_Scenario.GetStepInfo()
     local _, _, numCriteria = C_Scenario.GetStepInfo()
 
-	-- Assuming currentStage is the stepID and you want the first criteria
-	local stepID = currentStage
-	local criteriaIndex = 1
-	local duration, elapsed = select(10, C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex))
+    -- Assuming currentStage is the stepID and you want the first criteria
+    local stepID = currentStage
+    local criteriaIndex = 1
+    local criteriaInfo = {C_Scenario.GetCriteriaInfo(criteriaIndex)}
+    local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
 
-	--local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
-	RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
-	RQE.infoLog("[UpdateScenarioFrame, String] Elapsed is " .. tostring(elapsed))
+    RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
+    RQE.infoLog("[UpdateScenarioFrame, String] Elapsed is " .. tostring(elapsed))
 
     -- Check if we have valid timer information
     if duration and elapsed then
         local timeLeft = duration - elapsed
         RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
     else
-		RQE.ScenarioChildFrame.timer:SetText("")
-		--RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+        RQE.ScenarioChildFrame.timer:SetText("")
     end
 
     -- Check if we have valid scenario information
@@ -952,37 +950,36 @@ function RQE.UpdateScenarioFrame()
     if scenarioName and scenarioStepInfo then
         -- Update the scenarioTitle with the scenario name
         RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
-		--RQE.ScenarioChildFrame.scenarioTitle:SetWordWrap(true)
 
         -- Update the stage with the current stage and total stages
         RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
-		--RQE.ScenarioChildFrame.stage:SetWordWrap(true)
 
         -- Update the title with the scenario step title
-        RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo)--(scenarioStepInfo.title)
+        RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
 
         -- Update the main frame with criteria
         local criteriaText = ""
-		for criteriaIndex = 1, numCriteria do
-			local criteriaString, _, completed, quantity, totalQuantity = C_Scenario.GetCriteriaInfo(criteriaIndex)
-			if completed then
-				criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
-			else
-				criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
-			end
-		end
+        for criteriaIndex = 1, numCriteria do
+            local criteriaInfo = {C_Scenario.GetCriteriaInfo(criteriaIndex)}
+            local criteriaString, completed, quantity, totalQuantity = criteriaInfo[1], criteriaInfo[3], criteriaInfo[4], criteriaInfo[5]
+
+            if completed then
+                criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
+            else
+                criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
+            end
+        end
 
         RQE.ScenarioChildFrame.body:SetText(criteriaText)
 
         -- Update the timer, if applicable
-        local duration, elapsed = select(10, C_Scenario.GetCriteriaInfo(1))
+        local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
 
         if duration and elapsed then
             local timeLeft = duration - elapsed
             RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
         else
-			RQE.ScenarioChildFrame.timer:SetText("")
-            --RQE.ScenarioChildFrame.timer:SetText("No Timer Available")
+            RQE.ScenarioChildFrame.timer:SetText("")
         end
 
         -- Display the frame if it's not already shown
@@ -993,6 +990,7 @@ function RQE.UpdateScenarioFrame()
         RQE.ScenarioChildFrame:Hide()
     end
 end
+
 
 ---------------------------
 -- 9. Timer Functionality
