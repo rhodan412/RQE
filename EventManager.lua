@@ -914,7 +914,7 @@ end
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
-	HideObjectiveTracker()
+	--HideObjectiveTracker()
 	RQE:StartUpdatingCoordinates()
 end
 
@@ -922,9 +922,9 @@ end
 -- Handling PLAYER_STOPPED_MOVING Event
 function RQE.handlePlayerStoppedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player stopped moving.", 0.93, 0.82, 0.25)
-	C_Timer.After(0.25, function()
-		HideObjectiveTracker()
-	end)
+	-- C_Timer.After(0.25, function()
+		-- HideObjectiveTracker()
+	-- end)
    
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
@@ -1478,7 +1478,7 @@ function RQE.handleZoneChange(...)
 
 	local event = select(2, ...)
 
-	HideObjectiveTracker()
+	--HideObjectiveTracker()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -1614,7 +1614,7 @@ function RQE.handleZoneNewAreaChange()
 	-- startTime = debugprofilestop()  -- Start timer
 	-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 
-	HideObjectiveTracker()
+	--HideObjectiveTracker()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -2044,9 +2044,9 @@ end
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
 
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-	end)
+	-- C_Timer.After(0.5, function()
+		-- HideObjectiveTracker()
+	-- end)
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -2701,9 +2701,9 @@ function RQE.handleQuestWatchListChanged(...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
 
-	C_Timer.After(0.5, function()
-		HideObjectiveTracker()
-	end)
+	-- C_Timer.After(0.5, function()
+		-- HideObjectiveTracker()
+	-- end)
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
