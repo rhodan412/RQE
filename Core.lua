@@ -1640,22 +1640,22 @@ function RQE.PrintScenarioCriteriaInfoByStep()
             RQE.debugLog("No criteria info available for step", stepID)
         else
             for criteriaIndex = 1, numCriteria do
-                local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfoByStep(stepID, criteriaIndex)
+                local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
                 RQE.infoLog("Step ID:", stepID)
                 RQE.infoLog("Criteria Index:", criteriaIndex)
-                RQE.infoLog("Criteria String:", criteriaString or "N/A")
+                RQE.infoLog("Description:", description or "N/A")
                 RQE.infoLog("Criteria Type:", criteriaType or "N/A")
                 RQE.infoLog("Completed:", completed)
                 RQE.infoLog("Quantity:", quantity or "N/A")
                 RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
                 RQE.infoLog("Flags:", flags or "N/A")
                 RQE.infoLog("Asset ID:", assetID or "N/A")
-                RQE.infoLog("Quantity String:", quantityString or "N/A")
                 RQE.infoLog("Criteria ID:", criteriaID or "N/A")
                 RQE.infoLog("Duration:", duration or "N/A")
                 RQE.infoLog("Elapsed:", elapsed or "N/A")
                 RQE.infoLog("Criteria Failed:", criteriaFailed)
                 RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
+				RQE.infoLog("Is Formatted:", isFormatted)
             end
         end
     end
