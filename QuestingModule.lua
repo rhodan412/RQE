@@ -923,7 +923,7 @@ function RQE.UpdateScenarioFrame()
     -- Assuming currentStage is the stepID and you want the first criteria
     local stepID = currentStage
     local criteriaIndex = 1
-    local criteriaInfo = {C_Scenario.GetCriteriaInfo(criteriaIndex)}
+    local criteriaInfo = {C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)}
     local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
 
     RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
@@ -960,13 +960,32 @@ function RQE.UpdateScenarioFrame()
         -- Update the main frame with criteria
         local criteriaText = ""
         for criteriaIndex = 1, numCriteria do
-            local criteriaInfo = {C_Scenario.GetCriteriaInfo(criteriaIndex)}
-            local criteriaString, completed, quantity, totalQuantity = criteriaInfo[1], criteriaInfo[3], criteriaInfo[4], criteriaInfo[5]
+            local criteriaInfo = {C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)}
+            local criteriaString = criteriaInfo[1]
+            local completed = criteriaInfo[3]
+            local quantity = criteriaInfo[4] or 0
+            local totalQuantity = criteriaInfo[5]
 
-            if completed then
-                criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
+            -- Ensure criteriaString is a string
+            if type(criteriaString) == "table" then
+                criteriaString = table.concat(criteriaString, ", ")
             else
-                criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
+                criteriaString = tostring(criteriaString)
+            end
+
+            -- Add checks to handle cases where quantity or totalQuantity might be nil or zero
+            if totalQuantity then
+                if completed then
+                    criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
+                else
+                    criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
+                end
+            else
+                if completed then
+                    criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. "|r\n" -- Green color for completed
+                else
+                    criteriaText = criteriaText .. criteriaString .. "\n" -- Default color for not completed
+                end
             end
         end
 
