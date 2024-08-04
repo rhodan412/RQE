@@ -1623,6 +1623,9 @@ function UpdateRQEQuestFrame()
 							TomTom.waydb:ResetProfile()
 						end
 
+						-- Simulates click of the "W" Button
+						RQE.ClickUnknownQuestButton()
+
 						-- Scrolls the RQEFrame to top on super track
 						RQE.ScrollFrameToTop()
 
@@ -2164,6 +2167,7 @@ function UpdateRQEWorldQuestFrame()
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					C_QuestLog.RemoveWorldQuestWatch(questID)
+					RQE.infoLog("Removing world quest watch for quest: " .. questID)
 
 					local extractedQuestID
 					if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -2190,6 +2194,9 @@ function UpdateRQEWorldQuestFrame()
 
 					-- Clears Macro Data
 					RQEMacro:ClearMacroContentByName("RQE Macro")
+
+					-- Simulates click of the "W" Button
+					--RQE.ClickUnknownQuestButton()
 
 					-- -- Clear any existing super tracking
 					-- C_SuperTrack.SetSuperTrackedQuestID(0)
