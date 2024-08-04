@@ -228,18 +228,6 @@ end
 -- Handles ACHIEVEMENT_EARNED events
 -- Fired when an achievement is gained
 function RQE.handleAchievementTracking(...)
-    -- local args = {...}  -- Capture all arguments into a table
-    -- for i, arg in ipairs(args) do
-        -- if type(arg) == "table" then
-            -- print("Arg " .. i .. ": (table)")
-            -- for k, v in pairs(arg) do
-                -- print("  " .. tostring(k) .. ": " .. tostring(v))
-            -- end
-        -- else
-            -- print("Arg " .. i .. ": " .. tostring(arg))
-        -- end
-    -- end
-
 	local event = select(2, ...)
 	local achievementID = select(3, ...)
 	local alreadyEarned = select(4, ...)
@@ -642,6 +630,10 @@ function RQE.handlePlayerLogin()
 	C_Timer.After(0.5, function()
 		RQE.UntrackAutomaticWorldQuests()
 		RQE.UntrackAutomaticWorldQuestsByMap()
+	end)
+
+	C_Timer.After(0.2, function()
+		RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
 	end)
 end
 
@@ -2479,7 +2471,10 @@ end
 -- Handling QUEST_REMOVED event
 function RQE.handleQuestRemoved(...)
     -- startTime = debugprofilestop()  -- Start timer
-	RQE.CheckAndClearRQEFrame()
+
+	C_Timer.After(1, function()
+		RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
+	end)
 
     RQE:SaveAutomaticWorldQuestWatches()
     RQE.ReadyToRestoreAutoWorldQuests = true
@@ -2716,8 +2711,9 @@ function RQE.handleQuestWatchListChanged(...)
     local questID = select(3, ...)
     local added = select(4, ...)
 
-	RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
-
+	C_Timer.After(1, function()
+		RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
+	end)
     -- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
     if RQE.HasDragonraceAura() then
         return
