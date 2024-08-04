@@ -9,6 +9,71 @@ RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust t
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
 
 
+-- Function to check if the current RQE Macro matches the expected contents based on RQE.LastClickedIdentifier
+function RQE.CheckCurrentMacroContents()
+    local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+    -- Runs check and stops function if nothing is being super tracked
+    if not isSuperTracking then
+        RQE.debugLog("No quest is being super tracked")
+        return
+    end
+
+    -- Get the current macro contents
+    local macroIndex = GetMacroIndexByName("RQE Macro")
+    if not macroIndex or macroIndex == 0 then
+        RQE.debugLog("Macro 'RQE Macro' not found.")
+        return false
+    end
+
+    local _, _, currentMacroBody = GetMacroInfo(macroIndex)
+    if not currentMacroBody then
+        RQE.debugLog("Failed to retrieve current macro contents.")
+        return false
+    end
+
+    -- Get the expected macro contents based on RQE.LastClickedIdentifier
+    local lastClickedIdentifier = RQE.LastClickedIdentifier
+    if not lastClickedIdentifier then
+        RQE.debugLog("Last Clicked Identifier not found.")
+        return false
+    end
+
+    -- Replace this part with your logic to retrieve the questID
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    if not questID then
+        RQE.debugLog("Super tracked quest ID not found.")
+        return false
+    end
+
+    local questData = RQE.getQuestData(questID)
+    if not questData then
+        RQE.infoLog("Quest data not found for quest ID: " .. tostring(questID))
+        return false
+    end
+
+    local questStep = questData[lastClickedIdentifier]
+    if not questStep or not questStep.macro then
+        RQE.debugLog("No macro found for the specified quest step.")
+        return false
+    end
+
+    local expectedMacroBody = table.concat(questStep.macro, "\n")
+
+    -- Compare the current and expected macro contents
+    if currentMacroBody == expectedMacroBody then
+        RQE.infoLog("True - Current Waypoint is: " .. tostring(RQE.LastClickedIdentifier))
+        return true
+    else
+        RQE.infoLog("False - Current Waypoint is: " .. tostring(RQE.LastClickedIdentifier))
+			if RQE.LastClickedIdentifier == 1 then
+				RQE.WaypointButtons[1]:Click()
+			end
+        return false
+    end
+end
+
+
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
 RQE.Buttons.UpdateMagicButtonIcon = function()
     local macroIndex = GetMacroIndexByName("RQE Macro")
