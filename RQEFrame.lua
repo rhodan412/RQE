@@ -1187,6 +1187,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				RQE.debugLog("Invalid quest ID or step description. Quest data not found.")
 			end
 
+			-- Checks to make sure that the correct macro is in place
+			RQE.CheckAndBuildMacroIfNeeded()
+
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
 				RQE.Buttons.UpdateMagicButtonVisibility()
@@ -1489,6 +1492,8 @@ function RQE.ClickQuestLogIndexButton(questID)
     if not found then
         RQE.debugLog("No button found for questID: " .. tostring(questID))
     end
+	
+	RQE.CheckAndBuildMacroIfNeeded()
 end
 
 
