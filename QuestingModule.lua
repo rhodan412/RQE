@@ -1199,8 +1199,8 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
                 color = isUsable and ITEM_QUALITY_COLORS[quality] or colorNotUsable
             elseif lootType == 1 then
                 -- currency
-                local name, texture, amount, currencyID, quality = GetQuestLogRewardCurrencyInfo(i, questID, true)
-                amount = FormatLargeNumber(amount)
+                local name, texture, numItems, currencyId, quality = C_QuestLog.GetQuestRewardCurrencyInfo(i, questID, true)
+                local amount = FormatLargeNumber(amount)
                 text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(amount), name)
                 color = ITEM_QUALITY_COLORS[quality]
             end
@@ -1292,11 +1292,8 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
         end
     end
 
-    C_QuestLog.SetSelectedQuest(bckSelectedQuestID)  -- restore selected Quest
+    C_QuestLog.SetSelectedQuest(questID)  -- restore selected Quest
 end
-
-
-
 
 
 -- Determine QuestType Function
