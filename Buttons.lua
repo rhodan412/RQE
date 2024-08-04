@@ -63,42 +63,50 @@ RQE.UnknownButtonTooltip = function()
     RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
-		local extractedQuestID
-		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+        local extractedQuestID
+        local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
-		local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+        local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
-		if questID then  -- Add a check to ensure questID is not nil
-			local mapID = GetQuestUiMapID(questID)
-			local questData = RQE.getQuestData(questID)
-			if mapID == 0 then mapID = nil end
-		end
+        if questID then  -- Add a check to ensure questID is not nil
+            local mapID = GetQuestUiMapID(questID)
+            local questData = RQE.getQuestData(questID)
+            if mapID == 0 then mapID = nil end
+        end
 
-		if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
-			-- If coordinates are already available, just show them
-			local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
-			GameTooltip:SetText(tooltipText)
-			GameTooltip:Show()
+        if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
+            -- If coordinates are already available, just show them
+            local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
+            GameTooltip:SetText(tooltipText)
+            GameTooltip:Show()
         elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
             -- Open the quest log details for the super tracked quest to fetch the coordinates
             OpenQuestLogToQuestDetails(questID)
 
-			-- Update tooltip text based on new coordinates
-			if RQE.superX and RQE.superY and RQE.superMapID then
-				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.superX, RQE.superY, tostring(RQE.superMapID))
-				GameTooltip:SetText(tooltipText)
-			else
-				GameTooltip:SetText("Coordinates: Not available.")
-			end
-			GameTooltip:Show()
+            -- Use RQE.GetQuestCoordinates to get the coordinates
+            local x, y, mapID = RQE.GetQuestCoordinates(questID)
+            if x and y and mapID then
+                local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x * 100, y * 100, tostring(mapID))
+                GameTooltip:SetText(tooltipText)
+            else
+                -- Fallback to using RQE.GetNextWaypoint if coordinates are not available
+                local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+                if waypointX and waypointY and waypointMapID then
+                    local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", waypointX * 100, waypointY * 100, tostring(waypointMapID))
+                    GameTooltip:SetText(tooltipText)
+                else
+                    GameTooltip:SetText("Coordinates: Not available.")
+                end
+            end
+            GameTooltip:Show()
         else
             -- If coordinates are already available, just show them
             local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
             GameTooltip:SetText(tooltipText)
             GameTooltip:Show()
         end
-		WorldMapFrame:Hide()
+        WorldMapFrame:Hide()
     end)
 
     RQE.UnknownQuestButton:SetScript("OnLeave", function(self)
