@@ -1640,9 +1640,9 @@ function RQE.PrintScenarioCriteriaInfoByStep()
             print("No criteria info available for step", stepID)
         else
             for criteriaIndex = 1, numCriteria do
-                local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
+                --local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
+                local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
                 print("Step ID:", stepID)
-                print("Criteria Index:", criteriaIndex)
                 print("Criteria String:", criteriaString or "N/A")
                 print("Criteria Type:", criteriaType or "N/A")
                 print("Completed:", completed)
@@ -2063,7 +2063,7 @@ function RQE.SearchModule:CreateSearchBox()
 			if isWorldQuest then
 				C_QuestLog.AddWorldQuestWatch(foundQuestID, watchType or Enum.QuestWatchType.Manual)
 			else
-				C_QuestLog.AddQuestWatch(foundQuestID, Enum.QuestWatchType.Manual)
+				C_QuestLog.AddQuestWatch(foundQuestID)
 			end
 
             -- Print quest link or name
@@ -4031,7 +4031,7 @@ function RQE.PullDataFromMapQuests()
 
     -- Check if playerMapID is valid
     if not playerMapID then
-        print("Unable to get player's map ID.")
+        RQE.debugLog("Unable to get player's map ID.")
         return {}
     end
 
@@ -4040,7 +4040,7 @@ function RQE.PullDataFromMapQuests()
 
     -- Check if there are any quests on the map
     if not quests or #quests == 0 then
-        print("No quests found on the current map.")
+        RQE.debugLog("No quests found on the current map.")
         return {}
     end
 
