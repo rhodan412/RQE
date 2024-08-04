@@ -641,6 +641,7 @@ function RQE.handlePlayerLogin()
 	-- Clears World Quest that are Automatically Tracked when PLAYER_ENTERING_WORLD
 	C_Timer.After(0.5, function()
 		RQE.UntrackAutomaticWorldQuests()
+		RQE.UntrackAutomaticWorldQuestsByMap()
 	end)
 end
 
@@ -2478,12 +2479,13 @@ end
 -- Handling QUEST_REMOVED event
 function RQE.handleQuestRemoved(...)
     -- startTime = debugprofilestop()  -- Start timer
+	RQE.CheckAndClearRQEFrame()
 
-	RQE:SaveAutomaticWorldQuestWatches()
-	RQE.ReadyToRestoreAutoWorldQuests = true
+    RQE:SaveAutomaticWorldQuestWatches()
+    RQE.ReadyToRestoreAutoWorldQuests = true
 
     -- Extract questID and wasReplayQuest from the correct argument positions
-	local event = select(2, ...)
+    local event = select(2, ...)
     local questID = select(3, ...)
     local wasReplayQuest = select(4, ...)
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2492,73 +2494,86 @@ function RQE.handleQuestRemoved(...)
         currentSuperTrackedQuestID = RQE.LastSuperTrackedQuestID  -- Use the last known super-tracked questID if current is nil
     end
 
-   -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
+    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
 
-	RQEFrame:ClearAllPoints()
-	RQE.RQEQuestFrame:ClearAllPoints()
-	--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
-	RQE:QuestType()
-	SortQuestsByProximity()
+    RQEFrame:ClearAllPoints()
+    RQE.RQEQuestFrame:ClearAllPoints()
+    -- RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
+    RQE:QuestType()
+    SortQuestsByProximity()
 
-	AdjustRQEFrameWidths()
-	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+    AdjustRQEFrameWidths()
+    AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
-	RQE:ShouldClearFrame() -- Clears RQEFrame of WQ that is no longer being tracked
+    RQE:ShouldClearFrame() -- Clears RQEFrame of WQ that is no longer being tracked
 
     -- Check if the questID is valid and if it was being tracked automatically
     if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
         -- Remove the quest from the tracking list
         C_QuestLog.RemoveWorldQuestWatch(questID)
+		RQE.infoLog("Removing world quest watch for quest: " .. questID)
+
         -- Clear the saved state for this quest
         RQE.TrackedQuests[questID] = nil
-       -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed automatic World Quest watch for questID: " .. tostring(questID), 0.82, 0.70, 0.55) -- Light brown color
+        -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed automatic World Quest watch for questID: " .. tostring(questID), 0.82, 0.70, 0.55) -- Light brown color
     end
 
-	-- FLAG: Is the below necessary? Or redundant code that results in slowing
     -- Check if the removed quest is the currently super-tracked quest
     if questID == RQE.LastSuperTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-		-- Check if TomTom is loaded and compatibility is enabled
+        -- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
         if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
             TomTom.waydb:ResetProfile()
         end
 
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
+        local extractedQuestID
+        if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+            extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+        end
 
-		-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-		local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
-		local questInfo = RQE.getQuestData(questID)
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+        -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
+        local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
+        local questInfo = RQE.getQuestData(questID)
+        local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
-		-- Update RQEFrame
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+        -- Update RQEFrame
+        UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
-		-- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
-		RQE:UpdateRQEFrameVisibility()
-		-- DEFAULT_CHAT_FRAME:AddMessage("QR 01 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
+        -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
+        RQE:UpdateRQEFrameVisibility()
+        -- DEFAULT_CHAT_FRAME:AddMessage("QR 01 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
 
-		RQE:UpdateRQEQuestFrameVisibility()
-		-- DEFAULT_CHAT_FRAME:AddMessage("QR 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
-	end
+        RQE:UpdateRQEQuestFrameVisibility()
+        -- DEFAULT_CHAT_FRAME:AddMessage("QR 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
+    end
 
-	-- -- Resets Quest Progress ***
-	-- RQE.hasStateChanged()
-	-- RQE.hasQuestProgressChanged()
+    -- Resets Quest Progress ***
+    -- RQE.hasStateChanged()
+    -- RQE.hasQuestProgressChanged()
 
-	-- if questID == RQE.LastSuperTrackedQuestID then
-		-- RQE.AutoWaypointHasBeenClicked = false
-	-- end
+    -- if questID == RQE.LastSuperTrackedQuestID then
+    --     RQE.AutoWaypointHasBeenClicked = false
+    -- end
 
-	-- Calls for an update to the special Quest Item Buttons
-	--RQE:UpdateQuestItemButtons()
-	
-	-- local duration = debugprofilestop() - startTime
-	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+    -- Calls for an update to the special Quest Item Buttons
+    -- RQE:UpdateQuestItemButtons()
+
+    -- local duration = debugprofilestop() - startTime
+    -- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+
+    -- Remove the quest from saved lists
+    if questID then
+        local watchType = C_QuestLog.GetQuestWatchType(questID)
+        if watchType == nil then
+            if RQE.savedWorldQuestWatches[questID] then
+                RQE:RemoveManuallyTrackedWorldQuest(questID)
+            elseif RQE.savedAutomaticWorldQuestWatches[questID] then
+                RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
+            end
+        end
+    end
 end
 
 
@@ -2697,85 +2712,76 @@ end
 function RQE.handleQuestWatchListChanged(...)
     -- startTime = debugprofilestop()  -- Start timer
 
-	local event = select(2, ...)
-	local questID = select(3, ...)
-	local added = select(4, ...)
+    local event = select(2, ...)
+    local questID = select(3, ...)
+    local added = select(4, ...)
 
-	-- C_Timer.After(0.5, function()
-		-- HideObjectiveTracker()
-	-- end)
+	RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
 
-	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
-	if RQE.HasDragonraceAura() then
-		return
-	end
+    -- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+    if RQE.HasDragonraceAura() then
+        return
+    end
 
-	RQE.UpdateInstanceInfoOkay = true -- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
+    RQE.UpdateInstanceInfoOkay = true -- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
 
-	RQE:QuestType() -- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated
+    RQE:QuestType() -- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated
 
-	if questID then
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+    local extractedQuestID
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+    end
 
-		if isWorldQuest then
-			UpdateRQEWorldQuestFrame()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)
-		else
-			UpdateRQEQuestFrame()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)
-		end
-	end
+    -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
+    questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
+    local questInfo = RQE.getQuestData(questID)
+    local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+    StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
-	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_WATCH_LIST_CHANGED event triggered for questID: " .. tostring(questID) .. ", added: " .. tostring(added), 0.4, 0.6, 1.0)
+    if questID then
+        local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 
-	local extractedQuestID
-	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	end
+        if isWorldQuest then
+            UpdateRQEWorldQuestFrame()
 
-	-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-	local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
-	local questInfo = RQE.getQuestData(questID)
-	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
+            -- Check if the quest was removed from the watch list
+            if not added then
+                local watchType = C_QuestLog.GetQuestWatchType(questID)
+                if watchType == nil then
+                    if RQE.savedWorldQuestWatches[questID] then
+                        RQE:RemoveManuallyTrackedWorldQuest(questID)
+                    elseif RQE.savedAutomaticWorldQuestWatches[questID] then
+                        RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
+                    end
+                end
+            end
+        else
+            UpdateRQEQuestFrame()
+        end
+    end
 
-	if questID then
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-
-		if isWorldQuest then
-			UpdateRQEWorldQuestFrame()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2369).", 1, 0.75, 0.79)
-		else
-			UpdateRQEQuestFrame()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2372).", 1, 0.75, 0.79)
-		end
-	end
-
-	AdjustRQEFrameWidths()
-	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+    AdjustRQEFrameWidths()
+    AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
     -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
-	RQE:UpdateRQEFrameVisibility()
-   -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 01 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
-
+    RQE:UpdateRQEFrameVisibility()
     RQE:UpdateRQEQuestFrameVisibility()
-   -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 
     -- This ensures that any change in the watch list is reflected in your addon's UI
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+    UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
-	-- Debug messages for the above variables
-	-- for i, step in ipairs(questInfo) do
-		-- StepsText[i] = step.description
-		-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
-		-- MapIDs[i] = step.coordinates.mapID
-		-- questHeader[i] = step.description:match("^(.-)\n") or step.description
+    -- Debug messages for the above variables
+    -- for i, step in ipairs(questInfo) do
+        -- StepsText[i] = step.description
+        -- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+        -- MapIDs[i] = step.coordinates.mapID
+        -- questHeader[i] = step.description:match("^(.-)\n") or step.description
 
-		-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 03 Debug: Step " .. i .. ": " .. StepsText[i], 0.56, 0.93, 0.56)
-		-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 04 Debug: Coordinates " .. i .. ": " .. CoordsText[i], 0.56, 0.93, 0.56)
-		-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 05 Debug: MapID " .. i .. ": " .. tostring(MapIDs[i]), 0.56, 0.93, 0.56)
-		-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 06 Debug: Header " .. i .. ": " .. questHeader[i], 0.56, 0.93, 0.56)
-	-- end
+        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 03 Debug: Step " .. i .. ": " .. StepsText[i], 0.56, 0.93, 0.56)
+        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 04 Debug: Coordinates " .. i .. ": " .. CoordsText[i], 0.56, 0.93, 0.56)
+        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 05 Debug: MapID " .. i .. ": " .. tostring(MapIDs[i]), 0.56, 0.93, 0.56)
+        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 06 Debug: Header " .. i .. ": " .. questHeader[i], 0.56, 0.93, 0.56)
+    -- end
 
     -- if questInfo then
        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 07 Debug: Quest info found for questID: " .. tostring(questID), 0.4, 0.6, 1.0)
@@ -2783,31 +2789,31 @@ function RQE.handleQuestWatchListChanged(...)
        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 08 Debug: No quest info found for questID: " .. tostring(questID), 0.4, 0.6, 1.0)
     -- end
 
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(0.5, function()
-			RQE:StartPeriodicChecks()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QWLA 09 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
-		end)
-	end
+    -- Check to advance to next step in quest
+    if RQE.db.profile.autoClickWaypointButton then
+        C_Timer.After(0.5, function()
+            RQE:StartPeriodicChecks()
+            -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 09 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
+        end)
+    end
 
-	-- -- Only process the event if the achievements frame is shown
-	-- if RQE.AchievementsFrame:IsShown() then
-		-- C_Timer.After(0.1, function()
-			-- -- Ensure that the RQEQuestFrame updates when the quest is accepted (including World Quests)
-			-- UpdateRQEQuestFrame()
+    -- -- Only process the event if the achievements frame is shown
+    -- if RQE.AchievementsFrame:IsShown() then
+        -- C_Timer.After(0.1, function()
+            -- -- Ensure that the RQEQuestFrame updates when the quest is accepted (including World Quests)
+            -- UpdateRQEQuestFrame()
 
-			-- C_Timer.After(0.5, function()
-				-- UpdateRQEWorldQuestFrame()
-			-- end)
-		-- end)
-	-- end
+            -- C_Timer.After(0.5, function()
+                -- UpdateRQEWorldQuestFrame()
+            -- end)
+        -- end)
+    -- end
 
-	-- Calls for an update to the special Quest Item Buttons
-	--RQE:UpdateQuestItemButtons()
+    -- Calls for an update to the special Quest Item Buttons
+    --RQE:UpdateQuestItemButtons()
 
-	-- local duration = debugprofilestop() - startTime
-	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+    -- local duration = debugprofilestop() - startTime
+    -- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
