@@ -3863,6 +3863,32 @@ function RQE:SaveWorldQuestWatches()
 end
 
 
+-- Function to remove a manually tracked world quest
+function RQE:RemoveManuallyTrackedWorldQuest(questID)
+    if not questID then
+        RQE.debugLog("Invalid questID for RemoveManuallyTrackedWorldQuest")
+        return
+    end
+
+    -- Remove the world quest from tracking
+    C_QuestLog.RemoveWorldQuestWatch(questID)
+
+    -- Update the saved list
+    RQE.savedWorldQuestWatches[questID] = nil
+    RQE.infoLog("Manually removed World Quest ID: " .. questID .. " from saved list")
+
+    -- Refresh the UI
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+        if questID == extractedQuestID then
+            RQE:ClearFrameData()
+            RQE:ClearWaypointButtonData()
+        end
+    end
+    UpdateRQEWorldQuestFrame()
+end
+
+
 -- Function to save the currently watched world quests with Automatic watch type
 function RQE:SaveAutomaticWorldQuestWatches()
     wipe(RQE.savedAutomaticWorldQuestWatches)
@@ -3880,6 +3906,27 @@ function RQE:SaveAutomaticWorldQuestWatches()
     for questID, _ in pairs(RQE.savedAutomaticWorldQuestWatches) do
         RQE.infoLog("Saved World Quest ID:", questID)
     end
+end
+
+
+-- Function to remove an automatically tracked world quest
+function RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
+    if not questID then
+        RQE.debugLog("Invalid questID for RemoveAutomaticallyTrackedWorldQuest")
+        return
+    end
+
+    -- Remove the world quest from tracking
+    C_QuestLog.RemoveWorldQuestWatch(questID)
+
+    -- Update the saved list
+    RQE.savedAutomaticWorldQuestWatches[questID] = nil
+    RQE.infoLog("Automatically removed World Quest ID: " .. questID .. " from saved list")
+
+    -- Optionally clear RQEFrame if necessary
+    C_Timer.After(1, function()
+        RQE.CheckAndClearRQEFrame()
+    end)
 end
 
 
@@ -3923,7 +3970,7 @@ function RQE:RestoreSavedAutomaticWorldQuestWatches()
         local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
         if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
             C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-            RQE.infoLog("Automatically tracking World Quest ID " .. questID)
+            print("Automatically tracking World Quest ID " .. questID)
         end
         C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
     end
@@ -3940,7 +3987,7 @@ function RQE.PrintTrackedWorldQuestTypes()
         if questID then
             local watchType = C_QuestLog.GetQuestWatchType(questID)
             local trackingType = watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"
-            print("Quest ID " .. questID .. " is being tracked " .. trackingType)
+            RQE.infoLog("Quest ID " .. questID .. " is being tracked " .. trackingType)
         end
     end
 end
@@ -3977,45 +4024,101 @@ function RQE.GetMapQuests()
 end
 
 
--- -- Removes Automatic WQ when leaving area of WQ location
--- function RQE.UntrackAutomaticWorldQuests()
-    -- local playerMapID = C_Map.GetBestMapForUnit("player")
-    
-    -- -- Check if playerMapID is valid
-    -- if not playerMapID then
-        -- RQE.infoLog("Unable to get player's map ID.")
-        -- return
-    -- end
+-- Pulls map information for quests in the present zone and saves them
+function RQE.PullDataFromMapQuests()
+    -- Get the player's current map ID
+    local playerMapID = C_Map.GetBestMapForUnit("player")
 
-    -- local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+    -- Check if playerMapID is valid
+    if not playerMapID then
+        print("Unable to get player's map ID.")
+        return {}
+    end
 
-    -- -- Convert the questsInArea to a lookup table for quicker access and print them
-    -- local questsInAreaLookup = {}
-    -- for _, taskPOI in ipairs(questsInArea) do
-        -- questsInAreaLookup[taskPOI.questId] = true
-        -- RQE.infoLog(taskPOI.questId)  -- Print each quest ID found in the area
-    -- end
+    -- Fetch quests on the current map
+    local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
 
-    -- -- Go through each watched world quest and check conditions
-    -- RQE.infoLog("Checking watched world quests:")
-    -- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-        -- local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-        -- if questID then
-            -- local watchType = C_QuestLog.GetQuestWatchType(questID)
-            -- RQE.infoLog("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
+    -- Check if there are any quests on the map
+    if not quests or #quests == 0 then
+        print("No quests found on the current map.")
+        return {}
+    end
 
-            -- -- If the quest is not in the current area and it was tracked automatically, untrack it
-            -- if watchType == Enum.QuestWatchType.Automatic then
-                -- -- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
-                -- C_QuestLog.RemoveWorldQuestWatch(questID)
-            -- end
-        -- end
-    -- end
--- end
+    -- Create a table to store quest data
+    local questData = {}
+
+    -- Store the details of each quest on the map in the table
+    for _, quest in ipairs(quests) do
+        questData[quest.questID] = {
+            x = quest.x,
+            y = quest.y,
+            type = quest.type,
+            isMapIndicatorQuest = quest.isMapIndicatorQuest,
+            mapID = playerMapID
+        }
+    end
+
+    return questData
+end
+
+
+-- Function to get coordinates for a specific quest
+function RQE.GetQuestCoordinates(questID)
+    -- Get the quests on the current map
+    local questsOnMap = RQE.PullDataFromMapQuests()
+
+    -- Check if the questID is in the questsOnMap table
+    if questsOnMap[questID] then
+        return questsOnMap[questID].x, questsOnMap[questID].y, questsOnMap[questID].mapID
+    else
+        return nil, nil, nil
+    end
+end
 
 
 -- Removes Automatic WQ when leaving area of WQ location
 function RQE.UntrackAutomaticWorldQuests()
+    local playerMapID = C_Map.GetBestMapForUnit("player")
+    
+    -- Check if playerMapID is valid
+    if not playerMapID then
+        RQE.infoLog("Unable to get player's map ID.")
+        return
+    end
+
+    local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+
+    -- Convert the questsInArea to a lookup table for quicker access and print them
+    local questsInAreaLookup = {}
+    for _, taskPOI in ipairs(questsInArea) do
+        questsInAreaLookup[taskPOI.questId] = true
+        RQE.infoLog(taskPOI.questId)  -- Print each quest ID found in the area
+    end
+
+    -- Go through each watched world quest and check conditions
+    RQE.infoLog("Checking watched world quests:")
+    for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+        if questID then
+            local watchType = C_QuestLog.GetQuestWatchType(questID)
+            RQE.infoLog("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
+
+            -- Only untrack if the quest is tracked automatically and is not in the current area
+            if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
+                -- Additional check: ensure the player is not close to the quest location
+                local questMapID = C_TaskQuest.GetQuestZoneID(questID)
+                if questMapID and questMapID ~= playerMapID then
+                    C_QuestLog.RemoveWorldQuestWatch(questID)
+                    RQE.infoLog("Removing world quest watch for quest: " .. questID)
+                end
+            end
+        end
+    end
+end
+
+
+-- Removes Automatic WQ when leaving area of WQ location
+function RQE.UntrackAutomaticWorldQuestsByMap()
     local playerMapID = C_Map.GetBestMapForUnit("player")
     
     -- Check if playerMapID is valid
@@ -4062,13 +4165,9 @@ function RQE.UntrackAutomaticWorldQuests()
             -- If the quest is not in the current area and it was tracked automatically, untrack it
             if watchType == Enum.QuestWatchType.Automatic then
                 -- Check if the quest is not in the area and not on the map
-                if not questsInAreaLookup[questID] and not mapQuestsLookup[questID] then  -- Modified
+                if not questsInAreaLookup[questID] and not mapQuestsLookup[questID] then
                     C_QuestLog.RemoveWorldQuestWatch(questID)
-                    RQE.infoLog("Removed WQ " .. questID .. " from watch list.")  -- New
-
-					C_Timer.After(1, function()
-						RQE.CheckAndClearRQEFrame()
-					end)
+                    RQE.infoLog("Removed WQ " .. questID .. " from watch list.")
                 end
             end
         end
@@ -4084,17 +4183,30 @@ function RQE.CheckAndClearRQEFrame()
         visibleQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
     end
 
-	if RQE.searchedQuestID == visibleQuestID then
-		return
-	end
+    if RQE.searchedQuestID == visibleQuestID then
+        return
+    end
 
     -- Get the currently super tracked quest ID
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local isOnQuest = C_QuestLog.IsOnQuest(visibleQuestID)
 
-    -- Check if the visible quest or super tracked quest is no longer tracked
-    if visibleQuestID and not C_QuestLog.IsUnitOnQuest("player", visibleQuestID) then
-        RQE:ClearFrameData()
-        RQE:ClearWaypointButtonData()
+    -- Check if the visible quest is not a regular quest
+    if visibleQuestID and not isOnQuest then
+        local isWorldQuestTracked = false
+        for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+            local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+            if qID == visibleQuestID then
+                isWorldQuestTracked = true
+                break
+            end
+        end
+
+        -- Clear the frame data if the quest is neither a regular quest nor a tracked world quest
+        if not isWorldQuestTracked then
+            RQE:ClearFrameData()
+            RQE:ClearWaypointButtonData()
+        end
     end
 end
 
