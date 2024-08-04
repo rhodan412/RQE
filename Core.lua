@@ -2833,8 +2833,10 @@ function RQE:StartPeriodicChecks()
                 RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
             end
         end
+
+        -- Check and build macro if needed
+        RQE.CheckAndBuildMacroIfNeeded()
     end
-	--RQE:CheckAndAdvanceStep(questID)
 end
 
 
@@ -2876,9 +2878,9 @@ function RQE:ClickWaypointButtonForIndex(index)
 
     local button = self.WaypointButtons[index]
     if button then
-        button:Click()
-        self.LastClickedButtonRef = button  -- Update last clicked reference
+        self.LastClickedButtonRef = button  -- Update last clicked reference before the click
         self.CurrentStepIndex = index  -- Update current step index
+        button:Click()
         RQE.infoLog("Clicked waypoint button for index:", index)
     else
         RQE.infoLog("No waypoint button found for index:", index)
@@ -3970,7 +3972,7 @@ function RQE:RestoreSavedAutomaticWorldQuestWatches()
         local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
         if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
             C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-            print("Automatically tracking World Quest ID " .. questID)
+            RQE.infoLog("Automatically tracking World Quest ID " .. questID)
         end
         C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
     end
@@ -4355,6 +4357,20 @@ function RQE:AdvanceNextStep(questID)
 			--RQE:CheckAndAdvanceStep(questID)
 		end)
 	end
+end
+
+
+-- Function to check macro contents and build a new macro if needed
+function RQE.CheckAndBuildMacroIfNeeded()
+	if not RQE.db.profile.autoClickWaypointButton then
+		return
+	end
+
+    local isMacroCorrect = RQE.CheckCurrentMacroContents()
+    
+    if not isMacroCorrect then
+        RQE:BuildQuestMacroBackup()
+    end
 end
 
 
