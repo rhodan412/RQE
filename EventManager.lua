@@ -1383,6 +1383,11 @@ function RQE.handleQuestAccepted(...)
 	-- Reset Flag for printing schematics when quest accepted
 	RQE.alreadyPrintedSchematics = false
 
+	-- Checks to make sure that the correct macro is in place
+	C_Timer.After(0.5, function()
+		RQE.CheckAndBuildMacroIfNeeded()
+	end)
+
     if questID then
 		RQE.LastAcceptedQuest = questID
         local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
