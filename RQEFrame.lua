@@ -1494,7 +1494,6 @@ end
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
-    print("ClickUnknownQuestButton called.")
     RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
 
     -- Validation check
