@@ -2775,6 +2775,55 @@ end
 -- end
 
 
+-- Function to find and set the final step for the super-tracked quest
+function RQE:FindAndSetFinalStep()
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    if not superTrackedQuestID then
+        RQE.debugLog("No super-tracked quest ID found.")
+        return
+    end
+
+    local questData = self.getQuestData(superTrackedQuestID)
+
+    if not questData then
+        RQE.infoLog("Quest data not found for quest ID:", superTrackedQuestID)
+        return
+    end
+
+    for index, stepData in ipairs(questData) do
+        if stepData.objectiveIndex == 99 then
+            self.FinalStep = index
+            RQE.infoLog("Final step for quest ID", superTrackedQuestID, "is step index:", self.FinalStep)
+            return
+        end
+    end
+
+    RQE.infoLog("No final step found for quest ID:", superTrackedQuestID)
+    self.FinalStep = nil
+end
+
+
+-- Set initial waypoint button to 1
+function RQE.SetInitialWaypointToOne()
+	if not RQE.db.profile.autoClickWaypointButton then
+		return
+	end
+
+	C_Timer.After(1, function()
+		if RQE.LastClickedIdentifier == 1 then
+			RQE.WaypointButtons[1]:Click()
+        else
+            if RQE.WaypointButtons[RQE.LastClickedIdentifier] then
+                RQE.WaypointButtons[RQE.LastClickedIdentifier]:Click()
+            else
+                RQE.infoLog("Waypoint button with identifier " .. tostring(RQE.LastClickedIdentifier) .. " does not exist.")
+            end
+        end
+	end)
+end
+
+
 -- Periodic check setup
 function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2784,6 +2833,8 @@ function RQE:StartPeriodicChecks()
         return
     end
 
+    self:FindAndSetFinalStep()  -- Find and set the final step
+
     local questData = RQE.getQuestData(superTrackedQuestID)
     local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
 
@@ -2791,16 +2842,23 @@ function RQE:StartPeriodicChecks()
         local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
         local stepData = questData[stepIndex]
 
+        -- -- Handle turn-in readiness
+        -- if isReadyTurnIn then
+            -- for index, step in ipairs(questData) do
+                -- if step.objectiveIndex == 99 then
+                    -- RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
+                    -- self:ClickWaypointButtonForIndex(index)
+                    -- return
+                -- end
+            -- end
+            -- RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
+        -- end
+
         -- Handle turn-in readiness
-        if isReadyTurnIn then
-            for index, step in ipairs(questData) do
-                if step.objectiveIndex == 99 then
-                    RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
-                    self:ClickWaypointButtonForIndex(index)
-                    return
-                end
-            end
-            RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
+        if isReadyTurnIn and self.FinalStep then
+            RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+            self:ClickWaypointButtonForIndex(self.FinalStep)
+            return
         end
 
         -- -- Check if the specific functions related to the current step need to be triggered    -- KEEPING THIS MEANS THAT IT WONT COUNT THE ITEMS IN THE INVENTORY CORRECTLY AND POSSIBLY OTHER ISSUES SIMILARLY
@@ -4540,8 +4598,19 @@ function RQE:ConfirmAndBuyMerchantItem(index, quantity)
     quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
     maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
 
+    if not itemName then
+        RQE.debugLog("Error: Unable to retrieve item name for merchant index " .. tostring(index))
+        return
+    end
+
+    if not itemLink then
+        RQE.debugLog("Warning: Unable to retrieve item link for merchant index " .. tostring(index) .. ", using item name instead.")
+    end
+
+    local itemDisplay = itemLink or itemName
+
     StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
-        text = "Do you want to buy " .. quantity .. " of " .. (itemLink or itemName) .. "?",
+        text = "Do you want to buy " .. quantity .. " of " .. itemDisplay .. "?",
         button1 = "Yes",
         button2 = "No",
         OnShow = function(self)
