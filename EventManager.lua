@@ -1241,7 +1241,6 @@ function RQE.handleSuperTracking()
 	RQE.LastClickedIdentifier = nil
 		
 	RQE:ClearWaypointButtonData()
-	UpdateFrame()
 
     local extractedQuestID
     local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1371,10 +1370,10 @@ function RQE.handleSuperTracking()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
 
+	RQE.LastSuperTrackedQuestID = questID
+
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-
-	RQE.LastSuperTrackedQuestID = questID
 end
 
 
@@ -1607,11 +1606,11 @@ function RQE.handleZoneChange(...)
 		-- RQE:StartPeriodicChecks()
 	-- end
 
-	-- local duration = debugprofilestop() - startTime
-	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
+
+	-- local duration = debugprofilestop() - startTime
+	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
 
@@ -2041,6 +2040,7 @@ function RQE.handleInstanceInfoUpdate()
 	RQE:QuestType()
 
 	RQE.UpdateInstanceInfoOkay = false
+
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed UPDATE_INSTANCE_INFO in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -2188,6 +2188,7 @@ function RQE.handleQuestStatusUpdate()
 	
 	UpdateRQEQuestFrame()
 	UpdateRQEWorldQuestFrame()
+
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
@@ -2214,10 +2215,10 @@ function RQE.handleQuestCurrencyLootReceived(...)
 
     --RQE.handleQuestStatusUpdate()
 
+	RQE.QuestScrollFrameToTop()
+
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_CURRENCY_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-
-	RQE.QuestScrollFrameToTop()
 end
 
 
