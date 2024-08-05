@@ -2850,84 +2850,85 @@ function RQE.CheckAndSetFinalStep()
         return
     end
 
-	RQE.SetInitialWaypointToOne()
+    RQE.SetInitialWaypointToOne()
 
-	C_Timer.After(1, function()
-		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    C_Timer.After(1, function()
+        local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-		if not superTrackedQuestID then
-			RQE.debugLog("No super tracked quest ID found, skipping check.")
-			RQE.shouldCheckFinalStep = false
-			return
-		end
+        if not superTrackedQuestID then
+            RQE.debugLog("No super tracked quest ID found, skipping check.")
+            RQE.shouldCheckFinalStep = false
+            return
+        end
 
-		local questData = RQE.getQuestData(superTrackedQuestID)
-		if not questData then
-			RQE.debugLog("Quest data not found for quest ID:", superTrackedQuestID)
-			RQE.shouldCheckFinalStep = false
-			return
-		end
+        local questData = RQE.getQuestData(superTrackedQuestID)
+        if not questData then
+            RQE.debugLog("Quest data not found for quest ID:", superTrackedQuestID)
+            RQE.shouldCheckFinalStep = false
+            return
+        end
 
-		local objectives = C_QuestLog.GetQuestObjectives(superTrackedQuestID)
-		if not objectives or #objectives == 0 then
-			RQE.infoLog("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
-			RQE.shouldCheckFinalStep = false
-			return
-		end
+        local objectives = C_QuestLog.GetQuestObjectives(superTrackedQuestID)
+        if not objectives or #objectives == 0 then
+            RQE.infoLog("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
+            RQE.shouldCheckFinalStep = false
+            return
+        end
 
-		-- Check if all objectives are finished
-		local allObjectivesCompleted = true
-		for _, objective in ipairs(objectives) do
-			if not objective.finished then
-				allObjectivesCompleted = false
-				break
-			end
-		end
+        -- Check if all objectives are finished
+        local allObjectivesCompleted = true
+        for _, objective in ipairs(objectives) do
+            if not objective.finished then
+                allObjectivesCompleted = false
+                break
+            end
+        end
 
-		-- Calculate highestCompletedObjectiveIndex based on objectives completion
-		local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or RQE.LastClickedButtonRef.stepIndex or 1
+        -- Calculate highestCompletedObjectiveIndex based on objectives completion
+        local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or (RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex) or 1
 
-		for _, stepData in ipairs(questData) do
-			if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
-				local objective = objectives[stepData.objectiveIndex]
-				if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
-					highestCompletedObjectiveIndex = stepData.objectiveIndex
-				end
-			end
-		end
+        for _, stepData in ipairs(questData) do
+            if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
+                local objective = objectives[stepData.objectiveIndex]
+                if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
+                    highestCompletedObjectiveIndex = stepData.objectiveIndex
+                end
+            end
+        end
 
-		RQE.infoLog("QuestID:", tostring(superTrackedQuestID),
-			  ", All Objectives Completed:", tostring(allObjectivesCompleted),
-			  ", Highest Completed Objective Index:", tostring(highestCompletedObjectiveIndex))
-			  
-		local finalStepIndex = nil
-		for index, step in ipairs(questData) do
-			if step.objectiveIndex == 99 then
-				finalStepIndex = index
-				break
-			end
-		end
+        RQE.infoLog("QuestID:", tostring(superTrackedQuestID),
+              ", All Objectives Completed:", tostring(allObjectivesCompleted),
+              ", Highest Completed Objective Index:", tostring(highestCompletedObjectiveIndex))
+              
+        local finalStepIndex = nil
+        for index, step in ipairs(questData) do
+            if step.objectiveIndex == 99 then
+                finalStepIndex = index
+                break
+            end
+        end
 
-		if not finalStepIndex then
-			RQE.debugLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
-			RQE.shouldCheckFinalStep = false
-			return
-		end
-		
-		C_Timer.After(1.5, function()
-			if highestCompletedObjectiveIndex == 99 then
-				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
-				RQE.infoLog("Final Index is: " .. finalStepIndex)
-				RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
-			else
-				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
-				RQE.infoLog("Final Index is: " .. finalStepIndex)
-			end
-		end)
-	end)
+        if not finalStepIndex then
+            RQE.debugLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
+            RQE.shouldCheckFinalStep = false
+            return
+        end
+        
+        C_Timer.After(1.5, function()
+            if highestCompletedObjectiveIndex == 99 then
+                RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+                RQE.infoLog("Final Index is: " .. finalStepIndex)
+                RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
+            else
+                RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+                RQE.infoLog("Final Index is: " .. finalStepIndex)
+            end
+        end)
+    end)
 
     RQE.shouldCheckFinalStep = false
 end
+
 
 function RQE.SetMacroForFinalStep(questID, finalStepIndex)
     local questData = RQE.getQuestData(questID)
