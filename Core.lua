@@ -304,6 +304,8 @@ RQE.alreadyPrintedSchematics = false
 --RQE.AutoWaypointHasBeenClicked = true
 --RQE.canUpdateFromCriteria = true
 RQE.canSortQuests = false
+RQE.shouldCheckFinalStep = true
+RQE.hoveringOnFrame = false
 
 RQE.dragonMounts = {
     "Cliffside Wylderdrake",
@@ -560,6 +562,24 @@ function OpenQuestLogToQuestDetails(questID)
     if mapID == 0 then mapID = nil end
     OpenQuestLog(mapID)
     QuestMapFrame_ShowQuestDetails(questID)
+end
+
+
+function RQE.SaveCoordData()
+	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+		if questID then
+			-- This is where you place the logic for updating location data
+			local questData = RQE.getQuestData(questID)
+			if questData and questData.location then
+				-- Update the location data for the examined quest
+				RQE.DatabaseSuperX = questData.location.x / 100
+				RQE.DatabaseSuperY = questData.location.y / 100
+				RQE.DatabaseSuperMapID = questData.location.mapID
+			end
+		end
+	end
 end
 
 
@@ -2824,6 +2844,69 @@ function RQE.SetInitialWaypointToOne()
 end
 
 
+function RQE.CheckAndSetFinalStep()
+    if not RQE.shouldCheckFinalStep then
+        return
+    end
+
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    if not superTrackedQuestID then
+        RQE.debugLog("No super tracked quest ID found, skipping check.")
+        RQE.shouldCheckFinalStep = false
+        return
+    end
+
+    local questData = RQE.getQuestData(superTrackedQuestID)
+    if not questData then
+        RQE.infoLog("Quest data not found for quest ID:", superTrackedQuestID)
+        RQE.shouldCheckFinalStep = false
+        return
+    end
+
+    local finalStepIndex = nil
+    for index, step in ipairs(questData) do
+        if step.objectiveIndex == 99 then
+            finalStepIndex = index
+            break
+        end
+    end
+
+    if not finalStepIndex then
+        RQE.infoLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
+        RQE.shouldCheckFinalStep = false
+        return
+    end
+
+    -- Check if the currently clicked button matches the final step
+    if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex ~= finalStepIndex then
+        RQE.debugLog("Current step is not the final step. Setting macro for the final step.")
+        RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
+    else
+        RQE.debugLog("Current step is the final step. No action needed.")
+    end
+
+    RQE.shouldCheckFinalStep = false
+end
+
+function RQE.SetMacroForFinalStep(questID, finalStepIndex)
+    local questData = RQE.getQuestData(questID)
+    if not questData then
+        RQE.infoLog("Quest data not found for quest ID:", questID)
+        return
+    end
+
+    local stepData = questData[finalStepIndex]
+    if stepData and stepData.macro then
+        local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+        RQE.infoLog("Setting macro commands for final step:", macroCommands)
+        RQEMacro:SetQuestStepMacro(questID, finalStepIndex, macroCommands, false)
+    else
+        RQE.debugLog("No macro data found for the final step.")
+    end
+end
+
+
 -- Periodic check setup
 function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2891,7 +2974,6 @@ function RQE:StartPeriodicChecks()
                 RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
             end
         end
-
         -- Check and build macro if needed
         RQE.CheckAndBuildMacroIfNeeded()
     end
@@ -2926,6 +3008,21 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
             self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
         end
     end
+end
+
+
+-- Function to check if steps are displayed in the RQEFrame for a given questID
+function RQE.AreStepsDisplayed(questID)
+	local questInfo = RQE.getQuestData(questID)
+	if not questInfo then return false end
+
+	for stepIndex, stepData in ipairs(questInfo) do
+		if stepData and stepData.description then
+			return true
+		end
+	end
+
+	return false
 end
 
 
@@ -4429,6 +4526,12 @@ function RQE.CheckAndBuildMacroIfNeeded()
     if not isMacroCorrect then
         RQE:BuildQuestMacroBackup()
     end
+
+	if RQE.shouldCheckFinalStep then
+		C_Timer.After(1, function()
+			RQE.CheckAndSetFinalStep()
+		end)
+	end
 end
 
 
