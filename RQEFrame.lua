@@ -1117,7 +1117,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
 
             -- Call your function to handle the coordinate click
-            RQE:OnCoordinateClicked(x, y, mapID)
+			RQE.SaveCoordData()
+            RQE:OnCoordinateClicked(i)
 
 			-- Check if there's a last clicked button and reset its texture
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
@@ -1221,15 +1222,14 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:Hide()
 		end)
 
-		-- Add the mouse down event here
-		StepText:SetScript("OnMouseDown", function(self, button)
-			if button == "LeftButton" then
-				local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
-				x, y = tonumber(x), tonumber(y)
-				local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
+        -- Add the mouse down event here
+        StepText:SetScript("OnMouseDown", function(self, button)
+            if button == "LeftButton" then
+                -- Save the coordinates and mapID when the text is clicked
+                RQE.SaveCoordData()
 
                 -- Call your function to handle the coordinate click
-                RQE:OnCoordinateClicked(x, y, mapID)
+                RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
             end
         end)
     end
