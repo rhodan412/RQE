@@ -1173,14 +1173,17 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
     local questID = C_QuestLog.GetSelectedQuest()  -- backup selected Quest
     C_QuestLog.SetSelectedQuest(questID)  -- for num Choices
 
-    local xp = GetQuestLogRewardXP(questID)
+    local xp = GetQuestLogRewardXP()
+    --local xp = GetQuestLogRewardXP(questID)
     local money = GetQuestLogRewardMoney(questID)
     local artifactXP = GetQuestLogRewardArtifactXP(questID)
     local numQuestCurrencies = GetNumQuestLogRewardCurrencies(questID)
     local numQuestRewards = GetNumQuestLogRewards(questID)
     local numQuestSpellRewards, questSpellRewards = C_QuestInfoSystem.GetQuestRewardSpells(questID)
-    local numQuestChoices = GetNumQuestLogChoices(questID, true)
-    local honor = GetQuestLogRewardHonor(questID)
+    local numQuestChoices = GetNumQuestLogChoices()
+    --local numQuestChoices = GetNumQuestLogChoices(questID, true)
+    local honor = GetQuestLogRewardHonor()
+    --local honor = GetQuestLogRewardHonor(questID)
     local majorFactionRepRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
     local rewardsTitle = REWARDS..":"
 
@@ -1200,7 +1203,8 @@ function RQE:QuestRewardsTooltip(tooltip, questID, isBonus)
             local text, color
             if lootType == 0 then
                 -- item
-                local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo(i)
+                local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo()
+                --local name, texture, numItems, quality, isUsable = GetQuestLogChoiceInfo(i)
                 if numItems > 1 then
                     text = format(BONUS_OBJECTIVE_REWARD_WITH_COUNT_FORMAT, texture, HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(numItems), name)
                 elseif name and texture then
