@@ -1314,7 +1314,10 @@ function RQE.handleSuperTracking()
 		--RQE.LastClickedWaypointButton = nil
 	--end
 
-	RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	-- Logic to check autoClickWaypointButton and steps displayed
+	if not RQE.db.profile.autoClickWaypointButton and not RQE.AreStepsDisplayed(questID) then
+		RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	end
 
 	if questID then
 		local questName
@@ -2414,13 +2417,6 @@ function RQE.handleQuestAutoComplete(...)
 	--UpdateRQEQuestFrame()
 	--UpdateRQEWorldQuestFrame()
 	SortQuestsByProximity()
-
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(0.5, function()
-			--RQE:CheckAndAdvanceStep(questID)
-		end)
-	end
 
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
