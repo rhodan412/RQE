@@ -2844,47 +2844,87 @@ function RQE.SetInitialWaypointToOne()
 end
 
 
+-- Function to check and set the final step
 function RQE.CheckAndSetFinalStep()
     if not RQE.shouldCheckFinalStep then
         return
     end
 
-    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	RQE.SetInitialWaypointToOne()
 
-    if not superTrackedQuestID then
-        RQE.debugLog("No super tracked quest ID found, skipping check.")
-        RQE.shouldCheckFinalStep = false
-        return
-    end
+	C_Timer.After(1, function()
+		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-    local questData = RQE.getQuestData(superTrackedQuestID)
-    if not questData then
-        RQE.infoLog("Quest data not found for quest ID:", superTrackedQuestID)
-        RQE.shouldCheckFinalStep = false
-        return
-    end
+		if not superTrackedQuestID then
+			RQE.debugLog("No super tracked quest ID found, skipping check.")
+			RQE.shouldCheckFinalStep = false
+			return
+		end
 
-    local finalStepIndex = nil
-    for index, step in ipairs(questData) do
-        if step.objectiveIndex == 99 then
-            finalStepIndex = index
-            break
-        end
-    end
+		local questData = RQE.getQuestData(superTrackedQuestID)
+		if not questData then
+			RQE.debugLog("Quest data not found for quest ID:", superTrackedQuestID)
+			RQE.shouldCheckFinalStep = false
+			return
+		end
 
-    if not finalStepIndex then
-        RQE.infoLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
-        RQE.shouldCheckFinalStep = false
-        return
-    end
+		local objectives = C_QuestLog.GetQuestObjectives(superTrackedQuestID)
+		if not objectives or #objectives == 0 then
+			RQE.infoLog("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
+			RQE.shouldCheckFinalStep = false
+			return
+		end
 
-    -- Check if the currently clicked button matches the final step
-    if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex ~= finalStepIndex then
-        RQE.debugLog("Current step is not the final step. Setting macro for the final step.")
-        RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
-    else
-        RQE.debugLog("Current step is the final step. No action needed.")
-    end
+		-- Check if all objectives are finished
+		local allObjectivesCompleted = true
+		for _, objective in ipairs(objectives) do
+			if not objective.finished then
+				allObjectivesCompleted = false
+				break
+			end
+		end
+
+		-- Calculate highestCompletedObjectiveIndex based on objectives completion
+		local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or RQE.LastClickedButtonRef.stepIndex or 1
+
+		for _, stepData in ipairs(questData) do
+			if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
+				local objective = objectives[stepData.objectiveIndex]
+				if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
+					highestCompletedObjectiveIndex = stepData.objectiveIndex
+				end
+			end
+		end
+
+		RQE.infoLog("QuestID:", tostring(superTrackedQuestID),
+			  ", All Objectives Completed:", tostring(allObjectivesCompleted),
+			  ", Highest Completed Objective Index:", tostring(highestCompletedObjectiveIndex))
+			  
+		local finalStepIndex = nil
+		for index, step in ipairs(questData) do
+			if step.objectiveIndex == 99 then
+				finalStepIndex = index
+				break
+			end
+		end
+
+		if not finalStepIndex then
+			RQE.debugLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
+			RQE.shouldCheckFinalStep = false
+			return
+		end
+		
+		C_Timer.After(1.5, function()
+			if highestCompletedObjectiveIndex == 99 then
+				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+				RQE.infoLog("Final Index is: " .. finalStepIndex)
+				RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
+			else
+				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+				RQE.infoLog("Final Index is: " .. finalStepIndex)
+			end
+		end)
+	end)
 
     RQE.shouldCheckFinalStep = false
 end
@@ -4547,17 +4587,18 @@ function RQE:BuildQuestMacroBackup()
             -- Fetch the quest data here
             local questData = RQE.getQuestData(questID)
             if not questData then
-                RQE.debugLog("Quest data not found for questID:", questID)
+                print("Quest data not found for questID:", questID)
                 return
             end
 
             -- Check if the last clicked waypoint button's macro should be set
-            local waypointButton = RQE.LastClickedWaypointButton
+            local waypointButton = RQE.LastClickedWaypointButton or 1
             if waypointButton and waypointButton.stepIndex then
                 local stepData = questData[waypointButton.stepIndex]
                 if stepData and stepData.macro then
                     -- Get macro commands from the step data
                     local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+					print("Setting macro commands for final step:", macroCommands)
                     RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
                 end
             end

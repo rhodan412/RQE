@@ -1600,6 +1600,22 @@ function UpdateRQEQuestFrame()
 				number:SetText(questIndex)
 				QuestLogIndexButton.number = number  -- Save for future reference
 
+				-- Set flag to check if correct macro
+				if RQE.RQEQuestFrame then
+					QuestLogIndexButton:SetScript("OnEnter", function()
+						-- Set the flag to true
+						RQE.hoveringOnFrame = true
+					end)
+				end
+
+				-- Hide tooltip for the RQEQuestFrame when moving out of the frame
+				if RQE.RQEQuestFrame then
+					QuestLogIndexButton:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+						RQE.hoveringOnFrame = false
+					end)
+				end
+
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
 					if IsShiftKeyDown() and button == "LeftButton" then
@@ -1626,7 +1642,12 @@ function UpdateRQEQuestFrame()
 
 						if RQE.hoveringOnFrame then
 							RQE.shouldCheckFinalStep = true
-						end
+							RQE.CheckAndSetFinalStep()
+
+							if RQE.shouldCheckFinalStep then
+								RQE.shouldCheckFinalStep = false
+							end
+						end						
 
 						C_Map.ClearUserWaypoint()
 						-- Check if TomTom is loaded and compatibility is enabled
@@ -2174,6 +2195,22 @@ function UpdateRQEWorldQuestFrame()
             WQnumber:SetText("WQ")
             WQuestLogIndexButton.number = WQnumber
 
+			-- Set flag to check if correct macro
+			if RQE.RQEQuestFrame then
+				WQuestLogIndexButton:SetScript("OnEnter", function()
+					-- Set the flag to true
+					RQE.hoveringOnFrame = true
+				end)
+			end
+
+			-- Hide tooltip for the RQEQuestFrame when moving out of the frame
+			if RQE.RQEQuestFrame then
+				WQuestLogIndexButton:SetScript("OnLeave", function()
+					GameTooltip:Hide()
+					RQE.hoveringOnFrame = false
+				end)
+			end
+
 			-- Modify the OnClick event
 			WQuestLogIndexButton:SetScript("OnClick", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
@@ -2198,6 +2235,11 @@ function UpdateRQEWorldQuestFrame()
 					--UpdateRQEQuestFrame()
 					UpdateRQEWorldQuestFrame()
 				else
+					if RQE.hoveringOnFrame then
+						RQE.shouldCheckFinalStep = true
+						RQE.CheckAndSetFinalStep()
+					end
+
 					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
