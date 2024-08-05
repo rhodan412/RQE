@@ -196,15 +196,36 @@ end
 -- Function: OnCoordinateClicked (Updated)
 -- Triggered when a coordinate is clicked on the map.
 -- This version also creates waypoints using TomTom if available.
--- @param x: X-coordinate
--- @param y: Y-coordinate
--- @param mapID: ID of the map where the coordinate was clicked
 -- @param stepIndex: Index of the quest step
-function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
+function RQE:OnCoordinateClicked(stepIndex)
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    local x, y, mapID
+
     if not questID then
         RQE.debugLog("No super-tracked quest.")
         return -- Exit the function if questID is nil
+    end
+
+    -- Check conditions and get or reset coordinates
+    if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
+        -- Fetch the coordinates directly from the step data
+        local questData = RQE.getQuestData(questID)
+        if questData and questData[stepIndex] and questData[stepIndex].coordinates then
+            x = questData[stepIndex].coordinates.x
+            y = questData[stepIndex].coordinates.y
+            mapID = questData[stepIndex].coordinates.mapID
+        else
+            RQE.debugLog("Coordinates not found for quest step:", stepIndex)
+            return -- Exit if coordinates are not found
+        end
+    else
+        -- Reset the coordinates to avoid creating incorrect waypoints
+        x, y, mapID = nil, nil, nil
+    end
+
+    if not x or not y or not mapID then
+        RQE.debugLog("Invalid coordinates. Waypoint creation skipped.")
+        return -- Exit if coordinates are invalid
     end
 
     RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
@@ -231,13 +252,13 @@ function RQE:OnCoordinateClicked(x, y, mapID, stepIndex)
         title = title .. "\nDescription: " .. description
     end
 
-	-- Check if TomTom is loaded and compatibility is enabled
+    -- Check if TomTom is loaded and compatibility is enabled
     local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
     if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
         RQE.debugLog("TomTom is available.")
 
         -- Add waypoint using TomTom
-        local uid = TomTom:AddWaypoint(mapID, x/100, y/100, {
+        local uid = TomTom:AddWaypoint(mapID, x / 100, y / 100, {
             title = title,
             from = "RQE",
             persistent = nil,
