@@ -66,9 +66,7 @@ function RQE.CheckCurrentMacroContents()
         return true
     else
         RQE.infoLog("False - Current Waypoint is: " .. tostring(RQE.LastClickedIdentifier))
-			if RQE.LastClickedIdentifier == 1 then
-				RQE.WaypointButtons[1]:Click()
-			end
+			RQE.SetInitialWaypointToOne()
         return false
     end
 end
