@@ -566,8 +566,9 @@ end
 
 
 function RQE.SaveCoordData()
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 		if questID then
 			-- This is where you place the logic for updating location data
