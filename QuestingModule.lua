@@ -1620,8 +1620,9 @@ function UpdateRQEQuestFrame()
 							TomTom.waydb:ResetProfile()
 						end
 
-						-- Simulates click of the "W" Button
+						-- Simulates click of the "W" Button and then the Waypoint Button[1] to start to ensure correct waypoint coord creation
 						RQE.ClickUnknownQuestButton()
+						RQE.SetInitialWaypointToOne()
 
 						-- Scrolls the RQEFrame to top on super track
 						RQE.ScrollFrameToTop()
