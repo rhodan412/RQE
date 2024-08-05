@@ -42,7 +42,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         local questData = RQE.getQuestData(questID)
 
         if not questID then
-            print("No QuestID found. Cannot proceed.")
+            RQE.debugLog("No QuestID found. Cannot proceed.")
             return
         end
 

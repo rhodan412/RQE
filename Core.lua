@@ -4587,7 +4587,7 @@ function RQE:BuildQuestMacroBackup()
             -- Fetch the quest data here
             local questData = RQE.getQuestData(questID)
             if not questData then
-                print("Quest data not found for questID:", questID)
+                RQE.debugLog("Quest data not found for questID:", questID)
                 return
             end
 
@@ -4598,7 +4598,7 @@ function RQE:BuildQuestMacroBackup()
                 if stepData and stepData.macro then
                     -- Get macro commands from the step data
                     local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-					print("Setting macro commands for final step:", macroCommands)
+					RQE.infoLog("Setting macro commands for final step:", macroCommands)
                     RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
                 end
             end
