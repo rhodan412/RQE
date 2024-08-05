@@ -90,10 +90,20 @@ frame:SetScript("OnDragStart", frame.StartMoving)
 frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 
 
+-- Set flag to check if correct macro
+if RQE.RQEQuestFrame then
+    RQE.RQEQuestFrame:SetScript("OnEnter", function()
+		-- Set the flag to true
+		RQE.hoveringOnFrame = true
+    end)
+end
+
+
 -- Hide tooltip for the RQEQuestFrame when moving out of the frame
 if RQE.RQEQuestFrame then
     RQE.RQEQuestFrame:SetScript("OnLeave", function()
         GameTooltip:Hide()
+		RQE.hoveringOnFrame = false
     end)
 end
 
@@ -1614,6 +1624,10 @@ function UpdateRQEQuestFrame()
 						--RQE.OverrideHasProgress = true
 						--RQE.AutoWaypointHasBeenClicked = false
 
+						if RQE.hoveringOnFrame then
+							RQE.shouldCheckFinalStep = true
+						end
+
 						C_Map.ClearUserWaypoint()
 						-- Check if TomTom is loaded and compatibility is enabled
 						if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
@@ -1621,7 +1635,7 @@ function UpdateRQEQuestFrame()
 						end
 
 						-- Simulates click of the "W" Button and then the Waypoint Button[1] to start to ensure correct waypoint coord creation
-						RQE.ClickUnknownQuestButton()
+						--RQE.ClickUnknownQuestButton()
 						RQE.SetInitialWaypointToOne()
 
 						-- Scrolls the RQEFrame to top on super track
@@ -1634,7 +1648,7 @@ function UpdateRQEQuestFrame()
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 
 						-- Clicks Waypoint Button if autoClickWaypointButton is true
-						RQE:AutoClickQuestLogIndexWaypointButton()
+						--RQE:AutoClickQuestLogIndexWaypointButton()   -- TEMPORARILY BEING DONE to decide if it gets removed or kept as waypoint button 1 wasn't being clicked on new QuestLogIndexButton press
 
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
