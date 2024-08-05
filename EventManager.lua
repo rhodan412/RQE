@@ -393,6 +393,9 @@ function RQE.ReagentBagUpdate(...)
 					end
 				end
 			end
+			C_Timer.After(1, function()
+				RQE:StartPeriodicChecks()
+			end)
 		end
 	end
 end
@@ -440,6 +443,9 @@ function RQE.handleMerchantUpdate()
 				else
 					RQE.ClickQuestLogIndexButton(questID)
 				end
+				C_Timer.After(1, function()
+					RQE:StartPeriodicChecks()
+				end)
 			end
 		end
 	end
