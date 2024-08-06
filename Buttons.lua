@@ -219,6 +219,10 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
     MagicButton:SetSize(32, 32)  -- Set the button size
     MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
 
+    -- Enable mouse input propagation on MagicButton if necessary
+    MagicButton:SetPropagateMouseClicks(true)
+    MagicButton:SetPropagateMouseMotion(true)
+
     -- Storing MagicButton within the RQE table
 	RQE.MagicButton = MagicButton
 

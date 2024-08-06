@@ -157,6 +157,10 @@ ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 RQE.ScrollFrame = ScrollFrame
 
+-- Enable mouse input propagation
+ScrollFrame:SetPropagateMouseClicks(true)
+ScrollFrame:SetPropagateMouseMotion(true)
+
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
 RQE.content = content
@@ -383,7 +387,6 @@ RQE.QuestIDText:SetHeight(0)
 RQE.QuestIDText:EnableMouse(true)
 RQE.QuestIDText:SetPoint("TOPLEFT", RQE.UnknownQuestButton, "TOPLEFT", 40, -5)
 
-
 -- Create QuestName Text
 RQE.QuestNameText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
@@ -413,7 +416,6 @@ RQE.QuestNameText:SetWordWrap(true)
 RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.QuestNameText:SetHeight(0)
 RQE.QuestNameText:EnableMouse(true)
-
 
 -- Create DirectionTextFrame
 RQE.DirectionTextFrame = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -454,6 +456,7 @@ RQE.DirectionTextFrame:SetWordWrap(true)
 RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 50)
 RQE.DirectionTextFrame:SetHeight(0)
 RQE.DirectionTextFrame:EnableMouse(true)
+
 
 -- Create QuestDescription Text
 RQE.QuestDescription = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -541,7 +544,6 @@ RQE.QuestObjectives:SetWordWrap(true)
 RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.QuestObjectives:SetHeight(0)
 RQE.QuestObjectives:EnableMouse(true)
-
 
 -- Display MapID with Tracker Frame
 ---@class RQEFrame : Frame
@@ -1815,6 +1817,7 @@ function RQE.ToggleFrameLock()
         RQEFrame:SetScript("OnDragStop", nil)
         RQE.resizeGrip:Hide()
     end
+
     isFrameLocked = not isFrameLocked
     UpdateMenuText()  -- Make sure this function is called here
 end

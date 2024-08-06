@@ -73,6 +73,9 @@ ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
 RQE.QTScrollFrame = ScrollFrame
 
+-- Enable mouse input propagation
+RQE.QTScrollFrame:SetPropagateMouseClicks(true)
+RQE.QTScrollFrame:SetPropagateMouseMotion(true)
 
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
@@ -88,7 +91,6 @@ frame:EnableMouse(true)
 frame:RegisterForDrag("LeftButton")
 frame:SetScript("OnDragStart", frame.StartMoving)
 frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-
 
 -- Set flag to check if correct macro
 if RQE.RQEQuestFrame then
@@ -1414,7 +1416,7 @@ function RQE:QuestType()
 end
 
 
--- Your function to update the RQEQuestFrame
+-- Updates the RQEQuestFrame
 function UpdateRQEQuestFrame()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
@@ -1846,7 +1848,7 @@ function UpdateRQEQuestFrame()
 				QuestObjectivesOrDescription:SetHeight(0)  -- Auto height
 				QuestObjectivesOrDescription:SetWordWrap(true)
 				QuestObjectivesOrDescription:EnableMouse(true)
-
+				
 				-- Update the last element tracker for the correct type
 				if isCampaignQuest then
 					lastCampaignElement = QuestObjectivesOrDescription
@@ -2803,6 +2805,11 @@ function UpdateRQEAchievementsFrame()
 
 			-- Set up the clickable action for the achievement header
 			achievementHeader:EnableMouse(true)
+			
+			-- Enable mouse input propagation
+			achievementHeader:SetPropagateMouseClicks(true)
+			achievementHeader:SetPropagateMouseMotion(true)
+				
 			achievementHeader:SetScript("OnMouseUp", function(self, button)
 				if button == "LeftButton" then
 					local _, isBlizzAchieveLoaded = C_AddOns.IsAddOnLoaded("Blizzard_AchievementUI")

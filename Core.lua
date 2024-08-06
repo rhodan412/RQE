@@ -2497,6 +2497,10 @@ function RQE:ShowWowheadLink(questID)
     linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
     linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
 
+	-- Enable mouse input propagation
+	linkFrame:SetPropagateMouseClicks(true)
+	linkFrame:SetPropagateMouseMotion(true)
+
     -- Apply the border to the frame -- DUPLICATE
     --linkFrame:SetBackdrop(borderBackdrop)
 

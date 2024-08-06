@@ -238,6 +238,10 @@ end
 RQE.MinimapButton:SetMovable(true)
 RQE.MinimapButton:EnableMouse(true)
 
+-- Enable mouse input propagation
+RQE.MinimapButton:SetPropagateMouseClicks(true)
+RQE.MinimapButton:SetPropagateMouseMotion(true)
+
 RQE.MinimapButton:SetScript("OnDragStart", function(self)
     self:StartMoving()
 end)
