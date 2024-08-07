@@ -4597,8 +4597,20 @@ function RQE:BuildQuestMacroBackup()
                 return
             end
 
+            -- -- Check if the last clicked waypoint button's macro should be set
+            -- local waypointButton = RQE.LastClickedWaypointButton or 1
+
+			-- -- Check if the last clicked waypoint button's macro should be set and validate RQE.LastClickedWaypointButton before proceeding
+			-- if type(RQE.LastClickedWaypointButton) ~= "number" then
+				-- local waypointButton = RQE.LastClickedWaypointButton or 1
+			-- else
+				-- local waypointButton = RQE.LastClickedWaypointButton
+			-- end
+
+            -- Validate waypointButton before proceeding
+            local waypointButton = (type(RQE.LastClickedWaypointButton) == "table" and RQE.LastClickedWaypointButton) or { stepIndex = 1 }
+
             -- Check if the last clicked waypoint button's macro should be set
-            local waypointButton = RQE.LastClickedWaypointButton or 1
             if waypointButton and waypointButton.stepIndex then
                 local stepData = questData[waypointButton.stepIndex]
                 if stepData and stepData.macro then
