@@ -330,6 +330,7 @@ function RQE:RemoveWaypoint(waypoint)
         if wp == waypoint then
             -- Remove the map pin
             self:RemoveMapPin(wp)
+			RQE:RemoveMapPin()
 
             -- Remove the waypoint from the RQEWaypoints table
             table.remove(RQEWaypoints, index)
@@ -354,11 +355,18 @@ end
 
 -- Function: RemoveMapPin
 -- Removes an existing map pin.
--- @param mapPinID: The ID of the map pin to remove
-function RQE:RemoveMapPin(mapPinID)
-    -- Logic to remove a map pin
-    -- ...
+-- @param mapPinID: The ID of the map pin to remove (note: mapPinID is not needed for clearing the user waypoint)
+function RQE:RemoveMapPin()
+    -- Check if there is a user waypoint set
+    if C_Map.HasUserWaypoint() then
+        -- Clear the user waypoint
+        C_Map.ClearUserWaypoint()
+        RQE.debugLog("Removed user waypoint")
+    else
+        RQE.debugLog("No user waypoint to remove")
+    end
 end
+
 
 ---------------------------
 -- 3. Event Handlers
