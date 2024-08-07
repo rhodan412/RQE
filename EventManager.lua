@@ -950,6 +950,10 @@ function RQE.handleVariablesLoaded()
 		HideObjectiveTracker()
 	end)
 
+	C_Timer.After(3, function()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
+	end)
+
 	if C_Scenario.IsInScenario() then
 		RQE.ScenarioChildFrame:Show()
 	else
@@ -1234,7 +1238,7 @@ end
 -- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking()
     -- startTime = debugprofilestop()  -- Start timer
-	--RQEMacro:ClearMacroContentByName("RQE Macro")
+	RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
 
 	-- Reset the "Clicked" WaypointButton to nil
