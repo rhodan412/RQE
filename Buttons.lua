@@ -737,100 +737,386 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 end
 
 
+-- Custom Mixin for Quest Filter Menu Buttons
+RQE_QuestButtonMixin = {}
+
+
+function RQE_QuestButtonMixin:OnLoad()
+    self:SetNormalFontObject("GameFontHighlightSmall")
+    self:SetHighlightFontObject("GameFontHighlightSmall")
+
+    local normalTexture = self:CreateTexture(nil, "BACKGROUND")
+    normalTexture:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+    normalTexture:SetAllPoints(self)
+    self:SetNormalTexture(normalTexture)
+
+    local highlightTexture = self:CreateTexture(nil, "BACKGROUND")
+    highlightTexture:SetColorTexture(0.2, 0.2, 0.2, 1)
+    highlightTexture:SetAllPoints(self)
+    self:SetHighlightTexture(highlightTexture)
+
+    local pushedTexture = self:CreateTexture(nil, "BACKGROUND")
+    pushedTexture:SetColorTexture(0.05, 0.05, 0.05, 0.8)
+    pushedTexture:SetAllPoints(self)
+    self:SetPushedTexture(pushedTexture)
+end
+
+
+function RQE_QuestButtonMixin:OnClick()
+    -- Placeholder for button click handling
+end
+
+
+-- Custom Mixin for Quest Filter Menu
+RQE_QuestMenuMixin = {}
+
+
+function RQE_QuestMenuMixin:OnLoad()
+    self.buttons = {}
+    self:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 32,
+        edgeSize = 16,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    })
+    self:SetBackdropColor(0, 0, 0, 0.8)
+end
+
+
+-- Updated AddButton function to return the created button
+function RQE_QuestMenuMixin:AddButton(text, onClick, isSubmenu)
+    for _, button in ipairs(self.buttons) do
+        if button:GetText() == text .. (isSubmenu and " >" or "") then
+            return
+        end
+    end
+
+    local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
+    Mixin(button, RQE_QuestButtonMixin)
+    button:OnLoad()
+    button:SetText(text .. (isSubmenu and " >" or ""))
+    button:SetSize(self:GetWidth() - 20, 20)
+    button:SetScript("OnClick", onClick)
+
+    if #self.buttons == 0 then
+        button:SetPoint("TOP", self, "TOP", 0, -10)
+    else
+        button:SetPoint("TOP", self.buttons[#self.buttons], "BOTTOM", 0, -5)
+    end
+
+    table.insert(self.buttons, button)
+    self:SetHeight((#self.buttons * (20 + 5)) + 20)
+end
+
+
+-- Show and Position the Menu
+function RQE_QuestMenuMixin:ShowMenu(anchorFrame, isSubmenu)
+    self:ClearAllPoints()
+
+    local screenWidth = GetScreenWidth()
+    local screenHeight = GetScreenHeight()
+    local anchorX, anchorY = anchorFrame:GetCenter()
+
+    local isTopHalf = anchorY > (screenHeight / 2)
+    local isLeftHalf = anchorX < (screenWidth / 2)
+
+    if not isSubmenu and anchorFrame == RQE.QTQuestFilterButton then
+        -- Directly anchor the main menu below the filter button, considering screen side
+        if isLeftHalf then
+            self:SetPoint("TOPLEFT", RQE.QTQuestFilterButton, "BOTTOMLEFT", 0, -5)
+        else
+            self:SetPoint("TOPRIGHT", RQE.QTQuestFilterButton, "BOTTOMRIGHT", 0, -5)
+        end
+    elseif isSubmenu then
+        -- Adjust the positioning to anchor the submenu to the specific button (anchorFrame)
+        if isLeftHalf then
+            self:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT", 10, -60)
+        else
+            self:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT", -10, -60)
+        end
+    else
+        -- Fallback positioning for any other cases
+        if isLeftHalf then
+            self:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", 10, -85)
+        else
+            self:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT", -10, -85)
+        end
+    end
+
+    self:Show()
+end
+
+
+function RQE_QuestMenuMixin:HideMenu()
+    self:Hide()
+end
+
+
+function RQE_QuestMenuMixin:ToggleMenu(anchorFrame)
+    if self:IsShown() then
+        self:HideMenu()
+    else
+        self:ShowMenu(anchorFrame)
+    end
+end
+
+
 -- Parent function to Create QTFilterButton for RQEQuestFrame
 function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QToriginalHeight, QTcontent, QTScrollFrame, QTslider)
     local QTFilterButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
-    QTFilterButton:SetSize(18, 18)  -- Set to your desired size
+    QTFilterButton:SetSize(18, 18)
     QTFilterButton:SetText("F")
-    RQE.QTQuestFilterButton = QTFilterButton  -- Store the reference in the RQE table
+    RQE.QTQuestFilterButton = QTFilterButton
 
-    -- Position the button next to your minimize/maximize buttons
     QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMinimizeButton, "TOPLEFT", -3, 0)
-
-    -- Set the frame strata and level
     QTFilterButton:SetFrameStrata("MEDIUM")
     QTFilterButton:SetFrameLevel(3)
 
+    -- Attach Dropdown Menu to Filter Button Click
     QTFilterButton:SetScript("OnClick", function(self, button, down)
-        RQE.debugLog("RQE.FilterDropDownMenu:", RQE.FilterDropDownMenu)  -- Should not be nil
-        RQE.ScanQuestTypes()  -- Ensure quest types are up-to-date
-
-        -- Build the sorted quest type menu list
-        local questTypeMenuList = RQE.BuildQuestTypeMenuList()
-
-        RQE.ScanAndCacheZoneQuests()  -- Scan and cache zone quests
-        local zoneQuestMenuList = RQE.BuildZoneQuestMenuList()  -- Get the dynamically built zone quest menu list
-
-        RQE.ScanAndCacheCampaigns()
-        local campaignMenuList = RQE.BuildCampaignMenuList() -- Get the dynamically built campaign menu list
-        RQE.debugLog("Campaign Menu List: ", campaignMenuList)
-
-        local function resetScroll()
-            if RQE.QTScrollFrame and RQE.QMQTslider then
-                RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
-                RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
-            end
-        end
-
-        -- Define the menu items
-        local menuItems = {
-            {
-                text = "Auto-Track Zone Quests",
-                checked = function() return RQE.db.profile.autoTrackZoneQuests end,
-                func = function()
-                    RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
-                    if RQE.db.profile.autoTrackZoneQuests then
-                        RQE.DisplayCurrentZoneQuests()
-                    end
-                end,
-                isNotRadio = true, -- Allows this menu item to be a toggle (checkable) rather than a radio button
-                keepShownOnClick = true, -- Keeps the menu open after the item is clicked
-            },
-            { text = "Completed Quests", func = function() RQE.filterCompleteQuests(); resetScroll() end },
-            { text = "Daily / Weekly Quests", func = function() RQE.filterDailyWeeklyQuests(); resetScroll() end },
-            {
-                text = "Campaign Quests",
-                hasArrow = true,
-                menuList = campaignMenuList,
-            },
-            {
-                text = "Quest Type",
-                hasArrow = true,
-                menuList = questTypeMenuList,
-            },
-            {
-                text = "Zone Quests",
-                hasArrow = true,
-                menuList = zoneQuestMenuList,  -- Add zone quest menu list here
-            },
-            {
-                text = "Quest Line",
-                hasArrow = true,
-                menuList = RQE.BuildQuestLineMenuList(),
-            },
-        }
-
-        -- Create the context menu
-        MenuUtil.CreateContextMenu(QTFilterButton, function(ownerRegion, rootDescription)
-            for _, item in ipairs(menuItems) do
-                if item.hasArrow then
-                    rootDescription:CreateTitle(item.text)
-                    for _, subitem in ipairs(item.menuList) do
-                        rootDescription:CreateButton(subitem.text, subitem.func)
-                    end
-                else
-                    rootDescription:CreateButton(item.text, item.func)
-                end
-            end
-        end)
+		RQE.ScanQuestTypes()
+        RQE:ShowQuestFilterMenu()
     end)
 
-    CreateTooltip(QTFilterButton, "Filter Quests")  -- Tooltip function from your code
-    CreateBorder(QTFilterButton)  -- Border function from your code
+    CreateTooltip(QTFilterButton, "Filter Quests")
+    CreateBorder(QTFilterButton)
 
     return QTFilterButton
 end
 
+
+-- Create the Dropdown Menu
+function RQE:ShowQuestFilterMenu()
+    if not self.QuestFilterDropDownMenu then
+        self.QuestFilterDropDownMenu = CreateFrame("Frame", "RQEQuestFilterDropDownMenu", UIParent, "BackdropTemplate")
+        Mixin(self.QuestFilterDropDownMenu, RQE_QuestMenuMixin)
+        self.QuestFilterDropDownMenu:OnLoad()
+        self.QuestFilterDropDownMenu:SetSize(150, 200)
+        self.QuestFilterDropDownMenu:SetFrameStrata("DIALOG")
+        self.QuestFilterDropDownMenu:Hide()
+
+        -- Initialize the buttons table
+        self.QuestFilterDropDownMenu.buttons = {}
+
+        self.QuestFilterDropDownMenu:SetScript("OnEnter", function(self)
+            self:Show()
+        end)
+        self.QuestFilterDropDownMenu:SetScript("OnLeave", function(self)
+            C_Timer.After(0.1, function()
+                if not MouseIsOver(self) and not MouseIsOver(RQE.QTQuestFilterButton) then
+                    self:Hide()
+                end
+            end)
+        end)
+    end
+
+    -- Ensure buttons are only added once
+    if not self.QuestFilterDropDownMenu.buttons or #self.QuestFilterDropDownMenu.buttons == 0 then
+        -- First, ensure all necessary data is up-to-date
+        RQE.ScanQuestTypes()
+        RQE.ScanAndCacheZoneQuests()
+        RQE.ScanAndCacheCampaigns()
+
+        -- Build the sorted menu lists
+        local questTypeMenuList = RQE.BuildQuestTypeMenuList()
+        local zoneQuestMenuList = RQE.BuildZoneQuestMenuList()
+        local campaignMenuList = RQE.BuildCampaignMenuList()
+        local questLineMenuList = RQE.BuildQuestLineMenuList()
+
+        -- Add Buttons for Main Menu Items
+        self.QuestFilterDropDownMenu:AddButton("Auto-Track Zone Quests", function()
+            RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+            if RQE.db.profile.autoTrackZoneQuests then
+                RQE.DisplayCurrentZoneQuests()
+            end
+        end)
+
+        self.QuestFilterDropDownMenu:AddButton("Completed Quests", function()
+            RQE.filterCompleteQuests()
+            if RQE.QTScrollFrame and RQE.QMQTslider then
+                RQE.QTScrollFrame:SetVerticalScroll(0)
+                RQE.QMQTslider:SetValue(0)
+            end
+        end)
+
+        self.QuestFilterDropDownMenu:AddButton("Daily / Weekly Quests", function()
+            RQE.filterDailyWeeklyQuests()
+            if RQE.QTScrollFrame and RQE.QMQTslider then
+                RQE.QTScrollFrame:SetVerticalScroll(0)
+                RQE.QMQTslider:SetValue(0)
+            end
+        end)
+
+        -- Add Submenus
+        self.QuestFilterDropDownMenu:AddButton("Campaign Quests", function()
+            -- Hide any other open submenu
+            if self.QuestTypeSubMenu then self.QuestTypeSubMenu:Hide() end
+            if self.ZoneQuestSubMenu then self.ZoneQuestSubMenu:Hide() end
+            if self.QuestLineSubMenu then self.QuestLineSubMenu:Hide() end
+            
+            self.CampaignSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
+        end, true)
+        self:CreateCampaignSubMenu()
+
+        self.QuestFilterDropDownMenu:AddButton("Quest Type", function()
+            -- Hide any other open submenu
+            if self.CampaignSubMenu then self.CampaignSubMenu:Hide() end
+            if self.ZoneQuestSubMenu then self.ZoneQuestSubMenu:Hide() end
+            if self.QuestLineSubMenu then self.QuestLineSubMenu:Hide() end
+            
+            self.QuestTypeSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
+        end, true)
+        self:CreateQuestTypeSubMenu()
+
+        self.QuestFilterDropDownMenu:AddButton("Zone Quests", function()
+            -- Hide any other open submenu
+            if self.CampaignSubMenu then self.CampaignSubMenu:Hide() end
+            if self.QuestTypeSubMenu then self.QuestTypeSubMenu:Hide() end
+            if self.QuestLineSubMenu then self.QuestLineSubMenu:Hide() end
+            
+            self.ZoneQuestSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
+        end, true)
+        self:CreateZoneQuestSubMenu()
+
+        self.QuestFilterDropDownMenu:AddButton("Quest Line", function()
+            -- Hide any other open submenu
+            if self.CampaignSubMenu then self.CampaignSubMenu:Hide() end
+            if self.QuestTypeSubMenu then self.QuestTypeSubMenu:Hide() end
+            if self.ZoneQuestSubMenu then self.ZoneQuestSubMenu:Hide() end
+            
+            self.QuestLineSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
+        end, true)
+        self:CreateQuestLineSubMenu()
+    end
+
+    -- Toggle Menu Visibility
+    self.QuestFilterDropDownMenu:ToggleMenu(self.QTQuestFilterButton)
+end
+
+
+-- Create the Campaign Quests Submenu
+function RQE:CreateCampaignSubMenu()
+    if not self.CampaignSubMenu then
+        self.CampaignSubMenu = CreateFrame("Frame", "RQECampaignSubMenu", UIParent, "BackdropTemplate")
+        Mixin(self.CampaignSubMenu, RQE_QuestMenuMixin)
+        self.CampaignSubMenu:OnLoad()
+        self.CampaignSubMenu:SetSize(150, 200)
+        self.CampaignSubMenu:SetFrameStrata("DIALOG")
+        self.CampaignSubMenu:Hide()
+        
+        -- Keep submenu visible when mouse is over it
+        self.CampaignSubMenu:SetScript("OnEnter", function(self)
+            self:Show()
+        end)
+
+		-- Example for one of the submenus, apply similar logic to others
+		self.CampaignSubMenu:SetScript("OnLeave", function(self)
+			C_Timer.After(0.1, function()
+				if not MouseIsOver(self) and not MouseIsOver(self:GetParent()) then
+					self:Hide()
+					self:GetParent():Hide() -- Hide the main menu if mouse leaves both
+				end
+			end)
+		end)
+
+        -- Add buttons to the submenu
+        for _, item in ipairs(RQE.BuildCampaignMenuList()) do
+            self.CampaignSubMenu:AddButton(item.text, item.func)
+        end
+    end
+end
+
+
+-- Create the Quest Type Submenu
+function RQE:CreateQuestTypeSubMenu()
+    if not self.QuestTypeSubMenu then
+        self.QuestTypeSubMenu = CreateFrame("Frame", "RQEQuestTypeSubMenu", UIParent, "BackdropTemplate")
+        Mixin(self.QuestTypeSubMenu, RQE_QuestMenuMixin)
+        self.QuestTypeSubMenu:OnLoad()
+        self.QuestTypeSubMenu:SetSize(150, 200)
+        self.QuestTypeSubMenu:SetFrameStrata("DIALOG")
+        self.QuestTypeSubMenu:Hide()
+
+        -- Keep submenu visible when mouse is over it
+        self.QuestTypeSubMenu:SetScript("OnEnter", function(self)
+            self:Show()
+        end)
+        self.QuestTypeSubMenu:SetScript("OnLeave", function(self)
+            C_Timer.After(0.1, function()
+                if not MouseIsOver(self) then
+                    self:Hide()
+                end
+            end)
+        end)
+
+        -- Add buttons to the submenu
+        for _, item in ipairs(RQE.BuildQuestTypeMenuList()) do
+            self.QuestTypeSubMenu:AddButton(item.text, item.func)
+        end
+    end
+end
+
+
+-- Create the Zone Quests Submenu
+function RQE:CreateZoneQuestSubMenu()
+    if not self.ZoneQuestSubMenu then
+        self.ZoneQuestSubMenu = CreateFrame("Frame", "RQEZoneQuestSubMenu", UIParent, "BackdropTemplate")
+        Mixin(self.ZoneQuestSubMenu, RQE_QuestMenuMixin)
+        self.ZoneQuestSubMenu:OnLoad()
+        self.ZoneQuestSubMenu:SetSize(150, 200)
+        self.ZoneQuestSubMenu:SetFrameStrata("DIALOG")
+        self.ZoneQuestSubMenu:Hide()
+
+        -- Keep submenu visible when mouse is over it
+        self.ZoneQuestSubMenu:SetScript("OnEnter", function(self)
+            self:Show()
+        end)
+        self.ZoneQuestSubMenu:SetScript("OnLeave", function(self)
+            C_Timer.After(0.1, function()
+                if not MouseIsOver(self) then
+                    self:Hide()
+                end
+            end)
+        end)
+
+        -- Add buttons to the submenu
+        for _, item in ipairs(RQE.BuildZoneQuestMenuList()) do
+            self.ZoneQuestSubMenu:AddButton(item.text, item.func)
+        end
+    end
+end
+
+
+-- Create the Quest Line Submenu
+function RQE:CreateQuestLineSubMenu()
+    if not self.QuestLineSubMenu then
+        self.QuestLineSubMenu = CreateFrame("Frame", "RQEQuestLineSubMenu", UIParent, "BackdropTemplate")
+        Mixin(self.QuestLineSubMenu, RQE_QuestMenuMixin)
+        self.QuestLineSubMenu:OnLoad()
+        self.QuestLineSubMenu:SetSize(150, 200)
+        self.QuestLineSubMenu:SetFrameStrata("DIALOG")
+        self.QuestLineSubMenu:Hide()
+
+        -- Keep submenu visible when mouse is over it
+        self.QuestLineSubMenu:SetScript("OnEnter", function(self)
+            self:Show()
+        end)
+        self.QuestLineSubMenu:SetScript("OnLeave", function(self)
+            C_Timer.After(0.1, function()
+                if not MouseIsOver(self) then
+                    self:Hide()
+                end
+            end)
+        end)
+
+        -- Add buttons to the submenu
+        for _, item in ipairs(RQE.BuildQuestLineMenuList()) do
+            self.QuestLineSubMenu:AddButton(item.text, item.func)
+        end
+    end
+end
 
 
 -- ----------------------------------------------------
