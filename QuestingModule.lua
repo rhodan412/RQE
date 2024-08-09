@@ -1687,8 +1687,9 @@ function UpdateRQEQuestFrame()
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 
 						-- Clear any existing super tracking
-						C_SuperTrack.SetSuperTrackedQuestID(0)
-						C_SuperTrack.ClearSuperTrackedContent()
+						RQE:RemoveSuperTrackingFromQuest()
+						--C_SuperTrack.SetSuperTrackedQuestID(0)
+						--C_SuperTrack.ClearSuperTrackedContent()
 
 						-- -- Initially clicks the WaypointButton[1] after super tracking a quest via pressing QuestLogIndexButton
 						-- C_Timer.After(2, function()
