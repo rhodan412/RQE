@@ -1687,7 +1687,7 @@ function UpdateRQEQuestFrame()
 						RQEMacro:ClearMacroContentByName("RQE Macro")
 
 						-- Clear any existing super tracking
-						RQE:RemoveSuperTrackingFromQuest()
+						--------RQE:RemoveSuperTrackingFromQuest() -- 'TEMPORARILY' commenting out this function call as it seems to cause a loop
 						--C_SuperTrack.SetSuperTrackedQuestID(0)
 						--C_SuperTrack.ClearSuperTrackedContent()
 
