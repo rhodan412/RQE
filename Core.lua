@@ -935,63 +935,63 @@ function RQE:ToggleMainFrame()
 end
 
 
--- Create a hidden frame that will monitor mouse movement
-local tooltipCheckerFrame = CreateFrame("Frame")
+-- -- Create a hidden frame that will monitor mouse movement
+-- local tooltipCheckerFrame = CreateFrame("Frame")
 
 
--- Timer variable to control the frequency of checks
-local timeSinceLastUpdate = 0
+-- -- Timer variable to control the frequency of checks
+-- local timeSinceLastUpdate = 0
 
 
--- Function to check if the mouse is over an RQE UI element with a tooltip
-function RQE.CheckMouseHoverForTooltip()
-    -- List of RQE elements that have tooltips
-    local rqeElements = {
-        RQE.QTQuestFilterButton,
-        RQE.CampaignSubMenu,
-        RQE.QuestTypeSubMenu,
-        RQE.ZoneQuestSubMenu,
-        RQE.QuestLineSubMenu,
-        -- Add other RQE elements here that have tooltips
-    }
+-- -- Function to check if the mouse is over an RQE UI element with a tooltip
+-- function RQE.CheckMouseHoverForTooltip()
+    -- -- List of RQE elements that have tooltips
+    -- local rqeElements = {
+        -- RQE.QTQuestFilterButton,
+        -- RQE.CampaignSubMenu,
+        -- RQE.QuestTypeSubMenu,
+        -- RQE.ZoneQuestSubMenu,
+        -- RQE.QuestLineSubMenu,
+        -- -- Add other RQE elements here that have tooltips
+    -- }
 
-    -- Initialize a flag to track whether the mouse is over any RQE element
-    local isOverRQEElement = false
-    local dummyCounter = 0 -- Dummy operation to replace print
+    -- -- Initialize a flag to track whether the mouse is over any RQE element
+    -- local isOverRQEElement = false
+    -- local dummyCounter = 0 -- Dummy operation to replace print
 
-    for _, element in pairs(rqeElements) do
-        if element and element:IsShown() then
-            -- Safely check if the mouse is over the element
-            local isMouseOver = element:IsMouseOver()
+    -- for _, element in pairs(rqeElements) do
+        -- if element and element:IsShown() then
+            -- -- Safely check if the mouse is over the element
+            -- local isMouseOver = element:IsMouseOver()
 
-            -- Perform a dummy operation to ensure similar timing
-            dummyCounter = dummyCounter + 1
-			--print("Checking element:", elementName, " IsMouseOver:", isMouseOver and "true" or "false")
+            -- -- Perform a dummy operation to ensure similar timing
+            -- dummyCounter = dummyCounter + 1
+			-- --print("Checking element:", elementName, " IsMouseOver:", isMouseOver and "true" or "false")
 
-            if isMouseOver then
-                isOverRQEElement = true
-                break
-            end
-        end
-    end
+            -- if isMouseOver then
+                -- isOverRQEElement = true
+                -- break
+            -- end
+        -- end
+    -- end
 
-    -- If the mouse is not over any RQE element, hide the RQE tooltip
-    if not isOverRQEElement then
-        GameTooltip:Hide()
-    end
-end
+    -- -- If the mouse is not over any RQE element, hide the RQE tooltip
+    -- if not isOverRQEElement then
+        -- GameTooltip:Hide()
+    -- end
+-- end
 
 
--- Set the OnUpdate script to check the mouse position
-tooltipCheckerFrame:SetScript("OnUpdate", function(self, elapsed)
-    timeSinceLastUpdate = timeSinceLastUpdate + elapsed
+-- -- Set the OnUpdate script to check the mouse position
+-- tooltipCheckerFrame:SetScript("OnUpdate", function(self, elapsed)
+    -- timeSinceLastUpdate = timeSinceLastUpdate + elapsed
 
-    -- Only check the mouse position every 0.1 seconds
-    if timeSinceLastUpdate > 0.1 then
-        RQE.CheckMouseHoverForTooltip()
-        timeSinceLastUpdate = 0
-    end
-end)
+    -- -- Only check the mouse position every 0.1 seconds
+    -- if timeSinceLastUpdate > 0.1 then
+        -- RQE.CheckMouseHoverForTooltip()
+        -- timeSinceLastUpdate = 0
+    -- end
+-- end)
 
 
 -- Function to update the state of the minimap based on the current profile settings
