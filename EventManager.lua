@@ -1639,6 +1639,15 @@ function RQE.handleZoneNewAreaChange()
 		return
 	end
 
+	if RQE.db.profile.autoTrackZoneQuests then
+		RQE.DisplayCurrentZoneQuests()
+	end
+
+	SortQuestsByProximity()
+
+	AdjustRQEFrameWidths()
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1695,15 +1704,6 @@ function RQE.handleZoneNewAreaChange()
 				-- RQE.ScenarioChildFrame:Hide()
 				-- RQE.updateScenarioUI()
 			-- end
-
-			if RQE.db.profile.autoTrackZoneQuests then
-				RQE.DisplayCurrentZoneQuests()
-			end
-
-			SortQuestsByProximity()
-
-			AdjustRQEFrameWidths()
-			AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 		end)
 
 		-- -- Check to advance to next step in quest  -- HANDLED THRU QUEST_WATCH_LIST_CHANGED
