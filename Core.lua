@@ -739,7 +739,8 @@ function RQE:HandleSuperTrackedQuestUpdate()
     end
 
     -- Clear the current super tracked content for non-world quests or allowed world quests
-    C_SuperTrack.ClearSuperTrackedContent()
+	RQE:RemoveSuperTrackingFromQuest()
+    --C_SuperTrack.ClearSuperTrackedContent()
 
     -- Restore the super-tracked quest after a delay for non-world quests
     C_Timer.After(0.2, function()
@@ -1239,7 +1240,8 @@ function RQE:PerformClearActions()
     RQE:ClearFrameData()
     RQE.searchedQuestID = nil
     RQE.ManualSuperTrack = nil
-    C_SuperTrack.ClearSuperTrackedContent()
+	RQE:RemoveSuperTrackingFromQuest()
+    --C_SuperTrack.ClearSuperTrackedContent()
     RQE:UpdateRQEFrameVisibility()
     -- Reset manually tracked quests
     if RQE.ManuallyTrackedQuests then
@@ -1366,7 +1368,8 @@ function RQE:DelayedClearCheck()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
 
 			-- Untrack the quest by setting a non-existent quest ID
-			C_SuperTrack.SetSuperTrackedQuestID(0)
+			RQE:RemoveSuperTrackingFromQuest()
+			-- C_SuperTrack.SetSuperTrackedQuestID(0)
 
 			return -- Exit the function early
 		end
@@ -1378,12 +1381,58 @@ function RQE:DelayedClearCheck()
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 
 				-- Untrack the quest by setting a non-existent quest ID
-				C_SuperTrack.SetSuperTrackedQuestID(0)
+				RQE:RemoveSuperTrackingFromQuest()
+				--C_SuperTrack.SetSuperTrackedQuestID(0)
 
 				return -- Exit the function early
 			end
         end
     end)
+end
+
+
+-- Function to check if the quest in RQEFrame is either the searched quest or a tracked/watched quest, and clear if not
+function RQE:CheckAndClearUntrackedQuest()
+    -- Get the questID currently displayed in the RQEFrame
+    local displayedQuestID = RQE.searchedQuestID
+
+    -- If there is no questID in RQE.searchedQuestID, skip the check
+    if not displayedQuestID then return end
+
+    -- Flag to determine if the quest is relevant (either searched or tracked)
+    local isQuestRelevant = false
+
+    -- Check if the quest is the searched quest
+    if RQE.searchedQuestID == displayedQuestID then
+        isQuestRelevant = true
+    else
+        -- Loop through the regular quests tracked in RQEQuestFrame
+        for i = 1, C_QuestLog.GetNumQuestWatches() do
+            local trackedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+            if trackedQuestID == displayedQuestID then
+                isQuestRelevant = true
+                break
+            end
+        end
+
+        -- Loop through the world quests tracked in RQEQuestFrame if not already found
+        if not isQuestRelevant then
+            for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+                local worldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+                if worldQuestID == displayedQuestID then
+                    isQuestRelevant = true
+                    break
+                end
+            end
+        end
+    end
+
+    -- If the quest is not relevant, simulate the ClearButton click
+    if not isQuestRelevant then
+        if RQE.ClearButton and RQE.ClearButton:GetScript("OnClick") then
+            RQE.ClearButton:GetScript("OnClick")(RQE.ClearButton)
+        end
+    end
 end
 
 
@@ -1619,6 +1668,29 @@ function RemoveAllTrackedWorldQuests()
             C_QuestLog.RemoveWorldQuestWatch(questID)
         end
     end
+end
+
+
+-- Function that removes a quest from being super tracked but not actually removing the watch
+function RQE:RemoveSuperTrackingFromQuest()
+    -- Step 1: Get the currently super-tracked quest ID
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    
+    -- Debugging: Print the currently super-tracked quest ID
+    RQE.infoLog("Currently Super Tracked Quest ID:", superTrackedQuestID or "None")
+
+    -- Step 2: Remove the super-tracking by setting it to 0
+    if superTrackedQuestID and superTrackedQuestID ~= 0 then
+        C_SuperTrack.SetSuperTrackedQuestID(0)
+        RQE.infoLog("Removed super-tracking from quest ID:", superTrackedQuestID)
+    else
+        RQE.infoLog("No quest is currently super-tracked.")
+    end
+
+    -- Step 3: Update the RQEQuestFrame to reflect the change
+    UpdateRQEQuestFrame()
+	UpdateRQEWorldQuestFrame()
+    RQE.infoLog("RQEQuestFrame updated to reflect super-tracking changes.")
 end
 
 
