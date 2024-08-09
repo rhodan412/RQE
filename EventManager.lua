@@ -1101,14 +1101,20 @@ function RQE.handlePlayerEnterWorld(...)
 
 	if isLogin then
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)
+		RQE.RequestAndCacheQuestLines()
+		RQE:ClickSuperTrackedQuestButton()
 	elseif isReload then
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 02 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)
+		RQE.RequestAndCacheQuestLines()
+		RQE:ClickSuperTrackedQuestButton()
 	else
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Zoned between map instances.", 0.93, 0.51, 0.93)
 	end
 
-	RQE.RequestAndCacheQuestLines()
-	RQE:ClickSuperTrackedQuestButton()
+	-- Resets the position of the RQEFrame and RQEQuestFrame on reload and login (ONLY TEMPORARY!!)
+	RQE:ResetFramePositionToDBorDefault()
+	RQE:ResetQuestFramePositionToDBorDefault()
+
 	RQE.QuestScrollFrameToTop()
 
 	C_Timer.After(2, function()
