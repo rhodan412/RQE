@@ -51,6 +51,31 @@ end
 -- This section controls the default settings if the Profile section for the Add-On configuration doesn't contain that information
 RQE.Settings = {}
 
+-- Function to open the Frame Settings panel
+function RQE:OpenFrameSettings()
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.frame)
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.frame)  -- Sometimes needed twice
+end
+
+-- Function to open the Font Settings panel
+function RQE:OpenFontSettings()
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.font)
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.font)  -- Sometimes needed twice
+end
+
+-- Function to open the Debug Options panel
+function RQE:OpenDebugOptions()
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.debug)
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.debug)  -- Sometimes needed twice
+end
+
+-- Function to open the Profiles panel
+function RQE:OpenProfiles()
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.profiles)
+    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.profiles)  -- Sometimes needed twice
+end
+
+
 ---------------------------
 -- 4. Config Logic
 ---------------------------
@@ -1061,3 +1086,9 @@ RQE.options = {
 		},
 	},
 }
+
+-- Event Manager dealing with opening different panels in the addon options
+RQE:RegisterChatCommand("rqe_frame", "OpenFrameSettings")
+RQE:RegisterChatCommand("rqe_font", "OpenFontSettings")
+RQE:RegisterChatCommand("rqe_debug", "OpenDebugOptions")
+RQE:RegisterChatCommand("rqe_profiles", "OpenProfiles")
