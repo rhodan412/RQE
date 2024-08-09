@@ -1101,16 +1101,15 @@ function RQE.handlePlayerEnterWorld(...)
 
 	if isLogin then
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)
-		RQE.RequestAndCacheQuestLines()
-		RQE:ClickSuperTrackedQuestButton()
 	elseif isReload then
 		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 02 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)
-
-		RQE.RequestAndCacheQuestLines()
-		RQE:ClickSuperTrackedQuestButton()
 	else
-       -- DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Zoned between map instances.", 0.93, 0.51, 0.93)
+		-- DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Zoned between map instances.", 0.93, 0.51, 0.93)
 	end
+
+	RQE.RequestAndCacheQuestLines()
+	RQE:ClickSuperTrackedQuestButton()
+	RQE.QuestScrollFrameToTop()
 
 	C_Timer.After(2, function()
 		-- Check for Dragonriding & Capture and print the current states for debugging purposes
