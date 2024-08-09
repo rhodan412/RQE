@@ -925,13 +925,24 @@ function RQE:ShowQuestFilterMenu()
         local campaignMenuList = RQE.BuildCampaignMenuList()
         local questLineMenuList = RQE.BuildQuestLineMenuList()
 
-        -- Add Buttons for Main Menu Items
-        self.QuestFilterDropDownMenu:AddButton("Auto-Track Zone Quests", function()
-            RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
-            if RQE.db.profile.autoTrackZoneQuests then
-                RQE.DisplayCurrentZoneQuests()
-            end
-        end)
+		-- Add Buttons for Main Menu Items
+		self.QuestFilterDropDownMenu:AddButton("Auto-Track Zone Quests", function(button)
+			-- Toggle the autoTrackZoneQuests option
+			RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+
+			-- Update the button text to reflect the new state
+			if RQE.db.profile.autoTrackZoneQuests then
+				button:SetText("|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests")
+				RQE.DisplayCurrentZoneQuests()
+			else
+				button:SetText("Auto-Track Zone Quests")
+			end
+		end)
+
+		-- Initial state setup for the button
+		if RQE.db.profile.autoTrackZoneQuests then
+			self.QuestFilterDropDownMenu.buttons[#self.QuestFilterDropDownMenu.buttons]:SetText("|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests")
+		end
 
         self.QuestFilterDropDownMenu:AddButton("Completed Quests", function()
             RQE.filterCompleteQuests()
