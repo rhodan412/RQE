@@ -373,7 +373,8 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQE:ClearWaypointButtonData()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil
-		C_SuperTrack.ClearSuperTrackedContent()
+		RQE:RemoveSuperTrackingFromQuest()
+		--C_SuperTrack.ClearSuperTrackedContent()
 		RQE:UpdateRQEFrameVisibility()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.Buttons.UpdateMagicButtonVisibility()
