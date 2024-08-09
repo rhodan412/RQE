@@ -4479,6 +4479,7 @@ function RQE.CheckAndClearRQEFrame()
 
         -- Clear the frame data if the quest is neither a regular quest nor a tracked world quest
         if not isWorldQuestTracked then
+            RQE:RemoveSuperTrackingFromQuest() -- Remove super-tracking if the quest is not being tracked
             RQE:ClearFrameData()
             RQE:ClearWaypointButtonData()
         end
