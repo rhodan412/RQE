@@ -363,26 +363,26 @@ function RQE:OnInitialize()
     -- Initialize character-specific data
     self:GetCharacterInfo()
 
-    -- Register the main options table
-    AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
-    self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "Rhodan's Quest Explorer")
+	-- Register the main options table with a light purple name
+	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
+	self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Register the "Frame" options table as a separate tab
-    AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
-    self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "Rhodan's Quest Explorer")
+	-- Register the "Frame" options table as a separate tab
+	AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
+	self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Register the "Font" options table as a separate tab
-    AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
-    self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "Rhodan's Quest Explorer")
+	-- Register the "Font" options table as a separate tab
+	AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
+	self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Register the "Debug" options table as a separate tab
-    AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
-    self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "Rhodan's Quest Explorer")
+	-- Register the "Debug" options table as a separate tab
+	AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
+	self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Add profiles (if needed)
-    local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-    AC:RegisterOptionsTable("RQE_Profiles", profiles)
-    ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "Rhodan's Quest Explorer")
+	-- Add profiles (if needed)
+	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+	AC:RegisterOptionsTable("RQE_Profiles", profiles)
+	ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
 
     -- Auto-set profile based on some condition
     local characterName = UnitName("player")
@@ -768,31 +768,43 @@ end
 function RQE:SlashCommand(input)
     if input == "config" then
         -- Open the config panel
-        InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+        if SettingsPanel then
+            -- Use the new API to open the correct settings panel
+            SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+        else
+            -- Fallback for older versions, force open Interface Options to the AddOns tab
+            InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+            InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer") -- Sometimes needs to be called twice due to Blizzard quirk
+        end
     elseif input == "frame" or input == "toggle" then
         -- Toggle the frame visibility
         if RQEFrame:IsShown() then
             RQEFrame:Hide()
-			if RQE.MagicButton then
-				RQE.MagicButton:Hide()
-			end
+            if RQE.MagicButton then
+                RQE.MagicButton:Hide()
+            end
         else
-			RQEFrame:Show()
-			if RQE.MagicButton then
-				RQE.MagicButton:Show()
-			end
+            RQEFrame:Show()
+            if RQE.MagicButton then
+                RQE.MagicButton:Show()
+            end
         end
 
-        -- -- Refresh the config panel if it's open
-        -- if self.optionsFrame and self.optionsFrame:IsVisible() then
-            -- self.optionsFrame:UpdateCheckboxState(RQE.Settings.frameVisibility)
-        -- end
-
         -- Refresh the config panel if it's open
-        local openFrame = _G.InterfaceOptionsFramePanelContainer.displayedPanel
+        local openFrame
+        if SettingsPanel then
+            openFrame = _G.SettingsPanel:GetCurrentCategory()
+        else
+            openFrame = _G.InterfaceOptionsFramePanelContainer.displayedPanel
+        end
+        
         if openFrame and openFrame.name == "Rhodan's Quest Explorer" then
-            InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
-            InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
+            if SettingsPanel then
+                SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+            else
+                InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+                InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+            end
         end
     else
         print("Available commands for /rqe:")
@@ -800,9 +812,11 @@ function RQE:SlashCommand(input)
         print("frame, toggle - Toggles the RQE frame")
     end
 
-	-- Check if MagicButton should be visible based on macro body
-	RQE.Buttons.UpdateMagicButtonVisibility()
+    -- Check if MagicButton should be visible based on macro body
+    RQE.Buttons.UpdateMagicButtonVisibility()
 end
+
+
 
 
 -- SlashCommand to Reset LFG Role
@@ -919,6 +933,65 @@ function RQE:ToggleMainFrame()
 	-- Check if MagicButton should be visible based on macro body
 	RQE.Buttons.UpdateMagicButtonVisibility()
 end
+
+
+-- Create a hidden frame that will monitor mouse movement
+local tooltipCheckerFrame = CreateFrame("Frame")
+
+
+-- Timer variable to control the frequency of checks
+local timeSinceLastUpdate = 0
+
+
+-- Function to check if the mouse is over an RQE UI element with a tooltip
+function RQE.CheckMouseHoverForTooltip()
+    -- List of RQE elements that have tooltips
+    local rqeElements = {
+        RQE.QTQuestFilterButton,
+        RQE.CampaignSubMenu,
+        RQE.QuestTypeSubMenu,
+        RQE.ZoneQuestSubMenu,
+        RQE.QuestLineSubMenu,
+        -- Add other RQE elements here that have tooltips
+    }
+
+    -- Initialize a flag to track whether the mouse is over any RQE element
+    local isOverRQEElement = false
+    local dummyCounter = 0 -- Dummy operation to replace print
+
+    for _, element in pairs(rqeElements) do
+        if element and element:IsShown() then
+            -- Safely check if the mouse is over the element
+            local isMouseOver = element:IsMouseOver()
+
+            -- Perform a dummy operation to ensure similar timing
+            dummyCounter = dummyCounter + 1
+			--print("Checking element:", elementName, " IsMouseOver:", isMouseOver and "true" or "false")
+
+            if isMouseOver then
+                isOverRQEElement = true
+                break
+            end
+        end
+    end
+
+    -- If the mouse is not over any RQE element, hide the RQE tooltip
+    if not isOverRQEElement then
+        GameTooltip:Hide()
+    end
+end
+
+
+-- Set the OnUpdate script to check the mouse position
+tooltipCheckerFrame:SetScript("OnUpdate", function(self, elapsed)
+    timeSinceLastUpdate = timeSinceLastUpdate + elapsed
+
+    -- Only check the mouse position every 0.1 seconds
+    if timeSinceLastUpdate > 0.1 then
+        RQE.CheckMouseHoverForTooltip()
+        timeSinceLastUpdate = 0
+    end
+end)
 
 
 -- Function to update the state of the minimap based on the current profile settings
