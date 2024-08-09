@@ -200,369 +200,6 @@ end)
 -- 7. Menu Creation Functions
 ---------------------------
 
--- function RQE:ShowLDBDropdownMenu()
-    -- local menuFrame = CreateFrame("Frame", "RQEDropDownMenu", UIParent, "UIDropDownMenuTemplate")
-    -- UIDropDownMenu_Initialize(menuFrame, function(self, level, menuList)
-        -- local info = UIDropDownMenu_CreateInfo()
-        -- if level == 1 then
-            -- info.text, info.isTitle, info.notCheckable = "Menu", true, true
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "Toggle Frame(s)", true
-            -- info.func = function() RQE.ToggleBothFramesfromLDB() end
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "AddOn Settings", true
-            -- info.func = function() RQE:OpenSettings() end
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "Debug Log", true
-            -- info.func = function() RQE:ToggleDebugLog() end
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.hasArrow, info.notCheckable = "More Options", true, true
-            -- info.menuList = "MoreOptionsMenu"
-            -- UIDropDownMenu_AddButton(info, level)
-        -- elseif menuList == "MoreOptionsMenu" then
-            -- -- After adding the buttons, adjust the position of the More Options submenu
-            -- C_Timer.After(0.1, function()
-                -- local dropdownList = _G["DropDownList2"]  -- DropDownList2 is usually the second level menu
-                -- local mainDropdownList = _G["DropDownList1"]  -- DropDownList1 is the main menu
-
-                -- if dropdownList and mainDropdownList then
-                    -- dropdownList:ClearAllPoints()
-                    -- -- Anchor to the bottom left of the main menu with a slight offset down and to the right
-                    -- dropdownList:SetPoint("TOPRIGHT", mainDropdownList, "BOTTOMLEFT", 10, -10)
-                -- end
-            -- end)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.isTitle, info.notCheckable = "More Options Menu", true, true
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "Frame Settings", true
-            -- info.func = function() RQE:OpenFrameSettings() end
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "Font Settings", true
-            -- info.func = function() RQE:OpenFontSettings() end
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "Debug Options", true
-            -- info.func = function() RQE:OpenDebugOptions() end
-            -- UIDropDownMenu_AddButton(info, level)
-
-            -- info = UIDropDownMenu_CreateInfo()
-            -- info.text, info.notCheckable = "Profiles", true
-            -- info.func = function() RQE:OpenProfiles() end
-            -- UIDropDownMenu_AddButton(info, level)
-        -- end
-    -- end, "MENU")
-    -- ToggleDropDownMenu(1, nil, menuFrame, "cursor", 3, -3)
--- end
-
-
--- function RQE:ShowLDBDropdownMenu()
-	-- -- Create the main menu frame
-	-- local menuFrame = CreateFrame("Frame", "RQECustomMenu", UIParent, "BackdropTemplate")
-	-- menuFrame:SetSize(150, 140)  -- Increased height for more room
-	-- -- Anchor the menu to the LDB button icon
-	-- menuFrame:SetPoint("TOPRIGHT", "BazookaHL_RQE", "BOTTOMLEFT", -10, -5)
-	-- menuFrame:SetBackdrop({
-		-- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-		-- edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-		-- tile = true,
-		-- tileSize = 16,
-		-- edgeSize = 16,
-		-- insets = { left = 4, right = 4, top = 4, bottom = 4 }
-	-- })
-	-- menuFrame:SetFrameStrata("DIALOG")
-	-- menuFrame:SetFrameLevel(10)
-	-- menuFrame:Hide()
-
-    -- -- Function to toggle the visibility of the menu
-    -- function menuFrame:Toggle()
-        -- if self:IsShown() then
-            -- self:Hide()
-        -- else
-            -- self:Show()
-        -- end
-    -- end
-
-    -- -- Keep menu visible when mouse is over it
-    -- menuFrame:SetScript("OnEnter", function(self)
-        -- self:Show()
-    -- end)
-    -- menuFrame:SetScript("OnLeave", function(self)
-        -- C_Timer.After(0.3, function()  -- Increased delay for more tolerance
-            -- if not MouseIsOver(self) then
-                -- self:Hide()
-            -- end
-        -- end)
-    -- end)
-
-    -- -- Create the "Menu" title
-    -- local title = menuFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    -- title:SetPoint("TOP", menuFrame, "TOP", 0, -10)
-    -- title:SetText("Menu")
-
-    -- -- Create a button for toggling frames
-    -- local toggleFramesButton = CreateFrame("Button", nil, menuFrame, "UIPanelButtonTemplate")
-    -- toggleFramesButton:SetPoint("TOPLEFT", menuFrame, "TOPLEFT", 10, -30)
-    -- toggleFramesButton:SetSize(130, 20)
-    -- toggleFramesButton:SetText("Toggle Frame(s)")
-    -- toggleFramesButton:SetScript("OnClick", function()
-        -- RQE.ToggleBothFramesfromLDB()
-    -- end)
-
-    -- -- Keep menu visible when mouse is over buttons
-    -- toggleFramesButton:SetScript("OnEnter", function(self)
-        -- menuFrame:Show()
-    -- end)
-    -- toggleFramesButton:SetScript("OnLeave", function(self)
-        -- C_Timer.After(0.3, function()  -- Increased delay for more tolerance
-            -- if not MouseIsOver(menuFrame) then
-                -- menuFrame:Hide()
-            -- end
-        -- end)
-    -- end)
-
-	-- -- Create a button for AddOn settings
-	-- local settingsButton = CreateFrame("Button", nil, menuFrame, "UIPanelButtonTemplate")
-	-- settingsButton:SetPoint("TOPLEFT", toggleFramesButton, "BOTTOMLEFT", 0, -5)
-	-- settingsButton:SetSize(130, 20)
-	-- settingsButton:SetText("AddOn Settings")
-	-- settingsButton:SetScript("OnClick", function()
-		-- RQE:OpenSettings()
-	-- end)
-	-- settingsButton:SetScript("OnEnter", function(self)
-		-- menuFrame:Show()
-	-- end)
-	-- settingsButton:SetScript("OnLeave", function(self)
-		-- C_Timer.After(0.3, function()  -- Increased delay for more tolerance
-			-- if not MouseIsOver(menuFrame) then
-				-- menuFrame:Hide()
-			-- end
-		-- end)
-	-- end)
-
-	-- -- Create a button for Debug Log
-	-- local debugLogButton = CreateFrame("Button", nil, menuFrame, "UIPanelButtonTemplate")
-	-- debugLogButton:SetPoint("TOPLEFT", settingsButton, "BOTTOMLEFT", 0, -5)
-	-- debugLogButton:SetSize(130, 20)
-	-- debugLogButton:SetText("Debug Log")
-	-- debugLogButton:SetScript("OnClick", function()
-		-- RQE:ToggleDebugLog()
-	-- end)
-	-- debugLogButton:SetScript("OnEnter", function(self)
-		-- menuFrame:Show()
-	-- end)
-	-- debugLogButton:SetScript("OnLeave", function(self)
-		-- C_Timer.After(0.3, function()  -- Increased delay for more tolerance
-			-- if not MouseIsOver(menuFrame) then
-				-- menuFrame:Hide()
-			-- end
-		-- end)
-	-- end)
-
-    -- -- Create a button for the "More Options" submenu
-    -- local moreOptionsButton = CreateFrame("Button", nil, menuFrame, "UIPanelButtonTemplate")
-    -- moreOptionsButton:SetPoint("TOPLEFT", debugLogButton, "BOTTOMLEFT", 0, -5)
-    -- moreOptionsButton:SetSize(130, 20)
-    -- moreOptionsButton:SetText("More Options")
-    -- moreOptionsButton:SetScript("OnClick", function()
-        -- -- Create and show the More Options submenu
-        -- local moreOptionsFrame = CreateFrame("Frame", "RQEMoreOptionsMenu", UIParent, "BackdropTemplate")
-        -- moreOptionsFrame:SetSize(150, 120)
-        -- moreOptionsFrame:SetPoint("TOPRIGHT", menuFrame, "BOTTOMLEFT", 10, -10)
-        -- moreOptionsFrame:SetBackdrop({
-            -- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            -- edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            -- tile = true,
-            -- tileSize = 16,
-            -- edgeSize = 16,
-            -- insets = { left = 4, right = 4, top = 4, bottom = 4 }
-        -- })
-        -- moreOptionsFrame:SetFrameStrata("DIALOG")
-        -- moreOptionsFrame:SetFrameLevel(11)
-        -- moreOptionsFrame:Show()
-
-        -- -- Keep submenu visible when mouse is over it
-        -- moreOptionsFrame:SetScript("OnEnter", function(self)
-            -- menuFrame:Show()
-            -- self:Show()
-        -- end)
-        -- moreOptionsFrame:SetScript("OnLeave", function(self)
-            -- C_Timer.After(0.3, function()  -- Increased delay for more tolerance
-                -- if not MouseIsOver(self) and not MouseIsOver(menuFrame) then
-                    -- self:Hide()
-                    -- menuFrame:Hide()
-                -- end
-            -- end)
-        -- end)
-
-        -- -- Add buttons to the More Options submenu
-        -- local function createMoreOptionsButton(text, onClick)
-            -- local button = CreateFrame("Button", nil, moreOptionsFrame, "UIPanelButtonTemplate")
-            -- button:SetSize(130, 20)
-            -- button:SetText(text)
-            -- button:SetScript("OnClick", function()
-                -- onClick()
-            -- end)
-            -- return button
-        -- end
-
-        -- local frameSettingsButton = createMoreOptionsButton("Frame Settings", function() RQE:OpenFrameSettings() end)
-        -- frameSettingsButton:SetPoint("TOPLEFT", moreOptionsFrame, "TOPLEFT", 10, -10)
-        
-        -- local fontSettingsButton = createMoreOptionsButton("Font Settings", function() RQE:OpenFontSettings() end)
-        -- fontSettingsButton:SetPoint("TOPLEFT", frameSettingsButton, "BOTTOMLEFT", 0, -5)
-        
-        -- local debugOptionsButton = createMoreOptionsButton("Debug Options", function() RQE:OpenDebugOptions() end)
-        -- debugOptionsButton:SetPoint("TOPLEFT", fontSettingsButton, "BOTTOMLEFT", 0, -5)
-        
-        -- local profilesButton = createMoreOptionsButton("Profiles", function() RQE:OpenProfiles() end)
-        -- profilesButton:SetPoint("TOPLEFT", debugOptionsButton, "BOTTOMLEFT", 0, -5)
-
-        -- -- Keep the submenu visible when hovering over its buttons
-        -- local buttons = {frameSettingsButton, fontSettingsButton, debugOptionsButton, profilesButton}
-        -- for _, button in ipairs(buttons) do
-            -- button:SetScript("OnEnter", function(self)
-                -- menuFrame:Show()
-                -- moreOptionsFrame:Show()
-            -- end)
-            -- button:SetScript("OnLeave", function(self)
-                -- C_Timer.After(0.3, function()  -- Increased delay for more tolerance
-                    -- if not MouseIsOver(self) and not MouseIsOver(menuFrame) and not MouseIsOver(moreOptionsFrame) then
-                        -- menuFrame:Hide()
-                        -- moreOptionsFrame:Hide()
-                    -- end
-                -- end)
-            -- end)
-        -- end
-    -- end)
-
-    -- -- Toggle the main menu visibility
-    -- menuFrame:Toggle()
--- end
-
-
-
-
-
--- RQE_CustomMenuMixin = {};
-
--- function RQE_CustomMenuMixin:OnLoad()
-    -- self.buttons = {};
-    -- self.menuWidth = 150;  -- Define the default width for the menu
-    -- self.buttonHeight = 20;
--- end
-
--- function RQE_CustomMenuMixin:AddButton(text, onClick)
-    -- local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate");
-    -- button:SetSize(self.menuWidth - 20, self.buttonHeight);
-    -- button:SetText(text);
-    -- button:SetScript("OnClick", onClick);
-
-    -- if #self.buttons == 0 then
-        -- button:SetPoint("TOPLEFT", self, "TOPLEFT", 10, -30);
-    -- else
-        -- button:SetPoint("TOPLEFT", self.buttons[#self.buttons], "BOTTOMLEFT", 0, -5);
-    -- end
-
-    -- table.insert(self.buttons, button);
-
-    -- -- Update the menu size dynamically
-    -- self:SetHeight(#self.buttons * (self.buttonHeight + 5) + 40);
--- end
-
--- function RQE_CustomMenuMixin:ShowMenu(anchorFrame)
-    -- self:ClearAllPoints();
-    -- self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMLEFT", -10, -5);
-    -- self:Show();
--- end
-
--- function RQE_CustomMenuMixin:HideMenu()
-    -- self:Hide();
--- end
-
--- function RQE_CustomMenuMixin:ToggleMenu(anchorFrame)
-    -- if self:IsShown() then
-        -- self:HideMenu();
-    -- else
-        -- self:ShowMenu(anchorFrame);
-    -- end
--- end
-
-
--- function RQE:ShowLDBDropdownMenu()
-    -- -- Create or get the custom menu frame
-    -- if not self.CustomMenu then
-        -- self.CustomMenu = CreateFrame("Frame", "RQECustomMenu", UIParent, "BackdropTemplate");
-        -- Mixin(self.CustomMenu, RQE_CustomMenuMixin);
-        -- self.CustomMenu:OnLoad();
-        -- self.CustomMenu:SetBackdrop({
-            -- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            -- edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            -- tile = true,
-            -- tileSize = 16,
-            -- edgeSize = 16,
-            -- insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        -- });
-        -- self.CustomMenu:SetBackdropColor(0, 0, 0, 0.9);
-        -- self.CustomMenu:SetBackdropBorderColor(0.3, 0.3, 0.3, 1);
-        -- self.CustomMenu:SetWidth(self.CustomMenu.menuWidth);
-        -- self.CustomMenu:Hide();
-    -- end
-
-    -- -- Add buttons to the menu
-    -- self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end);
-    -- self.CustomMenu:AddButton("AddOn Settings", function() RQE:OpenSettings() end);
-    -- self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end);
-    -- self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end);
-
-    -- -- Toggle the menu visibility
-    -- self.CustomMenu:ToggleMenu("BazookaHL_RQE");
--- end
-
--- function RQE:ShowMoreOptionsMenu(parentMenu)
-    -- -- Create or get the More Options menu frame
-    -- if not self.MoreOptionsMenu then
-        -- self.MoreOptionsMenu = CreateFrame("Frame", "RQEMoreOptionsMenu", UIParent, "BackdropTemplate");
-        -- Mixin(self.MoreOptionsMenu, RQE_CustomMenuMixin);
-        -- self.MoreOptionsMenu:OnLoad();
-        -- self.MoreOptionsMenu:SetBackdrop({
-            -- bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            -- edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            -- tile = true,
-            -- tileSize = 16,
-            -- edgeSize = 16,
-            -- insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        -- });
-        -- self.MoreOptionsMenu:SetBackdropColor(0, 0, 0, 0.9);
-        -- self.MoreOptionsMenu:SetBackdropBorderColor(0.3, 0.3, 0.3, 1);
-        -- self.MoreOptionsMenu:SetWidth(self.MoreOptionsMenu.menuWidth);
-        -- self.MoreOptionsMenu:Hide();
-    -- end
-
-    -- -- Add buttons to the More Options menu
-    -- self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:OpenFrameSettings() end);
-    -- self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:OpenFontSettings() end);
-    -- self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:OpenDebugOptions() end);
-    -- self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end);
-
-    -- -- Toggle the More Options menu visibility
-    -- self.MoreOptionsMenu:ToggleMenu(parentMenu);
--- end
-
-
 -- Custom Mixin for Buttons
 RQE_ButtonMixin = {}
 
@@ -637,39 +274,37 @@ function RQE_MenuMixin:AddButton(text, onClick, isSubmenu)
 end
 
 
+-- Show and Position the Menu
 function RQE_MenuMixin:ShowMenu(anchorFrame, isSubmenu)
     self:ClearAllPoints()
 
     local screenWidth = GetScreenWidth()
     local screenHeight = GetScreenHeight()
-
     local anchorX, anchorY = anchorFrame:GetCenter()
 
-    -- Determine the quadrant based on anchor frame's position
     local isTopHalf = anchorY > (screenHeight / 2)
     local isLeftHalf = anchorX < (screenWidth / 2)
 
-    if isSubmenu then
-        -- Submenu positioning based on the quadrant
-        if isTopHalf and isLeftHalf then
-            -- Top-left quadrant
-            self:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", 10, 0)
-        elseif isTopHalf and not isLeftHalf then
-            -- Top-right quadrant
-            self:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT", -10, 0)
-        elseif not isTopHalf and isLeftHalf then
-            -- Bottom-left quadrant
-            self:SetPoint("BOTTOMLEFT", anchorFrame, "BOTTOMRIGHT", 10, 0)
-        elseif not isTopHalf and not isLeftHalf then
-            -- Bottom-right quadrant
-            self:SetPoint("BOTTOMRIGHT", anchorFrame, "BOTTOMLEFT", -10, 0)
+    if not isSubmenu and anchorFrame == _G["BazookaHL_RQE"] then
+        -- Directly anchor the main menu below the LDB button, considering screen side
+        if isLeftHalf then
+            self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
+        else
+            self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
+        end
+    elseif isSubmenu then
+        -- Adjust the positioning to anchor the submenu to the specific button (anchorFrame)
+        if isLeftHalf then
+            self:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT", 10, -60)
+        else
+            self:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT", -10, -60)
         end
     else
-        -- Main menu positioning based on screen boundaries
+        -- Fallback positioning for any other cases
         if isLeftHalf then
-            self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMRIGHT", 10, -10)
+            self:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", 10, -85)
         else
-            self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMLEFT", -10, -10)
+            self:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT", -10, -85)
         end
     end
 
@@ -700,19 +335,25 @@ function RQE:ShowLDBDropdownMenu()
         self.CustomMenu:SetSize(150, 100)
         self.CustomMenu:SetFrameStrata("DIALOG")
         self.CustomMenu:Hide()
-        
-        -- Keep menu visible when mouse is over it
-        self.CustomMenu:SetScript("OnEnter", function(self)
-            self:Show()
-        end)
-        self.CustomMenu:SetScript("OnLeave", function(self)
-            C_Timer.After(0.1, function()
-                if not MouseIsOver(self) and not MouseIsOver(RQE.MoreOptionsMenu) then
-                    self:Hide()
-                    if RQE.MoreOptionsMenu then RQE.MoreOptionsMenu:Hide() end
-                end
-            end)
-        end)
+
+		-- Keep menu visible when mouse is over it
+		self.CustomMenu:SetScript("OnEnter", function(self)
+			self:Show()
+		end)
+
+		self.CustomMenu:SetScript("OnLeave", function(self)
+			C_Timer.After(0.1, function()
+				-- Check if the frame exists before calling MouseIsOver
+				if (self and MouseIsOver(self)) or (RQE.MoreOptionsMenu and MouseIsOver(RQE.MoreOptionsMenu)) then
+					-- Do nothing, the mouse is still over the menu or its related submenus
+					return
+				end
+
+				-- Hide the menus if the mouse is not over them
+				self:Hide()
+				if RQE.MoreOptionsMenu then RQE.MoreOptionsMenu:Hide() end
+			end)
+		end)
     end
     
     -- Ensure buttons are only added once
@@ -768,6 +409,8 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
     end
     
     -- Toggle More Options menu visibility
+    self.MoreOptionsMenu:ClearAllPoints()
+    self.MoreOptionsMenu:SetPoint("TOPLEFT", parentMenu, "TOPRIGHT", 0, 0) -- Adjust this to your desired position
     self.MoreOptionsMenu:ToggleMenu(parentMenu, true)
 end
 
