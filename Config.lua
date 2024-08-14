@@ -6,7 +6,6 @@ It uses the Ace3 library for creating the configuration interface.
 
 ]]
 
-
 ---------------------------
 -- 1. Library and Main Table
 ---------------------------
@@ -32,6 +31,7 @@ RQE.Frame = RQE.Frame or {}
 
 RQE.db = RQE.db or {}
 RQE.db.profile = RQE.db.profile or {}
+
 
 ---------------------------
 -- 2. ProfileManager Logic (Commented out for removal of profile management)

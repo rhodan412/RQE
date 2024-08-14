@@ -49,7 +49,6 @@ function RQE:OpenSettings()
 end
 
 
-
 ---------------------------
 -- 4. Data Broker Handling
 ---------------------------
@@ -123,6 +122,7 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
     end,
 })
 
+
 function RQE.ToggleBothFramesfromLDB()
     if RQEFrame:IsShown() then
         RQEFrame:Hide()
@@ -195,6 +195,7 @@ end)
 RQE.MinimapButton:SetScript("OnLeave", function(self)
     GameTooltip:Hide()
 end)
+
 
 ---------------------------
 -- 7. Menu Creation Functions

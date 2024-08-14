@@ -1130,9 +1130,9 @@ function RQE:CreateQuestLineSubMenu()
 end
 
 
--- ----------------------------------------------------
--- -- 5. Special Quest Item Buttons
--- ----------------------------------------------------
+------------------------------------------------------
+-- 5. Special Quest Item Buttons
+------------------------------------------------------
 
 -- -- Creates or Updates the Special Quest Item to be placed in line with its quest within the RQEQuestFrame
 -- local frame = CreateFrame("Frame")
