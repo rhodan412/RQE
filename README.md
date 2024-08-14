@@ -23,4 +23,4 @@ Chat commands
 Links
 -----
 
-* The latest release is available on [CurseForge]([https://legacy.curseforge.com/wow/addons/rqe-rhodans-quest-explorer](https://legacy.curseforge.com/wow/addons/rqe-rhodans-quest-explorer))
+* The latest release is available on [CurseForge]([https://legacy.curseforge.com/wow/addons/rqe-rhodans-quest-explorer](https://legacy.curseforge.com/wow/addons/rqe-rhodans-quest-explorer)
