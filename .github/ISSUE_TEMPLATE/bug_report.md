@@ -7,8 +7,14 @@ assignees: rhodan412
 
 ---
 
+**Which version are you using when bug occurred**
+self-explanatory
+
 **Describe the bug**
 A clear and concise description of what the bug is.
+
+**LUA Error**
+If applicable, add to help detail what error codes may exist.
 
 **To Reproduce**
 Steps to reproduce the behavior:
