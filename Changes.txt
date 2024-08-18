@@ -1,3 +1,11 @@
+11.0.2.21
+	RQEFrame.lua
+		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded
+
+	RQEMinimap.lua
+		- Update to LDB & Minimap buttons to reflect Shift-Right-Click option to toggle settings directly
+		- Added 'Config Window' to More Options in LDB menu
+
 11.0.2.2
 	Config.lua
 		- Experimental: Update to OpenFrameSettings() function to include changes allegedly made with 11.0 API to open subcategories
