@@ -1110,7 +1110,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			C_Map.ClearUserWaypoint()
 
 			-- Check if TomTom is loaded and compatibility is enabled
-			if IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 			end
 
