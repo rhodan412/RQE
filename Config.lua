@@ -154,6 +154,7 @@ RQE.options = {
 						RQE.db.profile.hideRQEFrameWhenEmpty = value
 						RQE:UpdateRQEFrameVisibility()
 					end,
+					width = "full",
 					order = 2, -- Adjust the order as needed
 				},
 				enableQuestFrame = {
@@ -176,6 +177,7 @@ RQE.options = {
 						RQE.db.profile.hideRQEQuestFrameWhenEmpty = value
 						RQE:UpdateRQEQuestFrameVisibility()
 					end,
+					width = "full",
 					order = 4, -- Adjust the order as needed
 				},
 				minimapToggle = {
@@ -265,6 +267,7 @@ RQE.options = {
 					set = function(_, newValue)
 						RQE.db.profile.autoClickWaypointButton = newValue;
 					end,
+					width = "full",
 				},
 				enableQuestAbandonConfirm = {
 					type = "toggle",
@@ -285,6 +288,7 @@ RQE.options = {
 					set = function(_, newValue)
 						RQE.db.profile.enableTomTomCompatibility = newValue;
 					end,
+					width = "full",
 				},
 				enableCarboniteCompatibility = {
 					type = "toggle",
@@ -295,6 +299,7 @@ RQE.options = {
 					set = function(_, newValue)
 						RQE.db.profile.enableCarboniteCompatibility = newValue;
 					end,
+					width = "full",
 				},
 				keyBindSetting = {
 					type = "keybinding",
@@ -1117,13 +1122,87 @@ RQE:RegisterChatCommand("RQE_Profiles", "OpenProfiles")
 local AceGUI = LibStub("AceGUI-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 
-function RQE:AddFrameSettingsWidgets(container)
-    local inlineGroup = AceGUI:Create("InlineGroup")
-    inlineGroup:SetTitle("Main Frame Settings")
-    inlineGroup:SetFullWidth(true)
-    inlineGroup:SetLayout("Flow")
-    inlineGroup:SetHeight(100)  -- Set a specific height for the inline group
-    container:AddChild(inlineGroup)
+-- Creates the frame to handle the Configuration
+function RQE:CreateConfigFrame()
+    if not self.configFrame then  -- Check if the frame already exists
+        local frame = AceGUI:Create("Frame")
+        frame:SetTitle("Rhodan's Quest Explorer Settings")
+        frame:SetStatusText("Configure your settings")
+        frame:SetCallback("OnClose", function(widget) 
+            AceGUI:Release(widget)
+            self.configFrame = nil  -- Clear the reference when the frame is closed
+        end)
+        frame:SetLayout("Flow")
+        frame:SetWidth(600)  -- Increase the width of the frame
+        frame:SetHeight(400)  -- Set a specific height for the frame
+
+        -- Create a hidden frame to handle ESC key closure
+        local escFrame = CreateFrame("Frame", "RQEConfigFrameEscHandler", UIParent)
+        escFrame:SetAllPoints(frame.frame)
+        escFrame:SetScript("OnHide", function()
+            if self.configFrame then
+                self.configFrame:Hide()
+            end
+        end)
+        table.insert(UISpecialFrames, escFrame:GetName())
+
+        local tabGroup = AceGUI:Create("TabGroup")
+        tabGroup:SetLayout("Flow")
+        tabGroup:SetFullWidth(true)  -- Ensure it uses the full width of the frame
+        tabGroup:SetFullHeight(true) -- Ensure it uses the full height of the frame
+        tabGroup:SetTabs({
+            {text = "General Settings", value = "general"},
+            {text = "Frame Settings", value = "frame"},
+            {text = "Font Settings", value = "font"},
+            {text = "Debug Options", value = "debug"},
+            {text = "Profiles", value = "profiles"}
+        })
+
+        tabGroup:SetCallback("OnGroupSelected", function(container, event, group)
+            container:ReleaseChildren()
+            if group == "general" then
+                RQE:AddGeneralSettingsWidgets(container)
+            elseif group == "frame" then
+                RQE:AddFrameSettingsWidgets(container)
+            elseif group == "font" then
+                RQE:AddFontSettingsWidgets(container)
+            elseif group == "debug" then
+                RQE:AddDebugSettingsWidgets(container)
+            elseif group == "profiles" then
+                RQE:AddProfileSettingsWidgets(container)
+            end
+        end)
+
+        tabGroup:SelectTab("general")
+        frame:AddChild(tabGroup)
+
+        self.configFrame = frame  -- Store the frame reference in RQE
+    end
+end
+
+
+-- Function to toggle show/hide the Configuration Frame
+function RQE:ToggleConfigFrame()
+    if self.configFrame then
+        if self.configFrame:IsVisible() then
+            self.configFrame:Hide()
+        else
+            self.configFrame:Show()
+        end
+    else
+        self:CreateConfigFrame()
+    end
+end
+
+
+-- Displays the Widget Container General Settings in Config Frame
+function RQE:AddGeneralSettingsWidgets(container)
+    -- Create a Scroll Frame
+    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame:SetLayout("Flow")
+    scrollFrame:SetFullWidth(true)
+    scrollFrame:SetFullHeight(true) -- This will allow the scroll frame to take up the full height of the parent container
+    container:AddChild(scrollFrame)
 
     -- Enable Frame Checkbox
     local enableFrameCheckbox = AceGUI:Create("CheckBox")
@@ -1133,208 +1212,1103 @@ function RQE:AddFrameSettingsWidgets(container)
         RQE.db.profile.enableFrame = value
         RQE:ToggleRQEFrame()
     end)
-    enableFrameCheckbox:SetRelativeWidth(0.5)  -- Adjust to 50% of the parent's width
-    inlineGroup:AddChild(enableFrameCheckbox)
+
+	-- Add a tooltip description for enableFrameCheckbox (RQE.db.profile.enableFrame)
+	enableFrameCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable or disable the frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableFrameCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(enableFrameCheckbox)
+
+    -- Hide SuperTrack Frame When Empty Checkbox
+    local hideRQEFrameWhenEmptyCheckbox = AceGUI:Create("CheckBox")
+    hideRQEFrameWhenEmptyCheckbox:SetLabel("Hide SuperTrack Frame When Empty")
+    hideRQEFrameWhenEmptyCheckbox:SetValue(RQE.db.profile.hideRQEFrameWhenEmpty)
+    hideRQEFrameWhenEmptyCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.hideRQEFrameWhenEmpty = value
+        RQE:UpdateRQEFrameVisibility()
+    end)
+
+	hideRQEFrameWhenEmptyCheckbox:SetFullWidth(false)
+	hideRQEFrameWhenEmptyCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for hideRQEFrameWhenEmptyCheckbox (RQE.db.profile.hideRQEFrameWhenEmpty)
+	hideRQEFrameWhenEmptyCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Automatically hide the SuperTrack Frame when there are no quests being super tracked or searched.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	hideRQEFrameWhenEmptyCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(hideRQEFrameWhenEmptyCheckbox)
+
+    -- Enable Quest Frame Checkbox
+    local enableQuestFrameCheckbox = AceGUI:Create("CheckBox")
+    enableQuestFrameCheckbox:SetLabel("Enable Quest Frame")
+    enableQuestFrameCheckbox:SetValue(RQE.db.profile.enableQuestFrame)
+    enableQuestFrameCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.enableQuestFrame = value
+        RQE:ToggleRQEQuestFrame()
+    end)
+
+	-- Add a tooltip description for enableQuestFrameCheckbox (RQE.db.profile.enableQuestFrame)
+	enableQuestFrameCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable or disable the Quest Frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableQuestFrameCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(enableQuestFrameCheckbox)
+
+    -- Hide Quest Frame When Empty Checkbox
+    local hideRQEQuestFrameWhenEmptyCheckbox = AceGUI:Create("CheckBox")
+    hideRQEQuestFrameWhenEmptyCheckbox:SetLabel("Hide Quest Frame When Empty")
+    hideRQEQuestFrameWhenEmptyCheckbox:SetValue(RQE.db.profile.hideRQEQuestFrameWhenEmpty)
+    hideRQEQuestFrameWhenEmptyCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.hideRQEQuestFrameWhenEmpty = value
+        RQE:UpdateRQEQuestFrameVisibility()
+    end)
+
+	hideRQEQuestFrameWhenEmptyCheckbox:SetFullWidth(false)
+	hideRQEQuestFrameWhenEmptyCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for hideRQEQuestFrameWhenEmptyCheckbox (RQE.db.profile.hideRQEQuestFrameWhenEmpty)
+	hideRQEQuestFrameWhenEmptyCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Automatically hide the Quest Tracker when no quests or achievements are being watched.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	hideRQEQuestFrameWhenEmptyCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(hideRQEQuestFrameWhenEmptyCheckbox)
+
+    -- Show Minimap Button Checkbox
+    local minimapToggleCheckbox = AceGUI:Create("CheckBox")
+    minimapToggleCheckbox:SetLabel("Show Minimap Button")
+    minimapToggleCheckbox:SetValue(RQE.db.profile.showMinimapIcon)
+    minimapToggleCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.showMinimapIcon = value
+        RQE:ToggleMinimapIcon()
+    end)
+
+	-- Add a tooltip description for minimapToggleCheckbox (RQE.db.profile.showMinimapIcon)
+	minimapToggleCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Toggle the minimap button on or off", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	minimapToggleCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(minimapToggleCheckbox)
+
+    -- Show Current MapID Checkbox
+    local showMapIDCheckbox = AceGUI:Create("CheckBox")
+    showMapIDCheckbox:SetLabel("Show Current MapID")
+    showMapIDCheckbox:SetValue(RQE.db.profile.showMapID)
+    showMapIDCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.showMapID = value
+        RQE:UpdateMapIDDisplay()
+    end)
+
+	-- Add a tooltip description for showMapIDCheckbox (RQE.db.profile.showMapID)
+	showMapIDCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Toggles the display of the current MapID on the frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	showMapIDCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(showMapIDCheckbox)
+
+    -- Show Current X, Y Checkbox
+    local showCoordinatesCheckbox = AceGUI:Create("CheckBox")
+    showCoordinatesCheckbox:SetLabel("Show Current X, Y")
+    showCoordinatesCheckbox:SetValue(RQE.db.profile.showCoordinates)
+    showCoordinatesCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.showCoordinates = value
+        RQE:UpdateCoordinates()
+    end)
+
+	-- Add a tooltip description for showCoordinatesCheckbox (RQE.db.profile.showCoordinates)
+	showCoordinatesCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Toggles the display of the current coordinates on the frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	showCoordinatesCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(showCoordinatesCheckbox)
+
+    -- Auto Quest Watch Checkbox
+    local autoQuestWatchCheckbox = AceGUI:Create("CheckBox")
+    autoQuestWatchCheckbox:SetLabel("Auto Quest Watch")
+    autoQuestWatchCheckbox:SetValue(GetCVarBool("autoQuestWatch"))
+    autoQuestWatchCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.autoQuestWatch = value
+        SetCVar("autoQuestWatch", value and "1" or "0")
+    end)
+
+	-- Add a tooltip description for autoQuestWatchCheckbox (RQE.db.profile.autoQuestWatch)
+	autoQuestWatchCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Automatically track quests as soon as you obtain them and after achieving an objective.\n\n|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r", nil, nil, nil, nil, true)		
+		GameTooltip:Show()
+	end)
+	autoQuestWatchCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(autoQuestWatchCheckbox)
+
+    -- Auto Quest Progress Checkbox
+    local autoQuestProgressCheckbox = AceGUI:Create("CheckBox")
+    autoQuestProgressCheckbox:SetLabel("Auto Quest Progress")
+    autoQuestProgressCheckbox:SetValue(GetCVarBool("autoQuestProgress"))
+    autoQuestProgressCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.autoQuestProgress = value
+        SetCVar("autoQuestProgress", value and "1" or "0")
+    end)
+
+	-- Add a tooltip description for autoQuestProgressCheckbox (RQE.db.profile.autoQuestProgress)
+	autoQuestProgressCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	autoQuestProgressCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(autoQuestProgressCheckbox)
+
+    -- Remove WQ after login Checkbox
+    local removeWQatLoginCheckbox = AceGUI:Create("CheckBox")
+    removeWQatLoginCheckbox:SetLabel("Remove WQ after login")
+    removeWQatLoginCheckbox:SetValue(RQE.db.profile.removeWQatLogin)
+    removeWQatLoginCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.removeWQatLogin = value
+    end)
+
+	-- Add a tooltip description for removeWQatLoginCheckbox (RQE.db.profile.removeWQatLogin)
+	removeWQatLoginCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Removes all of the WQ on player login.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	removeWQatLoginCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(removeWQatLoginCheckbox)
+
+    -- Auto Track Zone Quests Checkbox
+    local autoTrackZoneQuestsCheckbox = AceGUI:Create("CheckBox")
+    autoTrackZoneQuestsCheckbox:SetLabel("Auto Track Zone Quests")
+    autoTrackZoneQuestsCheckbox:SetValue(RQE.db.profile.autoTrackZoneQuests)
+    autoTrackZoneQuestsCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.autoTrackZoneQuests = value
+    end)
+
+	-- Add a tooltip description for autoTrackZoneQuestsCheckbox (RQE.db.profile.autoTrackZoneQuests)
+	autoTrackZoneQuestsCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Updates watch list on zone change to display quests specific to the player's zone", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	autoTrackZoneQuestsCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(autoTrackZoneQuestsCheckbox)
+
+    -- Auto Click Waypoint Button Checkbox
+    local autoClickWaypointButtonCheckbox = AceGUI:Create("CheckBox")
+    autoClickWaypointButtonCheckbox:SetLabel("Auto Click Waypoint Button")
+    autoClickWaypointButtonCheckbox:SetValue(RQE.db.profile.autoClickWaypointButton)
+    autoClickWaypointButtonCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.autoClickWaypointButton = value
+    end)
+
+	-- Add a tooltip description for autoClickWaypointButtonCheckbox (RQE.db.profile.autoClickWaypointButton)
+	autoClickWaypointButtonCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Automatically click on the Waypoint Button in the Super Tracked frame when you progress through quest objectives.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	autoClickWaypointButtonCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(autoClickWaypointButtonCheckbox)
+
+    -- Auto Abandon Quest Checkbox
+    local enableQuestAbandonConfirmCheckbox = AceGUI:Create("CheckBox")
+    enableQuestAbandonConfirmCheckbox:SetLabel("Auto Abandon Quest")
+    enableQuestAbandonConfirmCheckbox:SetValue(RQE.db.profile.enableQuestAbandonConfirm)
+    enableQuestAbandonConfirmCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.enableQuestAbandonConfirm = value
+    end)
+
+	-- Add a tooltip description for enableQuestAbandonConfirmCheckbox (RQE.db.profile.enableQuestAbandonConfirm)
+	enableQuestAbandonConfirmCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("If enabled will hide confirmation pop up when abandoning quest via right-clicking quest in the addon. If disabled, pop up will appear with confirmation to abandon the selected quest", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableQuestAbandonConfirmCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(enableQuestAbandonConfirmCheckbox)
+
+    -- Enable TomTom Compatibility Checkbox
+    local enableTomTomCompatibilityCheckbox = AceGUI:Create("CheckBox")
+    enableTomTomCompatibilityCheckbox:SetLabel("Enable TomTom Compatibility")
+    enableTomTomCompatibilityCheckbox:SetValue(RQE.db.profile.enableTomTomCompatibility)
+    enableTomTomCompatibilityCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.enableTomTomCompatibility = value
+    end)
+
+	enableTomTomCompatibilityCheckbox:SetFullWidth(false)
+	enableTomTomCompatibilityCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for enableTomTomCompatibilityCheckbox (RQE.db.profile.enableTomTomCompatibility)
+	enableTomTomCompatibilityCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("If enabled will create waypoints via TomTom addon (if you have this addon also installed)", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableTomTomCompatibilityCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(enableTomTomCompatibilityCheckbox)
+
+    -- Enable Carbonite Compatibility Checkbox
+    local enableCarboniteCompatibilityCheckbox = AceGUI:Create("CheckBox")
+    enableCarboniteCompatibilityCheckbox:SetLabel("Enable Carbonite Compatibility")
+    enableCarboniteCompatibilityCheckbox:SetValue(RQE.db.profile.enableCarboniteCompatibility)
+    enableCarboniteCompatibilityCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.enableCarboniteCompatibility = value
+    end)
+
+	enableCarboniteCompatibilityCheckbox:SetFullWidth(false)
+	enableCarboniteCompatibilityCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for enableCarboniteCompatibilityCheckbox (RQE.db.profile.enableCarboniteCompatibility)
+	enableCarboniteCompatibilityCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("If enabled will create waypoints via Carbonite addon (if you have this addon also installed)", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableCarboniteCompatibilityCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(enableCarboniteCompatibilityCheckbox)
+
+    -- Key Binding for Macro Keybinding
+    local keyBindSettingKeybind = AceGUI:Create("Keybinding")
+    keyBindSettingKeybind:SetLabel("Key Binding for Macro")
+    keyBindSettingKeybind:SetKey(RQE.db.profile.keyBindSetting)
+    keyBindSettingKeybind:SetCallback("OnKeyChanged", function(widget, event, key)
+        RQE.db.profile.keyBindSetting = key
+        RQE:SetupOverrideMacroBinding()
+    end)
+
+	-- Add a tooltip description for keyBindSettingKeybind (RQE.db.profile.keyBindSetting)
+	keyBindSettingKeybind:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Specify the key combination for triggering the RQE Macro MagicButton", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	keyBindSettingKeybind:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    scrollFrame:AddChild(keyBindSettingKeybind)
+    
+    -- Spacer to ensure the scroll goes to the bottom
+    local spacer = AceGUI:Create("Label")
+    spacer:SetText(" ")
+    spacer:SetFullWidth(true)
+    scrollFrame:AddChild(spacer)
+end
+
+
+-- Displays the Widget Container Frame Settings in Config Frame
+function RQE:AddFrameSettingsWidgets(container)
+    -- Create a Scroll Frame
+    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame:SetLayout("Flow")
+    scrollFrame:SetFullWidth(true)
+    scrollFrame:SetFullHeight(true) -- This will allow the scroll frame to take up the full height of the parent container
+    container:AddChild(scrollFrame)
+
+    -- Main Frame Position Group
+    local framePositionGroup = AceGUI:Create("InlineGroup")
+    framePositionGroup:SetTitle("Main Frame Position")
+    framePositionGroup:SetFullWidth(true)
+    framePositionGroup:SetLayout("Flow")
+    scrollFrame:AddChild(framePositionGroup)
+
+    -- Anchor Points List
+    local anchorPoints = {
+        TOPLEFT = "TOPLEFT",
+        TOP = "TOP",
+        TOPRIGHT = "TOPRIGHT",
+        LEFT = "LEFT",
+        CENTER = "CENTER",
+        RIGHT = "RIGHT",
+        BOTTOMLEFT = "BOTTOMLEFT",
+        BOTTOM = "BOTTOM",
+        BOTTOMRIGHT = "BOTTOMRIGHT",
+    }
+
+    -- Anchor Point Dropdown for Main Frame
+    local anchorPointDropdown = AceGUI:Create("Dropdown")
+    anchorPointDropdown:SetLabel("Anchor Point")
+    anchorPointDropdown:SetList(anchorPoints)
+    anchorPointDropdown:SetValue(RQE.db.profile.framePosition.anchorPoint)
+    anchorPointDropdown:SetFullWidth(true)
+    anchorPointDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.framePosition.anchorPoint = value
+        RQE:UpdateFramePosition()
+    end)
+
+	-- Add a tooltip description for anchorPointDropdown (RQE.db.profile.framePosition.anchorPoint)
+	anchorPointDropdown:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("The point where the frame will be anchored.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	anchorPointDropdown:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    framePositionGroup:AddChild(anchorPointDropdown)
+
+    -- X Position Slider
+    local xPosSlider = AceGUI:Create("Slider")
+    xPosSlider:SetLabel("X Position")
+    xPosSlider:SetSliderValues(-500, 500, 1)
+    xPosSlider:SetValue(RQE.db.profile.framePosition.xPos)
+    xPosSlider:SetFullWidth(true)
+    xPosSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.framePosition.xPos = value
+        RQE:UpdateFramePosition()
+    end)
+    framePositionGroup:AddChild(xPosSlider)
+
+    -- Y Position Slider
+    local yPosSlider = AceGUI:Create("Slider")
+    yPosSlider:SetLabel("Y Position")
+    yPosSlider:SetSliderValues(-500, 500, 1)
+    yPosSlider:SetValue(RQE.db.profile.framePosition.yPos)
+    yPosSlider:SetFullWidth(true)
+    yPosSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.framePosition.yPos = value
+        RQE:UpdateFramePosition()
+    end)
+    framePositionGroup:AddChild(yPosSlider)
 
     -- Frame Opacity Slider
     local frameOpacitySlider = AceGUI:Create("Slider")
-    frameOpacitySlider:SetLabel("Frame Opacity")
-    frameOpacitySlider:SetValue(RQE.db.profile.MainFrameOpacity or 0.8)
+    frameOpacitySlider:SetLabel("Quest Helper Opacity")
     frameOpacitySlider:SetSliderValues(0, 1, 0.01)
-    frameOpacitySlider:SetRelativeWidth(0.5)  -- Adjust to 50% of the parent's width
+    frameOpacitySlider:SetIsPercent(true)
+    frameOpacitySlider:SetValue(RQE.db.profile.MainFrameOpacity)
+    frameOpacitySlider:SetFullWidth(true)
     frameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
         RQE.db.profile.MainFrameOpacity = value
         RQE:UpdateFrameOpacity()
     end)
-    inlineGroup:AddChild(frameOpacitySlider)
 
-    -- Spacer
+	-- Add a tooltip description for frameOpacitySlider (RQE.db.profile.MainFrameOpacity)
+	frameOpacitySlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Adjust the opacity of the main helper frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	frameOpacitySlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    framePositionGroup:AddChild(frameOpacitySlider)
+
+    -- Frame Width Slider
+    local frameWidthSlider = AceGUI:Create("Slider")
+    frameWidthSlider:SetLabel("Frame Width")
+    frameWidthSlider:SetSliderValues(100, 800, 1)
+    frameWidthSlider:SetValue(RQE.db.profile.framePosition.frameWidth)
+    frameWidthSlider:SetFullWidth(true)
+    frameWidthSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.framePosition.frameWidth = value
+        RQE:UpdateFrameSize()
+    end)
+
+	-- Add a tooltip description for frameWidthSlider (RQE.db.profile.framePosition.frameWidth)
+	frameWidthSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Adjust the width of the super tracking frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	frameWidthSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    framePositionGroup:AddChild(frameWidthSlider)
+
+    -- Frame Height Slider
+    local frameHeightSlider = AceGUI:Create("Slider")
+    frameHeightSlider:SetLabel("Frame Height")
+    frameHeightSlider:SetSliderValues(100, 800, 1)
+    frameHeightSlider:SetValue(RQE.db.profile.framePosition.frameHeight)
+    frameHeightSlider:SetFullWidth(true)
+    frameHeightSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.framePosition.frameHeight = value
+        RQE:UpdateFrameSize()
+    end)
+
+	-- Add a tooltip description for frameHeightSlider (RQE.db.profile.framePosition.frameHeight)
+	frameHeightSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Adjust the height of the super tracking frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	frameHeightSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    framePositionGroup:AddChild(frameHeightSlider)
+
+    -- Quest Frame Position Group
+    local questFramePositionGroup = AceGUI:Create("InlineGroup")
+    questFramePositionGroup:SetTitle("Quest Frame Position")
+    questFramePositionGroup:SetFullWidth(true)
+    questFramePositionGroup:SetLayout("Flow")
+    scrollFrame:AddChild(questFramePositionGroup)
+
+    -- Anchor Point Dropdown for Quest Frame
+    local questAnchorPointDropdown = AceGUI:Create("Dropdown")
+    questAnchorPointDropdown:SetLabel("Anchor Point")
+    questAnchorPointDropdown:SetList(anchorPoints)
+    questAnchorPointDropdown:SetValue(RQE.db.profile.QuestFramePosition.anchorPoint)
+    questAnchorPointDropdown:SetFullWidth(true)
+    questAnchorPointDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.QuestFramePosition.anchorPoint = value
+        RQE:UpdateQuestFramePosition()
+    end)
+
+	-- Add a tooltip description for questAnchorPointDropdown (RQE.db.profile.QuestFramePosition.anchorPoint)
+	questAnchorPointDropdown:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("The point where the quest frame will be anchored.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questAnchorPointDropdown:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questFramePositionGroup:AddChild(questAnchorPointDropdown)
+
+    -- Quest Frame X Position Slider
+    local questXPosSlider = AceGUI:Create("Slider")
+    questXPosSlider:SetLabel("X Position")
+    questXPosSlider:SetSliderValues(-500, 500, 1)
+    questXPosSlider:SetValue(RQE.db.profile.QuestFramePosition.xPos)
+    questXPosSlider:SetFullWidth(true)
+    questXPosSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.QuestFramePosition.xPos = value
+        RQE:UpdateQuestFramePosition()
+    end)
+    questFramePositionGroup:AddChild(questXPosSlider)
+
+    -- Quest Frame Y Position Slider
+    local questYPosSlider = AceGUI:Create("Slider")
+    questYPosSlider:SetLabel("Y Position")
+    questYPosSlider:SetSliderValues(-500, 500, 1)
+    questYPosSlider:SetValue(RQE.db.profile.QuestFramePosition.yPos)
+    questYPosSlider:SetFullWidth(true)
+    questYPosSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.QuestFramePosition.yPos = value
+        RQE:UpdateQuestFramePosition()
+    end)
+    questFramePositionGroup:AddChild(questYPosSlider)
+
+    -- Quest Frame Opacity Slider
+    local questFrameOpacitySlider = AceGUI:Create("Slider")
+    questFrameOpacitySlider:SetLabel("Quest Tracker Opacity")
+    questFrameOpacitySlider:SetSliderValues(0, 1, 0.01)
+    questFrameOpacitySlider:SetIsPercent(true)
+    questFrameOpacitySlider:SetValue(RQE.db.profile.QuestFrameOpacity)
+    questFrameOpacitySlider:SetFullWidth(true)
+    questFrameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.QuestFrameOpacity = value
+        RQE:UpdateFrameOpacity()
+    end)
+
+	-- Add a tooltip description for questFrameOpacitySlider (RQE.db.profile.QuestFrameOpacity)
+	questFrameOpacitySlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Adjust the opacity of the quest tracking frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questFrameOpacitySlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questFramePositionGroup:AddChild(questFrameOpacitySlider)
+
+    -- Quest Frame Width Slider
+    local questFrameWidthSlider = AceGUI:Create("Slider")
+    questFrameWidthSlider:SetLabel("Frame Width")
+    questFrameWidthSlider:SetSliderValues(100, 800, 1)
+    questFrameWidthSlider:SetValue(RQE.db.profile.QuestFramePosition.frameWidth)
+    questFrameWidthSlider:SetFullWidth(true)
+    questFrameWidthSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.QuestFramePosition.frameWidth = value
+        RQE:UpdateQuestFrameSize()
+    end)
+
+	-- Add a tooltip description for questFrameWidthSlider (RQE.db.profile.QuestFramePosition.frameWidth)
+	questFrameWidthSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Adjust the width of the super tracking frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questFrameWidthSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questFramePositionGroup:AddChild(questFrameWidthSlider)
+
+    -- Quest Frame Height Slider
+    local questFrameHeightSlider = AceGUI:Create("Slider")
+    questFrameHeightSlider:SetLabel("Frame Height")
+    questFrameHeightSlider:SetSliderValues(100, 800, 1)
+    questFrameHeightSlider:SetValue(RQE.db.profile.QuestFramePosition.frameHeight)
+    questFrameHeightSlider:SetFullWidth(true)
+    questFrameHeightSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.QuestFramePosition.frameHeight = value
+        RQE:UpdateQuestFrameSize()
+    end)
+
+	-- Add a tooltip description for questFrameHeightSlider (RQE.db.profile.QuestFramePosition.frameHeight)
+	questFrameHeightSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Adjust the height of the super tracking frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questFrameHeightSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questFramePositionGroup:AddChild(questFrameHeightSlider)
+
+    -- Spacer to ensure the scroll goes to the bottom
     local spacer = AceGUI:Create("Label")
     spacer:SetText(" ")
     spacer:SetFullWidth(true)
-    inlineGroup:AddChild(spacer)
-
-    -- Frame Position Dropdown
-    local framePositionDropdown = AceGUI:Create("Dropdown")
-    framePositionDropdown:SetLabel("Frame Anchor Point")
-    framePositionDropdown:SetList({
-        TOPLEFT = "Top Left",
-        TOP = "Top",
-        TOPRIGHT = "Top Right",
-        LEFT = "Left",
-        CENTER = "Center",
-        RIGHT = "Right",
-        BOTTOMLEFT = "Bottom Left",
-        BOTTOM = "Bottom",
-        BOTTOMRIGHT = "Bottom Right"
-    })
-    framePositionDropdown:SetValue(RQE.db.profile.framePosition.anchorPoint)
-    framePositionDropdown:SetFullWidth(true)  -- Take full width
-    framePositionDropdown:SetCallback("OnValueChanged", function(widget, event, value)
-        RQE.db.profile.framePosition.anchorPoint = value
-        RQE:UpdateFramePosition()
-    end)
-    inlineGroup:AddChild(framePositionDropdown)
-
-    -- Add more widgets as needed
-end
-
-function RQE:CreateConfigFrame()
-    local frame = AceGUI:Create("Frame")
-    frame:SetTitle("Rhodan's Quest Explorer Settings")
-    frame:SetStatusText("Configure your settings")
-    frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
-    frame:SetLayout("Flow")
-    frame:SetWidth(600)  -- Increase the width of the frame
-    frame:SetHeight(400)  -- Set a specific height for the frame
-
-    local tabGroup = AceGUI:Create("TabGroup")
-    tabGroup:SetLayout("Flow")
-    tabGroup:SetFullWidth(true)  -- Ensure it uses the full width of the frame
-    tabGroup:SetFullHeight(true) -- Ensure it uses the full height of the frame
-    tabGroup:SetTabs({
-        {text = "General Settings", value = "general"},
-        {text = "Frame Settings", value = "frame"},
-        {text = "Font Settings", value = "font"},
-        {text = "Debug Options", value = "debug"},
-        {text = "Profiles", value = "profiles"}
-    })
-
-    tabGroup:SetCallback("OnGroupSelected", function(container, event, group)
-        container:ReleaseChildren()
-        if group == "general" then
-            self:AddGeneralSettingsWidgets(container)
-        elseif group == "frame" then
-            self:AddFrameSettingsWidgets(container)
-        elseif group == "font" then
-            self:AddFontSettingsWidgets(container)
-        elseif group == "debug" then
-            self:AddDebugSettingsWidgets(container)
-        elseif group == "profiles" then
-            self:AddProfileSettingsWidgets(container)
-        end
-    end)
-
-    tabGroup:SelectTab("general")
-    frame:AddChild(tabGroup)
+    scrollFrame:AddChild(spacer)
 end
 
 
-function RQE:AddGeneralSettingsWidgets(container)
-    -- Example for enabling frame option
-    if RQE.options.args.general.args.enableFrame then
-        local enableFrameCheckbox = AceGUI:Create("CheckBox")
-        enableFrameCheckbox:SetLabel(RQE.options.args.general.args.enableFrame.name)
-        enableFrameCheckbox:SetValue(RQE.db.profile.enableFrame)
-        enableFrameCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
-            RQE.db.profile.enableFrame = value
-            RQE:ToggleRQEFrame()
-        end)
-        container:AddChild(enableFrameCheckbox)
-    end
-
-    -- Repeat similar blocks for other settings in RQE.options.args.general.args
-end
-
-
-function RQE:GenerateWidgetsFromOptions(options, container)
-    for key, option in pairs(options) do
-        if option.type == "toggle" then
-            local checkbox = AceGUI:Create("CheckBox")
-            checkbox:SetLabel(option.name)
-            checkbox:SetValue(RQE.db.profile[key])
-            checkbox:SetCallback("OnValueChanged", function(widget, event, value)
-                RQE.db.profile[key] = value
-                if option.set then option.set(nil, value) end
-            end)
-            container:AddChild(checkbox)
-        elseif option.type == "range" then
-            local slider = AceGUI:Create("Slider")
-            slider:SetLabel(option.name)
-            slider:SetValue(RQE.db.profile[key] or option.default)
-            slider:SetSliderValues(option.min, option.max, option.step)
-            slider:SetCallback("OnValueChanged", function(widget, event, value)
-                RQE.db.profile[key] = value
-                if option.set then option.set(nil, value) end
-            end)
-            container:AddChild(slider)
-        end
-        -- Add more cases for other option types
-    end
-end
-
-
+-- Displays the Widget Container Font Settings in Config Frame
 function RQE:AddFontSettingsWidgets(container)
-    -- Example for font size option
-    if RQE.options.args.font.args.fontSize then
-        local fontSizeSlider = AceGUI:Create("Slider")
-        fontSizeSlider:SetLabel(RQE.options.args.font.args.fontSize.name)
-        fontSizeSlider:SetValue(RQE.db.profile.textSettings.headerText.size or 18)
-        fontSizeSlider:SetSliderValues(8, 24, 1)
-        fontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
-            RQE.db.profile.textSettings.headerText.size = value
-            RQE:UpdateFontSize()
-        end)
-        container:AddChild(fontSizeSlider)
+    -- Create a Scroll Frame
+    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame:SetLayout("Flow")
+    scrollFrame:SetFullWidth(true)
+    scrollFrame:SetFullHeight(true)
+    container:AddChild(scrollFrame)
+
+    -- Font Size and Color Group
+    local fontSizeAndColorGroup = AceGUI:Create("InlineGroup")
+    fontSizeAndColorGroup:SetTitle("Font Size and Color")
+    fontSizeAndColorGroup:SetFullWidth(true)
+    fontSizeAndColorGroup:SetLayout("Flow")
+    scrollFrame:AddChild(fontSizeAndColorGroup)
+
+    local colorList = {
+        ["ffff00"] = "Yellow",
+        ["00ff00"] = "Green",
+        ["00ff99"] = "Cyan",
+        ["ffffd9"] = "Canary",
+        ["edbf59"] = "Cream Can"
+    }
+
+    local function SetColorDropdownValue(color)
+        local hexColor = string.format("%02x%02x%02x", color[1] * 255, color[2] * 255, color[3] * 255)
+        return hexColor
     end
 
-    local fontColorPicker = AceGUI:Create("ColorPicker")
-    fontColorPicker:SetLabel("Font Color")
-    local r, g, b = unpack(RQE.db.profile.textSettings.headerText.color)
-    fontColorPicker:SetColor(r, g, b)
-    fontColorPicker:SetCallback("OnValueChanged", function(widget, event, r, g, b)
-        RQE.db.profile.textSettings.headerText.color = {r, g, b}
-        RQE:UpdateFontColor()
+    -- Helper function to create font color dropdown
+    local function CreateFontColorDropdown(group, label, profilePath)
+        local dropdown = AceGUI:Create("Dropdown")
+        dropdown:SetLabel(label)
+        dropdown:SetList(colorList)
+        dropdown:SetValue(SetColorDropdownValue(RQE.db.profile.textSettings[profilePath].color))
+        dropdown:SetFullWidth(true)
+        dropdown:SetCallback("OnValueChanged", function(widget, event, value)
+            local r = tonumber(value:sub(1, 2), 16) / 255
+            local g = tonumber(value:sub(3, 4), 16) / 255
+            local b = tonumber(value:sub(5, 6), 16) / 255
+            RQE.db.profile.textSettings[profilePath].color = { r, g, b }
+            RQE:ConfigurationChanged()
+        end)
+        group:AddChild(dropdown)
+    end
+
+    -- Header Text Group
+    local headerTextGroup = AceGUI:Create("InlineGroup")
+    headerTextGroup:SetTitle("Header Text")
+    headerTextGroup:SetFullWidth(true)
+    headerTextGroup:SetLayout("Flow")
+    fontSizeAndColorGroup:AddChild(headerTextGroup)
+
+    -- Header Text Font Size Slider
+    local headerFontSizeSlider = AceGUI:Create("Slider")
+    headerFontSizeSlider:SetLabel("Font Size")
+    headerFontSizeSlider:SetSliderValues(8, 24, 1)
+    headerFontSizeSlider:SetValue(RQE.db.profile.textSettings.headerText.size)
+    headerFontSizeSlider:SetFullWidth(true)
+    headerFontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.headerText.size = value
+        RQE:ConfigurationChanged()
     end)
-    fontGroup:AddChild(fontColorPicker)
 
-    -- Add more widgets as needed
+	-- Add a tooltip description for headerFontSizeSlider (RQE.db.profile.textSettings.headerText.size)
+	headerFontSizeSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Default: 18", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	headerFontSizeSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    headerTextGroup:AddChild(headerFontSizeSlider)
+
+    -- Header Text Font Style Dropdown
+    local headerFontStyleDropdown = AceGUI:Create("Dropdown")
+    headerFontStyleDropdown:SetLabel("Font Style")
+    headerFontStyleDropdown:SetList({
+        ["SKURRI"] = "SKURRI.TTF",
+        ["FRIZQT__"] = "FRIZQT__.TTF"
+    })
+    headerFontStyleDropdown:SetValue(RQE.db.profile.textSettings.headerText.font and RQE.db.profile.textSettings.headerText.font:match("Fonts\\([a-zA-Z0-9_]+)%.TTF"))
+    headerFontStyleDropdown:SetFullWidth(true)
+    headerFontStyleDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.headerText.font = "Fonts\\" .. value .. ".TTF"
+        RQE:ConfigurationChanged()
+    end)
+    headerTextGroup:AddChild(headerFontStyleDropdown)
+
+    -- Header Text Font Color Dropdown
+    CreateFontColorDropdown(headerTextGroup, "Font Color", "headerText")
+
+    -- Quest ID Text Group
+    local questIDTextGroup = AceGUI:Create("InlineGroup")
+    questIDTextGroup:SetTitle("Quest ID Text")
+    questIDTextGroup:SetFullWidth(true)
+    questIDTextGroup:SetLayout("Flow")
+    fontSizeAndColorGroup:AddChild(questIDTextGroup)
+
+    -- Quest ID Text Font Size Slider
+    local questIDFontSizeSlider = AceGUI:Create("Slider")
+    questIDFontSizeSlider:SetLabel("Font Size")
+    questIDFontSizeSlider:SetSliderValues(8, 24, 1)
+    questIDFontSizeSlider:SetValue(RQE.db.profile.textSettings.QuestIDText.size)
+    questIDFontSizeSlider:SetFullWidth(true)
+    questIDFontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.QuestIDText.size = value
+        RQE:ConfigurationChanged()
+    end)
+
+	-- Add a tooltip description for questIDFontSizeSlider (RQE.db.profile.textSettings.QuestIDText.size)
+	questIDFontSizeSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Default: 15", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questIDFontSizeSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questIDTextGroup:AddChild(questIDFontSizeSlider)
+
+    -- Quest ID Text Font Style Dropdown
+    local questIDFontStyleDropdown = AceGUI:Create("Dropdown")
+    questIDFontStyleDropdown:SetLabel("Font Style")
+    questIDFontStyleDropdown:SetList({
+        ["SKURRI"] = "SKURRI.TTF",
+        ["FRIZQT__"] = "FRIZQT__.TTF"
+    })
+    questIDFontStyleDropdown:SetValue(RQE.db.profile.textSettings.QuestIDText.font and RQE.db.profile.textSettings.QuestIDText.font:match("Fonts\\([a-zA-Z0-9_]+)%.TTF"))
+    questIDFontStyleDropdown:SetFullWidth(true)
+    questIDFontStyleDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.QuestIDText.font = "Fonts\\" .. value .. ".TTF"
+        RQE:ConfigurationChanged()
+    end)
+    questIDTextGroup:AddChild(questIDFontStyleDropdown)
+
+    -- Quest ID Text Font Color Dropdown
+    CreateFontColorDropdown(questIDTextGroup, "Font Color", "QuestIDText")
+
+    -- Quest Name Text Group
+    local questNameTextGroup = AceGUI:Create("InlineGroup")
+    questNameTextGroup:SetTitle("Quest Name Text")
+    questNameTextGroup:SetFullWidth(true)
+    questNameTextGroup:SetLayout("Flow")
+    fontSizeAndColorGroup:AddChild(questNameTextGroup)
+
+    -- Quest Name Text Font Size Slider
+    local questNameFontSizeSlider = AceGUI:Create("Slider")
+    questNameFontSizeSlider:SetLabel("Font Size")
+    questNameFontSizeSlider:SetSliderValues(8, 24, 1)
+    questNameFontSizeSlider:SetValue(RQE.db.profile.textSettings.QuestNameText.size)
+    questNameFontSizeSlider:SetFullWidth(true)
+    questNameFontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.QuestNameText.size = value
+        RQE:ConfigurationChanged()
+    end)
+
+	-- Add a tooltip description for questNameFontSizeSlider (RQE.db.profile.textSettings.QuestNameText.size)
+	questNameFontSizeSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Default: 15", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questNameFontSizeSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questNameTextGroup:AddChild(questNameFontSizeSlider)
+
+    -- Quest Name Text Font Style Dropdown
+    local questNameFontStyleDropdown = AceGUI:Create("Dropdown")
+    questNameFontStyleDropdown:SetLabel("Font Style")
+    questNameFontStyleDropdown:SetList({
+        ["SKURRI"] = "SKURRI.TTF",
+        ["FRIZQT__"] = "FRIZQT__.TTF"
+    })
+    questNameFontStyleDropdown:SetValue(RQE.db.profile.textSettings.QuestNameText.font and RQE.db.profile.textSettings.QuestNameText.font:match("Fonts\\([a-zA-Z0-9_]+)%.TTF"))
+    questNameFontStyleDropdown:SetFullWidth(true)
+    questNameFontStyleDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.QuestNameText.font = "Fonts\\" .. value .. ".TTF"
+        RQE:ConfigurationChanged()
+    end)
+    questNameTextGroup:AddChild(questNameFontStyleDropdown)
+
+    -- Quest Name Text Font Color Dropdown
+    CreateFontColorDropdown(questNameTextGroup, "Font Color", "QuestNameText")
+
+    -- Direction Text Group
+    local directionTextGroup = AceGUI:Create("InlineGroup")
+    directionTextGroup:SetTitle("Direction Text")
+    directionTextGroup:SetFullWidth(true)
+    directionTextGroup:SetLayout("Flow")
+    fontSizeAndColorGroup:AddChild(directionTextGroup)
+
+    -- Direction Text Font Size Slider
+    local directionFontSizeSlider = AceGUI:Create("Slider")
+    directionFontSizeSlider:SetLabel("Font Size")
+    directionFontSizeSlider:SetSliderValues(8, 24, 1)
+    directionFontSizeSlider:SetValue(RQE.db.profile.textSettings.DirectionTextFrame.size)
+    directionFontSizeSlider:SetFullWidth(true)
+    directionFontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.DirectionTextFrame.size = value
+        RQE:ConfigurationChanged()
+    end)
+
+	-- Add a tooltip description for directionFontSizeSlider (RQE.db.profile.textSettings.DirectionTextFrame.size)
+	directionFontSizeSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Default: 13", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	directionFontSizeSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    directionTextGroup:AddChild(directionFontSizeSlider)
+
+    -- Direction Text Font Style Dropdown
+    local directionFontStyleDropdown = AceGUI:Create("Dropdown")
+    directionFontStyleDropdown:SetLabel("Font Style")
+    directionFontStyleDropdown:SetList({
+        ["SKURRI"] = "SKURRI.TTF",
+        ["FRIZQT__"] = "FRIZQT__.TTF"
+    })
+    directionFontStyleDropdown:SetValue(RQE.db.profile.textSettings.DirectionTextFrame.font and RQE.db.profile.textSettings.DirectionTextFrame.font:match("Fonts\\([a-zA-Z0-9_]+)%.TTF"))
+    directionFontStyleDropdown:SetFullWidth(true)
+    directionFontStyleDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.DirectionTextFrame.font = "Fonts\\" .. value .. ".TTF"
+        RQE:ConfigurationChanged()
+    end)
+    directionTextGroup:AddChild(directionFontStyleDropdown)
+
+    -- Direction Text Font Color Dropdown
+    CreateFontColorDropdown(directionTextGroup, "Font Color", "DirectionTextFrame")
+
+    -- Quest Description Group
+    local questDescriptionGroup = AceGUI:Create("InlineGroup")
+    questDescriptionGroup:SetTitle("Quest Description")
+    questDescriptionGroup:SetFullWidth(true)
+    questDescriptionGroup:SetLayout("Flow")
+    fontSizeAndColorGroup:AddChild(questDescriptionGroup)
+
+    -- Quest Description Font Size Slider
+    local questDescriptionFontSizeSlider = AceGUI:Create("Slider")
+    questDescriptionFontSizeSlider:SetLabel("Font Size")
+    questDescriptionFontSizeSlider:SetSliderValues(8, 24, 1)
+    questDescriptionFontSizeSlider:SetValue(RQE.db.profile.textSettings.QuestDescription.size)
+    questDescriptionFontSizeSlider:SetFullWidth(true)
+    questDescriptionFontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.QuestDescription.size = value
+        RQE:ConfigurationChanged()
+    end)
+
+	-- Add a tooltip description for questDescriptionFontSizeSlider (RQE.db.profile.textSettings.QuestDescription.size)
+	questDescriptionFontSizeSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Default: 14", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	questDescriptionFontSizeSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+    questDescriptionGroup:AddChild(questDescriptionFontSizeSlider)
+
+    -- Quest Description Font Style Dropdown
+    local questDescriptionFontStyleDropdown = AceGUI:Create("Dropdown")
+    questDescriptionFontStyleDropdown:SetLabel("Font Style")
+    questDescriptionFontStyleDropdown:SetList({
+        ["SKURRI"] = "SKURRI.TTF",
+        ["FRIZQT__"] = "FRIZQT__.TTF"
+    })
+    questDescriptionFontStyleDropdown:SetValue(RQE.db.profile.textSettings.QuestDescription.font and RQE.db.profile.textSettings.QuestDescription.font:match("Fonts\\([a-zA-Z0-9_]+)%.TTF"))
+    questDescriptionFontStyleDropdown:SetFullWidth(true)
+    questDescriptionFontStyleDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.textSettings.QuestDescription.font = "Fonts\\" .. value .. ".TTF"
+        RQE:ConfigurationChanged()
+    end)
+    questDescriptionGroup:AddChild(questDescriptionFontStyleDropdown)
+
+    -- Quest Description Font Color Dropdown
+    CreateFontColorDropdown(questDescriptionGroup, "Font Color", "QuestDescription")
+
+    -- Spacer to ensure the scroll goes to the bottom
+    local spacer = AceGUI:Create("Label")
+    spacer:SetText(" ")
+    spacer:SetFullWidth(true)
+    scrollFrame:AddChild(spacer)
 end
 
 
-function RQE:AddProfileSettingsWidgets(container)
-    -- Create a simple label indicating this is the Profile Settings tab
-    local label = AceGUI:Create("Label")
-    label:SetText("Profile Settings will go here.")
-    label:SetFullWidth(true)
-    container:AddChild(label)
-
-    -- You can add profile management widgets here if needed
-end
-
-
+-- Displays the Widget Container Debug Options in Config Frame
 function RQE:AddDebugSettingsWidgets(container)
-    -- Create a simple label indicating this is the Debug Options tab
+    -- Create a Scroll Frame
+    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame:SetLayout("Flow")
+    scrollFrame:SetFullWidth(true)
+    scrollFrame:SetFullHeight(true) -- This will allow the scroll frame to take up the full height of the parent container
+    container:AddChild(scrollFrame)
+
+    -- Function to refresh the contents of the Debug tab
+    local function RefreshDebugTab()
+        scrollFrame:ReleaseChildren() -- Clear all current children
+
+        -- Enable Debug Mode Checkbox
+        local debugModeCheckbox = AceGUI:Create("CheckBox")
+        debugModeCheckbox:SetLabel("Enable Debug Mode")
+        debugModeCheckbox:SetValue(RQE.db.profile.debugMode)
+        debugModeCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+            RQE.db.profile.debugMode = value
+            RQE.db.profile.debugLevel = value and RQE.db.profile.debugLevel or "NONE"
+            RefreshDebugTab()
+        end)
+
+		-- Add a tooltip description for debugModeCheckbox (RQE.db.profile.debugMode)
+		debugModeCheckbox:SetCallback("OnEnter", function(widget, event)
+			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+			GameTooltip:SetText("Enable or disable debug mode for additional logging.", nil, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		debugModeCheckbox:SetCallback("OnLeave", function(widget, event)
+			GameTooltip:Hide()
+		end)
+
+        scrollFrame:AddChild(debugModeCheckbox)
+
+        -- Display Memory Usage Checkbox
+        local displayMemoryUsageCheckbox = AceGUI:Create("CheckBox")
+        displayMemoryUsageCheckbox:SetLabel("Display Memory Usage")
+        displayMemoryUsageCheckbox:SetValue(RQE.db.profile.displayRQEmemUsage)
+        displayMemoryUsageCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+            RQE.db.profile.displayRQEmemUsage = value
+            RQE:CheckMemoryUsage()  -- Immediately update the memory usage display
+        end)
+
+		-- Add a tooltip description for displayMemoryUsageCheckbox (RQE.db.profile.displayRQEmemUsage)
+		displayMemoryUsageCheckbox:SetCallback("OnEnter", function(widget, event)
+			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+			GameTooltip:SetText("Displays the memory usage for the RQE addon", nil, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		displayMemoryUsageCheckbox:SetCallback("OnLeave", function(widget, event)
+			GameTooltip:Hide()
+		end)
+
+        scrollFrame:AddChild(displayMemoryUsageCheckbox)
+
+        -- Only show these options if Debug Mode is enabled
+        if RQE.db.profile.debugMode then
+            -- Debug Inline Group (appears when Debug Mode is enabled)
+            local debugInlineGroup = AceGUI:Create("InlineGroup")
+            debugInlineGroup:SetTitle("Debug")
+            debugInlineGroup:SetFullWidth(true)
+            debugInlineGroup:SetLayout("Flow")
+            scrollFrame:AddChild(debugInlineGroup)
+
+            -- Debug Level Dropdown
+            local debugLevelDropdown = AceGUI:Create("Dropdown")
+            debugLevelDropdown:SetLabel("Debug Level")
+            debugLevelDropdown:SetList(debugLevelOptions)
+            debugLevelDropdown:SetValue(getDebugLevelIndex(RQE.db.profile.debugLevel))
+            debugLevelDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+                RQE.db.profile.debugLevel = debugLevelOptions[value]
+                RefreshDebugTab()  -- Refresh the tab after changing the debug level
+            end)
+
+			-- Add a tooltip description for debugLevelDropdown (RQE.db.profile.debugLevel)
+			debugLevelDropdown:SetCallback("OnEnter", function(widget, event)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("Set the level of debug logging.", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			debugLevelDropdown:SetCallback("OnLeave", function(widget, event)
+				GameTooltip:Hide()
+			end)
+
+            debugInlineGroup:AddChild(debugLevelDropdown)
+
+            -- Reset Frame Position Button (only shown if debug level is "INFO")
+            if RQE.db.profile.debugLevel == "INFO" then
+                local resetFramePositionButton = AceGUI:Create("Button")
+                resetFramePositionButton:SetText("Reset Position")
+                resetFramePositionButton:SetCallback("OnClick", function()
+                    RQE:ResetFramePositionToDBorDefault()
+                    RQE:ResetQuestFramePositionToDBorDefault()
+                end)
+                debugInlineGroup:AddChild(resetFramePositionButton)
+
+                local resetFrameSizeButton = AceGUI:Create("Button")
+                resetFrameSizeButton:SetText("Reset Size")
+                resetFrameSizeButton:SetCallback("OnClick", function()
+                    RQE:ResetFrameSizeToDBorDefault()
+                end)
+                debugInlineGroup:AddChild(resetFrameSizeButton)
+            end
+        end
+
+        -- Spacer to ensure the scroll goes to the bottom
+        local spacer = AceGUI:Create("Label")
+        spacer:SetText(" ")
+        spacer:SetFullWidth(true)
+        scrollFrame:AddChild(spacer)
+    end
+
+    -- Initial setup of the Debug tab
+    RefreshDebugTab()
+end
+
+
+-- Displays the Widget Container Profiles in Config Frame
+function RQE:AddProfileSettingsWidgets(container)
+    -- Profile Management Section Label
     local label = AceGUI:Create("Label")
-    label:SetText("Debug Options will go here.")
+    label:SetText("Profile Management")
     label:SetFullWidth(true)
     container:AddChild(label)
 
-    -- You can add debug-related widgets here if needed
-end
+    -- Dropdown for existing profiles
+    local profileDropdown = AceGUI:Create("Dropdown")
+    profileDropdown:SetLabel("Select Profile")
+    local profiles = {}
+    local currentProfile = RQE.db:GetCurrentProfile()
 
+    -- Populate profiles dropdown
+    for _, profileName in pairs(RQE.db:GetProfiles()) do
+        profiles[profileName] = profileName
+    end
+    profileDropdown:SetList(profiles)
+    profileDropdown:SetValue(currentProfile)
+    profileDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db:SetProfile(value)
+    end)
+    container:AddChild(profileDropdown)
 
-function RQE:UpdateFontSize()
-    -- Implement the logic to update the font size based on the slider value
-    -- This function will be called whenever the font size slider is adjusted
-    print("Font size updated to:", RQE.db.profile.textSettings.headerText.size)
-    -- Add your logic here to apply the font size change in the addon
-end
+    -- Button for creating a new profile
+    local newProfileButton = AceGUI:Create("Button")
+    newProfileButton:SetText("Create New Profile")
+    newProfileButton:SetCallback("OnClick", function()
+        local newProfileName = "NewProfile"  -- You can prompt the user for this name if you want
+        RQE.db:SetProfile(newProfileName)
+        profiles[newProfileName] = newProfileName
+        profileDropdown:SetList(profiles)
+        profileDropdown:SetValue(newProfileName)
+    end)
+    container:AddChild(newProfileButton)
 
+    -- Button for copying a profile
+    local copyProfileButton = AceGUI:Create("Button")
+    copyProfileButton:SetText("Copy Current Profile")
+    copyProfileButton:SetCallback("OnClick", function()
+        local newProfileName = currentProfile .. "_Copy"
+        RQE.db:CopyProfile(currentProfile, newProfileName)
+        profiles[newProfileName] = newProfileName
+        profileDropdown:SetList(profiles)
+        profileDropdown:SetValue(newProfileName)
+    end)
+    container:AddChild(copyProfileButton)
 
-function RQE:UpdateFontColor()
-    -- Implement the logic to update the font color based on the color picker
-    -- This function will be called whenever the font color picker is adjusted
-    print("Font color updated to:", unpack(RQE.db.profile.textSettings.headerText.color))
-    -- Add your logic here to apply the font color change in the addon
-end
+    -- Button for deleting a profile
+    local deleteProfileButton = AceGUI:Create("Button")
+    deleteProfileButton:SetText("Delete Profile")
+    deleteProfileButton:SetCallback("OnClick", function()
+        RQE.db:DeleteProfile(currentProfile)
+        profiles[currentProfile] = nil
+        profileDropdown:SetList(profiles)
+        profileDropdown:SetValue(next(profiles))  -- Select the first available profile
+    end)
+    container:AddChild(deleteProfileButton)
 
-
-function RQE:AddGeneralSettingsWidgets(container)
-    RQE:GenerateWidgetsFromOptions(RQE.options.args.general.args, container)
-end
-
-
-function RQE:AddFontSettingsWidgets(container)
-    RQE:GenerateWidgetsFromOptions(RQE.options.args.font.args, container)
+    -- Button for resetting the profile
+    local resetProfileButton = AceGUI:Create("Button")
+    resetProfileButton:SetText("Reset Profile")
+    resetProfileButton:SetCallback("OnClick", function()
+        RQE.db:ResetProfile()
+    end)
+    container:AddChild(resetProfileButton)
 end
