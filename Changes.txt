@@ -1,3 +1,14 @@
+11.0.2.22
+	Config.lua
+		- Updates to Config Frame window
+		- Fixed issue where config setting names were being truncated
+
+	RQEMinimap.lua
+		- Update to LDB & Minimap dropdown
+		- Switched coding to Toggle Config Window instead of Creating (as this was previously resulting in duplication of window)
+		- Commented out section in the dropdown for RQE:ShowMoreOptionsMenu as these options, to trigger settings opening for subcategories are not yet functional
+
+
 11.0.2.21
 	RQEFrame.lua
 		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded within RQE:CreateStepsText function
@@ -5,6 +16,7 @@
 	RQEMinimap.lua
 		- Update to LDB & Minimap buttons to reflect Shift-Right-Click option to toggle settings directly
 		- Added 'Config Window' to More Options in LDB menu
+
 
 11.0.2.2
 	Config.lua
@@ -25,5 +37,6 @@
 
 	RQE.toc
 		- Included 110005 in the accepted Game versions
+
 
 11.0.2.1 - Initial Release
