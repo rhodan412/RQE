@@ -1,1 +1,21 @@
+11.0.2.2
+	Config.lua
+		- Experimental: Update to OpenFrameSettings() function to include changes allegedly made with 11.0 API to open subcategories
+
+	Core.lua
+		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded
+
+	EventManager.lua
+		- Better DB check in PLAYER_LOGIN event
+
+	QuestingModule.lua
+		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded
+
+	RQEMinimap.lua
+		- Fix to LDBdatabroker as buttons weren't clicking before
+		- Fix to Minimap Button as buttons weren't clicking before
+
+	RQE.toc
+		- Included 110005 in the accepted Game versions
+
 11.0.2.1 - Initial Release
