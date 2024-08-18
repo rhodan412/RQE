@@ -115,7 +115,7 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
         end
         RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
             RQE:ShowLDBDropdownMenu()
-        end, 1.5)
+        end, 3)
 
         GameTooltip:SetOwner(display, "ANCHOR_NONE")
         GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")
@@ -413,8 +413,9 @@ function RQE:ShowLDBDropdownMenu()
     if #self.CustomMenu.buttons == 0 then
         self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end)
         self.CustomMenu:AddButton("AddOn Settings", function() RQE:OpenSettings() end)
+		self.CustomMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
         self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end)
-        self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)
+        --self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)    -- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
     end
     
     -- Retrieve the actual frame object
@@ -459,7 +460,7 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
         self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:OpenFontSettings() end)
         self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:OpenDebugOptions() end)
         self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end)
-		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:CreateConfigFrame() end)
+		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
     end
     
     -- Toggle More Options menu visibility
