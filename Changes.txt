@@ -1,6 +1,6 @@
 11.0.2.21
 	RQEFrame.lua
-		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded
+		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded within RQE:CreateStepsText function
 
 	RQEMinimap.lua
 		- Update to LDB & Minimap buttons to reflect Shift-Right-Click option to toggle settings directly
