@@ -53,26 +53,42 @@ RQE.Settings = {}
 
 -- Function to open the Frame Settings panel
 function RQE:OpenFrameSettings()
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.frame)
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.frame)  -- Sometimes needed twice
+    if self.optionsFrame.frame then
+        SettingsPanel:OpenToCategory(self.optionsFrame.frame)
+        print("Opened Frame Settings")
+    else
+        print("Frame Settings not initialized")
+    end
 end
 
 -- Function to open the Font Settings panel
 function RQE:OpenFontSettings()
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.font)
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.font)  -- Sometimes needed twice
+    if self.optionsFrame.font then
+        SettingsPanel:OpenToCategory(self.optionsFrame.font)
+        print("Opened Font Settings")
+    else
+        print("Font Settings not initialized")
+    end
 end
 
 -- Function to open the Debug Options panel
 function RQE:OpenDebugOptions()
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.debug)
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.debug)  -- Sometimes needed twice
+    if self.optionsFrame.debug then
+        SettingsPanel:OpenToCategory(self.optionsFrame.debug)
+        print("Opened Debug Options")
+    else
+        print("Debug Options not initialized")
+    end
 end
 
 -- Function to open the Profiles panel
 function RQE:OpenProfiles()
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.profiles)
-    InterfaceOptionsFrame_OpenToCategory(self.optionsFrame.profiles)  -- Sometimes needed twice
+    if self.optionsFrame.profiles then
+        SettingsPanel:OpenToCategory(self.optionsFrame.profiles)
+        print("Opened Profiles")
+    else
+        print("Profiles not initialized")
+    end
 end
 
 
@@ -1091,4 +1107,234 @@ RQE.options = {
 RQE:RegisterChatCommand("rqe_frame", "OpenFrameSettings")
 RQE:RegisterChatCommand("rqe_font", "OpenFontSettings")
 RQE:RegisterChatCommand("rqe_debug", "OpenDebugOptions")
-RQE:RegisterChatCommand("rqe_profiles", "OpenProfiles")
+RQE:RegisterChatCommand("RQE_Profiles", "OpenProfiles")
+
+
+---------------------------
+-- 5. Config Frame
+---------------------------
+
+local AceGUI = LibStub("AceGUI-3.0")
+local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+
+function RQE:AddFrameSettingsWidgets(container)
+    local inlineGroup = AceGUI:Create("InlineGroup")
+    inlineGroup:SetTitle("Main Frame Settings")
+    inlineGroup:SetFullWidth(true)
+    inlineGroup:SetLayout("Flow")
+    inlineGroup:SetHeight(100)  -- Set a specific height for the inline group
+    container:AddChild(inlineGroup)
+
+    -- Enable Frame Checkbox
+    local enableFrameCheckbox = AceGUI:Create("CheckBox")
+    enableFrameCheckbox:SetLabel("Enable Frame")
+    enableFrameCheckbox:SetValue(RQE.db.profile.enableFrame)
+    enableFrameCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.enableFrame = value
+        RQE:ToggleRQEFrame()
+    end)
+    enableFrameCheckbox:SetRelativeWidth(0.5)  -- Adjust to 50% of the parent's width
+    inlineGroup:AddChild(enableFrameCheckbox)
+
+    -- Frame Opacity Slider
+    local frameOpacitySlider = AceGUI:Create("Slider")
+    frameOpacitySlider:SetLabel("Frame Opacity")
+    frameOpacitySlider:SetValue(RQE.db.profile.MainFrameOpacity or 0.8)
+    frameOpacitySlider:SetSliderValues(0, 1, 0.01)
+    frameOpacitySlider:SetRelativeWidth(0.5)  -- Adjust to 50% of the parent's width
+    frameOpacitySlider:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.MainFrameOpacity = value
+        RQE:UpdateFrameOpacity()
+    end)
+    inlineGroup:AddChild(frameOpacitySlider)
+
+    -- Spacer
+    local spacer = AceGUI:Create("Label")
+    spacer:SetText(" ")
+    spacer:SetFullWidth(true)
+    inlineGroup:AddChild(spacer)
+
+    -- Frame Position Dropdown
+    local framePositionDropdown = AceGUI:Create("Dropdown")
+    framePositionDropdown:SetLabel("Frame Anchor Point")
+    framePositionDropdown:SetList({
+        TOPLEFT = "Top Left",
+        TOP = "Top",
+        TOPRIGHT = "Top Right",
+        LEFT = "Left",
+        CENTER = "Center",
+        RIGHT = "Right",
+        BOTTOMLEFT = "Bottom Left",
+        BOTTOM = "Bottom",
+        BOTTOMRIGHT = "Bottom Right"
+    })
+    framePositionDropdown:SetValue(RQE.db.profile.framePosition.anchorPoint)
+    framePositionDropdown:SetFullWidth(true)  -- Take full width
+    framePositionDropdown:SetCallback("OnValueChanged", function(widget, event, value)
+        RQE.db.profile.framePosition.anchorPoint = value
+        RQE:UpdateFramePosition()
+    end)
+    inlineGroup:AddChild(framePositionDropdown)
+
+    -- Add more widgets as needed
+end
+
+function RQE:CreateConfigFrame()
+    local frame = AceGUI:Create("Frame")
+    frame:SetTitle("Rhodan's Quest Explorer Settings")
+    frame:SetStatusText("Configure your settings")
+    frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
+    frame:SetLayout("Flow")
+    frame:SetWidth(600)  -- Increase the width of the frame
+    frame:SetHeight(400)  -- Set a specific height for the frame
+
+    local tabGroup = AceGUI:Create("TabGroup")
+    tabGroup:SetLayout("Flow")
+    tabGroup:SetFullWidth(true)  -- Ensure it uses the full width of the frame
+    tabGroup:SetFullHeight(true) -- Ensure it uses the full height of the frame
+    tabGroup:SetTabs({
+        {text = "General Settings", value = "general"},
+        {text = "Frame Settings", value = "frame"},
+        {text = "Font Settings", value = "font"},
+        {text = "Debug Options", value = "debug"},
+        {text = "Profiles", value = "profiles"}
+    })
+
+    tabGroup:SetCallback("OnGroupSelected", function(container, event, group)
+        container:ReleaseChildren()
+        if group == "general" then
+            self:AddGeneralSettingsWidgets(container)
+        elseif group == "frame" then
+            self:AddFrameSettingsWidgets(container)
+        elseif group == "font" then
+            self:AddFontSettingsWidgets(container)
+        elseif group == "debug" then
+            self:AddDebugSettingsWidgets(container)
+        elseif group == "profiles" then
+            self:AddProfileSettingsWidgets(container)
+        end
+    end)
+
+    tabGroup:SelectTab("general")
+    frame:AddChild(tabGroup)
+end
+
+
+function RQE:AddGeneralSettingsWidgets(container)
+    -- Example for enabling frame option
+    if RQE.options.args.general.args.enableFrame then
+        local enableFrameCheckbox = AceGUI:Create("CheckBox")
+        enableFrameCheckbox:SetLabel(RQE.options.args.general.args.enableFrame.name)
+        enableFrameCheckbox:SetValue(RQE.db.profile.enableFrame)
+        enableFrameCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+            RQE.db.profile.enableFrame = value
+            RQE:ToggleRQEFrame()
+        end)
+        container:AddChild(enableFrameCheckbox)
+    end
+
+    -- Repeat similar blocks for other settings in RQE.options.args.general.args
+end
+
+
+function RQE:GenerateWidgetsFromOptions(options, container)
+    for key, option in pairs(options) do
+        if option.type == "toggle" then
+            local checkbox = AceGUI:Create("CheckBox")
+            checkbox:SetLabel(option.name)
+            checkbox:SetValue(RQE.db.profile[key])
+            checkbox:SetCallback("OnValueChanged", function(widget, event, value)
+                RQE.db.profile[key] = value
+                if option.set then option.set(nil, value) end
+            end)
+            container:AddChild(checkbox)
+        elseif option.type == "range" then
+            local slider = AceGUI:Create("Slider")
+            slider:SetLabel(option.name)
+            slider:SetValue(RQE.db.profile[key] or option.default)
+            slider:SetSliderValues(option.min, option.max, option.step)
+            slider:SetCallback("OnValueChanged", function(widget, event, value)
+                RQE.db.profile[key] = value
+                if option.set then option.set(nil, value) end
+            end)
+            container:AddChild(slider)
+        end
+        -- Add more cases for other option types
+    end
+end
+
+
+function RQE:AddFontSettingsWidgets(container)
+    -- Example for font size option
+    if RQE.options.args.font.args.fontSize then
+        local fontSizeSlider = AceGUI:Create("Slider")
+        fontSizeSlider:SetLabel(RQE.options.args.font.args.fontSize.name)
+        fontSizeSlider:SetValue(RQE.db.profile.textSettings.headerText.size or 18)
+        fontSizeSlider:SetSliderValues(8, 24, 1)
+        fontSizeSlider:SetCallback("OnValueChanged", function(widget, event, value)
+            RQE.db.profile.textSettings.headerText.size = value
+            RQE:UpdateFontSize()
+        end)
+        container:AddChild(fontSizeSlider)
+    end
+
+    local fontColorPicker = AceGUI:Create("ColorPicker")
+    fontColorPicker:SetLabel("Font Color")
+    local r, g, b = unpack(RQE.db.profile.textSettings.headerText.color)
+    fontColorPicker:SetColor(r, g, b)
+    fontColorPicker:SetCallback("OnValueChanged", function(widget, event, r, g, b)
+        RQE.db.profile.textSettings.headerText.color = {r, g, b}
+        RQE:UpdateFontColor()
+    end)
+    fontGroup:AddChild(fontColorPicker)
+
+    -- Add more widgets as needed
+end
+
+
+function RQE:AddProfileSettingsWidgets(container)
+    -- Create a simple label indicating this is the Profile Settings tab
+    local label = AceGUI:Create("Label")
+    label:SetText("Profile Settings will go here.")
+    label:SetFullWidth(true)
+    container:AddChild(label)
+
+    -- You can add profile management widgets here if needed
+end
+
+
+function RQE:AddDebugSettingsWidgets(container)
+    -- Create a simple label indicating this is the Debug Options tab
+    local label = AceGUI:Create("Label")
+    label:SetText("Debug Options will go here.")
+    label:SetFullWidth(true)
+    container:AddChild(label)
+
+    -- You can add debug-related widgets here if needed
+end
+
+
+function RQE:UpdateFontSize()
+    -- Implement the logic to update the font size based on the slider value
+    -- This function will be called whenever the font size slider is adjusted
+    print("Font size updated to:", RQE.db.profile.textSettings.headerText.size)
+    -- Add your logic here to apply the font size change in the addon
+end
+
+
+function RQE:UpdateFontColor()
+    -- Implement the logic to update the font color based on the color picker
+    -- This function will be called whenever the font color picker is adjusted
+    print("Font color updated to:", unpack(RQE.db.profile.textSettings.headerText.color))
+    -- Add your logic here to apply the font color change in the addon
+end
+
+
+function RQE:AddGeneralSettingsWidgets(container)
+    RQE:GenerateWidgetsFromOptions(RQE.options.args.general.args, container)
+end
+
+
+function RQE:AddFontSettingsWidgets(container)
+    RQE:GenerateWidgetsFromOptions(RQE.options.args.font.args, container)
+end
