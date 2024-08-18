@@ -596,7 +596,7 @@ function RQE.handlePlayerLogin()
 
 	-- Make sure RQE.db is initialized
 	if RQE.db == nil then
-		RQE.db = {}
+		RQE.db = RQE.db or {}
        -- DEFAULT_CHAT_FRAME:AddMessage("Debug: RQE.db initialized.", 0.68, 0.85, 0.9)
 	end
 
