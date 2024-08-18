@@ -71,6 +71,7 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
                 if RQE.MagicButton then
                     RQE.MagicButton:Hide()
                 end
+
                 RQE.RQEQuestFrame:Hide()
                 RQE.isRQEFrameManuallyClosed = true
                 RQE.isRQEQuestFrameManuallyClosed = true
@@ -82,6 +83,7 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
                 RQE:ClearWaypointButtonData()
                 RQEFrame:Show()
                 UpdateFrame()
+
                 if RQE.MagicButton then
                     RQE.MagicButton:Show()
                 end
@@ -90,18 +92,20 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
                 if RQE.db.profile.enableQuestFrame then
                     RQE.RQEQuestFrame:Show()
                 end
+
                 RQE.isRQEFrameManuallyClosed = false
                 RQE.isRQEQuestFrameManuallyClosed = false
 				
 				-- Check if MagicButton should be visible based on macro body
                 RQE.Buttons.UpdateMagicButtonVisibility()
             end
-        elseif button == "RightButton" then
-            RQE:ShowLDBDropdownMenu()
 
         elseif button == "RightButton" and IsShiftKeyDown() then
             RQE:OpenSettings()
-			--RQE:CreateConfigFrame()
+
+        elseif button == "RightButton" then
+            RQE:ShowLDBDropdownMenu()
+
         end
     end,
 
@@ -119,8 +123,9 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
         -- Directly define the tooltip here
         GameTooltip:AddLine("Rhodan's Quest Explorer")
         GameTooltip:AddLine("Left-click to toggle frame.")
-        GameTooltip:AddLine("Right-click to Settings.")
+        GameTooltip:AddLine("Right-click to open dropdown menu.")
         GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.")
+		GameTooltip:AddLine("Shift+Right-click to open Settings.")
 
         GameTooltip:Show()
     end,
@@ -193,6 +198,7 @@ RQE.MinimapButton:SetScript("OnClick", function(self, button)
 			if RQE.MagicButton then
 				RQE.MagicButton:Hide()
 			end
+
 			RQE.RQEQuestFrame:Hide()
 			RQE.isRQEFrameManuallyClosed = true
 			RQE.isRQEQuestFrameManuallyClosed = true
@@ -204,6 +210,7 @@ RQE.MinimapButton:SetScript("OnClick", function(self, button)
 			RQE:ClearWaypointButtonData()
 			RQEFrame:Show()
 			UpdateFrame()
+
 			if RQE.MagicButton then
 				RQE.MagicButton:Show()
 			end
@@ -212,18 +219,20 @@ RQE.MinimapButton:SetScript("OnClick", function(self, button)
 			if RQE.db.profile.enableQuestFrame then
 				RQE.RQEQuestFrame:Show()
 			end
+
 			RQE.isRQEFrameManuallyClosed = false
 			RQE.isRQEQuestFrameManuallyClosed = false
 			
 			-- Check if MagicButton should be visible based on macro body
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end
-	elseif button == "RightButton" then
-		RQE:ShowLDBDropdownMenu()
 
 	elseif button == "RightButton" and IsShiftKeyDown() then
 		RQE:OpenSettings()
-		--RQE:CreateConfigFrame()
+
+	elseif button == "RightButton" then
+		RQE:ShowLDBDropdownMenu()
+
 	end
 end)
 
@@ -450,6 +459,7 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
         self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:OpenFontSettings() end)
         self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:OpenDebugOptions() end)
         self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end)
+		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:CreateConfigFrame() end)
     end
     
     -- Toggle More Options menu visibility
