@@ -54,15 +54,17 @@ end
 ---------------------------
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
+local icon = LibStub("LibDBIcon-1.0", true)
 
-RQE.dataBroker = ldb:NewDataObject("RQE", {
+-- Create a Data Broker object
+local RQEdataBroker = ldb:NewDataObject("RQE", {
     type = "launcher",
     icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",
     OnClick = function(_, button)
-        if button == "RightButton" then
-            RQE:ShowLDBDropdownMenu()
-        elseif IsShiftKeyDown() and button == "LeftButton" then
+
+        if IsShiftKeyDown() and button == "LeftButton" then
             RQE:ToggleDebugLog()
+			
         elseif button == "LeftButton" then
             if RQEFrame:IsShown() then
                 RQEFrame:Hide()
@@ -72,6 +74,8 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
                 RQE.RQEQuestFrame:Hide()
                 RQE.isRQEFrameManuallyClosed = true
                 RQE.isRQEQuestFrameManuallyClosed = true
+				
+				-- Check if MagicButton should be visible based on macro body
                 RQE.Buttons.UpdateMagicButtonVisibility()
             else
                 RQE:ClearFrameData()
@@ -81,13 +85,23 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
                 if RQE.MagicButton then
                     RQE.MagicButton:Show()
                 end
+				
+				-- Check if enableQuestFrame is true before showing RQEQuestFrame
                 if RQE.db.profile.enableQuestFrame then
                     RQE.RQEQuestFrame:Show()
                 end
                 RQE.isRQEFrameManuallyClosed = false
                 RQE.isRQEQuestFrameManuallyClosed = false
+				
+				-- Check if MagicButton should be visible based on macro body
                 RQE.Buttons.UpdateMagicButtonVisibility()
             end
+        elseif button == "RightButton" then
+            RQE:ShowLDBDropdownMenu()
+
+        elseif button == "RightButton" and IsShiftKeyDown() then
+            RQE:OpenSettings()
+			--RQE:CreateConfigFrame()
         end
     end,
 
@@ -98,10 +112,16 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
         RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
             RQE:ShowLDBDropdownMenu()
         end, 1.5)
-        
+
         GameTooltip:SetOwner(display, "ANCHOR_NONE")
         GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")
-        RQE.dataBroker.OnTooltipShow(GameTooltip)
+
+        -- Directly define the tooltip here
+        GameTooltip:AddLine("Rhodan's Quest Explorer")
+        GameTooltip:AddLine("Left-click to toggle frame.")
+        GameTooltip:AddLine("Right-click to Settings.")
+        GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.")
+
         GameTooltip:Show()
     end,
 
@@ -112,17 +132,15 @@ RQE.dataBroker = ldb:NewDataObject("RQE", {
         end
         GameTooltip:Hide()
     end,
-
-    OnTooltipShow = function(tooltip)
-        if not tooltip or not tooltip.AddLine then return end
-        tooltip:AddLine("Rhodan's Quest Explorer")
-        tooltip:AddLine("Left-click to toggle frame.")
-        tooltip:AddLine("Right-click to Settings.")
-        tooltip:AddLine("Shift+Left-click to toggle Debug Log.")
-    end,
 })
 
+if icon then
+    icon:Register("RQE", RQEdataBroker, {})
+    icon:Show("RQE")
+end
 
+
+-- Function that toggles RQEFrame and RQEQuestFrame
 function RQE.ToggleBothFramesfromLDB()
     if RQEFrame:IsShown() then
         RQEFrame:Hide()
@@ -166,23 +184,47 @@ RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
 ---------------------------
 
 RQE.MinimapButton:SetScript("OnClick", function(self, button)
-    if button == "RightButton" then
-        RQE:ShowLDBDropdownMenu()
-    elseif button == "LeftButton" then
-        if RQEFrame:IsShown() then
-            RQEFrame:Hide()
-            if RQE.MagicButton then
-                RQE.MagicButton:Hide()
-            end
-        else
-            RQEFrame:Show()
-            if RQE.MagicButton then
-                RQE.MagicButton:Show()
-            end
-            RQE.RQEQuestFrame:Show()
-        end
-        RQE.Buttons.UpdateMagicButtonVisibility()
-    end
+	if IsShiftKeyDown() and button == "LeftButton" then
+		RQE:ToggleDebugLog()
+		
+	elseif button == "LeftButton" then
+		if RQEFrame:IsShown() then
+			RQEFrame:Hide()
+			if RQE.MagicButton then
+				RQE.MagicButton:Hide()
+			end
+			RQE.RQEQuestFrame:Hide()
+			RQE.isRQEFrameManuallyClosed = true
+			RQE.isRQEQuestFrameManuallyClosed = true
+			
+			-- Check if MagicButton should be visible based on macro body
+			RQE.Buttons.UpdateMagicButtonVisibility()
+		else
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQEFrame:Show()
+			UpdateFrame()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
+			
+			-- Check if enableQuestFrame is true before showing RQEQuestFrame
+			if RQE.db.profile.enableQuestFrame then
+				RQE.RQEQuestFrame:Show()
+			end
+			RQE.isRQEFrameManuallyClosed = false
+			RQE.isRQEQuestFrameManuallyClosed = false
+			
+			-- Check if MagicButton should be visible based on macro body
+			RQE.Buttons.UpdateMagicButtonVisibility()
+		end
+	elseif button == "RightButton" then
+		RQE:ShowLDBDropdownMenu()
+
+	elseif button == "RightButton" and IsShiftKeyDown() then
+		RQE:OpenSettings()
+		--RQE:CreateConfigFrame()
+	end
 end)
 
 RQE.MinimapButton:SetScript("OnEnter", function(self)
@@ -203,7 +245,6 @@ end)
 
 -- Custom Mixin for Buttons
 RQE_ButtonMixin = {}
-
 
 function RQE_ButtonMixin:OnLoad()
     self:SetNormalFontObject("GameFontHighlightSmall")
@@ -329,6 +370,8 @@ end
 
 -- Create the Dropdown Menu Function
 function RQE:ShowLDBDropdownMenu()
+	GameTooltip:Hide()
+
     if not self.CustomMenu then
         self.CustomMenu = CreateFrame("Frame", "RQECustomMenu", UIParent, "BackdropTemplate")
         Mixin(self.CustomMenu, RQE_MenuMixin)
