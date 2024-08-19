@@ -39,7 +39,7 @@ function AceAddon:NewAddon(name, ...)
     return {}  -- Returning an empty table as a dummy AceAddon instance
 end
 
--- Initialize your RQE addon with AceAddon
+-- Initialize RQE addon with AceAddon
 ---@class RQE : AceAddon  -- This line declares that RQE is a subclass of AceAddon
 RQE = LibStub("AceAddon-3.0"):NewAddon("RQE", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
@@ -50,22 +50,6 @@ local LSM = LibStub("LibSharedMedia-3.0")
 
 local AceAddon = LibStub("AceAddon-3.0")
 local AceGUI = LibStub("AceGUI-3.0")
-
--- -- Constants
--- local floor = math.floor
--- local fmod = math.fmod
--- local format = string.format
--- local gsub = string.gsub
--- local ipairs = ipairs
--- local max = math.max
--- local pairs = pairs
--- local strfind = string.find
--- local tonumber = tonumber
--- local tinsert = table.insert
--- local tremove = table.remove
--- local tContains = tContains
--- local unpack = unpack
--- local round = function(n) return floor(n + 0.5) end
 
 
 ---------------------------------------------------
@@ -213,6 +197,7 @@ local defaults = {
 		enableTomTomCompatibility = true,
 		enableCarboniteCompatibility = true,
 		keyBindSetting = nil,
+		minimapButtonAngle = 125,
 		displayRQEmemUsage = false,
         framePosition = {
             xPos = -40,
@@ -262,9 +247,9 @@ local defaults = {
                 color = {0/255, 255/255, 153/255}  -- RGB for Cyan
             },
          },
-        isFrameMaximized = true,  -- new setting for maximized/minimized state
-		isQuestFrameMaximized = true,  -- new setting for maximized/minimized state
-        globalSetting = true,  -- This should be inside the 'profile' table
+        isFrameMaximized = true,  -- Setting for maximized/minimized state
+		isQuestFrameMaximized = true,  -- Setting for maximized/minimized state
+        globalSetting = true,
     },
     -- char = {
         -- characterSetting = true,  -- Character-specific settings go here
@@ -285,7 +270,7 @@ RQE.QToriginalHeight = RQE.QToriginalHeight or 0
 -- Initialize Waypoint System
 RQE.waypoints = {}
 
--- Initialize the savedAutomaticWorldQuestWatches table within your addon's initialization logic
+-- Initialize the savedAutomaticWorldQuestWatches table within addon's initialization logic
 if not RQE.savedAutomaticWorldQuestWatches then
     RQE.savedAutomaticWorldQuestWatches = {}
 end
@@ -298,11 +283,7 @@ RQE.lastClickedObjectiveIndex = nil
 RQE.LastClickedButtonRef = nil
 RQE.AddedQuestID = nil
 RQE.UpdateInstanceInfoOkay = true
---RQE.OverrideHasProgress = false
---RQE.hasClickedQuestButton = false
 RQE.alreadyPrintedSchematics = false
---RQE.AutoWaypointHasBeenClicked = true
---RQE.canUpdateFromCriteria = true
 RQE.canSortQuests = false
 RQE.shouldCheckFinalStep = true
 RQE.hoveringOnFrame = false
@@ -323,7 +304,7 @@ function RQE:OnInitialize()
 	-- Start the timer
 	RQE.startTime = debugprofilestop()
 
-    -- Create a new AceDB-3.0 database for your addon
+    -- Create AceDB-3.0 database
     --self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults, true) -- Set default profile to the character
 	self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults, "Default")
 
@@ -331,26 +312,6 @@ function RQE:OnInitialize()
 	RQE.StepsText = RQE.StepsText or {}
 	RQE.CoordsText = RQE.CoordsText or {}
 	RQE.WaypointButtons = RQE.WaypointButtons or {}
-
-	-- -- Initialize checkbox state for Coordinates  -- NOT USED HERE - HANDLED IN CONFIG.LUA
-	-- if showCoordinates then  -- replace with your actual checkbox frame name
-		-- showCoordinates:SetChecked(RQE.db.profile.showCoordinates)
-	-- end
-
-	-- -- Initialize checkbox state for Auto Sort Frame
-	-- if autoQuestWatch then  -- replace with your actual checkbox frame name
-		-- autoQuestWatch:SetChecked(RQE.db.profile.autoQuestWatch)
-	-- end
-
-	-- -- Initialize checkbox state for Auto Progress Update
-	-- if autoQuestProgress then  -- replace with your actual checkbox frame name
-		-- autoQuestProgress:SetChecked(RQE.db.profile.autoQuestProgress)
-	-- end
-
-    -- -- Initialize checkbox state for MapID
-    -- if MapIDCheckbox then  -- replace with your actual checkbox frame name
-        -- MapIDCheckbox:SetChecked(RQE.db.profile.showMapID)
-    -- end
 
 	-- Register the profile changed callback
 	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
@@ -437,22 +398,21 @@ function RQE.InitializeFilterDropdown(self, level)
 		info.isNotRadio = true
 		info.func = function()
 			RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
-			-- No need to call RQE.DisplayCurrentZoneQuests() here since it will be called on zone change
 		end
 		info.checked = RQE.db.profile.autoTrackZoneQuests
 		UIDropDownMenu_AddButton(info, level)
 
         -- First-level menu items
         info.text = "Completed Quests"
-        info.func = RQE.filterCompleteQuests  -- Link to your filter function
+        info.func = RQE.filterCompleteQuests
         UIDropDownMenu_AddButton(info, level)
 
         info.text = "Daily / Weekly Quests"
-        info.func = RQE.filterDailyWeeklyQuests  -- Link to your filter function
+        info.func = RQE.filterDailyWeeklyQuests
         UIDropDownMenu_AddButton(info, level)
 
         info.text = "Zone Quests"
-        info.func = RQE.filterZoneQuests  -- Link to your filter function
+        info.func = RQE.filterZoneQuests
         UIDropDownMenu_AddButton(info, level)
 
         -- ... other first-level items ...
@@ -539,7 +499,6 @@ function RQE:ConfigurationChanged()
         RQE.QuestObjectives:SetFont(QuestObjectivesSettings.font, QuestObjectivesSettings.size)
         RQE.QuestObjectives:SetTextColor(unpack(QuestObjectivesSettings.color))
     end
- 	    -- You can add more configuration updates here
 
 	-- Notify AceConfig to update UI
     LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE")
@@ -568,10 +527,8 @@ end
 function RQE.SaveCoordData()
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
-		--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-
 		if questID then
-			-- This is where you place the logic for updating location data
+			-- Logic for updating location data
 			local questData = RQE.getQuestData(questID)
 			if questData and questData.location then
 				-- Update the location data for the examined quest
@@ -675,7 +632,6 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	-- If POI info is not available, try using GetNextWaypointForMap
 	if not posX or not posY then
 		if not isMapOpen and RQE.superTrackingChanged and not InCombatLockdown() then
-		-- if not isMapOpen and RQE.superTrackingChanged then  --  [commented out for above fix for Frame:SetPassThroughButtons() error]
 			-- Call the function to open the quest log with the details of the super tracked quest
 			OpenQuestLogToQuestDetails(questID)
         else
@@ -900,8 +856,7 @@ end
 
 -- Profile Refresh Function
 function RQE:RefreshConfig()
-    -- Here, you would reload any saved variables or reset frames, etc.
-    -- Basically, apply the settings from the new profile.
+    -- Reload any saved variables or reset frames, etc.
 	self:UpdateFrameFromProfile()
 
 	-- Refreshes/Reads the Configuration settings for the customized text (in the current/new profile) and calls them when the profile is changed to that from an earlier profile
@@ -935,65 +890,6 @@ function RQE:ToggleMainFrame()
 end
 
 
--- -- Create a hidden frame that will monitor mouse movement
--- local tooltipCheckerFrame = CreateFrame("Frame")
-
-
--- -- Timer variable to control the frequency of checks
--- local timeSinceLastUpdate = 0
-
-
--- -- Function to check if the mouse is over an RQE UI element with a tooltip
--- function RQE.CheckMouseHoverForTooltip()
-    -- -- List of RQE elements that have tooltips
-    -- local rqeElements = {
-        -- RQE.QTQuestFilterButton,
-        -- RQE.CampaignSubMenu,
-        -- RQE.QuestTypeSubMenu,
-        -- RQE.ZoneQuestSubMenu,
-        -- RQE.QuestLineSubMenu,
-        -- -- Add other RQE elements here that have tooltips
-    -- }
-
-    -- -- Initialize a flag to track whether the mouse is over any RQE element
-    -- local isOverRQEElement = false
-    -- local dummyCounter = 0 -- Dummy operation to replace print
-
-    -- for _, element in pairs(rqeElements) do
-        -- if element and element:IsShown() then
-            -- -- Safely check if the mouse is over the element
-            -- local isMouseOver = element:IsMouseOver()
-
-            -- -- Perform a dummy operation to ensure similar timing
-            -- dummyCounter = dummyCounter + 1
-			-- --print("Checking element:", elementName, " IsMouseOver:", isMouseOver and "true" or "false")
-
-            -- if isMouseOver then
-                -- isOverRQEElement = true
-                -- break
-            -- end
-        -- end
-    -- end
-
-    -- -- If the mouse is not over any RQE element, hide the RQE tooltip
-    -- if not isOverRQEElement then
-        -- GameTooltip:Hide()
-    -- end
--- end
-
-
--- -- Set the OnUpdate script to check the mouse position
--- tooltipCheckerFrame:SetScript("OnUpdate", function(self, elapsed)
-    -- timeSinceLastUpdate = timeSinceLastUpdate + elapsed
-
-    -- -- Only check the mouse position every 0.1 seconds
-    -- if timeSinceLastUpdate > 0.1 then
-        -- RQE.CheckMouseHoverForTooltip()
-        -- timeSinceLastUpdate = 0
-    -- end
--- end)
-
-
 -- Function to update the state of the minimap based on the current profile settings
 function RQE:ToggleMinimapIcon()
     local newValue = not self.db.profile.showMinimapIcon  -- Get the opposite of the current value
@@ -1015,7 +911,7 @@ function RQE:ToggleMapIDCheckbox()
     local newValue = not RQE.db.profile.showMapID
     RQE.db.profile.showMapID = newValue
 
-    -- Add logic here to update your checkbox UI element
+    -- Logic here to update checkbox UI element
     if RQE.MapIDCheckbox then
         RQE.MapIDCheckbox:SetChecked(newValue)
     end
@@ -1083,8 +979,6 @@ function RQE:UpdateRQEQuestFrameVisibility()
     else
         RQE.RQEQuestFrame:Show()
     end
-
-	--RQE.canUpdateFromCriteria = true
 end
 
 
@@ -1368,21 +1262,19 @@ function RQE:ShouldClearFrame()
 	end
 
 	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked and not isBeingSearched) then
-	--if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked) then
         -- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
         RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
-        return -- Exit the function early
+        return
     end
 
     if isWorldQuest then
 		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
-        --if not (manuallyTracked or (isBeingSearched and not isQuestCompleted)) then
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
-            return -- Exit the function early
+            return
         end
     else
         -- For non-world quests, clear if not in quest log or not being actively searched
@@ -1390,7 +1282,7 @@ function RQE:ShouldClearFrame()
             RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
-            return -- Exit the function early
+            return
         end
     end
 
@@ -1442,9 +1334,7 @@ function RQE:DelayedClearCheck()
 
 			-- Untrack the quest by setting a non-existent quest ID
 			RQE:RemoveSuperTrackingFromQuest()
-			-- C_SuperTrack.SetSuperTrackedQuestID(0)
-
-			return -- Exit the function early
+			return
 		end
 
 		if isWorldQuest then
@@ -1455,9 +1345,7 @@ function RQE:DelayedClearCheck()
 
 				-- Untrack the quest by setting a non-existent quest ID
 				RQE:RemoveSuperTrackingFromQuest()
-				--C_SuperTrack.SetSuperTrackedQuestID(0)
-
-				return -- Exit the function early
+				return
 			end
         end
     end)
@@ -1570,7 +1458,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	if questData and questData.title then
 		questName = questData.title  -- Use title from questData if available
 	else
-		questName = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call if no title is found in your databases
+		questName = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call if no title is found in the databases
 	end
 
 	questName = questName or "N/A"  -- Default to "N/A" if no title found
@@ -1624,10 +1512,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     -- Fetch the next waypoint text for the quest
 	local DirectionText = C_QuestLog.GetNextWaypointText(questID)
 	RQEFrame.DirectionText = DirectionText  -- Save to addon table
-	--RQE.UnknownQuestButton:Click() -- incorrect non-existent function call as it instead needs RQE.UnknownQuestButtonCalcNTrack() to update the waypoint on quest progress changes
 	RQE.UnknownQuestButtonCalcNTrack()
 
-	-- Assuming you have a UI element named DirectionTextFrame
 	if RQE.DirectionTextFrame then
 		RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
 	end
@@ -1843,10 +1729,10 @@ function RQE.Timer_OnUpdate(self, elapsed)
 
     self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
 
-    if self.timeSinceLastUpdate >= 1 then  -- Update the timer every second
+    if self.timeSinceLastUpdate >= 1 then
         local timeLeft = self.endTime - GetTime()  -- Calculate the remaining time
         if timeLeft > 0 then
-            -- Update your timer display here
+            -- Scenario Timer display
             RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
         else
             RQE.Timer_Stop()  -- Stop the timer if the time has elapsed
@@ -1875,7 +1761,7 @@ end
 
 -- Stops the timer and hides the UI elements
 function RQE.Timer_Stop()
-    local timerFrame = RQE.ScenarioChildFrame.timerFrame  -- Your custom timer frame
+    local timerFrame = RQE.ScenarioChildFrame.timerFrame
     if not timerFrame then
         return  -- Ensure the frame exists
     end
@@ -2029,7 +1915,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeFrame()
-    RQEFrame:SetSize(435, 30)  -- If you want to make this configurable, you can use similar logic as above
+    RQEFrame:SetSize(435, 30)
     RQE.db.profile.isFrameMaximized = false
 end
 
@@ -2076,7 +1962,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeQuestFrame()
-    RQE.RQEQuestFrame:SetSize(300, 30)  -- If you want to make this configurable, you can use similar logic as above
+    RQE.RQEQuestFrame:SetSize(300, 30)
     RQE.db.profile.isQuestFrameMaximized = false
 end
 
@@ -2106,7 +1992,7 @@ RQE.MinimizeButton = RQE.MinimizeButton or {}
 RQE.MaximizeButton = RQE.MaximizeButton or {}
 
 
--- Initialize SearchEditBox (Make it global if you want to access it from other files)
+-- Initialize SearchEditBox (Make it global to access it from other files)
 SearchEditBox = CreateFrame("EditBox", "RQESearchEditBox", RQEFrame, "InputBoxTemplate")
 
 
@@ -2203,7 +2089,7 @@ function RQE.SearchModule:CreateSearchBox()
         end
 
         if foundQuestID then
-			-- This is where you place the logic for updating location data
+			-- Logic for updating location data
 			local questData = RQE.getQuestData(foundQuestID)
 			if questData and questData.location then
 				-- Update the location data for the examined quest
@@ -2391,7 +2277,6 @@ function BuildItemNames(itemLinks)
 end
 
 
--- -- Define this function at the beginning of your script or in a utilities module
 -- function countTableElements(tbl)
     -- local count = 0
     -- for _ in pairs(tbl) do
@@ -2410,24 +2295,24 @@ end
 local lastKnownProgress = {}
 local isFirstRun = true
 
--- function AutoWatchQuestsWithProgress()
-    -- if isFirstRun then
-        -- -- On first run, just populate lastKnownProgress without tracking
-        -- for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-            -- local questInfo = C_QuestLog.GetInfo(i)
-            -- if questInfo and not questInfo.isHeader then
-                -- local questID = questInfo.questID
-                -- local objectives = C_QuestLog.GetQuestObjectives(questID)
-                -- local currentProgress = CalculateCurrentProgress(objectives)
-                -- lastKnownProgress[questID] = currentProgress
-            -- end
-        -- end
-        -- isFirstRun = false
-    -- else
-        -- -- On subsequent runs, track quests with new progress
-        -- TrackQuestsWithNewProgress()
-    -- end
--- end
+function AutoWatchQuestsWithProgress()
+    if isFirstRun then
+        -- On first run, just populate lastKnownProgress without tracking
+        for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+            local questInfo = C_QuestLog.GetInfo(i)
+            if questInfo and not questInfo.isHeader then
+                local questID = questInfo.questID
+                local objectives = C_QuestLog.GetQuestObjectives(questID)
+                local currentProgress = CalculateCurrentProgress(objectives)
+                lastKnownProgress[questID] = currentProgress
+            end
+        end
+        isFirstRun = false
+    else
+        -- On subsequent runs, track quests with new progress
+        TrackQuestsWithNewProgress()
+    end
+end
 
 
 function CalculateCurrentProgress(objectives)
@@ -2561,7 +2446,7 @@ end
 
 function RQE:QuestComplete(questID)
     local questData = RQE.getQuestData(questID)
-    if questData then  -- Make sure the quest exists in your database
+    if questData then
         questData.description = "Quest Complete - Follow the waypoint for quest turn-in"
         RQE:ConfigurationChanged()
     end
@@ -2645,9 +2530,6 @@ function RQE:ShowWowheadLink(questID)
 	-- Enable mouse input propagation
 	linkFrame:SetPropagateMouseClicks(true)
 	linkFrame:SetPropagateMouseMotion(true)
-
-    -- Apply the border to the frame -- DUPLICATE
-    --linkFrame:SetBackdrop(borderBackdrop)
 
     -- Configure the EditBox font
     wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
@@ -2763,9 +2645,6 @@ function RQE:ShowWowWikiLink(questID)
     linkFrame:RegisterForDrag("LeftButton")
     linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
     linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
-
-    -- Apply the border to the frame -- DUPLICATE
-    --linkFrame:SetBackdrop(borderBackdrop)
 
     -- Configure the EditBox font
     wowWikieditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
@@ -2925,24 +2804,24 @@ function RQE.compareTables(t1, t2)
 end
 
 
--- -- Function to determine the current step based on quest objectives
--- function RQE:DetermineCurrentStepIndex(questID)
-    -- local questData = RQE.getQuestData(questID)
-    -- if not questData then
-        -- RQE.infoLog("No quest data available for quest ID:", questID)
-        -- return 1  -- Default to the first step if no data is available
-    -- end
+-- Function to determine the current step based on quest objectives
+function RQE:DetermineCurrentStepIndex(questID)
+    local questData = RQE.getQuestData(questID)
+    if not questData then
+        RQE.infoLog("No quest data available for quest ID:", questID)
+        return 1  -- Default to the first step if no data is available
+    end
 
-    -- for index, step in ipairs(questData) do
-        -- if not C_QuestLog.ReadyForTurnIn(questID) then
-            -- if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
-                -- return index  -- Return the index of the first incomplete objective
-            -- end
-        -- end
-    -- end
+    for index, step in ipairs(questData) do
+        if not C_QuestLog.ReadyForTurnIn(questID) then
+            if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
+                return index  -- Return the index of the first incomplete objective
+            end
+        end
+    end
 
-    -- return #questData  -- Return the last step if all objectives are complete or ready for turn-in
--- end
+    return #questData  -- Return the last step if all objectives are complete or ready for turn-in
+end
 
 
 -- Function to find and set the final step for the super-tracked quest
@@ -3116,34 +2995,12 @@ function RQE:StartPeriodicChecks()
         local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
         local stepData = questData[stepIndex]
 
-        -- -- Handle turn-in readiness
-        -- if isReadyTurnIn then
-            -- for index, step in ipairs(questData) do
-                -- if step.objectiveIndex == 99 then
-                    -- RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", index)
-                    -- self:ClickWaypointButtonForIndex(index)
-                    -- return
-                -- end
-            -- end
-            -- RQE.infoLog("Quest is ready for turn-in but no appropriate Waypoint Button found.")
-        -- end
-
         -- Handle turn-in readiness
         if isReadyTurnIn and self.FinalStep then
             RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
             self:ClickWaypointButtonForIndex(self.FinalStep)
             return
         end
-
-        -- -- Check if the specific functions related to the current step need to be triggered    -- KEEPING THIS MEANS THAT IT WONT COUNT THE ITEMS IN THE INVENTORY CORRECTLY AND POSSIBLY OTHER ISSUES SIMILARLY
-        -- if not RQE.hasStateChanged(stepData) and not isReadyTurnIn then
-            -- RQE.infoLog("No relevant changes detected for the current step, skipping periodic checks.")
-            -- return
-		-- else
-			-- RQE.infoLog("Possible relevant changes detected!")
-        -- end
-
-        -- RQE.infoLog("Relevant changes detected or required for the current step.")
 
         -- Validate stepIndex
         if stepIndex < 1 or stepIndex > #questData then
@@ -3195,8 +3052,8 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
             self.LastClickedButtonRef = button
             RQE.infoLog("Advanced to next quest step: " .. buttonIndex)
             -- Update stepIndex globally or within a managed scope
-            self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex is how you track the current step globally
-            self:AutoClickQuestLogIndexWaypointButton()  -- Attempt to click using the new reference
+            self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex tracks current step globally
+            self:AutoClickQuestLogIndexWaypointButton()
         end
     end
 end
@@ -3426,9 +3283,6 @@ function RQE:HideCompletedWatchedQuests()
             if isQuestComplete then
                 -- Remove the quest from the watch list if it is completed
                 C_QuestLog.RemoveQuestWatch(qID)
-
-                -- Optional: Update the UI if necessary
-                -- If you have a custom UI that depends on the watch list, refresh it here
             end
         end
     end
@@ -3557,39 +3411,6 @@ function RQE.UpdateTrackedQuestsToCurrentZone()
 	RQE:ClearRQEQuestFrame()
 	UpdateRQEQuestFrame()
 end
-
-
--- function RQE.ScanAndCacheZoneQuests()
-    -- RQE.ZoneQuests = {}
-    -- local numEntries = C_QuestLog.GetNumQuestLogEntries()
-	-- local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
-
-    -- for i = 1, numEntries do
-        -- local questInfo = C_QuestLog.GetInfo(i)
-        -- if questInfo and not questInfo.isHeader then
-            -- local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID, ignoreWaypoints)
-            -- if zoneID then
-                -- RQE.ZoneQuests[zoneID] = RQE.ZoneQuests[zoneID] or {}
-                -- table.insert(RQE.ZoneQuests[zoneID], questInfo.questID)
-            -- end
-        -- end
-    -- end
-
-    -- if currentPlayerMapID then
-        -- local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
-        -- RQE.ZoneQuests[currentPlayerMapID] = {} -- Reset or initialize the quests for the current player map ID
-
-        -- for _, questOnMap in ipairs(questsOnMap) do
-            -- if questOnMap.questID then
-                -- -- Only add quests that are also in the player's quest log to ensure relevance
-                -- local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questOnMap.questID)
-                -- if questLogIndex then
-                    -- table.insert(RQE.ZoneQuests[currentPlayerMapID], questOnMap.questID)
-                -- end
-            -- end
-        -- end
-    -- end
--- end
 
 
 -- Function that when run will print out the Map that is associated with quests in the player's questlog
@@ -3869,45 +3690,43 @@ function RQE.filterByCampaign(campaignID)
 	SortQuestsByProximity()
 end
 
--- -- Function to print out the questline information for a specific quest
--- function RQE.PrintQuestLineInfo(questID, uiMapID)
-    -- -- Ensure that the questID and uiMapID are valid numbers
-    -- if not questID or not uiMapID then
-        -- print("Invalid questID or uiMapID provided.")
-        -- return
-    -- end
 
-    -- -- Ensure that the questID and uiMapID are numbers
-    -- if type(questID) ~= "number" or type(uiMapID) ~= "number" then
-        -- print("questID and uiMapID must be numbers.")
-        -- return
-    -- end
+-- Function to print out the questline information for a specific quest
+function RQE.PrintQuestLineInfo(questID, uiMapID)
+    -- Ensure that the questID and uiMapID are valid numbers
+    if not questID or not uiMapID then
+        print("Invalid questID or uiMapID provided.")
+        return
+    end
 
-    -- -- Retrieve the quest line information for the given questID and uiMapID
-    -- local status, questLineInfo = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
+    -- Ensure that the questID and uiMapID are numbers
+    if type(questID) ~= "number" or type(uiMapID) ~= "number" then
+        print("questID and uiMapID must be numbers.")
+        return
+    end
 
-    -- if status and questLineInfo then
-        -- -- Print the quest line information to chat
-        -- print("Quest Line Information for Quest ID " .. questID .. ":")
-        -- print("Quest Line ID:", questLineInfo.questLineID)
-        -- print("Quest Line Name:", questLineInfo.questLineName)
-        -- print("Map ID:", uiMapID)
-        -- print("Quest Name:", questLineInfo.questName)
-        -- print("X Position:", questLineInfo.x)
-        -- print("Y Position:", questLineInfo.y)
-        -- print("Is Hidden:", questLineInfo.isHidden and "Yes" or "No")
-        -- print("Is Legendary:", questLineInfo.isLegendary and "Yes" or "No")
-        -- print("Is Daily:", questLineInfo.isDaily and "Yes" or "No")
-        -- print("Is Campaign:", questLineInfo.isCampaign and "Yes" or "No")
-        -- print("Floor Location:", questLineInfo.floorLocation)
-    -- else
-        -- -- No quest line info was found for the given questID and uiMapID, or an error occurred
-        -- print("No quest line information found for Quest ID " .. questID .. " and Map ID " .. uiMapID .. ", or an error occurred.")
-    -- end
--- end
+    -- Retrieve the quest line information for the given questID and uiMapID
+    local status, questLineInfo = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
 
--- -- Example usage:
--- RQE.PrintQuestLineInfo(67100, 2022)
+    if status and questLineInfo then
+        -- Print the quest line information to chat
+        print("Quest Line Information for Quest ID " .. questID .. ":")
+        print("Quest Line ID:", questLineInfo.questLineID)
+        print("Quest Line Name:", questLineInfo.questLineName)
+        print("Map ID:", uiMapID)
+        print("Quest Name:", questLineInfo.questName)
+        print("X Position:", questLineInfo.x)
+        print("Y Position:", questLineInfo.y)
+        print("Is Hidden:", questLineInfo.isHidden and "Yes" or "No")
+        print("Is Legendary:", questLineInfo.isLegendary and "Yes" or "No")
+        print("Is Daily:", questLineInfo.isDaily and "Yes" or "No")
+        print("Is Campaign:", questLineInfo.isCampaign and "Yes" or "No")
+        print("Floor Location:", questLineInfo.floorLocation)
+    else
+        -- No quest line info was found for the given questID and uiMapID, or an error occurred
+        print("No quest line information found for Quest ID " .. questID .. " and Map ID " .. uiMapID .. ", or an error occurred.")
+    end
+end
 
 
 -- Function to Request and Cache all quest lines in player's quest log
@@ -4115,7 +3934,7 @@ function RQE.GetQuestTypeName(questType)
 end
 
 
--- Build Menu List for the QuestTypes in your QuestLog
+-- Build Menu List for the QuestTypes in QuestLog
 function RQE.BuildQuestTypeMenuList()
     local questTypeMenuList = {}
     RQE.QuestTypes = RQE.QuestTypes or {}
@@ -4655,7 +4474,7 @@ function RQE:AutoClickQuestLogIndexWaypointButton()
 end
 
 
--- Function to check the memory usage of your addon
+-- Function to check the memory usage of addon
 function RQE:CheckMemoryUsage()
     if RQE.db and RQE.db.profile.displayRQEmemUsage then
 		-- Update the memory usage information
@@ -4743,16 +4562,6 @@ function RQE:BuildQuestMacroBackup()
                 return
             end
 
-            -- -- Check if the last clicked waypoint button's macro should be set
-            -- local waypointButton = RQE.LastClickedWaypointButton or 1
-
-			-- -- Check if the last clicked waypoint button's macro should be set and validate RQE.LastClickedWaypointButton before proceeding
-			-- if type(RQE.LastClickedWaypointButton) ~= "number" then
-				-- local waypointButton = RQE.LastClickedWaypointButton or 1
-			-- else
-				-- local waypointButton = RQE.LastClickedWaypointButton
-			-- end
-
             -- Validate waypointButton before proceeding
             local waypointButton = (type(RQE.LastClickedWaypointButton) == "table" and RQE.LastClickedWaypointButton) or { stepIndex = 1 }
 
@@ -4793,24 +4602,6 @@ function RQE:ClickSuperTrackedQuestButton()
 
     RQE.debugLog("Button for super tracked quest ID not found:", superTrackedQuestID)
 end
-
-
--- function RQE:HighlightCurrentStepWaypointButton(currentStepIndex)
-    -- -- Loop through all WaypointButtons
-    -- for i, button in ipairs(RQE.WaypointButtons) do
-        -- -- Check if the button's step index matches the current step index
-        -- if button.stepIndex == currentStepIndex then
-            -- -- This is the button for the current step, so highlight it
-            -- button.bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-            -- -- Store this button as the last highlighted button
-            -- self.LastHighlightedWaypointButton = button
-        -- elseif self.LastHighlightedWaypointButton == button then
-            -- -- This button was previously highlighted, but is no longer the current step
-            -- -- Reset its appearance to the default texture
-            -- button.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
-        -- end
-    -- end
--- end
 
 
 -- Craft Specific Item for Quest
@@ -4961,10 +4752,8 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	-- Check if either TomTom or TradeSkillMaster is loaded
 	if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
 		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
-		--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
 	else
 		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
-		--RQE:SearchAndDisplayCommodityResults(itemID, quantity)
 		RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 	end
 end
@@ -5087,14 +4876,13 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
                     itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
                 end
                 print("Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
-                -- Here you might want to display the confirmation popup with the total cost
+                -- Display the confirmation popup with the total cost
                 StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
                     text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
                     button1 = "Yes",
                     button2 = "No",
                     OnAccept = function()
                         C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
-                        --C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity, unitPrice)
                         C_Timer.After(0.5, function()  -- Allow for server response time
                             C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
                         end)
