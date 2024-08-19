@@ -18,7 +18,7 @@ local RQEMinimapButton = {}
 ---------------------------
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
@@ -54,7 +54,7 @@ end
 ---------------------------
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
-local icon = LibStub("LibDBIcon-1.0", true)
+--local icon = LibStub("LibDBIcon-1.0", true)   -- commenting out as this was displaying a second button anchored to the minimap
 
 -- Create a Data Broker object
 local RQEdataBroker = ldb:NewDataObject("RQE", {
@@ -104,8 +104,8 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
             RQE:OpenSettings()
 
         elseif button == "RightButton" then
+			RQE.lastClickedFrame = _G["BazookaHL_RQE"]  -- Set the LDB button as the last clicked frame
             RQE:ShowLDBDropdownMenu()
-
         end
     end,
 
@@ -121,11 +121,12 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
         GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")
 
         -- Directly define the tooltip here
-        GameTooltip:AddLine("Rhodan's Quest Explorer")
-        GameTooltip:AddLine("Left-click to toggle frame.")
-        GameTooltip:AddLine("Right-click to open dropdown menu.")
-        GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.")
-		GameTooltip:AddLine("Shift+Right-click to open Settings.")
+		GameTooltip:AddLine("Rhodan's Quest Explorer")
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
+		GameTooltip:AddLine("Right-click to open dropdown menu.", 0.8, 0.8, 0.8, true)
+		GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.", 0.8, 0.8, 0.8, true)
+		GameTooltip:AddLine("Shift+Right-click to open Settings.", 0.8, 0.8, 0.8, true)
 
         GameTooltip:Show()
     end,
@@ -139,10 +140,10 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
     end,
 })
 
-if icon then
-    icon:Register("RQE", RQEdataBroker, {})
-    icon:Show("RQE")
-end
+-- if icon then
+    -- icon:Register("RQE", RQEdataBroker, {})
+    -- icon:Show("RQE")
+-- end
 
 
 -- Function that toggles RQEFrame and RQEQuestFrame
@@ -177,74 +178,162 @@ end
 -- 5. Minimap Button
 ---------------------------
 
-RQE.MinimapButton = CreateFrame("Button", "MyMinimapButton", Minimap)
+-- Creates the Minimap Button
+RQE.MinimapButton = CreateFrame("Button", "RQEMinimapButton", Minimap)
 RQE.MinimapButton:SetSize(25, 25)
 RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
 RQE.MinimapButton:SetHighlightTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
 RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
 RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
+RQE.MinimapButton:SetFrameStrata("MEDIUM")
+RQE.MinimapButton:SetFrameLevel(8)
 
+
+-- Allow the button to be dragged
+RQE.MinimapButton:RegisterForDrag("LeftButton")
+RQE.MinimapButton:SetMovable(true)
+RQE.MinimapButton:EnableMouse(true)
+
+
+-- Function to keep the button within the minimap's perimeter
+function RQE:UpdateMinimapButtonPosition()
+    local x, y = GetCursorPosition()
+    local scale = Minimap:GetEffectiveScale()
+    x = x / scale
+    y = y / scale
+
+    local angle = math.rad(RQE.db.profile.minimapButtonAngle)
+    local mx, my = Minimap:GetCenter()
+    local radius = (Minimap:GetWidth() / 2) + 5
+    local dx = math.cos(angle) * radius
+    local dy = math.sin(angle) * radius
+    local dist = math.sqrt(dx * dx + dy * dy)
+
+    local minimapRadius = (Minimap:GetWidth() / 2) + 5
+
+    -- Clamp the button position to the minimap's perimeter
+    if dist > minimapRadius then
+        angle = math.atan2(dy, dx)
+        dx = math.cos(angle) * minimapRadius
+        dy = math.sin(angle) * minimapRadius
+    end
+
+    -- Ensure dx and dy are valid numbers
+    if not dx or not dy then
+        dx = math.cos(angle) * minimapRadius
+        dy = math.sin(angle) * minimapRadius
+    end
+
+    RQE.MinimapButton:ClearAllPoints()
+    RQE.MinimapButton:SetPoint("CENTER", Minimap, "CENTER", dx, dy)
+
+    return dx, dy
+end
+
+	
 ---------------------------
 -- 6. Event Handler
 ---------------------------
 
+-- Register the button for clicks
+RQE.MinimapButton:RegisterForClicks("AnyUp")
+
+-- Function that handles the OnClick for the MinimapButton
 RQE.MinimapButton:SetScript("OnClick", function(self, button)
-	if IsShiftKeyDown() and button == "LeftButton" then
-		RQE:ToggleDebugLog()
-		
-	elseif button == "LeftButton" then
-		if RQEFrame:IsShown() then
-			RQEFrame:Hide()
-			if RQE.MagicButton then
-				RQE.MagicButton:Hide()
-			end
+    if button == "LeftButton" then
+        if IsShiftKeyDown() then
+            RQE:ToggleDebugLog()  -- Shift + Left Click
+        else
+            if RQEFrame:IsShown() then
+                RQEFrame:Hide()
+                if RQE.MagicButton then
+                    RQE.MagicButton:Hide()
+                end
 
-			RQE.RQEQuestFrame:Hide()
-			RQE.isRQEFrameManuallyClosed = true
-			RQE.isRQEQuestFrameManuallyClosed = true
-			
-			-- Check if MagicButton should be visible based on macro body
-			RQE.Buttons.UpdateMagicButtonVisibility()
-		else
-			RQE:ClearFrameData()
-			RQE:ClearWaypointButtonData()
-			RQEFrame:Show()
-			UpdateFrame()
+                RQE.RQEQuestFrame:Hide()
+                RQE.isRQEFrameManuallyClosed = true
+                RQE.isRQEQuestFrameManuallyClosed = true
 
-			if RQE.MagicButton then
-				RQE.MagicButton:Show()
-			end
-			
-			-- Check if enableQuestFrame is true before showing RQEQuestFrame
-			if RQE.db.profile.enableQuestFrame then
-				RQE.RQEQuestFrame:Show()
-			end
+                -- Check if MagicButton should be visible based on macro body
+                RQE.Buttons.UpdateMagicButtonVisibility()
+            else
+                RQE:ClearFrameData()
+                RQE:ClearWaypointButtonData()
+                RQEFrame:Show()
+                UpdateFrame()
 
-			RQE.isRQEFrameManuallyClosed = false
-			RQE.isRQEQuestFrameManuallyClosed = false
-			
-			-- Check if MagicButton should be visible based on macro body
-			RQE.Buttons.UpdateMagicButtonVisibility()
-		end
+                if RQE.MagicButton then
+                    RQE.MagicButton:Show()
+                end
 
-	elseif button == "RightButton" and IsShiftKeyDown() then
-		RQE:OpenSettings()
+                -- Check if enableQuestFrame is true before showing RQEQuestFrame
+                if RQE.db.profile.enableQuestFrame then
+                    RQE.RQEQuestFrame:Show()
+                end
 
-	elseif button == "RightButton" then
-		RQE:ShowLDBDropdownMenu()
+                RQE.isRQEFrameManuallyClosed = false
+                RQE.isRQEQuestFrameManuallyClosed = false
 
-	end
+                -- Check if MagicButton should be visible based on macro body
+                RQE.Buttons.UpdateMagicButtonVisibility()
+            end
+        end
+    elseif button == "RightButton" then
+        if IsShiftKeyDown() then
+            RQE:OpenSettings()  -- Shift + Right Click
+        else
+			RQE.lastClickedFrame = self  -- Set the minimap button as the last clicked frame
+            RQE:ShowLDBDropdownMenu()  -- Right Click
+        end
+    end
 end)
 
+
+-- Function that handles the OnEnter for the MinimapButton
 RQE.MinimapButton:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-    GameTooltip:SetText("Rhodan's Quest Explorer", 1, 1, 1)
-    GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPRIGHT")
+
+	-- Directly define the tooltip here
+	GameTooltip:AddLine("Rhodan's Quest Explorer")
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
+	GameTooltip:AddLine("Right-click to open dropdown menu.", 0.8, 0.8, 0.8, true)
+	GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.", 0.8, 0.8, 0.8, true)
+	GameTooltip:AddLine("Shift+Right-click to open Settings.", 0.8, 0.8, 0.8, true)
+
     GameTooltip:Show()
 end)
 
+
+-- Function that handles the OnLeave for the MinimapButton
 RQE.MinimapButton:SetScript("OnLeave", function(self)
-    GameTooltip:Hide()
+	GameTooltip:Hide()
+end)
+
+
+-- Function that handles the OnDragStart for the MinimapButton
+RQE.MinimapButton:SetScript("OnDragStart", function(self)
+    self:StartMoving()
+end)
+
+
+-- Function that handles the OnDragStop for the MinimapButton
+RQE.MinimapButton:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+
+    -- Calculate the new position after dragging
+    local mx, my = Minimap:GetCenter()
+    local bx, by = self:GetCenter()
+    local dx = bx - mx
+    local dy = by - my
+
+    -- Calculate the angle based on the new position
+    local angle = math.deg(math.atan2(dy, dx))
+    RQE.db.profile.minimapButtonAngle = angle
+
+    -- Update the button's position based on the new angle
+    RQE:UpdateMinimapButtonPosition()
 end)
 
 
@@ -252,7 +341,7 @@ end)
 -- 7. Menu Creation Functions
 ---------------------------
 
--- Custom Mixin for Buttons
+-- Custom Mixin for Buttons & Menus
 RQE_ButtonMixin = {}
 
 function RQE_ButtonMixin:OnLoad()
@@ -336,8 +425,17 @@ function RQE_MenuMixin:ShowMenu(anchorFrame, isSubmenu)
     local isTopHalf = anchorY > (screenHeight / 2)
     local isLeftHalf = anchorX < (screenWidth / 2)
 
+    -- If the anchor frame is the LDB button
     if not isSubmenu and anchorFrame == _G["BazookaHL_RQE"] then
         -- Directly anchor the main menu below the LDB button, considering screen side
+        if isLeftHalf then
+            self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
+        else
+            self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
+        end
+    -- If the anchor frame is the Minimap button
+    elseif not isSubmenu and anchorFrame == RQE.MinimapButton then
+        -- Dynamically position relative to the Minimap button
         if isLeftHalf then
             self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
         else
@@ -415,17 +513,18 @@ function RQE:ShowLDBDropdownMenu()
         self.CustomMenu:AddButton("AddOn Settings", function() RQE:OpenSettings() end)
 		self.CustomMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
         self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end)
-        --self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)    -- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
+        -- self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)    -- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
     end
     
-    -- Retrieve the actual frame object
-    local anchorFrame = _G["BazookaHL_RQE"]
-    if anchorFrame then
-        -- Toggle menu visibility
-        self.CustomMenu:ToggleMenu(anchorFrame)
-    else
-        print("Error: BazookaHL_RQE frame not found.")
-    end
+	-- Determine the actual frame object
+	local anchorFrame = RQE.lastClickedFrame
+
+	if anchorFrame then
+		-- Toggle menu visibility using the dynamically determined anchor
+		self.CustomMenu:ToggleMenu(anchorFrame)
+	else
+		print("Error: No valid anchor frame found.")
+	end
 end
 
 
@@ -465,28 +564,6 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
     
     -- Toggle More Options menu visibility
     self.MoreOptionsMenu:ClearAllPoints()
-    self.MoreOptionsMenu:SetPoint("TOPLEFT", parentMenu, "TOPRIGHT", 0, 0) -- Adjust this to your desired position
+    self.MoreOptionsMenu:SetPoint("TOPLEFT", parentMenu, "TOPRIGHT", 0, 0) -- Adjust this to desired position
     self.MoreOptionsMenu:ToggleMenu(parentMenu, true)
 end
-
-
----------------------------
--- 8. Drag n Drop Functions
----------------------------
-
-RQE.MinimapButton:SetMovable(true)
-RQE.MinimapButton:EnableMouse(true)
-
--- Enable mouse input propagation
-RQE.MinimapButton:SetPropagateMouseClicks(true)
-RQE.MinimapButton:SetPropagateMouseMotion(true)
-
-RQE.MinimapButton:SetScript("OnDragStart", function(self)
-    self:StartMoving()
-end)
-
-RQE.MinimapButton:SetScript("OnDragStop", function(self)
-    self:StopMovingOrSizing()
-end)
-
-RQE.MinimapButton:RegisterForDrag("LeftButton")
