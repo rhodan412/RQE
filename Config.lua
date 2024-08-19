@@ -22,7 +22,7 @@ local AceConfigCmd = LibStub("AceConfigCmd-3.0")
 if not RQE then RQE = {} end
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
@@ -178,7 +178,7 @@ RQE.options = {
 						RQE:UpdateRQEQuestFrameVisibility()
 					end,
 					width = "full",
-					order = 4, -- Adjust the order as needed
+					order = 4,
 				},
 				minimapToggle = {
 					type = "toggle",
@@ -188,15 +188,32 @@ RQE.options = {
 						return RQE.db.profile.showMinimapIcon
 					end,
 					set = function(_, newValue)
-						RQE:ToggleMinimapIcon()
+						RQE.db.profile.showMinimapIcon = newValue -- Ensure the profile is updated
+						RQE:ToggleMinimapIcon() -- Ensure the minimap icon is toggled according to the new value
 					end,
 					order = 5,
+				},
+				minimapButtonAngle = {
+					type = "range",
+					name = "Minimap Button Position",
+					desc = "Set the position of the Minimap button around the Minimap.",
+					min = 0,
+					max = 360,
+					step = 1,
+					get = function()
+						return RQE.db.profile.minimapButtonAngle
+					end,
+					set = function(_, newValue)
+						RQE.db.profile.minimapButtonAngle = newValue
+						RQE:UpdateMinimapButtonPosition()
+					end,
+					order = 6,
 				},
 				showMapID = {
 					type = "toggle",
 					name = "Show Current MapID",
 					desc = "Toggles the display of the current MapID on the frame.",
-					order = 6,  -- Adjust this based on where you want it in the order
+					order = 7,
 					get = function() return RQE.db.profile.showMapID end,
 					set = function(_, newValue)
 						RQE.db.profile.showMapID = newValue;
@@ -207,7 +224,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Show Current X, Y",
 					desc = "Toggles the display of the current coordinates on the frame.",
-					order = 7,  -- Adjust this based on where you want it in the order
+					order = 8,
 					get = function() return RQE.db.profile.showCoordinates end,
 					set = function(_, newValue)
 						RQE.db.profile.showCoordinates = newValue;
@@ -219,7 +236,7 @@ RQE.options = {
 					name = "Auto Quest Watch",
 					desc = "Automatically track quests as soon as you obtain them and after achieving an objective.\n\n" ..
 							"|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
-					order = 8,  -- Adjust this based on where you want it in the order
+					order = 9,
 					get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
 					set = function(_, newValue)
 						RQE.db.profile.autoQuestWatch = newValue;
@@ -231,7 +248,7 @@ RQE.options = {
 					name = "Auto Quest Progress",
 					desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n" ..
 							"|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
-					order = 9,  -- Adjust this based on where you want it in the order
+					order = 10,
 					get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
 					set = function(_, newValue)
 						RQE.db.profile.autoQuestProgress = newValue;
@@ -242,7 +259,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Remove WQ after login",
 					desc = "Removes all of the WQ on player login",
-					order = 10,  -- Adjust this based on where you want it in the order
+					order = 11,
 					get = function() return RQE.db.profile.removeWQatLogin end,
 					set = function(_, newValue)
 						RQE.db.profile.removeWQatLogin = newValue;
@@ -252,7 +269,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Auto Track Zone Quests",
 					desc = "Updates watch list on zone change to display quests specific to the player's zone",
-					order = 11,  -- Adjust this based on where you want it in the order
+					order = 12,
 					get = function() return RQE.db.profile.autoTrackZoneQuests end,
 					set = function(_, newValue)
 						RQE.db.profile.autoTrackZoneQuests = newValue;
@@ -262,7 +279,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Auto Click Waypoint Button",
 					desc = "Automatically click on the Waypoint Button in the Super Tracked frame when you progress through quest objectives",
-					order = 12,  -- Adjust this based on where you want it in the order
+					order = 13,
 					get = function() return RQE.db.profile.autoClickWaypointButton end,
 					set = function(_, newValue)
 						RQE.db.profile.autoClickWaypointButton = newValue;
@@ -273,7 +290,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Auto Abandon Quest",
 					desc = "If enabled will hide confirmation pop up when abandoning quest via right-clicking quest in the addon. If disabled, pop up will appear with confirmation to abandon the selected quest",
-					order = 13,  -- Adjust this based on where you want it in the order
+					order = 14,
 					get = function() return RQE.db.profile.enableQuestAbandonConfirm end,
 					set = function(_, newValue)
 						RQE.db.profile.enableQuestAbandonConfirm = newValue;
@@ -283,7 +300,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Enable TomTom Compatibility",
 					desc = "If enabled will create waypoints via TomTom addon (if you have this addon also installed)",
-					order = 14,  -- Adjust this based on where you want it in the order
+					order = 15,
 					get = function() return RQE.db.profile.enableTomTomCompatibility end,
 					set = function(_, newValue)
 						RQE.db.profile.enableTomTomCompatibility = newValue;
@@ -294,7 +311,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Enable Carbonite Compatibility",
 					desc = "If enabled will create waypoints via Carbonite addon (if you have this addon also installed)",
-					order = 15,  -- Adjust this based on where you want it in the order
+					order = 16,
 					get = function() return RQE.db.profile.enableCarboniteCompatibility end,
 					set = function(_, newValue)
 						RQE.db.profile.enableCarboniteCompatibility = newValue;
@@ -312,7 +329,7 @@ RQE.options = {
 						RQE.db.profile.keyBindSetting = value
 						RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
 					end,
-					order = 16,
+					order = 17,
 				},
 			},
 		},
@@ -324,7 +341,7 @@ RQE.options = {
 					type = "group",
 					name = "Main Frame Position",
 					inline = true,
-					order = 10,  -- Set this order to wherever you want it to appear
+					order = 10,
 					args = {
 						anchorPoint = {
 							type = 'select',
@@ -394,16 +411,16 @@ RQE.options = {
 							get = function(info) return RQE.db.profile.MainFrameOpacity end,
 							set = function(info, value)
 								RQE.db.profile.MainFrameOpacity = value
-								RQE:UpdateFrameOpacity()  -- You will need to create this function
+								RQE:UpdateFrameOpacity()
 							end,
-							order = 4,  -- Adjust this number to place it in your preferred order
+							order = 4,
 						},
 						frameWidth = {
 							type = 'range',
 							name = 'Frame Width',
 							desc = 'Adjust the width of the super tracking frame.',
-							min = 100,  -- Minimum height you allow
-							max = 800,  -- Maximum height you allow
+							min = 100,  -- Minimum height allowed
+							max = 800,  -- Maximum height allowed
 							step = 1,
 							get = function(info)
 								return RQE.db.profile.framePosition.frameWidth
@@ -418,8 +435,8 @@ RQE.options = {
 							type = 'range',
 							name = 'Frame Height',
 							desc = 'Adjust the height of the super tracking frame.',
-							min = 100,  -- Minimum height you allow
-							max = 800,  -- Maximum height you allow
+							min = 100,  -- Minimum height allowed
+							max = 800,  -- Maximum height allowed
 							step = 1,
 							get = function(info)
 								return RQE.db.profile.framePosition.frameHeight
@@ -506,16 +523,16 @@ RQE.options = {
 							get = function(info) return RQE.db.profile.QuestFrameOpacity end,
 							set = function(info, value)
 								RQE.db.profile.QuestFrameOpacity = value
-								RQE:UpdateFrameOpacity()  -- You will need to create this function
+								RQE:UpdateFrameOpacity()
 							end,
-							order = 4,  -- Adjust this number to place it in your preferred order
+							order = 4,
 						},
 						frameWidth = {
 							type = 'range',
 							name = 'Frame Width',
 							desc = 'Adjust the width of the super tracking frame.',
-							min = 100,  -- Minimum height you allow
-							max = 800,  -- Maximum height you allow
+							min = 100,  -- Minimum height allowed
+							max = 800,  -- Maximum height allowed
 							step = 1,
 							get = function(info)
 								return RQE.db.profile.QuestFramePosition.frameWidth
@@ -530,8 +547,8 @@ RQE.options = {
 							type = 'range',
 							name = 'Frame Height',
 							desc = 'Adjust the height of the super tracking frame.',
-							min = 100,  -- Minimum height you allow
-							max = 800,  -- Maximum height you allow
+							min = 100,  -- Minimum height allowed
+							max = 800,  -- Maximum height allowed
 							step = 1,
 							get = function(info)
 								return RQE.db.profile.QuestFramePosition.frameHeight
@@ -554,18 +571,18 @@ RQE.options = {
 					type = "group",
 					name = "Font Size and Color",
 					inline = true,
-					order = 12,  -- Set this order to wherever you want it to appear
+					order = 12,
 					args = {
 						headerText = {
 							name = "Header Text",
 							type = "group",
-							order = 1,  -- Set this order to wherever you want it to appear
+							order = 1,
 							args = {
 								fontSize = {
 									name = "Font Size",
 									desc = "Default: 18",
 									type = "range",
-									min = 8, max = 24, -- step = 1,   COMMENTING OUT AS REDUNDANT
+									min = 8, max = 24,
 									step = 1,
 									get = function(info) return RQE.db.profile.textSettings.headerText.size end,
 									set = function(info, val) RQE.db.profile.textSettings.headerText.size = val
@@ -1047,7 +1064,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Display Memory Usage",
 					desc = "Displays the memory usage for the RQE addon",
-					order = 2,  -- Adjust this based on where you want it in the order
+					order = 2,
 					get = function() return RQE.db.profile.displayRQEmemUsage end,
 					set = function(_, newValue)
 						RQE.db.profile.displayRQEmemUsage = newValue;
@@ -1058,7 +1075,7 @@ RQE.options = {
 					type = "group",
 					name = "Debug",
 					inline = true,
-					order = 3,  -- Set this order to wherever you want it to appear
+					order = 3,
 					hidden = function()
 						return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
 					end,
@@ -1294,14 +1311,42 @@ function RQE:AddGeneralSettingsWidgets(container)
 
     scrollFrame:AddChild(hideRQEQuestFrameWhenEmptyCheckbox)
 
-    -- Show Minimap Button Checkbox
-    local minimapToggleCheckbox = AceGUI:Create("CheckBox")
-    minimapToggleCheckbox:SetLabel("Show Minimap Button")
-    minimapToggleCheckbox:SetValue(RQE.db.profile.showMinimapIcon)
-    minimapToggleCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
-        RQE.db.profile.showMinimapIcon = value
-        RQE:ToggleMinimapIcon()
-    end)
+	-- Minimap Button Position Slider
+	local minimapButtonAngleSlider = AceGUI:Create("Slider")
+	minimapButtonAngleSlider:SetLabel("Minimap Button Position")
+	minimapButtonAngleSlider:SetSliderValues(0, 360, 1)
+	minimapButtonAngleSlider:SetValue(RQE.db.profile.minimapButtonAngle)
+	minimapButtonAngleSlider:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.minimapButtonAngle = value
+		RQE:UpdateMinimapButtonPosition()
+	end)
+
+	-- Add a tooltip description for the minimapButtonAngleSlider (RQE.db.profile.minimapButtonAngle)
+	minimapButtonAngleSlider:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Set the position of the Minimap button around the Minimap.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	minimapButtonAngleSlider:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(minimapButtonAngleSlider)
+
+	-- Add a description label below the slider
+	local minimapButtonAngleLabel = AceGUI:Create("Label")
+	minimapButtonAngleLabel:SetText("Set the position of the Minimap button around the Minimap.")
+	minimapButtonAngleLabel:SetFullWidth(true)
+	scrollFrame:AddChild(minimapButtonAngleLabel)
+
+	-- Show Minimap Button Checkbox
+	local minimapToggleCheckbox = AceGUI:Create("CheckBox")
+	minimapToggleCheckbox:SetLabel("Show Minimap Button")
+	minimapToggleCheckbox:SetValue(RQE.db.profile.showMinimapIcon) -- Get the current value from the profile
+	minimapToggleCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.showMinimapIcon = value
+		RQE:ToggleMinimapIcon()
+	end)
 
 	-- Add a tooltip description for minimapToggleCheckbox (RQE.db.profile.showMinimapIcon)
 	minimapToggleCheckbox:SetCallback("OnEnter", function(widget, event)
@@ -1313,7 +1358,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 		GameTooltip:Hide()
 	end)
 
-    scrollFrame:AddChild(minimapToggleCheckbox)
+	scrollFrame:AddChild(minimapToggleCheckbox)
 
     -- Show Current MapID Checkbox
     local showMapIDCheckbox = AceGUI:Create("CheckBox")
