@@ -1,3 +1,31 @@
+11.0.2.23
+	- Massive code cleanup (removed/re-worded comment lines)
+
+	Config.lua
+		- Added minimapButtonAngle for minimap button position as it relates to minimap (also included this setting in the ConfigFrame)
+	
+	Core.lua
+		Variables removed no longer used:
+		- Removed RQE.OverrideHasProgress, RQE.hasClickedQuestButton, RQE.AutoWaypointHasBeenClicked and RQE.canUpdateFromCriteria
+		
+		Functions removed no longer used:
+		- RQE.CheckMouseHoverForTooltip, RQE.ScanAndCacheZoneQuests (duplicate), RQE:HighlightCurrentStepWaypointButton
+		
+		Re-enabled function for debug purposes later on:
+		- AutoWatchQuestsWithProgress, RQE:DetermineCurrentStepIndex, RQE.PrintQuestLineInfo
+
+	RQEFrame.lua
+		Functions removed no longer used:
+		- RQE:UpdateQuestDescription, RQE:GetCurrentObjectiveIndex
+
+	RQEMinimap.lua
+		- Modified tooltip for minimap and LDB buttons
+		- Renamed minimap button
+		- Created new function RQE:UpdateMinimapButtonPosition to update location on minimap and to also snap button to minimap
+		- Transferred dynamic anchoring for menu system to minimap button that already existed in the LDB button
+		- Moved section #8 'drag n drop' to section #6 'event handler'
+
+
 11.0.2.22
 	Config.lua
 		- Updates to Config Frame window
