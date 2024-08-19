@@ -892,12 +892,12 @@ end
 
 -- Function to update the state of the minimap based on the current profile settings
 function RQE:ToggleMinimapIcon()
-    local newValue = not self.db.profile.showMinimapIcon  -- Get the opposite of the current value
-    RQE.debugLog("Toggling Minimap Icon. New Value: ", newValue)  -- Debugging line
+    local newValue = self.db.profile.showMinimapIcon
+    RQE.debugLog("Toggling Minimap Icon. New Value: ", tostring(newValue))  -- Debugging line
 
     self.db.profile.showMinimapIcon = newValue  -- Update the profile value
 
-    if newValue then
+    if newValue == true then
         RQE.MinimapButton:Show()
     else
         RQE.MinimapButton:Hide()
