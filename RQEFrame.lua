@@ -13,7 +13,7 @@ Manages the main frame design
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     print("RQE or RQE.debugLog is not initialized.")
 end
@@ -31,9 +31,9 @@ RQE.debugLog("RQE.db and RQE.db.profile loaded in RQEFrame.lua")
 
 -- When setting up the frame size based on isMinimized
 if RQE.db and RQE.db.profile.isMinimized then  -- Using AceDB profile storage
-    -- your logic to minimize the frame
+    -- Logic to minimize the frame
 else
-    -- your logic to maximize the frame
+    -- Logic to maximize the frame
 end
 
 
@@ -471,19 +471,6 @@ else
     RQE.debugLog("textSettings is not initialized.")
 end
 
--- -- Function to Update QuestDescription
--- function RQE:UpdateQuestDescription()
-    -- if RQEDatabase and RQEDatabase[currentQuestID] then
-        -- local questDescription = RQEDatabase[currentQuestID].description
-        -- RQE.QuestDescription:SetText(questDescription)
-    -- else
-        -- -- Handle the case where the quest ID is not found in the database
-        -- RQE.QuestDescription:SetText("Quest information not available.")
-    -- end
--- end
-
--- -- Call this function to initially set the text
--- RQE:UpdateQuestDescription()
 
 -- Debug: Check if settings are properly initialized
 if QuestDescription_settings then
@@ -510,7 +497,7 @@ RQE.QuestObjectives = QuestObjectives
 -- Check if QuestDescription is empty
 -- Check if RQE.QuestDescription has text and is shown
 -- If QuestDescription is already visible at the time of this code execution,
--- you need to set the initial position of QuestObjectives.
+-- Sets initial position of QuestObjectives.
 if RQE.QuestDescription and RQE.QuestDescription:IsShown() and RQE.QuestDescription:GetText() ~= "" then
     -- There is a description, so show it and position objectives below it.
     RQE.QuestDescription:Show()
@@ -528,6 +515,7 @@ if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
 else
     RQE.debugLog("textSettings is not initialized.")
 end
+
 
 -- Debug: Check if settings are properly initialized
 if QuestObjectives_settings then
@@ -628,7 +616,7 @@ end
 RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
     local baseWidth = 400
     local paddingIncrement = (width - baseWidth) / 20
-    local basePadding = 20 -- This is your base padding. Adjust as necessary.
+    local basePadding = 20 -- This is the base padding.
     local dynamicPadding = math.max(basePadding, paddingIncrement + basePadding)
 
     local newWidth = width - dynamicPadding  -- Use dynamic padding to adjust the width
@@ -993,7 +981,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	-- Initialize an array to store the heights
 	local stepTextHeights = {}
 	RQE.CurrentQuestSteps = {}
-	local yOffset = -20  -- Vertical distance you want to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
+	local yOffset = -20  -- Vertical distance to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	local baseYOffset = -20
 
 	if self.CoordsText then
@@ -1024,7 +1012,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		StepText:SetFont("Fonts\\FRIZQT__.TTF", 12)
 		StepText:SetJustifyH("LEFT")
 		StepText:SetTextColor(1, 1, 0.8) -- Text color for RQE.StepsText in RGB
-		StepText:SetSize(350, 0) -- Controls how much length you have across the frame before it will force a line break
+		StepText:SetSize(350, 0) -- Controls length you have across the frame before it will force a line break
 		StepText:SetHeight(0)  -- Auto height
 		StepText:SetWordWrap(true)  -- Allow word wrap
 		StepText:SetText(StepsText[i] or "No description available.")
@@ -1106,7 +1094,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
 
-			-- Your code for RWButton functionality here
+			-- Code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
 
 			-- Check if TomTom is loaded and compatibility is enabled
@@ -1118,7 +1106,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]  -- Fetch the mapID from the MapIDs array
 
-            -- Call your function to handle the coordinate click
+            -- Call function to handle the coordinate click
 			RQE.SaveCoordData()
             RQE:OnCoordinateClicked(i)
 
@@ -1230,7 +1218,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
                 -- Save the coordinates and mapID when the text is clicked
                 RQE.SaveCoordData()
 
-                -- Call your function to handle the coordinate click
+                -- Call function to handle the coordinate click
                 RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
             end
         end)
@@ -1314,44 +1302,14 @@ function RQE:CheckAndAdvanceStep(questID)
 
     -- Store the previous highestCompletedObjectiveIndex before calculations
     local previousHighestCompletedObjectiveIndex = RQE.lastKnownObjectiveIndex[questID] or 0
-
-	-- Before your if-else statement
 	local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
-
-    -- -- After calculations, compare the previous index to the current highestCompletedObjectiveIndex
-    -- if highestCompletedObjectiveIndex ~= previousHighestCompletedObjectiveIndex then
-        -- -- There has been progress, so call the function to click the super tracked quest button
-        -- --RQE:ClickSuperTrackedQuestButton()
-
-        -- -- Update the lastKnownObjectiveIndex for this quest
-        -- RQE.lastKnownObjectiveIndex[questID] = highestCompletedObjectiveIndex
-    -- end
 
     -- Handle quest completion and specific objectives
 	if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
 		nextObjectiveIndex = 99 -- Override if all objectives are completed
 	end
-
-	--self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
 end
 
-
--- -- Fetch the Objective Index for a particular quest
--- function RQE:GetCurrentObjectiveIndex(questID)
-    -- local objectives = C_QuestLog.GetQuestObjectives(questID)
-    -- if not objectives or #objectives == 0 then
-        -- RQE.debugLog("No objectives found for questID:", questID)
-        -- return 0  -- Return 0 or an appropriate default value if no objectives are found
-    -- end
-
-    -- local highestIndex = 0
-    -- for _, objective in ipairs(objectives) do
-        -- if objective.finished and objective.index and objective.index > highestIndex then
-            -- highestIndex = objective.index
-        -- end
-    -- end
-    -- return highestIndex
--- end
 
 -- Fetch the Objective Index for a particular quest
 function RQE:GetCurrentObjectiveIndex(questID)
@@ -1372,7 +1330,6 @@ function RQE:GetCurrentObjectiveIndex(questID)
 end
 
 
-
 -- Utility function to get the total number of unique objectiveIndexes in the quest
 function RQE:GetTotalObjectiveIndexes(questData)
     local indexes = {}
@@ -1391,16 +1348,6 @@ end
 
 -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
 function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
-    -- -- Direct click for the first objective when transitioning from 0 to 1
-    -- if nextObjectiveIndex == 1 and RQE.lastClickedObjectiveIndex == 0 then
-        -- RQE.infoLog("Quest is incomplete. Clicking WaypointButton(1).")
-        -- RQE.WaypointButtons[1]:Click()
-
-        -- -- Call to update the waypoint for the first objective
-        -- RQE.ClickUnknownQuestButton()
-        -- return
-    -- end
-
     -- If the quest is completed, prioritize clicking the button for objectiveIndex 99
     if nextObjectiveIndex == 99 then
         for stepIndex, stepData in ipairs(questData) do
@@ -1448,7 +1395,6 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
     end
     UpdateRQEQuestFrame()
 	UpdateRQEWorldQuestFrame()
-	--RQE:QuestType()
 end
 
 
@@ -1538,7 +1484,7 @@ function RQE.ClickUnknownQuestButton()
 
     C_SuperTrack.SetSuperTrackedQuestID(questID)
 
-    -- Call your function to create a waypoint using stored coordinates and mapID
+    -- Call function to create a waypoint using stored coordinates and mapID
     RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 end
 
@@ -1585,7 +1531,6 @@ end
 -- Function to handle button clicks
 function RQE:LFG_Create(questID)
 	-- Logic for creating a group
-	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questName = C_QuestLog.GetTitleForQuestID(questID)
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
 
@@ -1613,26 +1558,16 @@ function RQE:LFG_Delist(questID)
 end
 
 
--- -- Set the script for the button
--- RQE.SearchGroupButton:SetScript("OnClick", SearchGroupButton_OnClick)  -- HANDLED THRU ONMOUSEDOWN
-
-
 -- Register frame for event handling
 local eventFrame = CreateFrame("Frame")
+
 
 -- Define the function to show the role selection dialog
 function RQEShowRoleSelection(activityID)
 	ResetLFGRoles()
-    -- if LFGListApplicationDialog then
-        -- LFGListApplicationDialog_Show(LFGListApplicationDialog, activityID)
-    -- end
 end
 
--- -- Global variable to keep track of the last known group size and type
--- local lastGroupSize = 0
--- local lastGroupType = "none" -- "none", "party", "raid", "instance"
 
--- Update lastGroupSize on GROUP_ROSTER_UPDATE
 -- Function to update the group size and type
 function RQEUpdateGroupSizeAndType()
     local isInRaid = IsInRaid()
@@ -1653,6 +1588,7 @@ function RQEUpdateGroupSizeAndType()
 
     local lastGroupSize = groupSize
 end
+
 
 -- Define the function to handle GROUP_ROSTER_UPDATE event
 function RQEOnGroupRosterUpdate()
@@ -1681,6 +1617,7 @@ end
 
 -- Register the GROUP_ROSTER_UPDATE event
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+
 
 -- Set the script handler for the event
 eventFrame:SetScript("OnEvent", function(self, event, ...)
