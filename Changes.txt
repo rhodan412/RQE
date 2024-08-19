@@ -1,3 +1,8 @@
+11.0.2.24
+	Core.lua
+		- Fixed coding so that the Minimap button would reflect properly the checkbox in the SettingsPanel and ConfigFrame
+
+
 11.0.2.23
 	- Massive code cleanup (removed/re-worded comment lines)
 
