@@ -10,7 +10,7 @@ Manages button designs for the main frame
 RQE = RQE or {}
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
@@ -294,7 +294,7 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
     end
 
     local macroIndex = GetMacroIndexByName("RQE Macro")
-    local MagicButton = RQE.MagicButton -- Assuming you've stored MagicButton globally in RQE.MagicButton
+    local MagicButton = RQE.MagicButton -- Assuming MagicButton stored globally in RQE.MagicButton
 
     -- Check if the RQEFrame is hidden first
     if not RQEFrame or not RQEFrame:IsShown() then
@@ -317,7 +317,7 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
--- Function to set up an override key binding for your macro
+-- Function to set up an override key binding for macro
 function RQE:SetupOverrideMacroBinding()
     local ownerFrame = RQE.MagicButton
     local macroName = "RQE Macro"
@@ -344,9 +344,9 @@ function RQE:SetupOverrideMacroBinding()
 end
 
 
--- Remember to clear the override binding when it's no longer needed or when your UI is hidden
+-- Remember to clear the override binding when it's no longer needed or when UI is hidden
 local function ClearOverrideMacroBinding()
-    local ownerFrame = RQE.MagicButton -- The same frame you set the binding on
+    local ownerFrame = RQE.MagicButton -- The same frame binding is set to
 
     -- This will clear all override bindings associated with the ownerFrame
     ClearOverrideBindings(ownerFrame)
@@ -368,13 +368,12 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
     ClearButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 6, -6)  -- Anchoring
     ClearButton:SetScript("OnClick", function()
 
-        -- Your code for ClearButton functionality here
+        -- Code for ClearButton functionality here
 		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
 		RQE:ClearWaypointButtonData()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil
 		RQE:RemoveSuperTrackingFromQuest()
-		--C_SuperTrack.ClearSuperTrackedContent()
 		RQE:UpdateRQEFrameVisibility()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.Buttons.UpdateMagicButtonVisibility()
@@ -415,7 +414,7 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
     -- Nested functions
     RWButton:SetPoint("TOPLEFT", RQE.ClearButton, "TOPRIGHT", 3, 0)  -- Anchoring
     RWButton:SetScript("OnClick", function()
-        -- Your code for RWButton functionality here
+        -- Code for RWButton functionality here
         C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
@@ -581,7 +580,7 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
     -- Nested functions
     CQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
     CQButton:SetScript("OnClick", function()
-        -- Your code for showing completed quests functionality here
+        -- Code for showing completed quests functionality here
 		RQE.filterCompleteQuests()
     end)
 
@@ -606,7 +605,7 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
     -- Nested functions
     HQButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
     HQButton:SetScript("OnClick", function()
-        -- Your code for hiding completed quests functionality here
+        -- Code for hiding completed quests functionality here
 		RQE:HideCompletedWatchedQuests()
     end)
 
@@ -631,7 +630,7 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
     -- Nested functions
     ZQButton:SetPoint("TOPLEFT", RQE.HQButton, "TOPRIGHT", 4, 0)  -- Anchoring
     ZQButton:SetScript("OnClick", function()
-        -- Your code for displaying quests in current zone
+        -- Code for displaying quests in current zone
 		RQE.DisplayCurrentZoneQuests()
     end)
 

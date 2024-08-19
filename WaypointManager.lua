@@ -18,7 +18,7 @@ TomTom = TomTom or {}
 Nx = Nx or {}
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
@@ -348,7 +348,6 @@ end
 -- @param y: Y-coordinate
 function RQE:CreateMapPin(mapID, x, y)
     -- Logic to create a new map pin
-    -- ...
 end
 
 
@@ -451,7 +450,6 @@ function RQE:OnCoordinateClicked(stepIndex)
         end
     else
         RQE.debugLog("TomTom is not available.")
-        -- Code for your own waypoint system or an alternative action
     end
 end
 
@@ -461,4 +459,3 @@ end
 ---------------------------
 
 -- Final steps and exporting functions for use in other files
--- e.g., 

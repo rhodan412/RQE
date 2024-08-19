@@ -14,7 +14,7 @@ RQEDatabase = RQEDatabase or {}
 RQE.db.profile = RQE.db.profile or {}
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     print("RQE or RQE.debugLog is not initialized.")
 end

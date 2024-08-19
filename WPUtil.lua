@@ -17,7 +17,7 @@ RQE.posY = nil
 ---------------------------
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Your message here")
+    RQE.debugLog("Message here")
 else
     RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
@@ -62,7 +62,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
         -- Reset the superTrackingChanged flag
         RQE.superTrackingChanged = false
 
-        -- Call your function to create a waypoint using stored coordinates and mapID
+        -- Call function to create a waypoint using stored coordinates and mapID
         RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
     end)
 end

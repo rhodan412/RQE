@@ -19,12 +19,9 @@ end
 -- Function to display the log
 local function DisplayLog()
     -- Code to create or update a custom frame that displays the logTable contents
-    -- This is a placeholder for the UI code
 end
 
 
--- In your Config.lua or where you handle the toggle
--- Assuming you have a button or a command to toggle the display
 function RQE.ToggleLogDisplay()
     -- Code to show/hide the log display
     DisplayLog()
@@ -50,9 +47,11 @@ logFrame:SetScript("OnDragStop", logFrame.StopMovingOrSizing)
 logFrame:SetFrameStrata("HIGH")
 RQE.DebugLogFrame = logFrame
 
+
 -- Enable mouse input propagation
 logFrame:SetPropagateMouseClicks(true)
 logFrame:SetPropagateMouseMotion(true)
+
 
 local header = CreateFrame("Frame", "RQE.LogFrameHeader", logFrame, "BackdropTemplate")
 header:SetHeight(headerHeight)
@@ -71,9 +70,11 @@ header:RegisterForDrag("LeftButton")
 header:SetScript("OnDragStart", function(self) self:GetParent():StartMoving() end)
 header:SetScript("OnDragStop", function(self) self:GetParent():StopMovingOrSizing() end)
 
+
 -- Enable mouse input propagation
 header:SetPropagateMouseClicks(true)
 header:SetPropagateMouseMotion(true)
+
 
 local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 headerText:SetPoint("CENTER", header, "CENTER")
@@ -130,6 +131,7 @@ local function CalculateTextHeight(editBox)
 
     return totalHeight
 end
+
 
 -- Function to update the log frame with logTable contents
 function RQE.UpdateLogFrame()
@@ -215,12 +217,10 @@ end)
 
 -- Update the EditBox height and scrollbar range when text changes
 editBox:SetScript("OnTextChanged", function(self)
-    -- You'll need to calculate the height based on the content and set it manually
-    -- Since GetStringHeight is not available, we'll use GetHeight instead
+    -- Since GetStringHeight is not available
     local textHeight = self:GetHeight()
     self:SetHeight(textHeight)
 
     local maxScroll = math.max(textHeight - scrollFrame:GetHeight(), 0)
-    --scrollBar:SetMinMaxValues(1, maxScroll)
-    scrollBar:SetValue(maxScroll) -- Set to the bottom of the scroll area
+    scrollBar:SetValue(maxScroll) -- Set to bottom of the scroll area
 end)

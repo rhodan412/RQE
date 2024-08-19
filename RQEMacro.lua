@@ -39,7 +39,7 @@ function RQE.CheckCurrentMacroContents()
         return false
     end
 
-    -- Replace this part with your logic to retrieve the questID
+    -- Logic to retrieve the questID
     local questID = C_SuperTrack.GetSuperTrackedQuestID()
     if not questID then
         RQE.debugLog("Super tracked quest ID not found.")
