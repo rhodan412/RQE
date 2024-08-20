@@ -5,12 +5,16 @@ Unlock your full questing potential in World of Warcraft with Rhodan’s Quest E
 
 **Key Features:**
 Detailed Quest Insights: Provides in-depth details for each quest, including objectives, locations, and step-by-step navigation, ensuring you never miss a beat.
+Precision Guidance: Navigate Azeroth with step-by-step directions, detailed objectives, and instant waypoint setups.
+Complete Control: Manually advance through quest stages when you’re ready, putting you in charge of your journey.
+Advanced Macros: Utilize built-in macros for specific quests, helping you target the right NPC or interact with quest items quickly and efficiently.
+Step-by-Step Manual Progression: Manually progress through quest stages with a simple click, giving you control over each step of your quest journey.
 Interactive Map Points: Automatically sets waypoints to your next objective, complete with coordinates and customized navigation options.
 Customizable User Interface: Adjust the RQE interface to suit your gameplay style, with scalable windows and detailed control over what information is displayed.
 Integrated Group Finder: Easily form or join groups with others who are on the same quest, directly from the quest interface.
-Advanced Macros: Utilize built-in macros for specific quests, helping you target the right NPC or interact with quest items quickly and efficiently.
-Step-by-Step Manual Progression: Manually progress through quest stages with a simple click, giving you control over each step of your quest journey.
 Quest Completion Tracking: Keeps track of your quest progress, including any prerequisites or sequential steps needed to unlock further objectives.
+
+Whether you're tackling complex quest chains, hunting for that last elusive item, or simply wanting to streamline your questing route, RQE is designed to enhance your World of Warcraft journey, making every quest a clear and manageable adventure.
 
 Chat commands
 -------------
