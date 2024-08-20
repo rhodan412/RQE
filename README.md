@@ -41,6 +41,9 @@ Images:
 Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
 <img width="860" alt="RQE with TomTom" src="https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c">
 
+Receive guidance step-by-step as you navigate quests in the add-on's database of waypoints
+<img width="932" alt="RQE - custom step-by-step waypoints" src="https://github.com/user-attachments/assets/d98f53f1-f47c-4143-8d5a-9cb659921dbc">
+
 Tooltips to help provide additional information
 <img width="1686" alt="RQE quest tooltip" src="https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968">
 
