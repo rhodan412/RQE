@@ -1,3 +1,8 @@
+11.0.2.25
+	EventManager.lua
+		- Additional placements of HideObjectiveTracker() function -- additions were needed following 11.0
+		- Cleaned up code
+
 11.0.2.24
 	Core.lua
 		- Fixed coding so that the Minimap button would reflect properly the checkbox in the SettingsPanel and ConfigFrame
