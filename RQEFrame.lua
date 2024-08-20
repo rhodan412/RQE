@@ -774,7 +774,7 @@ local function CreateQuestTooltip(frame, questID)
 	else
 		-- Add Rewards
 		--GameTooltip:AddLine("Rewards: ")
-		--RQE:QuestRewardsTooltip(GameTooltip, questID)  -- Assuming RQE:QuestRewardsTooltip is defined
+		--RQE:QuestRewardsTooltip(questID)  -- Assuming RQE:QuestRewardsTooltip is defined
 	end
 
 	-- Party Members' Quest Progress
