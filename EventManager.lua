@@ -274,6 +274,8 @@ function RQE.handleItemCountChanged(...)
     local event = select(2, ...)
     local itemID = select(3, ...)
 
+	HideObjectiveTracker()
+
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: ITEM_COUNT_CHANGED event triggered for event: " .. tostring(event) .. ", ItemID: " .. tostring(itemID), 1, 0.65, 0.5)
 
 	if RQE.db.profile.autoClickWaypointButton then
@@ -511,6 +513,8 @@ end
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
+
+	HideObjectiveTracker()
 
     -- Check and execute any deferred scenario updates
     if RQE.deferredScenarioCriteriaUpdate then
@@ -828,24 +832,7 @@ end
 
 -- Function to handle WORLD_STATE_TIMER_START:
 function RQE.handleWorldStateTimerStart(...)
-	print("** RUNNING WORLD_STATE_TIMER_START **")
-
-    local args = {...}  -- Capture all arguments into a table
-    for i, arg in ipairs(args) do
-        if type(arg) == "table" then
-            print("Arg " .. i .. ": (table)")
-            for k, v in pairs(arg) do
-                print("  " .. tostring(k) .. ": " .. tostring(v))
-            end
-        else
-            print("Arg " .. i .. ": " .. tostring(arg))
-        end
-    end
-
-	local event = select(2, ...)
-	local timerID = select(3, ...)
-
-    DEFAULT_CHAT_FRAME:AddMessage("WSTS 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+    -- DEFAULT_CHAT_FRAME:AddMessage("WSTS 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
 
 	RQE.StopTimer()
 	RQE.StartTimer()
@@ -857,24 +844,7 @@ end
 
 -- Function to handle WORLD_STATE_TIMER_STOP:
 function RQE.handleWorldStateTimerStop(...)
-	print("** RUNNING WORLD_STATE_TIMER_STOP **")
-
-    local args = {...}  -- Capture all arguments into a table
-    for i, arg in ipairs(args) do
-        if type(arg) == "table" then
-            print("Arg " .. i .. ": (table)")
-            for k, v in pairs(arg) do
-                print("  " .. tostring(k) .. ": " .. tostring(v))
-            end
-        else
-            print("Arg " .. i .. ": " .. tostring(arg))
-        end
-    end
-
-	local event = select(2, ...)
-	local timerID = select(3, ...)
-
-	DEFAULT_CHAT_FRAME:AddMessage("WSTST 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+	-- DEFAULT_CHAT_FRAME:AddMessage("WSTST 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
 
     RQE.StopTimer()
 end
@@ -916,7 +886,7 @@ end
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
-	--HideObjectiveTracker()
+	HideObjectiveTracker()
 	RQE:StartUpdatingCoordinates()
 end
 
@@ -924,10 +894,8 @@ end
 -- Handling PLAYER_STOPPED_MOVING Event
 function RQE.handlePlayerStoppedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player stopped moving.", 0.93, 0.82, 0.25)
-	-- C_Timer.After(0.25, function()
-		-- HideObjectiveTracker()
-	-- end)
-   
+
+	HideObjectiveTracker()
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
 
@@ -1496,7 +1464,7 @@ function RQE.handleZoneChange(...)
 
 	local event = select(2, ...)
 
-	--HideObjectiveTracker()
+	HideObjectiveTracker()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -1632,7 +1600,7 @@ function RQE.handleZoneNewAreaChange()
 	-- startTime = debugprofilestop()  -- Start timer
 	-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 
-	--HideObjectiveTracker()
+	HideObjectiveTracker()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -1939,8 +1907,11 @@ function RQE.updateScenarioCriteriaUI()
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 end
 
+
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
+	HideObjectiveTracker()
+
 	-- If we're in combat, defer the update
     if InCombatLockdown() then
         RQE.deferredScenarioUpdate = true  -- Set a flag to update after combat
@@ -2063,9 +2034,7 @@ end
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
 
-	-- C_Timer.After(0.5, function()
-		-- HideObjectiveTracker()
-	-- end)
+	HideObjectiveTracker()
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -2691,6 +2660,8 @@ function RQE.handleQuestWatchListChanged(...)
     local event = select(2, ...)
     local questID = select(3, ...)
     local added = select(4, ...)
+
+	HideObjectiveTracker()
 
 	C_Timer.After(1, function()
 		RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
