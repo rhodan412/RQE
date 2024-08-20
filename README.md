@@ -24,3 +24,12 @@ Links
 -----
 
 * The latest release is available on [CurseForge]([https://legacy.curseforge.com/wow/addons/rqe-rhodans-quest-explorer](https://legacy.curseforge.com/wow/addons/rqe-rhodans-quest-explorer)
+
+Limitations:
+------------
+There is no countdown timer for Scenario stages, so if you're using this to find out how long between stages for super bloom, or whatever - don't hold your breath as this add-on won't do it. This is something that I would love to put in, but this may require a fairly large re-work.
+
+Known Bugs:
+-----------
+* Scenario/Dungeon Objectives are not visible as Blizz never re-implemented/fixed this part of the API since 11.0 (it worked just fine before 11.0). If this starts to work again, I will make sure that this is put back into place
+* Tooltips don't contain quest rewards any longer (again this is an issue that started in 11.0 and I haven't been able to get this part going again)
