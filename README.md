@@ -47,7 +47,7 @@ Receive guidance step-by-step as you navigate quests in the add-on's database of
 Tooltips to help provide additional information
 <img width="1686" alt="RQE quest tooltip" src="https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968">
 
-The ability to search through different filters such as specific campaign quests, specific zone quests, completed quests and more
+The ability to search through varying filters such as specific campaign quests, specific zone quests, & completed
 <img width="471" alt="RQE filter menu" src="https://github.com/user-attachments/assets/fa2af154-6c85-406d-bff3-496d132bfa20">
 
 Navigate through different tabs to customize the RQE addon's frames, fonts, and color
