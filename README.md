@@ -27,9 +27,11 @@ Links
 
 Limitations:
 ------------
-There is no countdown timer for Scenario stages, so if you're using this to find out how long between stages for super bloom, or whatever - don't hold your breath as this add-on won't do it. This is something that I would love to put in, but this may require a fairly large re-work.
+* There is no countdown timer for Scenario stages, so if you're using this to find out how long between stages for super bloom, or whatever - don't hold your breath as this add-on won't do it. This is something that I would love to put in, but this may require a fairly large re-work.
+* Currently special quest items/spells (such as the Area52 Special from the quest: "Mission: The Abyssal Shelf") aren't displayed in the Quest Watch frame or Super-Tracked frame (this is something that I am looking to add)
 
 Known Bugs:
 -----------
 * Scenario/Dungeon Objectives are not visible as Blizz never re-implemented/fixed this part of the API since 11.0 (it worked just fine before 11.0). If this starts to work again, I will make sure that this is put back into place
 * Tooltips don't contain quest rewards any longer (again this is an issue that started in 11.0 and I haven't been able to get this part going again)
+* Some (weekly JC quest in Valdrakken that requires you to craft four gems is the only one that I can think of) custom multi-step quests don't advance stages properly between the stage/waypoint buttons (numbered buttons in the Super-Track Frame) as you craft each of the gems. This means that the RQE Macro doesn't update unless you manually tick the stage button.
