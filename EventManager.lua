@@ -37,8 +37,13 @@ RQEDatabase = RQEDatabase or {}
 -- Create an event frame
 local Frame = CreateFrame("Frame")
 
+
 -- Hides the Objective Tracker (by default)
 function HideObjectiveTracker()
+	if ObjectiveTrackerFrame:IsShown() then
+		ObjectiveTrackerFrame:Hide()
+	end
+
 	C_Timer.After(0.1, function()
 		if ObjectiveTrackerFrame:IsShown() then
 			ObjectiveTrackerFrame:Hide()
@@ -68,16 +73,24 @@ local eventsToRegister = {
 	"ADDON_LOADED",
 	"BAG_UPDATE",
 	"BOSS_KILL",
+	-- "CHAT_MSG_CHANNEL",
+	-- "CHAT_MSG_LOOT",
 	"CLIENT_SCENE_CLOSED",
 	"CLIENT_SCENE_OPENED",
 	"CONTENT_TRACKING_UPDATE",
+	-- "COMPANION_UPDATE",
 	"CRITERIA_EARNED",
 	"ENCOUNTER_END",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	--"LEAVE_PARTY_CONFIRMATION",
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
+	-- "LOOT_OPENED",
+	-- "LOOT_READY",
 	"MERCHANT_UPDATE",
+	-- "NAME_PLATE_CREATED",
+	-- "NAME_PLATE_UNIT_ADDED",
+	-- "NAME_PLATE_UNIT_REMOVED",
 	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_LOGIN",
@@ -109,9 +122,17 @@ local eventsToRegister = {
 	"TRACKED_ACHIEVEMENT_UPDATE",
 	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
+	-- "UNIT_HEALTH",
+	-- "UNIT_TARGET",
 	"UNIT_INVENTORY_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
+	-- "UNIT_SPELLCAST_RETICLE_CLEAR",
+	-- "UNIT_SPELLCAST_RETICLE_TARGET",
+	-- "UNIT_SPELLCAST_START",
+	-- "UNIT_SPELLCAST_STOP",
+	-- "UNIT_SPELLCAST_SUCCEEDED",
 	"UPDATE_INSTANCE_INFO",
+	-- "UPDATE_INVENTORY_DURABILITY",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
@@ -132,15 +153,28 @@ local function HandleEvents(frame, event, ...)
 	-- local excludeEvents = {
 		-- ["ADDON_LOADED"] = true,
 		-- ["BAG_UPDATE"] = true,
+		-- ["CHAT_MSG_CHANNEL"] = true,
+		-- ["CHAT_MSG_LOOT"] = true,
+		-- ["COMPANION_UPDATE"] = true,
+		-- ["NAME_PLATE_CREATED"] = true,
+		-- ["NAME_PLATE_UNIT_ADDED"] = true,
+		-- ["NAME_PLATE_UNIT_REMOVED"] = true,
 		-- ["PLAYER_STARTED_MOVING"] = true,
 		-- ["PLAYER_STOPPED_MOVING"] = true,
 		-- ["UNIT_AURA"] = true,
 		-- ["UNIT_INVENTORY_CHANGED"] = true,
+		-- ["UNIT_SPELLCAST_RETICLE_CLEAR"] = true,
+		-- ["UNIT_SPELLCAST_RETICLE_TARGET"] = true,
+		-- ["UNIT_SPELLCAST_START"] = true,
+		-- ["UNIT_SPELLCAST_STOP"] = true,
+		-- ["UNIT_SPELLCAST_SUCCEEDED"] = true,
+		-- ["UPDATE_INVENTORY_DURABILITY"] = true,
 	-- }
 
 	-- -- Check if the event is not in the exclude list before printing
 	-- if not excludeEvents[event] then
 		-- print("EventHandler triggered with event:", event)  -- Print the event name
+		-- -- Print Event-specific Args
 		-- -- local args = {...}  -- Capture all arguments into a table
 		-- -- for i, arg in ipairs(args) do
 			-- -- if type(arg) == "table" then
@@ -159,16 +193,24 @@ local function HandleEvents(frame, event, ...)
 		ADDON_LOADED = RQE.handleAddonLoaded,
 		BAG_UPDATE = RQE.ReagentBagUpdate,
 		BOSS_KILL = RQE.handleBossKill,
+		-- CHAT_MSG_CHANNEL = RQE.handleChatMsgChannel,
+		-- CHAT_MSG_LOOT = RQE.handleChatMsgLootChannel,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 		CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,  -- MAY NEED TO COMMENT OUT AGAIN
 		CONTENT_TRACKING_UPDATE = RQE.handleContentUpdate,
+		-- COMPANION_UPDATE = RQE.handleCompanionUpdate,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
 		ENCOUNTER_END = RQE.handleBossKill,
 		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
 		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
+		-- LOOT_OPENED = RQE.handleLootOpened,
+		-- LOOT_READY = RQE.handleLootReady,
 		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
+		-- NAME_PLATE_CREATED = RQE.handleNamePlateCreated,
+		-- NAME_PLATE_UNIT_ADDED = RQE.handleNamePlateUnitAdded,
+		-- NAME_PLATE_UNIT_REMOVED = RQE.handleNamePlateUnitRemoved,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
@@ -200,9 +242,17 @@ local function HandleEvents(frame, event, ...)
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
 		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
+		-- UNIT_HEALTH = RQE.handleUnitHealthEvent,
+		-- UNIT_TARGET = RQE.handleUnitTargetEvent,
 		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
+		-- UNIT_SPELLCAST_RETICLE_CLEAR = RQE.handleUnitSpellCastChange,
+		-- UNIT_SPELLCAST_RETICLE_TARGET = RQE.handleUnitSpellCastChange,
+		-- UNIT_SPELLCAST_START = RQE.handleUnitSpellCastChange,
+		-- UNIT_SPELLCAST_STOP = RQE.handleUnitSpellCastChange,
+		-- UNIT_SPELLCAST_SUCCEEDED = RQE.handleUnitSpellCastChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
+		-- UPDATE_INVENTORY_DURABILITY = RQE.handleUpdateInventoryDurability,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		WORLD_STATE_TIMER_START = RQE.handleWorldStateTimerStart,
 		WORLD_STATE_TIMER_STOP = RQE.handleWorldStateTimerStop,
@@ -245,12 +295,78 @@ function RQE.handleContentUpdate(...)
 	local id = select(4, ...)
 	local isTracked = select(4, ...)
 
+	-- -- Print Event-specific Args
+	-- local args = {...}  -- Capture all arguments into a table
+	-- for i, arg in ipairs(args) do
+		-- if type(arg) == "table" then
+			-- print("Arg " .. i .. ": (table)")
+			-- for k, v in pairs(arg) do
+				-- print("  " .. tostring(k) .. ": " .. tostring(v))
+			-- end
+		-- else
+			-- print("Arg " .. i .. ": " .. tostring(arg))
+		-- end
+	-- end
+
 	if type == 2 then -- Assuming 2 indicates an achievement
 		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(type) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
 
 		RQE.UpdateTrackedAchievementList()
 		RQE.UpdateTrackedAchievements(type, id, isTracked)
 	end
+end
+
+
+-- Handle CHAT_MSG_CHANNEL Event
+function RQE.handleChatMsgChannel(...)
+	local event = select(2, ...)
+	local text = select(3, ...)				-- string - e.g. "Hello world!"
+	local playerName = select(4, ...)		-- string - Name of the user that initiated the chat message.
+	local languageName = select(5, ...)		-- string - Localized name of the language if applicable, e.g. "Common" or "Thalassian"
+	local channelName = select(6, ...)		-- string - Channel name with channelIndex, e.g. "2. Trade - City"
+	local playerName2 = select(7, ...)		-- string - The target name when there are two users involved, otherwise the same as playerName or an empty string.
+	local specialFlags = select(8, ...)		-- string - User flags if applicable, possible values are: "GM", "DEV", "AFK", "DND", "COM"
+	local zoneChannelID = select(9, ...)	-- number - The static ID of the zone channel, e.g. 1 for General, 2 for Trade and 22 for LocalDefense.
+	local channelIndex = select(10, ...)	-- number - Channel index, this usually is related to the order in which you joined each channel.
+	local channelBaseName = select(11, ...)	-- string - Channel name without the number, e.g. "Trade - City"
+	local languageID = select(12, ...)		-- number - LanguageID
+	local lineID = select(13, ...)			-- number - Unique chat lineID for differentiating/reporting chat messages. Can be passed to PlayerLocation:CreateFromChatLineID()
+	local guid = select(14, ...)			-- string - Sender's Unit GUID.
+	local bnSenderID = select(15, ...)		-- number - ID of the Battle.net friend.
+	local isMobile = select(16, ...)		-- boolean - If the sender is using the Blizzard Battle.net Mobile app.
+	local isSubtitle = select(17, ...)				-- boolean
+	local hideSenderInLetterbox = select(18, ...)	-- boolean - Whether this chat message is meant to show in the CinematicFrame only.
+	local supressRaidIcons = select(19, ...)		-- boolean - Whether Target marker expressions like {rt7} and {diamond} should not be rendered with C_ChatInfo.ReplaceIconAndGroupExpressions()
+end
+
+
+-- Handle CHAT_MSG_LOOT Event
+function RQE.handleChatMsgLootChannel(...)
+	local event = select(2, ...)
+	local text = select(3, ...)				-- string - e.g. "Hello world!"
+	local playerName = select(4, ...)		-- string - Name of the user that initiated the chat message.
+	local languageName = select(5, ...)		-- string - Localized name of the language if applicable, e.g. "Common" or "Thalassian"
+	local channelName = select(6, ...)		-- string - Channel name with channelIndex, e.g. "2. Trade - City"
+	local playerName2 = select(7, ...)		-- string - The target name when there are two users involved, otherwise the same as playerName or an empty string.
+	local specialFlags = select(8, ...)		-- string - User flags if applicable, possible values are: "GM", "DEV", "AFK", "DND", "COM"
+	local zoneChannelID = select(9, ...)	-- number - The static ID of the zone channel, e.g. 1 for General, 2 for Trade and 22 for LocalDefense.
+	local channelIndex = select(10, ...)	-- number - Channel index, this usually is related to the order in which you joined each channel.
+	local channelBaseName = select(11, ...)	-- string - Channel name without the number, e.g. "Trade - City"
+	local languageID = select(12, ...)		-- number - LanguageID
+	local lineID = select(13, ...)			-- number - Unique chat lineID for differentiating/reporting chat messages. Can be passed to PlayerLocation:CreateFromChatLineID()
+	local guid = select(14, ...)			-- string - Sender's Unit GUID.
+	local bnSenderID = select(15, ...)		-- number - ID of the Battle.net friend.
+	local isMobile = select(16, ...)		-- boolean - If the sender is using the Blizzard Battle.net Mobile app.
+	local isSubtitle = select(17, ...)				-- boolean
+	local hideSenderInLetterbox = select(18, ...)	-- boolean - Whether this chat message is meant to show in the CinematicFrame only.
+	local supressRaidIcons = select(19, ...)		-- boolean - Whether Target marker expressions like {rt7} and {diamond} should not be rendered with C_ChatInfo.ReplaceIconAndGroupExpressions()
+end
+
+
+-- Handles COMPANION_UPDATE event
+function RQE.handleCompanionUpdate(...)
+	local event = select(2, ...)
+	local companionType = select(3, ...)
 end
 
 
@@ -273,8 +389,6 @@ end
 function RQE.handleItemCountChanged(...)
     local event = select(2, ...)
     local itemID = select(3, ...)
-
-	HideObjectiveTracker()
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: ITEM_COUNT_CHANGED event triggered for event: " .. tostring(event) .. ", ItemID: " .. tostring(itemID), 1, 0.65, 0.5)
 
@@ -514,8 +628,6 @@ end
 function RQE.handlePlayerRegenEnabled()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 
-	HideObjectiveTracker()
-
     -- Check and execute any deferred scenario updates
     if RQE.deferredScenarioCriteriaUpdate then
 		--RQE.canUpdateFromCriteria = true
@@ -715,7 +827,6 @@ function RQE.handleBossKill(...)
 end
 
 
-
 -- Function to handle LFG_LIST_ACTIVE_ENTRY_UPDATE event
 function RQE.handleLFGActive(...)
 	local event = select(2, ...)
@@ -728,6 +839,23 @@ function RQE.handleLFGActive(...)
 	end
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("LFG-A Debug: " .. tostring(event) .. ". Created: " .. tostring(created), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
+end
+
+
+-- Function to handle LOOT_OPENED event
+-- Fires when a corpse is looted, after LOOT_READY.
+function RQE.handleLootOpened(...)
+	local event = select(2, ...)
+	local autoloot = select(3, ...)		-- boolean - Equal to autoLootDefault.
+	local isFromItem = select(3, ...)	-- boolean
+end
+
+
+-- Function to handle LOOT_READY event
+-- This is fired when looting begins, but before the loot window is shown. Loot functions like GetNumLootItems will be available until LOOT_CLOSED is fired. 
+function RQE.handleLootReady(...)
+	local event = select(2, ...)
+	local autoloot = select(3, ...)		-- boolean - Equal to autoLootDefault.
 end
 
 
@@ -819,6 +947,26 @@ function RQE.saveScenarioData(self, event, ...)
 end
 
 
+-- Handles NAME_PLATE_CREATED event
+function RQE.handleNamePlateCreated(...)
+	local event = select(2, ...)
+end
+
+
+-- Handles NAME_PLATE_UNIT_ADDED event
+function RQE.handleNamePlateUnitAdded(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+end
+
+
+-- Handles NAME_PLATE_UNIT_REMOVED event
+function RQE.handleNamePlateUnitRemoved(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+end
+
+
 -- Function to handle START_TIMER event, logging the timer details:
 function RQE.handleStartTimer(...)
 	local event = select(2, ...)
@@ -839,6 +987,31 @@ function RQE.handleWorldStateTimerStart(...)
 	RQE.HandleTimerStart(timerID)
 
 	RQE.updateScenarioUI()
+end
+
+
+-- Handles UNIT_HEALTH event
+-- Fires when the health of a unit changes. 
+function RQE.handleUnitHealthEvent(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+end
+
+
+-- Handles UNIT_TARGET event
+-- Fired when the target of yourself, raid, and party members change 
+function RQE.handleUnitTargetEvent(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+end
+
+
+-- Handle UNIT_SPELLCAST_RETICULE_CLEAR, UNIT_SPELLCAST_RETICULE_TARGET, UNIT_SPELLCAST_START, UNIT_SPELLCAST_STOP, UNIT_SPELLCAST_SUCCEEDED Events
+function RQE.handleUnitSpellCastChange(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+	local castGUID = select(4, ...)
+	local spellID = select(5, ...)
 end
 
 
@@ -886,7 +1059,6 @@ end
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
-	HideObjectiveTracker()
 	RQE:StartUpdatingCoordinates()
 end
 
@@ -895,7 +1067,6 @@ end
 function RQE.handlePlayerStoppedMoving()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Player stopped moving.", 0.93, 0.82, 0.25)
 
-	HideObjectiveTracker()
 	RQE:StopUpdatingCoordinates()
 	SortQuestsByProximity()
 
@@ -916,7 +1087,9 @@ end
 -- Fired in response to the CVars, Keybindings and other associated "Blizzard" variables being loaded
 function RQE.handleVariablesLoaded()
 	RQE:InitializeFrame()
+
 	--isVariablesLoaded = true
+	
 	C_Timer.After(0.5, function()
 		HideObjectiveTracker()
 	end)
@@ -1464,8 +1637,6 @@ function RQE.handleZoneChange(...)
 
 	local event = select(2, ...)
 
-	HideObjectiveTracker()
-
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
 
@@ -1599,8 +1770,6 @@ end
 function RQE.handleZoneNewAreaChange()
 	-- startTime = debugprofilestop()  -- Start timer
 	-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
-
-	HideObjectiveTracker()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -1910,8 +2079,6 @@ end
 
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
-	HideObjectiveTracker()
-
 	-- If we're in combat, defer the update
     if InCombatLockdown() then
         RQE.deferredScenarioUpdate = true  -- Set a flag to update after combat
@@ -2029,12 +2196,16 @@ function RQE.handleInstanceInfoUpdate()
 end
 
 
+-- Handle UPDATE_INVENTORY_DURABILITY Event
+function RQE.handleUpdateInventoryDurability()
+	-- Place relevant code here
+end
+
+
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
-
-	HideObjectiveTracker()
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -2661,8 +2832,6 @@ function RQE.handleQuestWatchListChanged(...)
     local questID = select(3, ...)
     local added = select(4, ...)
 
-	HideObjectiveTracker()
-
 	C_Timer.After(1, function()
 		RQE.CheckAndClearRQEFrame()  -- Checks to see if the RQEFrame is displaying a quest that player is either not on (regular quests) or a world quest that isn't being tracked
 	end)
@@ -2914,3 +3083,10 @@ SearchEditBox:SetScript("OnEnterPressed", function(self)
     self:ClearFocus()  -- remove focus from the edit box
     -- Implement search logic here, likely the same as the click event
 end)
+
+-- Hooking the Objective Tracker's OnShow and OnHide events
+ObjectiveTrackerFrame:HookScript("OnShow", HideObjectiveTracker)
+
+-- Optionally, use OnUpdate for continuous checking
+local hideObjectiveTrackerFrame = CreateFrame("Frame")
+hideObjectiveTrackerFrame:SetScript("OnUpdate", HideObjectiveTracker)
