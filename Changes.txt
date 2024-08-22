@@ -1,3 +1,10 @@
+11.0.2.26
+	EventManager.lua
+		- Fix made for ObjectiveTracker continuing to show up constantly
+		- Removed many lines previously added for HideObjectiveTracker that existed before the fix went in place with this version
+		- Added some additional functions for payload information temporarily (these are commented out and are not running on release client)
+
+
 11.0.2.25
 	EventManager.lua
 		- Additional placements of HideObjectiveTracker() function -- additions were needed following 11.0
