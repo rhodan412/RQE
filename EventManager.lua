@@ -774,6 +774,11 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		return
 	end
 
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(1, function()
+		RQE:UpdateContentSize()
+	end)
+
     -- Initialize the saved variable if it doesn't exist
     RQE_TrackedAchievements = RQE_TrackedAchievements or {}
 
@@ -1435,6 +1440,11 @@ function RQE.handleSuperTracking()
 	-- end
 
 	-- RQE.AutoWaypointHasBeenClicked = true
+
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(0.5, function()
+		RQE:UpdateContentSize()
+	end)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then

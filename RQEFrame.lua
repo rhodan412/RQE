@@ -1224,8 +1224,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
         end)
     end
 
-    -- Call UpdateContentSize at the end
-    RQE:UpdateContentSize()
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(0.5, function()
+		RQE:UpdateContentSize()
+	end)
 end
 
 
