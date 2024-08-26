@@ -2978,7 +2978,58 @@ function RQE.SetMacroForFinalStep(questID, finalStepIndex)
 end
 
 
--- Periodic check setup
+-- -- Periodic check setup
+-- function RQE:StartPeriodicChecks()
+    -- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    -- if not superTrackedQuestID then
+        -- RQE.debugLog("No super tracked quest ID found, skipping checks.")
+        -- return
+    -- end
+
+    -- self:FindAndSetFinalStep()  -- Find and set the final step
+
+    -- local questData = RQE.getQuestData(superTrackedQuestID)
+    -- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
+
+    -- if questData then
+        -- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+        -- local stepData = questData[stepIndex]
+
+        -- -- Handle turn-in readiness
+        -- if isReadyTurnIn and self.FinalStep then
+            -- RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+            -- self:ClickWaypointButtonForIndex(self.FinalStep)
+            -- return
+        -- end
+
+        -- -- Validate stepIndex
+        -- if stepIndex < 1 or stepIndex > #questData then
+            -- RQE.infoLog("Invalid step index:", stepIndex)
+            -- return  -- Exit if stepIndex is invalid
+        -- end
+
+        -- -- Process the current step
+        -- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+        -- if funcResult then
+            -- RQE.infoLog("Function for current step executed successfully.")
+        -- else
+            -- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+            -- if failFuncResult then
+                -- local failedIndex = stepData.failedIndex or 1
+                -- RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
+                -- self:ClickWaypointButtonForIndex(failedIndex)
+            -- else
+                -- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+            -- end
+        -- end
+        -- -- Check and build macro if needed
+        -- RQE.CheckAndBuildMacroIfNeeded()
+    -- end
+-- end
+
+
+-- Periodic check setup (updated to include CheckDBObjectiveStatus)
 function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -3009,6 +3060,15 @@ function RQE:StartPeriodicChecks()
             return  -- Exit if stepIndex is invalid
         end
 
+        -- Check if the current step requires objective progress check
+        if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
+            local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
+            if objProgressResult then
+                RQE.infoLog("Objective progress check completed and step advanced.")
+                return
+            end
+        end
+
         -- Process the current step
         local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
         if funcResult then
@@ -3023,6 +3083,7 @@ function RQE:StartPeriodicChecks()
                 RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
             end
         end
+
         -- Check and build macro if needed
         RQE.CheckAndBuildMacroIfNeeded()
     end
@@ -3242,6 +3303,43 @@ function RQE:CheckFactionGroupHorde(questID, stepIndex)
         RQE.infoLog("Player is not Horde, not advancing quest step.")
         return false
     end
+end
+
+
+-- Function to check the progress of objectives in a quest
+function RQE:CheckObjectiveProgress(questID, stepIndex)
+    local objectives = C_QuestLog.GetQuestObjectives(questID)
+    local questData = self.getQuestData(questID)
+
+    if not questData then
+        print("Quest data not found for questID:", questID)
+        return
+    end
+
+    local stepData = questData[stepIndex]
+
+    if not objectives then
+        print("No objectives found for questID:", questID)
+        return
+    end
+
+    -- Print out the current stepIndex
+    print("Current stepIndex: " .. stepIndex)
+
+    for i, objective in ipairs(objectives) do
+        if not objective.finished then
+            -- Find the objectiveIndex that matches the unfinished objective
+            for idx, step in ipairs(questData) do
+                if step.objectiveIndex == i then
+                    self:AdvanceQuestStep(questID, idx)
+                    return true  -- Advance to the step that matches the unfinished objective
+                end
+            end
+        end
+    end
+
+    RQE.debugLog("All objectives completed or no matching objective found for questID:", questID)
+    return false
 end
 
 
