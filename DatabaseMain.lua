@@ -37,7 +37,9 @@ function RQE.getQuestData(questID)
     local majorVersion = tonumber(string.match(version, "^%d+"))
 
     local dbOrder = {}
-    if majorVersion >= 10 then
+    if majorVersion >= 11 then
+        dbOrder = { "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+    elseif majorVersion >= 10 then
         dbOrder = { "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
     elseif majorVersion == 9 then
         dbOrder = { "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
