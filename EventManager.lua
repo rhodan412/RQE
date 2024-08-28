@@ -97,6 +97,7 @@ local eventsToRegister = {
 	"PLAYER_LOGOUT",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
 	"PLAYER_REGEN_ENABLED",
+	"PLAYER_REGEN_DISABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
@@ -217,6 +218,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerRegenEnabled,
 		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
+		PLAYER_REGEN_DISABLED = RQE.handlePlayerRegenDisabled,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
@@ -622,6 +624,12 @@ function RQE.handleUnitInventoryChange(...)
 end
 
 
+-- Function that handles the PLAYER_REGEN_DISABLED (entering combat) event
+function RQE.handlePlayerRegenDisabled()
+	-- Place applicable code here if needed, otherwise may delete this event listener
+end
+
+
 -- Function that runs after leaving combat or PLAYER_REGEN_ENABLED, PLAYER_MOUNT_DISPLAY_CHANGED
 -- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
@@ -774,10 +782,18 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		return
 	end
 
-	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
-	C_Timer.After(1, function()
-		RQE:UpdateContentSize()
-	end)
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+	if isSuperTracking then
+		-- Get the currently super tracked quest ID
+		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+		-- Check if a quest is being super tracked
+		if superTrackedQuestID and superTrackedQuestID > 0 then
+			C_SuperTrack.SetSuperTrackedQuestID(superTrackedQuestID)	-- Re-apply the super tracking to refresh
+		end
+	end
+
 
     -- Initialize the saved variable if it doesn't exist
     RQE_TrackedAchievements = RQE_TrackedAchievements or {}
@@ -1395,6 +1411,8 @@ function RQE.handleSuperTracking()
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
 
+	RQE.ScrollFrameToTop()
+
 	-- Reset the "Clicked" WaypointButton to nil
 	RQE.LastClickedIdentifier = nil
 		
@@ -1440,11 +1458,6 @@ function RQE.handleSuperTracking()
 	-- end
 
 	-- RQE.AutoWaypointHasBeenClicked = true
-
-	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
-	C_Timer.After(0.5, function()
-		RQE:UpdateContentSize()
-	end)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -2216,6 +2229,11 @@ end
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
+
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(5, function()
+		RQE:UpdateContentSize()
+	end)
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then

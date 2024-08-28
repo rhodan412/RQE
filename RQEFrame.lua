@@ -235,6 +235,8 @@ end
 RQE.UnknownQuestButton = CreateFrame("Button", nil, content)
 RQE.UnknownQuestButton:SetSize(25, 25)  -- Set size to 30x30
 RQE.UnknownQuestButton:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)  -- Adjusted Y-position
+RQE.UnknownQuestButton:SetPropagateMouseClicks(true)
+RQE.UnknownQuestButton:SetPropagateMouseMotion(true)
 RQE.UnknownQuestButton:Hide()  -- Initially hide the button
 
 -- Use the custom texture for the background
@@ -906,6 +908,7 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
     else
         slider:SetValue(value + 25)
     end
+	RQE:UpdateContentSize()
 end)
 
 ---------------------------
@@ -1043,6 +1046,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
         ---@type WaypointButton
 		local WaypointButton = CreateFrame("Button", nil, content)
 		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
+		WaypointButton:SetPropagateMouseClicks(true)
+		WaypointButton:SetPropagateMouseMotion(true)
 		WaypointButton:SetSize(30, 30)  -- Set size to 30x30
 
 		-- Use the custom texture for the background
@@ -1093,6 +1098,13 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
+			-- Check if the player is in combat
+			if InCombatLockdown() then
+				-- If in combat, check if the mouse is over the RQEFrame
+				if RQEFrame and RQEFrame:IsMouseOver() then
+					return
+				end
+			end
 
 			-- Code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
@@ -1224,10 +1236,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
         end)
     end
 
-	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
-	C_Timer.After(0.5, function()
-		RQE:UpdateContentSize()
-	end)
+	RQE:UpdateContentSize()
 end
 
 
