@@ -1483,6 +1483,14 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
+					-- Check if the player is in combat
+					if InCombatLockdown() then
+						-- If in combat, check if the mouse is over the RQEFrame
+						if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver() then
+							return
+						end
+					end
+
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
@@ -1644,6 +1652,9 @@ function UpdateRQEQuestFrame()
 					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
 				end
 				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
+				
+				QuestLogIndexButton:SetPropagateMouseClicks(true)
+				QuestLogIndexButton:SetPropagateMouseMotion(true)
 
 				-- Set Justification and Word Wrap
 				QuestLevelAndName:SetJustifyH("LEFT")
