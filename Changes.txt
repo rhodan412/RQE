@@ -1,3 +1,10 @@
+11.0.2.27b
+	- Reverted some code due to passthru error by commenting it out as this didn't fix the problem that came with 11.0 api passthru button changes
+
+	Core.lua
+		- Made it default that autoClickWaypointButton is true as this is of paramount importance in use of the walk thru guide!
+
+
 11.0.2.27
 	Buttons.lua
 		- Misc code clean-up and spacing
