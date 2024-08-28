@@ -1,4 +1,7 @@
 11.0.2.27
+	Buttons.lua
+		- Misc code clean-up and spacing
+
 	Core.lua
 		- Added RQE:CheckObjectiveProgress function for purposes of checking what stepIndex player should be on for a given quest
 		- Update to StartPeriodicChecks to include potential for CheckDBObjectiveStatus in the RQEDatabase
