@@ -1483,13 +1483,13 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
-					-- Check if the player is in combat
-					if InCombatLockdown() then
-						-- If in combat, check if the mouse is over the RQEFrame
-						if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver() then
-							return
-						end
-					end
+					-- -- Check if the player is in combat
+					-- if InCombatLockdown() then
+						-- -- If in combat, check if the mouse is over the RQEFrame
+						-- if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver() then
+							-- return
+						-- end
+					-- end
 
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest

@@ -31,13 +31,13 @@ end
 -- Assume CloseWorldMap() closes the world map
 RQE.UnknownQuestButtonCalcNTrack = function()
     RQE.UnknownQuestButton:SetScript("OnClick", function()
-		-- Check if the player is in combat
-		if InCombatLockdown() then
-			-- If in combat, check if the mouse is over the RQEFrame
-			if RQEFrame and RQEFrame:IsMouseOver() then
-				return
-			end
-		end
+		-- -- Check if the player is in combat
+		-- if InCombatLockdown() then
+			-- -- If in combat, check if the mouse is over the RQEFrame
+			-- if RQEFrame and RQEFrame:IsMouseOver() then
+				-- return
+			-- end
+		-- end
 
         local superQuest = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
         local extractedQuestID

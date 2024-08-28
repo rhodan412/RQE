@@ -1098,13 +1098,13 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
-			-- Check if the player is in combat
-			if InCombatLockdown() then
-				-- If in combat, check if the mouse is over the RQEFrame
-				if RQEFrame and RQEFrame:IsMouseOver() then
-					return
-				end
-			end
+			-- -- Check if the player is in combat
+			-- if InCombatLockdown() then
+				-- -- If in combat, check if the mouse is over the RQEFrame
+				-- if RQEFrame and RQEFrame:IsMouseOver() then
+					-- return
+				-- end
+			-- end
 
 			-- Code for RWButton functionality here
 			C_Map.ClearUserWaypoint()

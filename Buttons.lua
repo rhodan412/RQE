@@ -418,9 +418,9 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 
     -- Securely handle the OnClick script
     RWButton:SetScript("OnClick", function()
-        if InCombatLockdown() then
-            return
-        end
+        -- if InCombatLockdown() then
+            -- return
+        -- end
 
         -- Clear the waypoint
         C_Map.ClearUserWaypoint()
