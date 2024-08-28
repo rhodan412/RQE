@@ -158,6 +158,12 @@ closeButton:SetScript("OnClick", function()
 end)
 
 
+-- DebugButtonClick function
+function RQE:DebugButtonClick(buttonName)
+    print(buttonName .. " clicked at " .. date("%H:%M:%S"))
+end
+
+
 -- Resize button
 local resizeButton = CreateFrame("Button", nil, logFrame)
 resizeButton:SetPoint("BOTTOMRIGHT", -6, 7)
