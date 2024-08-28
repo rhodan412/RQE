@@ -3,13 +3,28 @@
 		- Added RQE:CheckObjectiveProgress function for purposes of checking what stepIndex player should be on for a given quest
 		- Update to StartPeriodicChecks to include potential for CheckDBObjectiveStatus in the RQEDatabase
 
+	DebugLog.lua
+		- Added debug coding for button click checks (disabled for players as not relevant)
+
 	DatabaseMain.lua
 	RQEDatabase.lua
 		- Include WarWithin for examining of information from the RQEDatabase
+		- Added campaign quests through Isle of Dorn and part of The Ringing Deeps (including waypoints and macros)
 
 	EventManager.lua
 	RQEFrame.lua
 		- Update the content height of the RQEFrame after a brief delay following ADDON_LOADED and SUPER_TRACKING_CHANGED events in order to populate for quests with many steps
+		- Added RQE:UpdateContentSize to when using scrollwheel as some quests with >7 objectives were being cut off/hidden unless frame were resized
+		- Prevent WaypointButton (stepIndex# buttons) from being updated while in combat as may have been responsible for button passthru error
+
+	QuestingModule.lua
+		- Prevent WaypointButton (stepIndex# buttons) from being updated while in combat as may have been responsible for button passthru error
+
+	RQEMacro.lua
+		- Modified code for RQE.MagicButton macro
+
+	WPUtil.lua
+		- Prevent UnknownQuestButton "W" from being updated while in combat as may have been responsible for button passthru error
 
 
 11.0.2.26
