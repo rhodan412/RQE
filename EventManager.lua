@@ -1587,13 +1587,15 @@ function RQE.handleQuestAccepted(...)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QA 05 Debug: questMapID: " .. tostring(questMapID) .. " (" .. type(questMapID) .. ")", 0.46, 0.62, 1)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QA 06 Debug: playerMapID: " .. tostring(playerMapID) .. " (" .. type(playerMapID) .. ")", 0.46, 0.62, 1)
 
-        if isWorldQuest and not isManuallyTracked then
-            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-           -- DEFAULT_CHAT_FRAME:AddMessage("QA 07 Debug: Automatically added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
-        elseif isWorldQuest and isManuallyTracked then
-            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-           -- DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
-        end
+		if isWorldQuest and not isManuallyTracked then
+			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+			-- DEFAULT_CHAT_FRAME:AddMessage("QA 07 Debug: Automatically added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
+		elseif isWorldQuest and isManuallyTracked then
+			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+			-- DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
+		else
+			C_QuestLog.AddQuestWatch(questID)
+		end
 
         -- Reapply the manual super-tracked quest ID if it's set and different from the current one
         if RQE.ManualSuperTrack then
@@ -2835,12 +2837,12 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
-		if questID == advanceQuestID then
+		--if questID == advanceQuestID then
 			C_Timer.After(1, function()
 				RQE:StartPeriodicChecks()
 				-- DEFAULT_CHAT_FRAME:AddMessage("QWU 13 Debug: Checking and advancing step for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 			end)
-		end
+		--end
 	end
 
 	C_Timer.After(0.5, function()
