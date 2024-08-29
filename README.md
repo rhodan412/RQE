@@ -32,6 +32,7 @@ Limitations:
 
 Known Bugs:
 -----------
-* Scenario/Dungeon Objectives are not visible as Blizz never re-implemented/fixed this part of the API since 11.0 (it worked just fine before 11.0). If this starts to work again, I will make sure that this is put back into place
-* Tooltips don't contain quest rewards any longer (again this is an issue that started in 11.0 and I haven't been able to get this part going again)
-* Some (weekly JC quest in Valdrakken that requires you to craft four gems is the only one that I can think of) custom multi-step quests don't advance stages properly between the stage/waypoint buttons (numbered buttons in the Super-Track Frame) as you craft each of the gems. This means that the RQE Macro doesn't update unless you manually tick the stage button.
+~~* Scenario/Dungeon Objectives are not visible as Blizz never re-implemented/fixed this part of the API since 11.0 (it worked just fine before 11.0). If this starts to work again, I will make sure that this is put back into place~~ FIXED!
+~~* Tooltips don't contain quest rewards any longer (again this is an issue that started in 11.0 and I haven't been able to get this part going again)~~ FIX coming in next release (v11.0.2.30)!
+~~* ButtonSetPassThrough propagate error~~ FIX coming in next release (v11.0.2.30)!
+~~* Some (weekly JC quest in Valdrakken that requires you to craft four gems is the only one that I can think of) custom multi-step quests don't advance stages properly between the stage/waypoint buttons (numbered buttons in the Super-Track Frame) as you craft each of the gems. This means that the RQE Macro doesn't update unless you manually tick the stage button.~~ FIXED!
