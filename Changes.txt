@@ -1,8 +1,19 @@
-11.0.2.27b
-	- Reverted some code due to passthru error by commenting it out as this didn't fix the problem that came with 11.0 api passthru button changes
+11.0.2.28
+	EventManager.lua
+		- Added functionality to automatically track a quest when QUEST_ACCEPTED fires (not sure why this wasn't the case before)
 
+	RQEDatabase.lua
+		- 78715: updates to waypoints on consoles
+		- 80321: updates to waypoints for Khadgar's Portal in Dalaran before porting to Khaz Algar "shores"
+		- 78462: Added some more info to description
+
+
+11.0.2.27b
 	Core.lua
 		- Made it default that autoClickWaypointButton is true as this is of paramount importance in use of the walk thru guide!
+
+	Misc:
+		- Reverted some code due to passthru error by commenting it out as this didn't fix the problem that came with 11.0 api passthru button changes
 
 
 11.0.2.27
