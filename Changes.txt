@@ -1,3 +1,8 @@
+11.0.2.29
+	Core.lua
+		- Fix implemented following the API change from 11.0 where scenario criteria was no longer available
+
+
 11.0.2.28
 	EventManager.lua
 		- Added functionality to automatically track a quest when QUEST_ACCEPTED fires (not sure why this wasn't the case before)
