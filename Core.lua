@@ -1658,58 +1658,123 @@ end
 -- 10. Scenario Functions
 ---------------------------------------------------
 
--- Function to fetch/print Scenario Criteria information
-function RQE.PrintScenarioCriteriaInfo()
-    local numCriteria = select(3, C_Scenario.GetStepInfo())
-    if not numCriteria or numCriteria == 0 then
+-- -- Function to fetch/print Scenario Criteria information
+-- function RQE.PrintScenarioCriteriaInfo()
+    -- local numCriteria = select(3, C_Scenario.GetStepInfo())
+    -- if not numCriteria or numCriteria == 0 then
+        -- return
+    -- end
+    -- for criteriaIndex = 1, numCriteria do
+        -- local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
+        -- RQE.infoLog("Criteria Index:", criteriaIndex)
+        -- RQE.infoLog("Criteria String:", criteriaString or "N/A")
+        -- RQE.infoLog("Criteria Type:", criteriaType or "N/A")
+        -- RQE.infoLog("Completed:", completed)
+        -- RQE.infoLog("Quantity:", quantity or "N/A")
+        -- RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
+        -- RQE.infoLog("Flags:", flags or "N/A")
+        -- RQE.infoLog("Asset ID:", assetID or "N/A")
+        -- RQE.infoLog("Quantity String:", quantityString or "N/A")
+        -- RQE.infoLog("Criteria ID:", criteriaID or "N/A")
+        -- RQE.infoLog("Duration:", duration or "N/A")
+        -- RQE.infoLog("Elapsed:", elapsed or "N/A")
+        -- RQE.infoLog("Criteria Failed:", criteriaFailed)
+        -- RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
+    -- end
+-- end
+
+
+-- -- Function to fetch/print Scenario Criteria Step by Step
+-- function RQE.PrintScenarioCriteriaInfoByStep()
+    -- local currentStep, numSteps = C_Scenario.GetInfo()
+    -- for stepID = 1, numSteps do
+        -- local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
+        -- if not numCriteria or numCriteria == 0 then
+            -- print("No criteria info available for step", stepID)
+        -- else
+            -- for criteriaIndex = 1, numCriteria do
+                -- --local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
+                -- local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+                -- print("Step ID:", stepID)
+                -- print("Criteria String:", criteriaString or "N/A")
+                -- print("Criteria Type:", criteriaType or "N/A")
+                -- print("Completed:", completed)
+                -- print("Quantity:", quantity or "N/A")
+                -- print("Total Quantity:", totalQuantity or "N/A")
+                -- print("Flags:", flags or "N/A")
+                -- print("Asset ID:", assetID or "N/A")
+                -- print("Quantity String:", quantityString or "N/A")
+                -- print("Criteria ID:", criteriaID or "N/A")
+                -- print("Duration:", duration or "N/A")
+                -- print("Elapsed:", elapsed or "N/A")
+                -- print("Criteria Failed:", criteriaFailed)
+                -- print("Is Weighted Progress:", isWeightedProgress)
+            -- end
+        -- end
+    -- end
+-- end
+
+
+-- Function to fetch/print Scenario Criteria Step by Step updated for Patch 11.0
+function RQE.PrintAllScenarioBits()
+    -- Check if the player is currently in a scenario
+    if not C_Scenario.IsInScenario() then
+        print("Not currently in a scenario.")
         return
     end
-    for criteriaIndex = 1, numCriteria do
-        local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
-        RQE.infoLog("Criteria Index:", criteriaIndex)
-        RQE.infoLog("Criteria String:", criteriaString or "N/A")
-        RQE.infoLog("Criteria Type:", criteriaType or "N/A")
-        RQE.infoLog("Completed:", completed)
-        RQE.infoLog("Quantity:", quantity or "N/A")
-        RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
-        RQE.infoLog("Flags:", flags or "N/A")
-        RQE.infoLog("Asset ID:", assetID or "N/A")
-        RQE.infoLog("Quantity String:", quantityString or "N/A")
-        RQE.infoLog("Criteria ID:", criteriaID or "N/A")
-        RQE.infoLog("Duration:", duration or "N/A")
-        RQE.infoLog("Elapsed:", elapsed or "N/A")
-        RQE.infoLog("Criteria Failed:", criteriaFailed)
-        RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
+
+    -- Fetch general scenario information
+    local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+    if scenarioInfo then
+        print("Scenario Name: " .. scenarioInfo.name)
+        print("Current Stage: " .. scenarioInfo.currentStage .. " of " .. scenarioInfo.numStages)
+        print("Scenario Type: " .. scenarioInfo.type)
+        print("Scenario Flags: " .. scenarioInfo.flags)
+    else
+        print("No active scenario information available.")
+        return
     end
-end
 
+    -- Iterate through each step in the current scenario
+    local stepID = scenarioInfo.currentStage
+	local numCriteria = select(3, C_Scenario.GetStepInfo())
+    --local numCriteria = C_Scenario.GetNumCriteria() or 0
 
--- Function to fetch/print Scenario Criteria Step by Step
-function RQE.PrintScenarioCriteriaInfoByStep()
-    local currentStep, numSteps = C_Scenario.GetInfo()
-    for stepID = 1, numSteps do
-        local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
-        if not numCriteria or numCriteria == 0 then
-            print("No criteria info available for step", stepID)
-        else
-            for criteriaIndex = 1, numCriteria do
-                --local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
-                local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-                print("Step ID:", stepID)
-                print("Criteria String:", criteriaString or "N/A")
-                print("Criteria Type:", criteriaType or "N/A")
-                print("Completed:", completed)
-                print("Quantity:", quantity or "N/A")
-                print("Total Quantity:", totalQuantity or "N/A")
-                print("Flags:", flags or "N/A")
-                print("Asset ID:", assetID or "N/A")
-                print("Quantity String:", quantityString or "N/A")
-                print("Criteria ID:", criteriaID or "N/A")
-                print("Duration:", duration or "N/A")
-                print("Elapsed:", elapsed or "N/A")
-                print("Criteria Failed:", criteriaFailed)
-                print("Is Weighted Progress:", isWeightedProgress)
-            end
+    for criteriaIndex = 1, numCriteria do
+        -- Fetch criteria information using GetCriteriaInfo
+        local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+        if criteriaInfo then
+            print("Criteria " .. criteriaIndex .. ":")
+            print("  Description: " .. (criteriaInfo.description or ""))
+            print("  Type: " .. tostring(criteriaInfo.criteriaType))
+            print("  Completed: " .. tostring(criteriaInfo.completed))
+            print("  Quantity: " .. tostring(criteriaInfo.quantity) .. " / " .. tostring(criteriaInfo.totalQuantity))
+            print("  Flags: " .. tostring(criteriaInfo.flags))
+            print("  Asset ID: " .. tostring(criteriaInfo.assetID))
+            print("  Criteria ID: " .. tostring(criteriaInfo.criteriaID))
+            print("  Duration: " .. tostring(criteriaInfo.duration))
+            print("  Elapsed: " .. tostring(criteriaInfo.elapsed))
+            print("  Failed: " .. tostring(criteriaInfo.failed))
+            print("  Is Weighted Progress: " .. tostring(criteriaInfo.isWeightedProgress))
+            print("  Is Formatted: " .. tostring(criteriaInfo.isFormatted))
+        end
+
+        -- Fetch criteria information using GetCriteriaInfoByStep
+        local criteriaInfoByStep = C_ScenarioInfo.GetCriteriaInfoByStep(stepID, criteriaIndex)
+        if criteriaInfoByStep then
+            print("Criteria By Step " .. criteriaIndex .. ":")
+            print("  Description: " .. (criteriaInfoByStep.description or ""))
+            print("  Type: " .. tostring(criteriaInfoByStep.criteriaType))
+            print("  Completed: " .. tostring(criteriaInfoByStep.completed))
+            print("  Quantity: " .. tostring(criteriaInfoByStep.quantity) .. " / " .. tostring(criteriaInfoByStep.totalQuantity))
+            print("  Flags: " .. tostring(criteriaInfoByStep.flags))
+            print("  Asset ID: " .. tostring(criteriaInfoByStep.assetID))
+            print("  Criteria ID: " .. tostring(criteriaInfoByStep.criteriaID))
+            print("  Duration: " .. tostring(criteriaInfoByStep.duration))
+            print("  Elapsed: " .. tostring(criteriaInfoByStep.elapsed))
+            print("  Failed: " .. tostring(criteriaInfoByStep.failed))
+            print("  Is Weighted Progress: " .. tostring(criteriaInfoByStep.isWeightedProgress))
+            print("  Is Formatted: " .. tostring(criteriaInfoByStep.isFormatted))
         end
     end
 end

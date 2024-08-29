@@ -929,25 +929,25 @@ end
 function RQE.UpdateScenarioFrame()
     -- Get the full scenario information once at the beginning of the function
     local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
-    local scenarioStepInfo = C_Scenario.GetStepInfo()
-    local _, _, numCriteria = C_Scenario.GetStepInfo()
+    local scenarioStepInfo = C_ScenarioInfo.GetScenarioInfo()
+	local numCriteria = select(3, C_Scenario.GetStepInfo())
 
     -- Assuming currentStage is the stepID list first criteria
-    local stepID = currentStage
+    local stepID = scenarioStepInfo.currentStage
     local criteriaIndex = 1
-    local criteriaInfo = {C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)}
-    local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
+    local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+    --local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
 
-    RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
-    RQE.infoLog("[UpdateScenarioFrame, String] Elapsed is " .. tostring(elapsed))
+    -- RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
+    -- RQE.infoLog("[UpdateScenarioFrame, String] Elapsed is " .. tostring(elapsed))
 
-    -- Check if we have valid timer information
-    if duration and elapsed then
-        local timeLeft = duration - elapsed
-        RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-    else
-        RQE.ScenarioChildFrame.timer:SetText("")
-    end
+    -- -- Check if we have valid timer information
+    -- if duration and elapsed then
+        -- local timeLeft = duration - elapsed
+        -- RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+    -- else
+        -- RQE.ScenarioChildFrame.timer:SetText("")
+    -- end
 
     -- Check if we have valid scenario information
     if scenarioStepInfo and type(scenarioStepInfo) == "table" then
@@ -971,32 +971,21 @@ function RQE.UpdateScenarioFrame()
 
         -- Update the main frame with criteria
         local criteriaText = ""
+        -- Iterate through each criteria and collect information
         for criteriaIndex = 1, numCriteria do
-            local criteriaInfo = {C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)}
-            local criteriaString = criteriaInfo[1]
-            local completed = criteriaInfo[3]
-            local quantity = criteriaInfo[4] or 0
-            local totalQuantity = criteriaInfo[5]
+            local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 
-            -- Ensure criteriaString is a string
-            if type(criteriaString) == "table" then
-                criteriaString = table.concat(criteriaString, ", ")
-            else
-                criteriaString = tostring(criteriaString)
-            end
+            if criteriaInfo then
+                local description = criteriaInfo.description or "No description available"
+                local quantity = criteriaInfo.quantity or 0
+                local totalQuantity = criteriaInfo.totalQuantity or 0
+                local completed = criteriaInfo.completed or false
 
-            -- Add checks to handle cases where quantity or totalQuantity might be nil or zero
-            if totalQuantity then
+                -- Format the criteria text
                 if completed then
-                    criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")" .. "|r\n" -- Green color for completed
+                    criteriaText = criteriaText .. "|cff00ff00" .. quantity .. " / " .. totalQuantity .. " " .. description .. "|r\n" -- Green color for completed
                 else
-                    criteriaText = criteriaText .. criteriaString .. " (" .. quantity .. "/" .. totalQuantity .. ")\n" -- Default color for not completed
-                end
-            else
-                if completed then
-                    criteriaText = criteriaText .. "|cff00ff00" .. criteriaString .. "|r\n" -- Green color for completed
-                else
-                    criteriaText = criteriaText .. criteriaString .. "\n" -- Default color for not completed
+                    criteriaText = criteriaText .. quantity .. " / " .. totalQuantity .. " " .. description .. "\n" -- Default color for not completed
                 end
             end
         end
