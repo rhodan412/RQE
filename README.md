@@ -47,5 +47,11 @@ The ability to search through different filters such as specific campaign quests
 <img width="860" alt="RQE with TomTom" src="https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c">
 Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
 
+<img width="788" alt="RQE_Quest_Tooltip" src="https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d">
+Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame')
+
 <img width="1920" alt="RQE search function" src="https://github.com/user-attachments/assets/636ae204-33e9-4973-b791-e4d14116aeb2">
 Search for specific quests whether you are on the quest or not
+
+<img width="1179" alt="Scenario Tracker Dungeon Progress" src="https://github.com/user-attachments/assets/84f7e7b2-f44a-4c0a-b09c-791150c8429d">
+View your teams progress on a dungeon or scenario to find out which bosses remain
