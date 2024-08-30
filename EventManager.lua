@@ -636,6 +636,33 @@ end
 function RQE.handlePlayerRegenEnabled()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 
+	-- Check and execute any deferred RQE:QuestType() to update frames
+	if RQE.QuestTypeFlagOutOfCombat then
+		RQE:QuestType()
+	end
+
+	-- Check and execute any deferred RQEQuestFrame anchor point updates
+	if RQE.MainFrameResetWidths then
+		AdjustRQEFrameWidths()
+	end
+
+	
+	-- Check and execute any deferred RQEQuestFrame anchor point updates
+	if RQE.QuestFrameResetUpdatePoints then
+		RQE.RQEQuestFrameSetChildFramePoints()
+	end
+
+	-- Check and execute any deferred updates to the child frame positions based on lastElements after combat ends
+	if RQE.UpdateChildFramePositionsOutsideCombat then
+		UpdateRQEQuestFrame()	-- obtain code for the elements within the following function call
+		UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+	end
+
+	-- Check and execute any deferred updates to the child frame anchors after combat ends
+	if RQE.UpdateChildFrameAnchorsOutsideCombat then
+		UpdateFrameAnchors()
+	end
+
     -- Check and execute any deferred scenario updates
     if RQE.deferredScenarioCriteriaUpdate then
 		--RQE.canUpdateFromCriteria = true
@@ -793,7 +820,6 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 			C_SuperTrack.SetSuperTrackedQuestID(superTrackedQuestID)	-- Re-apply the super tracking to refresh
 		end
 	end
-
 
     -- Initialize the saved variable if it doesn't exist
     RQE_TrackedAchievements = RQE_TrackedAchievements or {}
@@ -1933,30 +1959,28 @@ function RQE.handleUnitAura(...)
 		if RQE.HasDragonraceAura() or RQE.PlayerMountStatus ~= "Taxi" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			if not questID then
-				RQE.debugLog("No super tracked quest ID found, skipping aura checks.")
 				return
 			end
 
 			local questData = RQE.getQuestData(questID)
 			if not questData then
-				RQE.debugLog("No quest data available for quest ID:", questID)
 				return
 			end
 
 			if RQE.LastClickedButtonRef == nil then return end
 			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if not stepData then
-				RQE.debugLog("No step data available for quest ID:", questID)
 				return
 			end
 
 			-- Process 'funct' for buffs or debuffs if specified
 			if stepData and stepData.funct then
 				if string.find(stepData.funct, "CheckDBBuff") or string.find(stepData.funct, "CheckDBDebuff") then
-					RQE[stepData.funct](questID, stepIndex)
+					if type(RQE[stepData.funct]) == "function" then
+						RQE[stepData.funct](questID, stepIndex)
+					end
 				end
 			end
 
@@ -1976,9 +2000,6 @@ function RQE.handleUnitAura(...)
 					C_Timer.After(0.5, function()
 						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
 							RQE.WaypointButtons[failedIndex]:Click()
-							RQE.debugLog("Aura check failed, moving to step:", failedIndex)
-						else
-							RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
 						end
 					end)
 				end
@@ -1986,6 +2007,7 @@ function RQE.handleUnitAura(...)
 		end
 	end
 end
+
 
 
 -- Handles UNIT_QUEST_LOG_CHANGED event:
