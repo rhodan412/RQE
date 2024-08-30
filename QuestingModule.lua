@@ -716,7 +716,7 @@ end
 -- 7. Utility Functions
 ---------------------------
 
--- [Utility functions like AdjustQuestItemWidths, SaveQuestFramePosition, colorizeObjectives, RQE:QuestRewardsTooltip, etc.]
+-- [Utility functions like AdjustQuestItemWidths, SaveQuestFramePosition, RQE.colorizeObjectivesfromQM, RQE:QuestRewardsTooltip, etc.]
 
 -- Function to create and position the ScrollFrame's child frames
 local function shouldSortQuests()
@@ -1147,7 +1147,12 @@ end
 
 
 -- Function to Colorize the Quest Tracker Module based on objective progress using the API
-local function colorizeObjectives(questID)
+function RQE.colorizeObjectivesfromQM(questID)
+	if InCombatLockdown() then
+		RQE.colorizeObjectivesfromQMAfterCombat = true
+		return
+	end
+
     local objectivesData = C_QuestLog.GetQuestObjectives(questID)
     local colorizedText = ""
 
@@ -1169,6 +1174,7 @@ local function colorizeObjectives(questID)
         colorizedText = "Objective data unavailable."  -- Default text or handle as needed
     end
 
+	RQE.colorizeObjectivesfromQMAfterCombat = false
     return colorizedText
 end
 
@@ -1855,7 +1861,7 @@ function UpdateRQEQuestFrame()
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine("Objectives:")
 
-						local colorizedObjectives = colorizeObjectives(questID)
+						local colorizedObjectives = RQE.colorizeObjectivesfromQM(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 						GameTooltip:AddLine(" ")
 					end
@@ -1950,7 +1956,7 @@ function UpdateRQEQuestFrame()
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine("Objectives:")
 
-						local colorizedObjectives = colorizeObjectives(questID)
+						local colorizedObjectives = RQE.colorizeObjectivesfromQM(questID)
 						GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 						GameTooltip:AddLine(" ")
 					end
@@ -2009,7 +2015,7 @@ function UpdateRQEQuestFrame()
 				-- Check if objectivesText is blank
 				if objectivesText and objectivesText ~= "" then
 					-- Colorize each objective individually
-					local colorizedObjectives = colorizeObjectives(questID)
+					local colorizedObjectives = RQE.colorizeObjectivesfromQM(questID)
 					QuestObjectivesOrDescription:SetText(colorizedObjectives)
 				else
 					-- If there are no objectives, set the text as is (fallback)
@@ -2256,7 +2262,7 @@ function UpdateRQEWorldQuestFrame()
 			end
 
 			-- Apply colorization to objectivesText
-			objectivesText = colorizeObjectives(questID)
+			objectivesText = RQE.colorizeObjectivesfromQM(questID)
 
 			-- Create or update the quest title label
 			local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2432,7 +2438,7 @@ function UpdateRQEWorldQuestFrame()
 				if objectivesText and objectivesText ~= "" then
 					GameTooltip:AddLine("Objectives:")
 
-					local colorizedObjectives = colorizeObjectives(questID)
+					local colorizedObjectives = RQE.colorizeObjectivesfromQM(questID)
 					GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)
 					GameTooltip:AddLine(" ")
 				end
