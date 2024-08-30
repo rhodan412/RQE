@@ -325,12 +325,7 @@ RQE.UnknownQuestButtonMouseUp()
 
 
 -- Function to Colorize the RQEFrame Quest Helper Module
-function RQE.colorizeObjectivesfromRQEF(questID)
-	if InCombatLockdown() then
-		RQE.colorizeObjectivesfromRQEFAfterCombat = true
-		return
-	end
-
+local function colorizeObjectives(questID)
     local objectivesData = C_QuestLog.GetQuestObjectives(questID)
     local colorizedText = ""
 
@@ -348,7 +343,6 @@ function RQE.colorizeObjectivesfromRQEF(questID)
         end
     end
 
-	RQE.colorizeObjectivesfromRQEFAfterCombat = false
     return colorizedText
 end
 
@@ -772,7 +766,7 @@ local function CreateQuestTooltip(frame, questID)
             objectivesText = objectivesText .. objective.text .. "\n"
         end
 
-        local colorizedObjectives = RQE.colorizeObjectivesfromRQEF(questID)
+        local colorizedObjectives = colorizeObjectives(questID)
         GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)  -- true for wrap
 		GameTooltip:AddLine(" ")
     end

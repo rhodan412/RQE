@@ -439,13 +439,8 @@ function RQE.handleItemCountChanged(...)
 													end
 												end
 											else
-												if InCombatLockdown() then
-													print("Lockdown in Progress, can't call RQE.WaypointButtons[failedIndex]:Click() yet! Please program and execute a restart following free of combat!")
-													--return
-												else
-													RQE.WaypointButtons[failedIndex]:Click()
-													RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
-												end
+												RQE.WaypointButtons[failedIndex]:Click()
+												RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
 											end
 										else
 											RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
@@ -640,56 +635,6 @@ end
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
-
-	-- Check and execute any deferred updating of the visibility of the RQEMacro button after combat ends
-	if RQE.UpdateMagicButtonVisibilityAfterCombat then
-		RQE.Buttons.UpdateMagicButtonVisibility()
-	end
-
-	-- Check and execute any deferred clearing of the RQEFrame
-	if RQE.ShouldClearFrameAfterCombat then
-		RQE:ShouldClearFrame()
-	end
-
-	-- Deferred delay clearing of RQEFrame
-	if RQE.DelayedClearCheckAfterCombat then
-		RQE:DelayedClearCheck()
-	end
-
-	-- Check and execute any deferred updating of description and objectives
-	if RQE.UpdateQuestDescriptionAndObjectivesAfterCombat then
-		RQE.UpdateQuestDescriptionAndObjectives()
-	end
-	
-	-- Check and execute any deferred updating to the color of the objective text
-	if RQE.colorizeObjectivesfromCoreAfterCombat then
-		RQE.colorizeObjectivesfromCore()
-	end
-
-	-- Check and execute any deferred updating to the color of the objective text
-	if RQE.colorizeObjectivesfromRQEFAfterCombat then
-		RQE.colorizeObjectivesfromRQEF()
-	end
-
-	-- Check and execute any deferred updating to the color of the objective text
-	if RQE.colorizeObjectivesfromQMAfterCombat then
-		RQE.colorizeObjectivesfromQM()
-	end
-
-	-- Check and execute any deferred Check to update objectives table of super tracked quest
-	if RQE.UpdateFrameObjTableAfterCombat then
-		RQE.UpdateFrame_ObjectivesTable()
-	end
-
-	-- Check and execute any deferred Check to handle stepIndex and waypointButton that should be clicked
-	if RQE.StartPeriodicChecksAfterCombatNeeded then
-		RQE:StartPeriodicChecks()
-	end
-
-	-- Check and execute any deferred WaypointClicks
-	if RQE.InitWaypointSetPending then
-		RQE.SetInitialWaypointToOne()
-	end
 
 	-- Check and execute any deferred RQE:QuestType() to update frames
 	if RQE.QuestTypeFlagOutOfCombat then
@@ -1916,15 +1861,10 @@ function RQE.handleZoneNewAreaChange()
 
 				if stepData.failedfunc == "CheckDBZoneChange" and not table.includes(stepData.failedcheck, tostring(playerMapID)) then
 					C_Timer.After(0.5, function()
-						if InCombatLockdown() then
-							print("Lockdown in Progress, can't call ZONE_CHANGED_NEW_AREA's RQE.WaypointButtons[failedIndex]:Click() yet! Please program and execute a restart following free of combat!")
-							--return
+						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
+							RQE.WaypointButtons[failedIndex]:Click()
 						else
-							if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-								RQE.WaypointButtons[failedIndex]:Click()
-							else
-								RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
-							end
+							RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
 						end
 					end)
 				end
@@ -2058,13 +1998,8 @@ function RQE.handleUnitAura(...)
 				if not hasAura then
 					local failedIndex = stepData.failedIndex or stepIndex
 					C_Timer.After(0.5, function()
-						if InCombatLockdown() then
-							print("Lockdown in Progress, can't call UNIT_AURA's RQE.WaypointButtons[failedIndex]:Click() yet! Please program and execute a restart following free of combat!")
-							--return
-						else
-							if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-								RQE.WaypointButtons[failedIndex]:Click()
-							end
+						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
+							RQE.WaypointButtons[failedIndex]:Click()
 						end
 					end)
 				end

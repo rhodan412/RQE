@@ -290,7 +290,6 @@ end
 -- Update MagicButton based on macro content
 function RQE.Buttons.UpdateMagicButtonVisibility()
     if InCombatLockdown() then
-		RQE.UpdateMagicButtonVisibilityAfterCombat = true
         return
     end
 
@@ -315,8 +314,6 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
     else
         if MagicButton then MagicButton:Hide() end
     end
-
-	RQE.UpdateMagicButtonVisibilityAfterCombat = false
 end
 
 
