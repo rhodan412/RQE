@@ -332,6 +332,11 @@ end
 ---------------------------
 
 function UpdateFrameAnchors()
+    if InCombatLockdown() then
+		RQE.UpdateChildFrameAnchorsOutsideCombat = true
+        return
+    end
+
     -- Clear all points to prevent any previous anchoring affecting the new setup
     RQE.CampaignFrame:ClearAllPoints()
     RQE.QuestsFrame:ClearAllPoints()
@@ -377,6 +382,8 @@ function UpdateFrameAnchors()
     else
         RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
+
+	RQE.UpdateChildFrameAnchorsOutsideCombat = false
 end
 
 
@@ -426,6 +433,11 @@ end
 
 -- Adjust Set Point Anchor of Child Frames based on LastElements
 function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+    if InCombatLockdown() then
+		RQE.UpdateChildFramePositionsOutsideCombat = true
+        return
+    end
+
     -- Reset positions to default first
     ResetChildFramesToDefault()
 
@@ -475,6 +487,8 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
 	else
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
     end
+
+	RQE.UpdateChildFramePositionsOutsideCombat = false
 end
 
 
@@ -1158,8 +1172,98 @@ local function colorizeObjectives(questID)
     return colorizedText
 end
 
-function RQE:QuestRewardsTooltip(questID)
-	-- This code will be readded once I can get API working against
+
+-- Populates the Game Tooltip with Quest Reward information when hovering over a quest
+function RQE:QuestRewardsTooltip(tooltip, questID)
+	-- Reward Qualities
+	local customItemQualityColors = {
+		[0] = { r = 0.62, g = 0.62, b = 0.62 },  -- Poor (grey)
+		[1] = { r = 1.00, g = 1.00, b = 1.00 },  -- Common (white)
+		[2] = { r = 0.12, g = 1.00, b = 0.00 },  -- Uncommon (green)
+		[3] = { r = 0.00, g = 0.44, b = 0.87 },  -- Rare (blue)
+		[4] = { r = 0.64, g = 0.21, b = 0.93 },  -- Epic (purple)
+		[5] = { r = 1.00, g = 0.50, b = 0.00 },  -- Legendary (orange)
+		-- Add more custom colors for higher qualities as needed
+	}
+
+    -- Retrieve the quest rewards data
+    local rewardXP = GetQuestLogRewardXP(questID)
+    local rewardMoney = GetQuestLogRewardMoney(questID)
+    local rewardArtifactXP = GetQuestLogRewardArtifactXP(questID)
+    local rewardItemsCount = GetNumQuestLogRewards(questID)
+    local choiceItemsCount = GetNumQuestLogChoices(questID, true)
+    local reputationRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
+
+    -- Determine if there are multiple choice rewards
+    if choiceItemsCount > 0 then
+        if choiceItemsCount == 1 then
+            tooltip:AddLine("You will receive:")
+        else
+            tooltip:AddLine("Choose one of the following rewards:")
+        end
+
+        -- Add choice rewards to the tooltip
+        for i = 1, choiceItemsCount do
+            local itemName, itemTexture, numItems, quality, isUsable = GetQuestLogChoiceInfo(i)
+            if itemName then
+                local text = numItems > 1 and (numItems .. "x " .. itemName) or itemName
+                local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }  -- Default to white if no match
+                tooltip:AddLine(text, color.r, color.g, color.b)
+            end
+        end
+    end
+
+    -- Check if there are any unconditional rewards
+    if rewardXP > 0 or rewardMoney > 0 or rewardArtifactXP > 0 or rewardItemsCount > 0 or (reputationRewards and #reputationRewards > 0) then
+		if choiceItemsCount > 0 then
+			tooltip:AddLine(" ")
+			tooltip:AddLine("Additional rewards:")
+		else
+			tooltip:AddLine("Rewards:")
+		end
+
+        -- Add experience reward
+        if rewardXP > 0 then
+            tooltip:AddLine("XP: " .. FormatLargeNumber(rewardXP), 1, 1, 1)
+        end
+
+        -- Add money reward
+        if rewardMoney > 0 then
+            tooltip:AddLine("Gold: " .. GetCoinTextureString(rewardMoney), 1, 1, 1)
+        end
+
+        -- Add artifact power reward
+        if rewardArtifactXP > 0 then
+            tooltip:AddLine("Artifact Power: " .. FormatLargeNumber(rewardArtifactXP), 1, 1, 1)
+        end
+
+        -- Add item rewards
+        for i = 1, rewardItemsCount do
+            local itemName, itemTexture, numItems, quality, isUsable = GetQuestLogRewardInfo(i, questID)
+            if itemName then
+                local text = numItems > 1 and (numItems .. "x " .. itemName) or itemName
+                local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
+                tooltip:AddLine(text, color.r, color.g, color.b)
+            end
+        end
+
+        -- Add major faction reputation rewards
+        if reputationRewards and #reputationRewards > 0 then
+            for _, reward in ipairs(reputationRewards) do
+                -- Fetch major faction data to get the faction name
+                local majorFactionData = C_MajorFactions.GetMajorFactionData(reward.factionID)
+                local factionName = majorFactionData and majorFactionData.name or ("Faction ID " .. reward.factionID)
+                
+                -- Display the reputation reward with the faction name
+				tooltip:AddLine(" ")
+                tooltip:AddLine("Reputation:")
+				tooltip:AddLine(factionName .. ": " .. reward.rewardAmount, 0, 1, 0)
+            end
+        end
+    end
+
+    -- Finalize the tooltip
+    tooltip:Show()
 end
 
 
@@ -1236,6 +1340,11 @@ end
 
 -- Function to determine if each quest belongs to World Quest or Non-World Quest
 function RQE:QuestType()
+	if not InCombatLockdown() then
+		RQE.QuestTypeFlagOutOfCombat = true
+		return
+	end
+
     local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
     local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
     local regularQuestUpdated = false
@@ -1264,6 +1373,77 @@ function RQE:QuestType()
     if worldQuestUpdated then
         UpdateRQEWorldQuestFrame()
     end
+
+	RQE.QuestTypeFlagOutOfCombat = false
+end
+
+
+-- Function to set anchor points for frames safely
+function RQE.RQEQuestFrameSetChildFramePoints()
+	-- Prevent setting of anchor points when in combat
+    if InCombatLockdown() then
+		RQE.QuestFrameResetUpdatePoints = true
+		return
+	end
+
+	-- Create the Set Point for the Regular Quests Child Frame
+    if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
+        -- If CampaignFrame is present and shown, anchor QuestsFrame to CampaignFrame
+        RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If CampaignFrame is not shown but ScenarioChildFrame is, anchor QuestsFrame to ScenarioChildFrame
+        RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        -- If neither is present or shown, anchor QuestsFrame to content
+        RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+	-- Create the Set Point for the World Quests Child Frame
+    if RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
+        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
+        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
+        -- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
+        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
+        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        -- If no other frames are present or shown, anchor WorldQuestsFrame to content
+        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+	-- Create the Set Point for the World Quests Child Frame
+    if RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
+        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
+        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
+        -- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
+    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+        -- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+    else
+        -- If no other frames are present or shown, anchor WorldQuestsFrame to content
+        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+        RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+    end
+
+	RQE.QuestFrameResetUpdatePoints = false
 end
 
 
@@ -1339,62 +1519,8 @@ function UpdateRQEQuestFrame()
     -- Create a variable to hold the last QuestObjectivesOrDescription
     local lastQuestObjectivesOrDescription = nil
 
-	-- Create the Set Point for the Regular Quests Child Frame
-    if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-        -- If CampaignFrame is present and shown, anchor QuestsFrame to CampaignFrame
-        RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
-    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        -- If CampaignFrame is not shown but ScenarioChildFrame is, anchor QuestsFrame to ScenarioChildFrame
-        RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    else
-        -- If neither is present or shown, anchor QuestsFrame to content
-        RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-
-	-- Create the Set Point for the World Quests Child Frame
-    if RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
-        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -30)
-    elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-        -- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
-        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
-    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        -- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
-        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    else
-        -- If no other frames are present or shown, anchor WorldQuestsFrame to content
-        RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
-
-	-- Create the Set Point for the World Quests Child Frame
-    if RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
-        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -30)
-    elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-        -- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
-        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -30)
-    elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-        -- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
-        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -30)
-    elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-        -- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
-        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-    else
-        -- If no other frames are present or shown, anchor WorldQuestsFrame to content
-        RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
-        RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    end
+	-- Calls function to set anchors for the child frames within the RQEQuestFrame to prevent propagate error from continuing to fire off
+	RQE.RQEQuestFrameSetChildFramePoints()
 
     -- Separate variables to track the last element in each child frame
     local lastCampaignElement, lastQuestElement, lastWorldQuestElement = nil, nil, nil
@@ -1472,14 +1598,6 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
-					-- -- Check if the player is in combat
-					-- if InCombatLockdown() then
-						-- -- If in combat, check if the mouse is over the RQEFrame
-						-- if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver() then
-							-- return
-						-- end
-					-- end
-
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
@@ -1495,13 +1613,8 @@ function UpdateRQEQuestFrame()
 						end
 
 						-- Refresh the UI here to update the button state
-						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 					else
-						--RQE.lastKnownInventory = {}
-						--RQE.OverrideHasProgress = true
-						--RQE.AutoWaypointHasBeenClicked = false
-
 						if RQE.hoveringOnFrame then
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
@@ -1518,7 +1631,6 @@ function UpdateRQEQuestFrame()
 						end
 
 						-- Simulates click of the "W" Button and then the Waypoint Button[1] to start to ensure correct waypoint coord creation
-						--RQE.ClickUnknownQuestButton()
 						RQE.SetInitialWaypointToOne()
 
 						-- Scrolls the RQEFrame to top on super track
@@ -1529,9 +1641,6 @@ function UpdateRQEQuestFrame()
 
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-
-						-- Clicks Waypoint Button if autoClickWaypointButton is true
-						--RQE:AutoClickQuestLogIndexWaypointButton()   -- TEMPORARILY BEING DONE to decide if it gets removed or kept as waypoint button 1 wasn't being clicked on new QuestLogIndexButton press
 
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1570,7 +1679,6 @@ function UpdateRQEQuestFrame()
 						end)
 
 						-- Refresh the UI here to update the button state
-						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 
 						-- Check if MagicButton should be visible based on macro body
@@ -1642,8 +1750,11 @@ function UpdateRQEQuestFrame()
 				end
 				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
 				
-				QuestLogIndexButton:SetPropagateMouseClicks(true)
-				QuestLogIndexButton:SetPropagateMouseMotion(true)
+				-- Check if not in combat before setting propagate functions
+				if not InCombatLockdown() then
+					QuestLogIndexButton:SetPropagateMouseClicks(true)
+					QuestLogIndexButton:SetPropagateMouseMotion(true)
+				end
 
 				-- Set Justification and Word Wrap
 				QuestLevelAndName:SetJustifyH("LEFT")
@@ -1750,9 +1861,7 @@ function UpdateRQEQuestFrame()
 					end
 
 					-- Add Rewards
-					--GameTooltip:AddLine("Rewards: ")
-					--RQE:QuestRewardsTooltip(GameTooltip, questID)
-					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
+					RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
@@ -1847,9 +1956,7 @@ function UpdateRQEQuestFrame()
 					end
 
 					-- Add Rewards
-					--GameTooltip:AddLine("Rewards: ")
-					--RQE:QuestRewardsTooltip(GameTooltip, questID)
-					--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
+					RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
@@ -2331,9 +2438,7 @@ function UpdateRQEWorldQuestFrame()
 				end
 
 				-- Add Rewards
-				--GameTooltip:AddLine("Rewards: ")
-				--RQE:QuestRewardsTooltip(GameTooltip, questID)
-				--RQE:QuestRewardsTooltip(GameTooltip, questID, isBonus)
+				RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 				-- Add time left
 				local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
