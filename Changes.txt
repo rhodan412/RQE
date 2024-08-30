@@ -1,3 +1,26 @@
+11.0.2.30
+	Core.lua
+		- Set a number of flags to default values that will trigger if certain functions fire during an event while combat is in progress. That flag is then checked to re-run the paused function once combat terminates
+		- Sorted list of flags
+
+	EventManager.lua
+		- Fix to propagate error related to RQE:QuestTypes() firing during SUPER_TRACKING_CHANGED event - made so it would re-run function after combat ends
+		- Added additional checks after combat ends (PLAYER_REGEN_ENABLED event) to re-run functions if flag passes as true because an earlier attempt, during combat, was made to run said function
+
+	QuestingModule.lua
+		- Added Rewards Tooltip for the RQEFrame (SuperTrack quest frame) and the RQEQuestFrame (quest tracker)
+		- Fix to propagate error with setting anchor points (RQE.RQEQuestFrameSetChildFramePoints() function) of child frames while in combat (with reset flag after combat ends)
+		- Moved a number of lines of code dealing with child frame anchors of the RQEQuestFrame (scenario, campaign, regular, world quest, achievement) to function outside of previous UpdateRQEQuestFrame() function with call after combat flag/check
+		- Added code to prevent PropagateMouseClicks when combat is in process for QuestLogIndexButton button clicks
+
+	RQEDatabase.lua
+		- Added more quests, including for 2 of the 3 campaign chapters for "The Ringing Deeps" zone
+
+
+	RQEFrame.lua
+		- Set code/checks to prevent/delay adjustment of frame width of the RQEFrame (SuperTrack frame) to run after combat ends, should they be called when combat is in process
+
+
 11.0.2.29
 	Core.lua
 	QuestingModule.lua
