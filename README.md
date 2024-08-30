@@ -44,6 +44,9 @@ Receive guidance step-by-step as you navigate quests in the add-on's database of
 Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
 ![Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests).](https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c)
 
+Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame')
+![Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame').](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
+
 Tooltips to help provide additional information
 ![Tooltips to help provide additional information.](https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968)
 
@@ -52,9 +55,6 @@ View your teams progress on a dungeon or scenario to find out which bosses remai
 
 The ability to search through different filters such as specific campaign quests, specific zone quests, completed quests and more
 ![The ability to search through different filters such as specific campaign quests, specific zone quests, completed quests and more.](https://github.com/user-attachments/assets/fa2af154-6c85-406d-bff3-496d132bfa20)
-
-Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame')
-![Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame').](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
 
 Search for specific quests whether you are on the quest or not
 ![Search for specific quests whether you are on the quest or not.](https://github.com/user-attachments/assets/636ae204-33e9-4973-b791-e4d14116aeb2)
