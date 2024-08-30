@@ -775,8 +775,7 @@ local function CreateQuestTooltip(frame, questID)
 		-- Add code for the Rewards tooltip if this is a searched quest
 	else
 		-- Add Rewards
-		--GameTooltip:AddLine("Rewards: ")
-		--RQE:QuestRewardsTooltip(questID)  -- Assuming RQE:QuestRewardsTooltip is defined
+		RQE:QuestRewardsTooltip(GameTooltip, questID)
 	end
 
 	-- Party Members' Quest Progress
@@ -883,6 +882,11 @@ end
 
 -- Function used to adjust the RQE Frame width
 function AdjustRQEFrameWidths(newWidth)
+    if InCombatLockdown() then
+		RQE.MainFrameResetWidths = true
+        return
+    end
+
     -- Use the current frame width if newWidth is not provided
     newWidth = newWidth or RQEFrame:GetWidth()
 
@@ -897,6 +901,8 @@ function AdjustRQEFrameWidths(newWidth)
     RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
     RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
     RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
+
+	RQE.MainFrameResetWidths = false
 end
 
 
