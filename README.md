@@ -32,3 +32,20 @@ Known Bugs:
 ~~* Scenario/Dungeon Objectives are not visible as Blizz never re-implemented/fixed this part of the API since 11.0 (it worked just fine before 11.0). If this starts to work again, I will make sure that this is put back into place~~ FIXED
 ~~* Tooltips don't contain quest rewards any longer (again this is an issue that started in 11.0 and I haven't been able to get this part going again)~~ FIXED
 ~~* Some (weekly JC quest in Valdrakken that requires you to craft four gems is the only one that I can think of) custom multi-step quests don't advance stages properly between the stage/waypoint buttons (numbered buttons in the Super-Track Frame) as you craft each of the gems. This means that the RQE Macro doesn't update unless you manually tick the stage button.~~ FIXED
+
+Images:
+-------
+<img width="1273" alt="RQE ConfigFrame" src="https://github.com/user-attachments/assets/0f24e405-f535-4a13-8536-2a3784814e26">
+Navigate through different tabs to customize the RQE addon's frames, fonts, and color
+
+<img width="1686" alt="RQE quest tooltip" src="https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968">
+Tooltips to help provide additional information
+
+<img width="471" alt="RQE filter menu" src="https://github.com/user-attachments/assets/fa2af154-6c85-406d-bff3-496d132bfa20">
+The ability to search through different filters such as specific campaign quests, specific zone quests, completed quests and more
+
+<img width="860" alt="RQE with TomTom" src="https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c">
+Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
+
+<img width="1920" alt="RQE search function" src="https://github.com/user-attachments/assets/636ae204-33e9-4973-b791-e4d14116aeb2">
+Search for specific quests whether you are on the quest or not
