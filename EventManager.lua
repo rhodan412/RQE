@@ -151,43 +151,43 @@ local eventsToRegister = {
 -- On Event Handler
 local function HandleEvents(frame, event, ...)
     -- List of events to exclude from printing
-	-- local excludeEvents = {
-		-- ["ADDON_LOADED"] = true,
-		-- ["BAG_UPDATE"] = true,
-		-- ["CHAT_MSG_CHANNEL"] = true,
-		-- ["CHAT_MSG_LOOT"] = true,
-		-- ["COMPANION_UPDATE"] = true,
-		-- ["NAME_PLATE_CREATED"] = true,
-		-- ["NAME_PLATE_UNIT_ADDED"] = true,
-		-- ["NAME_PLATE_UNIT_REMOVED"] = true,
-		-- ["PLAYER_STARTED_MOVING"] = true,
-		-- ["PLAYER_STOPPED_MOVING"] = true,
-		-- ["UNIT_AURA"] = true,
-		-- ["UNIT_INVENTORY_CHANGED"] = true,
-		-- ["UNIT_SPELLCAST_RETICLE_CLEAR"] = true,
-		-- ["UNIT_SPELLCAST_RETICLE_TARGET"] = true,
-		-- ["UNIT_SPELLCAST_START"] = true,
-		-- ["UNIT_SPELLCAST_STOP"] = true,
-		-- ["UNIT_SPELLCAST_SUCCEEDED"] = true,
-		-- ["UPDATE_INVENTORY_DURABILITY"] = true,
-	-- }
+	local excludeEvents = {
+		["ADDON_LOADED"] = true,
+		["BAG_UPDATE"] = true,
+		["CHAT_MSG_CHANNEL"] = true,
+		["CHAT_MSG_LOOT"] = true,
+		["COMPANION_UPDATE"] = true,
+		["NAME_PLATE_CREATED"] = true,
+		["NAME_PLATE_UNIT_ADDED"] = true,
+		["NAME_PLATE_UNIT_REMOVED"] = true,
+		["PLAYER_STARTED_MOVING"] = true,
+		["PLAYER_STOPPED_MOVING"] = true,
+		["UNIT_AURA"] = true,
+		["UNIT_INVENTORY_CHANGED"] = true,
+		["UNIT_SPELLCAST_RETICLE_CLEAR"] = true,
+		["UNIT_SPELLCAST_RETICLE_TARGET"] = true,
+		["UNIT_SPELLCAST_START"] = true,
+		["UNIT_SPELLCAST_STOP"] = true,
+		["UNIT_SPELLCAST_SUCCEEDED"] = true,
+		["UPDATE_INVENTORY_DURABILITY"] = true,
+	}
 
-	-- -- Check if the event is not in the exclude list before printing
-	-- if not excludeEvents[event] then
-		-- print("EventHandler triggered with event:", event)  -- Print the event name
-		-- -- Print Event-specific Args
-		-- -- local args = {...}  -- Capture all arguments into a table
-		-- -- for i, arg in ipairs(args) do
-			-- -- if type(arg) == "table" then
-				-- -- print("Arg " .. i .. ": (table)")
-				-- -- for k, v in pairs(arg) do
-					-- -- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- -- end
-			-- -- else
-				-- -- print("Arg " .. i .. ": " .. tostring(arg))
-			-- -- end
-		-- -- end
-	-- end
+	-- Check if the event is not in the exclude list before printing
+	if not excludeEvents[event] then
+		print("EventHandler triggered with event:", event)  -- Print the event name
+		-- Print Event-specific Args
+		-- local args = {...}  -- Capture all arguments into a table
+		-- for i, arg in ipairs(args) do
+			-- if type(arg) == "table" then
+				-- print("Arg " .. i .. ": (table)")
+				-- for k, v in pairs(arg) do
+					-- print("  " .. tostring(k) .. ": " .. tostring(v))
+				-- end
+			-- else
+				-- print("Arg " .. i .. ": " .. tostring(arg))
+			-- end
+		-- end
+	end
 
     local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
@@ -439,8 +439,13 @@ function RQE.handleItemCountChanged(...)
 													end
 												end
 											else
-												RQE.WaypointButtons[failedIndex]:Click()
-												RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
+												if InCombatLockdown() then
+													print("Lockdown in Progress, can't call RQE.WaypointButtons[failedIndex]:Click() yet! Please program and execute a restart following free of combat!")
+													--return
+												else
+													RQE.WaypointButtons[failedIndex]:Click()
+													RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
+												end
 											end
 										else
 											RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
@@ -635,6 +640,56 @@ end
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
+
+	-- Check and execute any deferred updating of the visibility of the RQEMacro button after combat ends
+	if RQE.UpdateMagicButtonVisibilityAfterCombat then
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end
+
+	-- Check and execute any deferred clearing of the RQEFrame
+	if RQE.ShouldClearFrameAfterCombat then
+		RQE:ShouldClearFrame()
+	end
+
+	-- Deferred delay clearing of RQEFrame
+	if RQE.DelayedClearCheckAfterCombat then
+		RQE:DelayedClearCheck()
+	end
+
+	-- Check and execute any deferred updating of description and objectives
+	if RQE.UpdateQuestDescriptionAndObjectivesAfterCombat then
+		RQE.UpdateQuestDescriptionAndObjectives()
+	end
+	
+	-- Check and execute any deferred updating to the color of the objective text
+	if RQE.colorizeObjectivesfromCoreAfterCombat then
+		RQE.colorizeObjectivesfromCore()
+	end
+
+	-- Check and execute any deferred updating to the color of the objective text
+	if RQE.colorizeObjectivesfromRQEFAfterCombat then
+		RQE.colorizeObjectivesfromRQEF()
+	end
+
+	-- Check and execute any deferred updating to the color of the objective text
+	if RQE.colorizeObjectivesfromQMAfterCombat then
+		RQE.colorizeObjectivesfromQM()
+	end
+
+	-- Check and execute any deferred Check to update objectives table of super tracked quest
+	if RQE.UpdateFrameObjTableAfterCombat then
+		RQE.UpdateFrame_ObjectivesTable()
+	end
+
+	-- Check and execute any deferred Check to handle stepIndex and waypointButton that should be clicked
+	if RQE.StartPeriodicChecksAfterCombatNeeded then
+		RQE:StartPeriodicChecks()
+	end
+
+	-- Check and execute any deferred WaypointClicks
+	if RQE.InitWaypointSetPending then
+		RQE.SetInitialWaypointToOne()
+	end
 
 	-- Check and execute any deferred RQE:QuestType() to update frames
 	if RQE.QuestTypeFlagOutOfCombat then
@@ -1861,10 +1916,15 @@ function RQE.handleZoneNewAreaChange()
 
 				if stepData.failedfunc == "CheckDBZoneChange" and not table.includes(stepData.failedcheck, tostring(playerMapID)) then
 					C_Timer.After(0.5, function()
-						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-							RQE.WaypointButtons[failedIndex]:Click()
+						if InCombatLockdown() then
+							print("Lockdown in Progress, can't call ZONE_CHANGED_NEW_AREA's RQE.WaypointButtons[failedIndex]:Click() yet! Please program and execute a restart following free of combat!")
+							--return
 						else
-							RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
+							if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
+								RQE.WaypointButtons[failedIndex]:Click()
+							else
+								RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
+							end
 						end
 					end)
 				end
@@ -1998,8 +2058,13 @@ function RQE.handleUnitAura(...)
 				if not hasAura then
 					local failedIndex = stepData.failedIndex or stepIndex
 					C_Timer.After(0.5, function()
-						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-							RQE.WaypointButtons[failedIndex]:Click()
+						if InCombatLockdown() then
+							print("Lockdown in Progress, can't call UNIT_AURA's RQE.WaypointButtons[failedIndex]:Click() yet! Please program and execute a restart following free of combat!")
+							--return
+						else
+							if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
+								RQE.WaypointButtons[failedIndex]:Click()
+							end
 						end
 					end)
 				end
