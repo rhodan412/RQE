@@ -1,3 +1,18 @@
+11.0.2.31
+	Buttons.lua
+	Core.lua
+		- Fix of error stemming from UpdateFrame function, in Core.lua that some bits weren't allowed to be fired in combat - this this function is now fixed
+		- Updated function name for the colorize objective function in Core
+
+	EventManager.lua
+		- Added flags to be checked following combat ending to see if functions need to be run that were attempted to have been run while combat took place
+
+	QuestingModule.lua
+	RQEFrame.lua
+		- Updated function name for the colorize objective function
+		- Added InCombatLocked at top of colorize function located here
+
+
 11.0.2.30
 	Core.lua
 		- Set a number of flags to default values that will trigger if certain functions fire during an event while combat is in progress. That flag is then checked to re-run the paused function once combat terminates
