@@ -151,43 +151,43 @@ local eventsToRegister = {
 -- On Event Handler
 local function HandleEvents(frame, event, ...)
     -- List of events to exclude from printing
-	local excludeEvents = {
-		["ADDON_LOADED"] = true,
-		["BAG_UPDATE"] = true,
-		["CHAT_MSG_CHANNEL"] = true,
-		["CHAT_MSG_LOOT"] = true,
-		["COMPANION_UPDATE"] = true,
-		["NAME_PLATE_CREATED"] = true,
-		["NAME_PLATE_UNIT_ADDED"] = true,
-		["NAME_PLATE_UNIT_REMOVED"] = true,
-		["PLAYER_STARTED_MOVING"] = true,
-		["PLAYER_STOPPED_MOVING"] = true,
-		["UNIT_AURA"] = true,
-		["UNIT_INVENTORY_CHANGED"] = true,
-		["UNIT_SPELLCAST_RETICLE_CLEAR"] = true,
-		["UNIT_SPELLCAST_RETICLE_TARGET"] = true,
-		["UNIT_SPELLCAST_START"] = true,
-		["UNIT_SPELLCAST_STOP"] = true,
-		["UNIT_SPELLCAST_SUCCEEDED"] = true,
-		["UPDATE_INVENTORY_DURABILITY"] = true,
-	}
+	-- local excludeEvents = {
+		-- ["ADDON_LOADED"] = true,
+		-- ["BAG_UPDATE"] = true,
+		-- ["CHAT_MSG_CHANNEL"] = true,
+		-- ["CHAT_MSG_LOOT"] = true,
+		-- ["COMPANION_UPDATE"] = true,
+		-- ["NAME_PLATE_CREATED"] = true,
+		-- ["NAME_PLATE_UNIT_ADDED"] = true,
+		-- ["NAME_PLATE_UNIT_REMOVED"] = true,
+		-- ["PLAYER_STARTED_MOVING"] = true,
+		-- ["PLAYER_STOPPED_MOVING"] = true,
+		-- ["UNIT_AURA"] = true,
+		-- ["UNIT_INVENTORY_CHANGED"] = true,
+		-- ["UNIT_SPELLCAST_RETICLE_CLEAR"] = true,
+		-- ["UNIT_SPELLCAST_RETICLE_TARGET"] = true,
+		-- ["UNIT_SPELLCAST_START"] = true,
+		-- ["UNIT_SPELLCAST_STOP"] = true,
+		-- ["UNIT_SPELLCAST_SUCCEEDED"] = true,
+		-- ["UPDATE_INVENTORY_DURABILITY"] = true,
+	-- }
 
-	-- Check if the event is not in the exclude list before printing
-	if not excludeEvents[event] then
-		print("EventHandler triggered with event:", event)  -- Print the event name
-		-- Print Event-specific Args
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	end
+	-- -- Check if the event is not in the exclude list before printing
+	-- if not excludeEvents[event] then
+		-- print("EventHandler triggered with event:", event)  -- Print the event name
+		-- -- Print Event-specific Args
+		-- -- local args = {...}  -- Capture all arguments into a table
+		-- -- for i, arg in ipairs(args) do
+			-- -- if type(arg) == "table" then
+				-- -- print("Arg " .. i .. ": (table)")
+				-- -- for k, v in pairs(arg) do
+					-- -- print("  " .. tostring(k) .. ": " .. tostring(v))
+				-- -- end
+			-- -- else
+				-- -- print("Arg " .. i .. ": " .. tostring(arg))
+			-- -- end
+		-- -- end
+	-- end
 
     local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
