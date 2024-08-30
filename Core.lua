@@ -277,17 +277,20 @@ if not RQE.savedAutomaticWorldQuestWatches then
 end
 
 -- Initialize lastSuperTrackedQuestID variable
-RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
-RQE.ManualSuperTrack = nil
-RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
-RQE.lastClickedObjectiveIndex = nil
-RQE.LastClickedButtonRef = nil
 RQE.AddedQuestID = nil
-RQE.UpdateInstanceInfoOkay = true
 RQE.alreadyPrintedSchematics = false
 RQE.canSortQuests = false
-RQE.shouldCheckFinalStep = true
 RQE.hoveringOnFrame = false
+RQE.LastClickedButtonRef = nil
+RQE.lastClickedObjectiveIndex = nil
+RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
+RQE.ManualSuperTrack = nil
+RQE.QuestTypeFlagOutOfCombat = false
+RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
+RQE.shouldCheckFinalStep = true
+RQE.UpdateChildFrameAnchorsOutsideCombat = false
+RQE.UpdateChildFramePositionsOutsideCombat = false
+RQE.UpdateInstanceInfoOkay = true
 
 RQE.dragonMounts = {
     "Cliffside Wylderdrake",
@@ -1408,7 +1411,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     end
 
     -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
-    questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+    questID = RQE.searchedQuestID or extractedQuestID or quessetpointtID or currentSuperTrackedQuestID
 
     -- Fetch questInfo from RQEDatabase using the determined questID
     questInfo = RQE.getQuestData(questID) or questInfo
