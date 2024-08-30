@@ -280,7 +280,12 @@ end
 RQE.AddedQuestID = nil
 RQE.alreadyPrintedSchematics = false
 RQE.canSortQuests = false
+RQE.colorizeObjectivesfromCoreAfterCombat = false
+RQE.colorizeObjectivesfromRQEFAfterCombat = false
+RQE.colorizeObjectivesfromQMAfterCombat = false
+RQE.DelayedClearCheckAfterCombat = false
 RQE.hoveringOnFrame = false
+RQE.InitWaypointSetPending = false
 RQE.LastClickedButtonRef = nil
 RQE.lastClickedObjectiveIndex = nil
 RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
@@ -288,9 +293,14 @@ RQE.ManualSuperTrack = nil
 RQE.QuestTypeFlagOutOfCombat = false
 RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
 RQE.shouldCheckFinalStep = true
+RQE.ShouldClearFrameAfterCombat = false
+RQE.StartPeriodicChecksAfterCombatNeeded = false
 RQE.UpdateChildFrameAnchorsOutsideCombat = false
 RQE.UpdateChildFramePositionsOutsideCombat = false
+RQE.UpdateFrameObjTableAfterCombat = false
 RQE.UpdateInstanceInfoOkay = true
+RQE.UpdateQuestDescriptionAndObjectivesAfterCombat = false
+RQE.UpdateMagicButtonVisibilityAfterCombat = false
 
 RQE.dragonMounts = {
     "Cliffside Wylderdrake",
@@ -1175,7 +1185,12 @@ end
 
 
 -- Colorization of the RQEFrame
-local function colorizeObjectives(questID)
+function RQE.colorizeObjectivesfromCore(questID)
+	if InCombatLockdown() then
+		RQE.colorizeObjectivesfromCoreAfterCombat = true
+		return
+	end
+
 	if not questID then
 		return
 	end
@@ -1202,6 +1217,7 @@ local function colorizeObjectives(questID)
         colorizedText = "No objectives data available."
     end
 
+	RQE.colorizeObjectivesfromCoreAfterCombat = false
     return colorizedText
 end
 
@@ -1225,6 +1241,11 @@ end
 
 -- Function check if RQEFrame frame should be cleared
 function RQE:ShouldClearFrame()
+	if InCombatLockdown() then
+		RQE.ShouldClearFrameAfterCombat = true
+		return
+	end
+
     -- Attempt to directly extract questID from RQE.QuestIDText if available
     local extractedQuestID
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -1290,6 +1311,8 @@ function RQE:ShouldClearFrame()
         end
     end
 
+	RQE.ShouldClearFrameAfterCombat = false
+
 	-- Call the delayed clear check
 	RQE:DelayedClearCheck()
 end
@@ -1297,6 +1320,11 @@ end
 
 -- Function to initiate a delayed re-check and clear operation
 function RQE:DelayedClearCheck()
+	if InCombatLockdown() then
+		RQE.DelayedClearCheckAfterCombat = true
+		return
+	end
+
     C_Timer.After(3, function()
 		-- Attempt to directly extract questID from RQE.QuestIDText if available
 		local extractedQuestID
@@ -1353,6 +1381,8 @@ function RQE:DelayedClearCheck()
 			end
         end
     end)
+
+	RQE.DelayedClearCheckAfterCombat = false
 end
 
 
@@ -1401,6 +1431,38 @@ function RQE:CheckAndClearUntrackedQuest()
 end
 
 
+
+-- Function that handles populating of the ObjectivesTable for the UpdateFrame function of the RQEFrame
+function RQE.UpdateFrame_ObjectivesTable()
+	if InCombatLockdown() then
+		RQE.UpdateFrameObjTableAfterCombat = true
+		return
+	end
+
+    -- Retrieve the current super-tracked quest ID for debugging
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    local extractedQuestID
+    if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+        extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+    end
+
+    -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
+    questID = RQE.searchedQuestID or extractedQuestID or quessetpointtID or currentSuperTrackedQuestID
+
+    -- For QuestObjectives
+    local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+    local objectivesText = objectivesTable and "" or "No objectives available."
+    if objectivesTable then
+        for _, objective in pairs(objectivesTable) do
+            objectivesText = objectivesText .. objective.text .. "\n"
+        end
+    end
+
+	RQE.UpdateFrameObjTableAfterCombat = false
+end
+
+
+
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     -- Retrieve the current super-tracked quest ID for debugging
@@ -1419,7 +1481,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 	AdjustRQEFrameWidths()
-
+	
     -- Debug print the overridden questID and the content of RQE.QuestIDText
     RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
     if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -1479,7 +1541,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		end
 	end
-
+	
     -- For QuestDescription
 	if RQE.QuestDescription then  -- Check if QuestDescription is initialized
 		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
@@ -1494,28 +1556,22 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 
-    -- For QuestObjectives
-    local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
-    local objectivesText = objectivesTable and "" or "No objectives available."
-    if objectivesTable then
-        for _, objective in pairs(objectivesTable) do
-            objectivesText = objectivesText .. objective.text .. "\n"
-        end
-    end
+	-- Function that populates the Objectives table for the super tracked quest in the RQEFrame
+	RQE.UpdateFrame_ObjectivesTable()
 
     -- Apply colorization to objectivesText
-    local objectivesText = colorizeObjectives(questID)
-    --objectivesText = colorizeObjectives(questID)
+    local objectivesText = RQE.colorizeObjectivesfromCore(questID)
 
     if RQE.QuestObjectives then  -- Check if QuestObjectives is initialized
         RQE.QuestObjectives:SetText(objectivesText)
     else
         RQE.debugLog("RQE.QuestObjectives is not initialized.")
     end
-
+	
     -- Fetch the next waypoint text for the quest
 	local DirectionText = C_QuestLog.GetNextWaypointText(questID)
 	RQEFrame.DirectionText = DirectionText  -- Save to addon table
+
 	RQE.UnknownQuestButtonCalcNTrack()
 
 	if RQE.DirectionTextFrame then
@@ -1524,6 +1580,25 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	-- Always show the UnknownQuestButton
     RQE.UnknownQuestButton:Show()
+				
+	RQE.UpdateQuestDescriptionAndObjectives()
+				
+	-- Check to see if the RQEFrame should be cleared
+	RQE:ShouldClearFrame()
+				
+	-- Visibility Update Check for RQEMagic Button
+	C_Timer.After(1, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
+end
+
+
+-- Updates the Description and Objectives for the RQEFrame's UpdateFrame function
+function RQE.UpdateQuestDescriptionAndObjectives()
+	if InCombatLockdown() then
+		RQE.UpdateQuestDescriptionAndObjectivesAfterCombat = true
+		return
+	end
 
 	-- Runs a check to see if the super tracked quest allows for forming quest group (such as World Boss WQ)
     if questID and C_LFGList.CanCreateQuestGroup(questID) then
@@ -1540,7 +1615,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		local isQuestInLog = C_QuestLog.IsOnQuest(questID)
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
-
+				
         -- When the RQEFrame is updated for a searched quest that is not in the player's quest log
 		if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
 			if RQE.QuestDescription then
@@ -1558,13 +1633,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 
-	-- Check to see if the RQEFrame should be cleared
-	RQE:ShouldClearFrame()
-
-	-- Visibility Update Check for RQEMagic Button
-	C_Timer.After(1, function()
-		RQE.Buttons.UpdateMagicButtonVisibility()
-	end)
+	RQE.UpdateQuestDescriptionAndObjectivesAfterCombat = false
 end
 
 
@@ -2928,6 +2997,11 @@ function RQE.SetInitialWaypointToOne()
 		return
 	end
 
+    if InCombatLockdown() then
+		RQE.InitWaypointSetPending = true
+        return
+    end
+
 	C_Timer.After(1, function()
 		if RQE.LastClickedIdentifier == 1 then
 			RQE.WaypointButtons[1]:Click()
@@ -2939,6 +3013,8 @@ function RQE.SetInitialWaypointToOne()
             end
         end
 	end)
+
+RQE.InitWaypointSetPending = false
 end
 
 
@@ -3048,6 +3124,12 @@ end
 
 -- Periodic check setup (updated to include CheckDBObjectiveStatus)
 function RQE:StartPeriodicChecks()
+    if InCombatLockdown() then
+		RQE.StartPeriodicChecksAfterCombatNeeded = true
+        return
+    end
+
+	RQE.StartPeriodicChecksAfterCombatNeeded = false
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
     if not superTrackedQuestID then
