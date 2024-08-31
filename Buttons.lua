@@ -405,7 +405,7 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
     local RWButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
     RWButton:SetSize(18, 18)
     RWButton:SetText("RW")
-    RQE.RWButton = RWButton
+	RQE.RWButton = RWButton
 
     -- Set the frame strata and level
     RWButton:SetFrameStrata("MEDIUM")
@@ -413,23 +413,14 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 
     -- Nested functions
     RWButton:SetPoint("TOPLEFT", RQE.ClearButton, "TOPRIGHT", 3, 0)  -- Anchoring
-	RWButton:SetPropagateMouseClicks(true)
-	RWButton:SetPropagateMouseMotion(true)
-
-    -- Securely handle the OnClick script
     RWButton:SetScript("OnClick", function()
-        -- if InCombatLockdown() then
-            -- return
-        -- end
-
-        -- Clear the waypoint
+        -- Code for RWButton functionality here
         C_Map.ClearUserWaypoint()
-
-        -- Check if TomTom is loaded and compatibility is enabled
-        local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-        if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-            TomTom.waydb:ResetProfile()
-        end
+		-- Check if TomTom is loaded and compatibility is enabled
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			TomTom.waydb:ResetProfile()
+		end
     end)
 
     CreateTooltip(RWButton, "Remove Waypoints")
