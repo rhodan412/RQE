@@ -74,12 +74,11 @@ end
 
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
 RQE.Buttons.UpdateMagicButtonIcon = function()
-	-- print("~RQE.Buttons.UpdateMagicButtonIcon running`")
     local macroIndex = GetMacroIndexByName("RQE Macro")
     if macroIndex and macroIndex > 0 then
         local _, iconID = GetMacroInfo(macroIndex)
         if iconID then
-            local MagicButton = RQE.MagicButton
+            local MagicButton = RQE.MagicButton --_G["RQEMagicButton"]
             if MagicButton then
                 MagicButton:SetNormalTexture(iconID)
                 MagicButton:SetHighlightTexture(iconID, "ADD")
@@ -91,8 +90,6 @@ end
 
 -- Function to create or update a macro for a quest step
 function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
-	-- print("~RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter) running`")
-
     local macroName = "RQE Macro"
     local iconFileID = "INV_MISC_QUESTIONMARK"
     local macroBody = type(macroContent) == "table" and table.concat(macroContent, "\n") or macroContent
@@ -114,8 +111,6 @@ end
 
 -- Updated to use the existing structure
 function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
-	-- print("~RQEMacro:SetMacro(name, iconFileID, body, perCharacter) running`")
-
     if InCombatLockdown() then
         -- Queue the macro operation for after combat
         table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
@@ -128,7 +123,6 @@ end
 
 -- Internal function that actually creates the macro content
 function RQEMacro:ActuallySetMacro(name, iconFileID, body, perCharacter)
-	-- print("~RQEMacro:ActuallySetMacro(name, iconFileID, body, perCharacter) running`")
     local macroIndex = GetMacroIndexByName(name)
     if macroIndex == 0 then -- Macro doesn't exist, create a new one
         local numAccountMacros, numCharacterMacros = GetNumMacros()
@@ -149,7 +143,6 @@ end
 
 -- Function to clear a specific macro by name
 function RQEMacro:ClearMacroContentByName(macroName)
-	-- print("~RQEMacro:ClearMacroContentByName(macroName) running`")
     if InCombatLockdown() then
         -- Queue the macro clear request for after combat
         table.insert(self.pendingMacroClears, macroName)
@@ -162,7 +155,6 @@ end
 
 -- Internal function that actually clears the macro content
 function RQEMacro:ActuallyClearMacroContentByName(macroName)
-	-- print("~RQEMacro:ActuallyClearMacroContentByName(macroName) running`")
     local macroIndex = GetMacroIndexByName(macroName)
     if macroIndex ~= 0 then
         -- Macro found, clear its content
@@ -176,7 +168,6 @@ end
 
 -- Function to delete a macro by name
 function RQEMacro:DeleteMacroByName(name)
-	-- print("~RQEMacro:DeleteMacroByName(name) running`")
     local macroIndex = GetMacroIndexByName(name)
     if macroIndex ~= 0 then
         DeleteMacro(macroIndex)
