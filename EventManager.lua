@@ -97,7 +97,6 @@ local eventsToRegister = {
 	"PLAYER_LOGOUT",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
 	"PLAYER_REGEN_ENABLED",
-	"PLAYER_REGEN_DISABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
@@ -157,6 +156,7 @@ local function HandleEvents(frame, event, ...)
 		-- ["CHAT_MSG_CHANNEL"] = true,
 		-- ["CHAT_MSG_LOOT"] = true,
 		-- ["COMPANION_UPDATE"] = true,
+		-- ["UNIT_INVENTORY_CHANGED"] = true,
 		-- ["NAME_PLATE_CREATED"] = true,
 		-- ["NAME_PLATE_UNIT_ADDED"] = true,
 		-- ["NAME_PLATE_UNIT_REMOVED"] = true,
@@ -218,7 +218,6 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerRegenEnabled,
 		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
-		PLAYER_REGEN_DISABLED = RQE.handlePlayerRegenDisabled,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
@@ -624,44 +623,11 @@ function RQE.handleUnitInventoryChange(...)
 end
 
 
--- Function that handles the PLAYER_REGEN_DISABLED (entering combat) event
-function RQE.handlePlayerRegenDisabled()
-	-- Place applicable code here if needed, otherwise may delete this event listener
-end
-
-
 -- Function that runs after leaving combat or PLAYER_REGEN_ENABLED, PLAYER_MOUNT_DISPLAY_CHANGED
 -- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
-
-	-- Check and execute any deferred RQE:QuestType() to update frames
-	if RQE.QuestTypeFlagOutOfCombat then
-		RQE:QuestType()
-	end
-
-	-- Check and execute any deferred RQEQuestFrame anchor point updates
-	if RQE.MainFrameResetWidths then
-		AdjustRQEFrameWidths()
-	end
-
-	
-	-- Check and execute any deferred RQEQuestFrame anchor point updates
-	if RQE.QuestFrameResetUpdatePoints then
-		RQE.RQEQuestFrameSetChildFramePoints()
-	end
-
-	-- Check and execute any deferred updates to the child frame positions based on lastElements after combat ends
-	if RQE.UpdateChildFramePositionsOutsideCombat then
-		UpdateRQEQuestFrame()	-- obtain code for the elements within the following function call
-		UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
-	end
-
-	-- Check and execute any deferred updates to the child frame anchors after combat ends
-	if RQE.UpdateChildFrameAnchorsOutsideCombat then
-		UpdateFrameAnchors()
-	end
 
     -- Check and execute any deferred scenario updates
     if RQE.deferredScenarioCriteriaUpdate then
@@ -809,17 +775,10 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		return
 	end
 
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-
-	if isSuperTracking then
-		-- Get the currently super tracked quest ID
-		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-		-- Check if a quest is being super tracked
-		if superTrackedQuestID and superTrackedQuestID > 0 then
-			C_SuperTrack.SetSuperTrackedQuestID(superTrackedQuestID)	-- Re-apply the super tracking to refresh
-		end
-	end
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(1, function()
+		RQE:UpdateContentSize()
+	end)
 
     -- Initialize the saved variable if it doesn't exist
     RQE_TrackedAchievements = RQE_TrackedAchievements or {}
@@ -950,6 +909,11 @@ function RQE.handleScenarioCriteriaUpdate(...)
 	local event = select(2, ...)
 	local criteriaID = select(3, ...)
 
+	-- FIRES VERY FREQUENTLY AFTER LEAVING A SCENARIO (POSSIBLY WHILE PARTICIPATING IN A SCENARIO) AND WANT TO PREVENT A LOT OF EXTRA UNAPROVVED CALLS TO IT!!
+	-- if not RQE.ScenarioCriteriaUpdateOkayToRun then
+		-- return
+	-- end
+
 	-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
 	-- Call another function if necessary, for example:
 	RQE.saveScenarioData(RQE, event, criteriaID)
@@ -985,6 +949,10 @@ function RQE.saveScenarioData(self, event, ...)
         end
 
     elseif event == "SCENARIO_CRITERIA_UPDATE" then
+		if not RQE.ScenarioCriteriaUpdateOkayToRun then
+			return
+		end
+
         local criteriaID = unpack(args)
         if criteriaID then
             table.insert(RQE.ScenarioData, {type = event, criteriaID = criteriaID})
@@ -1436,7 +1404,6 @@ function RQE.handleSuperTracking()
     -- startTime = debugprofilestop()  -- Start timer
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
-
 	RQE.ScrollFrameToTop()
 
 	-- Reset the "Clicked" WaypointButton to nil
@@ -1484,6 +1451,11 @@ function RQE.handleSuperTracking()
 	-- end
 
 	-- RQE.AutoWaypointHasBeenClicked = true
+
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(0.5, function()
+		RQE:UpdateContentSize()
+	end)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -1593,6 +1565,8 @@ function RQE.handleQuestAccepted(...)
 	-- Reset Flag for printing schematics when quest accepted
 	RQE.alreadyPrintedSchematics = false
 
+	RQE.ScrollFrameToTop()
+
 	-- Checks to make sure that the correct macro is in place
 	C_Timer.After(0.5, function()
 		RQE.CheckAndBuildMacroIfNeeded()
@@ -1613,15 +1587,13 @@ function RQE.handleQuestAccepted(...)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QA 05 Debug: questMapID: " .. tostring(questMapID) .. " (" .. type(questMapID) .. ")", 0.46, 0.62, 1)
 		-- DEFAULT_CHAT_FRAME:AddMessage("QA 06 Debug: playerMapID: " .. tostring(playerMapID) .. " (" .. type(playerMapID) .. ")", 0.46, 0.62, 1)
 
-		if isWorldQuest and not isManuallyTracked then
-			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-			-- DEFAULT_CHAT_FRAME:AddMessage("QA 07 Debug: Automatically added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
-		elseif isWorldQuest and isManuallyTracked then
-			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
-			-- DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
-		else
-			C_QuestLog.AddQuestWatch(questID)
-		end
+        if isWorldQuest and not isManuallyTracked then
+            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+           -- DEFAULT_CHAT_FRAME:AddMessage("QA 07 Debug: Automatically added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
+        elseif isWorldQuest and isManuallyTracked then
+            C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+           -- DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
+        end
 
         -- Reapply the manual super-tracked quest ID if it's set and different from the current one
         if RQE.ManualSuperTrack then
@@ -1959,28 +1931,30 @@ function RQE.handleUnitAura(...)
 		if RQE.HasDragonraceAura() or RQE.PlayerMountStatus ~= "Taxi" then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			if not questID then
+				RQE.debugLog("No super tracked quest ID found, skipping aura checks.")
 				return
 			end
 
 			local questData = RQE.getQuestData(questID)
 			if not questData then
+				RQE.debugLog("No quest data available for quest ID:", questID)
 				return
 			end
 
 			if RQE.LastClickedButtonRef == nil then return end
 			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if not stepData then
+				RQE.debugLog("No step data available for quest ID:", questID)
 				return
 			end
 
 			-- Process 'funct' for buffs or debuffs if specified
 			if stepData and stepData.funct then
 				if string.find(stepData.funct, "CheckDBBuff") or string.find(stepData.funct, "CheckDBDebuff") then
-					if type(RQE[stepData.funct]) == "function" then
-						RQE[stepData.funct](questID, stepIndex)
-					end
+					RQE[stepData.funct](questID, stepIndex)
 				end
 			end
 
@@ -2000,6 +1974,9 @@ function RQE.handleUnitAura(...)
 					C_Timer.After(0.5, function()
 						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
 							RQE.WaypointButtons[failedIndex]:Click()
+							RQE.debugLog("Aura check failed, moving to step:", failedIndex)
+						else
+							RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
 						end
 					end)
 				end
@@ -2007,7 +1984,6 @@ function RQE.handleUnitAura(...)
 		end
 	end
 end
-
 
 
 -- Handles UNIT_QUEST_LOG_CHANGED event:
@@ -2225,6 +2201,8 @@ function RQE.handleInstanceInfoUpdate()
 		return
 	end
 
+	RQE.ScenarioCriteriaUpdateOkayToRun = true
+
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
@@ -2253,11 +2231,6 @@ end
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
     -- startTime = debugprofilestop()  -- Start timer
-
-	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
-	C_Timer.After(5, function()
-		RQE:UpdateContentSize()
-	end)
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -2859,12 +2832,12 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
-		--if questID == advanceQuestID then
+		if questID == advanceQuestID then
 			C_Timer.After(1, function()
 				RQE:StartPeriodicChecks()
 				-- DEFAULT_CHAT_FRAME:AddMessage("QWU 13 Debug: Checking and advancing step for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 			end)
-		--end
+		end
 	end
 
 	C_Timer.After(0.5, function()

@@ -277,20 +277,19 @@ if not RQE.savedAutomaticWorldQuestWatches then
 end
 
 -- Initialize lastSuperTrackedQuestID variable
+RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
+RQE.ManualSuperTrack = nil
+RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
+RQE.lastClickedObjectiveIndex = nil
+RQE.LastClickedButtonRef = nil
 RQE.AddedQuestID = nil
+RQE.UpdateInstanceInfoOkay = true
 RQE.alreadyPrintedSchematics = false
 RQE.canSortQuests = false
-RQE.hoveringOnFrame = false
-RQE.LastClickedButtonRef = nil
-RQE.lastClickedObjectiveIndex = nil
-RQE.LastClickedWaypointButton = nil -- Initialize with nil to indicate no button has been clicked yet
-RQE.ManualSuperTrack = nil
-RQE.QuestTypeFlagOutOfCombat = false
-RQE.searchedQuestID = nil  -- No quest is being searched/focused initially
+RQE.ScenarioCriteriaUpdateOkayToRun = false
 RQE.shouldCheckFinalStep = true
-RQE.UpdateChildFrameAnchorsOutsideCombat = false
-RQE.UpdateChildFramePositionsOutsideCombat = false
-RQE.UpdateInstanceInfoOkay = true
+RQE.hoveringOnFrame = false
+
 
 RQE.dragonMounts = {
     "Cliffside Wylderdrake",
@@ -1411,7 +1410,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
     end
 
     -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
-    questID = RQE.searchedQuestID or extractedQuestID or quessetpointtID or currentSuperTrackedQuestID
+    questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
     -- Fetch questInfo from RQEDatabase using the determined questID
     questInfo = RQE.getQuestData(questID) or questInfo
@@ -3046,6 +3045,57 @@ function RQE.SetMacroForFinalStep(questID, finalStepIndex)
 end
 
 
+-- -- Periodic check setup
+-- function RQE:StartPeriodicChecks()
+    -- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    -- if not superTrackedQuestID then
+        -- RQE.debugLog("No super tracked quest ID found, skipping checks.")
+        -- return
+    -- end
+
+    -- self:FindAndSetFinalStep()  -- Find and set the final step
+
+    -- local questData = RQE.getQuestData(superTrackedQuestID)
+    -- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
+
+    -- if questData then
+        -- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+        -- local stepData = questData[stepIndex]
+
+        -- -- Handle turn-in readiness
+        -- if isReadyTurnIn and self.FinalStep then
+            -- RQE.infoLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+            -- self:ClickWaypointButtonForIndex(self.FinalStep)
+            -- return
+        -- end
+
+        -- -- Validate stepIndex
+        -- if stepIndex < 1 or stepIndex > #questData then
+            -- RQE.infoLog("Invalid step index:", stepIndex)
+            -- return  -- Exit if stepIndex is invalid
+        -- end
+
+        -- -- Process the current step
+        -- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+        -- if funcResult then
+            -- RQE.infoLog("Function for current step executed successfully.")
+        -- else
+            -- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+            -- if failFuncResult then
+                -- local failedIndex = stepData.failedIndex or 1
+                -- RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
+                -- self:ClickWaypointButtonForIndex(failedIndex)
+            -- else
+                -- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+            -- end
+        -- end
+        -- -- Check and build macro if needed
+        -- RQE.CheckAndBuildMacroIfNeeded()
+    -- end
+-- end
+
+
 -- Periodic check setup (updated to include CheckDBObjectiveStatus)
 function RQE:StartPeriodicChecks()
     local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -3513,6 +3563,7 @@ function RQE:HandlePartialObjectiveProgress(questID, stepIndex)
 
     return false
 end
+
 
 
 ---------------------------------------------------
@@ -4108,7 +4159,7 @@ function RQE.PrintQuestlineDetails(questLineID)
         for i, questID in ipairs(questIDs) do
             -- Attempt to fetch quest title immediately, might not always work due to data loading
             local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
-            C_Timer.After(0.5, function()
+            C_Timer.After(3, function()
                 -- Fetch quest link, retry if not available yet
                 local questLink = GetQuestLink(questID)
                 if questLink then

@@ -235,8 +235,6 @@ end
 RQE.UnknownQuestButton = CreateFrame("Button", nil, content)
 RQE.UnknownQuestButton:SetSize(25, 25)  -- Set size to 30x30
 RQE.UnknownQuestButton:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)  -- Adjusted Y-position
-RQE.UnknownQuestButton:SetPropagateMouseClicks(true)
-RQE.UnknownQuestButton:SetPropagateMouseMotion(true)
 RQE.UnknownQuestButton:Hide()  -- Initially hide the button
 
 -- Use the custom texture for the background
@@ -724,7 +722,7 @@ local function CreateQuestTooltip(frame, questID)
     -- GameTooltip:SetText(questTitle)  -- Display quest name
 
     local questData = RQE.getQuestData(effectiveQuestID)
-    local questTitle = questData and questData.title or "Unknown Quest"
+    local questTitle = C_QuestLog.GetTitleForQuestID(questID)  -- = questData and questData.title or "Unknown Quest"
     GameTooltip:SetText(questTitle)
 
 	if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) and not isWorldQuest then
@@ -775,6 +773,7 @@ local function CreateQuestTooltip(frame, questID)
 		-- Add code for the Rewards tooltip if this is a searched quest
 	else
 		-- Add Rewards
+		--GameTooltip:AddLine("Rewards: ")
 		RQE:QuestRewardsTooltip(GameTooltip, questID)
 	end
 
@@ -882,11 +881,6 @@ end
 
 -- Function used to adjust the RQE Frame width
 function AdjustRQEFrameWidths(newWidth)
-    if InCombatLockdown() then
-		RQE.MainFrameResetWidths = true
-        return
-    end
-
     -- Use the current frame width if newWidth is not provided
     newWidth = newWidth or RQEFrame:GetWidth()
 
@@ -901,8 +895,6 @@ function AdjustRQEFrameWidths(newWidth)
     RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
     RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
     RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
-
-	RQE.MainFrameResetWidths = false
 end
 
 
@@ -914,7 +906,6 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
     else
         slider:SetValue(value + 25)
     end
-	RQE:UpdateContentSize()
 end)
 
 ---------------------------
@@ -1052,8 +1043,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
         ---@type WaypointButton
 		local WaypointButton = CreateFrame("Button", nil, content)
 		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
-		WaypointButton:SetPropagateMouseClicks(true)
-		WaypointButton:SetPropagateMouseMotion(true)
 		WaypointButton:SetSize(30, 30)  -- Set size to 30x30
 
 		-- Use the custom texture for the background
@@ -1104,13 +1093,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
-			-- -- Check if the player is in combat
-			-- if InCombatLockdown() then
-				-- -- If in combat, check if the mouse is over the RQEFrame
-				-- if RQEFrame and RQEFrame:IsMouseOver() then
-					-- return
-				-- end
-			-- end
 
 			-- Code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
@@ -1242,7 +1224,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
         end)
     end
 
-	RQE:UpdateContentSize()
+	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	C_Timer.After(0.5, function()
+		RQE:UpdateContentSize()
+	end)
 end
 
 
