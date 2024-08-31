@@ -30,6 +30,9 @@ Libs/AceTimer-3.0/AceTimer-3.0.xml
 Libs/AceBucket-3.0/AceBucket-3.0.xml
 Libs/LibSharedMedia-3.0/lib.xml
 
+## TaintLess
+TaintLess.xml
+
 # Core Functionality
 Core.lua
 DebugLog.lua

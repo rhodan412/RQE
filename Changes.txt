@@ -1,6 +1,26 @@
 11.0.2.32
+	Buttons.lua
+		- Removed unneeded code for preventing some code from running during combat - this appeared to be an error when this is actually taint and most of what I run should be fine to update their own frames in or out of combat
 
+	Core.lua
+	EventManager.lua
+	QuestingModule.lua
+	RQEFrame.lua
+	WPUtil.lua
+		- Removed unneeded code meant to prevent taint (handling different way for now)
 
+	DebugLog.lua
+		- Reverted to a previous version of the DebugLog before I did button checks to determine cause of taint.
+
+	RQEDatabase.lua
+		- Added more code and detail to The Rising Deeps (now all three chapters are in the RQEDatabase and able to be accessed by the RQEFrame when super tracked
+		- Added initial steps into Hallow Fall zone to the database
+
+	RQEMacro.lua
+		- Code clean-up
+
+	Taintless.XML
+		- Added to file to reduce issues with such things like Button and Frame Pass-Thru errors that don't effect the overall functionality of the add-on, but are a nuisance unless you have BugSack/BugGrabber addons
 
 
 11.0.2.31
@@ -35,7 +55,6 @@
 
 	RQEDatabase.lua
 		- Added more quests, including for 2 of the 3 campaign chapters for "The Ringing Deeps" zone
-
 
 	RQEFrame.lua
 		- Set code/checks to prevent/delay adjustment of frame width of the RQEFrame (SuperTrack frame) to run after combat ends, should they be called when combat is in process
