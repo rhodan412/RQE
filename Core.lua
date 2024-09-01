@@ -2944,30 +2944,32 @@ end
 -- Function to check and set the final step
 function RQE.CheckAndSetFinalStep()
     if not RQE.shouldCheckFinalStep then
+		-- print("RQE.shouldCheckFinalStep is false")
         return
     end
 
+	-- print("RQE.shouldCheckFinalStep is true")
     RQE.SetInitialWaypointToOne()
 
     C_Timer.After(1, function()
         local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
         if not superTrackedQuestID then
-            RQE.debugLog("No super tracked quest ID found, skipping check.")
+            -- print("No super tracked quest ID found, skipping check.")
             RQE.shouldCheckFinalStep = false
             return
         end
 
         local questData = RQE.getQuestData(superTrackedQuestID)
         if not questData then
-            RQE.debugLog("Quest data not found for quest ID:", superTrackedQuestID)
+            -- print("Quest data not found for quest ID:", superTrackedQuestID)
             RQE.shouldCheckFinalStep = false
             return
         end
 
         local objectives = C_QuestLog.GetQuestObjectives(superTrackedQuestID)
         if not objectives or #objectives == 0 then
-            RQE.infoLog("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
+            -- print("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
             RQE.shouldCheckFinalStep = false
             return
         end
@@ -2993,9 +2995,7 @@ function RQE.CheckAndSetFinalStep()
             end
         end
 
-        RQE.infoLog("QuestID:", tostring(superTrackedQuestID),
-              ", All Objectives Completed:", tostring(allObjectivesCompleted),
-              ", Highest Completed Objective Index:", tostring(highestCompletedObjectiveIndex))
+        -- print("QuestID:", tostring(superTrackedQuestID), ", All Objectives Completed:", tostring(allObjectivesCompleted),", Highest Completed Objective Index:", tostring(highestCompletedObjectiveIndex))
               
         local finalStepIndex = nil
         for index, step in ipairs(questData) do
@@ -3006,19 +3006,19 @@ function RQE.CheckAndSetFinalStep()
         end
 
         if not finalStepIndex then
-            RQE.debugLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
+            print("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
             RQE.shouldCheckFinalStep = false
             return
         end
         
         C_Timer.After(1.5, function()
             if highestCompletedObjectiveIndex == 99 then
-                RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
-                RQE.infoLog("Final Index is: " .. finalStepIndex)
+                -- print("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+                -- print("Final Index is: " .. finalStepIndex)
                 RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
             else
-                RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
-                RQE.infoLog("Final Index is: " .. finalStepIndex)
+                -- print("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+                -- print("Final Index is: " .. finalStepIndex)
             end
         end)
     end)
@@ -4159,20 +4159,22 @@ function RQE.PrintQuestlineDetails(questLineID)
         for i, questID in ipairs(questIDs) do
             -- Attempt to fetch quest title immediately, might not always work due to data loading
             local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
-            C_Timer.After(3, function()
+            C_Timer.After(0.2, function()
                 -- Fetch quest link, retry if not available yet
                 local questLink = GetQuestLink(questID)
-                if questLink then
-                    -- Store quest details in a table
-                    -- Light blue color for quest details
-                    questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
-                    questsToLoad = questsToLoad - 1
-                else
-                    -- Fallback if quest link is not available, attempt to use the title
-                    -- Light blue color for quest details
-                    questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
-                    questsToLoad = questsToLoad - 1
-                end
+				C_Timer.After(0.3, function()
+					if questLink then
+						-- Store quest details in a table
+						-- Light blue color for quest details
+						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
+						questsToLoad = questsToLoad - 1
+					else
+						-- Fallback if quest link is not available, attempt to use the title
+						-- Light blue color for quest details
+						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
+						questsToLoad = questsToLoad - 1
+					end
+				end)
 
                 -- Check if all quests have been processed
                 if questsToLoad <= 0 then
@@ -5337,4 +5339,52 @@ function RQE.ScenarioTimer_CheckTimers(...)
 	end
 	-- we had an update but didn't find a valid timer, kill the timer if it's running
 	ScenarioTimer_Stop();
+end
+
+
+-- Frame to handle the gossip event securely
+local RQEGossipFrame = CreateFrame("Frame", "RQEGossipFrame", UIParent)
+RQEGossipFrame:RegisterEvent("GOSSIP_SHOW")
+
+-- Function to store the selected gossip option criteria
+local selectedGossipOption = {
+    npcName = nil,
+    optionIndex = nil
+}
+
+
+-- Securely hook the frame's event handler
+RQEGossipFrame:HookScript("OnEvent", function(self, event)
+    -- Fetch available gossip options
+    local options = C_GossipInfo.GetOptions()
+
+    -- Check if options exist
+    if not options or #options == 0 then
+        return
+    end
+
+    -- Get the current NPC name
+    local currentNPCName = UnitName("npc")
+
+    -- Check if the selection criteria match the current NPC
+    if selectedGossipOption.npcName and currentNPCName == selectedGossipOption.npcName then
+        -- Iterate through options and select based on specified index
+        for i, option in ipairs(options) do
+            if option.orderIndex == selectedGossipOption.optionIndex then
+                print("Selecting gossip option:", option.orderIndex, "for NPC Name:", selectedGossipOption.npcName)
+                C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+                break
+            end
+        end
+    end
+end)
+
+
+-- Function to set the gossip selection criteria for the current NPC
+function RQE.SelectGossipOption(npcName, optionIndex)
+    -- Set the selected gossip option for future use
+    selectedGossipOption.npcName = npcName
+    selectedGossipOption.optionIndex = optionIndex
+
+    -- print("Gossip selection set for NPC Name:", npcName, "to select option:", optionIndex)
 end
