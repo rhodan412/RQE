@@ -81,6 +81,10 @@ local eventsToRegister = {
 	-- "COMPANION_UPDATE",
 	"CRITERIA_EARNED",
 	"ENCOUNTER_END",
+	"GOSSIP_CLOSED",
+	"GOSSIP_CONFIRM",
+	"GOSSIP_CONFIRM_CANCEL",
+	"GOSSIP_SHOW",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	--"LEAVE_PARTY_CONFIRMATION",
@@ -202,6 +206,10 @@ local function HandleEvents(frame, event, ...)
 		-- COMPANION_UPDATE = RQE.handleCompanionUpdate,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
 		ENCOUNTER_END = RQE.handleBossKill,
+		GOSSIP_CLOSED = RQE.handleGossipClosed,
+		GOSSIP_CONFIRM = RQE.handleGossipConfirm,
+		GOSSIP_CONFIRM_CANCEL = RQE.handleGossipConfirmCancel,
+		GOSSIP_SHOW = RQE.handleGossipShow,
 		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
@@ -383,6 +391,38 @@ end
 function RQE.handleTrackedAchieveUpdate(achievementID, criteriaID, elapsed, duration)
    -- DEFAULT_CHAT_FRAME:AddMessage("Debug: TRACKED_ACHIEVEMENT_UPDATE event triggered for achievementID: " .. tostring(achievementID) .. ", criteriaID: " .. tostring(criteriaID) .. ", elapsed: " .. tostring(elapsed) .. ", duration: " .. tostring(duration), 0xFA, 0x80, 0x72) -- Salmon color		
 	RQE.UpdateTrackedAchievementList()
+end
+
+
+-- Function that handles the GOSSIP_CLOSED event
+-- Fired when you close the talk window for an npc. (Seems to be called twice) 
+function RQE.handleGossipClosed()
+	-- Place applicable code here
+end
+
+
+-- Function that handles the GOSSIP_CONFIRM event
+function RQE.handleGossipConfirm(...)
+    local event = select(2, ...)
+    local gossipID = select(3, ...)
+    local text = select(4, ...)
+    local cost = select(5, ...)
+end
+
+
+-- Function that handles the GOSSIP_CONFIRM_CANCEL event
+function RQE.handleGossipConfirmCancel()
+	-- Nils out the npcName and Gossip optionIndex so that the same selection won't be run over and over again
+	RQE.SelectGossipOption(nil, nil)
+end
+
+
+-- Function that handles the GOSSIP_SHOW event
+-- Fires when you talk to an npc. 
+-- This event typicaly fires when you are given several choices, including choosing to sell item, select available and active quests, just talk about something, or bind to a location. Even when the the only available choices are quests, this event is often used instead of QUEST_GREETING.
+function RQE.handleGossipShow(...)
+    local event = select(2, ...)
+    local uiTextureKit = select(3, ...)
 end
 
 
@@ -910,9 +950,9 @@ function RQE.handleScenarioCriteriaUpdate(...)
 	local criteriaID = select(3, ...)
 
 	-- FIRES VERY FREQUENTLY AFTER LEAVING A SCENARIO (POSSIBLY WHILE PARTICIPATING IN A SCENARIO) AND WANT TO PREVENT A LOT OF EXTRA UNAPROVVED CALLS TO IT!!
-	-- if not RQE.ScenarioCriteriaUpdateOkayToRun then
-		-- return
-	-- end
+	if not RQE.ScenarioCriteriaUpdateOkayToRun then
+		return
+	end
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
 	-- Call another function if necessary, for example:
