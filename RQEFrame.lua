@@ -1127,7 +1127,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
 			if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= i and i > RQE.LastClickedIdentifier) then
 				RQE.LastClickedIdentifier = i
-				print("Debug: Updated LastClickedIdentifier to:", i)
+				-- print("Debug: Updated LastClickedIdentifier to:", i)
 			end
 
 			-- -- When creating the WaypointButton
@@ -1142,14 +1142,14 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- Update WaypointButton stepIndex only if needed
 			if WaypointButton.stepIndex and WaypointButton.stepIndex ~= i and i >= WaypointButton.stepIndex then
 				WaypointButton.stepIndex = i
-				print("Debug: Set WaypointButton stepIndex to:", i)
+				-- print("Debug: Set WaypointButton stepIndex to:", i)
 			else
-				print("Debug: WaypointButton stepIndex is nil or already set to:", i)
+				-- print("Debug: WaypointButton stepIndex is nil or already set to:", i)
 			end
 
-			print("Debug RQEFrame.lua @Line 1129  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+			-- print("Debug RQEFrame.lua @Line 1129  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 			RQE.LastClickedButtonRef = WaypointButton -- Update reference before printing
-			print("Debug RQEFrame.lua @Line 1131  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", tostring(RQE.LastClickedButtonRef.stepIndex or "nil"))
+			-- print("Debug RQEFrame.lua @Line 1131  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", tostring(RQE.LastClickedButtonRef.stepIndex or "nil"))
 			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
 
 			-- Update the reference to the last clicked button
@@ -1182,7 +1182,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex --or 1
 			else
 				local stepIndex = 1
-				print("Setting Step Index to 1 from line 1162 of RQEFrame.lua")
+				-- print("Setting Step Index to 1 from line 1162 of RQEFrame.lua")
 			end
 --print("Debug [RQEFrame.lua: Line 1159]: " .. tostring(RQE.LastClickedButtonRef.stepIndex))   --- FIRING WAYY  TOO OFTEN
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
@@ -1389,9 +1389,9 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
                 local button = RQE.WaypointButtons[stepIndex]
                 if button then
                     RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
-print("Debug [RQEFrame.lua: Line 1371]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 1371]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                     button:Click()
-print("Debug [RQEFrame.lua: Line 1373]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 1373]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                     RQE.lastClickedObjectiveIndex = 99
 
                     -- Call to update the waypoint for the quest completion objective
@@ -1416,9 +1416,9 @@ print("Debug [RQEFrame.lua: Line 1373]  | LastClickedButtonRef: ", tostring(RQE.
             if button then
                 -- Simulate the click
                 RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
-print("Debug [RQEFrame.lua: Line 1396]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 1396]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                 button:Click() -- `OnClick` will now use the button's direct data
-print("Debug [RQEFrame.lua: Line 1398]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 1398]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex
 
@@ -1503,9 +1503,9 @@ function RQE.ClickUnknownQuestButton()
     local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
-print("Debug [RQEFrame.lua: Line 1482]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 1482]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
             button:Click()
-print("Debug [RQEFrame.lua: Line 1483]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 1483]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
             foundButton = true
             break
         end
