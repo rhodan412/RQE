@@ -2,12 +2,28 @@
 	Buttons.lua
 		- Removed unneeded code for preventing some code from running during combat - this appeared to be an error when this is actually taint and most of what I run should be fine to update their own frames in or out of combat
 
+	Config.lua
+		- Removed some debug print lines
+
 	Core.lua
-	EventManager.lua
-	QuestingModule.lua
-	RQEFrame.lua
-	WPUtil.lua
 		- Removed unneeded code meant to prevent taint (handling different way for now)
+		- Add ability to select specific gossip option based on macro in the RQEDatabase (when available)
+
+	EventManager.lua
+		- Added GOSSIP_CLOSED, GOSSIP_CONFIRM, GOSSIP_CONFIRM_CANCEL, and GOSSIP_SHOW events along with set up for the add-on to automatically chose gossip option for an NPC based on macro in RQEDatabase
+		- Removed unneeded code meant to prevent taint
+
+	QuestingModule.lua
+		- Removed some code that was setting RQE.shouldCheckFinalStep flag to false when may be causing problems with advancing steps
+		- Removed unneeded code meant to prevent taint
+
+
+	RQEFrame.lua
+		- Add additional bits to run function to update frame size when number of steps may exceed window size of the frame.
+		- Removed unneeded code meant to prevent taint
+		
+	WPUtil.lua
+		- Removed unneeded code meant to prevent taint
 
 	DebugLog.lua
 		- Reverted to a previous version of the DebugLog before I did button checks to determine cause of taint.
