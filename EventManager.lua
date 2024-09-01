@@ -30,9 +30,9 @@ RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQEDatabase = RQEDatabase or {}
 
 
----------------------------
+-----------------------------
 -- 2. Constants and Settings
----------------------------
+-----------------------------
 
 -- Create an event frame
 local Frame = CreateFrame("Frame")
