@@ -9,12 +9,15 @@
 		- Added UI_INFO_MESSAGE as listener and having it run RQE.CheckThatQuestStep() to advance steps (this is temporary)
 		- Added several print debugs associated with 'RQE.LastClickedButtonRef.stepIndex being set to 1' (this is temporary)
 
+	QuestingModule.lua
+		- Addition of some debug msgs that are temporary
+
 	RQEDatabase.lua
 		- Modifications to some quests to fix waypoints
 
 	RQEFrame.lua
 		- Potential fix in place to keep RQE.LastClickedButtonRef and WaypointButton.stepIndex from resetting to "1" when in the middle of a quest (this is having the effect of setting the stepIndex/waypoint button to 1 and preventing advancement without a reload
-		
+
 
 11.0.2.32
 	Buttons.lua
