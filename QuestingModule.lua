@@ -1596,9 +1596,9 @@ function UpdateRQEQuestFrame()
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
 
-							if RQE.shouldCheckFinalStep then
-								RQE.shouldCheckFinalStep = false
-							end
+							-- if RQE.shouldCheckFinalStep then
+								-- RQE.shouldCheckFinalStep = false
+							-- end
 						end						
 
 						C_Map.ClearUserWaypoint()
