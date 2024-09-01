@@ -345,7 +345,6 @@ local function colorizeObjectives(questID)
 end
 
 
-
 -- Create QuestID Text
 RQE.QuestIDText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
@@ -569,13 +568,13 @@ RQEFrame.MemoryUsageText = MemoryUsageText
 
 
 -- Create buttons using functions from Buttons.lua
-RQE.Buttons.CreateClearButton(RQEFrame) --, "TOPLEFT")
-RQE.Buttons.CreateRWButton(RQEFrame) --, "ClearButton")
-RQE.Buttons.CreateSearchButton(RQEFrame) --, "RWButton")
-RQE.Buttons.CreateQMButton(RQEFrame) --, "SearchButton")
-RQE.Buttons.CreateCloseButton(RQEFrame) --, "TOPRIGHT")
-RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider) --, "CloseButton")
-RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider) --, "MaximizeButton")
+RQE.Buttons.CreateClearButton(RQEFrame)
+RQE.Buttons.CreateRWButton(RQEFrame)
+RQE.Buttons.CreateSearchButton(RQEFrame)
+RQE.Buttons.CreateQMButton(RQEFrame)
+RQE.Buttons.CreateCloseButton(RQEFrame)
+RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
+RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
 
 
 -- Magic Button
@@ -643,31 +642,6 @@ RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
         end
     end
 end)
--- RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
-    -- local newWidth = width - 45  -- Adjust the padding as needed
-    -- RQE.debugLog("OnSizeChanged: New width is " .. newWidth)
-
-    -- --RQE.QuestIDText:SetWidth(newWidth)
-    -- if RQE.QuestNameText then
-        -- RQE.QuestNameText:SetWidth(newWidth)
-    -- else
-        -- RQE.debugLog("RQE.QuestNameText is not initialized.")
-    -- end
-
-    -- if self.StepsText then
-        -- for i, stepsTextElement in ipairs(self.StepsText) do
-            -- stepsTextElement:SetWidth(newWidth)
-            -- RQE.debugLog("Setting StepsText " .. i .. " width to " .. newWidth)
-        -- end
-    -- end
-
-    -- if self.CoordsText then
-        -- for i, coordTextElement in ipairs(self.CoordsText) do
-            -- coordTextElement:SetWidth(newWidth)
-            -- RQE.debugLog("Setting CoordsText " .. i .. " width to " .. newWidth)
-        -- end
-    -- end
--- end)
 
 
 -- Add a click event to open the quest details for the current QuestID
@@ -711,15 +685,6 @@ local function CreateQuestTooltip(frame, questID)
 
 	questID = effectiveQuestID or extractedQuestID or currentSuperTrackedQuestID
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-
-	-- local questTitle
-    -- if RQEDatabase and RQEDatabase[questID] and RQEDatabase[questID].title then
-        -- questTitle = RQEDatabase[questID].title  -- Use title from RQEDatabase if available
-    -- else
-        -- questTitle = C_QuestLog.GetTitleForQuestID(questID)  -- Fallback to game's API call
-    -- end
-    -- questTitle = questTitle or "N/A"  -- Default to "N/A" if no title found
-    -- GameTooltip:SetText(questTitle)  -- Display quest name
 
     local questData = RQE.getQuestData(effectiveQuestID)
     local questTitle = C_QuestLog.GetTitleForQuestID(questID)  -- = questData and questData.title or "Unknown Quest"
@@ -1120,36 +1085,22 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-
-			-- -- Save the identifier (could be the questID or any unique property tied to the button)
-			-- RQE.LastClickedIdentifier = i
 		
 			-- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
 			if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= i and i > RQE.LastClickedIdentifier) then
 				RQE.LastClickedIdentifier = i
-				-- print("Debug: Updated LastClickedIdentifier to:", i)
+				RQE.debugLog("Debug: Updated LastClickedIdentifier to:", i)
 			end
-
-			-- -- When creating the WaypointButton
-			-- WaypointButton.stepIndex = i
-
-			-- -- Update WaypointButton stepIndex only if it is needed and it should be incrementing or staying the same
-			-- if WaypointButton.stepIndex ~= i and i >= WaypointButton.stepIndex then
-				-- WaypointButton.stepIndex = i
-				-- print("Debug: Set WaypointButton stepIndex to:", i)
-			-- end
 
 			-- Update WaypointButton stepIndex only if needed
 			if WaypointButton.stepIndex and WaypointButton.stepIndex ~= i and i >= WaypointButton.stepIndex then
 				WaypointButton.stepIndex = i
-				-- print("Debug: Set WaypointButton stepIndex to:", i)
+				RQE.debugLog("Debug: Set WaypointButton stepIndex to:", i)
 			else
-				-- print("Debug: WaypointButton stepIndex is nil or already set to:", i)
+				RQE.debugLog("Debug: WaypointButton stepIndex is nil or already set to:", i)
 			end
 
-			-- print("Debug RQEFrame.lua @Line 1129  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
-			RQE.LastClickedButtonRef = WaypointButton -- Update reference before printing
-			-- print("Debug RQEFrame.lua @Line 1131  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", tostring(RQE.LastClickedButtonRef.stepIndex or "nil"))
+			RQE.LastClickedButtonRef = WaypointButton
 			RQE.infoLog("New LastClickedButton set:", i or "Unnamed")
 
 			-- Update the reference to the last clicked button
@@ -1173,8 +1124,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 			RQE.debugLog("Attempting to create macro")
-			-- C_SuperTrack.SetSuperTrackedQuestID(questIDFromText)
---print("Debug [RQEFrame.lua: Line 1154]: " .. tostring(RQE.LastClickedButtonRef.stepIndex))   --- FIRING WAYY  TOO OFTEN
             local supertrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 			RQE.debugLog("Super Tracked Quest ID:", supertrackedQuestID)  -- Debug message for the super tracked quest ID
 			local questData = RQE.getQuestData(RQE.questIDFromText)
@@ -1182,9 +1131,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex --or 1
 			else
 				local stepIndex = 1
-				-- print("Setting Step Index to 1 from line 1162 of RQEFrame.lua")
 			end
---print("Debug [RQEFrame.lua: Line 1159]: " .. tostring(RQE.LastClickedButtonRef.stepIndex))   --- FIRING WAYY  TOO OFTEN
 			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
 			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
 			if questData then
@@ -1297,13 +1244,6 @@ function RQE:CheckAndAdvanceStep(questID)
         return
     end
 
-    -- -- Handle quest completion and specific objectives
-    -- if allObjectivesCompleted then
-        -- nextObjectiveIndex = 99
-        -- self:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
-        -- return
-    -- end
-
     -- Check if all objectives are finished
     local allObjectivesCompleted = true
     for _, objective in ipairs(objectives) do
@@ -1389,9 +1329,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
                 local button = RQE.WaypointButtons[stepIndex]
                 if button then
                     RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
--- print("Debug [RQEFrame.lua: Line 1371]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                     button:Click()
--- print("Debug [RQEFrame.lua: Line 1373]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                     RQE.lastClickedObjectiveIndex = 99
 
                     -- Call to update the waypoint for the quest completion objective
@@ -1416,9 +1354,7 @@ function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questD
             if button then
                 -- Simulate the click
                 RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
--- print("Debug [RQEFrame.lua: Line 1396]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                 button:Click() -- `OnClick` will now use the button's direct data
--- print("Debug [RQEFrame.lua: Line 1398]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
                 -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
                 RQE.lastClickedObjectiveIndex = nextObjectiveIndex
 
@@ -1503,9 +1439,7 @@ function RQE.ClickUnknownQuestButton()
     local foundButton = false
     for i, button in ipairs(RQE.QuestLogIndexButtons) do
         if button and button.questID == questID then
--- print("Debug [RQEFrame.lua: Line 1482]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
             button:Click()
--- print("Debug [RQEFrame.lua: Line 1483]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
             foundButton = true
             break
         end
