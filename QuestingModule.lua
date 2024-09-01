@@ -1613,13 +1613,13 @@ function UpdateRQEQuestFrame()
 
 						-- Scrolls the RQEFrame to top on super track
 						RQE.ScrollFrameToTop()
-print("Debug [QuestingModule.lua: Line 1616]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 1616]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 						-- Reset the "Clicked" WaypointButton to nil
 						RQE.LastClickedIdentifier = nil
-print("Debug [QuestingModule.lua: Line 1619]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 1619]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-print("Debug [QuestingModule.lua: Line 1622]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 1622]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 						-- Clicks Waypoint Button if autoClickWaypointButton is true
 						--RQE:AutoClickQuestLogIndexWaypointButton()   -- TEMPORARILY BEING DONE to decide if it gets removed or kept as waypoint button 1 wasn't being clicked on new QuestLogIndexButton press
 
@@ -2163,16 +2163,16 @@ function UpdateRQEWorldQuestFrame()
 
 					-- Clears Macro Data
 					RQEMacro:ClearMacroContentByName("RQE Macro")
-print("Debug [QuestingModule.lua: Line 2166]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 2166]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 					-- Reset the "Clicked" WaypointButton to nil
 					RQE.LastClickedIdentifier = nil
-print("Debug [QuestingModule.lua: Line 2169]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 2169]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 					-- Scrolls the RQEFrame to top on super track
 					RQE.ScrollFrameToTop()
-print("Debug [QuestingModule.lua: Line 2172]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 2172]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 					-- Reset the Last Clicked WaypointButton to be "1"
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-print("Debug [QuestingModule.lua: Line 2175]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [QuestingModule.lua: Line 2175]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 					-- Existing code to set as super-tracked
 					RQE.ManualSuperTrack = true
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
