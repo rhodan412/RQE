@@ -895,10 +895,12 @@ function AdjustRQEFrameWidths(newWidth)
     RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
     RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
     RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
+
+	RQE:UpdateContentSize()
 end
 
 
--- Optional: Update the scrollbar when mousewheel is used on the ScrollFrame
+-- Optional: Update the scrollbar when mouse wheel is used on the ScrollFrame
 ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
     local value = slider:GetValue()
     if delta > 0 then
@@ -906,6 +908,7 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
     else
         slider:SetValue(value + 25)
     end
+	RQE:UpdateContentSize()
 end)
 
 ---------------------------
