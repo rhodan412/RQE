@@ -9,6 +9,9 @@
 		- Removed unneeded code meant to prevent taint (handling different way for now)
 		- Add ability to select specific gossip option based on macro in the RQEDatabase (when available)
 
+	DebugLog.lua
+		- Reverted to a previous version of the DebugLog before I did button checks to determine cause of taint.
+
 	EventManager.lua
 		- Added GOSSIP_CLOSED, GOSSIP_CONFIRM, GOSSIP_CONFIRM_CANCEL, and GOSSIP_SHOW events along with set up for the add-on to automatically chose gossip option for an NPC based on macro in RQEDatabase
 		- Removed unneeded code meant to prevent taint
@@ -17,26 +20,22 @@
 		- Removed some code that was setting RQE.shouldCheckFinalStep flag to false when may be causing problems with advancing steps
 		- Removed unneeded code meant to prevent taint
 
+	RQEDatabase.lua
+		- Added more code and detail to The Rising Deeps (now all three chapters are in the RQEDatabase and able to be accessed by the RQEFrame when super tracked
+		- Added initial steps into Hallow Fall zone to the database
 
 	RQEFrame.lua
 		- Add additional bits to run function to update frame size when number of steps may exceed window size of the frame.
 		- Removed unneeded code meant to prevent taint
-		
-	WPUtil.lua
-		- Removed unneeded code meant to prevent taint
-
-	DebugLog.lua
-		- Reverted to a previous version of the DebugLog before I did button checks to determine cause of taint.
-
-	RQEDatabase.lua
-		- Added more code and detail to The Rising Deeps (now all three chapters are in the RQEDatabase and able to be accessed by the RQEFrame when super tracked
-		- Added initial steps into Hallow Fall zone to the database
 
 	RQEMacro.lua
 		- Code clean-up
 
 	Taintless.XML
 		- Added to file to reduce issues with such things like Button and Frame Pass-Thru errors that don't effect the overall functionality of the add-on, but are a nuisance unless you have BugSack/BugGrabber addons
+		
+	WPUtil.lua
+		- Removed unneeded code meant to prevent taint
 
 
 11.0.2.31
