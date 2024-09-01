@@ -124,6 +124,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
+	"UI_INFO_MESSAGE",
 	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
 	-- "UNIT_HEALTH",
@@ -249,6 +250,7 @@ local function HandleEvents(frame, event, ...)
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,  -- ADD MORE DEBUG AND MAKE SURE IT WORKS
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
+		UI_INFO_MESSAGE = RQE.handleUIInfoMessageUpdate,
 		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		-- UNIT_HEALTH = RQE.handleUnitHealthEvent,
@@ -431,6 +433,11 @@ function RQE.handleItemCountChanged(...)
     local event = select(2, ...)
     local itemID = select(3, ...)
 
+    -- Early return if no quest is super-tracked
+    if not RQE.IsQuestSuperTracked() then
+        return
+    end
+
 	-- DEFAULT_CHAT_FRAME:AddMessage("Debug: ITEM_COUNT_CHANGED event triggered for event: " .. tostring(event) .. ", ItemID: " .. tostring(itemID), 1, 0.65, 0.5)
 
 	if RQE.db.profile.autoClickWaypointButton then
@@ -444,11 +451,17 @@ function RQE.handleItemCountChanged(...)
 			local questData = RQE.getQuestData(questID)
 			if questData then
 				if RQE.LastClickedButtonRef == nil then return end
-				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+				if RQE.LastClickedButtonRef.stepIndex then
+					local stepIndex = RQE.LastClickedButtonRef.stepIndex
+				else
+					local stepIndex = 1
+					print("Setting Step Index to 1 from line 458 of EventManager.lua")
+				end
 				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 
 				-- Ensure stepIndex is within the bounds of questData
-				if stepIndex >= 1 and stepIndex <= #questData then
+				if stepIndex and stepIndex >= 1 and stepIndex <= #questData then
+				--if stepIndex >= 1 and stepIndex <= #questData then
 					local stepData = questData[stepIndex]
 					if stepData then
 						local requiredItems = stepData.failedcheck or {}
@@ -462,7 +475,6 @@ function RQE.handleItemCountChanged(...)
 								if itemCount < requiredAmount and stepData.failedfunc == "CheckDBInventory" then
 									C_Timer.After(0.5, function()
 										if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-
 											local previousStepData = questData[stepIndex - 1]
 											if previousStepData and previousStepData.funct == "CheckDBZoneChange" then
 												local currentMapID = C_Map.GetBestMapForUnit("player")
@@ -522,7 +534,12 @@ function RQE.ReagentBagUpdate(...)
 		local questData = RQE.getQuestData(questID)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
-			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef.stepIndex then
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex
+			else
+				local stepIndex = 1
+				print("Setting Step Index to 1 from line 537 of EventManager.lua")
+			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
@@ -569,7 +586,12 @@ function RQE.handleMerchantUpdate()
 		local questData = RQE.getQuestData(questID)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
-			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef.stepIndex then
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex
+			else
+				local stepIndex = 1
+				print("Setting Step Index to 1 from line 584 of EventManager.lua")
+			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 			
@@ -627,7 +649,12 @@ function RQE.handleUnitInventoryChange(...)
 		local questData = RQE.getQuestData(questID)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
-			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef.stepIndex then
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex
+			else
+				local stepIndex = 1
+				print("Setting Step Index to 1 from line 642 of EventManager.lua")
+			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
@@ -956,8 +983,8 @@ function RQE.handleScenarioCriteriaUpdate(...)
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
 	-- Call another function if necessary, for example:
-	RQE.saveScenarioData(RQE, event, criteriaID)
-	RQE.scenarioCriteriaUpdate = true
+	-- RQE.saveScenarioData(RQE, event, criteriaID)
+	-- RQE.scenarioCriteriaUpdate = true
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -988,16 +1015,16 @@ function RQE.saveScenarioData(self, event, ...)
 			-- DEFAULT_CHAT_FRAME:AddMessage("SU 01 Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
         end
 
-    elseif event == "SCENARIO_CRITERIA_UPDATE" then
-		if not RQE.ScenarioCriteriaUpdateOkayToRun then
-			return
-		end
+    -- elseif event == "SCENARIO_CRITERIA_UPDATE" then
+		-- if not RQE.ScenarioCriteriaUpdateOkayToRun then
+			-- return
+		-- end
 
-        local criteriaID = unpack(args)
-        if criteriaID then
-            table.insert(RQE.ScenarioData, {type = event, criteriaID = criteriaID})
-           -- DEFAULT_CHAT_FRAME:AddMessage("Saved Criteria Update Data: Criteria ID=" .. tostring(criteriaID), 0.9, 0.7, 0.9)
-        end
+        -- local criteriaID = unpack(args)
+        -- if criteriaID then
+            -- table.insert(RQE.ScenarioData, {type = event, criteriaID = criteriaID})
+           -- -- DEFAULT_CHAT_FRAME:AddMessage("Saved Criteria Update Data: Criteria ID=" .. tostring(criteriaID), 0.9, 0.7, 0.9)
+        -- end
     end
 end
 
@@ -1442,6 +1469,12 @@ end
 -- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking()
     -- startTime = debugprofilestop()  -- Start timer
+
+    -- Early return if no quest is super-tracked
+    if not RQE.IsQuestSuperTracked() then
+        return
+    end
+
 	RQEMacro:ClearMacroContentByName("RQE Macro")
 	RQE.SaveSuperTrackData()
 	RQE.ScrollFrameToTop()
@@ -1669,6 +1702,7 @@ function RQE.handleQuestAccepted(...)
 
 	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
 	if RQE.db.profile.autoClickWaypointButton then
+		RQE.SetInitialWaypointToOne()
 		RQE:StartPeriodicChecks()
 	end
 
@@ -1859,7 +1893,12 @@ function RQE.handleZoneNewAreaChange()
 
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
-			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef.stepIndex then
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex
+			else
+				local stepIndex = 1
+				print("Setting Step Index to 1 from line 1881 of EventManager.lua")
+			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
@@ -1955,12 +1994,22 @@ function RQE.handleZoneNewAreaChange()
 end
 
 
+-- Function to handle the UI_INFO_MESSAGE Event
+function RQE.handleUIInfoMessageUpdate(...)
+	local event = select(2, ...)
+	local errorType = select(3, ...)
+	local message = select(4, ...)
+
+	RQE.CheckThatQuestStep()
+end
+
+
 -- Handles UNIT_AURA event
 function RQE.handleUnitAura(...)
 	local event = select(2, ...)
 	local unitToken = select(3, ...)
 	local spellName = select(4, ...)
-	local filter = select(4, ...)
+	local filter = select(5, ...)
 
     if unitToken ~= "player" then  -- Only process changes for the player
         return
@@ -1982,7 +2031,12 @@ function RQE.handleUnitAura(...)
 			end
 
 			if RQE.LastClickedButtonRef == nil then return end
-			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+			if RQE.LastClickedButtonRef.stepIndex then
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex
+			else
+				local stepIndex = 1
+				print("Setting Step Index to 1 from line 2018 of EventManager.lua")
+			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
@@ -3013,13 +3067,13 @@ function RQE.handleQuestTurnIn(...)
     if questID == superTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-		
+print("Debug [RQEFrame.lua: Line 3028]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 		-- Reset the "Clicked" WaypointButton to nil
 		RQE.LastClickedIdentifier = nil
-
+print("Debug [RQEFrame.lua: Line 3031]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 		-- Reset the Last Clicked WaypointButton to be "1"
 		RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-		
+print("Debug [RQEFrame.lua: Line 3034]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 		-- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
         if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
