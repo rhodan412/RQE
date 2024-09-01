@@ -1,4 +1,25 @@
-11.0.2.33
+11.0.2.33-beta
+	Core.lua
+		- Remaining changes to RQE.CheckThatQuestStep() function to ensure quests are updated (verified with several known problem quests all on current version)
+		- Added RQE.AreYouSureThatStep() function to check if RQE.CheckThatQuestStep() is properly advancing player in the quest (some quests need to have their first neededAmt of the first objectiveIndex set to 0 instead of 1)
+		- Implemented new changes from RQE.CheckThatQuestStep() into the RQE:StartPeriodicChecks()
+		- Major improvements to the performance of the add-on
+
+	EventManager.lua
+		- Added a display memUsageText with each event listener that fires to check if certain events are causing problems
+		- Removed extra bits of RQE:StartPeriodicChecks() from some of the listeners that were slowing performance of the add-on by doing redundant/repeat checks of this hog of a function
+
+	QuestingModule.lua
+		- Commented out the added debug print msgs as they are no longer needed (or at least not at this time since seemingly fixing the quest advancement and performance problems)
+
+	RQEDatabase.lua
+		- Many updates for quests (some quests need to have their first neededAmt of the first objectiveIndex set to 0 instead of 1, more changes may be further needed as debugging continues)
+
+	RQEFrame.lua
+		- Commented out the added debug print msgs as they are no longer needed (or at least not at this time since seemingly fixing the quest advancement and performance problems)
+
+
+11.0.2.33-alpha
 	Core.lua
 		- Corrected for nil error in RQE:CheckObjectiveProgress function
 		- Many debugs added to solve issue with quest steps not advancing when the quest steps are listed in the RQEDatabase
