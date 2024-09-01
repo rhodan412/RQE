@@ -180,6 +180,14 @@ local function HandleEvents(frame, event, ...)
 	-- -- Check if the event is not in the exclude list before printing
 	-- if not excludeEvents[event] then
 		-- print("EventHandler triggered with event:", event)  -- Print the event name
+
+        -- -- Get the current memory usage of the addon
+		-- local addonName = "RQE"
+        -- local memoryUsage = GetAddOnMemoryUsage(addonName)
+		-- RQE:CheckMemoryUsage()
+        -- local memUsageText = string.format("RQE Usage: %.2f KB", memoryUsage)
+		-- print("Current Memory Usage: " .. memUsageText)
+
 		-- -- Print Event-specific Args
 		-- -- local args = {...}  -- Capture all arguments into a table
 		-- -- for i, arg in ipairs(args) do
@@ -455,7 +463,7 @@ function RQE.handleItemCountChanged(...)
 					local stepIndex = RQE.LastClickedButtonRef.stepIndex
 				else
 					local stepIndex = 1
-					print("Setting Step Index to 1 from line 458 of EventManager.lua")
+					-- print("Setting Step Index to 1 from line 458 of EventManager.lua")
 				end
 				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 
@@ -509,10 +517,9 @@ function RQE.handleItemCountChanged(...)
 				end
 			end
 		end
-
-		C_Timer.After(1, function()
-			RQE:StartPeriodicChecks()
-		end)
+		-- C_Timer.After(1, function()
+			-- RQE:StartPeriodicChecks()
+		-- end)
 	end
 end
 
@@ -538,7 +545,7 @@ function RQE.ReagentBagUpdate(...)
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex
 			else
 				local stepIndex = 1
-				print("Setting Step Index to 1 from line 537 of EventManager.lua")
+				-- print("Setting Step Index to 1 from line 537 of EventManager.lua")
 			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
@@ -567,9 +574,9 @@ function RQE.ReagentBagUpdate(...)
 					end
 				end
 			end
-			C_Timer.After(1, function()
-				RQE:StartPeriodicChecks()
-			end)
+			-- C_Timer.After(1, function()
+				-- RQE:StartPeriodicChecks()
+			-- end)
 		end
 	end
 end
@@ -590,7 +597,7 @@ function RQE.handleMerchantUpdate()
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex
 			else
 				local stepIndex = 1
-				print("Setting Step Index to 1 from line 584 of EventManager.lua")
+				-- print("Setting Step Index to 1 from line 584 of EventManager.lua")
 			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
@@ -622,9 +629,9 @@ function RQE.handleMerchantUpdate()
 				else
 					RQE.ClickQuestLogIndexButton(questID)
 				end
-				C_Timer.After(1, function()
-					RQE:StartPeriodicChecks()
-				end)
+				-- C_Timer.After(1, function()
+					-- RQE:StartPeriodicChecks()
+				-- end)
 			end
 		end
 	end
@@ -653,7 +660,7 @@ function RQE.handleUnitInventoryChange(...)
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex
 			else
 				local stepIndex = 1
-				print("Setting Step Index to 1 from line 642 of EventManager.lua")
+				-- print("Setting Step Index to 1 from line 642 of EventManager.lua")
 			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
@@ -749,11 +756,11 @@ function RQE.handlePlayerRegenEnabled()
 		local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
        -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
 
-        C_Timer.After(0.5, function()
-			RQE:StartPeriodicChecks() -- might need to comment section out if too much lag after combat (mount changes seem good)
-            --RQE:CheckAndAdvanceStep(questID)
-           -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.65, 0.5)
-        end)
+        -- C_Timer.After(0.5, function()
+			-- RQE:StartPeriodicChecks() -- might need to comment section out if too much lag after combat (mount changes seem good)
+            -- --RQE:CheckAndAdvanceStep(questID)
+           -- -- DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.65, 0.5)
+        -- end)
     else
        -- DEFAULT_CHAT_FRAME:AddMessage("Debug: autoClickWaypointButton is disabled.", 1, 0.65, 0.5)
     end
@@ -1897,7 +1904,7 @@ function RQE.handleZoneNewAreaChange()
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex
 			else
 				local stepIndex = 1
-				print("Setting Step Index to 1 from line 1881 of EventManager.lua")
+				-- print("Setting Step Index to 1 from line 1881 of EventManager.lua")
 			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
@@ -2000,7 +2007,7 @@ function RQE.handleUIInfoMessageUpdate(...)
 	local errorType = select(3, ...)
 	local message = select(4, ...)
 
-	RQE.CheckThatQuestStep()
+	-- RQE.CheckThatQuestStep()
 end
 
 
@@ -2035,7 +2042,7 @@ function RQE.handleUnitAura(...)
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex
 			else
 				local stepIndex = 1
-				print("Setting Step Index to 1 from line 2018 of EventManager.lua")
+				-- print("Setting Step Index to 1 from line 2018 of EventManager.lua")
 			end
 			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
@@ -2091,9 +2098,9 @@ function RQE.handleUnitQuestLogChange(...)
 	if unitTarget == "player" and not RQE.PlayerMountStatus == "Taxi" then
     --if unitTarget == "player" and not UnitOnTaxi("player") then	
 		-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-		if RQE.db.profile.autoClickWaypointButton then
-			RQE:StartPeriodicChecks()
-		end
+		-- if RQE.db.profile.autoClickWaypointButton then
+			-- RQE:StartPeriodicChecks()
+		-- end
 	end
 
 	-- Only process the event if the achievements frame is shown
@@ -2583,9 +2590,9 @@ function RQE.handleQuestComplete()
 
 	RQE:QuestComplete(questID)
 
-	-- Update RQEFrame and Refresh Quest Tracker
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
-	RQE:QuestType()
+	-- -- Update RQEFrame and Refresh Quest Tracker  --- BLOCKING THIS TO REMOVE BLOAT AND INCREASE EFFICENCY
+	-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
+	-- RQE:QuestType()
 
 	RQEFrame:ClearAllPoints()
 	RQE.RQEQuestFrame:ClearAllPoints()
@@ -3025,7 +3032,7 @@ function RQE.handleQuestWatchListChanged(...)
        -- DEFAULT_CHAT_FRAME:AddMessage("QWLA 08 Debug: No quest info found for questID: " .. tostring(questID), 0.4, 0.6, 1.0)
     -- end
 
-    -- Check to advance to next step in quest
+    -- Check to advance to next step in quest (necessary when tracking an existing quest that has progress on it where it is placed in the RQEFrame but not necessarily result of clicking super track button)
     if RQE.db.profile.autoClickWaypointButton then
         C_Timer.After(0.5, function()
             RQE:StartPeriodicChecks()
@@ -3067,13 +3074,13 @@ function RQE.handleQuestTurnIn(...)
     if questID == superTrackedQuestID then
         -- Clear user waypoint and reset TomTom if loaded
         C_Map.ClearUserWaypoint()
-print("Debug [RQEFrame.lua: Line 3028]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 3028]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 		-- Reset the "Clicked" WaypointButton to nil
 		RQE.LastClickedIdentifier = nil
-print("Debug [RQEFrame.lua: Line 3031]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 3031]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 		-- Reset the Last Clicked WaypointButton to be "1"
 		RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-print("Debug [RQEFrame.lua: Line 3034]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
+-- print("Debug [RQEFrame.lua: Line 3034]  | LastClickedButtonRef: ", tostring(RQE.LastClickedButtonRef), " | LastClickedButtonRef.stepIndex: ", RQE.LastClickedButtonRef and tostring(RQE.LastClickedButtonRef.stepIndex) or "nil")
 		-- Check if TomTom is loaded and compatibility is enabled
         local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
         if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
@@ -3104,12 +3111,12 @@ print("Debug [RQEFrame.lua: Line 3034]  | LastClickedButtonRef: ", tostring(RQE.
    -- DEFAULT_CHAT_FRAME:AddMessage("QTI 05 Debug: QuestID: " .. tostring(questID), 1.0, 0.08, 0.58)
    -- DEFAULT_CHAT_FRAME:AddMessage("QTI 06 Debug: DisplayedQuestID: " .. tostring(displayedQuestID), 1.0, 0.08, 0.58)
 
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(1, function()
-			RQE:StartPeriodicChecks()
-		end)
-	end
+	-- -- Check to advance to next step in quest
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- C_Timer.After(1, function()
+			-- RQE:StartPeriodicChecks()
+		-- end)
+	-- end
 
 	-- Update RQEFrame
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -3141,9 +3148,9 @@ function RQE.handleQuestFinished()
 	-- DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
 	-- DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: DisplayedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
 
-	-- Update RQEFrame and Refresh Quest Tracker
-	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-	RQE:QuestType()
+	-- -- Update RQEFrame and Refresh Quest Tracker  --- BLOCKING THIS TO REMOVE BLOAT AND INCREASE EFFICENCY
+	-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	-- RQE:QuestType()
 
 	-- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
 	RQE:UpdateRQEFrameVisibility()
@@ -3152,13 +3159,13 @@ function RQE.handleQuestFinished()
 	RQE:UpdateRQEQuestFrameVisibility()
 	-- DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 
-	-- Check to advance to next step in quest
-	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(0.5, function()
-			-- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
-			RQE:StartPeriodicChecks()
-		end)
-	end
+	-- -- Check to advance to next step in quest
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- C_Timer.After(0.5, function()
+			-- -- DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
+			-- RQE:StartPeriodicChecks()
+		-- end)
+	-- end
 
 	-- local duration = debugprofilestop() - startTime
 	-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_FINISHED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
