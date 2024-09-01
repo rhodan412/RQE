@@ -1,3 +1,11 @@
+11.0.2.34
+	Core.lua
+	EventManager.lua
+	QuestingModule.lua
+	RQEFrame.lua
+		- Cleaned up code and debug msgs to be swapped over the RQE.debugLog/RQE.infoLog instead of print
+
+
 11.0.2.33-beta
 	Core.lua
 		- Remaining changes to RQE.CheckThatQuestStep() function to ensure quests are updated (verified with several known problem quests all on current version)
@@ -10,7 +18,7 @@
 		- Removed extra bits of RQE:StartPeriodicChecks() from some of the listeners that were slowing performance of the add-on by doing redundant/repeat checks of this hog of a function
 
 	QuestingModule.lua
-		- Commented out the added debug print msgs as they are no longer needed (or at least not at this time since seemingly fixing the quest advancement and performance problems)
+		- Comment
 
 	RQEDatabase.lua
 		- Many updates for quests (some quests need to have their first neededAmt of the first objectiveIndex set to 0 instead of 1, more changes may be further needed as debugging continues)
