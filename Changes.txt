@@ -1,24 +1,35 @@
+11.0.2.35
+
+
 11.0.2.34
 	Core.lua
-	EventManager.lua
-	QuestingModule.lua
-	RQEFrame.lua
+		- Major improvements to the performance of the add-on
+		- Corrected for nil error in RQE:CheckObjectiveProgress function
+		- Many debugs added to solve issue with quest steps not advancing when the quest steps are listed in the RQEDatabase
+		- Implemented new changes into the RQE:StartPeriodicChecks()
 		- Cleaned up code and debug msgs to be swapped over the RQE.debugLog/RQE.infoLog instead of print
+
+	EventManager.lua
+		- Improved performance as associated with the SCENARIO_CRITERIA_UPDATE listener running too often and using a lot of resources (particularly loading screens when zoning out of story instances)
+		- Added a display memUsageText with each event listener that fires to check if certain events are causing problems
+		- Removed extra bits of RQE:StartPeriodicChecks() from some of the listeners that were slowing performance of the add-on by doing redundant/repeat checks of this hog of a function
+
+	RQEDatabase.lua
+		- Many updates for quests (some quests need to have their first neededAmt of the first objectiveIndex set to 0 instead of 1, more changes may be further needed as debugging continues)
+		- Modifications to some quests to fix waypoints
+
+	RQEFrame.lua
+		- Fix to performance problems and with quests not advancing properly from one stepIndex to the next
 
 
 11.0.2.33-beta
 	Core.lua
-		- Remaining changes to RQE.CheckThatQuestStep() function to ensure quests are updated (verified with several known problem quests all on current version)
-		- Added RQE.AreYouSureThatStep() function to check if RQE.CheckThatQuestStep() is properly advancing player in the quest (some quests need to have their first neededAmt of the first objectiveIndex set to 0 instead of 1)
 		- Implemented new changes from RQE.CheckThatQuestStep() into the RQE:StartPeriodicChecks()
 		- Major improvements to the performance of the add-on
 
 	EventManager.lua
 		- Added a display memUsageText with each event listener that fires to check if certain events are causing problems
 		- Removed extra bits of RQE:StartPeriodicChecks() from some of the listeners that were slowing performance of the add-on by doing redundant/repeat checks of this hog of a function
-
-	QuestingModule.lua
-		- Comment
 
 	RQEDatabase.lua
 		- Many updates for quests (some quests need to have their first neededAmt of the first objectiveIndex set to 0 instead of 1, more changes may be further needed as debugging continues)
@@ -31,15 +42,10 @@
 	Core.lua
 		- Corrected for nil error in RQE:CheckObjectiveProgress function
 		- Many debugs added to solve issue with quest steps not advancing when the quest steps are listed in the RQEDatabase
-		- Created RQE.CheckThatQuestStep() function to temporarily act as the handler to advance between steps as it relates to the CheckDBObjectiveStatus funct in the RQEDatabase
 
 	EventManager.lua
 		- Improved performance as associated with the SCENARIO_CRITERIA_UPDATE listener running too often and using a lot of resources (particularly loading screens when zoning out of story instances)
-		- Added UI_INFO_MESSAGE as listener and having it run RQE.CheckThatQuestStep() to advance steps (this is temporary)
 		- Added several print debugs associated with 'RQE.LastClickedButtonRef.stepIndex being set to 1' (this is temporary)
-
-	QuestingModule.lua
-		- Addition of some debug msgs that are temporary
 
 	RQEDatabase.lua
 		- Modifications to some quests to fix waypoints
