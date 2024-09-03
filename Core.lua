@@ -3188,9 +3188,9 @@ function RQE:StartPeriodicChecks()
 		-- Validate stepIndex
 		if stepIndex < 1 or stepIndex > #questData then
 			RQE.infoLog("Invalid step index:", stepIndex)
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Invalid step index:", stepIndex)
-			end
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Invalid step index:", stepIndex)
+			-- end
 			return  -- Exit if stepIndex is invalid
 		end
 
@@ -3282,7 +3282,6 @@ function RQE.CheckThatQuestStep()
 		if stepData then
 			print("neededAmt:", stepData.neededAmt and stepData.neededAmt[1] or "nil", "objectiveIndex:", stepData.objectiveIndex)
 		else
-			print("Invalid stepData for stepIndex:", currentStepIndex)
 			return
 		end
 	end
@@ -3541,7 +3540,7 @@ function RQE:ClickWaypointButtonForIndex(index)
 		button:Click()
 
 		-- Schedule a check to click the button associated with AddonSetStepIndex
-		C_Timer.After(0.1, function()
+		C_Timer.After(1.5, function()
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
