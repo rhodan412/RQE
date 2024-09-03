@@ -1,3 +1,14 @@
+11.0.2.36
+	Core.lua
+		- Adjusted timer before RQE.WaypointButtons[RQE.AddonSetStepIndex] button click fires
+
+	EventManager.lua
+		- Added auto supertrack nearest quest on PLAYER_ENTERING_WORLD (usually login/reload) if no quest is currently being supertracked
+		- Added auto clear raid marker from target on quest turn in or gossip finished (as the macros will place target markers on NPCs)
+		- Added initial click of waypoint button 1 when SUPER_TRACKING_CHANGED to generate the macro
+		- Added click of the 'UnknownQuestWaypointButton' if no steps are listed in the RQEFrame ("supertrack frame" where info pulled in from the RQEDatabase, if available) or if autoClickWaypoint is unchecked, this fires on SUPER_TRACKING_CHANGED, ZONE_CHANGED_NEW_AREA, and ZONE_CHANGED_INDOORS
+
+
 11.0.2.35
 	Config.lua
 		- Added additional options for debugging in Config Frame.
