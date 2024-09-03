@@ -318,6 +318,17 @@ RQE.options = {
 					end,
 					width = "full",
 				},
+				enableNearestSuperTrack = {
+					type = "toggle",
+					name = "Enable SuperTrack Nearest",
+					desc = "Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking",
+					order = 17,
+					get = function() return RQE.db.profile.enableNearestSuperTrack end,
+					set = function(_, newValue)
+						RQE.db.profile.enableNearestSuperTrack = newValue;
+					end,
+					width = "full",
+				},
 				keyBindSetting = {
 					type = "keybinding",
 					name = "Key Binding for Macro",
@@ -329,7 +340,7 @@ RQE.options = {
 						RQE.db.profile.keyBindSetting = value
 						RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
 					end,
-					order = 17,
+					order = 18,
 				},
 			},
 		},
@@ -1569,6 +1580,30 @@ function RQE:AddGeneralSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(enableCarboniteCompatibilityCheckbox)
+
+
+	-- Enable SuperTrack Nearest Checkbox
+	local enableNearestSuperTrack = AceGUI:Create("CheckBox")
+	enableNearestSuperTrack:SetLabel("Enable SuperTrack Nearest")
+	enableNearestSuperTrack:SetValue(RQE.db.profile.enableNearestSuperTrack)
+	enableNearestSuperTrack:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableNearestSuperTrack = value
+	end)
+
+	enableNearestSuperTrack:SetFullWidth(false)
+	enableNearestSuperTrack:SetWidth(300)
+
+	-- Add a tooltip description for enableNearestSuperTrack (RQE.db.profile.enableNearestSuperTrack)
+	enableNearestSuperTrack:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking)", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableNearestSuperTrack:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableNearestSuperTrack)
 
 	-- Key Binding for Macro Keybinding
 	local keyBindSettingKeybind = AceGUI:Create("Keybinding")
