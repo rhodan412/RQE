@@ -9,6 +9,9 @@
 		- Added additional 'defaults' to set for the additional config options added to the Config Frame.
 		- Added function to get the nearest super track questID
 
+	DebugLog.lua
+		- DEFAULT_CHAT_FRAME:AddMessage() will now be displayed in the DebugLog
+
 	EventManager.lua
 		- Commented out most of the code within RQE.handleUnitQuestLogChange function as much of what is done here is already handled through the QUEST_WATCH_UPDATE event that gets fired before it
 		- Optimized QUEST_WATCH_UPDATE event listener to improve efficiency of the add-on as increased lag was sometimes noticed when this event fired as a result of a quest being completed.
@@ -28,7 +31,6 @@
 
 	Misc:
 		- Cleaned up code (including spacing and indents).
-		- DEFAULT_CHAT_FRAME:AddMessage() will now be displayed in the DebugLog
 
 
 11.0.2.34
