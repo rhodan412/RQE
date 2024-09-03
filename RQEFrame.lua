@@ -1116,20 +1116,27 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
 			if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= effectiveStepIndex and effectiveStepIndex > RQE.LastClickedIdentifier) then
-				print("Before update: LastClickedIdentifier:", RQE.LastClickedIdentifier)
-				RQE.LastClickedIdentifier = effectiveStepIndex
-				print("After update: LastClickedIdentifier:", RQE.LastClickedIdentifier)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Before update: LastClickedIdentifier:", RQE.LastClickedIdentifier)
+					RQE.LastClickedIdentifier = effectiveStepIndex
+					print("After update: LastClickedIdentifier:", RQE.LastClickedIdentifier)
+				else
+					RQE.LastClickedIdentifier = effectiveStepIndex
+				end
 			end
 
 			-- Update WaypointButton stepIndex only if needed
 			if WaypointButton.stepIndex and WaypointButton.stepIndex ~= effectiveStepIndex and effectiveStepIndex >= WaypointButton.stepIndex then
-				print("Before update: WaypointButton.stepIndex:", WaypointButton.stepIndex)
-				WaypointButton.stepIndex = effectiveStepIndex
-				print("After update: WaypointButton.stepIndex:", WaypointButton.stepIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Before update: WaypointButton.stepIndex:", WaypointButton.stepIndex)
+					WaypointButton.stepIndex = effectiveStepIndex
+					print("After update: WaypointButton.stepIndex:", WaypointButton.stepIndex)
+				else
+					WaypointButton.stepIndex = effectiveStepIndex
+				end
 			end
 
 			RQE.LastClickedButtonRef = WaypointButton
-			print("New LastClickedButton set:", i or "Unnamed")
 
 			-- Update the reference to the last clicked button
 			RQE.LastClickedWaypointButton = WaypointButton
@@ -1144,7 +1151,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 					RQE.debugLog("Attempting to create macro")
-					C_SuperTrack.SetSuperTrackedQuestID(RQE.questIDFromText)	-- This call is now inside the else clause
+					--C_SuperTrack.SetSuperTrackedQuestID(RQE.questIDFromText)	-- This call is now inside the else clause	-- WAS CAUSING ISSUES OF SETTING SUPERTRACK IN COMBAT
 				end
 			end
 
@@ -1759,6 +1766,18 @@ function RQE.ToggleFrameLock()
 	isFrameLocked = not isFrameLocked
 	UpdateMenuText()  -- Make sure this function is called here
 end
+
+
+-- Unregister events when a frame is hidden
+RQEFrame:SetScript("OnHide", function()
+    RQE:ManageEvents(false)  -- Unregister events
+end)
+
+
+-- Re-register events when a frame is shown
+RQEFrame:SetScript("OnShow", function()
+    RQE:ManageEvents(true)  -- Register events
+end)
 
 
 -- Initialize frame lock state
