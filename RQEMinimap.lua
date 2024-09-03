@@ -18,9 +18,9 @@ local RQEMinimapButton = {}
 ---------------------------
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Message here")
+	RQE.debugLog("Message here")
 else
-    RQE.debugLog("RQE or RQE.debugLog is not initialized.")
+	RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
 
 ---------------------------
@@ -29,23 +29,23 @@ end
 
 -- Toggle Debug Log window function
 function RQE:ToggleDebugLog()
-    if not RQE.DebugLogFrameRef then
-        -- Initialize the debug log frame here if it doesn't exist yet
-    end
-    RQE.DebugLogFrame()
+	if not RQE.DebugLogFrameRef then
+		-- Initialize the debug log frame here if it doesn't exist yet
+	end
+	RQE.DebugLogFrame()
 end
 
 -- Open AddOn Settings function
 function RQE:OpenSettings()
-    -- Force the interface options to open on the AddOns tab
-    if SettingsPanel then
-        -- Use the new API to open the correct settings panel
-        SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
-    else
-        -- Fallback for older versions, force open Interface Options to the AddOns tab
-        InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-        InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer") -- Sometimes needs to be called twice due to Blizzard quirk
-    end
+	-- Force the interface options to open on the AddOns tab
+	if SettingsPanel then
+		-- Use the new API to open the correct settings panel
+		SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+	else
+		-- Fallback for older versions, force open Interface Options to the AddOns tab
+		InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+		InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer") -- Sometimes needs to be called twice due to Blizzard quirk
+	end
 end
 
 
@@ -54,73 +54,73 @@ end
 ---------------------------
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
---local icon = LibStub("LibDBIcon-1.0", true)   -- commenting out as this was displaying a second button anchored to the minimap
+--local icon = LibStub("LibDBIcon-1.0", true)	-- commenting out as this was displaying a second button anchored to the minimap
 
 -- Create a Data Broker object
 local RQEdataBroker = ldb:NewDataObject("RQE", {
-    type = "launcher",
-    icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",
-    OnClick = function(_, button)
+	type = "launcher",
+	icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",
+	OnClick = function(_, button)
 
-        if IsShiftKeyDown() and button == "LeftButton" then
-            RQE:ToggleDebugLog()
+		if IsShiftKeyDown() and button == "LeftButton" then
+			RQE:ToggleDebugLog()
 			
-        elseif button == "LeftButton" then
-            if RQEFrame:IsShown() then
-                RQEFrame:Hide()
-                if RQE.MagicButton then
-                    RQE.MagicButton:Hide()
-                end
+		elseif button == "LeftButton" then
+			if RQEFrame:IsShown() then
+				RQEFrame:Hide()
+				if RQE.MagicButton then
+					RQE.MagicButton:Hide()
+				end
 
-                RQE.RQEQuestFrame:Hide()
-                RQE.isRQEFrameManuallyClosed = true
-                RQE.isRQEQuestFrameManuallyClosed = true
+				RQE.RQEQuestFrame:Hide()
+				RQE.isRQEFrameManuallyClosed = true
+				RQE.isRQEQuestFrameManuallyClosed = true
 				
 				-- Check if MagicButton should be visible based on macro body
-                RQE.Buttons.UpdateMagicButtonVisibility()
-            else
-                RQE:ClearFrameData()
-                RQE:ClearWaypointButtonData()
-                RQEFrame:Show()
-                UpdateFrame()
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			else
+				RQE:ClearFrameData()
+				RQE:ClearWaypointButtonData()
+				RQEFrame:Show()
+				UpdateFrame()
 
-                if RQE.MagicButton then
-                    RQE.MagicButton:Show()
-                end
+				if RQE.MagicButton then
+					RQE.MagicButton:Show()
+				end
 				
 				-- Check if enableQuestFrame is true before showing RQEQuestFrame
-                if RQE.db.profile.enableQuestFrame then
-                    RQE.RQEQuestFrame:Show()
-                end
+				if RQE.db.profile.enableQuestFrame then
+					RQE.RQEQuestFrame:Show()
+				end
 
-                RQE.isRQEFrameManuallyClosed = false
-                RQE.isRQEQuestFrameManuallyClosed = false
+				RQE.isRQEFrameManuallyClosed = false
+				RQE.isRQEQuestFrameManuallyClosed = false
 				
 				-- Check if MagicButton should be visible based on macro body
-                RQE.Buttons.UpdateMagicButtonVisibility()
-            end
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			end
 
-        elseif button == "RightButton" and IsShiftKeyDown() then
-            RQE:OpenSettings()
+		elseif button == "RightButton" and IsShiftKeyDown() then
+			RQE:OpenSettings()
 
-        elseif button == "RightButton" then
+		elseif button == "RightButton" then
 			RQE.lastClickedFrame = _G["BazookaHL_RQE"]  -- Set the LDB button as the last clicked frame
-            RQE:ShowLDBDropdownMenu()
-        end
-    end,
+			RQE:ShowLDBDropdownMenu()
+		end
+	end,
 
-    OnEnter = function(display)
-        if RQE.hoverTimers[display] then
-            RQE:CancelTimer(RQE.hoverTimers[display])
-        end
-        RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
-            RQE:ShowLDBDropdownMenu()
-        end, 3)
+	OnEnter = function(display)
+		if RQE.hoverTimers[display] then
+			RQE:CancelTimer(RQE.hoverTimers[display])
+		end
+		RQE.hoverTimers[display] = RQE:ScheduleTimer(function()
+			RQE:ShowLDBDropdownMenu()
+		end, 3)
 
-        GameTooltip:SetOwner(display, "ANCHOR_NONE")
-        GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")
+		GameTooltip:SetOwner(display, "ANCHOR_NONE")
+		GameTooltip:SetPoint("BOTTOMLEFT", display, "TOPRIGHT")
 
-        -- Directly define the tooltip here
+		-- Directly define the tooltip here
 		GameTooltip:AddLine("Rhodan's Quest Explorer")
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
@@ -128,50 +128,50 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 		GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.", 0.8, 0.8, 0.8, true)
 		GameTooltip:AddLine("Shift+Right-click to open Settings.", 0.8, 0.8, 0.8, true)
 
-        GameTooltip:Show()
-    end,
+		GameTooltip:Show()
+	end,
 
-    OnLeave = function(display)
-        if RQE.hoverTimers[display] then
-            RQE:CancelTimer(RQE.hoverTimers[display])
-            RQE.hoverTimers[display] = nil
-        end
-        GameTooltip:Hide()
-    end,
+	OnLeave = function(display)
+		if RQE.hoverTimers[display] then
+			RQE:CancelTimer(RQE.hoverTimers[display])
+			RQE.hoverTimers[display] = nil
+		end
+		GameTooltip:Hide()
+	end,
 })
 
 -- if icon then
-    -- icon:Register("RQE", RQEdataBroker, {})
-    -- icon:Show("RQE")
+	-- icon:Register("RQE", RQEdataBroker, {})
+	-- icon:Show("RQE")
 -- end
 
 
 -- Function that toggles RQEFrame and RQEQuestFrame
 function RQE.ToggleBothFramesfromLDB()
-    if RQEFrame:IsShown() then
-        RQEFrame:Hide()
-        if RQE.MagicButton then
-            RQE.MagicButton:Hide()
-        end
-        RQE.RQEQuestFrame:Hide()
-        RQE.isRQEFrameManuallyClosed = true
-        RQE.isRQEQuestFrameManuallyClosed = true
-    else
-        RQE:ClearFrameData()
-        RQE:ClearWaypointButtonData()
-        if RQE.db.profile.enableFrame then
-            RQEFrame:Show()
-            if RQE.MagicButton then
-                RQE.MagicButton:Show()
-            end
-        end
-        if RQE.db.profile.enableQuestFrame then
-            RQE.RQEQuestFrame:Show()
-        end
-        RQE.isRQEFrameManuallyClosed = false
-        RQE.isRQEQuestFrameManuallyClosed = false
-        RQE.Buttons.UpdateMagicButtonVisibility()
-    end
+	if RQEFrame:IsShown() then
+		RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
+		RQE.RQEQuestFrame:Hide()
+		RQE.isRQEFrameManuallyClosed = true
+		RQE.isRQEQuestFrameManuallyClosed = true
+	else
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+		if RQE.db.profile.enableFrame then
+			RQEFrame:Show()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
+		end
+		if RQE.db.profile.enableQuestFrame then
+			RQE.RQEQuestFrame:Show()
+		end
+		RQE.isRQEFrameManuallyClosed = false
+		RQE.isRQEQuestFrameManuallyClosed = false
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end
 end
 
 ---------------------------
@@ -197,37 +197,37 @@ RQE.MinimapButton:EnableMouse(true)
 
 -- Function to keep the button within the minimap's perimeter
 function RQE:UpdateMinimapButtonPosition()
-    local x, y = GetCursorPosition()
-    local scale = Minimap:GetEffectiveScale()
-    x = x / scale
-    y = y / scale
+	local x, y = GetCursorPosition()
+	local scale = Minimap:GetEffectiveScale()
+	x = x / scale
+	y = y / scale
 
-    local angle = math.rad(RQE.db.profile.minimapButtonAngle)
-    local mx, my = Minimap:GetCenter()
-    local radius = (Minimap:GetWidth() / 2) + 5
-    local dx = math.cos(angle) * radius
-    local dy = math.sin(angle) * radius
-    local dist = math.sqrt(dx * dx + dy * dy)
+	local angle = math.rad(RQE.db.profile.minimapButtonAngle)
+	local mx, my = Minimap:GetCenter()
+	local radius = (Minimap:GetWidth() / 2) + 5
+	local dx = math.cos(angle) * radius
+	local dy = math.sin(angle) * radius
+	local dist = math.sqrt(dx * dx + dy * dy)
 
-    local minimapRadius = (Minimap:GetWidth() / 2) + 5
+	local minimapRadius = (Minimap:GetWidth() / 2) + 5
 
-    -- Clamp the button position to the minimap's perimeter
-    if dist > minimapRadius then
-        angle = math.atan2(dy, dx)
-        dx = math.cos(angle) * minimapRadius
-        dy = math.sin(angle) * minimapRadius
-    end
+	-- Clamp the button position to the minimap's perimeter
+	if dist > minimapRadius then
+		angle = math.atan2(dy, dx)
+		dx = math.cos(angle) * minimapRadius
+		dy = math.sin(angle) * minimapRadius
+	end
 
-    -- Ensure dx and dy are valid numbers
-    if not dx or not dy then
-        dx = math.cos(angle) * minimapRadius
-        dy = math.sin(angle) * minimapRadius
-    end
+	-- Ensure dx and dy are valid numbers
+	if not dx or not dy then
+		dx = math.cos(angle) * minimapRadius
+		dy = math.sin(angle) * minimapRadius
+	end
 
-    RQE.MinimapButton:ClearAllPoints()
-    RQE.MinimapButton:SetPoint("CENTER", Minimap, "CENTER", dx, dy)
+	RQE.MinimapButton:ClearAllPoints()
+	RQE.MinimapButton:SetPoint("CENTER", Minimap, "CENTER", dx, dy)
 
-    return dx, dy
+	return dx, dy
 end
 
 	
@@ -240,52 +240,52 @@ RQE.MinimapButton:RegisterForClicks("AnyUp")
 
 -- Function that handles the OnClick for the MinimapButton
 RQE.MinimapButton:SetScript("OnClick", function(self, button)
-    if button == "LeftButton" then
-        if IsShiftKeyDown() then
-            RQE:ToggleDebugLog()  -- Shift + Left Click
-        else
-            if RQEFrame:IsShown() then
-                RQEFrame:Hide()
-                if RQE.MagicButton then
-                    RQE.MagicButton:Hide()
-                end
+	if button == "LeftButton" then
+		if IsShiftKeyDown() then
+			RQE:ToggleDebugLog()  -- Shift + Left Click
+		else
+			if RQEFrame:IsShown() then
+				RQEFrame:Hide()
+				if RQE.MagicButton then
+					RQE.MagicButton:Hide()
+				end
 
-                RQE.RQEQuestFrame:Hide()
-                RQE.isRQEFrameManuallyClosed = true
-                RQE.isRQEQuestFrameManuallyClosed = true
+				RQE.RQEQuestFrame:Hide()
+				RQE.isRQEFrameManuallyClosed = true
+				RQE.isRQEQuestFrameManuallyClosed = true
 
-                -- Check if MagicButton should be visible based on macro body
-                RQE.Buttons.UpdateMagicButtonVisibility()
-            else
-                RQE:ClearFrameData()
-                RQE:ClearWaypointButtonData()
-                RQEFrame:Show()
-                UpdateFrame()
+				-- Check if MagicButton should be visible based on macro body
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			else
+				RQE:ClearFrameData()
+				RQE:ClearWaypointButtonData()
+				RQEFrame:Show()
+				UpdateFrame()
 
-                if RQE.MagicButton then
-                    RQE.MagicButton:Show()
-                end
+				if RQE.MagicButton then
+					RQE.MagicButton:Show()
+				end
 
-                -- Check if enableQuestFrame is true before showing RQEQuestFrame
-                if RQE.db.profile.enableQuestFrame then
-                    RQE.RQEQuestFrame:Show()
-                end
+				-- Check if enableQuestFrame is true before showing RQEQuestFrame
+				if RQE.db.profile.enableQuestFrame then
+					RQE.RQEQuestFrame:Show()
+				end
 
-                RQE.isRQEFrameManuallyClosed = false
-                RQE.isRQEQuestFrameManuallyClosed = false
+				RQE.isRQEFrameManuallyClosed = false
+				RQE.isRQEQuestFrameManuallyClosed = false
 
-                -- Check if MagicButton should be visible based on macro body
-                RQE.Buttons.UpdateMagicButtonVisibility()
-            end
-        end
-    elseif button == "RightButton" then
-        if IsShiftKeyDown() then
-            RQE:OpenSettings()  -- Shift + Right Click
-        else
+				-- Check if MagicButton should be visible based on macro body
+				RQE.Buttons.UpdateMagicButtonVisibility()
+			end
+		end
+	elseif button == "RightButton" then
+		if IsShiftKeyDown() then
+			RQE:OpenSettings()  -- Shift + Right Click
+		else
 			RQE.lastClickedFrame = self  -- Set the minimap button as the last clicked frame
-            RQE:ShowLDBDropdownMenu()  -- Right Click
-        end
-    end
+			RQE:ShowLDBDropdownMenu()  -- Right Click
+		end
+	end
 end)
 
 
@@ -302,7 +302,7 @@ RQE.MinimapButton:SetScript("OnEnter", function(self)
 	GameTooltip:AddLine("Shift+Left-click to toggle Debug Log.", 0.8, 0.8, 0.8, true)
 	GameTooltip:AddLine("Shift+Right-click to open Settings.", 0.8, 0.8, 0.8, true)
 
-    GameTooltip:Show()
+	GameTooltip:Show()
 end)
 
 
@@ -314,26 +314,26 @@ end)
 
 -- Function that handles the OnDragStart for the MinimapButton
 RQE.MinimapButton:SetScript("OnDragStart", function(self)
-    self:StartMoving()
+	self:StartMoving()
 end)
 
 
 -- Function that handles the OnDragStop for the MinimapButton
 RQE.MinimapButton:SetScript("OnDragStop", function(self)
-    self:StopMovingOrSizing()
+	self:StopMovingOrSizing()
 
-    -- Calculate the new position after dragging
-    local mx, my = Minimap:GetCenter()
-    local bx, by = self:GetCenter()
-    local dx = bx - mx
-    local dy = by - my
+	-- Calculate the new position after dragging
+	local mx, my = Minimap:GetCenter()
+	local bx, by = self:GetCenter()
+	local dx = bx - mx
+	local dy = by - my
 
-    -- Calculate the angle based on the new position
-    local angle = math.deg(math.atan2(dy, dx))
-    RQE.db.profile.minimapButtonAngle = angle
+	-- Calculate the angle based on the new position
+	local angle = math.deg(math.atan2(dy, dx))
+	RQE.db.profile.minimapButtonAngle = angle
 
-    -- Update the button's position based on the new angle
-    RQE:UpdateMinimapButtonPosition()
+	-- Update the button's position based on the new angle
+	RQE:UpdateMinimapButtonPosition()
 end)
 
 
@@ -345,28 +345,28 @@ end)
 RQE_ButtonMixin = {}
 
 function RQE_ButtonMixin:OnLoad()
-    self:SetNormalFontObject("GameFontHighlightSmall")
-    self:SetHighlightFontObject("GameFontHighlightSmall")
-    
-    local normalTexture = self:CreateTexture(nil, "BACKGROUND")
-    normalTexture:SetColorTexture(0.1, 0.1, 0.1, 0.9)
-    normalTexture:SetAllPoints(self)
-    self:SetNormalTexture(normalTexture)
-    
-    local highlightTexture = self:CreateTexture(nil, "BACKGROUND")
-    highlightTexture:SetColorTexture(0.2, 0.2, 0.2, 1)
-    highlightTexture:SetAllPoints(self)
-    self:SetHighlightTexture(highlightTexture)
-    
-    local pushedTexture = self:CreateTexture(nil, "BACKGROUND")
-    pushedTexture:SetColorTexture(0.05, 0.05, 0.05, 0.8)
-    pushedTexture:SetAllPoints(self)
-    self:SetPushedTexture(pushedTexture)
+	self:SetNormalFontObject("GameFontHighlightSmall")
+	self:SetHighlightFontObject("GameFontHighlightSmall")
+	
+	local normalTexture = self:CreateTexture(nil, "BACKGROUND")
+	normalTexture:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+	normalTexture:SetAllPoints(self)
+	self:SetNormalTexture(normalTexture)
+	
+	local highlightTexture = self:CreateTexture(nil, "BACKGROUND")
+	highlightTexture:SetColorTexture(0.2, 0.2, 0.2, 1)
+	highlightTexture:SetAllPoints(self)
+	self:SetHighlightTexture(highlightTexture)
+	
+	local pushedTexture = self:CreateTexture(nil, "BACKGROUND")
+	pushedTexture:SetColorTexture(0.05, 0.05, 0.05, 0.8)
+	pushedTexture:SetAllPoints(self)
+	self:SetPushedTexture(pushedTexture)
 end
 
 
 function RQE_ButtonMixin:OnClick()
-    -- Placeholder for button click handling
+	-- Placeholder for button click handling
 end
 
 
@@ -375,103 +375,103 @@ RQE_MenuMixin = {}
 
 
 function RQE_MenuMixin:OnLoad()
-    self.buttons = {}
-    self:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true,
-        tileSize = 32,
-        edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    self:SetBackdropColor(0, 0, 0, 0.8)
+	self.buttons = {}
+	self:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+		edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+		tile = true,
+		tileSize = 32,
+		edgeSize = 16,
+		insets = { left = 4, right = 4, top = 4, bottom = 4 },
+	})
+	self:SetBackdropColor(0, 0, 0, 0.8)
 end
 
 
 function RQE_MenuMixin:AddButton(text, onClick, isSubmenu)
-    -- Prevent adding the same button multiple times
-    for _, button in ipairs(self.buttons) do
-        if button:GetText() == text .. (isSubmenu and " >" or "") then
-            return
-        end
-    end
+	-- Prevent adding the same button multiple times
+	for _, button in ipairs(self.buttons) do
+		if button:GetText() == text .. (isSubmenu and " >" or "") then
+			return
+		end
+	end
 
-    local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
-    Mixin(button, RQE_ButtonMixin)
-    button:OnLoad()
-    button:SetText(text .. (isSubmenu and " >" or ""))
-    button:SetSize(self:GetWidth() - 20, 20)
-    button:SetScript("OnClick", onClick)
-    
-    if #self.buttons == 0 then
-        button:SetPoint("TOP", self, "TOP", 0, -10)
-    else
-        button:SetPoint("TOP", self.buttons[#self.buttons], "BOTTOM", 0, -5)
-    end
-    
-    table.insert(self.buttons, button)
-    self:SetHeight((#self.buttons * (20 + 5)) + 20)
+	local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
+	Mixin(button, RQE_ButtonMixin)
+	button:OnLoad()
+	button:SetText(text .. (isSubmenu and " >" or ""))
+	button:SetSize(self:GetWidth() - 20, 20)
+	button:SetScript("OnClick", onClick)
+	
+	if #self.buttons == 0 then
+		button:SetPoint("TOP", self, "TOP", 0, -10)
+	else
+		button:SetPoint("TOP", self.buttons[#self.buttons], "BOTTOM", 0, -5)
+	end
+	
+	table.insert(self.buttons, button)
+	self:SetHeight((#self.buttons * (20 + 5)) + 20)
 end
 
 
 -- Show and Position the Menu
 function RQE_MenuMixin:ShowMenu(anchorFrame, isSubmenu)
-    self:ClearAllPoints()
+	self:ClearAllPoints()
 
-    local screenWidth = GetScreenWidth()
-    local screenHeight = GetScreenHeight()
-    local anchorX, anchorY = anchorFrame:GetCenter()
+	local screenWidth = GetScreenWidth()
+	local screenHeight = GetScreenHeight()
+	local anchorX, anchorY = anchorFrame:GetCenter()
 
-    local isTopHalf = anchorY > (screenHeight / 2)
-    local isLeftHalf = anchorX < (screenWidth / 2)
+	local isTopHalf = anchorY > (screenHeight / 2)
+	local isLeftHalf = anchorX < (screenWidth / 2)
 
-    -- If the anchor frame is the LDB button
-    if not isSubmenu and anchorFrame == _G["BazookaHL_RQE"] then
-        -- Directly anchor the main menu below the LDB button, considering screen side
-        if isLeftHalf then
-            self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
-        else
-            self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
-        end
-    -- If the anchor frame is the Minimap button
-    elseif not isSubmenu and anchorFrame == RQE.MinimapButton then
-        -- Dynamically position relative to the Minimap button
-        if isLeftHalf then
-            self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
-        else
-            self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
-        end
-    elseif isSubmenu then
-        -- Adjust the positioning to anchor the submenu to the specific button (anchorFrame)
-        if isLeftHalf then
-            self:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT", 10, -60)
-        else
-            self:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT", -10, -60)
-        end
-    else
-        -- Fallback positioning for any other cases
-        if isLeftHalf then
-            self:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", 10, -85)
-        else
-            self:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT", -10, -85)
-        end
-    end
+	-- If the anchor frame is the LDB button
+	if not isSubmenu and anchorFrame == _G["BazookaHL_RQE"] then
+		-- Directly anchor the main menu below the LDB button, considering screen side
+		if isLeftHalf then
+			self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
+		else
+			self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
+		end
+	-- If the anchor frame is the Minimap button
+	elseif not isSubmenu and anchorFrame == RQE.MinimapButton then
+		-- Dynamically position relative to the Minimap button
+		if isLeftHalf then
+			self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
+		else
+			self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
+		end
+	elseif isSubmenu then
+		-- Adjust the positioning to anchor the submenu to the specific button (anchorFrame)
+		if isLeftHalf then
+			self:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT", 10, -60)
+		else
+			self:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT", -10, -60)
+		end
+	else
+		-- Fallback positioning for any other cases
+		if isLeftHalf then
+			self:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", 10, -85)
+		else
+			self:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT", -10, -85)
+		end
+	end
 
-    self:Show()
+	self:Show()
 end
 
 
 function RQE_MenuMixin:HideMenu()
-    self:Hide()
+	self:Hide()
 end
 
 
 function RQE_MenuMixin:ToggleMenu(anchorFrame)
-    if self:IsShown() then
-        self:HideMenu()
-    else
-        self:ShowMenu(anchorFrame)
-    end
+	if self:IsShown() then
+		self:HideMenu()
+	else
+		self:ShowMenu(anchorFrame)
+	end
 end
 
 
@@ -479,13 +479,13 @@ end
 function RQE:ShowLDBDropdownMenu()
 	GameTooltip:Hide()
 
-    if not self.CustomMenu then
-        self.CustomMenu = CreateFrame("Frame", "RQECustomMenu", UIParent, "BackdropTemplate")
-        Mixin(self.CustomMenu, RQE_MenuMixin)
-        self.CustomMenu:OnLoad()
-        self.CustomMenu:SetSize(150, 100)
-        self.CustomMenu:SetFrameStrata("DIALOG")
-        self.CustomMenu:Hide()
+	if not self.CustomMenu then
+		self.CustomMenu = CreateFrame("Frame", "RQECustomMenu", UIParent, "BackdropTemplate")
+		Mixin(self.CustomMenu, RQE_MenuMixin)
+		self.CustomMenu:OnLoad()
+		self.CustomMenu:SetSize(150, 100)
+		self.CustomMenu:SetFrameStrata("DIALOG")
+		self.CustomMenu:Hide()
 
 		-- Keep menu visible when mouse is over it
 		self.CustomMenu:SetScript("OnEnter", function(self)
@@ -505,17 +505,17 @@ function RQE:ShowLDBDropdownMenu()
 				if RQE.MoreOptionsMenu then RQE.MoreOptionsMenu:Hide() end
 			end)
 		end)
-    end
-    
-    -- Ensure buttons are only added once
-    if #self.CustomMenu.buttons == 0 then
-        self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end)
-        self.CustomMenu:AddButton("AddOn Settings", function() RQE:OpenSettings() end)
+	end
+	
+	-- Ensure buttons are only added once
+	if #self.CustomMenu.buttons == 0 then
+		self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end)
+		self.CustomMenu:AddButton("AddOn Settings", function() RQE:OpenSettings() end)
 		self.CustomMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
-        self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end)
-        -- self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)    -- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
-    end
-    
+		self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end)
+		-- self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)	-- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
+	end
+	
 	-- Determine the actual frame object
 	local anchorFrame = RQE.lastClickedFrame
 
@@ -530,40 +530,40 @@ end
 
 -- More Options Menu Creation
 function RQE:ShowMoreOptionsMenu(parentMenu)
-    if not self.MoreOptionsMenu then
-        self.MoreOptionsMenu = CreateFrame("Frame", "RQEMoreOptionsMenu", UIParent, "BackdropTemplate")
-        Mixin(self.MoreOptionsMenu, RQE_MenuMixin)
-        self.MoreOptionsMenu:OnLoad()
-        self.MoreOptionsMenu:SetSize(150, 100)
-        self.MoreOptionsMenu:SetFrameStrata("DIALOG")
-        self.MoreOptionsMenu:Hide()
-        
-        -- Keep submenu visible when mouse is over it
-        self.MoreOptionsMenu:SetScript("OnEnter", function(self)
-            self:Show()
-            parentMenu:Show()
-        end)
-        self.MoreOptionsMenu:SetScript("OnLeave", function(self)
-            C_Timer.After(0.1, function()
-                if not MouseIsOver(self) and not MouseIsOver(parentMenu) then
-                    self:Hide()
-                    parentMenu:Hide()
-                end
-            end)
-        end)
-    end
-    
-    -- Ensure buttons are only added once
-    if #self.MoreOptionsMenu.buttons == 0 then
-        self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:OpenFrameSettings() end)
-        self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:OpenFontSettings() end)
-        self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:OpenDebugOptions() end)
-        self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end)
+	if not self.MoreOptionsMenu then
+		self.MoreOptionsMenu = CreateFrame("Frame", "RQEMoreOptionsMenu", UIParent, "BackdropTemplate")
+		Mixin(self.MoreOptionsMenu, RQE_MenuMixin)
+		self.MoreOptionsMenu:OnLoad()
+		self.MoreOptionsMenu:SetSize(150, 100)
+		self.MoreOptionsMenu:SetFrameStrata("DIALOG")
+		self.MoreOptionsMenu:Hide()
+		
+		-- Keep submenu visible when mouse is over it
+		self.MoreOptionsMenu:SetScript("OnEnter", function(self)
+			self:Show()
+			parentMenu:Show()
+		end)
+		self.MoreOptionsMenu:SetScript("OnLeave", function(self)
+			C_Timer.After(0.1, function()
+				if not MouseIsOver(self) and not MouseIsOver(parentMenu) then
+					self:Hide()
+					parentMenu:Hide()
+				end
+			end)
+		end)
+	end
+	
+	-- Ensure buttons are only added once
+	if #self.MoreOptionsMenu.buttons == 0 then
+		self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:OpenFrameSettings() end)
+		self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:OpenFontSettings() end)
+		self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:OpenDebugOptions() end)
+		self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end)
 		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
-    end
-    
-    -- Toggle More Options menu visibility
-    self.MoreOptionsMenu:ClearAllPoints()
-    self.MoreOptionsMenu:SetPoint("TOPLEFT", parentMenu, "TOPRIGHT", 0, 0) -- Adjust this to desired position
-    self.MoreOptionsMenu:ToggleMenu(parentMenu, true)
+	end
+	
+	-- Toggle More Options menu visibility
+	self.MoreOptionsMenu:ClearAllPoints()
+	self.MoreOptionsMenu:SetPoint("TOPLEFT", parentMenu, "TOPRIGHT", 0, 0) -- Adjust this to desired position
+	self.MoreOptionsMenu:ToggleMenu(parentMenu, true)
 end

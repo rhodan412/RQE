@@ -17,9 +17,9 @@ RQE.posY = nil
 ---------------------------
 
 if RQE and RQE.debugLog then
-    RQE.debugLog("Message here")
+	RQE.debugLog("Message here")
 else
-    RQE.debugLog("RQE or RQE.debugLog is not initialized.")
+	RQE.debugLog("RQE or RQE.debugLog is not initialized.")
 end
 
 
@@ -30,39 +30,39 @@ end
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
 -- Assume CloseWorldMap() closes the world map
 RQE.UnknownQuestButtonCalcNTrack = function()
-    RQE.UnknownQuestButton:SetScript("OnClick", function()
-        local superQuest = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-        local extractedQuestID
-        if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-            extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-        end
+	RQE.UnknownQuestButton:SetScript("OnClick", function()
+		local superQuest = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
 
-        -- Determine questID based on various fallbacks
-        local questID = RQE.searchedQuestID or extractedQuestID or superQuest
-        local questData = RQE.getQuestData(questID)
+		-- Determine questID based on various fallbacks
+		local questID = RQE.searchedQuestID or extractedQuestID or superQuest
+		local questData = RQE.getQuestData(questID)
 
-        if not questID then
-            RQE.debugLog("No QuestID found. Cannot proceed.")
-            return
-        end
+		if not questID then
+			RQE.debugLog("No QuestID found. Cannot proceed.")
+			return
+		end
 
-        -- Check if World Map is open
-        local isMapOpen = WorldMapFrame:IsShown()
+		-- Check if World Map is open
+		local isMapOpen = WorldMapFrame:IsShown()
 
-        if not RQE.posX or not RQE.posY then
-            if not isMapOpen and RQE.superTrackingChanged then
-                -- If coordinates are not available, attempt to open the quest log to get them
-                OpenQuestLogToQuestDetails(questID)
-                if not isMapOpen then
-                    WorldMapFrame:Hide()
-                end
-            end
-        end
+		if not RQE.posX or not RQE.posY then
+			if not isMapOpen and RQE.superTrackingChanged then
+				-- If coordinates are not available, attempt to open the quest log to get them
+				OpenQuestLogToQuestDetails(questID)
+				if not isMapOpen then
+					WorldMapFrame:Hide()
+				end
+			end
+		end
 
-        -- Reset the superTrackingChanged flag
-        RQE.superTrackingChanged = false
+		-- Reset the superTrackingChanged flag
+		RQE.superTrackingChanged = false
 
-        -- Call function to create a waypoint using stored coordinates and mapID
-        RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-    end)
+		-- Call function to create a waypoint using stored coordinates and mapID
+		RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+	end)
 end

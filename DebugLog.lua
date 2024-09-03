@@ -9,22 +9,41 @@ local logTable = {}
 
 -- Function to add messages to the log
 function RQE.AddToDebugLog(message)
-    local timestamp = date("%Y-%m-%d %H:%M:%S")
-    local logEntry = string.format("[%s] %s", timestamp, message)
-    table.insert(logTable, logEntry)
-    RQE.UpdateLogFrame()  -- Refresh the log frame each time a new message is added
+	local timestamp = date("%Y-%m-%d %H:%M:%S")
+	local logEntry = string.format("[%s] %s", timestamp, message)
+	table.insert(logTable, logEntry)
+
+	RQE.UpdateLogFrame()  -- Refresh the log frame each time a new message is added
+end
+
+
+-- Create a backup of the original AddMessage function
+if not RQE.originalAddMessage then
+    RQE.originalAddMessage = DEFAULT_CHAT_FRAME.AddMessage
+end
+
+-- Create a new function to hook the default AddMessage
+function DEFAULT_CHAT_FRAME:AddMessage(message, r, g, b, ...)
+    -- Call the original function to print to the default chat frame
+    RQE.originalAddMessage(self, message, r, g, b, ...)
+
+    -- Also log the message to the Debug Log frame
+    if RQE and RQE.AddToDebugLog then
+        local formattedMessage = "|cff"..string.format("%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255) .. message .. "|r"
+        RQE.AddToDebugLog(formattedMessage)
+    end
 end
 
 
 -- Function to display the log
 local function DisplayLog()
-    -- Code to create or update a custom frame that displays the logTable contents
+	-- Code to create or update a custom frame that displays the logTable contents
 end
 
 
 function RQE.ToggleLogDisplay()
-    -- Code to show/hide the log display
-    DisplayLog()
+	-- Code to show/hide the log display
+	DisplayLog()
 end
 
 
@@ -33,10 +52,10 @@ local logFrame = CreateFrame("Frame", "LogFrame", UIParent, "BackdropTemplate")
 logFrame:SetSize(300, 400) -- width, height
 logFrame:SetPoint("CENTER") -- position
 logFrame:SetBackdrop({
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true, tileSize = 16, edgeSize = 8,
-    insets = { left = 8, right = 8, top = 8, bottom = 8 }
+	bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+	edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+	tile = true, tileSize = 16, edgeSize = 8,
+	insets = { left = 8, right = 8, top = 8, bottom = 8 }
 })
 logFrame:SetMovable(true)
 logFrame:EnableMouse(true)
@@ -56,10 +75,10 @@ logFrame:SetPropagateMouseMotion(true)
 local header = CreateFrame("Frame", "RQE.LogFrameHeader", logFrame, "BackdropTemplate")
 header:SetHeight(headerHeight)
 header:SetBackdrop({
-    bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-    edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-    tile = true, tileSize = 16, edgeSize = 16,
-    insets = { left = 4, right = 4, top = 4, bottom = 4 }
+	bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+	edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+	tile = true, tileSize = 16, edgeSize = 16,
+	insets = { left = 4, right = 4, top = 4, bottom = 4 }
 })
 header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
 header:SetPoint("TOPLEFT", logFrame, "TOPLEFT")
@@ -120,27 +139,27 @@ scrollBar:SetWidth(16)
 
 -- Function to calculate the height of the text in the EditBox
 local function CalculateTextHeight(editBox)
-    local textString = editBox:GetText()
-    local stringWidth = editBox:GetWidth()
-    local totalHeight = 0
-    local _, fontHeight = editBox:GetFont()
+	local textString = editBox:GetText()
+	local stringWidth = editBox:GetWidth()
+	local totalHeight = 0
+	local _, fontHeight = editBox:GetFont()
 
-    for line in textString:gmatch("[^\n]+") do
-        totalHeight = totalHeight + fontHeight
-    end
+	for line in textString:gmatch("[^\n]+") do
+		totalHeight = totalHeight + fontHeight
+	end
 
-    return totalHeight
+	return totalHeight
 end
 
 
 -- Function to update the log frame with logTable contents
 function RQE.UpdateLogFrame()
-    local logText = table.concat(logTable, "\n")
-    editBox:SetText(logText)
-    -- We need to update the size of the editBox and the scrollFrame here as well
-    editBox:SetWidth(scrollFrame:GetWidth())
-    editBox:SetHeight(CalculateTextHeight(editBox))  -- CalculateTextHeight needs to be defined correctly
-    scrollFrame:UpdateScrollChildRect()  -- This updates the scroll bar to account for the new size of the scroll child
+	local logText = table.concat(logTable, "\n")
+	editBox:SetText(logText)
+	-- We need to update the size of the editBox and the scrollFrame here as well
+	editBox:SetWidth(scrollFrame:GetWidth())
+	editBox:SetHeight(CalculateTextHeight(editBox))  -- CalculateTextHeight needs to be defined correctly
+	scrollFrame:UpdateScrollChildRect()  -- This updates the scroll bar to account for the new size of the scroll child
 end
 
 
@@ -154,7 +173,7 @@ closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down") -
 closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight") -- Set the highlight texture
 
 closeButton:SetScript("OnClick", function()
-    RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
+	RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
 end)
 
 
@@ -168,16 +187,16 @@ resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down"
 
 
 resizeButton:SetScript("OnMouseDown", function(self, button)
-    if button == "LeftButton" then
-        logFrame:StartSizing("BOTTOMRIGHT")
-        self:GetHighlightTexture():Hide()  -- Hide highlight so it doesn't stick while sizing
-    end
+	if button == "LeftButton" then
+		logFrame:StartSizing("BOTTOMRIGHT")
+		self:GetHighlightTexture():Hide()  -- Hide highlight so it doesn't stick while sizing
+	end
 end)
 
 resizeButton:SetScript("OnMouseUp", function(self, button)
-    logFrame:StopMovingOrSizing()
-    self:GetHighlightTexture():Show()
-    RQE.UpdateLogFrame()  -- Update the contents to fit the new size
+	logFrame:StopMovingOrSizing()
+	self:GetHighlightTexture():Show()
+	RQE.UpdateLogFrame()  -- Update the contents to fit the new size
 end)
 
 
@@ -189,38 +208,38 @@ logFrame:Hide()
 -- Now define the SLASH command after the function is defined
 SLASH_LOGTOGGLE1 = "/logtoggle"
 SlashCmdList["LOGTOGGLE"] = function()
-    if logFrame:IsShown() then
-        logFrame:Hide()
-    else
-        logFrame:Show()
-        RQE.UpdateLogFrame()
-    end
+	if logFrame:IsShown() then
+		logFrame:Hide()
+	else
+		logFrame:Show()
+		RQE.UpdateLogFrame()
+	end
 end
 
 
 -- Function to toggle the log frame visibility
 function RQE.DebugLogFrame()
-    if logFrame:IsShown() then
-        logFrame:Hide()
-    else
-        RQE.UpdateLogFrame()
-        logFrame:Show()
-    end
+	if logFrame:IsShown() then
+		logFrame:Hide()
+	else
+		RQE.UpdateLogFrame()
+		logFrame:Show()
+	end
 end
 
 
 -- Adjust the scrollbar (slider) to control the scrollFrame
 scrollBar:SetScript("OnValueChanged", function(self, value)
-    scrollFrame:SetVerticalScroll(value)
+	scrollFrame:SetVerticalScroll(value)
 end)
 
 
 -- Update the EditBox height and scrollbar range when text changes
 editBox:SetScript("OnTextChanged", function(self)
-    -- Since GetStringHeight is not available
-    local textHeight = self:GetHeight()
-    self:SetHeight(textHeight)
+	-- Since GetStringHeight is not available
+	local textHeight = self:GetHeight()
+	self:SetHeight(textHeight)
 
-    local maxScroll = math.max(textHeight - scrollFrame:GetHeight(), 0)
-    scrollBar:SetValue(maxScroll) -- Set to bottom of the scroll area
+	local maxScroll = math.max(textHeight - scrollFrame:GetHeight(), 0)
+	scrollBar:SetValue(maxScroll) -- Set to bottom of the scroll area
 end)
