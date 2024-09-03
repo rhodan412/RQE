@@ -71,8 +71,8 @@ end
 local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
-	"BAG_UPDATE",
-	"BOSS_KILL",
+	--"BAG_UPDATE",
+	--"BOSS_KILL",
 	-- "CHAT_MSG_CHANNEL",
 	-- "CHAT_MSG_LOOT",
 	"CLIENT_SCENE_CLOSED",
@@ -80,18 +80,18 @@ local eventsToRegister = {
 	"CONTENT_TRACKING_UPDATE",
 	-- "COMPANION_UPDATE",
 	"CRITERIA_EARNED",
-	"ENCOUNTER_END",
+	--"ENCOUNTER_END",
 	"GOSSIP_CLOSED",
-	"GOSSIP_CONFIRM",
+	--"GOSSIP_CONFIRM",
 	"GOSSIP_CONFIRM_CANCEL",
-	"GOSSIP_SHOW",
-	"ITEM_COUNT_CHANGED",
+	--"GOSSIP_SHOW",
+	--"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	--"LEAVE_PARTY_CONFIRMATION",
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
 	-- "LOOT_OPENED",
 	-- "LOOT_READY",
-	"MERCHANT_UPDATE",
+	--"MERCHANT_UPDATE",
 	-- "NAME_PLATE_CREATED",
 	-- "NAME_PLATE_UNIT_ADDED",
 	-- "NAME_PLATE_UNIT_REMOVED",
@@ -104,23 +104,23 @@ local eventsToRegister = {
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
-	"QUEST_AUTOCOMPLETE",
+	--"QUEST_AUTOCOMPLETE",
 	"QUEST_COMPLETE",
 	-- "QUEST_CURRENCY_LOOT_RECEIVED",
 	"QUEST_FINISHED",				-- MAY BE REDUNDANT
-	"QUEST_LOG_CRITERIA_UPDATE",
+	--"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
-	"QUEST_LOOT_RECEIVED",
+	--"QUEST_LOOT_RECEIVED",
 	--"QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
-	"QUEST_WATCH_LIST_CHANGED",
+	--"QUEST_WATCH_LIST_CHANGED",
 	"QUEST_WATCH_UPDATE",
 	--"QUESTLINE_UPDATE",			-- Commenting out as this fires too often resulting in some lag
 	"SCENARIO_COMPLETED",
 	"SCENARIO_CRITERIA_UPDATE",
 	"SCENARIO_UPDATE",
-	"START_TIMER",
+	--"START_TIMER",
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
@@ -129,8 +129,8 @@ local eventsToRegister = {
 	"UNIT_EXITING_VEHICLE",
 	-- "UNIT_HEALTH",
 	-- "UNIT_TARGET",
-	"UNIT_INVENTORY_CHANGED",
-	"UNIT_QUEST_LOG_CHANGED",
+	--"UNIT_INVENTORY_CHANGED",
+	--"UNIT_QUEST_LOG_CHANGED",
 	-- "UNIT_SPELLCAST_RETICLE_CLEAR",
 	-- "UNIT_SPELLCAST_RETICLE_TARGET",
 	-- "UNIT_SPELLCAST_START",
@@ -139,12 +139,11 @@ local eventsToRegister = {
 	"UPDATE_INSTANCE_INFO",
 	-- "UPDATE_INVENTORY_DURABILITY",
 	"VARIABLES_LOADED",
-	"WORLD_STATE_TIMER_START",
-	"WORLD_STATE_TIMER_STOP",
+	--"WORLD_STATE_TIMER_START",
+	--"WORLD_STATE_TIMER_STOP",
 	"ZONE_CHANGED",
 	"ZONE_CHANGED_INDOORS",
 	"ZONE_CHANGED_NEW_AREA"
-
 }
 
 
@@ -161,7 +160,6 @@ local function HandleEvents(frame, event, ...)
 			["BAG_UPDATE"] = true,
 			["CHAT_MSG_CHANNEL"] = true,
 			["CHAT_MSG_LOOT"] = true,
-			["COMPANION_UPDATE"] = true,
 			["UNIT_INVENTORY_CHANGED"] = true,
 			["NAME_PLATE_CREATED"] = true,
 			["NAME_PLATE_UNIT_ADDED"] = true,
@@ -195,8 +193,8 @@ local function HandleEvents(frame, event, ...)
 	local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
 		ADDON_LOADED = RQE.handleAddonLoaded,
-		BAG_UPDATE = RQE.ReagentBagUpdate,
-		BOSS_KILL = RQE.handleBossKill,
+		--BAG_UPDATE = RQE.ReagentBagUpdate,
+		--BOSS_KILL = RQE.handleBossKill,
 		-- CHAT_MSG_CHANNEL = RQE.handleChatMsgChannel,
 		-- CHAT_MSG_LOOT = RQE.handleChatMsgLootChannel,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
@@ -204,18 +202,18 @@ local function HandleEvents(frame, event, ...)
 		CONTENT_TRACKING_UPDATE = RQE.handleContentUpdate,
 		-- COMPANION_UPDATE = RQE.handleCompanionUpdate,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
-		ENCOUNTER_END = RQE.handleBossKill,
+		--ENCOUNTER_END = RQE.handleBossKill,
 		GOSSIP_CLOSED = RQE.handleGossipClosed,
-		GOSSIP_CONFIRM = RQE.handleGossipConfirm,
+		--GOSSIP_CONFIRM = RQE.handleGossipConfirm,
 		GOSSIP_CONFIRM_CANCEL = RQE.handleGossipConfirmCancel,
-		GOSSIP_SHOW = RQE.handleGossipShow,
-		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
+		--GOSSIP_SHOW = RQE.handleGossipShow,
+		--ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
 		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
 		-- LOOT_OPENED = RQE.handleLootOpened,
 		-- LOOT_READY = RQE.handleLootReady,
-		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
+		--MERCHANT_UPDATE = RQE.handleMerchantUpdate,
 		-- NAME_PLATE_CREATED = RQE.handleNamePlateCreated,
 		-- NAME_PLATE_UNIT_ADDED = RQE.handleNamePlateUnitAdded,
 		-- NAME_PLATE_UNIT_REMOVED = RQE.handleNamePlateUnitRemoved,
@@ -228,23 +226,23 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
-		QUEST_AUTOCOMPLETE = RQE.handleQuestAutoComplete,
+		--QUEST_AUTOCOMPLETE = RQE.handleQuestAutoComplete,
 		QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestCurrencyLootReceived,
 		QUEST_FINISHED = RQE.handleQuestFinished,
-		QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestLogCriteriaUpdate,
+		--QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestLogCriteriaUpdate,
 		QUEST_LOG_UPDATE = RQE.handleQuestStatusUpdate,
-		QUEST_LOOT_RECEIVED = RQE.handleQuestLootReceived,
+		--QUEST_LOOT_RECEIVED = RQE.handleQuestLootReceived,
 		-- QUEST_POI_UPDATE = RQE.handleQuestStatusUpdate,
 		QUEST_REMOVED = RQE.handleQuestRemoved,
 		QUEST_TURNED_IN = RQE.handleQuestTurnIn,
-		QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
+		--QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
 		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
 		QUESTLINE_UPDATE = RQE.handleQuestlineUpdate,
 		SCENARIO_COMPLETED = RQE.handleScenarioComplete,
 		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioCriteriaUpdate,
 		SCENARIO_UPDATE = RQE.handleScenarioUpdate,
-		START_TIMER = RQE.handleStartTimer,
+		--START_TIMER = RQE.handleStartTimer,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
@@ -253,8 +251,8 @@ local function HandleEvents(frame, event, ...)
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		-- UNIT_HEALTH = RQE.handleUnitHealthEvent,
 		-- UNIT_TARGET = RQE.handleUnitTargetEvent,
-		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
-		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
+		--UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
+		--UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		-- UNIT_SPELLCAST_RETICLE_CLEAR = RQE.handleUnitSpellCastChange,
 		-- UNIT_SPELLCAST_RETICLE_TARGET = RQE.handleUnitSpellCastChange,
 		-- UNIT_SPELLCAST_START = RQE.handleUnitSpellCastChange,
@@ -263,8 +261,8 @@ local function HandleEvents(frame, event, ...)
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		-- UPDATE_INVENTORY_DURABILITY = RQE.handleUpdateInventoryDurability,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
-		WORLD_STATE_TIMER_START = RQE.handleWorldStateTimerStart,
-		WORLD_STATE_TIMER_STOP = RQE.handleWorldStateTimerStop,
+		--WORLD_STATE_TIMER_START = RQE.handleWorldStateTimerStart,
+		--WORLD_STATE_TIMER_STOP = RQE.handleWorldStateTimerStop,
 		ZONE_CHANGED = RQE.handleZoneChange,
 		ZONE_CHANGED_INDOORS = RQE.handleZoneChange,
 		ZONE_CHANGED_NEW_AREA = RQE.handleZoneNewAreaChange
@@ -1951,6 +1949,9 @@ function RQE.handleSuperTracking()
 		startTime = debugprofilestop()  -- Start timer
 	end
 
+	-- Get the current super-tracked quest ID at the start
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
 	-- Early return if no quest is super-tracked
 	if not RQE.IsQuestSuperTracked() then
 		return
@@ -1959,8 +1960,11 @@ function RQE.handleSuperTracking()
 	-- Check if the super-tracked quest ID has changed
 	if currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			print("Super-tracked quest changed from", RQE.previousSuperTrackedQuestID, "to", currentSuperTrackedQuestID)
+			print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(currentSuperTrackedQuestID))
 		end
+
+		-- Clears Macro Data
+		RQEMacro:ClearMacroContentByName("RQE Macro")
 
 		-- Reset relevant variables
 		RQE.LastClickedIdentifier = nil
@@ -1969,7 +1973,6 @@ function RQE.handleSuperTracking()
 		RQE.LastClickedButtonRef = nil
 
 		-- Perform any additional reset logic needed
-		-- Example: Clear waypoint button data, etc.
 		RQE:ClearWaypointButtonData()
 
 		-- Update the previous super-tracked quest ID
@@ -1982,11 +1985,10 @@ function RQE.handleSuperTracking()
 
 	-- Reset the "Clicked" WaypointButton to nil
 	RQE.LastClickedIdentifier = nil
-		
+
 	RQE:ClearWaypointButtonData()
 
 	local extractedQuestID
-	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Extract questID from RQE's custom UI if available
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -1998,7 +2000,7 @@ function RQE.handleSuperTracking()
 		RQE:UpdateContentSize()
 	end)
 
-	-- Check to advance to next step in quest
+	-- Check to advance to the next step in the quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
 			RQE:StartPeriodicChecks()
@@ -2010,9 +2012,9 @@ function RQE.handleSuperTracking()
 		return
 	end
 
-	-- Early return if manual super tracking wasn't performed
+	-- If manual super tracking was performed
 	if RQE.ManualSuperTrack then
-		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
+		RQE:ClearFrameData()
 		RQE.lastClickedObjectiveIndex = 0
 	end
 
@@ -2031,27 +2033,25 @@ function RQE.handleSuperTracking()
 	end
 
 	if questID then
-		local questName
-		questName = C_QuestLog.GetTitleForQuestID(questID)
-		local questLink = GetQuestLink(questID)  -- Generate the quest link
+		local questName = C_QuestLog.GetTitleForQuestID(questID)
+		local questLink = GetQuestLink(questID)
 
 		RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			-- Define the colors
-			local yellowColor = "|cffffff00"	-- Yellow color
-			local lightPurpleColor = "|cff40BFD9"	-- Light purple with a slightly greater reddish hue
-			local resetColor = "|r"		-- Reset to default color
+			-- Define colors
+			local yellowColor = "|cffffff00"
+			local lightPurpleColor = "|cff40BFD9"
+			local resetColor = "|r"
 
 			-- Update the message with color coding
 			DEFAULT_CHAT_FRAME:AddMessage(
-				lightPurpleColor .. "Quest Name: " .. yellowColor .. questName .. resetColor .. 
+				lightPurpleColor .. "Quest Name: " .. yellowColor .. questName .. resetColor ..
 				lightPurpleColor .. " Quest Link: " .. resetColor .. questLink
 			)
 		end
 
 		-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-		local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
 		local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
@@ -2060,7 +2060,6 @@ function RQE.handleSuperTracking()
 		end
 	else
 		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
-		--SortQuestsByProximity()
 	end
 
 	AdjustRQEFrameWidths()
@@ -2094,6 +2093,7 @@ function RQE.handleSuperTracking()
 		DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
+
 
 
 -- Handling QUEST_ACCEPTED Event
@@ -2516,20 +2516,20 @@ function RQE.handleUnitAura(...)
 	local spellName = select(4, ...)
 	local filter = select(5, ...)
 
-	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		local args = {...}  -- Capture all arguments into a table
-		for i, arg in ipairs(args) do
-			if type(arg) == "table" then
-				print("Arg " .. i .. ": (table)")
-				for k, v in pairs(arg) do
-					print("  " .. tostring(k) .. ": " .. tostring(v))
-				end
-			else
-				print("Arg " .. i .. ": " .. tostring(arg))
-			end
-		end
-	end
+	-- -- Print Event-specific Args
+	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+		-- local args = {...}  -- Capture all arguments into a table
+		-- for i, arg in ipairs(args) do
+			-- if type(arg) == "table" then
+				-- print("Arg " .. i .. ": (table)")
+				-- for k, v in pairs(arg) do
+					-- print("  " .. tostring(k) .. ": " .. tostring(v))
+				-- end
+			-- else
+				-- print("Arg " .. i .. ": " .. tostring(arg))
+			-- end
+		-- end
+	-- end
 
 	if unitToken ~= "player" then  -- Only process changes for the player
 		return
@@ -3610,44 +3610,14 @@ function RQE.handleQuestWatchUpdate(...)
 		return
 	end
 
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-		DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
-	end
-
-	-- Determine the super-tracked quest and update if needed
-	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	if currentSuperTrackedQuestID ~= questID then
-		C_SuperTrack.SetSuperTrackedQuestID(questID)
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-			DEFAULT_CHAT_FRAME:AddMessage("Quest is already super tracked: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
-		end
-	end
-
 	-- Fetch quest data early and exit if not found
 	local questInfo = RQE.getQuestData(questID)
 	if not questInfo then
 		return
 	end
 
-	-- Perform required processing
-	RQE:QuestType()
-	SortQuestsByProximity()
-	AdjustRQEFrameWidths()
-	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
-
-	-- Update the visibility or content of frames as needed
-	RQE:UpdateRQEFrameVisibility()
-	RQE:UpdateRQEQuestFrameVisibility()
-
-	-- Add quest to watch list if progress is made
-	C_QuestLog.AddQuestWatch(questID)
-
-	-- Determine questID, questInfo, and steps based on various fallbacks
-	local extractedQuestID = RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	local activeQuestID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
-	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-	-- if questInfo then
+	if questInfo then
+		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 		-- -- Details about the quest fetched here
 		-- for i, step in ipairs(questInfo) do
 			-- StepsText[i] = step.description
@@ -3662,7 +3632,37 @@ function RQE.handleQuestWatchUpdate(...)
 				-- DEFAULT_CHAT_FRAME:AddMessage("QWU 11 Debug: Header " .. i .. ": " .. questHeader[i], 0.56, 0.93, 0.56)
 			-- end
 		-- end
-	-- end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
+		DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
+	end
+
+	-- Determine the super-tracked quest and update if needed
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	if currentSuperTrackedQuestID ~= questID then
+		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
+			DEFAULT_CHAT_FRAME:AddMessage("Quest is already super tracked: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
+		end
+	end
+
+	-- Perform required processing
+	RQE:QuestType()
+	SortQuestsByProximity()
+	AdjustRQEFrameWidths()
+	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+
+	-- Update the visibility or content of frames as needed
+	--RQE:UpdateRQEFrameVisibility()
+	--RQE:UpdateRQEQuestFrameVisibility()
+
+	-- Add quest to watch list if progress is made
+	C_QuestLog.AddQuestWatch(questID)
+
+	-- Determine questID, questInfo, and steps based on various fallbacks
+	local extractedQuestID = RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	local activeQuestID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Optimize periodic checks
 	if RQE.db.profile.autoClickWaypointButton and questID == activeQuestID then
@@ -3911,13 +3911,33 @@ function RQE.handleQuestFinished()
 		DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
 	end
 
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	if RQE.db.profile.enableNearestSuperTrack then
+		if not isSuperTracking then
+			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+			if closestQuestID then
+				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
+				end
+			end
+		end
+		C_Timer.After(1, function()
+			UpdateFrame()
+		end)
+	end
+
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-		DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
+		DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
 	end
 
 	-- Determine questID based on various fallbacks
@@ -3926,9 +3946,9 @@ function RQE.handleQuestFinished()
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-		DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
-		DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
-		DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: DisplayedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
+		DEFAULT_CHAT_FRAME:AddMessage("QF 04 Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.75, 0.79)
+		DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)
+		DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: DisplayedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)
 	end
 	
 	-- -- Update RQEFrame and Refresh Quest Tracker  --- BLOCKING THIS TO REMOVE BLOAT AND INCREASE EFFICENCY
@@ -3939,13 +3959,13 @@ function RQE.handleQuestFinished()
 	RQE:UpdateRQEFrameVisibility()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-		DEFAULT_CHAT_FRAME:AddMessage("QF 05 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
+		DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)
 	end
 
 	RQE:UpdateRQEQuestFrameVisibility()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-		DEFAULT_CHAT_FRAME:AddMessage("QF 06 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
+		DEFAULT_CHAT_FRAME:AddMessage("QF 08 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 
 		local duration = debugprofilestop() - startTime
 		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_FINISHED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
@@ -3997,3 +4017,137 @@ ObjectiveTrackerFrame:HookScript("OnShow", HideObjectiveTracker)
 -- Optionally, use OnUpdate for continuous checking
 local hideObjectiveTrackerFrame = CreateFrame("Frame")
 hideObjectiveTrackerFrame:SetScript("OnUpdate", HideObjectiveTracker)
+
+
+--------------------------------
+-- 6. Advanced Event Management
+--------------------------------
+
+-- Function to manage events dynamically
+function RQE:ManageEvents(shouldRegister)
+	if shouldRegister then
+		-- Register events when needed
+		self:RegisterEvent("ACHIEVEMENT_EARNED", "handleAchievementTracking")
+		self:RegisterEvent("ADDON_LOADED", "handleAddonLoaded")
+		--self:RegisterEvent("BAG_UPDATE", "ReagentBagUpdate")
+		--self:RegisterEvent("BOSS_KILL", "handleBossKill")
+		self:RegisterEvent("CLIENT_SCENE_CLOSED", "HandleClientSceneClosed")
+		self:RegisterEvent("CLIENT_SCENE_OPENED", "HandleClientSceneOpened")
+		self:RegisterEvent("CONTENT_TRACKING_UPDATE", "handleContentUpdate")
+		self:RegisterEvent("CRITERIA_EARNED", "handleCriteriaEarned")
+		--self:RegisterEvent("ENCOUNTER_END", "handleBossKill")
+		self:RegisterEvent("GOSSIP_CLOSED", "handleGossipClosed")
+		--self:RegisterEvent("GOSSIP_CONFIRM", "handleGossipConfirm")
+		self:RegisterEvent("GOSSIP_CONFIRM_CANCEL", "handleGossipConfirmCancel")
+		--self:RegisterEvent("GOSSIP_SHOW", "handleGossipShow")
+		--self:RegisterEvent("ITEM_COUNT_CHANGED", "handleItemCountChanged")
+		self:RegisterEvent("JAILERS_TOWER_LEVEL_UPDATE", "handleJailersUpdate")
+		self:RegisterEvent("LFG_LIST_ACTIVE_ENTRY_UPDATE", "handleLFGActive")
+		--self:RegisterEvent("MERCHANT_UPDATE", "handleMerchantUpdate")
+		self:RegisterEvent("PLAYER_CONTROL_GAINED", "handlePlayerControlGained")
+		self:RegisterEvent("PLAYER_ENTERING_WORLD", "handlePlayerEnterWorld")
+		self:RegisterEvent("PLAYER_LOGIN", "handlePlayerLogin")
+		self:RegisterEvent("PLAYER_LOGOUT", "handlePlayerLogout")
+		self:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED", "handlePlayerRegenEnabled")
+		self:RegisterEvent("PLAYER_REGEN_ENABLED", "handlePlayerRegenEnabled")
+		self:RegisterEvent("PLAYER_STARTED_MOVING", "handlePlayerStartedMoving")
+		self:RegisterEvent("PLAYER_STOPPED_MOVING", "handlePlayerStoppedMoving")
+		self:RegisterEvent("QUEST_ACCEPTED", "handleQuestAccepted")
+		--self:RegisterEvent("QUEST_AUTOCOMPLETE", "handleQuestAutoComplete")
+		self:RegisterEvent("QUEST_COMPLETE", "handleQuestComplete")
+		self:RegisterEvent("QUEST_FINISHED", "handleQuestFinished")
+		--self:RegisterEvent("QUEST_LOG_CRITERIA_UPDATE", "handleQuestLogCriteriaUpdate")
+		self:RegisterEvent("QUEST_LOG_UPDATE", "handleQuestStatusUpdate")
+		--self:RegisterEvent("QUEST_LOOT_RECEIVED", "handleQuestLootReceived")
+		self:RegisterEvent("QUEST_REMOVED", "handleQuestRemoved")
+		self:RegisterEvent("QUEST_TURNED_IN", "handleQuestTurnIn")
+		--self:RegisterEvent("QUEST_WATCH_LIST_CHANGED", "handleQuestWatchListChanged")
+		self:RegisterEvent("QUEST_WATCH_UPDATE", "handleQuestWatchUpdate")
+		self:RegisterEvent("SCENARIO_COMPLETED", "handleScenarioComplete")
+		self:RegisterEvent("SCENARIO_CRITERIA_UPDATE", "handleScenarioCriteriaUpdate")
+		self:RegisterEvent("SCENARIO_UPDATE", "handleScenarioUpdate")
+		--self:RegisterEvent("START_TIMER", "handleStartTimer")
+		self:RegisterEvent("SUPER_TRACKING_CHANGED", "handleSuperTracking")
+		self:RegisterEvent("TASK_PROGRESS_UPDATE", "handleQuestStatusUpdate")
+		self:RegisterEvent("TRACKED_ACHIEVEMENT_UPDATE", "handleTrackedAchieveUpdate")
+		self:RegisterEvent("UI_INFO_MESSAGE", "handleUIInfoMessageUpdate")
+		self:RegisterEvent("UNIT_AURA", "handleUnitAura")
+		self:RegisterEvent("UNIT_EXITING_VEHICLE", "handleZoneChange")
+		--self:RegisterEvent("UNIT_INVENTORY_CHANGED", "handleUnitInventoryChange")
+		--self:RegisterEvent("UNIT_QUEST_LOG_CHANGED", "handleUnitQuestLogChange")
+		self:RegisterEvent("UPDATE_INSTANCE_INFO", "handleInstanceInfoUpdate")
+		self:RegisterEvent("VARIABLES_LOADED", "handleVariablesLoaded")
+		--self:RegisterEvent("WORLD_STATE_TIMER_START", "handleWorldStateTimerStart")
+		--self:RegisterEvent("WORLD_STATE_TIMER_STOP", "handleWorldStateTimerStop")
+		self:RegisterEvent("ZONE_CHANGED", "handleZoneChange")
+		self:RegisterEvent("ZONE_CHANGED_INDOORS", "handleZoneChange")
+		self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "handleZoneNewAreaChange")
+		-- Add more events as needed
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Registering Events")
+		end
+	else
+		-- Unregister events when not needed
+		self:UnregisterEvent("ACHIEVEMENT_EARNED")
+		self:UnregisterEvent("ADDON_LOADED")
+		--self:UnregisterEvent("BAG_UPDATE")
+		--self:UnregisterEvent("BOSS_KILL")
+		self:UnregisterEvent("CLIENT_SCENE_CLOSED")
+		self:UnregisterEvent("CLIENT_SCENE_OPENED")
+		self:UnregisterEvent("CONTENT_TRACKING_UPDATE")
+		self:UnregisterEvent("CRITERIA_EARNED")
+		--self:UnregisterEvent("ENCOUNTER_END")
+		self:UnregisterEvent("GOSSIP_CLOSED")
+		--self:UnregisterEvent("GOSSIP_CONFIRM")
+		self:UnregisterEvent("GOSSIP_CONFIRM_CANCEL")
+		--self:UnregisterEvent("GOSSIP_SHOW")
+		--self:UnregisterEvent("ITEM_COUNT_CHANGED")
+		self:UnregisterEvent("JAILERS_TOWER_LEVEL_UPDATE")
+		self:UnregisterEvent("LFG_LIST_ACTIVE_ENTRY_UPDATE")
+		--self:UnregisterEvent("MERCHANT_UPDATE")
+		self:UnregisterEvent("PLAYER_CONTROL_GAINED")
+		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+		self:UnregisterEvent("PLAYER_LOGIN")
+		self:UnregisterEvent("PLAYER_LOGOUT")
+		self:UnregisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
+		self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+		self:UnregisterEvent("PLAYER_STARTED_MOVING")
+		self:UnregisterEvent("PLAYER_STOPPED_MOVING")
+		self:UnregisterEvent("QUEST_ACCEPTED")
+		--self:UnregisterEvent("QUEST_AUTOCOMPLETE")
+		self:UnregisterEvent("QUEST_COMPLETE")
+		self:UnregisterEvent("QUEST_FINISHED")
+		--self:UnregisterEvent("QUEST_LOG_CRITERIA_UPDATE")
+		self:UnregisterEvent("QUEST_LOG_UPDATE")
+		--self:UnregisterEvent("QUEST_LOOT_RECEIVED")
+		self:UnregisterEvent("QUEST_REMOVED")
+		self:UnregisterEvent("QUEST_TURNED_IN")
+		--self:UnregisterEvent("QUEST_WATCH_LIST_CHANGED")
+		self:UnregisterEvent("QUEST_WATCH_UPDATE")
+		self:UnregisterEvent("SCENARIO_COMPLETED")
+		self:UnregisterEvent("SCENARIO_CRITERIA_UPDATE")
+		self:UnregisterEvent("SCENARIO_UPDATE")
+		--self:UnregisterEvent("START_TIMER")
+		self:UnregisterEvent("SUPER_TRACKING_CHANGED")
+		self:UnregisterEvent("TASK_PROGRESS_UPDATE")
+		self:UnregisterEvent("TRACKED_ACHIEVEMENT_UPDATE")
+		self:UnregisterEvent("UI_INFO_MESSAGE")
+		self:UnregisterEvent("UNIT_AURA")
+		self:UnregisterEvent("UNIT_EXITING_VEHICLE")
+		--self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
+		--self:UnregisterEvent("UNIT_QUEST_LOG_CHANGED")
+		self:UnregisterEvent("UPDATE_INSTANCE_INFO")
+		self:UnregisterEvent("VARIABLES_LOADED")
+		--self:UnregisterEvent("WORLD_STATE_TIMER_START")
+		--self:UnregisterEvent("WORLD_STATE_TIMER_STOP")
+		self:UnregisterEvent("ZONE_CHANGED")
+		self:UnregisterEvent("ZONE_CHANGED_INDOORS")
+		self:UnregisterEvent("ZONE_CHANGED_NEW_AREA")
+		-- Add more events as needed
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Unregistered events")
+		end
+	end
+end
