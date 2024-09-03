@@ -105,18 +105,18 @@ local eventsToRegister = {
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
 	--"QUEST_AUTOCOMPLETE",
-	"QUEST_COMPLETE",
+	--"QUEST_COMPLETE",
 	-- "QUEST_CURRENCY_LOOT_RECEIVED",
-	"QUEST_FINISHED",				-- MAY BE REDUNDANT
+	"QUEST_FINISHED",
 	--"QUEST_LOG_CRITERIA_UPDATE",
-	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
+	--"QUEST_LOG_UPDATE",			-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	--"QUEST_LOOT_RECEIVED",
-	--"QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
+	--"QUEST_POI_UPDATE",
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	--"QUEST_WATCH_LIST_CHANGED",
 	"QUEST_WATCH_UPDATE",
-	--"QUESTLINE_UPDATE",			-- Commenting out as this fires too often resulting in some lag
+	--"QUESTLINE_UPDATE",
 	"SCENARIO_COMPLETED",
 	"SCENARIO_CRITERIA_UPDATE",
 	"SCENARIO_UPDATE",
@@ -124,7 +124,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
-	"UI_INFO_MESSAGE",
+	--"UI_INFO_MESSAGE",
 	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
 	-- "UNIT_HEALTH",
@@ -227,7 +227,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		--QUEST_AUTOCOMPLETE = RQE.handleQuestAutoComplete,
-		QUEST_COMPLETE = RQE.handleQuestComplete,
+		--QUEST_COMPLETE = RQE.handleQuestComplete,
 		QUEST_CURRENCY_LOOT_RECEIVED = RQE.handleQuestCurrencyLootReceived,
 		QUEST_FINISHED = RQE.handleQuestFinished,
 		--QUEST_LOG_CRITERIA_UPDATE = RQE.handleQuestLogCriteriaUpdate,
@@ -238,7 +238,7 @@ local function HandleEvents(frame, event, ...)
 		QUEST_TURNED_IN = RQE.handleQuestTurnIn,
 		--QUEST_WATCH_LIST_CHANGED = RQE.handleQuestWatchListChanged,
 		QUEST_WATCH_UPDATE = RQE.handleQuestWatchUpdate,
-		QUESTLINE_UPDATE = RQE.handleQuestlineUpdate,
+		--QUESTLINE_UPDATE = RQE.handleQuestlineUpdate,
 		SCENARIO_COMPLETED = RQE.handleScenarioComplete,
 		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioCriteriaUpdate,
 		SCENARIO_UPDATE = RQE.handleScenarioUpdate,
@@ -246,7 +246,7 @@ local function HandleEvents(frame, event, ...)
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
-		UI_INFO_MESSAGE = RQE.handleUIInfoMessageUpdate,
+		--UI_INFO_MESSAGE = RQE.handleUIInfoMessageUpdate,
 		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		-- UNIT_HEALTH = RQE.handleUnitHealthEvent,
@@ -467,7 +467,10 @@ end
 -- Function that handles the GOSSIP_CLOSED event
 -- Fired when you close the talk window for an npc. (Seems to be called twice) 
 function RQE.handleGossipClosed()
-	-- Place applicable code here
+	-- Clear the raid marker from the current target
+	if UnitExists("target") then
+		SetRaidTarget("target", 0)
+	end
 end
 
 
@@ -1792,6 +1795,28 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	C_Timer.After(3, function()
+		if RQE.db.profile.enableNearestSuperTrack then
+			if not isSuperTracking then
+				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+				if closestQuestID then
+					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+						DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+					end
+				else
+					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+						DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
+					end
+				end
+			end
+			C_Timer.After(1, function()
+				UpdateFrame()
+			end)
+		end
+	end)
+
 	-- Resets the position of the RQEFrame and RQEQuestFrame on reload and login (ONLY TEMPORARY!!)
 	RQE:ResetFramePositionToDBorDefault()
 	RQE:ResetQuestFramePositionToDBorDefault()
@@ -1965,6 +1990,16 @@ function RQE.handleSuperTracking()
 
 		-- Clears Macro Data
 		RQEMacro:ClearMacroContentByName("RQE Macro")
+
+		-- Checks to make sure that the correct macro is in place
+		C_Timer.After(1, function()
+			RQE.SetInitialWaypointToOne()
+		end)
+
+		-- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
+		if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
+			RQE.UnknownQuestButton:Click()
+		end
 
 		-- Reset relevant variables
 		RQE.LastClickedIdentifier = nil
@@ -2260,6 +2295,13 @@ function RQE.handleZoneChange(...)
 		end
 	end
 
+	if event == "ZONE_CHANGED_INDOORS" then
+		-- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
+		if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
+			RQE.UnknownQuestButton:Click()
+		end
+	end
+
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
 
@@ -2379,6 +2421,11 @@ function RQE.handleZoneNewAreaChange()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
+
+	-- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
+	if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
+		RQE.UnknownQuestButton:Click()
+	end
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -3616,6 +3663,11 @@ function RQE.handleQuestWatchUpdate(...)
 		return
 	end
 
+	-- Checks to make sure that the correct macro is in place
+	C_Timer.After(0.5, function()
+		RQE.CheckAndBuildMacroIfNeeded()
+	end)
+
 	if questInfo then
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 		-- -- Details about the quest fetched here
@@ -3812,6 +3864,11 @@ function RQE.handleQuestTurnIn(...)
 	local questID = select(3, ...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
+
+	-- Clear the raid marker from the current target
+	if UnitExists("target") then
+		SetRaidTarget("target", 0)
+	end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
@@ -4054,7 +4111,7 @@ function RQE:ManageEvents(shouldRegister)
 		self:RegisterEvent("PLAYER_STOPPED_MOVING", "handlePlayerStoppedMoving")
 		self:RegisterEvent("QUEST_ACCEPTED", "handleQuestAccepted")
 		--self:RegisterEvent("QUEST_AUTOCOMPLETE", "handleQuestAutoComplete")
-		self:RegisterEvent("QUEST_COMPLETE", "handleQuestComplete")
+		--self:RegisterEvent("QUEST_COMPLETE", "handleQuestComplete")
 		self:RegisterEvent("QUEST_FINISHED", "handleQuestFinished")
 		--self:RegisterEvent("QUEST_LOG_CRITERIA_UPDATE", "handleQuestLogCriteriaUpdate")
 		self:RegisterEvent("QUEST_LOG_UPDATE", "handleQuestStatusUpdate")
@@ -4070,7 +4127,7 @@ function RQE:ManageEvents(shouldRegister)
 		self:RegisterEvent("SUPER_TRACKING_CHANGED", "handleSuperTracking")
 		self:RegisterEvent("TASK_PROGRESS_UPDATE", "handleQuestStatusUpdate")
 		self:RegisterEvent("TRACKED_ACHIEVEMENT_UPDATE", "handleTrackedAchieveUpdate")
-		self:RegisterEvent("UI_INFO_MESSAGE", "handleUIInfoMessageUpdate")
+		--self:RegisterEvent("UI_INFO_MESSAGE", "handleUIInfoMessageUpdate")
 		self:RegisterEvent("UNIT_AURA", "handleUnitAura")
 		self:RegisterEvent("UNIT_EXITING_VEHICLE", "handleZoneChange")
 		--self:RegisterEvent("UNIT_INVENTORY_CHANGED", "handleUnitInventoryChange")
@@ -4116,7 +4173,7 @@ function RQE:ManageEvents(shouldRegister)
 		self:UnregisterEvent("PLAYER_STOPPED_MOVING")
 		self:UnregisterEvent("QUEST_ACCEPTED")
 		--self:UnregisterEvent("QUEST_AUTOCOMPLETE")
-		self:UnregisterEvent("QUEST_COMPLETE")
+		--self:UnregisterEvent("QUEST_COMPLETE")
 		self:UnregisterEvent("QUEST_FINISHED")
 		--self:UnregisterEvent("QUEST_LOG_CRITERIA_UPDATE")
 		self:UnregisterEvent("QUEST_LOG_UPDATE")
@@ -4132,7 +4189,7 @@ function RQE:ManageEvents(shouldRegister)
 		self:UnregisterEvent("SUPER_TRACKING_CHANGED")
 		self:UnregisterEvent("TASK_PROGRESS_UPDATE")
 		self:UnregisterEvent("TRACKED_ACHIEVEMENT_UPDATE")
-		self:UnregisterEvent("UI_INFO_MESSAGE")
+		--self:UnregisterEvent("UI_INFO_MESSAGE")
 		self:UnregisterEvent("UNIT_AURA")
 		self:UnregisterEvent("UNIT_EXITING_VEHICLE")
 		--self:UnregisterEvent("UNIT_INVENTORY_CHANGED")
