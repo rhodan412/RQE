@@ -192,6 +192,7 @@ local defaults = {
 		displayRQEmemUsage = false,
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
+		enableNearestSuperTrack = true,
 		enableQuestAbandonConfirm = false,
 		enableQuestFrame = true,
 		enableTomTomCompatibility = true,
@@ -1592,6 +1593,48 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 
 
+-- Function to find the closest quest currently being tracked
+function RQE:GetClosestTrackedQuest()
+	local closestQuestID = nil
+	local closestDistance = math.huge  -- Initialize with a very large number
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Iterate through all quests in the player's quest log
+	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+		local info = C_QuestLog.GetInfo(i)
+
+		-- Only consider quests that are being tracked
+		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) then
+			-- Get the distance to the quest
+			local questPosition = C_QuestLog.GetQuestObjectives(info.questID)
+			if questPosition then
+				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+				-- Update closest quest if this one is closer
+				if distance and distance < closestDistance then
+					closestDistance = distance
+					closestQuestID = info.questID
+				end
+			end
+		end
+	end
+
+	-- Handle the case where closestQuestID is nil
+	if not closestQuestID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No tracked quests found.")
+		end
+		return nil  -- Return nil if no tracked quest is found
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("The closest quest to your current location is " .. tostring(closestQuestID))
+	end
+
+	return closestQuestID
+end
+
+
 -- Function for Tracking World Quests
 function UpdateWorldQuestTrackingForMap(uiMapID)
 	if not uiMapID then
@@ -2377,13 +2420,28 @@ function BuildItemNames(itemLinks)
 end
 
 
--- function countTableElements(tbl)
-	-- local count = 0
-	-- for _ in pairs(tbl) do
-		-- count = count + 1
-	-- end
-	-- return count
--- end
+-- Utility function to convert a table to a string
+function RQE:TableToString(tbl)
+	if type(tbl) ~= "table" then
+		return tostring(tbl)
+	end
+
+	local result = "{"
+	for k, v in pairs(tbl) do
+		result = result .. tostring(k) .. "=" .. RQE:TableToString(v) .. ", "
+	end
+	return result .. "}"
+end
+
+
+-- Utility function to convert a table of elements
+function countTableElements(tbl)
+	local count = 0
+	for _ in pairs(tbl) do
+		count = count + 1
+	end
+	return count
+end
 
 
 ---------------------------------------------------
@@ -2521,12 +2579,12 @@ function PrintQuestStepsToChat(questID)
 	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
 	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
-	if not questInfo then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			DEFAULT_CHAT_FRAME:AddMessage("QuestInfo not found for questID: " .. tostring(questID), 0, 1, 0) -- Green color
-		end
-		return nil, nil, nil
-	end
+	-- if not questInfo then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- DEFAULT_CHAT_FRAME:AddMessage("QuestInfo not found for questID: " .. tostring(questID), 0, 1, 0) -- Green color
+		-- end
+		-- return nil, nil, nil
+	-- end
 
 	for i, step in ipairs(questInfo) do
 		StepsText[i] = step.description
@@ -2534,13 +2592,13 @@ function PrintQuestStepsToChat(questID)
 		MapIDs[i] = step.coordinates.mapID
 		questHeader[i] = step.description:match("^(.-)\n") or step.description
 
-		if RQE.db.profile.debugLevel == "INFO+" then
-			-- Debug messages
-			DEFAULT_CHAT_FRAME:AddMessage("Step " .. i .. ": " .. StepsText[i], 0, 1, 0) -- Green color
-			DEFAULT_CHAT_FRAME:AddMessage("Coordinates " .. i .. ": " .. CoordsText[i], 0, 1, 0) -- Green color
-			DEFAULT_CHAT_FRAME:AddMessage("MapID " .. i .. ": " .. tostring(MapIDs[i]), 0, 1, 0) -- Green color
-			DEFAULT_CHAT_FRAME:AddMessage("Header " .. i .. ": " .. questHeader[i], 0, 1, 0) -- Green color
-		end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- -- Debug messages
+			-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. i .. ": " .. StepsText[i], 0, 1, 0) -- Green color
+			-- DEFAULT_CHAT_FRAME:AddMessage("Coordinates " .. i .. ": " .. CoordsText[i], 0, 1, 0) -- Green color
+			-- DEFAULT_CHAT_FRAME:AddMessage("MapID " .. i .. ": " .. tostring(MapIDs[i]), 0, 1, 0) -- Green color
+			-- DEFAULT_CHAT_FRAME:AddMessage("Header " .. i .. ": " .. questHeader[i], 0, 1, 0) -- Green color
+		-- end
 	end
 
 	-- DEFAULT_CHAT_FRAME:AddMessage("Quest Steps Printed for QuestID: " .. tostring(questID), 0, 1, 0) -- Green color
@@ -3099,6 +3157,9 @@ function RQE:StartPeriodicChecks()
 		-- Handle turn-in readiness
 		if isReadyTurnIn and self.FinalStep then
 			RQE.debugLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+			-- end
 			self:ClickWaypointButtonForIndex(self.FinalStep)
 			return
 		end
@@ -3116,6 +3177,9 @@ function RQE:StartPeriodicChecks()
 			-- If the highest completed objective is 99, click the waypoint button for the final step
 			if highestCompletedObjectiveIndex == 99 and finalStepIndex then
 				RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
+				end
 				self:ClickWaypointButtonForIndex(finalStepIndex)
 				return
 			end
@@ -3124,6 +3188,9 @@ function RQE:StartPeriodicChecks()
 		-- Validate stepIndex
 		if stepIndex < 1 or stepIndex > #questData then
 			RQE.infoLog("Invalid step index:", stepIndex)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Invalid step index:", stepIndex)
+			end
 			return  -- Exit if stepIndex is invalid
 		end
 
@@ -3141,15 +3208,21 @@ function RQE:StartPeriodicChecks()
 		-- Process the current step
 		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
 		if funcResult then
-			print("Function for current step executed successfully.")
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Function for current step executed successfully.")
+			end
 		else
 			local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
 			if failFuncResult then
 				local failedIndex = stepData.failedIndex or 1
-				print("Failure condition met, resetting to step:", failedIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Failure condition met, resetting to step:", failedIndex)
+				end
 				self:ClickWaypointButtonForIndex(failedIndex)
 			else
-				print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+				end
 			end
 		end
 
@@ -3159,181 +3232,6 @@ function RQE:StartPeriodicChecks()
 end
 
 
-
--- Periodic check setup (updated to include CheckDBObjectiveStatus)
-function RQE:StartPeriodicChecks2()
-	RQE.CheckThatQuestStep()
-
-	-- -- Early return if no quest is super-tracked
-	-- if not RQE.IsQuestSuperTracked() then
-		-- return
-	-- end
-
-	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- if not superTrackedQuestID then
-		-- RQE.debugLog("No super tracked quest ID found, skipping checks.")
-		-- return
-	-- end
-
-	-- self:FindAndSetFinalStep()  -- Find and set the final step
-
-	-- local questData = RQE.getQuestData(superTrackedQuestID)
-	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
-
-	-- if questData then
-		-- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		-- local stepData = questData[stepIndex]
-
-		-- -- Handle turn-in readiness
-		-- if isReadyTurnIn and self.FinalStep then
-			-- RQE.debugLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
-			-- self:ClickWaypointButtonForIndex(self.FinalStep)
-			-- return
-		-- end
-
-		-- -- Additional check if the highest completed objective is 99
-		-- if self.shouldCheckFinalStep then
-			-- local finalStepIndex = #questData  -- Assuming the last step is the final one
-			-- for index, step in ipairs(questData) do
-				-- if step.objectiveIndex == 99 then
-					-- finalStepIndex = index
-					-- break
-				-- end
-			-- end
-
-			-- -- If the highest completed objective is 99, click the waypoint button for the final step
-			-- if highestCompletedObjectiveIndex == 99 and finalStepIndex then
-				-- RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
-				-- self:ClickWaypointButtonForIndex(finalStepIndex)
-				-- return
-			-- end
-		-- end
-
-		-- -- Validate stepIndex
-		-- if stepIndex < 1 or stepIndex > #questData then
-			-- RQE.infoLog("Invalid step index:", stepIndex)
-			-- return  -- Exit if stepIndex is invalid
-		-- end
-
-		-- -- Check if the current step requires objective progress check
-		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
-			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
-			-- if objProgressResult then
-				-- RQE.debugLog("Objective progress check completed and step advanced.")
-				-- return
-			-- else
-				-- RQE.debugLog("Objective progress check did not result in advancement.")
-			-- end
-		-- end
-
-		-- -- Process the current step
-		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-		-- if funcResult then
-			-- RQE.infoLog("Function for current step executed successfully.")
-		-- else
-			-- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-			-- if failFuncResult then
-				-- local failedIndex = stepData.failedIndex or 1
-				-- RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
-				-- self:ClickWaypointButtonForIndex(failedIndex)
-			-- else
-				-- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-			-- end
-		-- end
-
-		-- -- Check and build macro if needed
-		-- RQE.CheckAndBuildMacroIfNeeded()
-	-- end
-end
-
-
--- Periodic check setup (updated to include CheckDBObjectiveStatus)
-function RQE:StartPeriodicChecks3()
-	RQE.CheckThatQuestStep2()
-
-	-- -- Early return if no quest is super-tracked
-	-- if not RQE.IsQuestSuperTracked() then
-		-- return
-	-- end
-
-	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- if not superTrackedQuestID then
-		-- RQE.debugLog("No super tracked quest ID found, skipping checks.")
-		-- return
-	-- end
-
-	-- self:FindAndSetFinalStep()  -- Find and set the final step
-
-	-- local questData = RQE.getQuestData(superTrackedQuestID)
-	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
-
-	-- if questData then
-		-- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		-- local stepData = questData[stepIndex]
-
-		-- -- Handle turn-in readiness
-		-- if isReadyTurnIn and self.FinalStep then
-			-- RQE.debugLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
-			-- self:ClickWaypointButtonForIndex(self.FinalStep)
-			-- return
-		-- end
-
-		-- -- Additional check if the highest completed objective is 99
-		-- if self.shouldCheckFinalStep then
-			-- local finalStepIndex = #questData  -- Assuming the last step is the final one
-			-- for index, step in ipairs(questData) do
-				-- if step.objectiveIndex == 99 then
-					-- finalStepIndex = index
-					-- break
-				-- end
-			-- end
-
-			-- -- If the highest completed objective is 99, click the waypoint button for the final step
-			-- if highestCompletedObjectiveIndex == 99 and finalStepIndex then
-				-- RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
-				-- self:ClickWaypointButtonForIndex(finalStepIndex)
-				-- return
-			-- end
-		-- end
-
-		-- -- Validate stepIndex
-		-- if stepIndex < 1 or stepIndex > #questData then
-			-- RQE.infoLog("Invalid step index:", stepIndex)
-			-- return  -- Exit if stepIndex is invalid
-		-- end
-
-		-- -- Check if the current step requires objective progress check
-		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
-			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
-			-- if objProgressResult then
-				-- RQE.debugLog("Objective progress check completed and step advanced.")
-				-- return
-			-- else
-				-- RQE.debugLog("Objective progress check did not result in advancement.")
-			-- end
-		-- end
-
-		-- -- Process the current step
-		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-		-- if funcResult then
-			-- RQE.infoLog("Function for current step executed successfully.")
-		-- else
-			-- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-			-- if failFuncResult then
-				-- local failedIndex = stepData.failedIndex or 1
-				-- RQE.infoLog("Failure condition met, resetting to step:", failedIndex)
-				-- self:ClickWaypointButtonForIndex(failedIndex)
-			-- else
-				-- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-			-- end
-		-- end
-
-		-- -- Check and build macro if needed
-		-- RQE.CheckAndBuildMacroIfNeeded()
-	-- end
-end
 
 -- Function to check the current quest step and perform actions accordingly
 function RQE.CheckThatQuestStep()
@@ -3351,41 +3249,57 @@ function RQE.CheckThatQuestStep()
 	local questData = RQE.getQuestData(questID)
 
 	if not questData then
-		print("Quest data not found for questID:", questID)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest data not found for questID:", questID)
+		end
 		return
 	end
 
 	if not objectives then
-		print("No objectives found for questID:", questID)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No objectives found for questID:", questID)
+		end
 		return
 	end
 
-	print("Debug [Core.lua: Line 3156]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug [Core.lua: Line 3156]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
+	end
 
 	-- Determine the current step the player should be on
-	print("Current stepIndex:", currentStepIndex)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Current stepIndex:", currentStepIndex)
+	end
 	local currentStepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 	local stepData = questData[currentStepIndex]
 
-	print("Debug [Core.lua: Line 3162]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug [Core.lua: Line 3162]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
+	end
 
 	-- Print initial debug information
-	if stepData then
-		print("neededAmt:", stepData.neededAmt and stepData.neededAmt[1] or "nil", "objectiveIndex:", stepData.objectiveIndex)
-	else
-		print("Invalid stepData for stepIndex:", currentStepIndex)
-		return
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if stepData then
+			print("neededAmt:", stepData.neededAmt and stepData.neededAmt[1] or "nil", "objectiveIndex:", stepData.objectiveIndex)
+		else
+			print("Invalid stepData for stepIndex:", currentStepIndex)
+			return
+		end
 	end
 
 	-- Print objective details
-	for i, o in ipairs(objectives) do
-		print(i .. ".", o.text, o.numFulfilled .. "/" .. o.numRequired, "Finished:", tostring(o.finished))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		for i, o in ipairs(objectives) do
+			print(i .. ".", o.text, o.numFulfilled .. "/" .. o.numRequired, "Finished:", tostring(o.finished))
+		end
 	end
 
 	-- Check if the quest is ready for turn-in first
 	local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
 	if isReadyTurnIn then
-		print("Quest is ready for turn-in. Clicking final step associated with objectiveIndex 99.")
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Quest is ready for turn-in. Clicking final step associated with objectiveIndex 99.")
+		-- end
 		RQE:ClickWaypointButtonForIndex(#questData) -- Clicks the last step which should be the turn-in step
 		return
 	end
@@ -3400,8 +3314,10 @@ function RQE.CheckThatQuestStep()
 		local objective = objectives[objectiveIndex]
 
 		if objective then
-			print("Analyzing Step:", i)
-			print("Objective Index:", objectiveIndex, "Needed Amount:", neededAmt, "Objective Fulfilled:", objective.numFulfilled, "Objective Finished:", tostring(objective.finished))
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Analyzing Step:", i)
+				print("Objective Index:", objectiveIndex, "Needed Amount:", neededAmt, "Objective Fulfilled:", objective.numFulfilled, "Objective Finished:", tostring(objective.finished))
+			end
 
 			-- If the objective is completed, skip steps with this objectiveIndex
 			if objective.finished then
@@ -3423,139 +3339,32 @@ function RQE.CheckThatQuestStep()
 		end
 	end
 
-
 	-- Ensure correctStepIndex does not exceed the number of steps
 	correctStepIndex = math.min(correctStepIndex, #questData)
 
 	-- Print information about the quest and objectives
-	print("QuestID:", tostring(questID), ", All Objectives Completed:", tostring(isReadyTurnIn), ", Highest Completed Objective Index:", tostring(objectives[#objectives].finished and 99 or correctStepIndex))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestID:", tostring(questID), ", All Objectives Completed:", tostring(isReadyTurnIn), ", Highest Completed Objective Index:", tostring(objectives[#objectives].finished and 99 or correctStepIndex))
+	end
 
 	-- If the stepIndex does not match the expected, click the correct button
 	if correctStepIndex ~= currentStepIndex then
-		print("Mismatch detected. Expected stepIndex:", correctStepIndex, "but currently on:", currentStepIndex)
-		print("Clicking the correct step button.")
-		RQE:ClickWaypointButtonForIndex(correctStepIndex)
-	else
-		print("Current stepIndex matches expected stepIndex. No action needed.")
-	end
-
-	-- Print additional debug information
-	print("Final stepIndex:", correctStepIndex)
-	print("RQE.LastClickedIdentifier:", tostring(RQE.LastClickedIdentifier))
-	print("RQE.LastClickedButtonRef.stepIndex:", tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex))
-	print("RQE.LastClickedButtonRef:", tostring(RQE.LastClickedButtonRef))
-
-	-- Check and build macro if needed
-	RQE.CheckAndBuildMacroIfNeeded()
-end
-
-
--- Function to check the current quest step and perform actions accordingly
-function RQE.CheckThatQuestStep2()
-	-- Retrieve the questID from the RQEFrame
-	local questID = RQE.searchedQuestID or (RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))) or C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- Check if a valid questID was found
-	if not questID then
-		print("No valid questID found in RQEFrame.")
-		return
-	end
-
-	-- Get quest objectives
-	local objectives = C_QuestLog.GetQuestObjectives(questID)
-	local questData = RQE.getQuestData(questID)
-
-	if not questData then
-		print("Quest data not found for questID:", questID)
-		return
-	end
-
-	if not objectives then
-		print("No objectives found for questID:", questID)
-		return
-	end
-
-	print("Debug [Core.lua: Line 3156]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
-
-	-- Determine the current step the player should be on
-	local currentStepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-	local stepData = questData[currentStepIndex]
-
-	print("Debug [Core.lua: Line 3162]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
-
-	-- Print initial debug information
-	if stepData then
-		print("neededAmt:", stepData.neededAmt and stepData.neededAmt[1] or "nil", "objectiveIndex:", stepData.objectiveIndex)
-	else
-		print("Invalid stepData for stepIndex:", currentStepIndex)
-		return
-	end
-
-	-- Print objective details
-	for i, o in ipairs(objectives) do
-		print(i .. ".", o.text, o.numFulfilled .. "/" .. o.numRequired, "Finished:", tostring(o.finished))
-	end
-
-	-- Check if the quest is ready for turn-in first
-	local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
-	if isReadyTurnIn then
-		print("Quest is ready for turn-in. Clicking final step associated with objectiveIndex 99.")
-		RQE:ClickWaypointButtonForIndex(#questData) -- Clicks the last step which should be the turn-in step
-		return
-	end
-
-	-- Refined step advancement logic with additional debug prints
-	local correctStepIndex = 1
-	local foundStep = false
-
-	for i, step in ipairs(questData) do
-		local objectiveIndex = step.objectiveIndex or 1
-		local neededAmt = step.neededAmt and tonumber(step.neededAmt[1]) or 1
-		local objective = objectives[objectiveIndex]
-
-		if objective then
-			print("Analyzing Step:", i)
-			print("Objective Index:", objectiveIndex, "Needed Amount:", neededAmt, "Objective Fulfilled:", objective.numFulfilled, "Objective Finished:", tostring(objective.finished))
-
-			-- If the objective is completed, skip steps with this objectiveIndex
-			if objective.finished then
-				correctStepIndex = i + 1
-			elseif objective.numFulfilled == neededAmt then
-				correctStepIndex = i
-				foundStep = true
-				break
-			elseif objective.numFulfilled < neededAmt then
-				correctStepIndex = i
-				foundStep = true
-				break
-			end
-		else
-			print("Objective data missing or mismatched for questID:", questID, "at step:", i)
-			correctStepIndex = i
-			break
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Mismatch detected. Expected stepIndex:", correctStepIndex, "but currently on:", currentStepIndex)
+			print("Clicking the correct step button.")
 		end
-	end
-
-	-- Ensure correctStepIndex does not exceed the number of steps
-	correctStepIndex = math.min(correctStepIndex, #questData)
-
-	-- If the stepIndex does not match the expected, click the correct button
-	if correctStepIndex ~= currentStepIndex then
-		print("Mismatch detected. Expected stepIndex:", correctStepIndex, "but currently on:", currentStepIndex)
-		print("Clicking the correct step button.")
 		RQE:ClickWaypointButtonForIndex(correctStepIndex)
-
-		-- Update the reference to avoid stale state
-		RQE.LastClickedButtonRef = { stepIndex = correctStepIndex }
 	else
 		print("Current stepIndex matches expected stepIndex. No action needed.")
 	end
 
 	-- Print additional debug information
-	print("Final stepIndex:", correctStepIndex)
-	print("RQE.LastClickedIdentifier:", tostring(RQE.LastClickedIdentifier))
-	print("RQE.LastClickedButtonRef.stepIndex:", tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex))
-	print("RQE.LastClickedButtonRef:", tostring(RQE.LastClickedButtonRef))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Final stepIndex:", correctStepIndex)
+		print("RQE.LastClickedIdentifier:", tostring(RQE.LastClickedIdentifier))
+		print("RQE.LastClickedButtonRef.stepIndex:", tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex))
+		print("RQE.LastClickedButtonRef:", tostring(RQE.LastClickedButtonRef))
+	end
 
 	-- Check and build macro if needed
 	RQE.CheckAndBuildMacroIfNeeded()
@@ -3680,6 +3489,9 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
 			button:Click()
 			self.LastClickedButtonRef = button
 			RQE.infoLog("Advanced to next quest step: " .. buttonIndex)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Advanced to next quest step: " .. buttonIndex)
+			end
 
 			-- Update stepIndex globally or within a managed scope
 			self.CurrentStepIndex = buttonIndex  -- Assuming CurrentStepIndex tracks current step globally
@@ -3704,10 +3516,10 @@ function RQE.AreStepsDisplayed(questID)
 end
 
 
--- Function that handles if returns Failed stepIndex
+-- Function that handles button clicks based on changes to the stepText
 function RQE:ClickWaypointButtonForIndex(index)
 	-- Clears Macro Data
-	--RQEMacro:ClearMacroContentByName("RQE Macro")
+	RQEMacro:ClearMacroContentByName("RQE Macro")
 
 	local button = self.WaypointButtons[index]
 	if button then
@@ -3721,11 +3533,26 @@ function RQE:ClickWaypointButtonForIndex(index)
 		RQE.AddonSetStepIndex = index
 
 		-- Log the state changes for debugging
-		print("New LastClickedButton set:", index)
-		print("Updated RQE.CurrentStepIndex to:", self.CurrentStepIndex)
-		print("Updated RQE.AddonSetStepIndex to:", RQE.AddonSetStepIndex)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Clicking button at index:", index)
+		end
 
+		-- Perform the button click
 		button:Click()
+
+		-- Schedule a check to click the button associated with AddonSetStepIndex
+		C_Timer.After(0.1, function()
+			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
+			if addonButton then
+				-- Ensure the button is clickable and perform the click
+				addonButton:Click()
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+				end
+			else
+				RQE.debugLog("No waypoint button found for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+			end
+		end)
 	else
 		RQE.debugLog("No waypoint button found for index:", index)
 	end
