@@ -56,7 +56,7 @@ end
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 --local icon = LibStub("LibDBIcon-1.0", true)	-- commenting out as this was displaying a second button anchored to the minimap
 
--- Create a Data Broker object
+-- Updated LDB Button OnClick Function
 local RQEdataBroker = ldb:NewDataObject("RQE", {
 	type = "launcher",
 	icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",
@@ -66,40 +66,8 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 			RQE:ToggleDebugLog()
 			
 		elseif button == "LeftButton" then
-			if RQEFrame:IsShown() then
-				RQEFrame:Hide()
-				if RQE.MagicButton then
-					RQE.MagicButton:Hide()
-				end
-
-				RQE.RQEQuestFrame:Hide()
-				RQE.isRQEFrameManuallyClosed = true
-				RQE.isRQEQuestFrameManuallyClosed = true
-				
-				-- Check if MagicButton should be visible based on macro body
-				RQE.Buttons.UpdateMagicButtonVisibility()
-			else
-				RQE:ClearFrameData()
-				RQE:ClearWaypointButtonData()
-				RQEFrame:Show()
-				UpdateFrame()
-
-				if RQE.MagicButton then
-					RQE.MagicButton:Show()
-				end
-				
-				-- Check if enableQuestFrame is true before showing RQEQuestFrame
-				if RQE.db.profile.enableQuestFrame then
-					RQE.RQEQuestFrame:Show()
-				end
-
-				RQE.isRQEFrameManuallyClosed = false
-				RQE.isRQEQuestFrameManuallyClosed = false
-				
-				-- Check if MagicButton should be visible based on macro body
-				RQE.Buttons.UpdateMagicButtonVisibility()
-			end
-
+			RQE:ToggleFramesAndTracker()
+			
 		elseif button == "RightButton" and IsShiftKeyDown() then
 			RQE:OpenSettings()
 
@@ -140,16 +108,20 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 	end,
 })
 
--- if icon then
-	-- icon:Register("RQE", RQEdataBroker, {})
-	-- icon:Show("RQE")
--- end
-
 
 -- Function that toggles RQEFrame and RQEQuestFrame
 function RQE.ToggleBothFramesfromLDB()
 	if RQEFrame:IsShown() then
 		RQEFrame:Hide()
+
+		C_Map.ClearUserWaypoint()
+
+		-- Check if TomTom is loaded and compatibility is enabled
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			TomTom.waydb:ResetProfile()
+		end
+
 		if RQE.MagicButton then
 			RQE.MagicButton:Hide()
 		end
@@ -238,45 +210,13 @@ end
 -- Register the button for clicks
 RQE.MinimapButton:RegisterForClicks("AnyUp")
 
--- Function that handles the OnClick for the MinimapButton
+-- Updated Minimap Button OnClick Function
 RQE.MinimapButton:SetScript("OnClick", function(self, button)
 	if button == "LeftButton" then
 		if IsShiftKeyDown() then
 			RQE:ToggleDebugLog()  -- Shift + Left Click
 		else
-			if RQEFrame:IsShown() then
-				RQEFrame:Hide()
-				if RQE.MagicButton then
-					RQE.MagicButton:Hide()
-				end
-
-				RQE.RQEQuestFrame:Hide()
-				RQE.isRQEFrameManuallyClosed = true
-				RQE.isRQEQuestFrameManuallyClosed = true
-
-				-- Check if MagicButton should be visible based on macro body
-				RQE.Buttons.UpdateMagicButtonVisibility()
-			else
-				RQE:ClearFrameData()
-				RQE:ClearWaypointButtonData()
-				RQEFrame:Show()
-				UpdateFrame()
-
-				if RQE.MagicButton then
-					RQE.MagicButton:Show()
-				end
-
-				-- Check if enableQuestFrame is true before showing RQEQuestFrame
-				if RQE.db.profile.enableQuestFrame then
-					RQE.RQEQuestFrame:Show()
-				end
-
-				RQE.isRQEFrameManuallyClosed = false
-				RQE.isRQEQuestFrameManuallyClosed = false
-
-				-- Check if MagicButton should be visible based on macro body
-				RQE.Buttons.UpdateMagicButtonVisibility()
-			end
+			RQE:ToggleFramesAndTracker()
 		end
 	elseif button == "RightButton" then
 		if IsShiftKeyDown() then
@@ -287,6 +227,56 @@ RQE.MinimapButton:SetScript("OnClick", function(self, button)
 		end
 	end
 end)
+
+-- -- Function that handles the OnClick for the MinimapButton
+-- RQE.MinimapButton:SetScript("OnClick", function(self, button)
+	-- if button == "LeftButton" then
+		-- if IsShiftKeyDown() then
+			-- RQE:ToggleDebugLog()  -- Shift + Left Click
+		-- else
+			-- if RQEFrame:IsShown() then
+				-- RQEFrame:Hide()
+				-- if RQE.MagicButton then
+					-- RQE.MagicButton:Hide()
+				-- end
+
+				-- RQE.RQEQuestFrame:Hide()
+				-- RQE.isRQEFrameManuallyClosed = true
+				-- RQE.isRQEQuestFrameManuallyClosed = true
+
+				-- -- Check if MagicButton should be visible based on macro body
+				-- RQE.Buttons.UpdateMagicButtonVisibility()
+			-- else
+				-- RQE:ClearFrameData()
+				-- RQE:ClearWaypointButtonData()
+				-- RQEFrame:Show()
+				-- UpdateFrame()
+
+				-- if RQE.MagicButton then
+					-- RQE.MagicButton:Show()
+				-- end
+
+				-- -- Check if enableQuestFrame is true before showing RQEQuestFrame
+				-- if RQE.db.profile.enableQuestFrame then
+					-- RQE.RQEQuestFrame:Show()
+				-- end
+
+				-- RQE.isRQEFrameManuallyClosed = false
+				-- RQE.isRQEQuestFrameManuallyClosed = false
+
+				-- -- Check if MagicButton should be visible based on macro body
+				-- RQE.Buttons.UpdateMagicButtonVisibility()
+			-- end
+		-- end
+	-- elseif button == "RightButton" then
+		-- if IsShiftKeyDown() then
+			-- RQE:OpenSettings()  -- Shift + Right Click
+		-- else
+			-- RQE.lastClickedFrame = self  -- Set the minimap button as the last clicked frame
+			-- RQE:ShowLDBDropdownMenu()  -- Right Click
+		-- end
+	-- end
+-- end)
 
 
 -- Function that handles the OnEnter for the MinimapButton
