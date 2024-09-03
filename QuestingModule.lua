@@ -1379,14 +1379,14 @@ function UpdateRQEQuestFrame()
 
 	-- Loop through all tracked quests to count campaign and world quests
 	local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-	RQE.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+	RQE.worldQuestCount = 0  -- Reset before counting
 
 	for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if C_CampaignInfo.IsCampaignQuest(questID) then
 			RQE.campaignQuestCount = RQE.campaignQuestCount + 1
 		elseif C_QuestLog.IsWorldQuest(questID) then
-			RQE.worldQuestCounter = RQE.worldQuestCounter + 1
+			RQE.worldQuestCount = RQE.worldQuestCount + 1 -- Increment only for real world quests
 		end
 	end
 
@@ -2074,6 +2074,7 @@ function UpdateRQEWorldQuestFrame()
 		-- Retrieve or initialize the WQuestLogIndexButton for the current questID
 		local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
 
+		-- Check if the quest is a World Quest
 		if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
 			usedQuestIDs[questID] = true
 
@@ -2742,3 +2743,14 @@ function UpdateRQEAchievementsFrame()
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
 end
+
+-- Unregister events when a frame is hidden
+RQEQuestFrame:SetScript("OnHide", function()
+	RQE:ManageEvents(false)  -- Unregister events
+end)
+
+
+-- Re-register events when a frame is shown
+RQEQuestFrame:SetScript("OnShow", function()
+	RQE:ManageEvents(true)  -- Register events
+end)
