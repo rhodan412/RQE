@@ -1,23 +1,34 @@
 11.0.2.35
 	Config.lua
 		- Added additional options for debugging in Config Frame.
+		- Added option that super track the nearest quest, if super track frame is empty when QUEST_FINISHED event fires (default: on). Placed this option in settings panel and configuration frame
 
 	Core.lua
 		- Updated debug prints with RQE.CheckThatQuestStep() -- this is a 'disconnected function' that is able to only be run using the in-game /run command in order to act as a debugging tool for quest progression
 		- Added new setting to save Waypoint value (RQE.AddonSetStepIndex) to prevent RQEFrame from overriding when autoClickWaypoint is actively assisting player in quest step guidance (this would manifest by going to inappropriate waypoint buttons as quest progression occurred).
 		- Added additional 'defaults' to set for the additional config options added to the Config Frame.
+		- Added function to get the nearest super track questID
 
 	EventManager.lua
 		- Commented out most of the code within RQE.handleUnitQuestLogChange function as much of what is done here is already handled through the QUEST_WATCH_UPDATE event that gets fired before it
 		- Optimized QUEST_WATCH_UPDATE event listener to improve efficiency of the add-on as increased lag was sometimes noticed when this event fired as a result of a quest being completed.
 		- Settings added for when RQE.AddonSetStepIndex should be initialized and reset
 		- Added better visibility to debug messages based on new setting added to 'Debug' section of the Config Frame.
+		- Removed (commented out) many events that are redundant and were causing massive performance issues (particularly as player would progress through more and more quests)
+		- Added code to set super track to nearest quest, if enableNearestSuperTrack is enabled (default: on) when QUEST_FINISHED event fires
+
+	QuestingModule.lua
+		- Added fix for WQ header being displayed when none are selected (some quests were returning with the C_QuestLog.GetNumWorldQuestWatches() API even though they weren't actually WQ as determined thru C_QuestLog.IsWorldQuest(questID)
 
 	RQEDatabase.lua
 		- Modified some quests in the neededAmt and objectiveIndex as some quests with multiple steps associated with a single objective need to start off a neededAmt of 0, some with a neededAmt of 1 (based on how the add-on is reading this step/its 'objective')
 
+	RQEFrame.lua
+		- Switched some debug code to only print if INFO+ debug level is active
+
 	Misc:
 		- Cleaned up code (including spacing and indents).
+		- DEFAULT_CHAT_FRAME:AddMessage() will now be displayed in the DebugLog
 
 
 11.0.2.34
