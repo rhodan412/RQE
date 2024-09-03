@@ -1245,6 +1245,39 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 end
 
 
+-- Function to check if there are no waypoint buttons and a quest is super-tracked
+function RQE:NoWaypointButton()
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    if not superTrackedQuestID then
+        -- No quest is currently super-tracked
+        return false
+    end
+
+    -- Check if there are any waypoint buttons in the RQEFrame
+    if not self.WaypointButtons or #self.WaypointButtons == 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("No waypoint buttons found in RQEFrame for the super-tracked quest.")
+		-- end
+        return true
+    end
+
+    -- Check if any of the waypoint buttons are visible
+    for _, button in ipairs(self.WaypointButtons) do
+        if button:IsShown() then
+            -- At least one button is visible, so return false
+            return false
+        end
+    end
+
+    -- If we reach here, it means no buttons are visible
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("No visible waypoint buttons for the super-tracked quest.")
+	-- end
+    return true
+end
+
+
 -- Check and Advance Steps
 function RQE:CheckAndAdvanceStep(questID)
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()	 -- TEMPORARILY COMMENTING OUT IN ORDER TO GET RQE:StartPeriodicChecks() OPERATIONAL
