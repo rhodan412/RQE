@@ -11,6 +11,9 @@
 	RQEFrame.lua
 		- Added RQE:NoWaypointButton function to check if any Waypoint Buttons exist in the RQEFrame (for purpose of auto-click "W" button if none when various zone changes or SUPER_TRACKING_CHANGED occurs)
 
+	WaypointManager.lua
+		- Added nil check if nothing supertracked
+
 
 11.0.2.35
 	Config.lua
