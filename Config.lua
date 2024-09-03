@@ -348,11 +348,22 @@ RQE.options = {
 			name = "Frame Settings",
 			type = "group",
 			args = {
+				toggleBlizzObjectiveTracker = {
+					type = "toggle",
+					name = "Toggle Blizz Quest Tracker",
+					desc = "Show/Hide Blizzard's Quest Tracker",
+					get = function(info) return RQE.db.profile.toggleBlizzObjectiveTracker end,
+					set = function(info, value)
+						RQE.db.profile.toggleBlizzObjectiveTracker = value
+					end,
+					width = "full",
+					order = 1, -- Adjust the order as needed
+				},
 				framePosition = {
 					type = "group",
 					name = "Main Frame Position",
 					inline = true,
-					order = 10,
+					order = 2,
 					args = {
 						anchorPoint = {
 							type = 'select',
@@ -464,7 +475,7 @@ RQE.options = {
 					type = "group",
 					name = "Quest Frame Position",
 					inline = true,
-					order = 11,  -- Set this order to wherever you want it to appear
+					order = 3,  -- Set this order to wherever you want it to appear
 					args = {
 						anchorPoint = {
 							type = 'select',
@@ -1642,6 +1653,36 @@ function RQE:AddFrameSettingsWidgets(container)
 	scrollFrame:SetFullWidth(true)
 	scrollFrame:SetFullHeight(true) -- This will allow the scroll frame to take up the full height of the parent container
 	container:AddChild(scrollFrame)
+
+	-- Create the Frame Settings
+	local framePositionGroup = AceGUI:Create("InlineGroup")
+	framePositionGroup:SetTitle("Frame Settings")
+	framePositionGroup:SetFullWidth(true)
+	framePositionGroup:SetLayout("Flow")
+	scrollFrame:AddChild(framePositionGroup)
+
+	-- Add Toggle Blizz Quest Tracker CheckBox to the Frame Settings Widgets
+	local toggleBlizzObjectiveTrackerCheckbox = AceGUI:Create("CheckBox")
+	toggleBlizzObjectiveTrackerCheckbox:SetLabel("Toggle Blizz Quest Tracker")
+	toggleBlizzObjectiveTrackerCheckbox:SetDescription("Show/Hide Blizzard's Quest Tracker")
+	toggleBlizzObjectiveTrackerCheckbox:SetValue(RQE.db.profile.toggleBlizzObjectiveTracker)
+	toggleBlizzObjectiveTrackerCheckbox:SetFullWidth(true)
+	toggleBlizzObjectiveTrackerCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.toggleBlizzObjectiveTracker = value
+	end)
+
+	-- Optionally add a tooltip for more information
+	toggleBlizzObjectiveTrackerCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Toggles the visibility of Blizzard's default quest tracker frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	toggleBlizzObjectiveTrackerCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	-- Add the checkbox to the desired group (e.g., framePositionGroup)
+	framePositionGroup:AddChild(toggleBlizzObjectiveTrackerCheckbox)
 
 	-- Main Frame Position Group
 	local framePositionGroup = AceGUI:Create("InlineGroup")
