@@ -19,19 +19,19 @@ end
 
 -- Create a backup of the original AddMessage function
 if not RQE.originalAddMessage then
-    RQE.originalAddMessage = DEFAULT_CHAT_FRAME.AddMessage
+	RQE.originalAddMessage = DEFAULT_CHAT_FRAME.AddMessage
 end
 
 -- Create a new function to hook the default AddMessage
 function DEFAULT_CHAT_FRAME:AddMessage(message, r, g, b, ...)
-    -- Call the original function to print to the default chat frame
-    RQE.originalAddMessage(self, message, r, g, b, ...)
+	-- Call the original function to print to the default chat frame
+	RQE.originalAddMessage(self, message, r, g, b, ...)
 
-    -- Also log the message to the Debug Log frame
-    if RQE and RQE.AddToDebugLog then
-        local formattedMessage = "|cff"..string.format("%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255) .. message .. "|r"
-        RQE.AddToDebugLog(formattedMessage)
-    end
+	-- Also log the message to the Debug Log frame
+	if RQE and RQE.AddToDebugLog then
+		local formattedMessage = "|cff"..string.format("%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255) .. message .. "|r"
+		RQE.AddToDebugLog(formattedMessage)
+	end
 end
 
 
