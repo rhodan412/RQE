@@ -1,4 +1,8 @@
 11.0.2.36
+	Config.lua
+		- Added option to have Blizzard Objective Tracker be visible when the RQEFrame and RQEQuestFrame are not visible (default: on). Can be toggled on/off through configuration in frames tab.
+		- Clears Waypoint Arrow when RQEFrame is hidden (this will prevent confusion if wanting to switch to the Blizzard Objective Tracker as the waypoint would remain despite switching super track on the Blizz Tracker
+
 	Core.lua
 		- Adjusted timer before RQE.WaypointButtons[RQE.AddonSetStepIndex] button click fires
 
@@ -6,10 +10,15 @@
 		- Added auto supertrack nearest quest on PLAYER_ENTERING_WORLD (usually login/reload) if no quest is currently being supertracked
 		- Added auto clear raid marker from target on quest turn in or gossip finished (as the macros will place target markers on NPCs)
 		- Added initial click of waypoint button 1 when SUPER_TRACKING_CHANGED to generate the macro
-		- Added click of the 'UnknownQuestWaypointButton' if no steps are listed in the RQEFrame ("supertrack frame" where info pulled in from the RQEDatabase, if available) or if autoClickWaypoint is unchecked, this fires on SUPER_TRACKING_CHANGED, ZONE_CHANGED_NEW_AREA, and ZONE_CHANGED_INDOORS
+		- Added click of the 'UnknownQuestWaypointButton' if no steps are listed in the RQEFrame ("supertrack frame" where info pulled in from the RQEDatabase, if available) or if autoClickWaypoint is unchecked, this fires 
+			on SUPER_TRACKING_CHANGED, ZONE_CHANGED_NEW_AREA, and ZONE_CHANGED_INDOORS
 
 	RQEFrame.lua
 		- Added RQE:NoWaypointButton function to check if any Waypoint Buttons exist in the RQEFrame (for purpose of auto-click "W" button if none when various zone changes or SUPER_TRACKING_CHANGED occurs)
+		- Added second frame within the RQEFrame to contain data on the current step that the player is on
+
+	RQEMinimap.lua
+		- Control visibility of the Blizzard Objective Tracker (if enabled through Config) by clicking the LDB or Minimap button for the RQE addon
 
 	WaypointManager.lua
 		- Added nil check if nothing supertracked
