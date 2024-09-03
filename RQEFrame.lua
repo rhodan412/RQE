@@ -345,8 +345,86 @@ local function colorizeObjectives(questID)
 end
 
 
+-- Function to initialize the focused step frame and its children
+function RQE.InitializeFocusStepFrame()
+    -- Create the focusedStepFrame if not already created
+    if not RQE.FocusedStepFrame then
+        RQE.FocusedStepFrame = CreateFrame("Frame", "RQE_FocusedStepFrame", RQEFrame, "BackdropTemplate")
+        
+        -- Set the width to be slightly less than RQEFrame width
+        local padding = 55  -- Set your desired padding size
+        RQE.FocusedStepFrame:SetWidth(RQEFrame:GetWidth() - padding)  
+        RQE.FocusedStepFrame:SetPoint("TOPLEFT", RQE.QuestObjectives, "BOTTOMLEFT", -10, -5)  -- Align closer to the edge
+
+        -- Apply a backdrop to make the frame visible
+        RQE.FocusedStepFrame:SetBackdrop({
+            bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+            edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+            tile = true,
+            tileSize = 16,
+            edgeSize = 16,
+            insets = { left = 0, right = 0, top = 1, bottom = 0 }
+        })
+        RQE.FocusedStepFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
+        RQE.FocusedStepFrame:SetFrameStrata("MEDIUM")  -- Ensure it appears above other elements
+        RQE.FocusedStepFrame:SetFrameLevel(10)  -- Set a high frame level to make sure it's on top
+        RQE.FocusedStepFrame:Show()  -- Make sure the frame is visible
+    end
+
+    -- Create the scroll frame within focusedStepFrame if not already created
+    if not RQE.FocusedStepScrollFrame then
+        RQE.FocusedStepScrollFrame = CreateFrame("ScrollFrame", "RQE_FocusedStepScrollFrame", RQE.FocusedStepFrame, "UIPanelScrollFrameTemplate")
+        RQE.FocusedStepScrollFrame:SetPoint("TOPLEFT", RQE.FocusedStepFrame, "TOPLEFT", 0, 0)
+        RQE.FocusedStepScrollFrame:SetPoint("BOTTOMRIGHT", RQE.FocusedStepFrame, "BOTTOMRIGHT", 0, 0)
+        RQE.FocusedStepScrollFrame:EnableMouse(true)
+        RQE.FocusedStepScrollFrame:EnableMouseWheel(true)
+        RQE.FocusedStepScrollFrame:SetClipsChildren(true)
+        RQE.FocusedStepScrollFrame:Show()
+    end
+
+    -- Create the content frame for the scroll frame if not already created
+    if not RQE.FocusedStepContent then
+        RQE.FocusedStepContent = CreateFrame("Frame", "RQE_FocusedStepContent", RQE.FocusedStepScrollFrame)
+        RQE.FocusedStepContent:SetWidth(RQE.FocusedStepFrame:GetWidth() - 20)  -- Reduced width for padding
+        RQE.FocusedStepScrollFrame:SetScrollChild(RQE.FocusedStepContent)
+        RQE.FocusedStepContent:SetHeight(200)  -- Set initial height
+        RQE.FocusedStepContent:Show()
+    end
+
+    -- Attach the mouse wheel scroll script to the scroll frame
+    RQE.FocusedStepScrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local currentScroll = self:GetVerticalScroll()
+        local maxScroll = self:GetVerticalScrollRange()
+
+        -- Adjust the scroll speed by multiplying delta with a value (e.g., 20)
+        local newScroll = currentScroll - (delta * 20)
+        
+        -- Ensure the new scroll position is within valid bounds
+        newScroll = math.max(0, math.min(newScroll, maxScroll))
+
+        -- Set the new scroll position
+        self:SetVerticalScroll(newScroll)
+    end)
+end
+
+
+-- Helper function to handle the click logic for the focused step
+function RQE:HandleFocusedStepClick(WaypointButton)
+    -- Similar logic to what happens when a waypoint button in the main frame is clicked
+    C_Map.ClearUserWaypoint()
+       
+    -- Update the last clicked button texture
+    WaypointButton.bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+
+    -- Update references
+    RQE.LastClickedButtonRef = WaypointButton
+    RQE.LastClickedWaypointButton = WaypointButton
+end
+
+
 -- Create QuestID Text
 RQE.QuestIDText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+
 
 -- Debug: Check if settings are properly initialized
 if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
@@ -992,9 +1070,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		if i == 1 then
 			if self.QuestObjectives then
-				StepText:SetPoint("TOPLEFT", self.QuestObjectives, "BOTTOMLEFT", 35, yOffset)
+				StepText:SetPoint("TOPLEFT", RQE.FocusedStepContent, "BOTTOMLEFT", 35, yOffset)
 			elseif self.QuestDescription then
-				StepText:SetPoint("TOPLEFT", self.QuestDescription, "BOTTOMLEFT", 35, yOffset)
+				StepText:SetPoint("TOPLEFT", RQE.FocusedStepContent, "BOTTOMLEFT", 35, yOffset)
 			end
 		else
 			if prevText then  -- Check if StepText[i-1] exists
@@ -1010,7 +1088,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Create the WaypointButton
 		---@type WaypointButton
 		local WaypointButton = CreateFrame("Button", nil, content)
-		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
+		WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -5, 10)
 		WaypointButton:SetSize(30, 30)  -- Set size to 30x30
 
 		-- Use the custom texture for the background
@@ -1242,6 +1320,66 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	C_Timer.After(0.5, function()
 		RQE:UpdateContentSize()
 	end)
+end
+
+
+-- Function to update the focused step text
+function RQE:UpdateFocusedStep(stepText)
+    if not stepText then
+        return
+    end
+
+    -- Clear any existing children in the content frame
+    for _, child in ipairs({RQE.FocusedStepContent:GetChildren()}) do
+        child:Hide()
+    end
+
+    -- Create a new StepsText element
+    local StepText = RQE.FocusedStepContent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    StepText:SetJustifyH("LEFT")
+    StepText:SetTextColor(1, 1, 0.8) -- Text color for RQE.StepsText in RGB
+    StepText:SetWidth(RQE.FocusedStepFrame:GetWidth() - 60) -- Control the width to prevent overflow
+    StepText:SetHeight(0)  -- Auto height
+    StepText:SetWordWrap(true)  -- Allow word wrap
+    StepText:SetText(stepText)
+    StepText:SetPoint("TOPLEFT", RQE.FocusedStepContent, "TOPLEFT", 35, -15)
+    StepText:Show()
+    RQE.FocusedStepText = StepText
+
+    -- Adjust the height dynamically based on text content
+    local textHeight = StepText:GetStringHeight() + 35
+    RQE.FocusedStepFrame:SetHeight(textHeight)
+    RQE.FocusedStepContent:SetHeight(textHeight)
+
+    -- Create a Waypoint Button
+    local WaypointButton = CreateFrame("Button", nil, RQE.FocusedStepContent)
+    WaypointButton:SetSize(30, 30)
+    WaypointButton:SetPoint("TOPRIGHT", RQE.FocusedStepText, "TOPLEFT", -5, 5)
+	RQE.FocusWaypointButton = WaypointButton
+    local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+
+	-- Create the number label
+	local number = WaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+	number:SetPoint("CENTER", RQE.FocusWaypointButton, "CENTER")
+	local i = RQE.AddonSetStepIndex or 1
+	number:SetText(i)
+	number:SetTextColor(1, 1, 0)
+
+    -- Add the click event for the Waypoint Button
+    WaypointButton:SetScript("OnClick", function()
+		RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+    end)
+
+    WaypointButton:Show()
+end
+
+
+-- Call this function whenever the quest progress changes or a new step is selected
+function RQE:OnQuestProgressUpdated()
+    local currentStepText = self:GetCurrentStepText()
+    self:UpdateFocusedStep(currentStepText)
 end
 
 
