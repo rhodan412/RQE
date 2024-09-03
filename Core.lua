@@ -288,7 +288,8 @@ local defaults = {
 				size = 13,
 				color = {0/255, 255/255, 153/255}  -- RGB for Cyan
 			},
-		 },
+		},
+		toggleBlizzObjectiveTracker = true,
 		UpdateInstanceInfo = false,
 		WorldStateTimerStart = false,
 		WorldStateTimerStop = false,		
@@ -411,6 +412,12 @@ function RQE:OnInitialize()
 	end
 
 	self:UpdateFramePosition()
+
+	-- Use the method GetCurrentStepText to get the current step text
+	RQE.InitializeFocusStepFrame()
+	local currentStepText = self:GetCurrentStepText()
+	self:UpdateFocusedStep(currentStepText)
+
 	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
 	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 end
@@ -483,6 +490,75 @@ function RQE:InitializeFrame()
 			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
+	end
+end
+
+
+function RQE:SetWaypointForStep(stepText)
+	-- Logic to set the waypoint for the step
+	-- Example: Locate the step index and set the waypoint based on it
+	local stepIndex = self:GetStepIndexFromText(stepText)
+	if stepIndex then
+		-- Logic to set the waypoint using stepIndex
+		print("Setting waypoint for step:", stepText)
+	end
+end
+
+
+-- Helper function to find the index of a step based on the step text
+function RQE:GetStepIndexFromText(stepText)
+	-- Find and return the index of the step from stepText
+	for index, step in ipairs(RQE.StepsText) do
+		if step:GetText() == stepText then
+			return index
+		end
+	end
+	return nil
+end
+
+
+-- Function to determine the current step index for a given quest
+function RQE:GetCurrentStepIndexForQuest(questID)
+	-- Fetch the current step text
+	local currentStepText = self:GetCurrentStepText()
+
+	-- Use GetStepIndexFromText to find the index of the current step
+	local currentStepIndex = self:GetStepIndexFromText(currentStepText) or 1 -- Default to 1 if no step is found
+
+	return currentStepIndex
+end
+
+
+-- Main function to get the current step text
+function RQE:GetCurrentStepText()
+	-- Identify the current quest ID being tracked
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Gets the current super-tracked quest ID
+
+	-- Retrieve the quest data from your database or any other relevant source
+	local questData = self.getQuestData(questID)
+	if not questData then return nil end  -- Return nil if no data is found for the quest
+
+	-- Determine the current step index using the updated logic
+	local currentStepIndex = self:GetCurrentStepIndexForQuest(questID)
+
+	-- Fetch the step text for the current step index
+	local stepInfo = questData[currentStepIndex]
+	if stepInfo and stepInfo.description then
+		return stepInfo.description  -- Return the description of the current step
+	else
+		return nil  -- Return nil if no step information is found
+	end
+end
+
+
+-- Define the method to get the current step index for a given quest
+function RQE:GetCurrentStepIndexForQuest(questID)
+	-- Check if AddonSetStepIndex is available and valid
+	if RQE.AddonSetStepIndex and RQE.AddonSetStepIndex > 0 then
+		return RQE.AddonSetStepIndex  -- Use the current step index tracked by the addon
+	else
+		-- Return the default value if no step is set
+		return 1
 	end
 end
 
@@ -767,6 +843,15 @@ function RQE:SlashCommand(input)
 		-- Toggle the frame visibility
 		if RQEFrame:IsShown() then
 			RQEFrame:Hide()
+
+			C_Map.ClearUserWaypoint()
+
+			-- Check if TomTom is loaded and compatibility is enabled
+			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+				TomTom.waydb:ResetProfile()
+			end
+
 			if RQE.MagicButton then
 				RQE.MagicButton:Hide()
 			end
@@ -896,6 +981,48 @@ end
 ---------------------------------------------------
 -- 8. Toggle Frames
 ---------------------------------------------------
+
+-- Function to show RQE frames by default on login
+function RQE:ShowRQEFramesOnLogin()
+	-- Show the frames only if they are not already shown
+	if not RQEFrame:IsShown() then
+		RQEFrame:Show()
+	end
+	if not RQEQuestFrame:IsShown() then
+		RQEQuestFrame:Show()
+	end
+end
+
+
+-- Function to initialize the objective tracker state based on the checkbox and frames visibility
+function RQE:InitializeObjectiveTracker()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker or RQEFrame:IsShown() or RQEQuestFrame:IsShown() then
+		-- If the checkbox is not checked or RQE frames are visible, hide the Blizzard tracker
+		ObjectiveTrackerFrame:Hide()
+	else
+		-- Otherwise, show the Blizzard tracker
+		ObjectiveTrackerFrame:Show()
+	end
+end
+
+
+-- Hook the Objective Tracker's OnShow event to enforce the state based on visibility conditions
+ObjectiveTrackerFrame:HookScript("OnShow", function()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker or RQEFrame:IsShown() or RQEQuestFrame:IsShown() then
+		ObjectiveTrackerFrame:Hide()
+	end
+end)
+
+
+-- Continuous checking with OnUpdate to enforce the visibility state of the Blizzard Objective Tracker
+local hideObjectiveTrackerFrame = CreateFrame("Frame")
+hideObjectiveTrackerFrame:SetScript("OnUpdate", function()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker or RQEFrame:IsShown() or RQEQuestFrame:IsShown() then
+		-- Hide the Blizzard Objective Tracker if the conditions are met
+		ObjectiveTrackerFrame:Hide()
+	end
+end)
+
 
 -- Function to update the state of the frame based on the current profile settings
 function RQE:ToggleMainFrame()
@@ -1728,63 +1855,6 @@ end
 -- 10. Scenario Functions
 ---------------------------------------------------
 
--- -- Function to fetch/print Scenario Criteria information
--- function RQE.PrintScenarioCriteriaInfo()
-	-- local numCriteria = select(3, C_Scenario.GetStepInfo())
-	-- if not numCriteria or numCriteria == 0 then
-		-- return
-	-- end
-	-- for criteriaIndex = 1, numCriteria do
-		-- local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
-		-- RQE.infoLog("Criteria Index:", criteriaIndex)
-		-- RQE.infoLog("Criteria String:", criteriaString or "N/A")
-		-- RQE.infoLog("Criteria Type:", criteriaType or "N/A")
-		-- RQE.infoLog("Completed:", completed)
-		-- RQE.infoLog("Quantity:", quantity or "N/A")
-		-- RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
-		-- RQE.infoLog("Flags:", flags or "N/A")
-		-- RQE.infoLog("Asset ID:", assetID or "N/A")
-		-- RQE.infoLog("Quantity String:", quantityString or "N/A")
-		-- RQE.infoLog("Criteria ID:", criteriaID or "N/A")
-		-- RQE.infoLog("Duration:", duration or "N/A")
-		-- RQE.infoLog("Elapsed:", elapsed or "N/A")
-		-- RQE.infoLog("Criteria Failed:", criteriaFailed)
-		-- RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
-	-- end
--- end
-
-
--- -- Function to fetch/print Scenario Criteria Step by Step
--- function RQE.PrintScenarioCriteriaInfoByStep()
-	-- local currentStep, numSteps = C_Scenario.GetInfo()
-	-- for stepID = 1, numSteps do
-		-- local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
-		-- if not numCriteria or numCriteria == 0 then
-			-- print("No criteria info available for step", stepID)
-		-- else
-			-- for criteriaIndex = 1, numCriteria do
-				-- --local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
-				-- local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-				-- print("Step ID:", stepID)
-				-- print("Criteria String:", criteriaString or "N/A")
-				-- print("Criteria Type:", criteriaType or "N/A")
-				-- print("Completed:", completed)
-				-- print("Quantity:", quantity or "N/A")
-				-- print("Total Quantity:", totalQuantity or "N/A")
-				-- print("Flags:", flags or "N/A")
-				-- print("Asset ID:", assetID or "N/A")
-				-- print("Quantity String:", quantityString or "N/A")
-				-- print("Criteria ID:", criteriaID or "N/A")
-				-- print("Duration:", duration or "N/A")
-				-- print("Elapsed:", elapsed or "N/A")
-				-- print("Criteria Failed:", criteriaFailed)
-				-- print("Is Weighted Progress:", isWeightedProgress)
-			-- end
-		-- end
-	-- end
--- end
-
-
 -- Function to fetch/print Scenario Criteria Step by Step updated for Patch 11.0
 function RQE.PrintAllScenarioBits()
 	-- Check if the player is currently in a scenario
@@ -2337,6 +2407,15 @@ function RQE:ToggleRQEFrame()
 	end
 	if RQEFrame:IsShown() then
 		RQEFrame:Hide()
+
+		C_Map.ClearUserWaypoint()
+
+		-- Check if TomTom is loaded and compatibility is enabled
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			TomTom.waydb:ResetProfile()
+		end
+
 		if RQE.MagicButton then
 			RQE.MagicButton:Hide()
 		end
