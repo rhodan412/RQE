@@ -1,13 +1,23 @@
 11.0.2.35
+	Config.lua
+		- Added additional options for debugging in Config Frame.
+
 	Core.lua
 		- Updated debug prints with RQE.CheckThatQuestStep() -- this is a 'disconnected function' that is able to only be run using the in-game /run command in order to act as a debugging tool for quest progression
+		- Added new setting to save Waypoint value (RQE.AddonSetStepIndex) to prevent RQEFrame from overriding when autoClickWaypoint is actively assisting player in quest step guidance (this would manifest by going to inappropriate waypoint buttons as quest progression occurred).
+		- Added additional 'defaults' to set for the additional config options added to the Config Frame.
 
 	EventManager.lua
 		- Commented out most of the code within RQE.handleUnitQuestLogChange function as much of what is done here is already handled through the QUEST_WATCH_UPDATE event that gets fired before it
 		- Optimized QUEST_WATCH_UPDATE event listener to improve efficiency of the add-on as increased lag was sometimes noticed when this event fired as a result of a quest being completed.
+		- Settings added for when RQE.AddonSetStepIndex should be initialized and reset
+		- Added better visibility to debug messages based on new setting added to 'Debug' section of the Config Frame.
 
 	RQEDatabase.lua
 		- Modified some quests in the neededAmt and objectiveIndex as some quests with multiple steps associated with a single objective need to start off a neededAmt of 0, some with a neededAmt of 1 (based on how the add-on is reading this step/its 'objective')
+
+	Misc:
+		- Cleaned up code (including spacing and indents).
 
 
 11.0.2.34
