@@ -1159,36 +1159,34 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			RQE.infoLog("Quest ID from text for macro:", RQE.questIDFromText)  -- Debug message for the current operation
 
-			-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
-			RQE.debugLog("Attempting to create macro")
-			local supertrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-			RQE.debugLog("Super Tracked Quest ID:", supertrackedQuestID)	-- Debug message for the super tracked quest ID
-			local questData = RQE.getQuestData(RQE.questIDFromText)
-			if RQE.LastClickedButtonRef.stepIndex then
-				local stepIndex = RQE.LastClickedButtonRef.stepIndex
-			else
-				local stepIndex = 1
-			end
-			local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
-			RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-			if questData then
-				local stepData = questData[stepIndex]
-				RQE.debugLog("Quest data found for ID:", RQE.questIDFromText)
-				for index, stepData in ipairs(questData) do
-					if stepData.description == stepDescription then
-						RQE.infoLog("Matching step data found for description:", stepDescription)
-						if stepData and stepData.macro then
-							local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-							RQE.infoLog("Macro commands to set:", macroCommands)
-							RQEMacro:SetQuestStepMacro(RQE.questIDFromText, index, macroCommands, false)
-						else
-							RQE.debugLog("No macro data found for this step.")
-						end
-					end
-				end
-			else
-				RQE.debugLog("Invalid quest ID or step description. Quest data not found.")
-			end
+			-- -- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
+			-- RQE.debugLog("Attempting to create macro")
+			-- local supertrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+			-- RQE.debugLog("Super Tracked Quest ID:", supertrackedQuestID)	-- Debug message for the super tracked quest ID
+			-- local questData = RQE.getQuestData(RQE.questIDFromText)
+			-- if RQE.LastClickedButtonRef.stepIndex then
+				-- local stepIndex = RQE.LastClickedButtonRef.stepIndex
+			-- else
+				-- local stepIndex = 1
+			-- end
+			-- local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
+			-- RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
+			-- if questData then
+				-- local stepData = questData[stepIndex]
+				-- RQE.debugLog("Quest data found for ID:", RQE.questIDFromText)
+				-- for index, stepData in ipairs(questData) do
+					-- if stepData.description == stepDescription then
+						-- RQE.infoLog("Matching step data found for description:", stepDescription)
+						-- if stepData and stepData.macro then
+							-- local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+							-- RQE.infoLog("Macro commands to set:", macroCommands)
+							-- RQEMacro:SetQuestStepMacro(RQE.questIDFromText, index, macroCommands, false)
+						-- else
+							-- RQE.debugLog("No macro data found for this step.")
+						-- end
+					-- end
+				-- end
+			-- end
 
 			-- Checks to make sure that the correct macro is in place
 			RQE.CheckAndBuildMacroIfNeeded()
@@ -1794,14 +1792,14 @@ function RQE.InitializeSeparateFocusFrame()
         RQE.SeparateFocusFrame:SetSize(375, 100) -- Set the size of the frame
         RQE.SeparateFocusFrame:SetPoint("TOPLEFT", RQE.QuestObjectives, "BOTTOMLEFT", -10, -10)  -- Align closer to the edge
         RQE.SeparateFocusFrame:SetBackdrop({
-			bgFile = "Interface/Tooltips/UI-Tooltip-Background",
-			edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-			tile = true,
-			tileSize = 16,
-			edgeSize = 16,
-			insets = { left = 0, right = 0, top = 1, bottom = 0 }
-		})
-		RQE.SeparateFocusFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
+            bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+            edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+            tile = true,
+            tileSize = 16,
+            edgeSize = 16,
+            insets = { left = 0, right = 0, top = 1, bottom = 0 }
+        })
+        RQE.SeparateFocusFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
         RQE.SeparateFocusFrame:EnableMouse(true)
         RQE.SeparateFocusFrame:SetMovable(true)
         RQE.SeparateFocusFrame:RegisterForDrag("LeftButton")
@@ -1820,13 +1818,12 @@ function RQE.InitializeSeparateFocusFrame()
         RQE.SeparateScrollFrame:Show()
     end
 
-	-- Tooltip when hovering over the RQE.SeparateScrollFrame
-	RQE.SeparateScrollFrame:SetScript("OnEnter", function(self)
-		RQE.ShowFocusScrollFrameTooltip(RQEFrame) -- Call the function to show the tooltip anchored to RQEFrame
-	end)
+    -- Tooltip when hovering over the RQE.SeparateScrollFrame
+    RQE.SeparateScrollFrame:SetScript("OnEnter", function(self)
+        RQE.ShowFocusScrollFrameTooltip(RQEFrame) -- Call the function to show the tooltip anchored to RQEFrame
+    end)
 
-
-	RQE.SeparateScrollFrame:SetScript("OnLeave", RQE.HideFocusScrollFrameTooltip) -- Hide the tooltip when the mouse leaves the frame
+    RQE.SeparateScrollFrame:SetScript("OnLeave", RQE.HideFocusScrollFrameTooltip) -- Hide the tooltip when the mouse leaves the frame
 
     -- Create the content frame for the scroll frame
     if not RQE.SeparateContentFrame then
@@ -1837,148 +1834,124 @@ function RQE.InitializeSeparateFocusFrame()
         RQE.SeparateContentFrame:Show()
     end
 
-	-- Function to update the content dynamically
-	function RQE:UpdateSeparateFocusFrame()
-		-- Make sure the SeparateContentFrame exists
-		if not RQE.SeparateContentFrame then
-			print("Error: SeparateContentFrame not found.")
-			return
-		end
+    -- Function to update the content dynamically
+    function RQE:UpdateSeparateFocusFrame()
+        -- Make sure the SeparateContentFrame exists
+        if not RQE.SeparateContentFrame then
+            print("Error: SeparateContentFrame not found.")
+            return
+        end
 
-		-- Clear any existing children in the content frame
-		for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
-			child:Hide()
-		end
+        -- Clear any existing children in the content frame
+        for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
+            child:Hide()
+        end
 
-		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		if not isSuperTracking then
-			return
-		end
+        local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+        if not isSuperTracking then
+            return
+        end
 
-		local stepIndex = RQE.AddonSetStepIndex or 1
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		local questData = RQE.getQuestData(questID)
+        local stepIndex = RQE.AddonSetStepIndex or 1
+        local questID = C_SuperTrack.GetSuperTrackedQuestID()
+        local questData = RQE.getQuestData(questID)
 
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Quest data not found for questID:", questID)
-			end
+        if not questData then
+            if RQE.db.profile.debugLevel == "INFO+" then
+            end
 
-			-- Update the step text dynamically
-			RQE.SeparateStepText:SetText(stepData and stepData.description or "No step description available for this step.")
-			RQE.SeparateStepText:Show()
-			return
-		end
+            -- Ensure RQE.SeparateStepText is initialized before use
+            if not RQE.SeparateStepText then
+                RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                RQE.SeparateStepText:SetJustifyH("LEFT")
+                RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
+                RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
+                RQE.SeparateStepText:SetHeight(0)  -- Auto height
+                RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
+                RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+            end
 
-		local stepData = questData[stepIndex]
+            -- Update the step text dynamically
+            RQE.SeparateStepText:SetText("No step description available for this step.")
+            RQE.SeparateStepText:Show()
+            return
+        end
 
-		-- Create or update StepText element
-		if not RQE.SeparateStepText then
-			RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.SeparateStepText:SetJustifyH("LEFT")
-			RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
-			RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
-			RQE.SeparateStepText:SetHeight(0)  -- Auto height
-			RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
-			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-		end
+        local stepData = questData[stepIndex]
 
-		-- Update the step text dynamically to include the step index
-		local stepDescription = (stepData and stepData.description) or "No step description available for this step."
-		local formattedText = string.format("%d: %s", stepIndex, stepDescription) -- Prepend the stepIndex to the description
+        -- Create or update StepText element
+        if not RQE.SeparateStepText then
+            RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            RQE.SeparateStepText:SetJustifyH("LEFT")
+            RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
+            RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
+            RQE.SeparateStepText:SetHeight(0)  -- Auto height
+            RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
+            RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+        end
 
-		RQE.SeparateStepText:SetText(formattedText)
-		RQE.SeparateStepText:Show()
+        -- Update the step text dynamically to include the step index
+        local stepDescription = (stepData and stepData.description) or "No step description available for this step."
+        local formattedText = string.format("%d: %s", stepIndex, stepDescription) -- Prepend the stepIndex to the description
 
-		-- Create or update Waypoint Button
-		if not RQE.SeparateWaypointButton then
-			RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
-			RQE.SeparateWaypointButton:SetSize(30, 30)
-			RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
-			local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
-			bg:SetAllPoints()
-			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+        RQE.SeparateStepText:SetText(formattedText)
+        RQE.SeparateStepText:Show()
 
-			-- Create the number label
-			local number = RQE.SeparateWaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-			number:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER", 0, -2)
-			number:SetText("*")
-			number:SetTextColor(1, 1, 0)
+        -- Create or update Waypoint Button
+        if not RQE.SeparateWaypointButton then
+            RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
+            RQE.SeparateWaypointButton:SetSize(30, 30)
+            RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
+            local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
-			-- Add the click event for the Waypoint Button
-			RQE.SeparateWaypointButton:SetScript("OnClick", function()
-				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
-					RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
-					-- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
-					if RQE.AddonSetStepIndex == 1 then
-						RQE.CheckAndBuildMacroIfNeeded()
-					end
-				else
-					print("No waypoint button found for the current step.")
-				end
-			end)
+            -- Create the number label
+            local number = RQE.SeparateWaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+            number:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER", 0, -2)
+            number:SetText("*")
+            number:SetTextColor(1, 1, 0)
 
-			-- Add the script for the tooltip on mouse enter for the "C" button
-			RQE.SeparateWaypointButton:SetScript("OnEnter", function(self)
-				-- Use the stepIndex for the current step, always 1 for "C" button
-				local stepIndex = RQE.AddonSetStepIndex or 1
+            -- Add the click event for the Waypoint Button
+            RQE.SeparateWaypointButton:SetScript("OnClick", function()
+                if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+                    RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+                    -- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
+                    if RQE.AddonSetStepIndex == 1 then
+                        RQE.CheckAndBuildMacroIfNeeded()
+                    end
+                else
+                    print("No waypoint button found for the current step.")
+                end
+            end)
 
-				-- Retrieve the correct tooltip data using the function
-				local coordsText = RQE:GetTooltipDataForCButton()
+            -- Add the script for the tooltip on mouse enter for the "C" button
+            RQE.SeparateWaypointButton:SetScript("OnEnter", function(self)
+                -- Use the stepIndex for the current step, always 1 for "C" button
+                local stepIndex = RQE.AddonSetStepIndex or 1
 
-				-- Ensure coordsText is valid and set up the tooltip
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText(coordsText)
-				GameTooltip:ClearAllPoints()
-				GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)
-				GameTooltip:Show()
-			end)
+                -- Retrieve the correct tooltip data using the function
+                local coordsText = RQE:GetTooltipDataForCButton()
 
-			-- Hide the tooltip when leaving the "C" button
-			RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
-				GameTooltip:Hide()
-			end)
-		end
+                -- Ensure coordsText is valid and set up the tooltip
+                GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+                GameTooltip:SetText(coordsText)
+                GameTooltip:ClearAllPoints()
+                GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)
+                GameTooltip:Show()
+            end)
 
-		RQE.SeparateWaypointButton:Show()
+            -- Hide the tooltip when leaving the "C" button
+            RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
+                GameTooltip:Hide()
+            end)
+        end
 
-		-- Update content height dynamically
-		RQE.UpdateSeparateContentHeight()
-	end
+        RQE.SeparateWaypointButton:Show()
 
-	-- Attach the mouse wheel scroll script to the scroll frame
-	RQE.SeparateScrollFrame:SetScript("OnMouseWheel", function(self, delta)
-		-- Check if Alt, Ctrl, or Shift is being held down
-		if IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown() then
-			-- Handle scrolling for the SeparateScrollFrame
-			local currentScroll = self:GetVerticalScroll()
-			local maxScroll = self:GetVerticalScrollRange()
-
-			-- Adjust the scroll speed
-			local newScroll = currentScroll - (delta * 20)
-
-			-- Ensure the new scroll position is within valid bounds
-			newScroll = math.max(0, math.min(newScroll, maxScroll))
-
-			-- Set the new scroll position
-			self:SetVerticalScroll(newScroll)
-		else
-			-- If no modifier key is held, pass the scroll event to the main RQEFrame
-			if RQE.ScrollFrame then
-				local currentScroll = RQE.ScrollFrame:GetVerticalScroll()
-				local maxScroll = RQE.ScrollFrame:GetVerticalScrollRange()
-
-				-- Adjust the scroll speed
-				local newScroll = currentScroll - (delta * 20)
-
-				-- Ensure the new scroll position is within valid bounds
-				newScroll = math.max(0, math.min(newScroll, maxScroll))
-
-				-- Set the new scroll position for the main frame
-				RQE.ScrollFrame:SetVerticalScroll(newScroll)
-			end
-		end
-	end)
+        -- Update content height dynamically
+        RQE.UpdateSeparateContentHeight()
+    end
 
     -- Function to dynamically update the content height
     function RQE.UpdateSeparateContentHeight()
