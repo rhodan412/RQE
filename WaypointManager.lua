@@ -409,7 +409,6 @@ function RQE:OnCoordinateClicked(stepIndex)
 
 	local questData = RQE.getQuestData(questID)
 	if not questData then
-		RQE.debugLog("Quest data not found for ID:", questID)
 		return -- Exit if no data found for the questID
 	end
 

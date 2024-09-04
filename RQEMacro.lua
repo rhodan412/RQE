@@ -48,7 +48,6 @@ function RQE.CheckCurrentMacroContents()
 
 	local questData = RQE.getQuestData(questID)
 	if not questData then
-		RQE.infoLog("Quest data not found for quest ID: " .. tostring(questID))
 		return false
 	end
 
