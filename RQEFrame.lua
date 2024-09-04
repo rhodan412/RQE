@@ -1189,7 +1189,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- end
 
 			-- Checks to make sure that the correct macro is in place
-			RQE.CheckAndBuildMacroIfNeeded()
+			--RQE.CheckAndBuildMacroIfNeeded()
 
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
@@ -1446,7 +1446,8 @@ function RQE.ClickQuestLogIndexButton(questID)
 		RQE.debugLog("No button found for questID: " .. tostring(questID))
 	end
 	
-	RQE.CheckAndBuildMacroIfNeeded()
+	--RQE.CheckAndBuildMacroIfNeeded()
+	RQEMacro:CreateMacroForCurrentStep()
 end
 
 
@@ -1918,7 +1919,8 @@ function RQE.InitializeSeparateFocusFrame()
                     RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
                     -- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
                     if RQE.AddonSetStepIndex == 1 then
-                        RQE.CheckAndBuildMacroIfNeeded()
+						RQEMacro:CreateMacroForCurrentStep()
+                        --RQE.CheckAndBuildMacroIfNeeded()
                     end
                 else
                     print("No waypoint button found for the current step.")
@@ -1952,6 +1954,40 @@ function RQE.InitializeSeparateFocusFrame()
         -- Update content height dynamically
         RQE.UpdateSeparateContentHeight()
     end
+
+	-- Attach the mouse wheel scroll script to the scroll frame
+	RQE.SeparateScrollFrame:SetScript("OnMouseWheel", function(self, delta)
+		-- Check if Alt, Ctrl, or Shift is being held down
+		if IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown() then
+			-- Handle scrolling for the SeparateScrollFrame
+			local currentScroll = self:GetVerticalScroll()
+			local maxScroll = self:GetVerticalScrollRange()
+
+			-- Adjust the scroll speed
+			local newScroll = currentScroll - (delta * 20)
+
+			-- Ensure the new scroll position is within valid bounds
+			newScroll = math.max(0, math.min(newScroll, maxScroll))
+
+			-- Set the new scroll position
+			self:SetVerticalScroll(newScroll)
+		else
+			-- If no modifier key is held, pass the scroll event to the main RQEFrame
+			if RQE.ScrollFrame then
+				local currentScroll = RQE.ScrollFrame:GetVerticalScroll()
+				local maxScroll = RQE.ScrollFrame:GetVerticalScrollRange()
+
+				-- Adjust the scroll speed
+				local newScroll = currentScroll - (delta * 20)
+
+				-- Ensure the new scroll position is within valid bounds
+				newScroll = math.max(0, math.min(newScroll, maxScroll))
+
+				-- Set the new scroll position for the main frame
+				RQE.ScrollFrame:SetVerticalScroll(newScroll)
+			end
+		end
+	end)
 
     -- Function to dynamically update the content height
     function RQE.UpdateSeparateContentHeight()
