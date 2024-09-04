@@ -3,7 +3,8 @@
 		- Added DebugLog Toggle in Debug Setting in Configuration Frame
 
 	Core.lua
-		- Created flags 
+		- Created flags between QUEST_ACCEPTED and SUPER_TRACKING_CHANGED
+		- Added RQEMacro:CreateMacroForCurrentStep() function that creates macros based on current step of current super tracked quest and, before proceeding, checks to see if current macro (if exists) matches what it should be
 
 	DebugLog.lua
 		- Added functionality to only send info to debug log for storage if box is checked in Configuration Frame
@@ -11,15 +12,18 @@
 
 	EventManager.lua
 		- Added flags between QUEST_ACCEPTED and SUPER_TRACKING_CHANGED to increase efficiency/performance of add-on
+		- Re-enabled functionality to supertrack nearest tracked (watched quest). This was a feature in 11.0.2.35 release from 2004-09-02, but had been temporarily purged to conduct fixes to performance and bugs
 
 	QuestingModule.lua
 		- Reverted to QuestingModule from 2024-09-02.1726 as WQ were being hidden and made slight changes so some non-world quests wouldn't be counted but WQ would remain counted and listed
 
 	RQEFrame.lua
 		- Cleared out some of the code that was used in the creation of macros that was duplicative and potentially impacting add-on performance
+		- Added functionality that requires modifier key be held to scroll master status frame when hovering over it, otherwise the RQEFrame (super track frame remains focus of scrolling)
 
 	RQEMacro.lua
 		- Cleared unused debug msg
+		- Fixed RQE.CheckCurrentMacroContents() function so it once again checks to see if existing macro is the expected macro
 
 	WaypointManager.lua
 		- Cleared unused debug msg
