@@ -214,20 +214,8 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 		-- Fetch coordinates using super tracking data
 		C_Timer.After(0.1, function()
 			local extractedQuestID
-			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-
-			if not isSuperTracking then
-				return
-			end
-
 			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-			-- Add a check for RQE.QuestIDText
-			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-			else
-				extractedQuestID = nil
-			end
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
 			local questID = extractedQuestID or currentSuperTrackedQuestID
 
