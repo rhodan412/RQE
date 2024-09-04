@@ -1570,6 +1570,10 @@ function UpdateRQEQuestFrame()
 						-- end
 					-- end
 
+					-- RQE:RegisterEvent("SUPER_TRACKING_CHANGED", function()
+						-- RQE:OnSuperTrackingChanged()
+					-- end)
+
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
@@ -2744,13 +2748,13 @@ function UpdateRQEAchievementsFrame()
 	RQE:UpdateRQEQuestFrameVisibility()
 end
 
--- Unregister events when a frame is hidden
-RQEQuestFrame:SetScript("OnHide", function()
-	RQE:ManageEvents(false)  -- Unregister events
-end)
+-- -- Unregister events when a frame is hidden
+-- RQEQuestFrame:SetScript("OnHide", function()
+	-- RQE:ManageEvents(false)  -- Unregister events
+-- end)
 
 
--- Re-register events when a frame is shown
-RQEQuestFrame:SetScript("OnShow", function()
-	RQE:ManageEvents(true)  -- Register events
-end)
+-- -- Re-register events when a frame is shown
+-- RQEQuestFrame:SetScript("OnShow", function()
+	-- RQE:ManageEvents(true)  -- Register events
+-- end)
