@@ -1,39 +1,18 @@
-11.0.2.36
-	Config.lua
-		- Added option to have Blizzard Objective Tracker be visible when the RQEFrame and RQEQuestFrame are not visible (default: on). Can be toggled on/off through configuration in frames tab.
-		- Clears Waypoint Arrow when RQEFrame is hidden (this will prevent confusion if wanting to switch to the Blizzard Objective Tracker as the waypoint would remain despite switching super track on the Blizz Tracker
-
-	Core.lua
-		- Adjusted timer before RQE.WaypointButtons[RQE.AddonSetStepIndex] button click fires
-
-	EventManager.lua
-		- Added auto supertrack nearest quest on PLAYER_ENTERING_WORLD (usually login/reload) if no quest is currently being supertracked
-		- Added auto clear raid marker from target on quest turn in or gossip finished (as the macros will place target markers on NPCs)
-		- Added initial click of waypoint button 1 when SUPER_TRACKING_CHANGED to generate the macro
-		- Added click of the 'UnknownQuestWaypointButton' if no steps are listed in the RQEFrame ("supertrack frame" where info pulled in from the RQEDatabase, if available) or if autoClickWaypoint is unchecked, this fires 
-			on SUPER_TRACKING_CHANGED, ZONE_CHANGED_NEW_AREA, and ZONE_CHANGED_INDOORS
-
-	RQEFrame.lua
-		- Added RQE:NoWaypointButton function to check if any Waypoint Buttons exist in the RQEFrame (for purpose of auto-click "W" button if none when various zone changes or SUPER_TRACKING_CHANGED occurs)
-		- Added second frame within the RQEFrame to contain data on the current step that the player is on
-
-	RQEMinimap.lua
-		- Control visibility of the Blizzard Objective Tracker (if enabled through Config) by clicking the LDB or Minimap button for the RQE addon
-
-	WaypointManager.lua
-		- Added nil check if nothing supertracked
-
-
 11.0.2.35
+	Buttons.lua
+		- Added RQE:ClearSeparateFocusFrame functionality to the ClearButton in the RQEFrame
+
 	Config.lua
 		- Added additional options for debugging in Config Frame.
 		- Added option that super track the nearest quest, if super track frame is empty when QUEST_FINISHED event fires (default: on). Placed this option in settings panel and configuration frame
+		- Modified order numbers to accommodate addition of Blizzard objective frame toggle option
 
 	Core.lua
 		- Updated debug prints with RQE.CheckThatQuestStep() -- this is a 'disconnected function' that is able to only be run using the in-game /run command in order to act as a debugging tool for quest progression
 		- Added new setting to save Waypoint value (RQE.AddonSetStepIndex) to prevent RQEFrame from overriding when autoClickWaypoint is actively assisting player in quest step guidance (this would manifest by going to inappropriate waypoint buttons as quest progression occurred).
 		- Added additional 'defaults' to set for the additional config options added to the Config Frame.
 		- Added function to get the nearest super track questID
+		- Added RQE:ClearSeparateFocusFrame function to clear the newly created master status frame within the RQEFrame
 
 	DebugLog.lua
 		- DEFAULT_CHAT_FRAME:AddMessage() will now be displayed in the DebugLog
@@ -48,12 +27,18 @@
 
 	QuestingModule.lua
 		- Added fix for WQ header being displayed when none are selected (some quests were returning with the C_QuestLog.GetNumWorldQuestWatches() API even though they weren't actually WQ as determined thru C_QuestLog.IsWorldQuest(questID)
+		- Commented out defunct code
 
 	RQEDatabase.lua
 		- Modified some quests in the neededAmt and objectiveIndex as some quests with multiple steps associated with a single objective need to start off a neededAmt of 0, some with a neededAmt of 1 (based on how the add-on is reading this step/its 'objective')
+		- Improvements to the information from the pre-Isle of Dorn quests
 
 	RQEFrame.lua
 		- Switched some debug code to only print if INFO+ debug level is active
+		- Created a master status frame that states which stepIndex you're on and what the stepIndex description reads (to avoid need to scroll with each stepIndex progression made)
+
+	WaypointManager.lua
+		- Added nil checks
 
 	Misc:
 		- Cleaned up code (including spacing and indents).
