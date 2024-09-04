@@ -9,11 +9,16 @@ local logTable = {}
 
 -- Function to add messages to the log
 function RQE.AddToDebugLog(message)
-	local timestamp = date("%Y-%m-%d %H:%M:%S")
-	local logEntry = string.format("[%s] %s", timestamp, message)
-	table.insert(logTable, logEntry)
+    -- Check if debug logging is enabled via the checkbox
+    if not RQE.db.profile.debugLoggingCheckbox then
+        return
+    end
 
-	RQE.UpdateLogFrame()  -- Refresh the log frame each time a new message is added
+    local timestamp = date("%Y-%m-%d %H:%M:%S")
+    local logEntry = string.format("[%s] %s", timestamp, message)
+    table.insert(logTable, logEntry)
+
+    RQE.UpdateLogFrame()  -- Refresh the log frame each time a new message is added
 end
 
 
@@ -22,15 +27,15 @@ if not RQE.originalAddMessage then
 	RQE.originalAddMessage = DEFAULT_CHAT_FRAME.AddMessage
 end
 
+
 -- Create a new function to hook the default AddMessage
 function DEFAULT_CHAT_FRAME:AddMessage(message, r, g, b, ...)
 	-- Call the original function to print to the default chat frame
 	RQE.originalAddMessage(self, message, r, g, b, ...)
 
-	-- Also log the message to the Debug Log frame
+	-- Also log the message to the Debug Log frame if logging is enabled
 	if RQE and RQE.AddToDebugLog then
-		local formattedMessage = "|cff"..string.format("%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255) .. message .. "|r"
-		RQE.AddToDebugLog(formattedMessage)
+		RQE.AddToDebugLog(message)
 	end
 end
 
@@ -116,19 +121,19 @@ local editBox = CreateFrame("EditBox", nil, logFrame, "InputBoxTemplate")
 editBox:SetMultiLine(true)
 editBox:SetSize(280, 380)  -- Adjust the height as needed
 
+
 editBox:SetPoint("TOPLEFT")
 editBox:SetPoint("BOTTOMRIGHT", scrollFrame, "BOTTOMRIGHT")
 editBox:SetFontObject("ChatFontNormal")
 editBox:SetAutoFocus(false)
 editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 
+
 scrollFrame:SetScrollChild(editBox)
 
 
 -- Add a scroll bar to the edit box
----@class RQESlider : Slider
----@field scrollStep number
-local scrollBar = CreateFrame("Slider", nil, scrollFrame) -- Parent changed to scrollFrame
+local scrollBar = CreateFrame("Slider", nil, scrollFrame)
 scrollBar:SetPoint("TOPRIGHT", logFrame, "TOPRIGHT", -10, -30)
 scrollBar:SetPoint("BOTTOMRIGHT", logFrame, "BOTTOMRIGHT", -10, 10)
 scrollBar:SetValueStep(1)
@@ -140,7 +145,6 @@ scrollBar:SetWidth(16)
 -- Function to calculate the height of the text in the EditBox
 local function CalculateTextHeight(editBox)
 	local textString = editBox:GetText()
-	local stringWidth = editBox:GetWidth()
 	local totalHeight = 0
 	local _, fontHeight = editBox:GetFont()
 
@@ -156,21 +160,22 @@ end
 function RQE.UpdateLogFrame()
 	local logText = table.concat(logTable, "\n")
 	editBox:SetText(logText)
-	-- We need to update the size of the editBox and the scrollFrame here as well
 	editBox:SetWidth(scrollFrame:GetWidth())
-	editBox:SetHeight(CalculateTextHeight(editBox))  -- CalculateTextHeight needs to be defined correctly
-	scrollFrame:UpdateScrollChildRect()  -- This updates the scroll bar to account for the new size of the scroll child
+	editBox:SetHeight(CalculateTextHeight(editBox))
+	scrollFrame:UpdateScrollChildRect()
 end
 
 
--- Create and Display closeButton for DebugLog
+-- Create and display closeButton for DebugLog
 local closeButton = CreateFrame("Button", "RQEDebugLogCloseButton", RQE.DebugLogFrame, "UIPanelCloseButton")
-closeButton:SetSize(30, 30) -- Set the size of the close button
-closeButton:SetPoint("TOPRIGHT", RQE.DebugLogFrame, "TOPRIGHT", 0, 0) -- Position it at the top-right corner
+closeButton:SetSize(30, 30)
+closeButton:SetPoint("TOPRIGHT", RQE.DebugLogFrame, "TOPRIGHT", 0, 0)
 
-closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up") -- Set the normal texture
-closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down") -- Set the pushed texture
-closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight") -- Set the highlight texture
+
+closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
+closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down")
+closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight")
+
 
 closeButton:SetScript("OnClick", function()
 	RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
@@ -189,14 +194,15 @@ resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down"
 resizeButton:SetScript("OnMouseDown", function(self, button)
 	if button == "LeftButton" then
 		logFrame:StartSizing("BOTTOMRIGHT")
-		self:GetHighlightTexture():Hide()  -- Hide highlight so it doesn't stick while sizing
+		self:GetHighlightTexture():Hide()
 	end
 end)
 
-resizeButton:SetScript("OnMouseUp", function(self, button)
+
+resizeButton:SetScript("OnMouseUp", function(self)
 	logFrame:StopMovingOrSizing()
 	self:GetHighlightTexture():Show()
-	RQE.UpdateLogFrame()  -- Update the contents to fit the new size
+	RQE.UpdateLogFrame()
 end)
 
 
@@ -205,7 +211,7 @@ RQE.UpdateLogFrame()
 logFrame:Hide()
 
 
--- Now define the SLASH command after the function is defined
+-- Define the SLASH command to toggle the log
 SLASH_LOGTOGGLE1 = "/logtoggle"
 SlashCmdList["LOGTOGGLE"] = function()
 	if logFrame:IsShown() then
@@ -236,10 +242,22 @@ end)
 
 -- Update the EditBox height and scrollbar range when text changes
 editBox:SetScript("OnTextChanged", function(self)
-	-- Since GetStringHeight is not available
 	local textHeight = self:GetHeight()
 	self:SetHeight(textHeight)
-
 	local maxScroll = math.max(textHeight - scrollFrame:GetHeight(), 0)
-	scrollBar:SetValue(maxScroll) -- Set to bottom of the scroll area
+	scrollBar:SetValue(maxScroll)
 end)
+
+
+-- Function to clear the debug log
+function RQE:ClearDebugLog()
+    logTable = {}
+    print("Debug log cleared.")
+end
+
+
+-- Register the slash command
+SLASH_CLEARDEBUG1 = "/rqeclearlog"
+SlashCmdList["CLEARDEBUG"] = function(msg)
+    RQE:ClearDebugLog()
+end
