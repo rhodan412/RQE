@@ -1,3 +1,30 @@
+11.0.2.36
+	Config.lua
+		- Added DebugLog Toggle in Debug Setting in Configuration Frame
+
+	Core.lua
+		- Created flags 
+
+	DebugLog.lua
+		- Added functionality to only send info to debug log for storage if box is checked in Configuration Frame
+		- Added ability to clear Debug Log via slash command
+
+	EventManager.lua
+		- Added flags between QUEST_ACCEPTED and SUPER_TRACKING_CHANGED to increase efficiency/performance of add-on
+
+	QuestingModule.lua
+		- Reverted to QuestingModule from 2024-09-02.1726 as WQ were being hidden and made slight changes so some non-world quests wouldn't be counted but WQ would remain counted and listed
+
+	RQEFrame.lua
+		- Cleared out some of the code that was used in the creation of macros that was duplicative and potentially impacting add-on performance
+
+	RQEMacro.lua
+		- Cleared unused debug msg
+
+	WaypointManager.lua
+		- Cleared unused debug msg
+
+
 11.0.2.35
 	Buttons.lua
 		- Added RQE:ClearSeparateFocusFrame functionality to the ClearButton in the RQEFrame
