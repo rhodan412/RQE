@@ -28,6 +28,7 @@ RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQEDatabase = RQEDatabase or {}
+RQEMacro = RQEMacro or {}
 
 
 ---------------------------
@@ -1544,6 +1545,26 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	if RQE.db.profile.enableNearestSuperTrack then
+		if not isSuperTracking then
+			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+			if closestQuestID then
+				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
+				end
+			end
+		end
+		C_Timer.After(1, function()
+			UpdateFrame()
+		end)
+	end
+
 	if isLogin then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)
@@ -1716,11 +1737,30 @@ function RQE.handleSuperTracking()
 	RQE.SaveSuperTrackData()
 	RQE:ClearWaypointButtonData()
 
-	-- Reset the "Clicked" WaypointButton to nil
-	RQE.LastClickedIdentifier = nil
-	RQE.AddonSetStepIndex = 1
+    -- Optimize by updating the separate frame only if needed
+    RQE:UpdateSeparateFocusFrame()
+    RQE.FocusScrollFrameToTop()
 
-	RQE.SetInitialWaypointToOne()
+    -- Check if the super-tracked quest ID has changed
+    if currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
+        if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+            print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(currentSuperTrackedQuestID))
+        end
+
+        -- Reset relevant variables
+        RQE.LastClickedIdentifier = nil
+        RQE.CurrentStepIndex = 1
+        RQE.AddonSetStepIndex = 1
+        RQE.LastClickedButtonRef = nil
+
+        -- Call the function to reset to step 1
+        RQE:SetInitialWaypointToOne()
+		RQEMacro:CreateMacroForCurrentStep()
+
+        -- Store the current quest ID for future reference
+        RQE.previousSuperTrackedQuestID = currentSuperTrackedQuestID
+    end
+
 	UpdateFrame()
 
 	local extractedQuestID
@@ -3423,6 +3463,8 @@ function RQE.handleQuestWatchUpdate(...)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 				DEFAULT_CHAT_FRAME:AddMessage("Quest is already super tracked: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
 			end
+			RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+			RQEMacro:CreateMacroForCurrentStep()
 			questID = currentSuperTrackedQuestID
 		end
 	else
@@ -3835,6 +3877,26 @@ function RQE.handleQuestFinished()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 		-- startTime = debugprofilestop()  -- Start timer
 		DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
+	end
+
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	if RQE.db.profile.enableNearestSuperTrack then
+		if not isSuperTracking then
+			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+			if closestQuestID then
+				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
+				end
+			end
+		end
+		C_Timer.After(1, function()
+			UpdateFrame()
+		end)
 	end
 
 	local extractedQuestID
