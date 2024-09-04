@@ -14,6 +14,7 @@ RQE.db.profile = RQE.db.profile or {}
 
 RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
+RQEMacro = RQEMacro or {}
 
 -- Table to hold campaigns, quest types and quest lines
 RQE.Campaigns = RQE.Campaigns or {}
@@ -3186,6 +3187,52 @@ function RQE.SetMacroForFinalStep(questID, finalStepIndex)
 end
 
 
+-- Function that creates a macro based on the current stepIndex of the current super tracked quest
+function RQEMacro:CreateMacroForCurrentStep()
+    -- Retrieve the questID that is currently being supertracked
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    if not questID then
+        return
+    end
+
+	local isMacroCorrect = RQE.CheckCurrentMacroContents()
+	
+	if isMacroCorrect then
+		return
+	end
+
+    -- Retrieve the quest data from the database
+    local questData = RQE.getQuestData(questID)
+    if not questData then
+        return
+    end
+
+    -- Fetch the current step index that the player is on
+    local stepIndex = RQE.AddonSetStepIndex
+    if not stepIndex then
+        return
+    end
+
+    -- Fetch the macro data for the current step
+    local stepData = questData[stepIndex]
+    if not stepData or not stepData.macro then
+        return
+    end
+
+    -- Combine the macro data into a single string
+    local macroContent = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+
+    -- Print the macro content for debugging
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Creating or updating 'RQE Macro' with content:", macroContent)
+	end
+
+    -- Set or update the macro using the provided content
+    RQEMacro:SetMacro("RQE Macro", "INV_MISC_QUESTIONMARK", macroContent, false)
+	RQE.Buttons.UpdateMagicButtonVisibility()
+end
+
+
 -- Periodic check setup (updated to include CheckDBObjectiveStatus)
 function RQE:StartPeriodicChecks()
 	-- Early return if no quest is super-tracked
@@ -3282,7 +3329,8 @@ function RQE:StartPeriodicChecks()
 		end
 
 		-- Check and build macro if needed
-		RQE.CheckAndBuildMacroIfNeeded()
+		--RQE.CheckAndBuildMacroIfNeeded()
+		RQEMacro:CreateMacroForCurrentStep()
 	end
 end
 
@@ -5138,7 +5186,8 @@ function RQE.CheckAndBuildMacroIfNeeded()
 	local isMacroCorrect = RQE.CheckCurrentMacroContents()
 	
 	if not isMacroCorrect then
-		RQE:BuildQuestMacroBackup()
+		--RQE:BuildQuestMacroBackup()
+		RQEMacro:CreateMacroForCurrentStep()
 	end
 
 	if RQE.shouldCheckFinalStep then
