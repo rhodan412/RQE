@@ -187,7 +187,8 @@ local defaults = {
 		BossKill = false,
 		ClientSceneClosed = false,
 		ClientSceneOpened = false,
-		debugLevel = "INFO",
+		debugLevel = "NONE",
+		debugLoggingCheckbox = false,
 		debugMode = true,
 		displayRQEmemUsage = false,
 		enableCarboniteCompatibility = true,
@@ -313,6 +314,10 @@ RQE.QToriginalHeight = RQE.QToriginalHeight or 0
 
 -- Initialize Waypoint System
 RQE.waypoints = {}
+
+
+RQE.SetInitialFromAccept = false
+RQE.SetInitialFromSuperTrack = false
 
 -- Initialize the savedAutomaticWorldQuestWatches table within addon's initialization logic
 if not RQE.savedAutomaticWorldQuestWatches then
@@ -3037,7 +3042,6 @@ function RQE:FindAndSetFinalStep()
 	local questData = self.getQuestData(superTrackedQuestID)
 
 	if not questData then
-		RQE.infoLog("Quest data not found for quest ID:", superTrackedQuestID)
 		return
 	end
 
@@ -3059,7 +3063,21 @@ function RQE.SetInitialWaypointToOne()
 	if not RQE.db.profile.autoClickWaypointButton then
 		return
 	end
-	
+
+	if not RQE.SetInitialFromAccept or not RQE.RQEQuestFrame:IsMouseOver() then
+		return
+	end
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+	if isSuperTracking then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		RQE.SetMacroForFinalStep(questID, stepIndex)
+	end
+
+	RQE.SetInitialFromAccept = false
+
 	C_Timer.After(1, function()
 		if RQE.LastClickedIdentifier == 1 then
 			RQE.WaypointButtons[1]:Click()
@@ -3071,14 +3089,6 @@ function RQE.SetInitialWaypointToOne()
 			end
 		end
 	end)
-
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-
-	if isSuperTracking then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		local stepIndex = RQE.AddonSetStepIndex or 1
-		RQE.SetMacroForFinalStep(questID, stepIndex)
-	end
 end
 
 
@@ -3095,7 +3105,6 @@ function RQE.CheckAndSetFinalStep()
 
 		local questData = RQE.getQuestData(superTrackedQuestID)
 		if not questData then
-			RQE.debugLog("Quest data not found for quest ID:", superTrackedQuestID)
 			RQE.shouldCheckFinalStep = false
 			return
 		end
@@ -3163,7 +3172,6 @@ end
 function RQE.SetMacroForFinalStep(questID, finalStepIndex)
 	local questData = RQE.getQuestData(questID)
 	if not questData then
-		RQE.infoLog("Quest data not found for quest ID:", questID)
 		return
 	end
 
@@ -3513,7 +3521,6 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
 	local questData = self.getQuestData(questID)
 
 	if not questData then
-		RQE.debugLog("Quest data not found for questID:", questID)
 		return
 	end
 
@@ -3612,7 +3619,6 @@ function RQE:CheckDBBuff(questID, stepIndex, isFailureCheck)
 	local questData = self.getQuestData(questID)
 
 	if not questData then
-		RQE.debugLog("Quest data not found for questID:", questID)
 		return
 	end
 
@@ -3642,7 +3648,6 @@ function RQE:CheckDBDebuff(questID, stepIndex)
 	local questData = self.getQuestData(questID)
 
 	if not questData then
-		RQE.debugLog("Quest data not found for questID:", questID)
 		return
 	end
 
@@ -3666,7 +3671,6 @@ function RQE:CheckDBInventory(questID, stepIndex)
 	local questData = self.getQuestData(questID)
 
 	if not questData then
-		RQE.debugLog("Quest data not found for questID:", questID)
 		return
 	end
 
@@ -3694,7 +3698,6 @@ function RQE:CheckDBZoneChange(questID, stepIndex)
 	local questData = self.getQuestData(questID)
 
 	if not questData then
-		RQE.debugLog("Quest data not found for questID:", questID)
 		return
 	end
 
@@ -5158,7 +5161,6 @@ function RQE:BuildQuestMacroBackup()
 			-- Fetch the quest data here
 			local questData = RQE.getQuestData(questID)
 			if not questData then
-				RQE.debugLog("Quest data not found for questID:", questID)
 				return
 			end
 
