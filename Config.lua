@@ -2303,6 +2303,28 @@ function RQE:AddDebugSettingsWidgets(container)
 
 		scrollFrame:AddChild(displayMemoryUsageCheckbox)
 
+		if RQE.db.profile.debugMode then
+			-- Debug Logging Toggle
+			local debugLoggingCheckbox = AceGUI:Create("CheckBox")
+			debugLoggingCheckbox:SetLabel("Debug Logging")
+			debugLoggingCheckbox:SetValue(RQE.db.profile.debugLoggingCheckbox)
+			debugLoggingCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+				RQE.db.profile.debugLoggingCheckbox = value
+			end)
+
+			-- Add a tooltip description for debugLoggingCheckbox (RQE.db.profile.debugLoggingCheckbox)
+			debugLoggingCheckbox:SetCallback("OnEnter", function(widget, event)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("Toggles the option to log debug messages", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			debugLoggingCheckbox:SetCallback("OnLeave", function(widget, event)
+				GameTooltip:Hide()
+			end)
+
+			scrollFrame:AddChild(debugLoggingCheckbox)
+		end
+
 		-- Only show these options if Debug Mode is enabled
 		if RQE.db.profile.debugMode then
 			-- Debug Inline Group (appears when Debug Mode is enabled)
