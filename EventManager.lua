@@ -181,14 +181,14 @@ local eventsToRegister = {
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
-	"PLAYER_REGEN_ENABLED",
+	--"PLAYER_REGEN_ENABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
 	"QUEST_ACCEPTED",
 	--"QUEST_AUTOCOMPLETE",
 	--"QUEST_COMPLETE",
 	-- "QUEST_CURRENCY_LOOT_RECEIVED",
-	"QUEST_FINISHED",
+	--"QUEST_FINISHED",
 	--"QUEST_LOG_CRITERIA_UPDATE",
 	--"QUEST_LOG_UPDATE",			-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	--"QUEST_LOOT_RECEIVED",
@@ -959,16 +959,6 @@ function RQE.handlePlayerLogin()
 	RQE:InitializeAddon()
 	RQE:InitializeFrame()
 
-	-- Initialize Objective Tracker based on settings
-	C_Timer.After(0.1, function()
-		RQE:InitializeObjectiveTracker()
-	end)
-
-	-- Show RQE frames by default on login
-	C_Timer.After(0.1, function()
-		RQE:ShowRQEFramesOnLogin()
-	end)
-
 	C_Timer.After(0.1, function()
 		RQE:UpdateMinimapButtonPosition()
 	end)
@@ -1246,7 +1236,7 @@ end
 -- Function to handle SCENARIO_COMPLETED event
 function RQE.handleScenarioComplete(...)
 	if RQE.db.profile.debugLevel == "INFO+" then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -1275,8 +1265,8 @@ function RQE.handleScenarioComplete(...)
 	RQE.saveScenarioData(RQE, event, questID, xp, money)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCompleted then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_COMPLETED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_COMPLETED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 
 	RQE.updateScenarioUI()
@@ -1285,7 +1275,7 @@ end
 -- Function to handle SCENARIO_UPDATE event
 function RQE.handleScenarioUpdate(...)
 	if RQE.db.profile.debugLevel == "INFO+" then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -1315,8 +1305,8 @@ function RQE.handleScenarioUpdate(...)
 	RQE.saveScenarioData(RQE, event, newStep)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 
 	RQE.updateScenarioUI()
@@ -1325,7 +1315,7 @@ end
 -- Function to handle SCENARIO_CRITERIA_UPDATE event
 function RQE.handleScenarioCriteriaUpdate(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -1360,8 +1350,8 @@ function RQE.handleScenarioCriteriaUpdate(...)
 	-- RQE.scenarioCriteriaUpdate = true
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed SCENARIO_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 
 	RQE.updateScenarioCriteriaUI()
@@ -1601,7 +1591,7 @@ end
 -- Handles JAILERS_TOWER_LEVEL_UPDATE event
 function RQE.handleJailersUpdate(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -1641,8 +1631,8 @@ function RQE.handleJailersUpdate(...)
 	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed JAILERS_TOWER_LEVEL_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed JAILERS_TOWER_LEVEL_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -1653,7 +1643,7 @@ function RQE.handlePlayerControlGained()
 	RQE.canSortQuests = true
 	SortQuestsByProximity()
 	RQE:AutoClickQuestLogIndexWaypointButton()
-	RQE:StartPeriodicChecks() -- Needed for updating WaypointButton presses when getting off taxi
+	--RQE:StartPeriodicChecks() -- Needed for updating WaypointButton presses when getting off taxi
 end
 
 
@@ -1663,6 +1653,7 @@ function RQE.handlePlayerStartedMoving()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
 	end
 
+	RQE.FocusScrollFrameToTop()
 	RQE:StartUpdatingCoordinates()
 end
 
@@ -1999,16 +1990,16 @@ function RQE.handlePlayerEnterWorld(...)
 
 				C_Timer.After(1, function()
 					-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
-					RQE:StartPeriodicChecks()
+					--RQE:StartPeriodicChecks()
 				end)
 			end
+
+			UpdateFrame()
 		end
 
 		-- Handle scenario regardless of the condition
 		RQE.updateScenarioUI()
 	end
-
-	UpdateFrame()
 
 	C_Timer.After(2, function()
 		RQE:QuestType()
@@ -2058,166 +2049,327 @@ function RQE.handlePlayerEnterWorld(...)
 end
 
 
+-- Defined OnSuperTrackingChanged as a method of RQE
+function RQE:OnSuperTrackingChanged()
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    -- Check if the super-tracked quest ID has changed
+    if currentSuperTrackedQuestID ~= self.previousSuperTrackedQuestID then
+        if self.db.profile.debugLevel == "INFO+" and self.db.profile.showEventSuperTrackingChanged then
+            print("Super-tracked quest changed from", tostring(self.previousSuperTrackedQuestID), "to", tostring(currentSuperTrackedQuestID))
+        end
+
+        -- Unregister the event to prevent unwanted triggering
+        self:UnregisterEvent("SUPER_TRACKING_CHANGED")
+
+        -- Reset relevant variables
+        self.LastClickedIdentifier = nil
+        self.CurrentStepIndex = 1
+        self.AddonSetStepIndex = 1
+        self.LastClickedButtonRef = nil
+
+        -- Call the function to reset to step 1
+        self:SetInitialWaypointToOne()
+
+        -- Store the current quest ID for future reference
+        self.previousSuperTrackedQuestID = currentSuperTrackedQuestID
+
+        -- Re-register the event only when needed
+        self:RegisterEvent("SUPER_TRACKING_CHANGED", function()
+            self:OnSuperTrackingChanged()
+        end)
+    end
+end
+
+
+-- -- Handling SUPER_TRACKING_CHANGED Event
+-- -- Fired when the actively tracked location is changed
+-- function RQE.handleSuperTracking()
+    -- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+        -- -- startTime = debugprofilestop()  -- Start timer
+    -- end
+
+    -- -- Get the current super-tracked quest ID at the start
+    -- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+    -- -- Early return if no quest is super-tracked
+    -- if not RQE.IsQuestSuperTracked() then
+        -- return
+    -- end
+
+    -- RQE:UpdateSeparateFocusFrame()
+    -- RQE.FocusScrollFrameToTop()
+
+    -- -- Check if the super-tracked quest ID has changed
+    -- if currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
+        -- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+            -- print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(currentSuperTrackedQuestID))
+        -- end
+
+        -- -- Unregister the event to prevent unwanted triggering
+        -- RQE:UnregisterEvent("SUPER_TRACKING_CHANGED")
+
+		-- -- -- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
+		-- -- if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
+			-- -- RQE.UnknownQuestButton:Click()
+		-- -- end
+
+		-- -- Reset relevant variables
+		-- RQE.LastClickedIdentifier = nil
+		-- RQE.CurrentStepIndex = 1
+		-- RQE.AddonSetStepIndex = 1
+		-- RQE.LastClickedButtonRef = nil
+
+       -- -- Call the function to reset to step 1
+        -- RQE:SetInitialWaypointToOne()
+
+        -- -- Store the current quest ID for future reference
+        -- RQE.previousSuperTrackedQuestID = currentSuperTrackedQuestID
+
+        -- -- Re-register the event only when needed
+        -- RQE:RegisterEvent("SUPER_TRACKING_CHANGED", function()
+            -- RQE:OnSuperTrackingChanged()
+        -- end)
+    -- end
+
+	-- RQEMacro:ClearMacroContentByName("RQE Macro")
+	-- RQE.SaveSuperTrackData()
+	-- RQE.ScrollFrameToTop()
+
+	-- -- Reset the "Clicked" WaypointButton to nil
+	-- RQE.LastClickedIdentifier = nil
+
+	-- RQE:ClearWaypointButtonData()
+
+	-- local extractedQuestID
+
+	-- -- Extract questID from RQE's custom UI if available
+	-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	-- end
+
+	-- -- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
+	-- C_Timer.After(0.5, function()
+		-- RQE:UpdateContentSize()
+	-- end)
+
+	-- -- Check to advance to the next step in the quest
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- C_Timer.After(0.5, function()
+			-- RQE:StartPeriodicChecks()
+		-- end)
+	-- end
+
+	-- -- Early return if manual super tracking wasn't performed
+	-- if not RQE.ManualSuperTrack then
+		-- return
+	-- end
+
+	-- -- If manual super tracking was performed
+	-- if RQE.ManualSuperTrack then
+		-- RQE:ClearFrameData()
+		-- RQE.lastClickedObjectiveIndex = 0
+	-- end
+
+	-- -- Reset the manual super tracking flag now that we're handling it
+	-- RQE.ManualSuperTrack = nil
+
+	-- RQE:QuestType()
+	-- RQE.superTrackingChanged = true
+
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+
+	-- -- Logic to check autoClickWaypointButton and steps displayed
+	-- if not RQE.db.profile.autoClickWaypointButton and not RQE.AreStepsDisplayed(questID) then
+		-- RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	-- end
+
+	-- if questID then
+		-- local questName = C_QuestLog.GetTitleForQuestID(questID)
+		-- local questLink = GetQuestLink(questID)
+
+		-- RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
+
+		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+			-- -- Define colors
+			-- local yellowColor = "|cffffff00"
+			-- local lightPurpleColor = "|cff40BFD9"
+			-- local resetColor = "|r"
+
+			-- -- Update the message with color coding
+			-- DEFAULT_CHAT_FRAME:AddMessage(
+				-- lightPurpleColor .. "Quest Name: " .. yellowColor .. questName .. resetColor ..
+				-- lightPurpleColor .. " Quest Link: " .. resetColor .. questLink
+			-- )
+		-- end
+
+		-- -- Attempt to fetch quest info from RQEDatabase, use fallback if not present
+		-- local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
+		-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+		-- if StepsText and CoordsText and MapIDs then
+			-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		-- end
+	-- else
+		-- RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
+	-- end
+
+	-- AdjustRQEFrameWidths()
+	-- AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+
+	-- -- Simulate clicking the RWButton
+	-- if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
+		-- RQE.RWButton:GetScript("OnClick")()
+	-- end
+
+	-- C_Timer.After(0.5, function()
+		-- UpdateFrame()
+	-- end)
+
+	-- -- Update Display of Memory Usage of Addon
+	-- if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		-- RQE:CheckMemoryUsage()
+		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)
+		-- end
+	-- end
+
+	-- C_Timer.After(1, function()
+		-- RQE.Buttons.UpdateMagicButtonVisibility()
+	-- end)
+
+	-- RQE.LastSuperTrackedQuestID = questID
+
+	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+		-- -- local duration = debugprofilestop() - startTime
+		-- -- DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+	-- end
+-- end
+
 -- Handling SUPER_TRACKING_CHANGED Event
 -- Fired when the actively tracked location is changed
 function RQE.handleSuperTracking()
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-		startTime = debugprofilestop()  -- Start timer
-	end
+    if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+        -- Uncomment for debugging duration
+        -- startTime = debugprofilestop()  -- Start timer
+    end
 
-	-- Get the current super-tracked quest ID at the start
-	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- Get the current super-tracked quest ID at the start
+    local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-	-- Early return if no quest is super-tracked
-	if not RQE.IsQuestSuperTracked() then
-		return
-	end
+    -- Early return if no quest is super-tracked
+    if not RQE.IsQuestSuperTracked() then
+        return
+    end
 
-	-- Check if the super-tracked quest ID has changed
-	if currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(currentSuperTrackedQuestID))
-		end
+    -- Optimize by updating the separate frame only if needed
+    RQE:UpdateSeparateFocusFrame()
+    RQE.FocusScrollFrameToTop()
 
-		-- Clears Macro Data
-		RQEMacro:ClearMacroContentByName("RQE Macro")
+    -- Check if the super-tracked quest ID has changed
+    if currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
+        if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+            print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(currentSuperTrackedQuestID))
+        end
 
-		-- Checks to make sure that the correct macro is in place
-		C_Timer.After(1, function()
-			RQE.SetInitialWaypointToOne()
-		end)
+        -- Reset relevant variables
+        RQE.LastClickedIdentifier = nil
+        RQE.CurrentStepIndex = 1
+        RQE.AddonSetStepIndex = 1
+        RQE.LastClickedButtonRef = nil
 
-		-- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
-		if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
-			RQE.UnknownQuestButton:Click()
-		end
+        -- Call the function to reset to step 1
+        RQE:SetInitialWaypointToOne()
 
-		-- Reset relevant variables
-		RQE.LastClickedIdentifier = nil
-		RQE.CurrentStepIndex = 1
-		RQE.AddonSetStepIndex = 1
-		RQE.LastClickedButtonRef = nil
+        -- Store the current quest ID for future reference
+        RQE.previousSuperTrackedQuestID = currentSuperTrackedQuestID
+    end
 
-		-- Perform any additional reset logic needed
-		RQE:ClearWaypointButtonData()
+    -- Clear macro data once instead of in multiple places
+    RQEMacro:ClearMacroContentByName("RQE Macro")
 
-		-- Update the previous super-tracked quest ID
-		RQE.previousSuperTrackedQuestID = currentSuperTrackedQuestID
-	end
+    -- Only save super track data if there was a change
+    RQE.SaveSuperTrackData()
+    RQE.ScrollFrameToTop()
 
-	RQEMacro:ClearMacroContentByName("RQE Macro")
-	RQE.SaveSuperTrackData()
-	RQE.ScrollFrameToTop()
+    -- Clear any existing waypoint button data
+    RQE:ClearWaypointButtonData()
 
-	-- Reset the "Clicked" WaypointButton to nil
-	RQE.LastClickedIdentifier = nil
+    -- Consolidate timers to minimize delays and optimize frame updates
+    C_Timer.After(0.5, function()
+        RQE:UpdateContentSize()
 
-	RQE:ClearWaypointButtonData()
+        -- Start periodic checks only if necessary
+        if RQE.db.profile.autoClickWaypointButton then
+            RQE:StartPeriodicChecks()
+        end
+    end)
 
-	local extractedQuestID
+    -- Only proceed if manual super tracking was performed
+    if RQE.ManualSuperTrack then
+        RQE:ClearFrameData()
+        RQE.lastClickedObjectiveIndex = 0
+        RQE.ManualSuperTrack = nil -- Reset flag immediately after handling
+    end
 
-	-- Extract questID from RQE's custom UI if available
-	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	end
+    RQE:QuestType()
+    RQE.superTrackingChanged = true
 
-	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
-	C_Timer.After(0.5, function()
-		RQE:UpdateContentSize()
-	end)
+    -- Fetch and process quest data
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    local mapID = C_Map.GetBestMapForUnit("player")
 
-	-- Check to advance to the next step in the quest
-	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(0.5, function()
-			RQE:StartPeriodicChecks()
-		end)
-	end
+    -- Efficiently handle waypoint and step updates
+    if questID then
+        local questName = C_QuestLog.GetTitleForQuestID(questID)
+        local questLink = GetQuestLink(questID)
 
-	-- Early return if manual super tracking wasn't performed
-	if not RQE.ManualSuperTrack then
-		return
-	end
+        if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+            local yellowColor = "|cffffff00"
+            local lightPurpleColor = "|cff40BFD9"
+            local resetColor = "|r"
 
-	-- If manual super tracking was performed
-	if RQE.ManualSuperTrack then
-		RQE:ClearFrameData()
-		RQE.lastClickedObjectiveIndex = 0
-	end
+            DEFAULT_CHAT_FRAME:AddMessage(
+                lightPurpleColor .. "Quest Name: " .. yellowColor .. questName .. resetColor ..
+                lightPurpleColor .. " Quest Link: " .. resetColor .. questLink
+            )
+        end
 
-	-- Reset the manual super tracking flag now that we're handling it
-	RQE.ManualSuperTrack = nil
+        local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
+        local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
-	RQE:QuestType()
-	RQE.superTrackingChanged = true
+        if StepsText and CoordsText and MapIDs then
+            UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+        end
+    else
+        RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
+    end
 
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local mapID = C_Map.GetBestMapForUnit("player")
+    -- -- Consolidate frame adjustments
+    -- AdjustRQEFrameWidths()
+    -- AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
-	-- Logic to check autoClickWaypointButton and steps displayed
-	if not RQE.db.profile.autoClickWaypointButton and not RQE.AreStepsDisplayed(questID) then
-		RQE:CreateUnknownQuestWaypoint(questID, mapID)
-	end
+    -- Execute button actions if necessary
+    if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
+        RQE.RWButton:GetScript("OnClick")()
+    end
 
-	if questID then
-		local questName = C_QuestLog.GetTitleForQuestID(questID)
-		local questLink = GetQuestLink(questID)
+    -- Use a single timer for multiple updates
+    C_Timer.After(0.5, function()
+        --UpdateFrame()
+        RQE.Buttons.UpdateMagicButtonVisibility()
+    end)
 
-		RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
+    -- Efficiently check memory usage if enabled
+    if RQE.db and RQE.db.profile.displayRQEmemUsage then
+        RQE:CheckMemoryUsage()
+        if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+            DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)
+        end
+    end
 
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			-- Define colors
-			local yellowColor = "|cffffff00"
-			local lightPurpleColor = "|cff40BFD9"
-			local resetColor = "|r"
-
-			-- Update the message with color coding
-			DEFAULT_CHAT_FRAME:AddMessage(
-				lightPurpleColor .. "Quest Name: " .. yellowColor .. questName .. resetColor ..
-				lightPurpleColor .. " Quest Link: " .. resetColor .. questLink
-			)
-		end
-
-		-- Attempt to fetch quest info from RQEDatabase, use fallback if not present
-		local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-		if StepsText and CoordsText and MapIDs then
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		end
-	else
-		RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
-	end
-
-	AdjustRQEFrameWidths()
-	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
-
-	-- Simulate clicking the RWButton
-	if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
-		RQE.RWButton:GetScript("OnClick")()
-	end
-
-	C_Timer.After(0.5, function()
-		UpdateFrame()
-	end)
-
-	-- Update Display of Memory Usage of Addon
-	if RQE.db and RQE.db.profile.displayRQEmemUsage then
-		RQE:CheckMemoryUsage()
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)
-		end
-	end
-
-	C_Timer.After(1, function()
-		RQE.Buttons.UpdateMagicButtonVisibility()
-	end)
-
-	RQE.LastSuperTrackedQuestID = questID
-
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed SUPER_TRACKING_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-	end
+    RQE.LastSuperTrackedQuestID = questID
 end
 
 
@@ -2226,7 +2378,7 @@ end
 -- Fires whenever the player accepts a quest
 function RQE.handleQuestAccepted(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -2311,15 +2463,15 @@ function RQE.handleQuestAccepted(...)
 		end
 	end
 
-	-- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
-	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
-		C_Timer.After(2, function()
-			RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
-			RQE.ClickQuestLogIndexButton(questID)
-		end)
-	else
-		RQE.infoLog("RQEFrame is not blank, skipping QuestLogIndexButton click.")
-	end
+	-- -- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
+	-- if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
+		-- C_Timer.After(2, function()
+			-- RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
+			-- RQE.ClickQuestLogIndexButton(questID)
+		-- end)
+	-- else
+		-- RQE.infoLog("RQEFrame is not blank, skipping QuestLogIndexButton click.")
+	-- end
 
 	-- Update Frame with the newly accepted quest if nothing is super tracked
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
@@ -2331,8 +2483,8 @@ function RQE.handleQuestAccepted(...)
 
 	-- Runs periodic checks for quest progress (aura/debuff/inventory item, etc) to see if it should advance steps
 	if RQE.db.profile.autoClickWaypointButton then
-		RQE.SetInitialWaypointToOne()
-		RQE:StartPeriodicChecks()
+		--RQE.SetInitialWaypointToOne()
+		--RQE:StartPeriodicChecks()
 	end
 
 	-- Visibility Update Check for RQEFrame & RQEQuestFrame
@@ -2356,8 +2508,8 @@ function RQE.handleQuestAccepted(...)
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_ACCEPTED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_ACCEPTED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -2366,7 +2518,7 @@ end
 -- Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone
 function RQE.handleZoneChange(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -2386,12 +2538,12 @@ function RQE.handleZoneChange(...)
 		end
 	end
 
-	if event == "ZONE_CHANGED_INDOORS" then
-		-- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
-		if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
-			RQE.UnknownQuestButton:Click()
-		end
-	end
+	-- if event == "ZONE_CHANGED_INDOORS" then
+		-- -- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
+		-- if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
+			-- RQE.UnknownQuestButton:Click()
+		-- end
+	-- end
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -2496,8 +2648,8 @@ function RQE.handleZoneChange(...)
 	RQE.QuestScrollFrameToTop()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -2506,17 +2658,17 @@ end
 -- Fires when the player enters a new zone
 function RQE.handleZoneNewAreaChange()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 		DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	end
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
 
-	-- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
-	if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
-		RQE.UnknownQuestButton:Click()
-	end
+	-- -- Clicks the "W" button if no steps are listed in the RQEFrame or if autoClickWaypointButton is unchecked
+	-- if not RQE.db.profile.autoClickWaypointButton or RQE:NoWaypointButton() then
+		-- RQE.UnknownQuestButton:Click()
+	-- end
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -2618,8 +2770,8 @@ function RQE.handleZoneNewAreaChange()
 	RQE.QuestScrollFrameToTop()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed ZONE_CHANGED_NEW_AREA in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -2800,7 +2952,7 @@ function RQE.updateScenarioCriteriaUI()
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	-- Get the current scenario information
@@ -2820,8 +2972,8 @@ function RQE.updateScenarioCriteriaUI()
 		RQE.UpdateCampaignFrameAnchor()
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
-			local duration = debugprofilestop() - startTime
-			DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioCriteriaUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+			-- local duration = debugprofilestop() - startTime
+			-- DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioCriteriaUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 		end
 		return
 	end
@@ -2842,6 +2994,7 @@ function RQE.updateScenarioCriteriaUI()
 		end
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
+		--RQE.Timer_CheckTimers()
 		RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 	else
@@ -2868,8 +3021,8 @@ function RQE.updateScenarioCriteriaUI()
 	RQE.scenarioCriteriaUpdate = false	-- Flag that denotes if the event that was run prior to this was SCENARIO_CRITERIA_UPDATE
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -2903,7 +3056,7 @@ function RQE.updateScenarioUI()
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and (RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	-- Get the current scenario information
@@ -2926,8 +3079,8 @@ function RQE.updateScenarioUI()
 		RQE.UpdateCampaignFrameAnchor()
 
 		if RQE.db.profile.debugLevel == "INFO+" and (RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
-			local duration = debugprofilestop() - startTime
-			DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+			-- local duration = debugprofilestop() - startTime
+			-- DEFAULT_CHAT_FRAME:AddMessage("Processed updateScenarioUI completed in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 		end
 		return
 	end
@@ -2967,8 +3120,8 @@ function RQE.updateScenarioUI()
 	RQE:UpdateRQEQuestFrameVisibility()
 
 	if RQE.db.profile.debugLevel == "INFO+" and (RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioCriteriaUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed full updateScenarioCriteriaUI in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -2977,7 +3130,7 @@ end
 -- Fired when data from RequestRaidInfo is available and also when player uses portals
 function RQE.handleInstanceInfoUpdate()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.UpdateInstanceInfo then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	-- Updates the achievement list for criteria of tracked achievements
@@ -2992,7 +3145,7 @@ function RQE.handleInstanceInfoUpdate()
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
-			RQE:StartPeriodicChecks()
+			--RQE:StartPeriodicChecks()
 		end)
 	end
 
@@ -3003,8 +3156,8 @@ function RQE.handleInstanceInfoUpdate()
 	RQE.UpdateInstanceInfoOkay = false
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.UpdateInstanceInfo then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed UPDATE_INSTANCE_INFO in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed UPDATE_INSTANCE_INFO in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3019,7 +3172,7 @@ end
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	-- Restore Automatic World Quests that have been saved to their table
@@ -3146,8 +3299,8 @@ function RQE.handleQuestStatusUpdate()
 	UpdateRQEWorldQuestFrame()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3155,7 +3308,7 @@ end
 -- Handling QUEST_CURRENCY_LOOT_RECEIVED event
 function RQE.handleQuestCurrencyLootReceived(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestCurrencyLootReceived then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -3195,8 +3348,8 @@ function RQE.handleQuestCurrencyLootReceived(...)
 	RQE.QuestScrollFrameToTop()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestCurrencyLootReceived then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_CURRENCY_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_CURRENCY_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3204,7 +3357,7 @@ end
 -- Handling QUEST_LOG_CRITERIA_UPDATE event
 function RQE.handleQuestLogCriteriaUpdate(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLogCriteriaUpdate then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local questID = select(4, ...)
@@ -3245,8 +3398,8 @@ function RQE.handleQuestLogCriteriaUpdate(...)
 	--RQE.handleQuestStatusUpdate()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLogCriteriaUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOG_CRITERIA_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3255,7 +3408,7 @@ end
 -- Fires when player receives loot from quest turn in (Runs once per quest loot received)
 function RQE.handleQuestLootReceived(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLootReceived then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -3293,8 +3446,8 @@ function RQE.handleQuestLootReceived(...)
 	--RQE.handleQuestStatusUpdate()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLootReceived then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_LOOT_RECEIVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3302,7 +3455,7 @@ end
 -- Handling QUESTLINE_UPDATE event
 function RQE.handleQuestlineUpdate(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestlineUpdate then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	-- Extracting the third argument as 'requestRequired'
@@ -3337,8 +3490,8 @@ function RQE.handleQuestlineUpdate(...)
 	--RQE.handleQuestStatusUpdate()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestlineUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUESTLINE_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUESTLINE_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3347,7 +3500,7 @@ end
 -- Fired after the player hits the "Continue" button in the quest-information page, before the "Complete Quest" button. In other words, it fires when you are given the option to complete a quest, but just before you actually complete the quest. 
 function RQE.handleQuestComplete()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestComplete then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	-- Reset Flag for printing schematics when quest accepted
@@ -3420,13 +3573,13 @@ function RQE.handleQuestComplete()
 	if not RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(2, function()
 			--RQE.ClickUnknownQuestButton()
-			RQE:StartPeriodicChecks()
+			--RQE:StartPeriodicChecks()
 		end)
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestComplete then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_COMPLETE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_COMPLETE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3434,7 +3587,7 @@ end
 -- Fires when a quest that can be auto-completed is completed
 function RQE.handleQuestAutoComplete(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAutocomplete then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 		-- Extracting elements
@@ -3515,8 +3668,8 @@ function RQE.handleQuestAutoComplete(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QAC 05 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 		DEFAULT_CHAT_FRAME:AddMessage("QAC 06 Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_AUTOCOMPLETE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_AUTOCOMPLETE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3524,7 +3677,7 @@ end
 -- Handling CLIENT_SCENE_OPENED event (saving of World Quests when event fires):
 function RQE.HandleClientSceneOpened(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ClientSceneOpened then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -3554,8 +3707,8 @@ function RQE.HandleClientSceneOpened(...)
 	RQE:SaveWorldQuestWatches()  -- Save the watch list when a scene is opened
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ClientSceneOpened then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed CLIENT_SCENE_OPENED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed CLIENT_SCENE_OPENED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3563,7 +3716,7 @@ end
 -- Handling CLIENT_SCENE_CLOSED event (restoring of World Quests when event fires):
 function RQE.HandleClientSceneClosed()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ClientSceneClosed then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	RQE.isRestoringWorldQuests = true
@@ -3576,8 +3729,8 @@ function RQE.HandleClientSceneClosed()
 	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ClientSceneClosed then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed CLIENT_SCENE_CLOSED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed CLIENT_SCENE_CLOSED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3585,7 +3738,7 @@ end
 -- Handling QUEST_REMOVED event
 function RQE.handleQuestRemoved(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	C_Timer.After(1, function()
@@ -3710,11 +3863,30 @@ function RQE.handleQuestRemoved(...)
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_REMOVED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
+
+	-- Should update/clear the RQEQuestFrame after quests removed if not being done so properly
+	UpdateRQEQuestFrame()
 end
 
+
+-- Ensure QuestProgress table is initialized
+if not RQE.QuestProgress then
+    RQE.QuestProgress = {}  -- Initialize the table
+end
+
+-- Helper function to compare the current and previous progress
+function RQE.compareProgress(current, previous)
+    if not previous then return false end
+    for i, progress in ipairs(current) do
+        if not previous[i] or progress.fulfilled ~= previous[i].fulfilled then
+            return false
+        end
+    end
+    return true
+end
 
 -- Handling QUEST_WATCH_UPDATE event
 -- Fires each time the objectives of the quest with the supplied questID update, i.e. whenever a partial objective has been accomplished: killing a mob, looting a quest item etc
@@ -3722,6 +3894,11 @@ end
 function RQE.handleQuestWatchUpdate(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
+
+	-- Early exit if questID is not a number
+	if type(questID) ~= "number" then
+		return
+	end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
@@ -3738,14 +3915,50 @@ function RQE.handleQuestWatchUpdate(...)
 		end
 	end
 
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-		startTime = debugprofilestop()  -- Start timer
-	end
+    -- Initialize a table to store current progress data
+    local currentProgress = {}
 
-	-- Early exit if questID is not a number
-	if type(questID) ~= "number" then
-		return
-	end
+    -- Loop through the objectives of the quest using its questID
+    local objectiveIndex = 1
+    while true do
+        -- Retrieve information about the quest objective
+        local text, objectiveType, finished, fulfilled, required = GetQuestObjectiveInfo(questID, objectiveIndex, false)
+
+        -- Break the loop if no more objectives are found
+        if not text then break end
+
+        -- Store progress information in a table
+        currentProgress[objectiveIndex] = {
+            text = text,
+            objectiveType = objectiveType,
+            finished = finished,
+            fulfilled = fulfilled,
+            required = required,
+        }
+
+        -- Increase the objective index for the next iteration
+        objectiveIndex = objectiveIndex + 1
+    end
+
+    -- Retrieve the previously stored progress for comparison
+    local previousProgress = RQE.QuestProgress[questID] -- Correctly use the RQE context here
+
+    -- Check if progress has changed
+    if not previousProgress or not RQE.compareProgress(currentProgress, previousProgress) then
+        -- Update stored progress
+        RQE.QuestProgress[questID] = currentProgress -- Correctly use the RQE context here
+
+        -- Your existing logic for handling quest watch update
+        if RQE.db.profile.debugLevel == "INFO+" then
+            print("Quest progress updated for quest ID:", questID)
+            for i, progress in ipairs(currentProgress) do
+                print("Objective " .. i .. ": " .. progress.text .. " (" .. tostring(progress.fulfilled) .. "/" .. tostring(progress.required) .. ")")
+            end
+        end
+
+        -- Additional handling logic
+        UpdateRQEQuestFrame() -- Ensure this function is defined
+    end
 
 	-- Fetch quest data early and exit if not found
 	local questInfo = RQE.getQuestData(questID)
@@ -3755,6 +3968,8 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Checks to make sure that the correct macro is in place
 	C_Timer.After(0.5, function()
+		-- Clears the Macro if progress has been made
+		RQEMacro:ClearMacroContentByName("RQE Macro")
 		RQE.CheckAndBuildMacroIfNeeded()
 	end)
 
@@ -3785,7 +4000,7 @@ function RQE.handleQuestWatchUpdate(...)
 	if currentSuperTrackedQuestID ~= questID then
 		C_SuperTrack.SetSuperTrackedQuestID(questID)
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-			DEFAULT_CHAT_FRAME:AddMessage("Quest is already super tracked: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
+			DEFAULT_CHAT_FRAME:AddMessage("Quest is now super-tracked: " .. questID, 0.56, 0.93, 0.56)
 		end
 	end
 
@@ -3817,18 +4032,13 @@ function RQE.handleQuestWatchUpdate(...)
 	C_Timer.After(0.5, function()
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end)
-
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_UPDATE in: " .. duration .. "ms", 0.25, 0.75, 0.85)
-	end
 end
 
 
 -- Handling QUEST_WATCH_LIST_CHANGED event
 function RQE.handleQuestWatchListChanged(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -3929,7 +4139,7 @@ function RQE.handleQuestWatchListChanged(...)
 	-- Check to advance to next step in quest (necessary when tracking an existing quest that has progress on it where it is placed in the RQEFrame but not necessarily result of clicking super track button)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
-			RQE:StartPeriodicChecks()
+			--RQE:StartPeriodicChecks()
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 				DEFAULT_CHAT_FRAME:AddMessage("QWLA 09 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)
 			end
@@ -3937,8 +4147,8 @@ function RQE.handleQuestWatchListChanged(...)
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_WATCH_LIST_CHANGED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -3947,7 +4157,7 @@ end
 -- This event fires whenever the player turns in a quest, whether automatically with a Task-type quest (Bonus Objectives/World Quests), or by pressing the Complete button in a quest dialog window. 
 function RQE.handleQuestTurnIn(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 	end
 
 	local event = select(2, ...)
@@ -4044,8 +4254,8 @@ function RQE.handleQuestTurnIn(...)
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn then
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_TURNED_IN in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_TURNED_IN in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -4054,7 +4264,7 @@ end
 -- Fired whenever the quest frame changes (from Detail to Progress to Reward, etc.) or is closed
 function RQE.handleQuestFinished()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-		startTime = debugprofilestop()  -- Start timer
+		-- startTime = debugprofilestop()  -- Start timer
 		DEFAULT_CHAT_FRAME:AddMessage("RQE.handleQuestFinished called.", 1, 0.75, 0.79)
 	end
 
@@ -4114,8 +4324,8 @@ function RQE.handleQuestFinished()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 		DEFAULT_CHAT_FRAME:AddMessage("QF 08 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 
-		local duration = debugprofilestop() - startTime
-		DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_FINISHED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
+		-- local duration = debugprofilestop() - startTime
+		-- DEFAULT_CHAT_FRAME:AddMessage("Processed QUEST_FINISHED in: " .. duration .. "ms", 0.25, 0.75, 0.85)
 	end
 end
 
@@ -4157,6 +4367,13 @@ SearchEditBox:SetScript("OnEnterPressed", function(self)
 	self:ClearFocus()  -- remove focus from the edit box
 	-- Implement search logic here, likely the same as the click event
 end)
+
+-- Hooking the Objective Tracker's OnShow and OnHide events
+ObjectiveTrackerFrame:HookScript("OnShow", HideObjectiveTracker)
+
+-- Optionally, use OnUpdate for continuous checking
+local hideObjectiveTrackerFrame = CreateFrame("Frame")
+hideObjectiveTrackerFrame:SetScript("OnUpdate", HideObjectiveTracker)
 
 
 --------------------------------
