@@ -1871,6 +1871,9 @@ function RQE.handleQuestAccepted(...)
 	local questID = select(3, ...)
 	local superTrackQuest = C_SuperTrack.GetSuperTrackedQuestID()
 
+	RQE.QuestAcceptedToSuperTrackOkay = true
+	RQE.SetInitialFromAccept = true
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -1892,6 +1895,8 @@ function RQE.handleQuestAccepted(...)
 
 	-- Reset Flag for printing schematics when quest accepted
 	RQE.alreadyPrintedSchematics = false
+
+	RQE.SetInitialWaypointToOne()
 
 	if questID then
 		RQE.LastAcceptedQuest = questID
