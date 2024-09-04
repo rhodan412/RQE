@@ -1225,10 +1225,10 @@ end
 
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
-    -- Check if the SeparateFocusFrame exists
-    if not RQE.SeparateFocusFrame then
-        return
-    end
+	-- Check if the SeparateFocusFrame exists
+	if not RQE.SeparateFocusFrame then
+		return
+	end
 
 	RQE.SeparateStepText:SetText(stepData and stepData.description or "No step description available for this step.")
 	RQE.InitializeSeparateFocusFrame()
