@@ -1387,7 +1387,7 @@ function UpdateRQEQuestFrame()
 		if C_CampaignInfo.IsCampaignQuest(questID) then
 			RQE.campaignQuestCount = RQE.campaignQuestCount + 1
 		elseif C_QuestLog.IsWorldQuest(questID) then
-			RQE.worldQuestCounr = RQE.worldQuestCount + 1
+			RQE.worldQuestCount = RQE.worldQuestCount + 1
 		end
 	end
 
@@ -1411,9 +1411,9 @@ function UpdateRQEQuestFrame()
 	RQE.QTcontent:SetHeight(totalHeight)
 
 	-- Store quest count in each frame for reference
-	RQE.CampaignFrame.questCount = campaignQuestCount
-	RQE.QuestsFrame.questCount = regularQuestCount
-	RQE.WorldQuestsFrame.questCount = worldQuestCount
+	RQE.CampaignFrame.questCount = RQE.campaignQuestCount
+	RQE.QuestsFrame.questCount = RQE.regularQuestCount
+	RQE.WorldQuestsFrame.questCount = RQE.worldQuestCount
 
 	for _, fontString in pairs(RQE.RQEQuestFrame.questTitles or {}) do
 		fontString:Hide()
@@ -1422,7 +1422,7 @@ function UpdateRQEQuestFrame()
 	RQE.RQEQuestFrame.questTitles = RQE.RQEQuestFrame.questTitles or {}
 
 	-- Get the number of tracked quests
-	local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+	--local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 
 	-- Initialize the table to hold the QuestLogIndexButtons if it doesn't exist
 	RQE.QuestLogIndexButtons = RQE.QuestLogIndexButtons or {}
@@ -2075,7 +2075,8 @@ function UpdateRQEWorldQuestFrame()
 		-- Retrieve or initialize the WQuestLogIndexButton for the current questID
 		local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
 
-		if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
+		if questID and C_QuestLog.IsWorldQuest(questID) and not C_CampaignInfo.IsCampaignQuest(questID) then
+		--if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
 			usedQuestIDs[questID] = true
 
 			-- Create or reuse the WQuestLogIndexButton
