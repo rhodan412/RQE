@@ -1,3 +1,27 @@
+11.0.2.37
+	Buttons.lua
+		- Added flag for RQE.ClearButtonPressed
+
+	Config.lua
+		- Added option to debug settings to show debug messages from StartPeriodicChecks function
+
+	Core.lua
+		- Added flag priority for RQE:StartPeriodicChecks() function to limit the number of calls to this function to determine if it is time to advance the stepIndex (waypoint button denoted by a number in the RQEFrame/super-track frame)
+
+	DebugLog.lua
+		- Cleaned up code
+
+	EventManager.lua
+		- Created system of flags before and after the event firings call the RQE:StartPeriodicChecks() function to check if it should advance the stepIndex
+		- Cleaned up code
+
+	RQEDatabase.lua
+		- Added some additional description to some quests to make it easier to understand location of certain NPCs/objects, etc
+
+	Misc:
+		- Switched many macro creation functions to the newer RQEMacro:CreateMacroForCurrentStep() function call that does a more efficient job and has checks to make sure that the macro is correct. If correct, it won't run further - making add-on more efficient at handling memory resources and lag
+
+
 11.0.2.36
 	Config.lua
 		- Added DebugLog Toggle in Debug Setting in Configuration Frame
