@@ -11,79 +11,85 @@ RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help ident
 
 -- Function to check if the current RQE Macro matches the expected contents based on the current super-tracked quest step
 function RQE.CheckCurrentMacroContents()
-    -- Ensure that `RQE.AddonSetStepIndex` is initialized and maintained properly
-    if not RQE.AddonSetStepIndex then
-        RQE.debugLog("RQE.AddonSetStepIndex was nil; setting to 1 by default.")
-        RQE.AddonSetStepIndex = 1 -- Initialize to the first step by default
-    end
+	-- Prevent re-entry if the function is already in progress
+	if RQE.isCheckingMacroContents then
+		return false
+	end
 
-    -- Check if a quest is being super-tracked
-    local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-    if not isSuperTracking then
-        RQE.debugLog("No quest is currently being super-tracked.")
-        return false
-    end
+	-- Flag to indicate the function is in progress
+	RQE.isCheckingMacroContents = true
 
-    -- Get the quest ID of the currently super-tracked quest
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()
-    if not questID then
-        RQE.debugLog("Super-tracked quest ID not found.")
-        return false
-    end
+	-- Ensure that `RQE.AddonSetStepIndex` is initialized and maintained properly
+	if not RQE.AddonSetStepIndex then
+		RQE.debugLog("RQE.AddonSetStepIndex was nil; setting to 1 by default.")
+		RQE.AddonSetStepIndex = 1 -- Initialize to the first step by default
+	end
 
-    -- Retrieve the quest data from the database
-    local questData = RQE.getQuestData(questID)
-    if not questData then
-        RQE.debugLog("Quest data not found for quest ID:", questID)
-        return false
-    end
+	-- Check if a quest is being super-tracked
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then
+		RQE.debugLog("No quest is currently being super-tracked.")
+		return false
+	end
 
-    -- Fetch the current step index the player is on
-    local stepIndex = RQE.AddonSetStepIndex
-    if not stepIndex or stepIndex < 1 then
-        RQE.debugLog("Invalid or missing step index. Defaulting to 1.")
-        stepIndex = 1 -- Default to the first step if no valid step index is found
-        RQE.AddonSetStepIndex = stepIndex
-    end
+	-- Get the quest ID of the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		RQE.debugLog("Super-tracked quest ID not found.")
+		return false
+	end
 
-    RQE.debugLog("Current step index:", stepIndex)
+	-- Retrieve the quest data from the database
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		RQE.debugLog("Quest data not found for quest ID:", questID)
+		return false
+	end
 
-    -- Fetch the macro data for the current step
-    local questStep = questData[stepIndex]
-    if not questStep or not questStep.macro then
-        RQE.debugLog("No macro data found for step index:", stepIndex)
-        return false
-    end
+	-- Fetch the current step index the player is on
+	local stepIndex = RQE.AddonSetStepIndex
+	if not stepIndex or stepIndex < 1 then
+		RQE.debugLog("Invalid or missing step index. Defaulting to 1.")
+		stepIndex = 1 -- Default to the first step if no valid step index is found
+		RQE.AddonSetStepIndex = stepIndex
+	end
 
-    -- Combine the macro data into a single string
-    local expectedMacroBody = type(questStep.macro) == "table" and table.concat(questStep.macro, "\n") or questStep.macro
+	RQE.debugLog("Current step index:", stepIndex)
 
-    -- Get the current macro contents
-    local macroIndex = GetMacroIndexByName("RQE Macro")
-    if not macroIndex or macroIndex == 0 then
-        RQE.debugLog("Macro 'RQE Macro' not found.")
-        return false
-    end
+	-- Fetch the macro data for the current step
+	local questStep = questData[stepIndex]
+	if not questStep or not questStep.macro then
+		RQE.debugLog("No macro data found for step index:", stepIndex)
+		return false
+	end
 
-    local _, _, currentMacroBody = GetMacroInfo(macroIndex)
-    if not currentMacroBody then
-        RQE.debugLog("Failed to retrieve current macro contents.")
-        return false
-    end
+	-- Combine the macro data into a single string
+	local expectedMacroBody = type(questStep.macro) == "table" and table.concat(questStep.macro, "\n") or questStep.macro
 
-    -- Compare the current and expected macro contents
-    if currentMacroBody == expectedMacroBody then
-        RQE.infoLog("True - Current Macro matches expected contents for stepIndex: " .. tostring(stepIndex))
-        return true
-    else
-        RQE.infoLog("False - Current Macro does not match. Expected for stepIndex: " .. tostring(stepIndex))
-        -- Reset the step index to the first step if the macro does not match
-        RQE.SetInitialWaypointToOne()
-        return false
-    end
+	-- Get the current macro contents
+	local macroIndex = GetMacroIndexByName("RQE Macro")
+	if not macroIndex or macroIndex == 0 then
+		RQE.debugLog("Macro 'RQE Macro' not found.")
+		return false
+	end
+
+	local _, _, currentMacroBody = GetMacroInfo(macroIndex)
+	if not currentMacroBody then
+		RQE.debugLog("Failed to retrieve current macro contents.")
+		return false
+	end
+
+	-- Compare the current and expected macro contents
+	if currentMacroBody == expectedMacroBody then
+		RQE.infoLog("True - Current Macro matches expected contents for stepIndex: " .. tostring(stepIndex))
+		return true
+	else
+		RQE.infoLog("False - Current Macro does not match. Expected for stepIndex: " .. tostring(stepIndex))
+		-- Reset the step index to the first step if the macro does not match
+		RQE.SetInitialWaypointToOne()
+		return false
+	end
 end
-
-
 
 
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
