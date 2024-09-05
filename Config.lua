@@ -1592,7 +1592,6 @@ function RQE:AddGeneralSettingsWidgets(container)
 
 	scrollFrame:AddChild(enableCarboniteCompatibilityCheckbox)
 
-
 	-- Enable SuperTrack Nearest Checkbox
 	local enableNearestSuperTrack = AceGUI:Create("CheckBox")
 	enableNearestSuperTrack:SetLabel("Enable SuperTrack Nearest")
@@ -2413,6 +2412,25 @@ function RQE:AddDebugSettingsWidgets(container)
 					GameTooltip:Hide()
 				end)
 				debugInlineGroup:AddChild(showArgPayloadInfo)
+
+				-- Checkbox for displaying RQE:StartPeriodicChecks() returns
+				local showStartPeriodicCheckInfo = AceGUI:Create("CheckBox")
+				showStartPeriodicCheckInfo:SetLabel("Show StartPeriodicChecks Info")
+				showStartPeriodicCheckInfo:SetValue(RQE.db.profile.showStartPeriodicCheckInfo)
+				showStartPeriodicCheckInfo:SetCallback("OnValueChanged", function(widget, event, value)
+					RQE.db.profile.showStartPeriodicCheckInfo = value
+				end)
+
+				-- Add tooltip for the Argument/Payload returns checkbox
+				showStartPeriodicCheckInfo:SetCallback("OnEnter", function(widget, event)
+					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText("Display StartPeriodicChecks Info for events.", nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+				showStartPeriodicCheckInfo:SetCallback("OnLeave", function(widget, event)
+					GameTooltip:Hide()
+				end)
+				debugInlineGroup:AddChild(showStartPeriodicCheckInfo)
 
 				-- Checkbox for displaying ADDON_LOADED event debug info
 				local showAddonLoaded = AceGUI:Create("CheckBox")
