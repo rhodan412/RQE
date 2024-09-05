@@ -2289,9 +2289,9 @@ function RQE.SearchModule:CreateSearchBox()
 				C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
 			end
 
-			-- Add the quest to the tracker		
+			-- Add the quest to the tracker
 			if isWorldQuest then
-				C_QuestLog.AddWorldQuestWatch(foundQuestID, watchType or Enum.QuestWatchType.Manual)
+				C_QuestLog.AddWorldQuestWatch(foundQuestID)
 			else
 				C_QuestLog.AddQuestWatch(foundQuestID)
 			end
@@ -2538,7 +2538,12 @@ function TrackQuestsWithNewProgress()
 			local currentProgress = CalculateCurrentProgress(objectives)
 
 			if currentProgress > (lastKnownProgress[questID] or 0) then
-				C_QuestLog.AddQuestWatch(questID)
+				local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+				if isWorldQuest then
+					C_QuestLog.AddWorldQuestWatch(questID)
+				else
+					C_QuestLog.AddQuestWatch(questID)
+				end
 			end
 
 			lastKnownProgress[questID] = currentProgress
@@ -3302,6 +3307,23 @@ function RQE:StartPeriodicChecks()
 		else
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
 				print("RQE:StartPeriodicChecks() ceased because one of the Tier 4 flags was true: RQE.StartPerioFromQuestAccepted is " .. tostring(RQE.StartPerioFromQuestAccepted) .. ", RQE.StartPerioFromQuestComplete is " .. tostring(RQE.StartPerioFromQuestComplete) .. ", RQE.StartPerioFromQuestTurnedIn is " .. tostring(RQE.StartPerioFromQuestTurnedIn) .. ", or RQE.StartPerioFromItemCountChanged is " .. tostring(RQE.StartPerioFromItemCountChanged))
+			end
+			return
+		end
+	elseif RQE.StartPerioFromUnitQuestLogChanged then
+		-- Tier 5 priority, run only if no Tier 1, Tier 2, Tier 3, or Tier 4 flags are set
+		if not (RQE.StartPerioFromQuestWatchUpdate or RQE.StartPerioFromSuperTrackChange or 
+				RQE.StartPerioFromPlayerEnteringWorld or RQE.StartPerioFromInstanceInfoUpdate or 
+				RQE.StartPerioFromPlayerControlGained or RQE.StartPerioFromQuestAccepted or 
+				RQE.StartPerioFromQuestComplete or RQE.StartPerioFromQuestTurnedIn or 
+				RQE.StartPerioFromItemCountChanged) then
+			RQE.StartPerioFromUnitQuestLogChanged = false
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
+				print("Status of UNIT_QUEST_LOG_CHANGED RQE.StartPerioFromUnitQuestLogChanged is " .. tostring(RQE.StartPerioFromUnitQuestLogChanged))
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
+				print("RQE:StartPeriodicChecks() ceased because one of the Tier 5 flags was true: RQE.StartPerioFromUnitQuestLogChanged is " .. tostring(RQE.StartPerioFromUnitQuestLogChanged))
 			end
 			return
 		end
@@ -4548,7 +4570,12 @@ function RQE.filterByQuestLine(questLineID)
 
 	-- Add the quests from the selected questline to the watch list
 	for _, questID in ipairs(questIDsForLine) do
-		C_QuestLog.AddQuestWatch(questID)
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		if isWorldQuest then
+			C_QuestLog.AddWorldQuestWatch(questID)
+		else
+			C_QuestLog.AddQuestWatch(questID)
+		end
 	end
 
 	-- Update FrameUI
