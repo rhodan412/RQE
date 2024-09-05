@@ -374,6 +374,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQE:ClearSeparateFocusFrame()
 		RQE.searchedQuestID = nil
 		RQE.ManualSuperTrack = nil
+		RQE.ClearButtonPressed = true
 		RQE:RemoveSuperTrackingFromQuest()
 		RQE:UpdateRQEFrameVisibility()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
