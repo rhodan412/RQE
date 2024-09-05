@@ -8,6 +8,9 @@
 ## SavedVariables: RQEDB
 ## OptionalDeps: TomTom, Carbonite
 
+## Compatibility Note: This addon has known compatibility issues with the "World Quest Tracker" addon.
+## If you experience problems, consider disabling World Quest Tracker while using Rhodan's Quest Explorer.
+
 ## Libraries
 Libs/LibStub/LibStub.lua
 Libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
@@ -30,7 +33,7 @@ Libs/AceTimer-3.0/AceTimer-3.0.xml
 Libs/AceBucket-3.0/AceBucket-3.0.xml
 Libs/LibSharedMedia-3.0/lib.xml
 
-## TaintLess
+# TaintLess
 TaintLess.xml
 
 # Core Functionality
