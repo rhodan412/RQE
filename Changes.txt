@@ -13,12 +13,17 @@
 
 	EventManager.lua
 		- Created system of flags before and after the event firings call the RQE:StartPeriodicChecks() function to check if it should advance the stepIndex
+		- Added ability to remove Raid Marker from target when QUEST_ACCEPTED or QUEST_FINISHED fires
+		- Added additional requirements for selection before some Scenario-type debugs would print to chat
 		- Cleaned up code
 
 	RQEDatabase.lua
 		- Added some additional description to some quests to make it easier to understand location of certain NPCs/objects, etc
 
-	Misc:
+	RQEMacro.lua
+		- Fixed stack overflow LUA error from the RQE.CheckCurrentMacroContents() function
+
+	Misc.
 		- Switched many macro creation functions to the newer RQEMacro:CreateMacroForCurrentStep() function call that does a more efficient job and has checks to make sure that the macro is correct. If correct, it won't run further - making add-on more efficient at handling memory resources and lag
 		- Added note of compatibility issue between RQE and World Quest Tracker add-on in the TOC. A notation is currently listed on the RQE Curseforge page. This is something that doesn't exist if either RQE or WQT are used, but manifests in the form of some quests being listed as world quests when they shouldn't be. Problem goes away when WQT is disabled.
 
@@ -96,7 +101,7 @@
 	WaypointManager.lua
 		- Added nil checks
 
-	Misc:
+	Misc.:
 		- Cleaned up code (including spacing and indents).
 
 
@@ -250,13 +255,13 @@
 	Core.lua
 		- Made it default that autoClickWaypointButton is true as this is of paramount importance in use of the walk thru guide!
 
-	Misc:
-		- Reverted some code due to passthru error by commenting it out as this didn't fix the problem that came with 11.0 api passthru button changes
+	Misc.:
+		- Reverted some code due to pass-thru error by commenting it out as this didn't fix the problem that came with 11.0 api passthru button changes
 
 
 11.0.2.27
 	Buttons.lua
-		- Misc code clean-up and spacing
+		- Misc. code clean-up and spacing
 
 	Core.lua
 		- Added RQE:CheckObjectiveProgress function for purposes of checking what stepIndex player should be on for a given quest
