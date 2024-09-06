@@ -1087,7 +1087,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- -- Update the texture of the currently clicked button
 			-- bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-		
+
 			-- -- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
 			-- if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= i and i > RQE.LastClickedIdentifier) then
 				-- RQE.LastClickedIdentifier = i
@@ -1196,7 +1196,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				RQE.Buttons.UpdateMagicButtonVisibility()
 			end)
 
-			UpdateFrame(RQE.questIDFromText, questData, StepsText, CoordsText, MapIDs)
+			local questData = RQE.getQuestData(RQE.questIDFromText)
+			if questData then
+				UpdateFrame(RQE.questIDFromText, questData, StepsText, CoordsText, MapIDs)
+			end
 		end)
 
 		-- Add a mouse down event to simulate a button press
@@ -1334,7 +1337,7 @@ function RQE:GetCurrentObjectiveIndex(questID)
 			highestIndex = objectiveData.objectiveIndex
 		end
 	end
-	
+
 	return highestIndex
 end
 
@@ -1445,9 +1448,17 @@ function RQE.ClickQuestLogIndexButton(questID)
 	if not found then
 		RQE.debugLog("No button found for questID: " .. tostring(questID))
 	end
-	
-	--RQE.CheckAndBuildMacroIfNeeded()
-	RQEMacro:CreateMacroForCurrentStep()
+
+	-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE.CreateMacroForQuestLogIndexButton = true
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(3, function()
+			RQE.CreateMacroForQuestLogIndexButton = false
+		end)
+
+		--RQE.CheckAndBuildMacroIfNeeded()
+	end
 end
 
 
@@ -1919,8 +1930,15 @@ function RQE.InitializeSeparateFocusFrame()
 					RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
 					-- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
 					if RQE.AddonSetStepIndex == 1 then
-						RQEMacro:CreateMacroForCurrentStep()
-						--RQE.CheckAndBuildMacroIfNeeded()
+						-- Tier Two Importance: 
+						if RQE.db.profile.autoClickWaypointButton then
+							RQE.CreateMacroForUpdateSeparateFocusFrame = true
+							RQEMacro:CreateMacroForCurrentStep()
+							C_Timer.After(3, function()
+								RQE.CreateMacroForUpdateSeparateFocusFrame = false
+							end)
+							--RQE.CheckAndBuildMacroIfNeeded()
+						end
 					end
 				else
 					print("No waypoint button found for the current step.")
@@ -2042,7 +2060,7 @@ function RQE:GetTooltipDataForCButton()
 		-- Extract coordinate information for the current stepIndex
 		local coordData = questData[stepIndex].coordinates
 		local x, y, mapID = coordData.x, coordData.y, coordData.mapID
-		
+
 		-- Format the coordinate text
 		local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
 
