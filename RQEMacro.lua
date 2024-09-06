@@ -114,28 +114,28 @@ function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharact
 	local iconFileID = "INV_MISC_QUESTIONMARK"
 	local macroBody = type(macroContent) == "table" and table.concat(macroContent, "\n") or macroContent
 
-	if InCombatLockdown() then
-		-- Queue the macro set operation for after combat
-		table.insert(self.pendingMacroSets, {
-			name = macroName,
-			iconFileID = iconFileID,
-			body = macroBody,
-			perCharacter = perCharacter
-		})
-	else
+	-- if InCombatLockdown() then
+		-- -- Queue the macro set operation for after combat
+		-- table.insert(self.pendingMacroSets, {
+			-- name = macroName,
+			-- iconFileID = iconFileID,
+			-- body = macroBody,
+			-- perCharacter = perCharacter
+		-- })
+	-- else
 		-- Not in combat, set the macro immediately
 		return self:SetMacro(macroName, iconFileID, macroBody, perCharacter)
-	end
+	--end
 end
 
 
 -- Updated to use the existing structure
 function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
-	if InCombatLockdown() then
-		-- Queue the macro operation for after combat
-		table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
-		return
-	end
+	-- if InCombatLockdown() then
+		-- -- Queue the macro operation for after combat
+		-- table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
+		-- return
+	-- end
 
 	self:ActuallySetMacro(name, iconFileID, body, perCharacter)
 end
@@ -163,11 +163,13 @@ end
 
 -- Function to clear a specific macro by name
 function RQEMacro:ClearMacroContentByName(macroName)
-	if InCombatLockdown() then
-		-- Queue the macro clear request for after combat
-		table.insert(self.pendingMacroClears, macroName)
-		return
-	end
+	-- if InCombatLockdown() then
+		-- -- Queue the macro clear request for after combat
+		-- table.insert(self.pendingMacroClears, macroName)
+		-- return
+	-- end
+
+	local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
 	self:ActuallyClearMacroContentByName(macroName)
 end
@@ -205,26 +207,26 @@ RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 
--- Handle the queued macro creation and clear requests after combat
-RQEMacro.macroClearEventFrame = CreateFrame("Frame")
-RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
-	if event == "PLAYER_REGEN_ENABLED" then
-		-- Process queued macro set/update operations
-		for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
-			RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
-		end
-		wipe(RQEMacro.pendingMacroSets)
+-- -- Handle the queued macro creation and clear requests after combat
+-- RQEMacro.macroClearEventFrame = CreateFrame("Frame")
+-- RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+-- RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
+	-- if event == "PLAYER_REGEN_ENABLED" then
+		-- -- Process queued macro set/update operations
+		-- for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
+			-- RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
+		-- end
+		-- wipe(RQEMacro.pendingMacroSets)
 
-		for _, op in ipairs(RQEMacro.pendingMacroOperations) do
-			RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
-		end
-		wipe(RQEMacro.pendingMacroOperations)
+		-- for _, op in ipairs(RQEMacro.pendingMacroOperations) do
+			-- RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
+		-- end
+		-- wipe(RQEMacro.pendingMacroOperations)
 
-		-- Process queued macro clear operations
-		for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
-			RQEMacro:ActuallyClearMacroContentByName(macroName)
-		end
-		wipe(RQEMacro.pendingMacroClears)
-	end
-end)
+		-- -- Process queued macro clear operations
+		-- for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
+			-- RQEMacro:ActuallyClearMacroContentByName(macroName)
+		-- end
+		-- wipe(RQEMacro.pendingMacroClears)
+	-- end
+-- end)
