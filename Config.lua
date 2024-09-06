@@ -1167,7 +1167,7 @@ function RQE:CreateConfigFrame()
 		local frame = AceGUI:Create("Frame")
 		frame:SetTitle("Rhodan's Quest Explorer Settings")
 		frame:SetStatusText("Configure your settings")
-		frame:SetCallback("OnClose", function(widget) 
+		frame:SetCallback("OnClose", function(widget)
 			AceGUI:Release(widget)
 			self.configFrame = nil  -- Clear the reference when the frame is closed
 		end)
@@ -1436,7 +1436,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	-- Add a tooltip description for autoQuestWatchCheckbox (RQE.db.profile.autoQuestWatch)
 	autoQuestWatchCheckbox:SetCallback("OnEnter", function(widget, event)
 		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetText("Automatically track quests as soon as you obtain them and after achieving an objective.\n\n|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting..|r", nil, nil, nil, nil, true)		
+		GameTooltip:SetText("Automatically track quests as soon as you obtain them and after achieving an objective.\n\n|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting..|r", nil, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
 	autoQuestWatchCheckbox:SetCallback("OnLeave", function(widget, event)
@@ -1635,7 +1635,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(keyBindSettingKeybind)
-	
+
 	-- Spacer to ensure the scroll goes to the bottom
 	local spacer = AceGUI:Create("Label")
 	spacer:SetText(" ")
