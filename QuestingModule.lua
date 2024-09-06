@@ -1173,7 +1173,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 	}
 
 	-- Retrieve the quest rewards data
-	local rewardXP = GetQuestLogRewardXP(questID)
+	local rewardXP = GetQuestLogRewardXP(questID)	-- The presence of questID here is necessary to determine the reward for XP of different quests, otherwise the same amount of XP would appear in the tooltips of the frame for all quests
 	local rewardMoney = GetQuestLogRewardMoney(questID)
 	local rewardArtifactXP = GetQuestLogRewardArtifactXP(questID)
 	local rewardItemsCount = GetNumQuestLogRewards(questID)
@@ -2157,7 +2157,8 @@ function UpdateRQEWorldQuestFrame()
 					RQE:PerformClearActions()
 
 					-- Clears Macro Data
-					RQEMacro:ClearMacroContentByName("RQE Macro")
+					 RQEMacro:ClearMacroContentByName("RQE Macro")
+
 					-- Reset the "Clicked" WaypointButton to nil
 					RQE.LastClickedIdentifier = nil
 					-- Scrolls the RQEFrame to top on super track
