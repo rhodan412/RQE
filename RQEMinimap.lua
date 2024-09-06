@@ -64,10 +64,10 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 
 		if IsShiftKeyDown() and button == "LeftButton" then
 			RQE:ToggleDebugLog()
-			
+
 		elseif button == "LeftButton" then
 			RQE:ToggleFramesAndTracker()
-			
+
 		elseif button == "RightButton" and IsShiftKeyDown() then
 			RQE:OpenSettings()
 
@@ -202,7 +202,7 @@ function RQE:UpdateMinimapButtonPosition()
 	return dx, dy
 end
 
-	
+
 ---------------------------
 -- 6. Event Handler
 ---------------------------
@@ -337,17 +337,17 @@ RQE_ButtonMixin = {}
 function RQE_ButtonMixin:OnLoad()
 	self:SetNormalFontObject("GameFontHighlightSmall")
 	self:SetHighlightFontObject("GameFontHighlightSmall")
-	
+
 	local normalTexture = self:CreateTexture(nil, "BACKGROUND")
 	normalTexture:SetColorTexture(0.1, 0.1, 0.1, 0.9)
 	normalTexture:SetAllPoints(self)
 	self:SetNormalTexture(normalTexture)
-	
+
 	local highlightTexture = self:CreateTexture(nil, "BACKGROUND")
 	highlightTexture:SetColorTexture(0.2, 0.2, 0.2, 1)
 	highlightTexture:SetAllPoints(self)
 	self:SetHighlightTexture(highlightTexture)
-	
+
 	local pushedTexture = self:CreateTexture(nil, "BACKGROUND")
 	pushedTexture:SetColorTexture(0.05, 0.05, 0.05, 0.8)
 	pushedTexture:SetAllPoints(self)
@@ -392,13 +392,13 @@ function RQE_MenuMixin:AddButton(text, onClick, isSubmenu)
 	button:SetText(text .. (isSubmenu and " >" or ""))
 	button:SetSize(self:GetWidth() - 20, 20)
 	button:SetScript("OnClick", onClick)
-	
+
 	if #self.buttons == 0 then
 		button:SetPoint("TOP", self, "TOP", 0, -10)
 	else
 		button:SetPoint("TOP", self.buttons[#self.buttons], "BOTTOM", 0, -5)
 	end
-	
+
 	table.insert(self.buttons, button)
 	self:SetHeight((#self.buttons * (20 + 5)) + 20)
 end
@@ -496,7 +496,7 @@ function RQE:ShowLDBDropdownMenu()
 			end)
 		end)
 	end
-	
+
 	-- Ensure buttons are only added once
 	if #self.CustomMenu.buttons == 0 then
 		self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end)
@@ -505,7 +505,7 @@ function RQE:ShowLDBDropdownMenu()
 		self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end)
 		-- self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)	-- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
 	end
-	
+
 	-- Determine the actual frame object
 	local anchorFrame = RQE.lastClickedFrame
 
@@ -527,7 +527,7 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
 		self.MoreOptionsMenu:SetSize(150, 100)
 		self.MoreOptionsMenu:SetFrameStrata("DIALOG")
 		self.MoreOptionsMenu:Hide()
-		
+
 		-- Keep submenu visible when mouse is over it
 		self.MoreOptionsMenu:SetScript("OnEnter", function(self)
 			self:Show()
@@ -542,7 +542,7 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
 			end)
 		end)
 	end
-	
+
 	-- Ensure buttons are only added once
 	if #self.MoreOptionsMenu.buttons == 0 then
 		self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:OpenFrameSettings() end)
@@ -551,7 +551,7 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
 		self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end)
 		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
 	end
-	
+
 	-- Toggle More Options menu visibility
 	self.MoreOptionsMenu:ClearAllPoints()
 	self.MoreOptionsMenu:SetPoint("TOPLEFT", parentMenu, "TOPRIGHT", 0, 0) -- Adjust this to desired position
