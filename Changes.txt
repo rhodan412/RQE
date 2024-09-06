@@ -7,6 +7,8 @@
 
 	Core.lua
 		- Added flag priority for RQE:StartPeriodicChecks() function to limit the number of calls to this function to determine if it is time to advance the stepIndex (waypoint button denoted by a number in the RQEFrame/super-track frame)
+		- Added flag system for RQEMacro:CreateMacroForCurrentStep() for efficiency and went different code slightly with RQE:StartPeriodicChecks(), while code is new and works in current form, flags are not yet properly in place. The RQE:StartPeriodicChecks() will be ready for the update once flags are ready
+		- Fixed issue with RQEQuestFrame:IsShown and RQEQuestFrame:Show to be RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown()
 
 	DebugLog.lua
 		- Cleaned up code
@@ -15,6 +17,7 @@
 		- Created system of flags before and after the event firings call the RQE:StartPeriodicChecks() function to check if it should advance the stepIndex
 		- Added ability to remove Raid Marker from target when QUEST_ACCEPTED or QUEST_FINISHED fires
 		- Added additional requirements for selection before some Scenario-type debugs would print to chat
+		- Changed RQEQuestFrame and not RQEQuestFrame:IsShown() to be RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown()
 		- Cleaned up code
 
 	RQEDatabase.lua
@@ -22,6 +25,10 @@
 
 	RQEMacro.lua
 		- Fixed stack overflow LUA error from the RQE.CheckCurrentMacroContents() function
+		- Removed old code relating to combat checks since macros update just fine while in combat
+
+	WaypointManager.lua
+		- Fixed error of DatabaseSuperX, DatabaseSuperY being saved as globals vs more efficient addon namespace
 
 	Misc.
 		- Switched many macro creation functions to the newer RQEMacro:CreateMacroForCurrentStep() function call that does a more efficient job and has checks to make sure that the macro is correct. If correct, it won't run further - making add-on more efficient at handling memory resources and lag
