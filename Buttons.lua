@@ -967,7 +967,7 @@ function RQE:ShowQuestFilterMenu()
 			if self.QuestTypeSubMenu then self.QuestTypeSubMenu:Hide() end
 			if self.ZoneQuestSubMenu then self.ZoneQuestSubMenu:Hide() end
 			if self.QuestLineSubMenu then self.QuestLineSubMenu:Hide() end
-			
+
 			self.CampaignSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
 		end, true)
 		self:CreateCampaignSubMenu()
@@ -977,7 +977,7 @@ function RQE:ShowQuestFilterMenu()
 			if self.CampaignSubMenu then self.CampaignSubMenu:Hide() end
 			if self.ZoneQuestSubMenu then self.ZoneQuestSubMenu:Hide() end
 			if self.QuestLineSubMenu then self.QuestLineSubMenu:Hide() end
-			
+
 			self.QuestTypeSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
 		end, true)
 		self:CreateQuestTypeSubMenu()
@@ -987,7 +987,7 @@ function RQE:ShowQuestFilterMenu()
 			if self.CampaignSubMenu then self.CampaignSubMenu:Hide() end
 			if self.QuestTypeSubMenu then self.QuestTypeSubMenu:Hide() end
 			if self.QuestLineSubMenu then self.QuestLineSubMenu:Hide() end
-			
+
 			self.ZoneQuestSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
 		end, true)
 		self:CreateZoneQuestSubMenu()
@@ -997,7 +997,7 @@ function RQE:ShowQuestFilterMenu()
 			if self.CampaignSubMenu then self.CampaignSubMenu:Hide() end
 			if self.QuestTypeSubMenu then self.QuestTypeSubMenu:Hide() end
 			if self.ZoneQuestSubMenu then self.ZoneQuestSubMenu:Hide() end
-			
+
 			self.QuestLineSubMenu:ToggleMenu(self.QuestFilterDropDownMenu, true)
 		end, true)
 		self:CreateQuestLineSubMenu()
@@ -1017,7 +1017,7 @@ function RQE:CreateCampaignSubMenu()
 		self.CampaignSubMenu:SetSize(150, 200)
 		self.CampaignSubMenu:SetFrameStrata("DIALOG")
 		self.CampaignSubMenu:Hide()
-		
+
 		-- Keep submenu visible when mouse is over it
 		self.CampaignSubMenu:SetScript("OnEnter", function(self)
 			self:Show()
