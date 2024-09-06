@@ -228,56 +228,6 @@ RQE.MinimapButton:SetScript("OnClick", function(self, button)
 	end
 end)
 
--- -- Function that handles the OnClick for the MinimapButton
--- RQE.MinimapButton:SetScript("OnClick", function(self, button)
-	-- if button == "LeftButton" then
-		-- if IsShiftKeyDown() then
-			-- RQE:ToggleDebugLog()  -- Shift + Left Click
-		-- else
-			-- if RQEFrame:IsShown() then
-				-- RQEFrame:Hide()
-				-- if RQE.MagicButton then
-					-- RQE.MagicButton:Hide()
-				-- end
-
-				-- RQE.RQEQuestFrame:Hide()
-				-- RQE.isRQEFrameManuallyClosed = true
-				-- RQE.isRQEQuestFrameManuallyClosed = true
-
-				-- -- Check if MagicButton should be visible based on macro body
-				-- RQE.Buttons.UpdateMagicButtonVisibility()
-			-- else
-				-- RQE:ClearFrameData()
-				-- RQE:ClearWaypointButtonData()
-				-- RQEFrame:Show()
-				-- UpdateFrame()
-
-				-- if RQE.MagicButton then
-					-- RQE.MagicButton:Show()
-				-- end
-
-				-- -- Check if enableQuestFrame is true before showing RQEQuestFrame
-				-- if RQE.db.profile.enableQuestFrame then
-					-- RQE.RQEQuestFrame:Show()
-				-- end
-
-				-- RQE.isRQEFrameManuallyClosed = false
-				-- RQE.isRQEQuestFrameManuallyClosed = false
-
-				-- -- Check if MagicButton should be visible based on macro body
-				-- RQE.Buttons.UpdateMagicButtonVisibility()
-			-- end
-		-- end
-	-- elseif button == "RightButton" then
-		-- if IsShiftKeyDown() then
-			-- RQE:OpenSettings()  -- Shift + Right Click
-		-- else
-			-- RQE.lastClickedFrame = self  -- Set the minimap button as the last clicked frame
-			-- RQE:ShowLDBDropdownMenu()  -- Right Click
-		-- end
-	-- end
--- end)
-
 
 -- Function that handles the OnEnter for the MinimapButton
 RQE.MinimapButton:SetScript("OnEnter", function(self)

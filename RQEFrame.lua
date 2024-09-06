@@ -1080,31 +1080,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.SaveCoordData()
 			RQE:OnCoordinateClicked(i)
 
-			-- -- Check if there's a last clicked button and reset its texture
-			-- if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
-				-- RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
-			-- end
-
-			-- -- Update the texture of the currently clicked button
-			-- bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-
-			-- -- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
-			-- if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= i and i > RQE.LastClickedIdentifier) then
-				-- RQE.LastClickedIdentifier = i
-				-- print("Debug: Updated LastClickedIdentifier to:", i)
-			-- end
-
-			-- -- Update WaypointButton stepIndex only if needed
-			-- if WaypointButton.stepIndex and WaypointButton.stepIndex ~= i and i >= WaypointButton.stepIndex then
-				-- WaypointButton.stepIndex = i
-				-- print("Debug: Set WaypointButton stepIndex to:", i)
-			-- else
-				-- print("Debug: WaypointButton stepIndex is nil or already set to:", i)
-			-- end
-
-			-- RQE.LastClickedButtonRef = WaypointButton
-			-- print("New LastClickedButton set:", i or "Unnamed")
-
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
@@ -1778,18 +1753,6 @@ function RQE.ToggleFrameLock()
 	isFrameLocked = not isFrameLocked
 	UpdateMenuText()  -- Make sure this function is called here
 end
-
-
--- -- Unregister events when a frame is hidden
--- RQEFrame:SetScript("OnHide", function()
-	-- RQE:ManageEvents(false)  -- Unregister events
--- end)
-
-
--- -- Re-register events when a frame is shown
--- RQEFrame:SetScript("OnShow", function()
-	-- RQE:ManageEvents(true)  -- Register events
--- end)
 
 
 -- Initialize frame lock state

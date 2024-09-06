@@ -936,18 +936,6 @@ function RQE.UpdateScenarioFrame()
 	local stepID = scenarioStepInfo.currentStage
 	local criteriaIndex = 1
 	local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-	--local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
-
-	-- RQE.infoLog("[UpdateScenarioFrame, String] Duration is " .. tostring(duration))
-	-- RQE.infoLog("[UpdateScenarioFrame, String] Elapsed is " .. tostring(elapsed))
-
-	-- -- Check if we have valid timer information
-	-- if duration and elapsed then
-		-- local timeLeft = duration - elapsed
-		-- RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-	-- else
-		-- RQE.ScenarioChildFrame.timer:SetText("")
-	-- end
 
 	-- Check if we have valid scenario information
 	if scenarioStepInfo and type(scenarioStepInfo) == "table" then
