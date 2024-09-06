@@ -226,8 +226,8 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			end
 
 			if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
-				RQE.x = DatabaseSuperX
-				RQE.y = DatabaseSuperY
+				RQE.x = RQE.DatabaseSuperX --DatabaseSuperX
+				RQE.y = RQE.DatabaseSuperY --DatabaseSuperY
 				RQE.MapID = RQE.DatabaseSuperMapID
 			elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
 				RQE.x = RQE.superX
