@@ -1776,8 +1776,15 @@ function RQE.handleSuperTracking()
 				RQE.CreateMacroForSuperTracking = false
 			end)
 
+			-- Ensure that the quest ID is valid and that the necessary data is available
 			C_Timer.After(0.2, function()
-				RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+					RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
+					end
+				end
 			end)
 		end
 
@@ -2451,8 +2458,17 @@ function RQE.handleUnitQuestLogChange(...)
 				RQE.currentSuperTrackedQuestID = questID
 				local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
 
+				-- Ensure that the quest ID is valid and that the necessary data is available
 				if RQE.currentSuperTrackedQuestID then
-					RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+					C_Timer.After(0.2, function()
+						if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+							RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+						else
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
+							end
+						end
+					end)
 
 					-- Tier Five Importance: UNIT_QUEST_LOG_CHANGED event
 					if RQE.db.profile.autoClickWaypointButton then
@@ -2685,37 +2701,6 @@ function RQE.handleQuestStatusUpdate()
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- -- Check for specific event data
-	-- if RQE.latestEventInfo then
-		-- local eventInfo = RQE.latestEventInfo
-		-- -- Proceed based on the type of event that was triggered
-		-- if eventInfo.eventType == "QUEST_CURRENCY_LOOT_RECEIVED" then
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_CURRENCY_LOOT_RECEIVED", 0, 1, 0)  -- Bright Green
-			-- end
-			-- -- Use eventInfo.questID, eventInfo.currencyId, eventInfo.quantity as needed
-		-- elseif eventInfo.eventType == "QUEST_LOG_CRITERIA_UPDATE" then
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_LOG_CRITERIA_UPDATE", 0, 1, 0)  -- Bright Green
-			-- end
-			-- -- Use eventInfo.questID, eventInfo.specificTreeID, eventInfo.description , eventInfo.numFulfilled, eventInfo.numRequired as needed			
-		-- elseif eventInfo.eventType == "QUEST_LOOT_RECEIVED" then
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUEST_LOOT_RECEIVED", 0, 1, 0)  -- Bright Green
-			-- end
-			-- -- Use eventInfo.questID, eventInfo.itemLink, eventInfo.quantity as needed			
-		-- elseif eventInfo.eventType == "QUESTLINE_UPDATE" then
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Processing event data for QUESTLINE_UPDATE", 0, 1, 0)  -- Bright Green
-			-- end
-			-- -- Use eventInfo.requestRequired as needed
-		-- end
-		-- -- Reset for next event call
-		-- RQE.latestEventInfo = nil
-	-- else
-		-- -- Your existing logic for handling quest status updates without specific event data
-	-- end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Status Update Triggered. SuperTracking: " .. tostring(isSuperTracking) .. ", Super Tracked QuestID: " .. tostring(RQE.currentSuperTrackedQuestID), 0, 1, 0)  -- Bright Green
@@ -3010,6 +2995,7 @@ function RQE.handleQuestComplete()
 	end
 end
 
+
 -- Handling QUEST_AUTOCOMPLETE events
 -- Fires when a quest that can be auto-completed is completed
 function RQE.handleQuestAutoComplete(...)
@@ -3058,13 +3044,6 @@ function RQE.handleQuestAutoComplete(...)
 	RQEFrame:ClearAllPoints()
 	RQE.RQEQuestFrame:ClearAllPoints()
 	SortQuestsByProximity()
-
-	-- -- Check to advance to next step in quest
-	-- if RQE.db.profile.autoClickWaypointButton then
-		-- C_Timer.After(0.5, function()
-			-- RQE:CheckAndAdvanceStep(questID)
-		-- end)
-	-- end
 
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
