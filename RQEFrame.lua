@@ -237,10 +237,12 @@ RQE.UnknownQuestButton:SetSize(25, 25)  -- Set size to 30x30
 RQE.UnknownQuestButton:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)  -- Adjusted Y-position
 RQE.UnknownQuestButton:Hide()  -- Initially hide the button
 
+
 -- Use the custom texture for the background
 local bg = RQE.UnknownQuestButton:CreateTexture(nil, "BACKGROUND")
 bg:SetAllPoints()
 bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+
 
 -- Create the text label
 local label = RQE.UnknownQuestButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -416,6 +418,7 @@ RQE.QuestNameText:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.QuestNameText:SetHeight(0)
 RQE.QuestNameText:EnableMouse(true)
 
+
 -- Create DirectionTextFrame
 RQE.DirectionTextFrame = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
@@ -531,6 +534,7 @@ RQE.QuestObjectives:SetWordWrap(true)
 RQE.QuestObjectives:SetWidth(RQEFrame:GetWidth() - 35)
 RQE.QuestObjectives:SetHeight(0)
 RQE.QuestObjectives:EnableMouse(true)
+
 
 -- Display MapID with Tracker Frame
 ---@class RQEFrame : Frame
@@ -875,6 +879,7 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 	end
 	RQE:UpdateContentSize()
 end)
+
 
 ---------------------------
 -- 7. Utility Functions

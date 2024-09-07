@@ -687,8 +687,8 @@ function AdjustQuestItemWidths(frameWidth)
 		end
 	end
 
-	-- Example adjustment for RQE.AchievementsFrame specific elements
-	-- Assuming criteriaText and achievementHeader are directly accessible here
+	-- Adjustment for RQE.AchievementsFrame specific elements
+	-- criteriaText and achievementHeader are directly accessible here
 	if RQE.AchievementsFrame.criteriaText then
 		RQE.AchievementsFrame.criteriaText:SetWidth(frameWidth - textPadding)
 	end
@@ -723,6 +723,7 @@ local function shouldSortQuests()
 	return false
 end
 
+
 local function shouldSortQuestsWhileDragonRiding()
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if not mapID then
@@ -740,6 +741,7 @@ local function shouldSortQuestsWhileDragonRiding()
 	end
 	return false
 end
+
 
 function SortQuestsByProximity()
 	if RQE.PlayerMountStatus == "Dragonriding" then
@@ -1574,7 +1576,6 @@ function UpdateRQEQuestFrame()
 						end
 
 						-- Refresh the UI here to update the button state
-						--RQE:ClearRQEQuestFrame() -- HANDLED AT START OF UpdateRQEQuestFrame() FUNCTION
 						UpdateRQEQuestFrame()
 					else
 						--RQE.lastKnownInventory = {}
@@ -2543,6 +2544,7 @@ function RQE:ClickWorldQuestButton(questID)
 		button:Click()
 	end
 end
+
 
 function RQE:ForceRefreshAndClickWorldQuestButton(questID)
 	UpdateRQEWorldQuestFrame()  -- Force a refresh of all buttons
