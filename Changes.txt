@@ -1,5 +1,18 @@
 11.0.2.38
+	Core.lua
+		- Removed flags in RQEMacro:CreateMacroForCurrentStep() and RQE:StartPeriodicChecks() as not working as desired
 
+	EventManager.lua
+		- Fixed nil error caused on lines 1780 and 2455: RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+
+	QuestingModule.lua
+		- Code cleanup
+
+	RQEDatabase.lua
+		- Modifications to some of the Darkmoon Faire profession weekly quests
+
+	RQEFrame.lua
+		- Code cleanup
 
 
 11.0.2.37
