@@ -1123,6 +1123,10 @@ function RQE.handleScenarioUpdate(...)
 		DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
 	end
 
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
+	end
+
 	--RQE.saveScenarioData(RQE, event, newStep)
 	RQE.updateScenarioUI()
 end
@@ -2381,7 +2385,6 @@ function RQE.handleUnitAura(...)
 
 			if RQE.LastClickedButtonRef == nil then return end
 			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if not stepData then
@@ -2390,10 +2393,12 @@ function RQE.handleUnitAura(...)
 			end
 
 			-- Process 'funct' for buffs or debuffs if specified
-			if stepData and stepData.funct then
-				if string.find(stepData.funct, "CheckDBBuff") or string.find(stepData.funct, "CheckDBDebuff") then
-					RQE[stepData.funct](questID, stepIndex)
-				end
+			if stepData.funct and RQE[stepData.funct] and (string.find(stepData.funct, "CheckDBBuff") or string.find(stepData.funct, "CheckDBDebuff")) then
+				-- Call the function safely
+				RQE[stepData.funct](questID, stepIndex)
+			else
+				-- Debug log to indicate the function is not found
+				RQE.debugLog("Function " .. tostring(stepData.funct) .. " is not valid or not found in RQE.")
 			end
 
 			-- Handle failed functions based on losing a buff or debuff
