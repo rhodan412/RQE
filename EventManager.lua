@@ -1876,7 +1876,7 @@ function RQE.handleSuperTracking()
 
 	RQE:QuestType()
 	RQE.superTrackingChanged = true
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires (duplicate and may not be necessary)
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires (duplicate and may not be necessary)	-- ADDED to RQE:StartPeriodicChecks()
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local mapID = C_Map.GetBestMapForUnit("player")
@@ -2505,7 +2505,8 @@ function RQE.handleUnitQuestLogChange(...)
 		end)
 	end
 
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_QUEST_LOG_CHANGED event fires
+	RQE:StartPeriodicChecks()
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_QUEST_LOG_CHANGED event fires	-- ADDED to RQE:StartPeriodicChecks()
 end
 
 
@@ -3252,7 +3253,7 @@ function RQE.handleQuestWatchUpdate(...)
 	end
 
 	-- Initialize variables
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_WATCH_UPDATE event fires
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_WATCH_UPDATE event fires	-- ADDED to RQE:StartPeriodicChecks()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
