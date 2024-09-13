@@ -2,11 +2,14 @@
 	Core.lua
 		- Removed flags in RQEMacro:CreateMacroForCurrentStep() and RQE:StartPeriodicChecks() as not working as desired
 		- Added 'CheckScenarioStage' and 'CheckScenarioCriteria' as options for auto waypoint/stepIndex advancement
+		- Added RQE:UpdateSeparateFocusFrame() to end of RQE:StartPeriodicChecks()
 
 	EventManager.lua
 		- Fixed nil error caused on lines 1780 and 2455: RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
 		- Validation to stepData.funct before use in UNIT_AURA
 		- Added RQE:StartPeriodicChecks() to SCENARIO_UPDATE event
+		- Added RQE:StartPeriodicChecks() to UNIT_QUEST_LOG_CHANGED event
+		- Removed (commented out) several RQE:UpdateSeparateFocusFrame() as this was added to end of RQE:StartPeriodicChecks()
 
 	QuestingModule.lua
 		- Code cleanup
@@ -14,6 +17,7 @@
 	RQEDatabase.lua
 		- Modifications to some of the Darkmoon Faire profession weekly quests
 		- Fixed questID 78741 check funct used in step 2
+		- Updated questID 78642 to include those steps from that scenario quest
 
 	RQEFrame.lua
 		- Code cleanup
