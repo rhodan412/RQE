@@ -3652,6 +3652,7 @@ function RQE:StartPeriodicChecks()
 				print("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
 			end
 			self:ClickWaypointButtonForIndex(self.FinalStep)
+			RQE:UpdateSeparateFocusFrame()
 			return
 		end
 
@@ -3661,6 +3662,7 @@ function RQE:StartPeriodicChecks()
 			for index, step in ipairs(questData) do
 				if step.objectiveIndex == 99 then
 					finalStepIndex = index
+					RQE:UpdateSeparateFocusFrame()
 					break
 				end
 			end
@@ -3672,6 +3674,7 @@ function RQE:StartPeriodicChecks()
 					print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
 				end
 				self:ClickWaypointButtonForIndex(finalStepIndex)
+				RQE:UpdateSeparateFocusFrame()
 				return
 			end
 		end
@@ -3695,6 +3698,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Objective progress check completed and step advanced.")
 				end
+				RQE:UpdateSeparateFocusFrame()
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -3711,6 +3715,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario stage check completed and step advanced.")
 				end
+				RQE:UpdateSeparateFocusFrame()
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -3727,6 +3732,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario criteria check completed and step advanced.")
 				end
+				RQE:UpdateSeparateFocusFrame()
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -3776,6 +3782,8 @@ function RQE:StartPeriodicChecks()
 		-- end
 		-- return
 	end
+
+	RQE:UpdateSeparateFocusFrame()
 end
 
 
@@ -4332,8 +4340,6 @@ function RQE:CheckScenarioStage(questID, stepIndex)
 
 	return false
 end
-
-
 
 
 -- Function to check scenario criteria progress
