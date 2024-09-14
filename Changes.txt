@@ -10,6 +10,9 @@
 	RQEDatabase.lua
 		- Modified waypoint coordinate for a few quests in Ringing Deeps
 
+	WaypointManager.lua
+		- Created backup method for waypoint creation (for testing purposes)
+
 
 11.0.2.38
 	Core.lua
