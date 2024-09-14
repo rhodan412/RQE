@@ -643,6 +643,18 @@ function RQE.SaveSuperTrackData()
 end
 
 
+function RQE:UpdateWaypointForStep(questID, stepIndex)
+	local questData = RQE.getQuestData(questID)
+	if questData and questData[stepIndex] then
+		local stepData = questData[stepIndex]
+		if stepData and stepData.coordinates then
+			-- Logic to set the new waypoint
+			RQE:OnCoordinateClicked(stepIndex)
+		end
+	end
+end
+
+
 function RQE.ExtractAndSaveQuestCoordinates()
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
 
@@ -2942,6 +2954,7 @@ function RQE.hasQuestProgressChanged()
 	return false
 end
 
+
 function RQE.getAllWatchedQuestsObjectives()
 	local objectives = {}
 	local watchedQuests = C_QuestLog.GetNumQuestWatches()
@@ -3611,6 +3624,108 @@ end
 -- end
 
 
+-- -- Periodic check setup (updated to include CheckDBObjectiveStatus)
+-- function RQE:StartPeriodicChecks()
+	-- -- Early return if no quest is super-tracked
+	-- if not RQE.IsQuestSuperTracked() then
+		-- return
+	-- end
+
+	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- if not superTrackedQuestID then
+		-- RQE.debugLog("No super tracked quest ID found, skipping checks.")
+		-- return
+	-- end
+
+	-- self:FindAndSetFinalStep()  -- Find and set the final step
+
+	-- local questData = RQE.getQuestData(superTrackedQuestID)
+	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
+
+	-- if questData then
+		-- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		-- local stepData = questData[stepIndex]
+
+		-- -- Handle turn-in readiness
+		-- if isReadyTurnIn and self.FinalStep then
+			-- RQE.debugLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+			-- -- if RQE.db.profile.debugLevel == "INFO+" then
+				-- -- print("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
+			-- -- end
+			-- self:ClickWaypointButtonForIndex(self.FinalStep)
+			-- return
+		-- end
+
+		-- -- Additional check if the highest completed objective is 99
+		-- if self.shouldCheckFinalStep then
+			-- local finalStepIndex = #questData  -- Assuming the last step is the final one
+			-- for index, step in ipairs(questData) do
+				-- if step.objectiveIndex == 99 then
+					-- finalStepIndex = index
+					-- break
+				-- end
+			-- end
+
+			-- -- If the highest completed objective is 99, click the waypoint button for the final step
+			-- if highestCompletedObjectiveIndex == 99 and finalStepIndex then
+				-- RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
+				-- end
+				-- self:ClickWaypointButtonForIndex(finalStepIndex)
+				-- return
+			-- end
+		-- end
+
+		-- -- Validate stepIndex
+		-- if stepIndex < 1 or stepIndex > #questData then
+			-- RQE.infoLog("Invalid step index:", stepIndex)
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Invalid step index:", stepIndex)
+			-- end
+			-- return  -- Exit if stepIndex is invalid
+		-- end
+
+		-- -- Check if the current step requires objective progress check
+		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
+			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
+			-- if objProgressResult then
+				-- RQE.debugLog("Objective progress check completed and step advanced.")
+				-- return
+			-- else
+				-- RQE.debugLog("Objective progress check did not result in advancement.")
+			-- end
+		-- end
+
+		-- -- Process the current step
+		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+		-- if funcResult then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Function for current step executed successfully.")
+			-- end
+		-- else
+			-- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+			-- if failFuncResult then
+				-- local failedIndex = stepData.failedIndex or 1
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Failure condition met, resetting to step:", failedIndex)
+				-- end
+				-- self:ClickWaypointButtonForIndex(failedIndex)
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+				-- end
+			-- end
+		-- end
+
+		-- -- Check and build macro if needed
+		-- --RQE.CheckAndBuildMacroIfNeeded()
+		-- RQEMacro:CreateMacroForCurrentStep()
+	-- end
+-- end
+
+
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -3688,25 +3803,40 @@ function RQE:StartPeriodicChecks()
 			return  -- Exit if stepIndex is invalid
 		end
 
+		-- -- Check if the current step requires objective progress check
+		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Running CheckObjectiveProgress for stepIndex:", stepIndex)
+			-- end
+			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
+			-- if objProgressResult then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Objective progress check completed and step advanced.")
+				-- end
+				-- RQE:UpdateSeparateFocusFrame()
+				-- return
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Objective progress check did not result in advancement.")
+				-- end
+			-- end
+
 		-- Check if the current step requires objective progress check
-		if stepData.funct == "CheckDBObjectiveStatus" then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Running CheckObjectiveProgress for stepIndex:", stepIndex)
-			end
+		if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
 			local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
 			if objProgressResult then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Objective progress check completed and step advanced.")
 				end
-				RQE:UpdateSeparateFocusFrame()
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Objective progress check did not result in advancement.")
 				end
 			end
+			
 		-- Check if the current step requires scenario stage checks
-		elseif stepData.funct == "CheckScenarioStage" then
+		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioStage") then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Running CheckScenarioStage for stepIndex:", stepIndex)
 			end
@@ -3722,8 +3852,9 @@ function RQE:StartPeriodicChecks()
 					print("Scenario stage check did not result in advancement.")
 				end
 			end
-	-- Check if the current step requires scenario objective progress
-		elseif stepData.funct == "CheckScenarioCriteria" then
+
+		-- Check if the current step requires scenario objective progress
+		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioCriteria") then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Running CheckScenarioCriteria for stepIndex:", stepIndex)
 			end
@@ -4018,7 +4149,9 @@ function RQE:ClickWaypointButtonForIndex(index)
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
-				RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+				RQE:OnCoordinateClicked(RQE.AddonSetStepIndex)
+				-- RQE:OnCoordinateClicked(stepIndex)
+				-- RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
 				--addonButton:Click()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
@@ -4268,7 +4401,13 @@ function RQE:CheckObjectiveProgress(questID, stepIndex)
 
 	-- If the stepIndex does not match the expected, click the correct button
 	if correctStepIndex ~= currentStepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("StepIndex before running self:ClickWaypointButtonForIndex is: " .. correctStepIndex)
+		end
 		self:ClickWaypointButtonForIndex(correctStepIndex)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("StepIndex after running self:ClickWaypointButtonForIndex is: " .. correctStepIndex)
+		end
 		return true
 	end
 
