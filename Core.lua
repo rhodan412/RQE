@@ -1252,7 +1252,13 @@ function RQE:ClearSeparateFocusFrame()
 		return
 	end
 
-	RQE.SeparateStepText:SetText(stepData and stepData.description or "No step description available for this step.")
+	-- Check if SeparateStepText exists before attempting to set its text
+	if RQE.SeparateStepText then
+		RQE.SeparateStepText:SetText(stepData and stepData.description or "No step description available for this step.")
+	else
+		RQE.debugLog("SeparateStepText is nil, cannot set text.")
+	end
+
 	RQE.InitializeSeparateFocusFrame()
 end
 
@@ -3371,6 +3377,9 @@ function RQEMacro:CreateMacroForCurrentStep()
 		return
 	end
 
+	-- Clears the RQEMacro before creating a fresh one
+	RQEMacro:ClearMacroContentByName("RQE Macro")
+
 	-- Retrieve the quest data from the database
 	local questData = RQE.getQuestData(questID)
 	if not questData then
@@ -4149,8 +4158,8 @@ function RQE:ClickWaypointButtonForIndex(index)
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
-				RQE:OnCoordinateClicked(RQE.AddonSetStepIndex)
-				-- RQE:OnCoordinateClicked(stepIndex)
+				RQE:OnCoordinateClicked(stepIndex)
+				--RQE:OnCoordinateClicked(RQE.AddonSetStepIndex)
 				-- RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
 				--addonButton:Click()
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -4451,19 +4460,26 @@ function RQE:CheckScenarioStage(questID, stepIndex)
 		print("Current scenario stage:", currentStage, "Needed stage:", neededStage)
 	end
 
+	-- Check if the current stage meets or exceeds the needed stage
 	if currentStage >= neededStage then
-		-- Find the next correct step based on scenario stage
+		-- Correctly identify the next step index based on scenario progression
 		local nextStepIndex = stepIndex
-		for i = stepIndex, #questData do
+
+		-- Only advance if we have reached or surpassed the needed stage for the next step
+		for i = stepIndex + 1, #questData do
 			local step = questData[i]
 			local stepNeededStage = tonumber(step.neededAmt[1]) or 1
 
-			if currentStage < stepNeededStage then
+			-- Only advance if the current scenario stage is equal to the stepNeededStage
+			if currentStage == stepNeededStage then
+				nextStepIndex = i
+				break
+			elseif currentStage < stepNeededStage then
 				break
 			end
-			nextStepIndex = i
 		end
 
+		-- Advance to the next correct step only if it differs from the current step index
 		if nextStepIndex > stepIndex then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Scenario stage requirement met. Advancing to next step index:", nextStepIndex)
@@ -4479,6 +4495,7 @@ function RQE:CheckScenarioStage(questID, stepIndex)
 
 	return false
 end
+
 
 
 -- Function to check scenario criteria progress
