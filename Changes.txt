@@ -1,3 +1,18 @@
+11.0.2.40
+	Core.lua
+		- Added nil check to RQE:ClearSeparateFocusFrame() to make sure it first exists
+
+	EventManager.lua
+		- Fixed nil error with waypoint click in QUEST_WATCH_UPDATE event
+
+	RQEDatabase.lua
+		- Added quests from Hallowfall to DB
+		- Fix questID 78642 in the database in terms of values
+
+	RQEMacro.lua
+		- Fix 'EditMacro' error received
+
+
 11.0.2.39
 	Core.lua
 		- Fixed RQE:StartPeriodicChecks() as CheckDBObjectiveStatus wasn't updating the waypoint and now it is. Tentative switch for CheckScenarioStage and CheckScenarioCriteria but will need further testing to be sure same fix worked

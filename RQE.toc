@@ -1,7 +1,7 @@
 ## Interface: 110000, 110002, 110005
 ## Title: Rhodan's Quest Explorer
 ## Author: Rhodan {Aurleis}
-## Version: 11.0.2.39
+## Version: 11.0.2.40
 ## Notes: A handy tool for questing.
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
