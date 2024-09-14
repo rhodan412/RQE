@@ -613,9 +613,11 @@ function RQE.ReagentBagUpdate(...)
 				local requiredItems = stepData.failedcheck or {}
 				local neededAmounts = stepData.neededAmt or {}
 				local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
-				if stepData.failedfunc == "CheckDBInventory" then
+				if stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory") then
+				-- if stepData.failedfunc == "CheckDBInventory" then
 					local previousStepData = questData[stepIndex - 1]
-					if previousStepData.funct == "CheckDBZoneChange" then
+					if previousStepData and previousStepData.funct and string.find(previousStepData.funct, "CheckDBZoneChange") then
+					-- if previousStepData.funct == "CheckDBZoneChange" then
 						local currentMapID = C_Map.GetBestMapForUnit("player")
 						local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
@@ -662,9 +664,11 @@ function RQE.handleMerchantUpdate()
 			local requiredItems = stepData.failedcheck or {}
 			local neededAmounts = stepData.neededAmt or {}
 			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
-			if stepData.failedfunc == "CheckDBInventory" then
+			if stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory") then
+			-- if stepData.failedfunc == "CheckDBInventory" then
 				local previousStepData = questData[stepIndex - 1]
-				if previousStepData.funct == "CheckDBZoneChange" then
+				if previousStepData and previousStepData.funct and string.find(previousStepData.funct, "CheckDBZoneChange") then
+				-- if previousStepData.funct == "CheckDBZoneChange" then
 					local currentMapID = C_Map.GetBestMapForUnit("player")
 					local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
@@ -731,9 +735,11 @@ function RQE.handleUnitInventoryChange(...)
 			local requiredItems = stepData.failedcheck or {}
 			local neededAmounts = stepData.neededAmt or {}
 			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
-			if stepData.failedfunc == "CheckDBInventory" then
+			if stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory") then
+			-- if stepData.failedfunc == "CheckDBInventory" then
 				local previousStepData = questData[stepIndex - 1]
-				if previousStepData.funct == "CheckDBZoneChange" then
+				if previousStepData and previousStepData.funct and string.find(previousStepData.funct, "CheckDBZoneChange") then
+				-- if previousStepData.funct == "CheckDBZoneChange" then
 					local currentMapID = C_Map.GetBestMapForUnit("player")
 					local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
@@ -1565,9 +1571,16 @@ function RQE.handlePlayerEnterWorld(...)
 				end
 			end
 		end
+
 		C_Timer.After(1, function()
 			UpdateFrame()
 		end)
+
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		if RQEFrame and not not RQEFrame:IsMouseOver() then
+			RQE.ScrollFrameToTop()
+		end
+		RQE.FocusScrollFrameToTop()
 	end
 
 	if isLogin then
@@ -1782,8 +1795,10 @@ function RQE.handleSuperTracking()
 
 			-- Ensure that the quest ID is valid and that the necessary data is available
 			C_Timer.After(0.2, function()
-				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
-					RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] and RQE.LastClickedButtonRef then
+					RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex]:Click()
+				elseif RQE.WaypointButtons then
+					RQE:ClickWaypointButtonForIndex(1)
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
@@ -3651,6 +3666,11 @@ function RQE.handleQuestFinished()
 				end
 			end
 		end
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		if RQEFrame and not not RQEFrame:IsMouseOver() then
+			RQE.ScrollFrameToTop()
+		end
+		RQE.FocusScrollFrameToTop()
 	end
 
 	local extractedQuestID
