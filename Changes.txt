@@ -1,3 +1,16 @@
+11.0.2.39
+	Core.lua
+		- Fixed RQE:StartPeriodicChecks() as CheckDBObjectiveStatus wasn't updating the waypoint and now it is. Tentative switch for CheckScenarioStage and CheckScenarioCriteria but will need further testing to be sure same fix worked
+		- Modified waypoint creation to correctly 'click' the applicable waypoint - this was previously clicking earlier 'clicked' waypoints in the RQEFrame
+
+	EventManager.lua
+		- Modified ITEM_COUNT_CHANGED, BAG_UPDATE, MERCHANT_UPDATE, and UNIT_INVENTORY_CHANGED events to use string.find just as was done in the RQE:StartPeriodicChecks() function in Core.lua
+		- Fixed nil error with waypoint click in SUPER_TRACKING_CHANGED event
+
+	RQEDatabase.lua
+		- Modified waypoint coordinate for a few quests in Ringing Deeps
+
+
 11.0.2.38
 	Core.lua
 		- Removed flags in RQEMacro:CreateMacroForCurrentStep() and RQE:StartPeriodicChecks() as not working as desired
