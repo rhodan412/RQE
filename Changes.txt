@@ -6,7 +6,7 @@
 		- Fixed nil error with waypoint click in QUEST_WATCH_UPDATE event
 
 	RQEDatabase.lua
-		- Added quests from Hallowfall to DB
+		- Added quests from Hallowfall and Azj-Kahet to DB
 		- Fix questID 78642 in the database in terms of values
 
 	RQEMacro.lua
