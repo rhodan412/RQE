@@ -3290,8 +3290,39 @@ function RQE.handleQuestWatchUpdate(...)
 			-- questID = RQE.currentSuperTrackedQuestID -- NOT SURE WHY THIS WAS PLACED HERE???
 		end
 
+		-- if RQE.currentSuperTrackedQuestID then
+			-- -- Ensure that the quest ID is valid and that the necessary data is available
+			-- C_Timer.After(0.2, function()
+				-- if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] and RQE.LastClickedButtonRef then
+					-- RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex]:Click()
+				-- elseif RQE.WaypointButtons then
+					-- RQE:ClickWaypointButtonForIndex(1)
+				-- else
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
+					-- end
+				-- end
+			-- end)
+
+			-- -- Tier Five Importance: QUEST_WATCH_UPDATE event
+			-- if RQE.db.profile.autoClickWaypointButton then
+				-- RQE.CreateMacroForQuestWatchUpdate = true
+				-- RQEMacro:CreateMacroForCurrentStep()
+				-- C_Timer.After(3, function()
+					-- RQE.CreateMacroForQuestWatchUpdate = false
+				-- end)
+			-- end
+		-- end
+
 		if RQE.currentSuperTrackedQuestID then
-			RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+			-- Ensure that RQE.WaypointButtons and the index are valid before attempting to click
+			if RQE.WaypointButtons and RQE.AddonSetStepIndex and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+				RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Error: RQE.WaypointButtons or RQE.AddonSetStepIndex is nil or invalid.")
+				end
+			end
 
 			-- Tier Five Importance: QUEST_WATCH_UPDATE event
 			if RQE.db.profile.autoClickWaypointButton then
