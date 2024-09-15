@@ -1796,10 +1796,16 @@ function RQE.handleSuperTracking()
 
 			-- Ensure that the quest ID is valid and that the necessary data is available
 			C_Timer.After(0.2, function()
-				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] and RQE.LastClickedButtonRef then
-					RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex]:Click()
-				elseif RQE.WaypointButtons then
-					RQE:ClickWaypointButtonForIndex(1)
+				-- Ensure that WaypointButtons and LastClickedButtonRef are valid before using them
+				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+					if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex and RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex] then
+						RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex]:Click()
+					else
+						RQE:ClickWaypointButtonForIndex(1)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Warning: LastClickedButtonRef or its stepIndex is nil. Resetting to stepIndex 1.")
+						end
+					end
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
