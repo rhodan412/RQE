@@ -1251,14 +1251,26 @@ function RQE:ClearSeparateFocusFrame()
 		return
 	end
 
-	-- Check if SeparateStepText exists before attempting to set its text
-	if RQE.SeparateStepText then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		local stepData = RQE.getQuestData(questID)[stepIndex]
-		RQE.SeparateStepText:SetText(stepData and stepData.description or "No step description available for this step.")
-	else
-		RQE.debugLog("SeparateStepText is nil, cannot set text.")
+	-- Check to make sure that quest is being supertracked and if not will only initialize the frame, otherwise it will populate the focus quest frame data
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if isSuperTracking then
+		-- Check if SeparateStepText exists before attempting to set its text
+		if RQE.SeparateStepText then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+			local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+
+			-- Fetch quest data and ensure it is not nil
+			local questData = RQE.getQuestData(questID)
+			if questData and questData[stepIndex] then
+				local stepData = questData[stepIndex]
+				RQE.SeparateStepText:SetText(stepData.description or "No step description available for this step.")
+			else
+				RQE.debugLog("Quest data or step data is nil, cannot set text.")
+				RQE.SeparateStepText:SetText("No step description available for this step.")
+			end
+		else
+			RQE.debugLog("SeparateStepText is nil, cannot set text.")
+		end
 	end
 
 	RQE.InitializeSeparateFocusFrame()
@@ -4160,11 +4172,7 @@ function RQE:ClickWaypointButtonForIndex(index)
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
-				RQE:OnCoordinateClicked(index)
-				--RQE:OnCoordinateClicked(stepIndex)
-				--RQE:OnCoordinateClicked(RQE.AddonSetStepIndex)
-				-- RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
-				--addonButton:Click()
+				RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
 				if RQE.db.profile.debugLevel == "INFO+" then
 					RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
