@@ -2279,6 +2279,7 @@ function RQE.handleZoneNewAreaChange()
 				end
 			end
 		end
+		RQE:StartPeriodicChecks()
 	end
 
 	if RQE.PlayerMountStatus == "Flying" then
