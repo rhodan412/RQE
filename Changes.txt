@@ -4,6 +4,7 @@
 
 	EventManager.lua
 		- Fixed nil error with waypoint click in QUEST_WATCH_UPDATE event
+		- Added RQE:StartPeriodicChecks() for CheckDBZoneChange (tested with questID 79197) to run after ZONE_CHANGED_NEW_AREA event (which ticks when mapID changes)
 
 	RQEDatabase.lua
 		- Added quests from Hallowfall and Azj-Kahet to DB
