@@ -478,7 +478,6 @@ end
 
 
 -- InitializeFrame function
---- @param RQEFrame: The main frame object
 function RQE:InitializeFrame()
 	--self:Initialize()  -- Call Initialize() within InitializeFrame
 
@@ -1254,6 +1253,9 @@ function RQE:ClearSeparateFocusFrame()
 
 	-- Check if SeparateStepText exists before attempting to set its text
 	if RQE.SeparateStepText then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		local stepData = RQE.getQuestData(questID)[stepIndex]
 		RQE.SeparateStepText:SetText(stepData and stepData.description or "No step description available for this step.")
 	else
 		RQE.debugLog("SeparateStepText is nil, cannot set text.")
@@ -3191,7 +3193,7 @@ function RQE.CheckAndSetFinalStep()
 				RQEMacro:CreateMacroForCurrentStep()
 				C_Timer.After(3, function()
 					RQE.CreateMacroForCheckAndSetFinalStep = false
-				end)			
+				end)
 				-- RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
 			else
 				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
@@ -3372,7 +3374,7 @@ function RQEMacro:CreateMacroForCurrentStep()
 	end
 
 	local isMacroCorrect = RQE.CheckCurrentMacroContents()
-	
+
 	if isMacroCorrect then
 		return
 	end
@@ -3616,7 +3618,7 @@ end
 
 		-- -- Reset the flag after creating the macro
 		-- RQE.CreateMacroForPeriodicChecks = false
-		
+
 		-- -- Reset the in-progress flag after 3 seconds
 		-- C_Timer.After(3, function()
 			-- RQE.isPeriodicCheckInProgress = false
@@ -3843,7 +3845,7 @@ function RQE:StartPeriodicChecks()
 					print("Objective progress check did not result in advancement.")
 				end
 			end
-			
+
 		-- Check if the current step requires scenario stage checks
 		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioStage") then
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -3908,7 +3910,7 @@ function RQE:StartPeriodicChecks()
 
 		-- -- Reset the flag after creating the macro
 		-- RQE.CreateMacroForPeriodicChecks = false
-		
+
 		-- -- Reset the in-progress flag after 3 seconds
 		-- C_Timer.After(3, function()
 			-- RQE.isPeriodicCheckInProgress = false
@@ -4158,7 +4160,8 @@ function RQE:ClickWaypointButtonForIndex(index)
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
-				RQE:OnCoordinateClicked(stepIndex)
+				RQE:OnCoordinateClicked(index)
+				--RQE:OnCoordinateClicked(stepIndex)
 				--RQE:OnCoordinateClicked(RQE.AddonSetStepIndex)
 				-- RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
 				--addonButton:Click()
