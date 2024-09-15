@@ -1,21 +1,25 @@
 11.0.2.40
-	Core.lua
-		- Added nil check to RQE:ClearSeparateFocusFrame() to make sure it first exists
-		- Modified RQE:ClearSeparateFocusFrame() to obtain questID (current supertracked questID), stepIndex and stepData as some variables were returning nil
-		- Within the RQE:ClickWaypointButtonForIndex(index) function changed RQE:OnCoordinateClicked(stepIndex) to RQE:OnCoordinateClicked(index) as previous way may have prevented proper value being filled in here
+Core.lua
+- Added nil check to RQE:ClearSeparateFocusFrame() to make sure it first exists
 
-	EventManager.lua
-		- Fixed nil error with waypoint click in QUEST_WATCH_UPDATE event
-		- Added RQE:StartPeriodicChecks() for CheckDBZoneChange (tested with questID 79197) to run after ZONE_CHANGED_NEW_AREA event (which ticks when mapID changes)
-		- Added enableNearestSuperTrack for QUEST_WATCH_LIST_CHANGED event
-		- Fixed PLAYER_LOGIN event for DB file fetching in Saved Variables
+- Modified and fixed RQE:ClearSeparateFocusFrame() to obtain questID (current supertracked questID), stepIndex and stepData as some variables were returning nil
 
-	RQEDatabase.lua
-		- Added quests from Hallowfall and Azj-Kahet to DB
-		- Fix questID 78642 in the database in terms of values
+EventManager.lua
+- Fixed nil error with waypoint click in QUEST_WATCH_UPDATE and SUPER_TRACKING_CHANGED events
 
-	RQEMacro.lua
-		- Fix 'EditMacro' error received
+- Added RQE:StartPeriodicChecks() for CheckDBZoneChange (tested with questID 79197) to run after ZONE_CHANGED_NEW_AREA event (which ticks when mapID changes)
+
+- Added enableNearestSuperTrack for QUEST_WATCH_LIST_CHANGED event
+
+- Fixed PLAYER_LOGIN event for DB file fetching in Saved Variables
+
+RQEDatabase.lua
+- Added quests from Hallowfall and Azj-Kahet to DB
+- Fix of some spelling errors
+- Fix questID 78642 in the database in terms of values
+
+RQEMacro.lua
+- Fix 'EditMacro' error received
 
 
 11.0.2.39
