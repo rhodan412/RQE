@@ -865,7 +865,7 @@ function RQE.handlePlayerLogin()
 
 	-- Make sure RQE.db is initialized
 	if RQE.db == nil then
-		RQE.db = {}
+		RQE.db = RQE.db or {}
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerLogin then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: RQE.db initialized.", 0.68, 0.85, 0.9)
 		end
@@ -940,6 +940,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForUnitQuestLogChange = false
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
 	RQE.isCheckingMacroContents = false
+	RQE.QuestAddedForWatchListChanged = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
 	RQE.StartPerioFromPlayerControlGained = false
@@ -3339,11 +3340,13 @@ function RQE.handleQuestWatchUpdate(...)
 		C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
+			local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
 			DEFAULT_CHAT_FRAME:AddMessage("Now super tracking quest: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
 		end
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
+		local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(RQE.currentSuperTrackedQuestID) .. " / " .. tostring(superTrackedQuestName), 0.56, 0.93, 0.56)
 	end
 
@@ -3449,6 +3452,17 @@ function RQE.handleQuestWatchListChanged(...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
 
+	if not questID then
+		return
+	end
+
+	-- Checks to see if a quest was added or removed (true/false) in order to call this event
+	if added == true then
+		RQE.QuestAddedForWatchListChanged = true
+	else
+		RQE.QuestAddedForWatchListChanged = false
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -3463,6 +3477,10 @@ function RQE.handleQuestWatchListChanged(...)
 			end
 		end
 	end
+
+	-- Local variables for the event
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
 	-- Tier Five Importance: QUEST_WATCH_LIST_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
@@ -3482,27 +3500,21 @@ function RQE.handleQuestWatchListChanged(...)
 
 	RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
 
-	if questID then
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-
-		if isWorldQuest then
-			UpdateRQEWorldQuestFrame()
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-				DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)
-			end
-		else
-			UpdateRQEQuestFrame()
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-				DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)
-			end
+	if isWorldQuest then
+		UpdateRQEWorldQuestFrame()
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
+			DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)
+		end
+	else
+		UpdateRQEQuestFrame()
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
+			DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)
 		end
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_WATCH_LIST_CHANGED event triggered for questID: " .. tostring(questID) .. ", added: " .. tostring(added), 0.4, 0.6, 1.0)
 	end
-
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
 	if isSuperTracking then
 		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -3564,6 +3576,34 @@ function RQE.handleQuestWatchListChanged(...)
 				end)
 			end
 		end
+	end
+
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	if RQE.db.profile.enableNearestSuperTrack then
+		if not isSuperTracking then
+			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+			if closestQuestID then
+				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+					DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
+				end
+			end
+		end
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		if RQEFrame and not not RQEFrame:IsMouseOver() then
+			RQE.ScrollFrameToTop()
+		end
+		RQE.FocusScrollFrameToTop()
+	end
+
+	-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
+	if RQE.QuestAddedForWatchListChanged and not (isSuperTracking and isWorldQuest) then
+		C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
+		UpdateFrame()
 	end
 
 	-- Updates RQEQuestFrame widths when progress is made whether progress quest is super tracked or not
@@ -3635,7 +3675,7 @@ function RQE.handleQuestTurnIn(...)
 	RQE.alreadyPrintedSchematics = false
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn then
-		DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1.0, 0.08, 0.58)
+		DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: SuperTrackedQuestID: " .. tostring(C_SuperTrack.GetSuperTrackedQuestID()), 1.0, 0.08, 0.58)
 	end
 
 	-- Update the visibility or content of RQEQuestFrame as needed
@@ -3725,7 +3765,7 @@ function RQE.handleQuestFinished()
 	end
 
 	-- Determine questID based on various fallbacks
-	local questID = RQE.searchedQuestID or extractedQuestID or superTrackedQuestID
+	local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	local questInfo = RQE.getQuestData(questID)
 	if questInfo then
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
