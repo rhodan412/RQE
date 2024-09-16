@@ -579,33 +579,9 @@ function RQE.SaveCoordData()
 			if questData and questData.location then
 				-- Update the location data for the examined quest
 				RQE.DatabaseSuperX = questData.location.x / 100
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Line 583: RQE.DatabaseSuperX is: " .. RQE.DatabaseSuperX)
-				end
 				RQE.DatabaseSuperY = questData.location.y / 100
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Line 587: RQE.DatabaseSuperY is: " .. RQE.DatabaseSuperY)
-				end
 				RQE.DatabaseSuperMapID = questData.location.mapID
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Line 591: RQE.DatabaseSuperMapID is: " .. RQE.DatabaseSuperMapID)
-				end
 			end
-
-			-- Save these coordinates to the database fields
-			RQE.DatabaseSuperX = x
-			RQE.DatabaseSuperY = y
-			RQE.DatabaseSuperMapID = mapID
-
-			-- Save these coordinates to the database fields
-			RQE.superX = x
-			RQE.superY = y
-			RQE.superMapID = mapID
-
-			-- Save these coordinates to the database fields
-			RQE.x = x
-			RQE.y = y
-			RQE.MapID = mapID
 		end
 	end
 end
@@ -643,26 +619,14 @@ function RQE.SaveSuperTrackData()
 
 		if posX == nil then
 			RQE.superX = RQE.x
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Line 632: RQE.superX is " .. RQE.superX .. " and RQE.x is " .. RQE.x)
-			end
 		else
 			RQE.superX = posX
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Line 637: RQE.superX is " .. RQE.superX .. " and posX is " .. posX)
-			end
 		end
 
 		if posY == nil then
 			RQE.superY = RQE.y
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Line 644: RQE.superY is " .. RQE.superY .. " and RQE.x is " .. RQE.y)
-			end
 		else
 			RQE.superY = posY
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Line 649: RQE.superY is " .. RQE.superY .. " and posX is " .. posY)
-			end
 		end
 
 		C_Timer.After(1, function()
@@ -710,7 +674,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
 		if mapID then
 			posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
 		else
-			RQE.debugLog("Invalid mapID for World QuestID:", tostring(questID))
+			RQE.debugLog("Invalid mapID for World QuestID:", questID)
 			return
 		end
 	else
@@ -719,7 +683,6 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	end
 
 	if not mapID then
-		RQE.debugLog("No mapID found for QuestID:", tostring(questID))
 		return
 	end
 
@@ -729,24 +692,25 @@ function RQE.ExtractAndSaveQuestCoordinates()
 			-- Call the function to open the quest log with the details of the super tracked quest
 			OpenQuestLogToQuestDetails(questID)
 		else
-			-- Either map is open, or we are in combat, or another secure operation is in progress
+			-- Either map is open, or we are in combat, or another secure operation is in progress [fix for Frame:SetPassThroughButtons() error]
 			RQE.debugLog("Cannot open quest details due to combat lockdown or other restrictions.")
 			return
 		end
 
-		local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		--completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
 
-		-- Safely print the waypoint details
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Next Waypoint - MapID:", tostring(nextMapID), "X:", tostring(nextPosX), "Y:", tostring(nextPosY), "Waypoint Type:", tostring(wpType))
-		end
+		if not posX or not posY then
+			local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
 
-		-- Update the posX and posY variables with the new information
-		posX = nextPosX
-		posY = nextPosY
+			if nextMapID == nil or nextPosX == nil or nextPosY == nil then
+				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
+			else
+				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
+			end
 
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Coordinates from next waypoint: MapID:", tostring(nextMapID), "X:", tostring(posX), "Y:", tostring(posY))
+			-- Update the posX and posY variables with the new information
+			posX = nextPosX
+			posY = nextPosY
 		end
 
 		if not isMapOpen then
@@ -757,28 +721,11 @@ function RQE.ExtractAndSaveQuestCoordinates()
 	-- Reset the superTrackingChanged flag
 	RQE.superTrackingChanged = false
 
-	-- Ensure posX and posY are valid before saving
-	if not posX or not posY then
-		RQE.debugLog("Invalid coordinates for QuestID:", tostring(questID))
-		return
-	end
-
 	-- Save these to the RQE table
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Saving coordinates: posX =", tostring(posX), "posY =", tostring(posY), "mapID =", tostring(mapID))
-	end
-
 	RQE.x = posX
 	RQE.y = posY
 	RQE.mapID = mapID
-
-	-- Confirm saved coordinates
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("RQE coordinates saved - X:", tostring(RQE.x), "Y:", tostring(RQE.y), "MapID:", tostring(RQE.mapID))
-	end
 end
-
-
 
 
 -- Function controls the restoration of the quest that is super tracked to the RQEFrame
@@ -1297,6 +1244,39 @@ function RQE:ClearWaypointButtonData()
 end
 
 
+-- -- Function to clear the contents of the SeparateFocusFrame
+-- function RQE:ClearSeparateFocusFrame()
+	-- -- Check if the SeparateFocusFrame exists
+	-- if not RQE.SeparateFocusFrame then
+		-- return
+	-- end
+
+	-- -- Check to make sure that quest is being supertracked and if not will only initialize the frame, otherwise it will populate the focus quest frame data
+	-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	-- if isSuperTracking then
+		-- -- Check if SeparateStepText exists before attempting to set its text
+		-- if RQE.SeparateStepText then
+			-- local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+			-- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+
+			-- -- Fetch quest data and ensure it is not nil
+			-- local questData = RQE.getQuestData(questID)
+			-- if questData and questData[stepIndex] then
+				-- local stepData = questData[stepIndex]
+				-- RQE.SeparateStepText:SetText(stepData.description or "No step description available for this step.")
+			-- else
+				-- RQE.debugLog("Quest data or step data is nil, cannot set text.")
+				-- RQE.SeparateStepText:SetText("No step description available for this step.")
+			-- end
+		-- else
+			-- RQE.debugLog("SeparateStepText is nil, cannot set text.")
+		-- end
+	-- end
+
+	-- RQE.InitializeSeparateFocusFrame()
+-- end
+
+
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Check if the SeparateFocusFrame exists
@@ -1304,28 +1284,7 @@ function RQE:ClearSeparateFocusFrame()
 		return
 	end
 
-	-- Check to make sure that quest is being supertracked and if not will only initialize the frame, otherwise it will populate the focus quest frame data
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	if isSuperTracking then
-		-- Check if SeparateStepText exists before attempting to set its text
-		if RQE.SeparateStepText then
-			local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-			local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-
-			-- Fetch quest data and ensure it is not nil
-			local questData = RQE.getQuestData(questID)
-			if questData and questData[stepIndex] then
-				local stepData = questData[stepIndex]
-				RQE.SeparateStepText:SetText(stepData.description or "No step description available for this step.")
-			else
-				RQE.debugLog("Quest data or step data is nil, cannot set text.")
-				RQE.SeparateStepText:SetText("No step description available for this step.")
-			end
-		else
-			RQE.debugLog("SeparateStepText is nil, cannot set text.")
-		end
-	end
-
+	RQE.SeparateStepText:SetText("No step description available for this step.")
 	RQE.InitializeSeparateFocusFrame()
 end
 
@@ -1389,6 +1348,7 @@ function RQE:ShouldClearFrame()
 
 	-- Early exit if there's still no valid questID
 	if not extractedQuestID or extractedQuestID == 0 then
+		RQE:ClearSeparateFocusFrame()	-- Clears progress focus frame if nothing is being tracked
 		return
 	end
 
@@ -2823,9 +2783,9 @@ function RQE:ShowWowheadLink(questID)
 	linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
 	linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
 
-	-- Enable mouse input propagation
-	linkFrame:SetPropagateMouseClicks(true)
-	linkFrame:SetPropagateMouseMotion(true)
+	-- -- Enable mouse input propagation
+	-- linkFrame:SetPropagateMouseClicks(true)
+	-- linkFrame:SetPropagateMouseMotion(true)
 
 	-- Configure the EditBox font
 	wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
@@ -4225,11 +4185,10 @@ function RQE:ClickWaypointButtonForIndex(index)
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
-				RQE:OnCoordinateClicked(RQE.AddonSetStepIndex)
-				--RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
+				RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
 				if RQE.db.profile.debugLevel == "INFO+" then
 					RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
-					print("Clicked waypoint button for index: " .. index .. ". StepIndex is: " .. button.stepIndex .. ". AddonSetStepIndex:", RQE.AddonSetStepIndex)
+					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
 				end
 			else
 				RQE.debugLog("No waypoint button found for AddonSetStepIndex:", RQE.AddonSetStepIndex)
