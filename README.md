@@ -44,6 +44,9 @@ Receive guidance step-by-step as you navigate quests in the add-on's database of
 Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
 ![Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests).](https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c)
 
+Queue for group world quests, including the world boss!
+![WQ Queueing.](https://github.com/user-attachments/assets/8637cb2d-dce5-4038-b55b-dfb542446b8d)
+
 Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame')
 ![Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame').](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
 
