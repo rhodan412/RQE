@@ -73,9 +73,9 @@ ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
 RQE.QTScrollFrame = ScrollFrame
 
--- Enable mouse input propagation
-RQE.QTScrollFrame:SetPropagateMouseClicks(true)
-RQE.QTScrollFrame:SetPropagateMouseMotion(true)
+-- -- Enable mouse input propagation
+-- RQE.QTScrollFrame:SetPropagateMouseClicks(true)
+-- RQE.QTScrollFrame:SetPropagateMouseMotion(true)
 
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
@@ -1715,8 +1715,8 @@ function UpdateRQEQuestFrame()
 				end
 				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
 				
-				QuestLogIndexButton:SetPropagateMouseClicks(true)
-				QuestLogIndexButton:SetPropagateMouseMotion(true)
+				-- QuestLogIndexButton:SetPropagateMouseClicks(true)
+				-- QuestLogIndexButton:SetPropagateMouseMotion(true)
 
 				-- Set Justification and Word Wrap
 				QuestLevelAndName:SetJustifyH("LEFT")
@@ -2669,9 +2669,9 @@ function UpdateRQEAchievementsFrame()
 			-- Set up the clickable action for the achievement header
 			achievementHeader:EnableMouse(true)
 			
-			-- Enable mouse input propagation
-			achievementHeader:SetPropagateMouseClicks(true)
-			achievementHeader:SetPropagateMouseMotion(true)
+			-- -- Enable mouse input propagation
+			-- achievementHeader:SetPropagateMouseClicks(true)
+			-- achievementHeader:SetPropagateMouseMotion(true)
 				
 			achievementHeader:SetScript("OnMouseUp", function(self, button)
 				if button == "LeftButton" then
