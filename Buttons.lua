@@ -219,9 +219,9 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
 	MagicButton:SetSize(32, 32)  -- Set the button size
 	MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
 
-	-- Enable mouse input propagation on MagicButton if necessary
-	MagicButton:SetPropagateMouseClicks(true)
-	MagicButton:SetPropagateMouseMotion(true)
+	-- -- Enable mouse input propagation on MagicButton if necessary
+	-- MagicButton:SetPropagateMouseClicks(true)
+	-- MagicButton:SetPropagateMouseMotion(true)
 
 	-- Storing MagicButton within the RQE table
 	RQE.MagicButton = MagicButton
@@ -386,6 +386,20 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 		end
+
+		-- Clearing the frame data a second time
+		C_Timer.After(0.2, function()
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQE:RemoveSuperTrackingFromQuest()
+		end)
+
+		-- Clearing the frame data a third time
+		C_Timer.After(0.3, function()
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQE:RemoveSuperTrackingFromQuest()
+		end)
 
 		-- Reset manually tracked quests
 		if RQE.ManuallyTrackedQuests then
