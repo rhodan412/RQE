@@ -154,12 +154,13 @@ local ScrollFrame = CreateFrame("ScrollFrame", nil, RQEFrame)
 ScrollFrame:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-position
 ScrollFrame:SetPoint("BOTTOMRIGHT", RQEFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
-ScrollFrame:SetClipsChildren(true)  -- Enable clipping
+--ScrollFrame:SetClipsChildren(true)  -- Enable clipping/hiding of the scrollbar
 RQE.ScrollFrame = ScrollFrame
 
--- Enable mouse input propagation
-ScrollFrame:SetPropagateMouseClicks(true)
-ScrollFrame:SetPropagateMouseMotion(true)
+-- -- Enable mouse input propagation
+-- ScrollFrame:SetPropagateMouseClicks(true)
+-- ScrollFrame:SetPropagateMouseMotion(true)
+
 
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
@@ -183,6 +184,7 @@ header:SetBackdrop({
 header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
 header:SetPoint("TOPLEFT", 0, 0)
 header:SetPoint("TOPRIGHT", 0, 0)
+RQE.RQEFrameHeader = header
 
 
 -- Create header text
@@ -198,18 +200,88 @@ RQE.headerText = headerText
 -- Create the Slider (Scrollbar)
 ---@class RQESlider : Slider
 ---@field slider.scrollStep number
-local slider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
+-- local slider = CreateFrame("Slider", nil, ScrollFrame, "MinimalScrollBarWithBorderTemplate")
+-- RQE.slider = slider
+-- slider:SetPoint("TOPLEFT", RQEFrame, "TOPRIGHT", -20, -55)
+-- slider:SetPoint("BOTTOMLEFT", RQEFrame, "BOTTOMRIGHT", -20, 45)
+-- slider:SetMinMaxValues(0, content:GetHeight())
+-- slider:SetValueStep(0.3)
+-- slider.scrollStep = 1
+
+-- slider:SetScript("OnValueChanged", function(self, value)
+	-- ScrollFrame:SetVerticalScroll(value)
+-- end)
+
+-- Create the Slider (Scrollbar)
+local slider = CreateFrame("Slider", nil, ScrollFrame)
 RQE.slider = slider
-slider:SetPoint("TOPLEFT", RQEFrame, "TOPRIGHT", -20, -20)
-slider:SetPoint("BOTTOMLEFT", RQEFrame, "BOTTOMRIGHT", -20, 20)
+slider:SetPoint("TOPLEFT", RQEFrame, "TOPRIGHT", -20, -55)
+slider:SetPoint("BOTTOMLEFT", RQEFrame, "BOTTOMRIGHT", -20, 45)
 slider:SetMinMaxValues(0, content:GetHeight())
-slider:SetValueStep(1)
+slider:SetValueStep(0.2)
 slider.scrollStep = 1
+slider:SetWidth(12)  -- Set the width of the scrollbar
+
+-- Set a custom background for the scrollbar
+local bg = slider:CreateTexture(nil, "BACKGROUND")
+bg:SetAllPoints(slider)
+bg:SetColorTexture(0.15, 0.15, 0.15, 0.65) -- A dark gray, semi-transparent background
+
+-- Set a custom thumb texture for the scrollbar
+local thumb = slider:CreateTexture(nil, "OVERLAY")
+thumb:SetTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal") -- A custom thumb texture
+--thumb:SetTexture("Interface\\AddOns\\RQE\\Textures\\YourCustomThumbTexture")
+thumb:SetSize(12, 12)
+slider:SetThumbTexture(thumb)
+
+-- Add up and down arrow buttons to the scrollbar (optional)
+local upButton = CreateFrame("Button", nil, slider, "UIPanelScrollUpButtonTemplate")
+upButton:SetPoint("BOTTOM", slider, "TOP", 0, 0)
+upButton:SetScript("OnClick", function()
+	slider:SetValue(slider:GetValue() - 20) -- Scroll up by a set amount
+end)
+
+local downButton = CreateFrame("Button", nil, slider, "UIPanelScrollDownButtonTemplate")
+downButton:SetPoint("TOP", slider, "BOTTOM", 0, 0)
+downButton:SetScript("OnClick", function()
+	slider:SetValue(slider:GetValue() + 20) -- Scroll down by a set amount
+end)
+
+
+
+-- Ensure the thumb texture is created correctly
+local thumb = slider:CreateTexture(nil, "OVERLAY")
+thumb:SetSize(16, 32)  -- Adjust the size as needed
+thumb:SetTexture("Interface\\Buttons\\UI-ScrollBar-Knob")  -- Use any texture you want
+slider:SetThumbTexture(thumb)
+
+-- Create the Animation Group for the thumb
+local animGroup = thumb:CreateAnimationGroup()
+
+-- Create an Alpha Animation within the group
+local pulse = animGroup:CreateAnimation("Alpha")
+pulse:SetFromAlpha(1) -- Start from fully opaque
+pulse:SetToAlpha(0.5) -- Fade to 50% opacity
+pulse:SetDuration(0.5) -- Duration of the fade
+pulse:SetSmoothing("IN_OUT") -- Smooth the animation
+
+-- Set the looping mode on the animation group
+animGroup:SetLooping("BOUNCE")
+
+-- Start the animation when the mouse enters the scrollbar
+slider:SetScript("OnEnter", function(self)
+	RQE:UpdateContentSize()
+	animGroup:Play()
+end)
+
+-- Stop the animation when the mouse leaves the scrollbar
+slider:SetScript("OnLeave", function(self)
+	animGroup:Stop()
+end)
 
 slider:SetScript("OnValueChanged", function(self, value)
 	ScrollFrame:SetVerticalScroll(value)
 end)
-
 
 -- Right-Click Event Logic
 RQEFrame:SetScript("OnMouseUp", function(self, button)
@@ -262,7 +334,7 @@ RQE.HideUnknownButtonTooltip()
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
 -- Assume CloseWorldMap() closes the world map
 --RQE.UnknownQuestButtonCalcNTrack()
---RQE.SaveSuperTrackData()
+RQE.SaveSuperTrackData()
 
 
 -- Create and position the new Search Group Button
@@ -1081,6 +1153,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]		-- Fetch the mapID from the MapIDs array
 
+			-- Call function to handle the coordinate click
+			RQE.SaveCoordData()
+			RQE:OnCoordinateClicked(i)
+
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
@@ -1089,14 +1165,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
-			-- Save Initial data
-			RQE.SaveCoordData()
-
 			-- Use AddonSetStepIndex if available
 			local effectiveStepIndex = RQE.AddonSetStepIndex or i
-
-			-- Call function to handle the coordinate click
-			RQE:OnCoordinateClicked(i)
 
 			-- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
 			if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= effectiveStepIndex and effectiveStepIndex > RQE.LastClickedIdentifier) then
@@ -1211,16 +1281,16 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:Hide()
 		end)
 
-		-- -- Add the mouse down event here	-- THIS IS DUPLICATE OVER THE CLICK SCRIPT USED
-		-- StepText:SetScript("OnMouseDown", function(self, button)
-			-- if button == "LeftButton" then
-				-- -- Save the coordinates and mapID when the text is clicked
-				-- --RQE.SaveCoordData()
+		-- Add the mouse down event here
+		StepText:SetScript("OnMouseDown", function(self, button)
+			if button == "LeftButton" then
+				-- Save the coordinates and mapID when the text is clicked
+				RQE.SaveCoordData()
 
-				-- -- Call function to handle the coordinate click
-				-- RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
-			-- end
-		-- end)
+				-- Call function to handle the coordinate click
+				RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
+			end
+		end)
 	end
 
 	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
@@ -1633,7 +1703,7 @@ end)
 function RQE:ClearStepsTextInFrame()
 	if self.StepsText then
 		for i, textElement in ipairs(self.StepsText) do
-			textElement:SetText("")  -- Clear the text
+			textElement:SetText("")	-- Clear the text
 		end
 	end
 end
@@ -1653,8 +1723,9 @@ end
 
 -- Function to update the content size dynamically based on the number of steps
 function RQE:UpdateContentSize()
-	local n = #self.StepsText  -- The number of steps
-	local totalHeight = 25 + 25 + (35 * n) + (35 * n) + 30 * (n - 1)
+	local n = #self.StepsText	-- The number of steps
+	local totalHeight = 3 + (2 * n) + 8 * (n - 1)
+	--local totalHeight = 25 + 25 + (35 * n) + (35 * n) + 30 * (n - 1)
 	content:SetHeight(totalHeight)
 	slider:SetMinMaxValues(0, content:GetHeight())
 end
@@ -1785,8 +1856,8 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.SeparateFocusFrame:EnableMouse(true)
 		RQE.SeparateFocusFrame:SetMovable(true)
 		RQE.SeparateFocusFrame:RegisterForDrag("LeftButton")
-		RQE.SeparateFocusFrame:SetScript("OnDragStart", RQE.SeparateFocusFrame.StartMoving)
-		RQE.SeparateFocusFrame:SetScript("OnDragStop", RQE.SeparateFocusFrame.StopMovingOrSizing)
+		-- RQE.SeparateFocusFrame:SetScript("OnDragStart", RQE.SeparateFocusFrame.StartMoving)
+		-- RQE.SeparateFocusFrame:SetScript("OnDragStop", RQE.SeparateFocusFrame.StopMovingOrSizing)
 		RQE.SeparateFocusFrame:Show()
 	end
 
@@ -1945,22 +2016,25 @@ function RQE.InitializeSeparateFocusFrame()
 
 	-- Attach the mouse wheel scroll script to the scroll frame
 	RQE.SeparateScrollFrame:SetScript("OnMouseWheel", function(self, delta)
-		-- Check if Alt, Ctrl, or Shift is being held down
-		if IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown() then
-			-- Handle scrolling for the SeparateScrollFrame
-			local currentScroll = self:GetVerticalScroll()
-			local maxScroll = self:GetVerticalScrollRange()
+		-- Check if the mouse is over the SeparateStepText
+		if RQE.SeparateStepText:IsMouseOver() then
+			-- Check if Alt, Ctrl, or Shift is being held down
+			if IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown() then
+				-- Handle scrolling for the SeparateScrollFrame
+				local currentScroll = self:GetVerticalScroll()
+				local maxScroll = self:GetVerticalScrollRange()
 
-			-- Adjust the scroll speed
-			local newScroll = currentScroll - (delta * 20)
+				-- Adjust the scroll speed
+				local newScroll = currentScroll - (delta * 20)
 
-			-- Ensure the new scroll position is within valid bounds
-			newScroll = math.max(0, math.min(newScroll, maxScroll))
+				-- Ensure the new scroll position is within valid bounds
+				newScroll = math.max(0, math.min(newScroll, maxScroll))
 
-			-- Set the new scroll position
-			self:SetVerticalScroll(newScroll)
+				-- Set the new scroll position
+				self:SetVerticalScroll(newScroll)
+			end
 		else
-			-- If no modifier key is held, pass the scroll event to the main RQEFrame
+			-- If not over SeparateStepText or no modifier key is held, pass the scroll event to the main RQEFrame
 			if RQE.ScrollFrame then
 				local currentScroll = RQE.ScrollFrame:GetVerticalScroll()
 				local maxScroll = RQE.ScrollFrame:GetVerticalScrollRange()
