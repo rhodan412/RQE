@@ -72,9 +72,9 @@ logFrame:SetFrameStrata("HIGH")
 RQE.DebugLogFrame = logFrame
 
 
--- Enable mouse input propagation
-logFrame:SetPropagateMouseClicks(true)
-logFrame:SetPropagateMouseMotion(true)
+-- -- Enable mouse input propagation
+-- logFrame:SetPropagateMouseClicks(true)
+-- logFrame:SetPropagateMouseMotion(true)
 
 
 local header = CreateFrame("Frame", "RQE.LogFrameHeader", logFrame, "BackdropTemplate")
@@ -95,9 +95,9 @@ header:SetScript("OnDragStart", function(self) self:GetParent():StartMoving() en
 header:SetScript("OnDragStop", function(self) self:GetParent():StopMovingOrSizing() end)
 
 
--- Enable mouse input propagation
-header:SetPropagateMouseClicks(true)
-header:SetPropagateMouseMotion(true)
+-- -- Enable mouse input propagation
+-- header:SetPropagateMouseClicks(true)
+-- header:SetPropagateMouseMotion(true)
 
 
 local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
