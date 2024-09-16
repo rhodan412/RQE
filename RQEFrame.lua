@@ -262,7 +262,7 @@ RQE.HideUnknownButtonTooltip()
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
 -- Assume CloseWorldMap() closes the world map
 --RQE.UnknownQuestButtonCalcNTrack()
-RQE.SaveSuperTrackData()
+--RQE.SaveSuperTrackData()
 
 
 -- Create and position the new Search Group Button
@@ -1081,10 +1081,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]		-- Fetch the mapID from the MapIDs array
 
-			-- Call function to handle the coordinate click
-			RQE.SaveCoordData()
-			RQE:OnCoordinateClicked(i)
-
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
@@ -1093,8 +1089,14 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
+			-- Save Initial data
+			RQE.SaveCoordData()
+
 			-- Use AddonSetStepIndex if available
 			local effectiveStepIndex = RQE.AddonSetStepIndex or i
+
+			-- Call function to handle the coordinate click
+			RQE:OnCoordinateClicked(i)
 
 			-- Conditionally update LastClickedIdentifier only if the new step index is greater than the current
 			if not RQE.LastClickedIdentifier or (RQE.LastClickedIdentifier ~= effectiveStepIndex and effectiveStepIndex > RQE.LastClickedIdentifier) then
@@ -1209,16 +1211,16 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:Hide()
 		end)
 
-		-- Add the mouse down event here
-		StepText:SetScript("OnMouseDown", function(self, button)
-			if button == "LeftButton" then
-				-- Save the coordinates and mapID when the text is clicked
-				RQE.SaveCoordData()
+		-- -- Add the mouse down event here	-- THIS IS DUPLICATE OVER THE CLICK SCRIPT USED
+		-- StepText:SetScript("OnMouseDown", function(self, button)
+			-- if button == "LeftButton" then
+				-- -- Save the coordinates and mapID when the text is clicked
+				-- --RQE.SaveCoordData()
 
-				-- Call function to handle the coordinate click
-				RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
-			end
-		end)
+				-- -- Call function to handle the coordinate click
+				-- RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
+			-- end
+		-- end)
 	end
 
 	-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase

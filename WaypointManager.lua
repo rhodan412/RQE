@@ -48,6 +48,11 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	x = x or RQE.x
 	y = y or RQE.y
 
+	-- Debug message to print the coordinates being used to create the waypoint
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Line 53: Creating waypoint with coordinates - X:", tostring(x), "Y:", tostring(y), "MapID:", tostring(mapID), "Title:", tostring(title))
+	end
+
 	-- Create the waypoint data
 	local waypoint = {}
 	waypoint.x = x
@@ -58,10 +63,19 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	-- Add the waypoint to the RQEWaypoints table
 	table.insert(RQEWaypoints, waypoint)
 
+	-- Debug message to print the saved waypoint data
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Line 68: Waypoint saved - X:", tostring(waypoint.x), "Y:", tostring(waypoint.y), "MapID:", tostring(waypoint.mapID), "Title:", tostring(waypoint.title))
+	end
+
 	-- Create a Map Pin to represent the waypoint
 	self:CreateMapPin(waypoint.mapID, waypoint.x, waypoint.y)
 
-	RQE.debugLog("Exiting CreateWaypoint Function")
+	-- Debug message to indicate the end of the function
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Exiting CreateWaypoint Function")
+	end
+
 	return waypoint
 end
 
@@ -147,6 +161,11 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	x = tonumber(x) or 0
 	y = tonumber(y) or 0
 
+	-- Debug message to print the coordinates and mapID
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Line 166: Creating waypoint for unknown quest with coordinates - X:", x, "Y:", y, "MapID:", mapID)
+	end
+
 	RQE.infoLog("Old method coordinates: x =", x, "y =", y, "mapID =", mapID)
 
 	C_Map.ClearUserWaypoint()
@@ -164,7 +183,9 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			if mapID and x and y then -- Check if x and y are not nil
-				RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Line 187: Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				end
 				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
 				RQE.debugLog("Could not create waypoint for unknown quest.")
@@ -177,7 +198,9 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 			if mapID and x and y then -- Check if x and y are not nil
-				RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Line 202: Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				end
 				Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
 			else
 				RQE.debugLog("Could not create waypoint for unknown quest.")
@@ -229,17 +252,27 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				RQE.x = RQE.DatabaseSuperX --DatabaseSuperX
 				RQE.y = RQE.DatabaseSuperY --DatabaseSuperY
 				RQE.MapID = RQE.DatabaseSuperMapID
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Line 256: Adding waypoint RQE.MapID =", RQE.MapID, "RQE.x =", RQE.x, "RQE.y =", RQE.y)
+					print("Line 257: Adding waypoint RQE.DatabaseSuperMapID =", RQE.DatabaseSuperMapID, "RQE.DatabaseSuperX =", RQE.DatabaseSuperX, "RQE.DatabaseSuperY =", RQE.DatabaseSuperY)
+				end
 			elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
 				RQE.x = RQE.superX
 				RQE.y = RQE.superY
 				RQE.MapID = RQE.superMapID
-
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Line 264: Adding waypoint RQE.MapID =", tostring(RQE.MapID), "RQE.x =", tostring(RQE.x), "RQE.y =", tostring(RQE.y))
+					print("Line 265: Adding waypoint RQE.superMapID =", RQE.superMapID, "RQE.superX =", RQE.superX, "RQE.superY =", RQE.superY)
+				end
 				-- Use RQE.GetQuestCoordinates to get the coordinates
 				local x, y, mapID = RQE.GetQuestCoordinates(questID)
 				if x and y and mapID then
 					RQE.x = x
 					RQE.y = y
 					RQE.MapID = mapID
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Line 274: Adding waypoint RQE.MapID =", RQE.MapID, "RQE.x =", RQE.x, "RQE.y =", RQE.y)
+					end
 				else
 					-- Fallback to using RQE.GetNextWaypoint if coordinates are not available
 					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
@@ -247,6 +280,9 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 						RQE.x = waypointX
 						RQE.y = waypointY
 						RQE.MapID = waypointMapID
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Line 284: Adding waypoint RQE.MapID =", RQE.MapID, "RQE.x =", RQE.x, "RQE.y =", RQE.y)
+						end
 					else
 						-- Coordinates not available
 						RQE.x = 0
@@ -256,7 +292,9 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				end
 			end
 
-			RQE.infoLog("After timer: x =", RQE.x, "y =", RQE.y, "mapID =", RQE.MapID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("After timer: x =", RQE.x, "y =", RQE.y, "mapID =", RQE.MapID)
+			end
 
 			-- Normalize coordinates for TomTom
 			if RQE.x and RQE.y then
@@ -274,7 +312,9 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			x = tonumber(x) or 0
 			y = tonumber(y) or 0
 
-			RQE.infoLog("Before clearing user waypoint: x =", x, "y =", y, "mapID =", mapID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Before clearing user waypoint: x =", x, "y =", y, "mapID =", mapID)
+			end
 
 			C_Map.ClearUserWaypoint()
 
@@ -293,7 +333,9 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 					if mapID and x and y then  -- Check if x and y are not nil
-						RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("337: Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+						end
 						TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 					else
 						RQE.debugLog("Could not create waypoint for unknown quest.")
@@ -306,7 +348,9 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
 				if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 					if mapID and x and y then  -- Check if x and y are not nil
-						RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("352: Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+						end
 						Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
 					else
 						RQE.debugLog("Could not create waypoint for unknown quest.")
@@ -372,10 +416,12 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 		-- Add waypoint for TomTom if available and enabled
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			if mapID and x and y then -- Check if x and y are not nil
-				print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("420: Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				end
 				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
-				print("Could not create waypoint for unknown quest.")
+				print("424: Could not create waypoint for unknown quest.")
 			end
 		else
 			print("TomTom is not available.")
@@ -385,7 +431,9 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 		local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 			if mapID and x and y then -- Check if x and y are not nil
-				print("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("435: Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				end
 				Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
 			else
 				print("Could not create waypoint for unknown quest.")
@@ -460,14 +508,44 @@ function RQE:OnCoordinateClicked(stepIndex)
 		return -- Exit the function if questID is nil
 	end
 
+	-- Fetch the description from the specific stepIndex, if available	
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return -- Exit if no data found for the questID
+	end
+
 	-- Check conditions and get or reset coordinates
 	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
 		-- Fetch the coordinates directly from the step data
 		local questData = RQE.getQuestData(questID)
 		if questData and questData[stepIndex] and questData[stepIndex].coordinates then
-			x = questData[stepIndex].coordinates.x
-			y = questData[stepIndex].coordinates.y
+			x = questData[stepIndex].coordinates.x / 100
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Line 518: X is: " .. x)
+			end
+			y = questData[stepIndex].coordinates.y / 100
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Line 522: Y is: " .. y)
+			end
 			mapID = questData[stepIndex].coordinates.mapID
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Line 526: mapID is: " .. mapID)
+			end
+
+			-- Save these coordinates to the database fields
+			RQE.DatabaseSuperX = x
+			RQE.DatabaseSuperY = y
+			RQE.DatabaseSuperMapID = mapID
+
+			-- Save these coordinates to the database fields
+			RQE.superX = x
+			RQE.superY = y
+			RQE.superMapID = mapID
+
+			-- Save these coordinates to the database fields
+			RQE.x = x
+			RQE.y = y
+			RQE.MapID = mapID
 		else
 			RQE.debugLog("Coordinates not found for quest step:", stepIndex)
 			return -- Exit if coordinates are not found
@@ -484,16 +562,8 @@ function RQE:OnCoordinateClicked(stepIndex)
 
 	RQE.debugLog("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 
-	local questData = RQE.getQuestData(questID)
-	if not questData then
-		return -- Exit if no data found for the questID
-	end
-
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-	local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
-
-	-- Fetch the description from the specific stepIndex, if available
-	local stepData = questData[stepIndex]
+	local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName	local stepData = questData[stepIndex]
 	local description = stepData and stepData.description or "No step description available"
 
 	local directionText = RQE.DirectionText

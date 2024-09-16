@@ -1759,7 +1759,19 @@ function RQE.handleSuperTracking()
 	end
 	RQE.FocusScrollFrameToTop()
 
-	RQE.SaveSuperTrackData()
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- if questID then
+		-- local stepData = RQE.getQuestData(questID)
+		
+		-- if stepData then
+			-- local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+
+			-- if not stepData and not stepData.coordinates then
+				-- RQE.SaveSuperTrackData()
+			-- end
+		-- end
+	-- end
+
 	RQE:ClearWaypointButtonData()
 
 	-- Optimize by updating the separate frame only if needed
