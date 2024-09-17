@@ -1789,7 +1789,7 @@ function RQE.handleSuperTracking()
 		if RQE.db.profile.autoClickWaypointButton then
 			-- Tier Three Importance: SUPER_TRACKING_CHANGED event
 			RQE.CreateMacroForSuperTracking = true
-			RQEMacro:CreateMacroForCurrentStep()
+			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
 
 			C_Timer.After(3, function()
 				RQE.CreateMacroForSuperTracking = false
@@ -1827,7 +1827,7 @@ function RQE.handleSuperTracking()
 		-- Tier Three Importance: SUPER_TRACKING_CHANGED event
 		if RQE.db.profile.autoClickWaypointButton then
 			RQE.CreateMacroForSuperTracking = true
-			RQEMacro:CreateMacroForCurrentStep()
+			RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if SUPER_TRACKING_CHANGED event fires (a second time)
 			C_Timer.After(3, function()
 				RQE.CreateMacroForSuperTracking = false
 			end)
@@ -2478,7 +2478,7 @@ function RQE.handleUnitQuestLogChange(...)
 					-- Tier Five Importance: UNIT_QUEST_LOG_CHANGED event
 					if RQE.db.profile.autoClickWaypointButton then
 						RQE.CreateMacroForUnitQuestLogChange = true
-						RQEMacro:CreateMacroForCurrentStep()
+						RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if UNIT_QUEST_LOG_CHANGED event fires
 						C_Timer.After(3, function()
 							RQE.CreateMacroForUnitQuestLogChange = false
 						end)
@@ -3285,7 +3285,7 @@ function RQE.handleQuestWatchUpdate(...)
 			-- Tier Five Importance: QUEST_WATCH_UPDATE event
 			if RQE.db.profile.autoClickWaypointButton then
 				RQE.CreateMacroForQuestWatchUpdate = true
-				RQEMacro:CreateMacroForCurrentStep()
+				RQEMacro:CreateMacroForCurrentStep()			-- Checks for macro status if QUEST_WATCH_UPDATE event fires
 				C_Timer.After(3, function()
 					RQE.CreateMacroForQuestWatchUpdate = false
 				end)
@@ -3441,7 +3441,7 @@ function RQE.handleQuestWatchListChanged(...)
 	-- Tier Five Importance: QUEST_WATCH_LIST_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.CreateMacroForQuestWatchListChanged = true
-		RQEMacro:CreateMacroForCurrentStep()
+		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if QUEST_WATCH_LIST_CHANGED event fires
 		C_Timer.After(3, function()
 			RQE.CreateMacroForQuestWatchListChanged = false
 		end)
