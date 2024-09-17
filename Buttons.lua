@@ -64,6 +64,11 @@ RQE.UnknownButtonTooltip = function()
 		C_Timer.After(0.2, function()
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
+			-- Resets the master waypoint
+			RQE.WPxPos = nil
+			RQE.WPyPos = nil
+			RQE.WPmapID = nil
+
 			local extractedQuestID
 			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -81,6 +86,12 @@ RQE.UnknownButtonTooltip = function()
 				local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
 				GameTooltip:SetText(tooltipText)
 				GameTooltip:Show()
+
+				-- Saves the coords used to create the tooltip
+				RQE.WPxPos = RQE.DatabaseSuperX
+				RQE.WPyPos = RQE.DatabaseSuperY
+				RQE.WPmapID = RQE.DatabaseSuperMapID
+
 			elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
 				-- Open the quest log details for the super tracked quest to fetch the coordinates
 				OpenQuestLogToQuestDetails(questID)
@@ -101,18 +112,24 @@ RQE.UnknownButtonTooltip = function()
 					end
 				end
 				GameTooltip:Show()
+
+				-- Saves the coords used to create the tooltip
+				RQE.WPxPos = waypointX
+				RQE.WPyPos = waypointY
+				RQE.WPmapID = waypointMapID
 			else
 				-- If coordinates are already available, just show them
 				local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
 				GameTooltip:SetText(tooltipText)
 				GameTooltip:Show()
+
+				-- Saves the coords used to create the tooltip
+				RQE.WPxPos = RQE.superX
+				RQE.WPyPos = RQE.superY
+				RQE.WPmapID = RQE.superMapID
 			end
 			WorldMapFrame:Hide()
 		end)
-	end)
-
-	RQE.UnknownQuestButton:SetScript("OnLeave", function(self)
-		GameTooltip:Hide()
 	end)
 end
 
