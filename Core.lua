@@ -1246,39 +1246,6 @@ function RQE:ClearWaypointButtonData()
 end
 
 
--- -- Function to clear the contents of the SeparateFocusFrame
--- function RQE:ClearSeparateFocusFrame()
-	-- -- Check if the SeparateFocusFrame exists
-	-- if not RQE.SeparateFocusFrame then
-		-- return
-	-- end
-
-	-- -- Check to make sure that quest is being supertracked and if not will only initialize the frame, otherwise it will populate the focus quest frame data
-	-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	-- if isSuperTracking then
-		-- -- Check if SeparateStepText exists before attempting to set its text
-		-- if RQE.SeparateStepText then
-			-- local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
-			-- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-
-			-- -- Fetch quest data and ensure it is not nil
-			-- local questData = RQE.getQuestData(questID)
-			-- if questData and questData[stepIndex] then
-				-- local stepData = questData[stepIndex]
-				-- RQE.SeparateStepText:SetText(stepData.description or "No step description available for this step.")
-			-- else
-				-- RQE.debugLog("Quest data or step data is nil, cannot set text.")
-				-- RQE.SeparateStepText:SetText("No step description available for this step.")
-			-- end
-		-- else
-			-- RQE.debugLog("SeparateStepText is nil, cannot set text.")
-		-- end
-	-- end
-
-	-- RQE.InitializeSeparateFocusFrame()
--- end
-
-
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Check if the SeparateFocusFrame exists
@@ -1820,63 +1787,6 @@ end
 ---------------------------------------------------
 -- 10. Scenario Functions
 ---------------------------------------------------
-
--- -- Function to fetch/print Scenario Criteria information
--- function RQE.PrintScenarioCriteriaInfo()
-	-- local numCriteria = select(3, C_Scenario.GetStepInfo())
-	-- if not numCriteria or numCriteria == 0 then
-		-- return
-	-- end
-	-- for criteriaIndex = 1, numCriteria do
-		-- local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
-		-- RQE.infoLog("Criteria Index:", criteriaIndex)
-		-- RQE.infoLog("Criteria String:", criteriaString or "N/A")
-		-- RQE.infoLog("Criteria Type:", criteriaType or "N/A")
-		-- RQE.infoLog("Completed:", completed)
-		-- RQE.infoLog("Quantity:", quantity or "N/A")
-		-- RQE.infoLog("Total Quantity:", totalQuantity or "N/A")
-		-- RQE.infoLog("Flags:", flags or "N/A")
-		-- RQE.infoLog("Asset ID:", assetID or "N/A")
-		-- RQE.infoLog("Quantity String:", quantityString or "N/A")
-		-- RQE.infoLog("Criteria ID:", criteriaID or "N/A")
-		-- RQE.infoLog("Duration:", duration or "N/A")
-		-- RQE.infoLog("Elapsed:", elapsed or "N/A")
-		-- RQE.infoLog("Criteria Failed:", criteriaFailed)
-		-- RQE.infoLog("Is Weighted Progress:", isWeightedProgress)
-	-- end
--- end
-
-
--- -- Function to fetch/print Scenario Criteria Step by Step
--- function RQE.PrintScenarioCriteriaInfoByStep()
-	-- local currentStep, numSteps = C_Scenario.GetInfo()
-	-- for stepID = 1, numSteps do
-		-- local _, _, numCriteria = C_Scenario.GetStepInfo(stepID)
-		-- if not numCriteria or numCriteria == 0 then
-			-- print("No criteria info available for step", stepID)
-		-- else
-			-- for criteriaIndex = 1, numCriteria do
-				-- --local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress, isFormatted = C_ScenarioInfo.GetCriteriaInfo(stepID, criteriaIndex)
-				-- local criteriaString, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-				-- print("Step ID:", stepID)
-				-- print("Criteria String:", criteriaString or "N/A")
-				-- print("Criteria Type:", criteriaType or "N/A")
-				-- print("Completed:", completed)
-				-- print("Quantity:", quantity or "N/A")
-				-- print("Total Quantity:", totalQuantity or "N/A")
-				-- print("Flags:", flags or "N/A")
-				-- print("Asset ID:", assetID or "N/A")
-				-- print("Quantity String:", quantityString or "N/A")
-				-- print("Criteria ID:", criteriaID or "N/A")
-				-- print("Duration:", duration or "N/A")
-				-- print("Elapsed:", elapsed or "N/A")
-				-- print("Criteria Failed:", criteriaFailed)
-				-- print("Is Weighted Progress:", isWeightedProgress)
-			-- end
-		-- end
-	-- end
--- end
-
 
 -- Function to fetch/print Scenario Criteria Step by Step updated for Patch 11.0
 function RQE.PrintAllScenarioBits()
@@ -2784,10 +2694,6 @@ function RQE:ShowWowheadLink(questID)
 	linkFrame:RegisterForDrag("LeftButton")
 	linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
 	linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
-
-	-- -- Enable mouse input propagation
-	-- linkFrame:SetPropagateMouseClicks(true)
-	-- linkFrame:SetPropagateMouseMotion(true)
 
 	-- Configure the EditBox font
 	wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
@@ -3841,24 +3747,6 @@ function RQE:StartPeriodicChecks()
 			return  -- Exit if stepIndex is invalid
 		end
 
-		-- -- Check if the current step requires objective progress check
-		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Running CheckObjectiveProgress for stepIndex:", stepIndex)
-			-- end
-			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
-			-- if objProgressResult then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Objective progress check completed and step advanced.")
-				-- end
-				-- RQE:UpdateSeparateFocusFrame()
-				-- return
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Objective progress check did not result in advancement.")
-				-- end
-			-- end
-
 		-- Check if the current step requires objective progress check
 		if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
 			local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
@@ -4175,9 +4063,6 @@ function RQE:ClickWaypointButtonForIndex(index)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Clicking button at index:", index)
 		end
-
-		-- Clears the RQE Macro prior to clicking the Waypoint "W" Button
-		-- RQEMacro:ClearMacroContentByName("RQE Macro")
 
 		-- Perform the button click
 		button:Click()
@@ -6378,7 +6263,9 @@ RQEGossipFrame:HookScript("OnEvent", function(self, event)
 		-- Iterate through options and select based on specified index
 		for i, option in ipairs(options) do
 			if option.orderIndex == selectedGossipOption.optionIndex then
-				print("Selecting gossip option:", option.orderIndex, "for NPC Name:", selectedGossipOption.npcName)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Selecting gossip option:", option.orderIndex, "for NPC Name:", selectedGossipOption.npcName)
+				end
 				C_GossipInfo.SelectOptionByIndex(option.orderIndex)
 				break
 			end
