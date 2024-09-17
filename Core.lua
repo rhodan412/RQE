@@ -4072,7 +4072,8 @@ function RQE:ClickWaypointButtonForIndex(index)
 			local addonButton = RQE.WaypointButtons[RQE.AddonSetStepIndex]
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
-				RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
+				RQE:OnCoordinateClicked()
+				-- RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
 				RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
@@ -4357,6 +4358,13 @@ function RQE:CheckScenarioStage(questID, stepIndex)
 	-- Fetch quest data and step information
 	local questData = self.getQuestData(questID)
 	local stepData = questData and questData[stepIndex]
+
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data found in RQEDatabase for quest ID:", questID)
+		end
+		return false
+	end
 
 	if not stepData then
 		if RQE.db.profile.debugLevel == "INFO+" then
