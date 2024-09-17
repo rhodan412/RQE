@@ -551,70 +551,70 @@ end
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked()
 	local stepIndex = RQE.AddonSetStepIndex or 1
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
-    if not questID then
-        RQE.debugLog("No super-tracked quest.")
-        return -- Exit the function if questID is nil
-    end
+	if not questID then
+		RQE.debugLog("No super-tracked quest.")
+		return -- Exit the function if questID is nil
+	end
 
-    -- Fetch the coordinates using the shared function
+	-- Fetch the coordinates using the shared function
 	local x, y, mapID = RQE:GetStepCoordinates(stepIndex)
 
-    if not x or not y or not mapID then
-        RQE.debugLog("Invalid coordinates. Waypoint creation skipped.")
-        return -- Exit if coordinates are invalid
-    end
+	if not x or not y or not mapID then
+		RQE.debugLog("Invalid coordinates. Waypoint creation skipped.")
+		return -- Exit if coordinates are invalid
+	end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 		print("Waypoint coordinates - X:", x, "Y:", y, "MapID:", mapID)
 	end
 
-    local questData = RQE.getQuestData(questID)
-    if not questData then
-        return -- Exit if no data found for the questID
-    end
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return -- Exit if no data found for the questID
+	end
 
-    local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-    local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
+	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
-    -- Fetch the description from the specific stepIndex, if available
-    local stepData = questData[stepIndex]
-    local description = stepData and stepData.description or "No step description available"
+	-- Fetch the description from the specific stepIndex, if available
+	local stepData = questData[stepIndex]
+	local description = stepData and stepData.description or "No step description available"
 
-    local directionText = RQE.DirectionText
+	local directionText = RQE.DirectionText
 
-    if directionText then
-        title = title .. "\nDirection: " .. directionText
-    elseif description then
-        title = title .. "\nDescription: " .. description
-    end
+	if directionText then
+		title = title .. "\nDirection: " .. directionText
+	elseif description then
+		title = title .. "\nDescription: " .. description
+	end
 
-    -- Check if TomTom is loaded and compatibility is enabled
-    local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-    if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-        RQE.debugLog("TomTom is available.")
+	-- Check if TomTom is loaded and compatibility is enabled
+	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		RQE.debugLog("TomTom is available.")
 
-        -- Add waypoint using TomTom
-        local uid = TomTom:AddWaypoint(mapID, x, y, {
-            title = title,
-            from = "RQE",
-            persistent = nil,
-            minimap = true,
-            world = true
-        })
+		-- Add waypoint using TomTom
+		local uid = TomTom:AddWaypoint(mapID, x, y, {
+			title = title,
+			from = "RQE",
+			persistent = nil,
+			minimap = true,
+			world = true
+		})
 
-        if uid then
+		if uid then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Waypoint added successfully with UID:", tostring(uid))
 			end
-        else
-            RQE.debugLog("Failed to add waypoint.")
-        end
-    else
-        RQE.debugLog("TomTom is not available.")
-    end
+		else
+			RQE.debugLog("Failed to add waypoint.")
+		end
+	else
+		RQE.debugLog("TomTom is not available.")
+	end
 end
 
 
