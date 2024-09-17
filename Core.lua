@@ -3302,7 +3302,16 @@ end
 function RQEMacro:CreateMacroForCurrentStep()
 	-- Retrieve the questID that is currently being supertracked
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local isInInstance, instanceType = IsInInstance()
 	if not questID then
+		return
+	end
+
+	-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
+	if isInInstance and (instanceType == "party" or instanceType == "raid") then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
+		end
 		return
 	end
 
@@ -3819,9 +3828,9 @@ function RQE:StartPeriodicChecks()
 			end
 		end
 
-		-- -- Check and build macro if needed
+		-- Check and build macro if needed
 		-- RQE.CreateMacroForPeriodicChecks = true
-		-- RQEMacro:CreateMacroForCurrentStep()
+		RQEMacro:CreateMacroForCurrentStep()
 
 		-- -- Reset the flag after creating the macro
 		-- RQE.CreateMacroForPeriodicChecks = false
