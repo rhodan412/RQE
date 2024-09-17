@@ -73,9 +73,6 @@ ScrollFrame:SetClipsChildren(true)  -- Enable clipping
 --ScrollFrame:Hide()
 RQE.QTScrollFrame = ScrollFrame
 
--- -- Enable mouse input propagation
--- RQE.QTScrollFrame:SetPropagateMouseClicks(true)
--- RQE.QTScrollFrame:SetPropagateMouseMotion(true)
 
 -- Create the content frame
 local content = CreateFrame("Frame", nil, ScrollFrame)
@@ -762,24 +759,6 @@ function SortQuestsByProximity()
 end
 
 
--- -- Function to gather and sort World Quests by proximity
--- function GatherAndSortWorldQuestsByProximity()
-	-- local worldQuests = {}
-	-- local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
-
-	-- for i = 1, numTrackedWorldQuests do
-		-- local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-		-- if questID and C_QuestLog.IsWorldQuest(questID) then
-			-- local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
-			-- table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge })
-		-- end
-	-- end
-
-	-- table.sort(worldQuests, function(a, b) return a.distanceSq < b.distanceSq end)
-	-- return worldQuests
--- end
-
-
 -- Function to gather and sort World Quests and Bonus Objectives by proximity
 function GatherAndSortWorldQuestsByProximity()
 	local worldQuests = {}
@@ -861,9 +840,9 @@ function ShowQuestDropdown(self, questID)
 end
 
 
----------------------------
+-------------------------------
 -- 8. Scenario Frame Handling
----------------------------
+-------------------------------
 
 -- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
 
@@ -1774,9 +1753,6 @@ function UpdateRQEQuestFrame()
 					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
 				end
 				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
-				
-				-- QuestLogIndexButton:SetPropagateMouseClicks(true)
-				-- QuestLogIndexButton:SetPropagateMouseMotion(true)
 
 				-- Set Justification and Word Wrap
 				QuestLevelAndName:SetJustifyH("LEFT")
@@ -2887,10 +2863,6 @@ function UpdateRQEAchievementsFrame()
 
 			-- Set up the clickable action for the achievement header
 			achievementHeader:EnableMouse(true)
-			
-			-- -- Enable mouse input propagation
-			-- achievementHeader:SetPropagateMouseClicks(true)
-			-- achievementHeader:SetPropagateMouseMotion(true)
 				
 			achievementHeader:SetScript("OnMouseUp", function(self, button)
 				if button == "LeftButton" then
