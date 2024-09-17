@@ -5,13 +5,18 @@
 
 	Core.lua
 		- Simplified the RQE:ClearSeparateFocusFrame() from the previous iteration as it wasn't clearing properly
+		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 		- Removed SetPropagateMouse code
 
 	DebugLog.lua
 		- Removed SetPropagateMouse code
 
 	EventManager.lua
+		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
 		- Code cleanup
+
+	QuestingModule.lua
+		- Added functionality to track bonus objectives when player is at that location
 
 	RQEDatabase.lua
 		- Added some non-campaign leveling quests from Isle of Dorn to the DB
