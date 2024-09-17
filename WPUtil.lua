@@ -66,3 +66,77 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 		RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 	end)
 end
+
+
+-- Function to get coordinates for the current stepIndex
+function RQE:GetStepCoordinates(stepIndex)
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local x, y, mapID
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
+
+	-- Fetch the coordinates directly from the step data
+	local questData = RQE.getQuestData(questID)
+	if questData and questData[stepIndex] and questData[stepIndex].coordinates then
+		x = questData[stepIndex].coordinates.x / 100
+		y = questData[stepIndex].coordinates.y / 100
+		mapID = questData[stepIndex].coordinates.mapID
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Using coordinates from RQEDatabase for stepIndex:", stepIndex)
+		end
+	else
+		if RQE.WPxPos and C_QuestLog.IsOnQuest(questID) then
+			-- If coordinates are available from DatabaseSuper, use them
+			x = RQE.WPxPos
+			y = RQE.WPyPos
+			mapID = RQE.WPmapID
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Using coordinates from RQE.WPxyPos for questID:", questID)
+			end
+		elseif RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
+			-- If coordinates are available from DatabaseSuper, use them
+			x = RQE.DatabaseSuperX
+			y = RQE.DatabaseSuperY
+			mapID = RQE.DatabaseSuperMapID
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Using coordinates from DatabaseSuper for questID:", questID)
+			end
+		elseif (not RQE.DatabaseSuperX and RQE.DatabaseSuperY) or (not RQE.superX or not RQE.superY and RQE.superMapID) then
+			-- Open the quest log details for the super tracked quest to fetch the coordinates
+			OpenQuestLogToQuestDetails(questID)
+
+			-- Use RQE.GetQuestCoordinates to get the coordinates
+			x, y, mapID = RQE.GetQuestCoordinates(questID)
+			if not (x and y and mapID) then
+				-- Fallback to using C_QuestLog.GetNextWaypoint if coordinates are not available
+				mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Fallback to GetNextWaypoint for coordinates for questID:", questID)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Using coordinates from GetQuestCoordinates for questID:", questID)
+				end
+			end
+		else
+			-- If coordinates are available from super tracking, use them
+			x = RQE.superX
+			y = RQE.superY
+			mapID = RQE.superMapID
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Using coordinates from super tracking for questID:", questID)
+			end
+		end
+	end
+
+	-- Save the final coordinates to be used for the waypoint
+	RQE.WPxPos = x
+	RQE.WPyPos = y
+	RQE.WPmapID = mapID
+
+	-- Debug print the final coordinates and the method used
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Final waypoint coordinates - X:", RQE.WPxPos, "Y:", RQE.WPyPos, "MapID:", RQE.WPmapID)
+	end
+
+	return x, y, mapID
+end
