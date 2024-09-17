@@ -1041,6 +1041,8 @@ function RQE:UpdateRQEQuestFrameVisibility()
 				self.campaignQuestCount = self.campaignQuestCount + 1
 			elseif C_QuestLog.IsWorldQuest(questID) then
 				self.worldQuestCount = self.worldQuestCount + 1
+			elseif C_QuestLog.IsQuestTask(questID) then
+				self.worldQuestCount = self.worldQuestCount + 1
 			else
 				self.regularQuestCount = self.regularQuestCount + 1
 			end
