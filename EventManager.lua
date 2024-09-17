@@ -1989,6 +1989,8 @@ function RQE.handleQuestAccepted(...)
 		end
 	end
 
+	UpdateRQEWorldQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires
+
 	-- Clear the raid marker from the current target
 	if UnitExists("target") then
 		SetRaidTarget("target", 0)
