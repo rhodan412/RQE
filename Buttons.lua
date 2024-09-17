@@ -387,8 +387,6 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 		RQE.ClearButtonPressed = true
 		RQE:RemoveSuperTrackingFromQuest()
 		RQE:UpdateRQEFrameVisibility()
-		RQEMacro:ClearMacroContentByName("RQE Macro")
-		RQE.Buttons.UpdateMagicButtonVisibility()
 
 		C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
@@ -409,6 +407,14 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQE:RemoveSuperTrackingFromQuest()
+		end)
+
+		C_Timer.After(0.2, function()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+		end)
+
+		C_Timer.After(0.2, function()
+			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 
 		-- Reset manually tracked quests
