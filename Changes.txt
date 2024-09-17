@@ -2,13 +2,16 @@
 	Buttons.lua
 		- Created system of saving waypoint information to a variable to be used in waypoint creation under the automation system
 		- Modified code for the "C" Clear Button to better handle clearing the frame (focus frame, in particular) when pressed.
+		- Fixed macro not being cleared when the "C" ClearButton was pressed within the RQEFrame
 		- Removed SetPropagateMouse code
 
 	Core.lua
 		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately 
 		- Simplified the RQE:ClearSeparateFocusFrame() from the previous iteration as it wasn't clearing properly
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
+		- Added check for if player was in party/raid instance and if so, not to update/check macro (prior to this existing there was a momentary bump in lag whenever it checked which was more noticeable in these environments)
 		- Added nil check for questData within the RQE:CheckScenarioStage(questID, stepIndex) function
+		- Creates/checks macro status when RQE:StartPeriodicChecks runs to see if it has the correct macro in place
 		- Removed SetPropagateMouse code
 
 	DebugLog.lua
