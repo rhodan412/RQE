@@ -762,20 +762,75 @@ function SortQuestsByProximity()
 end
 
 
--- Function to gather and sort World Quests by proximity
+-- -- Function to gather and sort World Quests by proximity
+-- function GatherAndSortWorldQuestsByProximity()
+	-- local worldQuests = {}
+	-- local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+
+	-- for i = 1, numTrackedWorldQuests do
+		-- local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- if questID and C_QuestLog.IsWorldQuest(questID) then
+			-- local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+			-- table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge })
+		-- end
+	-- end
+
+	-- table.sort(worldQuests, function(a, b) return a.distanceSq < b.distanceSq end)
+	-- return worldQuests
+-- end
+
+
+-- Function to gather and sort World Quests and Bonus Objectives by proximity
 function GatherAndSortWorldQuestsByProximity()
 	local worldQuests = {}
 	local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
 
+	-- Gather World Quests
 	for i = 1, numTrackedWorldQuests do
 		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 		if questID and C_QuestLog.IsWorldQuest(questID) then
 			local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
-			table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge })
+			table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge, type = "WQ" })
 		end
 	end
 
+	-- Get the player's current map ID
+	local currentMapID = C_Map.GetBestMapForUnit("player")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Player's current map ID:", currentMapID)
+	end
+
+	-- Gather Bonus Objectives
+	local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(currentMapID) -- Fetch tasks for the current map
+	local closestBonusQuest = nil
+	local closestDistanceSq = math.huge
+
+	for _, task in ipairs(taskPOIs or {}) do
+		local bonusQuestID = task.questId
+
+		-- Check if the quest is a bonus objective and is not a world quest
+		if C_QuestLog.IsQuestTask(bonusQuestID) and not C_QuestLog.IsWorldQuest(bonusQuestID) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Detected Bonus Quest in current area:", bonusQuestID) -- Debug print
+			end
+			local distanceSq = C_QuestLog.GetDistanceSqToQuest(bonusQuestID)
+			
+			-- Find the closest bonus quest
+			if distanceSq and distanceSq < closestDistanceSq then
+				closestDistanceSq = distanceSq
+				closestBonusQuest = { questID = bonusQuestID, distanceSq = distanceSq, type = "BQ" }
+			end
+		end
+	end
+
+	-- If a closest bonus quest is found, add it to the list
+	if closestBonusQuest then
+		table.insert(worldQuests, closestBonusQuest)
+	end
+
+	-- Sort the combined list of quests by proximity
 	table.sort(worldQuests, function(a, b) return a.distanceSq < b.distanceSq end)
+
 	return worldQuests
 end
 
@@ -1251,18 +1306,18 @@ function GetQuestType(questID)
 		return "Campaign"
 	elseif C_QuestLog.IsWorldQuest(questID) then
 		return "World Quest"
+	elseif C_QuestLog.IsQuestTask(questID) then
+		return "Bonus Quest"
 	elseif C_QuestLog.IsQuestTrivial(questID) then
 		return "Trivial"
 	elseif C_QuestLog.IsThreatQuest(questID) then
-		return "Bonus Quest"
+		return "Threat Quest"
 	elseif C_QuestLog.IsRepeatableQuest(questID) then
 		return "Repeatable"
 	elseif QuestIsWeekly() then
 		return "Weekly Quest"
 	elseif QuestIsDaily() then
 		return "Daily Quest"
-	elseif C_QuestLog.IsThreatQuest(questID) then
-		return "Threat Quest"
 	else
 		return "Regular Quest"
 	end
@@ -1355,6 +1410,8 @@ function UpdateRQEQuestFrame()
 	RQE.campaignQuestCount = campaignQuestCount
 	RQE.regularQuestCount = regularQuestCount
 	RQE.worldQuestCount = worldQuestCount
+	RQE.bonusQuestCount = bonusQuestCount
+
 	RQE.AchievementsFrame.achieveCount = 0
 	local baseHeight = 175 -- Base height when no quests are present
 	local questHeight = 65 -- Height per quest
@@ -1377,6 +1434,8 @@ function UpdateRQEQuestFrame()
 		if C_CampaignInfo.IsCampaignQuest(questID) then
 			RQE.campaignQuestCount = RQE.campaignQuestCount + 1
 		elseif C_QuestLog.IsWorldQuest(questID) then
+			RQE.worldQuestCount = RQE.worldQuestCount + 1
+		elseif C_QuestLog.IsQuestTask(questID) then
 			RQE.worldQuestCount = RQE.worldQuestCount + 1
 		end
 	end
@@ -1496,13 +1555,14 @@ function UpdateRQEQuestFrame()
 				-- Determine the type of the quest (Campaign, World Quest, or Regular)
 				local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID)
 				local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+				local isBonusQuest = C_QuestLog.IsQuestTask(questID)
 
 				local parentFrame
 				local lastElement
 				if isCampaignQuest then
 					parentFrame = RQE.CampaignFrame
 					lastElement = lastCampaignElement
-				elseif isWorldQuest then
+				elseif isWorldQuest or isBonusQuest then
 					parentFrame = RQE.WorldQuestsFrame
 					lastElement = lastWorldQuestElement
 				else
@@ -2017,7 +2077,7 @@ function UpdateRQEQuestFrame()
 
 	UpdateHeader(RQE.CampaignFrame, "Campaign", RQE.campaignQuestCount)
 	UpdateHeader(RQE.QuestsFrame, "Quests", RQE.regularQuestCount)
-	UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.worldQuestCount)
+	UpdateHeader(RQE.WorldQuestsFrame, "World/Bonus Quests", RQE.worldQuestCount)
 
 	-- Update scrollbar range and visibility
 	local scrollFrameHeight = RQE.QTScrollFrame:GetHeight()
@@ -2029,6 +2089,7 @@ function UpdateRQEQuestFrame()
 	end
 
 	-- Visibility Update Check for RQEQuestFrame
+	UpdateRQEWorldQuestFrame()
 	RQE:UpdateRQEQuestFrameVisibility()
 end
 
@@ -2038,6 +2099,14 @@ function UpdateRQEWorldQuestFrame()
 	-- Define padding value
 	local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
+
+	-- Get the player's current map ID
+	local currentMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Player's current map ID:", currentMapID)
+	end
+
+	-- Gather and sort World Quests by proximity
 	local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
 
 	-- Hide all existing World Quest buttons first
@@ -2052,26 +2121,211 @@ function UpdateRQEWorldQuestFrame()
 
 	-- Get the number of tracked World Quests
 	local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+	local numTrackedBonusQuests = 0
 	local lastWorldQuestElement = nil
 	local usedQuestIDs = {}  -- Table to keep track of used quest IDs
 
-	-- Loop through each tracked World Quest
+	-- Loop through sorted quests to count bonus quests
+	for _, questInfo in ipairs(sortedWorldQuests) do
+		if questInfo.type == "BQ" then
+			numTrackedBonusQuests = numTrackedBonusQuests + 1
+		end
+	end
+
+	-- Total quests to be tracked
+	local totalTrackedQuests = numTrackedWorldQuests + numTrackedBonusQuests
+	RQE.numTrackedBonusQuests = numTrackedBonusQuests
+
+	-- Ensure the frame is visible if there are any tracked quests
+	if totalTrackedQuests > 0 then
+		RQE.WorldQuestsFrame:Show()
+	else
+		RQE.WorldQuestsFrame:Hide()
+		return -- Exit early if no quests to display
+	end
+	
+	-- -- Loop through each tracked World Quest
+	-- for i, questInfo in ipairs(sortedWorldQuests) do
+		-- local questID = questInfo.questID
+		-- local button = RQE.WorldQuestsFrame["WQButton" .. questID]
+		-- local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+
+		-- -- Retrieve or initialize the WQuestLogIndexButton for the current questID
+		-- local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
+
+		-- if questID and (C_QuestLog.IsWorldQuest(questID) or C_QuestLog.IsQuestTask(questID)) and not C_CampaignInfo.IsCampaignQuest(questID) then
+		-- --if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
+			-- usedQuestIDs[questID] = true
+
+			-- -- Create or reuse the WQuestLogIndexButton
+			-- ---@class WQuestLogIndexButton : Button
+			-- ---@field bg Texture
+			-- ---@field number FontString
+			-- local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
+			-- RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
+			-- WQuestLogIndexButton:SetSize(35, 35)
+
+			-- -- Ensure the button always has the correct background texture based on its tracking state
+			-- local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
+			-- WQuestLogIndexButton.bg = bg
+			-- bg:SetAllPoints()
+			-- if isSuperTracked then
+				-- bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+			-- else
+				-- bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+			-- end
+
+			-- WQuestLogIndexButton:Show()
+
+			-- -- Create or update the number label
+			-- local WQnumber = WQuestLogIndexButton.number or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+			-- WQnumber:SetPoint("CENTER", WQuestLogIndexButton, "CENTER")
+			-- WQnumber:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+			-- WQnumber:SetTextColor(1, 0.7, 0.2)
+			-- WQnumber:SetText("WQ")
+			-- WQuestLogIndexButton.number = WQnumber
+
+			-- -- Set flag to check if correct macro
+			-- if RQE.RQEQuestFrame then
+				-- WQuestLogIndexButton:SetScript("OnEnter", function()
+					-- -- Set the flag to true
+					-- RQE.hoveringOnFrame = true
+				-- end)
+			-- end
+
+			-- -- Hide tooltip for the RQEQuestFrame when moving out of the frame
+			-- if RQE.RQEQuestFrame then
+				-- WQuestLogIndexButton:SetScript("OnLeave", function()
+					-- GameTooltip:Hide()
+					-- RQE.hoveringOnFrame = false
+				-- end)
+			-- end
+
+			-- -- Modify the OnClick event
+			-- WQuestLogIndexButton:SetScript("OnClick", function(self, button)
+				-- if IsShiftKeyDown() and button == "LeftButton" then
+					-- -- Untrack the quest
+					-- C_QuestLog.RemoveWorldQuestWatch(questID)
+					-- RQE.infoLog("Removing world quest watch for quest: " .. questID)
+
+					-- local extractedQuestID
+					-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+						-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+					-- end
+
+					-- if questID == extractedQuestID then
+						-- RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
+						-- RQE:ClearWaypointButtonData()
+					-- end
+
+					-- RQE.TrackedQuests[questID] = nil -- Update the tracking table
+
+					-- -- Refresh the UI here to update the button state
+					-- UpdateRQEWorldQuestFrame()
+				-- else
+					-- if RQE.hoveringOnFrame then
+						-- RQE.shouldCheckFinalStep = true
+						-- RQE.CheckAndSetFinalStep()
+					-- end
+
+					-- -- Get the currently super tracked quest ID
+					-- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+					-- -- Simulates pressing the "Clear Window" Button before proceeding with rest of function
+					-- RQE:PerformClearActions()
+
+					-- -- Clears Macro Data
+					 -- RQEMacro:ClearMacroContentByName("RQE Macro")
+
+					-- -- Reset the "Clicked" WaypointButton to nil
+					-- RQE.LastClickedIdentifier = nil
+					-- -- Scrolls the RQEFrame to top on super track
+					-- RQE.ScrollFrameToTop()
+					-- -- Reset the Last Clicked WaypointButton to be "1"
+					-- RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+					-- -- Existing code to set as super-tracked
+					-- RQE.ManualSuperTrack = true
+					-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+					-- RQE.ManualSuperTrackedQuestID = questID
+					-- RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
+
+					-- -- Allow time for the UI to update and for the super track to register
+					-- C_Timer.After(1, function()
+						-- -- Fetch the quest data here
+						-- local questData = RQE.getQuestData(questID)
+						-- if not questData then
+							-- RQE.debugLog("Quest data not found for questID:", questID)
+							-- return
+						-- end
+
+						-- -- Check if the last clicked waypoint button's macro should be set
+						-- local waypointButton = RQE.LastClickedWaypointButton
+						-- if waypointButton and waypointButton.stepIndex then
+							-- local stepData = questData[waypointButton.stepIndex]
+							-- if stepData and stepData.macro then
+								-- -- Get macro commands from the step data
+								-- local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+								-- RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
+							-- end
+						-- end
+					-- end)
+
+					-- -- Refresh the UI here to update the button state
+					-- RQE:ClearRQEQuestFrame()
+					-- UpdateRQEQuestFrame()
+
+					-- -- Check if MagicButton should be visible based on macro body
+					-- C_Timer.After(1, function()
+						-- RQE.Buttons.UpdateMagicButtonVisibility()
+					-- end)
+				-- end
+			-- end)
+
+			-- -- Add a mouse down event to simulate a button press
+			-- WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
+				-- if button == "LeftButton" then
+					-- self.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
+				-- end
+			-- end)
+
+			-- -- Add a mouse up event to reset the texture
+			-- WQuestLogIndexButton:SetScript("OnMouseUp", function(self, button)
+				-- if button == "LeftButton" then
+					-- self.bg:SetAlpha(1)  -- Reset the alpha
+				-- end
+			-- end)
+
+			-- -- Fetch Quest Description and Objectives
+			-- local _, questObjectivesText = GetQuestLogQuestText(questID)
+			-- local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+			-- local objectivesText = ""
+			-- if objectivesTable then
+				-- for _, objective in ipairs(objectivesTable) do
+					-- objectivesText = objectivesText .. objective.text .. "\n"
+				-- end
+			-- end
+
+			-- -- Apply colorization to objectivesText
+			-- objectivesText = colorizeObjectives(questID)
+
+			-- -- Create or update the quest title label
+			-- local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+			-- local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			-- WQuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+			-- WQuestLevelAndName:SetHeight(0)
+			-- WQuestLevelAndName:SetJustifyH("LEFT")
+			-- WQuestLevelAndName:SetJustifyV("TOP")
+			-- WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
+
+	-- Loop through each tracked World Quest or Bonus Objective
 	for i, questInfo in ipairs(sortedWorldQuests) do
 		local questID = questInfo.questID
 		local button = RQE.WorldQuestsFrame["WQButton" .. questID]
 		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
 
-		-- Retrieve or initialize the WQuestLogIndexButton for the current questID
-		local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID]
-
-		if questID and C_QuestLog.IsWorldQuest(questID) and not C_CampaignInfo.IsCampaignQuest(questID) then
-		--if questID and C_QuestLog.IsWorldQuest(questID) and not usedQuestIDs[questID] then
-			usedQuestIDs[questID] = true
-
-			-- Create or reuse the WQuestLogIndexButton
-			---@class WQuestLogIndexButton : Button
-			---@field bg Texture
-			---@field number FontString
+		-- Ensure questID is valid
+		if questID then
+			-- Retrieve or initialize the WQuestLogIndexButton for the current questID
 			local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
 			RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
 			WQuestLogIndexButton:SetSize(35, 35)
@@ -2093,13 +2347,21 @@ function UpdateRQEWorldQuestFrame()
 			WQnumber:SetPoint("CENTER", WQuestLogIndexButton, "CENTER")
 			WQnumber:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQnumber:SetTextColor(1, 0.7, 0.2)
-			WQnumber:SetText("WQ")
+
+			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+			local isBonusQuest = C_QuestLog.IsQuestTask(questID)
+			
+			if isWorldQuest then
+				WQnumber:SetText("WQ")
+			elseif isBonusQuest then
+				WQnumber:SetText("BQ")
+			end
+
 			WQuestLogIndexButton.number = WQnumber
 
 			-- Set flag to check if correct macro
 			if RQE.RQEQuestFrame then
 				WQuestLogIndexButton:SetScript("OnEnter", function()
-					-- Set the flag to true
 					RQE.hoveringOnFrame = true
 				end)
 			end
@@ -2115,7 +2377,6 @@ function UpdateRQEWorldQuestFrame()
 			-- Modify the OnClick event
 			WQuestLogIndexButton:SetScript("OnClick", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
-					-- Untrack the quest
 					C_QuestLog.RemoveWorldQuestWatch(questID)
 					RQE.infoLog("Removing world quest watch for quest: " .. questID)
 
@@ -2125,13 +2386,11 @@ function UpdateRQEWorldQuestFrame()
 					end
 
 					if questID == extractedQuestID then
-						RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
+						RQE:ClearFrameData()
 						RQE:ClearWaypointButtonData()
 					end
 
-					RQE.TrackedQuests[questID] = nil -- Update the tracking table
-
-					-- Refresh the UI here to update the button state
+					RQE.TrackedQuests[questID] = nil
 					UpdateRQEWorldQuestFrame()
 				else
 					if RQE.hoveringOnFrame then
@@ -2139,87 +2398,49 @@ function UpdateRQEWorldQuestFrame()
 						RQE.CheckAndSetFinalStep()
 					end
 
-					-- Get the currently super tracked quest ID
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-					-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 					RQE:PerformClearActions()
-
-					-- Clears Macro Data
-					 RQEMacro:ClearMacroContentByName("RQE Macro")
-
-					-- Reset the "Clicked" WaypointButton to nil
+					RQEMacro:ClearMacroContentByName("RQE Macro")
 					RQE.LastClickedIdentifier = nil
-					-- Scrolls the RQEFrame to top on super track
 					RQE.ScrollFrameToTop()
-					-- Reset the Last Clicked WaypointButton to be "1"
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
-					-- Existing code to set as super-tracked
 					RQE.ManualSuperTrack = true
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
 					RQE.ManualSuperTrackedQuestID = questID
-					RQE.ManuallyTrackedQuests[questID] = true -- Set the manual tracking state
+					RQE.ManuallyTrackedQuests[questID] = true
 
-					-- Allow time for the UI to update and for the super track to register
 					C_Timer.After(1, function()
-						-- Fetch the quest data here
 						local questData = RQE.getQuestData(questID)
 						if not questData then
 							RQE.debugLog("Quest data not found for questID:", questID)
 							return
 						end
 
-						-- Check if the last clicked waypoint button's macro should be set
 						local waypointButton = RQE.LastClickedWaypointButton
 						if waypointButton and waypointButton.stepIndex then
 							local stepData = questData[waypointButton.stepIndex]
 							if stepData and stepData.macro then
-								-- Get macro commands from the step data
 								local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
 								RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
 							end
 						end
 					end)
 
-					-- Refresh the UI here to update the button state
 					RQE:ClearRQEQuestFrame()
 					UpdateRQEQuestFrame()
 
-					-- Check if MagicButton should be visible based on macro body
 					C_Timer.After(1, function()
 						RQE.Buttons.UpdateMagicButtonVisibility()
 					end)
 				end
 			end)
 
-			-- Add a mouse down event to simulate a button press
-			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
-				if button == "LeftButton" then
-					self.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
-				end
-			end)
-
-			-- Add a mouse up event to reset the texture
-			WQuestLogIndexButton:SetScript("OnMouseUp", function(self, button)
-				if button == "LeftButton" then
-					self.bg:SetAlpha(1)  -- Reset the alpha
-				end
-			end)
-
-			-- Fetch Quest Description and Objectives
-			local _, questObjectivesText = GetQuestLogQuestText(questID)
-			local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
-			local objectivesText = ""
-			if objectivesTable then
-				for _, objective in ipairs(objectivesTable) do
-					objectivesText = objectivesText .. objective.text .. "\n"
-				end
+			-- Fetch Quest Title with error handling
+			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
+			if not questTitle or questTitle == "" then
+				questTitle = "Unknown Quest"
 			end
 
-			-- Apply colorization to objectivesText
-			objectivesText = colorizeObjectives(questID)
-
-			-- Create or update the quest title label
 			local WQuestLevelAndName = WQuestLogIndexButton.WQuestLevelAndName or WQuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			WQuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 			WQuestLevelAndName:SetHeight(0)
@@ -2227,14 +2448,12 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetJustifyV("TOP")
 			WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
 
-			-- Retrieve the quest title using the quest ID
-			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
-
-			-- Check if questTitle is not nil before setting the text
-			if questTitle and questTitle ~= "" then
-				WQuestLevelAndName:SetText("[WQ] " .. questTitle)
+			if C_QuestLog.IsWorldQuest(questID) then
+				WQuestLevelAndName:SetText("|cFFFFD700[WQ] " .. questTitle .. "|r") -- Gold color for World Quests
+			elseif C_QuestLog.IsQuestTask(questID) then
+				WQuestLevelAndName:SetText("|cFF00CCFF[BQ] " .. questTitle .. "|r") -- Cyan color for Bonus Quests
 			else
-				WQuestLevelAndName:SetText("[WQ] Unknown Quest")  -- Placeholder text or handle the case as needed
+				WQuestLevelAndName:SetText("|cFFFFA500[UQ] Unknown Quest|r") -- Orange or any other color for Unknown Quests
 			end
 
 			WQuestLogIndexButton.WQuestLevelAndName = WQuestLevelAndName
