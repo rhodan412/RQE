@@ -1577,7 +1577,7 @@ function RQE.handlePlayerEnterWorld(...)
 			UpdateFrame()
 		end)
 
-		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
@@ -2125,6 +2125,12 @@ function RQE.handleZoneChange(...)
 
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
 
+	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+	if RQEFrame and not not RQEFrame:IsMouseOver() then
+		RQE.ScrollFrameToTop()
+	end
+	RQE.FocusScrollFrameToTop()
+
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
 		return
@@ -2251,6 +2257,12 @@ function RQE.handleZoneNewAreaChange()
 	end
 
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
+
+	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when ZONE_CHANGED_NEW_AREA event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+	if RQEFrame and not not RQEFrame:IsMouseOver() then
+		RQE.ScrollFrameToTop()
+	end
+	RQE.FocusScrollFrameToTop()
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -3601,7 +3613,7 @@ function RQE.handleQuestWatchListChanged(...)
 				end
 			end
 		end
-		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_WATCH_LIST_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
@@ -3746,7 +3758,7 @@ function RQE.handleQuestFinished()
 				end
 			end
 		end
-		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
