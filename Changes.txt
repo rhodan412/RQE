@@ -8,6 +8,7 @@
 		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately 
 		- Simplified the RQE:ClearSeparateFocusFrame() from the previous iteration as it wasn't clearing properly
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
+		- Added nil check for questData within the RQE:CheckScenarioStage(questID, stepIndex) function
 		- Removed SetPropagateMouse code
 
 	DebugLog.lua
