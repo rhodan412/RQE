@@ -4188,8 +4188,8 @@ function RQE:ClickWaypointButtonForIndex(index)
 			if addonButton then
 				-- Ensure the button is clickable and perform the click
 				RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
+				RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 				if RQE.db.profile.debugLevel == "INFO+" then
-					RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
 				end
 			else
