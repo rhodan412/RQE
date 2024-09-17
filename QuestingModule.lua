@@ -1385,7 +1385,7 @@ end
 function UpdateRQEQuestFrame()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
-	local campaignQuestCount, regularQuestCount, worldQuestCount = 0, 0, 0
+	local campaignQuestCount, regularQuestCount, worldQuestCount, bonusQuestCount = 0, 0, 0, 0
 	RQE.campaignQuestCount = campaignQuestCount
 	RQE.regularQuestCount = regularQuestCount
 	RQE.worldQuestCount = worldQuestCount
@@ -2442,7 +2442,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestObjectives:SetHeight(0)
 			WQuestObjectives:SetJustifyH("LEFT")
 			WQuestObjectives:SetJustifyV("TOP")
-			WQuestObjectives:SetText(objectivesText)
+			-- WQuestObjectives:SetText(GetQuestLogQuestText(C_QuestLog.GetLogIndexForQuestID(questID)))
 			WQuestLogIndexButton.QuestObjectives = WQuestObjectives
 
 			-- Untrack World Quest
@@ -2522,7 +2522,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestObjectivesOrDescription:SetHeight(0)
 			WQuestObjectivesOrDescription:SetWordWrap(true)
 			WQuestObjectivesOrDescription:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
-			WQuestObjectivesOrDescription:SetText(questObjectivesText)
+			-- WQuestObjectivesOrDescription:SetText(GetQuestLogQuestText(C_QuestLog.GetLogIndexForQuestID(questID)))
 			WQuestLogIndexButton.QuestObjectivesOrDescription = WQuestObjectivesOrDescription
 
 			WQuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
@@ -2585,6 +2585,7 @@ function UpdateRQEWorldQuestFrame()
 				end
 
 				-- Add objectives
+				local objectivesText = GetQuestLogQuestText(C_QuestLog.GetLogIndexForQuestID(questID))
 				if objectivesText and objectivesText ~= "" then
 					GameTooltip:AddLine("Objectives:")
 
