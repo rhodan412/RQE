@@ -284,13 +284,6 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
 		end
 	end)
 
-	-- -- Helper function to trim strings (removes whitespace from the beginning and end of a string)
-	-- if not string.trim then
-		-- string.trim = function(s)
-			-- return s:match("^%s*(.-)%s*$")
-		-- end
-	-- end
-
 	-- Local helper function to trim strings (removes whitespace from the beginning and end of a string)
 	local function trim(s)
 		return s:match("^%s*(.-)%s*$")
