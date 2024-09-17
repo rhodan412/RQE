@@ -5,7 +5,6 @@ Manages the main frame design
 
 ]]
 
-
 ---------------------------
 -- 1. Global Declarations
 ---------------------------
@@ -618,7 +617,6 @@ if MapIDText then
 	MapIDText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 15)
 	MapIDText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
 	MapIDText:SetText("Map ID: " .. tostring(C_Map.GetBestMapForUnit("player")))
-	--MapIDText:SetText("Map ID: " .. (C_Map.GetBestMapForUnit("player") or "N/A"))
 end
 RQEFrame.MapIDText = MapIDText
 
@@ -1205,43 +1203,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 					RQE.debugLog("Attempting to create macro")
-					--C_SuperTrack.SetSuperTrackedQuestID(RQE.questIDFromText)	-- This call is now inside the else clause	-- WAS CAUSING ISSUES OF SETTING SUPERTRACK IN COMBAT
 				end
 			end
 
 			RQE.infoLog("Quest ID from text for macro:", RQE.questIDFromText)  -- Debug message for the current operation
-
-			-- -- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
-			-- RQE.debugLog("Attempting to create macro")
-			-- local supertrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-			-- RQE.debugLog("Super Tracked Quest ID:", supertrackedQuestID)	-- Debug message for the super tracked quest ID
-			-- local questData = RQE.getQuestData(RQE.questIDFromText)
-			-- if RQE.LastClickedButtonRef.stepIndex then
-				-- local stepIndex = RQE.LastClickedButtonRef.stepIndex
-			-- else
-				-- local stepIndex = 1
-			-- end
-			-- local stepDescription = StepsText[i]  -- Holds the description like "This is Step One."
-			-- RQE.infoLog("Step Description:", stepDescription)  -- Debug message for the step description
-			-- if questData then
-				-- local stepData = questData[stepIndex]
-				-- RQE.debugLog("Quest data found for ID:", RQE.questIDFromText)
-				-- for index, stepData in ipairs(questData) do
-					-- if stepData.description == stepDescription then
-						-- RQE.infoLog("Matching step data found for description:", stepDescription)
-						-- if stepData and stepData.macro then
-							-- local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-							-- RQE.infoLog("Macro commands to set:", macroCommands)
-							-- RQEMacro:SetQuestStepMacro(RQE.questIDFromText, index, macroCommands, false)
-						-- else
-							-- RQE.debugLog("No macro data found for this step.")
-						-- end
-					-- end
-				-- end
-			-- end
-
-			-- Checks to make sure that the correct macro is in place
-			--RQE.CheckAndBuildMacroIfNeeded()
 
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
