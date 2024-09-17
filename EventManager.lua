@@ -1235,6 +1235,7 @@ function RQE.handleStartTimer(...)
 	RQE:SaveWorldQuestWatches()
 end
 
+
 -- Function to handle WORLD_STATE_TIMER_START:
 function RQE.handleWorldStateTimerStart(...)
 	local event = select(2, ...)
@@ -1898,7 +1899,6 @@ function RQE.handleSuperTracking()
 
 	RQE:QuestType()
 	RQE.superTrackingChanged = true
-	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires (duplicate and may not be necessary)	-- ADDED to RQE:StartPeriodicChecks()
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local mapID = C_Map.GetBestMapForUnit("player")
@@ -2185,18 +2185,6 @@ function RQE.handleZoneChange(...)
 			end
 
 			RQE:UpdateMapIDDisplay()
-
-			-- Call the functions to update the frame
-			--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-
-			-- if C_Scenario.IsInScenario() then
-				-- RQE.ScenarioChildFrame:Show()
-			-- else
-				-- RQE.ScenarioChildFrame:Hide()
-			-- end
-
-			-- Handle scenario regardless of the condition
-			-- RQE.updateScenarioUI()
 		end)
 	else
 		C_Timer.After(0.5, function()
@@ -2227,17 +2215,6 @@ function RQE.handleZoneChange(...)
 			RQE.debugLog("Player is flying or dragonriding")
 		end
 	end
-
-	-- -- Fail safe that will hide Scenario Frame on ZONE_CHANGE 
-	-- if RQE.ScenarioChildFrame:IsShown then
-		-- if C_Scenario.IsInScenario() then
-			-- RQE.ScenarioChildFrame:Show()
-			-- RQE.updateScenarioUI()
-		-- else
-			-- RQE.ScenarioChildFrame:Hide()
-			-- RQE.updateScenarioUI()
-		-- end
-	-- end
 
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
@@ -2313,21 +2290,7 @@ function RQE.handleZoneNewAreaChange()
 				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
 			end
 
-			-- local questInfo = RQE.getQuestData(questID)  -- HANDLED IN UPDATEFRAME
-			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Assuming PrintQuestStepsToChat exists and returns these values
-
 			RQE:UpdateMapIDDisplay()
-
-			-- Call the functions to update the frame
-			--UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-
-			-- if C_Scenario.IsInScenario() then  -- SHOULD BE HANDLED THRU SOMETHING LIKE SCENARIO_UPDATE
-				-- RQE.ScenarioChildFrame:Show()
-				-- RQE.updateScenarioUI()
-			-- else
-				-- RQE.ScenarioChildFrame:Hide()
-				-- RQE.updateScenarioUI()
-			-- end
 
 			if RQE.db.profile.autoTrackZoneQuests then
 				RQE.DisplayCurrentZoneQuests()
@@ -3307,34 +3270,7 @@ function RQE.handleQuestWatchUpdate(...)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 				DEFAULT_CHAT_FRAME:AddMessage("Quest is already super tracked: " .. superTrackedQuestName, 0.56, 0.93, 0.56)
 			end
-			-- RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
-			-- RQEMacro:CreateMacroForCurrentStep()
-			-- questID = RQE.currentSuperTrackedQuestID -- NOT SURE WHY THIS WAS PLACED HERE???
 		end
-
-		-- if RQE.currentSuperTrackedQuestID then
-			-- -- Ensure that the quest ID is valid and that the necessary data is available
-			-- C_Timer.After(0.2, function()
-				-- if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] and RQE.LastClickedButtonRef then
-					-- RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex]:Click()
-				-- elseif RQE.WaypointButtons then
-					-- RQE:ClickWaypointButtonForIndex(1)
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
-					-- end
-				-- end
-			-- end)
-
-			-- -- Tier Five Importance: QUEST_WATCH_UPDATE event
-			-- if RQE.db.profile.autoClickWaypointButton then
-				-- RQE.CreateMacroForQuestWatchUpdate = true
-				-- RQEMacro:CreateMacroForCurrentStep()
-				-- C_Timer.After(3, function()
-					-- RQE.CreateMacroForQuestWatchUpdate = false
-				-- end)
-			-- end
-		-- end
 
 		if RQE.currentSuperTrackedQuestID then
 			-- Ensure that RQE.WaypointButtons and the index are valid before attempting to click
@@ -3540,7 +3476,6 @@ function RQE.handleQuestWatchListChanged(...)
 		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		if superTrackedQuestID == questID then
 			-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-			--local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
 			local questInfo = RQE.getQuestData(superTrackedQuestID)
 			if questInfo then
 				local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}	-- Initialize variables StepsText, CoordsText, MapIds and questHeader
