@@ -1,9 +1,11 @@
 11.0.2.41
 	Buttons.lua
+		- Created system of saving waypoint information to a variable to be used in waypoint creation under the automation system
 		- Modified code for the "C" Clear Button to better handle clearing the frame (focus frame, in particular) when pressed.
 		- Removed SetPropagateMouse code
 
 	Core.lua
+		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately 
 		- Simplified the RQE:ClearSeparateFocusFrame() from the previous iteration as it wasn't clearing properly
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 		- Removed SetPropagateMouse code
@@ -12,13 +14,16 @@
 		- Removed SetPropagateMouse code
 
 	EventManager.lua
+		- Added functionality for the RQEFrame to scroll to top under zone change occurs as long as player isn't mousing over the RQEFrame at the time
 		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
 		- Code cleanup
 
 	QuestingModule.lua
 		- Added functionality to track bonus objectives when player is at that location
+		- Removed some debug messages
 
 	RQEDatabase.lua
+		- Updated waypoints on some quests in Hallowfall
 		- Added some non-campaign leveling quests from Isle of Dorn to the DB
 
 	RQEFrame.lua
@@ -31,6 +36,9 @@
 
 	WaypointManager.lua
 		- Added code to save x, y and mapID into addon table when RQE:OnCoordinateClicked(stepIndex) function fires as a means to attempt to correct issue where waypoint created was from previous stepIndex's waypoint from the DB
+
+	WPUtil.lua
+		- Added system to save coordinate data to a specific variable as the quest progress moves through the objectives
 
 
 11.0.2.40
