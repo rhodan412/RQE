@@ -775,8 +775,17 @@ function GatherAndSortWorldQuestsByProximity()
 
 	-- Get the player's current map ID
 	local currentMapID = C_Map.GetBestMapForUnit("player")
+	if not currentMapID then
+		-- If currentMapID is nil, print an error message and return the current worldQuests table
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Error: Could not determine player's current map ID.")
+		end
+		return worldQuests
+	end
+
+	-- Optional debug print
 	if RQE.db.profile.debugLevel == "INFO+" then
-		-- print("Player's current map ID:", currentMapID)
+		print("Player's current map ID:", currentMapID)
 	end
 
 	-- Gather Bonus Objectives
@@ -790,10 +799,10 @@ function GatherAndSortWorldQuestsByProximity()
 		-- Check if the quest is a bonus objective and is not a world quest
 		if C_QuestLog.IsQuestTask(bonusQuestID) and not C_QuestLog.IsWorldQuest(bonusQuestID) then
 			if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Detected Bonus Quest in current area:", bonusQuestID) -- Debug print
+				print("Detected Bonus Quest in current area:", bonusQuestID) -- Debug print
 			end
 			local distanceSq = C_QuestLog.GetDistanceSqToQuest(bonusQuestID)
-			
+
 			-- Find the closest bonus quest
 			if distanceSq and distanceSq < closestDistanceSq then
 				closestDistanceSq = distanceSq
