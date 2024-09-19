@@ -7,8 +7,7 @@
 		- Removed SetPropagateMouse code
 
 	Core.lua
-		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately 
-		- Simplified the RQE:ClearSeparateFocusFrame() from the previous iteration as it wasn't clearing properly
+		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 		- Added check for if player was in party/raid instance and if so, not to update/check macro (prior to this existing there was a momentary bump in lag whenever it checked which was more noticeable in these environments)
 		- Added nil check for questData within the RQE:CheckScenarioStage(questID, stepIndex) function
@@ -21,6 +20,7 @@
 
 	EventManager.lua
 		- Added functionality for the RQEFrame to scroll to top under zone change occurs as long as player isn't mousing over the RQEFrame at the time
+		- Simulated click of "C" ClearButton when quest turned in and nothing is being super tracked
 		- Added some calls to add/remove non-world quests when QUEST_ACCEPTED and QUEST_REMOVED fire to act as a failsafe
 		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
 		- Code cleanup
@@ -31,6 +31,7 @@
 		- Reverted GatherAndSortWorldQuestsByProximity function to older version as Bonus Objectives are placed in their own child frame
 		- Modified height and position of the child frames, adjusted anchoring with child frames
 		- Added functionality to track bonus objectives when player is at that location
+		- Modified position of the QuestLevel and Name associated with the Bonus Objective quest
 		- Modified the size of the child frames
 		- Corrected anchoring of child frames
 		- Removed some debug messages
@@ -47,7 +48,7 @@
 		- Removed SetPropagateMouse code
 
 	RQEMacro.lua
-		- Fix 'EditMacro' error received
+		- Fix 'EditMacro' error received, script rang too long
 
 	WaypointManager.lua
 		- Added code to save x, y and mapID into addon table when RQE:OnCoordinateClicked(stepIndex) function fires as a means to attempt to correct issue where waypoint created was from previous stepIndex's waypoint from the DB
