@@ -1253,8 +1253,18 @@ function RQE:ClearSeparateFocusFrame()
 		return
 	end
 
-	RQE.SeparateStepText:SetText("No step description available for this step.")
+	-- Ensure the frame is initialized
 	RQE.InitializeSeparateFocusFrame()
+
+	-- Ensure SeparateStepText exists
+	if not RQE.SeparateStepText then
+		RQE.SeparateStepText = RQE.SeparateFocusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 10, -10)
+		RQE.SeparateStepText:SetWidth(280)
+		RQE.SeparateStepText:SetWordWrap(true)
+	end
+
+	RQE.SeparateStepText:SetText("No step description available for this step.")
 end
 
 
