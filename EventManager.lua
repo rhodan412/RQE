@@ -979,7 +979,6 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	end)
 
 	-- Updates frame with data from the super tracked quest (if any)
-	RQE.InitializeBonusObjectivesFrame()
 	RQE:ClearWaypointButtonData()
 	RQE:ClearSeparateFocusFrame()
 end
@@ -1782,7 +1781,6 @@ function RQE.handleSuperTracking()
 			print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(RQE.currentSuperTrackedQuestID))
 		end
 
-		RQE.Buttons.ClearButtonPressed()	-- Clears the RQEFrame before super tracking a new quest
 		RQE.SuperTrackChangeToDifferentQuestOccurred = true
 
 		-- RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -2113,9 +2111,6 @@ function RQE.handleQuestAccepted(...)
 			DEFAULT_CHAT_FRAME:AddMessage("QA 14 Debug: Checked memory usage.", 0.46, 0.62, 1)
 		end
 	end
-
-	-- Failsafe to add the quest from the tracking list when event fires
-	C_QuestLog.AddQuestWatch(questID)
 end
 
 
@@ -3214,9 +3209,6 @@ function RQE.handleQuestRemoved(...)
 		end
 	end
 
-	-- Failsafe to remove the quest from the tracking list when event fires
-	C_QuestLog.RemoveQuestWatch(questID)
-
 	-- -- Resets Quest Progress ***
 	-- RQE.hasStateChanged()
 	-- RQE.hasQuestProgressChanged()
@@ -3336,8 +3328,9 @@ function RQE.handleQuestWatchUpdate(...)
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 05 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)
 	end
-	
-	C_QuestLog.IsWorldQuest(questID)
+
+	-- Adds quest to watch list when progress made
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 	if isWorldQuest then
 		C_QuestLog.AddWorldQuestWatch(questID)
 	else
