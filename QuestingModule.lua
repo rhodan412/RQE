@@ -1374,7 +1374,7 @@ function UpdateRQEBonusQuestFrame()
 			-- Set positioning based on the last quest
 			if i == 1 then
 				-- First bonus quest, position at the top
-				BQuestLevelAndName:SetPoint("TOPLEFT", RQE.BonusObjectivesFrame, "TOPLEFT", 45, yOffset)
+				BQuestLevelAndName:SetPoint("TOPLEFT", RQE.BonusObjectivesFrame, "TOPLEFT", 40, yOffset)
 			else
 				-- Subsequent bonus quests, position below the last one
 				BQuestLevelAndName:SetPoint("TOPLEFT", lastBonusQuestElement, "BOTTOMLEFT", 15, -padding)
