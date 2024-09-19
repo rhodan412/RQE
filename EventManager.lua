@@ -3597,6 +3597,7 @@ function RQE.handleQuestTurnIn(...)
 		end
 
 		if not isSuperTracking or (questID == RQE.previousSuperTrackedQuestID) then
+			RQE.Buttons.ClearButtonPressed()	-- Simulate pressing the "C" ClearButton
 			-- Clear user waypoint and reset TomTom if loaded
 			C_Map.ClearUserWaypoint()
 
