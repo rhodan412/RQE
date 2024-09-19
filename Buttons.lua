@@ -379,43 +379,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 	ClearButton:SetScript("OnClick", function()
 
 		-- Code for ClearButton functionality here
-		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
-		RQE:ClearWaypointButtonData()
-		RQE:ClearSeparateFocusFrame()
-		RQE.searchedQuestID = nil
-		RQE.ManualSuperTrack = nil
-		RQE.ClearButtonPressed = true
-		RQE:RemoveSuperTrackingFromQuest()
-		RQE:UpdateRQEFrameVisibility()
-
-		C_Map.ClearUserWaypoint()
-		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
-		end
-
-		-- Clearing the frame data a second time
-		C_Timer.After(0.2, function()
-			RQE:ClearFrameData()
-			RQE:ClearWaypointButtonData()
-			RQE:RemoveSuperTrackingFromQuest()
-		end)
-
-		-- Clearing the frame data a third time
-		C_Timer.After(0.3, function()
-			RQE:ClearFrameData()
-			RQE:ClearWaypointButtonData()
-			RQE:RemoveSuperTrackingFromQuest()
-		end)
-
-		C_Timer.After(0.2, function()
-			RQEMacro:ClearMacroContentByName("RQE Macro")
-		end)
-
-		C_Timer.After(0.2, function()
-			RQE.Buttons.UpdateMagicButtonVisibility()
-		end)
+		RQE.Buttons.ClearButtonPressed()
 
 		-- Reset manually tracked quests
 		if RQE.ManuallyTrackedQuests then
@@ -431,6 +395,47 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 	return ClearButton
 end
 
+
+-- Function to handle the clearing of the RQEFrame when the "C" button is pressed (or similar functionality is desired)
+function RQE.Buttons.ClearButtonPressed()
+	RQE:ClearFrameData()
+	RQE:ClearWaypointButtonData()
+	RQE:ClearSeparateFocusFrame()
+	RQE.searchedQuestID = nil
+	RQE.ManualSuperTrack = nil
+	RQE.ClearButtonPressed = true
+	RQE:RemoveSuperTrackingFromQuest()
+	RQE:UpdateRQEFrameVisibility()
+
+	C_Map.ClearUserWaypoint()
+	-- Check if TomTom is loaded and compatibility is enabled
+	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		TomTom.waydb:ResetProfile()
+	end
+
+	-- Clearing the frame data a second time
+	C_Timer.After(0.2, function()
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+		RQE:RemoveSuperTrackingFromQuest()
+	end)
+
+	-- Clearing the frame data a third time
+	C_Timer.After(0.3, function()
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+		RQE:RemoveSuperTrackingFromQuest()
+	end)
+
+	C_Timer.After(0.2, function()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
+	end)
+
+	C_Timer.After(0.2, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
+end
 
 -- Parent function to create RWButton
 function RQE.Buttons.CreateRWButton(RQEFrame)
