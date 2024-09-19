@@ -191,7 +191,7 @@ local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 headerText:SetPoint("CENTER", header, "CENTER")
 headerText:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
 headerText:SetTextColor(239/255, 191/255, 90/255)
-headerText:SetText("RQE Quest Tracker")
+headerText:SetText("RQE Quest Helper")
 headerText:SetWordWrap(true)
 RQE.headerText = headerText
 
@@ -1910,7 +1910,10 @@ function RQE.InitializeSeparateFocusFrame()
 
 		-- Update the step text dynamically to include the step index
 		local stepDescription = (stepData and stepData.description) or "No step description available for this step."
-		local formattedText = string.format("%d: %s", stepIndex, stepDescription) -- Prepend the stepIndex to the description
+		-- local formattedText = string.format("%d: %s", stepIndex, stepDescription) -- Prepend the stepIndex to the description
+		-- Function to update the step text dynamically to include the current and final step index
+		local totalSteps = #questData  -- Get the total number of steps from the questData
+		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
 
 		RQE.SeparateStepText:SetText(formattedText)
 		RQE.SeparateStepText:Show()
