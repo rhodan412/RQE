@@ -1655,36 +1655,36 @@ end
 
 -- Create the tooltip when mousing over certain assets
 function RQE:CreateQuestTooltip(self, questID, questTitle)
-    GameTooltip:SetOwner(self, "ANCHOR_LEFT", -30, 0)  -- Anchor the tooltip to the cursor
-    GameTooltip:ClearLines()
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT", -30, 0)  -- Anchor the tooltip to the cursor
+	GameTooltip:ClearLines()
 
-    -- Add the quest title
-    GameTooltip:AddLine(questTitle)
-    GameTooltip:AddLine(" ")  -- Blank line
+	-- Add the quest title
+	GameTooltip:AddLine(questTitle)
+	GameTooltip:AddLine(" ")  -- Blank line
 
-    -- Add description
-    local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-    if questLogIndex then
-        local _, questObjectives = GetQuestLogQuestText(questLogIndex)
-        local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
-        GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
-        GameTooltip:AddLine(" ")
-    end
+	-- Add description
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	if questLogIndex then
+		local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+		local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
+		GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+		GameTooltip:AddLine(" ")
+	end
 
-    -- Add objectives
-    local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
-    local objectivesText = objectivesTable and "" or "No objectives available."
-    if objectivesTable then
-        for _, objective in pairs(objectivesTable) do
-            objectivesText = objectivesText .. objective.text .. "\n"
-        end
-    end
+	-- Add objectives
+	local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+	local objectivesText = objectivesTable and "" or "No objectives available."
+	if objectivesTable then
+		for _, objective in pairs(objectivesTable) do
+			objectivesText = objectivesText .. objective.text .. "\n"
+		end
+	end
 
-    if objectivesText and objectivesText ~= "" then
-        GameTooltip:AddLine("Objectives:")
-        GameTooltip:AddLine(objectivesText, 1, 1, 1, true)
-        GameTooltip:AddLine(" ")
-    end
+	if objectivesText and objectivesText ~= "" then
+		GameTooltip:AddLine("Objectives:")
+		GameTooltip:AddLine(objectivesText, 1, 1, 1, true)
+		GameTooltip:AddLine(" ")
+	end
 
 	-- Add Rewards
 	RQE:QuestRewardsTooltip(GameTooltip, questID)
@@ -1693,7 +1693,7 @@ function RQE:CreateQuestTooltip(self, questID, questTitle)
 	GameTooltip:AddLine(" ")
 	GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
 
-    GameTooltip:Show()
+	GameTooltip:Show()
 end
 
 
