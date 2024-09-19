@@ -31,6 +31,8 @@
 		- Reverted GatherAndSortWorldQuestsByProximity function to older version as Bonus Objectives are placed in their own child frame
 		- Modified height and position of the child frames, adjusted anchoring with child frames
 		- Added functionality to track bonus objectives when player is at that location
+		- Modified the size of the child frames
+		- Corrected anchoring of child frames
 		- Removed some debug messages
 
 	RQEDatabase.lua
