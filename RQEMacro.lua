@@ -180,7 +180,9 @@ function RQEMacro:ActuallyClearMacroContentByName(macroName)
 	local macroIndex = GetMacroIndexByName(macroName)
 	if macroIndex ~= 0 then
 		-- Macro found, clear its content
-		EditMacro(macroIndex, nil, nil, " ")
+		--EditMacro(macroIndex, nil, nil, " ")
+		DeleteMacro(macroIndex)
+		RQE.Buttons.UpdateMagicButtonVisibility()
 	else
 		-- Macro not found, log this
 		RQE.debugLog("Macro not found: " .. macroName)
