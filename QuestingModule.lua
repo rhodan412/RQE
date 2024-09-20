@@ -205,58 +205,9 @@ local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
 	return frame
 end
 
--- local initialHeight = 75
--- local noinitialHeight = 10
-
--- -- Create the ScenarioChildFrame, anchored to the content frame
--- if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-	-- RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), initialHeight)
--- else
-	-- RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), noinitialHeight)
--- end
-
--- -- Create the Campaign Child frame, anchored to the content frame/Scenario Frame if available
--- if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-	-- RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, -50, content:GetWidth(), initialHeight)
--- else
-	-- RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, -50, content:GetWidth(), noinitialHeight)
--- end
--- RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
-
--- -- Create the second child frame, anchored below the CampaignFrame
--- if RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-	-- RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -50, content:GetWidth(), initialHeight)
--- else
-	-- RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -50, content:GetWidth(), noinitialHeight)
--- end
--- RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
-
--- -- Create the third child frame, anchored below the QuestsFrame
--- if RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-	-- RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -50, content:GetWidth(), initialHeight)
--- else
-	-- RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -50, content:GetWidth(), noinitialHeight)
--- end
--- RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
-
--- -- Create the Bonus Objectives Child Frame, properly parented
--- if RQE.BonusObjectivesFrame and RQE.BonusObjectivesFrame:IsShown() then
-	-- RQE.BonusObjectivesFrame = CreateChildFrame("RQEBonusObjectivesFrame", content, 0, -50, content:GetWidth(), initialHeight)
--- else
-	-- RQE.BonusObjectivesFrame = CreateChildFrame("RQEBonusObjectivesFrame", content, 0, -50, content:GetWidth(), noinitialHeight)
--- end
--- RQE.BonusObjectivesFrame.questCount = RQE.BonusObjectivesFrame.questCount or 0
-
--- -- Create the third child frame, anchored below the QuestsFrame
--- if RQE.AchievementsFrame and RQE.AchievementsFrame:IsShown() then
-	-- RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -50, content:GetWidth(), initialHeight)
--- else
-	-- RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -50, content:GetWidth(), noinitialHeight)
--- end
--- RQE.AchievementsFrame.achieveCount = RQE.AchievementsFrame.achieveCount or 0
 
 -- Create the ScenarioChildFrame, anchored to the content frame
-RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 150)
+RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 75)
 
 -- Create the Campaign Child frame, anchored to the content frame/Scenario Frame if available
 RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, 0, content:GetWidth(), 120)
@@ -343,6 +294,36 @@ local function CreateUniqueScenarioHeader(scenarioFrame, title)
 
 	scenarioFrame.header = header  -- Assign the header to the scenario frame
 	return header  -- Return the new header frame
+end
+
+
+-- Function to dynamically set ScenarioChildFrame height based on the number of criteria
+function RQE.SetScenarioChildFrameHeight()
+	-- Check if the player is currently in a scenario
+	if not C_Scenario.IsInScenario() then
+		return
+	end
+
+	-- Fetch scenario information
+	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+	if not scenarioInfo then
+		return
+	end
+
+	-- Fetch the number of criteria for the current scenario step
+	local numCriteria = select(3, C_Scenario.GetStepInfo()) or 0
+
+	-- Base height for the frame
+	local baseHeight = 75
+
+	-- Height per criteria (adjust as needed for proper spacing)
+	local heightPerCriteria = 35
+
+	-- Calculate the total height
+	local totalHeight = baseHeight + (numCriteria * heightPerCriteria)
+
+	-- Set the height of the ScenarioChildFrame dynamically
+	RQE.ScenarioChildFrame:SetHeight(totalHeight)
 end
 
 
@@ -1158,6 +1139,47 @@ function RQE.InitializeScenarioFrame()
 	end
 end
 
+-- /run RQE.PrintScenarioTimer()
+-- Check and set the scenario start time
+function RQE.CheckScenarioStartTime()
+	if not C_Scenario.IsInScenario() then
+		return
+	end
+
+	-- If we already have a start time, skip
+	if RQE.db.char.scenarioStartTime then
+		return
+	end
+
+	-- Record the current time (in seconds since epoch)
+	RQE.db.char.scenarioStartTime = time()
+
+	-- print("Scenario started at:", date("%Y-%m-%d %H:%M:%S", RQE.db.char.scenarioStartTime))
+end
+
+
+-- Print elapsed time since the scenario started
+function RQE.PrintScenarioElapsedTime()
+	if not C_Scenario.IsInScenario() then
+		return
+	end
+
+	if not RQE.db.char.scenarioStartTime then
+		return
+	end
+
+	-- Calculate the elapsed time
+	local elapsedTime = time() - RQE.db.char.scenarioStartTime
+	local hours = math.floor(elapsedTime / 3600)
+	local minutes = math.floor(elapsedTime / 60) % 60
+	local seconds = math.floor(elapsedTime % 60)
+
+	-- print("Elapsed time in scenario:", string.format("%02d:%02d:%02d", hours, minutes, seconds))
+	
+	-- Return formatted elapsed time (if needed elsewhere)
+	return string.format("%02d:%02d:%02d", hours, minutes, seconds)
+end
+
 
 -- Function to update the scenario frame with the latest information
 function RQE.UpdateScenarioFrame()
@@ -1519,45 +1541,54 @@ end
 -- 10. Timer Functionality
 ---------------------------
 
+-- Create a FontString for the timer text inside RQE.ScenarioChildFrame
 local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
 timerFrame:SetSize(100, 10) -- Adjust size as needed
 timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 75, -45)
 
-
--- Create a FontString for the timer text
 local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 timerText:SetAllPoints(timerFrame)
-timerText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")  -- Increase font size to 20, adjust as needed
-timerText:SetTextColor(1, 1, 1, 1) -- Sets timerText color to white
+timerText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")  -- Increase font size to 16, adjust as needed
+timerText:SetTextColor(1, 1, 1, 1) -- Set timerText color to white
 
-local startTime
-local function UpdateTimer(self, elapsed)
-	if startTime then
-		local currentTime = GetTime()
-		local elapsedTime = currentTime - startTime
-		local hours = math.floor(elapsedTime / 3600)
-		local minutes = math.floor(elapsedTime / 60) % 60
-		local seconds = elapsedTime % 60
-		timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
+-- Function to update the timer display based on elapsed time from the DB
+local function UpdateScenarioTimer(self, elapsed)
+	if not RQE.db or not RQE.db.char.scenarioStartTime then
+		timerText:SetText("00:00:00")  -- Reset if no time is found
+		return
 	end
+
+	-- Calculate the elapsed time from the stored start time
+	local elapsedTime = time() - RQE.db.char.scenarioStartTime
+	local hours = math.floor(elapsedTime / 3600)
+	local minutes = math.floor(elapsedTime / 60) % 60
+	local seconds = math.floor(elapsedTime % 60)
+
+	-- Update the timer text display
+	timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
 end
 
 
--- Start the timer
-function RQE.StartTimer()
-	startTime = GetTime()
-	timerFrame:SetScript("OnUpdate", UpdateTimer)
-	timerFrame:Show()
+-- Function to start showing the elapsed time in the RQEQuestFrame
+function RQE.StartScenarioTimer()
+	-- Only proceed if the player is in a scenario
+	if not C_Scenario.IsInScenario() then
+		return
+	end
+
+	-- Ensure the timer keeps updating based on the saved start time
+	timerFrame:SetScript("OnUpdate", UpdateScenarioTimer)
+	timerFrame:Show() -- Show the frame displaying the timer
 end
 
-
--- Stop the timer
-function RQE.StopTimer()
-	startTime = nil
-	timerFrame:SetScript("OnUpdate", nil)
-	timerText:SetText("00:00:00")
+-- Function to stop the timer and clear the saved time from the DB
+function RQE.StopScenarioTimer()
+	RQE.db.char.scenarioStartTime = nil  -- Clear the start time from the DB
+	timerFrame:SetScript("OnUpdate", nil)  -- Stop updating the timer
+	timerText:SetText("00:00:00")  -- Reset the displayed text
 	timerFrame:Hide()
 end
+
 
 
 ---------------------------
