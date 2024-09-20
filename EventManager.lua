@@ -90,6 +90,15 @@ end
 
 -- Function to Toggle RQE Frames and Blizzard Objective Tracker
 function RQE:ToggleFramesAndTracker()
+	if InCombatLockdown() then
+		-- If in combat, queue the toggle for after combat and return early
+		RQE:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+			RQE:ToggleFramesAndTracker() -- Try to toggle again once combat ends
+			RQE:UnregisterEvent("PLAYER_REGEN_ENABLED") -- Unregister the event to avoid repeated triggers
+		end)
+		return
+	end
+
 	if RQEFrame:IsShown() then
 		-- Hide RQE frames
 		RQEFrame:Hide()
@@ -1136,6 +1145,8 @@ function RQE.handleScenarioUpdate(...)
 
 	--RQE.saveScenarioData(RQE, event, newStep)
 	RQE.updateScenarioUI()
+
+	RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 end
 
 
@@ -1166,6 +1177,8 @@ function RQE.handleScenarioCriteriaUpdate(...)
 	--RQE.saveScenarioData(RQE, event, criteriaID)
 	RQE.scenarioCriteriaUpdate = true
 	RQE.updateScenarioCriteriaUI()
+
+	RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 end
 
 
@@ -1260,8 +1273,8 @@ function RQE.handleWorldStateTimerStart(...)
 		DEFAULT_CHAT_FRAME:AddMessage("WSTS 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
 	end
 
-	RQE.StopTimer()
-	RQE.StartTimer()
+	RQE.StartScenarioTimer()
+	RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 	RQE.HandleTimerStart(timerID)
 
 	RQE.updateScenarioUI()
@@ -1655,6 +1668,7 @@ function RQE.handlePlayerEnterWorld(...)
 	if isReload or isLogin then
 		if C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
+			RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 				DEFAULT_CHAT_FRAME:AddMessage("PEW 08 Debug: In a scenario, showing ScenarioChildFrame.", 0.93, 0.51, 0.93)
 			end
@@ -1691,6 +1705,13 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 
 			UpdateFrame()
+		end
+
+		-- Checks to see if in scenario and if no, will reset the scenario timer
+		if not C_Scenario.IsInScenario() then
+			C_Timer.After(0.7, function()
+				RQE.StopScenarioTimer()
+			end)
 		end
 
 		-- Handle scenario regardless of the condition
@@ -2241,6 +2262,13 @@ function RQE.handleZoneNewAreaChange()
 	end
 	RQE.FocusScrollFrameToTop()
 
+	-- Checks to see if in scenario and if no, will reset the scenario timer
+	if not C_Scenario.IsInScenario() then
+		C_Timer.After(0.7, function()
+			RQE.StopScenarioTimer()
+		end)
+	end
+
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
 		return
@@ -2518,6 +2546,8 @@ function RQE.updateScenarioCriteriaUI()
 		return
 	end
 
+	-- RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called (called separately)
+
 	-- Check to see if player in scenario, if not it will end
 	if not C_Scenario.IsInScenario() then
 		if RQE.ScenarioChildFrame:IsVisible() then
@@ -2561,7 +2591,8 @@ function RQE.updateScenarioCriteriaUI()
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
 		--RQE.Timer_CheckTimers()
-		RQE.StartTimer()
+		RQE.StartScenarioTimer()
+		RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 	else
 		RQE.ScenarioChildFrame:Hide()
@@ -2593,6 +2624,8 @@ function RQE.updateScenarioUI()
 		RQE.deferredScenarioUpdate = true  -- Set a flag to update after combat
 		return
 	end
+
+	-- RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called (called separately but might localize here)
 
 	-- Check to see if player in scenario, if not it will end
 	if not C_Scenario.IsInScenario() then
@@ -2638,7 +2671,8 @@ function RQE.updateScenarioUI()
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
 		--RQE.Timer_CheckTimers()
-		RQE.StartTimer()
+		RQE.StartScenarioTimer()
+		RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 	else
 		RQE.ScenarioChildFrame:Hide()
