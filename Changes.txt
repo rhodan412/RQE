@@ -1,54 +1,63 @@
 11.0.2.41
 	Buttons.lua
 		- Created system of saving waypoint information to a variable to be used in waypoint creation under the automation system
+		- Fixed macro not being cleared when the "C" ClearButton was pressed within the RQEFrame
 		- Modified code for the "C" Clear Button to better handle clearing the frame (focus frame, in particular) when pressed.
 		- Moved "C" ClearButton script function outside of the button so that it could be more easily called
-		- Fixed macro not being cleared when the "C" ClearButton was pressed within the RQEFrame
 		- Removed SetPropagateMouse code
 
 	Core.lua
-		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately
-		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 		- Added check for if player was in party/raid instance and if so, not to update/check macro (prior to this existing there was a momentary bump in lag whenever it checked which was more noticeable in these environments)
 		- Added nil check for questData within the RQE:CheckScenarioStage(questID, stepIndex) function
-		- Creates/checks macro status when RQE:StartPeriodicChecks runs to see if it has the correct macro in place
 		- Created separate function that creates a tooltip as this needed to be able to accommodate for the Bonus Objective quests
+		- Creates/checks macro status when RQE:StartPeriodicChecks runs to see if it has the correct macro in place
+		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately
 		- Removed SetPropagateMouse code
+		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 
 	DebugLog.lua
 		- Removed SetPropagateMouse code
 
 	EventManager.lua
+		- Added calls to start/stop/update timer that would give timer in scenario that persists between reloads
 		- Added functionality for the RQEFrame to scroll to top under zone change occurs as long as player isn't mousing over the RQEFrame at the time
-		- Simulated click of "C" ClearButton when quest turned in and nothing is being super tracked
+		- Added modification to have dynamic height for scenario child frame based on number of criteria
 		- Added some calls to add/remove non-world quests when QUEST_ACCEPTED and QUEST_REMOVED fire to act as a failsafe
-		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
 		- Code cleanup
+		- Fixed error with ToggleFramesAndTracker attempting to run while in combat
+		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
+		- Simulated click of "C" ClearButton when quest turned in and nothing is being super tracked
 
 	QuestingModule.lua
 		- Added Bonus Objectives child frame & GatherAndSortBonusQuestsByProximity
-		- Added questClassification to better understand if a freshly acquired quest was a bonus quest or something else
-		- Reverted GatherAndSortWorldQuestsByProximity function to older version as Bonus Objectives are placed in their own child frame
-		- Modified height and position of the child frames, adjusted anchoring with child frames
+		- Added dynamic height adjustment for scenario child frame
 		- Added functionality to track bonus objectives when player is at that location
+		- Added questClassification to better understand if a freshly acquired quest was a bonus quest or something else
+		- Corrected anchoring of child frames
+		- Modified height and position of the child frames, adjusted anchoring with child frames
 		- Modified position of the QuestLevel and Name associated with the Bonus Objective quest
 		- Modified the size of the child frames
-		- Corrected anchoring of child frames
 		- Removed some debug messages
+		- Reverted GatherAndSortWorldQuestsByProximity function to older version as Bonus Objectives are placed in their own child frame
+		- Timer associated with scenario will persist between /reloads and reads how long player has been inside that instance/scenario (Beta feature may not work completely as intended)
 
 	RQEDatabase.lua
-		- Updated waypoints on some quests in Hallowfall
 		- Added some non-campaign leveling quests from Isle of Dorn to the DB
+		- Updated waypoints on some quests in Hallowfall
 
 	RQEFrame.lua
 		- Added visible slider with animation as aid/option for scrolling the RQEFrame
+		- Fixed SeparateFocusFrame so that it would no longer be moveable
 		- Modified InitializeSeparateFocusFrame to display how many stepIndex (waypoint buttons) exist for a particular quest to better aid player in where they are in the chain of events for super tracked quest.
-		- Renamed the RQEFrame header to be "RQE Quest Helper" to better describe its function
 		- Modified the totalHeight of RQE.content in the RQE:UpdateContentSize() function as it was too large making scrolling a bit of a headache
 		- Removed SetPropagateMouse code
+		- Renamed the RQEFrame header to be "RQE Quest Helper" to better describe its function
 
 	RQEMacro.lua
 		- Fix 'EditMacro' error received, script rang too long
+
+	RQEMinimap.lua
+		- Fix issue with RQE:ToggleFramesAndTracker() being protected and unable to close, thru toggle during combat.
 
 	WaypointManager.lua
 		- Added code to save x, y and mapID into addon table when RQE:OnCoordinateClicked(stepIndex) function fires as a means to attempt to correct issue where waypoint created was from previous stepIndex's waypoint from the DB
