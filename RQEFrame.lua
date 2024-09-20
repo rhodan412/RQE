@@ -1817,12 +1817,8 @@ function RQE.InitializeSeparateFocusFrame()
 			edgeSize = 16,
 			insets = { left = 0, right = 0, top = 1, bottom = 0 }
 		})
-		RQE.SeparateFocusFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
+		RQE.SeparateFocusFrame:SetBackdropColor(0, 0, 0, 0.4)
 		RQE.SeparateFocusFrame:EnableMouse(true)
-		RQE.SeparateFocusFrame:SetMovable(true)
-		RQE.SeparateFocusFrame:RegisterForDrag("LeftButton")
-		-- RQE.SeparateFocusFrame:SetScript("OnDragStart", RQE.SeparateFocusFrame.StartMoving)
-		-- RQE.SeparateFocusFrame:SetScript("OnDragStop", RQE.SeparateFocusFrame.StopMovingOrSizing)
 		RQE.SeparateFocusFrame:Show()
 	end
 
