@@ -338,7 +338,7 @@ RQE.options = {
 					end,
 					set = function(_, value)
 						RQE.db.profile.keyBindSetting = value
-						RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
+						RQE:ReapplyMacroBinding()	-- RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
 					end,
 					order = 18,
 				},
@@ -1621,7 +1621,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	keyBindSettingKeybind:SetKey(RQE.db.profile.keyBindSetting)
 	keyBindSettingKeybind:SetCallback("OnKeyChanged", function(widget, event, key)
 		RQE.db.profile.keyBindSetting = key
-		RQE:SetupOverrideMacroBinding()
+		RQE:ReapplyMacroBinding()	-- RQE:SetupOverrideMacroBinding()
 	end)
 
 	-- Add a tooltip description for keyBindSettingKeybind (RQE.db.profile.keyBindSetting)
