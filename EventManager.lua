@@ -918,10 +918,12 @@ function RQE.handlePlayerLogin()
 		end
 	end
 
-	if RQE.MagicButton then
-		RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
-	end
+	-- if RQE.MagicButton then
+		-- RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
+	-- end
 
+	RQE:ReapplyMacroBinding()
+	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE.UntrackAutomaticWorldQuests()
 end
 
@@ -2010,7 +2012,9 @@ function RQE.handleQuestAccepted(...)
 		end
 	end
 
-	UpdateRQEWorldQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires
+	C_Timer.After(1, function()
+		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest
+	end)
 
 	-- Clear the raid marker from the current target
 	if UnitExists("target") then
@@ -2027,6 +2031,7 @@ function RQE.handleQuestAccepted(...)
 	if questID then
 		RQE.LastAcceptedQuest = questID
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		local isTaskQuest = C_QuestLog.IsQuestTask(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
 		local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)  -- Applies when world quest is manually watched and then accepted when player travels to world quest spot
 		local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
@@ -2051,6 +2056,9 @@ function RQE.handleQuestAccepted(...)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 				DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
 			end
+		elseif isTaskQuest then
+			local isTaskQuest = C_QuestLog.IsQuestTask(questID)
+			C_QuestLog.AddQuestWatch(questID)
 		end
 
 		-- Reapply the manual super-tracked quest ID if it's set and different from the current one
@@ -2123,6 +2131,7 @@ function RQE.handleQuestAccepted(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QA 13 Debug: UpdateRQEQuestFrameVisibility.", 0.46, 0.62, 1)
 	end
 
+	UpdateRQEQuestFrame()
 	RQE:UpdateRQEQuestFrameVisibility()
 
 	-- Update Display of Memory Usage of Addon
@@ -2144,6 +2153,7 @@ function RQE.handleZoneChange(...)
 		RQE.updateScenarioUI()
 	end
 
+	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
@@ -2254,6 +2264,7 @@ function RQE.handleZoneNewAreaChange()
 		DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	end
 
+	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when ZONE_CHANGED_NEW_AREA event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
@@ -3173,6 +3184,10 @@ function RQE.handleQuestRemoved(...)
 		end
 	end
 
+	C_Timer.After(1, function()
+		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest
+	end)
+
 	if not RQE.currentSuperTrackedQuestID then
 		RQE.currentSuperTrackedQuestID = RQE.LastSuperTrackedQuestID  -- Use the last known super-tracked questID if current is nil
 	end
@@ -3189,13 +3204,18 @@ function RQE.handleQuestRemoved(...)
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
+	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:ShouldClearFrame()
 
 	-- Check if the questID is valid and if it was being tracked automatically
 	if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
 
 		-- Remove the quest from the tracking list
-		C_QuestLog.RemoveWorldQuestWatch(questID)
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+
+		if isWorldQuest then
+			C_QuestLog.RemoveWorldQuestWatch(questID)
+		end
 
 		-- Clear the saved state for this quest
 		RQE.TrackedQuests[questID] = nil
@@ -3365,8 +3385,12 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Adds quest to watch list when progress made
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	local isTaskQuest = C_QuestLog.IsQuestTask(questID)
+
 	if isWorldQuest then
 		C_QuestLog.AddWorldQuestWatch(questID)
+	elseif isTaskQuest then
+		C_QuestLog.AddQuestWatch(questID)
 	else
 		C_QuestLog.AddQuestWatch(questID)
 	end
@@ -3594,6 +3618,8 @@ function RQE.handleQuestWatchListChanged(...)
 		C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
 		UpdateFrame()
 	end
+
+	UpdateRQEQuestFrame()
 
 	-- Updates RQEQuestFrame widths when progress is made whether progress quest is super tracked or not
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
