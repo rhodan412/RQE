@@ -6,6 +6,9 @@
 		- Moved "C" ClearButton script function outside of the button so that it could be more easily called
 		- Removed SetPropagateMouse code
 
+	Config.lua
+		- Utilized different method for calling function to ensure persistent update of the RQEMagicButton keybinding betweeen sessions
+
 	Core.lua
 		- Added check for if player was in party/raid instance and if so, not to update/check macro (prior to this existing there was a momentary bump in lag whenever it checked which was more noticeable in these environments)
 		- Added nil check for questData within the RQE:CheckScenarioStage(questID, stepIndex) function
@@ -13,6 +16,7 @@
 		- Creates/checks macro status when RQE:StartPeriodicChecks runs to see if it has the correct macro in place
 		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately
 		- Removed SetPropagateMouse code
+		- Fix for WQ not being removed when it should've been cleared from the RQEQuestFrame
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 
 	DebugLog.lua
@@ -24,9 +28,11 @@
 		- Added modification to have dynamic height for scenario child frame based on number of criteria
 		- Added some calls to add/remove non-world quests when QUEST_ACCEPTED and QUEST_REMOVED fire to act as a failsafe
 		- Code cleanup
+		- Fixed bug that resulted in WQ being tracked that shouldn't be and proper removal when leaving the area of those automatically accepted WQ
 		- Fixed error with ToggleFramesAndTracker attempting to run while in combat
 		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
 		- Simulated click of "C" ClearButton when quest turned in and nothing is being super tracked
+		- Utilized different method for calling function to ensure persistent update of the RQEMagicButton keybinding betweeen sessions
 
 	QuestingModule.lua
 		- Added Bonus Objectives child frame & GatherAndSortBonusQuestsByProximity
@@ -34,6 +40,7 @@
 		- Added functionality to track bonus objectives when player is at that location
 		- Added questClassification to better understand if a freshly acquired quest was a bonus quest or something else
 		- Corrected anchoring of child frames
+		- Fix made that was preventing bonus objective quests from showing up in the RQE Quest Tracker or being removed when either QUEST_ACCEPTED or QUEST_REMOVED events fired
 		- Modified height and position of the child frames, adjusted anchoring with child frames
 		- Modified position of the QuestLevel and Name associated with the Bonus Objective quest
 		- Modified the size of the child frames
@@ -55,6 +62,7 @@
 
 	RQEMacro.lua
 		- Fix 'EditMacro' error received, script rang too long
+		- Fix for RQEMagicButton keybinding not working
 
 	RQEMinimap.lua
 		- Fix issue with RQE:ToggleFramesAndTracker() being protected and unable to close, thru toggle during combat.
