@@ -327,6 +327,33 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
+-- -- Function to set up an override key binding for macro
+-- function RQE:SetupOverrideMacroBinding()
+	-- local ownerFrame = RQE.MagicButton
+	-- local macroName = "RQE Macro"
+	-- local bindingKey = RQE.db.profile.keyBindSetting	-- Use the stored setting or default
+
+	-- -- Check if bindingKey is valid
+	-- if not bindingKey or bindingKey == "" then
+		-- -- Provide feedback that no valid key binding is set
+		-- print("No key binding is set for the Quest Macro Button.")
+		-- return
+	-- end
+
+	-- local macroIndex = GetMacroIndexByName(macroName)
+	-- if macroIndex and macroIndex > 0 then
+		-- -- Sets an override binding that runs the specified macro by index
+		-- ClearOverrideBindings(ownerFrame)
+		-- SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
+		-- -- Optional: Provide feedback that the binding was set
+		-- RQE.infoLog("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
+	-- else
+		-- -- Provide feedback if the macro does not exist
+		-- RQE.debugLog("Macro '" .. macroName .. "' not found.")
+	-- end
+-- end
+
+
 -- Function to set up an override key binding for macro
 function RQE:SetupOverrideMacroBinding()
 	local ownerFrame = RQE.MagicButton
@@ -336,20 +363,41 @@ function RQE:SetupOverrideMacroBinding()
 	-- Check if bindingKey is valid
 	if not bindingKey or bindingKey == "" then
 		-- Provide feedback that no valid key binding is set
-		print("No key binding is set for the Quest Macro Button.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No key binding is set for the Quest Macro Button.")
+		end
 		return
 	end
 
 	local macroIndex = GetMacroIndexByName(macroName)
 	if macroIndex and macroIndex > 0 then
-		-- Sets an override binding that runs the specified macro by index
+		-- Remove the specific old binding if it exists
 		ClearOverrideBindings(ownerFrame)
+
+		-- Set new binding
 		SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
-		-- Optional: Provide feedback that the binding was set
-		RQE.infoLog("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
+
+		-- Optionally store the binding to ensure persistence
+		RQE.db.profile.macroBindingKey = bindingKey
+
+		-- Provide feedback that the binding was set
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
+		end
 	else
 		-- Provide feedback if the macro does not exist
-		RQE.debugLog("Macro '" .. macroName .. "' not found.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Macro '" .. macroName .. "' not found.")
+		end
+	end
+end
+
+
+-- Function to reapply the saved macro binding at login or reload
+function RQE:ReapplyMacroBinding()
+	local bindingKey = RQE.db.profile.macroBindingKey
+	if bindingKey then
+		RQE:SetupOverrideMacroBinding()
 	end
 end
 
