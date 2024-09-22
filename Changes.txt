@@ -18,6 +18,7 @@
 		- Removed SetPropagateMouse code
 		- Fix for WQ not being removed when it should've been cleared from the RQEQuestFrame
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
+		- Adjusted x, y of RQEFrame and RQEQuestFrame default location to not interfere with default minimap location
 
 	DebugLog.lua
 		- Removed SetPropagateMouse code
