@@ -126,7 +126,7 @@ end
 
 -- Create the main frame
 RQEFrame = CreateFrame("Frame", "RQE.RQEFrame", UIParent, "BackdropTemplate")
-RQEFrame:SetSize(435, 300)
+RQEFrame:SetSize(420, 325)
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.framePosition then
 	xPos = RQE.db.profile.framePosition.xPos or 810
@@ -1808,7 +1808,7 @@ function RQE.InitializeSeparateFocusFrame()
 	if not RQE.SeparateFocusFrame then
 		RQE.SeparateFocusFrame = CreateFrame("Frame", "RQE_SeparateFocusFrame", RQE.content, "BackdropTemplate")
 		RQE.SeparateFocusFrame:SetSize(375, 100) -- Set the size of the frame
-		RQE.SeparateFocusFrame:SetPoint("TOPLEFT", RQE.QuestObjectives, "BOTTOMLEFT", -10, -10)  -- Align closer to the edge
+		RQE.SeparateFocusFrame:SetPoint("TOPLEFT", RQE.QuestObjectives, "BOTTOMLEFT", -5, -10)  -- Align closer to the edge
 		RQE.SeparateFocusFrame:SetBackdrop({
 			bgFile = "Interface/Tooltips/UI-Tooltip-Background",
 			edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -1825,7 +1825,7 @@ function RQE.InitializeSeparateFocusFrame()
 	-- Create the scroll frame
 	if not RQE.SeparateScrollFrame then
 		RQE.SeparateScrollFrame = CreateFrame("ScrollFrame", "RQE_SeparateScrollFrame", RQE.SeparateFocusFrame, "UIPanelScrollFrameTemplate")
-		RQE.SeparateScrollFrame:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 10, -10)
+		RQE.SeparateScrollFrame:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", -5, -10)
 		RQE.SeparateScrollFrame:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -30, 10)
 		RQE.SeparateScrollFrame:EnableMouseWheel(true)
 		RQE.SeparateScrollFrame:SetClipsChildren(true)

@@ -201,10 +201,10 @@ local defaults = {
 		EncounterEnd = false,
 		framePosition = {
 			xPos = -40,
-			yPos = -270,
+			yPos = -285,
 			anchorPoint = "TOPRIGHT",
-			frameWidth = 435,
-			frameHeight = 300,
+			frameWidth = 420,
+			frameHeight = 325,
 		},
 		globalSetting = true,
 		hideRQEFrameWhenEmpty = false,
@@ -226,7 +226,7 @@ local defaults = {
 		QuestFinished = false,
 		QuestFramePosition = {
 			xPos = -40,
-			yPos = 150,
+			yPos = 130,
 			anchorPoint = "BOTTOMRIGHT",
 			frameWidth = 325,
 			frameHeight = 450
@@ -1099,7 +1099,7 @@ function RQE:UpdateFramePosition()
 	end
 
 	local xPos = self.db.profile.framePosition.xPos or -40
-	local yPos = self.db.profile.framePosition.yPos or -270
+	local yPos = self.db.profile.framePosition.yPos or -285
 
 	RQE.infoLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
 
@@ -1127,7 +1127,7 @@ function RQE:UpdateQuestFramePosition()
 	end
 
 	local xPos = self.db.profile.QuestFramePosition.xPos or -40
-	local yPos = self.db.profile.QuestFramePosition.yPos or 150
+	local yPos = self.db.profile.QuestFramePosition.yPos or 130
 
 	-- Error handling
 	local success, err = pcall(function()
@@ -2227,7 +2227,7 @@ end
 function RQE:ResetFramePositionToDBorDefault()
 	local anchorPoint = "TOPRIGHT"  -- Always set to TOPRIGHT
 	local xPos = -40  -- Preset xPos
-	local yPos = -270  -- Preset yPos
+	local yPos = -285  -- Preset yPos
 
 	-- Update the database
 	RQE.db.profile.framePosition.anchorPoint = anchorPoint
@@ -2241,8 +2241,8 @@ end
 
 -- Function for Button in Configuration that will reset the size of the RQEFrame and RQEQuestFrame to default values
 function RQE:ResetFrameSizeToDBorDefault()
-	local RQEWidth = 435
-	local RQEHeight = 300
+	local RQEWidth = 420
+	local RQEHeight = 325
 	local RQEQuestWidth = 325
 	local RQEQuestHeight = 450
 
@@ -2268,8 +2268,8 @@ end
 
 -- When the frame is maximized
 function RQE:MaximizeFrame()
-	local defaultWidth = RQE.db.profile.frameWidth or 400  -- Replace 400 with the default from Core.lua
-	local defaultHeight = RQE.db.profile.frameHeight or 300  -- Replace 300 with the default from Core.lua
+	local defaultWidth = RQE.db.profile.frameWidth or 420  -- Replace 400 with the default from Core.lua
+	local defaultHeight = RQE.db.profile.frameHeight or 325  -- Replace 300 with the default from Core.lua
 
 	local width = RQE.db.profile.framePosition.originalWidth or defaultWidth
 	local height = RQE.db.profile.framePosition.originalHeight or defaultHeight
@@ -2281,7 +2281,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeFrame()
-	RQEFrame:SetSize(435, 30)
+	RQEFrame:SetSize(420, 30)
 	RQE.db.profile.isFrameMaximized = false
 end
 
@@ -2301,7 +2301,7 @@ end
 function RQE:ResetQuestFramePositionToDBorDefault()
 	local anchorPoint = "BOTTOMRIGHT"  -- Default anchor point for RQEQuestFrame
 	local xPos = -40  -- Preset xPos
-	local yPos = 150  -- Preset yPos
+	local yPos = 130  -- Preset yPos
 
 	-- Update the database
 	RQE.db.profile.QuestFramePosition.anchorPoint = anchorPoint
@@ -6526,7 +6526,7 @@ end
 -- Function to update DB profile frame position
 function RQE:UpdateFrameFromProfile()
 	local xPos = RQE.db.profile.framePosition.xPos or -40
-	local yPos = RQE.db.profile.framePosition.yPos or -270
+	local yPos = RQE.db.profile.framePosition.yPos or -285
 	RQEFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", xPos, yPos)
 end
 

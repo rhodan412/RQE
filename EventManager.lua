@@ -1275,6 +1275,7 @@ function RQE.handleWorldStateTimerStart(...)
 		DEFAULT_CHAT_FRAME:AddMessage("WSTS 01 Debug: " .. tostring(event) .. " triggered. Timer ID: " .. tostring(timerID), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
 	end
 
+	RQE.StopScenarioTimer()
 	RQE.StartScenarioTimer()
 	RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 	RQE.HandleTimerStart(timerID)
@@ -1511,7 +1512,7 @@ function RQE.handleVariablesLoaded()
 
 	else
 		-- Code to minimize the frame
-		RQEFrame:SetSize(435, 30)
+		RQEFrame:SetSize(420, 30)
 
 		if RQE.ScrollFrame then
 			RQE.ScrollFrame:Hide()
@@ -1536,7 +1537,7 @@ function RQE.handleVariablesLoaded()
 
 	-- Initialize RQEQuestFrame position based on saved variables
 	local xPos = RQE.db.profile.QuestFramePosition.xPos or -40
-	local yPos = RQE.db.profile.QuestFramePosition.yPos or 150
+	local yPos = RQE.db.profile.QuestFramePosition.yPos or 130
 	local anchorPoint = RQE.db.profile.QuestFramePosition.anchorPoint
 
 	local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
@@ -2273,12 +2274,14 @@ function RQE.handleZoneNewAreaChange()
 	end
 	RQE.FocusScrollFrameToTop()
 
-	-- Checks to see if in scenario and if no, will reset the scenario timer
-	if not C_Scenario.IsInScenario() then
-		C_Timer.After(0.7, function()
+	-- -- Checks to see if in scenario and if no, will reset the scenario timer
+	-- if not C_Scenario.IsInScenario() then
+		-- C_Timer.After(0.7, function()
 			RQE.StopScenarioTimer()
-		end)
-	end
+			RQE.StartScenarioTimer()
+			RQE.CheckScenarioStartTime()
+		-- end)
+	-- end
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -2602,8 +2605,9 @@ function RQE.updateScenarioCriteriaUI()
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
 		--RQE.Timer_CheckTimers()
-		RQE.StartScenarioTimer()
-		RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
+		-- RQE.StopScenarioTimer()
+		-- RQE.StartScenarioTimer()
+		-- RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 	else
 		RQE.ScenarioChildFrame:Hide()
@@ -2682,6 +2686,7 @@ function RQE.updateScenarioUI()
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
 		--RQE.Timer_CheckTimers()
+		--RQE.StopScenarioTimer()
 		RQE.StartScenarioTimer()
 		RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
