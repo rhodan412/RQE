@@ -66,7 +66,8 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 			RQE:ToggleDebugLog()
 
 		elseif button == "LeftButton" then
-			RQE:ToggleFramesAndTracker()
+			--RQE:ToggleFramesAndTracker()
+			RQE.ToggleBothFramesfromLDB()
 
 		elseif button == "RightButton" and IsShiftKeyDown() then
 			RQE:OpenSettings()
@@ -111,8 +112,11 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 
 -- Function that toggles RQEFrame and RQEQuestFrame
 function RQE.ToggleBothFramesfromLDB()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
 	if RQEFrame:IsShown() then
 		RQEFrame:Hide()
+		RQE.db.profile.enableFrame = false
 
 		C_Map.ClearUserWaypoint()
 
@@ -126,23 +130,31 @@ function RQE.ToggleBothFramesfromLDB()
 			RQE.MagicButton:Hide()
 		end
 		RQE.RQEQuestFrame:Hide()
+		RQE.db.profile.enableQuestFrame = false
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
 	else
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		if RQE.db.profile.enableFrame then
+		--if RQE.db.profile.enableFrame then
 			RQEFrame:Show()
+			RQE.db.profile.enableFrame = true
 			if RQE.MagicButton then
 				RQE.MagicButton:Show()
 			end
-		end
-		if RQE.db.profile.enableQuestFrame then
+		--end
+		--if RQE.db.profile.enableQuestFrame then
 			RQE.RQEQuestFrame:Show()
-		end
+			RQE.db.profile.enableQuestFrame = true
+		--end
 		RQE.isRQEFrameManuallyClosed = false
 		RQE.isRQEQuestFrameManuallyClosed = false
 		RQE.Buttons.UpdateMagicButtonVisibility()
+	end
+
+	RQE.updateScenarioUI() -- Necessary to check/update if scenario information was present in the RQEQuestFrame, closed and then re-opened outside of a scenario
+	if not isSuperTracking then
+		RQE.Buttons.ClearButtonPressed()
 	end
 end
 
@@ -216,7 +228,8 @@ RQE.MinimapButton:SetScript("OnClick", function(self, button)
 		if IsShiftKeyDown() then
 			RQE:ToggleDebugLog()  -- Shift + Left Click
 		else
-			RQE:ToggleFramesAndTracker()
+			--RQE:ToggleFramesAndTracker()
+			RQE.ToggleBothFramesfromLDB()
 		end
 	elseif button == "RightButton" then
 		if IsShiftKeyDown() then
@@ -462,8 +475,6 @@ function RQE:ShowLDBDropdownMenu()
 	if anchorFrame then
 		-- Toggle menu visibility using the dynamically determined anchor
 		self.CustomMenu:ToggleMenu(anchorFrame)
-	else
-		print("Error: No valid anchor frame found.")
 	end
 end
 
