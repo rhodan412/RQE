@@ -1378,6 +1378,19 @@ function RQE.handlePlayerStartedMoving()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
 	end
 	RQE:StartUpdatingCoordinates()
+
+	-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
+	if C_Scenario.IsInScenario() then return end
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if RQEFrame:IsShown() and not isSuperTracking then
+		RQE.Buttons.ClearButtonPressed()
+
+		-- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
+		if RQE:ShouldClearMacro("RQE Macro") then
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+		end
+	end
 end
 
 
