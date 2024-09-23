@@ -204,7 +204,7 @@ local defaults = {
 			yPos = -285,
 			anchorPoint = "TOPRIGHT",
 			frameWidth = 420,
-			frameHeight = 325,
+			frameHeight = 310,
 		},
 		globalSetting = true,
 		hideRQEFrameWhenEmpty = false,
@@ -924,12 +924,30 @@ end
 
 -- Function to show RQE frames by default on login
 function RQE:ShowRQEFramesOnLogin()
-	-- Show the frames only if they are not already shown
-	if not RQEFrame:IsShown() then
-		RQEFrame:Show()
+	-- Check if the profile setting to enable the main frame is true
+	if RQE.db.profile.enableFrame then
+		-- Show the RQEFrame only if it's not already shown
+		if not RQEFrame:IsShown() then
+			RQEFrame:Show()
+		end
+	else
+		-- Hide the RQEFrame if the setting is false
+		if RQEFrame:IsShown() then
+			RQEFrame:Hide()
+		end
 	end
-	if not RQE.RQEQuestFrame:IsShown() then
-		RQE.RQEQuestFrame:Show()
+
+	-- Check if the profile setting to enable the quest frame is true
+	if RQE.db.profile.enableQuestFrame then
+		-- Show the RQEQuestFrame only if it's not already shown
+		if not RQE.RQEQuestFrame:IsShown() then
+			RQE.RQEQuestFrame:Show()
+		end
+	else
+		-- Hide the RQEQuestFrame if the setting is false
+		if RQE.RQEQuestFrame:IsShown() then
+			RQE.RQEQuestFrame:Hide()
+		end
 	end
 end
 
@@ -1144,8 +1162,8 @@ end
 -- Function to update the RQEFrame size based on the current profile settings
 function RQE:UpdateFrameSize()
 	-- When reading from DB
-	local frameWidth = self.db.profile.framePosition.frameWidth or 400
-	local frameHeight = self.db.profile.framePosition.frameHeight or 300
+	local frameWidth = self.db.profile.framePosition.frameWidth or 420
+	local frameHeight = self.db.profile.framePosition.frameHeight or 310
 
 	-- Error handling for main frame
 	local success, err = pcall(function()
@@ -1161,7 +1179,7 @@ end
 -- Function to update the RQEQuestFrame size based on the current profile settings
 function RQE:UpdateQuestFrameSize()
 	-- Update the quest frame size similarly, using its respective profile settings
-	local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 300
+	local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 325
 	local questFrameHeight = self.db.profile.QuestFramePosition.frameHeight or 450
 
 	-- Error handling for quest frame
@@ -2242,7 +2260,7 @@ end
 -- Function for Button in Configuration that will reset the size of the RQEFrame and RQEQuestFrame to default values
 function RQE:ResetFrameSizeToDBorDefault()
 	local RQEWidth = 420
-	local RQEHeight = 325
+	local RQEHeight = 310
 	local RQEQuestWidth = 325
 	local RQEQuestHeight = 450
 
@@ -2269,7 +2287,7 @@ end
 -- When the frame is maximized
 function RQE:MaximizeFrame()
 	local defaultWidth = RQE.db.profile.frameWidth or 420  -- Replace 400 with the default from Core.lua
-	local defaultHeight = RQE.db.profile.frameHeight or 325  -- Replace 300 with the default from Core.lua
+	local defaultHeight = RQE.db.profile.frameHeight or 310  -- Replace 300 with the default from Core.lua
 
 	local width = RQE.db.profile.framePosition.originalWidth or defaultWidth
 	local height = RQE.db.profile.framePosition.originalHeight or defaultHeight
@@ -2315,7 +2333,7 @@ end
 
 -- When the frame is maximized
 function RQE:MaximizeQuestFrame()
-	local defaultWidth = RQE.db.profile.QuestFrameWidth or 300  -- Replace 300 with the default width
+	local defaultWidth = RQE.db.profile.QuestFrameWidth or 325  -- Replace 300 with the default width
 	local defaultHeight = RQE.db.profile.QuestFrameHeight or 450  -- Replace 450 with the default height
 
 	local width = RQE.db.profile.QuestFramePosition.originalWidth or defaultWidth
@@ -2328,7 +2346,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeQuestFrame()
-	RQE.RQEQuestFrame:SetSize(300, 30)
+	RQE.RQEQuestFrame:SetSize(325, 30)
 	RQE.db.profile.isQuestFrameMaximized = false
 end
 
