@@ -1621,7 +1621,8 @@ function RQE:AddGeneralSettingsWidgets(container)
 	keyBindSettingKeybind:SetKey(RQE.db.profile.keyBindSetting)
 	keyBindSettingKeybind:SetCallback("OnKeyChanged", function(widget, event, key)
 		RQE.db.profile.keyBindSetting = key
-		RQE:ReapplyMacroBinding()	-- RQE:SetupOverrideMacroBinding()
+		RQE:ReapplyMacroBinding()
+		RQE:SetupOverrideMacroBinding()
 	end)
 
 	-- Add a tooltip description for keyBindSettingKeybind (RQE.db.profile.keyBindSetting)

@@ -919,7 +919,7 @@ function RQE.handlePlayerLogin()
 	end
 
 	-- if RQE.MagicButton then
-		-- RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
+		RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
 	-- end
 
 	RQE:ReapplyMacroBinding()
