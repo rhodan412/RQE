@@ -92,6 +92,26 @@ function RQE.CheckCurrentMacroContents()
 end
 
 
+-- Function to check if the macro contains any content
+function RQE:ShouldClearMacro(macroName)
+	local macroIndex = GetMacroIndexByName(macroName)
+	if not macroIndex or macroIndex == 0 then
+		-- No macro exists
+		return false
+	end
+
+	-- Fetch the current macro content
+	local _, _, macroBody = GetMacroInfo(macroIndex)
+	
+	-- Check if macro body has any content
+	if macroBody and macroBody ~= "" then
+		return true -- Macro has content
+	else
+		return false -- Macro is empty
+	end
+end
+
+
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
 RQE.Buttons.UpdateMagicButtonIcon = function()
 	local macroIndex = GetMacroIndexByName("RQE Macro")
