@@ -25,6 +25,7 @@
 
 	EventManager.lua
 		- Added calls to start/stop/update timer that would give timer in scenario that persists between reloads
+		- Added check when PLAYER_STARTED_MOVING that if not in a scenario and nothing super tracked it will clear the RQEFrame and macro if it exists
 		- Added functionality for the RQEFrame to scroll to top under zone change occurs as long as player isn't mousing over the RQEFrame at the time
 		- Added modification to have dynamic height for scenario child frame based on number of criteria
 		- Added some calls to add/remove non-world quests when QUEST_ACCEPTED and QUEST_REMOVED fire to act as a failsafe
