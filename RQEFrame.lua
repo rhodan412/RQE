@@ -126,7 +126,7 @@ end
 
 -- Create the main frame
 RQEFrame = CreateFrame("Frame", "RQE.RQEFrame", UIParent, "BackdropTemplate")
-RQEFrame:SetSize(420, 325)
+RQEFrame:SetSize(420, 310)
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.framePosition then
 	xPos = RQE.db.profile.framePosition.xPos or 810
@@ -2103,3 +2103,34 @@ function RQE:AttachTooltipToCButton()
 		GameTooltip:Hide()
 	end)
 end
+
+
+-- Continuous checking with OnUpdate to enforce the visibility state of RQE frames
+local checkRQEFrames = CreateFrame("Frame")
+checkRQEFrames:SetScript("OnUpdate", function()
+	-- Check for the RQEFrame visibility setting
+	if RQE.db.profile.enableFrame then
+		-- Show the RQEFrame if it should be enabled and is not currently shown
+		if not RQEFrame:IsShown() then
+			RQEFrame:Show()
+		end
+	else
+		-- Hide the RQEFrame if it should not be shown
+		if RQEFrame:IsShown() then
+			RQEFrame:Hide()
+		end
+	end
+
+	-- Check for the RQEQuestFrame visibility setting
+	if RQE.db.profile.enableQuestFrame then
+		-- Show the RQEQuestFrame if it should be enabled and is not currently shown
+		if not RQEQuestFrame:IsShown() then
+			RQEQuestFrame:Show()
+		end
+	else
+		-- Hide the RQEQuestFrame if it should not be shown
+		if RQEQuestFrame:IsShown() then
+			RQEQuestFrame:Hide()
+		end
+	end
+end)
