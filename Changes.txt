@@ -37,6 +37,7 @@
 
 	QuestingModule.lua
 		- Added Bonus Objectives child frame & GatherAndSortBonusQuestsByProximity
+		- Added check for scenario to update the frame when the RQEFrame/RQEQuestFrame are re-opened
 		- Added dynamic height adjustment for scenario child frame
 		- Added functionality to track bonus objectives when player is at that location
 		- Added questClassification to better understand if a freshly acquired quest was a bonus quest or something else
