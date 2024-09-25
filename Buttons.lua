@@ -69,9 +69,8 @@ RQE.UnknownButtonTooltip = function()
 			RQE.WPyPos = nil
 			RQE.WPmapID = nil
 
-			local extractedQuestID
 			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
 			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
@@ -452,6 +451,8 @@ function RQE.Buttons.ClearButtonPressed()
 	RQE.searchedQuestID = nil
 	RQE.ManualSuperTrack = nil
 	RQE.ClearButtonPressed = true
+	RQE.isSuperTracking = false			-- This is the variable that gets checked when RQE.isPlayerSuperTrackingQuest() runs
+	RQE.CurrentlySuperQuestID = nil		-- This is the variable that gets saved when RQE.isPlayerSuperTrackingQuest() runs and a quest is being super tracked
 	RQE:RemoveSuperTrackingFromQuest()
 	RQE:UpdateRQEFrameVisibility()
 
@@ -464,6 +465,8 @@ function RQE.Buttons.ClearButtonPressed()
 
 	-- Clearing the frame data a second time
 	C_Timer.After(0.2, function()
+		RQE.isSuperTracking = false
+		RQE.CurrentlySuperQuestID = nil
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE:RemoveSuperTrackingFromQuest()
@@ -471,10 +474,21 @@ function RQE.Buttons.ClearButtonPressed()
 
 	-- Clearing the frame data a third time
 	C_Timer.After(0.3, function()
+		RQE.isSuperTracking = false
+		RQE.CurrentlySuperQuestID = nil
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE:RemoveSuperTrackingFromQuest()
 	end)
+
+	-- -- Clearing the frame data a fourth time
+	-- C_Timer.After(0.5, function()
+		-- RQE.isSuperTracking = false
+		-- RQE.CurrentlySuperQuestID = nil
+		-- RQE:ClearFrameData()
+		-- RQE:ClearWaypointButtonData()
+		-- RQE:RemoveSuperTrackingFromQuest()
+	-- end)
 
 	C_Timer.After(0.2, function()
 		RQEMacro:ClearMacroContentByName("RQE Macro")
