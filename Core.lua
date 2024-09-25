@@ -1097,7 +1097,7 @@ end
 function RQE:UpdateMemUsageDisplay()
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if RQE.db.profile.showMapID and mapID then
-		RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. mapID)
+		RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. memUsageText)
 	else
 		RQEFrame.MemoryUsageText:SetText("")
 	end
@@ -1767,6 +1767,50 @@ function RQE:GetClosestTrackedQuest()
 end
 
 
+-- Function that tracks the closest quest on certain events in the Event Manager
+function RQE.TrackClosestQuest()
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	if RQE.db.profile.enableNearestSuperTrack then
+		RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
+		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+		if not RQE.isSuperTracking or not isSuperTracking then		-- if not isSuperTracking then
+			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Within TrackClosestQuest: The closest quest to your current location is " .. tostring(closestQuestID))
+			end
+			if closestQuestID then
+				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("TrackClosestQuest Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID))
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("TrackClosestQuest: No closest quest found to super-track.")
+				end
+			end
+		else
+			local supertrackedcurrentquestID = C_SuperTrack.GetSuperTrackedQuestID()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("TrackClosestQuest: Currently supertracking " .. tostring(supertrackedcurrentquestID))
+			end
+		end
+
+		C_Timer.After(1.5, function()
+			UpdateFrame()
+		end)
+
+		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+		if RQEFrame and not not RQEFrame:IsMouseOver() then
+			RQE.ScrollFrameToTop()
+		end
+		RQE.FocusScrollFrameToTop()
+	else
+		print("enableNearestSuperTrack is currently disabled in Config")
+	end
+end
+
+
 -- Function for Tracking World Quests
 function UpdateWorldQuestTrackingForMap(uiMapID)
 	if not uiMapID then
@@ -2026,6 +2070,27 @@ function RQE:RemoveSuperTrackingFromQuest()
 	UpdateRQEQuestFrame()
 	UpdateRQEWorldQuestFrame()
 	RQE.infoLog("RQEQuestFrame updated to reflect super-tracking changes.")
+end
+
+
+-- Function that checks to see if a player is currently tracking a quest
+function RQE.isPlayerSuperTrackingQuest()
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Extracted questID is: " .. tostring(extractedQuestID))
+		end
+		RQE.isSuperTracking = true
+		RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID	-- Added failsafe in case questID isn't yet registered in the RQEFrame, but something is being super tracked and should be considered
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.isSuperTracking is " .. tostring(RQE.isSuperTracking) .. ". Currently SuperTracked questID: " .. tostring(RQE.CurrentlySuperQuestID) .. " saved to RQE.CurrentlySuperQuestID addon variable")
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.isSuperTracking is " .. tostring(RQE.isSuperTracking) .. ". There are no quests being supertracked/displayed in the RQEFrame")
+		end
+		RQE.isSuperTracking = false
+	end
 end
 
 
@@ -3293,9 +3358,10 @@ function RQE.SetInitialWaypointToOne()
 		return
 	end
 
+	RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if isSuperTracking then
+	if RQE.isSuperTracking or isSuperTracking then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		local stepIndex = RQE.AddonSetStepIndex or 1
 
@@ -6134,7 +6200,7 @@ end
 function RQE:BuildQuestMacroBackup()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if isSuperTracking then
+	if RQE.isSuperTracking or isSuperTracking then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 		-- Allow time for the UI to update and for the super track to register
