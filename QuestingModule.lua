@@ -207,7 +207,7 @@ end
 
 
 -- Create the ScenarioChildFrame, anchored to the content frame
-RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 75)
+RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 110)
 
 -- Create the Campaign Child frame, anchored to the content frame/Scenario Frame if available
 RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, 0, content:GetWidth(), 120)
@@ -314,10 +314,10 @@ function RQE.SetScenarioChildFrameHeight()
 	local numCriteria = select(3, C_Scenario.GetStepInfo()) or 0
 
 	-- Base height for the frame
-	local baseHeight = 75
+	local baseHeight = 120
 
 	-- Height per criteria (adjust as needed for proper spacing)
-	local heightPerCriteria = 35
+	local heightPerCriteria = 45
 
 	-- Calculate the total height
 	local totalHeight = baseHeight + (numCriteria * heightPerCriteria)
@@ -363,7 +363,7 @@ function RQE.UpdateCampaignFrameAnchor()
 	if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 		-- If ScenarioChildFrame is present and shown, anchor CampaignFrame to ScenarioChildFrame
 		RQE.CampaignFrame:ClearAllPoints()  -- Clear existing points
-		RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -15)
+		RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -35)
 	else
 		-- If ScenarioChildFrame is not present or not shown, anchor CampaignFrame to content
 		RQE.CampaignFrame:ClearAllPoints()  -- Clear existing points
