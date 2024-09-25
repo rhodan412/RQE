@@ -1689,7 +1689,7 @@ end
 -- Function to update the content size dynamically based on the number of steps
 function RQE:UpdateContentSize()
 	local n = #self.StepsText	-- The number of steps
-	local totalHeight = 3 + (2 * n) + 8 * (n - 1)
+	local totalHeight = 5 + (2 * n) + 8 * (n - 1)
 	--local totalHeight = 25 + 25 + (35 * n) + (35 * n) + 30 * (n - 1)
 	content:SetHeight(totalHeight)
 	slider:SetMinMaxValues(0, content:GetHeight())
