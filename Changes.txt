@@ -7,16 +7,19 @@
 		- Removed SetPropagateMouse code
 
 	Config.lua
-		- Utilized different method for calling function to ensure persistent update of the RQEMagicButton keybinding betweeen sessions
+		- Utilized different method for calling function to ensure persistent update of the RQEMagicButton key binding between sessions
 
 	Core.lua
 		- Added check for if player was in party/raid instance and if so, not to update/check macro (prior to this existing there was a momentary bump in lag whenever it checked which was more noticeable in these environments)
+		- Added function that is responsible for checking and tracking closest quest
 		- Added nil check for questData within the RQE:CheckScenarioStage(questID, stepIndex) function
+		- Changed way that isSuperTracking is handled by running a function that checks the RQEFrame, but kept the original method of API in case RQEFrame is empty but quest is being super tracked
 		- Created separate function that creates a tooltip as this needed to be able to accommodate for the Bonus Objective quests
 		- Creates/checks macro status when RQE:StartPeriodicChecks runs to see if it has the correct macro in place
 		- Moved RQE.InitializeSeparateFocusFrame() function call outside of the debug statement so that it would fire appropriately
 		- Removed SetPropagateMouse code
 		- Fix for WQ not being removed when it should've been cleared from the RQEQuestFrame
+		- Fixed text that gets used when checking the add-on memory usage above the RQEFrame
 		- Start of work in adding counter for the bonus quests to be counted in the world quest frame
 		- Adjusted x, y of RQEFrame and RQEQuestFrame default location to not interfere with default minimap location
 
@@ -26,6 +29,7 @@
 	EventManager.lua
 		- Added calls to start/stop/update timer that would give timer in scenario that persists between reloads
 		- Added check when PLAYER_STARTED_MOVING that if not in a scenario and nothing super tracked it will clear the RQEFrame and macro if it exists
+		- Added enableNearestSuperTrack for PLAYER_ENTERING_WORLD event
 		- Added functionality for the RQEFrame to scroll to top under zone change occurs as long as player isn't mousing over the RQEFrame at the time
 		- Added modification to have dynamic height for scenario child frame based on number of criteria
 		- Added some calls to add/remove non-world quests when QUEST_ACCEPTED and QUEST_REMOVED fire to act as a failsafe
@@ -33,8 +37,9 @@
 		- Fixed bug that resulted in WQ being tracked that shouldn't be and proper removal when leaving the area of those automatically accepted WQ
 		- Fixed error with ToggleFramesAndTracker attempting to run while in combat
 		- Fixed to be sure to run UpdateRQEWorldQuestFrame() when a quest is accepted as normal triggers don't fire with bonus objectives
+		- Removed (commented out) enableNearestSuperTrack for PLAYER_LOGIN event as this is now covered by the optimal PLAYER_ENTERING_WORLD
 		- Simulated click of "C" ClearButton when quest turned in and nothing is being super tracked
-		- Utilized different method for calling function to ensure persistent update of the RQEMagicButton keybinding betweeen sessions
+		- Utilized different method for calling function to ensure persistent update of the RQEMagicButton key binding between sessions
 
 	QuestingModule.lua
 		- Added Bonus Objectives child frame & GatherAndSortBonusQuestsByProximity
@@ -49,7 +54,7 @@
 		- Modified the size of the child frames
 		- Removed some debug messages
 		- Reverted GatherAndSortWorldQuestsByProximity function to older version as Bonus Objectives are placed in their own child frame
-		- Timer associated with scenario will persist between /reloads and reads how long player has been inside that instance/scenario (Beta feature may not work completely as intended)
+		- Timer associated with scenario will persist between /reloads and reads how long player has been inside that instance/scenario
 
 	RQEDatabase.lua
 		- Added some non-campaign leveling quests from Isle of Dorn to the DB
@@ -69,6 +74,7 @@
 
 	RQEMinimap.lua
 		- Fix issue with RQE:ToggleFramesAndTracker() being protected and unable to close, thru toggle during combat.
+		- Added another method to check the text of the RQEFrame for possible super track questID
 
 	WaypointManager.lua
 		- Added code to save x, y and mapID into addon table when RQE:OnCoordinateClicked(stepIndex) function fires as a means to attempt to correct issue where waypoint created was from previous stepIndex's waypoint from the DB
