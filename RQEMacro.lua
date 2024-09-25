@@ -26,8 +26,10 @@ function RQE.CheckCurrentMacroContents()
 	end
 
 	-- Check if a quest is being super-tracked
+	RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	if not isSuperTracking then
+
+	if not RQE.isSuperTracking or not isSuperTracking then
 		RQE.debugLog("No quest is currently being super-tracked.")
 		return false
 	end
