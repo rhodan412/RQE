@@ -197,6 +197,7 @@ local defaults = {
 		enableNearestSuperTrack = true,
 		enableQuestAbandonConfirm = false,
 		enableQuestFrame = true,
+		enableQuestTypeDisplay = false,
 		enableTomTomCompatibility = true,
 		EncounterEnd = false,
 		framePosition = {
@@ -1267,12 +1268,13 @@ end
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Check if the SeparateFocusFrame exists
-	if not RQE.SeparateFocusFrame then
-		return
-	end
+	-- if not RQE.SeparateFocusFrame then
+		-- return
+	-- end
 
 	-- Ensure the frame is initialized
 	RQE.InitializeSeparateFocusFrame()
+	RQE.SeparateFocusFrame:Show()
 
 	-- Ensure SeparateStepText exists
 	if not RQE.SeparateStepText then
@@ -2075,6 +2077,8 @@ end
 
 -- Function that checks to see if a player is currently tracking a quest
 function RQE.isPlayerSuperTrackingQuest()
+	if RQE.currentSuperTrackedQuestID == RQE.previousSuperTrackedQuestID then return end
+
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -3634,6 +3638,8 @@ end
 
 -- Function that creates a macro based on the current stepIndex of the current super tracked quest
 function RQEMacro:CreateMacroForCurrentStep()
+	if not RQE.isCheckingMacroContents then return end
+
 	-- Retrieve the questID that is currently being supertracked
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local isInInstance, instanceType = IsInInstance()
@@ -4097,12 +4103,15 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Objective progress check completed and step advanced.")
 				end
+				RQE.isCheckingMacroContents = false
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Objective progress check did not result in advancement.")
 				end
 			end
+
+RQE.isCheckingMacroContents = false
 
 		-- Check if the current step requires scenario stage checks
 		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioStage") then
@@ -4114,6 +4123,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario stage check completed and step advanced.")
 				end
+				RQE.isCheckingMacroContents = false
 				RQE:UpdateSeparateFocusFrame()
 				return
 			else
@@ -4121,6 +4131,8 @@ function RQE:StartPeriodicChecks()
 					print("Scenario stage check did not result in advancement.")
 				end
 			end
+
+RQE.isCheckingMacroContents = false
 
 		-- Check if the current step requires scenario objective progress
 		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioCriteria") then
@@ -4132,6 +4144,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario criteria check completed and step advanced.")
 				end
+				RQE.isCheckingMacroContents = false
 				RQE:UpdateSeparateFocusFrame()
 				return
 			else
@@ -4140,6 +4153,8 @@ function RQE:StartPeriodicChecks()
 				end
 			end
 		end
+
+RQE.isCheckingMacroContents = false
 
 		-- Process the current step
 		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
@@ -4158,6 +4173,7 @@ function RQE:StartPeriodicChecks()
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+					RQE.isCheckingMacroContents = false
 				end
 			end
 		end
@@ -4420,6 +4436,7 @@ function RQE:ClickWaypointButtonForIndex(index)
 				RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+					RQE.isCheckingMacroContents = true
 				end
 			else
 				RQE.debugLog("No waypoint button found for AddonSetStepIndex:", RQE.AddonSetStepIndex)
@@ -4427,10 +4444,12 @@ function RQE:ClickWaypointButtonForIndex(index)
 		end)
 	else
 		RQE.debugLog("No waypoint button found for index:", index)
+		RQE.isCheckingMacroContents = false
 	end
 
 	-- Check to ensure that the macro is properly set
 	RQEMacro:CreateMacroForCurrentStep()
+	RQE.isCheckingMacroContents = false
 end
 
 

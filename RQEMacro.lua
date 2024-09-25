@@ -16,9 +16,6 @@ function RQE.CheckCurrentMacroContents()
 		return false
 	end
 
-	-- Flag to indicate the function is in progress
-	RQE.isCheckingMacroContents = true
-
 	-- Ensure that `RQE.AddonSetStepIndex` is initialized and maintained properly
 	if not RQE.AddonSetStepIndex then
 		RQE.debugLog("RQE.AddonSetStepIndex was nil; setting to 1 by default.")

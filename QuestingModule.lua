@@ -2342,23 +2342,29 @@ function UpdateRQEQuestFrame()
 				end)
 
 				-- Quest Type
-				local questTypeText = GetQuestType(questID)
-				local questZoneText = GetQuestZone(questID)
-				local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
-				QuestTypeLabel:SetWordWrap(true)
-				QuestTypeLabel:SetJustifyH("LEFT")
-				QuestTypeLabel:SetJustifyV("TOP")
-				QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
-				QuestTypeLabel:SetTextColor(250/255, 128/255, 115/255)  -- Salmon
+				if RQE.db.profile.enableQuestTypeDisplay then
+					local questTypeText = GetQuestType(questID)
+					local questZoneText = GetQuestZone(questID)
+					local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
+					QuestTypeLabel:SetWordWrap(true)
+					QuestTypeLabel:SetJustifyH("LEFT")
+					QuestTypeLabel:SetJustifyV("TOP")
+					QuestTypeLabel:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+					QuestTypeLabel:SetTextColor(250/255, 128/255, 115/255)  -- Salmon
 
-				-- Update the quest type label text
-				QuestTypeLabel:SetText(questTypeText .. " @ " .. questZoneText)
-				QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
+					-- Update the quest type label text
+					QuestTypeLabel:SetText(questTypeText .. " @ " .. questZoneText)
+					QuestLogIndexButton.QuestTypeLabel = QuestTypeLabel
+				end
 
 				-- Create or reuse the QuestObjectivesOrDescription label
 				local QuestObjectivesOrDescription = RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
+				if RQE.db.profile.enableQuestTypeDisplay then
+					QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
+				else
+					QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
+				end
 				QuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectivesOrDescription:SetJustifyH("LEFT")
 				QuestObjectivesOrDescription:SetJustifyV("TOP")

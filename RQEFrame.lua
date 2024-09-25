@@ -1914,65 +1914,7 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.SeparateStepText:SetText(formattedText)
 		RQE.SeparateStepText:Show()
 
-		-- Create or update Waypoint Button
-		if not RQE.SeparateWaypointButton then
-			RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
-			RQE.SeparateWaypointButton:SetSize(30, 30)
-			RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
-			local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
-			bg:SetAllPoints()
-			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
-
-			-- Create the number label
-			local number = RQE.SeparateWaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-			number:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER", 0, -2)
-			number:SetText("*")
-			number:SetTextColor(1, 1, 0)
-
-			-- Add the click event for the Waypoint Button
-			RQE.SeparateWaypointButton:SetScript("OnClick", function()
-				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
-					RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
-					-- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
-					if RQE.AddonSetStepIndex == 1 then
-						-- Tier Two Importance: 
-						if RQE.db.profile.autoClickWaypointButton then
-							RQE.CreateMacroForUpdateSeparateFocusFrame = true
-							RQEMacro:CreateMacroForCurrentStep()
-							C_Timer.After(3, function()
-								RQE.CreateMacroForUpdateSeparateFocusFrame = false
-							end)
-							--RQE.CheckAndBuildMacroIfNeeded()
-						end
-					end
-				else
-					print("No waypoint button found for the current step.")
-				end
-			end)
-
-			-- Add the script for the tooltip on mouse enter for the "C" button
-			RQE.SeparateWaypointButton:SetScript("OnEnter", function(self)
-				-- Use the stepIndex for the current step, always 1 for "C" button
-				local stepIndex = RQE.AddonSetStepIndex or 1
-
-				-- Retrieve the correct tooltip data using the function
-				local coordsText = RQE:GetTooltipDataForCButton()
-
-				-- Ensure coordsText is valid and set up the tooltip
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText(coordsText)
-				GameTooltip:ClearAllPoints()
-				GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)
-				GameTooltip:Show()
-			end)
-
-			-- Hide the tooltip when leaving the "C" button
-			RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
-				GameTooltip:Hide()
-			end)
-		end
-
-		RQE.SeparateWaypointButton:Show()
+		RQE.InitializeSeparateFocusWaypoints()
 
 		-- Update content height dynamically
 		RQE.UpdateSeparateContentHeight()
@@ -2029,6 +1971,69 @@ function RQE.InitializeSeparateFocusFrame()
 
 	-- Call the function to update the frame's content dynamically
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when initialized
+end
+
+
+function RQE.InitializeSeparateFocusWaypoints()
+	-- Create or update Waypoint Button
+	if not RQE.SeparateWaypointButton then
+		RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
+		RQE.SeparateWaypointButton:SetSize(30, 30)
+		RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
+		local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
+		bg:SetAllPoints()
+		bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+
+		-- Create the number label
+		local number = RQE.SeparateWaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		number:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER", 0, -2)
+		number:SetText("*")
+		number:SetTextColor(1, 1, 0)
+
+		-- Add the click event for the Waypoint Button
+		RQE.SeparateWaypointButton:SetScript("OnClick", function()
+			if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+				RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+				-- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
+				if RQE.AddonSetStepIndex == 1 then
+					-- Tier Two Importance: 
+					if RQE.db.profile.autoClickWaypointButton then
+						RQE.CreateMacroForUpdateSeparateFocusFrame = true
+						RQEMacro:CreateMacroForCurrentStep()
+						C_Timer.After(3, function()
+							RQE.CreateMacroForUpdateSeparateFocusFrame = false
+						end)
+						--RQE.CheckAndBuildMacroIfNeeded()
+					end
+				end
+			else
+				print("No waypoint button found for the current step.")
+			end
+		end)
+
+		-- Add the script for the tooltip on mouse enter for the "C" button
+		RQE.SeparateWaypointButton:SetScript("OnEnter", function(self)
+			-- Use the stepIndex for the current step, always 1 for "C" button
+			local stepIndex = RQE.AddonSetStepIndex or 1
+
+			-- Retrieve the correct tooltip data using the function
+			local coordsText = RQE:GetTooltipDataForCButton()
+
+			-- Ensure coordsText is valid and set up the tooltip
+			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			GameTooltip:SetText(coordsText)
+			GameTooltip:ClearAllPoints()
+			GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)
+			GameTooltip:Show()
+		end)
+
+		-- Hide the tooltip when leaving the "C" button
+		RQE.SeparateWaypointButton:SetScript("OnLeave", function(self)
+			GameTooltip:Hide()
+		end)
+	end
+
+	RQE.SeparateWaypointButton:Show()
 end
 
 

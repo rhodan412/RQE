@@ -569,6 +569,7 @@ function RQE:OnCoordinateClicked()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("OnCoordinateClicked called with questID:", questID, "stepIndex:", stepIndex)
 		print("Waypoint coordinates - X:", x, "Y:", y, "MapID:", mapID)
+		RQE.isCheckingMacroContents = true
 	end
 
 	local questData = RQE.getQuestData(questID)

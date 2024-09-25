@@ -357,7 +357,7 @@ end
 function RQE:SetupOverrideMacroBinding()
 	local ownerFrame = RQE.MagicButton
 	local macroName = "RQE Macro"
-	local bindingKey = RQE.db.profile.keyBindSetting	-- Use the stored setting or default
+	local bindingKey = RQE.db.profile.keyBindSetting or RQE.db.profile.macroBindingKey
 
 	-- Check if bindingKey is valid
 	if not bindingKey or bindingKey == "" then

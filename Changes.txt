@@ -1,3 +1,7 @@
+11.0.2.42
+	- Performances fixes as add-on would lag spike between some quest objectives
+
+
 11.0.2.41
 	Buttons.lua
 		- Created system of saving waypoint information to a variable to be used in waypoint creation under the automation system
