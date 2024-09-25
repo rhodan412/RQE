@@ -112,8 +112,6 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 
 -- Function that toggles RQEFrame and RQEQuestFrame
 function RQE.ToggleBothFramesfromLDB()
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-
 	if RQEFrame:IsShown() then
 		RQEFrame:Hide()
 		RQE.db.profile.enableFrame = false
@@ -153,7 +151,10 @@ function RQE.ToggleBothFramesfromLDB()
 	end
 
 	RQE.updateScenarioUI() -- Necessary to check/update if scenario information was present in the RQEQuestFrame, closed and then re-opened outside of a scenario
-	if not isSuperTracking then
+	--RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+	if not RQE.isSuperTracking or not isSuperTracking then
 		RQE.Buttons.ClearButtonPressed()
 	end
 end
