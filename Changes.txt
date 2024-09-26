@@ -1,5 +1,15 @@
 11.0.2.43
+	Config.lua
+		- Added showPlayerMountDisplayChanged and separated it from showPlayerRegenEnabled
 
+	Core.lua
+		- Set default to display 'showPlayerMountDisplayChanged' as false in local defaults
+
+	EventManager.lua
+		- Separated PLAYER_MOUNT_DISPLAY_CHANGED from PLAYER_REGEN_ENABLED and added failsafe to new PLAYER_MOUNT_DISPLAY_CHANGED event handler to check macro contents if they are correct with quest's current step
+
+	RQEDatabase.lua
+		- Fixed neededAmt for questID 78383's objectiveIndex 2 as it was stuck and wouldn't advance the WaypointButton further
 
 
 11.0.2.42
