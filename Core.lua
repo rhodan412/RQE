@@ -258,6 +258,7 @@ local defaults = {
 		showMinimapIcon = false,
 		showPlayerLogin = false,
 		showPlayerRegenEnabled = false,
+		showPlayerMountDisplayChanged = false,
 		showTrackedAchievementUpdate = false,
 		StartTimer = false,
 		textSettings = {
