@@ -2687,25 +2687,45 @@ function RQE:AddDebugSettingsWidgets(container)
 				end)
 				debugInlineGroup:AddChild(LFGActiveEntryUpdate)
 
-				-- Checkbox for displaying PLAYER_REGEN_ENABLED or PLAYER_MOUNT_DISPLAY_CHANGED event debug info
+				-- Checkbox for displaying PLAYER_REGEN_ENABLED event debug info
 				local showPlayerRegenEnabled = AceGUI:Create("CheckBox")
-				showPlayerRegenEnabled:SetLabel("Show PLAYER_REGEN and PLAYER_MOUNT Event Info")
+				showPlayerRegenEnabled:SetLabel("Show PLAYER_REGEN Event Info")
 				showPlayerRegenEnabled:SetValue(RQE.db.profile.showPlayerRegenEnabled)
 				showPlayerRegenEnabled:SetFullWidth(true)	-- Make the checkbox full width
 				showPlayerRegenEnabled:SetCallback("OnValueChanged", function(widget, event, value)
 					RQE.db.profile.showPlayerRegenEnabled = value
 				end)
 
-				-- Add tooltip for the PLAYER_REGEN_ENABLED or PLAYER_MOUNT_DISPLAY_CHANGED event checkbox
+				-- Add tooltip for the PLAYER_REGEN_ENABLED event checkbox
 				showPlayerRegenEnabled:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the PLAYER REGEN ENABLED or PLAYER MOUNT DISPLAY CHANGED event listener.\n\n|cFF4AA458Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the PLAYER REGEN ENABLED event listener.\n\n|cFF4AA458Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				showPlayerRegenEnabled:SetCallback("OnLeave", function(widget, event)
 					GameTooltip:Hide()
 				end)
 				debugInlineGroup:AddChild(showPlayerRegenEnabled)
+
+				-- Checkbox for displaying PLAYER_MOUNT_DISPLAY_CHANGED event debug info
+				local showPlayerMountDisplayChanged = AceGUI:Create("CheckBox")
+				showPlayerMountDisplayChanged:SetLabel("Show PLAYER_MOUNT Event Info")
+				showPlayerMountDisplayChanged:SetValue(RQE.db.profile.showPlayerMountDisplayChanged)
+				showPlayerMountDisplayChanged:SetFullWidth(true)	-- Make the checkbox full width
+				showPlayerMountDisplayChanged:SetCallback("OnValueChanged", function(widget, event, value)
+					RQE.db.profile.showPlayerMountDisplayChanged = value
+				end)
+
+				-- Add tooltip for the PLAYER_MOUNT_DISPLAY_CHANGED event checkbox
+				showPlayerMountDisplayChanged:SetCallback("OnEnter", function(widget, event)
+					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText("Toggle the display of debug print messages for the PLAYER MOUNT DISPLAY CHANGED event listener.\n\n|cFF4AA458Fired after activating/deactivating a player mount.|r", nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+				showPlayerMountDisplayChanged:SetCallback("OnLeave", function(widget, event)
+					GameTooltip:Hide()
+				end)
+				debugInlineGroup:AddChild(showPlayerMountDisplayChanged)
 
 				-- Checkbox for displaying PLAYER_LOGIN event debug info
 				local showPlayerLogin = AceGUI:Create("CheckBox")
