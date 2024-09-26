@@ -285,7 +285,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
-		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerRegenEnabled,
+		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerMountDisplayChanged,
 		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
@@ -770,7 +770,7 @@ function RQE.handleUnitInventoryChange(...)
 end
 
 
--- Function that runs after leaving combat or PLAYER_REGEN_ENABLED, PLAYER_MOUNT_DISPLAY_CHANGED
+-- Function that runs after leaving combat or PLAYER_REGEN_ENABLED
 -- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
@@ -854,6 +854,56 @@ function RQE.handlePlayerRegenEnabled()
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
 		RQE:CheckMemoryUsage()
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
+			DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)
+		end
+	end
+end
+
+
+-- Function that runs after leaving combat or PLAYER_MOUNT_DISPLAY_CHANGED
+function RQE.handlePlayerMountDisplayChanged()
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
+		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
+	end
+
+	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
+	if not C_Scenario.IsInScenario() then
+		if RQE.db.profile.autoClickWaypointButton then
+			C_Timer.After(2.5, function()
+				RQE.isCheckingMacroContents = true
+				RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
+				C_Timer.After(3, function()
+					RQE.isCheckingMacroContents = false
+				end)
+			end)
+		end
+	end
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
+				DEFAULT_CHAT_FRAME:AddMessage("Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.65, 0.5)
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
+				DEFAULT_CHAT_FRAME:AddMessage("Debug: No quest ID extracted from text.", 1, 0.65, 0.5)
+			end
+		end
+
+		-- Determine questID based on various fallbacks
+		local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
+			DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
+		end
+	end
+
+	-- Update Display of Memory Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		RQE:CheckMemoryUsage()
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
 			DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)
 		end
 	end
