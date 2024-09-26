@@ -16,12 +16,12 @@
 		- Fixed neededAmt for questID 78383's objectiveIndex 2 as it was stuck and wouldn't advance the WaypointButton further
 
 
-11.0.2.42
+11.0.2.42 (2024-09-26)
 
 	- Performances fixes as add-on would lag spike between some quest objectives
 
 
-11.0.2.41
+11.0.2.41 (2024-09-26)
 
 	Buttons.lua
 		- Created system of saving waypoint information to a variable to be used in waypoint creation under the automation system
@@ -107,7 +107,7 @@
 		- Added system to save coordinate data to a specific variable as the quest progress moves through the objectives
 
 
-11.0.2.40
+11.0.2.40 (2024-09-14)
 
 	Buttons.lua
 		- Modified code for the "C" Clear Button to better handle clearing the frame (focus frame, in particular) when pressed.
@@ -135,7 +135,7 @@
 		- Fix 'EditMacro' error received
 
 
-11.0.2.39
+11.0.2.39 (2024-09-13)
 
 	Core.lua
 		- Fixed RQE:StartPeriodicChecks() as CheckDBObjectiveStatus wasn't updating the waypoint and now it is. Tentative switch for CheckScenarioStage and CheckScenarioCriteria but will need further testing to be sure same fix worked
@@ -152,7 +152,7 @@
 		- Created backup method for waypoint creation (for testing purposes)
 
 
-11.0.2.38
+11.0.2.38 (2024-09-12)
 
 	Core.lua
 		- Removed flags in RQEMacro:CreateMacroForCurrentStep() and RQE:StartPeriodicChecks() as not working as desired
@@ -178,7 +178,7 @@
 		- Code cleanup
 
 
-11.0.2.37
+11.0.2.37 (2024-09-05)
 
 	Buttons.lua
 		- Added flag for RQE.ClearButtonPressed
@@ -216,7 +216,7 @@
 		- Added note of compatibility issue between RQE and World Quest Tracker add-on in the TOC. A notation is currently listed on the RQE Curseforge page. This is something that doesn't exist if either RQE or WQT are used, but manifests in the form of some quests being listed as world quests when they shouldn't be. Problem goes away when WQT is disabled.
 
 
-11.0.2.36
+11.0.2.36 (2024-09-04)
 
 	Config.lua
 		- Added DebugLog Toggle in Debug Setting in Configuration Frame
@@ -248,7 +248,7 @@
 		- Cleared unused debug msg
 
 
-11.0.2.35
+11.0.2.35 (2024-09-02)
 
 	Buttons.lua
 		- Added RQE:ClearSeparateFocusFrame functionality to the ClearButton in the RQEFrame
@@ -295,7 +295,7 @@
 		- Cleaned up code (including spacing and indents).
 
 
-11.0.2.34
+11.0.2.34 (2024-09-01)
 
 	Core.lua
 		- Major improvements to the performance of the add-on
@@ -317,7 +317,7 @@
 		- Fix to performance problems and with quests not advancing properly from one stepIndex to the next
 
 
-11.0.2.33-beta
+11.0.2.33-beta (2024-09-01)
 
 	Core.lua
 		- Implemented new changes from RQE.CheckThatQuestStep() into the RQE:StartPeriodicChecks()
@@ -334,7 +334,7 @@
 		- Commented out the added debug print msgs as they are no longer needed (or at least not at this time since seemingly fixing the quest advancement and performance problems)
 
 
-11.0.2.33-alpha
+11.0.2.33-alpha (2024-09-01)
 
 	Core.lua
 		- Corrected for nil error in RQE:CheckObjectiveProgress function
@@ -351,7 +351,7 @@
 		- Potential fix in place to keep RQE.LastClickedButtonRef and WaypointButton.stepIndex from resetting to "1" when in the middle of a quest (this is having the effect of setting the stepIndex/waypoint button to 1 and preventing advancement without a reload
 
 
-11.0.2.32
+11.0.2.32 (2024-08-31)
 
 	Buttons.lua
 		- Removed unneeded code for preventing some code from running during combat - this appeared to be an error when this is actually taint and most of what I run should be fine to update their own frames in or out of combat
@@ -392,7 +392,7 @@
 		- Removed unneeded code meant to prevent taint
 
 
-11.0.2.31
+11.0.2.31 (2024-08-30)
 
 	Buttons.lua
 	Core.lua
@@ -408,7 +408,7 @@
 		- Added InCombatLocked at top of colorize function located here
 
 
-11.0.2.30
+11.0.2.30 (2024-08-29)
 
 	Core.lua
 		- Set a number of flags to default values that will trigger if certain functions fire during an event while combat is in progress. That flag is then checked to re-run the paused function once combat terminates
@@ -431,14 +431,14 @@
 		- Set code/checks to prevent/delay adjustment of frame width of the RQEFrame (SuperTrack frame) to run after combat ends, should they be called when combat is in process
 
 
-11.0.2.29
+11.0.2.29 (2024-08-29)
 
 	Core.lua
 	QuestingModule.lua
 		- Fix implemented following the API change from 11.0 where scenario criteria was no longer available
 
 
-11.0.2.28
+11.0.2.28 (2024-08-29)
 
 	EventManager.lua
 		- Added functionality to automatically track a quest when QUEST_ACCEPTED fires (not sure why this wasn't the case before)
@@ -449,7 +449,7 @@
 		- 78462: Added some more info to description
 
 
-11.0.2.27b
+11.0.2.27b (2024-08-28)
 
 	Core.lua
 		- Made it default that autoClickWaypointButton is true as this is of paramount importance in use of the walk thru guide!
@@ -458,7 +458,7 @@
 		- Reverted some code due to pass-thru error by commenting it out as this didn't fix the problem that came with 11.0 api passthru button changes
 
 
-11.0.2.27
+11.0.2.27 (2024-08-28)
 
 	Buttons.lua
 		- Misc. code clean-up and spacing
@@ -491,7 +491,7 @@
 		- Prevent UnknownQuestButton "W" from being updated while in combat as may have been responsible for button passthru error
 
 
-11.0.2.26
+11.0.2.26 (2024-08-22)
 
 	EventManager.lua
 		- Fix made for ObjectiveTracker continuing to show up constantly
@@ -499,19 +499,19 @@
 		- Added some additional functions for payload information temporarily (these are commented out and are not running on release client)
 
 
-11.0.2.25
+11.0.2.25 (2024-08-19)
 
 	EventManager.lua
 		- Additional placements of HideObjectiveTracker() function -- additions were needed following 11.0
 		- Cleaned up code
 
-11.0.2.24
+11.0.2.24 (2024-08-19)
 
 	Core.lua
 		- Fixed coding so that the Minimap button would reflect properly the checkbox in the SettingsPanel and ConfigFrame
 
 
-11.0.2.23
+11.0.2.23 (2024-08-19)
 
 	- Massive code cleanup (removed/re-worded comment lines)
 
@@ -540,7 +540,7 @@
 		- Moved section #8 'drag n drop' to section #6 'event handler'
 
 
-11.0.2.22
+11.0.2.22 (2024-08-18)
 
 	Config.lua
 		- Updates to Config Frame window
@@ -552,7 +552,7 @@
 		- Commented out section in the dropdown for RQE:ShowMoreOptionsMenu as these options, to trigger settings opening for subcategories are not yet functional
 
 
-11.0.2.21
+11.0.2.21 (2024-08-17)
 
 	RQEFrame.lua
 		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded within RQE:CreateStepsText function
@@ -562,7 +562,7 @@
 		- Added 'Config Window' to More Options in LDB menu
 
 
-11.0.2.2
+11.0.2.2 (2024-08-17)
 
 	Config.lua
 		- Experimental: Update to OpenFrameSettings() function to include changes allegedly made with 11.0 API to open subcategories
@@ -584,6 +584,6 @@
 		- Included 110005 in the accepted Game versions
 
 
-11.0.2.1
+11.0.2.1 (2024-08-14)
 
 	Initial Release
