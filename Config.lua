@@ -329,11 +329,22 @@ RQE.options = {
 					end,
 					width = "full",
 				},
+				enableNearestSuperTrackCampaign = {
+					type = "toggle",
+					name = "Enable SuperTrack Nearest Campaign Quest",
+					desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking",
+					order = 18,
+					get = function() return RQE.db.profile.enableNearestSuperTrackCampaign end,
+					set = function(_, newValue)
+						RQE.db.profile.enableNearestSuperTrackCampaign = newValue;
+					end,
+					width = "full",
+				},
 				enableQuestTypeDisplay = {
 					type = "toggle",
 					name = "Enable Quest Type Display",
 					desc = "Enable visual information of the quest type in the Quest Tracker",
-					order = 18,
+					order = 19,
 					get = function() return RQE.db.profile.enableQuestTypeDisplay end,
 					set = function(_, newValue)
 						RQE.db.profile.enableQuestTypeDisplay = newValue;
@@ -351,7 +362,7 @@ RQE.options = {
 						RQE.db.profile.keyBindSetting = value
 						RQE:ReapplyMacroBinding()	-- RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
 					end,
-					order = 19,
+					order = 20,
 				},
 			},
 		},
@@ -1625,6 +1636,31 @@ function RQE:AddGeneralSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(enableNearestSuperTrack)
+
+	-- Enable SuperTrack Nearest Campaign Quest Checkbox
+	if RQE.db.profile.enableNearestSuperTrack then
+		local enableNearestSuperTrackCampaign = AceGUI:Create("CheckBox")
+		enableNearestSuperTrackCampaign:SetLabel("Enable SuperTrack Nearest Campaign Quest")
+		enableNearestSuperTrackCampaign:SetValue(RQE.db.profile.enableNearestSuperTrackCampaign)
+		enableNearestSuperTrackCampaign:SetCallback("OnValueChanged", function(widget, event, value)
+			RQE.db.profile.enableNearestSuperTrackCampaign = value
+		end)
+
+		enableNearestSuperTrackCampaign:SetFullWidth(false)
+		enableNearestSuperTrackCampaign:SetWidth(300)
+
+		-- Add a tooltip description for enableNearestSuperTrackCampaign (RQE.db.profile.enableNearestSuperTrackCampaign)
+		enableNearestSuperTrackCampaign:SetCallback("OnEnter", function(widget, event)
+			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking", nil, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		enableNearestSuperTrackCampaign:SetCallback("OnLeave", function(widget, event)
+			GameTooltip:Hide()
+		end)
+
+		scrollFrame:AddChild(enableNearestSuperTrackCampaign)
+	end
 
 	-- Enable QuestType Display Checkbox
 	local enableQuestTypeDisplay = AceGUI:Create("CheckBox")
