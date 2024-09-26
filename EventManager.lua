@@ -1672,32 +1672,35 @@ function RQE.handlePlayerEnterWorld(...)
 	end
 
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-	if RQE.db.profile.enableNearestSuperTrack then
-		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		if not isSuperTracking then
-			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
-			if closestQuestID then
-				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
-					DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+	C_Timer.After(3, function()
+		if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			if not isSuperTracking then
+				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+				if closestQuestID then
+					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+						DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
+					end
+				else
+					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+						DEFAULT_CHAT_FRAME:AddMessage("PEW 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
+					end
 				end
-			else
-				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
-					DEFAULT_CHAT_FRAME:AddMessage("PEW 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
-				end
+				RQE.TrackClosestQuest()
 			end
-		end
 
-		C_Timer.After(1, function()
-			UpdateFrame()
-		end)
+			C_Timer.After(1, function()
+				UpdateFrame()
+			end)
 
-		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-		if RQEFrame and not not RQEFrame:IsMouseOver() then
-			RQE.ScrollFrameToTop()
+			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+			if RQEFrame and not not RQEFrame:IsMouseOver() then
+				RQE.ScrollFrameToTop()
+			end
+			RQE.FocusScrollFrameToTop()
 		end
-		RQE.FocusScrollFrameToTop()
-	end
+	end)
 
 	if isLogin then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
@@ -1970,7 +1973,7 @@ function RQE.handleSuperTracking()
 
 	if not RQE.ClearButtonPressed then
 		if not isSuperTracking then
-			if RQE.db.profile.enableNearestSuperTrack then
+			if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
@@ -1983,6 +1986,7 @@ function RQE.handleSuperTracking()
 					end
 				end
 			end
+			RQE.TrackClosestQuest()
 		end
 	elseif RQE.ClearButtonPressed then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
@@ -3704,7 +3708,7 @@ function RQE.handleQuestWatchListChanged(...)
 
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	if RQE.db.profile.enableNearestSuperTrack then
-		if not isSuperTracking then
+		if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
@@ -3716,7 +3720,9 @@ function RQE.handleQuestWatchListChanged(...)
 					DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
 				end
 			end
+			RQE.TrackClosestQuest()
 		end
+
 		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_WATCH_LIST_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
@@ -3852,7 +3858,7 @@ function RQE.handleQuestFinished()
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	if RQE.db.profile.enableNearestSuperTrack then
 		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		if not isSuperTracking then
+		if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
@@ -3864,7 +3870,9 @@ function RQE.handleQuestFinished()
 					DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
 				end
 			end
+			RQE.TrackClosestQuest()
 		end
+
 		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
