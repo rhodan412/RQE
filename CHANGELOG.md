@@ -127,9 +127,6 @@
 		- Fix of some spelling errors
 		- Fix questID 78642 in the database in terms of values
 
-	RQEFrame.lua
-		- 
-
 	RQEMacro.lua
 		- Fix 'EditMacro' error received
 
