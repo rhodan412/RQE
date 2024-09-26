@@ -195,9 +195,9 @@ local defaults = {
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
 		enableNearestSuperTrack = true,
+		enableNearestSuperTrackCampaign = false,
 		enableQuestAbandonConfirm = false,
 		enableQuestFrame = true,
-		enableQuestTypeDisplay = false,
 		enableTomTomCompatibility = true,
 		EncounterEnd = false,
 		framePosition = {
@@ -205,7 +205,7 @@ local defaults = {
 			yPos = -285,
 			anchorPoint = "TOPRIGHT",
 			frameWidth = 420,
-			frameHeight = 310,
+			frameHeight = 325,
 		},
 		globalSetting = true,
 		hideRQEFrameWhenEmpty = false,
@@ -926,30 +926,12 @@ end
 
 -- Function to show RQE frames by default on login
 function RQE:ShowRQEFramesOnLogin()
-	-- Check if the profile setting to enable the main frame is true
-	if RQE.db.profile.enableFrame then
-		-- Show the RQEFrame only if it's not already shown
-		if not RQEFrame:IsShown() then
-			RQEFrame:Show()
-		end
-	else
-		-- Hide the RQEFrame if the setting is false
-		if RQEFrame:IsShown() then
-			RQEFrame:Hide()
-		end
+	-- Show the frames only if they are not already shown
+	if not RQEFrame:IsShown() then
+		RQEFrame:Show()
 	end
-
-	-- Check if the profile setting to enable the quest frame is true
-	if RQE.db.profile.enableQuestFrame then
-		-- Show the RQEQuestFrame only if it's not already shown
-		if not RQE.RQEQuestFrame:IsShown() then
-			RQE.RQEQuestFrame:Show()
-		end
-	else
-		-- Hide the RQEQuestFrame if the setting is false
-		if RQE.RQEQuestFrame:IsShown() then
-			RQE.RQEQuestFrame:Hide()
-		end
+	if not RQE.RQEQuestFrame:IsShown() then
+		RQE.RQEQuestFrame:Show()
 	end
 end
 
@@ -1269,13 +1251,12 @@ end
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Check if the SeparateFocusFrame exists
-	-- if not RQE.SeparateFocusFrame then
-		-- return
-	-- end
+	if not RQE.SeparateFocusFrame then
+		return
+	end
 
 	-- Ensure the frame is initialized
 	RQE.InitializeSeparateFocusFrame()
-	RQE.SeparateFocusFrame:Show()
 
 	-- Ensure SeparateStepText exists
 	if not RQE.SeparateStepText then
@@ -1739,10 +1720,24 @@ function RQE:GetClosestTrackedQuest()
 		local info = C_QuestLog.GetInfo(i)
 
 		-- Only consider quests that are being tracked
-		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) then
+		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) and RQE.db.profile.enableNearestSuperTrack and not RQE.db.profile.enableNearestSuperTrackCampaign then
 			-- Get the distance to the quest
 			local questPosition = C_QuestLog.GetQuestObjectives(info.questID)
 			if questPosition then
+				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+				-- Update closest quest if this one is closer
+				if distance and distance < closestDistance then
+					closestDistance = distance
+					closestQuestID = info.questID
+				end
+			end
+		elseif info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) and RQE.db.profile.enableNearestSuperTrackCampaign then
+			-- Check if the quest is a campaign quest
+			local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
+			
+			if classification == Enum.QuestClassification.Campaign then
+				-- Get the distance to the campaign quest
 				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
 
 				-- Update closest quest if this one is closer
@@ -1772,39 +1767,35 @@ end
 
 -- Function that tracks the closest quest on certain events in the Event Manager
 function RQE.TrackClosestQuest()
-	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	-- Ensure supertracking is enabled in the profile
 	if RQE.db.profile.enableNearestSuperTrack then
-		RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
-		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+		-- Get the closest tracked quest ID
+		local closestQuestID = RQE:GetClosestTrackedQuest()
 
-		if not RQE.isSuperTracking or not isSuperTracking then		-- if not isSuperTracking then
-			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Within TrackClosestQuest: The closest quest to your current location is " .. tostring(closestQuestID))
+		end
+
+		-- If a closest quest was found, set it as the supertracked quest
+		if closestQuestID then
+			C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Within TrackClosestQuest: The closest quest to your current location is " .. tostring(closestQuestID))
-			end
-			if closestQuestID then
-				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("TrackClosestQuest Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID))
-				end
-			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("TrackClosestQuest: No closest quest found to super-track.")
-				end
+				print("TrackClosestQuest Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID))
 			end
 		else
-			local supertrackedcurrentquestID = C_SuperTrack.GetSuperTrackedQuestID()
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("TrackClosestQuest: Currently supertracking " .. tostring(supertrackedcurrentquestID))
+				print("TrackClosestQuest: No closest quest found to super-track.")
 			end
 		end
 
+		-- Optionally trigger an update to the frame
 		C_Timer.After(1.5, function()
 			UpdateFrame()
 		end)
 
-		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-		if RQEFrame and not not RQEFrame:IsMouseOver() then
+		-- Optionally scroll the frames to the top
+		if RQEFrame and not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
 		RQE.FocusScrollFrameToTop()
@@ -1812,6 +1803,7 @@ function RQE.TrackClosestQuest()
 		print("enableNearestSuperTrack is currently disabled in Config")
 	end
 end
+
 
 
 -- Function for Tracking World Quests
@@ -3363,10 +3355,9 @@ function RQE.SetInitialWaypointToOne()
 		return
 	end
 
-	RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if RQE.isSuperTracking or isSuperTracking then
+	if isSuperTracking then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		local stepIndex = RQE.AddonSetStepIndex or 1
 
@@ -3653,9 +3644,11 @@ function RQEMacro:CreateMacroForCurrentStep()
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
 		end
+		RQE.isCheckingMacroContents = false
 		return
 	end
 
+	RQE.isCheckingMacroContents = false
 	local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
 	if isMacroCorrect then
@@ -4062,6 +4055,7 @@ function RQE:StartPeriodicChecks()
 			end
 			self:ClickWaypointButtonForIndex(self.FinalStep)
 			RQE:UpdateSeparateFocusFrame()
+			RQE.isCheckingMacroContents = false
 			return
 		end
 
@@ -4072,6 +4066,7 @@ function RQE:StartPeriodicChecks()
 				if step.objectiveIndex == 99 then
 					finalStepIndex = index
 					RQE:UpdateSeparateFocusFrame()
+					RQE.isCheckingMacroContents = false
 					break
 				end
 			end
@@ -4084,6 +4079,7 @@ function RQE:StartPeriodicChecks()
 				end
 				self:ClickWaypointButtonForIndex(finalStepIndex)
 				RQE:UpdateSeparateFocusFrame()
+				RQE.isCheckingMacroContents = false
 				return
 			end
 		end
@@ -4112,8 +4108,6 @@ function RQE:StartPeriodicChecks()
 				end
 			end
 
-RQE.isCheckingMacroContents = false
-
 		-- Check if the current step requires scenario stage checks
 		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioStage") then
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -4124,16 +4118,14 @@ RQE.isCheckingMacroContents = false
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario stage check completed and step advanced.")
 				end
-				RQE.isCheckingMacroContents = false
 				RQE:UpdateSeparateFocusFrame()
+				RQE.isCheckingMacroContents = false
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario stage check did not result in advancement.")
 				end
 			end
-
-RQE.isCheckingMacroContents = false
 
 		-- Check if the current step requires scenario objective progress
 		elseif stepData.funct and string.find(stepData.funct, "CheckScenarioCriteria") then
@@ -4145,8 +4137,8 @@ RQE.isCheckingMacroContents = false
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario criteria check completed and step advanced.")
 				end
-				RQE.isCheckingMacroContents = false
 				RQE:UpdateSeparateFocusFrame()
+				RQE.isCheckingMacroContents = false
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -4154,8 +4146,6 @@ RQE.isCheckingMacroContents = false
 				end
 			end
 		end
-
-RQE.isCheckingMacroContents = false
 
 		-- Process the current step
 		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
@@ -4174,7 +4164,6 @@ RQE.isCheckingMacroContents = false
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-					RQE.isCheckingMacroContents = false
 				end
 			end
 		end
@@ -4437,7 +4426,6 @@ function RQE:ClickWaypointButtonForIndex(index)
 				RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
-					RQE.isCheckingMacroContents = true
 				end
 			else
 				RQE.debugLog("No waypoint button found for AddonSetStepIndex:", RQE.AddonSetStepIndex)
@@ -4445,12 +4433,10 @@ function RQE:ClickWaypointButtonForIndex(index)
 		end)
 	else
 		RQE.debugLog("No waypoint button found for index:", index)
-		RQE.isCheckingMacroContents = false
 	end
 
 	-- Check to ensure that the macro is properly set
 	RQEMacro:CreateMacroForCurrentStep()
-	RQE.isCheckingMacroContents = false
 end
 
 
@@ -5925,19 +5911,6 @@ function RQE.UntrackAutomaticWorldQuests()
 end
 
 
--- /run RQE.IsQuestAWorldQuest(81804)
-function RQE.IsQuestAWorldQuest(questID)
-	local classification = C_QuestInfoSystem.GetQuestClassification(questID)
-	return classification == Enum.QuestClassification.WorldQuest
-end
-
--- /run RQE.IsQuestABonusObjective(81804)
-function RQE.IsQuestABonusObjective(questID)
-	local classification = C_QuestInfoSystem.GetQuestClassification(questID)
-	return classification == Enum.QuestClassification.BonusObjective
-end
-
-
 -- Removes Automatic WQ when leaving area of WQ location
 function RQE.UntrackAutomaticWorldQuestsByMap()
 	local playerMapID = C_Map.GetBestMapForUnit("player")
@@ -6220,7 +6193,7 @@ end
 function RQE:BuildQuestMacroBackup()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if RQE.isSuperTracking or isSuperTracking then
+	if isSuperTracking then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 		-- Allow time for the UI to update and for the super track to register
