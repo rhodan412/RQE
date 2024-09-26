@@ -1,4 +1,5 @@
 11.0.2.43
+
 	Config.lua
 		- Added showPlayerMountDisplayChanged and separated it from showPlayerRegenEnabled
 		- Added enableNearestSuperTrackCampaign options
@@ -16,10 +17,12 @@
 
 
 11.0.2.42
+
 	- Performances fixes as add-on would lag spike between some quest objectives
 
 
 11.0.2.41
+
 	Buttons.lua
 		- Created system of saving waypoint information to a variable to be used in waypoint creation under the automation system
 		- Fixed macro not being cleared when the "C" ClearButton was pressed within the RQEFrame
@@ -105,6 +108,7 @@
 
 
 11.0.2.40
+
 	Buttons.lua
 		- Modified code for the "C" Clear Button to better handle clearing the frame (focus frame, in particular) when pressed.
 		- Removed SetPropagateMouse code
@@ -132,6 +136,7 @@
 
 
 11.0.2.39
+
 	Core.lua
 		- Fixed RQE:StartPeriodicChecks() as CheckDBObjectiveStatus wasn't updating the waypoint and now it is. Tentative switch for CheckScenarioStage and CheckScenarioCriteria but will need further testing to be sure same fix worked
 		- Modified waypoint creation to correctly 'click' the applicable waypoint - this was previously clicking earlier 'clicked' waypoints in the RQEFrame
@@ -148,6 +153,7 @@
 
 
 11.0.2.38
+
 	Core.lua
 		- Removed flags in RQEMacro:CreateMacroForCurrentStep() and RQE:StartPeriodicChecks() as not working as desired
 		- Added 'CheckScenarioStage' and 'CheckScenarioCriteria' as options for auto waypoint/stepIndex advancement
@@ -173,6 +179,7 @@
 
 
 11.0.2.37
+
 	Buttons.lua
 		- Added flag for RQE.ClearButtonPressed
 
@@ -210,6 +217,7 @@
 
 
 11.0.2.36
+
 	Config.lua
 		- Added DebugLog Toggle in Debug Setting in Configuration Frame
 
@@ -241,6 +249,7 @@
 
 
 11.0.2.35
+
 	Buttons.lua
 		- Added RQE:ClearSeparateFocusFrame functionality to the ClearButton in the RQEFrame
 
@@ -287,6 +296,7 @@
 
 
 11.0.2.34
+
 	Core.lua
 		- Major improvements to the performance of the add-on
 		- Corrected for nil error in RQE:CheckObjectiveProgress function
@@ -308,6 +318,7 @@
 
 
 11.0.2.33-beta
+
 	Core.lua
 		- Implemented new changes from RQE.CheckThatQuestStep() into the RQE:StartPeriodicChecks()
 		- Major improvements to the performance of the add-on
@@ -324,6 +335,7 @@
 
 
 11.0.2.33-alpha
+
 	Core.lua
 		- Corrected for nil error in RQE:CheckObjectiveProgress function
 		- Many debugs added to solve issue with quest steps not advancing when the quest steps are listed in the RQEDatabase
@@ -340,6 +352,7 @@
 
 
 11.0.2.32
+
 	Buttons.lua
 		- Removed unneeded code for preventing some code from running during combat - this appeared to be an error when this is actually taint and most of what I run should be fine to update their own frames in or out of combat
 
@@ -380,6 +393,7 @@
 
 
 11.0.2.31
+
 	Buttons.lua
 	Core.lua
 		- Fix of error stemming from UpdateFrame function, in Core.lua that some bits weren't allowed to be fired in combat - this this function is now fixed
@@ -395,6 +409,7 @@
 
 
 11.0.2.30
+
 	Core.lua
 		- Set a number of flags to default values that will trigger if certain functions fire during an event while combat is in progress. That flag is then checked to re-run the paused function once combat terminates
 		- Sorted list of flags
@@ -417,12 +432,14 @@
 
 
 11.0.2.29
+
 	Core.lua
 	QuestingModule.lua
 		- Fix implemented following the API change from 11.0 where scenario criteria was no longer available
 
 
 11.0.2.28
+
 	EventManager.lua
 		- Added functionality to automatically track a quest when QUEST_ACCEPTED fires (not sure why this wasn't the case before)
 
@@ -433,6 +450,7 @@
 
 
 11.0.2.27b
+
 	Core.lua
 		- Made it default that autoClickWaypointButton is true as this is of paramount importance in use of the walk thru guide!
 
@@ -441,6 +459,7 @@
 
 
 11.0.2.27
+
 	Buttons.lua
 		- Misc. code clean-up and spacing
 
@@ -473,6 +492,7 @@
 
 
 11.0.2.26
+
 	EventManager.lua
 		- Fix made for ObjectiveTracker continuing to show up constantly
 		- Removed many lines previously added for HideObjectiveTracker that existed before the fix went in place with this version
@@ -480,16 +500,19 @@
 
 
 11.0.2.25
+
 	EventManager.lua
 		- Additional placements of HideObjectiveTracker() function -- additions were needed following 11.0
 		- Cleaned up code
 
 11.0.2.24
+
 	Core.lua
 		- Fixed coding so that the Minimap button would reflect properly the checkbox in the SettingsPanel and ConfigFrame
 
 
 11.0.2.23
+
 	- Massive code cleanup (removed/re-worded comment lines)
 
 	Config.lua
@@ -518,6 +541,7 @@
 
 
 11.0.2.22
+
 	Config.lua
 		- Updates to Config Frame window
 		- Fixed issue where config setting names were being truncated
@@ -529,6 +553,7 @@
 
 
 11.0.2.21
+
 	RQEFrame.lua
 		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded within RQE:CreateStepsText function
 
@@ -538,6 +563,7 @@
 
 
 11.0.2.2
+
 	Config.lua
 		- Experimental: Update to OpenFrameSettings() function to include changes allegedly made with 11.0 API to open subcategories
 
@@ -558,4 +584,6 @@
 		- Included 110005 in the accepted Game versions
 
 
-11.0.2.1 - Initial Release
+11.0.2.1
+
+	Initial Release
