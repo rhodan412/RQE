@@ -2380,12 +2380,6 @@ function UpdateRQEQuestFrame()
 					lastQuestElement = QuestObjectivesOrDescription
 				end
 
-				QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
-					if button == "RightButton" then
-						ShowQuestDropdown(self, questID)
-					end
-				end)
-
 				-- Tooltip on mouseover
 				QuestLevelAndName:SetScript("OnEnter", function(self)
 					GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
@@ -2442,6 +2436,19 @@ function UpdateRQEQuestFrame()
 					-- Add Rewards
 					RQE:QuestRewardsTooltip(GameTooltip, questID)
 
+					-- Quest Details and Menu for QuestObjectivesOrDescription
+					QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
+						if IsShiftKeyDown() and button == "LeftButton" then
+							-- Untrack the quest
+							C_QuestLog.RemoveQuestWatch(questID)
+							RQE:ClearRQEQuestFrame()
+						elseif button == "RightButton" then
+							ShowQuestDropdown(self, questID)
+						elseif button == "LeftButton" then
+							OpenQuestLogToQuestDetails(questID)
+						end
+					end)
+				
 					-- Party Members' Quest Progress
 					if IsInGroup() then
 						local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)

@@ -1,5 +1,7 @@
 11.0.2.43
 
+	- Removed SeparateFocusFrame as it appears to be the source of some of the problems of the QuestFrame being cut off near the top
+
 	Config.lua
 		- Added enableNearestSuperTrackCampaign options
 		- Added showPlayerMountDisplayChanged and separated it from showPlayerRegenEnabled
