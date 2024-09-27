@@ -211,6 +211,8 @@ local eventsToRegister = {
 	"UNIT_INVENTORY_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
+	"UPDATE_SHAPESHIFT_COOLDOWN",
+	"UPDATE_SHAPESHIFT_FORM",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
@@ -315,6 +317,8 @@ local function HandleEvents(frame, event, ...)
 		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
+		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
+		UPDATE_SHAPESHIFT_FORM = RQE.handleUpdateShapeShiftForm,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		WORLD_STATE_TIMER_START = RQE.handleWorldStateTimerStart,
 		WORLD_STATE_TIMER_STOP = RQE.handleWorldStateTimerStop,
@@ -428,6 +432,8 @@ function RQE.handleGossipClosed()
 	if UnitExists("target") then
 		SetRaidTarget("target", 0)
 	end
+
+	RQE.SelectGossipOption(nil, nil)
 end
 
 
@@ -1034,6 +1040,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.isCheckingMacroContents = false
 	RQE.isSuperTracking = false
 	RQE.QuestAddedForWatchListChanged = false
+	RQE.ShapeshiftUpdated = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
 	RQE.StartPerioFromPlayerControlGained = false
@@ -1497,6 +1504,61 @@ function RQE.handlePlayerStoppedMoving()
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStoppedMoving then
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 0.93, 0.82, 0.25)
 			end
+		end
+	end
+end
+
+
+-- Handling UPDATE_SHAPESHIFT_COOLDOWN event
+ function RQE.handleUpdateShapeShiftCD()
+ 	if InCombatLockdown() then
+		return
+	end
+
+	if not RQE.ShapeshiftUpdated then return end
+	local isInInstance, instanceType = IsInInstance()
+
+	-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
+	if isInInstance and (instanceType == "party" or instanceType == "raid") then
+		return
+	end
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not RQE.isSuperTracking or not isSuperTracking then return end
+
+	RQE.isCheckingMacroContents = true
+	RQEMacro:CreateMacroForCurrentStep()
+	RQE.isCheckingMacroContents = false
+ end
+ 
+ 
+-- Handling UPDATE_SHAPESHIFT_FORM event
+-- Fired when the current form changes
+function RQE.handleUpdateShapeShiftForm()
+	-- Get the macro index for 'RQE Macro'
+	local macroIndex = GetMacroIndexByName("RQE Macro")
+	
+	-- If the macro exists, retrieve its content
+	if macroIndex > 0 then
+		local _, _, macroBody = GetMacroInfo(macroIndex)
+		
+		-- Check if the macro body has content
+		if macroBody and macroBody ~= "" then
+			RQE.ShapeshiftUpdated = false  -- Macro has content, so set flag to true
+		else
+			RQE.ShapeshiftUpdated = true -- Macro is empty, so set flag to false
+		end
+	else
+		-- If macro doesn't exist, consider it empty
+		RQE.ShapeshiftUpdated = true
+	end
+	
+	-- Optional: Debugging messages to see the status
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if RQE.ShapeshiftUpdated then
+			print("RQE Macro has content. ShapeshiftUpdated is set to true.")
+		else
+			print("RQE Macro is empty or doesn't exist. ShapeshiftUpdated is set to false.")
 		end
 	end
 end
