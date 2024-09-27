@@ -227,7 +227,7 @@ local defaults = {
 		QuestFinished = false,
 		QuestFramePosition = {
 			xPos = -40,
-			yPos = 130,
+			yPos = 150,
 			anchorPoint = "BOTTOMRIGHT",
 			frameWidth = 325,
 			frameHeight = 450
@@ -1129,7 +1129,7 @@ function RQE:UpdateQuestFramePosition()
 	end
 
 	local xPos = self.db.profile.QuestFramePosition.xPos or -40
-	local yPos = self.db.profile.QuestFramePosition.yPos or 130
+	local yPos = self.db.profile.QuestFramePosition.yPos or 150
 
 	-- Error handling
 	local success, err = pcall(function()
@@ -1255,8 +1255,8 @@ function RQE:ClearSeparateFocusFrame()
 		return
 	end
 
-	-- -- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
-	-- RQE.InitializeSeparateFocusFrame()
+	-- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
+	RQE.InitializeSeparateFocusFrame()
 
 	-- Ensure SeparateStepText exists
 	if not RQE.SeparateStepText then
@@ -1267,7 +1267,9 @@ function RQE:ClearSeparateFocusFrame()
 		-- RQE.SeparateStepText:SetWordWrap(true)
 	end
 
-	RQE.SeparateStepText:SetText("No step description available for this step.")
+	if RQE.SeparateStepText then
+		RQE.SeparateStepText:SetText("No step description available for this step.")
+	end
 end
 
 
@@ -1501,6 +1503,11 @@ end
 
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	-- Checks flag to see if the Blacklist underway is presently in process
+	if RQE.BlacklistUnderway then return end
+
+	RQE:CheckSuperTrackedQuestAndStep()
+
 	-- Retrieve the current super-tracked quest ID for debugging
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local extractedQuestID
@@ -1538,10 +1545,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		-- Re-super-track the extractedQuestID
 		RQE.infoLog("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
 		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
-		UpdateRQEQuestFrame()
-	else
-		UpdateRQEQuestFrame()
 	end
+
+	UpdateRQEQuestFrame()
 
 	if not StepsText or not CoordsText or not MapIDs then
 		return
@@ -1664,6 +1670,147 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
 end
+
+
+-- -- Static Data Update Function
+-- function RQE.UpdateFrameStaticData(questID)
+	-- -- Retrieve the current super-tracked quest ID for debugging
+	-- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local extractedQuestID
+	-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	-- end
+
+	-- -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
+	-- questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+
+	-- -- Adjust frame widths for layout
+	-- AdjustRQEFrameWidths()
+
+	-- -- Debug print the overridden questID and the content of RQE.QuestIDText
+	-- RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
+
+	-- -- Validate questID before proceeding
+	-- if not questID or type(questID) ~= "number" then
+		-- return
+	-- end
+
+	-- -- Update Quest ID Text
+	-- if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+	-- end
+
+	-- -- Fetch the quest title from quest data or the game API
+	-- local questName = questInfo and questInfo.title or C_QuestLog.GetTitleForQuestID(questID)
+	-- questName = questName or "N/A"  -- Default to "N/A" if no title is found
+
+	-- -- Update Quest Name Text
+	-- if RQE.QuestNameText then
+		-- RQE.QuestNameText:SetText("Quest Name: " .. questName)
+	-- end
+
+	-- -- Update Quest Description Text
+	-- local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	-- if questLogIndex then
+		-- local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+		-- local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
+		-- if RQE.QuestDescription then
+			-- RQE.QuestDescription:SetText(descriptionText)
+		-- end
+	-- end
+-- end
+
+
+-- -- Dynamic Data Update Function (Objectives and Button States)
+-- function RQE.UpdateFrameDynamicData(questID)
+	-- -- Ensure the questID is valid
+	-- if not questID or type(questID) ~= "number" then
+		-- return
+	-- end
+
+	-- -- Update Quest Objectives Text
+	-- local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+	-- if not objectivesTable then
+		-- print("No objectives found for questID:", questID)
+		-- return
+	-- end
+
+	-- local objectivesText = ""
+	-- for _, objective in pairs(objectivesTable) do
+		-- objectivesText = objectivesText .. (objective.text or "") .. "\n"
+	-- end
+
+	-- -- Apply colorization to objectivesText
+	-- objectivesText = colorizeObjectives(questID)
+
+	-- if RQE.QuestObjectives then
+		-- RQE.QuestObjectives:SetText(objectivesText)
+	-- else
+		-- print("RQE.QuestObjectives is not initialized.")
+	-- end
+
+	-- -- Fetch and Update the next waypoint text
+	-- local DirectionText = C_QuestLog.GetNextWaypointText(questID)
+	-- RQEFrame.DirectionText = DirectionText  -- Save to addon table
+
+	-- if RQE.DirectionTextFrame then
+		-- RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
+	-- end
+
+	-- -- Always show the UnknownQuestButton
+	-- RQE.UnknownQuestButton:Show()
+
+	-- -- Show or hide the SearchGroupButton based on quest group availability
+	-- if questID and C_LFGList.CanCreateQuestGroup(questID) then
+		-- RQE.SearchGroupButton:Show()
+	-- else
+		-- RQE.SearchGroupButton:Hide()
+	-- end
+-- end
+
+
+-- function RQE.UpdateFrameSteps(questID)
+	-- -- Fetch questInfo from RQEDatabase using the determined questID
+	-- local questInfo = RQE.getQuestData(questID)
+-- RQE.PauseUpdatesFlag = false
+	-- -- PrintQuestStepsToChat provides StepsText, CoordsText, MapIDs
+	-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+	-- -- Update Steps Text
+	-- if RQE.CreateStepsText and StepsText and CoordsText and MapIDs then
+		-- RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+	-- end
+-- end
+
+
+-- -- Main UpdateFrame function
+-- function UpdateFrame(questID)
+	-- -- Fetch and update static data only once when the quest is first tracked
+	-- if not RQE.staticDataInitialized or RQE.lastTrackedQuestID ~= questID then
+		-- RQE.UpdateFrameStaticData(questID)
+		-- RQE.staticDataInitialized = true
+		-- RQE.lastTrackedQuestID = questID
+	-- end
+
+	-- -- Fetch and update dynamic data on every call
+	-- RQE.UpdateFrameDynamicData(questID)
+
+	-- if questID == 78640 then 
+		-- RQE.PauseUpdatesFlag = true
+		-- return
+	-- end
+
+	-- -- Function call that gets updated every time this function is called
+	-- RQE.UpdateFrameSteps(questID)
+
+	-- -- Perform any additional final updates here, e.g., clearing the frame
+	-- RQE:ShouldClearFrame()
+
+	-- -- Example: Update Button Visibility
+	-- C_Timer.After(1, function()
+		-- RQE.Buttons.UpdateMagicButtonVisibility()
+	-- end)
+-- end
 
 
 -- Create the tooltip when mousing over certain assets
@@ -2382,7 +2529,7 @@ end
 function RQE:ResetQuestFramePositionToDBorDefault()
 	local anchorPoint = "BOTTOMRIGHT"  -- Default anchor point for RQEQuestFrame
 	local xPos = -40  -- Preset xPos
-	local yPos = 130  -- Preset yPos
+	local yPos = 150  -- Preset yPos
 
 	-- Update the database
 	RQE.db.profile.QuestFramePosition.anchorPoint = anchorPoint
@@ -5397,22 +5544,20 @@ function RQE.PrintQuestlineDetails(questLineID)
 		for i, questID in ipairs(questIDs) do
 			-- Attempt to fetch quest title immediately, might not always work due to data loading
 			local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
-			C_Timer.After(0.2, function()
+			C_Timer.After(0.5, function()
 				-- Fetch quest link, retry if not available yet
 				local questLink = GetQuestLink(questID)
-				C_Timer.After(0.3, function()
-					if questLink then
-						-- Store quest details in a table
-						-- Light blue color for quest details
-						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
-						questsToLoad = questsToLoad - 1
-					else
-						-- Fallback if quest link is not available, attempt to use the title
-						-- Light blue color for quest details
-						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
-						questsToLoad = questsToLoad - 1
-					end
-				end)
+				if questLink then
+					-- Store quest details in a table
+					-- Light blue color for quest details
+					questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
+					questsToLoad = questsToLoad - 1
+				else
+					-- Fallback if quest link is not available, attempt to use the title
+					-- Light blue color for quest details
+					questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
+					questsToLoad = questsToLoad - 1
+				end
 
 				-- Check if all quests have been processed
 				if questsToLoad <= 0 then
@@ -6243,6 +6388,16 @@ function RQE:ClickSuperTrackedQuestButton()
 end
 
 
+function RQE:ClickSuperTrackedNonBlacklistQuestButton()
+	for _, button in pairs(RQE.QuestLogIndexButtons) do
+		if button.questID == RQE.NonBlacklistSuperID then
+			button:Click()
+			return
+		end
+	end
+end
+
+
 -- Craft Specific Item for Quest
 function RQE:CraftSpecificItem(recipeSpellID)
 	-- Retrieve recipe information to check if it can be crafted
@@ -6608,6 +6763,110 @@ end
 ---------------------------------------------------
 -- 20. Experimental Testing Ground
 ---------------------------------------------------
+
+-- Table to hold the questID and stepIndex conditions (blacklist)
+RQE.questConditions = {
+	[78640] = 3,  -- Example questID 78640 with stepIndex 3
+}
+
+
+-- Function to get the closest quest that isn't blacklisted
+function RQE:GetClosestNonBlacklistedQuest()
+	local nextClosestQuestID = nil
+	local closestDistance = math.huge  -- Initialize with a large number
+
+	-- Get the current map of the player (for quest location purposes)
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Iterate through all quests in the player's quest log
+	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+		local info = C_QuestLog.GetInfo(i)
+
+		-- Only consider quests that are on the map, are being tracked, and are not blacklisted
+		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) and not RQE.questConditions[info.questID] then
+			-- Get the quest's objectives to find position/distance
+			local questPosition = C_QuestLog.GetQuestObjectives(info.questID)
+
+			-- Ensure the quest position is valid
+			if questPosition then
+				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+				-- Check if this quest is closer than the current closest one
+				if distance and distance < closestDistance then
+					closestDistance = distance
+					nextClosestQuestID = info.questID
+				end
+			end
+		end
+	end
+
+	return nextClosestQuestID
+end
+
+
+-- Function to check if the supertracked quest matches the array and stepIndex
+function RQE:CheckSuperTrackedQuestAndStep()
+	-- Get the currently super-tracked quest ID
+	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	RQE.BlackListedQuestID = superTrackedQuestID
+
+	-- Get the current step index from the addon
+	local currentStepIndex = RQE.AddonSetStepIndex or 1  -- Default to 1 if AddonSetStepIndex is nil
+
+	-- Check if the super-tracked quest is in the questConditions array and matches the stepIndex
+	if RQE.questConditions[superTrackedQuestID] and RQE.questConditions[superTrackedQuestID] == currentStepIndex then
+		-- If the condition matches, clear the RQEFrame and blacklist the quest
+		RQE.BlacklistUnderway = true
+		
+		-- Temporarily remove the quest from the watch list
+		C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
+		RQE.Buttons.ClearButtonPressed()
+
+		-- Supertrack the next closest non-blacklisted quest
+		local nextClosestQuestID = RQE:GetClosestNonBlacklistedQuest()
+		RQE.ClosestSafeQuestID = nextClosestQuestID
+
+		if nextClosestQuestID then
+			-- Set the supertracked quest to the next closest non-blacklisted quest
+			C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
+
+			-- Ensure the blacklisted quest is not re-added prematurely
+			RQE.BlacklistUnderway = false
+
+			-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
+			C_Timer.After(2.5, function()
+				C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
+			end)
+		end
+	end
+end
+
+
+-- Function to supertrack a random quest
+function RQE:SupertrackRandomQuest()
+	local numQuests = C_QuestLog.GetNumQuestLogEntries()
+	local randomIndex = math.random(1, numQuests)
+
+	-- Iterate through the player's quest log to find a valid random quest
+	for i = 1, numQuests do
+		local info = C_QuestLog.GetInfo(i)
+		if info and info.questID then
+			-- Found a quest, supertrack it
+			C_SuperTrack.SetSuperTrackedQuestID(info.questID)
+
+			-- Print debug message
+			print("Supertracking random questID: " .. tostring(info.questID))
+
+			-- Call UpdateFrame to refresh the UI
+			UpdateFrame(info.questID)
+			return  -- Exit after setting one random quest
+		end
+	end
+
+	-- Fallback: No quests found
+	print("No quests found to supertrack.")
+end
+
 
 -- Function to log scenario information, including previously ignored values
 function RQE.LogScenarioInfo()

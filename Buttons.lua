@@ -70,7 +70,12 @@ RQE.UnknownButtonTooltip = function()
 			RQE.WPmapID = nil
 
 			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-			local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+
+			-- Add check to ensure RQE.QuestIDText exists and contains valid text
+			local extractedQuestID
+			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			end
 
 			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
@@ -80,7 +85,7 @@ RQE.UnknownButtonTooltip = function()
 				if mapID == 0 then mapID = nil end
 			end
 
-			if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
+			if RQE.DatabaseSuperX then
 				-- If coordinates are already available, just show them
 				local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
 				GameTooltip:SetText(tooltipText)

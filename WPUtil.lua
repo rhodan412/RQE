@@ -46,6 +46,11 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 			return
 		end
 
+		-- Update the macro if the WaypointButton is physically clicked by the player
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()
+		RQE.isCheckingMacroContents = false
+
 		-- Check if World Map is open
 		local isMapOpen = WorldMapFrame:IsShown()
 

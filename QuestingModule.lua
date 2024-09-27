@@ -2199,7 +2199,7 @@ function UpdateRQEQuestFrame()
 						if RQE.hoveringOnFrame then
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
-
+							RQE:StartPeriodicChecks()
 							-- if RQE.shouldCheckFinalStep then
 								-- RQE.shouldCheckFinalStep = false
 							-- end
@@ -2313,11 +2313,11 @@ function UpdateRQEQuestFrame()
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
 						C_QuestLog.RemoveQuestWatch(questID)
-						RQE:QuestType() -- Refreshes the Quest Tracking Frame as it redraws the Quest Tracker
-					elseif button == "LeftButton" then
-						OpenQuestLogToQuestDetails(questID)
+						RQE:ClearRQEQuestFrame()
 					elseif button == "RightButton" then
 						ShowQuestDropdown(self, questID)
+					elseif button == "LeftButton" then
+						OpenQuestLogToQuestDetails(questID)
 					end
 				end)
 

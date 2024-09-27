@@ -126,7 +126,7 @@ end
 
 -- Create the main frame
 RQEFrame = CreateFrame("Frame", "RQE.RQEFrame", UIParent, "BackdropTemplate")
-RQEFrame:SetSize(420, 310)
+RQEFrame:SetSize(435, 300)
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.framePosition then
 	xPos = RQE.db.profile.framePosition.xPos or 810
@@ -1236,15 +1236,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Show the Elements
 		WaypointButton:Show()  -- Make sure to show the button
 
-		-- Create CoordsText as a tooltip
-		StepText:SetScript("OnEnter", function(self)  -- changed to StepText from RQE.StepText
-			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText(CoordsText[i] or "No coordinates available.")
-			GameTooltip:Show()
-		end)
-		StepText:SetScript("OnLeave", function(self)  -- changed to StepText from RQE.StepText
-			GameTooltip:Hide()
-		end)
+		-- -- Create CoordsText as a tooltip	-- THIS WAS ACTUALLY CREATING A TOOLTIP OVER THE QUESTLOGINDEXBUTTON IN THE RQEQUESTFRAME
+		-- StepText:SetScript("OnEnter", function(self)  -- changed to StepText from RQE.StepText
+			-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			-- GameTooltip:SetText(CoordsText[i] or "No coordinates available.")
+			-- GameTooltip:Show()
+		-- end)
+		-- StepText:SetScript("OnLeave", function(self)  -- changed to StepText from RQE.StepText
+			-- GameTooltip:Hide()
+		-- end)
 
 		-- Add the mouse down event here
 		StepText:SetScript("OnMouseDown", function(self, button)

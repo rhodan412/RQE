@@ -206,6 +206,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
+	"UI_INFO_MESSAGE",
 	"UNIT_AURA",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_INVENTORY_CHANGED",
@@ -312,6 +313,7 @@ local function HandleEvents(frame, event, ...)
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
+		UI_INFO_MESSAGE = RQE.handleUIInfoMessage,
 		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
@@ -1026,6 +1028,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	end
 
 	-- Initialize Flags
+	RQE.BlacklistUnderway = false
 	RQE.ClearButtonPressed = false
 	RQE.CreateMacroForCheckAndBuildMacroIfNeeded = false
 	RQE.CreateMacroForCheckAndSetFinalStep = false
@@ -1929,6 +1932,11 @@ function RQE.handlePlayerEnterWorld(...)
 
 	-- Clicks Waypoint Button if autoClickWaypointButton is true
 	RQE:AutoClickQuestLogIndexWaypointButton()
+
+	-- Update the macro if the WaypointButton is physically clicked by the player
+	RQE.isCheckingMacroContents = true
+	RQEMacro:CreateMacroForCurrentStep()
+	RQE.isCheckingMacroContents = false
 end
 
 
@@ -2548,6 +2556,28 @@ function RQE.handleZoneNewAreaChange()
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
 end
+
+
+-- Handles UI_INFO_MESSAGE event
+function RQE.handleUIInfoMessage(...)
+	local event = select(2, ...)
+	local messageType = select(3, ...)
+	local message = select(4, ...)
+
+	if not RQE.BlacklistUnderway then return end
+
+	-- Check if the message is "Objective Complete." (messageType 309)
+	if messageType == 309 then
+	--if messageType == 309 and message == "Objective Complete." then
+		RQE.BlacklistUnderway = false
+		RQE.Buttons.ClearButtonPressed()
+		C_Timer.After(2.5, function()
+			C_SuperTrack.SetSuperTrackedQuestID(RQE.BlackListedQuestID)
+			UpdateFrame()
+		end)
+	end
+end
+
 
 
 -- Handles UNIT_AURA event
@@ -3332,14 +3362,15 @@ end
 
 -- Handling QUEST_REMOVED event
 function RQE.handleQuestRemoved(...)
-	RQE:SaveAutomaticWorldQuestWatches()
-	RQE.ReadyToRestoreAutoWorldQuests = true
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
-
 	-- Extract questID and wasReplayQuest from the correct argument positions
 	local event = select(2, ...)
 	local questID = select(3, ...)
 	local wasReplayQuest = select(4, ...)
+
+	RQE:SaveAutomaticWorldQuestWatches()
+	RQE.ReadyToRestoreAutoWorldQuests = true
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
+
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Print Event-specific Args
@@ -3449,6 +3480,9 @@ function RQE.handleQuestWatchUpdate(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 
+	-- Store the questID for tracking
+	RQE.LastQuestWatchQuestID = questID
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -3463,6 +3497,9 @@ function RQE.handleQuestWatchUpdate(...)
 			end
 		end
 	end
+
+	-- Checks to see if the quest and stepIndex are blacklisted from RQEFrame updates due to heavy load on the add-on and lag
+	RQE:CheckSuperTrackedQuestAndStep()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("Received questID: " .. tostring(questID), 0.56, 0.93, 0.56) -- Light Green
@@ -3671,16 +3708,16 @@ function RQE.handleQuestWatchListChanged(...)
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	-- Tier Five Importance: QUEST_WATCH_LIST_CHANGED event
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE.CreateMacroForQuestWatchListChanged = true
-		RQE.isCheckingMacroContents = true
-		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if QUEST_WATCH_LIST_CHANGED event fires
-		C_Timer.After(3, function()
-			RQE.CreateMacroForQuestWatchListChanged = false
-			RQE.isCheckingMacroContents = false
-		end)
-	end
+	-- -- Tier Five Importance: QUEST_WATCH_LIST_CHANGED event
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- RQE.CreateMacroForQuestWatchListChanged = true
+		-- RQE.isCheckingMacroContents = true
+		-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if QUEST_WATCH_LIST_CHANGED event fires
+		-- C_Timer.After(3, function()
+			-- RQE.CreateMacroForQuestWatchListChanged = false
+			-- RQE.isCheckingMacroContents = false
+		-- end)
+	-- end
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
