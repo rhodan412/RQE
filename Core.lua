@@ -490,7 +490,7 @@ function RQE:InitializeFrame()
 	RQE.Buttons.CreateSearchButton(RQEFrame)
 
 	-- Call the function to initialize the separate focus frame
-	------- RQE.InitializeSeparateFocusFrame()
+	RQE.InitializeSeparateFocusFrame()
 
 	-- Add logic to update frame with the current super tracked quest
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1256,11 +1256,11 @@ function RQE:ClearSeparateFocusFrame()
 	end
 
 	-- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
-	------- RQE.InitializeSeparateFocusFrame()
+	RQE.InitializeSeparateFocusFrame()
 
 	-- Ensure SeparateStepText exists
 	if not RQE.SeparateStepText then
-		------- RQE.InitializeSeparateFocusFrame()
+		RQE.InitializeSeparateFocusFrame()
 		-- RQE.SeparateStepText = RQE.SeparateFocusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 10, -10)
 		-- RQE.SeparateStepText:SetWidth(280)
@@ -1946,7 +1946,7 @@ function RQE.TrackClosestQuest()
 		if RQEFrame and not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
-		------- RQE.FocusScrollFrameToTop()
+		RQE.FocusScrollFrameToTop()
 	else
 		print("enableNearestSuperTrack is currently disabled in Config")
 	end
@@ -4203,7 +4203,7 @@ function RQE:StartPeriodicChecks()
 				print("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
 			end
 			self:ClickWaypointButtonForIndex(self.FinalStep)
-			------- RQE:UpdateSeparateFocusFrame()
+			RQE:UpdateSeparateFocusFrame()
 			return
 		end
 
@@ -4213,7 +4213,7 @@ function RQE:StartPeriodicChecks()
 			for index, step in ipairs(questData) do
 				if step.objectiveIndex == 99 then
 					finalStepIndex = index
-					------- RQE:UpdateSeparateFocusFrame()
+					RQE:UpdateSeparateFocusFrame()
 					break
 				end
 			end
@@ -4225,7 +4225,7 @@ function RQE:StartPeriodicChecks()
 					print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
 				end
 				self:ClickWaypointButtonForIndex(finalStepIndex)
-				------- RQE:UpdateSeparateFocusFrame()
+				RQE:UpdateSeparateFocusFrame()
 				return
 			end
 		end
@@ -4264,7 +4264,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario stage check completed and step advanced.")
 				end
-				------- RQE:UpdateSeparateFocusFrame()
+				RQE:UpdateSeparateFocusFrame()
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -4282,7 +4282,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Scenario criteria check completed and step advanced.")
 				end
-				------- RQE:UpdateSeparateFocusFrame()
+				RQE:UpdateSeparateFocusFrame()
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -4333,7 +4333,7 @@ function RQE:StartPeriodicChecks()
 		-- return
 	end
 
-	------- RQE:UpdateSeparateFocusFrame()
+	RQE:UpdateSeparateFocusFrame()
 end
 
 
@@ -4567,7 +4567,7 @@ function RQE:ClickWaypointButtonForIndex(index)
 				-- Ensure the button is clickable and perform the click
 				RQE:OnCoordinateClicked()
 				-- RQE:OnCoordinateClicked(stepIndex)	-- NEEDS to be stepIndex and NOT index to work properly!
-				------- RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
+				RQE.InitializeSeparateFocusFrame()	-- Refreshes the Focus Step Frame
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
 				end

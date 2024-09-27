@@ -329,6 +329,28 @@ RQE.options = {
 					end,
 					width = "full",
 				},
+				enableNearestSuperTrackCampaign = {
+					type = "toggle",
+					name = "Enable SuperTrack Nearest Campaign Quest",
+					desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking",
+					order = 18,
+					get = function() return RQE.db.profile.enableNearestSuperTrackCampaign end,
+					set = function(_, newValue)
+						RQE.db.profile.enableNearestSuperTrackCampaign = newValue;
+					end,
+					width = "full",
+				},
+				enableQuestTypeDisplay = {
+					type = "toggle",
+					name = "Enable Quest Type Display",
+					desc = "Enable visual information of the quest type in the Quest Tracker",
+					order = 19,
+					get = function() return RQE.db.profile.enableQuestTypeDisplay end,
+					set = function(_, newValue)
+						RQE.db.profile.enableQuestTypeDisplay = newValue;
+					end,
+					width = "full",
+				},
 				keyBindSetting = {
 					type = "keybinding",
 					name = "Key Binding for Macro",
@@ -338,9 +360,9 @@ RQE.options = {
 					end,
 					set = function(_, value)
 						RQE.db.profile.keyBindSetting = value
-						RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
+						RQE:ReapplyMacroBinding()	-- RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
 					end,
-					order = 18,
+					order = 20,
 				},
 			},
 		},
@@ -348,6 +370,17 @@ RQE.options = {
 			name = "Frame Settings",
 			type = "group",
 			args = {
+				toggleBlizzObjectiveTracker = {
+					type = "toggle",
+					name = "Toggle Blizz Quest Tracker",
+					desc = "Show/Hide Blizzard's Quest Tracker",
+					get = function(info) return RQE.db.profile.toggleBlizzObjectiveTracker end,
+					set = function(info, value)
+						RQE.db.profile.toggleBlizzObjectiveTracker = value
+					end,
+					width = "full",
+					order = 1, -- Adjust the order as needed
+				},
 				framePosition = {
 					type = "group",
 					name = "Main Frame Position",
@@ -1156,7 +1189,7 @@ function RQE:CreateConfigFrame()
 		local frame = AceGUI:Create("Frame")
 		frame:SetTitle("Rhodan's Quest Explorer Settings")
 		frame:SetStatusText("Configure your settings")
-		frame:SetCallback("OnClose", function(widget) 
+		frame:SetCallback("OnClose", function(widget)
 			AceGUI:Release(widget)
 			self.configFrame = nil  -- Clear the reference when the frame is closed
 		end)
@@ -1425,7 +1458,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	-- Add a tooltip description for autoQuestWatchCheckbox (RQE.db.profile.autoQuestWatch)
 	autoQuestWatchCheckbox:SetCallback("OnEnter", function(widget, event)
 		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetText("Automatically track quests as soon as you obtain them and after achieving an objective.\n\n|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting..|r", nil, nil, nil, nil, true)		
+		GameTooltip:SetText("Automatically track quests as soon as you obtain them and after achieving an objective.\n\n|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r", nil, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
 	autoQuestWatchCheckbox:SetCallback("OnLeave", function(widget, event)
@@ -1446,7 +1479,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	-- Add a tooltip description for autoQuestProgressCheckbox (RQE.db.profile.autoQuestProgress)
 	autoQuestProgressCheckbox:SetCallback("OnEnter", function(widget, event)
 		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetText("Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting..|r", nil, nil, nil, nil, true)
+		GameTooltip:SetText("Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r", nil, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
 	autoQuestProgressCheckbox:SetCallback("OnLeave", function(widget, event)
@@ -1581,7 +1614,6 @@ function RQE:AddGeneralSettingsWidgets(container)
 
 	scrollFrame:AddChild(enableCarboniteCompatibilityCheckbox)
 
-
 	-- Enable SuperTrack Nearest Checkbox
 	local enableNearestSuperTrack = AceGUI:Create("CheckBox")
 	enableNearestSuperTrack:SetLabel("Enable SuperTrack Nearest")
@@ -1605,12 +1637,61 @@ function RQE:AddGeneralSettingsWidgets(container)
 
 	scrollFrame:AddChild(enableNearestSuperTrack)
 
+	-- Enable SuperTrack Nearest Campaign Quest Checkbox
+	if RQE.db.profile.enableNearestSuperTrack then
+		local enableNearestSuperTrackCampaign = AceGUI:Create("CheckBox")
+		enableNearestSuperTrackCampaign:SetLabel("Enable SuperTrack Nearest Campaign Quest")
+		enableNearestSuperTrackCampaign:SetValue(RQE.db.profile.enableNearestSuperTrackCampaign)
+		enableNearestSuperTrackCampaign:SetCallback("OnValueChanged", function(widget, event, value)
+			RQE.db.profile.enableNearestSuperTrackCampaign = value
+		end)
+
+		enableNearestSuperTrackCampaign:SetFullWidth(false)
+		enableNearestSuperTrackCampaign:SetWidth(300)
+
+		-- Add a tooltip description for enableNearestSuperTrackCampaign (RQE.db.profile.enableNearestSuperTrackCampaign)
+		enableNearestSuperTrackCampaign:SetCallback("OnEnter", function(widget, event)
+			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking", nil, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		enableNearestSuperTrackCampaign:SetCallback("OnLeave", function(widget, event)
+			GameTooltip:Hide()
+		end)
+
+		scrollFrame:AddChild(enableNearestSuperTrackCampaign)
+	end
+
+	-- Enable QuestType Display Checkbox
+	local enableQuestTypeDisplay = AceGUI:Create("CheckBox")
+	enableQuestTypeDisplay:SetLabel("Enable QuestType Info")
+	enableQuestTypeDisplay:SetValue(RQE.db.profile.enableQuestTypeDisplay)
+	enableQuestTypeDisplay:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableQuestTypeDisplay = value
+	end)
+
+	enableQuestTypeDisplay:SetFullWidth(false)
+	enableQuestTypeDisplay:SetWidth(300)
+
+	-- Add a tooltip description for enableQuestTypeDisplay (RQE.db.profile.enableQuestTypeDisplay)
+	enableQuestTypeDisplay:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable visual information of the quest type in the Quest Tracker\n\n|cFFFF3333Reload of the UI may be required to get quest anchors to line up properly.|r", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableQuestTypeDisplay:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableQuestTypeDisplay)
+
 	-- Key Binding for Macro Keybinding
 	local keyBindSettingKeybind = AceGUI:Create("Keybinding")
 	keyBindSettingKeybind:SetLabel("Key Binding for Macro")
 	keyBindSettingKeybind:SetKey(RQE.db.profile.keyBindSetting)
 	keyBindSettingKeybind:SetCallback("OnKeyChanged", function(widget, event, key)
 		RQE.db.profile.keyBindSetting = key
+		RQE:ReapplyMacroBinding()
 		RQE:SetupOverrideMacroBinding()
 	end)
 
@@ -1625,7 +1706,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(keyBindSettingKeybind)
-	
+
 	-- Spacer to ensure the scroll goes to the bottom
 	local spacer = AceGUI:Create("Label")
 	spacer:SetText(" ")
@@ -1642,6 +1723,36 @@ function RQE:AddFrameSettingsWidgets(container)
 	scrollFrame:SetFullWidth(true)
 	scrollFrame:SetFullHeight(true) -- This will allow the scroll frame to take up the full height of the parent container
 	container:AddChild(scrollFrame)
+
+	-- Create the Frame Settings
+	local framePositionGroup = AceGUI:Create("InlineGroup")
+	framePositionGroup:SetTitle("Frame Settings")
+	framePositionGroup:SetFullWidth(true)
+	framePositionGroup:SetLayout("Flow")
+	scrollFrame:AddChild(framePositionGroup)
+
+	-- Add Toggle Blizz Quest Tracker CheckBox to the Frame Settings Widgets
+	local toggleBlizzObjectiveTrackerCheckbox = AceGUI:Create("CheckBox")
+	toggleBlizzObjectiveTrackerCheckbox:SetLabel("Toggle Blizz Quest Tracker")
+	toggleBlizzObjectiveTrackerCheckbox:SetDescription("Show/Hide Blizzard's Quest Tracker")
+	toggleBlizzObjectiveTrackerCheckbox:SetValue(RQE.db.profile.toggleBlizzObjectiveTracker)
+	toggleBlizzObjectiveTrackerCheckbox:SetFullWidth(true)
+	toggleBlizzObjectiveTrackerCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.toggleBlizzObjectiveTracker = value
+	end)
+
+	-- Optionally add a tooltip for more information
+	toggleBlizzObjectiveTrackerCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Toggles the visibility of Blizzard's default quest tracker frame.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	toggleBlizzObjectiveTrackerCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	-- Add the checkbox to the desired group (e.g., framePositionGroup)
+	framePositionGroup:AddChild(toggleBlizzObjectiveTrackerCheckbox)
 
 	-- Main Frame Position Group
 	local framePositionGroup = AceGUI:Create("InlineGroup")
@@ -2262,6 +2373,28 @@ function RQE:AddDebugSettingsWidgets(container)
 
 		scrollFrame:AddChild(displayMemoryUsageCheckbox)
 
+		if RQE.db.profile.debugMode then
+			-- Debug Logging Toggle
+			local debugLoggingCheckbox = AceGUI:Create("CheckBox")
+			debugLoggingCheckbox:SetLabel("Debug Logging")
+			debugLoggingCheckbox:SetValue(RQE.db.profile.debugLoggingCheckbox)
+			debugLoggingCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+				RQE.db.profile.debugLoggingCheckbox = value
+			end)
+
+			-- Add a tooltip description for debugLoggingCheckbox (RQE.db.profile.debugLoggingCheckbox)
+			debugLoggingCheckbox:SetCallback("OnEnter", function(widget, event)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("Toggles the option to log debug messages", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			debugLoggingCheckbox:SetCallback("OnLeave", function(widget, event)
+				GameTooltip:Hide()
+			end)
+
+			scrollFrame:AddChild(debugLoggingCheckbox)
+		end
+
 		-- Only show these options if Debug Mode is enabled
 		if RQE.db.profile.debugMode then
 			-- Debug Inline Group (appears when Debug Mode is enabled)
@@ -2351,6 +2484,25 @@ function RQE:AddDebugSettingsWidgets(container)
 				end)
 				debugInlineGroup:AddChild(showArgPayloadInfo)
 
+				-- Checkbox for displaying RQE:StartPeriodicChecks() returns
+				local showStartPeriodicCheckInfo = AceGUI:Create("CheckBox")
+				showStartPeriodicCheckInfo:SetLabel("Show StartPeriodicChecks Info")
+				showStartPeriodicCheckInfo:SetValue(RQE.db.profile.showStartPeriodicCheckInfo)
+				showStartPeriodicCheckInfo:SetCallback("OnValueChanged", function(widget, event, value)
+					RQE.db.profile.showStartPeriodicCheckInfo = value
+				end)
+
+				-- Add tooltip for the Argument/Payload returns checkbox
+				showStartPeriodicCheckInfo:SetCallback("OnEnter", function(widget, event)
+					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText("Display StartPeriodicChecks Info for events.", nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+				showStartPeriodicCheckInfo:SetCallback("OnLeave", function(widget, event)
+					GameTooltip:Hide()
+				end)
+				debugInlineGroup:AddChild(showStartPeriodicCheckInfo)
+
 				-- Checkbox for displaying ADDON_LOADED event debug info
 				local showAddonLoaded = AceGUI:Create("CheckBox")
 				showAddonLoaded:SetLabel("Show ADDON_LOADED Event Info")
@@ -2383,7 +2535,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the ACHIEVEMENT_EARNED event checkbox
 				showEventAchievementEarned:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the ACHIEVEMENT EARNED event listener.\n\n|cFF4AA458Fired when an achievement is gained..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the ACHIEVEMENT EARNED event listener.\n\n|cFF4AA458Fired when an achievement is gained.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				showEventAchievementEarned:SetCallback("OnLeave", function(widget, event)
@@ -2571,25 +2723,45 @@ function RQE:AddDebugSettingsWidgets(container)
 				end)
 				debugInlineGroup:AddChild(LFGActiveEntryUpdate)
 
-				-- Checkbox for displaying PLAYER_REGEN_ENABLED or PLAYER_MOUNT_DISPLAY_CHANGED event debug info
+				-- Checkbox for displaying PLAYER_REGEN_ENABLED event debug info
 				local showPlayerRegenEnabled = AceGUI:Create("CheckBox")
-				showPlayerRegenEnabled:SetLabel("Show PLAYER_REGEN and PLAYER_MOUNT Event Info")
+				showPlayerRegenEnabled:SetLabel("Show PLAYER_REGEN Event Info")
 				showPlayerRegenEnabled:SetValue(RQE.db.profile.showPlayerRegenEnabled)
 				showPlayerRegenEnabled:SetFullWidth(true)	-- Make the checkbox full width
 				showPlayerRegenEnabled:SetCallback("OnValueChanged", function(widget, event, value)
 					RQE.db.profile.showPlayerRegenEnabled = value
 				end)
 
-				-- Add tooltip for the PLAYER_REGEN_ENABLED or PLAYER_MOUNT_DISPLAY_CHANGED event checkbox
+				-- Add tooltip for the PLAYER_REGEN_ENABLED event checkbox
 				showPlayerRegenEnabled:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the PLAYER REGEN ENABLED or PLAYER MOUNT DISPLAY CHANGED event listener.\n\n|cFF4AA458Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the PLAYER REGEN ENABLED event listener.\n\n|cFF4AA458Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				showPlayerRegenEnabled:SetCallback("OnLeave", function(widget, event)
 					GameTooltip:Hide()
 				end)
 				debugInlineGroup:AddChild(showPlayerRegenEnabled)
+
+				-- Checkbox for displaying PLAYER_MOUNT_DISPLAY_CHANGED event debug info
+				local showPlayerMountDisplayChanged = AceGUI:Create("CheckBox")
+				showPlayerMountDisplayChanged:SetLabel("Show PLAYER_MOUNT Event Info")
+				showPlayerMountDisplayChanged:SetValue(RQE.db.profile.showPlayerMountDisplayChanged)
+				showPlayerMountDisplayChanged:SetFullWidth(true)	-- Make the checkbox full width
+				showPlayerMountDisplayChanged:SetCallback("OnValueChanged", function(widget, event, value)
+					RQE.db.profile.showPlayerMountDisplayChanged = value
+				end)
+
+				-- Add tooltip for the PLAYER_MOUNT_DISPLAY_CHANGED event checkbox
+				showPlayerMountDisplayChanged:SetCallback("OnEnter", function(widget, event)
+					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+					GameTooltip:SetText("Toggle the display of debug print messages for the PLAYER MOUNT DISPLAY CHANGED event listener.\n\n|cFF4AA458Fired after activating/deactivating a player mount.|r", nil, nil, nil, nil, true)
+					GameTooltip:Show()
+				end)
+				showPlayerMountDisplayChanged:SetCallback("OnLeave", function(widget, event)
+					GameTooltip:Hide()
+				end)
+				debugInlineGroup:AddChild(showPlayerMountDisplayChanged)
 
 				-- Checkbox for displaying PLAYER_LOGIN event debug info
 				local showPlayerLogin = AceGUI:Create("CheckBox")
@@ -2703,7 +2875,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event checkbox
 				QuestStatusUpdate:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST LOG UPDATE, QUEST POI UPDATE and TASK PROGRESS UPDATE event listener.\n\n|cFF4AA458Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST LOG UPDATE, QUEST POI UPDATE and TASK PROGRESS UPDATE event listener.\n\n|cFF4AA458Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest).|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				QuestStatusUpdate:SetCallback("OnLeave", function(widget, event)
@@ -2763,7 +2935,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the QUEST_LOOT_RECEIVED event checkbox
 				QuestLootReceived:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST LOOT RECEIVED event listener.\n\n|cFF4AA458Fires when player receives loot from quest turn in (Runs once per quest loot received)..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST LOOT RECEIVED event listener.\n\n|cFF4AA458Fires when player receives loot from quest turn in (Runs once per quest loot received).|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				QuestLootReceived:SetCallback("OnLeave", function(widget, event)
@@ -2803,7 +2975,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the QUEST_COMPLETE event checkbox
 				QuestComplete:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST COMPLETE event listener.\n\n|cFF4AA458Fired after the player hits the 'Continue' button in the quest-information page, before the 'Complete Quest' button. In other words, it fires when you are given the option to complete a quest, but just before you actually complete the quest. ..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST COMPLETE event listener.\n\n|cFF4AA458Fired after the player hits the 'Continue' button in the quest-information page, before the 'Complete Quest' button. In other words, it fires when you are given the option to complete a quest, but just before you actually complete the quest. .|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				QuestComplete:SetCallback("OnLeave", function(widget, event)
@@ -2823,7 +2995,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the QUEST_AUTOCOMPLETE event checkbox
 				QuestAutocomplete:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST AUTOCOMPLETE event listener.\n\n|cFF4AA458Fires when a quest that can be auto-completed is completed..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST AUTOCOMPLETE event listener.\n\n|cFF4AA458Fires when a quest that can be auto-completed is completed.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				QuestAutocomplete:SetCallback("OnLeave", function(widget, event)
@@ -2863,7 +3035,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the QUEST_WATCH_UPDATE event checkbox
 				QuestWatchUpdate:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST WATCH UPDATE event listener.\n\n|cFF4AA458Fires each time the objectives of the quest with the supplied questID update, i.e. whenever a partial objective has been accomplished: killing a mob, looting a quest item etc. UNIT_QUEST_LOG_CHANGED and QUEST_LOG_UPDATE both also seem to fire consistently – in that order – after each QUEST_WATCH_UPDATE..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the QUEST WATCH UPDATE event listener.\n\n|cFF4AA458Fires each time the objectives of the quest with the supplied questID update, i.e. whenever a partial objective has been accomplished: killing a mob, looting a quest item etc. UNIT_QUEST_LOG_CHANGED and QUEST_LOG_UPDATE both also seem to fire consistently – in that order – after each QUEST_WATCH_UPDATE.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				QuestWatchUpdate:SetCallback("OnLeave", function(widget, event)
@@ -3043,7 +3215,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the TRACKED_ACHIEVEMENT_UPDATE event checkbox
 				showTrackedAchievementUpdate:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the TRACKED ACHIEVEMENT UPDATE event listener.\n\n|cFF4AA458Fired when a timed event for an achievement begins or ends. The achievement does not have to be actively tracked for this to trigger..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the TRACKED ACHIEVEMENT UPDATE event listener.\n\n|cFF4AA458Fired when a timed event for an achievement begins or ends. The achievement does not have to be actively tracked for this to trigger.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				showTrackedAchievementUpdate:SetCallback("OnLeave", function(widget, event)
@@ -3063,7 +3235,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the UNIT_EXITING_VEHICLE, ZONE_CHANGED, ZONE_CHANGED_INDOORS, and ZONE_CHANGED_NEW_AREA event checkbox
 				ZoneChange:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the UNIT EXITING VEHICLE, ZONE CHANGED, ZONE CHANGED INDOORS, and ZONE CHANGED NEW AREA event listener.\n\n|cFF4AA458Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone or when the player enters a new zone..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the UNIT EXITING VEHICLE, ZONE CHANGED, ZONE CHANGED INDOORS, and ZONE CHANGED NEW AREA event listener.\n\n|cFF4AA458Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone or when the player enters a new zone.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				ZoneChange:SetCallback("OnLeave", function(widget, event)
@@ -3083,7 +3255,7 @@ function RQE:AddDebugSettingsWidgets(container)
 				-- Add tooltip for the UPDATE_INSTANCE_INFO event checkbox
 				UpdateInstanceInfo:SetCallback("OnEnter", function(widget, event)
 					GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-					GameTooltip:SetText("Toggle the display of debug print messages for the UPDATE INSTANCE INFO event listener.\n\n|cFF4AA458Fired when data from RequestRaidInfo is available and also when player uses portals..|r", nil, nil, nil, nil, true)
+					GameTooltip:SetText("Toggle the display of debug print messages for the UPDATE INSTANCE INFO event listener.\n\n|cFF4AA458Fired when data from RequestRaidInfo is available and also when player uses portals.|r", nil, nil, nil, nil, true)
 					GameTooltip:Show()
 				end)
 				UpdateInstanceInfo:SetCallback("OnLeave", function(widget, event)

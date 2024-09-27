@@ -428,7 +428,7 @@ end
 -- Function that handles the GOSSIP_CLOSED event
 -- Fired when you close the talk window for an npc. (Seems to be called twice) 
 function RQE.handleGossipClosed()
-	------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when GOSSIP_CLOSED event fires acting as a fail safe for some "gossip' quests that may not trigger what is necessary to update this frame otherwise
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when GOSSIP_CLOSED event fires acting as a fail safe for some "gossip' quests that may not trigger what is necessary to update this frame otherwise
 
 	-- Clear the raid marker from the current target
 	if UnitExists("target") then
@@ -1004,7 +1004,7 @@ function RQE.handlePlayerLogin()
 		-- if RQEFrame and not not RQEFrame:IsMouseOver() then
 			-- RQE.ScrollFrameToTop()
 		-- end
-		-- ------- RQE.FocusScrollFrameToTop()
+		-- RQE.FocusScrollFrameToTop()
 	-- end
 
 	-- if RQE.MagicButton then
@@ -1763,7 +1763,7 @@ function RQE.handlePlayerEnterWorld(...)
 			if RQEFrame and not not RQEFrame:IsMouseOver() then
 				RQE.ScrollFrameToTop()
 			end
-			------- RQE.FocusScrollFrameToTop()
+			RQE.FocusScrollFrameToTop()
 		end
 	end)
 
@@ -1953,14 +1953,14 @@ function RQE.handleSuperTracking()
 	if RQEFrame and not not RQEFrame:IsMouseOver() then
 		RQE.ScrollFrameToTop()
 	end
-	------- RQE.FocusScrollFrameToTop()
+	RQE.FocusScrollFrameToTop()
 
 	RQE.SaveSuperTrackData()
 	RQE:ClearWaypointButtonData()
 
 	-- Optimize by updating the separate frame only if needed
-	------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires
-	------- RQE.FocusScrollFrameToTop()
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires
+	RQE.FocusScrollFrameToTop()
 
 	local extractedQuestID
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2280,7 +2280,7 @@ function RQE.handleQuestAccepted(...)
 				UpdateFrame()
 			end)
 			RQE.SetInitialWaypointToOne()
-			------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_ACCEPTED event fires
+			RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_ACCEPTED event fires
 			RQE.StartPerioQuestAcceptIsSuperOkay = true
 		end
 		RQE:UpdateRQEFrameVisibility()
@@ -2329,13 +2329,13 @@ function RQE.handleZoneChange(...)
 	end
 
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
-	------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 	if RQEFrame and not not RQEFrame:IsMouseOver() then
 		RQE.ScrollFrameToTop()
 	end
-	------- RQE.FocusScrollFrameToTop()
+	RQE.FocusScrollFrameToTop()
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
@@ -2440,13 +2440,13 @@ function RQE.handleZoneNewAreaChange()
 	end
 
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
-	------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when ZONE_CHANGED_NEW_AREA event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 	if RQEFrame and not not RQEFrame:IsMouseOver() then
 		RQE.ScrollFrameToTop()
 	end
-	------- RQE.FocusScrollFrameToTop()
+	RQE.FocusScrollFrameToTop()
 
 	-- -- Checks to see if in scenario and if no, will reset the scenario timer
 	-- if not C_Scenario.IsInScenario() then
@@ -2746,7 +2746,7 @@ function RQE.handleUnitQuestLogChange(...)
 	end
 
 	RQE:StartPeriodicChecks()
-	-- ------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_QUEST_LOG_CHANGED event fires	-- ADDED to RQE:StartPeriodicChecks()
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_QUEST_LOG_CHANGED event fires	-- ADDED to RQE:StartPeriodicChecks()
 end
 
 
@@ -2940,7 +2940,7 @@ end
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
-	------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -3369,7 +3369,7 @@ function RQE.handleQuestRemoved(...)
 
 	RQE:SaveAutomaticWorldQuestWatches()
 	RQE.ReadyToRestoreAutoWorldQuests = true
-	------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
 
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -3517,7 +3517,7 @@ function RQE.handleQuestWatchUpdate(...)
 	end
 
 	-- Initialize variables
-	-- ------- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_WATCH_UPDATE event fires	-- ADDED to RQE:StartPeriodicChecks()
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_WATCH_UPDATE event fires	-- ADDED to RQE:StartPeriodicChecks()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -3826,7 +3826,7 @@ function RQE.handleQuestWatchListChanged(...)
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
-		------- RQE.FocusScrollFrameToTop()
+		RQE.FocusScrollFrameToTop()
 	end
 
 	-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
@@ -3976,7 +3976,7 @@ function RQE.handleQuestFinished()
 		if RQEFrame and not not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
-		------- RQE.FocusScrollFrameToTop()
+		RQE.FocusScrollFrameToTop()
 	end
 
 	local extractedQuestID
