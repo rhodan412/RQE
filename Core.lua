@@ -1255,15 +1255,16 @@ function RQE:ClearSeparateFocusFrame()
 		return
 	end
 
-	-- Ensure the frame is initialized
-	RQE.InitializeSeparateFocusFrame()
+	-- -- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
+	-- RQE.InitializeSeparateFocusFrame()
 
 	-- Ensure SeparateStepText exists
 	if not RQE.SeparateStepText then
-		RQE.SeparateStepText = RQE.SeparateFocusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-		RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 10, -10)
-		RQE.SeparateStepText:SetWidth(280)
-		RQE.SeparateStepText:SetWordWrap(true)
+		RQE.InitializeSeparateFocusFrame()
+		-- RQE.SeparateStepText = RQE.SeparateFocusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 10, -10)
+		-- RQE.SeparateStepText:SetWidth(280)
+		-- RQE.SeparateStepText:SetWordWrap(true)
 	end
 
 	RQE.SeparateStepText:SetText("No step description available for this step.")
@@ -3648,12 +3649,13 @@ function RQEMacro:CreateMacroForCurrentStep()
 		return
 	end
 
-	RQE.isCheckingMacroContents = false
 	local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
 	if isMacroCorrect then
 		return
 	end
+
+	RQE.isCheckingMacroContents = false
 
 	-- Clears the RQEMacro before creating a fresh one
 	RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -4055,7 +4057,6 @@ function RQE:StartPeriodicChecks()
 			end
 			self:ClickWaypointButtonForIndex(self.FinalStep)
 			RQE:UpdateSeparateFocusFrame()
-			RQE.isCheckingMacroContents = false
 			return
 		end
 
@@ -4066,7 +4067,6 @@ function RQE:StartPeriodicChecks()
 				if step.objectiveIndex == 99 then
 					finalStepIndex = index
 					RQE:UpdateSeparateFocusFrame()
-					RQE.isCheckingMacroContents = false
 					break
 				end
 			end
@@ -4079,7 +4079,6 @@ function RQE:StartPeriodicChecks()
 				end
 				self:ClickWaypointButtonForIndex(finalStepIndex)
 				RQE:UpdateSeparateFocusFrame()
-				RQE.isCheckingMacroContents = false
 				return
 			end
 		end
@@ -4119,7 +4118,6 @@ function RQE:StartPeriodicChecks()
 					print("Scenario stage check completed and step advanced.")
 				end
 				RQE:UpdateSeparateFocusFrame()
-				RQE.isCheckingMacroContents = false
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -4138,7 +4136,6 @@ function RQE:StartPeriodicChecks()
 					print("Scenario criteria check completed and step advanced.")
 				end
 				RQE:UpdateSeparateFocusFrame()
-				RQE.isCheckingMacroContents = false
 				return
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
