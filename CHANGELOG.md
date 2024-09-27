@@ -1,18 +1,20 @@
 11.0.2.43
 
 	Config.lua
-		- Added showPlayerMountDisplayChanged and separated it from showPlayerRegenEnabled
 		- Added enableNearestSuperTrackCampaign options
+		- Added showPlayerMountDisplayChanged and separated it from showPlayerRegenEnabled
 
 	Core.lua
 		- Set default to display 'showPlayerMountDisplayChanged' as false in local defaults
 		- Reverted bits of the file to 11.0.2.41 to fix SeparateFocusFrame waypoint button being missing and re-enabled the performance fixes from 11.0.2.42
 
 	EventManager.lua
-		- Separated PLAYER_MOUNT_DISPLAY_CHANGED from PLAYER_REGEN_ENABLED and added failsafe to new PLAYER_MOUNT_DISPLAY_CHANGED event handler to check macro contents if they are correct with quest's current step
 		- Added RQE:GetClosestTrackedQuest() / RQE.TrackClosestQuest() to various events as well as a timed delay to the one associated with the PLAYER_ENTERING_WORLD
+		- Added UPDATE_SHAPESHIFT_COOLDOWN and UPDATE_SHAPESHIFT_FORM to check for macro if not in combat, not in instance and macro is empty to ensure that it gets updated just as is done with PLAYER_MOUNT_DISPLAY_CHANGED for non-druids
+		- Separated PLAYER_MOUNT_DISPLAY_CHANGED from PLAYER_REGEN_ENABLED and added failsafe to new PLAYER_MOUNT_DISPLAY_CHANGED event handler to check macro contents if they are correct with quest's current step
 
 	RQEDatabase.lua
+		- Added RQE.SelectGossipOption to macro section for questID 78631 for testing and eventual expansion
 		- Fixed neededAmt for questID 78383's objectiveIndex 2 as it was stuck and wouldn't advance the WaypointButton further
 
 
