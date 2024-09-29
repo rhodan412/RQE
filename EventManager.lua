@@ -208,12 +208,13 @@ local eventsToRegister = {
 	"TRACKED_ACHIEVEMENT_UPDATE",
 	"UI_INFO_MESSAGE",
 	"UNIT_AURA",
+	"UNIT_ENTERING_VEHICLE",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_INVENTORY_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
-	"UPDATE_SHAPESHIFT_COOLDOWN",
-	"UPDATE_SHAPESHIFT_FORM",
+	--"UPDATE_SHAPESHIFT_COOLDOWN",
+	--"UPDATE_SHAPESHIFT_FORM",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
@@ -315,6 +316,7 @@ local function HandleEvents(frame, event, ...)
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
 		UI_INFO_MESSAGE = RQE.handleUIInfoMessage,
 		UNIT_AURA = RQE.handleUnitAura,
+		UNIT_ENTERING_VEHICLE = RQE.handleUnitEnterVehicle,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
@@ -1513,7 +1515,15 @@ end
 
 
 -- Handling UPDATE_SHAPESHIFT_COOLDOWN event
- function RQE.handleUpdateShapeShiftCD()
+function RQE.handleUpdateShapeShiftCD()
+	local isBearFormSpellKnown = IsPlayerSpell(5487)
+	if not isBearFormSpellKnown then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("SpellID 5487 is not known by player")
+		end
+		return
+	end
+
  	if InCombatLockdown() then
 		return
 	end
@@ -1532,12 +1542,24 @@ end
 	RQE.isCheckingMacroContents = true
 	RQEMacro:CreateMacroForCurrentStep()
 	RQE.isCheckingMacroContents = false
- end
+end
  
  
 -- Handling UPDATE_SHAPESHIFT_FORM event
 -- Fired when the current form changes
 function RQE.handleUpdateShapeShiftForm()
+	local isBearFormSpellKnown = IsPlayerSpell(5487)
+	if not isBearFormSpellKnown then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("SpellID 5487 is not known by player")
+		end
+		return
+	end
+
+ 	if InCombatLockdown() then
+		return
+	end
+
 	-- Get the macro index for 'RQE Macro'
 	local macroIndex = GetMacroIndexByName("RQE Macro")
 	
@@ -1982,13 +2004,6 @@ function RQE.handleSuperTracking()
 
 		-- If autoClickWaypointButton is enabled, then clear the macro, create a new macro and click the appropriate waypoint button
 		if RQE.db.profile.autoClickWaypointButton then
-			-- Tier Three Importance: SUPER_TRACKING_CHANGED event
-			RQE.CreateMacroForSuperTracking = true
-			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
-
-			C_Timer.After(3, function()
-				RQE.CreateMacroForSuperTracking = false
-			end)
 
 			-- Ensure that the quest ID is valid and that the necessary data is available
 			C_Timer.After(0.2, function()
@@ -2009,6 +2024,16 @@ function RQE.handleSuperTracking()
 				end
 			end)
 		end
+
+		-- Tier Three Importance: SUPER_TRACKING_CHANGED event
+		RQE.CreateMacroForSuperTracking = true
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
+
+		C_Timer.After(1.5, function()
+			RQE.isCheckingMacroContents = false
+			RQE.CreateMacroForSuperTracking = false
+		end)
 
 		-- Reset relevant variables
 		RQE.LastClickedIdentifier = nil
@@ -2172,6 +2197,11 @@ function RQE.handleQuestAccepted(...)
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
+	-- Check if the quest is a bonus objective
+	if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
+		UpdateRQEBonusQuestFrame(questID)
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -2319,6 +2349,44 @@ function RQE.handleQuestAccepted(...)
 end
 
 
+-- Handles UNIT_ENTERING_VEHICLE vent
+function RQE.handleUnitEnterVehicle(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+	local showVehicleFrame = select(4, ...)
+	local isControlSeat = select(5, ...)
+	local vehicleUIIndicatorID = select(6, ...)
+	local vehicleGUID = select(7, ...)
+	local mayChooseExit = select(8, ...)
+	local hasPitch = select(9, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.WorldStateTimerStop and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	-- Flag to make sure that it is only handling for circumstances when the player goes into vehicle/multi-person mount
+	if unitTarget ~= "player" then
+		return
+	end
+
+	-- Performs check of step and macro
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE:StartPeriodicChecks()
+	end
+end
+
+
 -- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS
 -- Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone
 function RQE.handleZoneChange(...)
@@ -2426,7 +2494,13 @@ function RQE.handleZoneChange(...)
 	RQE.QuestScrollFrameToTop()
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
-	RQE.UntrackAutomaticWorldQuests()
+	local isFlying = IsFlying("player")
+	local isMounted = IsMounted()
+	local onTaxi = UnitOnTaxi("player")
+
+	if not IsFlying and not isMounted and not onTaxi then
+		RQE.UntrackAutomaticWorldQuests()
+	end
 end
 
 
@@ -3889,7 +3963,6 @@ function RQE.handleQuestTurnIn(...)
 				TomTom.waydb:ResetProfile()
 			end
 
-			RQEMacro:ClearMacroContentByName("RQE Macro")
 			RQE:ClearSeparateFocusFrame()
 			UpdateFrame()
 
@@ -3897,6 +3970,10 @@ function RQE.handleQuestTurnIn(...)
 			RQE:UpdateRQEFrameVisibility()
 		end
 		RQE:QuestType()
+	end)
+
+	C_Timer.After(1.5, function()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
 	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn then
