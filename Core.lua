@@ -194,6 +194,7 @@ local defaults = {
 		displayRQEmemUsage = false,
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
+		enableGossipModeAutomation = false,
 		enableNearestSuperTrack = true,
 		enableNearestSuperTrackCampaign = false,
 		enableQuestAbandonConfirm = false,
@@ -1503,6 +1504,9 @@ end
 
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then return end
+
 	-- Checks flag to see if the Blacklist underway is presently in process
 	if RQE.BlacklistUnderway then return end
 
@@ -4187,6 +4191,7 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
+	RQE.isCheckingMacroContents = true
 	self:FindAndSetFinalStep()  -- Find and set the final step
 
 	local questData = RQE.getQuestData(superTrackedQuestID)
@@ -6214,14 +6219,23 @@ local function CheckQuestObjectivesAndPlaySound()
 		end
 	end
 
+	RQE.isCheckingMacroContents = true
+
 	if playSoundForCompletion then
 		PlaySound(6199) -- Sound for quest completion
 		soundCooldown = true
 		C_Timer.After(5, function() soundCooldown = false end)
+		RQEMacro:CreateMacroForCurrentStep()
 	elseif playSoundForObjectives then
 		PlaySound(6192) -- Sound for individual objective completion
 		soundCooldown = true
 		C_Timer.After(5, function() soundCooldown = false end)
+		RQEMacro:CreateMacroForCurrentStep()
+	end
+
+	-- Failsafe to set the flag back to false if is true
+	if RQE.isCheckingMacroContents then
+		RQE.isCheckingMacroContents = false
 	end
 end
 
@@ -6958,6 +6972,9 @@ end)
 
 -- Function to set the gossip selection criteria for the current NPC
 function RQE.SelectGossipOption(npcName, optionIndex)
+	-- Adding check to make sure that Gossip Mode is enabled
+	if not RQE.db.profile.enableGossipModeAutomation then return end
+
 	-- Set the selected gossip option for future use
 	selectedGossipOption.npcName = npcName
 	selectedGossipOption.optionIndex = optionIndex
