@@ -3,18 +3,27 @@
 	Config.lua
 		- Added enableNearestSuperTrackCampaign options
 		- Added showPlayerMountDisplayChanged and separated it from showPlayerRegenEnabled
+		- Added enableGossipModeAutomation to allow/disallow for function of macro operation with Gossip function calls
 
 	Core.lua
-		- Set default to display 'showPlayerMountDisplayChanged' as false in local defaults
+		- Added enableGossipModeAutomation to local defaults with turned off as this is fairly experimental and may result in some breakage if changes are made by Blizzard in the future to the index or NPC names
+		- Added failsafe that UpdateFrame won't fire unless something is being supertracked. This should improve the overall efficiency of the add-on's operation
+		- Added failsafe to RQEMacro:CreateMacroForCurrentStep() when CheckQuestObjectivesAndPlaySound() fires a sound for objective complete or quest complete
 		- Reverted bits of the file to 11.0.2.41 to fix SeparateFocusFrame waypoint button being missing and re-enabled the performance fixes from 11.0.2.42
+		- Set default to display 'showPlayerMountDisplayChanged' as false in local defaults
 
 	EventManager.lua
 		- Added RQE:GetClosestTrackedQuest() / RQE.TrackClosestQuest() to various events as well as a timed delay to the one associated with the PLAYER_ENTERING_WORLD
-		- Added UPDATE_SHAPESHIFT_COOLDOWN and UPDATE_SHAPESHIFT_FORM to check for macro if not in combat, not in instance and macro is empty to ensure that it gets updated just as is done with PLAYER_MOUNT_DISPLAY_CHANGED for non-druids
+		- Added UPDATE_SHAPESHIFT_COOLDOWN and UPDATE_SHAPESHIFT_FORM to check for macro if not in combat, not in instance and macro is empty to ensure that it gets updated just as is done with PLAYER_MOUNT_DISPLAY_CHANGED for non-druids (commented this out for now until I can get better addon performance with this enabled)
+		- Added UNIT_ENTERING_VEHICLE to check quest step status/macro operation when entering another player's vehicle to accommodate for similar circumstance as PLAYER_MOUNT_DISPLAY_CHANGED if not doing 2-player/multi-mount mounting
 		- Separated PLAYER_MOUNT_DISPLAY_CHANGED from PLAYER_REGEN_ENABLED and added failsafe to new PLAYER_MOUNT_DISPLAY_CHANGED event handler to check macro contents if they are correct with quest's current step
 
+	QuestingModule.lua
+		- Commented out BonusObjectiveChildFrame for now as it was improperly operating
+		- Reverted to pre-BonusObjectiveChildFrame for anchor update functions
+
 	RQEDatabase.lua
-		- Added RQE.SelectGossipOption to macro section for questID 78631 for testing and eventual expansion
+		- Added RQE.SelectGossipOption to macro section for questID 78631 for testing and eventual expansion (along with other additional quests following this)
 		- Fixed neededAmt for questID 78383's objectiveIndex 2 as it was stuck and wouldn't advance the WaypointButton further
 
 	RQEFrame.lua
