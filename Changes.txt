@@ -1,4 +1,4 @@
-11.0.2.43
+11.0.2.43 (2024-09-28)
 
 	Config.lua
 		- Added enableNearestSuperTrackCampaign options
