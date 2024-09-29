@@ -364,6 +364,17 @@ RQE.options = {
 					end,
 					order = 20,
 				},
+				enableGossipModeAutomation = {
+					type = "toggle",
+					name = "Enable Gossip Mode",
+					desc = "Enable Gossip Mode where the correct option will be chosen as part of the macro",
+					order = 21,
+					get = function() return RQE.db.profile.enableGossipModeAutomation end,
+					set = function(_, newValue)
+						RQE.db.profile.enableGossipModeAutomation = newValue;
+					end,
+					width = "full",
+				},
 			},
 		},
 		frame = {
@@ -1706,6 +1717,29 @@ function RQE:AddGeneralSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(keyBindSettingKeybind)
+
+	-- Enable GossipMode Display Checkbox
+	local enableGossipModeAutomation = AceGUI:Create("CheckBox")
+	enableGossipModeAutomation:SetLabel("Enable Gossip Mode")
+	enableGossipModeAutomation:SetValue(RQE.db.profile.enableGossipModeAutomation)
+	enableGossipModeAutomation:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableGossipModeAutomation = value
+	end)
+
+	enableGossipModeAutomation:SetFullWidth(false)
+	enableGossipModeAutomation:SetWidth(300)
+
+	-- Add a tooltip description for enableGossipModeAutomation (RQE.db.profile.enableGossipModeAutomation)
+	enableGossipModeAutomation:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable Gossip Mode where the correct option will be chosen as part of the macro", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableGossipModeAutomation:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableGossipModeAutomation)
 
 	-- Spacer to ensure the scroll goes to the bottom
 	local spacer = AceGUI:Create("Label")
