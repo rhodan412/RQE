@@ -2389,6 +2389,7 @@ function UpdateRQEQuestFrame()
 						RQE.ManualSuperTrack = true
 						RQE.ManualSuperTrackedQuestID = questID
 						C_SuperTrack.SetSuperTrackedQuestID(questID)
+						RQE:SaveSuperTrackedQuestToCharacter()
 
 						-- Allow time for the UI to update and for the super track to register
 						C_Timer.After(1, function()
@@ -2947,6 +2948,7 @@ function UpdateRQEWorldQuestFrame()
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 					RQE.ManualSuperTrack = true
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
+					RQE:SaveSuperTrackedQuestToCharacter()
 					RQE.ManualSuperTrackedQuestID = questID
 					RQE.ManuallyTrackedQuests[questID] = true
 
