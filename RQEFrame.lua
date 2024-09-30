@@ -1520,6 +1520,7 @@ function RQE.ClickUnknownQuestButton()
 	end
 
 	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	RQE:SaveSuperTrackedQuestToCharacter()
 
 	-- Call function to create a waypoint using stored coordinates and mapID
 	RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
