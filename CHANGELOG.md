@@ -1,5 +1,21 @@
 11.0.2.44
 
+	Core.lua
+		- Created ability to restore last super tracked quest on login of character (questID is saved anytime there is a super track change to the character-specific DB and restored on login) as long as player still has that quest
+
+	EventManager.lua
+		- Cleaned up code under ADDON_LOADED & SUPER_TRACKING_CHANGED event functions
+		- Created events on PLAYER_LOGIN to restore last super tracked quest
+
+	QuestingModule.lua
+		- Added method for the saving of super tracked quest when super tracking has been changed under the UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() functions
+
+	RQE.toc
+		- Reordering of load list
+
+	RQEFrame.lua
+		- Added method for the saving of super tracked quest when super tracking has been changed under the RQE.ClickUnknownQuestButton() function
+
 
 11.0.2.43 (2024-09-28)
 
@@ -10,7 +26,7 @@
 
 	Core.lua
 		- Added enableGossipModeAutomation to local defaults with turned off as this is fairly experimental and may result in some breakage if changes are made by Blizzard in the future to the index or NPC names
-		- Added failsafe that UpdateFrame won't fire unless something is being supertracked. This should improve the overall efficiency of the add-on's operation
+		- Added failsafe that UpdateFrame won't fire unless something is being super tracked. This should improve the overall efficiency of the add-on's operation
 		- Added failsafe to RQEMacro:CreateMacroForCurrentStep() when CheckQuestObjectivesAndPlaySound() fires a sound for objective complete or quest complete
 		- Reverted bits of the file to 11.0.2.41 to fix SeparateFocusFrame waypoint button being missing and re-enabled the performance fixes from 11.0.2.42
 		- Set default to display 'showPlayerMountDisplayChanged' as false in local defaults
