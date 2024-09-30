@@ -6,6 +6,7 @@
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
 ## SavedVariables: RQEDB
+## SavedVariablesPerCharacter: RQECharacterDB
 ## OptionalDeps: TomTom, Carbonite
 
 ## Compatibility Note: This addon has known compatibility issues with the "World Quest Tracker" addon.
@@ -43,7 +44,6 @@ RQEMinimap.lua
 DatabaseMain.lua
 RQEDatabase.lua
 EventManager.lua
-Buttons.lua
 
 # User Interface
 Config.lua
@@ -51,6 +51,11 @@ RQEMacro.lua
 
 # Utility Modules
 WPUtil.lua
+
+# Frame Buttons
+Buttons.lua
+
+# Frames
 QuestingModule.lua
 RQEFrame.lua
 
