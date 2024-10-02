@@ -2,8 +2,13 @@
 
 	Core.lua
 		- Created ability to restore last super tracked quest on login of character (questID is saved anytime there is a super track change to the character-specific DB and restored on login) as long as player still has that quest
-
+		- Fix made for the CreteMacroForCurrentStep call within RQE:ClickWaypointButtonForIndex(index) function to have the appropriate flag usage
+		- Temporarily had SearchBox and SearchButton initialized in InitializeFrame, within Core.lua but moved back to RQEFrame.lua
+	
 	EventManager.lua
+		- Added flags for QUEST_WATCH_UPDATE and SUPER_TRACKING_CHANGED that prevent UNIT_QUEST_LOG_UPDATE from firing immediately after (some quests may not fire QUEST_WATCH_UPDATE when progress is made, but UNIT_QUEST_LOG_UPDATE does fire). Flags are reset at start with QUEST_LOG_UPDATE if they exists.
+		- Added additional flags for ITEM_COUNT_CHANGED
+		- Added macro check to PLAYER_STARTED_MOVING if not flying, mounted or using taxi and if the macro is empty
 		- Cleaned up code under ADDON_LOADED & SUPER_TRACKING_CHANGED event functions
 		- Created events on PLAYER_LOGIN to restore last super tracked quest
 
