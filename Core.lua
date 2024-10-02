@@ -484,11 +484,7 @@ end
 function RQE:InitializeFrame()
 	--self:Initialize()  -- Call Initialize() within InitializeFrame
 
-	-- Initialize search box (Now calling the function from Buttons.lua)
-	RQE.Buttons.CreateSearchBox(RQEFrame)
 
-	-- Initialize search button (Now calling the function from Buttons.lua)
-	RQE.Buttons.CreateSearchButton(RQEFrame)
 
 	-- Call the function to initialize the separate focus frame
 	RQE.InitializeSeparateFocusFrame()
@@ -647,40 +643,40 @@ end
 
 -- Function to save the current supertracked quest to the character-specific table
 function RQE:SaveSuperTrackedQuestToCharacter()
-	-- Get the currently supertracked quest ID
-	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- Get the currently supertracked quest ID
+    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-	-- Ensure we have a valid quest ID before saving
-	if superTrackedQuestID and superTrackedQuestID > 0 then
-		-- Save it to the character-specific table
-		RQECharacterDB.superTrackedQuestID = superTrackedQuestID
+    -- Ensure we have a valid quest ID before saving
+    if superTrackedQuestID and superTrackedQuestID > 0 then
+        -- Save it to the character-specific table
+        RQECharacterDB.superTrackedQuestID = superTrackedQuestID
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Saved supertracked quest for this character: " .. superTrackedQuestID)
 		end
-	end
+    end
 end
 
 
 -- Function to restore the saved supertracked quest for the current character
 function RQE:RestoreSuperTrackedQuestForCharacter()
-	if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
-		local savedQuestID = RQECharacterDB.superTrackedQuestID
-		-- Check if the saved quest is still valid and in the quest log
-		if C_QuestLog.IsOnQuest(savedQuestID) then
-			C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+    if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
+        local savedQuestID = RQECharacterDB.superTrackedQuestID
+        -- Check if the saved quest is still valid and in the quest log
+        if C_QuestLog.IsOnQuest(savedQuestID) then
+            C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Restored supertracked quest for this character: " .. savedQuestID)
 			end
-		else
+        else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Saved supertracked quest is no longer valid.")
 			end
-		end
-	else
+        end
+    else
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No saved supertracked quest found for this character.")
 		end
-	end
+    end
 end
 
 
@@ -4628,7 +4624,13 @@ function RQE:ClickWaypointButtonForIndex(index)
 	end
 
 	-- Check to ensure that the macro is properly set
-	RQEMacro:CreateMacroForCurrentStep()
+	C_Timer.After(0.6, function()
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(0.4, function()
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
 end
 
 
