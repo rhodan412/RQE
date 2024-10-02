@@ -586,10 +586,21 @@ function RQE.handleItemCountChanged(...)
 		end
 		-- Tier Four Importance: ITEM_COUNT_CHANGED event
 		if RQE.db.profile.autoClickWaypointButton then
-			RQE.StartPerioFromItemCountChanged = true
-			RQE:StartPeriodicChecks()
-			C_Timer.After(3, function()
-				RQE.StartPerioFromItemCountChanged = false
+			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.CurrentlySuperQuestID
+
+			C_Timer.After(0.4, function()
+				if RQE.LastAcceptedQuest then
+					if RQE.LastAcceptedQuest == questID then
+						RQE.StartPerioFromItemCountChanged = true
+						--print("~~Line: 590~~")
+						RQE.ItemCountRanStartPeriodicChecks = true
+						RQE:StartPeriodicChecks()
+						C_Timer.After(3, function()
+							RQE.StartPerioFromItemCountChanged = false
+						end)
+					end
+				end
 			end)
 		end
 	end
@@ -1046,6 +1057,8 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
 	RQE.isCheckingMacroContents = false
 	RQE.QuestAddedForWatchListChanged = false
+	RQE.QuestRemoved = false
+	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.ShapeshiftUpdated = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
@@ -1057,7 +1070,10 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.StartPerioFromQuestWatchUpdate = false
 	RQE.StartPerioFromSuperTrackChange = false
 	RQE.StartPerioFromUnitQuestLogChanged = false
+	RQE.StartPerioFromUQLC = false
 	RQE.StartPerioQuestAcceptIsSuperOkay = false
+	RQE.SuperTrackChangeRanStartPeriodicChecks = false
+	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
 
 	-- Making sure that the variables are cleared
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -1248,6 +1264,7 @@ function RQE.handleScenarioUpdate(...)
 	end
 
 	if RQE.db.profile.autoClickWaypointButton then
+		--print("~~Line: 1253~~")
 		RQE:StartPeriodicChecks()
 	end
 
@@ -1469,6 +1486,7 @@ function RQE.handlePlayerControlGained()
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromPlayerControlGained = true
+			--print("~~Line: 1474~~")
 			RQE:StartPeriodicChecks()
 			C_Timer.After(3, function()
 				RQE.StartPerioFromPlayerControlGained = false
@@ -1487,14 +1505,44 @@ function RQE.handlePlayerStartedMoving()
 
 	-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
 	if C_Scenario.IsInScenario() then return end
+	if not RQE.db.profile.autoClickWaypointButton then return end
+
+ 	if InCombatLockdown() then
+		return
+	end
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	if RQEFrame:IsShown() and not isSuperTracking then
-		RQE.Buttons.ClearButtonPressed()
 
-		-- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
-		if RQE:ShouldClearMacro("RQE Macro") then
-			RQEMacro:ClearMacroContentByName("RQE Macro")
+		RQE.Buttons.ClearButtonPressed()
+	end
+
+	-- -- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
+	-- if RQE:ShouldClearMacro("RQE Macro") then
+		-- RQEMacro:ClearMacroContentByName("RQE Macro")
+	-- end
+
+	local isFlying = IsFlying("player")
+	local isMounted = IsMounted()
+	local onTaxi = UnitOnTaxi("player")
+
+	if not IsFlying and not isMounted and not onTaxi then
+
+		-- Get the macro index for 'RQE Macro'
+		local macroIndex = GetMacroIndexByName("RQE Macro")
+		
+		-- If the macro exists, retrieve its content
+		if macroIndex > 0 then
+			local _, _, macroBody = GetMacroInfo(macroIndex)
+
+			-- Check if the macro body has content
+			if macroBody and macroBody == "" then
+				RQE.isCheckingMacroContents = true
+				RQEMacro:CreateMacroForCurrentStep()
+				C_Timer.After(0.2, function()
+					RQE.isCheckingMacroContents = false
+				end)
+			end
 		end
 	end
 end
@@ -1898,6 +1946,7 @@ function RQE.handlePlayerEnterWorld(...)
 				-- Tier Three Importance: PLAYER_ENTERING_WORLD event
 				C_Timer.After(1, function()
 					RQE.StartPerioFromPlayerEnteringWorld = true
+					--print("~~Line: 1933~~")
 					RQE:StartPeriodicChecks()
 					C_Timer.After(3, function()
 						RQE.StartPerioFromPlayerEnteringWorld = false
@@ -1979,6 +2028,8 @@ function RQE.handleSuperTracking()
 		-- startTime = debugprofilestop()  -- Start timer
 	-- end
 
+	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = true
+
 	-- Making sure that the variables are cleared
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	if not isSuperTracking then
@@ -2044,15 +2095,17 @@ function RQE.handleSuperTracking()
 			end)
 		end
 
-		-- Tier Three Importance: SUPER_TRACKING_CHANGED event
-		RQE.CreateMacroForSuperTracking = true
-		RQE.isCheckingMacroContents = true
-		RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
+		-- -- Tier Three Importance: SUPER_TRACKING_CHANGED event	-- HANDLED AS PART OF STARTPERIODIC CALLED TOWARD BOTTOM OF FUNCTION
+		-- C_Timer.After(0.3, function()
+			-- RQE.CreateMacroForSuperTracking = true
+			-- RQE.isCheckingMacroContents = true
+			-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
 
-		C_Timer.After(1.5, function()
-			RQE.isCheckingMacroContents = false
-			RQE.CreateMacroForSuperTracking = false
-		end)
+			-- C_Timer.After(1.2, function()
+				-- RQE.isCheckingMacroContents = false
+				-- RQE.CreateMacroForSuperTracking = false
+			-- end)
+		-- end)
 
 		-- Reset relevant variables
 		RQE.LastClickedIdentifier = nil
@@ -2063,16 +2116,18 @@ function RQE.handleSuperTracking()
 		-- Call the function to reset to step 1
 		RQE:SetInitialWaypointToOne()
 
-		-- Tier Three Importance: SUPER_TRACKING_CHANGED event
-		if RQE.db.profile.autoClickWaypointButton then
-			RQE.CreateMacroForSuperTracking = true
-			RQE.isCheckingMacroContents = true
-			RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if SUPER_TRACKING_CHANGED event fires (a second time)
-			C_Timer.After(3, function()
-				RQE.CreateMacroForSuperTracking = false
-				RQE.isCheckingMacroContents = false
-			end)
-		end
+		-- -- Tier Three Importance: SUPER_TRACKING_CHANGED event	-- HANDLED AS PART OF STARTPERIODIC CALLED TOWARD BOTTOM OF FUNCTION
+		-- C_Timer.After(0.8, function()
+			-- if RQE.db.profile.autoClickWaypointButton then
+				-- RQE.CreateMacroForSuperTracking = true
+				-- RQE.isCheckingMacroContents = true
+				-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if SUPER_TRACKING_CHANGED event fires (a second time)
+				-- C_Timer.After(3, function()
+					-- RQE.CreateMacroForSuperTracking = false
+					-- RQE.isCheckingMacroContents = false
+				-- end)
+			-- end
+		-- end)
 
 		-- Store the current quest ID for future reference
 		RQE.previousSuperTrackedQuestID = RQE.currentSuperTrackedQuestID
@@ -2119,6 +2174,8 @@ function RQE.handleSuperTracking()
 	-- Tier Two Importance: SUPER_TRACKING_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromSuperTrackChange = true
+		RQE.SuperTrackChangeRanStartPeriodicChecks = true
+		--print("~~Line: 2160~~")
 		RQE:StartPeriodicChecks()
 		C_Timer.After(3, function()
 			RQE.StartPerioFromSuperTrackChange = false
@@ -2341,10 +2398,17 @@ function RQE.handleQuestAccepted(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestAccepted = true
-			RQE:StartPeriodicChecks()
-			C_Timer.After(3, function()
-				RQE.StartPerioFromQuestAccepted = false
-			end)
+			if not RQE.StartPerioFromUQLC then
+				if not RQE.SuperTrackChangeRanStartPeriodicChecks then
+					--print("~~Line: 2382~~")
+					RQE:StartPeriodicChecks()
+					C_Timer.After(3, function()
+						RQE.StartPerioFromQuestAccepted = false
+					end)
+				end
+				RQE.SuperTrackChangeRanStartPeriodicChecks = false
+			end
+			RQE.StartPerioFromUQLC = false
 		end)
 	end
 
@@ -2403,6 +2467,7 @@ function RQE.handleUnitEnterVehicle(...)
 
 	-- Performs check of step and macro
 	if RQE.db.profile.autoClickWaypointButton then
+		--print("~~Line: 2644~~")
 		RQE:StartPeriodicChecks()
 	end
 end
@@ -2588,6 +2653,7 @@ function RQE.handleZoneNewAreaChange()
 				end
 			end
 		end
+		--print("~~Line: 2629~~")
 		RQE:StartPeriodicChecks()
 	end
 
@@ -2673,7 +2739,6 @@ function RQE.handleUIInfoMessage(...)
 		end)
 	end
 end
-
 
 
 -- Handles UNIT_AURA event
@@ -2763,7 +2828,8 @@ function RQE.handleUnitAura(...)
 end
 
 
--- Handles UNIT_QUEST_LOG_CHANGED event:
+-- Handles UNIT_QUEST_LOG_CHANGED event
+-- Fired whenever the quest log changes. (Frequently, but not as frequently as QUEST_LOG_UPDATE) 
 function RQE.handleUnitQuestLogChange(...)
 	local event = select(2, ...)
 	local unitTarget = select(3, ...)
@@ -2783,6 +2849,9 @@ function RQE.handleUnitQuestLogChange(...)
 		end
 	end
 
+	-- Flag check to see if QUEST_WATCH_UPDATE has fired already and this is redundant
+	if RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded then return end
+
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Only process the event if it's for the player
@@ -2790,45 +2859,52 @@ function RQE.handleUnitQuestLogChange(...)
 		-- Ensure the event fires only for quests that are super-tracked
 		if questID and RQE.db.profile.autoClickWaypointButton then
 			C_Timer.After(1, function()
-				RQE.StartPerioFromUnitQuestLogChanged = true
-				RQE:StartPeriodicChecks()
+				-- Flag check to see if SUPER_TRACKING_CHANGED has fired already and this is redundant
+				if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then return end
 
-				-- Perform similar actions as in QUEST_WATCH_UPDATE to ensure waypoints and steps are updated
-				RQE.currentSuperTrackedQuestID = questID
-				local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
+				if not RQE.QuestRemoved then
+					RQE.StartPerioFromUnitQuestLogChanged = true
+					--print("~~Line: 2838~~")
+					RQE:StartPeriodicChecks()
+					RQE.QuestRemoved = false
 
-				-- Ensure that the quest ID is valid and that the necessary data is available
-				if RQE.currentSuperTrackedQuestID then
-					C_Timer.After(0.2, function()
-						if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
-							RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
-						else
-							if RQE.db.profile.debugLevel == "INFO+" then
-								print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
+					-- Perform similar actions as in QUEST_WATCH_UPDATE to ensure waypoints and steps are updated
+					RQE.currentSuperTrackedQuestID = questID
+					local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
+
+					-- Ensure that the quest ID is valid and that the necessary data is available
+					if RQE.currentSuperTrackedQuestID then
+						C_Timer.After(0.2, function()
+							if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
+								RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+							else
+								if RQE.db.profile.debugLevel == "INFO+" then
+									print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
+								end
 							end
+						end)
+
+						-- -- Tier Five Importance: UNIT_QUEST_LOG_CHANGED event
+						-- if RQE.db.profile.autoClickWaypointButton then
+							-- RQE.CreateMacroForUnitQuestLogChange = true
+							-- RQE.isCheckingMacroContents = true
+							-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if UNIT_QUEST_LOG_CHANGED event fires
+							-- C_Timer.After(3, function()
+								-- RQE.CreateMacroForUnitQuestLogChange = false
+								-- RQE.isCheckingMacroContents = false
+							-- end)
+						-- end
+
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Updating waypoint for UNIT_QUEST_LOG_CHANGED questID: " .. tostring(RQE.currentSuperTrackedQuestID))
 						end
-					end)
-
-					-- -- Tier Five Importance: UNIT_QUEST_LOG_CHANGED event
-					-- if RQE.db.profile.autoClickWaypointButton then
-						-- RQE.CreateMacroForUnitQuestLogChange = true
-						-- RQE.isCheckingMacroContents = true
-						-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if UNIT_QUEST_LOG_CHANGED event fires
-						-- C_Timer.After(3, function()
-							-- RQE.CreateMacroForUnitQuestLogChange = false
-							-- RQE.isCheckingMacroContents = false
-						-- end)
-					-- end
-
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Updating waypoint for UNIT_QUEST_LOG_CHANGED questID: " .. tostring(RQE.currentSuperTrackedQuestID))
 					end
-				end
 
-				-- Reset the flag after 3 seconds
-				C_Timer.After(3, function()
-					RQE.StartPerioFromUnitQuestLogChanged = false
-				end)
+					-- Reset the flag after 3 seconds
+					C_Timer.After(3, function()
+						RQE.StartPerioFromUnitQuestLogChanged = false
+					end)
+				end
 			end)
 		end
 	end
@@ -2836,13 +2912,25 @@ function RQE.handleUnitQuestLogChange(...)
 	-- Only process the event if the achievements frame is shown
 	if RQE.AchievementsFrame:IsShown() then
 		C_Timer.After(2, function()
+			-- Flag check to see if SUPER_TRACKING_CHANGED has fired already and this is redundant
+			if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then return end
+
 			-- Ensure that the RQEQuestFrame updates when the quest is accepted (including World Quests)
 			RQE:QuestType()
 		end)
 	end
 
-	RQE:StartPeriodicChecks()
-	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_QUEST_LOG_CHANGED event fires	-- ADDED to RQE:StartPeriodicChecks()
+	-- Flag check to see if SUPER_TRACKING_CHANGED has fired already and this is redundant
+	if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then 
+		return
+	else
+		if not RQE.QuestRemoved then
+			--print("~~Line: 2895~~")
+			RQE.StartPerioFromUQLC = true
+			RQE:StartPeriodicChecks()
+			RQE.QuestRemoved = false
+		end
+	end
 end
 
 
@@ -3019,6 +3107,7 @@ function RQE.handleInstanceInfoUpdate()
 	-- Tier Three Importance: UPDATE_INSTANCE_INFO event
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromInstanceInfoUpdate = true
+		--print("~~Line: 3073~~")
 		RQE:StartPeriodicChecks()
 		C_Timer.After(3, function()
 			RQE.StartPerioFromInstanceInfoUpdate = false
@@ -3037,6 +3126,16 @@ end
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
+
+	-- Resets the flag that prevents UNIT_QUEST_LOG_CHANGED from firing immediately following QUEST_WATCH_UPDATE
+	if RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded then
+		RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
+	end
+
+	-- Resets the flag that prevents UNIT_QUEST_LOG_CHANGED from firing immediately following SUPER_TRACKING_CHANGED
+	if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then
+		RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
+	end
 
 	-- Restore Automatic World Quests that have been saved to their table
 	if RQE.ReadyToRestoreAutoWorldQuests then
@@ -3338,6 +3437,7 @@ function RQE.handleQuestComplete()
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestComplete = true
+			--print("~~Line: 3402~~")
 			RQE:StartPeriodicChecks()
 			C_Timer.After(3, function()
 				RQE.StartPerioFromQuestComplete = false
@@ -3567,6 +3667,7 @@ function RQE.handleQuestRemoved(...)
 	-- -- Resets Quest Progress ***
 	-- RQE.hasStateChanged()
 	-- RQE.hasQuestProgressChanged()
+	RQE.QuestRemoved = true
 end
 
 
@@ -3609,6 +3710,8 @@ function RQE.handleQuestWatchUpdate(...)
 		return
 	end
 
+	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = true
+
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 02 Debug: QUEST_WATCH_UPDATE event triggered for questID: " .. tostring(questID), 0.56, 0.93, 0.56)
 	end
@@ -3643,16 +3746,16 @@ function RQE.handleQuestWatchUpdate(...)
 				end
 			end
 
-			-- Tier Five Importance: QUEST_WATCH_UPDATE event
-			if RQE.db.profile.autoClickWaypointButton then
-				RQE.CreateMacroForQuestWatchUpdate = true
-				RQE.isCheckingMacroContents = true
-				RQEMacro:CreateMacroForCurrentStep()			-- Checks for macro status if QUEST_WATCH_UPDATE event fires
-				C_Timer.After(3, function()
-					RQE.CreateMacroForQuestWatchUpdate = false
-					RQE.isCheckingMacroContents = false
-				end)
-			end
+			-- -- Tier Five Importance: QUEST_WATCH_UPDATE event
+			-- if RQE.db.profile.autoClickWaypointButton then
+				-- RQE.CreateMacroForQuestWatchUpdate = true
+				-- RQE.isCheckingMacroContents = true
+				-- RQEMacro:CreateMacroForCurrentStep()			-- Checks for macro status if QUEST_WATCH_UPDATE event fires
+				-- C_Timer.After(3, function()
+					-- RQE.CreateMacroForQuestWatchUpdate = false
+					-- RQE.isCheckingMacroContents = false
+				-- end)
+			-- end
 		end
 
 	elseif not isSuperTracking then
@@ -3752,6 +3855,7 @@ function RQE.handleQuestWatchUpdate(...)
 		if RQE.db.profile.autoClickWaypointButton then
 			C_Timer.After(1, function()
 				RQE.StartPerioFromQuestWatchUpdate = true
+				--print("~~Line: 3817~~")
 				RQE:StartPeriodicChecks()
 				-- Immediately reset flag after running StartPeriodicChecks
 				RQE.StartPerioFromQuestWatchUpdate = false
@@ -4032,6 +4136,7 @@ function RQE.handleQuestTurnIn(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestTurnedIn = true
+			--print("~~Line: 4098~~")
 			RQE:StartPeriodicChecks()
 			C_Timer.After(3, function()
 				RQE.StartPerioFromQuestTurnedIn = false
