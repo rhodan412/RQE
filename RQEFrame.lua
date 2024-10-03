@@ -1535,16 +1535,14 @@ function RQE:LFG_Search(questID)
     end
 
     -- Retrieve the super-tracked quest ID
-    questID = questID or C_SuperTrack.GetSuperTrackedQuestID()
+    local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
     if not questID or questID == 0 then
-        print("No valid quest is currently super-tracked.")
         return
     end
 
     -- Retrieve the activity ID for the quest
     local activityID = C_LFGList.GetActivityIDForQuestID(questID)
     if not activityID then
-        print("No activity found for the quest.")
         return
     end
 
@@ -1563,9 +1561,8 @@ end
 
 -- Function to create a group for the current quest
 function RQE:LFG_Create(questID)
-    questID = questID or C_SuperTrack.GetSuperTrackedQuestID()
+    local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
     if not questID or questID == 0 then
-        print("No valid quest is currently super-tracked.")
         return
     end
 
@@ -1573,7 +1570,6 @@ function RQE:LFG_Create(questID)
     local questName = C_QuestLog.GetTitleForQuestID(questID)
     local activityID = C_LFGList.GetActivityIDForQuestID(questID)
     if not activityID then
-        print("No activity found for this quest.")
         return
     end
 
