@@ -1,5 +1,10 @@
 11.0.2.45
 
+	Buttons.lua
+		- Modified function behind the button click for the 'Search Group' button (this is used to create/list or search for groups for quests of such things like World Bosses
+
+	RQEFrame.lua
+		- Modified the functions that control the searching for and creation of group for the world boss that is called when the button is clicked from Buttons.lua that was editted in this update
 
 
 11.0.2.44 (2024-10-02)
