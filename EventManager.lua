@@ -858,6 +858,34 @@ function RQE.handlePlayerRegenEnabled()
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
 		end
 
+		-- C_Timer.After(0.3, function()
+			-- if not C_Scenario.IsInScenario() then
+				-- local isFlying = IsFlying("player")
+				-- local isMounted = IsMounted()
+				-- local onTaxi = UnitOnTaxi("player")
+
+				-- if not IsFlying and not isMounted and not onTaxi then
+
+					-- -- Get the macro index for 'RQE Macro'
+					-- local macroIndex = GetMacroIndexByName("RQE Macro")
+					
+					-- -- If the macro exists, retrieve its content
+					-- if macroIndex > 0 then
+						-- local _, _, macroBody = GetMacroInfo(macroIndex)
+
+						-- -- Check if the macro body has content
+						-- if macroBody and macroBody == "" then
+							-- RQE.isCheckingMacroContents = true
+							-- RQEMacro:CreateMacroForCurrentStep()
+							-- C_Timer.After(0.2, function()
+								-- RQE.isCheckingMacroContents = false
+							-- end)
+						-- end
+					-- end
+				-- end
+			-- end
+		-- end)
+
 		--C_Timer.After(0.5, function()
 			--RQE:StartPeriodicChecks() -- might need to comment section out if too much lag after combat (mount changes seem good)
 			--RQE:CheckAndAdvanceStep(questID)
@@ -1517,33 +1545,35 @@ function RQE.handlePlayerStartedMoving()
 		RQE.Buttons.ClearButtonPressed()
 	end
 
-	-- -- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
-	-- if RQE:ShouldClearMacro("RQE Macro") then
-		-- RQEMacro:ClearMacroContentByName("RQE Macro")
-	-- end
-
 	local isFlying = IsFlying("player")
 	local isMounted = IsMounted()
 	local onTaxi = UnitOnTaxi("player")
 
 	if not IsFlying and not isMounted and not onTaxi then
 
-		-- Get the macro index for 'RQE Macro'
-		local macroIndex = GetMacroIndexByName("RQE Macro")
-		
-		-- If the macro exists, retrieve its content
-		if macroIndex > 0 then
-			local _, _, macroBody = GetMacroInfo(macroIndex)
-
-			-- Check if the macro body has content
-			if macroBody and macroBody == "" then
-				RQE.isCheckingMacroContents = true
-				RQEMacro:CreateMacroForCurrentStep()
-				C_Timer.After(0.2, function()
-					RQE.isCheckingMacroContents = false
-				end)
-			end
+		-- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
+		if RQE:ShouldClearMacro("RQE Macro") then
+			RQEMacro:ClearMacroContentByName("RQE Macro")
 		end
+
+		C_Timer.After(0.3, function()
+			-- Get the macro index for 'RQE Macro'
+			local macroIndex = GetMacroIndexByName("RQE Macro")
+			
+			-- If the macro exists, retrieve its content
+			if macroIndex > 0 then
+				local _, _, macroBody = GetMacroInfo(macroIndex)
+
+				-- Check if the macro body has content
+				if macroBody and macroBody == "" then
+					RQE.isCheckingMacroContents = true
+					RQEMacro:CreateMacroForCurrentStep()
+					C_Timer.After(0.2, function()
+						RQE.isCheckingMacroContents = false
+					end)
+				end
+			end
+		end)
 	end
 end
 
