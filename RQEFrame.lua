@@ -1527,66 +1527,64 @@ function RQE.ClickUnknownQuestButton()
 end
 
 
--- Function to handle button clicks
+-- Function to handle group search based on the current super-tracked quest
 function RQE:LFG_Search(questID)
-	-- Open the Group Finder frame if it's not already open
-	if not GroupFinderFrame:IsVisible() then
-		LFGListUtil_OpenBestWindow()
-	end
+    -- Ensure the Group Finder frame is open
+    if not GroupFinderFrame:IsVisible() then
+        LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
+    end
 
-	-- Logic for searching for groups
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- Retrieve the super-tracked quest ID
+    questID = questID or C_SuperTrack.GetSuperTrackedQuestID()
+    if not questID or questID == 0 then
+        print("No valid quest is currently super-tracked.")
+        return
+    end
 
-	if questID then
-		local questName = C_QuestLog.GetTitleForQuestID(questID)
-		local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-	end
+    -- Retrieve the activity ID for the quest
+    local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+    if not activityID then
+        print("No activity found for the quest.")
+        return
+    end
 
-	local categoryID = 3
+    -- Set the search panel to the activity associated with the quest
+    local SearchPanel = LFGListFrame.SearchPanel
+    LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
+    LFGListSearchPanel_SetCategory(SearchPanel, 1, 0) -- Category 1 is Dungeons/World Quests
 
-	if not categoryID or categoryID == 0 then
-		return
-	end
+    -- Set search criteria to the questID
+    C_LFGList.SetSearchToQuestID(questID)
 
-	local languages = C_LFGList.GetLanguageSearchFilter()
-
-	-- Set the search to the quest ID
-	if questID then
-		C_LFGList.SetSearchToQuestID(questID)
-	end
-
-	local filters = 0
-	local preferredFilters = 0
-
-	-- Accessing the search panel directly
-	local SearchPanel = LFGListFrame.SearchPanel
-	LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
-	LFGListSearchPanel_SetCategory(SearchPanel, categoryID, filters)
-	LFGListSearchPanel_DoSearch(SearchPanel)
+    -- Execute the search
+    LFGListSearchPanel_DoSearch(SearchPanel)
 end
 
 
--- Function to handle button clicks
+-- Function to create a group for the current quest
 function RQE:LFG_Create(questID)
-	-- Logic for creating a group
-	local questName = C_QuestLog.GetTitleForQuestID(questID)
-	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+    questID = questID or C_SuperTrack.GetSuperTrackedQuestID()
+    if not questID or questID == 0 then
+        print("No valid quest is currently super-tracked.")
+        return
+    end
 
-	if activityID then
-		local activityInfo = C_LFGList.GetActivityInfoTable(activityID)
-		local currentAreaActivities = C_LFGList.GetActivityInfoExpensive(activityID)
-	else
-		return
-	end
+    -- Retrieve quest name and activity ID
+    local questName = C_QuestLog.GetTitleForQuestID(questID)
+    local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+    if not activityID then
+        print("No activity found for this quest.")
+        return
+    end
 
-	local playerIlvl = GetAverageItemLevel()
-	local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
-	local itemLevel = minIlvlReq > playerIlvl and math.floor(playerIlvl) or minIlvlReq
-	local honorLevel = 0
-	local autoAccept = true
-	local privateGroup = false
+    -- Define group listing parameters
+    local minIlvl = UnitLevel("player") >= 70 and 80 or GetAverageItemLevel()
+    local itemLevel = math.floor(GetAverageItemLevel())
+    local autoAccept = true
+    local privateGroup = false
 
-	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID)
+    -- Create the group listing
+    C_LFGList.CreateListing(activityID, itemLevel, 0, autoAccept, privateGroup, questID)
 end
 
 
