@@ -1506,6 +1506,8 @@ end
 -- Handles PLAYER_CONTROL_GAINED event
 -- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 function RQE.handlePlayerControlGained()
+	RQE:UpdateMapIDDisplay()
+
 	RQE.canSortQuests = true
 	SortQuestsByProximity()
 	RQE:AutoClickQuestLogIndexWaypointButton()
