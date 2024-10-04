@@ -3,6 +3,9 @@
 	Buttons.lua
 		- Modified function behind the button click for the 'Search Group' button (this is used to create/list or search for groups for quests of such things like World Bosses
 
+	EventManager.lua
+		- Added RQE:UpdateMapIDDisplay() to PLAYER_CONTROL_GAINED event (follows after getting off taxi)
+
 	RQEDatabase.lua
 		- Added more quests to DB
 
