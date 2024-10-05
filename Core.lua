@@ -2327,6 +2327,7 @@ function RQE.PrintAllScenarioBits()
 			print("  Failed: " .. tostring(criteriaInfo.failed))
 			print("  Is Weighted Progress: " .. tostring(criteriaInfo.isWeightedProgress))
 			print("  Is Formatted: " .. tostring(criteriaInfo.isFormatted))
+			print("  Quality String: " .. tostring(criteriaInfo.quantityString))
 		end
 
 		-- Fetch criteria information using GetCriteriaInfoByStep
@@ -2345,6 +2346,7 @@ function RQE.PrintAllScenarioBits()
 			print("  Failed: " .. tostring(criteriaInfoByStep.failed))
 			print("  Is Weighted Progress: " .. tostring(criteriaInfoByStep.isWeightedProgress))
 			print("  Is Formatted: " .. tostring(criteriaInfoByStep.isFormatted))
+			print("  Quality String: " .. tostring(criteriaInfo.quantityString))
 		end
 	end
 end
