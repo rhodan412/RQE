@@ -1,10 +1,16 @@
-11.0.2.45
+11.0.2.45 (2024-10-04)
 
 	Buttons.lua
 		- Modified function behind the button click for the 'Search Group' button (this is used to create/list or search for groups for quests of such things like World Bosses
 
+	Core.lua
+		- Added qualityString for criteriaInfo for GetCriteriaInfoByStep and GetCriteriaInfo
+
 	EventManager.lua
 		- Added RQE:UpdateMapIDDisplay() to PLAYER_CONTROL_GAINED event (follows after getting off taxi)
+
+	QuestingModule.lua
+		- Nil fix for criteriaInfo within UpdateScenarioFrame function
 
 	RQEDatabase.lua
 		- Added more quests to DB
