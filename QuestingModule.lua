@@ -1360,7 +1360,8 @@ function RQE.UpdateScenarioFrame()
 		RQE.ScenarioChildFrame.body:SetText(criteriaText)
 
 		-- Update the timer, if applicable
-		local duration, elapsed = criteriaInfo[10], criteriaInfo[11]
+		local duration = criteriaInfo and criteriaInfo.duration
+		local elapsed = criteriaInfo and criteriaInfo.elapsed
 
 		if duration and elapsed then
 			local timeLeft = duration - elapsed
