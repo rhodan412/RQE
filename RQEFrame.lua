@@ -1529,58 +1529,58 @@ end
 
 -- Function to handle group search based on the current super-tracked quest
 function RQE:LFG_Search(questID)
-    -- Ensure the Group Finder frame is open
-    if not GroupFinderFrame:IsVisible() then
-        LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
-    end
+	-- Ensure the Group Finder frame is open
+	if not GroupFinderFrame:IsVisible() then
+		LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
+	end
 
-    -- Retrieve the super-tracked quest ID
-    local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-    if not questID or questID == 0 then
-        return
-    end
+	-- Retrieve the super-tracked quest ID
+	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		return
+	end
 
-    -- Retrieve the activity ID for the quest
-    local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-    if not activityID then
-        return
-    end
+	-- Retrieve the activity ID for the quest
+	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+	if not activityID then
+		return
+	end
 
-    -- Set the search panel to the activity associated with the quest
-    local SearchPanel = LFGListFrame.SearchPanel
-    LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
-    LFGListSearchPanel_SetCategory(SearchPanel, 1, 0) -- Category 1 is Dungeons/World Quests
+	-- Set the search panel to the activity associated with the quest
+	local SearchPanel = LFGListFrame.SearchPanel
+	LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
+	LFGListSearchPanel_SetCategory(SearchPanel, 1, 0) -- Category 1 is Dungeons/World Quests
 
-    -- Set search criteria to the questID
-    C_LFGList.SetSearchToQuestID(questID)
+	-- Set search criteria to the questID
+	C_LFGList.SetSearchToQuestID(questID)
 
-    -- Execute the search
-    LFGListSearchPanel_DoSearch(SearchPanel)
+	-- Execute the search
+	LFGListSearchPanel_DoSearch(SearchPanel)
 end
 
 
 -- Function to create a group for the current quest
 function RQE:LFG_Create(questID)
-    local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-    if not questID or questID == 0 then
-        return
-    end
+	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		return
+	end
 
-    -- Retrieve quest name and activity ID
-    local questName = C_QuestLog.GetTitleForQuestID(questID)
-    local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-    if not activityID then
-        return
-    end
+	-- Retrieve quest name and activity ID
+	local questName = C_QuestLog.GetTitleForQuestID(questID)
+	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+	if not activityID then
+		return
+	end
 
-    -- Define group listing parameters
-    local minIlvl = UnitLevel("player") >= 70 and 80 or GetAverageItemLevel()
-    local itemLevel = math.floor(GetAverageItemLevel())
-    local autoAccept = true
-    local privateGroup = false
+	-- Define group listing parameters
+	local minIlvl = UnitLevel("player") >= 70 and 80 or GetAverageItemLevel()
+	local itemLevel = math.floor(GetAverageItemLevel())
+	local autoAccept = true
+	local privateGroup = false
 
-    -- Create the group listing
-    C_LFGList.CreateListing(activityID, itemLevel, 0, autoAccept, privateGroup, questID)
+	-- Create the group listing
+	C_LFGList.CreateListing(activityID, itemLevel, 0, autoAccept, privateGroup, questID)
 end
 
 
