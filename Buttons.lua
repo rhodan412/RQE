@@ -196,54 +196,54 @@ end
 
 
 RQE.SearchGroupButtonMouseDown = function()
-    RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
-        RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
+	RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
+		RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
-        local questID = C_SuperTrack.GetSuperTrackedQuestID()
-        if not questID then
-            print("No super-tracked quest to handle LFG.")
-            return
-        end
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if not questID then
+			print("No super-tracked quest to handle LFG.")
+			return
+		end
 
-        if IsShiftKeyDown() and button == "LeftButton" then
-            -- Delist the group if Shift + LeftClick
-            RQE:LFG_Delist(questID)
-            RQE.LFGActive = false -- Delisting means no active group
-        elseif button == "LeftButton" then
-            -- Search for groups if LeftClick
-            RQE:LFG_Search(questID)
-        elseif button == "RightButton" then
-            -- Create or delist group if RightClick
-            if RQE.LFGActive then
-                -- Group is active, delist it
-                RQE:LFG_Delist(questID)
-                RQE:StopFormingLFG()
-                RQE.LFGActive = false -- Mark group as inactive
-            else
-                -- Group is not active, create a new group
-                RQE:LFG_Create(questID)
-                
-                -- We add a delay to check if the group was successfully created
-                C_Timer.After(2, function()
-                    -- Check if group was successfully created using C_LFGList.GetActiveEntryInfo()
-                    local groupInfo = C_LFGList.GetActiveEntryInfo()
-                    if groupInfo then
-                        print("Group successfully created for quest ID:", questID)
-                        RQE.LFGActive = true -- Mark group as active
-                        RQE:FormLFG()
-                    else
-                        print("Failed to create a group.")
-                        RQE.LFGActive = false -- No group formed
+		if IsShiftKeyDown() and button == "LeftButton" then
+			-- Delist the group if Shift + LeftClick
+			RQE:LFG_Delist(questID)
+			RQE.LFGActive = false -- Delisting means no active group
+		elseif button == "LeftButton" then
+			-- Search for groups if LeftClick
+			RQE:LFG_Search(questID)
+		elseif button == "RightButton" then
+			-- Create or delist group if RightClick
+			if RQE.LFGActive then
+				-- Group is active, delist it
+				RQE:LFG_Delist(questID)
+				RQE:StopFormingLFG()
+				RQE.LFGActive = false -- Mark group as inactive
+			else
+				-- Group is not active, create a new group
+				RQE:LFG_Create(questID)
+				
+				-- We add a delay to check if the group was successfully created
+				C_Timer.After(2, function()
+					-- Check if group was successfully created using C_LFGList.GetActiveEntryInfo()
+					local groupInfo = C_LFGList.GetActiveEntryInfo()
+					if groupInfo then
+						print("Group successfully created for quest ID:", questID)
+						RQE.LFGActive = true -- Mark group as active
+						RQE:FormLFG()
+					else
+						print("Failed to create a group.")
+						RQE.LFGActive = false -- No group formed
 						RQE:StopFormingLFG()
-                    end
-                end)
-            end
-        end
-    end)
+					end
+				end)
+			end
+		end
+	end)
 
-    RQE.SearchGroupButton:SetScript("OnMouseUp", function(self, button)
-        RQE.sgbg:SetAlpha(1)  -- Reset the alpha
-    end)
+	RQE.SearchGroupButton:SetScript("OnMouseUp", function(self, button)
+		RQE.sgbg:SetAlpha(1)  -- Reset the alpha
+	end)
 end
 
 
