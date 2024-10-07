@@ -197,6 +197,7 @@ local defaults = {
 		enableGossipModeAutomation = false,
 		enableNearestSuperTrack = true,
 		enableNearestSuperTrackCampaign = false,
+		enableNearestSuperTrackCampaignOnlyWhileLeveling = false,
 		enableQuestAbandonConfirm = false,
 		enableQuestFrame = true,
 		enableTomTomCompatibility = true,
@@ -1902,36 +1903,57 @@ function RQE:GetClosestTrackedQuest()
 	local closestQuestID = nil
 	local closestDistance = math.huge  -- Initialize with a very large number
 	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local playerLevel = UnitLevel("player")
+	local maxPlayerLevel = GetMaxPlayerLevel()
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("playerLevel is " .. playerLevel .. " and maxPlayerLevel is " .. maxPlayerLevel)
+	end
 
 	-- Iterate through all quests in the player's quest log
 	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
 		local info = C_QuestLog.GetInfo(i)
 
-		-- Only consider quests that are being tracked
-		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) and RQE.db.profile.enableNearestSuperTrack and not RQE.db.profile.enableNearestSuperTrackCampaign then
-			-- Get the distance to the quest
-			local questPosition = C_QuestLog.GetQuestObjectives(info.questID)
-			if questPosition then
-				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+		-- Only consider quests that are being tracked and on the map
+		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) then
 
-				-- Update closest quest if this one is closer
-				if distance and distance < closestDistance then
-					closestDistance = distance
-					closestQuestID = info.questID
+			-- Case 1: Super track nearest non-campaign quest if campaign tracking is disabled
+			if RQE.db.profile.enableNearestSuperTrack and not RQE.db.profile.enableNearestSuperTrackCampaign then
+				local questPosition = C_QuestLog.GetQuestObjectives(info.questID)
+				if questPosition then
+					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+					-- Update closest quest if this one is closer
+					if distance and distance < closestDistance then
+						closestDistance = distance
+						closestQuestID = info.questID
+					end
 				end
-			end
-		elseif info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) and RQE.db.profile.enableNearestSuperTrackCampaign then
-			-- Check if the quest is a campaign quest
-			local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
-			
-			if classification == Enum.QuestClassification.Campaign then
-				-- Get the distance to the campaign quest
-				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
 
-				-- Update closest quest if this one is closer
-				if distance and distance < closestDistance then
-					closestDistance = distance
-					closestQuestID = info.questID
+			-- Case 2: Super track nearest campaign quest while leveling if "Leveling Only" is enabled
+			elseif RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly and playerLevel < maxPlayerLevel then
+				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
+				if classification == Enum.QuestClassification.Campaign then
+					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+					-- Update closest campaign quest if this one is closer
+					if distance and distance < closestDistance then
+						closestDistance = distance
+						closestQuestID = info.questID
+					end
+				end
+
+			-- Case 3: Super track nearest campaign quest even at max level
+			elseif RQE.db.profile.enableNearestSuperTrackCampaign then
+				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
+				if classification == Enum.QuestClassification.Campaign then
+					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+					-- Update closest campaign quest if this one is closer
+					if distance and distance < closestDistance then
+						closestDistance = distance
+						closestQuestID = info.questID
+					end
 				end
 			end
 		end
