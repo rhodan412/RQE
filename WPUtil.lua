@@ -31,6 +31,13 @@ end
 -- Assume CloseWorldMap() closes the world map
 RQE.UnknownQuestButtonCalcNTrack = function()
 	RQE.UnknownQuestButton:SetScript("OnClick", function()
+		if RQE.hoveringOnRQEFrameAndButton then
+			RQE:StartPeriodicChecks()
+			C_Timer.After(0.2, function()
+				RQE.hoveringOnRQEFrameAndButton = false
+			end)
+		end
+
 		local superQuest = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
