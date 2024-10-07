@@ -126,16 +126,16 @@ end
 
 -- Create the main frame
 RQEFrame = CreateFrame("Frame", "RQE.RQEFrame", UIParent, "BackdropTemplate")
-RQEFrame:SetSize(435, 300)
+RQEFrame:SetSize(420, 300)
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.framePosition then
-	xPos = RQE.db.profile.framePosition.xPos or 810
-	yPos = RQE.db.profile.framePosition.yPos or 165
+	xPos = RQE.db.profile.framePosition.xPos or 40 --810
+	yPos = RQE.db.profile.framePosition.yPos or -285 --165
 else
-	xPos = 810
-	yPos = 165
+	xPos = 40 --810
+	yPos = -285 --165
 end
-RQEFrame:SetPoint("CENTER", UIParent, "CENTER", xPos, yPos)
+RQEFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", xPos, yPos)
 RQEFrame:SetBackdrop({
 	bgFile = "Interface/Tooltips/UI-Tooltip-Background",
 	edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
@@ -155,10 +155,6 @@ ScrollFrame:SetPoint("BOTTOMRIGHT", RQEFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Must remain 'true' as it will otherwise cause the SeparateFocusFrame to overlap into the RQEQuestFrame!!
 RQE.ScrollFrame = ScrollFrame
-
--- -- Enable mouse input propagation
--- ScrollFrame:SetPropagateMouseClicks(true)
--- ScrollFrame:SetPropagateMouseMotion(true)
 
 
 -- Create the content frame
