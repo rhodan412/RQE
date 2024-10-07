@@ -11,10 +11,17 @@
 		- Set enableNearestSuperTrackCampaignLevelingOnly option as 'false' by default
 		- Modified RQE:GetClosestTrackedQuest() to take into account for campaign quests at max level vs leveling up (an option for the player to potentially level up through the campaign but super track the nearest quest in general at max level)
 		- Added function to print the mapID, x and y position for the C_QuestLog.GetNextWaypointForMap, using the GetQuestUiMapID to obtain a quests appropriate mapID
+		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and RQEQuestFrame
 
 	EventManager.lua
 		- Set RQE.hoveringOnRQEFrameAndButton as 'false' by default on ADDON_LOADED event
-		- Added setting to update the RQEFrame to the profile value when PLAYER_ENTERING_WORLD fires
+		- Adjusted yPos of RQEQuestFrame
+
+	QuestingModule.lua
+		- Adjusted yPos of RQEQuestFrame
+
+	RQEFrame.lua
+		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and its anchor point
 
 	WPUtil.lua
 		- Run RQE:StartPeriodicChecks() when player manually presses the "W" button in the RQEFrame (this prevents this weighty function from being called automatically through other functions firing that interact with the RQE.UnknownQuestButtonCalcNTrack function
