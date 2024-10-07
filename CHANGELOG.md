@@ -1,5 +1,21 @@
 11.0.2.46
 
+	Buttons.lua
+		- Added RQE.hoveringOnRQEFrameAndButton to be marked true/false based on if the player is hovering over the RQE.UnknownQuestButton within the RQEFrame or not
+
+	Config.lua
+		- Added enableNearestSuperTrackCampaignLevelingOnly option to the settings panel and configuration frame
+
+	Core.lua
+		- Set enableNearestSuperTrackCampaignLevelingOnly option as 'false' by default
+		- Modified RQE:GetClosestTrackedQuest() to take into account for campaign quests at max level vs leveling up (an option for the player to potentially level up through the campaign but super track the nearest quest in general at max level)
+
+	EventManager.lua
+		- Set RQE.hoveringOnRQEFrameAndButton as 'false' by default on ADDON_LOADED event
+
+	WPUtil.lua
+		- Run RQE:StartPeriodicChecks() when player manually presses the "W" button in the RQEFrame (this prevents this weighty function from being called automatically through other functions firing that interact with the RQE.UnknownQuestButtonCalcNTrack function
+
 
 11.0.2.45 (2024-10-04)
 
