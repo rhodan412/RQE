@@ -82,7 +82,14 @@ RQE.UnknownButtonTooltip = function()
 
 			if questID then  -- Add a check to ensure questID is not nil
 				local mapID = GetQuestUiMapID(questID)
+				RQE.WPmapID = mapID
 				local questData = RQE.getQuestData(questID)
+				local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+				RQE.WPxPos = x
+				RQE.WPyPos = y
+				if not RQE.WPxPos == nil then
+					local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID))
+				end
 				if mapID == 0 then mapID = nil end
 			end
 
