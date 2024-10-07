@@ -207,7 +207,7 @@ local defaults = {
 			yPos = -285,
 			anchorPoint = "TOPRIGHT",
 			frameWidth = 420,
-			frameHeight = 325,
+			frameHeight = 300,
 		},
 		globalSetting = true,
 		hideRQEFrameWhenEmpty = false,
@@ -1184,7 +1184,7 @@ end
 function RQE:UpdateFrameSize()
 	-- When reading from DB
 	local frameWidth = self.db.profile.framePosition.frameWidth or 420
-	local frameHeight = self.db.profile.framePosition.frameHeight or 310
+	local frameHeight = self.db.profile.framePosition.frameHeight or 300
 
 	-- Error handling for main frame
 	local success, err = pcall(function()
@@ -2536,7 +2536,7 @@ end
 -- Function for Button in Configuration that will reset the size of the RQEFrame and RQEQuestFrame to default values
 function RQE:ResetFrameSizeToDBorDefault()
 	local RQEWidth = 420
-	local RQEHeight = 310
+	local RQEHeight = 300
 	local RQEQuestWidth = 325
 	local RQEQuestHeight = 450
 
@@ -2563,7 +2563,7 @@ end
 -- When the frame is maximized
 function RQE:MaximizeFrame()
 	local defaultWidth = RQE.db.profile.frameWidth or 420  -- Replace 400 with the default from Core.lua
-	local defaultHeight = RQE.db.profile.frameHeight or 310  -- Replace 300 with the default from Core.lua
+	local defaultHeight = RQE.db.profile.frameHeight or 300  -- Replace 300 with the default from Core.lua
 
 	local width = RQE.db.profile.framePosition.originalWidth or defaultWidth
 	local height = RQE.db.profile.framePosition.originalHeight or defaultHeight
