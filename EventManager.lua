@@ -1083,6 +1083,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForSuperTracking = false
 	RQE.CreateMacroForUnitQuestLogChange = false
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
+	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
