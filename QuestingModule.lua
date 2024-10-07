@@ -46,10 +46,10 @@ local frame = RQE.RQEQuestFrame
 local xPos, yPos
 if RQE and RQE.db and RQE.db.profile and RQE.db.profile.QuestFramePosition then
 	xPos = RQE.db.profile.QuestFramePosition.xPos or -40  -- Default x position
-	yPos = RQE.db.profile.QuestFramePosition.yPos or 130  -- Default y position
+	yPos = RQE.db.profile.QuestFramePosition.yPos or 150  -- Default y position
 else
 	xPos = -40  -- Default x position if db is not available
-	yPos = 130  -- Default y position if db is not available
+	yPos = 150  -- Default y position if db is not available
 end
 
 RQE.RQEQuestFrame:SetSize(325, 450)
