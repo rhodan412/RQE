@@ -5505,6 +5505,17 @@ function RQE.PrintQuestLineInfo(questID, uiMapID)
 end
 
 
+-- Get the X, Y, and MapID of a particular quest
+function RQE.GetQuestUiMapID(questID)
+	local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	local mapID = GetQuestUiMapID(questID)
+	local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+
+	print("Map is: " .. mapID)
+	print("X:", tostring(x), "Y:", tostring(y))
+end
+
+
 -- Function to Request and Cache all quest lines in player's quest log
 function RQE.RequestAndCacheQuestLines()
 	RQE.QuestLines = RQE.QuestLines or {}
