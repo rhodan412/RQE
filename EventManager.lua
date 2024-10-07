@@ -1848,6 +1848,9 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	-- Ensure that the RQEFrame is in the correct location based on the profile or default settings if profile doesn't have existing setting
+	RQE:UpdateFrameFromProfile()
+
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	C_Timer.After(3, function()
 		if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
