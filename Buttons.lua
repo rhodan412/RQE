@@ -61,6 +61,7 @@ end
 -- Add mouseover tooltip and trigger map opening/closing
 RQE.UnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
+		RQE.hoveringOnRQEFrameAndButton = true
 		C_Timer.After(0.2, function()
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
@@ -141,6 +142,7 @@ end
 -- Hide the tooltip when the mouse leaves
 RQE.HideUnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnLeave", function()
+		RQE.hoveringOnRQEFrameAndButton = false
 		GameTooltip:Hide()
 	end)
 end
