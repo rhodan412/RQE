@@ -1694,6 +1694,20 @@ end
 -- Call to function create the search frame
 CreateSearchFrame()
 
+-- Event to update text widths when the frame is resized
+RQEFrame:SetScript("OnSizeChanged", function(self, width, height)
+	AdjustRQEFrameWidths()
+	SaveRQEFrameSize()
+end)
+
+
+-- Calls function to save Quest Frame Position OnDragStop
+RQEFrame:SetScript("OnDragStop", function()
+	RQEFrame:StopMovingOrSizing()
+	RQE:SaveFramePosition()  -- This will save the current frame position
+end)
+
+
 -- Define the function to save frame position
 function RQE:SaveFramePosition()
 	local yourProfile = RQE.db:GetCurrentProfile()
