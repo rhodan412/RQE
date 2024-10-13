@@ -2,26 +2,31 @@
 
 	Buttons.lua
 		- Added RQE.hoveringOnRQEFrameAndButton to be marked true/false based on if the player is hovering over the RQE.UnknownQuestButton within the RQEFrame or not
+		- Added RQE:SaveSuperTrackedQuestToCharacter() when ClearButton is pressed in the RQEFrame
+		- Cleared commented out function that has been resolved already
 		- Modified tooltip over the "W" button as it was using continentID instead of mapID to display waypoint tooltip (not impacting waypoint creation, only the tooltip itself)
 
 	Config.lua
 		- Added enableNearestSuperTrackCampaignLevelingOnly option to the settings panel and configuration frame
 
 	Core.lua
-		- Set enableNearestSuperTrackCampaignLevelingOnly option as 'false' by default
-		- Modified RQE:GetClosestTrackedQuest() to take into account for campaign quests at max level vs leveling up (an option for the player to potentially level up through the campaign but super track the nearest quest in general at max level)
+		- Added code to re-supertrack world quests in addition to the campaign/regular quests that could be re-supertracked as last quest, but runs a check to make sure that that WQ is available
 		- Added function to print the mapID, x and y position for the C_QuestLog.GetNextWaypointForMap, using the GetQuestUiMapID to obtain a quests appropriate mapID
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and RQEQuestFrame
+		- Modified RQE:GetClosestTrackedQuest() to take into account for campaign quests at max level vs leveling up (an option for the player to potentially level up through the campaign but super track the nearest quest in general at max level)
+		- Set enableNearestSuperTrackCampaignLevelingOnly option as 'false' by default
 
 	EventManager.lua
-		- Set RQE.hoveringOnRQEFrameAndButton as 'false' by default on ADDON_LOADED event
+		- Added check to potentially clear macro and FocusFrame on ZONE_CHANGE... and QUEST_WATCH_LIST_CHANGED
 		- Adjusted yPos of RQEQuestFrame
+		- Set RQE.hoveringOnRQEFrameAndButton as 'false' by default on ADDON_LOADED event
 
 	QuestingModule.lua
 		- Adjusted yPos of RQEQuestFrame
 
 	RQEFrame.lua
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and its anchor point
+		- Fix for the RQEFrame to update the correct frame size and position on resize and dragging as this SetScript was missing
 
 	WPUtil.lua
 		- Run RQE:StartPeriodicChecks() when player manually presses the "W" button in the RQEFrame (this prevents this weighty function from being called automatically through other functions firing that interact with the RQE.UnknownQuestButtonCalcNTrack function
