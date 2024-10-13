@@ -1054,6 +1054,12 @@ function RQE.handlePlayerLogin()
 		RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
 	-- end
 
+	-- -- Resets frame back to default -- currently is bugged as it will sometimes on /reload move the location of the RQEFrame to the upper right corner of the screen outside of the view of the player
+	-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		-- RQE:ResetFramePositionToDBorDefault()
+		-- RQE:ResetQuestFramePositionToDBorDefault()
+	-- end
+
 	RQE:ReapplyMacroBinding()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE.UntrackAutomaticWorldQuests()
@@ -2517,6 +2523,20 @@ function RQE.handleZoneChange(...)
 
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
+
+	C_Timer.After(0.5, function()
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
+			local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			if not extractedQuestID or extractedQuestID == 0 then
+				RQEMacro:ClearMacroContentByName("RQE Macro")
+				RQE:ClearSeparateFocusFrame()
+			end
+		else
+			-- If QuestIDText is nil or has no text, ensure the macro and frame are cleared
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+			RQE:ClearSeparateFocusFrame()
+		end
+	end)
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 	if RQEFrame and not not RQEFrame:IsMouseOver() then
@@ -4073,6 +4093,20 @@ function RQE.handleQuestWatchListChanged(...)
 	end
 
 	UpdateRQEQuestFrame()
+
+	C_Timer.After(0.5, function()
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
+			local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			if not extractedQuestID or extractedQuestID == 0 then
+				RQEMacro:ClearMacroContentByName("RQE Macro")
+				RQE:ClearSeparateFocusFrame()
+			end
+		else
+			-- If QuestIDText is nil or has no text, ensure the macro and frame are cleared
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+			RQE:ClearSeparateFocusFrame()
+		end
+	end)
 
 	-- Updates RQEQuestFrame widths when progress is made whether progress quest is super tracked or not
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
