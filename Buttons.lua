@@ -358,33 +358,6 @@ function RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
--- -- Function to set up an override key binding for macro
--- function RQE:SetupOverrideMacroBinding()
-	-- local ownerFrame = RQE.MagicButton
-	-- local macroName = "RQE Macro"
-	-- local bindingKey = RQE.db.profile.keyBindSetting	-- Use the stored setting or default
-
-	-- -- Check if bindingKey is valid
-	-- if not bindingKey or bindingKey == "" then
-		-- -- Provide feedback that no valid key binding is set
-		-- print("No key binding is set for the Quest Macro Button.")
-		-- return
-	-- end
-
-	-- local macroIndex = GetMacroIndexByName(macroName)
-	-- if macroIndex and macroIndex > 0 then
-		-- -- Sets an override binding that runs the specified macro by index
-		-- ClearOverrideBindings(ownerFrame)
-		-- SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
-		-- -- Optional: Provide feedback that the binding was set
-		-- RQE.infoLog("Override binding set for " .. bindingKey .. " to run macro: " .. macroName)
-	-- else
-		-- -- Provide feedback if the macro does not exist
-		-- RQE.debugLog("Macro '" .. macroName .. "' not found.")
-	-- end
--- end
-
-
 -- Function to set up an override key binding for macro
 function RQE:SetupOverrideMacroBinding()
 	local ownerFrame = RQE.MagicButton
@@ -511,6 +484,7 @@ function RQE.Buttons.ClearButtonPressed()
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE:RemoveSuperTrackingFromQuest()
+		RQE:SaveSuperTrackedQuestToCharacter()
 	end)
 
 	-- -- Clearing the frame data a fourth time
@@ -529,6 +503,8 @@ function RQE.Buttons.ClearButtonPressed()
 	C_Timer.After(0.2, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
+
+	RQE:SaveSuperTrackedQuestToCharacter()
 end
 
 -- Parent function to create RWButton
