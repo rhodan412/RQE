@@ -232,16 +232,16 @@ RQE.SearchGroupButtonMouseDown = function()
 				-- Group is not active, create a new group
 				RQE:LFG_Create(questID)
 				
-				-- We add a delay to check if the group was successfully created
+				-- Delay to check if the group was successfully created
 				C_Timer.After(2, function()
 					-- Check if group was successfully created using C_LFGList.GetActiveEntryInfo()
 					local groupInfo = C_LFGList.GetActiveEntryInfo()
 					if groupInfo then
-						print("Group successfully created for quest ID:", questID)
+						--print("Group successfully created for quest ID:", questID)
 						RQE.LFGActive = true -- Mark group as active
 						RQE:FormLFG()
 					else
-						print("Failed to create a group.")
+						--print("Failed to create a group.")
 						RQE.LFGActive = false -- No group formed
 						RQE:StopFormingLFG()
 					end
@@ -254,7 +254,6 @@ RQE.SearchGroupButtonMouseDown = function()
 		RQE.sgbg:SetAlpha(1)  -- Reset the alpha
 	end)
 end
-
 
 
 ----------------------------------------------------
