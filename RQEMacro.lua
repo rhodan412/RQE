@@ -196,6 +196,18 @@ end
 
 -- Internal function that actually clears the macro content
 function RQEMacro:ActuallyClearMacroContentByName(macroName)
+	-- Check for being inside an instance with a raid or party
+	local isInInstance, instanceType = IsInInstance()
+
+	-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
+	if isInInstance and (instanceType == "party" or instanceType == "raid") then
+		return
+	end
+
+	if InCombatLockdown() then
+		return
+	end
+
 	local macroIndex = GetMacroIndexByName(macroName)
 	if macroIndex ~= 0 then
 		-- Macro found, clear its content
