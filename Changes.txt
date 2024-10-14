@@ -31,6 +31,9 @@
 		- Fixed issue where groups for World Bosses either prevented existing groups from being located or your current group from being visible
 		- Fix for the RQEFrame to update the correct frame size and position on resize and dragging as this SetScript was missing
 
+	RQEMacro.lua
+		- LUA error fix: Add-on will not clear the macro if player is inside an raid or dungeon group while inside an instance or in combat
+
 	WPUtil.lua
 		- Run RQE:StartPeriodicChecks() when player manually presses the "W" button in the RQEFrame (this prevents this weighty function from being called automatically through other functions firing that interact with the RQE.UnknownQuestButtonCalcNTrack function
 
