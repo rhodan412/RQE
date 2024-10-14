@@ -644,74 +644,74 @@ end
 
 -- Function to save the current supertracked quest to the character-specific table
 function RQE:SaveSuperTrackedQuestToCharacter()
-    -- Get the currently supertracked quest ID
-    local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- Get the currently supertracked quest ID
+	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-    -- Ensure we have a valid quest ID before saving
-    if superTrackedQuestID and superTrackedQuestID > 0 then
-        -- Check if it is a world quest
-        local isWorldQuest = C_QuestLog.IsWorldQuest(superTrackedQuestID)
+	-- Ensure we have a valid quest ID before saving
+	if superTrackedQuestID and superTrackedQuestID > 0 then
+		-- Check if it is a world quest
+		local isWorldQuest = C_QuestLog.IsWorldQuest(superTrackedQuestID)
 
-        -- Save it to the character-specific table with world quest flag
-        RQECharacterDB.superTrackedQuestID = superTrackedQuestID
-        RQECharacterDB.isWorldQuest = isWorldQuest
+		-- Save it to the character-specific table with world quest flag
+		RQECharacterDB.superTrackedQuestID = superTrackedQuestID
+		RQECharacterDB.isWorldQuest = isWorldQuest
 
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print("Saved supertracked quest for this character: " .. superTrackedQuestID)
-        end
-    else
-        RQECharacterDB.superTrackedQuestID = nil
-        RQECharacterDB.isWorldQuest = nil
-    end
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Saved supertracked quest for this character: " .. superTrackedQuestID)
+		end
+	else
+		RQECharacterDB.superTrackedQuestID = nil
+		RQECharacterDB.isWorldQuest = nil
+	end
 end
 
 
 -- Function to restore the saved supertracked quest for the current character
 function RQE:RestoreSuperTrackedQuestForCharacter()
-    if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
-        local savedQuestID = RQECharacterDB.superTrackedQuestID
-        local isWorldQuest = RQECharacterDB.isWorldQuest
+	if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
+		local savedQuestID = RQECharacterDB.superTrackedQuestID
+		local isWorldQuest = RQECharacterDB.isWorldQuest
 
-        -- Check if it's a world quest
-        if isWorldQuest then
-            -- Check if the world quest is still available
-            local isWorldQuestStillAvailable = C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
+		-- Check if it's a world quest
+		if isWorldQuest then
+			-- Check if the world quest is still available
+			local isWorldQuestStillAvailable = C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
 
-            if isWorldQuestStillAvailable then
-                -- Restore the world quest as supertracked
-                C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("Restored supertracked world quest for this character: " .. savedQuestID)
-                end
-            else
-                -- World quest is no longer available, clear supertracked quest
-                RQECharacterDB.superTrackedQuestID = nil
-                RQECharacterDB.isWorldQuest = nil
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("Saved supertracked world quest is no longer valid.")
-                end
-            end
-        else
-            -- Check if the regular quest is still valid and in the quest log
-            if C_QuestLog.IsOnQuest(savedQuestID) then
-                C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("Restored supertracked quest for this character: " .. savedQuestID)
-                end
-            else
-                -- If the quest is no longer valid, clear the supertracked quest
-                RQECharacterDB.superTrackedQuestID = nil
-                RQECharacterDB.isWorldQuest = nil
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("Saved supertracked quest is no longer valid.")
-                end
-            end
-        end
-    else
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print("No saved supertracked quest found for this character.")
-        end
-    end
+			if isWorldQuestStillAvailable then
+				-- Restore the world quest as supertracked
+				C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Restored supertracked world quest for this character: " .. savedQuestID)
+				end
+			else
+				-- World quest is no longer available, clear supertracked quest
+				RQECharacterDB.superTrackedQuestID = nil
+				RQECharacterDB.isWorldQuest = nil
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Saved supertracked world quest is no longer valid.")
+				end
+			end
+		else
+			-- Check if the regular quest is still valid and in the quest log
+			if C_QuestLog.IsOnQuest(savedQuestID) then
+				C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Restored supertracked quest for this character: " .. savedQuestID)
+				end
+			else
+				-- If the quest is no longer valid, clear the supertracked quest
+				RQECharacterDB.superTrackedQuestID = nil
+				RQECharacterDB.isWorldQuest = nil
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Saved supertracked quest is no longer valid.")
+				end
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No saved supertracked quest found for this character.")
+		end
+	end
 end
 
 
