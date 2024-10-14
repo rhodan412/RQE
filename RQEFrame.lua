@@ -1523,34 +1523,41 @@ function RQE.ClickUnknownQuestButton()
 end
 
 
--- Function to handle group search based on the current super-tracked quest
+-- Function to handle button clicks
 function RQE:LFG_Search(questID)
-	-- Ensure the Group Finder frame is open
+	-- Open the Group Finder frame if it's not already open
 	if not GroupFinderFrame:IsVisible() then
-		LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
+		LFGListUtil_OpenBestWindow()
 	end
 
-	-- Retrieve the super-tracked quest ID
-	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-	if not questID or questID == 0 then
+	-- Logic for searching for groups
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if questID then
+		local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or C_QuestLog.GetTitleForQuestID(questID)
+		local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+	end
+
+	local categoryID = 3
+
+	if not categoryID or categoryID == 0 then
 		return
 	end
 
-	-- Retrieve the activity ID for the quest
-	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-	if not activityID then
-		return
+	local languages = C_LFGList.GetLanguageSearchFilter()
+
+	-- Set the search to the quest ID
+	if questID then
+		C_LFGList.SetSearchToQuestID(questID)
 	end
 
-	-- Set the search panel to the activity associated with the quest
+	local filters = 0
+	local preferredFilters = 0
+
+	-- Accessing the search panel directly
 	local SearchPanel = LFGListFrame.SearchPanel
 	LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
-	LFGListSearchPanel_SetCategory(SearchPanel, 1, 0) -- Category 1 is Dungeons/World Quests
-
-	-- Set search criteria to the questID
-	C_LFGList.SetSearchToQuestID(questID)
-
-	-- Execute the search
+	LFGListSearchPanel_SetCategory(SearchPanel, categoryID, filters)
 	LFGListSearchPanel_DoSearch(SearchPanel)
 end
 
@@ -1559,24 +1566,30 @@ end
 function RQE:LFG_Create(questID)
 	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID or questID == 0 then
+		--print("No valid quest ID to create a group.")
 		return
 	end
 
-	-- Retrieve quest name and activity ID
-	local questName = C_QuestLog.GetTitleForQuestID(questID)
+	-- Retrieve activity ID for the quest
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
 	if not activityID then
+		--print("No valid activity ID for quest ID:", questID)
 		return
 	end
 
 	-- Define group listing parameters
-	local minIlvl = UnitLevel("player") >= 70 and 80 or GetAverageItemLevel()
-	local itemLevel = math.floor(GetAverageItemLevel())
+	local playerIlvl = GetAverageItemLevel()
+	local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
+	local itemLevel = minIlvlReq > playerIlvl and math.floor(playerIlvl) or minIlvlReq
+	local honorLevel = 0  -- Honor level requirement (can be adjusted)
 	local autoAccept = true
 	local privateGroup = false
 
-	-- Create the group listing
-	C_LFGList.CreateListing(activityID, itemLevel, 0, autoAccept, privateGroup, questID)
+	-- Attempt to create the group listing
+	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID, 0, 0, 0)
+
+	-- Optional debug print
+	--print("Group listing created for quest ID:", questID)
 end
 
 
@@ -1720,9 +1733,26 @@ function RQE:SaveFramePosition()
 	-- Get the current frame position
 	local point, _, relativePoint, xOfs, yOfs = RQEFrame:GetPoint()
 
-	-- Save the frame position
-	RQE.db.profile.framePosition.xPos = xOfs
-	RQE.db.profile.framePosition.yPos = yOfs
+	-- Save the frame position with the anchor points and offsets
+	RQE.db.profile.framePosition.point = point
+	RQE.db.profile.framePosition.relativePoint = relativePoint
+	RQE.db.profile.framePosition.xOffset = xOfs
+	RQE.db.profile.framePosition.yOffset = yOfs
+end
+
+
+-- Restores the RQEFrame position based on DB
+function RQE:RestoreFramePosition()
+	local pos = RQE.db.profile.framePosition
+	if pos and pos.point and pos.relativePoint and pos.xOffset and pos.yOffset then
+		-- Restore the frame position using saved values
+		RQEFrame:ClearAllPoints()
+		RQEFrame:SetPoint(pos.point, UIParent, pos.relativePoint, pos.xOffset, pos.yOffset)
+	else
+		-- Default position if saved values are missing or incomplete
+		RQEFrame:ClearAllPoints()
+		RQEFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+	end
 end
 
 
