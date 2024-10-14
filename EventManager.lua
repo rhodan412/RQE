@@ -1076,6 +1076,8 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		return
 	end
 
+	RQE:RestoreFramePosition()
+
 	-- Initialize Flags
 	RQE.BlacklistUnderway = false
 	RQE.ClearButtonPressed = false
