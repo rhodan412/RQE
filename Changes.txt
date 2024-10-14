@@ -1,9 +1,10 @@
-11.0.2.46
+11.0.2.46 
 
 	Buttons.lua
 		- Added RQE.hoveringOnRQEFrameAndButton to be marked true/false based on if the player is hovering over the RQE.UnknownQuestButton within the RQEFrame or not
 		- Added RQE:SaveSuperTrackedQuestToCharacter() when ClearButton is pressed in the RQEFrame
 		- Cleared commented out function that has been resolved already
+		- Fixed issue where groups for World Bosses either prevented existing groups from being located or your current group from being visible
 		- Modified tooltip over the "W" button as it was using continentID instead of mapID to display waypoint tooltip (not impacting waypoint creation, only the tooltip itself)
 
 	Config.lua
@@ -20,12 +21,14 @@
 		- Added check to potentially clear macro and FocusFrame on ZONE_CHANGE... and QUEST_WATCH_LIST_CHANGED
 		- Adjusted yPos of RQEQuestFrame
 		- Set RQE.hoveringOnRQEFrameAndButton as 'false' by default on ADDON_LOADED event
+		- Set restoration of Frame Position for the RQEFrame on ADDON_LOADED to prevent frame from sometimes glitching out and moving to inappropriate location and changing your positional preference
 
 	QuestingModule.lua
 		- Adjusted yPos of RQEQuestFrame
 
 	RQEFrame.lua
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and its anchor point
+		- Fixed issue where groups for World Bosses either prevented existing groups from being located or your current group from being visible
 		- Fix for the RQEFrame to update the correct frame size and position on resize and dragging as this SetScript was missing
 
 	WPUtil.lua
