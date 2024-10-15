@@ -12,6 +12,7 @@
 
 	Core.lua
 		- Added code to re-supertrack world quests in addition to the campaign/regular quests that could be re-supertracked as last quest, but runs a check to make sure that that WQ is available
+		- Added RQE.CheckQuestInfoExists() for the purpose of clearing the Focus Frame when it should be blank as nothing is being tracked
 		- Added function to print the mapID, x and y position for the C_QuestLog.GetNextWaypointForMap, using the GetQuestUiMapID to obtain a quests appropriate mapID
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and RQEQuestFrame
 		- Modified RQE:GetClosestTrackedQuest() to take into account for campaign quests at max level vs leveling up (an option for the player to potentially level up through the campaign but super track the nearest quest in general at max level)
@@ -19,7 +20,12 @@
 
 	EventManager.lua
 		- Added check to potentially clear macro and FocusFrame on ZONE_CHANGE... and QUEST_WATCH_LIST_CHANGED
+		- Added check to find if Focus Frame should be cleared as nothing is being super tracked when UPDATE_INSTANCE_INFO event function is fired
+		- Added check to RQE:StartUpdatingCoordinates() within PLAYER_STARTED_MOVING event only if this is selected (in order to save on memory usage)
+		- Added RQE:UpdateContentSize() to PLAYER_STARTED_MOVING and SUPER_TRACKING_CHANGED event functions
 		- Adjusted yPos of RQEQuestFrame
+		- Fixed QUEST_ACCEPTED to now automatically track all quests (such as Meta) when they are accepted
+		- Removed section of ClearMacroContents within PLAYER_STARTED_MOVING as this is redundant and accomplished further down in the code
 		- Set RQE.hoveringOnRQEFrameAndButton as 'false' by default on ADDON_LOADED event
 		- Set restoration of Frame Position for the RQEFrame on ADDON_LOADED to prevent frame from sometimes glitching out and moving to inappropriate location and changing your positional preference
 
@@ -28,6 +34,7 @@
 
 	RQEFrame.lua
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and its anchor point
+		- Modified totalHeight calculation within RQE:UpdateContentSize(), which is responsible for handling the height of the RQEFrame and allow proper scroll function
 		- Fixed issue where groups for World Bosses either prevented existing groups from being located or your current group from being visible
 		- Fix for the RQEFrame to update the correct frame size and position on resize and dragging as this SetScript was missing
 
