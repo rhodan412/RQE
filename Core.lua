@@ -4439,6 +4439,18 @@ function RQE:StartPeriodicChecks()
 end
 
 
+-- This function will check to see if there is quest info being tracked in the RQEFrame
+function RQE.CheckQuestInfoExists()
+	local questID = RQE.QuestIDText and RQE.QuestIDText:GetText()
+
+	-- Check if a valid questID was found
+	if not questID then
+		--print("No valid questID found in RQEFrame.")
+		RQE.Buttons.ClearButtonPressed()
+	end
+end
+
+
 -- Function to check the current quest step and perform actions accordingly
 function RQE.CheckThatQuestStep()
 	-- Retrieve the questID from the RQEFrame
