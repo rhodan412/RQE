@@ -1540,7 +1540,11 @@ function RQE.handlePlayerStartedMoving()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStartedMoving then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)
 	end
-	RQE:StartUpdatingCoordinates()
+
+	-- Checks to see if showCoordinates is selected as true for an option before calling the applicable function
+	if RQE.db.profile.showCoordinates then
+		RQE:StartUpdatingCoordinates()
+	end
 
 	-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
 	if C_Scenario.IsInScenario() then return end
@@ -1552,7 +1556,6 @@ function RQE.handlePlayerStartedMoving()
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	if RQEFrame:IsShown() and not isSuperTracking then
-
 		RQE.Buttons.ClearButtonPressed()
 	end
 
@@ -1562,10 +1565,10 @@ function RQE.handlePlayerStartedMoving()
 
 	if not IsFlying and not isMounted and not onTaxi then
 
-		-- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
-		if RQE:ShouldClearMacro("RQE Macro") then
-			RQEMacro:ClearMacroContentByName("RQE Macro")
-		end
+		-- -- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
+		-- if RQE:ShouldClearMacro("RQE Macro") then
+			-- RQEMacro:ClearMacroContentByName("RQE Macro")
+		-- end
 
 		C_Timer.After(0.3, function()
 			-- Get the macro index for 'RQE Macro'
@@ -1885,6 +1888,8 @@ function RQE.handlePlayerEnterWorld(...)
 				RQE.ScrollFrameToTop()
 			end
 			RQE.FocusScrollFrameToTop()
+		else
+			RQE:UpdateContentSize()
 		end
 	end)
 
@@ -2068,6 +2073,10 @@ function RQE.handleSuperTracking()
 	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 		-- startTime = debugprofilestop()  -- Start timer
 	-- end
+
+	C_Timer.After(1.5, function()
+		RQE:UpdateContentSize()
+	end)
 
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = true
 
@@ -2355,6 +2364,7 @@ function RQE.handleQuestAccepted(...)
 		RQE.LastAcceptedQuest = questID
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local isTaskQuest = C_QuestLog.IsQuestTask(questID)
+		local isMetaQuest = C_QuestLog.IsMetaQuest(questID)
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
 		local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)  -- Applies when world quest is manually watched and then accepted when player travels to world quest spot
 		local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
@@ -2379,9 +2389,11 @@ function RQE.handleQuestAccepted(...)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 				DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)
 			end
-		elseif isTaskQuest then
-			local isTaskQuest = C_QuestLog.IsQuestTask(questID)
-			C_QuestLog.AddQuestWatch(questID)
+		-- elseif isTaskQuest then
+			-- local isTaskQuest = C_QuestLog.IsQuestTask(questID)
+			-- C_QuestLog.AddQuestWatch(questID)
+		else
+			C_QuestLog.AddQuestWatch(questID)	-- Designed to be called in the event that the quest accepted is something like a meta quest
 		end
 
 		-- Reapply the manual super-tracked quest ID if it's set and different from the current one
@@ -3152,6 +3164,10 @@ end
 -- Handles UPDATE_INSTANCE_INFO Event
 -- Fired when data from RequestRaidInfo is available and also when player uses portals
 function RQE.handleInstanceInfoUpdate()
+	C_Timer.After(1.5, function()
+		RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
+	end)
+
 	if not RQE.UpdateInstanceInfoOkay then
 		return
 	end
