@@ -1,4 +1,4 @@
-11.0.2.46 
+11.0.2.46 (2024-10-15)
 
 	Buttons.lua
 		- Added RQE.hoveringOnRQEFrameAndButton to be marked true/false based on if the player is hovering over the RQE.UnknownQuestButton within the RQEFrame or not
@@ -11,6 +11,7 @@
 		- Added enableNearestSuperTrackCampaignLevelingOnly option to the settings panel and configuration frame
 
 	Core.lua
+		- Added (preliminary) function for the purpose of adding tradeskill tracking to the RQEQuestFrame (currently not clickable, only shows up in the RQEQuestFrame)
 		- Added code to re-supertrack world quests in addition to the campaign/regular quests that could be re-supertracked as last quest, but runs a check to make sure that that WQ is available
 		- Added RQE.CheckQuestInfoExists() for the purpose of clearing the Focus Frame when it should be blank as nothing is being tracked
 		- Added function to print the mapID, x and y position for the C_QuestLog.GetNextWaypointForMap, using the GetQuestUiMapID to obtain a quests appropriate mapID
@@ -22,6 +23,8 @@
 		- Added check to potentially clear macro and FocusFrame on ZONE_CHANGE... and QUEST_WATCH_LIST_CHANGED
 		- Added check to find if Focus Frame should be cleared as nothing is being super tracked when UPDATE_INSTANCE_INFO event function is fired
 		- Added check to RQE:StartUpdatingCoordinates() within PLAYER_STARTED_MOVING event only if this is selected (in order to save on memory usage)
+		- Added event function to listen for TRACKED_RECIPE_UPDATE for the tracking of the tradeskill in the RQEQuestFrame
+		- Fix for UNIT_AURA to change filter to arg5 (previously had two arg4)
 		- Added RQE:UpdateContentSize() to PLAYER_STARTED_MOVING and SUPER_TRACKING_CHANGED event functions
 		- Adjusted yPos of RQEQuestFrame
 		- Fixed QUEST_ACCEPTED to now automatically track all quests (such as Meta) when they are accepted
@@ -31,6 +34,7 @@
 
 	QuestingModule.lua
 		- Adjusted yPos of RQEQuestFrame
+		- Added child frame for the tracking of tradeskill in the RQEQuestFrame
 
 	RQEFrame.lua
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and its anchor point
