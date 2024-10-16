@@ -206,6 +206,7 @@ local eventsToRegister = {
 	"SUPER_TRACKING_CHANGED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
+	"TRACKED_RECIPE_UPDATE",
 	"UI_INFO_MESSAGE",
 	"UNIT_AURA",
 	"UNIT_ENTERING_VEHICLE",
@@ -314,6 +315,7 @@ local function HandleEvents(frame, event, ...)
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
+		TRACKED_RECIPE_UPDATE = RQE.handleTrackedRecipeUpdate,
 		UI_INFO_MESSAGE = RQE.handleUIInfoMessage,
 		UNIT_AURA = RQE.handleUnitAura,
 		UNIT_ENTERING_VEHICLE = RQE.handleUnitEnterVehicle,
@@ -380,7 +382,7 @@ function RQE.handleContentUpdate(...)
 	local event = select(2, ...)
 	local type = select(3, ...)
 	local id = select(4, ...)
-	local isTracked = select(4, ...)
+	local isTracked = select(5, ...)
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventContentTrackingUpdate and RQE.db.profile.showArgPayloadInfo then
@@ -2786,6 +2788,40 @@ function RQE.handleZoneNewAreaChange()
 end
 
 
+-- Handles TRACKED_RECIPE_UPDATE event
+function RQE.handleTrackedRecipeUpdate(...)
+	local event = select(2, ...)
+	local recipeID = select(3, ...)
+	local tracked = select(4, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	if tracked then
+		-- Recipe is being tracked, update the recipe frame
+		RQE:CreateRecipeTrackingFrame()
+		RQE:UpdateRecipeTrackingFrame(recipeID)
+	else
+		-- Recipe is untracked, clear the frame
+		if RQE.recipeTrackingFrame then
+			RQE.recipeTrackingFrame:Hide()
+		end
+	end
+end
+
+
 -- Handles UI_INFO_MESSAGE event
 function RQE.handleUIInfoMessage(...)
 	local event = select(2, ...)
@@ -2813,7 +2849,7 @@ function RQE.handleUnitAura(...)
 	local event = select(2, ...)
 	local unitToken = select(3, ...)
 	local spellName = select(4, ...)
-	local filter = select(4, ...)
+	local filter = select(5, ...)
 
 	-- -- Print Event-specific Args
 	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
