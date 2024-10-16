@@ -199,7 +199,7 @@ end
 ---@class RQEChildFrame : Frame
 ---@field questCount number
 local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
-	local frame = CreateFrame("Frame", name, parent)
+	local frame = CreateFrame("Frame", name, parent, "BackdropTemplate")
 	frame:SetSize(width, height)
 	frame:SetPoint("TOPLEFT", parent, "TOPLEFT", offsetX, offsetY)
 	return frame
@@ -214,11 +214,13 @@ RQE.CampaignFrame = CreateChildFrame("RQECampaignFrame", content, 0, 0, content:
 RQE.CampaignFrame.questCount = RQE.CampaignFrame.questCount or 0
 
 -- Create the second child frame, anchored below the CampaignFrame
-RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -20, content:GetWidth(), 120)
+RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, 0, content:GetWidth(), 120)
+--RQE.QuestsFrame = CreateChildFrame("RQEQuestsFrame", content, 0, -20, content:GetWidth(), 120)
 RQE.QuestsFrame.questCount = RQE.QuestsFrame.questCount or 0
 
 -- Create the third child frame, anchored below the QuestsFrame
-RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -40, content:GetWidth(), 120)
+RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, 0, content:GetWidth(), 120)
+--RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -40, content:GetWidth(), 120)
 RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 
 -- Create the Bonus Objectives Child Frame, properly parented
@@ -226,7 +228,8 @@ RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 -- RQE.BonusObjectivesFrame.questCount = RQE.BonusObjectivesFrame.questCount or 0
 
 -- Create the third child frame, anchored below the QuestsFrame
-RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -40, content:GetWidth(), 120)
+RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, 0, content:GetWidth(), 120)
+--RQE.AchievementsFrame = CreateChildFrame("RQEAchievementsFrame", content, 0, -40, content:GetWidth(), 120)
 RQE.AchievementsFrame.achieveCount = RQE.AchievementsFrame.achieveCount or 0
 
 
@@ -258,12 +261,72 @@ local function CreateChildFrameHeader(childFrame, title)
 end
 
 
+-- Create the Recipe Tracking Frame using the CreateChildFrame method
+function RQE:CreateRecipeTrackingFrame()
+	-- If the frame already exists, return
+	if RQE.recipeTrackingFrame then
+		return
+	end
+
+	-- Create the child frame using the same helper function as the others
+	local recipeFrame = CreateChildFrame("RQERecipeTrackingFrame", content, 0, -60, content:GetWidth(), 50)
+	
+	-- Set the backdrop
+	recipeFrame:SetBackdrop({
+		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+		tile = true, tileSize = 16, edgeSize = 8,
+		insets = { left = 4, right = 4, top = 4, bottom = 4 }
+	})
+	
+	-- Set the backdrop color
+	recipeFrame:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+
+	-- Store the frame for future reference
+	RQE.recipeTrackingFrame = recipeFrame
+
+	-- Add a clickable button or interactive text for the recipe
+	local recipeButton = CreateFrame("Button", nil, RQE.recipeTrackingFrame, "GameFontNormal")
+	recipeButton:SetPoint("CENTER", RQE.recipeTrackingFrame, "CENTER", 0, 0)
+	recipeButton:SetSize(250, 20)
+	recipeButton:SetText(recipeName)
+	recipeButton:SetNormalFontObject("GameFontNormal")
+	recipeButton:SetHighlightFontObject("GameFontHighlight")
+	RQE.recipeButton = recipeButton
+
+	RQE.recipeButton:EnableMouse(true)
+
+	-- RQE.recipeButton:SetScript("OnClick", function()
+		-- -- Open the TradeSkill UI and jump to the specific recipe
+		-- C_TradeSkillUI.OpenRecipe(recipeID)
+	-- end)
+
+	-- -- Show the tooltip when the mouse leaves
+	-- RQE.recipeButton:SetScript("OnEnter", function()
+		-- GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
+		-- GameTooltip:Show()
+	-- end)
+
+	-- -- Hide the tooltip when the mouse leaves
+	-- RQE.recipeButton:SetScript("OnLeave", function()
+		-- GameTooltip:Hide()
+	-- end)
+
+	-- -- Add a click handler to open the recipe when clicked
+	-- RQE.recipeButton:SetScript("OnClick", function()
+		-- -- Open the TradeSkill UI and jump to the specific recipe
+		-- C_TradeSkillUI.OpenRecipe(recipeID)
+	-- end)
+end
+
+
 -- Create headers for each child frame
 RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
 RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Normal Quests")
 RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
 --RQE.BonusObjectivesFrame.header = CreateChildFrameHeader(RQE.BonusObjectivesFrame, "Bonus Objectives")
 RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+--RQE.recipeTrackingFrame.header = CreateChildFrameHeader(RQE.recipeTrackingFrame, "Profession")
 
 
 -- ScenarioChildFrame header
@@ -355,6 +418,9 @@ function UpdateFrameAnchors()
 	RQE.QuestsFrame:ClearAllPoints()
 	RQE.WorldQuestsFrame:ClearAllPoints()
 	RQE.AchievementsFrame:ClearAllPoints()
+	if RQE.recipeTrackingFrame then
+		RQE.recipeTrackingFrame:ClearAllPoints()
+	end
 
 	-- Anchor CampaignFrame
 	if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
@@ -394,6 +460,24 @@ function UpdateFrameAnchors()
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
 	else
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+	end
+
+	-- Anchor RecipeTrackingFrame (if it exists) below the last frame
+	if RQE.recipeTrackingFrame then
+		if RQE.AchievementsFrame and RQE.AchievementsFrame:IsShown() then
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.AchievementsFrame, "BOTTOMLEFT", 0, -10)
+		elseif RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -10)
+		elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
+		elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+		elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+		else
+			-- Default to the top of content if no other frame is shown
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+		end
 	end
 end
 
