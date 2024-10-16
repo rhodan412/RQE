@@ -1477,6 +1477,7 @@ function RQE:DelayedClearCheck()
 
 		-- Early exit if there's still no valid questID
 		if not extractedQuestID or extractedQuestID == 0 then
+			RQE:ClearSeparateFocusFrame()
 			return
 		end
 
@@ -6535,6 +6536,59 @@ function RQE:ClickSuperTrackedNonBlacklistQuestButton()
 			return
 		end
 	end
+end
+
+
+-- Function to update the recipe tracking frame with the tracked recipe info
+function RQE:UpdateRecipeTrackingFrame(recipeID)
+	local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeID)
+	if not recipeInfo then
+		print("Recipe info not found for recipeID:", recipeID)
+		return
+	end
+
+	-- Get recipe name and output item data
+	local recipeName = recipeInfo.name
+	local outputData = C_TradeSkillUI.GetRecipeOutputItemData(recipeID)
+
+	-- Get reagents
+	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false, recipeInfo.unlockedRecipeLevel)
+	local reagents = {}
+
+	if schematic and schematic.reagentSlotSchematics then
+		for _, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
+			for _, reagent in ipairs(slotSchematic.reagents) do
+				local reagentName = GetItemInfo(reagent.itemID)
+				local playerReagentCount = GetItemCount(reagent.itemID)
+				table.insert(reagents, {
+					name = reagentName,
+					required = slotSchematic.quantityRequired,
+					playerCount = playerReagentCount
+				})
+			end
+		end
+	end
+
+	-- Display the recipe info on the frame
+	if not RQE.recipeTrackingFrame.recipeText then
+		RQE.recipeTrackingFrame.recipeText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.recipeTrackingFrame.recipeText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame, "TOPLEFT", 10, -10)
+	end
+	RQE.recipeTrackingFrame.recipeText:SetText(recipeName)
+
+	-- Display the reagents info on the frame
+	if not RQE.recipeTrackingFrame.reagentsText then
+		RQE.recipeTrackingFrame.reagentsText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.recipeTrackingFrame.reagentsText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame.recipeText, "BOTTOMLEFT", 0, -10)
+	end
+	local reagentString = ""
+	for _, reagent in ipairs(reagents) do
+		reagentString = reagentString .. string.format("%s: %d/%d\n", reagent.name, reagent.playerCount, reagent.required)
+	end
+	RQE.recipeTrackingFrame.reagentsText:SetText(reagentString)
+
+	-- Show the frame
+	RQE.recipeTrackingFrame:Show()
 end
 
 
