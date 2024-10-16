@@ -1,3 +1,8 @@
+11.0.2.47
+
+
+
+
 11.0.2.46 (2024-10-15)
 
 	Buttons.lua
@@ -35,6 +40,9 @@
 	QuestingModule.lua
 		- Adjusted yPos of RQEQuestFrame
 		- Added child frame for the tracking of tradeskill in the RQEQuestFrame
+
+	RQEDatabase.lua
+		- Added MANY more side quests for TWW expansion
 
 	RQEFrame.lua
 		- Adjusted frameHeight, frameWidth, xPos and yPos of RQEFrame and its anchor point
