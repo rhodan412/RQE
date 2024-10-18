@@ -1,6 +1,7 @@
 11.0.2.47
 
-
+	RQEDatabase.lua
+		- Updates/Additions to quests in the DB
 
 
 11.0.2.46 (2024-10-15)
