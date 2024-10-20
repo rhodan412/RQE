@@ -1748,6 +1748,65 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 end
 
 
+-- Function that will click the "W" button in the RQEFrame
+function RQE.ClickWButton()
+	RQE.UnknownQuestButton:Click()
+end
+
+
+-- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
+function RQE.CheckAndClickWButton()
+	-- Adds a check if player is in party or raid instance, if so, will not allow function to continue further
+	local isInInstance, instanceType = IsInInstance()
+	if isInInstance and (instanceType == "party" or instanceType == "raid") then
+		return
+	end
+
+    -- Get the current quest ID displayed in the RQEFrame
+    local questID = RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+
+    -- Check if the quest ID exists
+    if not questID or questID == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No valid quest ID found.")
+		end
+        return
+    end
+
+    -- Check if the quest exists in the database
+    local questData = RQEDatabase[questID]
+
+    -- If the quest is not in the database or it has no steps, click the "W" button
+    if not questData or not next(questData) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest not found in the database or has no steps. Clicking the 'W' button.")
+		end
+        RQE.ClickWButton()
+        return
+    end
+
+    -- If quest exists but has no steps defined, click the "W" button
+    local hasSteps = false
+    for _, step in pairs(questData) do
+        if type(step) == "table" and step.description then
+            hasSteps = true
+            break
+        end
+    end
+
+    if not hasSteps then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest found but no steps are defined. Clicking the 'W' button.")
+		end
+        RQE.ClickWButton()
+    else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest has steps, no need to click the 'W' button.")
+		end
+    end
+end
+
+
 -- -- Static Data Update Function
 -- function RQE.UpdateFrameStaticData(questID)
 	-- -- Retrieve the current super-tracked quest ID for debugging
