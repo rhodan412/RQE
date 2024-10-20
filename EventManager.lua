@@ -2567,6 +2567,12 @@ function RQE.handleZoneChange(...)
 
 	RQE.canSortQuests = true
 
+	-- Check if autoClickWaypointButton is selected in the configuration
+	if RQE.db.profile.autoClickWaypointButton then
+		-- Click the "W" Button is autoclick is selected and no steps or questData exist
+		RQE.CheckAndClickWButton()
+	end
+
 	C_Timer.After(2, function()
 		-- Check for Dragonriding & Capture and print the current states for debugging purposes
 		if RQE.CheckForDragonMounts() then
@@ -2696,6 +2702,9 @@ function RQE.handleZoneNewAreaChange()
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		local playerMapID = C_Map.GetBestMapForUnit("player")
 		local questData = RQE.getQuestData(questID)
+
+		-- Click the "W" Button is autoclick is selected and no steps or questData exist
+		RQE.CheckAndClickWButton()
 
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
@@ -3961,6 +3970,12 @@ function RQE.handleQuestWatchUpdate(...)
 		-- Tier One Importance: QUEST_WATCH_UPDATE event
 		if RQE.db.profile.autoClickWaypointButton then
 			C_Timer.After(1, function()
+				-- Check if autoClickWaypointButton is selected in the configuration
+				if RQE.db.profile.autoClickWaypointButton then
+					-- Click the "W" Button is autoclick is selected and no steps or questData exist
+					RQE.CheckAndClickWButton()
+				end
+
 				RQE.StartPerioFromQuestWatchUpdate = true
 				--print("~~Line: 3817~~")
 				RQE:StartPeriodicChecks()
