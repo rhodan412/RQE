@@ -2435,6 +2435,12 @@ function UpdateRQEQuestFrame()
 						--RQE.OverrideHasProgress = true
 						--RQE.AutoWaypointHasBeenClicked = false
 
+						-- Check if autoClickWaypointButton is selected in the configuration
+						if RQE.db.profile.autoClickWaypointButton then
+							-- Click the "W" Button is autoclick is selected and no steps or questData exist
+							RQE.CheckAndClickWButton()
+						end
+
 						if RQE.hoveringOnFrame then
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
