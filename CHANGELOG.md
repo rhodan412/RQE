@@ -4,13 +4,16 @@
 		- Added function that checks to see if questData or steps exist in the RQEFrame and if not function will continue where it will click the "W" button in the RQEFrame
 
 	EventManager.lua
-		- Clicks "W" Button upon ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA if autoClickWaypointButton is a selected option by the player
+		- Clicks "W" Button upon QUEST_WATCH_UPDATE, UNIT_QUEST_LOG_CHANGED, and ZONE_CHANGED_NEW_AREA if autoClickWaypointButton is a selected option by the player
+
+	QuestingModule.lua
+		- Added RQE.CheckAndClickWButton() function call to be run when the QuestLogIndexButton in the RQEQuestFrame is pressed by player
 
 	RQEDatabase.lua
 		- Updates/Additions to quests in the DB
 		- Cleaning up TBC and Wrath quests in the DB
 		- Added Hero's Call (Hero's Call Board) quests to the DB
-		- Added many Hellfire Peninsula (Alliance) quests
+		- Added many Hellfire Peninsula, Zangarmarsh and Nagrand (Alliance) quests
 
 
 11.0.2.46 (2024-10-15)
