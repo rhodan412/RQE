@@ -2567,11 +2567,11 @@ function RQE.handleZoneChange(...)
 
 	RQE.canSortQuests = true
 
-	-- Check if autoClickWaypointButton is selected in the configuration
-	if RQE.db.profile.autoClickWaypointButton then
-		-- Click the "W" Button is autoclick is selected and no steps or questData exist
-		RQE.CheckAndClickWButton()
-	end
+	-- -- Check if autoClickWaypointButton is selected in the configuration
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- -- Click the "W" Button is autoclick is selected and no steps or questData exist
+		-- RQE.CheckAndClickWButton()
+	-- end
 
 	C_Timer.After(2, function()
 		-- Check for Dragonriding & Capture and print the current states for debugging purposes
@@ -2971,6 +2971,7 @@ function RQE.handleUnitQuestLogChange(...)
 		-- Ensure the event fires only for quests that are super-tracked
 		if questID and RQE.db.profile.autoClickWaypointButton then
 			C_Timer.After(1, function()
+				RQE.CheckAndClickWButton()
 				-- Flag check to see if SUPER_TRACKING_CHANGED has fired already and this is redundant
 				if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then return end
 
@@ -3797,6 +3798,12 @@ function RQE.handleQuestWatchUpdate(...)
 	-- Store the questID for tracking
 	RQE.LastQuestWatchQuestID = questID
 
+	-- Check if autoClickWaypointButton is selected in the configuration
+	if RQE.db.profile.autoClickWaypointButton then
+		-- Click the "W" Button is autoclick is selected and no steps or questData exist
+		RQE.CheckAndClickWButton()
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -3970,15 +3977,13 @@ function RQE.handleQuestWatchUpdate(...)
 		-- Tier One Importance: QUEST_WATCH_UPDATE event
 		if RQE.db.profile.autoClickWaypointButton then
 			C_Timer.After(1, function()
-				-- Check if autoClickWaypointButton is selected in the configuration
-				if RQE.db.profile.autoClickWaypointButton then
-					-- Click the "W" Button is autoclick is selected and no steps or questData exist
-					RQE.CheckAndClickWButton()
-				end
+				-- Click the "W" Button is autoclick is selected and no steps or questData exist
+				RQE.CheckAndClickWButton()
 
 				RQE.StartPerioFromQuestWatchUpdate = true
 				--print("~~Line: 3817~~")
 				RQE:StartPeriodicChecks()
+
 				-- Immediately reset flag after running StartPeriodicChecks
 				RQE.StartPerioFromQuestWatchUpdate = false
 
