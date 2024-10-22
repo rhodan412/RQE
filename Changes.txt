@@ -13,7 +13,7 @@
 		- Updates/Additions to quests in the DB
 		- Cleaning up TBC and Wrath quests in the DB
 		- Added Hero's Call (Hero's Call Board) quests to the DB
-		- Added many Hellfire Peninsula, Zangarmarsh and Nagrand (Alliance) quests
+		- Added many Hellfire Peninsula, Zangarmarsh, Nagrand and Terokkar Forest (Alliance) quests
 
 
 11.0.2.46 (2024-10-15)
