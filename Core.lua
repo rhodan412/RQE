@@ -6216,10 +6216,23 @@ function RQE.UntrackAutomaticWorldQuests()
 	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 	local questsInAreaLookup = {}
 
-	for _, taskPOI in ipairs(questsInArea) do
-		questsInAreaLookup[taskPOI.questId] = true
+	-- Ensure questsInArea is not nil before iterating
+	if questsInArea then
+		for _, taskPOI in ipairs(questsInArea) do
+			if taskPOI.questId then -- Ensure the questId is valid
+				questsInAreaLookup[taskPOI.questId] = true
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest found in area: " .. taskPOI.questId)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Invalid task POI with no questId.")
+				end
+			end
+		end
+	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Quest found in area: " .. taskPOI.questId)
+			print("No quests found in the current area.")
 		end
 	end
 
