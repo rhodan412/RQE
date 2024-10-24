@@ -1,4 +1,4 @@
-## Interface: 110002, 110005
+## Interface: 110005
 ## Title: Rhodan's Quest Explorer
 ## Author: Rhodan {Aurleis}
 ## Version: 11.0.2.47
