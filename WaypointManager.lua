@@ -192,10 +192,11 @@ end
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	if not questID then
+		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
-			return
+			return -- Exit if questID and QuestIDText are both unavailable
 		end
 	end
 
@@ -213,42 +214,43 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	else
 		-- Fetch coordinates using super tracking data
 		C_Timer.After(0.1, function()
-			local extractedQuestID
-			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			local extractedQuestID = nil
 
-			local questID = extractedQuestID or currentSuperTrackedQuestID
+			-- Ensure QuestIDText exists and is valid before extracting the quest ID
+			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			end
 
-			if questID then  -- Add a check to ensure questID is not nil
+			-- Use either extractedQuestID or current super-tracked quest ID
+			local questID = extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+
+			if questID then
 				mapID = GetQuestUiMapID(questID)
 				questData = RQE.getQuestData(questID)
 				if mapID == 0 then mapID = nil end
 			end
 
 			if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
-				RQE.x = RQE.DatabaseSuperX --DatabaseSuperX
-				RQE.y = RQE.DatabaseSuperY --DatabaseSuperY
+				RQE.x = RQE.DatabaseSuperX
+				RQE.y = RQE.DatabaseSuperY
 				RQE.MapID = RQE.DatabaseSuperMapID
 			elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
 				RQE.x = RQE.superX
 				RQE.y = RQE.superY
 				RQE.MapID = RQE.superMapID
 
-				-- Use RQE.GetQuestCoordinates to get the coordinates
 				local x, y, mapID = RQE.GetQuestCoordinates(questID)
 				if x and y and mapID then
 					RQE.x = x
 					RQE.y = y
 					RQE.MapID = mapID
 				else
-					-- Fallback to using RQE.GetNextWaypoint if coordinates are not available
 					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
 					if waypointX and waypointY and waypointMapID then
 						RQE.x = waypointX
 						RQE.y = waypointY
 						RQE.MapID = waypointMapID
 					else
-						-- Coordinates not available
 						RQE.x = 0
 						RQE.y = 0
 						RQE.MapID = nil
@@ -258,7 +260,6 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 
 			RQE.infoLog("After timer: x =", RQE.x, "y =", RQE.y, "mapID =", RQE.MapID)
 
-			-- Normalize coordinates for TomTom
 			if RQE.x and RQE.y then
 				x = RQE.x * 100
 				y = RQE.y * 100
@@ -270,7 +271,6 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			mapID = RQE.MapID or mapID
 			waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
-			-- Ensure x and y are numbers before attempting arithmetic
 			x = tonumber(x) or 0
 			y = tonumber(y) or 0
 
@@ -278,7 +278,6 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 
 			C_Map.ClearUserWaypoint()
 
-			-- Check if TomTom is loaded and compatibility is enabled
 			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
@@ -286,13 +285,12 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 
 			C_Timer.After(0.5, function()
 				if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
-					waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText  -- Append DirectionText on a new line if available
+					waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText
 				end
 
-				-- Check if TomTom is loaded and compatibility is enabled
 				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-					if mapID and x and y then  -- Check if x and y are not nil
+					if mapID and x and y then
 						RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 						TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 					else
@@ -302,10 +300,9 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 					RQE.debugLog("TomTom is not available.")
 				end
 
-				-- Check if Carbonite is loaded and compatibility is enabled
 				local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
 				if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
-					if mapID and x and y then  -- Check if x and y are not nil
+					if mapID and x and y then
 						RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 						Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
 					else
