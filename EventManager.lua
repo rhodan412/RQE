@@ -1065,6 +1065,14 @@ function RQE.handlePlayerLogin()
 	RQE:ReapplyMacroBinding()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE.UntrackAutomaticWorldQuests()
+
+	-- Check if autoClickWaypointButton is selected in the configuration
+	C_Timer.After(5, function()
+		if RQE.db.profile.autoClickWaypointButton then
+			-- Click the "W" Button is autoclick is selected and no steps or questData exist
+			RQE.CheckAndClickWButton()
+		end
+	end)
 end
 
 
