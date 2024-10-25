@@ -14,7 +14,7 @@
 		- Updates/Additions to quests in the DB
 		- Cleaning up TBC and Wrath quests in the DB
 		- Added Hero's Call (Hero's Call Board) quests to the DB
-		- Added many Hellfire Peninsula, Zangarmarsh, Nagrand, Terokkar Forest and Netherstorm (Alliance) quests
+		- Added many Hellfire Peninsula, Zangarmarsh, Nagrand, Terokkar Forest, Netherstorm, and Shadowmoon Valley (Alliance) quests
 
 	WaypointManager.lua
 		- Fixed nil error related to RQE.QuestIDText at time of extractedQuestID
