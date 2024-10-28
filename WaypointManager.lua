@@ -101,6 +101,13 @@ end
 
 -- Create a Waypoint when there is Direction Text available
 function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden and won't display waypoint information WithDirectionText")
+		end
+		return
+	end
+
 	if not questID then
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -191,6 +198,13 @@ end
 
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden and won't display waypoint information for NoDirectionText")
+		end
+		return
+	end
+
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -245,15 +259,20 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 					RQE.y = y
 					RQE.MapID = mapID
 				else
-					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
-					if waypointX and waypointY and waypointMapID then
-						RQE.x = waypointX
-						RQE.y = waypointY
-						RQE.MapID = waypointMapID
-					else
-						RQE.x = 0
-						RQE.y = 0
-						RQE.MapID = nil
+					-- Add a check here to ensure GetNextWaypoint only runs if waypoints are available
+					if questID then
+						local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+						if waypointX and waypointY and waypointMapID then
+							RQE.x = waypointX
+							RQE.y = waypointY
+							RQE.MapID = waypointMapID
+						else
+							-- Handle cases where no waypoint is available
+							RQE.x = 0
+							RQE.y = 0
+							RQE.MapID = nil
+							RQE.debugLog("No waypoint data available for quest ID:", questID)
+						end
 					end
 				end
 			end
@@ -269,7 +288,16 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			end
 
 			mapID = RQE.MapID or mapID
-			waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
+			
+			-- Ensure questID is not nil before using it
+			if not questID then
+				questID = C_SuperTrack.GetSuperTrackedQuestID() or 0  -- Fallback to super-tracked quest or set to 0
+			end
+
+			-- Set a default title if questID is still nil or 0
+			local waypointTitle = questID > 0 and ("Quest ID: " .. questID .. ", Quest Name: " .. (questName or "Unknown")) or "Unknown Quest"
+
+			--waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
 			x = tonumber(x) or 0
 			y = tonumber(y) or 0
@@ -313,6 +341,90 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				end
 			end)
 		end)
+	end
+end
+
+
+-- Create a Waypoint when there is No Direction Text available
+function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden and won't display waypoint information for ForEvent")
+		end
+		return
+	end
+
+	if not questID then
+		-- Check if RQE.QuestIDText exists and has text
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		else
+			return -- Exit if questID and QuestIDText are both unavailable
+		end
+	end
+
+	local questData = RQE.getQuestData(questID)
+	local x, y
+	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local waypointTitle
+
+	-- Determine coordinates and title based on quest presence in quest log and database
+	if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+		x = questData.location.x
+		y = questData.location.y
+		mapID = questData.location.mapID
+		waypointTitle = "Quest Start: " .. questData.title
+	else
+		-- Log error if location data isn't available
+		RQE.debugLog("No valid coordinates available for quest:", questID)
+		return
+	end
+
+	-- Ensure x and y are numbers before setting the waypoint
+	x = tonumber(x) or 0
+	y = tonumber(y) or 0
+	waypointTitle = waypointTitle or ("Quest ID: " .. questID .. ", Quest Name: " .. questName)
+
+	RQE.infoLog("Attempting to set waypoint for:", questName, "at coordinates:", x, ",", y, "on mapID:", mapID)
+
+	-- Clear any existing waypoint
+	C_Map.ClearUserWaypoint()
+
+	-- Check if TomTom is loaded and compatibility is enabled
+	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		TomTom.waydb:ResetProfile()
+		C_Timer.After(0.5, function()
+			if mapID and x and y then
+				RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+			else
+				RQE.debugLog("Could not create TomTom waypoint for:", questID)
+			end
+		end)
+	else
+		RQE.debugLog("TomTom is not available or compatibility disabled.")
+	end
+
+	-- Check if Carbonite is loaded and compatibility is enabled
+	local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+	if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
+		C_Timer.After(0.5, function()
+			if mapID and x and y then
+				RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
+			else
+				RQE.debugLog("Could not create Carbonite waypoint for:", questID)
+			end
+		end)
+	else
+		RQE.debugLog("Carbonite is not available or compatibility disabled.")
+	end
+
+	-- Fallback to default waypoint if neither TomTom nor Carbonite are used
+	if not isTomTomLoaded and not isCarboniteLoaded then
+		RQE.debugLog("Setting default waypoint with C_Map.SetUserWaypoint")
+		C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x / 100, y / 100))
 	end
 end
 
