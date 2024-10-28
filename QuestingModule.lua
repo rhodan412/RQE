@@ -270,7 +270,7 @@ function RQE:CreateRecipeTrackingFrame()
 
 	-- Create the child frame using the same helper function as the others
 	local recipeFrame = CreateChildFrame("RQERecipeTrackingFrame", content, 0, -60, content:GetWidth(), 50)
-	
+
 	-- Set the backdrop
 	recipeFrame:SetBackdrop({
 		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -278,7 +278,7 @@ function RQE:CreateRecipeTrackingFrame()
 		tile = true, tileSize = 16, edgeSize = 8,
 		insets = { left = 4, right = 4, top = 4, bottom = 4 }
 	})
-	
+
 	-- Set the backdrop color
 	recipeFrame:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
 
@@ -1382,7 +1382,7 @@ function RQE.PrintScenarioElapsedTime()
 	local seconds = math.floor(elapsedTime % 60)
 
 	-- print("Elapsed time in scenario:", string.format("%02d:%02d:%02d", hours, minutes, seconds))
-	
+
 	-- Return formatted elapsed time (if needed elsewhere)
 	return string.format("%02d:%02d:%02d", hours, minutes, seconds)
 end
@@ -1608,7 +1608,7 @@ function UpdateRQEBonusQuestFrame(questID)
 			-- end
 
 			-- BQuestObjectivesOrDescription:Show()
-	
+
 			-- -- Set positioning based on the last quest
 			-- if i == 1 then
 				-- -- First bonus quest, position at the top
@@ -1713,7 +1713,7 @@ function CreateBQWaypointButton(questID)
 	-- local waypointButton = CreateFrame("Button", "BQ_WaypointButton" .. questID, parentFrame, "UIPanelButtonTemplate")
 	-- waypointButton:SetSize(30, 30)  -- Adjust the size as needed
 	-- waypointButton:SetPoint("TOPRIGHT", parentFrame, "TOPLEFT", 30, yOffset)
-	
+
 	-- -- Add a label to the button
 	-- waypointButton:SetText("BQ")  -- You can customize the label here
 	-- RQE.BQwaypointButton = waypointButton
@@ -1722,7 +1722,7 @@ function CreateBQWaypointButton(questID)
 	-- local bqbg = waypointButton:CreateTexture(nil, "BACKGROUND")
 	-- bqbg:SetAllPoints(waypointButton)
 	-- bqbg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")  -- Custom texture
-	
+
 	-- -- Ensure the button shows up on top of other layers
 	-- waypointButton:SetFrameStrata("HIGH")
 
@@ -2017,7 +2017,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 				-- Fetch major faction data to get the faction name
 				local majorFactionData = C_MajorFactions.GetMajorFactionData(reward.factionID)
 				local factionName = majorFactionData and majorFactionData.name or ("Faction ID " .. reward.factionID)
-				
+
 				-- Display the reputation reward with the faction name
 				tooltip:AddLine(" ")
 				tooltip:AddLine("Reputation:")
@@ -2448,7 +2448,7 @@ function UpdateRQEQuestFrame()
 							-- if RQE.shouldCheckFinalStep then
 								-- RQE.shouldCheckFinalStep = false
 							-- end
-						end						
+						end
 
 						C_Map.ClearUserWaypoint()
 						-- Check if TomTom is loaded and compatibility is enabled
@@ -2618,7 +2618,7 @@ function UpdateRQEQuestFrame()
 				QuestObjectivesOrDescription:SetHeight(0)  -- Auto height
 				QuestObjectivesOrDescription:SetWordWrap(true)
 				QuestObjectivesOrDescription:EnableMouse(true)
-				
+
 				-- Update the last element tracker for the correct type
 				if isCampaignQuest then
 					lastCampaignElement = QuestObjectivesOrDescription
@@ -2981,7 +2981,7 @@ function UpdateRQEWorldQuestFrame()
 
 			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 			local isBonusQuest = C_QuestLog.IsQuestTask(questID)
-			
+
 			if isWorldQuest then
 				WQnumber:SetText("WQ")
 			elseif isBonusQuest then
@@ -3539,7 +3539,7 @@ function UpdateRQEAchievementsFrame()
 
 			-- Set up the clickable action for the achievement header
 			achievementHeader:EnableMouse(true)
-				
+
 			achievementHeader:SetScript("OnMouseUp", function(self, button)
 				if button == "LeftButton" then
 					local _, isBlizzAchieveLoaded = C_AddOns.IsAddOnLoaded("Blizzard_AchievementUI")
