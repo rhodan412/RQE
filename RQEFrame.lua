@@ -947,6 +947,28 @@ ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 end)
 
 
+-- Method to display a quest on RQEFrame
+function RQEFrame:DisplayQuest(questID)
+	-- Clear previous content if necessary
+	if self.questText then
+		self.questText:SetText("")
+	else
+		-- Create a FontString if it doesn't exist yet
+		self.questText = self:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		self.questText:SetPoint("TOP", self, "TOP", 0, -50)  -- Position it within RQEFrame
+		self.questText:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+		self.questText:SetTextColor(1, 1, 1)
+	end
+
+	-- Get quest title for the quest ID
+	local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Quest not found"
+	self.questText:SetText("Next quest: " .. questTitle)
+
+	-- Optionally, display other quest details here
+	print("Displaying quest:", questTitle)
+end
+
+
 ---------------------------
 -- 7. Utility Functions
 ---------------------------
