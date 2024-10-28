@@ -2,10 +2,13 @@
 
 	Core.lua
 		- Added function that checks to see if questData or steps exist in the RQEFrame and if not function will continue where it will click the "W" button in the RQEFrame
+		- Added function in preparation of tracking certain event quests (such as the pumpkin quests)
 		- Fixed table index nil error for taskPOI.questId
+		- Require that the RQEFrame be shown before it will track nearest quest (this was a fix for a nil error)
 
 	EventManager.lua
 		- Clicks "W" Button upon PLAYER_ENTERING_WORLD, PLAYER_LOGIN, QUEST_WATCH_UPDATE, UNIT_QUEST_LOG_CHANGED, and ZONE_CHANGED_NEW_AREA if autoClickWaypointButton is a selected option by the player
+		- Require that the RQEFrame be shown before it will track nearest quest (this was a fix for a nil error)
 
 	QuestingModule.lua
 		- Added RQE.CheckAndClickWButton() function call to be run when the QuestLogIndexButton in the RQEQuestFrame is pressed by player
@@ -15,9 +18,13 @@
 		- Cleaning up TBC and Wrath quests in the DB
 		- Added Hero's Call (Hero's Call Board) quests to the DB
 		- Added many Hellfire Peninsula, Zangarmarsh, Nagrand, Terokkar Forest, Netherstorm, and Shadowmoon Valley (Alliance) quests
+		- Added Candy Buckets across Azeroth (more to come)
+
+	RQEFrame.lua
+		- Added function in preparation of tracking certain event quests (such as the pumpkin quests)
 
 	WaypointManager.lua
-		- Fixed nil error related to RQE.QuestIDText at time of extractedQuestID
+		- Fixed nil error related to RQE.QuestIDText or missing questID at time of extractedQuestID
 
 
 11.0.2.46 (2024-10-15)
