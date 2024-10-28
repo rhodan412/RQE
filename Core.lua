@@ -1762,48 +1762,48 @@ function RQE.CheckAndClickWButton()
 		return
 	end
 
-    -- Get the current quest ID displayed in the RQEFrame
-    local questID = RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	-- Get the current quest ID displayed in the RQEFrame
+	local questID = RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 
-    -- Check if the quest ID exists
-    if not questID or questID == 0 then
+	-- Check if the quest ID exists
+	if not questID or questID == 0 then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No valid quest ID found.")
 		end
-        return
-    end
+		return
+	end
 
-    -- Check if the quest exists in the database
-    local questData = RQEDatabase[questID]
+	-- Check if the quest exists in the database
+	local questData = RQEDatabase[questID]
 
-    -- If the quest is not in the database or it has no steps, click the "W" button
-    if not questData or not next(questData) then
+	-- If the quest is not in the database or it has no steps, click the "W" button
+	if not questData or not next(questData) then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Quest not found in the database or has no steps. Clicking the 'W' button.")
 		end
-        RQE.ClickWButton()
-        return
-    end
+		RQE.ClickWButton()
+		return
+	end
 
-    -- If quest exists but has no steps defined, click the "W" button
-    local hasSteps = false
-    for _, step in pairs(questData) do
-        if type(step) == "table" and step.description then
-            hasSteps = true
-            break
-        end
-    end
+	-- If quest exists but has no steps defined, click the "W" button
+	local hasSteps = false
+	for _, step in pairs(questData) do
+		if type(step) == "table" and step.description then
+			hasSteps = true
+			break
+		end
+	end
 
-    if not hasSteps then
+	if not hasSteps then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Quest found but no steps are defined. Clicking the 'W' button.")
 		end
-        RQE.ClickWButton()
-    else
+		RQE.ClickWButton()
+	else
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Quest has steps, no need to click the 'W' button.")
 		end
-    end
+	end
 end
 
 
@@ -2071,6 +2071,8 @@ end
 
 -- Function that tracks the closest quest on certain events in the Event Manager
 function RQE.TrackClosestQuest()
+	if not RQEFrame:IsShown() then return end
+
 	-- Ensure supertracking is enabled in the profile
 	if RQE.db.profile.enableNearestSuperTrack then
 		-- Get the closest tracked quest ID
@@ -2111,17 +2113,16 @@ end
 
 
 
--- Function for Tracking World Quests
 function UpdateWorldQuestTrackingForMap(uiMapID)
 	if not uiMapID then
 		print("Invalid map ID provided to UpdateWorldQuestTrackingForMap")
-		return  -- Early exit if uiMapID is invalid
+		return
 	end
 
 	local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
 	local trackedQuests = {}
 	local maxTracked = 1
-	local currentTrackedCount = 0  -- Initialize the counter for tracked quests
+	local currentTrackedCount = 0
 
 	-- Retrieve the currently tracked quests to avoid duplicates
 	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
@@ -2137,14 +2138,14 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 			print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
 		end
 		for _, taskPOI in ipairs(taskPOIs) do
-			local questID = taskPOI.questId
+			local questID = taskPOI.questID
 
 			-- Only proceed if the quest is a world quest (classification 10)
 			if questID and RQE:IsWorldQuest(questID) then
 				-- Fetch additional info to check if the quest is in the area
 				local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
 
-				if isInArea then  -- Only track if the quest is in the area
+				if isInArea then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Checking World QuestID: " .. questID .. " (in area)")
 					end
@@ -2152,19 +2153,18 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 					-- Check if the quest is already tracked
 					if not trackedQuests[questID] then
 						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
-						trackedQuests[questID] = true  -- Mark as tracked
-						currentTrackedCount = currentTrackedCount + 1  -- Increment the count
+						trackedQuests[questID] = true
+						currentTrackedCount = currentTrackedCount + 1
 
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Automatic World QuestID: " .. questID .. " added to watch list.")
 						end
 
-						-- Check if we've reached the maximum number of tracked quests
 						if currentTrackedCount >= maxTracked then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Reached the maximum number of tracked World Quests: " .. maxTracked)
 							end
-							break  -- Exit the loop as we've reached the limit
+							break
 						end
 					else
 						if RQE.db.profile.debugLevel == "INFO+" then
@@ -2174,8 +2174,8 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("World QuestID: " .. questID .. " (not in area)")
-						C_QuestLog.RemoveWorldQuestWatch(questID)
 					end
+					C_QuestLog.RemoveWorldQuestWatch(questID)
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -2185,6 +2185,7 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 		end
 	end
 end
+
 
 
 -- Function to remove world quests from tracking if the player leaves the area
@@ -2202,7 +2203,7 @@ function RQE:RemoveWorldQuestsIfOutOfArea()
 	-- Fetch quests in the player's current map area
 	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 	local questsInAreaLookup = {}
-	
+
 	-- Store all the quest IDs currently in the player's area
 	for _, taskPOI in ipairs(questsInArea or {}) do
 		questsInAreaLookup[taskPOI.questId] = true
@@ -2725,6 +2726,10 @@ end
 -- 12. Event Handling
 ---------------------------------------------------
 
+-- Table to store active events
+RQE.activeEvents = {}
+
+
 -- Check for TomTom load
 local function TomTom_Loaded(self, event, addon)
 	if addon == "TomTom" then
@@ -2732,6 +2737,175 @@ local function TomTom_Loaded(self, event, addon)
 	end
 end
 
+
+-- Function to populate the activeEvents table with today's events
+function RQE:UpdateActiveEvents()
+	-- Clear the table each time this function runs
+	RQE.activeEvents = {}
+
+	-- Get today's date
+	local today = C_DateAndTime.GetCurrentCalendarTime()
+
+	-- Loop through events for today and store them in the table
+	for i = 1, C_Calendar.GetNumDayEvents(0, today.monthDay) do
+		local eventInfo = C_Calendar.GetDayEvent(0, today.monthDay, i)
+		if eventInfo then
+			RQE.activeEvents[eventInfo.eventID] = eventInfo.title
+		end
+	end
+end
+
+
+-- Function to check if a specific eventID is active
+-- /run RQE:IsEventActive(324)	-- Check to see if Hallow's End event (eventID 324) is active
+function RQE:IsEventActive(eventID)
+		-- Update active events to ensure we have the latest information
+		RQE:UpdateActiveEvents()
+
+	-- Check if the specified eventID is in the table
+	if RQE.activeEvents[eventID] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Event ID", eventID, "is currently active:", RQE.activeEvents[eventID])
+		end
+		return true
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Event ID", eventID, "is not active.")
+		end
+		return false
+	end
+end
+
+
+function RQE:PopulateNextQuestInEventSeries(eventID)
+	-- Check if the eventID matches Hallow's End (324)
+	if eventID ~= 324 then
+		return -- Exit if it's not the right event
+	end
+
+	-- Retrieve the list of questIDs for the event
+	local questList = RQE.eventQuests[eventID]
+	if not questList then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quests defined for event ID:", eventID)
+		end
+		return
+	end
+
+	-- Iterate through the quest list to find the first incomplete quest
+	for _, questID in ipairs(questList) do
+		local isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+
+		if not isCompleted then
+			-- Fetch quest information from RQEDatabase, if available
+			local questInfo = RQE.getQuestData(questID) or {}
+
+			-- If questInfo is empty, set up minimal info
+			questInfo.title = questInfo.title or C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+			questInfo.description = questInfo.description or "No description available."
+			questInfo.objectives = questInfo.objectives or "No objectives available."
+
+			-- Display the quest in RQEFrame by calling UpdateFrame
+			UpdateFrame(questID, questInfo)
+
+			-- Manual fallback to populate RQEFrame if UpdateFrame does not display it
+			if RQE.QuestIDText then
+				RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+			end
+			if RQE.QuestNameText then
+				RQE.QuestNameText:SetText("Quest Name: " .. questInfo.title)
+			end
+			if RQE.QuestDescription then
+				RQE.QuestDescription:SetText(questInfo.description)
+			end
+			if RQE.QuestObjectives then
+				RQE.QuestObjectives:SetText(questInfo.objectives)
+			end
+
+			-- Get additional step information and display it
+			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+			if RQE.CreateStepsText then
+				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+			end
+
+			-- Display the "W" button with coordinates from location if steps are not available
+			if RQE.UnknownQuestButton then
+				if questInfo.location then
+					local x, y, mapID = questInfo.location.x, questInfo.location.y, questInfo.location.mapID
+
+					-- Set up the "W" button to create a waypoint when clicked
+					RQE.UnknownQuestButton:SetScript("OnClick", function()
+						RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Waypoint set for", questInfo.title, "at", x, ",", y)
+						end
+					end)
+
+					-- Set the tooltip for the "W" button to show the coordinates
+					RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+						GameTooltip:SetText("Coordinates: " .. x .. ", " .. y)
+						GameTooltip:Show()
+					end)
+
+					-- Hide the tooltip when the mouse leaves the button
+					RQE.UnknownQuestButton:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+				else
+					-- Default behavior if location is unavailable
+					RQE.UnknownQuestButton:SetScript("OnClick", function()
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("No location data available.")
+						end
+					end)
+					RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+						GameTooltip:SetText("Coordinates: Not Available")
+						GameTooltip:Show()
+					end)
+					RQE.UnknownQuestButton:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+				end
+				RQE.UnknownQuestButton:Show()
+			end
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Next quest to complete for event:", questID, "-", questInfo.title)
+			end
+			return
+		end
+	end
+
+	-- All quests completed
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("All event quests for event ID", eventID, "have been completed.")
+	end
+end
+
+
+-- Register the QUEST_TURNED_IN event
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("QUEST_TURNED_IN")
+
+frame:SetScript("OnEvent", function(self, event, questID)
+	if event == "QUEST_TURNED_IN" then
+		-- Check and populate the next quest if event 324 is active
+		local currentEventID = GetCurrentEventID()
+		if currentEventID then
+			RQE:PopulateNextQuestInEventSeries(currentEventID)
+		end
+		-- if currentEventID == 324 then
+			-- RQE:PopulateNextQuestInEventSeries(324)
+		-- end
+	end
+end)
+
+
+-- Define a table for holiday event quest IDs
+RQE.eventQuests = {
+	--[324] = {12397, 13437} -- Hallow's End Holiday event
+}
 
 ---------------------------------------------------
 -- 13. UI Components
@@ -3079,7 +3253,7 @@ local isFirstRun = true
 -- Enhanced function to check the correct classification of the quest
 local function GetCorrectQuestType(questID)
 	local classification = C_QuestInfoSystem.GetQuestClassification(questID)
-	
+
 	-- World quests should have classification 10
 	if classification == Enum.QuestClassification.WorldQuest then
 		return "WorldQuest"
@@ -6202,7 +6376,6 @@ end
 -- end
 
 
--- Function to untrack automatically tracked world quests
 function RQE.UntrackAutomaticWorldQuests()
 	local playerMapID = C_Map.GetBestMapForUnit("player")
 	if not playerMapID then
@@ -6212,21 +6385,19 @@ function RQE.UntrackAutomaticWorldQuests()
 		return
 	end
 
-	-- Check for quests in the current map area
 	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 	local questsInAreaLookup = {}
 
-	-- Ensure questsInArea is not nil before iterating
 	if questsInArea then
 		for _, taskPOI in ipairs(questsInArea) do
-			if taskPOI.questId then -- Ensure the questId is valid
-				questsInAreaLookup[taskPOI.questId] = true
+			if taskPOI.questID then
+				questsInAreaLookup[taskPOI.questID] = true
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Quest found in area: " .. taskPOI.questId)
+					print("Quest found in area: " .. taskPOI.questID)
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Invalid task POI with no questId.")
+					print("Invalid task POI with no questID.")
 				end
 			end
 		end
@@ -6236,15 +6407,12 @@ function RQE.UntrackAutomaticWorldQuests()
 		end
 	end
 
-	-- Iterate over tracked world quests
 	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
 		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 		if questID then
 			local watchType = C_QuestLog.GetQuestWatchType(questID)
 
-			-- Ensure it is tracked automatically
 			if watchType == Enum.QuestWatchType.Automatic then
-				-- Remove it if the quest is no longer in the current area
 				if not questsInAreaLookup[questID] then
 					C_QuestLog.RemoveWorldQuestWatch(questID)
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6257,11 +6425,9 @@ function RQE.UntrackAutomaticWorldQuests()
 end
 
 
--- Removes Automatic WQ when leaving area of WQ location
 function RQE.UntrackAutomaticWorldQuestsByMap()
 	local playerMapID = C_Map.GetBestMapForUnit("player")
 
-	-- Check if playerMapID is valid
 	if not playerMapID then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Unable to get player's map ID.")
@@ -6269,38 +6435,30 @@ function RQE.UntrackAutomaticWorldQuestsByMap()
 		return
 	end
 
-	-- Get quests on the current map
 	local mapQuests = C_QuestLog.GetQuestsOnMap(playerMapID)
-
-	-- Convert the mapQuests to a lookup table for quicker access
 	local mapQuestsLookup = {}
 	for _, quest in ipairs(mapQuests) do
 		mapQuestsLookup[quest.questID] = true
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Map Quest ID: " .. quest.questID .. " at (" .. quest.x .. ", " .. quest.y .. ")")  -- Print each quest ID found on the map
+			print("Map Quest ID: " .. quest.questID .. " at (" .. quest.x .. ", " .. quest.y .. ")")
 		end
 	end
 
-	-- Convert the questsInArea to a lookup table for quicker access and print them
 	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
 	local questsInAreaLookup = {}
 	for _, taskPOI in ipairs(questsInArea) do
-		questsInAreaLookup[taskPOI.questId] = true
+		questsInAreaLookup[taskPOI.questID] = true
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print(taskPOI.questId)  -- Print each quest ID found in the area
+			print("Quest ID in area: " .. taskPOI.questID)
 		end
 	end
 
-	-- Get the currently super tracked quest ID
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- Attempt to directly extract questID from RQE.QuestIDText if available
 	local visibleQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 		visibleQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
-	-- Go through each watched world quest and check conditions
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Checking watched world quests:")
 	end
@@ -6312,9 +6470,7 @@ function RQE.UntrackAutomaticWorldQuestsByMap()
 				print("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
 			end
 
-			-- If the quest is not in the current area and it was tracked automatically, untrack it
 			if watchType == Enum.QuestWatchType.Automatic then
-				-- Check if the quest is not in the area and not on the map
 				if not questsInAreaLookup[questID] and not mapQuestsLookup[questID] then
 					C_QuestLog.RemoveWorldQuestWatch(questID)
 					RQE.infoLog("Removed WQ " .. questID .. " from watch list.")
@@ -6752,7 +6908,7 @@ end
 
 -- Function to confirm and buy an item from a merchant
 function RQE:ConfirmAndBuyMerchantItem(index, quantity)
-	local itemName, _, _, _, _, _, _, maxStack = GetMerchantItemInfo(index)
+	local itemName, _, _, _, _, _, _, maxStack = GetMerchantItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
 	local itemLink = GetMerchantItemLink(index)
 	quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
 	maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
@@ -7083,7 +7239,7 @@ function RQE:CheckSuperTrackedQuestAndStep()
 	if RQE.questConditions[superTrackedQuestID] and RQE.questConditions[superTrackedQuestID] == currentStepIndex then
 		-- If the condition matches, clear the RQEFrame and blacklist the quest
 		RQE.BlacklistUnderway = true
-		
+
 		-- Temporarily remove the quest from the watch list
 		C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
 		RQE.Buttons.ClearButtonPressed()
