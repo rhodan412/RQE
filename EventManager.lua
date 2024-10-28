@@ -189,7 +189,7 @@ local eventsToRegister = {
 	"QUEST_AUTOCOMPLETE",
 	"QUEST_COMPLETE",
 	-- "QUEST_CURRENCY_LOOT_RECEIVED",
-	"QUEST_FINISHED",				-- MAY BE REDUNDANT
+	"QUEST_FINISHED",
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	"QUEST_LOOT_RECEIVED",
@@ -870,7 +870,7 @@ function RQE.handlePlayerRegenEnabled()
 
 					-- -- Get the macro index for 'RQE Macro'
 					-- local macroIndex = GetMacroIndexByName("RQE Macro")
-					
+
 					-- -- If the macro exists, retrieve its content
 					-- if macroIndex > 0 then
 						-- local _, _, macroBody = GetMacroInfo(macroIndex)
@@ -1583,7 +1583,7 @@ function RQE.handlePlayerStartedMoving()
 		C_Timer.After(0.3, function()
 			-- Get the macro index for 'RQE Macro'
 			local macroIndex = GetMacroIndexByName("RQE Macro")
-			
+
 			-- If the macro exists, retrieve its content
 			if macroIndex > 0 then
 				local _, _, macroBody = GetMacroInfo(macroIndex)
@@ -1654,8 +1654,8 @@ function RQE.handleUpdateShapeShiftCD()
 	RQEMacro:CreateMacroForCurrentStep()
 	RQE.isCheckingMacroContents = false
 end
- 
- 
+
+
 -- Handling UPDATE_SHAPESHIFT_FORM event
 -- Fired when the current form changes
 function RQE.handleUpdateShapeShiftForm()
@@ -1673,11 +1673,11 @@ function RQE.handleUpdateShapeShiftForm()
 
 	-- Get the macro index for 'RQE Macro'
 	local macroIndex = GetMacroIndexByName("RQE Macro")
-	
+
 	-- If the macro exists, retrieve its content
 	if macroIndex > 0 then
 		local _, _, macroBody = GetMacroInfo(macroIndex)
-		
+
 		-- Check if the macro body has content
 		if macroBody and macroBody ~= "" then
 			RQE.ShapeshiftUpdated = false  -- Macro has content, so set flag to true
@@ -1688,7 +1688,7 @@ function RQE.handleUpdateShapeShiftForm()
 		-- If macro doesn't exist, consider it empty
 		RQE.ShapeshiftUpdated = true
 	end
-	
+
 	-- Optional: Debugging messages to see the status
 	if RQE.db.profile.debugLevel == "INFO+" then
 		if RQE.ShapeshiftUpdated then
@@ -1872,6 +1872,7 @@ function RQE.handlePlayerEnterWorld(...)
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	C_Timer.After(3, function()
 		if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+			if not RQEFrame:IsShown() then return end
 			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 			if not isSuperTracking then
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
@@ -2203,6 +2204,7 @@ function RQE.handleSuperTracking()
 	if not RQE.ClearButtonPressed then
 		if not isSuperTracking then
 			if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
@@ -3042,7 +3044,7 @@ function RQE.handleUnitQuestLogChange(...)
 	end
 
 	-- Flag check to see if SUPER_TRACKING_CHANGED has fired already and this is redundant
-	if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then 
+	if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then
 		return
 	else
 		if not RQE.QuestRemoved then
@@ -4145,6 +4147,7 @@ function RQE.handleQuestWatchListChanged(...)
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	if RQE.db.profile.enableNearestSuperTrack then
 		if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+			if not RQEFrame:IsShown() then return end
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
@@ -4315,6 +4318,7 @@ function RQE.handleQuestFinished()
 	if RQE.db.profile.enableNearestSuperTrack then
 		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 		if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+			if not RQEFrame:IsShown() then return end
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
