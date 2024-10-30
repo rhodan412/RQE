@@ -1,4 +1,4 @@
-11.0.2.47
+11.0.2.47 (2024-10-29)
 
 	Core.lua
 		- Added function that checks to see if questData or steps exist in the RQEFrame and if not function will continue where it will click the "W" button in the RQEFrame
@@ -19,6 +19,7 @@
 		- Added Hero's Call (Hero's Call Board) quests to the DB
 		- Added many Hellfire Peninsula, Zangarmarsh, Nagrand, Terokkar Forest, Netherstorm, and Shadowmoon Valley (Alliance) quests
 		- Added Candy Buckets across Azeroth (more to come)
+		- Added additional weekly quests in Dornogol
 
 	RQEFrame.lua
 		- Added function in preparation of tracking certain event quests (such as the pumpkin quests)
