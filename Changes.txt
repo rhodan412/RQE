@@ -1,5 +1,8 @@
 11.0.5.2
 
+	RQEFrame.lua
+		- Fixed SearchGroup search section of function to older iteration
+
 
 11.0.2.47 (2024-10-29)
 
