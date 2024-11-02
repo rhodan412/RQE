@@ -121,7 +121,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	local waypointTitle
 
-	if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+	if questData and questID and not C_QuestLog.IsOnQuest(questID) and questData.location then
 		x = questData.location.x
 		y = questData.location.y
 		mapID = questData.location.mapID
@@ -244,7 +244,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				if mapID == 0 then mapID = nil end
 			end
 
-			if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
+			if RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
 				RQE.x = RQE.DatabaseSuperX
 				RQE.y = RQE.DatabaseSuperY
 				RQE.MapID = RQE.DatabaseSuperMapID
@@ -369,7 +369,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	local waypointTitle
 
 	-- Determine coordinates and title based on quest presence in quest log and database
-	if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+	if questData and questID and not C_QuestLog.IsOnQuest(questID) and questData.location then
 		x = questData.location.x
 		y = questData.location.y
 		mapID = questData.location.mapID
