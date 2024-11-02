@@ -1,7 +1,13 @@
 11.0.5.2
 
+	RQEDatabase.lua
+		- Added Borean Tundra (Alliance) quests
+
 	RQEFrame.lua
 		- Fixed SearchGroup search section of function to older iteration
+
+	WaypointManager.lua
+		- Fixed nil error related to Waypoint creation system when questID is unknown/unlisted
 
 
 11.0.2.47 (2024-10-29)
