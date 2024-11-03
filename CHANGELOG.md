@@ -1,7 +1,7 @@
 11.0.5.2
 
 	RQEDatabase.lua
-		- Added Borean Tundra (Alliance) quests
+		- Added Borean Tundra & some Howling Fjord (Alliance) quests
 
 	RQEFrame.lua
 		- Fixed SearchGroup search section of function to older iteration
