@@ -1584,7 +1584,39 @@ end
 -- end
 
 
--- Function to handle group search based on the current super-tracked quest (Activation Protocol search works)
+-- -- Function to handle group search based on the current super-tracked quest (Activation Protocol search works)
+-- function RQE:LFG_Search(questID)
+    -- -- Ensure the Group Finder frame is open
+    -- if not GroupFinderFrame:IsVisible() then
+        -- LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
+    -- end
+
+    -- -- Retrieve the super-tracked quest ID
+    -- local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+    -- if not questID or questID == 0 then
+        -- return
+    -- end
+
+    -- -- Retrieve the activity ID for the quest
+    -- local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+    -- if not activityID then
+        -- return
+    -- end
+
+    -- -- Set the search panel to the activity associated with the quest
+    -- local SearchPanel = LFGListFrame.SearchPanel
+    -- LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
+    -- LFGListSearchPanel_SetCategory(SearchPanel, 1, 0) -- Category 1 is Dungeons/World Quests
+
+    -- -- Set search criteria to the questID
+    -- C_LFGList.SetSearchToQuestID(questID)
+
+    -- -- Execute the search
+    -- LFGListSearchPanel_DoSearch(SearchPanel)
+-- end
+
+
+-- Function to handle group search based on the current super-tracked quest with fallback for missing activityID
 function RQE:LFG_Search(questID)
     -- Ensure the Group Finder frame is open
     if not GroupFinderFrame:IsVisible() then
@@ -1594,22 +1626,31 @@ function RQE:LFG_Search(questID)
     -- Retrieve the super-tracked quest ID
     local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
     if not questID or questID == 0 then
+        --print("LFG Search: No valid questID available.")
         return
     end
 
     -- Retrieve the activity ID for the quest
     local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+    local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or C_QuestLog.GetTitleForQuestID(questID)
+
     if not activityID then
-        return
+        --print("LFG Search: No activityID found for questID", questID, "using quest name:", questName)
     end
 
-    -- Set the search panel to the activity associated with the quest
+    -- Set the search panel to the appropriate category
     local SearchPanel = LFGListFrame.SearchPanel
     LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
-    LFGListSearchPanel_SetCategory(SearchPanel, 1, 0) -- Category 1 is Dungeons/World Quests
+    LFGListSearchPanel_SetCategory(SearchPanel, 3, 0)
 
-    -- Set search criteria to the questID
-    C_LFGList.SetSearchToQuestID(questID)
+    -- Set search criteria to the questID or fallback to the quest name if activityID is missing
+    if activityID then
+        C_LFGList.SetSearchToQuestID(questID)
+    else
+        -- Fallback: Search by quest name if activityID is unavailable or unreliable
+        SearchPanel.SearchBox:SetText(questName or "")
+        SearchPanel.SearchBox:ClearFocus()
+    end
 
     -- Execute the search
     LFGListSearchPanel_DoSearch(SearchPanel)
