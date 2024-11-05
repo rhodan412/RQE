@@ -2,9 +2,10 @@
 
 	RQEDatabase.lua
 		- Added Borean Tundra, Howling Fjord and some Grizzly Hills (Alliance) quests
+		- Added some weekly quests and cleaned up DB
 
 	RQEFrame.lua
-		- Fixed SearchGroup search section of function to older iteration
+		- Modified SearchGroup search section to work better for world quests (such as world bosses)
 
 	WaypointManager.lua
 		- Fixed nil error related to Waypoint creation system when questID is unknown/unlisted
