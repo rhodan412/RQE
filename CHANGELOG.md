@@ -1,7 +1,7 @@
 11.0.5.2
 
 	RQEDatabase.lua
-		- Added Borean Tundra, Howling Fjord and some Grizzly Hills (Alliance) quests
+		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin and Storm Peaks (Alliance) quests
 		- Added some weekly quests and cleaned up DB
 
 	RQEFrame.lua
