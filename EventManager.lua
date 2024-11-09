@@ -2333,7 +2333,7 @@ function RQE.handleQuestAccepted(...)
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	RQE.QuestStepsBlocked(questID)
+	RQE.QuestStepsBlocked(questID)	-- Function call that checks to see if quest is in the DB already, but nothing is printed unless debug mode is set to 'Info'
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
