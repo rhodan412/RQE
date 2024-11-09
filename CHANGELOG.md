@@ -1,7 +1,13 @@
 11.0.5.2
 
+	Core.lua
+		- Function that checks to see if quest is in the DB already and if it needs to be updated with new quest details
+
+	EventManager.lua
+		- Function call that checks to see if quest is in the DB already
+
 	RQEDatabase.lua
-		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks and some Icecrown (Alliance) quests
+		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks Icecrown and some Dragonblight (Alliance) quests
 		- Added some weekly quests and cleaned up DB
 
 	RQEFrame.lua
