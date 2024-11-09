@@ -1319,6 +1319,31 @@ function RQE:ClearWaypointButtonData()
 end
 
 
+-- This function checks to see if the quest that was accepted has data in the DB that needs to be unblocked
+function RQE.QuestStepsBlocked(questID)
+	-- Ensure the questID is valid
+	if not questID then
+		return
+	end
+
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local questData = RQE.getQuestData(questID)
+
+	-- Check if questData is available
+	if not questData then
+		return
+	end
+
+	-- Get the total number of steps, if any
+	local totalSteps = #questData
+	if stepIndex == 1 and totalSteps == 0 then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("~~ Quest " .. questID .. " is in the DB but has no steps to display. ~~")
+		end
+	end
+end
+
+
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Check if the SeparateFocusFrame exists
