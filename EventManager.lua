@@ -2333,6 +2333,7 @@ function RQE.handleQuestAccepted(...)
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
+	RQE.QuestStepsBlocked(questID)
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
