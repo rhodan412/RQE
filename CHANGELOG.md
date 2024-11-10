@@ -7,7 +7,7 @@
 		- Function call that checks to see if quest is in the DB already
 
 	RQEDatabase.lua
-		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks Icecrown and some Dragonblight (Alliance) quests
+		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks Icecrown, Dragonblight, and Zul'Drak (Alliance) quests
 		- Added some weekly quests and cleaned up DB
 
 	RQEFrame.lua
