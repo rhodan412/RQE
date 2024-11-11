@@ -3,11 +3,16 @@
 	Core.lua
 		- Function that checks to see if quest is in the DB already and if it needs to be updated with new quest details
 
+	DatabaseMain.lua
+		- Added code to distinguish between quests in the various levels of the Warlords of Draenor garrison (as there are different pickup/turn-in coordinates for these quests based on garrison level)
+
 	EventManager.lua
 		- Function call that checks to see if quest is in the DB already
 
 	RQEDatabase.lua
 		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks Icecrown, Dragonblight, and Zul'Drak (Alliance) quests
+		- Added most Shadowmoon Valley (Warlords of Draenor-Alliance) quests to DB
+		- Added 'Cursed Tome' quest picked up from Shadowmoon Valley (Draenor) which is part of the Legion expansion of quests
 		- Added some weekly quests and cleaned up DB
 
 	RQEFrame.lua
