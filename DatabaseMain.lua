@@ -35,23 +35,60 @@ function RQE.getQuestData(questID)
 	-- Get the build info to determine the game version
 	local version, build = GetBuildInfo()
 	local majorVersion = tonumber(string.match(version, "^%d+"))
+	local wodGarrisonLevel = C_Garrison.GetGarrisonInfo(2)
 
 	local dbOrder = {}
 	if majorVersion >= 11 then
-		dbOrder = { "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
 	elseif majorVersion >= 10 then
-		dbOrder = { "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
 	elseif majorVersion == 9 then
-		dbOrder = { "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
 	elseif majorVersion == 8 then
-		dbOrder = { "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "BattleForAzeroth", "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
 	elseif majorVersion == 7 then
-		dbOrder = { "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
 	elseif majorVersion == 6 then
-		dbOrder = { "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
+
 	elseif majorVersion == 5 then
 		dbOrder = { "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
-
 	elseif majorVersion == 4 then
 		dbOrder = { "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
 	elseif majorVersion == 3 then
