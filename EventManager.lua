@@ -1871,10 +1871,6 @@ function RQE.handlePlayerEnterWorld(...)
 
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	C_Timer.After(3, function()
-		-- if RQE.db.profile.debugLevel == "INFO" then
-			-- ChatFrame1:Clear()
-		-- end
-
 		if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
 			if not RQEFrame:IsShown() then return end
 			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
