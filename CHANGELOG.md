@@ -13,7 +13,7 @@
 		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks Icecrown, Dragonblight, and Zul'Drak (Alliance) quests
 		- Added Shadowmoon Valley (Warlords of Draenor-Alliance), Gorgrond, Talador, Spires of Arak and Nagrand quests to DB
 		- Added 'Cursed Tome' quest picked up from Shadowmoon Valley (Draenor) which is part of the Legion expansion of quests
-		- Added some weekly quests and cleaned up DB
+		- Added some weekly quests (including more in Dornogol) and cleaned up DB
 
 	RQEFrame.lua
 		- Modified SearchGroup search section to work better for world quests (such as world bosses)
