@@ -8,10 +8,12 @@
 
 	EventManager.lua
 		- Function call that checks to see if quest is in the DB already
+		- Cleaned up old/unused debug code
 
 	RQEDatabase.lua
 		- Added Borean Tundra, Howling Fjord, Grizzly Hills, Sholazar Basin, Storm Peaks Icecrown, Dragonblight, and Zul'Drak (Alliance) quests
 		- Added Shadowmoon Valley (Warlords of Draenor-Alliance), Gorgrond, Talador, Spires of Arak and Nagrand quests to DB
+		- Added Maw introduction quests from Shadowlands expansion, as well as Bastion and some Maldraxxus campaign quests
 		- Added 'Cursed Tome' quest picked up from Shadowmoon Valley (Draenor) which is part of the Legion expansion of quests
 		- Added some weekly quests (including more in Dornogol) and cleaned up DB
 
