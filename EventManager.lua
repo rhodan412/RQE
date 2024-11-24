@@ -595,7 +595,6 @@ function RQE.handleItemCountChanged(...)
 				if RQE.LastAcceptedQuest then
 					if RQE.LastAcceptedQuest == questID then
 						RQE.StartPerioFromItemCountChanged = true
-						--print("~~Line: 590~~")
 						RQE.ItemCountRanStartPeriodicChecks = true
 						RQE:StartPeriodicChecks()
 						C_Timer.After(3, function()
@@ -1311,7 +1310,6 @@ function RQE.handleScenarioUpdate(...)
 	end
 
 	if RQE.db.profile.autoClickWaypointButton then
-		--print("~~Line: 1253~~")
 		RQE:StartPeriodicChecks()
 	end
 
@@ -1535,7 +1533,6 @@ function RQE.handlePlayerControlGained()
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromPlayerControlGained = true
-			--print("~~Line: 1474~~")
 			RQE:StartPeriodicChecks()
 			C_Timer.After(3, function()
 				RQE.StartPerioFromPlayerControlGained = false
@@ -2003,7 +2000,6 @@ function RQE.handlePlayerEnterWorld(...)
 				-- Tier Three Importance: PLAYER_ENTERING_WORLD event
 				C_Timer.After(1, function()
 					RQE.StartPerioFromPlayerEnteringWorld = true
-					--print("~~Line: 1933~~")
 					RQE:StartPeriodicChecks()
 					C_Timer.After(3, function()
 						RQE.StartPerioFromPlayerEnteringWorld = false
@@ -2237,7 +2233,6 @@ function RQE.handleSuperTracking()
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromSuperTrackChange = true
 		RQE.SuperTrackChangeRanStartPeriodicChecks = true
-		--print("~~Line: 2160~~")
 		RQE:StartPeriodicChecks()
 		C_Timer.After(3, function()
 			RQE.StartPerioFromSuperTrackChange = false
@@ -2466,7 +2461,6 @@ function RQE.handleQuestAccepted(...)
 			RQE.StartPerioFromQuestAccepted = true
 			if not RQE.StartPerioFromUQLC then
 				if not RQE.SuperTrackChangeRanStartPeriodicChecks then
-					--print("~~Line: 2382~~")
 					RQE:StartPeriodicChecks()
 					C_Timer.After(3, function()
 						RQE.StartPerioFromQuestAccepted = false
@@ -2533,7 +2527,6 @@ function RQE.handleUnitEnterVehicle(...)
 
 	-- Performs check of step and macro
 	if RQE.db.profile.autoClickWaypointButton then
-		--print("~~Line: 2644~~")
 		RQE:StartPeriodicChecks()
 	end
 end
@@ -2742,7 +2735,6 @@ function RQE.handleZoneNewAreaChange()
 				end
 			end
 		end
-		--print("~~Line: 2629~~")
 		RQE:StartPeriodicChecks()
 	end
 
@@ -2988,7 +2980,6 @@ function RQE.handleUnitQuestLogChange(...)
 
 				if not RQE.QuestRemoved then
 					RQE.StartPerioFromUnitQuestLogChanged = true
-					--print("~~Line: 2838~~")
 					RQE:StartPeriodicChecks()
 					RQE.QuestRemoved = false
 
@@ -3049,7 +3040,6 @@ function RQE.handleUnitQuestLogChange(...)
 		return
 	else
 		if not RQE.QuestRemoved then
-			--print("~~Line: 2895~~")
 			RQE.StartPerioFromUQLC = true
 			RQE:StartPeriodicChecks()
 			RQE.QuestRemoved = false
@@ -3235,7 +3225,6 @@ function RQE.handleInstanceInfoUpdate()
 	-- Tier Three Importance: UPDATE_INSTANCE_INFO event
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromInstanceInfoUpdate = true
-		--print("~~Line: 3073~~")
 		RQE:StartPeriodicChecks()
 		C_Timer.After(3, function()
 			RQE.StartPerioFromInstanceInfoUpdate = false
@@ -3565,7 +3554,6 @@ function RQE.handleQuestComplete()
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestComplete = true
-			--print("~~Line: 3402~~")
 			RQE:StartPeriodicChecks()
 			C_Timer.After(3, function()
 				RQE.StartPerioFromQuestComplete = false
@@ -3992,7 +3980,6 @@ function RQE.handleQuestWatchUpdate(...)
 				RQE.CheckAndClickWButton()
 
 				RQE.StartPerioFromQuestWatchUpdate = true
-				--print("~~Line: 3817~~")
 				RQE:StartPeriodicChecks()
 
 				-- Immediately reset flag after running StartPeriodicChecks
@@ -4289,7 +4276,6 @@ function RQE.handleQuestTurnIn(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestTurnedIn = true
-			--print("~~Line: 4098~~")
 			RQE:StartPeriodicChecks()
 			C_Timer.After(3, function()
 				RQE.StartPerioFromQuestTurnedIn = false
