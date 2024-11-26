@@ -1547,29 +1547,29 @@ end
 
 -- Function to handle group search based on the current super-tracked quest with fallback for missing activityID
 function RQE:LFG_Search(questID)
-    -- Ensure the Group Finder frame is open
-    if not GroupFinderFrame:IsVisible() then
-        LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
-    end
+	-- Ensure the Group Finder frame is open
+	if not GroupFinderFrame:IsVisible() then
+		LFGListUtil_OpenBestWindow() -- Open LFG window if it's not already visible
+	end
 
-    -- Retrieve the super-tracked quest ID
-    local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-    if not questID or questID == 0 then
-        --print("LFG Search: No valid questID available.")
-        return
-    end
+	-- Retrieve the super-tracked quest ID
+	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		--print("LFG Search: No valid questID available.")
+		return
+	end
 
-    -- Retrieve the activity ID for the quest
-    local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-    local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or C_QuestLog.GetTitleForQuestID(questID)
+	-- Retrieve the activity ID for the quest
+	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+	local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or C_QuestLog.GetTitleForQuestID(questID)
 
-    if not activityID then
-        --print("LFG Search: No activityID found for questID", questID, "using quest name:", questName)
-    end
+	if not activityID then
+		--print("LFG Search: No activityID found for questID", questID, "using quest name:", questName)
+	end
 
-    -- Set the search panel to the appropriate category
-    local SearchPanel = LFGListFrame.SearchPanel
-    LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
+	-- Set the search panel to the appropriate category
+	local SearchPanel = LFGListFrame.SearchPanel
+	LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
 
 	if questID == 81630 then	-- This questID is for 'Activation Protocol', which is the world boss at Isle of Dorn, 'Kordac'
 		RQE.SearchCategory = 1
@@ -1577,19 +1577,19 @@ function RQE:LFG_Search(questID)
 		RQE.SearchCategory = 3
 	end
 
-    LFGListSearchPanel_SetCategory(SearchPanel, RQE.SearchCategory, 0)
+	LFGListSearchPanel_SetCategory(SearchPanel, RQE.SearchCategory, 0)
 
-    -- Set search criteria to the questID or fallback to the quest name if activityID is missing
-    if activityID then
-        C_LFGList.SetSearchToQuestID(questID)
-    else
-        -- Fallback: Search by quest name if activityID is unavailable or unreliable
-        SearchPanel.SearchBox:SetText(questName or "")
-        SearchPanel.SearchBox:ClearFocus()
-    end
+	-- Set search criteria to the questID or fallback to the quest name if activityID is missing
+	if activityID then
+		C_LFGList.SetSearchToQuestID(questID)
+	else
+		-- Fallback: Search by quest name if activityID is unavailable or unreliable
+		SearchPanel.SearchBox:SetText(questName or "")
+		SearchPanel.SearchBox:ClearFocus()
+	end
 
-    -- Execute the search
-    LFGListSearchPanel_DoSearch(SearchPanel)
+	-- Execute the search
+	LFGListSearchPanel_DoSearch(SearchPanel)
 end
 
 
