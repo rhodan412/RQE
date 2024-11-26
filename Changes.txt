@@ -17,9 +17,11 @@
 		- Added 'Cursed Tome' quest picked up from Shadowmoon Valley (Draenor) which is part of the Legion expansion of quests
 		- Added many horde zone intro quests to DB
 		- Added some weekly quests (including more in Dornogol) and cleaned up DB
+		- Added some raid quests to DB for Castle Nathria and Sanctum of Domination
 
 	RQEFrame.lua
 		- Modified SearchGroup search section to work better for world quests (such as world bosses)
+		- Fixed SearchGroup for LFG to better work between the various world bosses as some weren't showing up in the search
 
 	WaypointManager.lua
 		- Fixed nil error related to Waypoint creation system when questID is unknown/unlisted
