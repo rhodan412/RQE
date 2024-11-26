@@ -15,6 +15,7 @@
 		- Added Shadowmoon Valley (Warlords of Draenor-Alliance), Gorgrond, Talador, Spires of Arak and Nagrand quests to DB
 		- Added Maw introduction quests from Shadowlands expansion, as well as Bastion, Maldraxxus, Ardenweald and Revendreth campaign quests
 		- Added 'Cursed Tome' quest picked up from Shadowmoon Valley (Draenor) which is part of the Legion expansion of quests
+		- Added many horde zone intro quests to DB
 		- Added some weekly quests (including more in Dornogol) and cleaned up DB
 
 	RQEFrame.lua
