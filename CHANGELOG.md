@@ -1,4 +1,9 @@
-11.0.5.2
+11.0.5.3
+
+
+
+
+11.0.5.2 (2024-11-26)
 
 	Core.lua
 		- Function that checks to see if quest is in the DB already and if it needs to be updated with new quest details
