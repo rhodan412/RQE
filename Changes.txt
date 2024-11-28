@@ -1,6 +1,7 @@
 11.0.5.3
 
-
+	RQEDatabase.lua
+		- Removal of quest data not currently in the DB
 
 
 11.0.5.2 (2024-11-26)
