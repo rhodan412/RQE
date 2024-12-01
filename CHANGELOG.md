@@ -3,7 +3,8 @@
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
 		- Added side quests of Bastion, Maldraxxus, Ardenweald, and Revendreth to DB
-		- Added Night Fae campaign quests to DB
+		- Added Night Fae & Venthyr campaign quests to DB
+		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
 
 
 11.0.5.2 (2024-11-26)
