@@ -4547,6 +4547,7 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
+	RQE.CheckAndClickWButton()	-- Sets the Waypoint initially to that of the "W" button
 	RQE.isCheckingMacroContents = true
 	self:FindAndSetFinalStep()  -- Find and set the final step
 
