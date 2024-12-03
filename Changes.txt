@@ -1,9 +1,12 @@
 11.0.5.3
 
+	Core.lua
+		- Click "W" Button at start of regularly called RQE:StartPeriodicChecks function in order to initially set the waypoint
+
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
 		- Added side quests of Bastion, Maldraxxus, Ardenweald, and Revendreth to DB
-		- Added Night Fae & Venthyr campaign quests to DB
+		- Added Night Fae, Venthyr, Kyrian & Necrolord campaign quests to DB
 		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
 
 
