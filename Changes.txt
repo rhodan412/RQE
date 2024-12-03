@@ -8,6 +8,7 @@
 		- Added side quests of Bastion, Maldraxxus, Ardenweald, and Revendreth to DB
 		- Added Night Fae, Venthyr, Kyrian & Necrolord campaign quests to DB
 		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
+		- Added 'Maw Walkers' chapter of Chains of Domination (Shadowlands) to DB
 
 
 11.0.5.2 (2024-11-26)
