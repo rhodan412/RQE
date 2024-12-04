@@ -522,95 +522,89 @@ function RQE.handleItemCountChanged(...)
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: ITEM_COUNT_CHANGED event triggered for event: " .. tostring(event) .. ", ItemID: " .. tostring(itemID), 1, 0.65, 0.5)
 	end
 
-	if not RQE.db.profile.autoClickWaypointButton then return end
+	if RQE.db.profile.autoClickWaypointButton then
+		itemID = tostring(itemID)  -- Ensure the itemID is treated as a string if needed
+		local itemCount = C_Item.GetItemCount(itemID)
+		RQE.infoLog("Item count changed for itemID:", itemID, " to ", itemCount)
 
-	if InCombatLockdown() then return end
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if questID then
+			RQE.infoLog("Current super tracked questID:", questID)
+			local questData = RQE.getQuestData(questID)
+			if questData then
+				if RQE.LastClickedButtonRef == nil then return end
+				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
+				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 
-	RQE:StartPeriodicChecks()
+				-- Ensure stepIndex is within the bounds of questData
+				if stepIndex >= 1 and stepIndex <= #questData then
+					local stepData = questData[stepIndex]
+					if stepData then
+						local requiredItems = stepData.failedcheck or {}
+						local neededAmounts = stepData.neededAmt or {}
+						local failedAmounts = stepData.failedAmt or {}
+						local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
 
-	-- if RQE.db.profile.autoClickWaypointButton then
-		-- itemID = tostring(itemID)  -- Ensure the itemID is treated as a string if needed
-		-- local itemCount = C_Item.GetItemCount(itemID)
-		-- RQE.infoLog("Item count changed for itemID:", itemID, " to ", itemCount)
+						for index, reqItemID in ipairs(requiredItems) do
+							if tostring(reqItemID) == itemID then
+								local requiredAmount = tonumber(neededAmounts[index]) or 1
+								if itemCount < requiredAmount and stepData.failedfunc == "CheckDBInventory" then
+									C_Timer.After(0.5, function()
+										if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
 
-		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		-- if questID then
-			-- RQE.infoLog("Current super tracked questID:", questID)
-			-- local questData = RQE.getQuestData(questID)
-			-- if questData then
-				-- if RQE.LastClickedButtonRef == nil then return end
-				-- local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-				-- --local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+											local previousStepData = questData[stepIndex - 1]
+											if previousStepData and previousStepData.funct == "CheckDBZoneChange" then
+												local currentMapID = C_Map.GetBestMapForUnit("player")
+												local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
-				-- -- Ensure stepIndex is within the bounds of questData
-				-- if stepIndex >= 1 and stepIndex <= #questData then
-					-- local stepData = questData[stepIndex]
-					-- if stepData then
-						-- local requiredItems = stepData.failedcheck or {}
-						-- local neededAmounts = stepData.neededAmt or {}
-						-- local failedAmounts = stepData.failedAmt or {}
-						-- local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
+												RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+												-- Check if the current map ID is in the list of required IDs
+												if requiredMapIDs and #requiredMapIDs > 0 then
+													for _, mapID in ipairs(requiredMapIDs) do
+														if tostring(currentMapID) == tostring(mapID) then
+															return
+														end
+													end
+												end
+											else
+												RQE.WaypointButtons[failedIndex]:Click()
+												RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
+											end
+										else
+											RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
+										end
+									end)
+									return
+								end
+							end
+						end
+					else
+						RQE.debugLog("No stepData found for stepIndex:", stepIndex)
+					end
+				else
+					RQE.debugLog("Invalid stepIndex:", stepIndex)
+				end
+			end
+		end
+		-- Tier Four Importance: ITEM_COUNT_CHANGED event
+		if RQE.db.profile.autoClickWaypointButton then
+			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.CurrentlySuperQuestID
 
-						-- for index, reqItemID in ipairs(requiredItems) do
-							-- if tostring(reqItemID) == itemID then
-								-- local requiredAmount = tonumber(neededAmounts[index]) or 1
-								-- if itemCount < requiredAmount and stepData.failedfunc == "CheckDBInventory" then
-									-- C_Timer.After(0.5, function()
-										-- if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-
-											-- local previousStepData = questData[stepIndex - 1]
-											-- if previousStepData and previousStepData.funct == "CheckDBZoneChange" then
-												-- local currentMapID = C_Map.GetBestMapForUnit("player")
-												-- local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
-
-												-- RQE.infoLog("Checking Map ID:", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
-												-- -- Check if the current map ID is in the list of required IDs
-												-- if requiredMapIDs and #requiredMapIDs > 0 then
-													-- for _, mapID in ipairs(requiredMapIDs) do
-														-- if tostring(currentMapID) == tostring(mapID) then
-															-- return
-														-- end
-													-- end
-												-- end
-											-- else
-												-- RQE.WaypointButtons[failedIndex]:Click()
-												-- RQE.infoLog("Inventory check failed, moving to step:", failedIndex)
-											-- end
-										-- else
-											-- RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
-										-- end
-									-- end)
-									-- return
-								-- end
-							-- end
-						-- end
-					-- else
-						-- RQE.debugLog("No stepData found for stepIndex:", stepIndex)
-					-- end
-				-- else
-					-- RQE.debugLog("Invalid stepIndex:", stepIndex)
-				-- end
-			-- end
-		-- end
-		-- -- Tier Four Importance: ITEM_COUNT_CHANGED event
-		-- if RQE.db.profile.autoClickWaypointButton then
-			-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-			-- local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.CurrentlySuperQuestID
-
-			-- C_Timer.After(0.4, function()
-				-- if RQE.LastAcceptedQuest then
-					-- if RQE.LastAcceptedQuest == questID then
-						-- RQE.StartPerioFromItemCountChanged = true
-						-- RQE.ItemCountRanStartPeriodicChecks = true
-						-- RQE:StartPeriodicChecks()
-						-- C_Timer.After(3, function()
-							-- RQE.StartPerioFromItemCountChanged = false
-						-- end)
-					-- end
-				-- end
-			-- end)
-		-- end
-	-- end
+			C_Timer.After(0.4, function()
+				if RQE.LastAcceptedQuest then
+					if RQE.LastAcceptedQuest == questID then
+						RQE.StartPerioFromItemCountChanged = true
+						RQE.ItemCountRanStartPeriodicChecks = true
+						RQE:StartPeriodicChecks()
+						C_Timer.After(3, function()
+							RQE.StartPerioFromItemCountChanged = false
+						end)
+					end
+				end
+			end)
+		end
+	end
 end
 
 
@@ -727,7 +721,7 @@ function RQE.handleMerchantUpdate()
 end
 
 
--- Handles UNIT_INVENTORY_CHANGED event
+-- Handles UNIT_INVENTORY_CHANGED event:
 -- Fires when an item is destroyed
 function RQE.handleUnitInventoryChange(...)
 	local event = select(2, ...)
@@ -753,11 +747,6 @@ function RQE.handleUnitInventoryChange(...)
 	end
 
 	if not RQE.db.profile.autoClickWaypointButton then return end
-
-	if RQE.db.profile.autoClickWaypointButton then
-		if InCombatLockdown() then return end
-		RQE:StartPeriodicChecks()
-	end
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if questID then
@@ -2164,11 +2153,6 @@ function RQE.handleSuperTracking()
 				if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
 					if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex and RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex] then
 						RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex]:Click()
-					else
-						--RQE:ClickWaypointButtonForIndex(1)	-- The existence of this appears to reset the index to 1 
-						if RQE.db.profile.debugLevel == "INFO+" then
-							print("Warning: LastClickedButtonRef or its stepIndex is nil. Resetting to stepIndex 1.")
-						end
 					end
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -2197,7 +2181,7 @@ function RQE.handleSuperTracking()
 		RQE.LastClickedButtonRef = nil
 
 		-- Call the function to reset to step 1
-		RQE:SetInitialWaypointToOne()
+		--RQE:SetInitialWaypointToOne()
 
 		-- -- Tier Three Importance: SUPER_TRACKING_CHANGED event	-- HANDLED AS PART OF STARTPERIODIC CALLED TOWARD BOTTOM OF FUNCTION
 		-- C_Timer.After(0.8, function()
@@ -2328,6 +2312,14 @@ function RQE.handleSuperTracking()
 		C_Timer.After(0.5, function()
 			UpdateFrame()
 		end)
+	end
+
+	-- Update Display of Memory Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		RQE:CheckMemoryUsage()
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+			DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)
+		end
 	end
 
 	C_Timer.After(1, function()
