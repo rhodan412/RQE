@@ -1,7 +1,18 @@
 11.0.5.3
 
+	Config.lua
+		- Modified the supertracking toggles to be independent of each other and also added additional tooltip info for enableNearestSuperTrack
+
 	Core.lua
-		- Click "W" Button at start of regularly called RQE:StartPeriodicChecks function in order to initially set the waypoint
+		- Modified RQE.CheckAndClickWButton() to better check if there is data in the RQEDatabase if not, the "W" Button won't be pressed
+		- Modified RQE:GetClosestTrackedQuest() to check that quest is being watched and added failsafe to supertrack a quest that returns as being part of that zone if nothing is still supertracked
+		- Added RQE:CheckMemoryUsage() to RQE:StartPeriodicChecks() to get a better idea, for debugging, add-on's performance
+
+	EventManager.lua
+		- Fixed RQE.handleItemCountChanged event function for the ITEM_COUNT_CHANGED event so that it will work once again
+		- Added functionality to UNIT_INVENTORY_CHANGED and PLAYER_ENTERING_WORLD to run RQE:StartPeriodicChecks() as long as player isn't in combat
+		- Removed RQE:ClickWaypointButtonForIndex(1) from RQE.handleSuperTracking() as this was overriding the waypoint location of what is specified in the DB when step 1 waypoint location differs from the waypoint under the "W" Button
+		- Set supertracked quest to be what is questID from QUEST_ACCEPTED event if nothing is being supertracked
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
@@ -9,6 +20,10 @@
 		- Added Night Fae, Venthyr, Kyrian & Necrolord campaign quests to DB
 		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
 		- Added 'Maw Walkers' chapter of Chains of Domination (Shadowlands) to DB
+		- Fixed some quests for the Darkmoon Faire for the CheckDBObjectiveStatus and CheckDBComplete as well as cleaned up for Blacksmithing quest in Darkmoon Faire to better handle item count checks
+
+	QuestingModule.lua
+		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
 
 
 11.0.5.2 (2024-11-26)
