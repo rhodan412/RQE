@@ -6969,12 +6969,14 @@ function RQE:CraftSpecificItem(recipeSpellID)
 	end
 
 	-- Check if we've already printed the reagents for this recipe
-	if not RQE.alreadyPrintedSchematics then
-		-- Print the reagents required for the recipe
-		RQE:PrintRecipeSchematic(recipeSpellID, false) -- Assuming isRecraft is false; adjust as needed
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if not RQE.alreadyPrintedSchematics then
+			-- Print the reagents required for the recipe
+			RQE:PrintRecipeSchematic(recipeSpellID, false) -- Assuming isRecraft is false; adjust as needed
 
-		-- Mark this recipe as having its reagents printed so we don't do it again
-		RQE.alreadyPrintedSchematics = true
+			-- Mark this recipe as having its reagents printed so we don't do it again
+			RQE.alreadyPrintedSchematics = true
+		end
 	end
 end
 
