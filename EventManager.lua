@@ -2350,10 +2350,10 @@ function RQE.handleQuestAccepted(...)
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
-	-- Check if the quest is a bonus objective
-	if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
-		UpdateRQEBonusQuestFrame(questID)
-	end
+	-- -- Check if the quest is a bonus objective
+	-- if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
+		-- UpdateRQEBonusQuestFrame(questID)
+	-- end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted and RQE.db.profile.showArgPayloadInfo then
@@ -2366,18 +2366,6 @@ function RQE.handleQuestAccepted(...)
 				end
 			else
 				print("Arg " .. i .. ": " .. tostring(arg))
-			end
-		end
-	end
-
-	-- Supertrack the accepted quest if no quest is currently supertracked and enableNearestSuperTrack is true
-	if RQE.db.profile.enableNearestSuperTrack then
-		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-		if not currentSuperTrackedQuestID or currentSuperTrackedQuestID == 0 then
-			C_SuperTrack.SetSuperTrackedQuestID(questID)
-			RQE:SaveSuperTrackedQuestToCharacter()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				DEFAULT_CHAT_FRAME:AddMessage("QA Debug: Supertracked newly accepted QuestID: " .. tostring(questID), 0.46, 0.62, 1)
 			end
 		end
 	end
