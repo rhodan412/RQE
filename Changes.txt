@@ -10,9 +10,9 @@
 		- Only print schematics (reagents needed) if debug is set to INFO+
 
 	EventManager.lua
-		- Fixed RQE.handleItemCountChanged event function for the ITEM_COUNT_CHANGED event so that it will work once again
 		- Added functionality to UNIT_INVENTORY_CHANGED and PLAYER_ENTERING_WORLD to run RQE:StartPeriodicChecks() as long as player isn't in combat
 		- Removed RQE:ClickWaypointButtonForIndex(1) from RQE.handleSuperTracking() as this was overriding the waypoint location of what is specified in the DB when step 1 waypoint location differs from the waypoint under the "W" Button
+		- Removed set to Waypoint Step One after SUPER_TRACKING_CHANGED as this might interfere with method to properly set stepIndex
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
@@ -22,6 +22,7 @@
 		- Added 'Maw Walkers' chapter of Chains of Domination (Shadowlands) to DB
 		- Fixed some quests for the Darkmoon Faire for the CheckDBObjectiveStatus and CheckDBComplete as well as cleaned up for Blacksmithing quest in Darkmoon Faire to better handle item count checks
 		- Added Enchanting weekly Dornogol questID 84084 to DB
+		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
 
 	QuestingModule.lua
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
