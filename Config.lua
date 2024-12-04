@@ -321,15 +321,12 @@ RQE.options = {
 				enableNearestSuperTrack = {
 					type = "toggle",
 					name = "Enable SuperTrack Nearest",
-					desc = "Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking",
+					desc = "Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking\n\n" ..
+							"|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r",
 					order = 17,
 					get = function() return RQE.db.profile.enableNearestSuperTrack end,
 					set = function(_, newValue)
 						RQE.db.profile.enableNearestSuperTrack = newValue;
-						if not RQE.db.profile.enableNearestSuperTrack then
-							RQE.db.profile.enableNearestSuperTrackCampaign = false
-							RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly = false
-						end
 					end,
 					width = "full",
 				},
@@ -1652,10 +1649,6 @@ function RQE:AddGeneralSettingsWidgets(container)
 	enableNearestSuperTrack:SetValue(RQE.db.profile.enableNearestSuperTrack)
 	enableNearestSuperTrack:SetCallback("OnValueChanged", function(widget, event, value)
 		RQE.db.profile.enableNearestSuperTrack = value
-		if not RQE.db.profile.enableNearestSuperTrack then
-			RQE.db.profile.enableNearestSuperTrackCampaign = false
-			RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly = false
-		end
 	end)
 
 	enableNearestSuperTrack:SetFullWidth(false)
@@ -1664,7 +1657,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	-- Add a tooltip description for enableNearestSuperTrack (RQE.db.profile.enableNearestSuperTrack)
 	enableNearestSuperTrack:SetCallback("OnEnter", function(widget, event)
 		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetText("Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking)", nil, nil, nil, nil, true)
+		GameTooltip:SetText("Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking\n\n|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r", nil, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
 	enableNearestSuperTrack:SetCallback("OnLeave", function(widget, event)
@@ -1674,57 +1667,53 @@ function RQE:AddGeneralSettingsWidgets(container)
 	scrollFrame:AddChild(enableNearestSuperTrack)
 
 	-- Enable SuperTrack Nearest Campaign Quest Checkbox
-	if RQE.db.profile.enableNearestSuperTrack then
-		local maxPlayerLevel = GetMaxPlayerLevel()
-		local enableNearestSuperTrackCampaign = AceGUI:Create("CheckBox")
-		enableNearestSuperTrackCampaign:SetLabel("Enable SuperTrack Nearest Campaign Quest [Max Level: " .. maxPlayerLevel .. "]")
-		enableNearestSuperTrackCampaign:SetValue(RQE.db.profile.enableNearestSuperTrackCampaign)
-		enableNearestSuperTrackCampaign:SetCallback("OnValueChanged", function(widget, event, value)
-			RQE.db.profile.enableNearestSuperTrackCampaign = value
-		end)
+	local maxPlayerLevel = GetMaxPlayerLevel()
+	local enableNearestSuperTrackCampaign = AceGUI:Create("CheckBox")
+	enableNearestSuperTrackCampaign:SetLabel("Enable SuperTrack Nearest Campaign Quest [Max Level: " .. maxPlayerLevel .. "]")
+	enableNearestSuperTrackCampaign:SetValue(RQE.db.profile.enableNearestSuperTrackCampaign)
+	enableNearestSuperTrackCampaign:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableNearestSuperTrackCampaign = value
+	end)
 
-		enableNearestSuperTrackCampaign:SetFullWidth(true)
-		enableNearestSuperTrackCampaign:SetWidth(300)
+	enableNearestSuperTrackCampaign:SetFullWidth(true)
+	enableNearestSuperTrackCampaign:SetWidth(300)
 
-		-- Add a tooltip description for enableNearestSuperTrackCampaign (RQE.db.profile.enableNearestSuperTrackCampaign)
-		enableNearestSuperTrackCampaign:SetCallback("OnEnter", function(widget, event)
-			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking", nil, nil, nil, nil, true)
-			GameTooltip:Show()
-		end)
-		enableNearestSuperTrackCampaign:SetCallback("OnLeave", function(widget, event)
-			GameTooltip:Hide()
-		end)
+	-- Add a tooltip description for enableNearestSuperTrackCampaign (RQE.db.profile.enableNearestSuperTrackCampaign)
+	enableNearestSuperTrackCampaign:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableNearestSuperTrackCampaign:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
 
-		scrollFrame:AddChild(enableNearestSuperTrackCampaign)
-	end
+	scrollFrame:AddChild(enableNearestSuperTrackCampaign)
 
 	-- Enable SuperTrack Nearest Campaign Quest Checkbox
-	if RQE.db.profile.enableNearestSuperTrack then
-		local playerLevel = UnitLevel("player")
-		local maxPlayerLevel = GetMaxPlayerLevel()
-		local enableNearestSuperTrackCampaignLevelingOnly = AceGUI:Create("CheckBox")
-		enableNearestSuperTrackCampaignLevelingOnly:SetLabel("Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. playerLevel .. "/" .. maxPlayerLevel .. "]")
-		enableNearestSuperTrackCampaignLevelingOnly:SetValue(RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)
-		enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnValueChanged", function(widget, event, value)
-			RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly = value
-		end)
+	local playerLevel = UnitLevel("player")
+	local maxPlayerLevel = GetMaxPlayerLevel()
+	local enableNearestSuperTrackCampaignLevelingOnly = AceGUI:Create("CheckBox")
+	enableNearestSuperTrackCampaignLevelingOnly:SetLabel("Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. playerLevel .. "/" .. maxPlayerLevel .. "]")
+	enableNearestSuperTrackCampaignLevelingOnly:SetValue(RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)
+	enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly = value
+	end)
 
-		enableNearestSuperTrackCampaignLevelingOnly:SetFullWidth(true)
-		enableNearestSuperTrackCampaignLevelingOnly:SetWidth(300)
+	enableNearestSuperTrackCampaignLevelingOnly:SetFullWidth(true)
+	enableNearestSuperTrackCampaignLevelingOnly:SetWidth(300)
 
-		-- Add a tooltip description for enableNearestSuperTrackCampaignLevelingOnly (RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)
-		enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnEnter", function(widget, event)
-			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-			GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling", nil, nil, nil, nil, true)
-			GameTooltip:Show()
-		end)
-		enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnLeave", function(widget, event)
-			GameTooltip:Hide()
-		end)
+	-- Add a tooltip description for enableNearestSuperTrackCampaignLevelingOnly (RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)
+	enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableNearestSuperTrackCampaignLevelingOnly:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
 
-		scrollFrame:AddChild(enableNearestSuperTrackCampaignLevelingOnly)
-	end
+	scrollFrame:AddChild(enableNearestSuperTrackCampaignLevelingOnly)
 
 	-- Enable QuestType Display Checkbox
 	local enableQuestTypeDisplay = AceGUI:Create("CheckBox")
