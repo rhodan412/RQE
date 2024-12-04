@@ -89,21 +89,40 @@ frame:RegisterForDrag("LeftButton")
 frame:SetScript("OnDragStart", frame.StartMoving)
 frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
 
--- Set flag to check if correct macro
-if RQE.RQEQuestFrame then
-	RQE.RQEQuestFrame:SetScript("OnEnter", function()
-		-- Set the flag to true
-		RQE.hoveringOnFrame = true
+
+-- Recursive function to attach hover handlers to a frame and its children
+local function AttachHoverHandlers(frame)
+	if not frame then return end
+
+	-- Attach hover handlers to the frame itself
+	frame:SetScript("OnEnter", function()
+		if not RQE.hoveringOnFrame then
+			RQE.hoveringOnFrame = true
+		end
 	end)
+
+	frame:SetScript("OnLeave", function()
+		-- Delay to recheck mouse position to ensure accurate detection
+		C_Timer.After(0.1, function()
+			-- Check if mouse is still over the frame or any of its children
+			if not MouseIsOver(frame) then
+				GameTooltip:Hide()
+				RQE.hoveringOnFrame = false
+			end
+		end)
+	end)
+
+	-- Recursively attach handlers to all children of the frame
+	local children = { frame:GetChildren() }
+	for _, child in ipairs(children) do
+		AttachHoverHandlers(child)
+	end
 end
 
 
--- Hide tooltip for the RQEQuestFrame when moving out of the frame
+-- Attach hover handlers to RQEQuestFrame and its children
 if RQE.RQEQuestFrame then
-	RQE.RQEQuestFrame:SetScript("OnLeave", function()
-		GameTooltip:Hide()
-		RQE.hoveringOnFrame = false
-	end)
+	AttachHoverHandlers(RQE.RQEQuestFrame)
 end
 
 
@@ -2388,21 +2407,21 @@ function UpdateRQEQuestFrame()
 				number:SetText(questIndex)
 				QuestLogIndexButton.number = number  -- Save for future reference
 
-				-- Set flag to check if correct macro
-				if RQE.RQEQuestFrame then
-					QuestLogIndexButton:SetScript("OnEnter", function()
-						-- Set the flag to true
-						RQE.hoveringOnFrame = true
-					end)
-				end
+				-- -- Set flag to check if correct macro
+				-- if RQE.RQEQuestFrame then
+					-- QuestLogIndexButton:SetScript("OnEnter", function()
+						-- -- Set the flag to true
+						-- RQE.hoveringOnFrame = true
+					-- end)
+				-- end
 
-				-- Hide tooltip for the RQEQuestFrame when moving out of the frame
-				if RQE.RQEQuestFrame then
-					QuestLogIndexButton:SetScript("OnLeave", function()
-						GameTooltip:Hide()
-						RQE.hoveringOnFrame = false
-					end)
-				end
+				-- -- Hide tooltip for the RQEQuestFrame when moving out of the frame
+				-- if RQE.RQEQuestFrame then
+					-- QuestLogIndexButton:SetScript("OnLeave", function()
+						-- GameTooltip:Hide()
+						-- RQE.hoveringOnFrame = false
+					-- end)
+				-- end
 
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
@@ -2435,15 +2454,16 @@ function UpdateRQEQuestFrame()
 						--RQE.OverrideHasProgress = true
 						--RQE.AutoWaypointHasBeenClicked = false
 
-						-- Check if autoClickWaypointButton is selected in the configuration
-						if RQE.db.profile.autoClickWaypointButton then
-							-- Click the "W" Button is autoclick is selected and no steps or questData exist
-							RQE.CheckAndClickWButton()
-						end
-
 						if RQE.hoveringOnFrame then
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
+
+							-- Check if autoClickWaypointButton is selected in the configuration
+							if RQE.db.profile.autoClickWaypointButton then
+								-- Click the "W" Button is autoclick is selected and no steps or questData exist
+								RQE.CheckAndClickWButton()
+							end
+
 							RQE:StartPeriodicChecks()
 							-- if RQE.shouldCheckFinalStep then
 								-- RQE.shouldCheckFinalStep = false
