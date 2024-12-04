@@ -13,11 +13,15 @@
 		- Added functionality to UNIT_INVENTORY_CHANGED and PLAYER_ENTERING_WORLD to run RQE:StartPeriodicChecks() as long as player isn't in combat
 		- Removed RQE:ClickWaypointButtonForIndex(1) from RQE.handleSuperTracking() as this was overriding the waypoint location of what is specified in the DB when step 1 waypoint location differs from the waypoint under the "W" Button
 		- Removed set to Waypoint Step One after SUPER_TRACKING_CHANGED as this might interfere with method to properly set stepIndex
+		- Moved RQE:StartPeriodicChecks() into  nested check to first see if something was being supertracked in the PLAYER_ENTERING_WORLD event
+		- Updates player coordinates (above RQEFrame) after PLAYER_MOUNT_DISPLAY_CHANGED (mounting/dismounting), PLAYER_CONTROL_GAINED (post-taxi), & UPDATE_INSTANCE_INFO events (such as new dungeon/jumping into the Maw)
+		- Updates player mapID (above RQEFrame) after UPDATE_INSTANCE_INFO event
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
 		- Added side quests of Bastion, Maldraxxus, Ardenweald, and Revendreth to DB
 		- Added Night Fae, Venthyr, Kyrian & Necrolord campaign quests to DB
+		- Added additional callings for the 4 covenants (Shadowlands) to DB
 		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
 		- Added 'Maw Walkers' chapter of Chains of Domination (Shadowlands) to DB
 		- Fixed some quests for the Darkmoon Faire for the CheckDBObjectiveStatus and CheckDBComplete as well as cleaned up for Blacksmithing quest in Darkmoon Faire to better handle item count checks
