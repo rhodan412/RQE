@@ -916,6 +916,8 @@ function RQE.handlePlayerMountDisplayChanged()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 	end
 
+	RQE:UpdateCoordinates()
+
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	if not C_Scenario.IsInScenario() then
 		if RQE.db.profile.autoClickWaypointButton then
@@ -1524,6 +1526,7 @@ end
 -- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 function RQE.handlePlayerControlGained()
 	RQE:UpdateMapIDDisplay()
+	RQE:UpdateCoordinates()
 
 	RQE.canSortQuests = true
 	SortQuestsByProximity()
@@ -1866,18 +1869,11 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
-	if RQE.db.profile.autoClickWaypointButton then
-		if InCombatLockdown() then return end
-		C_Timer.After(4, function()
-			RQE:StartPeriodicChecks()
-		end)
-	end
-
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	C_Timer.After(3, function()
+		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 		if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
 			if not RQEFrame:IsShown() then return end
-			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 			if not isSuperTracking then
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
@@ -1892,6 +1888,11 @@ function RQE.handlePlayerEnterWorld(...)
 					end
 				end
 				RQE.TrackClosestQuest()
+				if RQE.db.profile.autoClickWaypointButton then
+					C_Timer.After(4, function()
+						RQE:StartPeriodicChecks()
+					end)
+				end
 			end
 
 			C_Timer.After(1, function()
@@ -3224,6 +3225,9 @@ function RQE.handleInstanceInfoUpdate()
 	C_Timer.After(1.5, function()
 		RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
 	end)
+
+	RQE:UpdateMapIDDisplay()
+	RQE:UpdateCoordinates()
 
 	if not RQE.UpdateInstanceInfoOkay then
 		return
