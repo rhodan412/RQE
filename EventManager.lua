@@ -161,6 +161,7 @@ end
 local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
 	"ADDON_LOADED",
+	"BAG_NEW_ITEMS_UPDATED",
 	"BAG_UPDATE",
 	"BOSS_KILL",
 	"CLIENT_SCENE_CLOSED",
@@ -270,6 +271,7 @@ local function HandleEvents(frame, event, ...)
 	local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
 		ADDON_LOADED = RQE.handleAddonLoaded,
+		BAG_NEW_ITEMS_UPDATED = RQE.BagNewItemsAdded,
 		BAG_UPDATE = RQE.ReagentBagUpdate,
 		BOSS_KILL = RQE.handleBossKill,
 		CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
@@ -605,6 +607,16 @@ function RQE.handleItemCountChanged(...)
 			end)
 		end
 	end
+end
+
+
+-- Handles BAG_NEW_ITEMS_UPDATED event
+function RQE.BagNewItemsAdded()
+	if InCombatLockdown() then return end
+
+	C_Timer.After(1, function()
+		RQE:StartPeriodicChecks()
+	end)
 end
 
 
