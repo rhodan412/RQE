@@ -16,6 +16,7 @@
 		- Moved RQE:StartPeriodicChecks() into  nested check to first see if something was being supertracked in the PLAYER_ENTERING_WORLD event
 		- Updates player coordinates (above RQEFrame) after PLAYER_MOUNT_DISPLAY_CHANGED (mounting/dismounting), PLAYER_CONTROL_GAINED (post-taxi), & UPDATE_INSTANCE_INFO events (such as new dungeon/jumping into the Maw)
 		- Updates player mapID (above RQEFrame) after UPDATE_INSTANCE_INFO event
+		- Added BAG_NEW_ITEMS_UPDATED to better handle for CheckDBInventory check in DB
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
@@ -23,10 +24,12 @@
 		- Added Night Fae, Venthyr, Kyrian & Necrolord campaign quests to DB
 		- Added additional callings for the 4 covenants (Shadowlands) to DB
 		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
-		- Added 'Maw Walkers' chapter of Chains of Domination (Shadowlands) to DB
+		- Added 'Maw Walkers' & 'Focusing the Eye' chapters of Chains of Domination (Shadowlands) to DB
+		- Added remainder of Zereth Mortis campaign quests to DB
 		- Fixed some quests for the Darkmoon Faire for the CheckDBObjectiveStatus and CheckDBComplete as well as cleaned up for Blacksmithing quest in Darkmoon Faire to better handle item count checks
 		- Added Enchanting weekly Dornogol questID 84084 to DB
 		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
+		- Modified questID 29509 to include CheckDBInventory for cleaner macros
 
 	QuestingModule.lua
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
