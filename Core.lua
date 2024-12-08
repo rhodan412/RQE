@@ -1781,6 +1781,11 @@ end
 
 -- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
 function RQE.CheckAndClickWButton()
+	if InCombatLockdown() then
+		RQE.CheckNClickWButtonAfterCombat = true
+		return
+	end
+
 	-- Adds a check if player is in party or raid instance; if so, will not allow the function to continue further
 	local isInInstance, instanceType = IsInInstance()
 	if isInInstance and (instanceType == "party" or instanceType == "raid") then
@@ -1821,28 +1826,37 @@ function RQE.CheckAndClickWButton()
 		return
 	end
 
-	-- -- If quest exists but has no steps defined, click the "W" button	-- THE BELOW RESULTS IN HIGH LAG WHEN OBJECTIVE PROGRESS MADE (USUALLY IMMEDIATELY FOLLOWING COMBAT)
-	-- local hasSteps = false
-	-- for _, step in pairs(questData) do
-		-- if type(step) == "table" and step.description then
-			-- hasSteps = true
-			-- if RQE.AddonSetStepIndex == 1 then
-				-- RQE:ClickWaypointButtonForIndex(1)
-			-- end
-			-- break
-		-- end
-	-- end
+	-- If quest exists but has no steps defined, click the "W" button
+	local hasSteps = false
+	C_Timer.After(1, function()
+		for _, step in pairs(questData) do
+			if type(step) == "table" and step.description then
+				hasSteps = true
+				if not RQE.AddonSetStepIndex == 1 then
+					print("RQE.AddonSetStepIndex NOT 1")
+					return
+				end
 
-	-- if not hasSteps then
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Quest found but no steps are defined. Clicking the 'W' button.")
-		-- end
-		-- RQE.ClickWButton()
-	-- else
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Quest has steps, no need to click the 'W' button.")
-		-- end
-	-- end
+				if RQE.CheckClickWButtonPossible and RQE.AddonSetStepIndex == 1 then
+					print("RQE.AddonSetStepIndex == 1")
+					RQE:ClickWaypointButtonForIndex(1)
+					RQE.CheckClickWButtonPossible = false
+				end
+				break
+			end
+		end
+
+		if not hasSteps then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest found but no steps are defined. Clicking the 'W' button.")
+			end
+			RQE.ClickWButton()
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest has steps, no need to click the 'W' button.")
+			end
+		end
+	end)
 end
 
 
@@ -4646,6 +4660,11 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
+	if InCombatLockdown() then
+		RQE.StartPeriodicAfterCombat = true
+		return
+	end
+
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	if not superTrackedQuestID then
@@ -4655,14 +4674,8 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
-	if InCombatLockdown() then
-		RQE.StartPeriodicAfterCombat = true
-		return
-	end
-
 	RQE.CheckAndClickWButton()	-- Sets the Waypoint initially to that of the "W" button
 	RQE.isCheckingMacroContents = true
-	RQEMacro:CreateMacroForCurrentStep()
 	self:FindAndSetFinalStep()  -- Find and set the final step
 
 	local questData = RQE.getQuestData(superTrackedQuestID)
