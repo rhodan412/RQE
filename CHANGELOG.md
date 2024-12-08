@@ -8,6 +8,8 @@
 		- Modified RQE:GetClosestTrackedQuest() to check that quest is being watched and added failsafe to supertrack a quest that returns as being part of that zone if nothing is still supertracked
 		- Added RQE:CheckMemoryUsage() to RQE:StartPeriodicChecks() to get a better idea, for debugging, add-on's performance
 		- Only print schematics (reagents needed) if debug is set to INFO+
+		- Commented out code within RQE.CheckAndClickWButton() that was causing performance issues typically after leaving combat when making quest progress
+		- Set RQE:StartPeriodicChecks() to run after combat finishes
 
 	EventManager.lua
 		- Added functionality to UNIT_INVENTORY_CHANGED and PLAYER_ENTERING_WORLD to run RQE:StartPeriodicChecks() as long as player isn't in combat
@@ -17,6 +19,8 @@
 		- Updates player coordinates (above RQEFrame) after PLAYER_MOUNT_DISPLAY_CHANGED (mounting/dismounting), PLAYER_CONTROL_GAINED (post-taxi), & UPDATE_INSTANCE_INFO events (such as new dungeon/jumping into the Maw)
 		- Updates player mapID (above RQEFrame) after UPDATE_INSTANCE_INFO event
 		- Added BAG_NEW_ITEMS_UPDATED to better handle for CheckDBInventory check in DB
+		- Set RQE:StartPeriodicChecks() to run after combat finishes
+		- Added call to update mapID and coordinates to area above RQEFrame on zone change
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
@@ -30,6 +34,9 @@
 		- Added Enchanting weekly Dornogol questID 84084 to DB
 		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
 		- Modified questID 29509 to include CheckDBInventory for cleaner macros
+
+	RQEFrame.lua
+		- Commented out RQE.SaveCoordData() and RQE:OnCoordinateClicked(i) from within WaypointButton:SetScript("OnClick", function()
 
 	QuestingModule.lua
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
