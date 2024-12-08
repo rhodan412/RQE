@@ -1169,9 +1169,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]		-- Fetch the mapID from the MapIDs array
 
-			-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON)
-			--RQE.SaveCoordData()
-			--RQE:OnCoordinateClicked(i)
+			-- Call function to handle the coordinate click
+			RQE.SaveCoordData()
+			RQE:OnCoordinateClicked(i)
 
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
