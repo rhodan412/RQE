@@ -812,6 +812,13 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 	end
 
+	if RQE.StartPeriodicAfterCombat then
+		C_Timer.After(1.8, function()
+			RQE:StartPeriodicChecks()
+		end)
+		RQE.StartPeriodicAfterCombat = false
+	end
+
 	-- Check and execute any deferred scenario updates
 	if RQE.deferredScenarioCriteriaUpdate then
 		--RQE.canUpdateFromCriteria = true
@@ -1120,6 +1127,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.ShapeshiftUpdated = false
+	RQE.StartPeriodicAfterCombat = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
 	RQE.StartPerioFromPlayerControlGained = false
@@ -2564,6 +2572,8 @@ function RQE.handleZoneChange(...)
 		RQE.updateScenarioUI()
 	end
 
+	RQE:UpdateMapIDDisplay()
+	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
 
@@ -2645,8 +2655,6 @@ function RQE.handleZoneChange(...)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
 				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
 			end
-
-			RQE:UpdateMapIDDisplay()
 		end)
 	else
 		C_Timer.After(0.5, function()
@@ -2701,6 +2709,8 @@ function RQE.handleZoneNewAreaChange()
 		DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	end
 
+	RQE:UpdateMapIDDisplay()
+	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
@@ -2770,8 +2780,6 @@ function RQE.handleZoneNewAreaChange()
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
 				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
 			end
-
-			RQE:UpdateMapIDDisplay()
 
 			if RQE.db.profile.autoTrackZoneQuests then
 				RQE.DisplayCurrentZoneQuests()
@@ -2966,7 +2974,7 @@ function RQE.handleUnitAura(...)
 end
 
 
--- Handles UNIT_QUEST_LOG_CHANGED event
+-- Handles UNIT_QUEST_LOG_CHANGED event	-- POSSIBLY FIRED WHILE IN COMBAT CAUSING PASSTHRU ERROR
 -- Fired whenever the quest log changes. (Frequently, but not as frequently as QUEST_LOG_UPDATE) 
 function RQE.handleUnitQuestLogChange(...)
 	local event = select(2, ...)
