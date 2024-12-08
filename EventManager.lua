@@ -812,6 +812,14 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 	end
 
+	if RQE.CheckNClickWButtonAfterCombat and not RQE.StartPeriodicAfterCombat then
+		C_Timer.After(1.5, function()
+			RQE.CheckAndClickWButton()
+		end)
+		RQE.CheckNClickWButtonAfterCombat = false
+		RQE.StartPeriodicAfterCombat = false	-- Set in place to prevent potential loop
+	end
+
 	if RQE.StartPeriodicAfterCombat then
 		C_Timer.After(1.8, function()
 			RQE:StartPeriodicChecks()
@@ -1110,6 +1118,8 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 
 	-- Initialize Flags
 	RQE.BlacklistUnderway = false
+	RQE.CheckNClickWButtonAfterCombat = false
+	RQE.CheckClickWButtonPossible = false
 	RQE.ClearButtonPressed = false
 	RQE.CreateMacroForCheckAndBuildMacroIfNeeded = false
 	RQE.CreateMacroForCheckAndSetFinalStep = false
@@ -2157,6 +2167,7 @@ function RQE.handleSuperTracking()
 
 	-- Check if the super-tracked quest ID has changed
 	if RQE.currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
+		RQE.CheckClickWButtonPossible = true
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 			print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(RQE.currentSuperTrackedQuestID))
 		end
@@ -2220,6 +2231,7 @@ function RQE.handleSuperTracking()
 		-- Store the current quest ID for future reference
 		RQE.previousSuperTrackedQuestID = RQE.currentSuperTrackedQuestID
 	else
+		RQE.CheckClickWButtonPossible = false
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 			print("Super-tracked quest is the same between", tostring(RQE.previousSuperTrackedQuestID), "and", tostring(RQE.currentSuperTrackedQuestID))
 		end
@@ -2455,6 +2467,8 @@ function RQE.handleQuestAccepted(...)
 			UpdateWorldQuestTrackingForMap(playerMapID)
 		end
 	end
+
+	RQE.CheckClickWButtonPossible = true
 
 	-- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
 	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
