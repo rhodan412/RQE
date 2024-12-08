@@ -8,7 +8,7 @@
 		- Modified RQE:GetClosestTrackedQuest() to check that quest is being watched and added failsafe to supertrack a quest that returns as being part of that zone if nothing is still supertracked
 		- Added RQE:CheckMemoryUsage() to RQE:StartPeriodicChecks() to get a better idea, for debugging, add-on's performance
 		- Only print schematics (reagents needed) if debug is set to INFO+
-		- Commented out code within RQE.CheckAndClickWButton() that was causing performance issues typically after leaving combat when making quest progress
+		- Modified code within RQE.CheckAndClickWButton() to only fire in more specific circumstances by adding a flag
 		- Set RQE:StartPeriodicChecks() to run after combat finishes
 
 	EventManager.lua
@@ -21,6 +21,7 @@
 		- Added BAG_NEW_ITEMS_UPDATED to better handle for CheckDBInventory check in DB
 		- Set RQE:StartPeriodicChecks() to run after combat finishes
 		- Added call to update mapID and coordinates to area above RQEFrame on zone change
+		- Added flag for click of the "W" button within the RQEFrame so that it fires at more appropriate times and nixing much of the potential redundancy
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
@@ -28,15 +29,13 @@
 		- Added Night Fae, Venthyr, Kyrian & Necrolord campaign quests to DB
 		- Added additional callings for the 4 covenants (Shadowlands) to DB
 		- Added 'Among the Kyrian' and 'Torghast' chapters of Kyrian campaign to DB
-		- Added 'Maw Walkers' & 'Focusing the Eye' chapters of Chains of Domination (Shadowlands) to DB
+		- Added Chains of Domination Korthia campaign (Shadowlands) to DB
 		- Added remainder of Zereth Mortis campaign quests to DB
 		- Fixed some quests for the Darkmoon Faire for the CheckDBObjectiveStatus and CheckDBComplete as well as cleaned up for Blacksmithing quest in Darkmoon Faire to better handle item count checks
 		- Added Enchanting weekly Dornogol questID 84084 to DB
 		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
 		- Modified questID 29509 to include CheckDBInventory for cleaner macros
-
-	RQEFrame.lua
-		- Commented out RQE.SaveCoordData() and RQE:OnCoordinateClicked(i) from within WaypointButton:SetScript("OnClick", function()
+		- Updated waypoints, macros, etc for Maw and some Bastion campaign quests in DB
 
 	QuestingModule.lua
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
