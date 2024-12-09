@@ -1131,6 +1131,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForSuperTracking = false
 	RQE.CreateMacroForUnitQuestLogChange = false
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
+	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
 	RQE.QuestAddedForWatchListChanged = false
@@ -3446,6 +3447,20 @@ function RQE.handleQuestLogCriteriaUpdate(...)
 				end
 			else
 				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if isSuperTracking or RQE.isSuperTracking then
+		local superQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		if superQuestID == questID then
+			if numFulfilled ~= 0 or 1 then
+				print("RQE.GreaterThanOneProgress is true")
+				RQE.GreaterThanOneProgress = true
+			else
+				print("RQE.GreaterThanOneProgress is false")
+				RQE.GreaterThanOneProgress = false
 			end
 		end
 	end
