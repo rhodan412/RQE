@@ -1169,7 +1169,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			x, y = tonumber(x), tonumber(y)
 			local mapID = MapIDs[i]		-- Fetch the mapID from the MapIDs array
 
-			-- Call function to handle the coordinate click
+			-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON and may cause some post-combat lag)
 			RQE.SaveCoordData()
 			RQE:OnCoordinateClicked(i)
 
