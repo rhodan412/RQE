@@ -10,6 +10,7 @@
 		- Only print schematics (reagents needed) if debug is set to INFO+
 		- Modified code within RQE.CheckAndClickWButton() to only fire in more specific circumstances by adding a flag
 		- Set RQE:StartPeriodicChecks() to run after combat finishes
+		- Added flag to avoid multi clicking the "W" button when stepIndex was 1, but that stepIndex required multi steps (such as the step requiring killing 12 bears before advancing to stepIndex 2)
 
 	EventManager.lua
 		- Added functionality to UNIT_INVENTORY_CHANGED and PLAYER_ENTERING_WORLD to run RQE:StartPeriodicChecks() as long as player isn't in combat
@@ -21,7 +22,7 @@
 		- Added BAG_NEW_ITEMS_UPDATED to better handle for CheckDBInventory check in DB
 		- Set RQE:StartPeriodicChecks() to run after combat finishes
 		- Added call to update mapID and coordinates to area above RQEFrame on zone change
-		- Added flag for click of the "W" button within the RQEFrame so that it fires at more appropriate times and nixing much of the potential redundancy
+		- Added flags for click of the "W" button within the RQEFrame so that it fires at more appropriate times and nixing much of the potential redundancy (including one that checks numfullfilled vs required to avoid clicking button multiple times when the stepIndex remains at 1)
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
