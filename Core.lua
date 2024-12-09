@@ -1833,14 +1833,16 @@ function RQE.CheckAndClickWButton()
 			if type(step) == "table" and step.description then
 				hasSteps = true
 				if not RQE.AddonSetStepIndex == 1 then
-					print("RQE.AddonSetStepIndex NOT 1")
 					return
 				end
 
 				if RQE.CheckClickWButtonPossible and RQE.AddonSetStepIndex == 1 then
 					print("RQE.AddonSetStepIndex == 1")
-					RQE:ClickWaypointButtonForIndex(1)
-					RQE.CheckClickWButtonPossible = false
+					if not RQE.GreaterThanOneProgress then
+						RQE:ClickWaypointButtonForIndex(1)
+						RQE.CheckClickWButtonPossible = false
+						RQE.GreaterThanOneProgress = false
+					end
 				end
 				break
 			end
