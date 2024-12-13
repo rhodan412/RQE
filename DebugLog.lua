@@ -242,7 +242,6 @@ end)
 -- Function to clear the debug log
 function RQE:ClearDebugLog()
 	logTable = {}
-	print("Debug log cleared.")
 end
 
 
