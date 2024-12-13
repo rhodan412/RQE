@@ -812,19 +812,11 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 	end
 
-	if RQE.CheckNClickWButtonAfterCombat and not RQE.StartPeriodicAfterCombat then
+	if RQE.CheckNClickWButtonAfterCombat then
 		C_Timer.After(1.5, function()
 			RQE.CheckAndClickWButton()
 		end)
 		RQE.CheckNClickWButtonAfterCombat = false
-		RQE.StartPeriodicAfterCombat = false	-- Set in place to prevent potential loop
-	end
-
-	if RQE.StartPeriodicAfterCombat then
-		C_Timer.After(1.8, function()
-			RQE:StartPeriodicChecks()
-		end)
-		RQE.StartPeriodicAfterCombat = false
 	end
 
 	-- Check and execute any deferred scenario updates
@@ -1138,7 +1130,6 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.ShapeshiftUpdated = false
-	RQE.StartPeriodicAfterCombat = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
 	RQE.StartPerioFromPlayerControlGained = false
@@ -1556,8 +1547,10 @@ end
 -- Handles PLAYER_CONTROL_GAINED event
 -- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 function RQE.handlePlayerControlGained()
-	RQE:UpdateMapIDDisplay()
-	RQE:UpdateCoordinates()
+	C_Timer.After(1.5, function()
+		RQE:UpdateMapIDDisplay()
+		RQE:UpdateCoordinates()
+	end)
 
 	RQE.canSortQuests = true
 	SortQuestsByProximity()
