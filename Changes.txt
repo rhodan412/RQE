@@ -9,15 +9,18 @@
 		- Added RQE:CheckMemoryUsage() to RQE:StartPeriodicChecks() to get a better idea, for debugging, add-on's performance
 		- Only print schematics (reagents needed) if debug is set to INFO+
 		- Modified code within RQE.CheckAndClickWButton() to only fire in more specific circumstances by adding a flag
-		- Set RQE:StartPeriodicChecks() to run after combat finishes
 		- Added flag to avoid multi clicking the "W" button when stepIndex was 1, but that stepIndex required multi steps (such as the step requiring killing 12 bears before advancing to stepIndex 2)
+		- Check added to make sure quest is being supertracked before attempting to click the "W" button
+
+	DebugLog.lua
+		- Removed debug print when DebugLog is cleared
 
 	EventManager.lua
 		- Added functionality to UNIT_INVENTORY_CHANGED and PLAYER_ENTERING_WORLD to run RQE:StartPeriodicChecks() as long as player isn't in combat
 		- Removed RQE:ClickWaypointButtonForIndex(1) from RQE.handleSuperTracking() as this was overriding the waypoint location of what is specified in the DB when step 1 waypoint location differs from the waypoint under the "W" Button
 		- Removed set to Waypoint Step One after SUPER_TRACKING_CHANGED as this might interfere with method to properly set stepIndex
 		- Moved RQE:StartPeriodicChecks() into  nested check to first see if something was being supertracked in the PLAYER_ENTERING_WORLD event
-		- Updates player coordinates (above RQEFrame) after PLAYER_MOUNT_DISPLAY_CHANGED (mounting/dismounting), PLAYER_CONTROL_GAINED (post-taxi), & UPDATE_INSTANCE_INFO events (such as new dungeon/jumping into the Maw)
+		- Updates player coordinates (above RQEFrame) after PLAYER_MOUNT_DISPLAY_CHANGED (mounting/dismounting), PLAYER_CONTROL_GAINED (post-taxi with slight delay), & UPDATE_INSTANCE_INFO events (such as new dungeon/jumping into the Maw)
 		- Updates player mapID (above RQEFrame) after UPDATE_INSTANCE_INFO event
 		- Added BAG_NEW_ITEMS_UPDATED to better handle for CheckDBInventory check in DB
 		- Set RQE:StartPeriodicChecks() to run after combat finishes
@@ -37,6 +40,9 @@
 		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
 		- Modified questID 29509 to include CheckDBInventory for cleaner macros
 		- Updated waypoints, macros, etc for Maw and some Bastion campaign quests in DB
+
+	RQEFrame.lua
+		- Modified totalHeight of the RQEFrame content to handle larger numbers of quest steps
 
 	QuestingModule.lua
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
