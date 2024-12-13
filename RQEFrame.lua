@@ -1725,7 +1725,7 @@ end
 function RQE:UpdateContentSize()
 	local n = #self.StepsText	-- The number of steps
 	--local totalHeight = 5 + (2 * n) + 8 * (n - 1)
-	local totalHeight = 110 + (35 * n) + (35 * n) + 35 * (n - 1)
+	local totalHeight = 110 + (40 * n) + (40 * n) + 40 * (n - 1) + 25
 	content:SetHeight(totalHeight)
 	slider:SetMinMaxValues(0, content:GetHeight())
 end
