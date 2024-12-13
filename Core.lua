@@ -1781,6 +1781,9 @@ end
 
 -- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
 function RQE.CheckAndClickWButton()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then return end
+
 	if InCombatLockdown() then
 		RQE.CheckNClickWButtonAfterCombat = true
 		return
@@ -1837,7 +1840,6 @@ function RQE.CheckAndClickWButton()
 				end
 
 				if RQE.CheckClickWButtonPossible and RQE.AddonSetStepIndex == 1 then
-					print("RQE.AddonSetStepIndex == 1")
 					if not RQE.GreaterThanOneProgress then
 						RQE:ClickWaypointButtonForIndex(1)
 						RQE.CheckClickWButtonPossible = false
@@ -4659,11 +4661,6 @@ function RQE:StartPeriodicChecks()
 
 	-- Early return if no quest is super-tracked
 	if not RQE.IsQuestSuperTracked() then
-		return
-	end
-
-	if InCombatLockdown() then
-		RQE.StartPeriodicAfterCombat = true
 		return
 	end
 
