@@ -4282,8 +4282,8 @@ function RQEMacro:CreateMacroForCurrentStep()
 
 	RQE.isCheckingMacroContents = false
 
-	-- Clears the RQEMacro before creating a fresh one
-	RQEMacro:ClearMacroContentByName("RQE Macro")
+	-- -- Clears the RQEMacro before creating a fresh one	-- keeping this in place resulted in the macro being cleared too frequently and sometimes being left empty at those inappropriate times
+	-- RQEMacro:ClearMacroContentByName("RQE Macro")
 
 	-- Retrieve the quest data from the database
 	local questData = RQE.getQuestData(questID)
