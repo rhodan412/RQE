@@ -11,6 +11,7 @@
 		- Modified code within RQE.CheckAndClickWButton() to only fire in more specific circumstances by adding a flag
 		- Added flag to avoid multi clicking the "W" button when stepIndex was 1, but that stepIndex required multi steps (such as the step requiring killing 12 bears before advancing to stepIndex 2)
 		- Check added to make sure quest is being supertracked before attempting to click the "W" button
+		- Removed a RQEMacro:ClearMacroContentByName("RQE Macro") as this was resulting in macro clearing at inappropriate times
 
 	DebugLog.lua
 		- Removed debug print when DebugLog is cleared
@@ -26,6 +27,7 @@
 		- Set RQE:StartPeriodicChecks() to run after combat finishes
 		- Added call to update mapID and coordinates to area above RQEFrame on zone change
 		- Added flags for click of the "W" button within the RQEFrame so that it fires at more appropriate times and nixing much of the potential redundancy (including one that checks numfullfilled vs required to avoid clicking button multiple times when the stepIndex remains at 1)
+		- Added function to close the RQEFrame and RQEQuestFrame and show the Blizzard Objective Tracker so that players could use run macro to complete quests that were completed via the Blizzard Objective Tracker
 
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
@@ -40,12 +42,16 @@
 		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
 		- Modified questID 29509 to include CheckDBInventory for cleaner macros
 		- Updated waypoints, macros, etc for Maw and some Bastion campaign quests in DB
+		- Updated Bastion, Maldraxxus, Ardenweald and Revendreth leveling campaign quests to DB
 
 	RQEFrame.lua
 		- Modified totalHeight of the RQEFrame content to handle larger numbers of quest steps
 
 	QuestingModule.lua
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
+
+	WPUtil.lua
+		- Commented out/removed code that dealt with opening the quest details/map when determing coordinates for quest (this is no longer needed as the DB will contain most of these waypoints and keeping this was resulting in complication of the map opening at inappropriate times.
 
 
 11.0.5.2 (2024-11-26)
