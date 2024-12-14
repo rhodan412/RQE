@@ -64,10 +64,10 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 		if not RQE.posX or not RQE.posY then
 			if not isMapOpen and RQE.superTrackingChanged then
 				-- If coordinates are not available, attempt to open the quest log to get them
-				OpenQuestLogToQuestDetails(questID)
-				if not isMapOpen then
-					WorldMapFrame:Hide()
-				end
+				--OpenQuestLogToQuestDetails(questID)
+				-- if not isMapOpen then
+					-- WorldMapFrame:Hide()
+				-- end
 			end
 		end
 
@@ -114,7 +114,7 @@ function RQE:GetStepCoordinates(stepIndex)
 			end
 		elseif (not RQE.DatabaseSuperX and RQE.DatabaseSuperY) or (not RQE.superX or not RQE.superY and RQE.superMapID) then
 			-- Open the quest log details for the super tracked quest to fetch the coordinates
-			OpenQuestLogToQuestDetails(questID)
+			--OpenQuestLogToQuestDetails(questID)
 
 			-- Use RQE.GetQuestCoordinates to get the coordinates
 			x, y, mapID = RQE.GetQuestCoordinates(questID)
