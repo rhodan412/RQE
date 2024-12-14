@@ -55,6 +55,18 @@ function HideObjectiveTracker()
 end
 
 
+-- Function to Hide the RQE Tracker and display the Blizzard Objective Tracker for quests that require Blizzard's Tracker to complete or accept quest
+function RQE:BlizzObjectiveTracker()
+	RQE.ToggleBothFramesfromLDB()
+
+	C_Timer.After(0.5, function()
+		RQE:ToggleObjectiveTracker()
+	end)
+
+	RQE.ReEnableRQEFrames = true
+end
+
+
 -- Function to Display or Hide the Objective Tracker
 function RQE:ToggleObjectiveTracker()
 	if RQE.db.profile.toggleBlizzObjectiveTracker then
@@ -1129,6 +1141,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
+	RQE.ReEnableRQEFrames = false
 	RQE.ShapeshiftUpdated = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
@@ -3551,6 +3564,13 @@ end
 function RQE.handleQuestComplete()
 	-- Reset Flag for printing schematics when quest accepted
 	RQE.alreadyPrintedSchematics = false
+
+	if RQE.ReEnableRQEFrames then
+		C_Timer.After(2.5, function()
+			RQE.ToggleBothFramesfromLDB()
+		end)
+		RQE.ReEnableRQEFrames = false
+	end
 
 	local extractedQuestID
 
