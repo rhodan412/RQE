@@ -1,5 +1,8 @@
 11.0.7.2
 
+	*HIGHLIGHTS*
+		- Fix for hiding or closing RQE Frames, Hide Frames option in right click frame menu, and fix for Blizz Objective Tracker not showing up on press of LDB
+
 	Buttons.lua
 		- Added setting to 'check' the enableFrame or enableQuestFrame when closing one of the frames with the "x" or close button
 
