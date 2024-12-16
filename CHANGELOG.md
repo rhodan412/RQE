@@ -6,6 +6,10 @@
 	Buttons.lua
 		- Added setting to 'check' the enableFrame or enableQuestFrame when closing one of the frames with the "x" or close button
 
+	Core.lua
+		- Updated C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) to be C_TaskQuest.GetQuestsOnMap(uiMapID) as the old was deprecated with patch 11.0.5 and will be removed in patch 12.0, being replaced by the new API variant
+		- Updated GetMerchantItemInfo(index) to be C_MerchantFrame.GetItemInfo(index) as the old was deprecated with patch 11.0.5 and will be removed in patch 12.0, being replaced by the new API variant
+		
 	EventManager.lua
 		- Added function that temporarily hides the RQEFrame and RQEQuestFrame for 10 seconds on right-click menu in these frames
 
@@ -14,6 +18,7 @@
 
 	RQEDatabase.lua
 		- Added additional Battle For Azeroth (alliance) quests to DB
+		- Added some Twilight Highlands (Cataclysm/Alliance) quests to DB
 
 	RQEFrame.lua
 		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame for 10 seconds
