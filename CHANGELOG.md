@@ -1,4 +1,4 @@
-11.0.5.3
+11.0.7.1 (12-15-2024)
 
 	Config.lua
 		- Modified the supertracking toggles to be independent of each other and also added additional tooltip info for enableNearestSuperTrack
@@ -29,6 +29,9 @@
 		- Added flags for click of the "W" button within the RQEFrame so that it fires at more appropriate times and nixing much of the potential redundancy (including one that checks numfullfilled vs required to avoid clicking button multiple times when the stepIndex remains at 1)
 		- Added function to close the RQEFrame and RQEQuestFrame and show the Blizzard Objective Tracker so that players could use run macro to complete quests that were completed via the Blizzard Objective Tracker
 
+	RQE.toc
+		- Update version# with the upcoming release of patch 11.0.7
+
 	RQEDatabase.lua
 		- Removal of quest data not currently in the DB
 		- Added side quests of Bastion, Maldraxxus, Ardenweald, and Revendreth to DB
@@ -43,6 +46,7 @@
 		- Modified questID 29509 to include CheckDBInventory for cleaner macros
 		- Updated waypoints, macros, etc for Maw and some Bastion campaign quests in DB
 		- Updated Bastion, Maldraxxus, Ardenweald and Revendreth leveling campaign quests to DB
+		- Added many of the initial quests for Battle for Azeroth to the DB
 
 	RQEFrame.lua
 		- Modified totalHeight of the RQEFrame content to handle larger numbers of quest steps
@@ -51,7 +55,7 @@
 		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
 
 	WPUtil.lua
-		- Commented out/removed code that dealt with opening the quest details/map when determing coordinates for quest (this is no longer needed as the DB will contain most of these waypoints and keeping this was resulting in complication of the map opening at inappropriate times.
+		- Commented out/removed code that dealt with opening the quest details/map when determining coordinates for quest (this is no longer needed as the DB will contain most of these waypoints and keeping this was resulting in complication of the map opening at inappropriate times.
 
 
 11.0.5.2 (2024-11-26)
