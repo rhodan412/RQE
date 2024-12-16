@@ -195,6 +195,7 @@ local eventsToRegister = {
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
+	--"PLAYER_REGEN_DISABLED",
 	"PLAYER_REGEN_ENABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
@@ -305,6 +306,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerMountDisplayChanged,
+		--PLAYER_REGEN_DISABLED = RQE.handlePlayerRegenDisabled,
 		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
@@ -813,6 +815,13 @@ function RQE.handleUnitInventoryChange(...)
 			end
 		end
 	end
+end
+
+
+-- Function that handles PLAYER_REGEN_DISABLED event
+-- Fired whenever you enter combat, as normal regen rates are disabled during combat. This means that either you are in the hate list of a NPC or that you've been taking part in a pvp action (either as attacker or victim). 
+function RQE.handlePlayerRegenDisabled()
+	-- Bits of code for handling code during combat
 end
 
 
