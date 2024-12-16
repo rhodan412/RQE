@@ -859,6 +859,14 @@ RQE.RQEQuestFrame:SetScript("OnDragStop", function()
 end)
 
 
+-- Right-Click Event Logic
+RQE.RQEQuestFrame:SetScript("OnMouseUp", function(self, button)
+	if button == "RightButton" then
+		ShowDropdownRQEQuestFrame()
+	end
+end)
+
+
 -- Define the function to save frame position
 function SaveQuestFramePosition()
 	local point, relativeTo, relativePoint, xOfs, yOfs = RQE.RQEQuestFrame:GetPoint()
@@ -1241,9 +1249,17 @@ function ShowQuestDropdown(self, questID)
 
 		rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 		rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 	end)
 end
 
+
+-- Function to Show Right-Click Dropdown Menu
+function ShowDropdownRQEQuestFrame(self)
+	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
+	end)
+end
 
 -------------------------------
 -- 8. Scenario Frame Handling
