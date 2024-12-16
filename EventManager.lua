@@ -67,6 +67,19 @@ function RQE:BlizzObjectiveTracker()
 end
 
 
+-- Function to Hide the RQE Tracker and display the Blizzard Objective Tracker for quests that require Blizzard's Tracker to complete or accept quest
+function RQE:TempBlizzObjectiveTracker()
+	RQE.ToggleBothFramesfromLDB()
+
+	C_Timer.After(0.5, function()
+		RQE:ToggleObjectiveTracker()
+	end)
+
+	C_Timer.After(10, function()
+		RQE.ToggleBothFramesfromLDB()
+	end)
+end
+
 -- Function to Display or Hide the Objective Tracker
 function RQE:ToggleObjectiveTracker()
 	if RQE.db.profile.toggleBlizzObjectiveTracker then
