@@ -99,8 +99,24 @@ function ShowQuestDropdownRQEFrame(self, questID)
 
 		rootDescription:CreateButton("Stop Tracking", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
 		rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
+
+		local uiMapID = C_Map.GetBestMapForUnit("player")
+		local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
+		if questLineInfo and questLineInfo.questLineID then
+			rootDescription:CreateButton("Print Questline", function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end)
+		end
+
 		rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 		rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
+	end)
+end
+
+
+-- Function to Show Right-Click Dropdown Menu
+function ShowDropdownRQEFrame(self)
+	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 	end)
 end
 
@@ -280,9 +296,10 @@ end)
 
 -- Right-Click Event Logic
 RQEFrame:SetScript("OnMouseUp", function(self, button)
-	-- if button == "RightButton" then
+	if button == "RightButton" then
 		-- EasyMenu(frameMenu, menuFrame, "cursor", 0 , 0, "MENU")
-	-- end
+		ShowDropdownRQEFrame()
+	end
 end)
 
 
