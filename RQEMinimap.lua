@@ -131,6 +131,12 @@ function RQE.ToggleBothFramesfromLDB()
 		RQE.db.profile.enableQuestFrame = false
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
+
+		C_Timer.After(0.5, function()
+			if RQE.db.profile.toggleBlizzObjectiveTracker then
+				RQE:ToggleObjectiveTracker()
+			end
+		end)
 	else
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
