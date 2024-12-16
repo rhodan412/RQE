@@ -1,3 +1,25 @@
+11.0.7.2
+
+	Buttons.lua
+		- Added setting to 'check' the enableFrame or enableQuestFrame when closing one of the frames with the "x" or close button
+
+	EventManager.lua
+		- Added function that temporarily hides the RQEFrame and RQEQuestFrame for 10 seconds on right-click menu in these frames
+
+	QuestingModule.lua
+		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame
+
+	RQEDatabase.lua
+		- Added additional Battle For Azeroth (alliance) quests to DB
+
+	RQEFrame.lua
+		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame for 10 seconds
+		- Added option to Print Questline (if available) by right-clicking on quest in this frame
+	
+	RQEMinimap.lua
+		- Fixed issue where closing the frames from the LDB button resulted in the Blizzard Objective Tracker not being displayed
+
+
 11.0.7.1 (12-15-2024)
 
 	Config.lua
