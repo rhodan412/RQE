@@ -54,7 +54,6 @@ end
 ---------------------------
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
---local icon = LibStub("LibDBIcon-1.0", true)	-- commenting out as this was displaying a second button anchored to the minimap
 
 -- Updated LDB Button OnClick Function
 local RQEdataBroker = ldb:NewDataObject("RQE", {
@@ -140,17 +139,15 @@ function RQE.ToggleBothFramesfromLDB()
 	else
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		--if RQE.db.profile.enableFrame then
-			RQEFrame:Show()
-			RQE.db.profile.enableFrame = true
-			if RQE.MagicButton then
-				RQE.MagicButton:Show()
-			end
-		--end
-		--if RQE.db.profile.enableQuestFrame then
-			RQE.RQEQuestFrame:Show()
-			RQE.db.profile.enableQuestFrame = true
-		--end
+		RQEFrame:Show()
+		RQE.db.profile.enableFrame = true
+
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
+
+		RQE.RQEQuestFrame:Show()
+		RQE.db.profile.enableQuestFrame = true
 		RQE.isRQEFrameManuallyClosed = false
 		RQE.isRQEQuestFrameManuallyClosed = false
 		RQE.Buttons.UpdateMagicButtonVisibility()

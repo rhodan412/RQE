@@ -598,14 +598,6 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
 	end
 end
 
--- function UpdateFrameAnchors()
-	-- RQE.UpdateCampaignFrameAnchor()
-	-- UpdateQuestsFrameAnchor(RQE.lastCampaignElement)
-	-- UpdateWorldQuestsFrameAnchor(RQE.lastQuestElement, RQE.lastCampaignElement)
-	-- UpdateBonusObjectivesFrameAnchor(RQE.lastWorldQuestElement, RQE.lastQuestElement, RQE.lastCampaignElement)
-	-- UpdateAchievementsFrameAnchor(RQE.lastBonusQuestElement, RQE.lastWorldQuestElement, RQE.lastQuestElement, RQE.lastCampaignElement)
--- end
-
 
 -- Update the Campaign frame anchor dynamically based on the state of the ScenarioChild being is present or not
 function RQE.UpdateCampaignFrameAnchor()
@@ -621,206 +613,6 @@ function RQE.UpdateCampaignFrameAnchor()
 end
 
 
--- -- Function to update the anchor points for the RQE.QuestsFrame
--- function UpdateQuestsFrameAnchor(lastCampaignElement)
-	-- -- Clear any previous anchor points to avoid conflicts
-	-- RQE.QuestsFrame:ClearAllPoints()
-
-	-- -- Check if lastCampaignElement is available and not nil
-	-- if RQE.lastCampaignElement then
-		-- -- Anchor to the lastCampaignElement
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.lastCampaignElement, "BOTTOMLEFT", -40, -25)
-	-- elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-		-- -- If no lastCampaignElement but CampaignFrame is available and shown, anchor to it
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -25)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- -- If CampaignFrame is not available but ScenarioChildFrame is shown, anchor to ScenarioChildFrame
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- -- If none of the frames are available, anchor directly to the content
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
-
--- -- Function to update the anchor points for the RQE.WorldQuestsFrame
--- function UpdateWorldQuestsFrameAnchor(lastQuestElement, lastCampaignElement)
-	-- -- Clear any previous anchor points to avoid conflicts
-	-- RQE.WorldQuestsFrame:ClearAllPoints()
-
-	-- -- First priority: anchor to lastQuestElement if available and QuestsFrame is shown
-	-- if RQE.lastQuestElement and RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.lastQuestElement, "BOTTOMLEFT", -40, -25)
-	-- elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -25)
-	-- elseif RQE.lastCampaignElement then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.lastCampaignElement, "BOTTOMLEFT", -40, -25)
-	-- elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -25)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
-
--- -- Function to update the anchor points for the RQE.BonusObjectivesFrame
--- function UpdateBonusObjectivesFrameAnchor(lastWorldQuestElement, lastQuestElement, lastCampaignElement)
-	-- -- Clear any previous anchor points to avoid conflicts
-	-- RQE.BonusObjectivesFrame:ClearAllPoints()
-
-	-- -- First priority: anchor to lastWorldQuestElement if available and WorldQuestsFrame is shown
-	-- if lastWorldQuestElement and RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif lastQuestElement then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif lastCampaignElement then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -15)
-	-- else
-		-- RQE.BonusObjectivesFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
-
--- -- Function to update the anchor points for the RQE.AchievementsFrame
--- function UpdateAchievementsFrameAnchor(lastBonusQuestElement, lastWorldQuestElement, lastQuestElement, lastCampaignElement)
-	-- -- Clear any previous anchor points to avoid conflicts
-	-- RQE.AchievementsFrame:ClearAllPoints()
-
-	-- -- First priority: anchor to lastBonusQuestElement if available and BonusObjectivesFrame is shown
-	-- if lastBonusQuestElement and RQE.BonusObjectivesFrame and RQE.BonusObjectivesFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastBonusQuestElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.BonusObjectivesFrame and RQE.BonusObjectivesFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusObjectivesFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif lastWorldQuestElement and RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif lastQuestElement then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif lastCampaignElement then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -15)
-	-- else
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
-
--- -- Make the function global or move it outside where it is defined so it can be accessed by UpdateFrameAnchors
--- function ResetChildFramesToDefault()
-	-- -- CampaignFrame positioning
-	-- if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- RQE.CampaignFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
-
-	-- -- QuestsFrame positioning
-	-- if RQE.CampaignFrame:IsShown() then
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
-
-	-- -- WorldQuestsFrame positioning
-	-- if RQE.QuestsFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.CampaignFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
-
-	-- -- AchievementsFrame positioning
-	-- if RQE.WorldQuestsFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.QuestsFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-	-- elseif RQE.CampaignFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
-
--- -- Adjust Set Point Anchor of Child Frames based on LastElements
--- function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
-	-- -- Reset positions to default first
-	-- ResetChildFramesToDefault()
-
-	-- -- Adjusting Quests child frame position based on last campaign element
-	-- if lastCampaignElement then
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
-	-- elseif not RQE.CampaignFrame:IsShown() and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- -- If there are no campaign quests but ScenarioChildFrame is shown
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- elseif not RQE.CampaignFrame:IsShown() then
-		-- -- If there are no campaign quests, anchor QuestsFrame to content
-		-- RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
-
-	-- -- Adjusting World Quests child frame position based on last campaign element
-	-- if lastQuestElement then
-		-- -- If there's a last element in the regular quests frame, anchor to it
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
-	-- elseif lastCampaignElement then
-		-- -- If there's no last regular quest element but a last campaign element, anchor to it
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
-	-- elseif RQE.CampaignFrame:IsShown() and not lastCampaignElement then
-		-- -- If the Campaign frame is shown but there's no last campaign element, anchor to the Campaign frame
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
-	-- elseif RQE.QuestsFrame:IsShown() and not lastQuestElement then
-		-- -- If the Quests frame is shown but there's no last quest element, anchor to the Quests frame
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
-	-- elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-		-- -- If the ScenarioChildFrame is shown, anchor to it
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-	-- else
-		-- -- If neither Campaign nor Regular Quests frames have elements, anchor to the content
-		-- RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
-
-	-- -- Adjust AchievementsFrame position based on the presence of WorldQuest elements
-	-- if RQE.BonusObjectivesFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusObjectivesFrame, "BOTTOMLEFT", 0, -15)
-	-- elseif RQE.WorldQuestsFrame:IsShown() and lastWorldQuestElement then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", -40, -15)
-	-- elseif not RQE.WorldQuestsFrame:IsShown() and lastQuestElement then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
-	-- elseif not RQE.WorldQuestsFrame:IsShown() and lastCampaignElement then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
-	-- elseif RQE.WorldQuestsFrame:IsShown() or RQE.QuestsFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame or RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
-	-- elseif RQE.ScenarioChildFrame:IsShown() then
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -15)
-	-- else
-		-- RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-	-- end
--- end
-
-
 ---------------------------
 -- 5. Button Creation
 ---------------------------
@@ -832,13 +624,13 @@ RQE.Buttons.CreateQuestMinimizeButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQ
 RQE.Buttons.CreateQuestFilterButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQE.QToriginalHeight, RQE.QTcontent, RQE.QTScrollFrame, RQE.QMQTslider)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.CQButton(RQE.RQEQuestFrame) --, "TOPLEFT")
+RQE.Buttons.CQButton(RQE.RQEQuestFrame)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.HQButton(RQE.RQEQuestFrame) --, "TOPLEFT")
+RQE.Buttons.HQButton(RQE.RQEQuestFrame)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
-RQE.Buttons.ZQButton(RQE.RQEQuestFrame) --, "TOPLEFT")
+RQE.Buttons.ZQButton(RQE.RQEQuestFrame)
 
 
 ---------------------------
@@ -1192,7 +984,7 @@ function GatherAndSortBonusQuestsByProximity()
 	-- end
 
 	-- -- Gather Bonus Objectives from the current map
-	-- local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(currentMapID) -- Fetch tasks for the current map
+	-- local taskPOIs = C_TaskQuest.GetQuestsOnMap(currentMapID) -- Fetch tasks for the current map		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 	-- local closestBonusQuest = nil
 	-- local closestDistanceSq = math.huge
 
@@ -2295,9 +2087,6 @@ function UpdateRQEQuestFrame()
 
 	RQE.RQEQuestFrame.questTitles = RQE.RQEQuestFrame.questTitles or {}
 
-	-- Get the number of tracked quests
-	--local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-
 	-- Initialize the table to hold the QuestLogIndexButtons if it doesn't exist
 	RQE.QuestLogIndexButtons = RQE.QuestLogIndexButtons or {}
 
@@ -2307,57 +2096,57 @@ function UpdateRQEQuestFrame()
 	-- Create the Set Point for the Regular Quests Child Frame
 	if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
 		-- If CampaignFrame is present and shown, anchor QuestsFrame to CampaignFrame
-		RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.QuestsFrame:ClearAllPoints()
 		RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 		-- If CampaignFrame is not shown but ScenarioChildFrame is, anchor QuestsFrame to ScenarioChildFrame
-		RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.QuestsFrame:ClearAllPoints()
 		RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
 	else
 		-- If neither is present or shown, anchor QuestsFrame to content
-		RQE.QuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.QuestsFrame:ClearAllPoints()
 		RQE.QuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 	end
 
 	-- Create the Set Point for the World Quests Child Frame
 	if RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
 		-- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
-		RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.WorldQuestsFrame:ClearAllPoints()
 		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
 		-- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
-		RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.WorldQuestsFrame:ClearAllPoints()
 		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 		-- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
-		RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.WorldQuestsFrame:ClearAllPoints()
 		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
 	else
 		-- If no other frames are present or shown, anchor WorldQuestsFrame to content
-		RQE.WorldQuestsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.WorldQuestsFrame:ClearAllPoints()
 		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 	end
 
 	-- Create the Set Point for the World Quests Child Frame
 	if RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
 		-- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
-		RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.AchievementsFrame:ClearAllPoints()
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
 		-- If QuestsFrame is present and shown, anchor WorldQuestsFrame to QuestsFrame
-		RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.AchievementsFrame:ClearAllPoints()
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
 		-- If QuestsFrame is not shown but CampaignFrame is, anchor WorldQuestsFrame to CampaignFrame
-		RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.AchievementsFrame:ClearAllPoints()
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 		-- If none of the quest frames are shown but ScenarioChildFrame is, anchor WorldQuestsFrame to ScenarioChildFrame
-		RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.AchievementsFrame:ClearAllPoints()
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
 	else
 		-- If no other frames are present or shown, anchor WorldQuestsFrame to content
-		RQE.AchievementsFrame:ClearAllPoints()  -- Clear existing points
+		RQE.AchievementsFrame:ClearAllPoints()
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 	end
 
@@ -2423,22 +2212,6 @@ function UpdateRQEQuestFrame()
 				number:SetText(questIndex)
 				QuestLogIndexButton.number = number  -- Save for future reference
 
-				-- -- Set flag to check if correct macro
-				-- if RQE.RQEQuestFrame then
-					-- QuestLogIndexButton:SetScript("OnEnter", function()
-						-- -- Set the flag to true
-						-- RQE.hoveringOnFrame = true
-					-- end)
-				-- end
-
-				-- -- Hide tooltip for the RQEQuestFrame when moving out of the frame
-				-- if RQE.RQEQuestFrame then
-					-- QuestLogIndexButton:SetScript("OnLeave", function()
-						-- GameTooltip:Hide()
-						-- RQE.hoveringOnFrame = false
-					-- end)
-				-- end
-
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
 					-- -- Check if the player is in combat
@@ -2466,10 +2239,6 @@ function UpdateRQEQuestFrame()
 						-- Refresh the UI here to update the button state
 						UpdateRQEQuestFrame()
 					else
-						--RQE.lastKnownInventory = {}
-						--RQE.OverrideHasProgress = true
-						--RQE.AutoWaypointHasBeenClicked = false
-
 						if RQE.hoveringOnFrame then
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
@@ -2481,9 +2250,6 @@ function UpdateRQEQuestFrame()
 							end
 
 							RQE:StartPeriodicChecks()
-							-- if RQE.shouldCheckFinalStep then
-								-- RQE.shouldCheckFinalStep = false
-							-- end
 						end
 
 						C_Map.ClearUserWaypoint()
@@ -3197,7 +2963,6 @@ function UpdateRQEWorldQuestFrame()
 			WQuestTimeLeft:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQuestTimeLeft:SetTextColor(0.98, 0.5, 0.45)  -- Set the text color to Salmon
 			WQuestTimeLeft:SetJustifyH("LEFT")
-			--WQuestTimeLeft:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 45)
 			WQuestLogIndexButton.WQuestTimeLeft = WQuestTimeLeft
 
 			-- Get the time left for the World Quest
@@ -3221,7 +2986,6 @@ function UpdateRQEWorldQuestFrame()
 			WQuestDistance:SetPoint("TOPLEFT", WQuestTimeLeft, "BOTTOMLEFT", 0, -5)
 			WQuestDistance:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQuestDistance:SetJustifyH("LEFT")
-			--WQuestDistance:SetWidth(RQE.WorldQuestsFrame:GetWidth() - 65)
 			WQuestDistance:SetText(questDistanceText)
 			WQuestLogIndexButton.WQuestDistance = WQuestDistance
 			WQuestDistance:Show()
@@ -3534,7 +3298,6 @@ function UpdateRQEAchievementsFrame()
 			achievementHeader:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
 			achievementHeader:SetText("[" .. id .. "] " .. name)
 			achievementHeader:SetTextColor(1, 0.5, 0.3) -- Tan color for the achievement ID and name
-			--achievementHeader:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
 			achievementHeader:SetJustifyH("LEFT")
 			RQE.AchievementHeader = achievementHeader  -- Save for future reference
 
@@ -3600,7 +3363,6 @@ function UpdateRQEAchievementsFrame()
 
 				-- Create a FontString for each criteria
 				local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				--criteriaText:SetWidth(RQE.AchievementsFrame:GetWidth() - textPadding)
 				criteriaText:SetWidth(availableWidth)
 				criteriaText:SetJustifyH("LEFT")
 				criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
@@ -3625,7 +3387,6 @@ function UpdateRQEAchievementsFrame()
 
 	-- After creating each new FontString, insert it into RQE.AchievementsIDWidgets:
 	table.insert(RQE.AchievementsIDWidgets, RQE.AchievementHeader)
-	--table.insert(RQE.AchievementsIDWidgets, achievementHeader)
 
 	-- Check if any achievements in the Achievement Frame are being tracked/watched
 	RQE.AchievementsFrame:SetShown(RQE.AchievementsFrame.achieveCount > 0)

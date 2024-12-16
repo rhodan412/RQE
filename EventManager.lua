@@ -385,7 +385,7 @@ function RQE.handleAchievementTracking(...)
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventAchievementEarned and RQE.db.profile.showArgPayloadInfo then
-		local args = {...}  -- Capture all arguments into a table
+		local args = {...}
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
 				print("Arg " .. i .. ": (table)")
@@ -563,7 +563,6 @@ function RQE.handleItemCountChanged(...)
 			if questData then
 				if RQE.LastClickedButtonRef == nil then return end
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 
 				-- Ensure stepIndex is within the bounds of questData
 				if stepIndex >= 1 and stepIndex <= #questData then
@@ -676,7 +675,6 @@ function RQE.ReagentBagUpdate(...)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
 			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			if stepData then
@@ -684,10 +682,8 @@ function RQE.ReagentBagUpdate(...)
 				local neededAmounts = stepData.neededAmt or {}
 				local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
 				if stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory") then
-				-- if stepData.failedfunc == "CheckDBInventory" then
 					local previousStepData = questData[stepIndex - 1]
 					if previousStepData and previousStepData.funct and string.find(previousStepData.funct, "CheckDBZoneChange") then
-					-- if previousStepData.funct == "CheckDBZoneChange" then
 						local currentMapID = C_Map.GetBestMapForUnit("player")
 						local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
@@ -722,7 +718,6 @@ function RQE.handleMerchantUpdate()
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
 			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-			--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 			local stepData = questData[stepIndex]
 
 			-- Validate that stepData exists before continuing
@@ -735,10 +730,8 @@ function RQE.handleMerchantUpdate()
 			local neededAmounts = stepData.neededAmt or {}
 			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
 			if stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory") then
-			-- if stepData.failedfunc == "CheckDBInventory" then
 				local previousStepData = questData[stepIndex - 1]
 				if previousStepData and previousStepData.funct and string.find(previousStepData.funct, "CheckDBZoneChange") then
-				-- if previousStepData.funct == "CheckDBZoneChange" then
 					local currentMapID = C_Map.GetBestMapForUnit("player")
 					local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
@@ -806,10 +799,8 @@ function RQE.handleUnitInventoryChange(...)
 			local neededAmounts = stepData.neededAmt or {}
 			local failedIndex = stepData.failedIndex or stepIndex  -- Default to current step if no failedIndex is provided
 			if stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory") then
-			-- if stepData.failedfunc == "CheckDBInventory" then
 				local previousStepData = questData[stepIndex - 1]
 				if previousStepData and previousStepData.funct and string.find(previousStepData.funct, "CheckDBZoneChange") then
-				-- if previousStepData.funct == "CheckDBZoneChange" then
 					local currentMapID = C_Map.GetBestMapForUnit("player")
 					local requiredMapIDs = previousStepData.check  -- This should be a list of mapIDs
 
@@ -912,41 +903,9 @@ function RQE.handlePlayerRegenEnabled()
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5)
 		end
 
-		-- C_Timer.After(0.3, function()
-			-- if not C_Scenario.IsInScenario() then
-				-- local isFlying = IsFlying("player")
-				-- local isMounted = IsMounted()
-				-- local onTaxi = UnitOnTaxi("player")
-
-				-- if not IsFlying and not isMounted and not onTaxi then
-
-					-- -- Get the macro index for 'RQE Macro'
-					-- local macroIndex = GetMacroIndexByName("RQE Macro")
-
-					-- -- If the macro exists, retrieve its content
-					-- if macroIndex > 0 then
-						-- local _, _, macroBody = GetMacroInfo(macroIndex)
-
-						-- -- Check if the macro body has content
-						-- if macroBody and macroBody == "" then
-							-- RQE.isCheckingMacroContents = true
-							-- RQEMacro:CreateMacroForCurrentStep()
-							-- C_Timer.After(0.2, function()
-								-- RQE.isCheckingMacroContents = false
-							-- end)
-						-- end
-					-- end
-				-- end
-			-- end
-		-- end)
-
-		--C_Timer.After(0.5, function()
-			--RQE:StartPeriodicChecks() -- might need to comment section out if too much lag after combat (mount changes seem good)
-			--RQE:CheckAndAdvanceStep(questID)
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
-				DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.65, 0.5)
-			end
-		--end)
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
+			DEFAULT_CHAT_FRAME:AddMessage("Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.65, 0.5)
+		end
 	else
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: autoClickWaypointButton is disabled.", 1, 0.65, 0.5)
@@ -1083,39 +1042,7 @@ function RQE.handlePlayerLogin()
 		end
 	end
 
-	-- -- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-	-- if RQE.db.profile.enableNearestSuperTrack then
-		-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		-- if not isSuperTracking then
-			-- local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
-			-- if closestQuestID then
-				-- C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerLogin then
-					-- DEFAULT_CHAT_FRAME:AddMessage("PL 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)
-				-- end
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerLogin then
-					-- DEFAULT_CHAT_FRAME:AddMessage("PL 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)
-				-- end
-			-- end
-		-- end
-		-- -- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-		-- if RQEFrame and not not RQEFrame:IsMouseOver() then
-			-- RQE.ScrollFrameToTop()
-		-- end
-		-- RQE.FocusScrollFrameToTop()
-	-- end
-
-	-- if RQE.MagicButton then
-		RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
-	-- end
-
-	-- -- Resets frame back to default -- currently is bugged as it will sometimes on /reload move the location of the RQEFrame to the upper right corner of the screen outside of the view of the player
-	-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-		-- RQE:ResetFramePositionToDBorDefault()
-		-- RQE:ResetQuestFramePositionToDBorDefault()
-	-- end
-
+	RQE:SetupOverrideMacroBinding()  -- Set the key binding using the created MagicButton
 	RQE:ReapplyMacroBinding()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE.UntrackAutomaticWorldQuests()
@@ -1135,7 +1062,7 @@ end
 function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	-- Only proceed if RQE is the addon being loaded
 	if addonName == "RQE" then
-		-- RQE.infoLog("ADDON_LOADED for Rhodan's Quest Explorer")
+		RQE.infoLog("ADDON_LOADED for Rhodan's Quest Explorer")
 	else
 		return
 	end
@@ -1276,10 +1203,7 @@ function RQE.handleBossKill(...)
 			DEFAULT_CHAT_FRAME:AddMessage("ENCOUNTER_END event triggered: EncounterID: " .. tostring(encounterID) .. ", Encounter Name: " .. tostring(encounterName) .. ", DifficultyID: " .. difficultyID .. ", Group Size: " .. tostring(groupSize) .. ", Success Check: " .. tostring(success), 0, 1, 0)  -- Bright Green
 		end
 	end
-
-	--RQE.canUpdateFromCriteria = true
 end
-
 
 
 -- Function to handle LFG_LIST_ACTIVE_ENTRY_UPDATE event
@@ -1340,7 +1264,6 @@ function RQE.handleScenarioComplete(...)
 		DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)  -- Light purple with a slightly greater reddish hue
 	end
 
-	--RQE.saveScenarioData(RQE, event, questID, xp, money)
 	RQE.updateScenarioUI()
 end
 
@@ -1403,7 +1326,6 @@ function RQE.handleScenarioCriteriaUpdate(...)
 		DEFAULT_CHAT_FRAME:AddMessage("SCU Debug: " .. tostring(event) .. " triggered. Criteria ID: " .. tostring(criteriaID), 0.9, 0.7, 0.9)
 	end
 
-	--RQE.saveScenarioData(RQE, event, criteriaID)
 	RQE.scenarioCriteriaUpdate = true
 	RQE.updateScenarioCriteriaUI()
 
@@ -1633,12 +1555,6 @@ function RQE.handlePlayerStartedMoving()
 	local onTaxi = UnitOnTaxi("player")
 
 	if not IsFlying and not isMounted and not onTaxi then
-
-		-- -- Use the new ShouldClearMacro function to conditionally clear the macro when the player moves if it has contents and should be empty
-		-- if RQE:ShouldClearMacro("RQE Macro") then
-			-- RQEMacro:ClearMacroContentByName("RQE Macro")
-		-- end
-
 		C_Timer.After(0.3, function()
 			-- Get the macro index for 'RQE Macro'
 			local macroIndex = GetMacroIndexByName("RQE Macro")
@@ -2019,7 +1935,6 @@ function RQE.handlePlayerEnterWorld(...)
 
 	C_Timer.After(1, function()  -- Delay of 1 second
 		wipe(RQE.savedWorldQuestWatches)
-		--RQE:HandleSuperTrackedQuestUpdate()
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 07 Debug: Cleared saved World Quest watches.", 0.93, 0.51, 0.93)
 		end
@@ -2203,8 +2118,6 @@ function RQE.handleSuperTracking()
 
 		RQE.SuperTrackChangeToDifferentQuestOccurred = true
 
-		-- RQEMacro:ClearMacroContentByName("RQE Macro")
-
 		-- If autoClickWaypointButton is enabled, then clear the macro, create a new macro and click the appropriate waypoint button
 		if RQE.db.profile.autoClickWaypointButton then
 
@@ -2223,39 +2136,11 @@ function RQE.handleSuperTracking()
 			end)
 		end
 
-		-- -- Tier Three Importance: SUPER_TRACKING_CHANGED event	-- HANDLED AS PART OF STARTPERIODIC CALLED TOWARD BOTTOM OF FUNCTION
-		-- C_Timer.After(0.3, function()
-			-- RQE.CreateMacroForSuperTracking = true
-			-- RQE.isCheckingMacroContents = true
-			-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
-
-			-- C_Timer.After(1.2, function()
-				-- RQE.isCheckingMacroContents = false
-				-- RQE.CreateMacroForSuperTracking = false
-			-- end)
-		-- end)
-
 		-- Reset relevant variables
 		RQE.LastClickedIdentifier = nil
 		RQE.CurrentStepIndex = 1
 		RQE.AddonSetStepIndex = 1
 		RQE.LastClickedButtonRef = nil
-
-		-- Call the function to reset to step 1
-		--RQE:SetInitialWaypointToOne()
-
-		-- -- Tier Three Importance: SUPER_TRACKING_CHANGED event	-- HANDLED AS PART OF STARTPERIODIC CALLED TOWARD BOTTOM OF FUNCTION
-		-- C_Timer.After(0.8, function()
-			-- if RQE.db.profile.autoClickWaypointButton then
-				-- RQE.CreateMacroForSuperTracking = true
-				-- RQE.isCheckingMacroContents = true
-				-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if SUPER_TRACKING_CHANGED event fires (a second time)
-				-- C_Timer.After(3, function()
-					-- RQE.CreateMacroForSuperTracking = false
-					-- RQE.isCheckingMacroContents = false
-				-- end)
-			-- end
-		-- end)
 
 		-- Store the current quest ID for future reference
 		RQE.previousSuperTrackedQuestID = RQE.currentSuperTrackedQuestID
@@ -2313,7 +2198,6 @@ function RQE.handleSuperTracking()
 
 	-- Early return if manual super tracking wasn't performed
 	if not RQE.ManualSuperTrack then
-		--RQE:ShouldClearFrame()
 		return
 	end
 
@@ -2355,7 +2239,6 @@ function RQE.handleSuperTracking()
 			end
 		else
 			RQE.debugLog("questID is nil in SUPER_TRACKING_CHANGED event.")
-			--SortQuestsByProximity()
 		end
 
 		-- Handles width adjustment of RQEFrame if Super Track Change occurred following actual change from one quest to another or from nil to a quest
@@ -3073,17 +2956,6 @@ function RQE.handleUnitQuestLogChange(...)
 							end
 						end)
 
-						-- -- Tier Five Importance: UNIT_QUEST_LOG_CHANGED event
-						-- if RQE.db.profile.autoClickWaypointButton then
-							-- RQE.CreateMacroForUnitQuestLogChange = true
-							-- RQE.isCheckingMacroContents = true
-							-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if UNIT_QUEST_LOG_CHANGED event fires
-							-- C_Timer.After(3, function()
-								-- RQE.CreateMacroForUnitQuestLogChange = false
-								-- RQE.isCheckingMacroContents = false
-							-- end)
-						-- end
-
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Updating waypoint for UNIT_QUEST_LOG_CHANGED questID: " .. tostring(RQE.currentSuperTrackedQuestID))
 						end
@@ -3130,8 +3002,6 @@ function RQE.updateScenarioCriteriaUI()
 		return
 	end
 
-	-- RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called (called separately)
-
 	-- Check to see if player in scenario, if not it will end
 	if not C_Scenario.IsInScenario() then
 		if RQE.ScenarioChildFrame:IsVisible() then
@@ -3164,20 +3034,12 @@ function RQE.updateScenarioCriteriaUI()
 		return
 	end
 
-	-- if not RQE.canUpdateFromCriteria then
-		-- return  -- Skip processing if the flag is false
-	-- end
-
 	if C_Scenario.IsInScenario() then
 		if not RQE.ScenarioChildFrame:IsVisible() then
 			RQE.ScenarioChildFrame:Show()
 		end
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
-		--RQE.Timer_CheckTimers()
-		-- RQE.StopScenarioTimer()
-		-- RQE.StartScenarioTimer()
-		-- RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 	else
 		RQE.ScenarioChildFrame:Hide()
@@ -3197,7 +3059,6 @@ function RQE.updateScenarioCriteriaUI()
 	RQE:UpdateRQEFrameVisibility()
 	RQE:UpdateRQEQuestFrameVisibility()
 
-	--RQE.canUpdateFromCriteria = false
 	RQE.scenarioCriteriaUpdate = false	-- Flag that denotes if the event that was run prior to this was SCENARIO_CRITERIA_UPDATE
 end
 
@@ -3255,8 +3116,6 @@ function RQE.updateScenarioUI()
 		end
 		RQE.InitializeScenarioFrame()
 		RQE.UpdateScenarioFrame()
-		--RQE.Timer_CheckTimers()
-		--RQE.StopScenarioTimer()
 		RQE.StartScenarioTimer()
 		RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
@@ -3360,7 +3219,6 @@ function RQE.handleQuestStatusUpdate()
 	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 	if RQE.PlayerMountStatus == "Flying" or RQE.PlayerMountStatus ~= "Taxi" or RQE.PlayerMountStatus ~= "Dragonriding" then
-	--if not IsFlying("player") and not UnitOnTaxi("player") and not RQE.isDragonRiding then
 		C_Timer.After(0.7, function()
 			if questID then
 				if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then

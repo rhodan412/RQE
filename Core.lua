@@ -1357,10 +1357,6 @@ function RQE:ClearSeparateFocusFrame()
 	-- Ensure SeparateStepText exists
 	if not RQE.SeparateStepText then
 		RQE.InitializeSeparateFocusFrame()
-		-- RQE.SeparateStepText = RQE.SeparateFocusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-		-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 10, -10)
-		-- RQE.SeparateStepText:SetWidth(280)
-		-- RQE.SeparateStepText:SetWordWrap(true)
 	end
 
 	if RQE.SeparateStepText then
@@ -1864,148 +1860,6 @@ function RQE.CheckAndClickWButton()
 end
 
 
-
--- -- Static Data Update Function
--- function RQE.UpdateFrameStaticData(questID)
-	-- -- Retrieve the current super-tracked quest ID for debugging
-	-- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	-- local extractedQuestID
-	-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	-- end
-
-	-- -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
-	-- questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-
-	-- -- Adjust frame widths for layout
-	-- AdjustRQEFrameWidths()
-
-	-- -- Debug print the overridden questID and the content of RQE.QuestIDText
-	-- RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
-
-	-- -- Validate questID before proceeding
-	-- if not questID or type(questID) ~= "number" then
-		-- return
-	-- end
-
-	-- -- Update Quest ID Text
-	-- if RQE.QuestIDText then
-		-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
-	-- end
-
-	-- -- Fetch the quest title from quest data or the game API
-	-- local questName = questInfo and questInfo.title or C_QuestLog.GetTitleForQuestID(questID)
-	-- questName = questName or "N/A"  -- Default to "N/A" if no title is found
-
-	-- -- Update Quest Name Text
-	-- if RQE.QuestNameText then
-		-- RQE.QuestNameText:SetText("Quest Name: " .. questName)
-	-- end
-
-	-- -- Update Quest Description Text
-	-- local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-	-- if questLogIndex then
-		-- local _, questObjectives = GetQuestLogQuestText(questLogIndex)
-		-- local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
-		-- if RQE.QuestDescription then
-			-- RQE.QuestDescription:SetText(descriptionText)
-		-- end
-	-- end
--- end
-
-
--- -- Dynamic Data Update Function (Objectives and Button States)
--- function RQE.UpdateFrameDynamicData(questID)
-	-- -- Ensure the questID is valid
-	-- if not questID or type(questID) ~= "number" then
-		-- return
-	-- end
-
-	-- -- Update Quest Objectives Text
-	-- local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
-	-- if not objectivesTable then
-		-- print("No objectives found for questID:", questID)
-		-- return
-	-- end
-
-	-- local objectivesText = ""
-	-- for _, objective in pairs(objectivesTable) do
-		-- objectivesText = objectivesText .. (objective.text or "") .. "\n"
-	-- end
-
-	-- -- Apply colorization to objectivesText
-	-- objectivesText = colorizeObjectives(questID)
-
-	-- if RQE.QuestObjectives then
-		-- RQE.QuestObjectives:SetText(objectivesText)
-	-- else
-		-- print("RQE.QuestObjectives is not initialized.")
-	-- end
-
-	-- -- Fetch and Update the next waypoint text
-	-- local DirectionText = C_QuestLog.GetNextWaypointText(questID)
-	-- RQEFrame.DirectionText = DirectionText  -- Save to addon table
-
-	-- if RQE.DirectionTextFrame then
-		-- RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
-	-- end
-
-	-- -- Always show the UnknownQuestButton
-	-- RQE.UnknownQuestButton:Show()
-
-	-- -- Show or hide the SearchGroupButton based on quest group availability
-	-- if questID and C_LFGList.CanCreateQuestGroup(questID) then
-		-- RQE.SearchGroupButton:Show()
-	-- else
-		-- RQE.SearchGroupButton:Hide()
-	-- end
--- end
-
-
--- function RQE.UpdateFrameSteps(questID)
-	-- -- Fetch questInfo from RQEDatabase using the determined questID
-	-- local questInfo = RQE.getQuestData(questID)
--- RQE.PauseUpdatesFlag = false
-	-- -- PrintQuestStepsToChat provides StepsText, CoordsText, MapIDs
-	-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-	-- -- Update Steps Text
-	-- if RQE.CreateStepsText and StepsText and CoordsText and MapIDs then
-		-- RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
-	-- end
--- end
-
-
--- -- Main UpdateFrame function
--- function UpdateFrame(questID)
-	-- -- Fetch and update static data only once when the quest is first tracked
-	-- if not RQE.staticDataInitialized or RQE.lastTrackedQuestID ~= questID then
-		-- RQE.UpdateFrameStaticData(questID)
-		-- RQE.staticDataInitialized = true
-		-- RQE.lastTrackedQuestID = questID
-	-- end
-
-	-- -- Fetch and update dynamic data on every call
-	-- RQE.UpdateFrameDynamicData(questID)
-
-	-- if questID == 78640 then 
-		-- RQE.PauseUpdatesFlag = true
-		-- return
-	-- end
-
-	-- -- Function call that gets updated every time this function is called
-	-- RQE.UpdateFrameSteps(questID)
-
-	-- -- Perform any additional final updates here, e.g., clearing the frame
-	-- RQE:ShouldClearFrame()
-
-	-- -- Example: Update Button Visibility
-	-- C_Timer.After(1, function()
-		-- RQE.Buttons.UpdateMagicButtonVisibility()
-	-- end)
--- end
-
-
 -- Create the tooltip when mousing over certain assets
 function RQE:CreateQuestTooltip(self, questID, questTitle)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT", -30, 0)  -- Anchor the tooltip to the cursor
@@ -2262,7 +2116,7 @@ function UpdateWorldQuestTrackingForMap(uiMapID)
 		return
 	end
 
-	local taskPOIs = C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(uiMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 	local trackedQuests = {}
 	local maxTracked = 1
 	local currentTrackedCount = 0
@@ -2344,7 +2198,7 @@ function RQE:RemoveWorldQuestsIfOutOfArea()
 	end
 
 	-- Fetch quests in the player's current map area
-	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 	local questsInAreaLookup = {}
 
 	-- Store all the quest IDs currently in the player's area
@@ -2401,7 +2255,7 @@ function RQE:RemoveWorldQuestsIfOutOfSubzone()
 	local playerX, playerY = playerPosition:GetXY()
 
 	-- Fetch quests in the player's current map area
-	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 	local questsInAreaLookup = {}
 
 	-- Check currently tracked world quests
@@ -6479,55 +6333,7 @@ function RQE.GetQuestCoordinates(questID)
 end
 
 
--- -- Removes Automatic WQ when leaving area of WQ location
--- function RQE.UntrackAutomaticWorldQuests()
-	-- local playerMapID = C_Map.GetBestMapForUnit("player")
-
-	-- -- Check if playerMapID is valid
-	-- if not playerMapID then
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Unable to get player's map ID.")
-		-- end
-		-- return
-	-- end
-
-	-- local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
-
-	-- -- Convert the questsInArea to a lookup table for quicker access and print them
-	-- local questsInAreaLookup = {}
-	-- for _, taskPOI in ipairs(questsInArea) do
-		-- questsInAreaLookup[taskPOI.questId] = true
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print(taskPOI.questId)  -- Print each quest ID found in the area
-		-- end
-	-- end
-
-	-- -- Go through each watched world quest and check conditions
-	-- RQE.infoLog("Checking watched world quests:")
-	-- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-		-- local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-		-- if questID then
-			-- local watchType = C_QuestLog.GetQuestWatchType(questID)
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
-			-- end
-
-			-- -- Only untrack if the quest is tracked automatically and is not in the current area
-			-- if watchType == Enum.QuestWatchType.Automatic and not questsInAreaLookup[questID] then
-				-- -- Additional check: ensure the player is not close to the quest location
-				-- local questMapID = C_TaskQuest.GetQuestZoneID(questID)
-				-- if questMapID and questMapID ~= playerMapID then
-					-- C_QuestLog.RemoveWorldQuestWatch(questID)
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Removing world quest watch for quest: " .. questID)
-					-- end
-				-- end
-			-- end
-		-- end
-	-- end
--- end
-
-
+-- Removes Automatic WQ when leaving area of WQ location
 function RQE.UntrackAutomaticWorldQuests()
 	local playerMapID = C_Map.GetBestMapForUnit("player")
 	if not playerMapID then
@@ -6537,7 +6343,7 @@ function RQE.UntrackAutomaticWorldQuests()
 		return
 	end
 
-	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 	local questsInAreaLookup = {}
 
 	if questsInArea then
@@ -6596,7 +6402,7 @@ function RQE.UntrackAutomaticWorldQuestsByMap()
 		end
 	end
 
-	local questsInArea = C_TaskQuest.GetQuestsForPlayerByMapID(playerMapID)
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 	local questsInAreaLookup = {}
 	for _, taskPOI in ipairs(questsInArea) do
 		questsInAreaLookup[taskPOI.questID] = true
@@ -7062,7 +6868,9 @@ end
 
 -- Function to confirm and buy an item from a merchant
 function RQE:ConfirmAndBuyMerchantItem(index, quantity)
-	local itemName, _, _, _, _, _, _, maxStack = GetMerchantItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
+	local itemName = C_MerchantFrame.GetItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
+	--local itemName, _, _, _, _, _, _, _, _, _, _, = C_MerchantFrame.GetItemInfo(index)
+	local maxStack = GetMerchantItemMaxStack(index)
 	local itemLink = GetMerchantItemLink(index)
 	quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
 	maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available

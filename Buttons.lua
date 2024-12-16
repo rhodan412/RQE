@@ -266,10 +266,6 @@ function RQE.Buttons.CreateMagicButton(RQEFrame)
 	MagicButton:SetSize(32, 32)  -- Set the button size
 	MagicButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", -50, -30)  -- Positioning the button
 
-	-- -- Enable mouse input propagation on MagicButton if necessary
-	-- MagicButton:SetPropagateMouseClicks(true)
-	-- MagicButton:SetPropagateMouseMotion(true)
-
 	-- Storing MagicButton within the RQE table
 	RQE.MagicButton = MagicButton
 
@@ -485,15 +481,6 @@ function RQE.Buttons.ClearButtonPressed()
 		RQE:RemoveSuperTrackingFromQuest()
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end)
-
-	-- -- Clearing the frame data a fourth time
-	-- C_Timer.After(0.5, function()
-		-- RQE.isSuperTracking = false
-		-- RQE.CurrentlySuperQuestID = nil
-		-- RQE:ClearFrameData()
-		-- RQE:ClearWaypointButtonData()
-		-- RQE:RemoveSuperTrackingFromQuest()
-	-- end)
 
 	C_Timer.After(0.2, function()
 		RQEMacro:ClearMacroContentByName("RQE Macro")

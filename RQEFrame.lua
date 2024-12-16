@@ -259,7 +259,6 @@ downButton:SetScript("OnClick", function()
 end)
 
 
-
 -- Ensure the thumb texture is created correctly
 local thumb = slider:CreateTexture(nil, "OVERLAY")
 thumb:SetSize(16, 32)  -- Adjust the size as needed
@@ -341,11 +340,6 @@ RQE.UnknownButtonTooltip()
 
 -- Hide the tooltip when the mouse leaves
 RQE.HideUnknownButtonTooltip()
-
-
--- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
--- Assume CloseWorldMap() closes the world map
---RQE.UnknownQuestButtonCalcNTrack()
 RQE.SaveSuperTrackData()
 
 
@@ -825,7 +819,6 @@ local function CreateQuestTooltip(frame, questID)
 		-- Add code for the Rewards tooltip if this is a searched quest
 	else
 		-- Add Rewards
-		--GameTooltip:AddLine("Rewards: ")
 		RQE:QuestRewardsTooltip(GameTooltip, questID)
 	end
 
@@ -1271,16 +1264,6 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Show the Elements
 		WaypointButton:Show()  -- Make sure to show the button
 
-		-- -- Create CoordsText as a tooltip	-- THIS WAS ACTUALLY CREATING A TOOLTIP OVER THE QUESTLOGINDEXBUTTON IN THE RQEQUESTFRAME
-		-- StepText:SetScript("OnEnter", function(self)  -- changed to StepText from RQE.StepText
-			-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			-- GameTooltip:SetText(CoordsText[i] or "No coordinates available.")
-			-- GameTooltip:Show()
-		-- end)
-		-- StepText:SetScript("OnLeave", function(self)  -- changed to StepText from RQE.StepText
-			-- GameTooltip:Hide()
-		-- end)
-
 		-- Add the mouse down event here
 		StepText:SetScript("OnMouseDown", function(self, button)
 			if button == "LeftButton" then
@@ -1508,8 +1491,6 @@ function RQE.ClickQuestLogIndexButton(questID)
 		C_Timer.After(3, function()
 			RQE.CreateMacroForQuestLogIndexButton = false
 		end)
-
-		--RQE.CheckAndBuildMacroIfNeeded()
 	end
 end
 
@@ -1572,17 +1553,12 @@ function RQE:LFG_Search(questID)
 	-- Retrieve the super-tracked quest ID
 	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID or questID == 0 then
-		--print("LFG Search: No valid questID available.")
 		return
 	end
 
 	-- Retrieve the activity ID for the quest
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
 	local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or C_QuestLog.GetTitleForQuestID(questID)
-
-	if not activityID then
-		--print("LFG Search: No activityID found for questID", questID, "using quest name:", questName)
-	end
 
 	-- Set the search panel to the appropriate category
 	local SearchPanel = LFGListFrame.SearchPanel
@@ -1614,14 +1590,12 @@ end
 function RQE:LFG_Create(questID)
 	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID or questID == 0 then
-		--print("No valid quest ID to create a group.")
 		return
 	end
 
 	-- Retrieve activity ID for the quest
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
 	if not activityID then
-		--print("No valid activity ID for quest ID:", questID)
 		return
 	end
 
@@ -1635,9 +1609,6 @@ function RQE:LFG_Create(questID)
 
 	-- Attempt to create the group listing
 	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID, 0, 0, 0)
-
-	-- Optional debug print
-	--print("Group listing created for quest ID:", questID)
 end
 
 
@@ -1741,7 +1712,6 @@ end
 -- Function to update the content size dynamically based on the number of steps
 function RQE:UpdateContentSize()
 	local n = #self.StepsText	-- The number of steps
-	--local totalHeight = 5 + (2 * n) + 8 * (n - 1)
 	local totalHeight = 110 + (40 * n) + (40 * n) + 40 * (n - 1) + 25
 	content:SetHeight(totalHeight)
 	slider:SetMinMaxValues(0, content:GetHeight())

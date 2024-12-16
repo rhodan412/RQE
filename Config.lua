@@ -55,9 +55,6 @@ RQE.Settings = {}
 function RQE:OpenFrameSettings()
 	if self.optionsFrame.frame then
 		SettingsPanel:OpenToCategory(self.optionsFrame.frame)
-		-- print("Opened Frame Settings")
-	else
-		-- print("Frame Settings not initialized")
 	end
 end
 
@@ -65,9 +62,6 @@ end
 function RQE:OpenFontSettings()
 	if self.optionsFrame.font then
 		SettingsPanel:OpenToCategory(self.optionsFrame.font)
-		-- print("Opened Font Settings")
-	else
-		-- print("Font Settings not initialized")
 	end
 end
 
@@ -75,9 +69,6 @@ end
 function RQE:OpenDebugOptions()
 	if self.optionsFrame.debug then
 		SettingsPanel:OpenToCategory(self.optionsFrame.debug)
-		-- print("Opened Debug Options")
-	else
-		-- print("Debug Options not initialized")
 	end
 end
 
@@ -85,9 +76,6 @@ end
 function RQE:OpenProfiles()
 	if self.optionsFrame.profiles then
 		SettingsPanel:OpenToCategory(self.optionsFrame.profiles)
-		-- print("Opened Profiles")
-	else
-		-- print("Profiles not initialized")
 	end
 end
 
