@@ -931,16 +931,14 @@ function RQE.handlePlayerMountDisplayChanged()
 	RQE:UpdateCoordinates()
 
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
-	if not C_Scenario.IsInScenario() then
-		if RQE.db.profile.autoClickWaypointButton then
-			C_Timer.After(2.5, function()
-				RQE.isCheckingMacroContents = true
-				RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
-				C_Timer.After(3, function()
-					RQE.isCheckingMacroContents = false
-				end)
+	if RQE.db.profile.autoClickWaypointButton then
+		C_Timer.After(0.5, function()
+			RQE.isCheckingMacroContents = true
+			RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
+			C_Timer.After(3, function()
+				RQE.isCheckingMacroContents = false
 			end)
-		end
+		end)
 	end
 
 	-- Check to advance to next step in quest
