@@ -12,6 +12,7 @@
 		
 	EventManager.lua
 		- Added function that temporarily hides the RQEFrame and RQEQuestFrame for 10 seconds on right-click menu in these frames
+		- Modified the macro update when PLAYER_MOUNT_DISPLAY_CHANGED
 
 	QuestingModule.lua
 		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame
