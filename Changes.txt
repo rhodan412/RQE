@@ -1,3 +1,15 @@
+11.0.7.3
+
+	Core.lua
+		- Fixed nil error for questData.location at RQE.SaveCoordData function
+
+	RQE.toc
+		- Updated version#
+
+	RQEDatabase.lua
+		- Updated data for 'Legacy of the Vrykul' world quest in DB
+
+
 11.0.7.2 (2024-12-18)
 
 	*HIGHLIGHTS*
@@ -10,7 +22,7 @@
 	Core.lua
 		- Updated C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) to be C_TaskQuest.GetQuestsOnMap(uiMapID) as the old was deprecated with patch 11.0.5 and will be removed in patch 12.0, being replaced by the new API variant
 		- Updated GetMerchantItemInfo(index) to be C_MerchantFrame.GetItemInfo(index) as the old was deprecated with patch 11.0.5 and will be removed in patch 12.0, being replaced by the new API variant
-		
+
 	EventManager.lua
 		- Added function that temporarily hides the RQEFrame and RQEQuestFrame for 10 seconds on right-click menu in these frames
 		- Modified the macro update when PLAYER_MOUNT_DISPLAY_CHANGED
@@ -29,7 +41,7 @@
 	RQEFrame.lua
 		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame for 10 seconds
 		- Added option to Print Questline (if available) by right-clicking on quest in this frame
-	
+
 	RQEMinimap.lua
 		- Fixed issue where closing the frames from the LDB button resulted in the Blizzard Objective Tracker not being displayed
 
