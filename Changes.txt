@@ -8,6 +8,9 @@
 
 	RQEDatabase.lua
 		- Updated data for 'Legacy of the Vrykul' world quest in DB
+		- Updated step info for 'Peak Precision' quest in DB
+		- Updated description info for stepIndex 2 for the quest 'To the Siren Isle!' in DB
+		- Updated step information for some quests in Tiragarde Sound (Battle for Azeroth expansion)
 
 
 11.0.7.2 (2024-12-18)
