@@ -571,19 +571,24 @@ end
 
 
 function RQE.SaveCoordData()
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
-		if questID then
-			-- Logic for updating location data
-			local questData = RQE.getQuestData(questID)
-			if questData and questData.location then
-				-- Update the location data for the examined quest
-				RQE.DatabaseSuperX = questData.location.x / 100
-				RQE.DatabaseSuperY = questData.location.y / 100
-				RQE.DatabaseSuperMapID = questData.location.mapID
-			end
-		end
-	end
+    local questID = C_SuperTrack.GetSuperTrackedQuestID()
+    if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
+        if questID then
+            -- Logic for updating location data
+            local questData = RQE.getQuestData(questID)
+            if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
+                -- Update the location data for the examined quest
+                RQE.DatabaseSuperX = questData.location.x / 100
+                RQE.DatabaseSuperY = questData.location.y / 100
+                RQE.DatabaseSuperMapID = questData.location.mapID
+            else
+                -- Debug message or fallback to prevent further errors
+                if RQE.db.profile.debugLevel == "INFO+" then
+                    print("SaveCoordData: Invalid location data for questID:", questID)
+                end
+            end
+        end
+    end
 end
 
 
