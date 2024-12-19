@@ -1,7 +1,8 @@
-11.0.7.2
+11.0.7.2 (2024-12-18)
 
 	*HIGHLIGHTS*
 		- Fix for hiding or closing RQE Frames, Hide Frames option in right click frame menu, and fix for Blizz Objective Tracker not showing up on press of LDB
+		- Added initial quests for Siren Isle to DB
 
 	Buttons.lua
 		- Added setting to 'check' the enableFrame or enableQuestFrame when closing one of the frames with the "x" or close button
@@ -17,9 +18,13 @@
 	QuestingModule.lua
 		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame
 
+	RQE.toc
+		- Update Interface version
+
 	RQEDatabase.lua
 		- Added additional Battle For Azeroth (alliance) quests to DB
 		- Added some Twilight Highlands (Cataclysm/Alliance) quests to DB
+		- Added initial quests for Siren Isle to DB
 
 	RQEFrame.lua
 		- Added option to Hide RQE Objective Tracker by right-clicking on quest in this frame for 10 seconds
@@ -29,7 +34,7 @@
 		- Fixed issue where closing the frames from the LDB button resulted in the Blizzard Objective Tracker not being displayed
 
 
-11.0.7.1 (12-15-2024)
+11.0.7.1 (2024-12-15)
 
 	Config.lua
 		- Modified the supertracking toggles to be independent of each other and also added additional tooltip info for enableNearestSuperTrack
