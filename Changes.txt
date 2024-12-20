@@ -11,6 +11,7 @@
 		- Updated step info for 'Peak Precision' quest in DB
 		- Updated description info for stepIndex 2 for the quest 'To the Siren Isle!' in DB
 		- Updated step information for some quests in Tiragarde Sound (Battle for Azeroth expansion)
+		- Added some end-game initial quests for Battle for Azeroth & some Legion zone breadcrumb quests to DB
 
 
 11.0.7.2 (2024-12-18)
