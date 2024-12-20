@@ -243,6 +243,7 @@ local eventsToRegister = {
 	"UPDATE_INSTANCE_INFO",
 	--"UPDATE_SHAPESHIFT_COOLDOWN",
 	--"UPDATE_SHAPESHIFT_FORM",
+	-- "UPDATE_UI_WIDGET",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
@@ -354,6 +355,7 @@ local function HandleEvents(frame, event, ...)
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
 		UPDATE_SHAPESHIFT_FORM = RQE.handleUpdateShapeShiftForm,
+		-- UPDATE_UI_WIDGET = RQE.handleUpdateWidgetID,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
 		WORLD_STATE_TIMER_START = RQE.handleWorldStateTimerStart,
 		WORLD_STATE_TIMER_STOP = RQE.handleWorldStateTimerStop,
@@ -1671,6 +1673,27 @@ function RQE.handleUpdateShapeShiftForm()
 		end
 	end
 end
+
+
+-- -- Function to handle the UPDATE_UI_WIDGET event
+-- function RQE.handleUpdateWidgetID(...)
+	-- if RQE.db.profile.debugLevel ~= "INFO+" then return end
+
+	-- -- Print Event-specific Args
+	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+		-- local args = {...}  -- Capture all arguments into a table
+		-- for i, arg in ipairs(args) do
+			-- if type(arg) == "table" then
+				-- print("Arg " .. i .. ": (table)")
+				-- for k, v in pairs(arg) do
+					-- print("  " .. tostring(k) .. ": " .. tostring(v))
+				-- end
+			-- else
+				-- print("Arg " .. i .. ": " .. tostring(arg))
+			-- end
+		-- end
+	-- end
+-- end
 
 
 -- Handling VARIABLES_LOADED Event
