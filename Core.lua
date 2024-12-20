@@ -2471,6 +2471,73 @@ function RQE.PrintAllScenarioBits()
 end
 
 
+-- -- Function to print all widget IDs for a given setID
+-- function RQE.PrintAllWidgetIDs(setID)
+    -- -- Check if setID is provided
+    -- if not setID then
+        -- print("No setID provided. Please provide a valid setID.")
+        -- return
+    -- end
+
+    -- -- Fetch all widget IDs for the given setID
+    -- local widgetIDs = C_UIWidgetManager.GetAllWidgetsBySetID(setID)
+
+    -- -- Check if widgetIDs are valid
+    -- if not widgetIDs or #widgetIDs == 0 then
+        -- print("No widgets found for setID:", setID)
+        -- return
+    -- end
+
+    -- -- Print the widget IDs
+    -- print("Widget IDs for setID:", setID)
+    -- for _, widgetID in ipairs(widgetIDs) do
+        -- print("Widget ID:", widgetID)
+    -- end
+-- end
+
+
+-- -- Extracts scenario header widget timer info and prints on screen
+-- function RQE.PrintScenarioHeaderInfo(widgetID)
+    -- -- Check if widgetID is provided
+    -- if not widgetID then
+        -- print("No widgetID provided. Please provide a valid widgetID.")
+        -- return
+    -- end
+
+    -- -- Fetch the widget information using the API
+    -- local widgetInfo = C_UIWidgetManager.GetScenarioHeaderTimerWidgetVisualizationInfo(widgetID)
+
+    -- -- Check if the widgetInfo is valid
+    -- if not widgetInfo then
+        -- print("No widget information found for widgetID:", widgetID)
+        -- return
+    -- end
+
+    -- -- Print all fields returned by the API
+    -- print("Scenario Header Timer Widget Info for widgetID:", widgetID)
+    -- print("---------------------------------------------------")
+    -- print("shownState:", widgetInfo.shownState)
+    -- print("timerMin:", widgetInfo.timerMin)
+    -- print("timerMax:", widgetInfo.timerMax)
+    -- print("timerValue:", widgetInfo.timerValue)
+    -- print("headerText:", widgetInfo.headerText or "N/A")
+    -- print("timerTooltip:", widgetInfo.timerTooltip or "N/A")
+    -- print("widgetSizeSetting:", widgetInfo.widgetSizeSetting)
+    -- print("textureKit:", widgetInfo.textureKit or "N/A")
+    -- print("frameTextureKit:", widgetInfo.frameTextureKit or "N/A")
+    -- print("hasTimer:", widgetInfo.hasTimer)
+    -- print("orderIndex:", widgetInfo.orderIndex)
+    -- print("widgetTag:", widgetInfo.widgetTag or "N/A")
+    -- print("inAnimType:", widgetInfo.inAnimType)
+    -- print("outAnimType:", widgetInfo.outAnimType)
+    -- print("widgetScale:", widgetInfo.widgetScale)
+    -- print("layoutDirection:", widgetInfo.layoutDirection)
+    -- print("modelSceneLayer:", widgetInfo.modelSceneLayer)
+    -- print("scriptedAnimationEffectID:", widgetInfo.scriptedAnimationEffectID)
+    -- print("---------------------------------------------------")
+-- end
+
+
 -- Updates the timer display
 --- @param self TimerFrame The timer frame
 --- @param elapsed number The time elapsed since the last update
