@@ -16,6 +16,8 @@
 	QuestingModule.lua
 		- Combined Campaign/Meta quests to be added under the previously called 'Campaign' Header and renamed to be 'Campaign/Meta'
 		- Added functionality to track Bonus Quests of the player's current zone to the section under "Normal Quests"
+		- Adjusted position of RQE.ClearBonusQuestElements() and RQE.AddBonusQuestToFrame() functions, within the file for better organization
+		- Added functionality to click Bonus Quest so that it would open the quest details and map associated with that
 
 	RQE.toc
 		- Updated version#
