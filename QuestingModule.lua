@@ -484,11 +484,11 @@ function UpdateFrameAnchors()
 	-- Anchor RecipeTrackingFrame (if it exists) below the last frame
 	if RQE.recipeTrackingFrame then
 		if RQE.AchievementsFrame and RQE.AchievementsFrame:IsShown() then
-			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.AchievementsFrame, "BOTTOMLEFT", 0, -10)
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.AchievementsFrame, "BOTTOMLEFT", 0, -30)
 		elseif RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -10)
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
 		elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -10)
+			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
 		elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
 			RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
 		elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
@@ -1294,6 +1294,123 @@ end
 ----------------------------------
 -- 9. Bonus Quest Frame Handling
 ----------------------------------
+
+-- Clears the Bonus Quest Elements in order to refresh them when changes occur to tracking or objectives completed
+function RQE.ClearBonusQuestElements()
+	-- Ensure RQE.bonusQuestElements exists and iterate through it to clear all elements
+	if not RQE.bonusQuestElements then
+		RQE.bonusQuestElements = {}
+		return
+	end
+
+	for _, element in ipairs(RQE.bonusQuestElements) do
+		if element then
+			element:Hide() -- Hide the element
+			element:ClearAllPoints() -- Clear its anchor points
+			element:SetParent(nil) -- Remove it from the parent frame
+		end
+	end
+
+	-- Reset the bonus quest elements table
+	RQE.bonusQuestElements = {}
+end
+
+
+-- Function that adds the Bonus Quests to the RQE.QuestsFrame below the last tracked normal quest
+function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
+	-- Validate the questID
+	if not questID or type(questID) ~= "number" or questID <= 0 then
+		print("Error: Invalid questID for AddBonusQuestToFrame:", questID)
+		return lastElement -- Return the lastElement unchanged
+	end
+
+	-- Create a FontString for the quest title
+	local bonusQuestLabel = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	bonusQuestLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+	bonusQuestLabel:SetTextColor(137/255, 95/255, 221/255) -- Medium Purple
+	bonusQuestLabel:SetText(questTitle)
+	RQE.bonusQuestLabel = bonusQuestLabel
+
+	-- Add the click event for the bonusQuestLabel
+	RQE.bonusQuestLabel:SetScript("OnMouseDown", function(self, button)
+		if button == "LeftButton" then
+			OpenQuestLogToQuestDetails(questID)
+		end
+	end)
+
+	-- Position the label relative to the previous element or at the top
+	if lastElement then
+		bonusQuestLabel:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", -20, -20) -- Further left for bonus quest names
+	else
+		bonusQuestLabel:SetPoint("TOPLEFT", parentFrame.header, "BOTTOMLEFT", 15, -20)
+	end
+
+	-- Add this label to the bonusQuestElements table for easy clearing later
+	table.insert(RQE.bonusQuestElements, bonusQuestLabel)
+
+	-- Fetch and set the objectives text from the quest log
+	local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+	local objectivesText = objectivesTable and "" or "No objectives available."
+	if objectivesTable then
+		for _, objective in pairs(objectivesTable) do
+			objectivesText = objectivesText .. (objective.text or "Unknown Objective") .. "\n"
+		end
+	end
+
+	-- Apply colorization to objectivesText
+	objectivesText = RQE.colorizeObjectives(questID)
+
+	-- Create a FontString for the objectives
+	local bonusQuestObjectives = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	bonusQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+	bonusQuestObjectives:SetTextColor(1, 1, 1) -- White text
+	bonusQuestObjectives:SetWordWrap(true)
+	bonusQuestObjectives:SetWidth(parentFrame:GetWidth() - 110)
+	bonusQuestObjectives:SetHeight(0) -- Auto height
+	bonusQuestObjectives:SetText(objectivesText)
+
+	-- Position the objectives relative to the bonus quest label
+	bonusQuestObjectives:SetPoint("TOPLEFT", bonusQuestLabel, "BOTTOMLEFT", 20, -5) -- Slight right indentation for objectives
+
+	-- Add this label to the bonusQuestElements table for easy clearing later
+	table.insert(RQE.bonusQuestElements, bonusQuestObjectives)
+
+	-- Add tooltip functionality for the bonus quest title
+	bonusQuestLabel:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
+		GameTooltip:SetMinimumWidth(350)
+		GameTooltip:SetHeight(0)
+		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
+		GameTooltip:SetText(questTitle)
+
+		GameTooltip:AddLine(" ")
+
+		-- Add objectives
+		if objectivesText and objectivesText ~= "" then
+			GameTooltip:AddLine("Objectives:")
+			GameTooltip:AddLine(objectivesText, 1, 1, 1, true)
+			GameTooltip:AddLine(" ")
+		end
+
+		-- Add rewards (if any)
+		RQE:QuestRewardsTooltip(GameTooltip, questID)
+
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+
+		-- Show the tooltip
+		GameTooltip:Show()
+	end)
+
+	-- Clear tooltip on leave
+	bonusQuestLabel:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
+	-- Return the objectives label as the new "lastElement" for subsequent bonus quests
+	return bonusQuestObjectives
+end
+
 
 -- -- Function to initialize the Bonus Objectives Frame
 -- function RQE.InitializeBonusObjectivesFrame()
@@ -2767,116 +2884,6 @@ function UpdateRQEQuestFrame()
 	--UpdateRQEBonusQuestFrame(questID)
 	RQE:UpdateRQEQuestFrameVisibility()
 end
-
-
--- Clears the Bonus Quest Elements in order to refresh them when changes occur to tracking or objectives completed
-function RQE.ClearBonusQuestElements()
-	-- Ensure RQE.bonusQuestElements exists and iterate through it to clear all elements
-	if not RQE.bonusQuestElements then
-		RQE.bonusQuestElements = {}
-		return
-	end
-
-	for _, element in ipairs(RQE.bonusQuestElements) do
-		if element then
-			element:Hide() -- Hide the element
-			element:ClearAllPoints() -- Clear its anchor points
-			element:SetParent(nil) -- Remove it from the parent frame
-		end
-	end
-
-	-- Reset the bonus quest elements table
-	RQE.bonusQuestElements = {}
-end
-
-
--- Function that adds the Bonus Quests to the RQE.QuestsFrame below the last tracked normal quest
-function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
-	-- Validate the questID
-	if not questID or type(questID) ~= "number" or questID <= 0 then
-		print("Error: Invalid questID for AddBonusQuestToFrame:", questID)
-		return lastElement -- Return the lastElement unchanged
-	end
-
-	-- Create a FontString for the quest title
-	local bonusQuestLabel = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	bonusQuestLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-	bonusQuestLabel:SetTextColor(137/255, 95/255, 221/255) -- Medium Purple
-	bonusQuestLabel:SetText(questTitle)
-
-	-- Position the label relative to the previous element or at the top
-	if lastElement then
-		bonusQuestLabel:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", -20, -20) -- Further left for bonus quest names
-	else
-		bonusQuestLabel:SetPoint("TOPLEFT", parentFrame.header, "BOTTOMLEFT", 15, -20)
-	end
-
-	-- Add this label to the bonusQuestElements table for easy clearing later
-	table.insert(RQE.bonusQuestElements, bonusQuestLabel)
-
-	-- Fetch and set the objectives text from the quest log
-	local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
-	local objectivesText = objectivesTable and "" or "No objectives available."
-	if objectivesTable then
-		for _, objective in pairs(objectivesTable) do
-			objectivesText = objectivesText .. (objective.text or "Unknown Objective") .. "\n"
-		end
-	end
-
-	-- Apply colorization to objectivesText
-	objectivesText = RQE.colorizeObjectives(questID)
-
-	-- Create a FontString for the objectives
-	local bonusQuestObjectives = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	bonusQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-	bonusQuestObjectives:SetTextColor(1, 1, 1) -- White text
-	bonusQuestObjectives:SetWordWrap(true)
-	bonusQuestObjectives:SetWidth(parentFrame:GetWidth() - 110)
-	bonusQuestObjectives:SetHeight(0) -- Auto height
-	bonusQuestObjectives:SetText(objectivesText)
-
-	-- Position the objectives relative to the bonus quest label
-	bonusQuestObjectives:SetPoint("TOPLEFT", bonusQuestLabel, "BOTTOMLEFT", 20, -5) -- Slight right indentation for objectives
-
-	-- Add this label to the bonusQuestElements table for easy clearing later
-	table.insert(RQE.bonusQuestElements, bonusQuestObjectives)
-
-	-- Add tooltip functionality for the bonus quest title
-	bonusQuestLabel:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
-		GameTooltip:SetMinimumWidth(350)
-		GameTooltip:SetHeight(0)
-		GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
-		GameTooltip:SetText(questTitle)
-
-		GameTooltip:AddLine(" ")
-
-		-- Add objectives
-		if objectivesText and objectivesText ~= "" then
-			GameTooltip:AddLine("Objectives:")
-			GameTooltip:AddLine(objectivesText, 1, 1, 1, true)
-			GameTooltip:AddLine(" ")
-		end
-
-		-- Add rewards (if any)
-		RQE:QuestRewardsTooltip(GameTooltip, questID)
-
-		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
-
-		-- Show the tooltip
-		GameTooltip:Show()
-	end)
-
-	-- Clear tooltip on leave
-	bonusQuestLabel:SetScript("OnLeave", function()
-		GameTooltip:Hide()
-	end)
-
-	-- Return the objectives label as the new "lastElement" for subsequent bonus quests
-	return bonusQuestObjectives
-end
-
 
 
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
