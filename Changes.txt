@@ -1,7 +1,21 @@
 11.0.7.3
 
+	*HIGHLIGHTS*
+		- Combined Campaign/Meta quests to be added under the previously called 'Campaign' Header and renamed to be 'Campaign/Meta'
+		- Added functionality to track Bonus Quests of the player's current zone to the section under "Normal Quests"
+		- Added "macro = { "" }," to quest steps, in the DB, that didn't already have a macro set as this would clear the macro when a new step was reached
+
 	Core.lua
 		- Fixed nil error for questData.location at RQE.SaveCoordData function
+		- Added RQE:GetBonusQuestsInCurrentZone() function to retrieve bonus quests that are in the player's current zone
+		- Added RQE:GetAllQuestsInCurrentZone() and RQE:InspectTaskPOIs() functions for the sake of debugging only
+
+	EventManager.lua
+		- Changed local isTaskQuest = C_QuestLog.IsQuestTask(questID) to local isTaskQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID) within QUEST_WATCH_UPDATE event function
+
+	QuestingModule.lua
+		- Combined Campaign/Meta quests to be added under the previously called 'Campaign' Header and renamed to be 'Campaign/Meta'
+		- Added functionality to track Bonus Quests of the player's current zone to the section under "Normal Quests"
 
 	RQE.toc
 		- Updated version#
@@ -12,6 +26,7 @@
 		- Updated description info for stepIndex 2 for the quest 'To the Siren Isle!' in DB
 		- Updated step information for some quests in Tiragarde Sound (Battle for Azeroth expansion)
 		- Added some end-game initial quests for Battle for Azeroth & some Legion zone breadcrumb quests to DB
+		- Added "macro = { "" }," to quest steps, in the DB, that didn't already have a macro set as this would clear the macro when a new step was reached
 
 
 11.0.7.2 (2024-12-18)
