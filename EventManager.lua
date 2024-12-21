@@ -3905,7 +3905,7 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Adds quest to watch list when progress made
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-	local isTaskQuest = C_QuestLog.IsQuestTask(questID)
+	local isTaskQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
 
 	if isWorldQuest then
 		C_QuestLog.AddWorldQuestWatch(questID)
