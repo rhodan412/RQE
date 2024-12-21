@@ -571,24 +571,24 @@ end
 
 
 function RQE.SaveCoordData()
-    local questID = C_SuperTrack.GetSuperTrackedQuestID()
-    if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
-        if questID then
-            -- Logic for updating location data
-            local questData = RQE.getQuestData(questID)
-            if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
-                -- Update the location data for the examined quest
-                RQE.DatabaseSuperX = questData.location.x / 100
-                RQE.DatabaseSuperY = questData.location.y / 100
-                RQE.DatabaseSuperMapID = questData.location.mapID
-            else
-                -- Debug message or fallback to prevent further errors
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("SaveCoordData: Invalid location data for questID:", questID)
-                end
-            end
-        end
-    end
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
+		if questID then
+			-- Logic for updating location data
+			local questData = RQE.getQuestData(questID)
+			if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
+				-- Update the location data for the examined quest
+				RQE.DatabaseSuperX = questData.location.x / 100
+				RQE.DatabaseSuperY = questData.location.y / 100
+				RQE.DatabaseSuperMapID = questData.location.mapID
+			else
+				-- Debug message or fallback to prevent further errors
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("SaveCoordData: Invalid location data for questID:", questID)
+				end
+			end
+		end
+	end
 end
 
 
@@ -1119,8 +1119,8 @@ function RQE:UpdateRQEQuestFrameVisibility()
 				self.campaignQuestCount = self.campaignQuestCount + 1
 			elseif C_QuestLog.IsWorldQuest(questID) then
 				self.worldQuestCount = self.worldQuestCount + 1
-			elseif C_QuestLog.IsQuestTask(questID) then
-				self.worldQuestCount = self.worldQuestCount + 1
+			-- elseif C_QuestLog.IsQuestTask(questID) then
+				-- self.worldQuestCount = self.worldQuestCount + 1
 			else
 				self.regularQuestCount = self.regularQuestCount + 1
 			end
@@ -2473,68 +2473,68 @@ end
 
 -- -- Function to print all widget IDs for a given setID
 -- function RQE.PrintAllWidgetIDs(setID)
-    -- -- Check if setID is provided
-    -- if not setID then
-        -- print("No setID provided. Please provide a valid setID.")
-        -- return
-    -- end
+	-- -- Check if setID is provided
+	-- if not setID then
+		-- print("No setID provided. Please provide a valid setID.")
+		-- return
+	-- end
 
-    -- -- Fetch all widget IDs for the given setID
-    -- local widgetIDs = C_UIWidgetManager.GetAllWidgetsBySetID(setID)
+	-- -- Fetch all widget IDs for the given setID
+	-- local widgetIDs = C_UIWidgetManager.GetAllWidgetsBySetID(setID)
 
-    -- -- Check if widgetIDs are valid
-    -- if not widgetIDs or #widgetIDs == 0 then
-        -- print("No widgets found for setID:", setID)
-        -- return
-    -- end
+	-- -- Check if widgetIDs are valid
+	-- if not widgetIDs or #widgetIDs == 0 then
+		-- print("No widgets found for setID:", setID)
+		-- return
+	-- end
 
-    -- -- Print the widget IDs
-    -- print("Widget IDs for setID:", setID)
-    -- for _, widgetID in ipairs(widgetIDs) do
-        -- print("Widget ID:", widgetID)
-    -- end
+	-- -- Print the widget IDs
+	-- print("Widget IDs for setID:", setID)
+	-- for _, widgetID in ipairs(widgetIDs) do
+		-- print("Widget ID:", widgetID)
+	-- end
 -- end
 
 
 -- -- Extracts scenario header widget timer info and prints on screen
 -- function RQE.PrintScenarioHeaderInfo(widgetID)
-    -- -- Check if widgetID is provided
-    -- if not widgetID then
-        -- print("No widgetID provided. Please provide a valid widgetID.")
-        -- return
-    -- end
+	-- -- Check if widgetID is provided
+	-- if not widgetID then
+		-- print("No widgetID provided. Please provide a valid widgetID.")
+		-- return
+	-- end
 
-    -- -- Fetch the widget information using the API
-    -- local widgetInfo = C_UIWidgetManager.GetScenarioHeaderTimerWidgetVisualizationInfo(widgetID)
+	-- -- Fetch the widget information using the API
+	-- local widgetInfo = C_UIWidgetManager.GetScenarioHeaderTimerWidgetVisualizationInfo(widgetID)
 
-    -- -- Check if the widgetInfo is valid
-    -- if not widgetInfo then
-        -- print("No widget information found for widgetID:", widgetID)
-        -- return
-    -- end
+	-- -- Check if the widgetInfo is valid
+	-- if not widgetInfo then
+		-- print("No widget information found for widgetID:", widgetID)
+		-- return
+	-- end
 
-    -- -- Print all fields returned by the API
-    -- print("Scenario Header Timer Widget Info for widgetID:", widgetID)
-    -- print("---------------------------------------------------")
-    -- print("shownState:", widgetInfo.shownState)
-    -- print("timerMin:", widgetInfo.timerMin)
-    -- print("timerMax:", widgetInfo.timerMax)
-    -- print("timerValue:", widgetInfo.timerValue)
-    -- print("headerText:", widgetInfo.headerText or "N/A")
-    -- print("timerTooltip:", widgetInfo.timerTooltip or "N/A")
-    -- print("widgetSizeSetting:", widgetInfo.widgetSizeSetting)
-    -- print("textureKit:", widgetInfo.textureKit or "N/A")
-    -- print("frameTextureKit:", widgetInfo.frameTextureKit or "N/A")
-    -- print("hasTimer:", widgetInfo.hasTimer)
-    -- print("orderIndex:", widgetInfo.orderIndex)
-    -- print("widgetTag:", widgetInfo.widgetTag or "N/A")
-    -- print("inAnimType:", widgetInfo.inAnimType)
-    -- print("outAnimType:", widgetInfo.outAnimType)
-    -- print("widgetScale:", widgetInfo.widgetScale)
-    -- print("layoutDirection:", widgetInfo.layoutDirection)
-    -- print("modelSceneLayer:", widgetInfo.modelSceneLayer)
-    -- print("scriptedAnimationEffectID:", widgetInfo.scriptedAnimationEffectID)
-    -- print("---------------------------------------------------")
+	-- -- Print all fields returned by the API
+	-- print("Scenario Header Timer Widget Info for widgetID:", widgetID)
+	-- print("---------------------------------------------------")
+	-- print("shownState:", widgetInfo.shownState)
+	-- print("timerMin:", widgetInfo.timerMin)
+	-- print("timerMax:", widgetInfo.timerMax)
+	-- print("timerValue:", widgetInfo.timerValue)
+	-- print("headerText:", widgetInfo.headerText or "N/A")
+	-- print("timerTooltip:", widgetInfo.timerTooltip or "N/A")
+	-- print("widgetSizeSetting:", widgetInfo.widgetSizeSetting)
+	-- print("textureKit:", widgetInfo.textureKit or "N/A")
+	-- print("frameTextureKit:", widgetInfo.frameTextureKit or "N/A")
+	-- print("hasTimer:", widgetInfo.hasTimer)
+	-- print("orderIndex:", widgetInfo.orderIndex)
+	-- print("widgetTag:", widgetInfo.widgetTag or "N/A")
+	-- print("inAnimType:", widgetInfo.inAnimType)
+	-- print("outAnimType:", widgetInfo.outAnimType)
+	-- print("widgetScale:", widgetInfo.widgetScale)
+	-- print("layoutDirection:", widgetInfo.layoutDirection)
+	-- print("modelSceneLayer:", widgetInfo.modelSceneLayer)
+	-- print("scriptedAnimationEffectID:", widgetInfo.scriptedAnimationEffectID)
+	-- print("---------------------------------------------------")
 -- end
 
 
@@ -3326,8 +3326,8 @@ local function GetCorrectQuestType(questID)
 	-- World quests should have classification 10
 	if classification == Enum.QuestClassification.WorldQuest then
 		return "WorldQuest"
-	elseif classification == Enum.QuestClassification.BonusObjective then
-		return "BonusObjective"
+	-- elseif classification == Enum.QuestClassification.BonusObjective then
+		-- return "BonusObjective"
 	else
 		return "Other"
 	end
@@ -3487,6 +3487,115 @@ function PrintQuestStepsToChat(questID)
 end
 
 
+-- Retrieve all of the non-campaign/regular quests in the player's current zone
+function RQE:GetAllQuestsInCurrentZone()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		print("Debug: Could not determine the player's current map ID.")
+		return
+	end
+	print("Debug: Player Map ID:", playerMapID)
+
+	-- Get task POIs in the current zone
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		print("Debug: No tasks or bonus quests found in the current map.")
+		return
+	end
+	print("Debug: Found task POIs:", #taskPOIs)
+
+	-- Iterate through task POIs
+	for _, poi in ipairs(taskPOIs) do
+		local questID = poi.questID -- Extract quest ID
+		if questID then
+			-- Fetch quest title
+			local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+			print("Task Quest Found - ID:", questID, "Title:", questTitle)
+		else
+			print("Debug: Task POI does not have a valid questID.")
+		end
+	end
+end
+
+
+-- Retrieve all of the bonus quests in the player's current zone to be updated to the RQEQuestFrame and placed under the RQE.QuestsFrame child
+function RQE:GetBonusQuestsInCurrentZone()
+	local bonusQuests = {} -- Ensure we always return a valid table
+	RQE.bonusQuestCount = 0
+
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Debug: Could not determine the player's current map ID.")
+		end
+		return bonusQuests -- Return an empty table
+	end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug: Player Map ID:", playerMapID)
+	end
+
+	-- Get task POIs in the current zone
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Debug: No tasks or bonus quests found in the current map.")
+		end
+		return bonusQuests -- Return an empty table
+	end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug: Found task POIs:", #taskPOIs)
+	end
+
+	-- Iterate through task POIs and filter by classification
+	for _, poi in ipairs(taskPOIs) do
+		local questID = poi.questID -- Extract quest ID
+		if questID then
+			local classification = C_QuestInfoSystem.GetQuestClassification(questID) or -1 -- Get classification
+			if classification == 8 or classification == 9 then -- Check for BonusObjective or Threat
+				local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Bonus/Threat Quest Found - ID:", questID, "Title:", questTitle, "Classification:", classification)
+				end
+				table.insert(bonusQuests, { questID = questID, title = questTitle })
+				RQE.bonusQuestCount = RQE.bonusQuestCount + 1
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Debug: Task POI does not have a valid questID.")
+			end
+		end
+	end
+
+	return bonusQuests
+end
+
+
+-- Inspect/Print the TaskPOIs on Player's Current Map
+function RQE:InspectTaskPOIs()
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		print("No Map ID Found")
+		return
+	end
+
+	local taskPOIs =C_TaskQuest.GetQuestsOnMap(playerMapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		print("No Task POIs Found")
+		return
+	end
+
+	for index, poi in ipairs(taskPOIs) do
+		print("Task POI [" .. index .. "]:")
+		for key, value in pairs(poi) do
+			print(" - " .. tostring(key) .. ":", tostring(value))
+		end
+	end
+end
+
+
+-- Function to check if the quest should be flagged as complete
 function RQE:QuestComplete(questID)
 	local questData = RQE.getQuestData(questID)
 	if questData then
