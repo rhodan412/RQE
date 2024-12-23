@@ -55,8 +55,13 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	waypoint.mapID = mapID
 	waypoint.title = title
 
+	if mapID and x and y then -- Check if x and y are not nil
+		print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+	end
+
 	-- Add the waypoint to the RQEWaypoints table
-	table.insert(RQEWaypoints, waypoint)
+	--table.insert(RQEWaypoints, waypoint)
 
 	-- Create a Map Pin to represent the waypoint
 	self:CreateMapPin(waypoint.mapID, waypoint.x, waypoint.y)
