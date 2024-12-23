@@ -1496,6 +1496,27 @@ end
 
 
 -- Function that simulates a click of the UnknownQuestButton but streamlined
+function RQE.ClickRandomQuestLogIndexButton(bigQuestID)
+	local randomQuestID = 81930
+	C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
+
+	RQE.ClickQuestLogIndexButton(randomQuestID)
+
+	C_Timer.After(0.2, function()
+		RQE.ClickWButton()
+	end)
+
+	C_Timer.After(0.3, function()
+		RQE.ClickQuestLogIndexButton(bigQuestID)
+
+		C_Timer.After(0.2, function()
+			RQE.ClickWButton()
+		end)
+	end)
+end
+
+
+-- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
 
@@ -1963,6 +1984,7 @@ function RQE.InitializeSeparateFocusFrame()
 		-- Function to update the step text dynamically to include the current and final step index
 		local totalSteps = #questData  -- Get the total number of steps from the questData
 		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
+		RQE.StepIndexForCoordMatch = stepIndex
 
 		RQE.SeparateStepText:SetText(formattedText)
 		RQE.SeparateStepText:Show()
@@ -2070,7 +2092,7 @@ function RQE.InitializeSeparateFocusWaypoints()
 			local stepIndex = RQE.AddonSetStepIndex or 1
 
 			-- Retrieve the correct tooltip data using the function
-			local coordsText = RQE:GetTooltipDataForCButton()
+			local coordsText = RQE.GetTooltipDataForCButton()
 
 			-- Ensure coordsText is valid and set up the tooltip
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
@@ -2116,7 +2138,7 @@ end
 
 
 -- Function to retrieve the tooltip data for the specific stepIndex from the RQEDatabase
-function RQE:GetTooltipDataForCButton()
+function RQE.GetTooltipDataForCButton()
 	local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
@@ -2128,7 +2150,13 @@ function RQE:GetTooltipDataForCButton()
 		local x, y, mapID = coordData.x, coordData.y, coordData.mapID
 
 		-- Format the coordinate text
-		local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
+		local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
+		--local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
+		RQE.SeparateFocusCoordData = coordsText
+
+		if RQE.db.profile.debugLevel == "INFO" then
+			DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+		end
 
 		-- Return the formatted coordinate text
 		return coordsText
@@ -2146,7 +2174,7 @@ function RQE:AttachTooltipToCButton()
 	-- Add the script for the tooltip on mouse enter for the "C" button
 	RQE.SeparateWaypointButton:SetScript("OnEnter", function(self)
 		-- Retrieve the correct tooltip data
-		local coordsText = RQE:GetTooltipDataForCButton()
+		local coordsText = RQE.GetTooltipDataForCButton()
 
 		-- Set up the tooltip for the "C" button
 		GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
