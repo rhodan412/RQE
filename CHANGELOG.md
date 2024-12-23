@@ -5,6 +5,9 @@
 		- Added functionality to track Bonus Quests of the player's current zone to the section under "Normal Quests"
 		- Added "macro = { "" }," to quest steps, in the DB, that didn't already have a macro set as this would clear the macro when a new step was reached
 
+	Buttons.lua
+		- Additional debug tool added with mousing over the "W" Button to get chat to print out the waypoint, after it clicks the "W" Button
+
 	Core.lua
 		- Fixed nil error for questData.location at RQE.SaveCoordData function
 		- Added RQE:GetBonusQuestsInCurrentZone() function to retrieve bonus quests that are in the player's current zone
@@ -30,6 +33,13 @@
 		- Added some end-game initial quests for Battle for Azeroth & some Legion zone breadcrumb quests to DB
 		- Added "macro = { "" }," to quest steps, in the DB, that didn't already have a macro set as this would clear the macro when a new step was reached
 		- Added some Cata and updated some Shadowlands quests in DB
+		- Updated waypoint, macro, step info for DB on Shadowlands quests
+
+	RQEFrame.lua
+		- Adds debug info to print coordText on mouse-over of the SeparateFocusFrameButton (removed for now)
+
+	WaypointManager.lua
+		- Fixed RQE:CreateWaypoint function designed to create custom waypoint if we have the x, y and mapID info (this is currently only utilized by manually running the function and isn't tied into any functions for auto running)
 
 
 11.0.7.2 (2024-12-18)
