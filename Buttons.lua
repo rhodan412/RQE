@@ -62,6 +62,11 @@ end
 RQE.UnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 		RQE.hoveringOnRQEFrameAndButton = true
+		if RQE.db.profile.autoClickWaypointButton
+			if RQE.db.profile.debugLevel == "INFO" then
+				RQE.ClickWButton()
+			end
+		end
 		C_Timer.After(0.2, function()
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
 
@@ -88,14 +93,20 @@ RQE.UnknownButtonTooltip = function()
 				RQE.WPxPos = x
 				RQE.WPyPos = y
 				if not RQE.WPxPos == nil then
-					local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID))
+					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID))
+					if RQE.db.profile.debugLevel == "INFO" then
+						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+					end
 				end
 				if mapID == 0 then mapID = nil end
 			end
 
 			if RQE.DatabaseSuperX then
 				-- If coordinates are already available, just show them
-				local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
+				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
+				if RQE.db.profile.debugLevel == "INFO" then
+					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+				end
 				GameTooltip:SetText(tooltipText)
 				GameTooltip:Show()
 
@@ -112,12 +123,18 @@ RQE.UnknownButtonTooltip = function()
 				local x, y, mapID = RQE.GetQuestCoordinates(questID)
 				if x and y and mapID then
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x * 100, y * 100, tostring(mapID))
+					if RQE.db.profile.debugLevel == "INFO" then
+						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+					end
 					GameTooltip:SetText(tooltipText)
 				else
 					-- Fallback to using RQE.GetNextWaypoint if coordinates are not available
 					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
 					if waypointX and waypointY and waypointMapID then
 						local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", waypointX * 100, waypointY * 100, tostring(waypointMapID))
+						if RQE.db.profile.debugLevel == "INFO" then
+							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+						end
 						GameTooltip:SetText(tooltipText)
 					else
 						GameTooltip:SetText("Coordinates: Not available.")
@@ -131,7 +148,10 @@ RQE.UnknownButtonTooltip = function()
 				RQE.WPmapID = waypointMapID
 			else
 				-- If coordinates are already available, just show them
-				local tooltipText = string.format("Coordinates: (%.1f, %.1f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
+				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
+				if RQE.db.profile.debugLevel == "INFO" then
+					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+				end
 				GameTooltip:SetText(tooltipText)
 				GameTooltip:Show()
 
@@ -144,6 +164,168 @@ RQE.UnknownButtonTooltip = function()
 		end)
 	end)
 end
+
+
+-- -- Function that computes and stores the tooltip data for the "W" button
+-- function RQE.ComputeTooltipDataForWButton()
+	-- -- Initialize default values
+	-- RQE.WButtonWPxPos, RQE.WButtonWPyPos, RQE.WButtonWPmapID = nil, nil, nil
+
+	-- -- Determine the current questID
+	-- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local extractedQuestID
+	-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	-- end
+	-- local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Computed questID:", questID)
+	-- end
+
+	-- if questID then
+		-- RQE.QuestIDComputed = questID
+		-- local mapID = GetQuestUiMapID(questID)
+		-- RQE.WButtonWPmapID = mapID
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("MapID for questID:", mapID)
+		-- end
+
+		-- -- Try getting the waypoint coordinates
+		-- local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		-- if x and y then
+			-- RQE.WButtonWPxPos, RQE.WButtonWPyPos = x, y
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Waypoint found:", x, y)
+			-- end
+		-- end
+
+		-- -- Fallback logic if no waypoint coordinates are available
+		-- if not RQE.WButtonWPxPos or not RQE.WButtonWPyPos then
+			-- local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+			-- if waypointX and waypointY and waypointMapID then
+				-- RQE.WButtonWPxPos, RQE.WButtonWPyPos, RQE.WButtonWPmapID = waypointX, waypointY, waypointMapID
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Fallback waypoint found:", waypointX, waypointY)
+				-- end
+			-- end
+		-- end
+	-- end
+
+	-- -- Use saved coordinates if they are already available
+	-- if RQE.superX and RQE.superY and RQE.superMapID then
+		-- RQE.WButtonWPxPos, RQE.WButtonWPyPos, RQE.WButtonWPmapID = RQE.superX, RQE.superY, RQE.superMapID
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Super fallback:", RQE.superX, RQE.superY)
+		-- end
+	-- elseif RQE.DatabaseSuperX and RQE.DatabaseSuperY and RQE.DatabaseSuperMapID then
+		-- RQE.WButtonWPxPos, RQE.WButtonWPyPos, RQE.WButtonWPmapID = RQE.DatabaseSuperX, RQE.DatabaseSuperY, RQE.DatabaseSuperMapID
+		-- print("Database fallback:", RQE.DatabaseSuperX, RQE.DatabaseSuperY)
+	-- end
+
+	-- -- Save the computed result to RQE.GetTooltipDataForWButton
+	-- if RQE.WButtonWPxPos and RQE.WButtonWPyPos and RQE.WButtonWPmapID then
+		-- RQE.GetTooltipDataForWButton = string.format(
+			-- "Coordinates: (%.2f, %.2f) - MapID: %s",
+			-- RQE.WButtonWPxPos * 100,
+			-- RQE.WButtonWPyPos * 100,
+			-- tostring(RQE.WButtonWPmapID)
+		-- )
+	-- end
+-- end
+
+
+-- -- Function that prints the current player coords along with the coords of the "W" Button
+-- function RQE.CurrentPlayerCoordinates()
+	-- if RQE.db.profile.debugLevel == "NONE" then return end
+
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- RQE.ClickWButton()	-- Starts by clicking the "W" Button
+	-- C_Timer.After(1, function()
+		-- RQE.ComputeTooltipDataForWButton() -- Compute the coordinate tooltip information for the "W" Button
+
+		-- -- Print the tooltip data for the "W" button
+		-- if RQE.GetTooltipDataForWButton then
+			-- local mapID = C_Map.GetBestMapForUnit("player")
+			-- local position = C_Map.GetPlayerMapPosition(mapID, "player")
+			-- if position then
+				-- local x, y = position:GetXY()
+				-- x = math.floor(x * 10000) / 100
+				-- y = math.floor(y * 10000) / 100 
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Current Player Coordinates: " .. x .. ", " .. y .. " (MapID: " .. mapID .. ")")
+				-- end
+			-- end
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Coordinates from W Button:", RQE.GetTooltipDataForWButton)
+			-- end
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("RQE.GetTooltipDataForWButton for W-button Coordinates is N/A. Re-trying, but if this loops, may need to restart game to break loop and fix this!")
+			-- end
+			-- RQE.ClickRandomQuestLogIndexButton(questID)
+			-- C_Timer.After(0.5, function()
+				-- RQE.CurrentPlayerCoordinates()
+			-- end)
+		-- end
+
+		-- if RQE.GetTooltipDataForCButton ~= nil then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Step Coordinates: " .. tostring(RQE.GetTooltipDataForCButton()))
+			-- end
+		-- end
+
+		-- C_Timer.After(0.15, function()
+			-- local function parseCoordinates(coordString)
+				-- -- Check if coordString is a valid string
+				-- if type(coordString) ~= "string" then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Error: Invalid coordString passed to parseCoordinates. Expected string, got:", type(coordString))
+					-- end
+					-- return nil, nil, nil
+				-- end
+
+				-- -- Extract x, y, and mapID from the coordinate string
+				-- local x, y, mapID = string.match(coordString, "Coordinates:%s*%(([%d%.]+),%s*([%d%.]+)%).*MapID:%s*(%d+)")
+				-- return tonumber(x), tonumber(y), tonumber(mapID)
+			-- end
+
+			-- -- Ensure we call `RQE.GetTooltipDataForCButton()` to get the value it returns
+			-- local wButtonCoords = RQE.GetTooltipDataForWButton  -- Already computed value (assumed string)
+			-- local cButtonCoords = RQE.GetTooltipDataForCButton()  -- Ensure the function is called
+
+			-- -- Parse the coordinates
+			-- local wx, wy, wMapID = parseCoordinates(wButtonCoords or "")
+			-- local cx, cy, cMapID = parseCoordinates(cButtonCoords or "")
+
+			-- if wx and wy and cx and cy and wMapID and cMapID then
+				-- -- Compare coordinates with a small tolerance
+				-- if math.abs(wx - cx) < 0.01 and math.abs(wy - cy) < 0.01 and wMapID == cMapID then
+					-- print("Coords match for step number " .. RQE.StepIndexForCoordMatch .. " of quest " .. RQE.QuestIDComputed)
+				-- else
+					-- if wx == 0 then
+						-- print("~~~ COORDS: N/A ~~~")
+						-- return
+					-- else
+						-- if wMapID ~= cMapID then
+							-- print("~~~ MAP: Mismatch ~~~")
+							-- return
+						-- else
+							-- print("Coords don't match for step number " .. RQE.StepIndexForCoordMatch .. " of quest " .. RQE.QuestIDComputed)
+							-- print(string.format("W Button: (%.2f, %.2f, MapID: %d)", wx, wy, wMapID))
+							-- RQE:CreateWaypoint(wx, wy, wMapID, wbutton)
+							-- print(string.format("Step: (%.2f, %.2f, MapID: %d)", cx, cy, cMapID))
+							-- RQE:CreateWaypoint(cx, cy, cMapID, db)
+						-- end
+					-- end
+				-- end
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Invalid coordinate data for comparison.")
+				-- end
+			-- end
+		-- end)
+	-- end)
+-- end
 
 
 -- Hide the tooltip when the mouse leaves
