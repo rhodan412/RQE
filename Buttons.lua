@@ -62,7 +62,7 @@ end
 RQE.UnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 		RQE.hoveringOnRQEFrameAndButton = true
-		if RQE.db.profile.autoClickWaypointButton
+		if RQE.db.profile.autoClickWaypointButton then
 			if RQE.db.profile.debugLevel == "INFO" then
 				RQE.ClickWButton()
 			end
