@@ -1,4 +1,4 @@
-11.0.7.3
+11.0.7.3 (2024-12-25)
 
 	*HIGHLIGHTS*
 		- Combined Campaign/Meta quests to be added under the previously called 'Campaign' Header and renamed to be 'Campaign/Meta'
