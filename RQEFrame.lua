@@ -1609,14 +1609,19 @@ end
 
 -- Function to create a group for the current quest
 function RQE:LFG_Create(questID)
+	-- Determine the questID
 	local questID = questID or RQE.currentSuperTrackedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID or questID == 0 then
+		print("LFG_Create: Invalid or missing questID.")
 		return
 	end
 
-	-- Retrieve activity ID for the quest
+	-- Retrieve the activity ID for the quest
 	local activityID = C_LFGList.GetActivityIDForQuestID(questID)
 	if not activityID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("LFG_Create: No activity ID found for questID", questID)
+		end
 		return
 	end
 
@@ -1624,12 +1629,41 @@ function RQE:LFG_Create(questID)
 	local playerIlvl = GetAverageItemLevel()
 	local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
 	local itemLevel = minIlvlReq > playerIlvl and math.floor(playerIlvl) or minIlvlReq
-	local honorLevel = 0  -- Honor level requirement (can be adjusted)
+	local honorLevel = 0 -- Honor level requirement
 	local autoAccept = true
 	local privateGroup = false
 
+	-- Create the `createData` table
+	local createData = {
+		activityIDs = { activityID }, -- Wrap the activity ID in a table
+		questID = questID,
+		isAutoAccept = autoAccept,
+		isPrivateGroup = privateGroup,
+		requiredItemLevel = itemLevel,
+		requiredDungeonScore = 0, -- Optional; adjust as needed
+		requiredPvpRating = honorLevel, -- Optional; adjust as needed
+		playstyle = nil, -- Optional; can be adjusted based on group preferences
+		isCrossFactionListing = false, -- Optional; adjust if cross-faction grouping is supported
+	}
+
+	-- Debugging output
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("LFG_Create Debugging:")
+		for key, value in pairs(createData) do
+			print("  " .. key .. ": " .. tostring(value) .. " (type: " .. type(value) .. ")")
+		end
+	end
+
 	-- Attempt to create the group listing
-	C_LFGList.CreateListing(activityID, itemLevel, honorLevel, autoAccept, privateGroup, questID, 0, 0, 0)
+	local success, err = pcall(C_LFGList.CreateListing, createData)
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if not success then
+			print("LFG_Create: Error creating group listing:", err)
+		else
+			print("LFG_Create: Group listing created successfully!")
+		end
+	end
 end
 
 
