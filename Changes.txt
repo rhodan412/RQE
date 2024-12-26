@@ -4,6 +4,7 @@
 		- Combined Campaign/Meta quests to be added under the previously called 'Campaign' Header and renamed to be 'Campaign/Meta'
 		- Added functionality to track Bonus Quests of the player's current zone to the section under "Normal Quests"
 		- Added "macro = { "" }," to quest steps, in the DB, that didn't already have a macro set as this would clear the macro when a new step was reached
+		- Fixed LFG Creation tool for world boss resulting from a change to the API in 11.0.7 that changed activityID to activityIDs
 
 	Buttons.lua
 		- Additional debug tool added with mousing over the "W" Button to get chat to print out the waypoint, after it clicks the "W" Button
@@ -34,9 +35,11 @@
 		- Added "macro = { "" }," to quest steps, in the DB, that didn't already have a macro set as this would clear the macro when a new step was reached
 		- Added some Cata and updated some Shadowlands quests in DB
 		- Updated waypoint, macro, step info for DB on Shadowlands quests
+		- Added additional details for Shadowlands quests and Winter Veil to DB
 
 	RQEFrame.lua
 		- Adds debug info to print coordText on mouse-over of the SeparateFocusFrameButton (removed for now)
+		- Fixed RQE:LFG_Create(questID) due to an API change with C_LFGList.GetSearchResultInfo that changed activityID to activityIDs
 
 	WaypointManager.lua
 		- Fixed RQE:CreateWaypoint function designed to create custom waypoint if we have the x, y and mapID info (this is currently only utilized by manually running the function and isn't tied into any functions for auto running)
