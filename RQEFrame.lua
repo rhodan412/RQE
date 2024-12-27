@@ -1181,7 +1181,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 			-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON and may cause some post-combat lag)
 			RQE.SaveCoordData()
-			RQE:OnCoordinateClicked(i)
+			RQE:OnCoordinateClicked() --RQE:OnCoordinateClicked(i)
 
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
@@ -1271,7 +1271,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				RQE.SaveCoordData()
 
 				-- Call function to handle the coordinate click
-				RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
+				RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
 			end
 		end)
 	end
@@ -2244,13 +2244,13 @@ checkRQEFrames:SetScript("OnUpdate", function()
 	-- Check for the RQEQuestFrame visibility setting
 	if RQE.db.profile.enableQuestFrame then
 		-- Show the RQEQuestFrame if it should be enabled and is not currently shown
-		if not RQEQuestFrame:IsShown() then
-			RQEQuestFrame:Show()
+		if not RQE.RQEQuestFrame:IsShown() then
+			RQE.RQEQuestFrame:Show()
 		end
 	else
 		-- Hide the RQEQuestFrame if it should not be shown
-		if RQEQuestFrame:IsShown() then
-			RQEQuestFrame:Hide()
+		if RQE.RQEQuestFrame:IsShown() then
+			RQE.RQEQuestFrame:Hide()
 		end
 	end
 end)
