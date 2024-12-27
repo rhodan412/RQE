@@ -56,8 +56,10 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	waypoint.title = title
 
 	if mapID and x and y then -- Check if x and y are not nil
-		print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+		print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
+		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = title })
+		-- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+		-- TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 	end
 
 	-- Add the waypoint to the RQEWaypoints table
