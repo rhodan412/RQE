@@ -1071,8 +1071,8 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 
 	-- Initialize Flags
 	RQE.BlacklistUnderway = false
-	RQE.CheckNClickWButtonAfterCombat = false
 	RQE.CheckClickWButtonPossible = false
+	RQE.CheckNClickWButtonAfterCombat = false
 	RQE.ClearButtonPressed = false
 	RQE.CreateMacroForCheckAndBuildMacroIfNeeded = false
 	RQE.CreateMacroForCheckAndSetFinalStep = false
@@ -1106,6 +1106,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.StartPerioQuestAcceptIsSuperOkay = false
 	RQE.SuperTrackChangeRanStartPeriodicChecks = false
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
+	RQE.WaypointButtonHover = false
 
 	-- Making sure that the variables are cleared
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
