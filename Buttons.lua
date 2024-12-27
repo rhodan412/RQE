@@ -139,13 +139,12 @@ RQE.UnknownButtonTooltip = function()
 					else
 						GameTooltip:SetText("Coordinates: Not available.")
 					end
+					-- Saves the coords used to create the tooltip
+					RQE.WPxPos = waypointX
+					RQE.WPyPos = waypointY
+					RQE.WPmapID = waypointMapID
 				end
 				GameTooltip:Show()
-
-				-- Saves the coords used to create the tooltip
-				RQE.WPxPos = waypointX
-				RQE.WPyPos = waypointY
-				RQE.WPmapID = waypointMapID
 			else
 				-- If coordinates are already available, just show them
 				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
