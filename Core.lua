@@ -726,7 +726,7 @@ function RQE:UpdateWaypointForStep(questID, stepIndex)
 		local stepData = questData[stepIndex]
 		if stepData and stepData.coordinates then
 			-- Logic to set the new waypoint
-			RQE:OnCoordinateClicked(stepIndex)
+			RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(stepIndex)
 		end
 	end
 end
@@ -1157,7 +1157,7 @@ end
 function RQE:UpdateMemUsageDisplay()
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if RQE.db.profile.showMapID and mapID then
-		RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. memUsageText)
+		RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. RQE.memUsageText)
 	else
 		RQEFrame.MemoryUsageText:SetText("")
 	end
@@ -3285,7 +3285,7 @@ function BuildItemNames(itemLinks)
 end
 
 
--- Utility function to convert a table to a string
+-- Utility function to convert table to string for debug purposes
 function RQE:TableToString(tbl)
 	if type(tbl) ~= "table" then
 		return tostring(tbl)
@@ -4082,6 +4082,7 @@ function RQE.CheckAndSetFinalStep()
 
 		-- Calculate highestCompletedObjectiveIndex based on objectives completion
 		local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or RQE.AddonSetStepIndex or 1 --(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex) or 1
+		RQE.highestCompletedObjectiveIndex = highestCompletedObjectiveIndex
 
 		for _, stepData in ipairs(questData) do
 			if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
@@ -4742,7 +4743,8 @@ function RQE:StartPeriodicChecks()
 			end
 
 			-- If the highest completed objective is 99, click the waypoint button for the final step
-			if highestCompletedObjectiveIndex == 99 and finalStepIndex then
+			if RQE.highestCompletedObjectiveIndex == 99 and finalStepIndex then
+			--if highestCompletedObjectiveIndex == 99 and finalStepIndex then
 				RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
@@ -6772,6 +6774,7 @@ function RQE:CheckMemoryUsage()
 
 		-- Check if memUsage is greater than 1000 KB, then convert to MB
 		local memUsageText
+		RQE.memUsageText = memUsageText
 		if memUsage > 1000 then
 			memUsageText = string.format("RQE Memory usage: %.2f MB", memUsage / 1024)
 		else
@@ -7300,21 +7303,21 @@ end
 -- 19. Finalization
 ---------------------------------------------------
 
--- Converts table to string for debug purposes
-function RQE:TableToString(tbl)
-	if tbl == nil then
-		RQE.debugLog("Table is nil in TableToString")
-		return
-	end
-	local str = "{"
-	for k, v in pairs(tbl) do
-		if type(v) == "table" then
-			v = RQE:TableToString(v)
-		end
-		str = str .. tostring(k) .. " = " .. tostring(v) .. ", "
-	end
-	return str .. "}"
-end
+-- -- Converts table to string for debug purposes
+-- function RQE:TableToString(tbl)
+	-- if tbl == nil then
+		-- RQE.debugLog("Table is nil in TableToString")
+		-- return
+	-- end
+	-- local str = "{"
+	-- for k, v in pairs(tbl) do
+		-- if type(v) == "table" then
+			-- v = RQE:TableToString(v)
+		-- end
+		-- str = str .. tostring(k) .. " = " .. tostring(v) .. ", "
+	-- end
+	-- return str .. "}"
+-- end
 
 
 -- Function to update DB profile frame position
@@ -7401,7 +7404,7 @@ function RQE:CheckSuperTrackedQuestAndStep()
 
 			-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
 			C_Timer.After(2.5, function()
-				C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
+				C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)	--C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
 			end)
 		end
 	end
