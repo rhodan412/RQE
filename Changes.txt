@@ -1,5 +1,29 @@
-11.0.7.4
+11.0.7.4-Alpha (2024-12-27)
 
+	Buttons.lua
+		- Moved waypointX, waypointY and waypointMapID within the RQE.UnknownButtonTooltip function so that these would be recognized and saved appropriately to the addon table
+
+	Core.lua
+		- Changed RQE:OnCoordinateClicked(stepIndex) function calls to RQE:OnCoordinateClicked() as the function doesn't have anything passed to it within the function itself
+		- Removed duplicate RQE:TableToString function
+		- Created addon table variable for the highestCompletedObjectiveIndex to be saved as RQE.highestCompletedObjectiveIndex
+		- Created addon table variable for the memUsageText to be saved as RQE.memUsageText
+		- Changed C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1) API call to C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID) as watchType isn't being used in this case
+
+	QuestingModule.lua
+		- Created local variable of receipeName to be included in RQE:CreateRecipeTrackingFrame function call that is temporarily not used until it can be cleaned up
+		- Uncommented section for the numTrackedBonusQuests and have this saved to the RQE addon table
+		- Changed function call from UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement, lastBonusQuestElement) to UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement) as the lastBonusQuestElement isn't used with the bonus quests appearing within the Normal Quest Child Frame
+
+	RQEDatabase.lua
+		- Modified macro icons and waypoint/description information for the Shadowlands leveling campaign quests
+
+	RQEFrame.lua
+		- Changed RQE:OnCoordinateClicked(stepIndex) function calls to RQE:OnCoordinateClicked() as the function doesn't have anything passed to it within the function itself
+		- Within checkRQEFrames:SetScript OnUpdate modified RQEQuestFrame (show/hide) to be RQE.RQEQuestFrame so that it would be recognizeable
+
+	WaypointManager.lua
+		- Changed waypointTitle to title in the variable within the RQE:CreateWaypoint(x, y, mapID, title) function so that it would be better recognized
 
 
 11.0.7.3 (2024-12-25)
