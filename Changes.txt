@@ -1,3 +1,17 @@
+11.0.7.4-Beta (2024-12-27)
+
+	Core.lua
+		- Commented out RQE:UpdateWaypointForStep(questID, stepIndex) function as this doesn't link to anything
+		- Fixed memUsageText/RQE.memUsageText
+
+	EventManager.lua
+		- Added RQE.WaypointButtonHover true/false variable to ADDON_LOADED event function (used within RQEFrame.lua file)
+
+	RQEFrame.lua
+		 - Utilized RQE.WaypointButtonHover true/false respectively on WaypointButton:SetScript("OnEnter", function(self) and WaypointButton:SetScript("OnLeave", function()
+		 - Added functionality to custom-click a stepIndex that the addon doesn't recognize you on to update waypoint, macros, etc
+
+
 11.0.7.4-Alpha (2024-12-27)
 
 	Buttons.lua
@@ -20,7 +34,7 @@
 
 	RQEFrame.lua
 		- Changed RQE:OnCoordinateClicked(stepIndex) function calls to RQE:OnCoordinateClicked() as the function doesn't have anything passed to it within the function itself
-		- Within checkRQEFrames:SetScript OnUpdate modified RQEQuestFrame (show/hide) to be RQE.RQEQuestFrame so that it would be recognizeable
+		- Within checkRQEFrames:SetScript OnUpdate modified RQEQuestFrame (show/hide) to be RQE.RQEQuestFrame so that it would be recognizable
 
 	WaypointManager.lua
 		- Changed waypointTitle to title in the variable within the RQE:CreateWaypoint(x, y, mapID, title) function so that it would be better recognized
