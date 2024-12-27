@@ -1153,6 +1153,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			GameTooltip:ClearAllPoints()
 			GameTooltip:SetPoint("BOTTOMRIGHT", self, "BOTTOMLEFT", 0, 0)  -- Adjust the x, y offsets as needed
 			GameTooltip:Show()
+			RQE.WaypointButtonHover = true
 		end)
 
 		-- Insert it into the RQE.WaypointButtons table
@@ -1161,11 +1162,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Hide the tooltip when the mouse leaves
 		WaypointButton:SetScript("OnLeave", function()
+			RQE.WaypointButtonHover = false
 			GameTooltip:Hide()
 		end)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
+			if RQE.WaypointButtonHover then
+				RQE:ClickWaypointButtonForIndex(i)
+			end
 
 			-- Code for RWButton functionality here
 			C_Map.ClearUserWaypoint()
@@ -2225,7 +2230,7 @@ function RQE:AttachTooltipToCButton()
 end
 
 
--- Continuous checking with OnUpdate to enforce the visibility state of RQE frames
+-- Continuous checking with OnUpdate to enforce the visibility state of RQE frames (may not do anything)
 local checkRQEFrames = CreateFrame("Frame")
 checkRQEFrames:SetScript("OnUpdate", function()
 	-- Check for the RQEFrame visibility setting
