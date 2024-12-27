@@ -720,16 +720,16 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 end
 
 
-function RQE:UpdateWaypointForStep(questID, stepIndex)
-	local questData = RQE.getQuestData(questID)
-	if questData and questData[stepIndex] then
-		local stepData = questData[stepIndex]
-		if stepData and stepData.coordinates then
-			-- Logic to set the new waypoint
-			RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(stepIndex)
-		end
-	end
-end
+-- function RQE:UpdateWaypointForStep(questID, stepIndex)
+	-- local questData = RQE.getQuestData(questID)
+	-- if questData and questData[stepIndex] then
+		-- local stepData = questData[stepIndex]
+		-- if stepData and stepData.coordinates then
+			-- -- Logic to set the new waypoint
+			-- RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(stepIndex)
+		-- end
+	-- end
+-- end
 
 
 function RQE.ExtractAndSaveQuestCoordinates()
@@ -1153,15 +1153,15 @@ function RQE:UpdateMapIDDisplay()
 end
 
 
--- Function to update Memory Usage display
-function RQE:UpdateMemUsageDisplay()
-	local mapID = C_Map.GetBestMapForUnit("player")
-	if RQE.db.profile.showMapID and mapID then
-		RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. RQE.memUsageText)
-	else
-		RQEFrame.MemoryUsageText:SetText("")
-	end
-end
+-- -- Function to update Memory Usage display
+-- function RQE:UpdateMemUsageDisplay()
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	-- if RQE.db.profile.showMapID and mapID then
+		-- RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. memUsageText)
+	-- else
+		-- RQEFrame.MemoryUsageText:SetText("")
+	-- end
+-- end
 
 
 -- Function to update the frame based on the current profile settings
@@ -6776,14 +6776,14 @@ function RQE:CheckMemoryUsage()
 		local memUsageText
 		RQE.memUsageText = memUsageText
 		if memUsage > 1000 then
-			memUsageText = string.format("RQE Memory usage: %.2f MB", memUsage / 1024)
+			RQE.memUsageText = string.format("RQE Memory usage: %.2f MB", memUsage / 1024)
 		else
-			memUsageText = string.format("RQE Memory usage: %.2f KB", memUsage)
+			RQE.memUsageText = string.format("RQE Memory usage: %.2f KB", memUsage)
 		end
 
 		-- Update the MemoryUsageText FontString with the new memory usage
 		if RQEFrame and RQEFrame.MemoryUsageText then
-			RQEFrame.MemoryUsageText:SetText(memUsageText)
+			RQEFrame.MemoryUsageText:SetText(RQE.memUsageText)
 		end
 	else
 		-- User wants to hide memory usage or the setting is not available
