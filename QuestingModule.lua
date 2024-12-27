@@ -306,6 +306,7 @@ function RQE:CreateRecipeTrackingFrame()
 
 	-- Add a clickable button or interactive text for the recipe
 	local recipeButton = CreateFrame("Button", nil, RQE.recipeTrackingFrame, "GameFontNormal")
+	local recipeName
 	recipeButton:SetPoint("CENTER", RQE.recipeTrackingFrame, "CENTER", 0, 0)
 	recipeButton:SetSize(250, 20)
 	recipeButton:SetText(recipeName)
@@ -2864,8 +2865,9 @@ function UpdateRQEQuestFrame()
 
 	-- Call the function to reposition child frames again at the end
 	UpdateFrameAnchors()
-	UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement, lastBonusQuestElement)
-	--UpdateBonusQuestAnchors()
+	UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+	-- UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement, lastBonusQuestElement)
+	-- UpdateBonusQuestAnchors()
 	UpdateHeader(RQE.CampaignFrame, "Campaign/Meta", RQE.campaignQuestCount)
 	UpdateHeader(RQE.QuestsFrame, "Normal Quests", RQE.regularQuestCount)
 	UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.worldQuestCount)
@@ -2913,7 +2915,7 @@ function UpdateRQEWorldQuestFrame()
 
 	-- Get the number of tracked World Quests
 	local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
-	--local numTrackedBonusQuests = 0
+	local numTrackedBonusQuests = 0
 	local lastWorldQuestElement = nil
 	local usedQuestIDs = {}  -- Table to keep track of used quest IDs
 
@@ -2926,7 +2928,7 @@ function UpdateRQEWorldQuestFrame()
 
 	-- Total quests to be tracked
 	local totalTrackedQuests = numTrackedWorldQuests --+ numTrackedBonusQuests
-	--RQE.numTrackedBonusQuests = numTrackedBonusQuests
+	RQE.numTrackedBonusQuests = numTrackedBonusQuests
 
 	-- Ensure the frame is visible if there are any tracked quests
 	if totalTrackedQuests > 0 then
