@@ -1,3 +1,13 @@
+11.0.7.4
+
+	*HIGHLIGHTS*
+		- Ace3 Library Updates
+		- Players can now click waypoint button of their choice to act as failsafe (even if the addon doesn't recognize that the player is on that step).
+
+	Ace3
+		- Library Updates
+
+
 11.0.7.4-Beta (2024-12-27)
 
 	Core.lua
