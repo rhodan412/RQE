@@ -2121,7 +2121,9 @@ function RQE.InitializeSeparateFocusWaypoints()
 					end
 				end
 			else
-				print("No waypoint button found for the current step.")
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("No waypoint button found for the current step.")
+				end
 			end
 		end)
 
