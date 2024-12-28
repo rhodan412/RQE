@@ -1,11 +1,27 @@
-11.0.7.4
+11.0.7.4 (2024-12-28)
 
 	*HIGHLIGHTS*
 		- Ace3 Library Updates
 		- Players can now click waypoint button of their choice to act as failsafe (even if the addon doesn't recognize that the player is on that step).
+		- Updated info for failedfunct in DB (some quests have steps listed that have player fly to a new zone that aren't specifically part of the objectives) so that conditions no longer being met will revert player to earlier, more appropriate stepIndex
 
 	Ace3
 		- Library Updates
+
+	Core.lua
+		- Set RQE:StartPeriodicChecks() function call to not run if the player is on a taxi
+		- Modified RQE:StartPeriodicChecks() function debug msgs
+		- Updated failedfunct checks in RQE:StartPeriodicChecks() function
+		- Corrected RQE:CheckDBZoneChange() function to now properly/better handle situation with failedfunct calls
+
+	EventManager.lua
+		- Commented information in code to state what event is firing when a call is being made within to the RQE:StartPeriodicChecks() function
+
+	RQEDatabase.lua
+		- Updated some code in the DB to include failedchecks in order to revert back to earlier stepIndex when a condition is no longer being met that advanced the quest to a new step
+
+	RQEFrame.lua
+		- Updated some debug to print info only if certain debug level is set in the configuration
 
 
 11.0.7.4-Beta (2024-12-27)
