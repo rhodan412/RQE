@@ -5276,49 +5276,49 @@ end
 
 -- Function will check the player's current map ID against the expected map ID stored in the check field in the RQEDatabase
 function RQE:CheckDBZoneChange(questID, stepIndex, isFailedCheck)
-    local currentMapID = C_Map.GetBestMapForUnit("player")
-    local questData = self.getQuestData(questID)
+	local currentMapID = C_Map.GetBestMapForUnit("player")
+	local questData = self.getQuestData(questID)
 
-    if not questData then
-        return false  -- Quest data is missing
-    end
+	if not questData then
+		return false  -- Quest data is missing
+	end
 
-    local stepData = questData[stepIndex]
-    local mapCheckField = isFailedCheck and stepData.failedcheck or stepData.check  -- Use failedcheck if this is a failedfunc
-    local requiredMapIDs = mapCheckField  -- This should be a list of mapIDs
+	local stepData = questData[stepIndex]
+	local mapCheckField = isFailedCheck and stepData.failedcheck or stepData.check  -- Use failedcheck if this is a failedfunc
+	local requiredMapIDs = mapCheckField  -- This should be a list of mapIDs
 
-    if RQE.db.profile.debugLevel == "INFO+" then
-        local checkType = isFailedCheck and "failedcheck" or "check"
-        print("Checking Map ID for", checkType, ":", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
-    end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		local checkType = isFailedCheck and "failedcheck" or "check"
+		print("Checking Map ID for", checkType, ":", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+	end
 
-    -- Check if the current map ID is in the list of required IDs
-    if requiredMapIDs and #requiredMapIDs > 0 then
-        for _, mapID in ipairs(requiredMapIDs) do
-            if tostring(currentMapID) == tostring(mapID) then
-                if isFailedCheck then
-                    -- Failed check passes, player is back in the incorrect zone
-                    if RQE.db.profile.debugLevel == "INFO+" then
-                        print("Failed condition met: Player is in the wrong zone (MapID:", currentMapID, ").")
-                    end
-                    return true
-                else
-                    -- Normal check: Advance to the next step
-                    self:AdvanceQuestStep(questID, stepIndex)
-                    if RQE.db.profile.debugLevel == "INFO+" then
-                        print("Player is in the correct zone (MapID:", currentMapID, "). Advancing to the next quest step.")
-                    end
-                    return true  -- Exit after advancing to avoid multiple advancements
-                end
-            end
-        end
-    end
+	-- Check if the current map ID is in the list of required IDs
+	if requiredMapIDs and #requiredMapIDs > 0 then
+		for _, mapID in ipairs(requiredMapIDs) do
+			if tostring(currentMapID) == tostring(mapID) then
+				if isFailedCheck then
+					-- Failed check passes, player is back in the incorrect zone
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Failed condition met: Player is in the wrong zone (MapID:", currentMapID, ").")
+					end
+					return true
+				else
+					-- Normal check: Advance to the next step
+					self:AdvanceQuestStep(questID, stepIndex)
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Player is in the correct zone (MapID:", currentMapID, "). Advancing to the next quest step.")
+					end
+					return true  -- Exit after advancing to avoid multiple advancements
+				end
+			end
+		end
+	end
 
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print("Player is not in the correct zone. Current MapID:", currentMapID, "Required MapID(s):", table.concat(requiredMapIDs, ", "))
-    end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Player is not in the correct zone. Current MapID:", currentMapID, "Required MapID(s):", table.concat(requiredMapIDs, ", "))
+	end
 
-    return false  -- No match found
+	return false  -- No match found
 end
 
 
