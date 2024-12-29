@@ -1,9 +1,17 @@
 11.0.7.5
 
 	**HIGHLIGHTS**
+		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
 
+	Core.lua
+		- Added utility function for table.includes
+		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
 
+	EventManager.lua
+		- Added slight delay before running RQE:StartPeriodicChecks() function after PLAYER_LOGIN event fires
 
+	RQEDatabase.lua
+		- Added/updated quests for legendary Battle for Azeroth cloak, "Ashjra'kamas, Shroud of Resolve"
 
 
 11.0.7.4 (2024-12-28)
