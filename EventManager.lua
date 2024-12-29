@@ -1052,6 +1052,9 @@ function RQE.handlePlayerLogin()
 		if RQE.db.profile.autoClickWaypointButton then
 			-- Click the "W" Button is autoclick is selected and no steps or questData exist
 			RQE.CheckAndClickWButton()
+			C_Timer.After(2.5, function()
+				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_LOGIN fires
+			end)
 		end
 	end)
 end
