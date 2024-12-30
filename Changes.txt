@@ -12,6 +12,7 @@
 
 	RQEDatabase.lua
 		- Added/updated quests for legendary Battle for Azeroth cloak, "Ashjra'kamas, Shroud of Resolve"
+		- Added some Hero Call quests to DB along with their updates
 
 
 11.0.7.4 (2024-12-28)
