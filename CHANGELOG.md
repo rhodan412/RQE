@@ -5,6 +5,7 @@
 
 	Core.lua
 		- Added utility function for table.includes
+		- Cleaned up spacing in code
 		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
 
 	EventManager.lua
@@ -13,6 +14,8 @@
 	RQEDatabase.lua
 		- Added/updated quests for legendary Battle for Azeroth cloak, "Ashjra'kamas, Shroud of Resolve"
 		- Added some Hero Call quests to DB along with their updates
+		- Added some Cata quests for Mount Hyjal zone to DB
+		- Updated iconID to use "item:28372" instead of "item:118474" for SetRaidTarget(\"target\",7) macros
 
 
 11.0.7.4 (2024-12-28)
