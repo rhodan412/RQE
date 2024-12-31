@@ -3301,12 +3301,12 @@ end
 
 -- Utility function to check if a value exists in a table
 function table.includes(tbl, value)
-    for _, v in pairs(tbl) do
-        if v == value then
-            return true
-        end
-    end
-    return false
+	for _, v in pairs(tbl) do
+		if v == value then
+			return true
+		end
+	end
+	return false
 end
 
 
@@ -5254,39 +5254,39 @@ end
 
 -- Function will check the player's current map ID against the expected map ID(s) stored in the check field in the RQEDatabase
 function RQE:CheckDBZoneChange(questID, stepIndex)
-    local currentMapID = C_Map.GetBestMapForUnit("player")
-    local questData = self.getQuestData(questID)
+	local currentMapID = C_Map.GetBestMapForUnit("player")
+	local questData = self.getQuestData(questID)
 
-    if not questData then
-        return false -- Exit early if no quest data is found
-    end
+	if not questData then
+		return false -- Exit early if no quest data is found
+	end
 
-    local stepData = questData[stepIndex]
-    local requiredMapIDs = stepData.check  -- This should be a list of mapIDs
+	local stepData = questData[stepIndex]
+	local requiredMapIDs = stepData.check  -- This should be a list of mapIDs
 
-    if not requiredMapIDs or #requiredMapIDs == 0 then
-        return false -- Exit early if no required map IDs are specified
-    end
+	if not requiredMapIDs or #requiredMapIDs == 0 then
+		return false -- Exit early if no required map IDs are specified
+	end
 
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print("Checking Map ID for check :", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
-    end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking Map ID for check :", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+	end
 
-    -- Iterate through the requiredMapIDs to check if the current map ID matches any of them
-    for _, mapID in ipairs(requiredMapIDs) do
-        if tostring(currentMapID) == tostring(mapID) then
-            self:AdvanceQuestStep(questID, stepIndex)
-            if RQE.db.profile.debugLevel == "INFO+" then
-                print("Player is in one of the correct zones (MapID: " .. tostring(currentMapID) .. "). Advancing to the next quest step.")
-            end
-            return true -- Exit after advancing the step
-        end
-    end
+	-- Iterate through the requiredMapIDs to check if the current map ID matches any of them
+	for _, mapID in ipairs(requiredMapIDs) do
+		if tostring(currentMapID) == tostring(mapID) then
+			self:AdvanceQuestStep(questID, stepIndex)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Player is in one of the correct zones (MapID: " .. tostring(currentMapID) .. "). Advancing to the next quest step.")
+			end
+			return true -- Exit after advancing the step
+		end
+	end
 
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print("Player is not in any of the correct zones. Current MapID:", tostring(currentMapID), "Required MapID(s):", table.concat(requiredMapIDs, ", "))
-    end
-    return false -- Return false if no match is found
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Player is not in any of the correct zones. Current MapID:", tostring(currentMapID), "Required MapID(s):", table.concat(requiredMapIDs, ", "))
+	end
+	return false -- Return false if no match is found
 end
 
 
