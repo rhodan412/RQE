@@ -705,6 +705,9 @@ function RQE.ReagentBagUpdate(...)
 			end
 		end
 	end
+	-- C_Timer.After(1.5, function()
+		-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
+	-- end)
 end
 
 
@@ -751,6 +754,9 @@ function RQE.handleMerchantUpdate()
 				end
 			end
 		end
+		C_Timer.After(1.3, function()
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after MERCHANT_UPDATE fires
+		end)
 	end
 end
 
@@ -820,6 +826,9 @@ function RQE.handleUnitInventoryChange(...)
 				end
 			end
 		end
+		-- C_Timer.After(1.7, function()
+			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_INVENTORY_CHANGED fires
+		-- end)
 	end
 end
 
@@ -1093,6 +1102,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
+	RQE.QuestWatchUpdateFired = false
 	RQE.ReEnableRQEFrames = false
 	RQE.ShapeshiftUpdated = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
@@ -2824,7 +2834,18 @@ function RQE.handleUIInfoMessage(...)
 
 	if not RQE.BlacklistUnderway then return end
 
-	-- Check if the message is "Objective Complete." (messageType 309)
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- -- Check if the message is Exploration objective complete (messageType 308)
+	-- if messageType == 308 then
+		-- if RQE.db.profile.autoClickWaypointButton then
+			-- C_Timer.After(1.5, function()
+				-- RQE.ClickQuestLogIndexButton(questID)
+			-- end)
+		-- end
+	-- end
+
+	-- Check if the message is Travel to a specific location such as for exploration objective (messageType 308)
 	if messageType == 309 then
 	--if messageType == 309 and message == "Objective Complete." then
 		RQE.BlacklistUnderway = false
@@ -2835,6 +2856,33 @@ function RQE.handleUIInfoMessage(...)
 			UpdateFrame()
 		end)
 	end
+
+	-- -- Check if the message is Monster Kill (messageType 310)
+	-- if messageType == 310 then
+		-- if RQE.db.profile.autoClickWaypointButton then
+			-- C_Timer.After(1.5, function()
+				-- RQE.ClickQuestLogIndexButton(questID)
+			-- end)
+		-- end
+	-- end
+
+	-- -- Check if the message is Collecting an object from ground or speaking to NPC (messageType 311)
+	-- if messageType == 311 then
+		-- if RQE.db.profile.autoClickWaypointButton then
+			-- C_Timer.After(1.5, function()
+				-- RQE.ClickQuestLogIndexButton(questID)
+			-- end)
+		-- end
+	-- end
+
+	-- -- Check if the message is Collecting an object from ground or quest loot from mob (messageType 312)
+	-- if messageType == 312 then
+		-- if RQE.db.profile.autoClickWaypointButton then
+			-- C_Timer.After(1.5, function()
+				-- RQE.ClickQuestLogIndexButton(questID)
+			-- end)
+		-- end
+	-- end
 end
 
 
@@ -3777,6 +3825,7 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Store the questID for tracking
 	RQE.LastQuestWatchQuestID = questID
+	RQE.QuestWatchUpdateFired = true
 
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -3982,6 +4031,13 @@ function RQE.handleQuestWatchUpdate(...)
 		end
 
 		C_Timer.After(0.5, function()
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_UPDATE fires
+		end)
+
+		C_Timer.After(0.5, function()
+			if RQE.QuestWatchUpdateFired then
+				RQE.QuestWatchUpdateFired = false	-- Reset the flag to false if it is currently marked as true
+			end
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
 	end
