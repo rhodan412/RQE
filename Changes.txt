@@ -16,6 +16,7 @@
 		- Added some Hero Call quests to DB along with their updates
 		- Added some Cata quests for Mount Hyjal zone to DB
 		- Updated iconID to use "item:28372" instead of "item:118474" for SetRaidTarget(\"target\",7) macros
+		- Updated DB for many Alliance Hellfire Peninsula quests
 
 
 11.0.7.4 (2024-12-28)
