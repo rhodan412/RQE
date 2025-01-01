@@ -4689,11 +4689,15 @@ end
 
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
-	if UnitOnTaxi("player") then 
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Player is on Taxi, unable to continue RQE:StartPeriodicChecks() function call")
+	-- Ensures that if QUEST_WATCH_UPDATE fired and was responsible for this call (RQE.QuestWatchUpdateFired = true), then it will continue even if on taxi
+	if not RQE.QuestWatchUpdateFired then
+		if UnitOnTaxi("player") then 
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Player is on Taxi, unable to continue RQE:StartPeriodicChecks() function call")
+			end
+			RQE.QuestWatchUpdateFired = false
+			return
 		end
-		return
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
