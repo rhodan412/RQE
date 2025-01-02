@@ -2428,7 +2428,6 @@ function UpdateRQEQuestFrame()
 								-- Click the "W" Button is autoclick is selected and no steps or questData exist
 								RQE.CheckAndClickWButton()
 							end
-
 							RQE:StartPeriodicChecks()
 						end
 
