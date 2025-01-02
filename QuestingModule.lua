@@ -1911,7 +1911,6 @@ local function colorizeObjectives(questID)
 end
 
 
-
 -- Function to Colorize the Quest Tracker Module based on objective progress using the API
 function RQE.colorizeObjectives(questID)
 	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
@@ -1937,6 +1936,7 @@ function RQE.colorizeObjectives(questID)
 
 	return colorizedText
 end
+
 
 -- Populates the Game Tooltip with Quest Reward information when hovering over a quest
 function RQE:QuestRewardsTooltip(tooltip, questID)
