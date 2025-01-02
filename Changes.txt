@@ -4,6 +4,12 @@
 		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
 		- Fixed issue where objective progress wasn't reliably advancing to next steps with data in DB
 
+	Buttons.lua
+		- Added failsafe code that when obtaining coordinate info from "W" button's tooltip that it will run RQE:StartPeriodicChecks() shortly thereafter (This only is applicable for author purposes with INFO debug requirement)
+
+	Config.lua
+		- Updated tooltip for debug menu in config panel to reflect that the INFO and INFO+ options are designed for author use only due to the amount of information that would be useless for the users/players
+
 	Core.lua
 		- Added utility function for table.includes
 		- Cleaned up spacing in code
@@ -18,7 +24,7 @@
 		- Added some Hero Call quests to DB along with their updates
 		- Added some Cata quests for Mount Hyjal zone to DB
 		- Updated iconID to use "item:28372" instead of "item:118474" for SetRaidTarget(\"target\",7) macros
-		- Updated DB for Alliance Hellfire Peninsula quests
+		- Updated DB for Alliance Hellfire Peninsula & Zangarmarsh quests
 
 
 11.0.7.4 (2024-12-28)
