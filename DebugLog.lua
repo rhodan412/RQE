@@ -1,7 +1,9 @@
 -- DebugLog.lua
 
+
 RQE = RQE or {}
 RQE.Buttons = RQE.Buttons or {}
+
 
 local headerHeight = 30
 local logTable = {}
@@ -118,7 +120,6 @@ editBox:SetFontObject("ChatFontNormal")
 editBox:SetAutoFocus(false)
 editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 
-
 scrollFrame:SetScrollChild(editBox)
 
 
@@ -160,13 +161,9 @@ end
 local closeButton = CreateFrame("Button", "RQEDebugLogCloseButton", RQE.DebugLogFrame, "UIPanelCloseButton")
 closeButton:SetSize(30, 30)
 closeButton:SetPoint("TOPRIGHT", RQE.DebugLogFrame, "TOPRIGHT", 0, 0)
-
-
 closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
 closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down")
 closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight")
-
-
 closeButton:SetScript("OnClick", function()
 	RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
 end)
@@ -179,8 +176,6 @@ resizeButton:SetSize(16, 16)
 resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
 resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
 resizeButton:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-
-
 resizeButton:SetScript("OnMouseDown", function(self, button)
 	if button == "LeftButton" then
 		logFrame:StartSizing("BOTTOMRIGHT")
