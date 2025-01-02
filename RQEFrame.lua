@@ -2165,10 +2165,10 @@ end
 
 -- Function to create a tooltip to display
 function RQE.ShowFocusScrollFrameTooltip(self)
-    GameTooltip:SetOwner(self, "ANCHOR_TOP", -200, 20) -- Anchor the tooltip at the top of the frame
+	GameTooltip:SetOwner(self, "ANCHOR_TOP", -200, 20) -- Anchor the tooltip at the top of the frame
 
-    -- Set the title of the tooltip
-    GameTooltip:SetText("Hold ALT, CTRL, or SHIFT to scroll this frame.", 1, 1, 1, 1, true)
+	-- Set the title of the tooltip
+	GameTooltip:SetText("Hold ALT, CTRL, or SHIFT to scroll this frame.", 1, 1, 1, 1, true)
 
 	-- Check if RQE.SeparateStepText exists and has text
 	if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
@@ -2180,7 +2180,7 @@ function RQE.ShowFocusScrollFrameTooltip(self)
 		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 	end
 
-    GameTooltip:Show()
+	GameTooltip:Show()
 end
 
 
