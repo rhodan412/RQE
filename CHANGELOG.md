@@ -3,6 +3,7 @@
 	**HIGHLIGHTS**
 		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
 		- Fixed issue where objective progress wasn't reliably advancing to next steps with data in DB
+		- Modified colors and better handling for quest complete as some quests weren't showing that it was complete when it actually was (such as Escort quests)
 
 	Buttons.lua
 		- Added failsafe code that when obtaining coordinate info from "W" button's tooltip that it will run RQE:StartPeriodicChecks() shortly thereafter (This only is applicable for author purposes with INFO debug requirement)
@@ -14,10 +15,15 @@
 		- Added utility function for table.includes
 		- Cleaned up spacing in code
 		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
+		- Added information to tooltip to display step information when hovering over the QuestID/Name in RQEFrame as well as when hovering over the step frame
+		- Modified colors and better handling for quest complete as some quests weren't showing that it was complete when it actually was (such as Escort quests)
 
 	EventManager.lua
 		- Added slight delay before running RQE:StartPeriodicChecks() function after PLAYER_LOGIN event fires
 		- Fixed issue where objective progress wasn't reliably advancing to next steps with data in DB
+
+	QuestingModule.lua
+		- Modified colors and better handling for quest complete as some quests weren't showing that it was complete when it actually was (such as Escort quests)
 
 	RQEDatabase.lua
 		- Added/updated quests for legendary Battle for Azeroth cloak, "Ashjra'kamas, Shroud of Resolve"
@@ -26,6 +32,10 @@
 		- Updated iconID to use "item:28372" instead of "item:118474" for SetRaidTarget(\"target\",7) macros
 		- Updated DB for Alliance Hellfire Peninsula & Zangarmarsh quests
 		- Updated DB quests for some of alliance Terokkar Forest quests
+
+	RQEFrame.lua
+		- Added information to tooltip to display step information when hovering over the QuestID/Name in RQEFrame as well as when hovering over the step frame
+		- Modified colors and better handling for quest complete as some quests weren't showing that it was complete when it actually was (such as Escort quests)
 
 
 11.0.7.4 (2024-12-28)
