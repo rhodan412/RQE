@@ -930,6 +930,12 @@ function RQE.handlePlayerRegenEnabled()
 			DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)
 		end
 	end
+
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- C_Timer.After(1.3, function()
+			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_REGEN_ENABLED fires
+		-- end)
+	-- end
 end
 
 
@@ -1119,6 +1125,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.StartPerioQuestAcceptIsSuperOkay = false
 	RQE.SuperTrackChangeRanStartPeriodicChecks = false
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
+	RQE.UIInfoUpdateFired = false
 	RQE.WaypointButtonHover = false
 
 	-- Making sure that the variables are cleared
@@ -2840,7 +2847,12 @@ function RQE.handleUIInfoMessage(...)
 	-- if messageType == 308 then
 		-- if RQE.db.profile.autoClickWaypointButton then
 			-- C_Timer.After(1.5, function()
-				-- RQE.ClickQuestLogIndexButton(questID)
+				-- RQE.UIInfoUpdateFired = true
+				-- RQE:StartPeriodicChecks()
+				-- C_Timer.After(0.2, function()
+					-- RQE.UIInfoUpdateFired = false
+				-- end)
+				-- -- RQE.ClickQuestLogIndexButton(questID)
 			-- end)
 		-- end
 	-- end
@@ -2853,7 +2865,17 @@ function RQE.handleUIInfoMessage(...)
 		C_Timer.After(2.5, function()
 			C_SuperTrack.SetSuperTrackedQuestID(RQE.BlackListedQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()
-			UpdateFrame()
+			C_Timer.After(1.5, function()
+				if RQE.db.profile.autoClickWaypointButton then
+					RQE.UIInfoUpdateFired = true
+					RQE:StartPeriodicChecks()
+					C_Timer.After(0.2, function()
+						RQE.UIInfoUpdateFired = false
+					end)
+					-- RQE.ClickQuestLogIndexButton(questID)
+				end
+				UpdateFrame()
+			end)
 		end)
 	end
 
@@ -2861,7 +2883,12 @@ function RQE.handleUIInfoMessage(...)
 	-- if messageType == 310 then
 		-- if RQE.db.profile.autoClickWaypointButton then
 			-- C_Timer.After(1.5, function()
-				-- RQE.ClickQuestLogIndexButton(questID)
+				-- RQE.UIInfoUpdateFired = true
+				-- RQE:StartPeriodicChecks()
+				-- C_Timer.After(0.2, function()
+					-- RQE.UIInfoUpdateFired = false
+				-- end)
+				-- -- RQE.ClickQuestLogIndexButton(questID)
 			-- end)
 		-- end
 	-- end
@@ -2870,7 +2897,12 @@ function RQE.handleUIInfoMessage(...)
 	-- if messageType == 311 then
 		-- if RQE.db.profile.autoClickWaypointButton then
 			-- C_Timer.After(1.5, function()
-				-- RQE.ClickQuestLogIndexButton(questID)
+				-- RQE.UIInfoUpdateFired = true
+				-- RQE:StartPeriodicChecks()
+				-- C_Timer.After(0.2, function()
+					-- RQE.UIInfoUpdateFired = false
+				-- end)
+				-- -- RQE.ClickQuestLogIndexButton(questID)
 			-- end)
 		-- end
 	-- end
@@ -2879,7 +2911,12 @@ function RQE.handleUIInfoMessage(...)
 	-- if messageType == 312 then
 		-- if RQE.db.profile.autoClickWaypointButton then
 			-- C_Timer.After(1.5, function()
-				-- RQE.ClickQuestLogIndexButton(questID)
+				-- RQE.UIInfoUpdateFired = true
+				-- RQE:StartPeriodicChecks()
+				-- C_Timer.After(0.2, function()
+					-- RQE.UIInfoUpdateFired = false
+				-- end)
+				-- -- RQE.ClickQuestLogIndexButton(questID)
 			-- end)
 		-- end
 	-- end
@@ -4029,10 +4066,6 @@ function RQE.handleQuestWatchUpdate(...)
 				end
 			end)
 		end
-
-		C_Timer.After(0.5, function()
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_UPDATE fires
-		end)
 
 		C_Timer.After(0.5, function()
 			if RQE.QuestWatchUpdateFired then
