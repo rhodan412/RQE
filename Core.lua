@@ -4689,18 +4689,6 @@ end
 
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
-	-- Ensures that if QUEST_WATCH_UPDATE fired and was responsible for this call (RQE.QuestWatchUpdateFired = true), then it will continue even if on taxi
-	if not RQE.QuestWatchUpdateFired or not RQE.UIInfoUpdateFired then
-		if UnitOnTaxi("player") then 
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Player is on Taxi, unable to continue RQE:StartPeriodicChecks() function call")
-			end
-			RQE.QuestWatchUpdateFired = false
-			RQE.UIInfoUpdateFired = false
-			return
-		end
-	end
-
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("StartPeriodicChecks() called.")
 	end
@@ -4766,8 +4754,7 @@ function RQE:StartPeriodicChecks()
 			end
 
 			-- If the highest completed objective is 99, click the waypoint button for the final step
-			if RQE.highestCompletedObjectiveIndex == 99 and finalStepIndex then
-			--if highestCompletedObjectiveIndex == 99 and finalStepIndex then
+			if highestCompletedObjectiveIndex == 99 and finalStepIndex then
 				RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
@@ -4839,38 +4826,59 @@ function RQE:StartPeriodicChecks()
 			end
 		end
 
+		-- -- Process the current step
+		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+		-- if funcResult then
+			-- -- Success: Step executed successfully
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Function for current step executed successfully. Advancing to the next step.")
+			-- end
+		-- else
+			-- -- Failure: Check and handle failure logic for the current stepIndex
+			-- local failFuncResult = stepData.failedfunc and stepData.failedcheck and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+			-- local failedIndex = stepData.failedIndex --or 1 -- Default to step 1 if failedIndex is not defined
+
+			-- if failFuncResult then
+				-- -- Transition to failedIndex
+				-- local failedIndex = stepData.failedIndex --or 1
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Failure condition met for stepIndex:", stepIndex, ". Reverting to failedIndex:", failedIndex)
+				-- end
+				-- RQE.AddonSetStepIndex = failedIndex
+				-- self:ClickWaypointButtonForIndex(failedIndex)
+				-- return  -- Stop further processing as we've transitioned to the failedIndex
+			-- else
+				-- -- Log when no failure conditions are met
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Failure condition NOT met for stepIndex:", stepIndex, ". Staying on current step.")
+				-- end
+			-- end
+
+			-- -- Update internal state and transition
+			-- RQE.AddonSetStepIndex = failedIndex
+			-- self:ClickWaypointButtonForIndex(failedIndex)
+			-- return -- Stop further processing as we've transitioned to the failedIndex
+		-- end
+
 		-- Process the current step
 		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
 		if funcResult then
-			-- Success: Step executed successfully
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Function for current step executed successfully. Advancing to the next step.")
+				print("Function for current step executed successfully.")
 			end
 		else
-			-- Failure: Check and handle failure logic for the current stepIndex
-			local failFuncResult = stepData.failedfunc and stepData.failedcheck and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-			local failedIndex = stepData.failedIndex or 1 -- Default to step 1 if failedIndex is not defined
-
+			local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
 			if failFuncResult then
-				-- Transition to failedIndex
 				local failedIndex = stepData.failedIndex or 1
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Failure condition met for stepIndex:", stepIndex, ". Reverting to failedIndex:", failedIndex)
+					print("Failure condition met, resetting to step:", failedIndex)
 				end
-				RQE.AddonSetStepIndex = failedIndex
 				self:ClickWaypointButtonForIndex(failedIndex)
-				return  -- Stop further processing as we've transitioned to the failedIndex
 			else
-				-- Log when no failure conditions are met
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Failure condition NOT met for stepIndex:", stepIndex, ". Staying on current step.")
+					print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
 				end
 			end
-
-			-- Update internal state and transition
-			RQE.AddonSetStepIndex = failedIndex
-			self:ClickWaypointButtonForIndex(failedIndex)
-			return -- Stop further processing as we've transitioned to the failedIndex
 		end
 
 		-- Check and build macro if needed
