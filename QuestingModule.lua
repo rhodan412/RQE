@@ -1889,18 +1889,28 @@ local function colorizeObjectives(questID)
 	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
 	local colorizedText = ""
 
+	-- Check if the quest is ready for turn-in
+	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+
 	if objectivesData then  -- Check if the data is not nil
 		for _, objective in ipairs(objectivesData) do
 			local description = objective.text
-			if objective.finished then
-				-- Objective complete, colorize in green
-				colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-			elseif objective.numFulfilled > 0 then
-				-- Objective partially complete, colorize in yellow
-				colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+			if isReadyForTurnIn then
+				-- Entire quest is ready for turn-in, colorize all objectives in green
+				colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"	-- Green
+				-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"	-- Yellow
+				-- colorizedText = colorizedText .. "|cff0000ff" .. description .. "|r\n"	-- Blue
 			else
-				-- Objective has not started or no progress, leave as white
-				colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				if objective.finished then
+					-- Objective complete, colorize in green
+					colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+				elseif objective.numFulfilled > 0 then
+					-- Objective partially complete, colorize in yellow
+					colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+				else
+					-- Objective has not started or no progress, leave as white
+					colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				end
 			end
 		end
 	else
@@ -1916,18 +1926,28 @@ function RQE.colorizeObjectives(questID)
 	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
 	local colorizedText = ""
 
+	-- Check if the quest is ready for turn-in
+	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+
 	if objectivesData then  -- Check if the data is not nil
 		for _, objective in ipairs(objectivesData) do
 			local description = objective.text
-			if objective.finished then
-				-- Objective complete, colorize in green
-				colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-			elseif objective.numFulfilled > 0 then
-				-- Objective partially complete, colorize in yellow
-				colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+			if isReadyForTurnIn then
+				-- Entire quest is ready for turn-in, colorize all objectives in green
+				colorizedText = colorizedText .. "|cff00ff00" .. description .. " (Complete) |r\n"	-- Green
+				-- colorizedText = colorizedText .. "|cffffff00" .. description .. " (Complete) |r\n"	-- Yellow
+				-- colorizedText = colorizedText .. "|cff0000ff" .. description .. " (Complete) |r\n"	-- Blue
 			else
-				-- Objective has not started or no progress, leave as white
-				colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				if objective.finished then
+					-- Objective complete, colorize in green
+					colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+				elseif objective.numFulfilled > 0 then
+					-- Objective partially complete, colorize in yellow
+					colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+				else
+					-- Objective has not started or no progress, leave as white
+					colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				end
 			end
 		end
 	else
