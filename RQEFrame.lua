@@ -822,6 +822,16 @@ local function CreateQuestTooltip(frame, questID)
 		RQE:QuestRewardsTooltip(GameTooltip, questID)
 	end
 
+	-- Check if RQE.SeparateStepText exists and has text
+	if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
+		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
+		GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
+	else
+		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
+	end
+
 	-- Party Members' Quest Progress
 	if IsInGroup() then
 		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -2155,9 +2165,22 @@ end
 
 -- Function to create a tooltip to display
 function RQE.ShowFocusScrollFrameTooltip(self)
-	GameTooltip:SetOwner(self, "ANCHOR_TOP", -200, 20) -- Anchor the tooltip at the top of the frame
-	GameTooltip:SetText("Hold ALT, CTRL, or SHIFT to scroll this frame.", 1, 1, 1, 1, true)
-	GameTooltip:Show()
+    GameTooltip:SetOwner(self, "ANCHOR_TOP", -200, 20) -- Anchor the tooltip at the top of the frame
+
+    -- Set the title of the tooltip
+    GameTooltip:SetText("Hold ALT, CTRL, or SHIFT to scroll this frame.", 1, 1, 1, 1, true)
+
+	-- Check if RQE.SeparateStepText exists and has text
+	if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
+		GameTooltip:AddLine(" ")
+		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
+		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
+		GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
+	else
+		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
+	end
+
+    GameTooltip:Show()
 end
 
 
