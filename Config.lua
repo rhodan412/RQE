@@ -1144,7 +1144,8 @@ RQE.options = {
 						debugLevel = {
 							type = 'select',
 							name = 'Debug Level',
-							desc = 'Set the level of debug logging.',
+							desc = "Set the level of debug logging.\n\n" ..
+							"|cFFFF3333The INFO and INFO+ settings are designed for the author ONLY. Using this may inadvertently impact your experience!|r",
 							values = debugLevelOptions,
 							get = function(info)
 								return getDebugLevelIndex(RQE.db.profile.debugLevel)  -- Convert string to index
@@ -2481,7 +2482,7 @@ function RQE:AddDebugSettingsWidgets(container)
 			-- Add a tooltip description for debugLevelDropdown (RQE.db.profile.debugLevel)
 			debugLevelDropdown:SetCallback("OnEnter", function(widget, event)
 				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-				GameTooltip:SetText("Set the level of debug logging.", nil, nil, nil, nil, true)
+				GameTooltip:SetText("Set the level of debug logging.\n\n|cFFFF3333The INFO and INFO+ settings are designed for the author ONLY. Using this may inadvertently impact your experience!|r", nil, nil, nil, nil, true)
 				GameTooltip:Show()
 			end)
 			debugLevelDropdown:SetCallback("OnLeave", function(widget, event)
