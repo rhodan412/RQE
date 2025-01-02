@@ -1063,13 +1063,15 @@ function RQE.handlePlayerLogin()
 	RQE.UntrackAutomaticWorldQuests()
 
 	-- Check if autoClickWaypointButton is selected in the configuration
-	C_Timer.After(5, function()
+	C_Timer.After(2.5, function()
 		if RQE.db.profile.autoClickWaypointButton then
+			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 			-- Click the "W" Button is autoclick is selected and no steps or questData exist
-			RQE.CheckAndClickWButton()
-			C_Timer.After(2.5, function()
-				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_LOGIN fires
-			end)
+			--RQE.CheckAndClickWButton()
+			-- C_Timer.After(2.5, function()
+				-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_LOGIN fires
+			-- end)
+			RQE.ClickQuestLogIndexButton(currentSuperTrackedQuestID)
 		end
 	end)
 end
