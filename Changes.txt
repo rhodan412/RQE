@@ -25,6 +25,7 @@
 		- Added some Cata quests for Mount Hyjal zone to DB
 		- Updated iconID to use "item:28372" instead of "item:118474" for SetRaidTarget(\"target\",7) macros
 		- Updated DB for Alliance Hellfire Peninsula & Zangarmarsh quests
+		- Updated DB quests for some of alliance Terokkar Forest quests
 
 
 11.0.7.4 (2024-12-28)
