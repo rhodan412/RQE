@@ -4690,12 +4690,13 @@ end
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
 	-- Ensures that if QUEST_WATCH_UPDATE fired and was responsible for this call (RQE.QuestWatchUpdateFired = true), then it will continue even if on taxi
-	if not RQE.QuestWatchUpdateFired then
+	if not RQE.QuestWatchUpdateFired or not RQE.UIInfoUpdateFired then
 		if UnitOnTaxi("player") then 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Player is on Taxi, unable to continue RQE:StartPeriodicChecks() function call")
 			end
 			RQE.QuestWatchUpdateFired = false
+			RQE.UIInfoUpdateFired = false
 			return
 		end
 	end
@@ -7177,7 +7178,9 @@ end
 -- Function to search an item in the auction house and prepare for manual review
 function RQE:SearchAndPrepareAuctionItem(itemID, quantity)
 	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
-		print("Auction House is not open.")
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Auction House is not open.")
+		end
 		return
 	end
 
@@ -7212,7 +7215,9 @@ end
 -- Function that searches for and prints out the prices for an item
 function RQE:SearchAndDisplayCommodityResults(itemID, quantity)
 	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
-		print("Auction House is not open.")
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Auction House is not open.")
+		end
 		return
 	end
 
@@ -7251,7 +7256,9 @@ end
 -- Function to confirm and purchase a commodity from the auction house
 function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
-		print("Auction House is not open.")
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Auction House is not open.")
+		end
 		return
 	end
 
