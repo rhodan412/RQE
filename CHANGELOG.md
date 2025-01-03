@@ -2,14 +2,25 @@
 
 	**HIGHLIGHTS**
 		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips!
+		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint
+
+	Buttons.lua
+		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
+
+	Core.lua
+		- Created function aimed at clicking the RQE.SeparateWaypointButton
 
 	EventManager.lua
-		- Fixed function call for RQE:StartPeriodicChecks() to properly update when ITEM_COUNT_CHANGED event fires
+		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
 		- Added debugs for RQE:StartPeriodicChecks() in case future issues arise
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
 		- Added DB quests for alliance Nagrand quests
+		- Added some aldor-side and neutral Netherstorm quests to DB
+
+	RQEFrame.lua
+		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
 
 
 11.0.7.5 (2025-01-02)
