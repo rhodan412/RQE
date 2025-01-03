@@ -1518,14 +1518,14 @@ function RQE.ClickRandomQuestLogIndexButton(bigQuestID)
 	RQE.ClickQuestLogIndexButton(randomQuestID)
 
 	C_Timer.After(0.2, function()
-		RQE.ClickWButton()
+		RQE.CheckAndClickWButton()
 	end)
 
 	C_Timer.After(0.3, function()
 		RQE.ClickQuestLogIndexButton(bigQuestID)
 
 		C_Timer.After(0.2, function()
-			RQE.ClickWButton()
+			RQE.CheckAndClickWButton()
 		end)
 	end)
 end
