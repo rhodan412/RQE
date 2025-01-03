@@ -65,8 +65,38 @@ RQE.UnknownButtonTooltip = function()
 		if RQE.db.profile.autoClickWaypointButton then
 			if RQE.db.profile.debugLevel == "INFO" then
 				RQE.ClickWButton()
-				C_Timer.After(5, function()
+				C_Timer.After(2.5, function()
 					RQE:StartPeriodicChecks()
+					C_Timer.After(0.2, function()
+						RQE.CheckAndClickSeparateWaypointButtonButton()
+						-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
+						if RQE.db.profile.debugLevel == "INFO" then
+							local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
+							local questID = C_SuperTrack.GetSuperTrackedQuestID()
+							local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
+
+							-- Ensure quest data exists and has the coordinate data
+							if questData and questData[stepIndex] and questData[stepIndex].coordinates then
+								-- Extract coordinate information for the current stepIndex
+								local coordData = questData[stepIndex].coordinates
+								local x, y, mapID = coordData.x, coordData.y, coordData.mapID
+
+								-- Format the coordinate text
+								local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
+								--local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
+								RQE.SeparateFocusCoordData = coordsText
+
+								if RQE.db.profile.debugLevel == "INFO" then
+									DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+								end
+
+								-- Return the formatted coordinate text
+								return coordsText
+							else
+								return "No tooltip available."  -- Fallback if no data is available
+							end
+						end
+					end)
 				end)
 			end
 		end
