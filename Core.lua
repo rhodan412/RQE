@@ -1786,6 +1786,12 @@ function RQE.ClickWButton()
 end
 
 
+-- Function that clicks the SeparateWaypointButton
+function RQE.CheckAndClickSeparateWaypointButtonButton()
+	RQE.SeparateWaypointButton:Click()
+end
+
+
 -- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
 function RQE.CheckAndClickWButton()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -1834,6 +1840,9 @@ function RQE.CheckAndClickWButton()
 		end
 		RQE.ClickWButton()
 		return
+	else
+		RQE.CheckAndClickSeparateWaypointButtonButton()
+		return
 	end
 
 	-- If quest exists but has no steps defined, click the "W" button
@@ -1863,6 +1872,7 @@ function RQE.CheckAndClickWButton()
 			end
 			RQE.ClickWButton()
 		else
+			RQE.CheckAndClickSeparateWaypointButtonButton()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Quest has steps, no need to click the 'W' button.")
 			end
