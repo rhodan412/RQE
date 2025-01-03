@@ -621,17 +621,30 @@ function RQE.handleItemCountChanged(...)
 			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.CurrentlySuperQuestID
 
-			C_Timer.After(0.4, function()
-				if RQE.LastAcceptedQuest then
-					if RQE.LastAcceptedQuest == questID then
-						RQE.StartPerioFromItemCountChanged = true
-						RQE.ItemCountRanStartPeriodicChecks = true
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
-						C_Timer.After(3, function()
-							RQE.StartPerioFromItemCountChanged = false
-						end)
-					end
+			-- C_Timer.After(0.7, function()
+				-- if RQE.LastAcceptedQuest then
+					-- if RQE.LastAcceptedQuest == questID then
+						-- RQE.StartPerioFromItemCountChanged = true
+						-- RQE.ItemCountRanStartPeriodicChecks = true
+						-- if RQE.db.profile.showStartPeriodicCheckInfo then
+							-- print("~~~~629")
+						-- end
+						-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+						-- C_Timer.After(3, function()
+							-- RQE.StartPerioFromItemCountChanged = false
+						-- end)
+					-- end
+				-- end
+			-- end)
+
+			C_Timer.After(0.7, function()
+				if RQE.db.profile.showStartPeriodicCheckInfo then
+					print("~~~~629")
 				end
+				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+				C_Timer.After(3, function()
+					RQE.StartPerioFromItemCountChanged = false
+				end)
 			end)
 		end
 	end
@@ -643,6 +656,9 @@ function RQE.BagNewItemsAdded()
 	if InCombatLockdown() then return end
 
 	C_Timer.After(1, function()
+		if RQE.db.profile.showStartPeriodicCheckInfo then
+			print("~~~~646")
+		end
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
 	end)
 end
@@ -755,6 +771,9 @@ function RQE.handleMerchantUpdate()
 			end
 		end
 		C_Timer.After(1.3, function()
+			if RQE.db.profile.showStartPeriodicCheckInfo then
+				print("~~~~758")
+			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after MERCHANT_UPDATE fires
 		end)
 	end
@@ -1315,6 +1334,9 @@ function RQE.handleScenarioUpdate(...)
 	end
 
 	if RQE.db.profile.autoClickWaypointButton then
+		if RQE.db.profile.showStartPeriodicCheckInfo then
+			print("~~~~1318")
+		end
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SCENARIO_UPDATE fires
 	end
 
@@ -1540,6 +1562,9 @@ function RQE.handlePlayerControlGained()
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromPlayerControlGained = true
+			if RQE.db.profile.showStartPeriodicCheckInfo then
+				print("~~~~1543")
+			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_CONTROL_GAINED fires
 			C_Timer.After(3, function()
 				RQE.StartPerioFromPlayerControlGained = false
@@ -1909,6 +1934,9 @@ function RQE.handlePlayerEnterWorld(...)
 				RQE.TrackClosestQuest()
 				if RQE.db.profile.autoClickWaypointButton then
 					C_Timer.After(4, function()
+						if RQE.db.profile.showStartPeriodicCheckInfo then
+							print("~~~~1912")
+						end
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_ENTERING_WORLD fires
 					end)
 				end
@@ -2026,6 +2054,9 @@ function RQE.handlePlayerEnterWorld(...)
 				-- Tier Three Importance: PLAYER_ENTERING_WORLD event
 				C_Timer.After(1, function()
 					RQE.StartPerioFromPlayerEnteringWorld = true
+					if RQE.db.profile.showStartPeriodicCheckInfo then
+						print("~~~~2029")
+					end
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_ENTERING_WORLD fires
 					C_Timer.After(3, function()
 						RQE.StartPerioFromPlayerEnteringWorld = false
@@ -2234,6 +2265,9 @@ function RQE.handleSuperTracking()
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromSuperTrackChange = true
 		RQE.SuperTrackChangeRanStartPeriodicChecks = true
+		if RQE.db.profile.showStartPeriodicCheckInfo then
+			print("~~~~2237")
+		end
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
 		C_Timer.After(3, function()
 			RQE.StartPerioFromSuperTrackChange = false
@@ -2462,6 +2496,9 @@ function RQE.handleQuestAccepted(...)
 			RQE.StartPerioFromQuestAccepted = true
 			if not RQE.StartPerioFromUQLC then
 				if not RQE.SuperTrackChangeRanStartPeriodicChecks then
+					if RQE.db.profile.showStartPeriodicCheckInfo then
+						print("~~~~2465")
+					end
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires
 					C_Timer.After(3, function()
 						RQE.StartPerioFromQuestAccepted = false
@@ -2528,6 +2565,9 @@ function RQE.handleUnitEnterVehicle(...)
 
 	-- Performs check of step and macro
 	if RQE.db.profile.autoClickWaypointButton then
+		if RQE.db.profile.showStartPeriodicCheckInfo then
+			print("~~~~2531")
+		end
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_ENTERING_VEHICLE fires
 	end
 end
@@ -2738,6 +2778,9 @@ function RQE.handleZoneNewAreaChange()
 				end
 			end
 		end
+		if RQE.db.profile.showStartPeriodicCheckInfo then
+			print("~~~~2741")
+		end
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED_NEW_AREA fires
 	end
 
@@ -2870,6 +2913,9 @@ function RQE.handleUIInfoMessage(...)
 			C_Timer.After(1.5, function()
 				if RQE.db.profile.autoClickWaypointButton then
 					RQE.UIInfoUpdateFired = true
+					if RQE.db.profile.showStartPeriodicCheckInfo then
+						print("~~~~2873")
+					end
 					RQE:StartPeriodicChecks()
 					C_Timer.After(0.2, function()
 						RQE.UIInfoUpdateFired = false
@@ -3049,6 +3095,9 @@ function RQE.handleUnitQuestLogChange(...)
 
 				if not RQE.QuestRemoved then
 					RQE.StartPerioFromUnitQuestLogChanged = true
+					if RQE.db.profile.showStartPeriodicCheckInfo then
+						print("~~~~3052")
+					end
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
 					RQE.QuestRemoved = false
 
@@ -3099,6 +3148,9 @@ function RQE.handleUnitQuestLogChange(...)
 	else
 		if not RQE.QuestRemoved then
 			RQE.StartPerioFromUQLC = true
+			if RQE.db.profile.showStartPeriodicCheckInfo then
+				print("~~~~3102")
+			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
 			RQE.QuestRemoved = false
 		end
@@ -3273,6 +3325,9 @@ function RQE.handleInstanceInfoUpdate()
 	-- Tier Three Importance: UPDATE_INSTANCE_INFO event
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromInstanceInfoUpdate = true
+		if RQE.db.profile.showStartPeriodicCheckInfo then
+			print("~~~~3276")
+		end
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UPDATE_INSTANCE_INFO fires
 		C_Timer.After(3, function()
 			RQE.StartPerioFromInstanceInfoUpdate = false
@@ -3622,6 +3677,9 @@ function RQE.handleQuestComplete()
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestComplete = true
+			if RQE.db.profile.showStartPeriodicCheckInfo then
+				print("~~~~3625")
+			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_COMPLETE fires
 			C_Timer.After(3, function()
 				RQE.StartPerioFromQuestComplete = false
@@ -4057,6 +4115,9 @@ function RQE.handleQuestWatchUpdate(...)
 				RQE.CheckAndClickWButton()
 
 				RQE.StartPerioFromQuestWatchUpdate = true
+				if RQE.db.profile.showStartPeriodicCheckInfo then
+					print("~~~~4060")
+				end
 				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_UPDATE fires
 
 				-- Immediately reset flag after running StartPeriodicChecks
@@ -4356,6 +4417,9 @@ function RQE.handleQuestTurnIn(...)
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1, function()
 			RQE.StartPerioFromQuestTurnedIn = true
+			if RQE.db.profile.showStartPeriodicCheckInfo then
+				print("~~~~4359")
+			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_TURNED_IN fires
 			C_Timer.After(3, function()
 				RQE.StartPerioFromQuestTurnedIn = false
