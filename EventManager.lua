@@ -641,7 +641,12 @@ function RQE.handleItemCountChanged(...)
 				if RQE.db.profile.showStartPeriodicCheckInfo then
 					print("~~~~629")
 				end
-				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+
+				if RQE.UIInfoMsgFiredAfterQuestWatchUpdate then
+					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+					RQE.UIInfoMsgFiredAfterQuestWatchUpdate = false
+				end
+
 				C_Timer.After(3, function()
 					RQE.StartPerioFromItemCountChanged = false
 				end)
@@ -1129,6 +1134,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
+	RQE.QuestWatchUnitQuestLogChangedFired = false
 	RQE.QuestWatchUpdateFired = false
 	RQE.ReEnableRQEFrames = false
 	RQE.ShapeshiftUpdated = false
@@ -1146,6 +1152,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.StartPerioQuestAcceptIsSuperOkay = false
 	RQE.SuperTrackChangeRanStartPeriodicChecks = false
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
+	RQE.UIInfoMsgFiredAfterQuestWatchUpdate = false
 	RQE.UIInfoUpdateFired = false
 	RQE.WaypointButtonHover = false
 
@@ -2884,6 +2891,11 @@ function RQE.handleUIInfoMessage(...)
 	local messageType = select(3, ...)
 	local message = select(4, ...)
 
+	if RQE.QuestWatchUnitQuestLogChangedFired then
+		RQE.UIInfoMsgFiredAfterQuestWatchUpdate = true
+		RQE.QuestWatchUnitQuestLogChangedFired = false
+	end
+
 	if not RQE.BlacklistUnderway then return end
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -3063,6 +3075,8 @@ end
 function RQE.handleUnitQuestLogChange(...)
 	local event = select(2, ...)
 	local unitTarget = select(3, ...)
+
+	RQE.QuestWatchUnitQuestLogChangedFired = true
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
@@ -3919,6 +3933,8 @@ end
 function RQE.handleQuestWatchUpdate(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
+
+	RQE.QuestWatchUnitQuestLogChangedFired = true
 
 	-- Store the questID for tracking
 	RQE.LastQuestWatchQuestID = questID
