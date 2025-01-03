@@ -1,8 +1,23 @@
+11.0.7.6
+
+	**HIGHLIGHTS**
+		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips!
+
+	EventManager.lua
+		- Fixed function call for RQE:StartPeriodicChecks() to properly update when ITEM_COUNT_CHANGED event fires
+		- Added debugs for RQE:StartPeriodicChecks() in case future issues arise
+
+	RQEDatabase.lua
+		- Added remainder of quests in Terokkar Forest quests
+		- Added DB quests for alliance Nagrand quests
+
+
 11.0.7.5 (2025-01-02)
 
 	**HIGHLIGHTS**
 		- Updated RQE:CheckDBZoneChange() function to handle for multiple mapID checks in DB for a single CheckDBZoneChange check
 		- Fixed issue where objective progress wasn't reliably advancing to next steps with data in DB
+		- Added information to tooltip to display step information when hovering over the QuestID/Name in RQEFrame as well as when hovering over the step frame
 		- Modified colors and better handling for quest complete as some quests weren't showing that it was complete when it actually was (such as Escort quests)
 
 	Buttons.lua
