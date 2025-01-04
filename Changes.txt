@@ -6,12 +6,14 @@
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
+		- Plays certain sound whether the waypoint information in the DB exists, matches or doesn't match the stored Blizzard waypoint for the super tracked quest (only on INFO debug level)
 
 	Core.lua
 		- Created function aimed at clicking the RQE.SeparateWaypointButton
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
+		- Modified fix to check for running RQE:StartPeriodicChecks(), on item loot, ONLY if the stepData.funct or stepData.failedfunct of the player's current step on the super tracked quest is in the DB and is listed as "CheckDBInventory"
 		- Added debugs for RQE:StartPeriodicChecks() in case future issues arise
 
 	RQEDatabase.lua
