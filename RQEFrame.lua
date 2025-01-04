@@ -946,7 +946,7 @@ function AdjustRQEFrameWidths(newWidth)
 
 	-- Adjust width for each element
 	RQE.QuestIDText:SetWidth(newWidth - dynamicPadding - 25)
-	RQE.QuestNameText:SetWidth(newWidth - dynamicPadding - 55)
+	RQE.QuestNameText:SetWidth(newWidth - dynamicPadding - 65)
 	RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
 	RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
 	RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
