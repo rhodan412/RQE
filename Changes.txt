@@ -7,9 +7,11 @@
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
 		- Plays certain sound whether the waypoint information in the DB exists, matches or doesn't match the stored Blizzard waypoint for the super tracked quest (only on INFO debug level)
+		- Modified the C_Timer.After in the RQE.UnknownButtonTooltip function
 
 	Core.lua
 		- Created function aimed at clicking the RQE.SeparateWaypointButton
+		- Fixed error related to the click of the RQE.SeparateWaypointButton
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
@@ -20,9 +22,11 @@
 		- Added remainder of quests in Terokkar Forest quests
 		- Added DB quests for alliance Nagrand quests
 		- Added some aldor-side and neutral Netherstorm quests to DB
+		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
+		- Changed dynamic padding of RQEFrame's QuestNameText to allow for better wrap for longer quest titles
 
 
 11.0.7.5 (2025-01-02)
