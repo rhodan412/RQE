@@ -672,7 +672,6 @@ function RQE.handleItemCountChanged(...)
 							end
 						end
 					else
-						print(tostring(stepData.funct))
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("No quest data found for questID:", questID)
 						end
