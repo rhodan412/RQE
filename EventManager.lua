@@ -622,32 +622,65 @@ function RQE.handleItemCountChanged(...)
 			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.CurrentlySuperQuestID
 
 			-- C_Timer.After(0.7, function()
-				-- if RQE.LastAcceptedQuest then
-					-- if RQE.LastAcceptedQuest == questID then
-						-- RQE.StartPerioFromItemCountChanged = true
-						-- RQE.ItemCountRanStartPeriodicChecks = true
-						-- if RQE.db.profile.showStartPeriodicCheckInfo then
-							-- print("~~~~629")
-						-- end
-						-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
-						-- C_Timer.After(3, function()
-							-- RQE.StartPerioFromItemCountChanged = false
-						-- end)
-					-- end
+				-- if RQE.db.profile.showStartPeriodicCheckInfo then
+					-- print("~~~~629")
 				-- end
+
+				-- if RQE.UIInfoMsgFiredAfterQuestWatchUpdate then
+					-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+					-- RQE.UIInfoMsgFiredAfterQuestWatchUpdate = false
+				-- end
+
+				-- C_Timer.After(3, function()
+					-- RQE.StartPerioFromItemCountChanged = false
+				-- end)
 			-- end)
 
 			C_Timer.After(0.7, function()
 				if RQE.db.profile.showStartPeriodicCheckInfo then
-					print("~~~~629")
+					print("~~~~641")
 				end
 
-				if RQE.UIInfoMsgFiredAfterQuestWatchUpdate then
-					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
-					RQE.UIInfoMsgFiredAfterQuestWatchUpdate = false
+				-- Check if a quest is being supertracked
+				local questID = C_SuperTrack.GetSuperTrackedQuestID()
+				if questID then
+					-- Get the quest data from the database
+					local questData = RQE.getQuestData(questID)
+					if questData then
+						-- Determine the current step index
+						local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+						-- Ensure stepIndex is within bounds
+						if stepIndex >= 1 and stepIndex <= #questData then
+							local stepData = questData[stepIndex]
+							if stepData then
+								-- Check if either funct or failedfunc contains "CheckDBInventory"
+								local hasCheckDBInventory =
+									(stepData.funct and string.find(stepData.funct, "CheckDBInventory")) or
+									(stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory"))
+								
+								if hasCheckDBInventory then
+									RQE:StartPeriodicChecks() -- Run the periodic checks
+								end
+							else
+								if RQE.db.profile.debugLevel == "INFO+" then
+									print("No stepData found for stepIndex:", stepIndex)
+								end
+							end
+						else
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Invalid stepIndex:", stepIndex)
+							end
+						end
+					else
+						print(tostring(stepData.funct))
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("No quest data found for questID:", questID)
+						end
+					end
 				end
 
-				C_Timer.After(3, function()
+				-- Reset flags or states if necessary
+				C_Timer.After(1.7, function()
 					RQE.StartPerioFromItemCountChanged = false
 				end)
 			end)
@@ -660,11 +693,52 @@ end
 function RQE.BagNewItemsAdded()
 	if InCombatLockdown() then return end
 
-	C_Timer.After(1, function()
+	C_Timer.After(0.7, function()
 		if RQE.db.profile.showStartPeriodicCheckInfo then
-			print("~~~~646")
+			print("~~~~697")
 		end
-		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
+
+		-- Check if a quest is being supertracked
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if questID then
+			-- Get the quest data from the database
+			local questData = RQE.getQuestData(questID)
+			if questData then
+				-- Determine the current step index
+				local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+				-- Ensure stepIndex is within bounds
+				if stepIndex >= 1 and stepIndex <= #questData then
+					local stepData = questData[stepIndex]
+					if stepData then
+						-- Check if either funct or failedfunc contains "CheckDBInventory"
+						local hasCheckDBInventory =
+							(stepData.funct and string.find(stepData.funct, "CheckDBInventory")) or
+							(stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory"))
+						
+						if hasCheckDBInventory then
+							RQE:StartPeriodicChecks() -- Run the periodic checks
+						end
+					else
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("No stepData found for stepIndex:", stepIndex)
+						end
+					end
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Invalid stepIndex:", stepIndex)
+					end
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("No quest data found for questID:", questID)
+				end
+			end
+		end
+
+		-- Reset flags or states if necessary
+		C_Timer.After(2, function()
+			RQE.StartPerioFromItemCountChanged = false
+		end)
 	end)
 end
 
@@ -722,13 +796,58 @@ function RQE.ReagentBagUpdate(...)
 					else
 						RQE.ClickQuestLogIndexButton(questID)
 					end
+
+					C_Timer.After(0.7, function()
+						if RQE.db.profile.showStartPeriodicCheckInfo then
+							print("~~~~801")
+						end
+
+						-- Check if a quest is being supertracked
+						local questID = C_SuperTrack.GetSuperTrackedQuestID()
+						if questID then
+							-- Get the quest data from the database
+							local questData = RQE.getQuestData(questID)
+							if questData then
+								-- Determine the current step index
+								local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+								-- Ensure stepIndex is within bounds
+								if stepIndex >= 1 and stepIndex <= #questData then
+									local stepData = questData[stepIndex]
+									if stepData then
+										-- Check if either funct or failedfunc contains "CheckDBInventory"
+										local hasCheckDBInventory =
+											(stepData.funct and string.find(stepData.funct, "CheckDBInventory")) or
+											(stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory"))
+										
+										if hasCheckDBInventory then
+											RQE:StartPeriodicChecks() -- Run the periodic checks
+										end
+									else
+										if RQE.db.profile.debugLevel == "INFO+" then
+											print("No stepData found for stepIndex:", stepIndex)
+										end
+									end
+								else
+									if RQE.db.profile.debugLevel == "INFO+" then
+										print("Invalid stepIndex:", stepIndex)
+									end
+								end
+							else
+								if RQE.db.profile.debugLevel == "INFO+" then
+									print("No quest data found for questID:", questID)
+								end
+							end
+						end
+
+						-- Reset flags or states if necessary
+						C_Timer.After(1.5, function()
+							RQE.StartPerioFromItemCountChanged = false
+						end)
+					end)
 				end
 			end
 		end
 	end
-	-- C_Timer.After(1.5, function()
-		-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
-	-- end)
 end
 
 
@@ -848,11 +967,56 @@ function RQE.handleUnitInventoryChange(...)
 				else
 					RQE.ClickQuestLogIndexButton(questID)
 				end
+
+				C_Timer.After(0.7, function()
+					if RQE.db.profile.showStartPeriodicCheckInfo then
+						print("~~~~972")
+					end
+
+					-- Check if a quest is being supertracked
+					local questID = C_SuperTrack.GetSuperTrackedQuestID()
+					if questID then
+						-- Get the quest data from the database
+						local questData = RQE.getQuestData(questID)
+						if questData then
+							-- Determine the current step index
+							local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+							-- Ensure stepIndex is within bounds
+							if stepIndex >= 1 and stepIndex <= #questData then
+								local stepData = questData[stepIndex]
+								if stepData then
+									-- Check if either funct or failedfunc contains "CheckDBInventory"
+									local hasCheckDBInventory =
+										(stepData.funct and string.find(stepData.funct, "CheckDBInventory")) or
+										(stepData.failedfunc and string.find(stepData.failedfunc, "CheckDBInventory"))
+									
+									if hasCheckDBInventory then
+										RQE:StartPeriodicChecks() -- Run the periodic checks
+									end
+								else
+									if RQE.db.profile.debugLevel == "INFO+" then
+										print("No stepData found for stepIndex:", stepIndex)
+									end
+								end
+							else
+								if RQE.db.profile.debugLevel == "INFO+" then
+									print("Invalid stepIndex:", stepIndex)
+								end
+							end
+						else
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("No quest data found for questID:", questID)
+							end
+						end
+					end
+
+					-- Reset flags or states if necessary
+					C_Timer.After(1.5, function()
+						RQE.StartPerioFromItemCountChanged = false
+					end)
+				end)
 			end
 		end
-		-- C_Timer.After(1.7, function()
-			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_INVENTORY_CHANGED fires
-		-- end)
 	end
 end
 
