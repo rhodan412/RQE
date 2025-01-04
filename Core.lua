@@ -1788,7 +1788,15 @@ end
 
 -- Function that clicks the SeparateWaypointButton
 function RQE.CheckAndClickSeparateWaypointButtonButton()
-	RQE.SeparateWaypointButton:Click()
+	if RQE.SeparateWaypointButton then
+		-- Click the button if it exists
+		RQE.SeparateWaypointButton:Click()
+	-- else
+		-- -- Debugging: Provide feedback if the button doesn't exist
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("|cffff0000Error: SeparateWaypointButton is not initialized or available.|r")
+		-- end
+	end
 end
 
 
