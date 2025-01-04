@@ -65,9 +65,9 @@ RQE.UnknownButtonTooltip = function()
 		if RQE.db.profile.autoClickWaypointButton then
 			if RQE.db.profile.debugLevel == "INFO" then
 				RQE.ClickWButton()
-				C_Timer.After(2.5, function()
+				C_Timer.After(3.5, function()
 					RQE:StartPeriodicChecks()
-					C_Timer.After(0.2, function()
+					C_Timer.After(0.6, function()
 						RQE.CheckAndClickSeparateWaypointButtonButton()
 						-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
 						if RQE.db.profile.debugLevel == "INFO" then
