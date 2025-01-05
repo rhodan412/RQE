@@ -12,11 +12,16 @@
 	Core.lua
 		- Created function aimed at clicking the RQE.SeparateWaypointButton
 		- Fixed error related to the click of the RQE.SeparateWaypointButton
+		- Fix to RQEMacro:CreateMacroForCurrentStep() function that allows for update to occur in instance if this was shortly after a zone change event occurred 
+		- Slight modification to RQE:StartPeriodicChecks() so that funct checks work correctly with CheckDBZone and CheckDBInventory (although CheckDBInventory won't handle failedchecks in DB, so these won't be used for the foreseeable future)
+		- Slight modification to the RQE:CheckDBZoneChange function (will revert back to 11.0.7.5 addon version if needed)
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
 		- Modified fix to check for running RQE:StartPeriodicChecks(), on item loot, ONLY if the stepData.funct or stepData.failedfunct of the player's current step on the super tracked quest is in the DB and is listed as "CheckDBInventory"
 		- Added debugs for RQE:StartPeriodicChecks() in case future issues arise
+		- Added functionality to re-run event that fires on SUPER_TRACKING_CHANGED if it previously fired when in combat
+		- Addon variable created to allow RQEMacro:CreateMacroForCurrentStep() function to run if the call takes place following a zone change event
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
