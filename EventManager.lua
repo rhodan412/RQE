@@ -549,6 +549,8 @@ function RQE.handleItemCountChanged(...)
 		end
 	end
 
+	-- RQE.InventoryFailCheck()
+	
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showItemCountChanged then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: ITEM_COUNT_CHANGED event triggered for event: " .. tostring(event) .. ", ItemID: " .. tostring(itemID), 1, 0.65, 0.5)
 	end
@@ -1035,6 +1037,13 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5)
 	end
 
+	if RQE.RunSuperTrackChangedAfterCombat then
+		RQE.handleSuperTracking()
+		C_Timer.After(0.2, function()
+			RQE.RunSuperTrackChangedAfterCombat = false
+		end)
+	end
+
 	if RQE.CheckNClickWButtonAfterCombat then
 		C_Timer.After(1.5, function()
 			RQE.CheckAndClickWButton()
@@ -1294,12 +1303,14 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
+	RQE.NewZoneChange = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.QuestWatchUnitQuestLogChangedFired = false
 	RQE.QuestWatchUpdateFired = false
 	RQE.ReEnableRQEFrames = false
+	RQE.RunSuperTrackChangedAfterCombat = false
 	RQE.ShapeshiftUpdated = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
@@ -2316,6 +2327,13 @@ function RQE.handleSuperTracking()
 		end
 	end
 
+	C_Timer.After(0.4, function()
+		if InCombatLockdown() then
+			RQE.RunSuperTrackChangedAfterCombat = true
+			return
+		end
+	end)
+
 	C_Timer.After(1.5, function()
 		RQE:UpdateContentSize()
 	end)
@@ -2378,6 +2396,9 @@ function RQE.handleSuperTracking()
 						print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
 					end
 				end
+				C_Timer.After(0.1, function()
+					RQE.CheckAndClickWButton()
+				end)
 			end)
 		end
 
@@ -2752,6 +2773,8 @@ function RQE.handleZoneChange(...)
 		RQE.updateScenarioUI()
 	end
 
+	RQE.NewZoneChange = true
+
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
@@ -2889,6 +2912,7 @@ function RQE.handleZoneNewAreaChange()
 		DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	end
 
+	RQE.NewZoneChange = true
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
