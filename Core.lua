@@ -4336,15 +4336,18 @@ function RQEMacro:CreateMacroForCurrentStep()
 		return
 	end
 
-	-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
-	if isInInstance and (instanceType == "party" or instanceType == "raid") then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
+	if not RQE.NewZoneChange then
+		-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
+		if isInInstance and (instanceType == "party" or instanceType == "raid") then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
+			end
+			RQE.isCheckingMacroContents = false
+			return
 		end
-		RQE.isCheckingMacroContents = false
-		return
 	end
 
+	RQE.NewZoneChange = false
 	local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
 	if isMacroCorrect then
@@ -4388,331 +4391,10 @@ function RQEMacro:CreateMacroForCurrentStep()
 end
 
 
--- -- Periodic check setup (updated to include CheckDBObjectiveStatus)
--- function RQE:StartPeriodicChecks()
-	-- -- Priority Flag Check: Determine which flag is allowed to run the function
-	-- if RQE.StartPerioFromQuestWatchUpdate then
-		-- -- Tier 1 priority, always allowed to run immediately
-		-- RQE.StartPerioFromQuestWatchUpdate = false
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-			-- print("RQE:StartPeriodicChecks() ceased because " .. tostring(RQE.StartPerioFromQuestWatchUpdate))
-		-- end
-	-- elseif RQE.StartPerioFromSuperTrackChange then
-		-- -- Tier 2 priority, run only if no Tier 1 flag is set
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-			-- print("Status of SUPER_TRACKING_CHANGED RQE.StartPerioFromSuperTrackChange is " .. tostring(RQE.StartPerioFromSuperTrackChange))
-		-- end
-		-- if not (RQE.StartPerioFromQuestWatchUpdate) then
-			-- RQE.StartPerioFromSuperTrackChange = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("RQE:StartPeriodicChecks() ceased because " .. tostring(RQE.StartPerioFromSuperTrackChange))
-			-- end
-		-- else
-			-- return
-		-- end
-	-- elseif RQE.StartPerioFromPlayerEnteringWorld or RQE.StartPerioFromInstanceInfoUpdate or RQE.StartPerioFromPlayerControlGained then
-		-- -- Tier 3 priority, run only if no Tier 1 or Tier 2 flags are set
-		-- if not (RQE.StartPerioFromQuestWatchUpdate or RQE.StartPerioFromSuperTrackChange) then
-			-- RQE.StartPerioFromPlayerEnteringWorld = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of PLAYER_ENTERING_WORLD RQE.StartPerioFromPlayerEnteringWorld is " .. tostring(RQE.StartPerioFromPlayerEnteringWorld))
-			-- end
-			-- RQE.StartPerioFromInstanceInfoUpdate = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of UPDATE_INSTANCE_INFO RQE.StartPerioFromInstanceInfoUpdate is " .. tostring(RQE.StartPerioFromInstanceInfoUpdate))
-			-- end
-			-- RQE.StartPerioFromPlayerControlGained = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of PLAYER_CONTROL_GAINED RQE.StartPerioFromPlayerControlGained is " .. tostring(RQE.StartPerioFromPlayerControlGained))
-			-- end
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("RQE:StartPeriodicChecks() ceased because either RQE.StartPerioFromQuestWatchUpdate is " .. tostring(RQE.StartPerioFromQuestWatchUpdate) .. " or RQE.StartPerioFromSuperTrackChange is " .. tostring(RQE.StartPerioFromSuperTrackChange))
-			-- end
-			-- return
-		-- end
-	-- elseif RQE.StartPerioFromQuestAccepted or RQE.StartPerioFromQuestComplete or RQE.StartPerioFromQuestTurnedIn or RQE.StartPerioFromItemCountChanged then
-		-- -- Tier 4 priority, run only if no Tier 1, Tier 2, or Tier 3 flags are set
-		-- if not (RQE.StartPerioFromQuestWatchUpdate or RQE.StartPerioFromSuperTrackChange or
-				-- RQE.StartPerioFromPlayerEnteringWorld or RQE.StartPerioFromInstanceInfoUpdate or
-				-- RQE.StartPerioFromPlayerControlGained) then
-			-- RQE.StartPerioFromQuestAccepted = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of QUEST_ACCEPTED RQE.StartPerioFromQuestAccepted is " .. tostring(RQE.StartPerioFromQuestAccepted))
-			-- end
-			-- RQE.StartPerioFromQuestComplete = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of QUEST_COMPLETE RQE.StartPerioFromQuestComplete is " .. tostring(RQE.StartPerioFromQuestComplete))
-			-- end
-			-- RQE.StartPerioFromQuestTurnedIn = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of QUEST_TURNED_IN RQE.StartPerioFromQuestTurnedIn is " .. tostring(RQE.StartPerioFromQuestTurnedIn))
-			-- end
-			-- RQE.StartPerioFromItemCountChanged = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of ITEM_COUNT_CHANGED RQE.StartPerioFromItemCountChanged is " .. tostring(RQE.StartPerioFromItemCountChanged))
-			-- end
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("RQE:StartPeriodicChecks() ceased because one of the Tier 4 flags was true: RQE.StartPerioFromQuestAccepted is " .. tostring(RQE.StartPerioFromQuestAccepted) .. ", RQE.StartPerioFromQuestComplete is " .. tostring(RQE.StartPerioFromQuestComplete) .. ", RQE.StartPerioFromQuestTurnedIn is " .. tostring(RQE.StartPerioFromQuestTurnedIn) .. ", or RQE.StartPerioFromItemCountChanged is " .. tostring(RQE.StartPerioFromItemCountChanged))
-			-- end
-			-- return
-		-- end
-	-- elseif RQE.StartPerioFromUnitQuestLogChanged then
-		-- -- Tier 5 priority, run only if no Tier 1, Tier 2, Tier 3, or Tier 4 flags are set
-		-- if not (RQE.StartPerioFromQuestWatchUpdate or RQE.StartPerioFromSuperTrackChange or
-				-- RQE.StartPerioFromPlayerEnteringWorld or RQE.StartPerioFromInstanceInfoUpdate or
-				-- RQE.StartPerioFromPlayerControlGained or RQE.StartPerioFromQuestAccepted or
-				-- RQE.StartPerioFromQuestComplete or RQE.StartPerioFromQuestTurnedIn or
-				-- RQE.StartPerioFromItemCountChanged) then
-			-- RQE.StartPerioFromUnitQuestLogChanged = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Status of UNIT_QUEST_LOG_CHANGED RQE.StartPerioFromUnitQuestLogChanged is " .. tostring(RQE.StartPerioFromUnitQuestLogChanged))
-			-- end
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("RQE:StartPeriodicChecks() ceased because one of the Tier 5 flags was true: RQE.StartPerioFromUnitQuestLogChanged is " .. tostring(RQE.StartPerioFromUnitQuestLogChanged))
-			-- end
-			-- return
-		-- end
-	-- else
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-			-- print("RQE:StartPeriodicChecks() ceased because no flag detected")
-		-- end
-		-- return
-	-- end
-
-	-- -- Early return if no quest is super-tracked
-	-- if not RQE.IsQuestSuperTracked() then
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-			-- print("RQE:StartPeriodicChecks() ceased because nothing being Super Tracked")
-		-- end
-		-- return
-	-- end
-
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-		-- print("~~ Entering RQE:StartPeriodicChecks() ~~")
-	-- end
-
-	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- if not superTrackedQuestID then
-		-- RQE.debugLog("No super tracked quest ID found, skipping checks.")
-		-- return
-	-- end
-
-	-- self:FindAndSetFinalStep()  -- Find and set the final step
-
-	-- local questData = RQE.getQuestData(superTrackedQuestID)
-	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
-
-	-- if questData then
-		-- local stepIndex = RQE.AddonSetStepIndex --self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		-- local stepData = questData[stepIndex]
-
-		-- -- Handle turn-in readiness
-		-- if isReadyTurnIn and self.FinalStep then
-			-- RQE.debugLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
-			-- end
-			-- self:ClickWaypointButtonForIndex(self.FinalStep)
-			-- return
-		-- end
-
-		-- -- Additional check if the highest completed objective is 99
-		-- if self.shouldCheckFinalStep then
-			-- local finalStepIndex = #questData  -- Assuming the last step is the final one
-			-- for index, step in ipairs(questData) do
-				-- if step.objectiveIndex == 99 then
-					-- finalStepIndex = index
-					-- break
-				-- end
-			-- end
-
-			-- -- Calculate highestCompletedObjectiveIndex based on objectives completion
-			-- --highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or (RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex) or 1
-			-- local highestCompletedObjectiveIndex = RQE:AreAllObjectivesCompleted(superTrackedQuestID) or RQE.AddonSetStepIndex or 1
-
-			-- -- If the highest completed objective is 99, click the waypoint button for the final step
-			-- if highestCompletedObjectiveIndex == 99 and finalStepIndex then
-				-- RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-					-- print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
-				-- end
-				-- self:ClickWaypointButtonForIndex(finalStepIndex)
-				-- return
-			-- end
-		-- end
-
-		-- -- Validate stepIndex
-		-- if stepIndex < 1 or stepIndex > #questData then
-			-- RQE.infoLog("Invalid step index:", stepIndex)
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Invalid step index:", stepIndex)
-			-- end
-			-- return
-		-- end
-
-		-- -- Check if the current step requires objective progress check
-		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
-			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
-			-- if objProgressResult then
-				-- RQE.debugLog("Objective progress check completed and step advanced.")
-				-- return
-			-- else
-				-- RQE.debugLog("Objective progress check did not result in advancement.")
-			-- end
-		-- end
-
-		-- -- Process the current step
-		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-		-- if funcResult then
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("Function for current step executed successfully.")
-			-- end
-		-- else
-			-- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-			-- if failFuncResult then
-				-- local failedIndex = stepData.failedIndex or 1
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-					-- print("Failure condition met, resetting to step:", failedIndex)
-				-- end
-				-- self:ClickWaypointButtonForIndex(failedIndex)
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-					-- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-				-- end
-			-- end
-		-- end
-
-		-- -- Check and build macro if needed
-		-- RQE.CreateMacroForPeriodicChecks = true
-		-- RQEMacro:CreateMacroForCurrentStep()
-
-		-- -- Reset the flag after creating the macro
-		-- RQE.CreateMacroForPeriodicChecks = false
-
-		-- -- Reset the in-progress flag after 3 seconds
-		-- C_Timer.After(3, function()
-			-- RQE.isPeriodicCheckInProgress = false
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-				-- print("RQE:StartPeriodicChecks() is ready for the next call.")
-			-- end
-		-- end)
-	-- else
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
-			-- print("RQE:StartPeriodicChecks() ceased because no flag detected")
-		-- end
-		-- return
-	-- end
--- end
-
-
--- -- Periodic check setup (updated to include CheckDBObjectiveStatus)
--- function RQE:StartPeriodicChecks()
-	-- -- Early return if no quest is super-tracked
-	-- if not RQE.IsQuestSuperTracked() then
-		-- return
-	-- end
-
-	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- if not superTrackedQuestID then
-		-- RQE.debugLog("No super tracked quest ID found, skipping checks.")
-		-- return
-	-- end
-
-	-- self:FindAndSetFinalStep()  -- Find and set the final step
-
-	-- local questData = RQE.getQuestData(superTrackedQuestID)
-	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
-
-	-- if questData then
-		-- local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-		-- local stepData = questData[stepIndex]
-
-		-- -- Handle turn-in readiness
-		-- if isReadyTurnIn and self.FinalStep then
-			-- RQE.debugLog("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
-			-- -- if RQE.db.profile.debugLevel == "INFO+" then
-				-- -- print("Quest is ready for turn-in, clicking Waypoint Button for step index:", self.FinalStep)
-			-- -- end
-			-- self:ClickWaypointButtonForIndex(self.FinalStep)
-			-- return
-		-- end
-
-		-- -- Additional check if the highest completed objective is 99
-		-- if self.shouldCheckFinalStep then
-			-- local finalStepIndex = #questData  -- Assuming the last step is the final one
-			-- for index, step in ipairs(questData) do
-				-- if step.objectiveIndex == 99 then
-					-- finalStepIndex = index
-					-- break
-				-- end
-			-- end
-
-			-- -- If the highest completed objective is 99, click the waypoint button for the final step
-			-- if highestCompletedObjectiveIndex == 99 and finalStepIndex then
-				-- RQE.infoLog("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("All objectives completed. Advancing to final stepIndex:", finalStepIndex)
-				-- end
-				-- self:ClickWaypointButtonForIndex(finalStepIndex)
-				-- return
-			-- end
-		-- end
-
-		-- -- Validate stepIndex
-		-- if stepIndex < 1 or stepIndex > #questData then
-			-- RQE.infoLog("Invalid step index:", stepIndex)
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Invalid step index:", stepIndex)
-			-- end
-			-- return  -- Exit if stepIndex is invalid
-		-- end
-
-		-- -- Check if the current step requires objective progress check
-		-- if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
-			-- local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
-			-- if objProgressResult then
-				-- RQE.debugLog("Objective progress check completed and step advanced.")
-				-- return
-			-- else
-				-- RQE.debugLog("Objective progress check did not result in advancement.")
-			-- end
-		-- end
-
-		-- -- Process the current step
-		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-		-- if funcResult then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Function for current step executed successfully.")
-			-- end
-		-- else
-			-- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-			-- if failFuncResult then
-				-- local failedIndex = stepData.failedIndex or 1
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Failure condition met, resetting to step:", failedIndex)
-				-- end
-				-- self:ClickWaypointButtonForIndex(failedIndex)
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- RQE.infoLog("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-				-- end
-			-- end
-		-- end
-
-		-- -- Check and build macro if needed
-		-- --RQE.CheckAndBuildMacroIfNeeded()
-		-- RQEMacro:CreateMacroForCurrentStep()
-	-- end
--- end
-
-
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
+	RQE.AddonFailedSetStepIndex = RQE.AddonFailedSetStepIndex or 1
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("StartPeriodicChecks() called.")
 	end
@@ -4798,6 +4480,21 @@ function RQE:StartPeriodicChecks()
 			return  -- Exit if stepIndex is invalid
 		end
 
+		-- Step Function Execution
+		if stepData.funct and RQE[stepData.funct] then
+			local funcResult = RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+			if funcResult then
+				-- If the function succeeds, advance to the next step
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Primary function succeeded for stepIndex:", stepIndex, ". Advancing to the next step.")
+				end
+				RQE.AddonSetStepIndex = stepIndex + 1
+				self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+				RQE.isCheckingMacroContents = false
+				return
+			end
+		end
+
 		-- Check if the current step requires objective progress check
 		if stepData.funct and string.find(stepData.funct, "CheckDBObjectiveStatus") then
 			local objProgressResult = RQE:CheckObjectiveProgress(superTrackedQuestID, stepIndex)
@@ -4850,7 +4547,61 @@ function RQE:StartPeriodicChecks()
 			end
 		end
 
-		-- -- Process the current step
+		-- Process the current step
+		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+
+		if funcResult then
+			-- Success: Step executed successfully
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Function for current step executed successfully. Advancing to the next step.")
+			end
+		else
+			-- Handle failure conditions differently based on funct or failedfunc
+			if stepData.funct == "CheckDBZoneChange" or stepData.failedfunc == "CheckDBZoneChange" then
+				-- Specific logic for CheckDBZoneChange
+				local failFuncResult = stepData.failedfunc and stepData.failedcheck and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+				local failedIndex = stepData.failedIndex or 1 -- Default to step 1 if failedIndex is not defined
+				RQE.AddonFailedSetStepIndex = failedIndex or 1
+
+				if failFuncResult then
+					-- Transition to failedIndex
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Failure condition met for stepIndex:", stepIndex, ". Reverting to failedIndex:", failedIndex)
+					end
+					RQE.AddonFailedSetStepIndex = failedIndex or 1
+					self:ClickWaypointButtonForIndex(failedIndex)
+					return -- Stop further processing as we've transitioned to the failedIndex
+				else
+					-- Log when no failure conditions are met
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Failure condition NOT met for stepIndex:", stepIndex, ". Staying on current step.")
+					end
+				end
+
+				-- Update internal state and transition
+				RQE.AddonFailedSetStepIndex = failedIndex or 1
+				self:ClickWaypointButtonForIndex(failedIndex)
+				return -- Stop further processing as we've transitioned to the failedIndex
+			else
+				-- General logic for other functions like CheckDBInventory
+				local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+				if failFuncResult then
+					local failedIndex = stepData.failedIndex or 1
+					RQE.AddonFailedSetStepIndex = failedIndex or 1
+
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Failure condition met, resetting to step:", failedIndex)
+					end
+					RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex)
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+					end
+				end
+			end
+		end
+
+		-- -- Process the current step (works for CheckDBZone but not for CheckDBInventory)
 		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
 		-- if funcResult then
 			-- -- Success: Step executed successfully
@@ -4884,26 +4635,26 @@ function RQE:StartPeriodicChecks()
 			-- return -- Stop further processing as we've transitioned to the failedIndex
 		-- end
 
-		-- Process the current step
-		local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-		if funcResult then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Function for current step executed successfully.")
-			end
-		else
-			local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
-			if failFuncResult then
-				local failedIndex = stepData.failedIndex or 1
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Failure condition met, resetting to step:", failedIndex)
-				end
-				self:ClickWaypointButtonForIndex(failedIndex)
-			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
-				end
-			end
-		end
+		-- -- Process the current step (works for CheckDBInventory but not for CheckDBZone)
+		-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+		-- if funcResult then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Function for current step executed successfully.")
+			-- end
+		-- else
+			-- local failFuncResult = stepData.failedfunc and RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, superTrackedQuestID, stepIndex, true)
+			-- if failFuncResult then
+				-- local failedIndex = stepData.failedIndex or 1
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Failure condition met, resetting to step:", failedIndex)
+				-- end
+				-- self:ClickWaypointButtonForIndex(failedIndex)
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("No conditions met for current step", stepIndex, "of quest ID", superTrackedQuestID)
+				-- end
+			-- end
+		-- end
 
 		-- Check and build macro if needed
 		-- RQE.CreateMacroForPeriodicChecks = true
@@ -4926,8 +4677,57 @@ function RQE:StartPeriodicChecks()
 		-- return
 	end
 
+	RQE.NewZoneChange = false
 	RQE:UpdateSeparateFocusFrame()
 end
+
+
+-- function RQE.InventoryFailCheck()
+    -- -- Ensure the quest is supertracked
+    -- local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
+    -- if not isSuperTracking then return end
+
+    -- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+    -- local questData = RQE.getQuestData(superTrackedQuestID)
+
+	-- RQE.StepItemID = RQE.StepItemID or nil
+	-- RQE.FailedStepItemID = RQE.FailedStepItemID or nil
+
+    -- if questData then
+        -- local stepIndex = RQE.AddonSetStepIndex
+        -- local stepData = questData[stepIndex]
+
+        -- -- Check for CheckDBInventory in the current step
+        -- if stepData.funct == "CheckDBInventory" then
+            -- -- Get the item info from the 'check' field
+            -- local itemCheck = stepData.check and stepData.check[1] -- Assuming 'check' is a table
+            -- if tonumber(itemCheck) then
+                -- -- Save directly if it's already an ID
+                -- RQE.StepItemID = tonumber(itemCheck)
+                -- if RQE.db.profile.debugLevel == "INFO" then
+                    -- print("Set RQE.StepItemID to:", RQE.StepItemID, "for stepIndex:", stepIndex)
+                -- end
+            -- elseif type(itemCheck) == "string" then
+                -- -- Convert itemName to itemID
+                -- local itemID = C_Item.GetItemIDForItemInfo(itemCheck)
+                -- if itemID then
+                    -- RQE.StepItemID = itemID
+                    -- if RQE.db.profile.debugLevel == "INFO" then
+                        -- print("Converted itemName:", itemCheck, "to itemID:", itemID, "and set RQE.StepItemID.")
+                    -- end
+                -- else
+                    -- if RQE.db.profile.debugLevel == "INFO" then
+                        -- print("Failed to convert itemName:", itemCheck, "to itemID for stepIndex:", stepIndex)
+                    -- end
+                -- end
+            -- else
+                -- if RQE.db.profile.debugLevel == "INFO" then
+                    -- print("Invalid or missing item ID or itemName in 'check' for stepIndex:", stepIndex)
+                -- end
+            -- end
+        -- end
+    -- end
+-- end
 
 
 -- This function will check to see if there is quest info being tracked in the RQEFrame
@@ -5279,17 +5079,20 @@ function RQE:CheckDBInventory(questID, stepIndex)
 		local requiredAmount = tonumber(neededAmounts[index]) or 1  -- Default to 1 if no amount specified
 		local itemCount = C_Item.GetItemCount(itemID)
 
-		RQE.infoLog("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
+		print("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
 
 		if itemCount >= requiredAmount then
 			self:AdvanceQuestStep(questID, stepIndex)
-			return  -- Exit function after advancing step to avoid multiple advancements
+			return true  -- Exit function after advancing step to avoid multiple advancements
+		else
+			RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex)
+			return false
 		end
 	end
 end
 
 
--- Function will check the player's current map ID against the expected map ID(s) stored in the check field in the RQEDatabase
+-- Function will check the player's current map ID against the expected map ID(s) stored in the check and failedcheck fields in the RQEDatabase
 function RQE:CheckDBZoneChange(questID, stepIndex)
 	local currentMapID = C_Map.GetBestMapForUnit("player")
 	local questData = self.getQuestData(questID)
@@ -5299,29 +5102,55 @@ function RQE:CheckDBZoneChange(questID, stepIndex)
 	end
 
 	local stepData = questData[stepIndex]
-	local requiredMapIDs = stepData.check  -- This should be a list of mapIDs
-
-	if not requiredMapIDs or #requiredMapIDs == 0 then
-		return false -- Exit early if no required map IDs are specified
+	if not stepData then
+		return false -- Exit early if no step data is found
 	end
 
+	local requiredMapIDs = stepData.check  -- Map IDs for the correct zones
+	local failedMapIDs = stepData.failedcheck  -- Map IDs for failed zones
+	local failedIndex = stepData.failedIndex or stepIndex -- Default to current step if no failedIndex is specified
+
+	-- Debug info for the current state
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Checking Map ID for check :", tostring(currentMapID), "Against Required IDs:", table.concat(requiredMapIDs, ", "))
+		print("Checking Map ID for stepIndex:", stepIndex)
+		print("Current Map ID:", tostring(currentMapID))
+		print("Required Map IDs:", table.concat(requiredMapIDs or {}, ", "))
+		print("Failed Map IDs:", table.concat(failedMapIDs or {}, ", "))
+		print("Expected failedIndex:", failedIndex)
 	end
 
-	-- Iterate through the requiredMapIDs to check if the current map ID matches any of them
-	for _, mapID in ipairs(requiredMapIDs) do
-		if tostring(currentMapID) == tostring(mapID) then
-			self:AdvanceQuestStep(questID, stepIndex)
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Player is in one of the correct zones (MapID: " .. tostring(currentMapID) .. "). Advancing to the next quest step.")
+	-- Check if the current map ID matches any of the requiredMapIDs
+	if requiredMapIDs and #requiredMapIDs > 0 then
+		for _, mapID in ipairs(requiredMapIDs) do
+			if tostring(currentMapID) == tostring(mapID) then
+				self:AdvanceQuestStep(questID, stepIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Player is in a required zone (MapID: " .. tostring(currentMapID) .. "). Advancing to the next quest step.")
+				end
+				return true -- Exit after advancing the step
 			end
-			return true -- Exit after advancing the step
 		end
 	end
 
+	-- Check if the current map ID matches any of the failedMapIDs
+	if failedMapIDs and #failedMapIDs > 0 then
+		for _, mapID in ipairs(failedMapIDs) do
+			if tostring(currentMapID) == tostring(mapID) then
+				self:AdvanceQuestStep(questID, failedIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Player is in a failed zone (MapID: " .. tostring(currentMapID) .. "). Regressing to stepIndex:", failedIndex)
+				end
+				return true -- Exit after regressing the step
+			end
+		end
+	end
+
+	-- If no match is found
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Player is not in any of the correct zones. Current MapID:", tostring(currentMapID), "Required MapID(s):", table.concat(requiredMapIDs, ", "))
+		print("Player is not in any of the correct or failed zones. Current stepIndex:", stepIndex, "Expected failedIndex:", failedIndex)
+		print("Current MapID:", tostring(currentMapID),
+			  "Required MapID(s):", table.concat(requiredMapIDs or {}, ", "),
+			  "Failed MapID(s):", table.concat(failedMapIDs or {}, ", "))
 	end
 	return false -- Return false if no match is found
 end
