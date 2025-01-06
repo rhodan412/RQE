@@ -27,6 +27,8 @@
 		- Addon variable created to allow RQEMacro:CreateMacroForCurrentStep() function to run if the call takes place following a zone change event
 		- Cleaned up debug code to ensure able to track down potential issues with the autoclick advancement feature  (2025.01.06)
 		- Commented out several bits of auto clicking questlogindexbutton and redundant/frequent StartPeriodicCheck calls (2025.01.06)
+		... Reverted to 2025.01.01 EventManager due to problems with auto quest advancement - will see to re-adding the above as the need comes up prior to next release candidate (but kept most of SUPER_TRACKING_CHANGED event function from 2025.01.06)...
+		- Added RQE:StartPeriodicChecks() function calls at the end of QUEST_ACCEPTED, ZONE_CHANGED and ZONE_CHANGED_NEW_AREA (2025.01.06)
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
@@ -34,6 +36,7 @@
 		- Added some aldor-side and neutral Netherstorm quests to DB
 		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs
 		- Updated quests in Darkmoon Faire to handle more advanced quest steps for obtaining items from vendors associated with profession quests (2025.01.06)
+		- Darkmoon Faire coordinate updates (2025.01.06)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
