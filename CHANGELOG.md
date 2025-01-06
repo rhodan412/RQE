@@ -18,6 +18,8 @@
 		- Redesigned RQE:ClickWaypointButtonForIndex(index) function to look and handle when description starts out with 'ALLIANCE:' or 'HORDE:' (2025.01.06)
 		- Updated RQE:CheckDBInventory(questID, stepIndex) function to handle ANDs and ORs for array of inventory items (2025.01.06)
 		- Possible fix for RQE:CheckObjectiveProgress(questID, stepIndex) in the handling of advancement beyond the stepIndex that it should be (2025.01.06)
+		- Added macro creation/check toward the end of the UpdateFrame function (2025.01.06)
+		- Modified CheckDBInventory function to handle AND, OR, NOT, combo logic (2025.01.06)
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
@@ -29,6 +31,11 @@
 		- Commented out several bits of auto clicking questlogindexbutton and redundant/frequent StartPeriodicCheck calls (2025.01.06)
 		... Reverted to 2025.01.01 EventManager due to problems with auto quest advancement - will see to re-adding the above as the need comes up prior to next release candidate (but kept most of SUPER_TRACKING_CHANGED event function from 2025.01.06)...
 		- Added RQE:StartPeriodicChecks() function calls at the end of QUEST_ACCEPTED, ZONE_CHANGED and ZONE_CHANGED_NEW_AREA (2025.01.06)
+		- Added RQE:StartPeriodicChecks() function calls at the end of PLAYER_LOGIN in orer to capture reloads (2025.01.06)
+		- Moved RQE:StartPeriodicChecks(), toward the end of the SUPER_TRACKING_CHANGED out of the timer so it should fire much earlier (2025.01.06)
+		- Modified delay of UpdateFrame() function call toward the end of SUPER_TRACKING_CHANGED (2025.01.06)
+		- Modified when RQE:StartPeriodicChecks() fires in the QUEST_ACCEPTED event to only do this if the quest that is being supertracked is the one that matches the QUEST_ACCEPTED questID (2025.01.06)
+		- Modified how the initial "W" button is pressed within the UNIT_QUEST_LOG_CHANGED event by adding RQE.InitSetStepIndex variable to initially click the stepIndex 1 (2025.01.06)
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
@@ -37,6 +44,7 @@
 		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs
 		- Updated quests in Darkmoon Faire to handle more advanced quest steps for obtaining items from vendors associated with profession quests (2025.01.06)
 		- Darkmoon Faire coordinate updates (2025.01.06)
+		- Fixed notations for the AND, NOT, OR, combo logic in the DB (2025.01.06)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
