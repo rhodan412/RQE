@@ -1773,6 +1773,14 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
 
+	C_Timer.After(0.2, function()
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(0.1, function()
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
+
 	-- Visibility Update Check for RQEMagic Button
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
@@ -5029,7 +5037,7 @@ function RQE:ClickWaypointButtonForIndex(index)
 	button:Click()
 
 	-- Ensure the macro and UI are refreshed only once
-	C_Timer.After(0.6, function()
+	C_Timer.After(1, function()
 		-- Refresh the macro
 		RQE.isCheckingMacroContents = true
 		RQEMacro:CreateMacroForCurrentStep()
@@ -5145,93 +5153,190 @@ function RQE:CheckDBDebuff(questID, stepIndex)
 end
 
 
--- Function will check the player's inventory for multiple specific items with AND or OR logic.
+-- Main function to check inventory conditions
 function RQE:CheckDBInventory(questID, stepIndex)
     local questData = self.getQuestData(questID)
-
     if not questData then
         return false -- Exit early if no quest data is found
     end
 
     local stepData = questData[stepIndex]
-    local requiredItems = stepData.check or {} -- Array of item IDs to check
-    local neededAmounts = stepData.neededAmt or {} -- Array of required amounts for each item
-    local isOrCondition = type(requiredItems) == "string" and requiredItems:find(";") -- Detect OR condition
+    local requiredItems = stepData.check or {} -- Complex condition table
+    local neededAmounts = stepData.neededAmt or {} -- Corresponding required amounts
 
-    if isOrCondition then
-        -- Split the OR items into a table
-        local orItems = {}
-        for item in requiredItems:gmatch("[^;]+") do
-            table.insert(orItems, item)
-        end
+    if RQE.db.profile.debugLevel == "INFO+" then
+        print("Evaluating inventory conditions for stepIndex:", stepIndex)
+    end
 
+    -- Evaluate the condition
+    local success = evaluateCondition(requiredItems, neededAmounts)
+
+    if success then
         if RQE.db.profile.debugLevel == "INFO+" then
-            print("Checking inventory with OR condition for stepIndex:", stepIndex)
-        end
-
-        -- Check if any item meets the condition
-        for index, itemID in ipairs(orItems) do
-            local requiredAmount = tonumber(neededAmounts[index]) or 1 -- Default to 1 if no amount is specified
-            local itemCount = C_Item.GetItemCount(itemID)
-
-            if RQE.db.profile.debugLevel == "INFO+" then
-                print("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
-            end
-
-            -- If any item meets the required amount, advance the step
-            if itemCount >= requiredAmount then
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("OR condition met for item ID:", itemID, "Advancing quest step.")
-                end
-                self:AdvanceQuestStep(questID, stepIndex)
-                return true -- Indicate successful advancement
-            end
-        end
-
-        -- If no items meet the condition, handle failure
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print("Failed OR inventory check for all items.")
-        end
-        RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex or stepIndex)
-        return false
-    else
-        -- AND condition (default behavior)
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print("Checking inventory with AND condition for stepIndex:", stepIndex)
-        end
-
-        -- Iterate through the required items and check their counts
-        for index, itemID in ipairs(requiredItems) do
-            local requiredAmount = tonumber(neededAmounts[index]) or 1 -- Default to 1 if no amount is specified
-            local itemCount = C_Item.GetItemCount(itemID)
-
-            if RQE.db.profile.debugLevel == "INFO+" then
-                print("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
-            end
-
-            -- If any item does not meet the required amount, handle failure
-            if itemCount < requiredAmount then
-                if RQE.db.profile.debugLevel == "INFO+" then
-                    print("Failed inventory check for item ID:", itemID, "Required:", requiredAmount, "Have:", itemCount)
-                end
-
-                -- Trigger failure action
-                RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex or stepIndex)
-                return false -- Stop further processing as the requirement is not met
-            end
-        end
-
-        -- If all items meet their required amounts, advance to the next step
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print("All AND inventory conditions met for stepIndex:", stepIndex, ". Advancing quest step.")
+            print("Inventory condition met for stepIndex:", stepIndex, ". Advancing quest step.")
         end
         self:AdvanceQuestStep(questID, stepIndex)
         return true -- Indicate successful advancement
+    else
+        if RQE.db.profile.debugLevel == "INFO+" then
+            print("Inventory condition NOT met for stepIndex:", stepIndex)
+        end
+        RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex or stepIndex)
+        return false -- Indicate failure
     end
 end
 
 
--- -- Function will check the player's inventory for multiple specific items.
+-- Helper function to evaluate NOT conditions
+local function evaluateNotCondition(itemID, requiredAmount)
+    local itemCount = C_Item.GetItemCount(itemID)
+    return itemCount < requiredAmount -- Return true if the player does NOT have the required amount
+end
+
+
+-- Helper function to evaluate AND conditions
+local function evaluateAndCondition(andItems, neededAmounts)
+    for index, itemID in ipairs(andItems) do
+        local requiredAmount = tonumber(neededAmounts[index]) or 1 -- Default to 1
+        local itemCount = C_Item.GetItemCount(itemID)
+        if itemCount < requiredAmount then
+            return false -- Fail if any condition in AND is not met
+        end
+    end
+    return true -- Pass if all AND conditions are met
+end
+
+
+-- Helper function to evaluate OR conditions
+local function evaluateOrCondition(orItems, neededAmounts)
+    for index, itemID in ipairs(orItems) do
+        local requiredAmount = tonumber(neededAmounts[index]) or 1 -- Default to 1
+        local itemCount = C_Item.GetItemCount(itemID)
+        if itemCount >= requiredAmount then
+            return true -- Pass if any condition in OR is met
+        end
+    end
+    return false -- Fail if no OR conditions are met
+end
+
+
+-- Function to evaluate complex conditions recursively
+local function evaluateCondition(check, neededAmounts)
+    if type(check) == "string" then
+        -- Simple case for single item
+        local itemCount = C_Item.GetItemCount(check)
+        local requiredAmount = tonumber(neededAmounts[1]) or 1
+        return itemCount >= requiredAmount
+    elseif type(check) == "table" then
+        -- Handle complex nested conditions
+        if check[1] == ";" then
+            -- OR logic
+            local orItems = { select(2, unpack(check)) }
+            return evaluateOrCondition(orItems, neededAmounts)
+        elseif check[1] == "&" then
+            -- AND logic
+            local andItems = { select(2, unpack(check)) }
+            return evaluateAndCondition(andItems, neededAmounts)
+        elseif check[1] == "!" then
+            -- NOT logic
+            local notItem = check[2]
+            local requiredAmount = tonumber(neededAmounts[1]) or 1
+            return evaluateNotCondition(notItem, requiredAmount)
+        else
+            -- Default to AND logic for flat tables
+            return evaluateAndCondition(check, neededAmounts)
+        end
+    end
+end
+
+
+-- -- Function will check the player's inventory for multiple specific items with AND or OR logic.
+-- function RQE:CheckDBInventory(questID, stepIndex)
+    -- local questData = self.getQuestData(questID)
+
+    -- if not questData then
+        -- return false -- Exit early if no quest data is found
+    -- end
+
+    -- local stepData = questData[stepIndex]
+    -- local requiredItems = stepData.check or {} -- Array of item IDs to check
+    -- local neededAmounts = stepData.neededAmt or {} -- Array of required amounts for each item
+    -- local isOrCondition = type(requiredItems) == "string" and requiredItems:find(";") -- Detect OR condition
+
+    -- if isOrCondition then
+        -- -- Split the OR items into a table
+        -- local orItems = {}
+        -- for item in requiredItems:gmatch("[^;]+") do
+            -- table.insert(orItems, item)
+        -- end
+
+        -- if RQE.db.profile.debugLevel == "INFO+" then
+            -- print("Checking inventory with OR condition for stepIndex:", stepIndex)
+        -- end
+
+        -- -- Check if any item meets the condition
+        -- for index, itemID in ipairs(orItems) do
+            -- local requiredAmount = tonumber(neededAmounts[index]) or 1 -- Default to 1 if no amount is specified
+            -- local itemCount = C_Item.GetItemCount(itemID)
+
+            -- if RQE.db.profile.debugLevel == "INFO+" then
+                -- print("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
+            -- end
+
+            -- -- If any item meets the required amount, advance the step
+            -- if itemCount >= requiredAmount then
+                -- if RQE.db.profile.debugLevel == "INFO+" then
+                    -- print("OR condition met for item ID:", itemID, "Advancing quest step.")
+                -- end
+                -- self:AdvanceQuestStep(questID, stepIndex)
+                -- return true -- Indicate successful advancement
+            -- end
+        -- end
+
+        -- -- If no items meet the condition, handle failure
+        -- if RQE.db.profile.debugLevel == "INFO+" then
+            -- print("Failed OR inventory check for all items.")
+        -- end
+        -- RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex or stepIndex)
+        -- return false
+    -- else
+        -- -- AND condition (default behavior)
+        -- if RQE.db.profile.debugLevel == "INFO+" then
+            -- print("Checking inventory with AND condition for stepIndex:", stepIndex)
+        -- end
+
+        -- -- Iterate through the required items and check their counts
+        -- for index, itemID in ipairs(requiredItems) do
+            -- local requiredAmount = tonumber(neededAmounts[index]) or 1 -- Default to 1 if no amount is specified
+            -- local itemCount = C_Item.GetItemCount(itemID)
+
+            -- if RQE.db.profile.debugLevel == "INFO+" then
+                -- print("Item ID:", itemID, "Needed:", requiredAmount, "In Inventory:", itemCount)
+            -- end
+
+            -- -- If any item does not meet the required amount, handle failure
+            -- if itemCount < requiredAmount then
+                -- if RQE.db.profile.debugLevel == "INFO+" then
+                    -- print("Failed inventory check for item ID:", itemID, "Required:", requiredAmount, "Have:", itemCount)
+                -- end
+
+                -- -- Trigger failure action
+                -- RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex or stepIndex)
+                -- return false -- Stop further processing as the requirement is not met
+            -- end
+        -- end
+
+        -- -- If all items meet their required amounts, advance to the next step
+        -- if RQE.db.profile.debugLevel == "INFO+" then
+            -- print("All AND inventory conditions met for stepIndex:", stepIndex, ". Advancing quest step.")
+        -- end
+        -- self:AdvanceQuestStep(questID, stepIndex)
+        -- return true -- Indicate successful advancement
+    -- end
+-- end
+
+
+-- -- Function will check the player's inventory for multiple specific items. -- AND LOGIC
 -- function RQE:CheckDBInventory(questID, stepIndex)
     -- local questData = self.getQuestData(questID)
 
