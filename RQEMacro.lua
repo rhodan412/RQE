@@ -234,6 +234,7 @@ RQE.Buttons.EventFrame:RegisterEvent("UPDATE_MACROS")
 RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 	if event == "UPDATE_MACROS" then
 		RQE.Buttons.UpdateMagicButtonIcon()
+		RQEMacro:UpdateMagicButtonTooltip()
 	end
 end)
 
@@ -261,3 +262,120 @@ RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
 		wipe(RQEMacro.pendingMacroClears)
 	end
 end)
+
+
+-- Function to update the Magic Button Tooltip dynamically
+function RQEMacro:UpdateMagicButtonTooltip()
+    local MagicButton = RQE.MagicButton -- Reference to the magic button
+    if not MagicButton then return end
+
+    -- Create or reuse the count text overlay
+    if not MagicButton.CountText then
+        MagicButton.CountText = MagicButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+        MagicButton.CountText:SetPoint("BOTTOMRIGHT", MagicButton, "BOTTOMRIGHT", -5, 5)
+        MagicButton.CountText:SetJustifyH("RIGHT")
+        MagicButton.CountText:SetText("") -- Initialize empty
+    end
+
+    MagicButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+        
+        -- Get the debug level
+        local debugLevel = RQE.db.profile.debugLevel or "INFO"
+
+        -- Get the macro index and contents
+        local macroIndex = GetMacroIndexByName("RQE Macro")
+        if not macroIndex or macroIndex == 0 then
+            GameTooltip:SetText("Macro 'RQE Macro' not found.")
+            GameTooltip:Show()
+            return
+        end
+        
+        local _, _, macroBody = GetMacroInfo(macroIndex)
+        if not macroBody or macroBody == "" then
+            GameTooltip:SetText("Macro content not found.")
+            GameTooltip:Show()
+            return
+        end
+
+        -- Debug mode: Show raw macro text
+        if debugLevel == "INFO+" then
+            GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
+            GameTooltip:Show()
+            return
+        end
+
+        -- Extract target (item or spell) from the macro body
+        local useTarget = macroBody:match("/use%s+(.+)")
+        if not useTarget then
+            GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
+            GameTooltip:Show()
+            return
+        end
+
+        -- Attempt to resolve as an item first
+        local itemLink = select(2, GetItemInfo(useTarget)) -- Fetch item link by name
+        if not itemLink then
+            local itemID = select(1, GetItemInfoInstant(useTarget)) -- Fetch item ID
+            if itemID then
+                itemLink = "item:" .. itemID
+            end
+        end
+
+        if itemLink then
+            -- Show the item tooltip if an item is found
+            GameTooltip:SetHyperlink(itemLink)
+            GameTooltip:Show()
+            return
+        end
+
+        -- If no item is found, attempt to resolve as a spell
+        local spellInfo = C_Spell.GetSpellInfo(useTarget)
+        if spellInfo then
+            GameTooltip:SetSpellByID(spellInfo.spellID) -- Show the spell tooltip
+            GameTooltip:Show()
+            return
+        end
+
+        -- Fallback: Show the raw macro body if neither item nor spell is resolved
+        GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+
+    -- Add item count logic
+    MagicButton:SetScript("OnUpdate", function()
+        local macroIndex = GetMacroIndexByName("RQE Macro")
+        if not macroIndex or macroIndex == 0 then
+            MagicButton.CountText:SetText("")
+            return
+        end
+
+        local _, _, macroBody = GetMacroInfo(macroIndex)
+        if not macroBody or macroBody == "" then
+            MagicButton.CountText:SetText("")
+            return
+        end
+
+        -- Extract item name from the macro body
+        local useTarget = macroBody:match("/use%s+(.+)")
+        if not useTarget then
+            MagicButton.CountText:SetText("")
+            return
+        end
+
+        -- Get the item count from the player's inventory
+        local itemCount = GetItemCount(useTarget)
+        if not itemCount or itemCount < 2 then
+            MagicButton.CountText:SetText("") -- Hide if less than 2
+        else
+            if itemCount > 999 then
+                itemCount = 999 -- Cap the count at 999
+            end
+            MagicButton.CountText:SetText(itemCount) -- Update the count display
+        end
+    end)
+
+    MagicButton:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+end
