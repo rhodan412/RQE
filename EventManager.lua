@@ -2454,7 +2454,7 @@ function RQE.handleQuestAccepted(...)
 	if isSuperTracking then
 		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		if questID == superTrackedQuestID then
-			C_Timer.After(0.1, function()  -- Delay of 1 second
+			C_Timer.After(0.1, function()  -- Delay of 0.1 second
 				UpdateFrame()
 			end)
 			RQE.SetInitialWaypointToOne()
@@ -3138,7 +3138,6 @@ function RQE.handleUnitQuestLogChange(...)
 	-- end
 
 	if RQE.LastAcceptedQuest == superTrackedQuest then
-		RQE:StartPeriodicChecks()
 		C_Timer.After(0.5, function()
 			RQE.ClickQuestLogIndexButton(superTrackedQuest)
 			C_Timer.After(0.2, function()
