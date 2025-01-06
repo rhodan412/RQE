@@ -15,6 +15,9 @@
 		- Fix to RQEMacro:CreateMacroForCurrentStep() function that allows for update to occur in instance if this was shortly after a zone change event occurred 
 		- Slight modification to RQE:StartPeriodicChecks() so that funct checks work correctly with CheckDBZone and CheckDBInventory (although CheckDBInventory won't handle failedchecks in DB, so these won't be used for the foreseeable future)
 		- Slight modification to the RQE:CheckDBZoneChange function (will revert back to 11.0.7.5 addon version if needed)
+		- Redesigned RQE:ClickWaypointButtonForIndex(index) function to look and handle when description starts out with 'ALLIANCE:' or 'HORDE:' (2025.01.06)
+		- Updated RQE:CheckDBInventory(questID, stepIndex) function to handle ANDs and ORs for array of inventory items (2025.01.06)
+		- Possible fix for RQE:CheckObjectiveProgress(questID, stepIndex) in the handling of advancement beyond the stepIndex that it should be (2025.01.06)
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
@@ -22,16 +25,23 @@
 		- Added debugs for RQE:StartPeriodicChecks() in case future issues arise
 		- Added functionality to re-run event that fires on SUPER_TRACKING_CHANGED if it previously fired when in combat
 		- Addon variable created to allow RQEMacro:CreateMacroForCurrentStep() function to run if the call takes place following a zone change event
+		- Cleaned up debug code to ensure able to track down potential issues with the autoclick advancement feature  (2025.01.06)
+		- Commented out several bits of auto clicking questlogindexbutton and redundant/frequent StartPeriodicCheck calls (2025.01.06)
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
 		- Added DB quests for alliance Nagrand quests
 		- Added some aldor-side and neutral Netherstorm quests to DB
 		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs
+		- Updated quests in Darkmoon Faire to handle more advanced quest steps for obtaining items from vendors associated with profession quests (2025.01.06)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
 		- Changed dynamic padding of RQEFrame's QuestNameText to allow for better wrap for longer quest titles
+
+	RQEMacro.lua
+		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
+		- Added counter to Magic Button for items in inventory to better keep track (2025.01.06)
 
 
 11.0.7.5 (2025-01-02)
