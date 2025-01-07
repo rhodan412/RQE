@@ -2184,7 +2184,6 @@ end
 function RQE:QuestType()
 	local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 	local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
-
 	local regularQuestUpdated = false
 	local worldQuestUpdated = false
 
