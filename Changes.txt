@@ -26,23 +26,6 @@
 		- Changed CheckObjectiveProgress to CheckDBObjectiveStatus function call for ease of use (2025.01.07)
 		- Updated RQE:CheckDBObjectiveStatus/RQE:CheckObjectiveProgress function as it wasn't working when objectiveIndex was not in the same numerically ascending order as the stepIndex (2025.01.07)
 
-	EventManager.lua
-		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
-		- Modified fix to check for running RQE:StartPeriodicChecks(), on item loot, ONLY if the stepData.funct or stepData.failedfunct of the player's current step on the super tracked quest is in the DB and is listed as "CheckDBInventory"
-		- Added debugs for RQE:StartPeriodicChecks() in case future issues arise
-		- Added functionality to re-run event that fires on SUPER_TRACKING_CHANGED if it previously fired when in combat
-		- Addon variable created to allow RQEMacro:CreateMacroForCurrentStep() function to run if the call takes place following a zone change event
-		- Cleaned up debug code to ensure able to track down potential issues with the autoclick advancement feature  (2025.01.06)
-		- Commented out several bits of auto clicking questlogindexbutton and redundant/frequent StartPeriodicCheck calls (2025.01.06)
-		... Reverted to 2025.01.01 EventManager due to problems with auto quest advancement - will see to re-adding the above as the need comes up prior to next release candidate (but kept most of SUPER_TRACKING_CHANGED event function from 2025.01.06)...
-		- Added RQE:StartPeriodicChecks() function calls at the end of QUEST_ACCEPTED, ZONE_CHANGED and ZONE_CHANGED_NEW_AREA (2025.01.06)
-		- Added RQE:StartPeriodicChecks() function calls at the end of PLAYER_LOGIN in orer to capture reloads (2025.01.06)
-		- Moved RQE:StartPeriodicChecks(), toward the end of the SUPER_TRACKING_CHANGED out of the timer so it should fire much earlier (2025.01.06)
-		- Modified delay of UpdateFrame() function call toward the end of SUPER_TRACKING_CHANGED (2025.01.06)
-		- Modified when RQE:StartPeriodicChecks() fires in the QUEST_ACCEPTED event to only do this if the quest that is being supertracked is the one that matches the QUEST_ACCEPTED questID (2025.01.06)
-		- Modified how the initial "W" button is pressed within the UNIT_QUEST_LOG_CHANGED event by adding RQE.InitSetStepIndex variable to initially click the stepIndex 1 (2025.01.06)
-		... Reverted to 2025.01.02 EventManager due to problems with auto quest advancement - will see to re-adding the above as the need comes up prior to next release candidate (2025.01.07)
-
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
 		- Added DB quests for alliance Nagrand quests
