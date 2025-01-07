@@ -1342,7 +1342,7 @@ function RQE.QuestStepsBlocked(questID)
 	-- Get the total number of steps, if any
 	local totalSteps = #questData
 	if stepIndex == 1 and totalSteps == 0 then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~~ Quest " .. questID .. " is in the DB but has no steps to display. ~~")
 		end
 	end
@@ -1805,7 +1805,7 @@ function RQE.CheckAndClickSeparateWaypointButtonButton()
 		RQE.SeparateWaypointButton:Click()
 	-- else
 		-- -- Debugging: Provide feedback if the button doesn't exist
-		-- if RQE.db.profile.debugLevel == "INFO" then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
 			-- print("|cffff0000Error: SeparateWaypointButton is not initialized or available.|r")
 		-- end
 	end
@@ -3275,7 +3275,7 @@ function RQE:AbandonQuest(questID)
 	local questLink = GetQuestLink(oldSelectedQuest)  -- Generate the quest link
 
 	if questLink then
-		if RQE.db.profile.debugLevel == "INFO"  or RQE.db.profile.debugLevel == "INFO+" then
+		if RQE.db.profile.debugLevel == "INFO+"  or RQE.db.profile.debugLevel == "INFO+" then
 			print("Abandoning QuestID:", questID .. " - " .. questLink)
 		end
 	end
@@ -4445,7 +4445,7 @@ function RQE:StartPeriodicChecks()
             CheckDBDebuff = "CheckDBDebuff",
             CheckDBInventory = "CheckDBInventory",
             CheckDBZoneChange = "CheckDBZoneChange",
-            CheckDBObjectiveStatus = "CheckObjectiveProgress",
+            CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
             CheckScenarioStage = "CheckScenarioStage",
             CheckScenarioCriteria = "CheckScenarioCriteria",
         }
@@ -4771,6 +4771,11 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
 			print("No more steps available for quest ID:", questID)
 		end
 	end
+
+	-- Apply faction logic after ensuring state is consistent
+	C_Timer.After(0.7, function()
+		RQE:HandleFactionLogicAfterAdvance()
+	end)
 end
 
 
@@ -5116,7 +5121,7 @@ end
 
 -- -- Main function to check inventory conditions (Array/Checks or Check compatible)
 -- function RQE:CheckDBInventory(questID, stepIndex)
-	-- if RQE.db.profile.debugLevel == "INFO" then
+	-- if RQE.db.profile.debugLevel == "INFO+" then
 		-- print("Starting inventory condition evaluation for questID:", questID, "stepIndex:", stepIndex)
 	-- end
 
@@ -5124,13 +5129,13 @@ end
 	-- local success = self:EvaluateStepChecks(questID, stepIndex)
 
 	-- if success then
-		-- if RQE.db.profile.debugLevel == "INFO" then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
 			-- print("Inventory conditions met for questID:", questID, "stepIndex:", stepIndex)
 		-- end
 		-- self:AdvanceQuestStep(questID, stepIndex) -- Advance the quest step
 		-- return true -- Indicate successful advancement
 	-- else
-		-- if RQE.db.profile.debugLevel == "INFO" then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
 			-- print("Inventory conditions NOT met for questID:", questID, "stepIndex:", stepIndex)
 		-- end
 		-- RQE:ClickWaypointButtonForIndex(RQE.AddonFailedSetStepIndex or stepIndex)
@@ -5222,7 +5227,7 @@ function RQE:EvaluateStepChecks(questID, stepIndex)
             -- Resolve the function
             local checkFunction = self[functName]
             if not checkFunction then
-                if RQE.db.profile.debugLevel == "INFO" then
+                if RQE.db.profile.debugLevel == "INFO+" then
                     print("Function not found for logic:", logic, "functName:", functName)
                 end
                 return false, nil
@@ -5237,7 +5242,7 @@ function RQE:EvaluateStepChecks(questID, stepIndex)
             elseif logic == "NOT" then
                 success = self:EvaluateNotCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
             else
-                if RQE.db.profile.debugLevel == "INFO" then
+                if RQE.db.profile.debugLevel == "INFO+" then
                     print("Unknown logic type:", logic)
                 end
                 return false, nil
@@ -5670,7 +5675,7 @@ end
 	-- if description:find("^ALLIANCE:") then
 		-- -- If description starts with "ALLIANCE:" and the player is not Alliance, skip to the next step
 		-- if englishFaction ~= "Alliance" then
-			-- if RQE.db.profile.debugLevel == "INFO" then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
 				-- print("Player is not Alliance. Skipping stepIndex:", stepIndex)
 			-- end
 			-- self:AdvanceQuestStep(questID, stepIndex + 1)
@@ -5679,7 +5684,7 @@ end
 	-- elseif description:find("^HORDE:") then
 		-- -- If description starts with "HORDE:" and the player is not Horde, skip to the next step
 		-- if englishFaction ~= "Horde" then
-			-- if RQE.db.profile.debugLevel == "INFO" then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
 				-- print("Player is not Horde. Skipping stepIndex:", stepIndex)
 			-- end
 			-- self:AdvanceQuestStep(questID, stepIndex + 1)
@@ -5688,7 +5693,7 @@ end
 	-- end
 
 	-- -- If no faction-specific text or player matches the faction, proceed with the step
-	-- if RQE.db.profile.debugLevel == "INFO" then
+	-- if RQE.db.profile.debugLevel == "INFO+" then
 		-- print("Player's faction matches or no faction-specific text. Proceeding with stepIndex:", stepIndex)
 	-- end
 	-- return false -- Indicate that no skip occurred
@@ -5732,70 +5737,92 @@ end
 
 
 -- Primary function to check the progress of objectives in a quest (Array/Checks or Check compatible)
-function RQE:CheckObjectiveProgress(questID, stepIndex)
-	-- print("~~ Running CheckObjectiveProgress for CheckDBObjectiveStatus ~~")
-	local objectives = C_QuestLog.GetQuestObjectives(questID)
-	if not objectives or not objectives[1] then
-		return false -- Exit early if objectives are not available
-	end
+function RQE:CheckDBObjectiveStatus(questID, stepIndex)	-- renamed from RQE:CheckObjectiveProgress function
+	print("~~ Running RQE:CheckDBObjectiveStatus ~~")
 
-	local questData = self.getQuestData(questID)
-	if not questData or not questData[stepIndex] then
-		return false -- Exit early if no quest or step data is found
-	end
+    -- Retrieve quest objectives and data
+    local objectives = C_QuestLog.GetQuestObjectives(questID)
+    local questData = self.getQuestData(questID)
 
-	local stepData = questData[stepIndex]
-	local objectiveIndex = stepData.objectiveIndex or 1
+    -- Early return if no quest is super-tracked or if data is missing
+    if not RQE.IsQuestSuperTracked() or not questData or not objectives then
+        return false
+    end
 
-	-- Check for multiple `checks`
-	if stepData.checks then
-		local success = self:EvaluateStepChecks(questID, stepIndex)
-		if success then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Objective progress conditions met for stepIndex:", stepIndex)
-			end
-			self:ClickWaypointButtonForIndex(stepIndex)
-			-- self:AdvanceQuestStep(questID, stepIndex)
-			return true
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Objective progress conditions NOT met for stepIndex:", stepIndex)
-			end
-			return false
-		end
-	end
+    -- Ensure stepIndex is valid
+    if not questData[stepIndex] then
+        return false
+    end
 
-	-- Handle single `check` for objective progress
-	local neededAmt = tonumber(stepData.neededAmt[1]) or 1
+    -- Turn-in readiness check
+    local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+    if isReadyTurnIn then
+        self:ClickWaypointButtonForIndex(#questData) -- Clicks the last step (turn-in step)
+        return true
+    end
 
-	-- Ensure the objectiveIndex is valid
-	local objective = objectives[objectiveIndex]
-	if not objective then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ObjectiveIndex invalid or not present for stepIndex:", stepIndex)
-		end
-		return false -- Exit if the specified objective doesn't exist
-	end
+    -- Dynamically determine the correct step to advance to
+    local correctStepIndex = 1
+    local foundStep = false
 
-	-- Check for objective completion
-	if objective.numFulfilled >= neededAmt or objective.finished then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Objective met: ", objectiveIndex, " Needed:", neededAmt, " Fulfilled:", objective.numFulfilled)
-		end
-		self:AdvanceQuestStep(questID, stepIndex)
-		return true
-	end
+    -- Iterate through the questData to find the correct step based on objective completion
+    for i, step in ipairs(questData) do
+        local objectiveIndex = step.objectiveIndex or 1
+        local neededAmt = step.neededAmt and tonumber(step.neededAmt[1]) or 1
+        local objective = objectives[objectiveIndex]
 
-	-- Debug information for unmet objectives
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Objective not met: ", objectiveIndex, " Needed:", neededAmt, " Fulfilled:", objective.numFulfilled)
-	end
-	return false
+        if objective then
+            if objective.finished or objective.numFulfilled >= neededAmt then
+                correctStepIndex = i + 1
+            elseif objective.numFulfilled < neededAmt then
+                correctStepIndex = i
+                foundStep = true
+                break
+            end
+        else
+            correctStepIndex = i -- Handle cases where objectives might be missing
+            break
+        end
+    end
+
+    -- Ensure correctStepIndex does not exceed the number of steps
+    correctStepIndex = math.min(correctStepIndex, #questData)
+
+    -- If the stepIndex doesn't match the expected step, click the correct button
+    if correctStepIndex ~= stepIndex then
+        self:ClickWaypointButtonForIndex(correctStepIndex)
+        if RQE.db.profile.debugLevel == "INFO+" then
+            print("Adjusted to correctStepIndex: ", correctStepIndex)
+        end
+        return true
+    end
+
+    -- Handle `checks` if defined for the current step
+    local stepData = questData[stepIndex]
+    if stepData.checks then
+        local success = self:EvaluateStepChecks(questID, stepIndex)
+        if success then
+            self:AdvanceQuestStep(questID, stepIndex)
+            if RQE.db.profile.debugLevel == "INFO" then
+                print("Objective checks met for stepIndex:", stepIndex)
+            end
+            return true
+        else
+            if RQE.db.profile.debugLevel == "INFO" then
+                print("Objective checks NOT met for stepIndex:", stepIndex)
+            end
+            return false
+        end
+    end
+
+    -- If no conditions matched, stay on the current step
+    return false
 end
 
 
+
 -- -- Primary function to check the progress of objectives in a quest
--- function RQE:CheckObjectiveProgress(questID, stepIndex)
+-- function RQE:CheckDBObjectiveStatus(questID, stepIndex)
 	-- local objectives = C_QuestLog.GetQuestObjectives(questID)
 	-- if not objectives or not objectives[1] then
 		-- return false
@@ -5809,6 +5836,23 @@ end
 	-- local stepData = questData[stepIndex]
 	-- local objectiveIndex = stepData.objectiveIndex or 1
 	-- local neededAmt = tonumber(stepData.neededAmt[1]) or 1
+
+    -- -- Handle the case where `checks` is defined
+    -- if stepData.checks then
+        -- local success = self:EvaluateStepChecks(questID, stepIndex)
+        -- if success then
+            -- self:AdvanceQuestStep(questID, stepIndex)
+            -- if RQE.db.profile.debugLevel == "INFO+" then
+                -- print("Objective checks met for stepIndex:", stepIndex)
+            -- end
+            -- return true
+        -- else
+            -- if RQE.db.profile.debugLevel == "INFO+" then
+                -- print("Objective checks NOT met for stepIndex:", stepIndex)
+            -- end
+            -- return false
+        -- end
+    -- end
 
 	-- local objective = objectives[objectiveIndex]
 	-- if not objective then
@@ -7817,7 +7861,7 @@ end
 -- Function to search an item in the auction house and prepare for manual review
 function RQE:SearchAndPrepareAuctionItem(itemID, quantity)
 	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Auction House is not open.")
 		end
 		return
@@ -7854,7 +7898,7 @@ end
 -- Function that searches for and prints out the prices for an item
 function RQE:SearchAndDisplayCommodityResults(itemID, quantity)
 	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Auction House is not open.")
 		end
 		return
@@ -7895,7 +7939,7 @@ end
 -- Function to confirm and purchase a commodity from the auction house
 function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Auction House is not open.")
 		end
 		return
