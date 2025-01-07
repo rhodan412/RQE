@@ -260,7 +260,7 @@ local eventsToRegister = {
 -- On Event Handler
 local function HandleEvents(frame, event, ...)
 	-- List of events to exclude from printing
-	if (RQE.db.profile.debugLevel == "INFO+") and (RQE.db.profile.showEventDebugInfo) then
+	if (RQE.db.profile.debugLevel == "INFO") and (RQE.db.profile.showEventDebugInfo) then
 		local excludeEvents = {
 			["ADDON_LOADED"] = true,
 			["BAG_UPDATE"] = true,
@@ -1919,7 +1919,7 @@ function RQE.handlePlayerEnterWorld(...)
 			end)
 
 			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-			if RQEFrame and not not RQEFrame:IsMouseOver() then
+			if RQEFrame and not RQEFrame:IsMouseOver() then
 				RQE.ScrollFrameToTop()
 			end
 			RQE.FocusScrollFrameToTop()
@@ -2136,7 +2136,7 @@ function RQE.handleSuperTracking()
 	end
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when SUPER_TRACKING_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-	if RQEFrame and not not RQEFrame:IsMouseOver() then
+	if RQEFrame and not RQEFrame:IsMouseOver() then
 		RQE.ScrollFrameToTop()
 	end
 	RQE.FocusScrollFrameToTop()
@@ -2542,10 +2542,10 @@ function RQE.handleZoneChange(...)
 		RQE.updateScenarioUI()
 	end
 
-	RQE:UpdateMapIDDisplay()
-	RQE:UpdateCoordinates()
-	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
+	-- RQE:UpdateMapIDDisplay()
+	-- RQE:UpdateCoordinates()
+	-- RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
 
 	C_Timer.After(0.5, function()
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
@@ -2554,15 +2554,15 @@ function RQE.handleZoneChange(...)
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 				RQE:ClearSeparateFocusFrame()
 			end
-		else
-			-- If QuestIDText is nil or has no text, ensure the macro and frame are cleared
-			RQEMacro:ClearMacroContentByName("RQE Macro")
-			RQE:ClearSeparateFocusFrame()
+		-- else
+			-- -- If QuestIDText is nil or has no text, ensure the macro and frame are cleared
+			-- RQEMacro:ClearMacroContentByName("RQE Macro")
+			-- RQE:ClearSeparateFocusFrame()
 		end
 	end)
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-	if RQEFrame and not not RQEFrame:IsMouseOver() then
+	if RQEFrame and not RQEFrame:IsMouseOver() then
 		RQE.ScrollFrameToTop()
 	end
 	RQE.FocusScrollFrameToTop()
@@ -2618,28 +2618,27 @@ function RQE.handleZoneChange(...)
 			DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. SubZone Text: " .. tostring(GetSubZoneText()), 0, 1, 1)  -- Cyan
 		end
 
-		C_Timer.After(1.0, function()  -- Delay of 1 second
-
-			-- Get the current map ID
-			local mapID = C_Map.GetBestMapForUnit("player")
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+		-- Get the current map ID
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+			C_Timer.After(1.0, function()  -- Delay of 1 second
+				local mapID = C_Map.GetBestMapForUnit("player")
 				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
-			end
-		end)
-	else
-		C_Timer.After(0.5, function()
-			local extractedQuestID
-			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-			end
+			end)
+		end
+	-- else
+		-- C_Timer.After(0.5, function()
+			-- local extractedQuestID
+			-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			-- end
 
-			-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-			local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-			local questInfo = RQE.getQuestData(questID)
-			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+			-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
+			-- local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			-- local questInfo = RQE.getQuestData(questID)
+			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
-			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		end)
+			-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		-- end)
 	end
 
 	-- Update Display of Memory Usage of Addon
@@ -2647,8 +2646,8 @@ function RQE.handleZoneChange(...)
 		if RQE.PlayerMountStatus ~= "Flying" and not InCombatLockdown() then
 		-- if not IsFlying("player") or not InCombatLockdown() then
 			RQE.debugLog("Player not flying or dragonriding")
-			RQE:CheckMemoryUsage()
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+				RQE:CheckMemoryUsage()
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 0, 1, 1)
 			end
 		else
@@ -2659,10 +2658,10 @@ function RQE.handleZoneChange(...)
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
 
-	-- Clears World Quest that are Automatically Tracked when switching to a new area
-	local isFlying = IsFlying("player")
-	local isMounted = IsMounted()
-	local onTaxi = UnitOnTaxi("player")
+	-- -- Clears World Quest that are Automatically Tracked when switching to a new area
+	-- local isFlying = IsFlying("player")
+	-- local isMounted = IsMounted()
+	-- local onTaxi = UnitOnTaxi("player")
 
 	if not IsFlying and not isMounted and not onTaxi then
 		RQE.UntrackAutomaticWorldQuests()
@@ -2685,7 +2684,7 @@ function RQE.handleZoneNewAreaChange()
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when ZONE_CHANGED_NEW_AREA event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-	if RQEFrame and not not RQEFrame:IsMouseOver() then
+	if RQEFrame and not RQEFrame:IsMouseOver() then
 		RQE.ScrollFrameToTop()
 	end
 	RQE.FocusScrollFrameToTop()
@@ -4232,7 +4231,7 @@ function RQE.handleQuestWatchListChanged(...)
 		end
 
 		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_WATCH_LIST_CHANGED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-		if RQEFrame and not not RQEFrame:IsMouseOver() then
+		if RQEFrame and not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
 		RQE.FocusScrollFrameToTop()
@@ -4402,7 +4401,7 @@ function RQE.handleQuestFinished()
 		end
 
 		-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-		if RQEFrame and not not RQEFrame:IsMouseOver() then
+		if RQEFrame and not RQEFrame:IsMouseOver() then
 			RQE.ScrollFrameToTop()
 		end
 		RQE.FocusScrollFrameToTop()
