@@ -2534,7 +2534,8 @@ end
 
 
 -- Handling of UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS
--- Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward or Fires when the player enters a subzone
+-- Fired as a unit is about to exit a vehicle, as compared to UNIT_EXITED_VEHICLE which happens afterward
+-- Fires when the player enters an outdoors/indoors subzone
 function RQE.handleZoneChange(...)
 	local event = select(2, ...)
 
