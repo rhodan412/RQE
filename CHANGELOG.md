@@ -5,6 +5,7 @@
 		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint
 		- DB should now work with AND, OR, NOT and combo checks as well as multiple types of functional checks before advancing stepIndex (2025.01.06)
 		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGE can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
+		- CheckDBInventory successfully works for both 'check' and 'checks' (2025.01.07)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
@@ -26,6 +27,9 @@
 		- Modified RQE:StartPeriodicChecks() and subsequent related functions to better with single check, but still need to test the 'checks' versions - CheckDBInventory and CheckDBObjectiveStatus seem to function as well as ever (2025.01.06)
 		- Changed CheckObjectiveProgress to CheckDBObjectiveStatus function call for ease of use (2025.01.07)
 		- Updated RQE:CheckDBObjectiveStatus/RQE:CheckObjectiveProgress function as it wasn't working when objectiveIndex was not in the same numerically ascending order as the stepIndex (2025.01.07)
+		- Fixed functionality in RQE:StartPeriodicChecks to handle the CheckDBInventory for both check and checks (2025.01.07)
+		- Updates to RQE:EvaluateStepChecks to include more debug for future checks analysis/debugging (2025.01.07)
+		- Modified RQE:CraftSpecificItem to only run if INFO+ debugMode is set as this only deals with printing the schematic/recipe materials (2025.01.07)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -41,6 +45,7 @@
 		- Fixed notations for the AND, NOT, OR, combo logic in the DB (2025.01.06)
 		- Updated some Aldor Netherstorm quests to DB (2025.01.07)
 		- Updated DB coord information for a number of profession quest dailies (2025.01.07)
+		- Updated questID 70563 to include the 'checks' feature for this quest - the original CheckDBObjectiveStatus would work just fine, but this was necessary in order to ensure that the checks for CheckDBInventory was functional (2025.01.07)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
