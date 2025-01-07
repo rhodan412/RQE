@@ -23,6 +23,8 @@
 		- Modified CheckDBInventory function to handle AND, OR, NOT, combo logic (2025.01.06)
 		- Large re-work of RQE:StartPeriodicChecks() (along with subsequent related functions for evaluating the checks and funct) and subsequent functions that now will hopefully handle array checks and check with AND, OR and NOT logic (2025.01.06)
 		- Modified RQE:StartPeriodicChecks() and subsequent related functions to better with single check, but still need to test the 'checks' versions - CheckDBInventory and CheckDBObjectiveStatus seem to function as well as ever (2025.01.06)
+		- Changed CheckObjectiveProgress to CheckDBObjectiveStatus function call for ease of use (2025.01.07)
+		- Updated RQE:CheckDBObjectiveStatus/RQE:CheckObjectiveProgress function as it wasn't working when objectiveIndex was not in the same numerically ascending order as the stepIndex (2025.01.07)
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
@@ -39,6 +41,7 @@
 		- Modified delay of UpdateFrame() function call toward the end of SUPER_TRACKING_CHANGED (2025.01.06)
 		- Modified when RQE:StartPeriodicChecks() fires in the QUEST_ACCEPTED event to only do this if the quest that is being supertracked is the one that matches the QUEST_ACCEPTED questID (2025.01.06)
 		- Modified how the initial "W" button is pressed within the UNIT_QUEST_LOG_CHANGED event by adding RQE.InitSetStepIndex variable to initially click the stepIndex 1 (2025.01.06)
+		... Reverted to 2025.01.02 EventManager due to problems with auto quest advancement - will see to re-adding the above as the need comes up prior to next release candidate (2025.01.07)
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
@@ -48,6 +51,7 @@
 		- Updated quests in Darkmoon Faire to handle more advanced quest steps for obtaining items from vendors associated with profession quests (2025.01.06)
 		- Darkmoon Faire coordinate updates (2025.01.06)
 		- Fixed notations for the AND, NOT, OR, combo logic in the DB (2025.01.06)
+		- Updated some Aldor Netherstorm quests to DB (2025.01.07)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
