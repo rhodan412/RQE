@@ -4410,65 +4410,96 @@ end
 
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
+	-- print("~~~ Running RQE:StartPeriodicChecks() ~~~")
+
 	if not RQE.IsQuestSuperTracked() then return end
 
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- print("Current superTrackedQuestID:", superTrackedQuestID)
+
 	if not superTrackedQuestID then return end
 
 	local questData = self.getQuestData(superTrackedQuestID)
-	if not questData then return end
-
-	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
-	local stepData = questData[stepIndex]
-	if not stepData then return end
-
-	-- Handle turn-in readiness
-	if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-		local finalStepIndex = #questData
-		for index, step in ipairs(questData) do
-			if step.objectiveIndex == 99 then
-				finalStepIndex = index
-				break
-			end
-		end
-		self:ClickWaypointButtonForIndex(finalStepIndex)
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
-		end
+	if not questData then
+		-- print("No quest data for superTrackedQuestID:", superTrackedQuestID)
 		return
 	end
 
-	-- Determine and call the appropriate parent function based on `funct`
-	if stepData.funct then
-		local functionMap = {
-			CheckDBBuff = "CheckDBBuff",
-			CheckDBDebuff = "CheckDBDebuff",
-			CheckDBInventory = "CheckDBInventory",
-			CheckDBZoneChange = "CheckDBZoneChange",
-			CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
-			CheckScenarioStage = "CheckScenarioStage",
-			CheckScenarioCriteria = "CheckScenarioCriteria",
-		}
+	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+	-- print("stepIndex being evaluated:", stepIndex)
 
-		local parentFunctionName = functionMap[stepData.funct]
-		if parentFunctionName and self[parentFunctionName] then
-			local funcResult = self[parentFunctionName](self, superTrackedQuestID, stepIndex)
-			if funcResult then
-				self:AdvanceQuestStep(superTrackedQuestID, stepIndex)
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print(parentFunctionName, "succeeded for stepIndex:", stepIndex, ". Advancing to the next step.")
+	-- Define the function map for parent functions
+	local functionMap = {
+		CheckDBBuff = "CheckDBBuff",
+		CheckDBDebuff = "CheckDBDebuff",
+		CheckDBInventory = "CheckDBInventory",
+		CheckDBZoneChange = "CheckDBZoneChange",
+		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
+		CheckScenarioStage = "CheckScenarioStage",
+		CheckScenarioCriteria = "CheckScenarioCriteria",
+	}
+
+	-- Iterate over all steps to evaluate which one should be active
+	for i, stepData in ipairs(questData) do
+		-- print("Evaluating stepIndex:", i)
+
+		-- Handle `check` for single-condition steps
+		if stepData.check and stepData.neededAmt and stepData.funct then
+			local parentFunctionName = functionMap[stepData.funct]
+			if self[parentFunctionName] then
+				-- print("Calling function:", parentFunctionName, "for stepIndex:", i)
+				local funcResult = self[parentFunctionName](self, superTrackedQuestID, i, stepData.check, stepData.neededAmt)
+				if funcResult then
+					-- print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
+					stepIndex = i + 1
+				else
+					print(parentFunctionName, "did not succeed for stepIndex:", i)
+					break
 				end
-				return
 			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print(parentFunctionName, "did not succeed for stepIndex:", stepIndex)
+				-- print("Invalid or missing function for funct:", stepData.funct)
+				break
+			end
+		end
+
+		-- Handle `checks` for multi-condition steps
+		if stepData.checks then
+			-- print("~~~ StepData contains checks. Evaluating each check. ~~~")
+			local allChecksPassed = true
+			for j, checkData in ipairs(stepData.checks) do
+				local parentFunctionName = checkData.funct
+				if self[parentFunctionName] then
+					-- print("Calling parent function:", parentFunctionName, "for check index:", j)
+					local funcResult = self[parentFunctionName](self, superTrackedQuestID, i, checkData.check, checkData.neededAmt)
+					if not funcResult then
+						-- print("Check failed at index:", j, "for function:", parentFunctionName)
+						allChecksPassed = false
+						break
+					end
+				else
+					-- print("Invalid or missing function for check index:", j, "funct:", checkData.funct)
+					allChecksPassed = false
+					break
 				end
+			end
+
+			if allChecksPassed then
+				-- print("All checks succeeded for stepIndex:", i, ". Advancing to the next step.")
+				stepIndex = i + 1
+			else
+				-- print("Not all checks passed for stepIndex:", i)
+				break
 			end
 		end
 	end
 
-	-- Default fallback
-	self:ClickWaypointButtonForIndex(stepIndex)
+	-- If we advanced to a new stepIndex, click the appropriate waypoint button
+	if stepIndex <= #questData then
+		-- print("Setting stepIndex to:", stepIndex)
+		self:ClickWaypointButtonForIndex(stepIndex)
+	else
+		-- print("No further steps to process.")
+	end
 
 	RQEMacro:CreateMacroForCurrentStep()
 	RQE.isCheckingMacroContents = false
@@ -4477,6 +4508,7 @@ function RQE:StartPeriodicChecks()
 	RQE.NewZoneChange = false
 	RQE:UpdateSeparateFocusFrame()
 end
+
 
 
 -- -- Periodic check setup comparing with entry in RQEDatabase
@@ -5108,15 +5140,36 @@ end
 
 
 -- Main function to check inventory conditions (Array/Checks or Check compatible)
-function RQE:CheckDBInventory(questID, stepIndex)
+function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
 	-- print("~~~ Running CheckDBInventory ~~~")
 
-	local success = self:EvaluateStepChecks(questID, stepIndex)
+	-- Ensure `check` and `neededAmt` are valid
+	check = check or {}
+	neededAmt = neededAmt or {}
 
+	-- Debug print
+	-- print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+
+	-- Evaluate `check` and `neededAmt` directly if provided
+	if #check > 0 and #neededAmt > 0 then
+		for i, condition in ipairs(check) do
+			local amount = tonumber(neededAmt[i]) or 1
+			local itemCount = GetItemCount(condition, false) -- Replace with your inventory check logic
+			if itemCount < amount then
+				-- print("Inventory check failed for item:", condition, "needed:", amount, "found:", itemCount)
+				return false
+			end
+		end
+		-- print("All inventory conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+		return true
+	end
+
+	-- Fallback to `EvaluateStepChecks` if `check` and `neededAmt` are not directly provided
+	-- print("Falling back to EvaluateStepChecks for questID:", questID, "stepIndex:", stepIndex)
+	local success = self:EvaluateStepChecks(questID, stepIndex)
 	if success then
 		-- print("~ Success ~")
 		-- print("Inventory conditions met for questID:", questID, "stepIndex:", stepIndex)
-		self:ClickWaypointButtonForIndex(stepIndex)
 		return true
 	else
 		-- print("~ Failure ~")
@@ -5217,15 +5270,22 @@ end
 
 -- Evaluate if using 'check' or 'checks' and if it is 'checks' this function will evaluate, otherwise with 'check' it will hand off to another function
 function RQE:EvaluateStepChecks(questID, stepIndex)
+	print("~~~ Running EvaluateStepChecks ~~~")
 	local questData = self.getQuestData(questID)
-	if not questData then return false, nil end
+	if not questData then
+		-- print("RQE: No quest data for questID:", questID)
+		return false, nil
+	end
 
 	local stepData = questData[stepIndex]
-	if not stepData then return false, nil end
+	if not stepData then
+		-- print("RQE: No step data for stepIndex:", stepIndex)
+		return false, nil
+	end
 
 	-- Handle `checks` array for multiple checks
 	if stepData.checks then
-		for _, checkData in ipairs(stepData.checks) do
+		for i, checkData in ipairs(stepData.checks) do
 			local logic = checkData.logic or "AND"
 			local check = checkData.check or {}
 			local neededAmt = checkData.neededAmt or {}
@@ -5234,10 +5294,8 @@ function RQE:EvaluateStepChecks(questID, stepIndex)
 			-- Resolve the function
 			local checkFunction = self[functName]
 			if not checkFunction then
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Function not found for logic:", logic, "functName:", functName)
-				end
-				return false, nil
+				-- print("RQE: Function not found for check index:", i, "logic:", logic, "functName:", functName)
+				return false, i
 			end
 
 			-- Evaluate the condition
@@ -5249,15 +5307,17 @@ function RQE:EvaluateStepChecks(questID, stepIndex)
 			elseif logic == "NOT" then
 				success = self:EvaluateNotCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
 			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Unknown logic type:", logic)
-				end
-				return false, nil
+				-- print("RQE: Unknown logic type for check index:", i, "logic:", logic)
+				return false, i
 			end
 
-			if not success then return false, "failed" end
+			if not success then
+				-- print("RQE: Check failed at index:", i, "logic:", logic, "check:", check, "neededAmt:", neededAmt)
+				return false, i -- Return the index of the failed check
+			end
 		end
-		return true, nil
+		-- print("RQE: All checks passed for stepIndex:", stepIndex)
+		return true, nil -- All conditions satisfied
 	end
 
 	-- Handle single `check` + `neededAmt` style
@@ -7715,6 +7775,8 @@ end
 
 -- Craft Specific Item for Quest
 function RQE:CraftSpecificItem(recipeSpellID)
+	if RQE.db.profile.debugLevel ~= "INFO+" then return end
+
 	-- Retrieve recipe information to check if it can be crafted
 	local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeSpellID)
 	if not recipeInfo or not recipeInfo.learned or not recipeInfo.craftable then
@@ -7728,14 +7790,12 @@ function RQE:CraftSpecificItem(recipeSpellID)
 	end
 
 	-- Check if we've already printed the reagents for this recipe
-	if RQE.db.profile.debugLevel == "INFO+" then
-		if not RQE.alreadyPrintedSchematics then
-			-- Print the reagents required for the recipe
-			RQE:PrintRecipeSchematic(recipeSpellID, false) -- Assuming isRecraft is false; adjust as needed
+	if not RQE.alreadyPrintedSchematics then
+		-- Print the reagents required for the recipe
+		RQE:PrintRecipeSchematic(recipeSpellID, false) -- Assuming isRecraft is false; adjust as needed
 
-			-- Mark this recipe as having its reagents printed so we don't do it again
-			RQE.alreadyPrintedSchematics = true
-		end
+		-- Mark this recipe as having its reagents printed so we don't do it again
+		RQE.alreadyPrintedSchematics = true
 	end
 end
 
