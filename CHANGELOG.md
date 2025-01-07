@@ -20,6 +20,7 @@
 		- Possible fix for RQE:CheckObjectiveProgress(questID, stepIndex) in the handling of advancement beyond the stepIndex that it should be (2025.01.06)
 		- Added macro creation/check toward the end of the UpdateFrame function (2025.01.06)
 		- Modified CheckDBInventory function to handle AND, OR, NOT, combo logic (2025.01.06)
+		- Large re-work of RQE:StartPeriodicChecks() (along with subsequent related functions for evaluating the checks and funct) and subsequent functions that now will hopefully handle array checks and check with AND, OR and NOT logic
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
