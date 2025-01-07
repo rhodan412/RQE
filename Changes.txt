@@ -3,6 +3,7 @@
 	**HIGHLIGHTS**
 		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips!
 		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint
+		- DB should now work with AND, OR, NOT and combo checks as well as multiple types of functional checks before advancing stepIndex (2025.01.06)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
@@ -20,7 +21,8 @@
 		- Possible fix for RQE:CheckObjectiveProgress(questID, stepIndex) in the handling of advancement beyond the stepIndex that it should be (2025.01.06)
 		- Added macro creation/check toward the end of the UpdateFrame function (2025.01.06)
 		- Modified CheckDBInventory function to handle AND, OR, NOT, combo logic (2025.01.06)
-		- Large re-work of RQE:StartPeriodicChecks() (along with subsequent related functions for evaluating the checks and funct) and subsequent functions that now will hopefully handle array checks and check with AND, OR and NOT logic
+		- Large re-work of RQE:StartPeriodicChecks() (along with subsequent related functions for evaluating the checks and funct) and subsequent functions that now will hopefully handle array checks and check with AND, OR and NOT logic (2025.01.06)
+		- Modified RQE:StartPeriodicChecks() and subsequent related functions to better with single check, but still need to test the 'checks' versions - CheckDBInventory and CheckDBObjectiveStatus seem to function as well as ever (2025.01.06)
 
 	EventManager.lua
 		- Added functionality to minimize the number of times that ITEM_COUNT_CHANGED event fires in its call for RQE:StartPeriodicChecks()
