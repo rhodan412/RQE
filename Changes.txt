@@ -4,6 +4,7 @@
 		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips!
 		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint
 		- DB should now work with AND, OR, NOT and combo checks as well as multiple types of functional checks before advancing stepIndex (2025.01.06)
+		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGE can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
@@ -26,6 +27,10 @@
 		- Changed CheckObjectiveProgress to CheckDBObjectiveStatus function call for ease of use (2025.01.07)
 		- Updated RQE:CheckDBObjectiveStatus/RQE:CheckObjectiveProgress function as it wasn't working when objectiveIndex was not in the same numerically ascending order as the stepIndex (2025.01.07)
 
+	EventManager.lua
+		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
+		- Fixed LUA typo errors by removing the double not not associated with RQE.ScrollFrameToTop() (2025.01.07)
+
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
 		- Added DB quests for alliance Nagrand quests
@@ -35,6 +40,7 @@
 		- Darkmoon Faire coordinate updates (2025.01.06)
 		- Fixed notations for the AND, NOT, OR, combo logic in the DB (2025.01.06)
 		- Updated some Aldor Netherstorm quests to DB (2025.01.07)
+		- Updated DB coord information for a number of profession quest dailies (2025.01.07)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
