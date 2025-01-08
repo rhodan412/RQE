@@ -202,6 +202,7 @@ local eventsToRegister = {
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	--"LEAVE_PARTY_CONFIRMATION",
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
+	"MAIL_SUCCESS",
 	"MERCHANT_UPDATE",
 	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
@@ -314,6 +315,7 @@ local function HandleEvents(frame, event, ...)
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
 		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
+		MAIL_SUCCESS = RQE.handleMailSuccess,
 		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
@@ -708,6 +710,17 @@ function RQE.ReagentBagUpdate(...)
 	-- C_Timer.After(1.5, function()
 		-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
 	-- end)
+end
+
+
+-- Function that handles the MAIL_SUCCESS event
+function RQE.handleMailSuccess(...)
+	local event = select(2, ...)
+	local itemID = select(3, ...)
+
+	C_Timer.After(3, function()
+		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after MAIL_SUCCESS fires
+	end)
 end
 
 
@@ -1107,6 +1120,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
+	RQE.OkayCheckBonusQuests = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
@@ -1589,7 +1603,7 @@ function RQE.handlePlayerStartedMoving()
 				-- Check if the macro body has content
 				if macroBody and macroBody == "" then
 					RQE.isCheckingMacroContents = true
-					RQEMacro:CreateMacroForCurrentStep()
+					RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STARTED_MOVING event fires
 					C_Timer.After(0.2, function()
 						RQE.isCheckingMacroContents = false
 					end)
@@ -1625,32 +1639,32 @@ end
 
 -- Handling UPDATE_SHAPESHIFT_COOLDOWN event
 function RQE.handleUpdateShapeShiftCD()
-	local isBearFormSpellKnown = IsPlayerSpell(5487)
-	if not isBearFormSpellKnown then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("SpellID 5487 is not known by player")
-		end
-		return
-	end
+	-- local isBearFormSpellKnown = IsPlayerSpell(5487)
+	-- if not isBearFormSpellKnown then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("SpellID 5487 is not known by player")
+		-- end
+		-- return
+	-- end
 
- 	if InCombatLockdown() then
-		return
-	end
+ 	-- if InCombatLockdown() then
+		-- return
+	-- end
 
-	if not RQE.ShapeshiftUpdated then return end
-	local isInInstance, instanceType = IsInInstance()
+	-- if not RQE.ShapeshiftUpdated then return end
+	-- local isInInstance, instanceType = IsInInstance()
 
-	-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
-	if isInInstance and (instanceType == "party" or instanceType == "raid") then
-		return
-	end
+	-- -- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
+	-- if isInInstance and (instanceType == "party" or instanceType == "raid") then
+		-- return
+	-- end
 
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	if not RQE.isSuperTracking or not isSuperTracking then return end
+	-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	-- if not RQE.isSuperTracking or not isSuperTracking then return end
 
-	RQE.isCheckingMacroContents = true
-	RQEMacro:CreateMacroForCurrentStep()
-	RQE.isCheckingMacroContents = false
+	-- RQE.isCheckingMacroContents = true
+	-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UPDATE_SHAPESHIFT_COOLDOWN event fires
+	-- RQE.isCheckingMacroContents = false
 end
 
 
@@ -2093,10 +2107,10 @@ function RQE.handlePlayerEnterWorld(...)
 	-- Clicks Waypoint Button if autoClickWaypointButton is true
 	RQE:AutoClickQuestLogIndexWaypointButton()
 
-	-- Update the macro if the WaypointButton is physically clicked by the player
-	RQE.isCheckingMacroContents = true
-	RQEMacro:CreateMacroForCurrentStep()
-	RQE.isCheckingMacroContents = false
+	-- -- Update the macro if the WaypointButton is physically clicked by the player	HANDLED THROUGH STARTPERIODICCHECKS CALLED WITHIN THIS FUNCTION
+	-- RQE.isCheckingMacroContents = true
+	-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
+	-- RQE.isCheckingMacroContents = false
 end
 
 
@@ -2114,6 +2128,8 @@ function RQE.handleSuperTracking()
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)
 		end
 	end
+
+	RQE.OkayCheckBonusQuests = true
 
 	C_Timer.After(1.5, function()
 		RQE:UpdateContentSize()
@@ -2234,7 +2250,9 @@ function RQE.handleSuperTracking()
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromSuperTrackChange = true
 		RQE.SuperTrackChangeRanStartPeriodicChecks = true
-		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+		if RQE.LastAcceptedQuest == RQE.currentSuperTrackedQuestID then
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+		end
 		C_Timer.After(3, function()
 			RQE.StartPerioFromSuperTrackChange = false
 		end)
@@ -2315,6 +2333,7 @@ function RQE.handleSuperTracking()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
 
+	RQE.OkayCheckBonusQuests = false
 	RQE.LastSuperTrackedQuestID = questID
 end
 
@@ -2462,7 +2481,10 @@ function RQE.handleQuestAccepted(...)
 			RQE.StartPerioFromQuestAccepted = true
 			if not RQE.StartPerioFromUQLC then
 				if not RQE.SuperTrackChangeRanStartPeriodicChecks then
-					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires
+					local currentSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+					if RQE.LastAcceptedQuest == currentSuperQuestID then
+						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires
+					end
 					C_Timer.After(3, function()
 						RQE.StartPerioFromQuestAccepted = false
 					end)
@@ -2678,6 +2700,8 @@ function RQE.handleZoneNewAreaChange()
 		-- startTime = debugprofilestop()  -- Start timer
 		DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
 	end
+
+	RQE.OkayCheckBonusQuests = true
 
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
@@ -3049,7 +3073,9 @@ function RQE.handleUnitQuestLogChange(...)
 
 				if not RQE.QuestRemoved then
 					RQE.StartPerioFromUnitQuestLogChanged = true
-					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
+					if RQE.LastAcceptedQuest ~= RQE.currentSuperTrackedQuestID then
+						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+					end
 					RQE.QuestRemoved = false
 
 					-- Perform similar actions as in QUEST_WATCH_UPDATE to ensure waypoints and steps are updated
@@ -3099,7 +3125,9 @@ function RQE.handleUnitQuestLogChange(...)
 	else
 		if not RQE.QuestRemoved then
 			RQE.StartPerioFromUQLC = true
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+			if RQE.LastAcceptedQuest ~= RQE.currentSuperTrackedQuestID then
+				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+			end
 			RQE.QuestRemoved = false
 		end
 	end
