@@ -30,6 +30,7 @@
 		- Fixed functionality in RQE:StartPeriodicChecks to handle the CheckDBInventory for both check and checks (2025.01.07)
 		- Updates to RQE:EvaluateStepChecks to include more debug for future checks analysis/debugging (2025.01.07)
 		- Modified RQE:CraftSpecificItem to only run if INFO+ debugMode is set as this only deals with printing the schematic/recipe materials (2025.01.07)
+		- Updated RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt) function to work for not just check but also checks (2025.01.07)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
