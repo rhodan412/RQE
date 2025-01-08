@@ -2869,9 +2869,12 @@ function UpdateRQEQuestFrame()
 
 	-- Add Bonus Quests to the "Normal Quests" frame
 	RQE.ClearBonusQuestElements() -- Clear existing bonus quest elements
-	for _, bonusQuest in ipairs(bonusQuests) do
-		lastQuestElement = RQE.AddBonusQuestToFrame(RQE.QuestsFrame, lastQuestElement, bonusQuest.questID, bonusQuest.title)
+	if type(bonusQuests) == "table" then
+		for _, bonusQuest in ipairs(bonusQuests) do
+			lastQuestElement = RQE.AddBonusQuestToFrame(RQE.QuestsFrame, lastQuestElement, bonusQuest.questID, bonusQuest.title)
+			RQE.OkayCheckBonusQuests = false
 		--lastQuestElement = RQE.AddBonusQuestToFrame(RQE.QuestsFrame, lastQuestElement, bonusQuest.title)
+		end
 	end
 
 	-- Check if any of the child frames should have their visibility removed as no quests being tracked
