@@ -6,6 +6,7 @@
 		- DB should now work with AND, OR, NOT and combo checks as well as multiple types of functional checks before advancing stepIndex (2025.01.06)
 		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGE can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
 		- CheckDBInventory successfully works for both 'check' and 'checks' (2025.01.07)
+		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
@@ -31,10 +32,20 @@
 		- Updates to RQE:EvaluateStepChecks to include more debug for future checks analysis/debugging (2025.01.07)
 		- Modified RQE:CraftSpecificItem to only run if INFO+ debugMode is set as this only deals with printing the schematic/recipe materials (2025.01.07)
 		- Updated RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt) function to work for not just check but also checks (2025.01.07)
+		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
+		- Updated RQE:StartPeriodicChecks() so that it would work with the RQE:CombineCheckResults function call (2025.01.08)
+		- Fixed RQE:CheckDBObjectiveStatus function call to that it would work with the 'check' and 'checks' in the DB along with the modifiers (2025.01.08)
+		- Updated RQE:CheckDBZoneChange() function call to that it would work with the 'check' and 'checks' in the DB (2025.01.08)
+		- Removed call to update the macro when UpdateFrame fires as this was causing unreasonable lag (2025.01.08)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
 		- Fixed LUA typo errors by removing the double not not associated with RQE.ScrollFrameToTop() (2025.01.07)
+		- Added MAIL_SUCCESS event to run the RQE:StartPeriodicChecks when mail item has been received, in the event that you pick up a quest item from there (2025.01.08)
+		- Cleaned up code within UNIT_QUEST_LOG_CHANGED and QUEST_ACCEPTED to limit the circumstances of when RQE:StartPeriodicChecks() should be called, thus improving lag after quest acceptance (2025.01.08)
+
+	QuestingModule.lua
+		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
 
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
