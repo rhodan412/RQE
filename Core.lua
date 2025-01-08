@@ -4453,7 +4453,7 @@ function RQE:StartPeriodicChecks()
 					-- print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
 					stepIndex = i + 1
 				else
-					print(parentFunctionName, "did not succeed for stepIndex:", i)
+					-- print(parentFunctionName, "did not succeed for stepIndex:", i)
 					break
 				end
 			else
@@ -4508,7 +4508,6 @@ function RQE:StartPeriodicChecks()
 	RQE.NewZoneChange = false
 	RQE:UpdateSeparateFocusFrame()
 end
-
 
 
 -- -- Periodic check setup comparing with entry in RQEDatabase
@@ -5808,87 +5807,186 @@ end
 
 
 -- Primary function to check the progress of objectives in a quest (Array/Checks or Check compatible)
-function RQE:CheckDBObjectiveStatus(questID, stepIndex)	-- renamed from RQE:CheckObjectiveProgress function
-	-- print("~~ Running RQE:CheckDBObjectiveStatus ~~")
+function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
+    -- print("~~ Running RQE:CheckDBObjectiveStatus ~~")
 
-	-- Retrieve quest objectives and data
-	local objectives = C_QuestLog.GetQuestObjectives(questID)
-	local questData = self.getQuestData(questID)
+    -- Ensure `check` and `neededAmt` are valid
+    check = check or {}
+    neededAmt = neededAmt or {}
 
-	-- Early return if no quest is super-tracked or if data is missing
-	if not RQE.IsQuestSuperTracked() or not questData or not objectives then
-		return false
-	end
+    -- Retrieve quest objectives and data
+    local objectives = C_QuestLog.GetQuestObjectives(questID)
+    local questData = self.getQuestData(questID)
 
-	-- Ensure stepIndex is valid
-	if not questData[stepIndex] then
-		return false
-	end
+    -- Early return if no quest is super-tracked or if data is missing
+    if not RQE.IsQuestSuperTracked() or not questData or not objectives then
+        -- print("Missing quest data or objectives for questID:", questID)
+        return false
+    end
 
-	-- Turn-in readiness check
-	local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
-	if isReadyTurnIn then
-		self:ClickWaypointButtonForIndex(#questData) -- Clicks the last step (turn-in step)
-		return true
-	end
+    -- Ensure stepIndex is valid
+    local stepData = questData[stepIndex]
+    if not stepData then
+        -- print("Invalid stepIndex:", stepIndex, "for questID:", questID)
+        return false
+    end
 
-	-- Dynamically determine the correct step to advance to
-	local correctStepIndex = 1
-	local foundStep = false
+    -- Turn-in readiness check
+    local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+    if isReadyTurnIn then
+        -- print("Quest ready for turn-in. Clicking the last step.")
+        self:ClickWaypointButtonForIndex(#questData)
+        return true
+    end
 
-	-- Iterate through the questData to find the correct step based on objective completion
-	for i, step in ipairs(questData) do
-		local objectiveIndex = step.objectiveIndex or 1
-		local neededAmt = step.neededAmt and tonumber(step.neededAmt[1]) or 1
-		local objective = objectives[objectiveIndex]
+    -- Handle `check` and `neededAmt` explicitly
+    if #check > 0 and #neededAmt > 0 then
+        -- print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+        for i, condition in ipairs(check) do
+            local amount = tonumber(neededAmt[i]) or 1
+            local objectiveIndex = stepData.objectiveIndex or 1 -- Use the objectiveIndex from stepData
+            local objective = objectives[objectiveIndex]
+            if not objective or objective.numFulfilled < amount then
+                -- print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+                return false
+            end
+        end
+        -- print("All objective conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+        return true
+    end
 
-		if objective then
-			if objective.finished or objective.numFulfilled >= neededAmt then
-				correctStepIndex = i + 1
-			elseif objective.numFulfilled < neededAmt then
-				correctStepIndex = i
-				foundStep = true
-				break
-			end
-		else
-			correctStepIndex = i -- Handle cases where objectives might be missing
-			break
-		end
-	end
+    -- Dynamically determine the correct step to advance to
+    local correctStepIndex = 1
+    for i, step in ipairs(questData) do
+        local objectiveIndex = step.objectiveIndex or 1
+        local neededAmount = step.neededAmt and tonumber(step.neededAmt[1]) or 1
+        local objective = objectives[objectiveIndex]
 
-	-- Ensure correctStepIndex does not exceed the number of steps
-	correctStepIndex = math.min(correctStepIndex, #questData)
+        if objective then
+            if objective.finished or objective.numFulfilled >= neededAmount then
+                correctStepIndex = i + 1
+            elseif objective.numFulfilled < neededAmount then
+                correctStepIndex = i
+                break
+            end
+        else
+            correctStepIndex = i -- Handle cases where objectives might be missing
+            break
+        end
+    end
 
-	-- If the stepIndex doesn't match the expected step, click the correct button
-	if correctStepIndex ~= stepIndex then
-		self:ClickWaypointButtonForIndex(correctStepIndex)
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Adjusted to correctStepIndex: ", correctStepIndex)
-		end
-		return true
-	end
+    -- Ensure correctStepIndex does not exceed the number of steps
+    correctStepIndex = math.min(correctStepIndex, #questData)
 
-	-- Handle `checks` if defined for the current step
-	local stepData = questData[stepIndex]
-	if stepData.checks then
-		local success = self:EvaluateStepChecks(questID, stepIndex)
-		if success then
-			self:AdvanceQuestStep(questID, stepIndex)
-			if RQE.db.profile.debugLevel == "INFO" then
-				print("Objective checks met for stepIndex:", stepIndex)
-			end
-			return true
-		else
-			if RQE.db.profile.debugLevel == "INFO" then
-				print("Objective checks NOT met for stepIndex:", stepIndex)
-			end
-			return false
-		end
-	end
+    -- If the stepIndex doesn't match the expected step, click the correct button
+    if correctStepIndex ~= stepIndex then
+        -- print("Adjusted to correctStepIndex:", correctStepIndex, "from stepIndex:", stepIndex)
+        self:ClickWaypointButtonForIndex(correctStepIndex)
+        return true
+    end
 
-	-- If no conditions matched, stay on the current step
-	return false
+    -- Handle `checks` if defined for the current step
+    if stepData.checks then
+        -- print("Step contains multiple checks. Evaluating each check.")
+        local success = self:EvaluateStepChecks(questID, stepIndex)
+        if success then
+            print("Objective checks met for stepIndex:", stepIndex)
+            self:AdvanceQuestStep(questID, stepIndex)
+            return true
+        else
+            -- print("Objective checks NOT met for stepIndex:", stepIndex)
+            return false
+        end
+    end
+
+    -- Fallback if no conditions matched
+    -- print("No conditions met for questID:", questID, "stepIndex:", stepIndex)
+    return false
 end
+
+
+-- -- Primary function to check the progress of objectives in a quest (Array/Checks or Check compatible)
+-- function RQE:CheckDBObjectiveStatus(questID, stepIndex)	-- renamed from RQE:CheckObjectiveProgress function
+	-- -- print("~~ Running RQE:CheckDBObjectiveStatus ~~")
+
+	-- -- Retrieve quest objectives and data
+	-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+	-- local questData = self.getQuestData(questID)
+
+	-- -- Early return if no quest is super-tracked or if data is missing
+	-- if not RQE.IsQuestSuperTracked() or not questData or not objectives then
+		-- return false
+	-- end
+
+	-- -- Ensure stepIndex is valid
+	-- if not questData[stepIndex] then
+		-- return false
+	-- end
+
+	-- -- Turn-in readiness check
+	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+	-- if isReadyTurnIn then
+		-- self:ClickWaypointButtonForIndex(#questData) -- Clicks the last step (turn-in step)
+		-- return true
+	-- end
+
+	-- -- Dynamically determine the correct step to advance to
+	-- local correctStepIndex = 1
+	-- local foundStep = false
+
+	-- -- Iterate through the questData to find the correct step based on objective completion
+	-- for i, step in ipairs(questData) do
+		-- local objectiveIndex = step.objectiveIndex or 1
+		-- local neededAmt = step.neededAmt and tonumber(step.neededAmt[1]) or 1
+		-- local objective = objectives[objectiveIndex]
+
+		-- if objective then
+			-- if objective.finished or objective.numFulfilled >= neededAmt then
+				-- correctStepIndex = i + 1
+			-- elseif objective.numFulfilled < neededAmt then
+				-- correctStepIndex = i
+				-- foundStep = true
+				-- break
+			-- end
+		-- else
+			-- correctStepIndex = i -- Handle cases where objectives might be missing
+			-- break
+		-- end
+	-- end
+
+	-- -- Ensure correctStepIndex does not exceed the number of steps
+	-- correctStepIndex = math.min(correctStepIndex, #questData)
+
+	-- -- If the stepIndex doesn't match the expected step, click the correct button
+	-- if correctStepIndex ~= stepIndex then
+		-- self:ClickWaypointButtonForIndex(correctStepIndex)
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Adjusted to correctStepIndex: ", correctStepIndex)
+		-- end
+		-- return true
+	-- end
+
+	-- -- Handle `checks` if defined for the current step
+	-- local stepData = questData[stepIndex]
+	-- if stepData.checks then
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- self:AdvanceQuestStep(questID, stepIndex)
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print("Objective checks met for stepIndex:", stepIndex)
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print("Objective checks NOT met for stepIndex:", stepIndex)
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- If no conditions matched, stay on the current step
+	-- return false
+-- end
 
 
 -- -- Primary function to check the progress of objectives in a quest
