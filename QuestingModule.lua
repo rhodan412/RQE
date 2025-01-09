@@ -3483,7 +3483,9 @@ function UpdateRQEAchievementsFrame()
 	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
 
 	-- Print the IDs of tracked achievements for debugging
-	RQE.infoLog("Currently Tracked Achievements:")
+	if RQE.AchievementsFrame.achieveCount > 0 then
+		RQE.infoLog("Currently Tracked Achievements:")
+	end
 
 	-- Clear the achievement ID list before updating
 	RQE:ClearAchievementFrame()
