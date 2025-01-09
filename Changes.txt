@@ -37,6 +37,7 @@
 		- Fixed RQE:CheckDBObjectiveStatus function call to that it would work with the 'check' and 'checks' in the DB along with the modifiers (2025.01.08)
 		- Updated RQE:CheckDBZoneChange() function call to that it would work with the 'check' and 'checks' in the DB (2025.01.08)
 		- Removed call to update the macro when UpdateFrame fires as this was causing unreasonable lag (2025.01.08)
+		- Updated functions that call CheckDBBuff, CheckDBDebuff, CheckScenarioStage and CheckScenarioCriteria DB functions to also handle 'checks' in addition to the 'check' as it existed (2025.01.08)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
