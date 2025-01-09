@@ -1688,8 +1688,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	if questInfo then
-		RQE.infoLog("questInfo.description is ", questInfo.description)
-		RQE.infoLog("questInfo.objectives is ", questInfo.objectives)
+		RQE.infoLog("Line 1691: questInfo.description is ", questInfo.description)
+		RQE.infoLog("Line 1692: questInfo.objectives is ", questInfo.objectives)
 
 		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
@@ -4517,6 +4517,8 @@ function RQE:StartPeriodicChecks()
 		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
 		CheckScenarioStage = "CheckScenarioStage",
 		CheckScenarioCriteria = "CheckScenarioCriteria",
+		CheckFactionGroupAlliance = "CheckFactionGroupAlliance",
+		CheckFactionGroupHorde = "CheckFactionGroupHorde",
 	}
 
 	-- Iterate over all steps to evaluate which one should be active
@@ -4604,6 +4606,37 @@ function RQE:StartPeriodicChecks()
 	end
 	RQEMacro:CreateMacroForCurrentStep()
 	RQE.isCheckingMacroContents = false
+
+	-- Process the current step
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questData = RQE.getQuestData(questID)
+	--if not questData then return end
+	local stepData = questData[stepIndex]
+	local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+
+	if funcResult then
+		-- Success: Step executed successfully
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Function for current step executed successfully. Advancing to the next step.")
+		end
+		RQE.AddonSetStepIndex = stepIndex + 1
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+		RQE.isCheckingMacroContents = false
+		return
+	else
+		-- Check for failedfunc after the primary function fails
+		local failedHandled = self:HandleFailedFunction(superTrackedQuestID, stepIndex)
+		if failedHandled then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Failed function handled successfully for stepIndex:", stepIndex)
+			end
+			return
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No failed function handling needed for stepIndex:", stepIndex)
+			end
+		end
+	end
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
@@ -4981,7 +5014,7 @@ end
 function RQE:ClickWaypointButtonForIndex(index)
 	local button = self.WaypointButtons[index]
 	if not button then
-		RQE.debugLog("No waypoint button found for index:", index)
+		print("No waypoint button found for index:", index)
 		return
 	end
 
@@ -5029,7 +5062,9 @@ end
 
 -- Function that handles the check to see if the player is Alliance or Horde when needed to be called
 function RQE:HandleFactionLogicAfterAdvance()
-	-- print("~~ Running RQE:HandleFactionLogicAfterAdvance ~~")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:HandleFactionLogicAfterAdvance ~~")
+	end
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then return end
@@ -5058,6 +5093,73 @@ function RQE:HandleFactionLogicAfterAdvance()
 		RQE.AddonSetStepIndex = stepIndex + 1
 		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
 	end
+
+	-- After faction logic, check failedfunc
+	C_Timer.After(0.5, function()
+		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		if superTrackedQuestID then
+			RQE:HandleFailedFunction(superTrackedQuestID, RQE.AddonSetStepIndex)
+		end
+	end)
+end
+
+
+-- Function to handle failedfunc logic for CheckDBZoneChange
+function RQE:HandleFailedFunction(questID, stepIndex)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:HandleFailedFunction ~~")
+	end
+
+	-- Get the quest data
+	local questData = self.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data found for questID:", questID)
+		end
+		return
+	end
+
+	-- Get the current step data
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data found for stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check for failedfunc and failedcheck
+	if stepData.failedfunc and stepData.failedcheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Failed function detected for stepIndex:", stepIndex, "Failed Function:", stepData.failedfunc)
+		end
+
+		-- Call the failed function with the necessary parameters
+		local failFuncResult = RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, questID, stepIndex, stepData.failedcheck, stepData.failedIndex)
+
+		if failFuncResult then
+			-- If failed function triggers, move to the failedIndex
+			local failedIndex = stepData.failedIndex or 1 -- Default to step 1 if not provided
+			RQE.AddonFailedSetStepIndex = failedIndex
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Failure condition met. Reverting to failedIndex:", failedIndex)
+			end
+
+			self:ClickWaypointButtonForIndex(failedIndex)
+			return true -- Indicate failure handling occurred
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Failed function condition not met for stepIndex:", stepIndex)
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("No failed function executed for stepIndex:", stepIndex)
+	end
+
+	return false -- No failure conditions triggered
 end
 
 
@@ -5553,15 +5655,31 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 	neededAmt = neededAmt or {}
 
 	local currentMapID = C_Map.GetBestMapForUnit("player")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Current MapID:", tostring(currentMapID))
+	end
+
 	local questData = self.getQuestData(questID)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Valid quest data found for questID:", questID)
+	end
 
 	if not questData then
 		return false -- Exit early if no quest data is found
 	end
 
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Valid step data found for stepIndex:", stepIndex)
+	end
+
 	local stepData = questData[stepIndex]
 	if not stepData then
 		return false -- Exit early if no step data is found
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Evaluating single check for Current MapID:", tostring(currentMapID))
+		print("Required MapID(s):", table.concat(check, ", "))
 	end
 
 	-- Handle single check + neededAmt directly
@@ -5580,6 +5698,10 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 			print("Required MapID(s):", table.concat(check or {}, ", "))
 		end
 		return false
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Evaluating multiple checks for stepIndex:", stepIndex)
 	end
 
 	-- Handle multiple checks using EvaluateStepChecks
@@ -5601,11 +5723,15 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 
 	-- Handle failed zones if `failedcheck` is defined
 	local failedMapIDs = stepData.failedcheck or {}
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Evaluating failed zones for Current MapID:", tostring(currentMapID))
+		print("Failed MapID(s):", table.concat(failedMapIDs, ", "))
+	end
 	if failedMapIDs and #failedMapIDs > 0 then
 		for _, mapID in ipairs(failedMapIDs) do
 			if tostring(currentMapID) == tostring(mapID) then
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Player is in a failed zone (MapID: " .. tostring(currentMapID) .. "). Returning failure.")
+					print("Player is in a failed zone (MapID: " .. tostring(currentMapID) .. "). Returning failure. Current stepIndex:", stepIndex)
 				end
 				return false
 			end
@@ -5677,40 +5803,91 @@ end
 -- end
 
 
--- -- Function to check if the player's faction is Alliance and advance the quest step if true
--- function RQE:CheckFactionGroupAlliance(questID, stepIndex)
-	-- local englishFaction = UnitFactionGroup("player")
+-- Function to check if the player's faction is Alliance and advance the quest step if true
+function RQE:CheckFactionGroupAlliance(questID, stepIndex, check, neededAmt)
+	local englishFaction = UnitFactionGroup("player")
 
-	-- RQE.infoLog("Checking if player's faction is Alliance: " .. tostring(englishFaction))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking if player's faction is Alliance: " .. tostring(englishFaction))
+	end
 
-	-- -- Check if the player's faction is Alliance
-	-- if englishFaction == "Alliance" then
-		-- RQE.infoLog("Player is Alliance, advancing quest step.")
-		-- self:AdvanceQuestStep(questID, stepIndex)
-		-- return true
-	-- else
-		-- RQE.infoLog("Player is not Alliance, not advancing quest step.")
-		-- return false
-	-- end
--- end
+	-- Validate faction
+	if englishFaction ~= "Alliance" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not Alliance, not advancing quest step.")
+		end
+		return false
+	end
+
+	-- Use `check` and `neededAmt` for evaluation
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- Handle single `check`
+	if #check > 0 then
+		for _, condition in ipairs(check) do
+			if tostring(condition) == "Alliance" then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Alliance-specific check passed. Advancing quest step.")
+				end
+				self:ClickWaypointButtonForIndex(stepIndex)
+				return true
+			end
+		end
+	end
+
+	-- Handle multiple `checks`
+	local questData = self.getQuestData(questID)
+	local stepData = questData and questData[stepIndex]
+
+	if stepData and stepData.checks then
+		local success = self:EvaluateStepChecks(questID, stepIndex)
+		if success then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("All Alliance-specific checks passed. Advancing quest step.")
+			end
+			self:ClickWaypointButtonForIndex(stepIndex)
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Alliance-specific checks failed or not met.")
+	end
+	return false
+end
 
 
--- -- Function to check if the player's faction is Horde and advance the quest step if true
--- function RQE:CheckFactionGroupHorde(questID, stepIndex)
-	-- local englishFaction = UnitFactionGroup("player")
+-- Function to check if the player's faction is Horde and advance the quest step if true
+function RQE:CheckFactionGroupHorde(questID, stepIndex, check, neededAmt)
+	local englishFaction = UnitFactionGroup("player")
+	local currentStepIndex = RQE.AddonSetStepIndex
 
-	-- RQE.infoLog("Checking if player's faction is Horde: " .. tostring(englishFaction))
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking if player's faction is Horde:", tostring(englishFaction))
+		print("Current stepIndex in function:", currentStepIndex, "Passed stepIndex:", stepIndex)
+	end
 
-	-- -- Check if the player's faction is Horde
-	-- if englishFaction == "Horde" then
-		-- RQE.infoLog("Player is Horde, advancing quest step.")
-		-- self:AdvanceQuestStep(questID, stepIndex)
-		-- return true
-	-- else
-		-- RQE.infoLog("Player is not Horde, not advancing quest step.")
-		-- return false
-	-- end
--- end
+	if englishFaction == "Horde" then
+		if currentStepIndex == stepIndex then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Horde-specific check passed. Advancing quest step.")
+			end
+			self:AdvanceQuestStep(questID, stepIndex)
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Player is Horde, but stepIndex does not match. No advancement.")
+			end
+			return false
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not Horde, not advancing quest step.")
+		end
+		return false
+	end
+end
 
 
 -- Primary function to check the progress of objectives in a quest (Array/Checks or Check compatible)
@@ -5725,7 +5902,7 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 
 	-- Retrieve quest objectives and data
 	local objectives = C_QuestLog.GetQuestObjectives(questID)
-	local questData = self.getQuestData(questID)
+	local questData = RQE.getQuestData(questID)
 
 	-- Early return if no quest is super-tracked or if data is missing
 	if not RQE.IsQuestSuperTracked() or not questData or not objectives then
