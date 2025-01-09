@@ -562,7 +562,7 @@ function RQE.handleItemCountChanged(...)
 
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		if questID then
-			RQE.infoLog("Current super tracked questID:", questID)
+			RQE.infoLog("Line 565: Current super tracked questID:", questID)
 			local questData = RQE.getQuestData(questID)
 			if questData then
 				if RQE.LastClickedButtonRef == nil then return end
@@ -674,7 +674,7 @@ function RQE.ReagentBagUpdate(...)
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if questID then
-		RQE.infoLog("Current super tracked questID:", questID)
+		--RQE.infoLog("Line 677: Current super tracked questID:", questID)	-- Potentially Fires a lot and visible only when Debug Logging is active
 		local questData = RQE.getQuestData(questID)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
@@ -731,7 +731,7 @@ function RQE.handleMerchantUpdate()
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if questID then
-		RQE.infoLog("Current super tracked questID:", questID)
+		RQE.infoLog("Line 734: Current super tracked questID:", questID)
 		local questData = RQE.getQuestData(questID)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
@@ -803,7 +803,7 @@ function RQE.handleUnitInventoryChange(...)
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if questID then
-		RQE.infoLog("Current super tracked questID:", questID)
+		--RQE.infoLog("Line 806: Current super tracked questID:", questID)	-- Potentially Fires a lot and visible only when Debug Logging is active
 		local questData = RQE.getQuestData(questID)
 		if questData then
 			if RQE.LastClickedButtonRef == nil then return end
@@ -1571,7 +1571,9 @@ function RQE.handlePlayerStartedMoving()
 
 	-- Checks to see if showCoordinates is selected as true for an option before calling the applicable function
 	if RQE.db.profile.showCoordinates then
-		RQE:StartUpdatingCoordinates()
+		C_Timer.After(0.3, function()
+			RQE:StartUpdatingCoordinates()
+		end)
 	end
 
 	-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
@@ -1582,10 +1584,10 @@ function RQE.handlePlayerStartedMoving()
 		return
 	end
 
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	if RQEFrame:IsShown() and not isSuperTracking then
-		RQE.Buttons.ClearButtonPressed()
-	end
+	-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	-- if RQEFrame:IsShown() and not isSuperTracking then
+		-- RQE.Buttons.ClearButtonPressed()
+	-- end
 
 	local isFlying = IsFlying("player")
 	local isMounted = IsMounted()
@@ -2003,7 +2005,7 @@ function RQE.handlePlayerEnterWorld(...)
 		DEFAULT_CHAT_FRAME:AddMessage("PEW 08 Debug: Current map ID: " .. tostring(mapID), 0.93, 0.51, 0.93)
 	end
 
-	RQE.Timer_CheckTimers(GetWorldElapsedTimers())
+	-- RQE.Timer_CheckTimers(GetWorldElapsedTimers())	-- Fires needlessly as the data is nil
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 		DEFAULT_CHAT_FRAME:AddMessage("PEW 09 Debug: Checked timers.", 0.93, 0.51, 0.93)
 	end
@@ -2956,81 +2958,84 @@ function RQE.handleUnitAura(...)
 	local spellName = select(4, ...)
 	local filter = select(5, ...)
 
-	-- -- Print Event-specific Args
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	-- end
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
 
 	if unitToken ~= "player" then  -- Only process changes for the player
 		return
 	end
 
-	if RQE.db.profile.autoClickWaypointButton then
-		-- Only process the event if it's for the player and not in a taxi
-		if RQE.HasDragonraceAura() or RQE.PlayerMountStatus ~= "Taxi" then
-			local questID = C_SuperTrack.GetSuperTrackedQuestID()
-			if not questID then
-				RQE.debugLog("No super tracked quest ID found, skipping aura checks.")
-				return
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cffffff00EventHandler triggered with event:|r", event)	-- Print the event name in yellow
+	end
+
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super tracked quest ID found, skipping aura checks.")
+		end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if the current step relies on buffs or debuffs
+	local isBuffOrDebuffCheck = false
+	if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
+		isBuffOrDebuffCheck = true
+	elseif stepData.checks then
+		-- Also evaluate `checks` for the same
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
+				isBuffOrDebuffCheck = true
+				break
 			end
+		end
+	end
 
-			local questData = RQE.getQuestData(questID)
-			if not questData then
-				RQE.debugLog("No quest data available for quest ID:", questID)
-				return
+	-- If the current step is tied to buff or debuff checks, re-run periodic checks
+	if isBuffOrDebuffCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UNIT_AURA related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+		C_Timer.After(0.5, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~ Running RQE:StartPeriodicChecks() from UNIT_AURA ~~")
 			end
-
-			if RQE.LastClickedButtonRef == nil then return end
-			local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-			local stepData = questData[stepIndex]
-
-			if not stepData then
-				RQE.debugLog("No step data available for quest ID:", questID)
-				return
-			end
-
-			-- Process 'funct' for buffs or debuffs if specified
-			if stepData.funct and RQE[stepData.funct] and (string.find(stepData.funct, "CheckDBBuff") or string.find(stepData.funct, "CheckDBDebuff")) then
-				-- Call the function safely
-				RQE[stepData.funct](questID, stepIndex)
-			else
-				-- Debug log to indicate the function is not found
-				RQE.debugLog("Function " .. tostring(stepData.funct) .. " is not valid or not found in RQE.")
-			end
-
-			-- Handle failed functions based on losing a buff or debuff
-			if stepData.failedfunc and (string.find(stepData.failedfunc, "CheckDBBuff") or string.find(stepData.failedfunc, "CheckDBDebuff")) then
-				local hasAura = false
-				for _, auraName in ipairs(stepData.failedcheck or {}) do
-					if C_UnitAuras.GetAuraDataBySpellName("player", auraName) then
-						hasAura = true
-						break
-					end
-				end
-
-				-- If the aura is not present and it's a condition for failure, trigger the failure response
-				if not hasAura then
-					local failedIndex = stepData.failedIndex or stepIndex
-					C_Timer.After(0.5, function()
-						if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-							RQE.WaypointButtons[failedIndex]:Click()
-							RQE.debugLog("Aura check failed, moving to step:", failedIndex)
-						else
-							RQE.debugLog("No WaypointButton found for failed index:", failedIndex)
-						end
-					end)
-				end
-			end
+			RQE:StartPeriodicChecks()
+		end)
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
 		end
 	end
 end
