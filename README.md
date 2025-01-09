@@ -29,14 +29,14 @@ Current Limitations:
 
 Known Bugs:
 -----------
-~~* Scenario/Dungeon Objectives are not visible as Blizz never re-implemented/fixed this part of the API since 11.0 (it worked just fine before 11.0). If this starts to work again, I will make sure that this is put back into place~~ FIXED
-~~* Tooltips don't contain quest rewards any longer (again this is an issue that started in 11.0 and I haven't been able to get this part going again)~~ FIXED
-~~* Some (weekly JC quest in Valdrakken that requires you to craft four gems is the only one that I can think of) custom multi-step quests don't advance stages properly between the stage/waypoint buttons (numbered buttons in the Super-Track Frame) as you craft each of the gems. This means that the RQE Macro doesn't update unless you manually tick the stage button.~~ FIXED
+None
 
 Images:
 -------
 Navigate through different tabs to customize the RQE addon's frames, fonts, and color
 ![Navigate through different tabs to customize the RQE addon's frames, fonts, and color.](https://github.com/user-attachments/assets/0f24e405-f535-4a13-8536-2a3784814e26)
+
+Save time with RQE! The GIF here shows an example of that with 'The Ghostfish' quest from Wrath of the Lich King. It's an item that once looted, you have to click on it to complete the quest within ONE MINUTE. RQE watches your inventory for many such quest items.![fishing](https://github.com/user-attachments/assets/5f635ddb-a233-493f-b86b-0ff0676a87ab)
 
 Receive guidance step-by-step as you navigate quests in the add-on's database of waypoints
 ![Receive guidance step-by-step as you navigate quests in the add-on's database of waypoints.](https://github.com/user-attachments/assets/9e549a8a-6529-44dc-84e8-12b3135e13c2)
@@ -46,9 +46,11 @@ Navigate your tracked quests and waypoints (provided through custom step-by-step
 
 Queue for group world quests, including the world boss!
 ![WQ Queueing.](https://github.com/user-attachments/assets/8637cb2d-dce5-4038-b55b-dfb542446b8d)
+![fishing](https://github.com/user-attachments/assets/ab7fe220-a1cc-4336-a412-777fd0d88f28)
 
 Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame')
-![Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame').](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
+![Check out the rewards you have for a particu![fishing](https://github.com/user-attachments/assets/77f70807-5de1-4325-a52d-345a447ee3a4)
+lar quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame').](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
 
 Tooltips to help provide additional information
 ![Tooltips to help provide additional information.](https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968)
