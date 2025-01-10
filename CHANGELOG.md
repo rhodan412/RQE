@@ -52,6 +52,9 @@
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
 		- Updated a notification for Currently Tracked Achievements but set the printing ability only to be if Tracked Achievements were greater than 0 (2025.01.09)
 
+	RQE.toc
+		- Updated version# (2025.01.09)
+
 	RQEDatabase.lua
 		- Added remainder of quests in Terokkar Forest quests
 		- Added DB quests for alliance Nagrand quests
