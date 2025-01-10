@@ -5793,7 +5793,7 @@ end
 			-- self:AdvanceQuestStep(questID, stepIndex + 1)
 			-- return true
 		-- end
-	-- end
+	-- end 
 
 	-- -- If no faction-specific text or player matches the faction, proceed with the step
 	-- if RQE.db.profile.debugLevel == "INFO+" then
