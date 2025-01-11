@@ -4517,8 +4517,6 @@ function RQE:StartPeriodicChecks()
 		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
 		CheckScenarioStage = "CheckScenarioStage",
 		CheckScenarioCriteria = "CheckScenarioCriteria",
-		CheckFactionGroupAlliance = "CheckFactionGroupAlliance",
-		CheckFactionGroupHorde = "CheckFactionGroupHorde",
 	}
 
 	-- Iterate over all steps to evaluate which one should be active
@@ -4607,36 +4605,35 @@ function RQE:StartPeriodicChecks()
 	RQEMacro:CreateMacroForCurrentStep()
 	RQE.isCheckingMacroContents = false
 
-	-- Process the current step
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local questData = RQE.getQuestData(questID)
-	--if not questData then return end
-	local stepData = questData[stepIndex]
-	local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
+	-- -- Process the current step	-- Pushes player stepIndex to complete instead of potentially back even if not listed or even if it isn't objective complete
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local questData = RQE.getQuestData(questID)
+	-- local stepData = questData[stepIndex]
+	-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
 
-	if funcResult then
-		-- Success: Step executed successfully
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Function for current step executed successfully. Advancing to the next step.")
-		end
-		RQE.AddonSetStepIndex = stepIndex + 1
-		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
-		RQE.isCheckingMacroContents = false
-		return
-	else
-		-- Check for failedfunc after the primary function fails
-		local failedHandled = self:HandleFailedFunction(superTrackedQuestID, stepIndex)
-		if failedHandled then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Failed function handled successfully for stepIndex:", stepIndex)
-			end
-			return
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No failed function handling needed for stepIndex:", stepIndex)
-			end
-		end
-	end
+	-- if funcResult then
+		-- -- Success: Step executed successfully
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Function for current step executed successfully. Advancing to the next step.")
+		-- end
+		-- RQE.AddonSetStepIndex = stepIndex + 1
+		-- self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+		-- RQE.isCheckingMacroContents = false
+		-- return
+	-- else
+		-- -- Check for failedfunc after the primary function fails
+		-- local failedHandled = self:HandleFailedFunction(superTrackedQuestID, stepIndex)
+		-- if failedHandled then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Failed function handled successfully for stepIndex:", stepIndex)
+			-- end
+			-- return
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("No failed function handling needed for stepIndex:", stepIndex)
+			-- end
+		-- end
+	-- end
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
