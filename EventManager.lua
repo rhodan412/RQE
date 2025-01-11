@@ -624,16 +624,16 @@ function RQE.handleItemCountChanged(...)
 			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.CurrentlySuperQuestID
 
 			C_Timer.After(0.4, function()
-				if RQE.LastAcceptedQuest then
-					if RQE.LastAcceptedQuest == questID then
+				--if RQE.LastAcceptedQuest then
+					--if RQE.LastAcceptedQuest == questID then
 						RQE.StartPerioFromItemCountChanged = true
 						RQE.ItemCountRanStartPeriodicChecks = true
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 						C_Timer.After(3, function()
 							RQE.StartPerioFromItemCountChanged = false
 						end)
-					end
-				end
+					--end
+				--end
 			end)
 		end
 	end
@@ -2687,6 +2687,10 @@ function RQE.handleZoneChange(...)
 	-- local isFlying = IsFlying("player")
 	-- local isMounted = IsMounted()
 	-- local onTaxi = UnitOnTaxi("player")
+
+	C_Timer.After(1, function()
+		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED or ZONE_CHANGED_INDOORS fires
+	end)
 
 	if not IsFlying and not isMounted and not onTaxi then
 		RQE.UntrackAutomaticWorldQuests()
