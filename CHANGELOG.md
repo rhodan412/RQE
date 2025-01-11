@@ -40,6 +40,7 @@
 		- Updated functions that call CheckDBBuff, CheckDBDebuff, CheckScenarioStage and CheckScenarioCriteria DB functions to also handle 'checks' in addition to the 'check' as it existed (2025.01.08)
 		- Added functionality to RQE:StartPeriodicChecks() function for failedfunct (2025.01.09)
 		- Updated RQE:CheckFactionGroupAlliance and RQE:CheckFactionGroupHorde, but not reliably working (2025.01.09)
+		- Reverted to an earlier RQE:StartPeriodicChecks() and commented out failedfunct section for now until can work reliably (2025.01.10)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -47,6 +48,7 @@
 		- Added MAIL_SUCCESS event to run the RQE:StartPeriodicChecks when mail item has been received, in the event that you pick up a quest item from there (2025.01.08)
 		- Cleaned up code within UNIT_QUEST_LOG_CHANGED and QUEST_ACCEPTED to limit the circumstances of when RQE:StartPeriodicChecks() should be called, thus improving lag after quest acceptance (2025.01.08)
 		- Fixed UNIT_AURA sometimes not recognizing that progress had been made on a quest, set it so that it wouldn't continuously fire whenever an aura change is detected on nearby players (2025.01.09)
+		- Added RQE:StartPeriodicChecks() function call to ZONE_CHANGED/ZONE_CHANGED_INDOORS event function and removed LastAcceptQuest check for this function running within ITEM_COUNT_CHANGED as it wasn't firing reliably while working on quest (2025.01.10)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
