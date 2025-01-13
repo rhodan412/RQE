@@ -12,6 +12,7 @@
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
 		- Plays certain sound whether the waypoint information in the DB exists, matches or doesn't match the stored Blizzard waypoint for the super tracked quest (only on INFO debug level)
 		- Modified the C_Timer.After in the RQE.UnknownButtonTooltip function
+		- Cleaned up unused code (2025.01.12)
 
 	Core.lua
 		- Created function aimed at clicking the RQE.SeparateWaypointButton
@@ -41,6 +42,7 @@
 		- Added functionality to RQE:StartPeriodicChecks() function for failedfunct (2025.01.09)
 		- Updated RQE:CheckFactionGroupAlliance and RQE:CheckFactionGroupHorde, but not reliably working (2025.01.09)
 		- Reverted to an earlier RQE:StartPeriodicChecks() and commented out failedfunct section for now until can work reliably (2025.01.10)
+		- Cleaned up unused code (2025.01.12)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -49,10 +51,15 @@
 		- Cleaned up code within UNIT_QUEST_LOG_CHANGED and QUEST_ACCEPTED to limit the circumstances of when RQE:StartPeriodicChecks() should be called, thus improving lag after quest acceptance (2025.01.08)
 		- Fixed UNIT_AURA sometimes not recognizing that progress had been made on a quest, set it so that it wouldn't continuously fire whenever an aura change is detected on nearby players (2025.01.09)
 		- Added RQE:StartPeriodicChecks() function call to ZONE_CHANGED/ZONE_CHANGED_INDOORS event function and removed LastAcceptQuest check for this function running within ITEM_COUNT_CHANGED as it wasn't firing reliably while working on quest (2025.01.10)
+		- Cleaned up unused code (2025.01.12)
+		- Added Scenario check to the top of SCENARIO_UPDATE function to prevent unnecessary running of rest of function (2025.01.12)
+		- Reordered/cleaned up code within ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA (2025.01.12)
+		- Modified code to ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA to check to see if CheckDBZoneChange is present in the current step of DB before calling RQE:StartPeriodicChecks (2025.01.12)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
 		- Updated a notification for Currently Tracked Achievements but set the printing ability only to be if Tracked Achievements were greater than 0 (2025.01.09)
+		- Modified QuestTypeLabel to be RQE.QuestTypeLabel so that it could be properly referenced as an anchor point for QuestObjectivesOrDescription (2025.01.12)
 
 	RQE.toc
 		- Updated version# (2025.01.09)
@@ -77,6 +84,9 @@
 	RQEMacro.lua
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
 		- Added counter to Magic Button for items in inventory to better keep track (2025.01.06)
+
+	WaypointManager.lua
+		- Cleaned up unused code (2025.01.12)
 
 
 11.0.7.5 (2025-01-02)
