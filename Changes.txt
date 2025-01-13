@@ -41,7 +41,7 @@
 		- Updated functions that call CheckDBBuff, CheckDBDebuff, CheckScenarioStage and CheckScenarioCriteria DB functions to also handle 'checks' in addition to the 'check' as it existed (2025.01.08)
 		- Added functionality to RQE:StartPeriodicChecks() function for failedfunct (2025.01.09)
 		- Updated RQE:CheckFactionGroupAlliance and RQE:CheckFactionGroupHorde, but not reliably working (2025.01.09)
-		- Reverted to an earlier RQE:StartPeriodicChecks() and commented out failedfunct section for now until can work reliably (2025.01.10)
+		- Reverted to an earlier RQE:StartPeriodicChecks() and commented out failedfunct section for now until can work reliably, but these checks can be handled through the 'checks' (2025.01.10)
 		- Cleaned up unused code (2025.01.12)
 
 	EventManager.lua
@@ -76,6 +76,7 @@
 		- Updated DB coord information for a number of profession quest dailies (2025.01.07)
 		- Updated questID 70563 to include the 'checks' feature for this quest - the original CheckDBObjectiveStatus would work just fine, but this was necessary in order to ensure that the checks for CheckDBInventory was functional (2025.01.07)
 		- Updated many daily fishing/cooking quests in the DB (2025.01.09)
+		- Updated daily cooking quests in the DB for Shattrath City (2025.01.13)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
