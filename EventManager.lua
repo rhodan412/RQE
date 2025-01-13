@@ -1107,15 +1107,9 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CheckClickWButtonPossible = false
 	RQE.CheckNClickWButtonAfterCombat = false
 	RQE.ClearButtonPressed = false
-	RQE.CreateMacroForCheckAndBuildMacroIfNeeded = false
 	RQE.CreateMacroForCheckAndSetFinalStep = false
-	RQE.CreateMacroForPeriodicChecks = false
 	RQE.CreateMacroForQuestLogIndexButton = false
-	RQE.CreateMacroForQuestWatchListChanged = false
-	RQE.CreateMacroForQuestWatchUpdate = false
 	RQE.CreateMacroForSetInitialWaypoint = false
-	RQE.CreateMacroForSuperTracking = false
-	RQE.CreateMacroForUnitQuestLogChange = false
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
 	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
@@ -1138,7 +1132,6 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.StartPerioFromSuperTrackChange = false
 	RQE.StartPerioFromUnitQuestLogChanged = false
 	RQE.StartPerioFromUQLC = false
-	RQE.StartPerioQuestAcceptIsSuperOkay = false
 	RQE.SuperTrackChangeRanStartPeriodicChecks = false
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
 	RQE.UIInfoUpdateFired = false
@@ -1308,6 +1301,8 @@ end
 function RQE.handleScenarioUpdate(...)
 	local event = select(2, ...)
 	local newStep = select(3, ...)
+
+	if not C_Scenario.IsInScenario() then return end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate and RQE.db.profile.showArgPayloadInfo then
@@ -2108,11 +2103,6 @@ function RQE.handlePlayerEnterWorld(...)
 
 	-- Clicks Waypoint Button if autoClickWaypointButton is true
 	RQE:AutoClickQuestLogIndexWaypointButton()
-
-	-- -- Update the macro if the WaypointButton is physically clicked by the player	HANDLED THROUGH STARTPERIODICCHECKS CALLED WITHIN THIS FUNCTION
-	-- RQE.isCheckingMacroContents = true
-	-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
-	-- RQE.isCheckingMacroContents = false
 end
 
 
@@ -2472,7 +2462,6 @@ function RQE.handleQuestAccepted(...)
 			end)
 			RQE.SetInitialWaypointToOne()
 			RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_ACCEPTED event fires
-			RQE.StartPerioQuestAcceptIsSuperOkay = true
 		end
 		RQE:UpdateRQEFrameVisibility()
 	end
@@ -2586,25 +2575,6 @@ function RQE.handleZoneChange(...)
 		end
 	end)
 
-	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-	if RQEFrame and not RQEFrame:IsMouseOver() then
-		RQE.ScrollFrameToTop()
-	end
-	RQE.FocusScrollFrameToTop()
-
-	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
-	if RQE.HasDragonraceAura() then
-		return
-	end
-
-	RQE.canSortQuests = true
-
-	-- -- Check if autoClickWaypointButton is selected in the configuration
-	-- if RQE.db.profile.autoClickWaypointButton then
-		-- -- Click the "W" Button is autoclick is selected and no steps or questData exist
-		-- RQE.CheckAndClickWButton()
-	-- end
-
 	C_Timer.After(2, function()
 		-- Check for Dragonriding & Capture and print the current states for debugging purposes
 		if RQE.CheckForDragonMounts() then
@@ -2630,13 +2600,6 @@ function RQE.handleZoneChange(...)
 			RQE.PlayerMountStatus = "None"
 		end
 	end)
-
-	if event == "UNIT_EXITING_VEHICLE" then
-		local unitTarget = select(3, ...)
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-			DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: UNIT_EXITING_VEHICLE triggered for " .. tostring(...) .. ".", 0, 1, 1)  -- Cyan
-		end
-	end
 
 	if RQE.PlayerMountStatus == "None" or RQE.PlayerMountStatus == "Mounted" then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
@@ -2680,6 +2643,41 @@ function RQE.handleZoneChange(...)
 		end
 	end
 
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super-tracked quest ID found, skipping zone checks.")
+		end
+		return
+	end
+
+	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UNIT_EXITING_VEHICLE, ZONE_CHANGED or ZONE_CHANGED_INDOORS events fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+	if RQEFrame and not RQEFrame:IsMouseOver() then
+		RQE.ScrollFrameToTop()
+	end
+	RQE.FocusScrollFrameToTop()
+
+	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+	if RQE.HasDragonraceAura() then
+		return
+	end
+
+	RQE.canSortQuests = true
+
+	-- -- Check if autoClickWaypointButton is selected in the configuration
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- -- Click the "W" Button is autoclick is selected and no steps or questData exist
+		-- RQE.CheckAndClickWButton()
+	-- end
+
+	if event == "UNIT_EXITING_VEHICLE" then
+		local unitTarget = select(3, ...)
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+			DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: UNIT_EXITING_VEHICLE triggered for " .. tostring(...) .. ".", 0, 1, 1)  -- Cyan
+		end
+	end
+
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
 
@@ -2688,9 +2686,54 @@ function RQE.handleZoneChange(...)
 	-- local isMounted = IsMounted()
 	-- local onTaxi = UnitOnTaxi("player")
 
-	C_Timer.After(1, function()
-		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED or ZONE_CHANGED_INDOORS fires
-	end)
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if the current step relies on CheckDBZoneChange
+	local isZoneChangeCheck = false
+	if stepData.funct and stepData.funct == "CheckDBZoneChange" then
+		isZoneChangeCheck = true
+	elseif stepData.checks then
+		-- Evaluate `checks` for CheckDBZoneChange
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct and checkData.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+				break
+			end
+		end
+	end
+
+	-- If the current step relies on CheckDBZoneChange, re-run periodic checks
+	if isZoneChangeCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+		C_Timer.After(1.3, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED ~~")
+			end
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED or ZONE_CHANGED_INDOORS fires
+		end)
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+	end
 
 	if not IsFlying and not isMounted and not onTaxi then
 		RQE.UntrackAutomaticWorldQuests()
@@ -2701,18 +2744,21 @@ end
 -- Handles the event ZONE_CHANGED_NEW_AREA
 -- Fires when the player enters a new zone
 function RQE.handleZoneNewAreaChange()
-	local event = "ZONE_CHANGED_NEW_AREA"
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-		-- startTime = debugprofilestop()  -- Start timer
-		DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. Zone Text: " .. GetZoneText(), 0, 1, 1)  -- Cyan
-	end
-
 	RQE.OkayCheckBonusQuests = true
 
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
+
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super-tracked quest ID found, skipping zone checks.")
+		end
+		return
+	end
 
 	-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when ZONE_CHANGED_NEW_AREA event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 	if RQEFrame and not RQEFrame:IsMouseOver() then
@@ -2768,10 +2814,9 @@ function RQE.handleZoneNewAreaChange()
 				end
 			end
 		end
-		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED_NEW_AREA fires
 	end
 
-	if RQE.PlayerMountStatus == "Flying" then
+	--if RQE.PlayerMountStatus == "Flying" then
 	-- if not UnitOnTaxi("player") and not RQE.isDragonRiding then
 		C_Timer.After(1.5, function()
 
@@ -2791,18 +2836,18 @@ function RQE.handleZoneNewAreaChange()
 			AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 		end)
 
-	elseif RQE.PlayerMountStatus == "Dragonriding" then
-	--elseif not UnitOnTaxi("player") and RQE.isDragonRiding then
-		RQE.canSortQuests = true
-		C_Timer.After(0.5, function()
-			-- Get the current map ID
-			local mapID = C_Map.GetBestMapForUnit("player")
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
-			end
-			RQE:UpdateMapIDDisplay()
-		end)
-	end
+	-- elseif RQE.PlayerMountStatus == "Dragonriding" then
+	-- --elseif not UnitOnTaxi("player") and RQE.isDragonRiding then
+		-- RQE.canSortQuests = true
+		-- C_Timer.After(0.5, function()
+			-- -- Get the current map ID
+			-- local mapID = C_Map.GetBestMapForUnit("player")
+			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+				-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
+			-- end
+			-- RQE:UpdateMapIDDisplay()
+		-- end)
+	-- end
 
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -2825,6 +2870,55 @@ function RQE.handleZoneNewAreaChange()
 
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if the current step relies on CheckDBZoneChange
+	local isZoneChangeCheck = false
+	if stepData.funct and stepData.funct == "CheckDBZoneChange" then
+		isZoneChangeCheck = true
+	elseif stepData.checks then
+		-- Evaluate `checks` for CheckDBZoneChange
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct and checkData.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+				break
+			end
+		end
+	end
+
+	-- If the current step relies on CheckDBZoneChange, re-run periodic checks
+	if isZoneChangeCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+		C_Timer.After(0.8, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED_NEW_AREA ~~")
+			end
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED_NEW_AREA fires
+		end)
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+	end
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -3981,17 +4075,6 @@ function RQE.handleQuestWatchUpdate(...)
 					print("Error: RQE.WaypointButtons or RQE.AddonSetStepIndex is nil or invalid.")
 				end
 			end
-
-			-- -- Tier Five Importance: QUEST_WATCH_UPDATE event
-			-- if RQE.db.profile.autoClickWaypointButton then
-				-- RQE.CreateMacroForQuestWatchUpdate = true
-				-- RQE.isCheckingMacroContents = true
-				-- RQEMacro:CreateMacroForCurrentStep()			-- Checks for macro status if QUEST_WATCH_UPDATE event fires
-				-- C_Timer.After(3, function()
-					-- RQE.CreateMacroForQuestWatchUpdate = false
-					-- RQE.isCheckingMacroContents = false
-				-- end)
-			-- end
 		end
 
 	elseif not isSuperTracking then
@@ -4151,17 +4234,6 @@ function RQE.handleQuestWatchListChanged(...)
 	-- Local variables for the event
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-
-	-- -- Tier Five Importance: QUEST_WATCH_LIST_CHANGED event
-	-- if RQE.db.profile.autoClickWaypointButton then
-		-- RQE.CreateMacroForQuestWatchListChanged = true
-		-- RQE.isCheckingMacroContents = true
-		-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if QUEST_WATCH_LIST_CHANGED event fires
-		-- C_Timer.After(3, function()
-			-- RQE.CreateMacroForQuestWatchListChanged = false
-			-- RQE.isCheckingMacroContents = false
-		-- end)
-	-- end
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 	if RQE.HasDragonraceAura() then
