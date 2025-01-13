@@ -101,7 +101,7 @@ function RQE:ShouldClearMacro(macroName)
 
 	-- Fetch the current macro content
 	local _, _, macroBody = GetMacroInfo(macroIndex)
-	
+
 	-- Check if macro body has any content
 	if macroBody and macroBody ~= "" then
 		return true -- Macro has content
@@ -279,7 +279,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 
 	MagicButton:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-		
+
 		-- Get the debug level
 		local debugLevel = RQE.db.profile.debugLevel or "INFO"
 
@@ -290,7 +290,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 			GameTooltip:Show()
 			return
 		end
-		
+
 		local _, _, macroBody = GetMacroInfo(macroIndex)
 		if not macroBody or macroBody == "" then
 			GameTooltip:SetText("Macro content not found.")
