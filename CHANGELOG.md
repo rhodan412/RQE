@@ -1,25 +1,25 @@
 11.0.7.6
 
 	**HIGHLIGHTS**
-		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips!
-		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint
+		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips! (2025.01.02)
+		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint (2025.01.03)
 		- DB should now work with AND, OR, NOT and combo checks as well as multiple types of functional checks before advancing stepIndex (2025.01.06)
 		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGE can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
 		- CheckDBInventory successfully works for both 'check' and 'checks' (2025.01.07)
 		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
 
 	Buttons.lua
-		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set
-		- Plays certain sound whether the waypoint information in the DB exists, matches or doesn't match the stored Blizzard waypoint for the super tracked quest (only on INFO debug level)
-		- Modified the C_Timer.After in the RQE.UnknownButtonTooltip function
+		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set (2025.01.03)
+		- Plays certain sound whether the waypoint information in the DB exists, matches or doesn't match the stored Blizzard waypoint for the super tracked quest (only on INFO debug level) (2025.01.03)
+		- Modified the C_Timer.After in the RQE.UnknownButtonTooltip function (2025.01.03)
 		- Cleaned up unused code (2025.01.12)
 
 	Core.lua
-		- Created function aimed at clicking the RQE.SeparateWaypointButton
-		- Fixed error related to the click of the RQE.SeparateWaypointButton
-		- Fix to RQEMacro:CreateMacroForCurrentStep() function that allows for update to occur in instance if this was shortly after a zone change event occurred 
-		- Slight modification to RQE:StartPeriodicChecks() so that funct checks work correctly with CheckDBZone and CheckDBInventory (although CheckDBInventory won't handle failedchecks in DB, so these won't be used for the foreseeable future)
-		- Slight modification to the RQE:CheckDBZoneChange function (will revert back to 11.0.7.5 addon version if needed)
+		- Created function aimed at clicking the RQE.SeparateWaypointButton (2025.01.03)
+		- Fixed error related to the click of the RQE.SeparateWaypointButton (2025.01.03)
+		- Fix to RQEMacro:CreateMacroForCurrentStep() function that allows for update to occur in instance if this was shortly after a zone change event occurred (2025.01.04)
+		- Slight modification to RQE:StartPeriodicChecks() so that funct checks work correctly with CheckDBZone and CheckDBInventory (although CheckDBInventory won't handle failedchecks in DB, so these won't be used for the foreseeable future) (2025.01.04)
+		- Slight modification to the RQE:CheckDBZoneChange function (will revert back to 11.0.7.5 addon version if needed) (2025.01.04)
 		- Redesigned RQE:ClickWaypointButtonForIndex(index) function to look and handle when description starts out with 'ALLIANCE:' or 'HORDE:' (2025.01.06)
 		- Updated RQE:CheckDBInventory(questID, stepIndex) function to handle ANDs and ORs for array of inventory items (2025.01.06)
 		- Possible fix for RQE:CheckObjectiveProgress(questID, stepIndex) in the handling of advancement beyond the stepIndex that it should be (2025.01.06)
@@ -65,10 +65,10 @@
 		- Updated version# (2025.01.09)
 
 	RQEDatabase.lua
-		- Added remainder of quests in Terokkar Forest quests
-		- Added DB quests for alliance Nagrand quests
-		- Added some aldor-side and neutral Netherstorm quests to DB
-		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs
+		- Added remainder of quests in Terokkar Forest quests (2025.01.02)
+		- Added DB quests for alliance Nagrand quests (2025.01.03)
+		- Added some aldor-side and neutral Netherstorm quests to DB (2025.01.03)
+		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs (2025.01.03)
 		- Updated quests in Darkmoon Faire to handle more advanced quest steps for obtaining items from vendors associated with profession quests (2025.01.06)
 		- Darkmoon Faire coordinate updates (2025.01.06)
 		- Fixed notations for the AND, NOT, OR, combo logic in the DB (2025.01.06)
@@ -78,8 +78,8 @@
 		- Updated many daily fishing/cooking quests in the DB (2025.01.09)
 
 	RQEFrame.lua
-		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button
-		- Changed dynamic padding of RQEFrame's QuestNameText to allow for better wrap for longer quest titles
+		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
+		- Changed dynamic padding of RQEFrame's QuestNameText to allow for better wrap for longer quest titles (2025.01.03)
 
 	RQEMacro.lua
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
