@@ -223,6 +223,7 @@ RQE.headerText = headerText
 	-- ScrollFrame:SetVerticalScroll(value)
 -- end)
 
+
 -- Create the Slider (Scrollbar)
 local slider = CreateFrame("Slider", nil, ScrollFrame)
 RQE.slider = slider
