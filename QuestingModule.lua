@@ -2593,6 +2593,7 @@ function UpdateRQEQuestFrame()
 					local questTypeText = GetQuestType(questID)
 					local questZoneText = GetQuestZone(questID)
 					local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					RQE.QuestTypeLabel = QuestTypeLabel
 					QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
 					QuestTypeLabel:SetWordWrap(true)
 					QuestTypeLabel:SetJustifyH("LEFT")
@@ -2608,7 +2609,7 @@ function UpdateRQEQuestFrame()
 				-- Create or reuse the QuestObjectivesOrDescription label
 				local QuestObjectivesOrDescription = RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				if RQE.db.profile.enableQuestTypeDisplay then
-					QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
+					QuestObjectivesOrDescription:SetPoint("TOPLEFT", RQE.QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
 				else
 					QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
 				end
