@@ -2509,8 +2509,8 @@ function RQE:AddDebugSettingsWidgets(container)
 				debugInlineGroup:AddChild(resetFrameSizeButton)
 			end
 
-			-- Additional options for "INFO+" level
-			if RQE.db.profile.debugLevel == "INFO+" then
+			-- Additional options for "INFO" level
+			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				-- Checkbox for displaying specific event debug info
 				local showEventDebugInfoCheckbox = AceGUI:Create("CheckBox")
 				showEventDebugInfoCheckbox:SetLabel("Show Event Debug Info")
@@ -2529,7 +2529,10 @@ function RQE:AddDebugSettingsWidgets(container)
 					GameTooltip:Hide()
 				end)
 				debugInlineGroup:AddChild(showEventDebugInfoCheckbox)
+			end
 
+			-- Additional options for "INFO+" level
+			if RQE.db.profile.debugLevel == "INFO+" then
 				-- Checkbox for displaying Argument/Payload returns on event listeners
 				local showArgPayloadInfo = AceGUI:Create("CheckBox")
 				showArgPayloadInfo:SetLabel("Show Arg/Payload Info")
