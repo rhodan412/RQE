@@ -14,6 +14,9 @@
 		- Modified the C_Timer.After in the RQE.UnknownButtonTooltip function (2025.01.03)
 		- Cleaned up unused code (2025.01.12)
 
+	Config.lua
+		- Updated config to allow 'Show Event Debug Info' when Debug Mode is now either INFO or INFO+ (2025.01.13)
+
 	Core.lua
 		- Created function aimed at clicking the RQE.SeparateWaypointButton (2025.01.03)
 		- Fixed error related to the click of the RQE.SeparateWaypointButton (2025.01.03)
@@ -55,6 +58,7 @@
 		- Added Scenario check to the top of SCENARIO_UPDATE function to prevent unnecessary running of rest of function (2025.01.12)
 		- Reordered/cleaned up code within ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA (2025.01.12)
 		- Modified code to ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA to check to see if CheckDBZoneChange is present in the current step of DB before calling RQE:StartPeriodicChecks (2025.01.12)
+		- Modified SCENARIO_UPDATE to run if Scenario Child Frame is visible, as this would otherwise result in Scenario Child Frame remaining after concluding/leaving scenario/dungeon (2025.01.13)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -77,6 +81,7 @@
 		- Updated questID 70563 to include the 'checks' feature for this quest - the original CheckDBObjectiveStatus would work just fine, but this was necessary in order to ensure that the checks for CheckDBInventory was functional (2025.01.07)
 		- Updated many daily fishing/cooking quests in the DB (2025.01.09)
 		- Updated daily cooking quests in the DB for Shattrath City (2025.01.13)
+		- Updated DB to include preliminary info on War Campaign of TWW (2025.01.13)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
