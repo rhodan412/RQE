@@ -1302,8 +1302,6 @@ function RQE.handleScenarioUpdate(...)
 	local event = select(2, ...)
 	local newStep = select(3, ...)
 
-	if not C_Scenario.IsInScenario() then return end
-
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -1321,6 +1319,17 @@ function RQE.handleScenarioUpdate(...)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)
+	end
+
+	if not C_Scenario.IsInScenario() then
+		if not RQE.ScenarioChildFrame:IsVisible() then
+			-- print("Not in scenario... Ending")
+			return
+		-- else
+			-- print("In scenario... Continuing")
+		end
+	-- else
+		-- print("In scenario... Continuing")
 	end
 
 	if RQE.db.profile.autoClickWaypointButton then
