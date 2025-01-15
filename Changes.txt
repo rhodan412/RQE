@@ -64,6 +64,7 @@
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
 		- Updated a notification for Currently Tracked Achievements but set the printing ability only to be if Tracked Achievements were greater than 0 (2025.01.09)
 		- Modified QuestTypeLabel to be RQE.QuestTypeLabel so that it could be properly referenced as an anchor point for QuestObjectivesOrDescription (2025.01.12)
+		- Updated the QuestLogIndexButton:SetScript Click event to have a 0.2 sec delay before firing RQE:StartPeriodicChecks (2025.01.15)
 
 	RQE.toc
 		- Updated version# (2025.01.09)
