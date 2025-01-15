@@ -2448,7 +2448,9 @@ function UpdateRQEQuestFrame()
 								-- Click the "W" Button is autoclick is selected and no steps or questData exist
 								RQE.CheckAndClickWButton()
 							end
-							RQE:StartPeriodicChecks()
+							C_Timer.After(0.2, function()
+								RQE:StartPeriodicChecks()
+							end)
 						end
 
 						C_Map.ClearUserWaypoint()
