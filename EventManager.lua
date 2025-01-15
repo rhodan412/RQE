@@ -644,9 +644,74 @@ end
 function RQE.BagNewItemsAdded()
 	if InCombatLockdown() then return end
 
-	C_Timer.After(1, function()
-		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
-	end)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("|cffffff00BAG_NEW_ITEMS_UPDATED triggered.|r")
+	-- end
+
+	-- C_Timer.After(1.5, function()
+		-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
+	-- end)
+
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super-tracked quest ID found, skipping inventory checks.")
+		end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if the current step relies on inventory checks
+	local isInventoryCheck = false
+	if stepData.funct and stepData.funct == "CheckDBInventory" then
+		isInventoryCheck = true
+	elseif stepData.checks then
+		-- Also evaluate `checks` for CheckDBInventory
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct and checkData.funct == "CheckDBInventory" then
+				isInventoryCheck = true
+				break
+			end
+		end
+	end
+
+	-- If the current step is tied to inventory checks, re-run periodic checks
+	if isInventoryCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("BAG_NEW_ITEMS_UPDATED related to current stepIndex:", stepIndex, "for questID:", questID)
+			RQE.BagNewItemsRunning = false
+		end
+		C_Timer.After(1.5, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
+			end
+			RQE.BagNewItemsRunning = true
+			RQE:StartPeriodicChecks()
+		end)
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("BAG_NEW_ITEMS_UPDATED not related to current stepIndex:", stepIndex, "for questID:", questID)
+			RQE.BagNewItemsRunning = false
+		end
+	end
 end
 
 
@@ -1103,6 +1168,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE:RestoreFramePosition()
 
 	-- Initialize Flags
+	RQE.BagNewItemsRunning = false
 	RQE.BlacklistUnderway = false
 	RQE.CheckClickWButtonPossible = false
 	RQE.CheckNClickWButtonAfterCombat = false
@@ -2991,6 +3057,15 @@ function RQE.handleUIInfoMessage(...)
 			-- end)
 		-- end
 	-- end
+
+	if messageType == 311 or messageType == 312 then
+		if RQE.BagNewItemsRunning then
+			C_Timer.After(0.1, function()
+				RQE:StartPeriodicChecks()
+				RQE.BagNewItemsRunning = false
+			end)
+		end
+	end
 
 	-- Check if the message is Travel to a specific location such as for exploration objective (messageType 308)
 	if messageType == 309 then
