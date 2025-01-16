@@ -60,6 +60,7 @@
 		- Modified code to ZONE_CHANGED, ZONE_CHANGED_INDOORS and ZONE_CHANGED_NEW_AREA to check to see if CheckDBZoneChange is present in the current step of DB before calling RQE:StartPeriodicChecks (2025.01.12)
 		- Modified SCENARIO_UPDATE to run if Scenario Child Frame is visible, as this would otherwise result in Scenario Child Frame remaining after concluding/leaving scenario/dungeon (2025.01.13)
 		- Updated BAG_NEW_ITEMS_UPDATED to include a check for 'CheckDBInventory' under 'check' or 'checks' within the DB of the current super tracked quest and stepIndex (2025.01.15)
+		- Will print the questLink on QUEST_ACCEPTED if debugMode is either INFO or INFO+ (2025.01.15)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
