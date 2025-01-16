@@ -84,6 +84,7 @@
 		- Updated many daily fishing/cooking quests in the DB (2025.01.09)
 		- Updated daily cooking quests in the DB for Shattrath City (2025.01.13)
 		- Updated DB to include preliminary info on War Campaign of TWW (2025.01.13)
+		- Updated some Aldor/Neutral Shadowmoon Valley quests to DB (2025.01.15)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
