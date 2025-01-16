@@ -2412,6 +2412,11 @@ function RQE.handleQuestAccepted(...)
 	local questID = select(3, ...)
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	local questLink = GetQuestLink(questID)
+
+	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. tostring(questID) .. " (accepted): " .. questLink, 0.9, 0.7, 0.9)
+	end
 
 	RQE.QuestStepsBlocked(questID)	-- Function call that checks to see if quest is in the DB already, but nothing is printed unless debug mode is set to 'Info'
 	RQE.QuestAcceptedToSuperTrackOkay = true
