@@ -4676,7 +4676,6 @@ end
 function RQE:ClickWaypointButtonForIndex(index)
 	local button = self.WaypointButtons[index]
 	if not button then
-		print("No waypoint button found for index:", index)
 		return
 	end
 
@@ -6639,6 +6638,24 @@ function RQE.PrintQuestlineDetails(questLineID)
 		end
 	else
 		RQE.debugLog("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
+	end
+end
+
+
+-- Returns the available quests at a quest giver when GOSSIP_SHOW is called from EventManager
+function RQE.GetAvailableQuests()
+	-- Fetch the available quests using the Gossip API
+	local availableQuests = C_GossipInfo.GetAvailableQuests()
+
+	-- Check if there are available quests
+	if not availableQuests or #availableQuests == 0 then
+		return
+	end
+
+	-- Iterate through the available quests and print their questID and title
+	print("|cFFFFA500Available quests at the quest giver:|r")	-- Printed in orange
+	for _, questInfo in ipairs(availableQuests) do
+		print("|cffffff00Quest ID: " .. questInfo.questID .. " - |r|cFFADD8E6[" .. questInfo.title .. "]|r")	-- Printed in gold for the questID and light blue for the title
 	end
 end
 
