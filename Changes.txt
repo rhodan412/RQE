@@ -46,6 +46,8 @@
 		- Updated RQE:CheckFactionGroupAlliance and RQE:CheckFactionGroupHorde, but not reliably working (2025.01.09)
 		- Reverted to an earlier RQE:StartPeriodicChecks() and commented out failedfunct section for now until can work reliably, but these checks can be handled through the 'checks' (2025.01.10)
 		- Cleaned up unused code (2025.01.12)
+		- Removed debug statement no longer needed (2025.01.16)
+		- Added section that displays available quests from NPC when interacting (only prints when debugMode is INFO or INFO+ (2025.01.16)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -61,6 +63,7 @@
 		- Modified SCENARIO_UPDATE to run if Scenario Child Frame is visible, as this would otherwise result in Scenario Child Frame remaining after concluding/leaving scenario/dungeon (2025.01.13)
 		- Updated BAG_NEW_ITEMS_UPDATED to include a check for 'CheckDBInventory' under 'check' or 'checks' within the DB of the current super tracked quest and stepIndex (2025.01.15)
 		- Will print the questLink on QUEST_ACCEPTED if debugMode is either INFO or INFO+ (2025.01.15)
+		- Display of GOSSIP_SHOW for event function and will call function for the purpose of printing available quests from that NPC (2025.01.16)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -86,6 +89,7 @@
 		- Updated daily cooking quests in the DB for Shattrath City (2025.01.13)
 		- Updated DB to include preliminary info on War Campaign of TWW (2025.01.13)
 		- Updated some Aldor/Alliance-Neutral Shadowmoon Valley quests to DB (2025.01.15)
+		- Updated some Alliance quests in Borean Tundra to DB (2025.01.16)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
