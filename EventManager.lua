@@ -197,7 +197,7 @@ local eventsToRegister = {
 	"GOSSIP_CLOSED",
 	--"GOSSIP_CONFIRM",
 	"GOSSIP_CONFIRM_CANCEL",
-	--"GOSSIP_SHOW",
+	"GOSSIP_SHOW",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
 	--"LEAVE_PARTY_CONFIRMATION",
@@ -310,7 +310,7 @@ local function HandleEvents(frame, event, ...)
 		GOSSIP_CLOSED = RQE.handleGossipClosed,
 		--GOSSIP_CONFIRM = RQE.handleGossipConfirm,
 		GOSSIP_CONFIRM_CANCEL = RQE.handleGossipConfirmCancel,
-		--GOSSIP_SHOW = RQE.handleGossipShow,
+		GOSSIP_SHOW = RQE.handleGossipShow,
 		ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 		JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
 		--LEAVE_PARTY_CONFIRMATION = RQE.handleScenarioEvent,
@@ -509,25 +509,31 @@ end
 
 -- Function that handles the GOSSIP_SHOW event
 -- Fires when you talk to an npc. 
--- This event typicaly fires when you are given several choices, including choosing to sell item, select available and active quests, just talk about something, or bind to a location. Even when the the only available choices are quests, this event is often used instead of QUEST_GREETING.
+-- This event typically fires when you are given several choices, including choosing to sell item, select available and active quests, just talk about something, or bind to a location. Even when the the only available choices are quests, this event is often used instead of QUEST_GREETING.
 function RQE.handleGossipShow(...)
 	local event = select(2, ...)
 	local uiTextureKit = select(3, ...)
 
-	-- -- Print Event-specific Args
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	-- end
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		RQE.GetAvailableQuests()
+	else
+		return
+	end
 end
 
 
