@@ -269,6 +269,19 @@ function RQEMacro:UpdateMagicButtonTooltip()
 	local MagicButton = RQE.MagicButton -- Reference to the magic button
 	if not MagicButton then return end
 
+	-- List of exception itemIDs
+	local exceptionItemIDs = {
+		[841] = true,
+		[2554] = true,
+		[4588] = true,
+		[5061] = true,
+		[5830] = true,
+		[23784] = true,
+		[28372] = true,
+		[30817] = true,
+		[118474] = true,
+	}
+
 	-- Create or reuse the count text overlay
 	if not MagicButton.CountText then
 		MagicButton.CountText = MagicButton:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
@@ -279,9 +292,6 @@ function RQEMacro:UpdateMagicButtonTooltip()
 
 	MagicButton:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-
-		-- Get the debug level
-		local debugLevel = RQE.db.profile.debugLevel or "INFO"
 
 		-- Get the macro index and contents
 		local macroIndex = GetMacroIndexByName("RQE Macro")
@@ -299,50 +309,86 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		end
 
 		-- Debug mode: Show raw macro text
-		if debugLevel == "INFO+" then
+		if debugLevel == "INFO+" or IsShiftKeyDown() then
 			GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 			GameTooltip:Show()
 			return
 		end
 
-		-- Extract target (item or spell) from the macro body
-		local useTarget = macroBody:match("/use%s+(.+)")
-		if not useTarget then
-			GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
-			GameTooltip:Show()
-			return
-		end
-
-		-- Attempt to resolve as an item first
-		local itemLink = select(2, GetItemInfo(useTarget)) -- Fetch item link by name
-		if not itemLink then
-			local itemID = select(1, GetItemInfoInstant(useTarget)) -- Fetch item ID
-			if itemID then
-				itemLink = "item:" .. itemID
+		-- Extract item ID from the macro body for `#showtooltip item:X`
+		local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
+		if itemID then
+			-- Check if the item is an exception
+			if exceptionItemIDs[itemID] then
+				-- Show the macro body and icon for the exception
+				if itemID == 841 then
+					GameTooltip:SetText("Pull Timer!\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 2554 then
+					GameTooltip:SetText("Turn in the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 4588 then
+					GameTooltip:SetText("Kill Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 5061 then
+					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 30817 then
+					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 5830 then
+					GameTooltip:SetText("Speak with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 23784 then
+					GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
+				elseif itemID == 118474 then
+					GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+				else
+					GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
+					-- GameTooltip:AddLine("\n(Item Exception ID: " .. itemID .. ")", 1, 1, 0)
+				end
+				GameTooltip:Show()
+				return
+			else
+				-- Display the item tooltip if not an exception
+				local itemLink = select(2, C_Item.GetItemInfo(itemID))
+				if itemLink then
+					GameTooltip:SetHyperlink(itemLink)
+					GameTooltip:Show()
+					return
+				end
 			end
 		end
 
-		if itemLink then
-			-- Show the item tooltip if an item is found
-			GameTooltip:SetHyperlink(itemLink)
-			GameTooltip:Show()
-			return
+		-- Extract item or spell from the macro body if no exception logic applies
+		local useTarget = macroBody:match("/use%s+(.+)")
+			or macroBody:match("/cast%s+(.+)")
+			or macroBody:match("#showtooltip%s+(.+)")
+
+		if useTarget then
+			-- Attempt to resolve as an item
+			local itemLink = select(2, C_Item.GetItemInfo(useTarget))
+			if not itemLink then
+				local itemID = tonumber(useTarget) or select(1, C_Item.GetItemInfoInstant(useTarget))
+				if itemID then
+					itemLink = "item:" .. itemID
+				end
+			end
+
+			if itemLink then
+				GameTooltip:SetHyperlink(itemLink)
+				GameTooltip:Show()
+				return
+			end
+
+			-- Attempt to resolve as a spell
+			local spellInfo = C_Spell.GetSpellInfo(useTarget)
+			if spellInfo then
+				GameTooltip:SetSpellByID(spellInfo.spellID)
+				GameTooltip:Show()
+				return
+			end
 		end
 
-		-- If no item is found, attempt to resolve as a spell
-		local spellInfo = C_Spell.GetSpellInfo(useTarget)
-		if spellInfo then
-			GameTooltip:SetSpellByID(spellInfo.spellID) -- Show the spell tooltip
-			GameTooltip:Show()
-			return
-		end
-
-		-- Fallback: Show the raw macro body if neither item nor spell is resolved
+		-- Fallback: Show raw macro body if no item or spell is resolved
 		GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
 
-	-- Add item count logic
 	MagicButton:SetScript("OnUpdate", function()
 		local macroIndex = GetMacroIndexByName("RQE Macro")
 		if not macroIndex or macroIndex == 0 then
@@ -356,22 +402,20 @@ function RQEMacro:UpdateMagicButtonTooltip()
 			return
 		end
 
-		-- Extract item name from the macro body
-		local useTarget = macroBody:match("/use%s+(.+)")
-		if not useTarget then
-			MagicButton.CountText:SetText("")
-			return
-		end
-
-		-- Get the item count from the player's inventory
-		local itemCount = GetItemCount(useTarget)
-		if not itemCount or itemCount < 2 then
-			MagicButton.CountText:SetText("") -- Hide if less than 2
-		else
-			if itemCount > 999 then
-				itemCount = 999 -- Cap the count at 999
+		-- Extract item ID for count updates
+		local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
+		if itemID then
+			local itemCount = C_Item.GetItemCount(itemID)
+			if not itemCount or itemCount < 2 then
+				MagicButton.CountText:SetText("") -- Hide count if less than 2
+			else
+				if itemCount > 999 then
+					itemCount = 999 -- Cap at 999
+				end
+				MagicButton.CountText:SetText(itemCount) -- Display count
 			end
-			MagicButton.CountText:SetText(itemCount) -- Update the count display
+		else
+			MagicButton.CountText:SetText("")
 		end
 	end)
 
