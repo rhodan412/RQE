@@ -48,6 +48,7 @@
 		- Cleaned up unused code (2025.01.12)
 		- Removed debug statement no longer needed (2025.01.16)
 		- Added section that displays available quests from NPC when interacting (only prints when debugMode is INFO or INFO+ (2025.01.16)
+		- Updated function selecting Gossip options to apply if the npcName used in the function call is 'target' then it will just use the current targetName (2025.01.18)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -64,6 +65,8 @@
 		- Updated BAG_NEW_ITEMS_UPDATED to include a check for 'CheckDBInventory' under 'check' or 'checks' within the DB of the current super tracked quest and stepIndex (2025.01.15)
 		- Will print the questLink on QUEST_ACCEPTED if debugMode is either INFO or INFO+ (2025.01.15)
 		- Display of GOSSIP_SHOW for event function and will call function for the purpose of printing available quests from that NPC (2025.01.16)
+		- Updated ITEM_COUNT_CHANGED, BAG_NEW_ITEMS_UPDATED, BAG_UPDATE, MERCHANT_UPDATE and UNIT_INVENTORY_CHANGED to require CheckDBInventory before firing RQE:StartPeriodicChecks() (2025.01.18)
+		- Added QUEST_DETAIL to called events for the purpose of displaying the questID of the currently displayed quest from the NPC quest-giver (2025.01.18)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -98,6 +101,7 @@
 	RQEMacro.lua
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
 		- Added counter to Magic Button for items in inventory to better keep track (2025.01.06)
+		- Updated macro to display tooltip when itemID is listed in the 'use' and 'cast' showtooltip while maintaining previous functionality for 'use' (2025.01.18a)
 
 	WaypointManager.lua
 		- Cleaned up unused code (2025.01.12)
