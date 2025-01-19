@@ -335,8 +335,10 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					GameTooltip:SetText("Speak with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 23784 then
 					GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
-				elseif itemID == 118474 then
+				elseif itemID == 28372 then
 					GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 118474 then
+					GameTooltip:SetText("Look Follow/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				else
 					GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 					-- GameTooltip:AddLine("\n(Item Exception ID: " .. itemID .. ")", 1, 1, 0)
@@ -388,36 +390,6 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 		GameTooltip:Show()
 	end)
-
-	-- MagicButton:SetScript("OnUpdate", function()
-		-- local macroIndex = GetMacroIndexByName("RQE Macro")
-		-- if not macroIndex or macroIndex == 0 then
-			-- MagicButton.CountText:SetText("")
-			-- return
-		-- end
-
-		-- local _, _, macroBody = GetMacroInfo(macroIndex)
-		-- if not macroBody or macroBody == "" then
-			-- MagicButton.CountText:SetText("")
-			-- return
-		-- end
-
-		-- -- Extract item ID for count updates
-		-- local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
-		-- if itemID then
-			-- local itemCount = C_Item.GetItemCount(itemID)
-			-- if not itemCount or itemCount < 2 then
-				-- MagicButton.CountText:SetText("") -- Hide count if less than 2
-			-- else
-				-- if itemCount > 999 then
-					-- itemCount = 999 -- Cap at 999
-				-- end
-				-- MagicButton.CountText:SetText(itemCount) -- Display count
-			-- end
-		-- else
-			-- MagicButton.CountText:SetText("")
-		-- end
-	-- end)
 
 	MagicButton:SetScript("OnUpdate", function()
 		local macroIndex = GetMacroIndexByName("RQE Macro")
