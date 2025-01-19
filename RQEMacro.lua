@@ -389,6 +389,36 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		GameTooltip:Show()
 	end)
 
+	-- MagicButton:SetScript("OnUpdate", function()
+		-- local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- if not macroIndex or macroIndex == 0 then
+			-- MagicButton.CountText:SetText("")
+			-- return
+		-- end
+
+		-- local _, _, macroBody = GetMacroInfo(macroIndex)
+		-- if not macroBody or macroBody == "" then
+			-- MagicButton.CountText:SetText("")
+			-- return
+		-- end
+
+		-- -- Extract item ID for count updates
+		-- local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
+		-- if itemID then
+			-- local itemCount = C_Item.GetItemCount(itemID)
+			-- if not itemCount or itemCount < 2 then
+				-- MagicButton.CountText:SetText("") -- Hide count if less than 2
+			-- else
+				-- if itemCount > 999 then
+					-- itemCount = 999 -- Cap at 999
+				-- end
+				-- MagicButton.CountText:SetText(itemCount) -- Display count
+			-- end
+		-- else
+			-- MagicButton.CountText:SetText("")
+		-- end
+	-- end)
+
 	MagicButton:SetScript("OnUpdate", function()
 		local macroIndex = GetMacroIndexByName("RQE Macro")
 		if not macroIndex or macroIndex == 0 then
@@ -402,8 +432,19 @@ function RQEMacro:UpdateMagicButtonTooltip()
 			return
 		end
 
-		-- Extract item ID for count updates
+		-- Extract item ID directly if available
 		local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
+
+		-- If no item ID is found, extract the item name from `/use`
+		if not itemID then
+			local itemName = macroBody:match("/use%s+(.+)")
+			if itemName then
+				-- Resolve item name to item ID
+				itemID = C_Item.GetItemInfoInstant(itemName)
+			end
+		end
+
+		-- Continue with item count logic if itemID is resolved
 		if itemID then
 			local itemCount = C_Item.GetItemCount(itemID)
 			if not itemCount or itemCount < 2 then
@@ -415,7 +456,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 				MagicButton.CountText:SetText(itemCount) -- Display count
 			end
 		else
-			MagicButton.CountText:SetText("")
+			MagicButton.CountText:SetText("") -- Clear the count if no valid item ID
 		end
 	end)
 
