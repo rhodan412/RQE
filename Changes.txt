@@ -7,6 +7,7 @@
 		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGE can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
 		- CheckDBInventory successfully works for both 'check' and 'checks' (2025.01.07)
 		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
+		- Updated tooltip display for RQE Magic Button and itemCount to be displayed with button (2025.01.18)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set (2025.01.03)
@@ -92,7 +93,7 @@
 		- Updated daily cooking quests in the DB for Shattrath City (2025.01.13)
 		- Updated DB to include preliminary info on War Campaign of TWW (2025.01.13)
 		- Updated some Aldor/Alliance-Neutral Shadowmoon Valley quests to DB (2025.01.15)
-		- Updated some Alliance quests in Borean Tundra to DB (2025.01.16)
+		- Updated Alliance quests in Borean Tundra to DB (2025.01.18)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
@@ -101,7 +102,7 @@
 	RQEMacro.lua
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
 		- Added counter to Magic Button for items in inventory to better keep track (2025.01.06)
-		- Updated macro to display tooltip when itemID is listed in the 'use' and 'cast' showtooltip while maintaining previous functionality for 'use' (2025.01.18a)
+		- Updated macro to display tooltip when itemID is listed in the 'use' and 'cast' showtooltip while maintaining previous functionality for 'use' & gives itemCount if no itemID is present following the '#showtooltip' (2025.01.18)
 
 	WaypointManager.lua
 		- Cleaned up unused code (2025.01.12)
