@@ -94,6 +94,7 @@
 		- Updated DB to include preliminary info on War Campaign of TWW (2025.01.13)
 		- Updated some Aldor/Alliance-Neutral Shadowmoon Valley quests to DB (2025.01.15)
 		- Updated Alliance quests in Borean Tundra to DB (2025.01.18)
+		- Added some Howling Fjord (alliance) quests to DB (2025.01.19)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
@@ -103,6 +104,7 @@
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
 		- Added counter to Magic Button for items in inventory to better keep track (2025.01.06)
 		- Updated macro to display tooltip when itemID is listed in the 'use' and 'cast' showtooltip while maintaining previous functionality for 'use' & gives itemCount if no itemID is present following the '#showtooltip' (2025.01.18)
+		- Added some more context to other exceptionItemIDs (2025.01.19)
 
 	WaypointManager.lua
 		- Cleaned up unused code (2025.01.12)
