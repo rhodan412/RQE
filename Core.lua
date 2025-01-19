@@ -8070,7 +8070,11 @@ function RQE.SelectGossipOption(npcName, optionIndex)
 	if not RQE.db.profile.enableGossipModeAutomation then return end
 
 	-- Set the selected gossip option for future use
-	selectedGossipOption.npcName = npcName
+	if npcName == "target" then
+		selectedGossipOption.npcName = UnitName("target")
+	else
+		selectedGossipOption.npcName = npcName
+	end
 	selectedGossipOption.optionIndex = optionIndex
 
 	if RQE.db.profile.debugLevel == "INFO+" then
