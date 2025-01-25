@@ -2035,6 +2035,7 @@ function RQE.InitializeSeparateFocusFrame()
 		local totalSteps = #questData  -- Get the total number of steps from the questData
 		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
 		RQE.StepIndexForCoordMatch = stepIndex
+		RQE.totalStepforQuest = totalSteps
 
 		RQE.SeparateStepText:SetText(formattedText)
 		RQE.SeparateStepText:Show()
