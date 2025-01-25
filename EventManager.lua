@@ -2263,6 +2263,14 @@ function RQE.handleSuperTracking()
 
 	-- Optimize by updating the separate frame only if needed
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires
+
+	-- -- Adds a check to advise if the DB entry details are incomplete for a quest
+	-- if RQE.db.profile.debugLevel == "INFO" then
+		-- if RQE.totalStepforQuest < RQE.StepIndexForCoordMatch then
+			-- print("~~ DB Entry is incomplete for " .. RQE.currentSuperTrackedQuestID .. " ~~")
+		-- end
+	-- end
+
 	RQE.FocusScrollFrameToTop()
 
 	local extractedQuestID
