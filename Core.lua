@@ -1336,14 +1336,18 @@ function RQE.QuestStepsBlocked(questID)
 
 	-- Check if questData is available
 	if not questData then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("~~ This is a new quest for the DB ~~")
+		end
 		return
 	end
 
 	-- Get the total number of steps, if any
 	local totalSteps = #questData
 	if stepIndex == 1 and totalSteps == 0 then
-		if RQE.db.profile.debugLevel == "INFO+" then
+		if RQE.db.profile.debugLevel == "INFO" then
 			print("~~ Quest " .. questID .. " is in the DB but has no steps to display. ~~")
+			PlaySound(1283)
 		end
 	end
 end
@@ -5315,10 +5319,16 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 	check = check or {}
 	neededAmt = neededAmt or {}
 
+	-- Get the player's current map ID and subzone name
 	local currentMapID = C_Map.GetBestMapForUnit("player")
+	local currentSubZone = GetSubZoneText() or "" -- Subzone name
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Current MapID:", tostring(currentMapID))
+		print("Current SubZone:", currentSubZone)
 	end
+
+	-- Determine if `check` contains strings (subzones) or numerals (map IDs)
+	local isSubZoneCheck = type(check[1]) == "string" and not tonumber(check[1])
 
 	local questData = self.getQuestData(questID)
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -5338,10 +5348,33 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 		return false -- Exit early if no step data is found
 	end
 
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Evaluating single check for Current MapID:", tostring(currentMapID))
-		print("Required MapID(s):", table.concat(check, ", "))
+	-- Handle subzone checks (string-based)
+	if isSubZoneCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Evaluating subzone check. Required SubZones:", table.concat(check, ", "))
+		end
+
+		for _, subZone in ipairs(check) do
+			if currentSubZone == subZone then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Player is in the required subzone:", subZone)
+				end
+				return true -- Subzone matches
+			end
+		end
+
+		-- If no match in subzone checks
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not in any of the required subzones. Current SubZone:", currentSubZone)
+			print("Required SubZones:", table.concat(check, ", "))
+		end
+		return false
 	end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Evaluating single check for Current MapID:", tostring(currentMapID))
+		-- print("Required MapID(s):", table.concat(check, ", "))
+	-- end
 
 	-- Handle single check + neededAmt directly
 	if #check > 0 then
