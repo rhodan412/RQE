@@ -8,6 +8,7 @@
 		- CheckDBInventory successfully works for both 'check' and 'checks' (2025.01.07)
 		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
 		- Updated tooltip display for RQE Magic Button and itemCount to be displayed with button (2025.01.18)
+		- Added string for subzones on CheckDBZoneChange within the RQE:CheckDBZoneChange function (2025.01.24)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set (2025.01.03)
@@ -50,6 +51,8 @@
 		- Removed debug statement no longer needed (2025.01.16)
 		- Added section that displays available quests from NPC when interacting (only prints when debugMode is INFO or INFO+ (2025.01.16)
 		- Updated function selecting Gossip options to apply if the npcName used in the function call is 'target' then it will just use the current targetName (2025.01.18)
+		- Added sound (INFO debugMode only) for when a quest is picked up that has no steps listed but is in the DB (2025.01.24)
+		- Added string for subzones on CheckDBZoneChange within the RQE:CheckDBZoneChange function (2025.01.24)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -68,6 +71,7 @@
 		- Display of GOSSIP_SHOW for event function and will call function for the purpose of printing available quests from that NPC (2025.01.16)
 		- Updated ITEM_COUNT_CHANGED, BAG_NEW_ITEMS_UPDATED, BAG_UPDATE, MERCHANT_UPDATE and UNIT_INVENTORY_CHANGED to require CheckDBInventory before firing RQE:StartPeriodicChecks() (2025.01.18)
 		- Added QUEST_DETAIL to called events for the purpose of displaying the questID of the currently displayed quest from the NPC quest-giver (2025.01.18)
+		- Call to compare RQE.totalStepforQuest and RQE.StepIndexForCoordMatch to determine on SUPER_TRACKING_CHANGED if DB entry details are incomplete (2025.01.24)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -84,7 +88,7 @@
 		- Added some aldor-side and neutral Netherstorm quests to DB (2025.01.03)
 		- Updated ordering and spacing of quests in DB which should now correctly reflect quests with fewer digits than other questIDs (2025.01.03)
 		- Updated quests in Darkmoon Faire to handle more advanced quest steps for obtaining items from vendors associated with profession quests (2025.01.06)
-		- Darkmoon Faire coordinate updates (2025.01.06)
+		- Updated Darkmoon Faire coordinates (2025.01.06)
 		- Fixed notations for the AND, NOT, OR, combo logic in the DB (2025.01.06)
 		- Updated some Aldor Netherstorm quests to DB (2025.01.07)
 		- Updated DB coord information for a number of profession quest dailies (2025.01.07)
@@ -94,17 +98,20 @@
 		- Updated DB to include preliminary info on War Campaign of TWW (2025.01.13)
 		- Updated some Aldor/Alliance-Neutral Shadowmoon Valley quests to DB (2025.01.15)
 		- Updated Alliance quests in Borean Tundra to DB (2025.01.18)
-		- Added some Howling Fjord (alliance) quests to DB (2025.01.19)
+		- Updated Alliance quests in Howling Fjord to DB (2025.01.25)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
 		- Changed dynamic padding of RQEFrame's QuestNameText to allow for better wrap for longer quest titles (2025.01.03)
+		- Added RQE.totalStepforQuest to addon table for totalSteps for quest contribution purposes (2025.01.24)
 
 	RQEMacro.lua
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
 		- Added counter to Magic Button for items in inventory to better keep track (2025.01.06)
 		- Updated macro to display tooltip when itemID is listed in the 'use' and 'cast' showtooltip while maintaining previous functionality for 'use' & gives itemCount if no itemID is present following the '#showtooltip' (2025.01.18)
 		- Added some more context to other exceptionItemIDs (2025.01.19)
+		- Updated itemCount to display if an item has at least 1 and less than 999 as it was 2 (2025.01.24)
+		- Added new icon for emote usage to the exception table of the macro showtooltip (2025.01.25)
 
 	WaypointManager.lua
 		- Cleaned up unused code (2025.01.12)
