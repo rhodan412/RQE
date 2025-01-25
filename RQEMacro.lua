@@ -278,6 +278,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		[5830] = true,
 		[23784] = true,
 		[28372] = true,
+		[28885] = true,
 		[30817] = true,
 		[118474] = true,
 	}
@@ -337,6 +338,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
 				elseif itemID == 28372 then
 					GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 28885 then
+					GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 118474 then
 					GameTooltip:SetText("Look Follow/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				else
@@ -419,8 +422,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		-- Continue with item count logic if itemID is resolved
 		if itemID then
 			local itemCount = C_Item.GetItemCount(itemID)
-			if not itemCount or itemCount < 2 then
-				MagicButton.CountText:SetText("") -- Hide count if less than 2
+			if not itemCount or itemCount < 1 then
+				MagicButton.CountText:SetText("") -- Hide count if less than 1
 			else
 				if itemCount > 999 then
 					itemCount = 999 -- Cap at 999
