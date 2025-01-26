@@ -580,49 +580,50 @@ function RQE.handleItemCountChanged(...)
 		return
 	end
 
-	-- Determine the current stepIndex
-	local stepIndex = RQE.AddonSetStepIndex or 1
-	local stepData = questData[stepIndex]
-	if not stepData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-		end
-		return
-	end
+	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
+	local function hasCheckDBInventory(data)
+		for _, step in ipairs(data) do
+			-- Check `check` field
+			if step.funct and step.funct == "CheckDBInventory" then
+				return true
+			end
 
-	-- Check if the current step relies on inventory checks
-	local isInventoryCheck = false
-	if stepData.funct and stepData.funct == "CheckDBInventory" then
-		isInventoryCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for CheckDBInventory
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBInventory" then
-				isInventoryCheck = true
-				break
+			-- Check `checks` field
+			if step.checks then
+				for _, checkData in ipairs(step.checks) do
+					if checkData.funct and checkData.funct == "CheckDBInventory" then
+						return true
+					end
+				end
 			end
 		end
+		return false
 	end
 
-	-- If the current step is tied to inventory checks, re-run periodic checks
+	local isInventoryCheck = hasCheckDBInventory(questData)
+
+	-- If CheckDBInventory is found, trigger StartPeriodicChecks
 	if isInventoryCheck then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ITEM_COUNT_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("ITEM_COUNT_CHANGED related to questID:", questID, "due to CheckDBInventory presence.")
 		end
-		C_Timer.After(0.4, function()
+		C_Timer.After(0.2, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from ITEM_COUNT_CHANGED ~~")
 			end
 			RQE.StartPerioFromItemCountChanged = true
 			RQE.ItemCountRanStartPeriodicChecks = true
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
-			C_Timer.After(3, function()
-				RQE.StartPerioFromItemCountChanged = false
+			RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+			C_Timer.After(0.4, function()
+				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+				C_Timer.After(3, function()
+					RQE.StartPerioFromItemCountChanged = false
+				end)
 			end)
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ITEM_COUNT_CHANGED not related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("ITEM_COUNT_CHANGED not related to any CheckDBInventory in questID:", questID)
 		end
 	end
 end
@@ -653,46 +654,44 @@ function RQE.BagNewItemsAdded()
 		return
 	end
 
-	-- Determine the current stepIndex
-	local stepIndex = RQE.AddonSetStepIndex or 1
-	local stepData = questData[stepIndex]
-	if not stepData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-		end
-		return
-	end
+	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
+	local function hasCheckDBInventory(data)
+		for _, step in ipairs(data) do
+			-- Check `check` field
+			if step.funct and step.funct == "CheckDBInventory" then
+				return true
+			end
 
-	-- Check if the current step relies on inventory checks
-	local isInventoryCheck = false
-	if stepData.funct and stepData.funct == "CheckDBInventory" then
-		isInventoryCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for CheckDBInventory
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBInventory" then
-				isInventoryCheck = true
-				break
+			-- Check `checks` field
+			if step.checks then
+				for _, checkData in ipairs(step.checks) do
+					if checkData.funct and checkData.funct == "CheckDBInventory" then
+						return true
+					end
+				end
 			end
 		end
+		return false
 	end
 
-	-- If the current step is tied to inventory checks, re-run periodic checks
+	local isInventoryCheck = hasCheckDBInventory(questData)
+
+	-- If CheckDBInventory is found, trigger StartPeriodicChecks
 	if isInventoryCheck then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_NEW_ITEMS_UPDATED related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("BAG_NEW_ITEMS_UPDATED related to questID:", questID, "due to CheckDBInventory presence.")
 			RQE.BagNewItemsRunning = false
 		end
-		C_Timer.After(1.5, function()
+		C_Timer.After(0.9, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
 			end
 			RQE.BagNewItemsRunning = true
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
+			RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_NEW_ITEMS_UPDATED not related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("BAG_NEW_ITEMS_UPDATED not related to any CheckDBInventory in questID:", questID)
 			RQE.BagNewItemsRunning = false
 		end
 	end
@@ -704,21 +703,20 @@ function RQE.ReagentBagUpdate(...)
 	local event = select(2, ...)
 	local bagID = select(3, ...)
 
-	-- -- Print Event-specific Args
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	-- end
-
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
 
 	-- Return if the auto-click option is disabled
 	if not RQE.db.profile.autoClickWaypointButton then return end
@@ -740,44 +738,42 @@ function RQE.ReagentBagUpdate(...)
 		return
 	end
 
-	-- Determine the current stepIndex
-	local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-	local stepData = questData[stepIndex]
-	if not stepData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-		end
-		return
-	end
+	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
+	local function hasCheckDBInventory(data)
+		for _, step in ipairs(data) do
+			-- Check `funct` field
+			if step.funct and step.funct == "CheckDBInventory" then
+				return true
+			end
 
-	-- Check if the current step relies on inventory checks
-	local isInventoryCheck = false
-	if stepData.funct and stepData.funct == "CheckDBInventory" then
-		isInventoryCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for CheckDBInventory
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBInventory" then
-				isInventoryCheck = true
-				break
+			-- Check `checks` field
+			if step.checks then
+				for _, checkData in ipairs(step.checks) do
+					if checkData.funct and checkData.funct == "CheckDBInventory" then
+						return true
+					end
+				end
 			end
 		end
+		return false
 	end
 
-	-- If the current step is tied to inventory checks, re-run periodic checks
+	local isInventoryCheck = hasCheckDBInventory(questData)
+
+	-- If CheckDBInventory is found, trigger StartPeriodicChecks
 	if isInventoryCheck then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("BAG_UPDATE related to questID:", questID, "due to CheckDBInventory presence.")
 		end
 		C_Timer.After(1.5, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
 			end
-			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
+			-- RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_UPDATE fires
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_UPDATE not related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("BAG_UPDATE not related to any CheckDBInventory in questID:", questID)
 		end
 	end
 end
