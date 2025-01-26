@@ -72,6 +72,7 @@
 		- Updated ITEM_COUNT_CHANGED, BAG_NEW_ITEMS_UPDATED, BAG_UPDATE, MERCHANT_UPDATE and UNIT_INVENTORY_CHANGED to require CheckDBInventory before firing RQE:StartPeriodicChecks() (2025.01.18)
 		- Added QUEST_DETAIL to called events for the purpose of displaying the questID of the currently displayed quest from the NPC quest-giver (2025.01.18)
 		- Call to compare RQE.totalStepforQuest and RQE.StepIndexForCoordMatch to determine on SUPER_TRACKING_CHANGED if DB entry details are incomplete (2025.01.24)
+		- Fixed ITEM_COUNT_CHANGED, BAG_NEW_ITEMS_UPDATED and BAG_UPDATE to check if CheckDBInventory exists in any of the 'check' or 'checks' within the current supertracked quest of the other stepIndex (2025.01.25)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -99,6 +100,7 @@
 		- Updated some Aldor/Alliance-Neutral Shadowmoon Valley quests to DB (2025.01.15)
 		- Updated Alliance quests in Borean Tundra to DB (2025.01.18)
 		- Updated Alliance quests in Howling Fjord to DB (2025.01.25)
+		- Added some Alliance quests in Dragonblight to DB (2025.01.25)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
