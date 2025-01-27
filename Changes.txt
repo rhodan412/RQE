@@ -9,6 +9,7 @@
 		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
 		- Updated tooltip display for RQE Magic Button and itemCount to be displayed with button (2025.01.18)
 		- Added string for subzones on CheckDBZoneChange within the RQE:CheckDBZoneChange function (2025.01.24)
+		- Added better handling for CheckDBComplete to not automatically enable without that funct in last stepIndex, in order to allow better guidance out of caves/undergrounds (2025.01.26)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set (2025.01.03)
@@ -18,6 +19,7 @@
 
 	Config.lua
 		- Updated config to allow 'Show Event Debug Info' when Debug Mode is now either INFO or INFO+ (2025.01.13)
+		- Updated config to allow 'Show Arg/Payload Info' when Debug Mode is now either INFO or INFO+ (2025.01.26)
 
 	Core.lua
 		- Created function aimed at clicking the RQE.SeparateWaypointButton (2025.01.03)
@@ -53,6 +55,8 @@
 		- Updated function selecting Gossip options to apply if the npcName used in the function call is 'target' then it will just use the current targetName (2025.01.18)
 		- Added sound (INFO debugMode only) for when a quest is picked up that has no steps listed but is in the DB (2025.01.24)
 		- Added string for subzones on CheckDBZoneChange within the RQE:CheckDBZoneChange function (2025.01.24)
+		- Added placeholder for CheckDBModel for purposes of firing when the UNIT_MODEL_CHANGED fires (2025.01.26)
+		- Added better handling for CheckDBComplete to not advance automatically to this stepIndex if CheckDBComplete doesn't exist for final step to better handle for zone requirements to more easily navigate out of caves where the exit isn't obvious (2025.01.26)
 
 	EventManager.lua
 		- Changed info that allows viewing showEventDebugInfo to be debugMode INFO (user would still need to switch to INFO+ in order to toggle this option, but could then switch back to INFO (2025.01.07)
@@ -73,6 +77,7 @@
 		- Added QUEST_DETAIL to called events for the purpose of displaying the questID of the currently displayed quest from the NPC quest-giver (2025.01.18)
 		- Call to compare RQE.totalStepforQuest and RQE.StepIndexForCoordMatch to determine on SUPER_TRACKING_CHANGED if DB entry details are incomplete (2025.01.24)
 		- Fixed ITEM_COUNT_CHANGED, BAG_NEW_ITEMS_UPDATED and BAG_UPDATE to check if CheckDBInventory exists in any of the 'check' or 'checks' within the current supertracked quest of the other stepIndex (2025.01.25)
+		- Added UNIT_MODEL_CHANGED for purposes when disguise occurs but UNIT_AURA doesn't call RQE:StartPeriodicChecks function (2025.01.26)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
