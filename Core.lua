@@ -4273,6 +4273,17 @@ function RQEMacro:CreateMacroForCurrentStep()
 end
 
 
+-- Helper function to check if the final step contains `funct = "CheckDBComplete"`
+function RQE:HasCheckDBComplete(questData)
+	local finalStepIndex = #questData
+	local finalStep = questData[finalStepIndex]
+	if finalStep and finalStep.funct and finalStep.funct == "CheckDBComplete" then
+		return true, finalStepIndex
+	end
+	return false, finalStepIndex
+end
+
+
 -- Periodic check setup comparing with entry in RQEDatabase
 function RQE:StartPeriodicChecks()
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -4303,24 +4314,41 @@ function RQE:StartPeriodicChecks()
 
 	-- Handle turn-in readiness
 	if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-		local finalStepIndex = #questData
-		for index, step in ipairs(questData) do
-			if step.objectiveIndex == 99 then
-				finalStepIndex = index
-				break
+		local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		if hasCheckDBComplete then
+			self:ClickWaypointButtonForIndex(finalStepIndex)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+			end
+			return
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
 			end
 		end
-		self:ClickWaypointButtonForIndex(finalStepIndex)
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
-		end
-		return
 	end
+
+	-- -- Handle turn-in readiness
+	-- if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
+		-- local finalStepIndex = #questData
+		-- for index, step in ipairs(questData) do
+			-- if step.objectiveIndex == 99 then
+				-- finalStepIndex = index
+				-- break
+			-- end
+		-- end
+		-- self:ClickWaypointButtonForIndex(finalStepIndex)
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+		-- end
+		-- return
+	-- end
 
 	-- Define the function map for parent functions
 	local functionMap = {
 		CheckDBBuff = "CheckDBBuff",
 		CheckDBDebuff = "CheckDBDebuff",
+		--CheckDBModel = "CheckDBModel",	-- NYI, but meant to reduce firings from CheckDBBuff and CheckDBDebuff
 		CheckDBInventory = "CheckDBInventory",
 		CheckDBZoneChange = "CheckDBZoneChange",
 		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
@@ -4413,36 +4441,6 @@ function RQE:StartPeriodicChecks()
 	end
 	RQEMacro:CreateMacroForCurrentStep()
 	RQE.isCheckingMacroContents = false
-
-	-- -- Process the current step	-- Pushes player stepIndex to complete instead of potentially back even if not listed or even if it isn't objective complete
-	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	-- local questData = RQE.getQuestData(questID)
-	-- local stepData = questData[stepIndex]
-	-- local funcResult = stepData.funct and RQE[stepData.funct] and RQE[stepData.funct](self, superTrackedQuestID, stepIndex)
-
-	-- if funcResult then
-		-- -- Success: Step executed successfully
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Function for current step executed successfully. Advancing to the next step.")
-		-- end
-		-- RQE.AddonSetStepIndex = stepIndex + 1
-		-- self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
-		-- RQE.isCheckingMacroContents = false
-		-- return
-	-- else
-		-- -- Check for failedfunc after the primary function fails
-		-- local failedHandled = self:HandleFailedFunction(superTrackedQuestID, stepIndex)
-		-- if failedHandled then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Failed function handled successfully for stepIndex:", stepIndex)
-			-- end
-			-- return
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("No failed function handling needed for stepIndex:", stepIndex)
-			-- end
-		-- end
-	-- end
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
@@ -4825,6 +4823,12 @@ function RQE:HandleFailedFunction(questID, stepIndex)
 	end
 
 	return false -- No failure conditions triggered
+end
+
+
+-- Function will check if the player currently has a change to their portrait
+function RQE.CheckDBModel(questID, stepIndex, check, neededAmt)
+	-- Placeholder for the function that will control checks for the UNIT_MODEL_CHANGED event (this will reduce number of unnecessary firings of main functions
 end
 
 
@@ -5322,9 +5326,17 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 	-- Get the player's current map ID and subzone name
 	local currentMapID = C_Map.GetBestMapForUnit("player")
 	local currentSubZone = GetSubZoneText() or "" -- Subzone name
+	local currentZone = GetZoneText() or "" -- Zone name
+
+	-- Fall back to zone name if subzone is blank
+	if currentSubZone == "" then
+		currentSubZone = currentZone
+	end
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Current MapID:", tostring(currentMapID))
 		print("Current SubZone:", currentSubZone)
+		print("Current Zone:", currentZone)
 	end
 
 	-- Determine if `check` contains strings (subzones) or numerals (map IDs)
@@ -5618,12 +5630,30 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 	-- Turn-in readiness check
 	local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
 	if isReadyTurnIn then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Quest ready for turn-in. Clicking the last step.")
+		local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		if hasCheckDBComplete then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ready for turn-in. Clicking the last step.")
+			end
+			self:ClickWaypointButtonForIndex(finalStepIndex)
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
+			end
+			return false
 		end
-		self:ClickWaypointButtonForIndex(#questData)
-		return true
 	end
+
+	-- -- Turn-in readiness check
+	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+	-- if isReadyTurnIn then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Quest ready for turn-in. Clicking the last step.")
+		-- end
+		-- self:ClickWaypointButtonForIndex(#questData)
+		-- return true
+	-- end
 
 	-- Handle `check` and `neededAmt` explicitly
 	if #check > 0 and #neededAmt > 0 then
