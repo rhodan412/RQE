@@ -2532,7 +2532,7 @@ function RQE:AddDebugSettingsWidgets(container)
 			end
 
 			-- Additional options for "INFO+" level
-			if RQE.db.profile.debugLevel == "INFO+" then
+			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				-- Checkbox for displaying Argument/Payload returns on event listeners
 				local showArgPayloadInfo = AceGUI:Create("CheckBox")
 				showArgPayloadInfo:SetLabel("Show Arg/Payload Info")
@@ -2551,7 +2551,9 @@ function RQE:AddDebugSettingsWidgets(container)
 					GameTooltip:Hide()
 				end)
 				debugInlineGroup:AddChild(showArgPayloadInfo)
-
+			end
+			
+			if RQE.db.profile.debugLevel == "INFO+" then
 				-- Checkbox for displaying RQE:StartPeriodicChecks() returns
 				local showStartPeriodicCheckInfo = AceGUI:Create("CheckBox")
 				showStartPeriodicCheckInfo:SetLabel("Show StartPeriodicChecks Info")
