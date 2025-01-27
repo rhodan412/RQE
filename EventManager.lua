@@ -195,12 +195,12 @@ local eventsToRegister = {
 	"CRITERIA_EARNED",
 	"ENCOUNTER_END",
 	"GOSSIP_CLOSED",
-	--"GOSSIP_CONFIRM",
+	-- "GOSSIP_CONFIRM",
 	"GOSSIP_CONFIRM_CANCEL",
 	"GOSSIP_SHOW",
 	"ITEM_COUNT_CHANGED",
 	"JAILERS_TOWER_LEVEL_UPDATE",
-	--"LEAVE_PARTY_CONFIRMATION",
+	-- "LEAVE_PARTY_CONFIRMATION",
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
 	"MAIL_SUCCESS",
 	"MERCHANT_UPDATE",
@@ -209,7 +209,7 @@ local eventsToRegister = {
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
-	--"PLAYER_REGEN_DISABLED",
+	-- "PLAYER_REGEN_DISABLED",
 	"PLAYER_REGEN_ENABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
@@ -222,12 +222,12 @@ local eventsToRegister = {
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	"QUEST_LOOT_RECEIVED",
-	--"QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
+	-- "QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	"QUEST_WATCH_LIST_CHANGED",
 	"QUEST_WATCH_UPDATE",
-	--"QUESTLINE_UPDATE",			-- Commenting out as this fires too often resulting in some lag
+	-- "QUESTLINE_UPDATE",			-- Commenting out as this fires too often resulting in some lag
 	"SCENARIO_COMPLETED",
 	"SCENARIO_CRITERIA_UPDATE",
 	"SCENARIO_UPDATE",
@@ -241,10 +241,11 @@ local eventsToRegister = {
 	"UNIT_ENTERING_VEHICLE",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_INVENTORY_CHANGED",
+	"UNIT_MODEL_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
-	--"UPDATE_SHAPESHIFT_COOLDOWN",
-	--"UPDATE_SHAPESHIFT_FORM",
+	-- "UPDATE_SHAPESHIFT_COOLDOWN",
+	-- "UPDATE_SHAPESHIFT_FORM",
 	-- "UPDATE_UI_WIDGET",
 	"VARIABLES_LOADED",
 	"WORLD_STATE_TIMER_START",
@@ -355,6 +356,7 @@ local function HandleEvents(frame, event, ...)
 		UNIT_ENTERING_VEHICLE = RQE.handleUnitEnterVehicle,
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
+		UNIT_MODEL_CHANGED = RQE.handleUnitModelChange,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
@@ -485,20 +487,20 @@ function RQE.handleGossipConfirm(...)
 	local text = select(4, ...)
 	local cost = select(5, ...)
 
-	-- -- Print Event-specific Args
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	-- end
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
 end
 
 
@@ -517,7 +519,7 @@ function RQE.handleGossipShow(...)
 	local uiTextureKit = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -704,7 +706,7 @@ function RQE.ReagentBagUpdate(...)
 	local bagID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -862,20 +864,20 @@ function RQE.handleUnitInventoryChange(...)
 	local event = select(2, ...)
 	local unitTarget = select(3, ...)
 
-	-- -- Print Event-specific Args
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	-- end
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
 
 	if unitTarget ~= "player" then  -- Only process changes for the player
 		return
@@ -1817,25 +1819,25 @@ function RQE.handleUpdateShapeShiftForm()
 end
 
 
--- -- Function to handle the UPDATE_UI_WIDGET event
--- function RQE.handleUpdateWidgetID(...)
-	-- if RQE.db.profile.debugLevel ~= "INFO+" then return end
+-- Function to handle the UPDATE_UI_WIDGET event
+function RQE.handleUpdateWidgetID(...)
+	if RQE.db.profile.debugLevel ~= "INFO+" then return end
 
-	-- -- Print Event-specific Args
-	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
-		-- local args = {...}  -- Capture all arguments into a table
-		-- for i, arg in ipairs(args) do
-			-- if type(arg) == "table" then
-				-- print("Arg " .. i .. ": (table)")
-				-- for k, v in pairs(arg) do
-					-- print("  " .. tostring(k) .. ": " .. tostring(v))
-				-- end
-			-- else
-				-- print("Arg " .. i .. ": " .. tostring(arg))
-			-- end
-		-- end
-	-- end
--- end
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+end
 
 
 -- Handling VARIABLES_LOADED Event
@@ -2825,8 +2827,14 @@ function RQE.handleZoneChange(...)
 		return
 	end
 
+	-- State tracking to prevent frequent firing
+	local lastCheckedZone = ""
+	local lastCheckedStepIndex = nil
+
 	-- Check if the current step relies on CheckDBZoneChange
 	local isZoneChangeCheck = false
+	local isFailedZoneCheck = false
+
 	if stepData.funct and stepData.funct == "CheckDBZoneChange" then
 		isZoneChangeCheck = true
 	elseif stepData.checks then
@@ -2834,27 +2842,83 @@ function RQE.handleZoneChange(...)
 		for _, checkData in ipairs(stepData.checks) do
 			if checkData.funct and checkData.funct == "CheckDBZoneChange" then
 				isZoneChangeCheck = true
-				break
+
+				-- Get the current minimap zone text
+				local currentMinimapZone = GetMinimapZoneText() or "" -- Minimap zone text
+				currentMinimapZone = currentMinimapZone:lower() -- Normalize casing
+
+				-- Ensure `checkData.check` is a table for consistency
+				local requiredZones = type(checkData.check) == "table" and checkData.check or { checkData.check }
+
+				for _, requiredZone in ipairs(requiredZones) do
+					requiredZone = requiredZone:lower() -- Normalize casing
+
+					if checkData.logic == "NOT" then
+						-- Handle NOT logic: Trigger failure if in the forbidden minimap zone
+						if currentMinimapZone == requiredZone then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Failed zone check triggered. Current MinimapZone matches:", requiredZone)
+							end
+							isFailedZoneCheck = true
+							break
+						end
+					else
+						-- Handle positive logic: Match required minimap zones
+						if currentMinimapZone == requiredZone then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Successful zone match for required MinimapZone:", requiredZone)
+							end
+							isFailedZoneCheck = false -- Reset failed state for positive match
+							break
+						end
+					end
+				end
+
+				-- Stop checking further if a failed zone check has already been triggered
+				if isFailedZoneCheck then
+					break
+				end
 			end
 		end
 	end
 
-	-- If the current step relies on CheckDBZoneChange, re-run periodic checks
-	if isZoneChangeCheck then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
+	-- Avoid frequent firing by checking state
+	if (lastCheckedZone ~= currentMinimapZone or lastCheckedStepIndex ~= stepIndex) then
+		lastCheckedZone = currentMinimapZone
+		lastCheckedStepIndex = stepIndex
+
+		-- Trigger the button click only if the failed zone matches and we are on the correct stepIndex
+		if isFailedZoneCheck and stepIndex == RQE.AddonSetStepIndex then
+			C_Timer.After(0.2, function()
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Failed zone check. Clicking supertracked quest button.")
+				end
+				RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+			end)
 		end
-		C_Timer.After(1.3, function()
+
+		-- If the current step relies on CheckDBZoneChange, re-run periodic checks
+		if isZoneChangeCheck then
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED ~~")
+				print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED or ZONE_CHANGED_INDOORS fires
-		end)
+			C_Timer.After(1.3, function()
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED ~~")
+				end
+				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ZONE_CHANGED or ZONE_CHANGED_INDOORS fires
+			end)
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
+			end
+		end
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("Zone or stepIndex already checked. No further actions.")
 		end
 	end
+
 
 	if not IsFlying and not isMounted and not onTaxi then
 		RQE.UntrackAutomaticWorldQuests()
@@ -3053,7 +3117,7 @@ function RQE.handleTrackedRecipeUpdate(...)
 	local tracked = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -3187,7 +3251,7 @@ function RQE.handleUnitAura(...)
 	local filter = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -3269,6 +3333,99 @@ function RQE.handleUnitAura(...)
 end
 
 
+-- Function to handle the UNIT_MODEL_CHANGED event
+function RQE.handleUnitModelChange(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+
+	if unitTarget ~= "player" then return end
+	
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super tracked quest ID found, skipping aura checks.")
+		end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if CheckDBBuff or CheckDBDebuff exists anywhere in the supertracked quest's data
+	local function hasCheckDBBuffDebuff(data)
+		for _, step in ipairs(data) do
+			-- Check `check` field
+			if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
+				return true
+			end
+
+			-- Check `checks` field
+			if step.checks then
+				for _, checkData in ipairs(step.checks) do
+					if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
+						return true
+					end
+				end
+			end
+		end
+		return false
+	end
+
+	local isBuffOrDebuffCheck = hasCheckDBBuffDebuff(questData)
+
+	-- If the current step is tied to buff or debuff checks, re-run periodic checks
+	if isBuffOrDebuffCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UNIT_AURA related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+		C_Timer.After(0.2, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~ Running RQE:StartPeriodicChecks() from UNIT_AURA ~~")
+			end
+			RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+			C_Timer.After(0.5, function()
+				RQE:StartPeriodicChecks()
+			end)
+		end)
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+	end
+end
+
+
 -- Handles UNIT_QUEST_LOG_CHANGED event	-- POSSIBLY FIRED WHILE IN COMBAT CAUSING PASSTHRU ERROR
 -- Fired whenever the quest log changes. (Frequently, but not as frequently as QUEST_LOG_UPDATE) 
 function RQE.handleUnitQuestLogChange(...)
@@ -3276,7 +3433,7 @@ function RQE.handleUnitQuestLogChange(...)
 	local unitTarget = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
