@@ -700,7 +700,8 @@ function RQE.BagNewItemsAdded()
 end
 
 
--- Handles BAG_UPDATE event:
+-- Handles BAG_UPDATE event
+-- Fired when a bags inventory changes
 function RQE.ReagentBagUpdate(...)
 	local event = select(2, ...)
 	local bagID = select(3, ...)
@@ -936,7 +937,7 @@ function RQE.handleUnitInventoryChange(...)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from UNIT_INVENTORY_CHANGED ~~")
 			end
-			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_INVENTORY_CHANGED fires
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_INVENTORY_CHANGED fires
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
