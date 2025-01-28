@@ -78,6 +78,7 @@
 		- Call to compare RQE.totalStepforQuest and RQE.StepIndexForCoordMatch to determine on SUPER_TRACKING_CHANGED if DB entry details are incomplete (2025.01.24)
 		- Fixed ITEM_COUNT_CHANGED, BAG_NEW_ITEMS_UPDATED and BAG_UPDATE to check if CheckDBInventory exists in any of the 'check' or 'checks' within the current supertracked quest of the other stepIndex (2025.01.25)
 		- Added UNIT_MODEL_CHANGED for purposes when disguise occurs but UNIT_AURA doesn't call RQE:StartPeriodicChecks function (2025.01.26)
+		- Updated BAG_UPDATE to now call RQE:StartPeriodicChecks (2025.01.27)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -105,7 +106,8 @@
 		- Updated some Aldor/Alliance-Neutral Shadowmoon Valley quests to DB (2025.01.15)
 		- Updated Alliance quests in Borean Tundra to DB (2025.01.18)
 		- Updated Alliance quests in Howling Fjord to DB (2025.01.25)
-		- Added some Alliance quests in Dragonblight to DB (2025.01.25)
+		- Updated Alliance quests in Dragonblight to DB (2025.01.27)
+		- Added some Alliance quests in Grizzly Hills to DB (2025.01.27)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
