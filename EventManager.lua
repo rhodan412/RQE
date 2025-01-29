@@ -615,7 +615,7 @@ function RQE.handleItemCountChanged(...)
 			end
 			RQE.StartPerioFromItemCountChanged = true
 			RQE.ItemCountRanStartPeriodicChecks = true
-			RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
 			C_Timer.After(0.4, function()
 				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				C_Timer.After(3, function()
@@ -700,11 +700,16 @@ function RQE.BagNewItemsAdded()
 end
 
 
--- Handles BAG_UPDATE event
--- Fired when a bags inventory changes
+-- Handles BAG_UPDATE event:
 function RQE.ReagentBagUpdate(...)
 	local event = select(2, ...)
 	local bagID = select(3, ...)
+
+	-- Array of allowed questID and minimap zone text pairs
+	local allowedQuests = {
+		["12000"] = { "Dragonblight", "Moonrest Gardens" },
+		-- Add more questIDs and zones as needed
+	}
 
 	-- Print Event-specific Args
 	if RQE.db.profile.showArgPayloadInfo then
@@ -733,6 +738,28 @@ function RQE.ReagentBagUpdate(...)
 		return
 	end
 
+	-- Get the current minimap zone text
+	local currentMinimapZone = GetMinimapZoneText() or ""
+
+	-- Check if the questID and minimap zone match the allowed pairs
+	local isAllowedQuest = false
+	if allowedQuests[tostring(questID)] then
+		for _, zone in ipairs(allowedQuests[tostring(questID)]) do
+			if currentMinimapZone == zone then
+				isAllowedQuest = true
+				break
+			end
+		end
+	end
+
+	-- If not an allowed quest in the allowed zones, exit early
+	if not isAllowedQuest then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("BAG_UPDATE not related to the allowed questID or minimap zone. QuestID:", questID, "Minimap Zone:", currentMinimapZone)
+		end
+		return
+	end
+
 	local questData = RQE.getQuestData(questID)
 	if not questData then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -741,42 +768,44 @@ function RQE.ReagentBagUpdate(...)
 		return
 	end
 
-	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
-	local function hasCheckDBInventory(data)
-		for _, step in ipairs(data) do
-			-- Check `funct` field
-			if step.funct and step.funct == "CheckDBInventory" then
-				return true
-			end
-
-			-- Check `checks` field
-			if step.checks then
-				for _, checkData in ipairs(step.checks) do
-					if checkData.funct and checkData.funct == "CheckDBInventory" then
-						return true
-					end
-				end
-			end
+	-- Determine the current stepIndex
+	local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
 		end
-		return false
+		return
 	end
 
-	local isInventoryCheck = hasCheckDBInventory(questData)
+	-- Check if the current step relies on inventory checks
+	local isInventoryCheck = false
+	if stepData.funct and stepData.funct == "CheckDBInventory" then
+		isInventoryCheck = true
+	elseif stepData.checks then
+		-- Also evaluate `checks` for CheckDBInventory
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct and checkData.funct == "CheckDBInventory" then
+				isInventoryCheck = true
+				break
+			end
+		end
+	end
 
-	-- If CheckDBInventory is found, trigger StartPeriodicChecks
+	-- If the current step is tied to inventory checks, re-run periodic checks
 	if isInventoryCheck then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_UPDATE related to questID:", questID, "due to CheckDBInventory presence.")
+			print("BAG_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
 		end
 		C_Timer.After(1.5, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
 			end
-			-- RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_UPDATE fires
+			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_UPDATE not related to any CheckDBInventory in questID:", questID)
+			print("BAG_UPDATE not related to current stepIndex:", stepIndex, "for questID:", questID)
 		end
 	end
 end
@@ -859,11 +888,17 @@ function RQE.handleMerchantUpdate()
 end
 
 
--- Handles UNIT_INVENTORY_CHANGED event:
+-- Handles UNIT_INVENTORY_CHANGED event
 -- Fires when an item is destroyed
 function RQE.handleUnitInventoryChange(...)
 	local event = select(2, ...)
 	local unitTarget = select(3, ...)
+
+	-- Array of allowed questID and minimap zone text pairs
+	local allowedQuests = {
+		["12000"] = { "Dragonblight", "Moonrest Gardens" },
+		-- Add more questIDs and zones as needed
+	}
 
 	-- Print Event-specific Args
 	if RQE.db.profile.showArgPayloadInfo then
@@ -890,6 +925,28 @@ function RQE.handleUnitInventoryChange(...)
 	if not questID then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No super-tracked quest ID found, skipping inventory change checks.")
+		end
+		return
+	end
+
+	-- Get the current minimap zone text
+	local currentMinimapZone = GetMinimapZoneText() or ""
+
+	-- Check if the questID and minimap zone match the allowed pairs
+	local isAllowedQuest = false
+	if allowedQuests[tostring(questID)] then
+		for _, zone in ipairs(allowedQuests[tostring(questID)]) do
+			if currentMinimapZone == zone then
+				isAllowedQuest = true
+				break
+			end
+		end
+	end
+
+	-- If not an allowed quest in the allowed zones, exit early
+	if not isAllowedQuest then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("BAG_UPDATE not related to the allowed questID or minimap zone. QuestID:", questID, "Minimap Zone:", currentMinimapZone)
 		end
 		return
 	end
@@ -1114,6 +1171,7 @@ function RQE.handlePlayerLogin()
 	RQE:InitializeAddon()
 	RQE:InitializeFrame()
 
+	RQE:RestoreTrackedQuestsForCharacter()
 	RQE:RestoreSuperTrackedQuestForCharacter()
 
 	-- Add this line to update coordinates when player logs in
@@ -1238,6 +1296,11 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
 	RQE.UIInfoUpdateFired = false
 	RQE.WaypointButtonHover = false
+
+	C_Timer.After(3, function()
+		RQE:RestoreTrackedQuestsForCharacter()
+		RQE:RestoreSuperTrackedQuestForCharacter()
+	end)
 
 	-- Making sure that the variables are cleared
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -2019,7 +2082,7 @@ function RQE.handlePlayerEnterWorld(...)
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-					RQE:SaveSuperTrackedQuestToCharacter()
+					--RQE:SaveSuperTrackedQuestToCharacter()
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 						DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
 					end
@@ -2130,6 +2193,8 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 		end
 
+		RQE:RestoreTrackedQuestsForCharacter()
+		RQE:RestoreSuperTrackedQuestForCharacter()
 		UpdateRQEQuestFrame()
 
 		local extractedQuestID
@@ -2332,6 +2397,7 @@ function RQE.handleSuperTracking()
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					RQE:SaveTrackedQuestsToCharacter()
 					RQE:SaveSuperTrackedQuestToCharacter()
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 						DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
@@ -2543,6 +2609,7 @@ function RQE.handleQuestAccepted(...)
 			local superTrackIDToApply = RQE.ManualSuperTrackedQuestID
 			if superTrackIDToApply and superTrackIDToApply ~= C_SuperTrack.GetSuperTrackedQuestID() then
 				C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
+				RQE:SaveTrackedQuestsToCharacter()
 				RQE:SaveSuperTrackedQuestToCharacter()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 					DEFAULT_CHAT_FRAME:AddMessage("QA 09 Debug: Reapplied manual super-tracked QuestID: " .. tostring(superTrackIDToApply), 0.46, 0.62, 1)	-- Cornflower Blue
@@ -3754,6 +3821,7 @@ function RQE.handleQuestStatusUpdate()
 			if questID then
 				if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
 					C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
+					RQE:SaveTrackedQuestsToCharacter()
 					RQE:SaveSuperTrackedQuestToCharacter()
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
 						DEFAULT_CHAT_FRAME:AddMessage("Debug: Manual Super Tracking set for QuestID: " .. tostring(RQE.ManualSuperTrackedQuestID), 0, 1, 0)  -- Bright Green
@@ -4367,6 +4435,7 @@ function RQE.handleQuestWatchUpdate(...)
 
 	elseif not isSuperTracking then
 		C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
+		RQE:SaveTrackedQuestsToCharacter()
 		RQE:SaveSuperTrackedQuestToCharacter()
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
@@ -4643,6 +4712,7 @@ function RQE.handleQuestWatchListChanged(...)
 	end
 
 	UpdateRQEQuestFrame()
+	RQE:SaveTrackedQuestsToCharacter()
 
 	C_Timer.After(0.5, function()
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
@@ -4803,6 +4873,7 @@ function RQE.handleQuestFinished()
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				RQE:SaveTrackedQuestsToCharacter()
 				RQE:SaveSuperTrackedQuestToCharacter()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 					DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
