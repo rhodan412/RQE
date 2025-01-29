@@ -111,8 +111,9 @@
 		- Updated Alliance quests in Borean Tundra to DB (2025.01.18)
 		- Updated Alliance quests in Howling Fjord to DB (2025.01.25)
 		- Updated Alliance quests in Dragonblight to DB (2025.01.27)
-		- Added some Alliance quests in Grizzly Hills to DB (2025.01.27)
-		- Added some Lunar Festival 'Elder' quests to DB (2025.01.28)
+		- Updated Alliance quests in Grizzly Hills to DB (2025.01.29)
+		- Added most Lunar Festival 'Elder' quests to DB (2025.01.29)
+		- Added some Alliance quests in Scholazar Basin to DB (2025.01.29)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
