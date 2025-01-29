@@ -671,6 +671,31 @@ function RQE:SaveSuperTrackedQuestToCharacter()
 end
 
 
+-- Function to save the currently watched/tracked quests to the character-specific table
+function RQE:SaveTrackedQuestsToCharacter()
+    -- Initialize the trackedQuests table for this character
+    RQECharacterDB.trackedQuests = {}
+
+    -- Loop through the tracked quests
+    for i = 1, C_QuestLog.GetNumQuestWatches() do
+        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+        if questID then
+            -- Save the tracked quest ID
+            table.insert(RQECharacterDB.trackedQuests, questID)
+        end
+    end
+
+    -- Debug output for tracked quests
+    if RQE.db.profile.debugLevel == "INFO+" then
+        if #RQECharacterDB.trackedQuests > 0 then
+            print("Saved tracked quests for this character:", table.concat(RQECharacterDB.trackedQuests, ", "))
+        else
+            print("No tracked quests found to save for this character.")
+        end
+    end
+end
+
+
 -- Function to restore the saved supertracked quest for the current character
 function RQE:RestoreSuperTrackedQuestForCharacter()
 	if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
@@ -717,6 +742,32 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 			print("No saved supertracked quest found for this character.")
 		end
 	end
+end
+
+
+-- Function to restore the watched/tracked quests for the current character
+function RQE:RestoreTrackedQuestsForCharacter()
+    if not RQECharacterDB or not RQECharacterDB.trackedQuests then
+        if RQE.db.profile.debugLevel == "INFO+" then
+            print("No tracked quests saved for this character.")
+        end
+        return
+    end
+
+    -- Iterate through saved tracked quests and re-enable tracking
+    for _, questID in ipairs(RQECharacterDB.trackedQuests) do
+        if C_QuestLog.IsOnQuest(questID) then
+            -- Enable tracking for the quest if it's still in the quest log
+            C_QuestLog.AddQuestWatch(questID)
+            if RQE.db.profile.debugLevel == "INFO+" then
+                print("Restored tracking for quest:", questID)
+            end
+        else
+            if RQE.db.profile.debugLevel == "INFO+" then
+                print("Tracked quest is no longer valid:", questID)
+            end
+        end
+    end
 end
 
 
