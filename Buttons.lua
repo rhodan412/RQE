@@ -571,8 +571,6 @@ function RQE.Buttons.ClearButtonPressed()
 	C_Timer.After(0.2, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
-
-	RQE:SaveSuperTrackedQuestToCharacter()
 end
 
 -- Parent function to create RWButton
