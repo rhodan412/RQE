@@ -3312,33 +3312,85 @@ end
 
 
 -- Handles UNIT_AURA event
+-- Fires when a buff, debuff, status, or item bonus was gained by or faded from an entity (player, pet, NPC, or mob.)
 function RQE.handleUnitAura(...)
 	local event = select(2, ...)
-	local unitToken = select(3, ...)
-	local spellName = select(4, ...)
-	local filter = select(5, ...)
+	local unitTarget = select(3, ...)
+	local updateInfo = select(4, ...)
 
-	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
-		local args = {...}  -- Capture all arguments into a table
-		for i, arg in ipairs(args) do
-			if type(arg) == "table" then
-				print("Arg " .. i .. ": (table)")
-				for k, v in pairs(arg) do
-					print("  " .. tostring(k) .. ": " .. tostring(v))
-				end
-			else
-				print("Arg " .. i .. ": " .. tostring(arg))
-			end
-		end
-	end
-
-	if unitToken ~= "player" then  -- Only process changes for the player
+	if unitTarget ~= "player" then  -- Only process changes for the player
 		return
 	end
 
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		print("Unit Target:", unitTarget)
+
+		-- Handle `updateInfo` (ensure it's a table and display all details)
+		if type(updateInfo) == "table" then
+			print("Update Info:")
+
+			-- Check for full update
+			if updateInfo.isFullUpdate then
+				print("  Full Update: true")
+			else
+				print("  Full Update: false")
+			end
+
+			-- Print added auras
+			if updateInfo.addedAuras then
+				print("  Added Auras:")
+				for _, aura in ipairs(updateInfo.addedAuras) do
+					print(string.format(
+						"	Aura Name: %s, SpellID: %d, IsHelpful: %s, IsHarmful: %s, SourceUnit: %s",
+						aura.name or "Unknown",
+						aura.spellId or 0,
+						tostring(aura.isHelpful),
+						tostring(aura.isHarmful),
+						tostring(aura.sourceUnit or "None")
+					))
+				end
+			else
+				print("  Added Auras: None")
+			end
+
+			-- Print updated auras
+			if updateInfo.updatedAuraInstanceIDs then
+				print("  Updated Auras:")
+				for _, instanceID in ipairs(updateInfo.updatedAuraInstanceIDs) do
+					local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unitTarget, instanceID)
+					if auraData then
+						print(string.format(
+							"	Updated Aura: %s, SpellID: %d, Applications: %d, ExpirationTime: %s",
+							auraData.name or "Unknown",
+							auraData.spellId or 0,
+							auraData.applications or 0,
+							auraData.expirationTime or "Unknown"
+						))
+					else
+						print("	Aura Data not available for InstanceID:", instanceID)
+					end
+				end
+			else
+				print("  Updated Auras: None")
+			end
+
+			-- Print removed auras
+			if updateInfo.removedAuraInstanceIDs then
+				print("  Removed Auras:")
+				for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
+					print(string.format("	Removed Aura InstanceID: %d", instanceID))
+				end
+			else
+				print("  Removed Auras: None")
+			end
+		else
+			print("Update Info: None or not a table")
+		end
+	end
+
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("|cffffff00EventHandler triggered with event:|r", event)	-- Print the event name in yellow
+		print("|cffffff00EventHandler triggered with event:|r", event)  -- Print the event name in yellow
 	end
 
 	-- Get the currently super-tracked quest
@@ -3368,35 +3420,48 @@ function RQE.handleUnitAura(...)
 		return
 	end
 
-	-- Check if the current step relies on buffs or debuffs
-	local isBuffOrDebuffCheck = false
-	if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
-		isBuffOrDebuffCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for the same
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
-				isBuffOrDebuffCheck = true
-				break
+	-- Check if any added auras match the current step's checks
+	if updateInfo and updateInfo.addedAuras then
+		for _, aura in ipairs(updateInfo.addedAuras) do
+			-- Compare added aura name or spell ID to stepData.check or stepData.checks
+			local matchesAura = false
+			if stepData.checks then
+				for _, checkData in ipairs(stepData.checks) do
+					if checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff" then
+						for _, checkValue in ipairs(checkData.check) do
+							if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+								matchesAura = true
+								break
+							end
+						end
+					end
+					if matchesAura then break end
+				end
+			elseif stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff" then
+				for _, checkValue in ipairs(stepData.check) do
+					if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+						matchesAura = true
+						break
+					end
+				end
+			end
+
+			-- If a match is found, trigger periodic checks
+			if matchesAura then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("Aura %s (SpellID: %d) matched quest step. Running periodic checks.", aura.name, aura.spellId))
+				end
+				C_Timer.After(0.5, function()
+					RQE:StartPeriodicChecks()
+				end)
+				return
 			end
 		end
 	end
 
-	-- If the current step is tied to buff or debuff checks, re-run periodic checks
-	if isBuffOrDebuffCheck then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("UNIT_AURA related to current stepIndex:", stepIndex, "for questID:", questID)
-		end
-		C_Timer.After(0.5, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("~~ Running RQE:StartPeriodicChecks() from UNIT_AURA ~~")
-			end
-			RQE:StartPeriodicChecks()
-		end)
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
-		end
+	-- Default debug for unrelated auras
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
 	end
 end
 
