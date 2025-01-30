@@ -11,6 +11,7 @@
 		- Added string for subzones on CheckDBZoneChange within the RQE:CheckDBZoneChange function (2025.01.24)
 		- Added better handling for CheckDBComplete to not automatically enable without that funct in last stepIndex, in order to allow better guidance out of caves/undergrounds (2025.01.26)
 		- Added functionality to save/restore the watched/tracked quests on character-basis (2025.01.28)
+		- Fixed UNIT_AURA event to work better and print out more info for debugging (2025.01.29)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set (2025.01.03)
@@ -83,6 +84,7 @@
 		- Added UNIT_MODEL_CHANGED for purposes when disguise occurs but UNIT_AURA doesn't call RQE:StartPeriodicChecks function (2025.01.26)
 		- Updated BAG_UPDATE to now call RQE:StartPeriodicChecks (2025.01.27)
 		- Added functionality to save/restore the watched/tracked quests on character-basis (2025.01.28)
+		- Fixed UNIT_AURA event function to print out more info if showArgPayloadInfo is enabled and should work better now (2025.01.29)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
