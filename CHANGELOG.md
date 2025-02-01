@@ -115,7 +115,9 @@
 		- Updated Alliance quests in Dragonblight to DB (2025.01.27)
 		- Updated Alliance quests in Grizzly Hills to DB (2025.01.29)
 		- Added most Lunar Festival 'Elder' quests to DB (2025.01.29)
-		- Added some Alliance quests in Scholazar Basin to DB (2025.01.29)
+		- Updated Alliance quests in Sholazar Basin to DB (2025.01.31)
+		- Added some Alliance quests in The Storm Peaks to DB (2025.01.31)
+		- Added some of the 11.1 quests to DB including Dalaran finale and early intro of Undermine (2025.01.31)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
