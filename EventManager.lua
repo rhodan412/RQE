@@ -616,7 +616,7 @@ function RQE.handleItemCountChanged(...)
 			RQE.StartPerioFromItemCountChanged = true
 			RQE.ItemCountRanStartPeriodicChecks = true
 			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
-			C_Timer.After(0.4, function()
+			C_Timer.After(0.5, function()
 				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				C_Timer.After(3, function()
 					RQE.StartPerioFromItemCountChanged = false
@@ -2428,11 +2428,13 @@ function RQE.handleSuperTracking()
 		RQE.StartPerioFromSuperTrackChange = true
 		RQE.SuperTrackChangeRanStartPeriodicChecks = true
 		if RQE.LastAcceptedQuest == RQE.currentSuperTrackedQuestID then
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+			C_Timer.After(1.3, function()
+				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+				C_Timer.After(3, function()
+					RQE.StartPerioFromSuperTrackChange = false
+				end)
+			end)
 		end
-		C_Timer.After(3, function()
-			RQE.StartPerioFromSuperTrackChange = false
-		end)
 	end
 
 	-- Early return if manual super tracking wasn't performed
@@ -3597,7 +3599,9 @@ function RQE.handleUnitQuestLogChange(...)
 				if not RQE.QuestRemoved then
 					RQE.StartPerioFromUnitQuestLogChanged = true
 					if RQE.LastAcceptedQuest ~= RQE.currentSuperTrackedQuestID then
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+						C_Timer.After(1.1, function()
+							RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
+						end)
 					end
 					RQE.QuestRemoved = false
 
@@ -3612,7 +3616,7 @@ function RQE.handleUnitQuestLogChange(...)
 								RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
 							else
 								if RQE.db.profile.debugLevel == "INFO+" then
-									print("Error: Waypoint button or AddonSetStepIndex is nil during SUPER_TRACKING_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
+									print("Error: Waypoint button or AddonSetStepIndex is nil during UNIT_QUEST_LOG_CHANGED for quest ID:", RQE.currentSuperTrackedQuestID)
 								end
 							end
 						end)
@@ -3649,7 +3653,9 @@ function RQE.handleUnitQuestLogChange(...)
 		if not RQE.QuestRemoved then
 			RQE.StartPerioFromUQLC = true
 			if RQE.LastAcceptedQuest ~= RQE.currentSuperTrackedQuestID then
-				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
+				C_Timer.After(0.4, function()
+					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
+				end)
 			end
 			RQE.QuestRemoved = false
 		end
