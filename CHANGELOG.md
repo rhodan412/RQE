@@ -1,4 +1,4 @@
-11.0.7.6
+11.0.7.6 (2025-02-02)
 
 	**HIGHLIGHTS**
 		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips! (2025.01.02)
@@ -85,6 +85,7 @@
 		- Updated BAG_UPDATE to now call RQE:StartPeriodicChecks (2025.01.27)
 		- Added functionality to save/restore the watched/tracked quests on character-basis (2025.01.28)
 		- Fixed UNIT_AURA event function to print out more info if showArgPayloadInfo is enabled and should work better now (2025.01.29)
+		- Fixed timer delay before RQE:StartPeriodicChecks function is called in some circumstances (2025.02.02)
 
 	QuestingModule.lua
 		- Fixed issue related to bonus quests check firing too often, thus improving lag between zone changes as well as periodic gameplay when a primary function is called (2025.01.08)
@@ -118,11 +119,13 @@
 		- Updated Alliance quests in Sholazar Basin to DB (2025.01.31)
 		- Added some Alliance quests in The Storm Peaks to DB (2025.01.31)
 		- Added some of the 11.1 quests to DB including Dalaran finale and early intro of Undermine (2025.01.31)
+		- Updated The Darkmoon Faire profession quests in the DB (2025.02.02)
 
 	RQEFrame.lua
 		- Fixed some options within RQE.ClickRandomQuestLogIndexButton function to call RQE.CheckAndClickWButton() instead of immediately clicking the "W" button. This is because the function call performs various checks to make sure if it is first necessary to click the button (2025.01.03)
 		- Changed dynamic padding of RQEFrame's QuestNameText to allow for better wrap for longer quest titles (2025.01.03)
 		- Added RQE.totalStepforQuest to addon table for totalSteps for quest contribution purposes (2025.01.24)
+		- Fixed nil error for the RQE.SeparateStepText (2025.02.02)
 
 	RQEMacro.lua
 		- Added better visibility for displaying tooltip of item associated with Magic Button macro, and works with spells too that are in the macro (2025.01.06)
