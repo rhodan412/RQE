@@ -2049,7 +2049,7 @@ function RQE.InitializeSeparateFocusFrame()
 	-- Attach the mouse wheel scroll script to the scroll frame
 	RQE.SeparateScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 		-- Check if the mouse is over the SeparateStepText
-		if RQE.SeparateStepText:IsMouseOver() then
+		if RQE.SeparateStepText and RQE.SeparateStepText:IsMouseOver() then
 			-- Check if Alt, Ctrl, or Shift is being held down
 			if IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown() then
 				-- Handle scrolling for the SeparateScrollFrame
