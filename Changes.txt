@@ -1,3 +1,11 @@
+11.0.7.7
+
+	**HIGHLIGHTS**
+
+	RQE.toc
+		- Updated version# (2025.02.02)
+
+
 11.0.7.6 (2025-02-02)
 
 	**HIGHLIGHTS**
@@ -12,6 +20,7 @@
 		- Added better handling for CheckDBComplete to not automatically enable without that funct in last stepIndex, in order to allow better guidance out of caves/undergrounds (2025.01.26)
 		- Added functionality to save/restore the watched/tracked quests on character-basis (2025.01.28)
 		- Fixed UNIT_AURA event to work better and print out more info for debugging (2025.01.29)
+		- Improved handling of quests, particularly in certain caves or across multiple zones for waypoint guidance, such as Darkmoon Faire quests where you need to collect profession materials outside of the Darkmoon Faire. (2025.02.02)
 
 	Buttons.lua
 		- Modified RQE.UnknownButtonTooltip function to run RQE.CheckAndClickSeparateWaypointButtonButton() after RQE.ClickWButton() and RQE:StartPeriodicChecks() and also providing tooltip information if INFO debug option is set (2025.01.03)
