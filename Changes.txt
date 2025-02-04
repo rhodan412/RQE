@@ -5,6 +5,9 @@
 	RQE.toc
 		- Updated version# (2025.02.02)
 
+	RQEDatabase.lua
+		- Updates to Love Is In The Air event quests (2025.02.04)
+
 
 11.0.7.6 (2025-02-02)
 
