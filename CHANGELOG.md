@@ -6,7 +6,9 @@
 		- Updated version# (2025.02.02)
 
 	RQEDatabase.lua
-		- Updates to Love Is In The Air event quests (2025.02.04)
+		- Updates to Love Is In The Air event quests (2025.02.05)
+		- Added 'Lingering Shadows' preliminary quests to DB (2025.02.05)
+		- Added Mount Hyjal and Deepholm preliminary quests to DB (2025.02.05)
 
 
 11.0.7.6 (2025-02-02)
