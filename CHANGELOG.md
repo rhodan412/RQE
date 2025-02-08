@@ -4,11 +4,13 @@
 
 	RQE.toc
 		- Updated version# (2025.02.02)
+		- Updated info in notes to detail info on compatibility issues (2025.02.07)
 
 	RQEDatabase.lua
 		- Added 'Lingering Shadows' preliminary quests to DB (2025.02.05)
 		- Added Mount Hyjal and Deepholm preliminary quests to DB (2025.02.05)
 		- Updates to Love Is In The Air event quests (2025.02.06)
+		- Updated Deepholm, Uldum and Twilight Highlands quests to DB (2025.02.07)
 
 
 11.0.7.6 (2025-02-02)
