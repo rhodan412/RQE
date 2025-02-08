@@ -2,15 +2,12 @@
 ## Title: Rhodan's Quest Explorer
 ## Author: Rhodan {Aurleis}
 ## Version: 11.0.7.7
-## Notes: A handy tool for questing.
+## Notes: A handy tool for questing.|cFFCC99FFThis addon has known compatibility issues with the "World Quest Tracker" addon. There are partial issues with "Carbonite Quests" addon, but only when turning in quests thru the default Blizzard Objective Tracker. If you experience problems, consider disabling these addons while using RQE.|r
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
 ## SavedVariables: RQEDB
 ## SavedVariablesPerCharacter: RQECharacterDB
 ## OptionalDeps: TomTom, Carbonite
-
-## Compatibility Note: This addon has known compatibility issues with the "World Quest Tracker" addon.
-## If you experience problems, consider disabling World Quest Tracker while using Rhodan's Quest Explorer.
 
 ## Libraries
 Libs/LibStub/LibStub.lua
