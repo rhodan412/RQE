@@ -11,6 +11,7 @@
 		- Added Mount Hyjal and Deepholm preliminary quests to DB (2025.02.05)
 		- Updates to Love Is In The Air event quests (2025.02.06)
 		- Updated Deepholm, Uldum and Twilight Highlands quests to DB (2025.02.07)
+		- Updated Vashj'ir quests to DB (2025.02.08)
 
 
 11.0.7.6 (2025-02-02)
