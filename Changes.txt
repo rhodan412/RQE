@@ -2,6 +2,9 @@
 
 	**HIGHLIGHTS**
 
+	Buttons.lua
+		- Fixed nil error associated with currentSuperTrackedQuestID in the "W" button tooltip (2025.02.09)
+
 	RQE.toc
 		- Updated version# (2025.02.02)
 		- Updated info in notes to detail info on compatibility issues (2025.02.07)
@@ -10,8 +13,8 @@
 		- Added 'Lingering Shadows' preliminary quests to DB (2025.02.05)
 		- Added Mount Hyjal and Deepholm preliminary quests to DB (2025.02.05)
 		- Updates to Love Is In The Air event quests (2025.02.06)
-		- Updated Deepholm, Uldum and Twilight Highlands quests to DB (2025.02.07)
-		- Updated Vashj'ir quests to DB (2025.02.08)
+		- Updated Vashj'ir, Deepholm, Uldum and Twilight Highlands (alliance/neutral) quests to DB (2025.02.08)
+		- Added Elwynn Forest and Westfall quests to DB (2025.02.09)
 
 
 11.0.7.6 (2025-02-02)
