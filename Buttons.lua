@@ -126,19 +126,24 @@ RQE.UnknownButtonTooltip = function()
 				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 
-			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+			RQE.CurrentTrackedQuestID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+			--local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
-			if questID then  -- Add a check to ensure questID is not nil
-				local mapID = GetQuestUiMapID(questID)
+			if not RQE.CurrentTrackedQuestID then
+				RQE.CurrentTrackedQuestID = 0
+			end
+
+			if RQE.CurrentTrackedQuestID then  -- Add a check to ensure questID is not nil
+				local mapID = GetQuestUiMapID(RQE.CurrentTrackedQuestID)
 				RQE.WPmapID = mapID
-				local questData = RQE.getQuestData(questID)
-				local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+				local questData = RQE.getQuestData(RQE.CurrentTrackedQuestID)
+				local x, y = C_QuestLog.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
 				RQE.WPxPos = x
 				RQE.WPyPos = y
 				if not RQE.WPxPos == nil then
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID))
 					if RQE.db.profile.debugLevel == "INFO" then
-						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 						RQE.WCoordData = tooltipText
 						C_Timer.After(5, function()
 							RQE:StartPeriodicChecks()
@@ -152,7 +157,7 @@ RQE.UnknownButtonTooltip = function()
 				-- If coordinates are already available, just show them
 				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.DatabaseSuperX * 100, RQE.DatabaseSuperY * 100, tostring(RQE.DatabaseSuperMapID))
 				if RQE.db.profile.debugLevel == "INFO" then
-					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 					RQE.WCoordData = tooltipText
 					C_Timer.After(5, function()
 						RQE:StartPeriodicChecks()
@@ -168,14 +173,14 @@ RQE.UnknownButtonTooltip = function()
 
 			elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
 				-- Open the quest log details for the super tracked quest to fetch the coordinates
-				OpenQuestLogToQuestDetails(questID)
+				OpenQuestLogToQuestDetails(RQE.CurrentTrackedQuestID)
 
 				-- Use RQE.GetQuestCoordinates to get the coordinates
-				local x, y, mapID = RQE.GetQuestCoordinates(questID)
+				local x, y, mapID = RQE.GetQuestCoordinates(RQE.CurrentTrackedQuestID)
 				if x and y and mapID then
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x * 100, y * 100, tostring(mapID))
 					if RQE.db.profile.debugLevel == "INFO" then
-						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 						RQE.WCoordData = tooltipText
 						C_Timer.After(5, function()
 							RQE:StartPeriodicChecks()
@@ -184,11 +189,11 @@ RQE.UnknownButtonTooltip = function()
 					GameTooltip:SetText(tooltipText)
 				else
 					-- Fallback to using RQE.GetNextWaypoint if coordinates are not available
-					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(RQE.CurrentTrackedQuestID)
 					if waypointX and waypointY and waypointMapID then
 						local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", waypointX * 100, waypointY * 100, tostring(waypointMapID))
 						if RQE.db.profile.debugLevel == "INFO" then
-							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 							RQE.WCoordData = tooltipText
 							C_Timer.After(5, function()
 								RQE:StartPeriodicChecks()
@@ -208,7 +213,7 @@ RQE.UnknownButtonTooltip = function()
 				-- If coordinates are already available, just show them
 				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.superX * 100, RQE.superY * 100, tostring(RQE.superMapID))
 				if RQE.db.profile.debugLevel == "INFO" then
-					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. currentSuperTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 					RQE.WCoordData = tooltipText
 					C_Timer.After(5, function()
 						RQE:StartPeriodicChecks()
