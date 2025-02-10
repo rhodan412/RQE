@@ -1,6 +1,7 @@
 11.0.7.7
 
 	**HIGHLIGHTS**
+		- Updated most quests in Cataclysm (alliance) to include waypoints, macros and quest tips! (2025.02.10)
 
 	Buttons.lua
 		- Fixed nil error associated with currentSuperTrackedQuestID in the "W" button tooltip (2025.02.09)
@@ -14,7 +15,7 @@
 		- Added Mount Hyjal and Deepholm preliminary quests to DB (2025.02.05)
 		- Updates to Love Is In The Air event quests (2025.02.06)
 		- Updated Vashj'ir, Deepholm, Uldum and Twilight Highlands (alliance/neutral) quests to DB (2025.02.08)
-		- Added Elwynn Forest and Westfall quests to DB (2025.02.09)
+		- Added Elwynn Forest, Westfall and Redridge Mountains quests to DB (2025.02.10)
 
 
 11.0.7.6 (2025-02-02)
