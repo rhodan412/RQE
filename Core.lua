@@ -649,6 +649,10 @@ end
 
 -- Function to save the current supertracked quest to the character-specific table
 function RQE:SaveSuperTrackedQuestToCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
+	end
+
 	-- Get the currently supertracked quest ID
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -698,6 +702,10 @@ end
 
 -- Function to restore the saved supertracked quest for the current character
 function RQE:RestoreSuperTrackedQuestForCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
+	end
+
 	if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
 		local savedQuestID = RQECharacterDB.superTrackedQuestID
 		local isWorldQuest = RQECharacterDB.isWorldQuest
@@ -742,6 +750,10 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 			print("No saved supertracked quest found for this character.")
 		end
 	end
+
+	C_Timer.After(0.1, function()
+		UpdateFrame()
+	end)
 end
 
 
@@ -2401,7 +2413,7 @@ function RQE:RemoveSuperTrackingFromQuest()
 	-- Step 2: Remove the super-tracking by setting it to 0
 	if superTrackedQuestID and superTrackedQuestID ~= 0 then
 		C_SuperTrack.SetSuperTrackedQuestID(0)
-		RQE:SaveSuperTrackedQuestToCharacter()
+		-- RQE:SaveSuperTrackedQuestToCharacter()
 		RQE.infoLog("Removed super-tracking from quest ID:", superTrackedQuestID)
 	else
 		RQE.infoLog("No quest is currently super-tracked.")
