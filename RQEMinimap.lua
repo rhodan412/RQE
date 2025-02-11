@@ -112,6 +112,7 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 -- Function that toggles RQEFrame and RQEQuestFrame
 function RQE.ToggleBothFramesfromLDB()
 	if RQEFrame:IsShown() then
+		RQE:SaveSuperTrackedQuestToCharacter()
 		RQEFrame:Hide()
 		RQE.db.profile.enableFrame = false
 
