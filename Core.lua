@@ -5326,56 +5326,6 @@ function RQE:EvaluateNotCondition(checkFunction, check, neededAmt, questID, step
 end
 
 
--- function RQE:EvaluateChecks(questID, stepIndex)
-	-- local questData = self.getQuestData(questID)
-	-- if not questData then return false end
-
-	-- local stepData = questData[stepIndex]
-	-- if not stepData or not stepData.checks then return false end
-
-	-- -- Iterate through all checks for this step
-	-- for _, checkData in ipairs(stepData.checks) do
-		-- local logic = checkData.logic or "AND" -- Default to AND logic
-		-- local check = checkData.check or {}
-		-- local neededAmt = checkData.neededAmt or {}
-		-- local functName = checkData.funct or ""
-
-		-- -- Resolve the function
-		-- local checkFunction = self[functName]
-		-- if not checkFunction then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Function not found for logic:", logic, "functName:", functName)
-			-- end
-			-- return false
-		-- end
-
-		-- -- Evaluate the condition
-		-- local success
-		-- if logic == "AND" then
-			-- success = self:EvaluateAndCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
-		-- elseif logic == "OR" then
-			-- success = self:EvaluateOrCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
-		-- elseif logic == "NOT" then
-			-- success = self:EvaluateNotCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Unknown logic type:", logic)
-			-- end
-			-- return false
-		-- end
-
-		-- if not success then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Condition failed for logic:", logic)
-			-- end
-			-- return false
-		-- end
-	-- end
-
-	-- return true -- All conditions satisfied
--- end
-
-
 -- Function will check the player's current map ID against the expected map ID(s) stored in the check and failedcheck fields in the RQEDatabase (Array/Checks or Check compatible)
 function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -5517,6 +5467,147 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 
 	return false -- Default to false if no conditions are met
 end
+
+
+-- -- Function to check the player's current map ID against expected map ID(s) {Experimental}
+-- function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckDBZoneChange ~~")
+	-- end
+
+	-- -- Ensure `check` and `neededAmt` are valid
+	-- if type(check) ~= "table" then
+		-- check = { check }  -- Convert single number into a table
+	-- end
+	-- neededAmt = neededAmt or {}
+
+	-- -- Get the player's current map ID and subzone name
+	-- local currentMapID = C_Map.GetBestMapForUnit("player")
+	-- local currentSubZone = GetSubZoneText() or "" -- Subzone name
+	-- local currentZone = GetZoneText() or "" -- Zone name
+
+	-- -- Fall back to zone name if subzone is blank
+	-- if currentSubZone == "" then
+		-- currentSubZone = currentZone
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Current MapID:", tostring(currentMapID))
+		-- print("Current SubZone:", currentSubZone)
+		-- print("Current Zone:", currentZone)
+	-- end
+
+	-- -- Determine if `check` contains strings (subzones) or numbers (map IDs)
+	-- local isSubZoneCheck = type(check[1]) == "string" and not tonumber(check[1])
+
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("No valid quest data found for questID:", questID)
+		-- end
+		-- return false -- Exit early if no quest data is found
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("No valid step data found for stepIndex:", stepIndex)
+		-- end
+		-- return false -- Exit early if no step data is found
+	-- end
+
+	-- -- Handle subzone checks (string-based)
+	-- if isSubZoneCheck then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Evaluating subzone check. Required SubZones:", table.concat(check, ", "))
+		-- end
+
+		-- for _, subZone in ipairs(check) do
+			-- if currentSubZone == subZone then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Player is in the required subzone:", subZone)
+				-- end
+				-- return true -- Subzone matches
+			-- end
+		-- end
+
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Player is not in any of the required subzones. Current SubZone:", currentSubZone)
+			-- print("Required SubZones:", table.concat(check, ", "))
+		-- end
+		-- return false
+	-- end
+
+	-- -- Handle single check + neededAmt directly
+	-- if #check > 0 then
+		-- for _, mapID in ipairs(check) do
+			-- if tostring(currentMapID) == tostring(mapID) then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Player is in a required zone (MapID: " .. tostring(currentMapID) .. "). Advancing to the next quest step.")
+				-- end
+				-- return true
+			-- end
+		-- end
+		-- -- If no match is found in the single check, return false
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Player is not in any of the required zones from single check. Current MapID:", tostring(currentMapID))
+			-- print("Required MapID(s):", table.concat(check or {}, ", "))
+		-- end
+		-- return false
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Evaluating multiple checks for stepIndex:", stepIndex)
+	-- end
+
+	-- -- Handle multiple checks using EvaluateStepChecks
+	-- if stepData.checks then
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("All zone conditions satisfied for stepIndex:", stepIndex)
+			-- end
+			-- self:ClickWaypointButtonForIndex(stepIndex)
+			-- return true -- Indicate successful advancement
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Zone conditions NOT satisfied for stepIndex:", stepIndex)
+			-- end
+			-- return false -- Indicate failure
+		-- end
+	-- end
+
+	-- -- Handle failed zones if `failedcheck` is defined
+	-- local failedMapIDs = stepData.failedcheck or {}
+	-- if type(failedMapIDs) ~= "table" then
+		-- failedMapIDs = { failedMapIDs }  -- Ensure it's always a table
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Evaluating failed zones for Current MapID:", tostring(currentMapID))
+		-- print("Failed MapID(s):", table.concat(failedMapIDs, ", "))
+	-- end
+	-- if #failedMapIDs > 0 then
+		-- for _, mapID in ipairs(failedMapIDs) do
+			-- if tostring(currentMapID) == tostring(mapID) then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Player is in a failed zone (MapID: " .. tostring(currentMapID) .. "). Returning failure. Current stepIndex:", stepIndex)
+				-- end
+				-- return false
+			-- end
+		-- end
+	-- end
+
+	-- -- If no match is found
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Player is not in any of the correct or failed zones. Current stepIndex:", stepIndex)
+		-- print("Current MapID:", tostring(currentMapID),
+			  -- "Required MapID(s):", table.concat(stepData.check or {}, ", "),
+			  -- "Failed MapID(s):", table.concat(failedMapIDs or {}, ", "))
+	-- end
+
+	-- return false -- Default to false if no conditions are met
+-- end
 
 
 -- Function will check if the quest is ready for turn-in from what is passed by the RQEDatabase.
@@ -5798,6 +5889,147 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 	end
 	return false
 end
+
+
+-- -- Primary function to check the progress of objectives in a quest (Array/Checks or Check compatible) {Experimental}
+-- function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt, checkData)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckDBObjectiveStatus ~~")
+	-- end
+
+	-- -- Ensure `check` and `neededAmt` are valid
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Retrieve quest objectives and data
+	-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+	-- local questData = RQE.getQuestData(questID)
+
+	-- -- Early return if no quest is super-tracked or if data is missing
+	-- if not RQE.IsQuestSuperTracked() or not questData or not objectives then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Missing quest data or objectives for questID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Ensure stepIndex is valid
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Invalid stepIndex:", stepIndex, "for questID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Turn-in readiness check
+	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+	-- if isReadyTurnIn then
+		-- local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		-- if hasCheckDBComplete then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Quest ready for turn-in. Clicking the last step.")
+			-- end
+			-- self:ClickWaypointButtonForIndex(finalStepIndex)
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Determine which objectiveIndex to use
+	-- local objectiveIndex = (checkData and checkData.objIndex) or (stepData and stepData.objectiveIndex) or 1
+
+	-- -- Handle `check` and `neededAmt` explicitly
+	-- local allChecksPassed = true -- Assume all checks pass unless a failure is found
+
+	-- if #check > 0 and #neededAmt > 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Evaluating all checks for stepIndex:", stepIndex, "QuestID:", questID)
+		-- end
+
+		-- for i, condition in ipairs(check) do
+			-- local amount = tonumber(neededAmt[i]) or 1
+			-- local objIdx = checkData and checkData.objIndex or stepData.objectiveIndex or 1 -- Ensure correct objIndex handling
+			-- local objective = objectives[objIdx]
+
+			-- if not objective then
+				-- allChecksPassed = false
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("No valid objective found for objIndex:", objIdx, "QuestID:", questID, "StepIndex:", stepIndex)
+				-- end
+			-- elseif not objective.finished and objective.numFulfilled < amount then
+				-- allChecksPassed = false
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Objective status check failed for objIndex:", objIdx, 
+						-- "needed:", amount, 
+						-- "fulfilled:", objective.numFulfilled, 
+						-- "Finished:", tostring(objective.finished), 
+						-- "QuestID:", questID, "StepIndex:", stepIndex
+					-- )
+				-- end
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Objective passed for objIndex:", objIdx, 
+						-- "needed:", amount, 
+						-- "fulfilled:", objective.numFulfilled, 
+						-- "Finished:", tostring(objective.finished), 
+						-- "QuestID:", questID, "StepIndex:", stepIndex
+					-- )
+				-- end
+			-- end
+		-- end
+	-- end
+
+	-- -- 🔥 Validate `checks` array correctly
+	-- if stepData.checks and not checkData then 
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Checking additional `checks` array for stepIndex:", stepIndex, "QuestID:", questID)
+		-- end
+
+		-- for _, checkItem in ipairs(stepData.checks) do
+			-- local checkPassed = self:EvaluateStepChecks(questID, stepIndex)  -- Use EvaluateStepChecks
+			-- if not checkPassed then
+				-- allChecksPassed = false
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("One or more checks in `checks` array failed. Step does NOT advance.")
+				-- end
+				-- break -- Prevent multiple failed checks from re-evaluating
+			-- end
+		-- end
+	-- end
+
+	-- -- 🔥 Ensure step only advances if ALL conditions pass
+	-- if allChecksPassed then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("All objective conditions met for stepIndex:", stepIndex, ". Advancing step.")
+		-- end
+
+		-- -- 🔥 Ensure stepIndex actually increases correctly
+		-- local nextStepIndex = stepIndex + 1
+		-- if questData[nextStepIndex] then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Moving to next stepIndex:", nextStepIndex, "for QuestID:", questID)
+			-- end
+			-- self:AdvanceQuestStep(questID, nextStepIndex) 
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("No next step found. Staying on last step:", stepIndex, "for QuestID:", questID)
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- If no conditions met, remain on current step
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("No conditions met for questID:", questID, "stepIndex:", stepIndex)
+	-- end
+	-- return false
+-- end
 
 
 -- Function to check the current scenario stage (Array/Checks or Check compatible)
