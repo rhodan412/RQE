@@ -566,7 +566,7 @@ function RQE.Buttons.ClearButtonPressed()
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE:RemoveSuperTrackingFromQuest()
-		RQE:SaveSuperTrackedQuestToCharacter()
+		-- RQE:SaveSuperTrackedQuestToCharacter()
 	end)
 
 	C_Timer.After(0.2, function()
