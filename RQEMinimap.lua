@@ -155,11 +155,18 @@ function RQE.ToggleBothFramesfromLDB()
 
 	RQE.updateScenarioUI() -- Necessary to check/update if scenario information was present in the RQEQuestFrame, closed and then re-opened outside of a scenario
 	--RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if not RQE.isSuperTracking or not isSuperTracking then
-		RQE.Buttons.ClearButtonPressed()
-	end
+	C_Timer.After(0.1, function()
+		if RQE.db.profile.enableFrame then
+			RQE:RestoreSuperTrackedQuestForCharacter()
+		else
+			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+			if not RQE.isSuperTracking or not isSuperTracking then
+				RQE.Buttons.ClearButtonPressed()
+			end
+		end
+	end)
 end
 
 ---------------------------
