@@ -4,13 +4,17 @@
 		- Updated most quests in Cataclysm (alliance) to include waypoints, macros and quest tips! (2025.02.10)
 		- Super tracked quest is restored when the RQEFrame is re-enabled (2025.02.11)
 
+	**Misc/Experimental**
+		- Experimental addition modification to CheckDBZoneChange and CheckDBObjectiveStatus but commented out (2025.02.11)
+
 	Buttons.lua
 		- Fixed nil error associated with currentSuperTrackedQuestID in the "W" button tooltip (2025.02.09)
-		- Removed code that was saving character's supertracked quest when the clear button was pressed - this may be reverted (2025.02.11)
+		- Removed code that was saving character's supertracked quest when the clear button was pressed (2025.02.11)
 
 	Core.lua
 		- Added/modified some debug language for when quest player was supertracking are saved to the savedvariables DB file (2025.02.11)
 		- UpdateFrame() is now called after RQE:RestoreSuperTrackedQuestForCharacter() to ensure proper updates to the frame (2025.02.11)
+		- Removed old commented out bits related to quest step automation (2025.02.11)
 
 	EventManager.lua
 		- Removed code that was saving character's supertracked quest when SUPER_TRACKING_CHANGED event fires as this was causing the function to fire too frequently (2025.02.11)
@@ -22,13 +26,14 @@
 	RQEDatabase.lua
 		- Added 'Lingering Shadows' preliminary quests to DB (2025.02.05)
 		- Added Mount Hyjal and Deepholm preliminary quests to DB (2025.02.05)
-		- Updates to Love Is In The Air event quests (2025.02.06)
 		- Updated Vashj'ir, Deepholm, Uldum and Twilight Highlands (alliance/neutral) quests to DB (2025.02.08)
 		- Added Elwynn Forest, Westfall and Redridge Mountains quests to DB (2025.02.10)
 		- Added Swamp of Sorrows, Burning Steppes and Blasted Lands (alliance/neutral) quests to DB (2025.02.11)
+		- Updates to Love Is In The Air event quests (2025.02.11)
 
 	RQEMinimap.lua
 		- When RQEFrame is restored via RQE.ToggleBothFramesfromLDB() or LDB/minimap button press it will now properly restore the quest that was saved to what the player was supertracking (2025.02.11)
+		- Added functionality to save currently super tracked quest, if the RQEFrame is shown, prior to disabling of the RQEFrame (2025.02.11)
 
 
 11.0.7.6 (2025-02-02)
