@@ -566,7 +566,7 @@ function RQE.Buttons.ClearButtonPressed()
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE:RemoveSuperTrackingFromQuest()
-		-- RQE:SaveSuperTrackedQuestToCharacter()
+		--RQE:SaveSuperTrackedQuestToCharacter()	-- needs to only run this part if the player actually presses the "C" button, otherwise only the other bits of this code should run!
 	end)
 
 	C_Timer.After(0.2, function()
