@@ -1486,28 +1486,34 @@ end
 
 -- Function that simulates a click of the QuestLogIndexButton
 function RQE.ClickQuestLogIndexButton(questID)
-	local found = false
-	for i, button in ipairs(RQE.QuestLogIndexButtons) do
-		if button and button.questID == questID then
-			if button:IsVisible() and button:IsEnabled() then
-				button:Click()
-				found = true
-				break
-			end
-		end
-	end
-	if not found then
-		RQE.debugLog("No button found for questID: " .. tostring(questID))
-	end
+    -- Ensure the table is initialized
+    if not RQE.QuestLogIndexButtons then
+        RQE.QuestLogIndexButtons = {}
+    end
 
-	-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE.CreateMacroForQuestLogIndexButton = true
-		RQEMacro:CreateMacroForCurrentStep()
-		C_Timer.After(3, function()
-			RQE.CreateMacroForQuestLogIndexButton = false
-		end)
-	end
+    local found = false
+    for i, button in ipairs(RQE.QuestLogIndexButtons) do
+        if button and button.questID == questID then
+            if button:IsVisible() and button:IsEnabled() then
+                button:Click()
+                found = true
+                break
+            end
+        end
+    end
+
+    if not found then
+        RQE.debugLog("No button found for questID: " .. tostring(questID))
+    end
+
+    -- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
+    if RQE.db.profile.autoClickWaypointButton then
+        RQE.CreateMacroForQuestLogIndexButton = true
+        RQEMacro:CreateMacroForCurrentStep()
+        C_Timer.After(3, function()
+            RQE.CreateMacroForQuestLogIndexButton = false
+        end)
+    end
 end
 
 
