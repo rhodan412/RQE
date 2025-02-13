@@ -3,6 +3,7 @@
 	**HIGHLIGHTS**
 		- Updated most quests in Cataclysm (alliance) to include waypoints, macros and quest tips! (2025.02.10)
 		- Super tracked quest is restored when the RQEFrame is re-enabled (2025.02.11)
+		- Added functionality for sorting non-world quests in the RQEQuestFrame when UpdateRQEQuestFrame() function is called (2025.02.12)
 
 	**Misc/Experimental**
 		- Experimental addition modification to CheckDBZoneChange and CheckDBObjectiveStatus but commented out (2025.02.11)
@@ -18,6 +19,12 @@
 
 	EventManager.lua
 		- Removed code that was saving character's supertracked quest when SUPER_TRACKING_CHANGED event fires as this was causing the function to fire too frequently (2025.02.11)
+		- Added functionality for sorting non-world quests in the RQEQuestFrame when UpdateRQEQuestFrame() function is called within event handling (2025.02.12)
+		- Added PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event (2025.02.12)
+
+	QuestingModule.lua
+		- Added functionality to provide a print-out of quests in current player zone of sorted quest list (2025.02.12)
+		- Added functionality to sort non-world quests for tracked quests in player zone for the RQEQuestFrame and quests not in the zone are listed below the sorted ones (2025.02.12)
 
 	RQE.toc
 		- Updated version# (2025.02.02)
@@ -30,6 +37,11 @@
 		- Added Elwynn Forest, Westfall and Redridge Mountains quests to DB (2025.02.10)
 		- Added Swamp of Sorrows, Burning Steppes and Blasted Lands (alliance/neutral) quests to DB (2025.02.11)
 		- Updates to Love Is In The Air event quests (2025.02.11)
+		- Added preliminary quests to Undermine to DB (2025.02.12)
+		- Added Stranglethorn zones (alliance/neutral) quests to DB (2025.02.12)
+
+	RQEFrame.lua
+		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
 
 	RQEMinimap.lua
 		- When RQEFrame is restored via RQE.ToggleBothFramesfromLDB() or LDB/minimap button press it will now properly restore the quest that was saved to what the player was supertracking (2025.02.11)
