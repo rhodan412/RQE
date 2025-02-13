@@ -906,6 +906,98 @@ function SortQuestsByProximity()
 end
 
 
+-- Function that prints the currently watched quest along with a listing of distance
+function RQE:PrintSortedWatchedQuests()
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local pos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+
+	if not pos then
+		print("Error: Unable to determine player position.")
+		return
+	end
+
+	local playerX, playerY = pos:GetXY()
+	print("Player Position:", playerX, playerY, "on Map ID:", playerMapID)
+
+	local questDistances = {}
+
+	-- Iterate over watched quests
+	for i = 1, C_QuestLog.GetNumQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+
+		-- Get the squared distance to the quest
+		local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+
+		-- Only include quests that are on the same continent
+		if distanceSq and onContinent then
+			table.insert(questDistances, { questID = questID, distanceSq = distanceSq })
+		end
+	end
+
+	-- Sort quests by proximity (smallest distance first)
+	table.sort(questDistances, function(a, b)
+		return a.distanceSq < b.distanceSq
+	end)
+
+	-- Print sorted quest list
+	print("Sorted Quest List by Proximity:")
+	for _, data in ipairs(questDistances) do
+		local questName = C_QuestLog.GetTitleForQuestID(data.questID) or "Unknown Quest"
+		print(questName, "- QuestID:", data.questID, "- Distance:", math.sqrt(data.distanceSq))
+	end
+end
+
+
+-- Function that handles the sorting of tracked/watched quests based on proximity
+-- Only sorts quests that are in the player's current zone. Others are placed at the end.
+function RQE:SortWatchedQuestsByProximity()
+    --if C_Scenario.IsInScenario() then return end
+    RQE.SortedWatchedQuests = {}  -- Reset the table
+    local unsortedQuests = {}  -- Store quests that can't be sorted
+
+    local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+    if numTrackedQuests == 0 then return end
+
+    local playerMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
+    
+    for i = 1, numTrackedQuests do
+        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+
+        if questID and not C_QuestLog.IsWorldQuest(questID) then
+            local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+            local questMapID = GetQuestUiMapID(questID) -- Get the actual zone ID
+
+            -- Check if the quest is in the player's current zone
+            if distanceSq and onContinent and questMapID == playerMapID then
+                table.insert(RQE.SortedWatchedQuests, { questID = questID, distanceSq = distanceSq })
+            else
+                -- Assign an artificially large distance for out-of-zone or unknown-distance quests
+                table.insert(unsortedQuests, { questID = questID, distanceSq = 999999999 })
+            end
+        end
+    end
+
+    -- Sort table by proximity (smallest distance first)
+    table.sort(RQE.SortedWatchedQuests, function(a, b)
+        return a.distanceSq < b.distanceSq
+    end)
+    
+    -- Append unsorted quests at the end
+    for _, questData in ipairs(unsortedQuests) do
+        table.insert(RQE.SortedWatchedQuests, questData)
+    end
+
+    -- Debug Print
+    if RQE.db.profile.debugLevel == "INFO+" then
+        print("Sorted watched quests by proximity:")
+        for i, questData in ipairs(RQE.SortedWatchedQuests) do
+            local displayDistance = (questData.distanceSq == 999999999) and "Out of Zone" or math.sqrt(questData.distanceSq)
+            print(i .. ". QuestID:", questData.questID, "- Distance:", displayDistance)
+        end
+    end
+end
+
+
 -- -- Function to gather and sort World Quests and Bonus Objectives by proximity
 -- function GatherAndSortWorldQuestsByProximity()
 	-- local worldQuests = {}
@@ -2215,7 +2307,12 @@ end
 
 -- Updates the RQEQuestFrame
 function UpdateRQEQuestFrame()
+	RQE:SortWatchedQuestsByProximity()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
+
+	-- if RQE.SortOnly then
+		-- if C_Scenario.IsInScenario() then return end
+	-- end
 
 	local campaignQuestCount, regularQuestCount, worldQuestCount, bonusQuestCount = 0, 0, 0, 0
 	RQE.campaignQuestCount = campaignQuestCount
@@ -2356,9 +2453,13 @@ function UpdateRQEQuestFrame()
 	-- Get the bonus quests in the current zone
 	local bonusQuests = RQE:GetBonusQuestsInCurrentZone()
 
-		-- Loop through all tracked quests
-		for i = 1, numTrackedQuests do
-		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+	-- Loop through all tracked quests
+	-- for i = 1, numTrackedQuests do
+		-- local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+
+	-- Loop through sorted watched quests by proximity
+	for i, questData in ipairs(RQE.SortedWatchedQuests) do
+		local questID = questData.questID
 		local directionText = C_QuestLog.GetNextWaypointText(questID)
 		RQE.QuestDirectionText = directionText
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
