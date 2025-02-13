@@ -206,6 +206,7 @@ local eventsToRegister = {
 	"MERCHANT_UPDATE",
 	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
+	"PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED",
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
@@ -321,6 +322,7 @@ local function HandleEvents(frame, event, ...)
 		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
+		PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED = RQE.PlayerInsideQuestBlobStateChanged,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
 		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerMountDisplayChanged,
@@ -1118,6 +1120,19 @@ function RQE.handlePlayerMountDisplayChanged()
 
 	RQE:UpdateCoordinates()
 
+	local onTaxi = UnitOnTaxi("player")
+	local isResting = IsResting()
+
+	if not OnTaxi and not isResting then
+		if not RQE.hoveringOnFrame then
+			RQE.SortOnly = true
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
+			C_Timer.After(0.5, function()
+				RQE.SortOnly = false
+			end)
+		end
+	end
+
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.5, function()
@@ -1155,6 +1170,44 @@ function RQE.handlePlayerMountDisplayChanged()
 		RQE:CheckMemoryUsage()
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
 			DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)	-- Cornflower Blue
+		end
+	end
+end
+
+
+-- Function that handles the PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event
+function RQE.PlayerInsideQuestBlobStateChanged(...)
+	local event = select(2, ...)
+	local questID = select(3, ...)
+	local inBlobState = select(4, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventAchievementEarned and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	if not inBlobState then return end
+
+	local onTaxi = UnitOnTaxi("player")
+	local isResting = IsResting()
+
+	if not OnTaxi and not isResting then
+		if not RQE.hoveringOnFrame then
+			RQE.SortOnly = true
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
+			C_Timer.After(0.5, function()
+				RQE.SortOnly = false
+			end)
 		end
 	end
 end
@@ -1281,6 +1334,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestWatchUpdateFired = false
 	RQE.ReEnableRQEFrames = false
 	RQE.ShapeshiftUpdated = false
+	RQE.SortOnly = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
 	RQE.StartPerioFromItemCountChanged = false
 	RQE.StartPerioFromPlayerControlGained = false
@@ -1715,6 +1769,18 @@ function RQE.handlePlayerControlGained()
 		RQE:UpdateCoordinates()
 	end)
 
+	local onTaxi = UnitOnTaxi("player")
+
+	if not OnTaxi then
+		if not RQE.hoveringOnFrame then
+			RQE.SortOnly = true
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
+			C_Timer.After(0.5, function()
+				RQE.SortOnly = false
+			end)
+		end
+	end
+
 	RQE.canSortQuests = true
 	SortQuestsByProximity()
 	RQE:AutoClickQuestLogIndexWaypointButton()
@@ -1761,6 +1827,17 @@ function RQE.handlePlayerStartedMoving()
 	local isFlying = IsFlying("player")
 	local isMounted = IsMounted()
 	local onTaxi = UnitOnTaxi("player")
+	local isResting = IsResting()
+
+	if not OnTaxi and not isResting then
+		if not RQE.hoveringOnFrame then
+			RQE.SortOnly = true
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_STARTED_MOVING event fires
+			C_Timer.After(0.5, function()
+				RQE.SortOnly = false
+			end)
+		end
+	end
 
 	if not IsFlying and not isMounted and not onTaxi then
 		C_Timer.After(0.3, function()
@@ -2195,7 +2272,7 @@ function RQE.handlePlayerEnterWorld(...)
 
 		RQE:RestoreTrackedQuestsForCharacter()
 		RQE:RestoreSuperTrackedQuestForCharacter()
-		UpdateRQEQuestFrame()
+		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -2555,7 +2632,7 @@ function RQE.handleQuestAccepted(...)
 	end
 
 	C_Timer.After(1, function()
-		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest
+		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest (fires during QUEST_ACCEPTED event) - possible duplicate
 	end)
 
 	-- Clear the raid marker from the current target
@@ -2688,7 +2765,7 @@ function RQE.handleQuestAccepted(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QA 13 Debug: UpdateRQEQuestFrameVisibility.", 0.46, 0.62, 1)	-- Cornflower Blue
 	end
 
-	UpdateRQEQuestFrame()
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_ACCEPTED event fires - possible duplicate
 	RQE:UpdateRQEQuestFrameVisibility()
 
 	-- Update Display of Memory Usage of Addon
@@ -2747,6 +2824,23 @@ function RQE.handleZoneChange(...)
 
 	if C_Scenario.IsInScenario() then
 		RQE.updateScenarioUI()
+	end
+
+	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
+		local onTaxi = UnitOnTaxi("player")
+		local isResting = IsResting()
+
+		-- print(tostring(event))
+
+		if not OnTaxi and not isResting then
+			if not RQE.hoveringOnFrame then
+				RQE.SortOnly = true
+				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
+				C_Timer.After(0.5, function()
+					RQE.SortOnly = false
+				end)
+			end
+		end
 	end
 
 	-- RQE:UpdateMapIDDisplay()
@@ -3005,6 +3099,19 @@ function RQE.handleZoneNewAreaChange()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
+
+	local onTaxi = UnitOnTaxi("player")
+	local isResting = IsResting()
+
+	if not OnTaxi and not isResting then
+		if not RQE.hoveringOnFrame then
+			RQE.SortOnly = true
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
+			C_Timer.After(0.5, function()
+				RQE.SortOnly = false
+			end)
+		end
+	end
 
 	-- Get the currently super-tracked quest
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -3715,7 +3822,7 @@ function RQE.updateScenarioCriteriaUI()
 		RQE.StopTimer()
 	end
 
-	UpdateRQEQuestFrame()
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when SCENARIO_CRITERA_UPDATE event fires
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("updateScenarioCriteriaUI: Called UpdateRQEQuestFrame (1431).", 1, 0.75, 0.79)		-- Pink
 	end
@@ -3753,7 +3860,7 @@ function RQE.updateScenarioUI()
 		end
 
 		RQE.UpdateCampaignFrameAnchor()
-		UpdateRQEQuestFrame()
+		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 		if RQE.db.profile.debugLevel == "INFO+" or (RQE.db.profile.ScenarioCriteriaUpdate or RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
 			DEFAULT_CHAT_FRAME:AddMessage("updateScenarioUI: Called UpdateRQEQuestFrame (1470).", 1, 0.75, 0.79)		-- Pink
 		end
@@ -3793,7 +3900,7 @@ function RQE.updateScenarioUI()
 		RQE.StopTimer()
 	end
 
-	UpdateRQEQuestFrame()
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 	if RQE.db.profile.debugLevel == "INFO+" or (RQE.db.profile.ScenarioCriteriaUpdate or RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
 		DEFAULT_CHAT_FRAME:AddMessage("updateScenarioUI: Called UpdateRQEQuestFrame (1521).", 1, 0.75, 0.79)		-- Pink
@@ -3934,7 +4041,7 @@ function RQE.handleQuestStatusUpdate()
 		end)
 	end
 
-	UpdateRQEQuestFrame()
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires
 	UpdateRQEWorldQuestFrame()
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
@@ -4328,7 +4435,7 @@ function RQE.handleQuestRemoved(...)
 	end
 
 	C_Timer.After(1, function()
-		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest
+		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest (fires during QUEST_REMOVED event)
 	end)
 
 	if not RQE.currentSuperTrackedQuestID then
@@ -4678,7 +4785,7 @@ function RQE.handleQuestWatchListChanged(...)
 			DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)		-- Pink
 		end
 	else
-		UpdateRQEQuestFrame()
+		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 			DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)		-- Pink
 		end
@@ -4782,7 +4889,7 @@ function RQE.handleQuestWatchListChanged(...)
 		UpdateFrame()
 	end
 
-	UpdateRQEQuestFrame()
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 	RQE:SaveTrackedQuestsToCharacter()
 
 	C_Timer.After(0.5, function()
