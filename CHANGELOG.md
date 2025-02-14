@@ -6,7 +6,7 @@
 		- Added functionality for sorting non-world quests in the RQEQuestFrame when UpdateRQEQuestFrame() function is called (2025.02.12)
 
 	**Misc/Experimental**
-		- Experimental addition modification to CheckDBZoneChange and CheckDBObjectiveStatus but commented out (2025.02.11)
+		- Experimental addition modification to CheckDBZoneChange and CheckDBObjectiveStatus but commented out for now until can perfect (2025.02.11)
 
 	Buttons.lua
 		- Fixed nil error associated with currentSuperTrackedQuestID in the "W" button tooltip (2025.02.09)
@@ -39,6 +39,7 @@
 		- Updates to Love Is In The Air event quests (2025.02.11)
 		- Added preliminary quests to Undermine to DB (2025.02.12)
 		- Added Stranglethorn zones (alliance/neutral) quests to DB (2025.02.12)
+		- Added Loch Modan, Badlands and some Dun Morogh zones (alliance/neutral) quests to DB (2025.02.13)
 
 	RQEFrame.lua
 		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
