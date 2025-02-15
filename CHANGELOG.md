@@ -40,6 +40,7 @@
 		- Added preliminary quests to Undermine to DB (2025.02.12)
 		- Added Stranglethorn zones (alliance/neutral) quests to DB (2025.02.12)
 		- Added Loch Modan, Badlands and some Dun Morogh zones (alliance/neutral) quests to DB (2025.02.13)
+		- Added rest of Dun Morogh, Wetlands and some of Arathi Highlands (alliance/neutral) quests to DB (2025.02.14)
 
 	RQEFrame.lua
 		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
