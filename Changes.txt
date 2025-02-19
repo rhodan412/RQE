@@ -43,6 +43,7 @@
 		- Added rest of Dun Morogh, Wetlands and some of Arathi Highlands (alliance/neutral) quests to DB (2025.02.14)
 		- Added rest of Arathi Highlands and Hinterlands (alliance/neutral) quests to DB (2025.02.15)
 		- Added Western Plaguelands and Eastern Plaguelands (alliance/neutral) quests to DB (2025.02.16)
+		- Added some Dustwallow Marsh and Tanaris (alliance/neutral) quests to DB (2025.02.19)
 
 	RQEFrame.lua
 		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
