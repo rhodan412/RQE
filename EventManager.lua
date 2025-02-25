@@ -3669,7 +3669,7 @@ end
 
 
 -- Handles UNIT_QUEST_LOG_CHANGED event	-- POSSIBLY FIRED WHILE IN COMBAT CAUSING PASSTHRU ERROR
--- Fired whenever the quest log changes. (Frequently, but not as frequently as QUEST_LOG_UPDATE) 
+-- Fired whenever the quest log changes and also seems to fire with progress quests. (Frequently, but not as frequently as QUEST_LOG_UPDATE) 
 function RQE.handleUnitQuestLogChange(...)
 	local event = select(2, ...)
 	local unitTarget = select(3, ...)
