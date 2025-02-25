@@ -274,6 +274,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		[841] = true,
 		[2554] = true,
 		[4588] = true,
+		[4787] = true,
 		[5061] = true,
 		[5830] = true,
 		[23784] = true,
@@ -328,6 +329,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					GameTooltip:SetText("Turn in the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 4588 then
 					GameTooltip:SetText("Kill Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 4787 then
+					GameTooltip:SetText("Loot Item from Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5061 then
 					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 30817 then
