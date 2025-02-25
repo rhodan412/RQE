@@ -21,6 +21,7 @@
 		- Removed code that was saving character's supertracked quest when SUPER_TRACKING_CHANGED event fires as this was causing the function to fire too frequently (2025.02.11)
 		- Added functionality for sorting non-world quests in the RQEQuestFrame when UpdateRQEQuestFrame() function is called within event handling (2025.02.12)
 		- Added PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event (2025.02.12)
+		- Updated some commented out code for UNIT_QUEST_LOG_CHANGED for clarification (2025.02.24)
 
 	QuestingModule.lua
 		- Added functionality to provide a print-out of quests in current player zone of sorted quest list (2025.02.12)
@@ -44,9 +45,13 @@
 		- Added rest of Arathi Highlands and Hinterlands (alliance/neutral) quests to DB (2025.02.15)
 		- Added Western Plaguelands and Eastern Plaguelands (alliance/neutral) quests to DB (2025.02.16)
 		- Added some Dustwallow Marsh and Tanaris (alliance/neutral) quests to DB (2025.02.19)
+		- Added rest of campaign quests for Undermine zone to DB (2025.02.24)
 
 	RQEFrame.lua
 		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
+
+	RQEMacro.lua
+		- Added RQE Button tooltip text for when quest item is to be looted from a mob (2025.02.24)
 
 	RQEMinimap.lua
 		- When RQEFrame is restored via RQE.ToggleBothFramesfromLDB() or LDB/minimap button press it will now properly restore the quest that was saved to what the player was supertracking (2025.02.11)
