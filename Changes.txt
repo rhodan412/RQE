@@ -1,4 +1,4 @@
-11.0.7.7 (2025-03-01)
+11.1.0.1 (2025-03-01)
 
 	**HIGHLIGHTS**
 		- Updated most quests in Cataclysm (alliance) to include waypoints, macros and quest tips! (2025.02.10)
