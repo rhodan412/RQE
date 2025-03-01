@@ -1,9 +1,11 @@
-11.0.7.7
+11.0.7.7 (2025-03-01)
 
 	**HIGHLIGHTS**
 		- Updated most quests in Cataclysm (alliance) to include waypoints, macros and quest tips! (2025.02.10)
 		- Super tracked quest is restored when the RQEFrame is re-enabled (2025.02.11)
 		- Added functionality for sorting non-world quests in the RQEQuestFrame when UpdateRQEQuestFrame() function is called (2025.02.12)
+		- Added Undermine campaign chapters to DB (2025.02.12)
+		- Cleaned up available Undermine campaign quests in the DB (2025.03.01)
 
 	**Misc/Experimental**
 		- Experimental addition modification to CheckDBZoneChange and CheckDBObjectiveStatus but commented out for now until can perfect (2025.02.11)
@@ -30,6 +32,7 @@
 	RQE.toc
 		- Updated version# (2025.02.02)
 		- Updated info in notes to detail info on compatibility issues (2025.02.07)
+		- Updated interface#  (2025.03.01)
 
 	RQEDatabase.lua
 		- Added 'Lingering Shadows' preliminary quests to DB (2025.02.05)
@@ -47,6 +50,7 @@
 		- Added some Dustwallow Marsh and Tanaris (alliance/neutral) quests to DB (2025.02.19)
 		- Added rest of campaign quests for Undermine zone to DB (2025.02.24)
 		- Added detail to most of the Undermine campaign chapters to DB (2025.02.28)
+		- Added more Tanaris quests and cleaned up all available campaign chapters for Undermine patch (2025.03.01)
 
 	RQEFrame.lua
 		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
