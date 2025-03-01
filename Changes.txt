@@ -46,6 +46,7 @@
 		- Added Western Plaguelands and Eastern Plaguelands (alliance/neutral) quests to DB (2025.02.16)
 		- Added some Dustwallow Marsh and Tanaris (alliance/neutral) quests to DB (2025.02.19)
 		- Added rest of campaign quests for Undermine zone to DB (2025.02.24)
+		- Added detail to most of the Undermine campaign chapters to DB (2025.02.28)
 
 	RQEFrame.lua
 		- Fixed nil error by ensuring that RQE>QuestLogIndexButton exists (2025.02.12)
