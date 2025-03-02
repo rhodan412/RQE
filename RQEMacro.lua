@@ -1,4 +1,10 @@
--- RQEMacro.lua
+--[[ 
+
+RQEMacro.lua
+Handles the creation of the macro button as it relates to quests in the DB file
+
+]]
+
 
 RQEMacro = RQEMacro or {}
 RQEMacro.pendingMacroSets = {} -- Queue for macro set operations
