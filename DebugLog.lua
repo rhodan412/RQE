@@ -1,4 +1,9 @@
--- DebugLog.lua
+--[[ 
+
+DebugLog.lua
+Handles the debug messages and creation of the debug log frame for copying/pasting
+
+]]
 
 
 RQE = RQE or {}
