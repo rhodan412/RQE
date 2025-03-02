@@ -5,6 +5,7 @@ For advanced quest tracking features linked with RQEFrame
 
 ]]
 
+
 ---------------------------
 -- 1. Global Declarations
 ---------------------------
@@ -951,50 +952,50 @@ end
 -- Function that handles the sorting of tracked/watched quests based on proximity
 -- Only sorts quests that are in the player's current zone. Others are placed at the end.
 function RQE:SortWatchedQuestsByProximity()
-    --if C_Scenario.IsInScenario() then return end
-    RQE.SortedWatchedQuests = {}  -- Reset the table
-    local unsortedQuests = {}  -- Store quests that can't be sorted
+	--if C_Scenario.IsInScenario() then return end
+	RQE.SortedWatchedQuests = {}  -- Reset the table
+	local unsortedQuests = {}  -- Store quests that can't be sorted
 
-    local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-    if numTrackedQuests == 0 then return end
+	local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+	if numTrackedQuests == 0 then return end
 
-    local playerMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
-    
-    for i = 1, numTrackedQuests do
-        local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+	local playerMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
+	
+	for i = 1, numTrackedQuests do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 
-        if questID and not C_QuestLog.IsWorldQuest(questID) then
-            local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
-            local questMapID = GetQuestUiMapID(questID) -- Get the actual zone ID
+		if questID and not C_QuestLog.IsWorldQuest(questID) then
+			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			local questMapID = GetQuestUiMapID(questID) -- Get the actual zone ID
 
-            -- Check if the quest is in the player's current zone
-            if distanceSq and onContinent and questMapID == playerMapID then
-                table.insert(RQE.SortedWatchedQuests, { questID = questID, distanceSq = distanceSq })
-            else
-                -- Assign an artificially large distance for out-of-zone or unknown-distance quests
-                table.insert(unsortedQuests, { questID = questID, distanceSq = 999999999 })
-            end
-        end
-    end
+			-- Check if the quest is in the player's current zone
+			if distanceSq and onContinent and questMapID == playerMapID then
+				table.insert(RQE.SortedWatchedQuests, { questID = questID, distanceSq = distanceSq })
+			else
+				-- Assign an artificially large distance for out-of-zone or unknown-distance quests
+				table.insert(unsortedQuests, { questID = questID, distanceSq = 999999999 })
+			end
+		end
+	end
 
-    -- Sort table by proximity (smallest distance first)
-    table.sort(RQE.SortedWatchedQuests, function(a, b)
-        return a.distanceSq < b.distanceSq
-    end)
-    
-    -- Append unsorted quests at the end
-    for _, questData in ipairs(unsortedQuests) do
-        table.insert(RQE.SortedWatchedQuests, questData)
-    end
+	-- Sort table by proximity (smallest distance first)
+	table.sort(RQE.SortedWatchedQuests, function(a, b)
+		return a.distanceSq < b.distanceSq
+	end)
+	
+	-- Append unsorted quests at the end
+	for _, questData in ipairs(unsortedQuests) do
+		table.insert(RQE.SortedWatchedQuests, questData)
+	end
 
-    -- Debug Print
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print("Sorted watched quests by proximity:")
-        for i, questData in ipairs(RQE.SortedWatchedQuests) do
-            local displayDistance = (questData.distanceSq == 999999999) and "Out of Zone" or math.sqrt(questData.distanceSq)
-            print(i .. ". QuestID:", questData.questID, "- Distance:", displayDistance)
-        end
-    end
+	-- Debug Print
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Sorted watched quests by proximity:")
+		for i, questData in ipairs(RQE.SortedWatchedQuests) do
+			local displayDistance = (questData.distanceSq == 999999999) and "Out of Zone" or math.sqrt(questData.distanceSq)
+			print(i .. ". QuestID:", questData.questID, "- Distance:", displayDistance)
+		end
+	end
 end
 
 
