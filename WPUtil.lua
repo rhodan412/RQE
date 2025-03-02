@@ -1,5 +1,9 @@
--- WPUtil.lua
--- This add-on file may be used to either store, or call coordinate information from the RQEDatabase file for the purposes of modularity/compartmentalization
+--[[ 
+
+WPUtil.lua
+This add-on file may be used to either store, or call coordinate information from the RQEDatabase file for the purposes of modularity/compartmentalization
+
+]]
 
 
 ---------------------------
