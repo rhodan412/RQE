@@ -5,6 +5,7 @@ This add-on file handles the creation logic of the Waypoint and Map Pin creation
 
 ]]
 
+
 ---------------------------
 -- 1. Library and AddOn Initialization
 ---------------------------
