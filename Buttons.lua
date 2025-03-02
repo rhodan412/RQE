@@ -1,7 +1,10 @@
 --[[ 
+
 Buttons.lua
 Manages button designs for the main frame
+
 ]]
+
 
 ----------------------------------------------------
 -- 1. Global Declarations
