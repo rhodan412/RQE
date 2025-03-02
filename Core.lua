@@ -1,7 +1,10 @@
 --[[ 
+
 Core.lua
 Core file linking all other modules
+
 ]]
+
 
 ---------------------------------------------------
 -- 1. Global Declarations
