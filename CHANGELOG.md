@@ -1,4 +1,13 @@
-11.0.7.7 (2025-03-01)
+11.1.0.2
+
+	**HIGHLIGHTS**
+
+	RQE.toc
+		- Updated interface# (2025.03.01)
+		- Added category information for addon (2025.03.01)
+
+
+11.1.0.1 (2025-03-01)
 
 	**HIGHLIGHTS**
 		- Updated most quests in Cataclysm (alliance) to include waypoints, macros and quest tips! (2025.02.10)

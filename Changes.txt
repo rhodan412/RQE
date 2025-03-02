@@ -1,3 +1,15 @@
+11.1.0.2
+
+	**HIGHLIGHTS**
+
+	All files
+		- Updated commented out header for all files in addon for easier explanation of what each file does
+
+	RQE.toc
+		- Updated interface# (2025.03.01)
+		- Added category information for addon (2025.03.01)
+
+
 11.1.0.1 (2025-03-01)
 
 	**HIGHLIGHTS**
