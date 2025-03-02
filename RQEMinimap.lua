@@ -1,5 +1,10 @@
--- RQEMinimap.lua
--- Creates minimap button that will toggle the RQEFrame
+--[[ 
+
+RQEMinimap.lua
+Creates minimap button that will toggle the RQEFrame
+
+]]
+
 
 ---------------------------
 -- 1. Declarations
