@@ -9,6 +9,8 @@
 
 	RQEDatabase.lua
 		- Updated Undermine campaign quests in DB to include the 5 available chapters of 6 (2025.03.01)
+		- Fixed questID 29520 to check inventory/zoneID before advancing in one of the steps (2025.03.02)
+		- Fixed questID 29517 to check objective status rather than item that doesn't go into bags (2025.03.02)
 
 
 11.1.0.1 (2025-03-01)
