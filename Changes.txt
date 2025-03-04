@@ -12,6 +12,7 @@
 		- Fixed questID 29520 to check inventory/zoneID before advancing in one of the steps (2025.03.02)
 		- Fixed questID 29517 to check objective status rather than item that doesn't go into bags (2025.03.02)
 		- Added rest of Tanaris (neutral/Alliance), Un'Goro Crater, Silithus and most of Azuremyst Isle quests to DB (2025.03.03)
+		- Added preliminary additional side quests of Undermine to DB (2025.03.04)
 
 
 11.1.0.1 (2025-03-01)
