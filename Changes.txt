@@ -2,6 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Updated Undermine campaign quests in DB to include the 5 available chapters of 6 (2025.03.01)
+		- Added questID 85088 for the Undermine zone world boss (2025.03.05)
 
 	RQE.toc
 		- Updated interface# (2025.03.01)
@@ -14,6 +15,10 @@
 		- Added rest of Tanaris (neutral/Alliance), Un'Goro Crater, Silithus and most of Azuremyst Isle quests to DB (2025.03.03)
 		- Added preliminary additional side quests of Undermine to DB (2025.03.04)
 		- Fixed and added several Undermine campaign quests in DB (2025.03.05)
+		- Fixed several Undermine quests in DB (2025.03.05)
+
+	RQEFrame.lua
+		- Added questID 85088 for the Undermine zone world boss (2025.03.05)
 
 
 11.1.0.1 (2025-03-01)
