@@ -1608,7 +1608,7 @@ function RQE:LFG_Search(questID)
 	local SearchPanel = LFGListFrame.SearchPanel
 	LFGListFrame_SetActivePanel(LFGListFrame, SearchPanel)
 
-	if questID == 81630 then	-- This questID is for 'Activation Protocol', which is the world boss at Isle of Dorn, 'Kordac'
+	if questID == 81630 or questID == 85088 then	-- 81630 questID is for 'Activation Protocol', which is the world boss at Isle of Dorn, 'Kordac' and 85088 is 'The Main Event' for 'Gobfather' in Undermine
 		RQE.SearchCategory = 1
 	else
 		RQE.SearchCategory = 3
