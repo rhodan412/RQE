@@ -1,4 +1,4 @@
-11.1.0.2
+11.1.0.2 (2025-03-05)
 
 	**HIGHLIGHTS**
 		- Updated Undermine campaign quests in DB to include the 5 available chapters of 6 (2025.03.01)
