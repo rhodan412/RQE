@@ -4,7 +4,8 @@
 		- Updated interface# (2025.03.05)
 
 	RQEDatabase.lua
-		- Added Azuremyst Isle and many quests in Bloodmyst Isle (2025.03.06)
+		- Added Azuremyst Isle and Bloodmyst Isle quests to DB (2025.03.06)
+		- Added some Darkshore quests to DB (2025.03.06)
 
 
 11.1.0.2 (2025-03-05)
