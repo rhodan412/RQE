@@ -1104,6 +1104,11 @@ function RQE.handlePlayerRegenEnabled()
 		end
 	end
 
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
+	end
+
 	-- if RQE.db.profile.autoClickWaypointButton then
 		-- C_Timer.After(1.3, function()
 			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_REGEN_ENABLED fires
@@ -1171,6 +1176,11 @@ function RQE.handlePlayerMountDisplayChanged()
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
 			DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)	-- Cornflower Blue
 		end
+	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
 	end
 end
 
@@ -1882,6 +1892,11 @@ function RQE.handlePlayerStoppedMoving()
 			end
 		end
 	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
+	end
 end
 
 
@@ -2354,6 +2369,11 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
+	end
+
 	-- Clicks Waypoint Button if autoClickWaypointButton is true
 	RQE:AutoClickQuestLogIndexWaypointButton()
 end
@@ -2372,6 +2392,11 @@ function RQE.handleSuperTracking()
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)		-- Gold
 		end
+	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
 	end
 
 	RQE.OkayCheckBonusQuests = true
@@ -2585,6 +2610,11 @@ function RQE.handleSuperTracking()
 		end
 	end
 
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
+	end
+
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
@@ -2775,6 +2805,11 @@ function RQE.handleQuestAccepted(...)
 			DEFAULT_CHAT_FRAME:AddMessage("QA 14 Debug: Checked memory usage.", 0.46, 0.62, 1)	-- Cornflower Blue
 		end
 	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
+	end
 end
 
 
@@ -2928,6 +2963,11 @@ function RQE.handleZoneChange(...)
 		else
 			RQE.debugLog("Player is flying or dragonriding")
 		end
+	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
 	end
 
 	-- Get the currently super-tracked quest
@@ -3223,6 +3263,11 @@ function RQE.handleZoneNewAreaChange()
 		else
 			RQE.debugLog("Player is flying or dragonriding")
 		end
+	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
 	end
 
 	if RQE.db and RQE.db.profile.autoTrackZoneQuests then
@@ -4537,6 +4582,11 @@ function RQE.handleQuestWatchUpdate(...)
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 1.0, 0.84, 0)		-- Gold
 		end
+	end
+
+	-- Update Display of CPU Usage of Addon
+	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		RQE:CheckCPUUsage()
 	end
 
 	-- Check if autoClickWaypointButton is selected in the configuration
