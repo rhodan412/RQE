@@ -1133,11 +1133,35 @@ RQE.options = {
 						RQE:CheckMemoryUsage();  -- Immediately update the memory usage display
 					end,
 				},
+				-- Display CPU Usage Checkbox -- alternative is /run SetCVar("scriptProfile", 1) or /run SetCVar("scriptProfile", 0)
+				displayRQEcpuUsage = {
+					type = "toggle",
+					name = "Display CPU Usage",
+					desc = "Displays the CPU usage for the RQE addon",
+					order = 3,
+					-- get = function() return RQE.db.profile.displayRQEcpuUsage end,
+					get = function() 
+						-- Get the actual scriptProfile state instead of just saved profile value
+						return GetCVar("scriptProfile") == "1"
+					end,
+					set = function(_, newValue)
+						-- Save setting
+						RQE.db.profile.displayRQEcpuUsage = newValue
+
+						-- If the new value differs from scriptProfile, toggle it and show the popup
+						if (GetCVar("scriptProfile") == "1") ~= newValue then
+							RQE:ToggleCPUProfiling()  -- Only toggle if needed
+						end
+
+						-- Immediately update the displayed CPU usage
+						RQE:CheckCPUUsage()
+					end,
+				},
 				debug = {
 					type = "group",
 					name = "Debug",
 					inline = true,
-					order = 3,
+					order = 4,
 					hidden = function()
 						return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
 					end,
@@ -2438,6 +2462,59 @@ function RQE:AddDebugSettingsWidgets(container)
 		end)
 
 		scrollFrame:AddChild(displayMemoryUsageCheckbox)
+
+		-- -- Display CPU Usage Checkbox
+		-- local displayCPUUsageCheckbox = AceGUI:Create("CheckBox")
+		-- displayCPUUsageCheckbox:SetLabel("Display CPU Usage")
+		-- displayCPUUsageCheckbox:SetValue(RQE.db.profile.displayRQEcpuUsage)
+		-- displayCPUUsageCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+			-- RQE.db.profile.displayRQEcpuUsage = value
+			-- RQE:CheckCPUUsage()  -- Immediately update the cpu usage display
+			-- RQE:ToggleCPUProfiling()	-- Toggles CPU profiling on/off
+		-- end)
+
+		-- -- Add a tooltip description for displayCPUUsageCheckbox (RQE.db.profile.displayRQEcpuUsage)
+		-- displayCPUUsageCheckbox:SetCallback("OnEnter", function(widget, event)
+			-- GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+			-- GameTooltip:SetText("Displays the cpu usage for the RQE addon", nil, nil, nil, nil, true)
+			-- GameTooltip:Show()
+		-- end)
+		-- displayCPUUsageCheckbox:SetCallback("OnLeave", function(widget, event)
+			-- GameTooltip:Hide()
+		-- end)
+
+		-- scrollFrame:AddChild(displayCPUUsageCheckbox)
+
+		-- Display CPU Usage Checkbox -- alternative is /run SetCVar("scriptProfile", 1) or /run SetCVar("scriptProfile", 0)
+		local displayCPUUsageCheckbox = AceGUI:Create("CheckBox")
+		displayCPUUsageCheckbox:SetLabel("Display CPU Usage")
+
+		-- Set checkbox to reflect scriptProfile setting
+		displayCPUUsageCheckbox:SetValue(GetCVar("scriptProfile") == "1")
+
+		displayCPUUsageCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+			RQE.db.profile.displayRQEcpuUsage = value
+			
+			-- Only toggle profiling if the state actually needs to change
+			if (GetCVar("scriptProfile") == "1") ~= value then
+				RQE:ToggleCPUProfiling()
+			end
+
+			-- Immediately update CPU usage display
+			RQE:CheckCPUUsage()
+		end)
+
+		-- Add tooltip description for displayCPUUsageCheckbox
+		displayCPUUsageCheckbox:SetCallback("OnEnter", function(widget, event)
+			GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+			GameTooltip:SetText("Displays the CPU usage for the RQE addon", nil, nil, nil, nil, true)
+			GameTooltip:Show()
+		end)
+		displayCPUUsageCheckbox:SetCallback("OnLeave", function(widget, event)
+			GameTooltip:Hide()
+		end)
+
+		scrollFrame:AddChild(displayCPUUsageCheckbox)
 
 		if RQE.db.profile.debugMode then
 			-- Debug Logging Toggle
