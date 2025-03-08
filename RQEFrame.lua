@@ -650,6 +650,16 @@ end
 RQEFrame.MemoryUsageText = MemoryUsageText
 
 
+-- Create Font String for Addon CPU Usage
+local CPUUsageText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+if CPUUsageText then
+	CPUUsageText:SetPoint("TOPLEFT", RQEFrame.MemoryUsageText, "BOTTOMLEFT", 0, 35)  -- Position it above MemoryUsageText
+	CPUUsageText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
+	CPUUsageText:SetTextColor(120/255, 231/255, 120/255) -- Green color
+end
+RQEFrame.CPUUsageText = CPUUsageText
+
+
 -- Create buttons using functions from Buttons.lua
 RQE.Buttons.CreateClearButton(RQEFrame)
 RQE.Buttons.CreateRWButton(RQEFrame)
