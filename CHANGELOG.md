@@ -1,11 +1,27 @@
 11.1.0.3
 
+	**HIGHLIGHTS**
+		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
+
+	Config.lua
+		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
+
+	Core.lua
+		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
+
+	EventManager.lua
+		- Updates call to check CPU usage in the same circumstances as a memory usage update check occurs (2025.03.08)
+
 	RQE.toc
 		- Updated interface# (2025.03.05)
 
 	RQEDatabase.lua
 		- Added Azuremyst Isle and Bloodmyst Isle quests to DB (2025.03.06)
-		- Added some Darkshore quests to DB (2025.03.06)
+		- Added Darkshore quests to DB (2025.03.08)
+		- Added some Ashenvale quests to DB (2025.03.08)
+
+	RQEFrame.lua
+		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
 
 
 11.1.0.2 (2025-03-05)
