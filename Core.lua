@@ -194,6 +194,7 @@ local defaults = {
 		debugLevel = "NONE",
 		debugLoggingCheckbox = false,
 		debugMode = true,
+		displayRQEcpuUsage = false,
 		displayRQEmemUsage = false,
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
@@ -433,6 +434,69 @@ function RQE:OnInitialize()
 	self:UpdateFramePosition()
 	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
 	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
+end
+
+
+-- Function to print quest info when run with a questID
+function RQE:GetQuestInfo(questID)
+	if not questID then
+		print("Error: No questID provided.")
+		return
+	end
+
+	-- Get the quest log index for the given quest ID
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+
+	if not questLogIndex then
+		print("Error: Could not find quest log index for Quest ID:", questID)
+		return
+	end
+
+	-- Retrieve quest information
+	local info = C_QuestLog.GetInfo(questLogIndex)
+
+	if not info then
+		print("Error: No quest info found for Quest ID:", questID)
+		return
+	end
+
+	-- Print the retrieved quest information
+	print("===== Quest Info for Quest ID:", questID, "=====")
+	for key, value in pairs(info) do
+		print(key .. ":", tostring(value))
+	end
+	print("===================================")
+end
+
+
+-- Function that prints the quest data as it relates to a certain quest such as type, numRequired, finished (true/false), text, objectiveType and numFulfilled
+function RQE:PrintQuestData(questID)
+	-- Ensure the quest data is available
+	if not HaveQuestData(questID) then
+		print("Quest data is not available for QuestID:", questID)
+		return
+	end
+
+	-- Get the quest data from the API
+	local questData = C_QuestLog.GetQuestObjectives(questID)  -- Replace with the correct function if needed
+
+	-- Print formatted output
+	print("Quest Data for QuestID:", questID)
+	if type(questData) == "table" then
+		for key, value in pairs(questData) do
+			if type(value) == "table" then
+				print("  " .. key .. " = {")
+				for subKey, subValue in pairs(value) do
+					print("	" .. subKey .. " = " .. tostring(subValue))
+				end
+				print("  },")
+			else
+				print("  " .. key .. " = " .. tostring(value))
+			end
+		end
+	else
+		print("  Data is not a table or is empty.")
+	end
 end
 
 
@@ -7651,6 +7715,78 @@ function RQE:AutoClickQuestLogIndexWaypointButton()
 			RQE.LastClickedButtonRef:Click()
 		else
 			RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
+		end
+	end
+end
+
+
+-- Function to toggle script profiling and prompt for reload
+function RQE:ToggleCPUProfiling()
+	local currentSetting = GetCVar("scriptProfile") == "1"
+	local newSetting = currentSetting and "0" or "1"
+	
+	-- Set the new profiling value
+	SetCVar("scriptProfile", newSetting)
+
+	-- Message for the dialog box
+	local message = (newSetting == "1") 
+		and "CPU Profiling has been ENABLED. A reload is required for changes to take effect."
+		or "CPU Profiling has been DISABLED. A reload is required for changes to take effect."
+
+	-- Show confirmation popup
+	StaticPopupDialogs["RQE_CPU_PROFILING_TOGGLE"] = {
+		text = message,
+		button1 = "Reload UI",
+		button2 = "Cancel",
+		OnAccept = function()
+			ReloadUI()
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3
+	}
+
+	-- Show the popup
+	StaticPopup_Show("RQE_CPU_PROFILING_TOGGLE")
+end
+
+
+-- Function to check the CPU usage of the addon
+function RQE:CheckCPUUsage()
+	if GetCVar("scriptProfile") == "1" then
+		if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+			-- Ensure CPU tracking is updated
+			UpdateAddOnCPUUsage()
+
+			-- Fetch CPU usage
+			local cpuUsage = GetAddOnCPUUsage("RQE")
+
+			-- Ensure CPU usage is calculated as a percentage
+			local totalCPU = 0
+			for i = 1, C_AddOns.GetNumAddOns() do
+				totalCPU = totalCPU + GetAddOnCPUUsage(i)
+			end
+
+			-- Calculate percentage usage
+			local cpuUsagePercent = (totalCPU > 0) and ((cpuUsage / totalCPU) * 1000) or 0
+
+			-- Create the display string
+			if cpuUsagePercent > 0 then
+				RQE.cpuUsageText = string.format("CPU Usage: %.2f%%", cpuUsagePercent)
+			else
+				RQE.cpuUsageText = "CPU Usage: 0.00%"  -- Default display if 0%
+			end
+
+			-- Update the display text
+			if RQEFrame and RQEFrame.CPUUsageText then
+				RQEFrame.CPUUsageText:SetText(RQE.cpuUsageText)
+			end
+		else
+			-- Hide if disabled in settings
+			if RQEFrame and RQEFrame.CPUUsageText then
+				RQEFrame.CPUUsageText:SetText("")
+			end
 		end
 	end
 end
