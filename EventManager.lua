@@ -1334,6 +1334,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForQuestLogIndexButton = false
 	RQE.CreateMacroForSetInitialWaypoint = false
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
+	RQE.DataDeletedfromDBFile = false
 	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
