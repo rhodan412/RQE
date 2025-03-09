@@ -18,7 +18,7 @@
 	RQEDatabase.lua
 		- Added Azuremyst Isle and Bloodmyst Isle quests to DB (2025.03.06)
 		- Added Darkshore quests to DB (2025.03.08)
-		- Added some Ashenvale quests to DB (2025.03.08)
+		- Added Ashenvale, Stonetalon Mountains, Desolace and some Feralas quests to DB (2025.03.09)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
