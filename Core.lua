@@ -862,6 +862,87 @@ end
 -- end
 
 
+-- Obtain addon Contribution Data
+function RQE.GetDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE:ClearDebugLog()
+		RQE_Contribution.GetAllContributionInfo()
+		RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(2, function()
+			RQE:ShowDeleteConfirmationDialog()
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
+-- Function to Show Confirmation Dialog for Deleting Data
+function RQE:ShowDeleteConfirmationDialog()
+    -- Define the dialog structure
+    StaticPopupDialogs["RQE_DELETE_CONFIRM"] = {
+        text = "Are you sure you want to delete all contribution data? This action is irreversible.",
+        button1 = "Delete Data",
+        button2 = "Cancel",
+        OnAccept = function()
+            RQE:ExecuteDataDeletion()
+        end,
+        OnCancel = function()
+            print("Data deletion canceled.")
+			RQE.DataDeletedfromDBFile = false
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3, -- Avoid conflicts with other popups
+    }
+
+    -- Show the confirmation popup
+    StaticPopup_Show("RQE_DELETE_CONFIRM")
+end
+
+
+-- Function to Show Confirmation Dialog for Reloading the UI
+function RQE:ShowReloadConfirmationDialog()
+    -- Define the dialog structure
+    StaticPopupDialogs["RQE_RELOAD_CONFIRM"] = {
+        text = "Are you sure you want to reload the UI?",
+        button1 = "Reload",
+        button2 = "Cancel",
+        OnAccept = function()
+            ReloadUI()
+        end,
+        OnCancel = function()
+            print("Not Reloading the UI")
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3, -- Avoid conflicts with other popups
+    }
+
+    -- Show the confirmation popup
+    StaticPopup_Show("RQE_RELOAD_CONFIRM")
+end
+
+
+-- Function to Run the Data Deletion
+function RQE:ExecuteDataDeletion()
+    if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
+        RQE_Contribution.DeleteAllContributionInfo()
+        print("All contribution data has been deleted.")
+		C_Timer.After(0.2, function()
+			RQE:ShowReloadConfirmationDialog()
+		end)
+    else
+        print("Error: Unable to delete contribution data. Function not found.")
+    end
+end
+
+
 function RQE.ExtractAndSaveQuestCoordinates()
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()  -- Fetching the current QuestID
 
