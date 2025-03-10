@@ -8,6 +8,7 @@
 
 	Core.lua
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
+		- Added code to make it easier to obtain data from the contribution companion addon (2025.03.09)
 
 	EventManager.lua
 		- Updates call to check CPU usage in the same circumstances as a memory usage update check occurs (2025.03.08)
@@ -19,6 +20,7 @@
 		- Added Azuremyst Isle and Bloodmyst Isle quests to DB (2025.03.06)
 		- Added Darkshore quests to DB (2025.03.08)
 		- Added Ashenvale, Stonetalon Mountains, Desolace and some Feralas quests to DB (2025.03.09)
+		- Added Feralas, Winterspring and part of Southern Barrens quests to DB (2025.03.09)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
