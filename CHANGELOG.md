@@ -2,6 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
+		- Added alliance/neutral Cataclysm quests (preliminary) to DB (2025.03.10)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
@@ -21,6 +22,7 @@
 		- Added Darkshore quests to DB (2025.03.08)
 		- Added Ashenvale, Stonetalon Mountains, Desolace and some Feralas quests to DB (2025.03.09)
 		- Added Feralas, Winterspring and part of Southern Barrens quests to DB (2025.03.09)
+		- Added Southern Barrens, Dustwallow Marsh, and Thousand Needles quests to DB (2025.03.10)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
