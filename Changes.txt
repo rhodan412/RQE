@@ -2,7 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
-		- Added alliance/neutral Cataclysm quests (preliminary) to DB (2025.03.10)
+		- Added/Fixed LibDataBroker library in anticipation of 11.1.5 patch (2025.03.11)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
@@ -23,9 +23,11 @@
 		- Added Ashenvale, Stonetalon Mountains, Desolace and some Feralas quests to DB (2025.03.09)
 		- Added Feralas, Winterspring and part of Southern Barrens quests to DB (2025.03.09)
 		- Added Southern Barrens, Dustwallow Marsh, and Thousand Needles quests to DB (2025.03.10)
+		- Added preliminary for final campaign chapter of Undermine quests to DB (2025.03.11)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
+		- Fixed world quest for Undermine world boss (2025.03.11)
 
 
 11.1.0.2 (2025-03-05)
