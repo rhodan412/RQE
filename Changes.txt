@@ -3,6 +3,7 @@
 	**HIGHLIGHTS**
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
 		- Added/Fixed LibDataBroker library in anticipation of 11.1.5 patch (2025.03.11)
+		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
@@ -25,6 +26,7 @@
 		- Added Southern Barrens, Dustwallow Marsh, and Thousand Needles quests to DB (2025.03.10)
 		- Added preliminary for final campaign chapter of Undermine quests to DB (2025.03.11)
 		- Added side quests from Isle of Dorn and Ringing Deeps (2025.03.12)
+		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
