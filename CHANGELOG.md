@@ -24,6 +24,7 @@
 		- Added Feralas, Winterspring and part of Southern Barrens quests to DB (2025.03.09)
 		- Added Southern Barrens, Dustwallow Marsh, and Thousand Needles quests to DB (2025.03.10)
 		- Added preliminary for final campaign chapter of Undermine quests to DB (2025.03.11)
+		- Added side quests from Isle of Dorn and Ringing Deeps (2025.03.12)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
