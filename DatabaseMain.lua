@@ -41,7 +41,23 @@ function RQE.getQuestData(questID)
 	local wodGarrisonLevel = C_Garrison.GetGarrisonInfo(2)
 
 	local dbOrder = {}
-	if majorVersion >= 11 then
+	if majorVersion >= 13 then
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
+	elseif majorVersion >= 12 then
+		if wodGarrisonLevel == 3 then
+			dbOrder = { "Midnight", "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		elseif wodGarrisonLevel == 2 then
+			dbOrder = { "Midnight", "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		else
+			dbOrder = { "Midnight", "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
+		end
+	elseif majorVersion >= 11 then
 		if wodGarrisonLevel == 3 then
 			dbOrder = { "WarWithin", "Dragonflight", "Shadowlands", "BattleForAzeroth", "Legion", "WarlordsOfDraenor03", "WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria", "Cataclysm", "Wrath", "BurningCrusade", "Vanilla" }
 		elseif wodGarrisonLevel == 2 then
