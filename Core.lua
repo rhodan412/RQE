@@ -194,6 +194,7 @@ local defaults = {
 		debugLevel = "NONE",
 		debugLoggingCheckbox = false,
 		debugMode = true,
+		debugTimeStampCheckbox = true,
 		displayRQEcpuUsage = false,
 		displayRQEmemUsage = false,
 		enableCarboniteCompatibility = true,
