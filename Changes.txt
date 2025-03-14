@@ -7,10 +7,18 @@
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
+		- Added option to include timestamps with the debug log (2025.03.13)
 
 	Core.lua
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
 		- Added code to make it easier to obtain data from the contribution companion addon (2025.03.09)
+		- Set debug timestamps to be on by default (2025.03.13)
+
+	DatabaseMain.lua
+		- Set up for game version checks of the upcoming Midnight and future Last Titan expansions (2025.03.13)
+
+	DebugLog.lua
+		- Modification to print time stamps in debug log if checked in config (2025.03.13)
 
 	EventManager.lua
 		- Updates call to check CPU usage in the same circumstances as a memory usage update check occurs (2025.03.08)
@@ -27,6 +35,7 @@
 		- Added preliminary for final campaign chapter of Undermine quests to DB (2025.03.11)
 		- Added side quests from Isle of Dorn and Ringing Deeps (2025.03.12)
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
+		- Added additional side quests for Ringing Deeps and Hallowfall (2025.03.13)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
