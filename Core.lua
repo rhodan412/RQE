@@ -3739,7 +3739,6 @@ end
 
 -- Retrieve all of the bonus quests in the player's current zone to be updated to the RQEQuestFrame and placed under the RQE.QuestsFrame child
 function RQE:GetBonusQuestsInCurrentZone()
-	if not RQE.OkayCheckBonusQuests then return end
 	local bonusQuests = {} -- Ensure we always return a valid table
 	RQE.bonusQuestCount = 0
 
@@ -3787,7 +3786,6 @@ function RQE:GetBonusQuestsInCurrentZone()
 		end
 	end
 
-	RQE.OkayCheckBonusQuests = false
 	return bonusQuests
 end
 
