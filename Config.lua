@@ -1157,11 +1157,26 @@ RQE.options = {
 						RQE:CheckCPUUsage()
 					end,
 				},
+				debugTimeStampCheckbox = {
+					type = "toggle",
+					name = "Enable Debug Timestamps",
+					desc = "Enable or disable timestamp in the debug frame.",
+					order = 4,
+					get = function(info)
+						return RQE.db.profile.debugTimeStampCheckbox
+					end,
+					set = function(info, value)
+						RQE.db.profile.debugTimeStampCheckbox = value
+						if not value then
+							RQE.db.profile.debugLevel = "NONE"
+						end
+					end,
+				},
 				debug = {
 					type = "group",
 					name = "Debug",
 					inline = true,
-					order = 4,
+					order = 5,
 					hidden = function()
 						return not RQE.db.profile.debugMode  -- Hide when Debug Mode is off
 					end,
@@ -2537,6 +2552,28 @@ function RQE:AddDebugSettingsWidgets(container)
 		end)
 
 		scrollFrame:AddChild(displayCPUUsageCheckbox)
+
+		if RQE.db.profile.debugMode then
+			-- Debug Timestamp Enable/Disable checkbox
+			local debugTimeStampCheckbox = AceGUI:Create("CheckBox")
+			debugTimeStampCheckbox:SetLabel("Debug Timestamps")
+			debugTimeStampCheckbox:SetValue(RQE.db.profile.debugTimeStampCheckbox)
+			debugTimeStampCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+				RQE.db.profile.debugTimeStampCheckbox = value
+			end)
+
+			-- Add a tooltip description for debugTimeStampCheckbox (RQE.db.profile.debugTimeStampCheckbox)
+			debugTimeStampCheckbox:SetCallback("OnEnter", function(widget, event)
+				GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+				GameTooltip:SetText("Toggles the option to include timestamp with debug messages", nil, nil, nil, nil, true)
+				GameTooltip:Show()
+			end)
+			debugTimeStampCheckbox:SetCallback("OnLeave", function(widget, event)
+				GameTooltip:Hide()
+			end)
+
+			scrollFrame:AddChild(debugTimeStampCheckbox)
+		end
 
 		-- Only show these options if Debug Mode is enabled
 		if RQE.db.profile.debugMode then
