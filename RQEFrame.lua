@@ -55,9 +55,9 @@ local frameMenu = {
 }
 
 
----------------------------
+--------------------------
 -- 2. Local Variables
----------------------------
+--------------------------
 
 -- Variable to keep track of the last known group size and type
 local lastGroupSize = 0
