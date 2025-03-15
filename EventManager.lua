@@ -31,9 +31,9 @@ RQEDatabase = RQEDatabase or {}
 RQEMacro = RQEMacro or {}
 
 
----------------------------
+------------------------------
 -- 2. Constants and Settings
----------------------------
+------------------------------
 
 -- Create an event frame
 local Frame = CreateFrame("Frame")
