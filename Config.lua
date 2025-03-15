@@ -7,9 +7,9 @@ It uses the Ace3 library for creating the configuration interface.
 ]]
 
 
----------------------------
+-----------------------------
 -- 1. Library and Main Table
----------------------------
+-----------------------------
 
 -- Ace3 Libraries
 local AceDB = LibStub("AceDB-3.0")
