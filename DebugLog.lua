@@ -29,14 +29,14 @@ function RQE.AddToDebugLog(message)
         logEntry = string.format("[%s] %s", timestamp, message)
     else
         -- If timestamps are disabled, use [XXX] instead
-        logEntry = string.format("[XXX] %s", message)
+        logEntry = string.format(message)
     end
 
-    -- Store the log message
-    table.insert(logTable, logEntry)
-
-    -- Update the log frame
-    RQE.UpdateLogFrame()
+    -- Prevent duplicate messages
+    if logTable[#logTable] ~= logEntry then
+        table.insert(logTable, logEntry)
+        RQE.UpdateLogFrame()
+    end
 end
 
 
