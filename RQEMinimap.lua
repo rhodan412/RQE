@@ -18,9 +18,9 @@ RQE.hoverTimers = {}
 ---@field hoverTimer any
 local RQEMinimapButton = {}
 
----------------------------
+--------------------------
 -- 2. Debug Logic
----------------------------
+--------------------------
 
 if RQE and RQE.debugLog then
 	RQE.debugLog("Message here")
