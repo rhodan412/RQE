@@ -6,9 +6,9 @@ This add-on file may be used to either store, or call coordinate information fro
 ]]
 
 
----------------------------
+--------------------------
 -- 1. Declarations
----------------------------
+--------------------------
 
 RQE = RQE or {}
 RQE.Frame = RQE.Frame or {}
