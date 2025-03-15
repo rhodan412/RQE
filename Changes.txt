@@ -5,6 +5,7 @@
 		- Added/Fixed LibDataBroker library in anticipation of 11.1.5 patch (2025.03.11)
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 		- Fixed issue with RQE:GetBonusQuestsInCurrentZone() function as bonus quests weren't showing up in the frame (2025.03.14)
+		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
@@ -15,12 +16,15 @@
 		- Added code to make it easier to obtain data from the contribution companion addon (2025.03.09)
 		- Set debug timestamps to be on by default (2025.03.13)
 		- Fixed issue with RQE:GetBonusQuestsInCurrentZone() function as bonus quests weren't showing up in the frame (2025.03.14)
+		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
 
 	DatabaseMain.lua
 		- Set up for game version checks of the upcoming Midnight and future Last Titan expansions (2025.03.13)
 
 	DebugLog.lua
 		- Modification to print time stamps in debug log if checked in config (2025.03.13)
+		- Fixed debug log for printing only message when timestamps are not selected (2025.03.14)
+		- Fixed debug log to not print duplicate data (2025.03.14)
 
 	EventManager.lua
 		- Updates call to check CPU usage in the same circumstances as a memory usage update check occurs (2025.03.08)
@@ -42,6 +46,7 @@
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 		- Added additional side quests for Ringing Deeps and Hallowfall (2025.03.13)
 		- Added additional side quests for Hallowfall (2025.03.14)
+		- Added additional side quests for Ringing Deeps (2025.03.14)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
