@@ -7107,43 +7107,45 @@ end
 
 -- Function to print quest IDs of a questline along with quest links
 function RQE.PrintQuestlineDetails(questLineID)
-	local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
-	local questDetails = {}
-	local questsToLoad = #questIDs -- Number of quests to load data for
+	C_Timer.After(0.3, function()
+		local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
+		local questDetails = {}
+		local questsToLoad = #questIDs -- Number of quests to load data for
 
-	if questsToLoad > 0 then
-		-- Orange color for the questline ID and name message
-		print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
-		for i, questID in ipairs(questIDs) do
-			-- Attempt to fetch quest title immediately, might not always work due to data loading
-			local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
-			C_Timer.After(0.5, function()
-				-- Fetch quest link, retry if not available yet
-				local questLink = GetQuestLink(questID)
-				if questLink then
-					-- Store quest details in a table
-					-- Light blue color for quest details
-					questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
-					questsToLoad = questsToLoad - 1
-				else
-					-- Fallback if quest link is not available, attempt to use the title
-					-- Light blue color for quest details
-					questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
-					questsToLoad = questsToLoad - 1
-				end
-
-				-- Check if all quests have been processed
-				if questsToLoad <= 0 then
-					-- Print all quest details in order
-					for j = 1, #questDetails do
-						print(questDetails[j])
+		if questsToLoad > 0 then
+			-- Orange color for the questline ID and name message
+			print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
+			for i, questID in ipairs(questIDs) do
+				-- Attempt to fetch quest title immediately, might not always work due to data loading
+				local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
+				C_Timer.After(0.5, function()
+					-- Fetch quest link, retry if not available yet
+					local questLink = GetQuestLink(questID)
+					if questLink then
+						-- Store quest details in a table
+						-- Light blue color for quest details
+						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
+						questsToLoad = questsToLoad - 1
+					else
+						-- Fallback if quest link is not available, attempt to use the title
+						-- Light blue color for quest details
+						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
+						questsToLoad = questsToLoad - 1
 					end
-				end
-			end)
+
+					-- Check if all quests have been processed
+					if questsToLoad <= 0 then
+						-- Print all quest details in order
+						for j = 1, #questDetails do
+							print(questDetails[j])
+						end
+					end
+				end)
+			end
+		else
+			RQE.debugLog("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
 		end
-	else
-		RQE.debugLog("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
-	end
+	end)
 end
 
 
