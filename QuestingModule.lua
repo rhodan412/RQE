@@ -1506,9 +1506,9 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 end
 
 
----------------------------
+----------------------------
 -- 10. Timer Functionality
----------------------------
+----------------------------
 
 -- Create a FontString for the timer text inside RQE.ScenarioChildFrame
 local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
