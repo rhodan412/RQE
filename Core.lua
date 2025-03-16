@@ -7107,7 +7107,7 @@ end
 
 -- Function to print quest IDs of a questline along with quest links
 function RQE.PrintQuestlineDetails(questLineID)
-	C_Timer.After(0.3, function()
+	C_Timer.After(1.2, function()
 		local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
 		local questDetails = {}
 		local questsToLoad = #questIDs -- Number of quests to load data for
