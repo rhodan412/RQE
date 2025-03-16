@@ -1130,6 +1130,7 @@ function ShowQuestDropdown(self, questID)
 		local uiMapID = C_Map.GetBestMapForUnit("player")
 		local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
 		if questLineInfo and questLineInfo.questLineID then
+			RQE.PrintQuestDetails = 1
 			rootDescription:CreateButton("Print Questline", function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end)
 		end
 
