@@ -16,27 +16,27 @@ local logTable = {}
 
 -- Function to add messages to the log
 function RQE.AddToDebugLog(message)
-    -- Check if debug logging is enabled via the checkbox
-    if not RQE.db.profile.debugLoggingCheckbox then
-        return
-    end
+	-- Check if debug logging is enabled via the checkbox
+	if not RQE.db.profile.debugLoggingCheckbox then
+		return
+	end
 
-    local timestamp = date("%Y-%m-%d %H:%M:%S")
-    local logEntry
+	local timestamp = date("%Y-%m-%d %H:%M:%S")
+	local logEntry
 
-    if RQE.db.profile.debugTimeStampCheckbox then
-        -- If timestamps are enabled, format normally
-        logEntry = string.format("[%s] %s", timestamp, message)
-    else
-        -- If timestamps are disabled, use [XXX] instead
-        logEntry = string.format(message)
-    end
+	if RQE.db.profile.debugTimeStampCheckbox then
+		-- If timestamps are enabled, format normally
+		logEntry = string.format("[%s] %s", timestamp, message)
+	else
+		-- If timestamps are disabled, use [XXX] instead
+		logEntry = string.format(message)
+	end
 
-    -- Prevent duplicate messages
-    if logTable[#logTable] ~= logEntry then
-        table.insert(logTable, logEntry)
-        RQE.UpdateLogFrame()
-    end
+	-- Prevent duplicate messages
+	if logTable[#logTable] ~= logEntry then
+		table.insert(logTable, logEntry)
+		RQE.UpdateLogFrame()
+	end
 end
 
 
