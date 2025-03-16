@@ -130,7 +130,6 @@ RQE.UnknownButtonTooltip = function()
 			end
 
 			RQE.CurrentTrackedQuestID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
-			--local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
 			if not RQE.CurrentTrackedQuestID then
 				RQE.CurrentTrackedQuestID = 0
