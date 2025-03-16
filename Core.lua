@@ -883,64 +883,64 @@ end
 
 -- Function to Show Confirmation Dialog for Deleting Data
 function RQE:ShowDeleteConfirmationDialog()
-    -- Define the dialog structure
-    StaticPopupDialogs["RQE_DELETE_CONFIRM"] = {
-        text = "Are you sure you want to delete all contribution data? This action is irreversible.",
-        button1 = "Delete Data",
-        button2 = "Cancel",
-        OnAccept = function()
-            RQE:ExecuteDataDeletion()
-        end,
-        OnCancel = function()
-            print("Data deletion canceled.")
+	-- Define the dialog structure
+	StaticPopupDialogs["RQE_DELETE_CONFIRM"] = {
+		text = "Are you sure you want to delete all contribution data? This action is irreversible.",
+		button1 = "Delete Data",
+		button2 = "Cancel",
+		OnAccept = function()
+			RQE:ExecuteDataDeletion()
+		end,
+		OnCancel = function()
+			print("Data deletion canceled.")
 			RQE.DataDeletedfromDBFile = false
-        end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        preferredIndex = 3, -- Avoid conflicts with other popups
-    }
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid conflicts with other popups
+	}
 
-    -- Show the confirmation popup
-    StaticPopup_Show("RQE_DELETE_CONFIRM")
+	-- Show the confirmation popup
+	StaticPopup_Show("RQE_DELETE_CONFIRM")
 end
 
 
 -- Function to Show Confirmation Dialog for Reloading the UI
 function RQE:ShowReloadConfirmationDialog()
-    -- Define the dialog structure
-    StaticPopupDialogs["RQE_RELOAD_CONFIRM"] = {
-        text = "Are you sure you want to reload the UI?",
-        button1 = "Reload",
-        button2 = "Cancel",
-        OnAccept = function()
-            ReloadUI()
-        end,
-        OnCancel = function()
-            print("Not Reloading the UI")
-        end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        preferredIndex = 3, -- Avoid conflicts with other popups
-    }
+	-- Define the dialog structure
+	StaticPopupDialogs["RQE_RELOAD_CONFIRM"] = {
+		text = "Are you sure you want to reload the UI?",
+		button1 = "Reload",
+		button2 = "Cancel",
+		OnAccept = function()
+			ReloadUI()
+		end,
+		OnCancel = function()
+			print("Not Reloading the UI")
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid conflicts with other popups
+	}
 
-    -- Show the confirmation popup
-    StaticPopup_Show("RQE_RELOAD_CONFIRM")
+	-- Show the confirmation popup
+	StaticPopup_Show("RQE_RELOAD_CONFIRM")
 end
 
 
 -- Function to Run the Data Deletion
 function RQE:ExecuteDataDeletion()
-    if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
-        RQE_Contribution.DeleteAllContributionInfo()
-        print("All contribution data has been deleted.")
+	if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
+		RQE_Contribution.DeleteAllContributionInfo()
+		print("All contribution data has been deleted.")
 		C_Timer.After(0.2, function()
 			RQE:ShowReloadConfirmationDialog()
 		end)
-    else
-        print("Error: Unable to delete contribution data. Function not found.")
-    end
+	else
+		print("Error: Unable to delete contribution data. Function not found.")
+	end
 end
 
 
@@ -5965,11 +5965,32 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 			local amount = tonumber(neededAmt[i]) or 1
 			local objectiveIndex = stepData.objectiveIndex or 1 -- Use the objectiveIndex from stepData
 			local objective = objectives[objectiveIndex]
-			if not objective or objective.numFulfilled < amount then
+
+			-- Determine the objective type
+			local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(questID, objectiveIndex, false)
+
+			-- Check if the objective is a progress bar
+			if objectiveType == "progressbar" then
+				local progress = GetQuestProgressBarPercent(questID) -- Get the progress percentage
+
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+					print(string.format("Quest %d Objective %d is a progress bar: %d%% complete (Required: %d%%)", questID, objectiveIndex, progress, amount))
 				end
-				return false
+
+				-- Return true if progress is equal to or greater than neededAmt (now representing percentage)
+				if progress >= amount then
+					return true
+				else
+					return false
+				end
+			else
+				-- Regular check for other objective types (fallback)
+				if not objective or objective.numFulfilled < amount then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+					end
+					return false
+				end
 			end
 		end
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -5977,6 +5998,28 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 		end
 		return true
 	end
+
+	-- -- Handle `check` and `neededAmt` explicitly
+	-- if #check > 0 and #neededAmt > 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+		-- end
+		-- for i, condition in ipairs(check) do
+			-- local amount = tonumber(neededAmt[i]) or 1
+			-- local objectiveIndex = stepData.objectiveIndex or 1 -- Use the objectiveIndex from stepData
+			-- local objective = objectives[objectiveIndex]
+			-- if not objective or objective.numFulfilled < amount then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+				-- end
+				-- return false
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("All objective conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+		-- end
+		-- return true
+	-- end
 
 	-- Dynamically determine the correct step to advance to
 	local correctStepIndex = 1
@@ -7107,35 +7150,45 @@ end
 
 -- Function to print quest IDs of a questline along with quest links
 function RQE.PrintQuestlineDetails(questLineID)
-	C_Timer.After(1.2, function()
+	if not RQE.PrintQuestDetails then
+		RQE.PrintQuestDetails = 1 -- Initialize state if not set
+	end
+
+	C_Timer.After(0.2, function()
 		local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
 		local questDetails = {}
 		local questsToLoad = #questIDs -- Number of quests to load data for
 
 		if questsToLoad > 0 then
-			-- Orange color for the questline ID and name message
+			if RQE.PrintQuestDetails == 1 then
+				-- First run: Load data only, do not print
+				RQE.debugLog("|cFFFFA500Questline ID " .. questLineID .. " data is being retrieved...|r")
+
+				-- Schedule second run after 0.5s
+				C_Timer.After(0.5, function()
+					if RQE.PrintQuestDetails == 1 then  -- Ensure second run happens
+						RQE.PrintQuestDetails = 2  -- Mark function as completed
+						RQE.PrintQuestlineDetails(questLineID)  -- Call again to print details
+					end
+				end)
+				return -- Exit early to prevent printing now
+			end
+
+			-- Second run: Print quest details
 			print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
 			for i, questID in ipairs(questIDs) do
-				-- Attempt to fetch quest title immediately, might not always work due to data loading
 				local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
 				C_Timer.After(0.5, function()
-					-- Fetch quest link, retry if not available yet
 					local questLink = GetQuestLink(questID)
 					if questLink then
-						-- Store quest details in a table
-						-- Light blue color for quest details
 						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
-						questsToLoad = questsToLoad - 1
 					else
-						-- Fallback if quest link is not available, attempt to use the title
-						-- Light blue color for quest details
 						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
-						questsToLoad = questsToLoad - 1
 					end
 
 					-- Check if all quests have been processed
+					questsToLoad = questsToLoad - 1
 					if questsToLoad <= 0 then
-						-- Print all quest details in order
 						for j = 1, #questDetails do
 							print(questDetails[j])
 						end
