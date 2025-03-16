@@ -47,6 +47,7 @@
 		- Added additional side quests for Ringing Deeps and Hallowfall (2025.03.13)
 		- Added additional side quests for Hallowfall (2025.03.14)
 		- Added additional side quests for Ringing Deeps (2025.03.14)
+		- Added remaining preliminary side quests for Isle of Dorn, Ringing Deeps and Hallowfall (2025.03.15)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
