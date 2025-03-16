@@ -6,6 +6,7 @@
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 		- Fixed issue with RQE:GetBonusQuestsInCurrentZone() function as bonus quests weren't showing up in the frame (2025.03.14)
 		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
+		- Added ability to read progress bar percent to better direct player to waypoints when this is the objective type (2025.03.16)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
@@ -17,6 +18,7 @@
 		- Set debug timestamps to be on by default (2025.03.13)
 		- Fixed issue with RQE:GetBonusQuestsInCurrentZone() function as bonus quests weren't showing up in the frame (2025.03.14)
 		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
+		- Added ability to read progress bar percent to better direct player to waypoints when this is the objective type (2025.03.16)
 
 	DatabaseMain.lua
 		- Set up for game version checks of the upcoming Midnight and future Last Titan expansions (2025.03.13)
