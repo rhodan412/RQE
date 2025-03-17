@@ -1131,6 +1131,9 @@ function ShowQuestDropdown(self, questID)
 		local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
 		if questLineInfo and questLineInfo.questLineID then
 			RQE.PrintQuestDetails = 1
+			RQE.RePrintQuestDetailAttempts = 0
+			RQE.PrintQuestDetailsSuccess = false
+			RQE.PrintQuestLineFailed = false
 			rootDescription:CreateButton("Print Questline", function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end)
 		end
 
