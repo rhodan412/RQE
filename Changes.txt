@@ -46,13 +46,8 @@
 		- Added Feralas, Winterspring and part of Southern Barrens quests to DB (2025.03.09)
 		- Added Southern Barrens, Dustwallow Marsh, and Thousand Needles quests to DB (2025.03.10)
 		- Added preliminary for final campaign chapter of Undermine quests to DB (2025.03.11)
-		- Added side quests from Isle of Dorn and Ringing Deeps (2025.03.12)
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
-		- Added additional side quests for Ringing Deeps and Hallowfall (2025.03.13)
-		- Added additional side quests for Hallowfall (2025.03.14)
-		- Added additional side quests for Ringing Deeps (2025.03.14)
-		- Added remaining preliminary side quests for Isle of Dorn, Ringing Deeps and Hallowfall (2025.03.15)
-		- Added additional preliminary side quests for Azj-Kahet (2025.03.16)
+		- Added preliminary side quests for Isle of Dorn, Ringing Deeps, Hallowfall and Azj-Kahet (2025.03.16)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
