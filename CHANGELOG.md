@@ -48,6 +48,7 @@
 		- Added preliminary for final campaign chapter of Undermine quests to DB (2025.03.11)
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 		- Added preliminary side quests for Isle of Dorn, Ringing Deeps, Hallowfall and Azj-Kahet (2025.03.16)
+		- Added Teldrassil and Felwood (Alliance/Neutral) quests to DB (2025.03.17)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
