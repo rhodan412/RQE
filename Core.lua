@@ -7150,6 +7150,9 @@ end
 
 -- Function to print quest IDs of a questline along with quest links
 function RQE.PrintQuestlineDetails(questLineID)
+	if RQE.PrintQuestDetailsSuccess then return end
+	if RQE.RePrintQuestDetailAttempts > 1 then return end
+
 	if not RQE.PrintQuestDetails then
 		RQE.PrintQuestDetails = 1 -- Initialize state if not set
 	end
@@ -7168,16 +7171,22 @@ function RQE.PrintQuestlineDetails(questLineID)
 				C_Timer.After(0.5, function()
 					if RQE.PrintQuestDetails == 1 then  -- Ensure second run happens
 						RQE.PrintQuestDetails = 2  -- Mark function as completed
-						RQE.PrintQuestlineDetails(questLineID)  -- Call again to print details
+						RQE.PrintQuestLineFailed = true -- Mark as true for the initial run
 					end
 				end)
-				return -- Exit early to prevent printing now
+			end
+
+			-- Second run: Print header
+			if not RQE.PrintQuestLineFailed then
+				print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
 			end
 
 			-- Second run: Print quest details
-			print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
 			for i, questID in ipairs(questIDs) do
 				local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
+				if questTitle == "Loading..." then
+					RQE.PrintQuestLineFailed = true
+				end
 				C_Timer.After(0.5, function()
 					local questLink = GetQuestLink(questID)
 					if questLink then
@@ -7186,17 +7195,25 @@ function RQE.PrintQuestlineDetails(questLineID)
 						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
 					end
 
-					-- Check if all quests have been processed
+					-- Fail check if the initial printing would've come back as "Loading" for any of the values of questTitle
+					if RQE.PrintQuestLineFailed then
+						RQE.RePrintQuestDetailAttempts = RQE.RePrintQuestDetailAttempts + 1
+						if RQE.RePrintQuestDetailAttempts == 1 then
+							RQE.PrintQuestlineDetails(questLineID)
+							return
+						end
+					end
+
+					-- Check if all quests have been processed (if questTitle has failed the 2nd time thru with questTitle being Loading, it will print what it has)
 					questsToLoad = questsToLoad - 1
 					if questsToLoad <= 0 then
 						for j = 1, #questDetails do
 							print(questDetails[j])
 						end
+						RQE.PrintQuestDetailsSuccess = true
 					end
 				end)
 			end
-		else
-			RQE.debugLog("|cFFFFA500No quests found for questline ID: " .. questLineID .. "|r")
 		end
 	end)
 end
