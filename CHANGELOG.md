@@ -19,6 +19,7 @@
 		- Fixed issue with RQE:GetBonusQuestsInCurrentZone() function as bonus quests weren't showing up in the frame (2025.03.14)
 		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
 		- Added ability to read progress bar percent to better direct player to waypoints when this is the objective type (2025.03.16)
+		- Additional fixes for the RQE.PrintQuestlineDetails to prevent/minimize chance of questTitles not properly loading (2025.03.16)
 
 	DatabaseMain.lua
 		- Set up for game version checks of the upcoming Midnight and future Last Titan expansions (2025.03.13)
@@ -33,6 +34,7 @@
 
 	QuestingModule.lua
 		- Removed old code that had been commented out relating to a long, old method for bonus quests in the tracker (2025.03.14)
+		- Additional fixes for the RQE.PrintQuestlineDetails to prevent/minimize chance of questTitles not properly loading (2025.03.16)
 
 	RQE.toc
 		- Updated interface# (2025.03.05)
@@ -50,6 +52,7 @@
 		- Added additional side quests for Hallowfall (2025.03.14)
 		- Added additional side quests for Ringing Deeps (2025.03.14)
 		- Added remaining preliminary side quests for Isle of Dorn, Ringing Deeps and Hallowfall (2025.03.15)
+		- Added additional preliminary side quests for Azj-Kahet (2025.03.16)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
