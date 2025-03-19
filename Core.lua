@@ -355,168 +355,168 @@ RQE.dragonMounts = {
 
 -- Addon Initialization
 function RQE:OnInitialize()
-    -- Start the timer
-    RQE.startTime = debugprofilestop()
+	-- Start the timer
+	RQE.startTime = debugprofilestop()
 
-    -- Ensure SavedVariables `profileKeys` exists before AceDB initializes
-    if not RQEDB.profileKeys then
-        RQEDB.profileKeys = {}
-    end
+	-- Ensure SavedVariables `profileKeys` exists before AceDB initializes
+	if not RQEDB.profileKeys then
+		RQEDB.profileKeys = {}
+	end
 
-    -- Create AceDB-3.0 database **without forcing a default profile yet**
-    self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults)
+	-- Create AceDB-3.0 database **without forcing a default profile yet**
+	self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults)
 
-    -- Ensure AceDB does not overwrite stored profileKeys
-    self.db.profileKeys = RQEDB.profileKeys
+	-- Ensure AceDB does not overwrite stored profileKeys
+	self.db.profileKeys = RQEDB.profileKeys
 
-    -- Debugging: Print all stored profile keys before restoring profile
-    print("Checking stored profileKeys before restoration...")
-    for key, value in pairs(self.db.profileKeys) do
-        print("Found profile key: " .. key .. " -> " .. value)
-    end
+	-- Debugging: Print all stored profile keys before restoring profile
+	print("Checking stored profileKeys before restoration...")
+	for key, value in pairs(self.db.profileKeys) do
+		print("Found profile key: " .. key .. " -> " .. value)
+	end
 
-    -- Restore the correct profile from SavedVariables
-    self:RestoreSavedProfile()
+	-- Restore the correct profile from SavedVariables
+	self:RestoreSavedProfile()
 
-    -- Debugging: Confirm the correct profile was restored
-    print("Profile after OnInitialize():", self.db:GetCurrentProfile())
+	-- Debugging: Confirm the correct profile was restored
+	print("Profile after OnInitialize():", self.db:GetCurrentProfile())
 
-    -- Register profile callbacks
-    self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
-    self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
-    self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+	-- Register profile callbacks
+	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
+	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
+	self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
 
-    -- Initialize UI components
-    RQE.StepsText = RQE.StepsText or {}
-    RQE.CoordsText = RQE.CoordsText or {}
-    RQE.WaypointButtons = RQE.WaypointButtons or {}
+	-- Initialize UI components
+	RQE.StepsText = RQE.StepsText or {}
+	RQE.CoordsText = RQE.CoordsText or {}
+	RQE.WaypointButtons = RQE.WaypointButtons or {}
 
-    -- Set UI Frame Position
-    self:UpdateFrameFromProfile()
+	-- Set UI Frame Position
+	self:UpdateFrameFromProfile()
 
-    -- Load character-specific data
-    self:GetCharacterInfo()
+	-- Load character-specific data
+	self:GetCharacterInfo()
 
-    -- Register UI Options
-    AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
-    self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
+	-- Register UI Options
+	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
+	self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Register UI Pages
-    AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
-    self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+	-- Register UI Pages
+	AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
+	self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
-    self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+	AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
+	self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
-    self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
+	AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
+	self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Register Profiles Section
-    local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-    AC:RegisterOptionsTable("RQE_Profiles", profiles)
-    ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
+	-- Register Profiles Section
+	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+	AC:RegisterOptionsTable("RQE_Profiles", profiles)
+	ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-    -- Register chat commands
-    self:RegisterChatCommand("rqe", "SlashCommand")
+	-- Register chat commands
+	self:RegisterChatCommand("rqe", "SlashCommand")
 
-    -- Override print function for debug logging
-    local originalPrint = print
-    print = function(...)
-        local args = {...}
-        local output = {}
+	-- Override print function for debug logging
+	local originalPrint = print
+	print = function(...)
+		local args = {...}
+		local output = {}
 
-        for i, v in ipairs(args) do
-            if v == nil then
-                output[i] = "nil"  -- Replace nil values with "nil" string
-            elseif type(v) == "table" then
-                output[i] = "[Table]"  -- Prevent error from printing tables
-            else
-                output[i] = tostring(v)  -- Convert all other values to strings
-            end
-        end
+		for i, v in ipairs(args) do
+			if v == nil then
+				output[i] = "nil"  -- Replace nil values with "nil" string
+			elseif type(v) == "table" then
+				output[i] = "[Table]"  -- Prevent error from printing tables
+			else
+				output[i] = tostring(v)  -- Convert all other values to strings
+			end
+		end
 
-        local message = table.concat(output, " ")
+		local message = table.concat(output, " ")
 
-        -- Add to debug log
-        RQE.AddToDebugLog(message)
+		-- Add to debug log
+		RQE.AddToDebugLog(message)
 
-        -- Call original print function
-        originalPrint(message)
-    end
+		-- Call original print function
+		originalPrint(message)
+	end
 
-    -- Final UI Setup
-    self:UpdateFramePosition()
-    RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
-    UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
+	-- Final UI Setup
+	self:UpdateFramePosition()
+	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
+	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 end
 
 
 -- AceAddon calls this after the addon is fully loaded
 function RQE:OnEnable()
-    -- Restore profile only if not already set
-    if not self.db:GetCurrentProfile() or self.db:GetCurrentProfile() == "Default" then
-        self:RestoreSavedProfile()
-    end
+	-- Restore profile only if not already set
+	if not self.db:GetCurrentProfile() or self.db:GetCurrentProfile() == "Default" then
+		self:RestoreSavedProfile()
+	end
 
-    -- Debugging Output
-    print("Currently loaded profile:", self.db:GetCurrentProfile())
+	-- Debugging Output
+	print("Currently loaded profile:", self.db:GetCurrentProfile())
 
-    -- Apply UI settings after profile is set
-    self:ApplyUISettings()
+	-- Apply UI settings after profile is set
+	self:ApplyUISettings()
 end
 
 
 -- Function to restore the correct profile from SavedVariables
 function RQE:RestoreSavedProfile()
-    local characterName = UnitName("player")
-    local characterRealm = GetRealmName()
-    local profileKey = characterName .. " - " .. characterRealm
+	local characterName = UnitName("player")
+	local characterRealm = GetRealmName()
+	local profileKey = characterName .. " - " .. characterRealm
 
-    -- Ensure the profileKeys table exists
-    self.db.profileKeys = self.db.profileKeys or {}
+	-- Ensure the profileKeys table exists
+	self.db.profileKeys = self.db.profileKeys or {}
 
-    -- Debugging: Check if profileKey exists
-    if not self.db.profileKeys[profileKey] then
-        print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
-        self.db.profileKeys[profileKey] = "Default"
-    end
+	-- Debugging: Check if profileKey exists
+	if not self.db.profileKeys[profileKey] then
+		print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
+		self.db.profileKeys[profileKey] = "Default"
+	end
 
-    local savedProfile = self.db.profileKeys[profileKey]
+	local savedProfile = self.db.profileKeys[profileKey]
 
-    -- Debugging: Print loaded profile information
-    print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
+	-- Debugging: Print loaded profile information
+	print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
 
-    -- Ensure profile exists before setting it
-    if self.db.profiles and self.db.profiles[savedProfile] then
-        self.db:SetProfile(savedProfile)
-        print("Successfully restored profile: " .. savedProfile)
-    else
-        print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
-        self.db:SetProfile("Default")
-    end
+	-- Ensure profile exists before setting it
+	if self.db.profiles and self.db.profiles[savedProfile] then
+		self.db:SetProfile(savedProfile)
+		print("Successfully restored profile: " .. savedProfile)
+	else
+		print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
+		self.db:SetProfile("Default")
+	end
 
-    -- Final Debug Output
-    print("Final profile loaded:", self.db:GetCurrentProfile())
+	-- Final Debug Output
+	print("Final profile loaded:", self.db:GetCurrentProfile())
 end
 
 
 -- Function to apply UI settings after restoring profile
 function RQE:ApplyUISettings()
-    -- Ensure that MAP ID value is set to default values
-    local showMapID = RQE.db.profile.showMapID
-    if showMapID then
-        -- Code to display MapID
-        RQEFrame.MapIDText:Show()
-    else
-        -- Code to hide MapID
-        RQEFrame.MapIDText:Hide()
-    end
+	-- Ensure that MAP ID value is set to default values
+	local showMapID = RQE.db.profile.showMapID
+	if showMapID then
+		-- Code to display MapID
+		RQEFrame.MapIDText:Show()
+	else
+		-- Code to hide MapID
+		RQEFrame.MapIDText:Hide()
+	end
 
-    -- Ensure that frame opacity is set to default values
-    local MainOpacity = RQE.db.profile.MainFrameOpacity
-    local QuestOpacity = RQE.db.profile.QuestFrameOpacity
-    RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
-    RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+	-- Ensure that frame opacity is set to default values
+	local MainOpacity = RQE.db.profile.MainFrameOpacity
+	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
+	RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
+	RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
 end
 
 
