@@ -197,6 +197,7 @@ local defaults = {
 		debugTimeStampCheckbox = true,
 		displayRQEcpuUsage = false,
 		displayRQEmemUsage = false,
+		enableAutoSuperTrackSwap = false,
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
 		enableGossipModeAutomation = false,
@@ -354,87 +355,168 @@ RQE.dragonMounts = {
 
 -- Addon Initialization
 function RQE:OnInitialize()
-	-- Start the timer
-	RQE.startTime = debugprofilestop()
+    -- Start the timer
+    RQE.startTime = debugprofilestop()
 
-	-- Create AceDB-3.0 database
-	--self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults, true) -- Set default profile to the character
-	self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults, "Default")
+    -- Ensure SavedVariables `profileKeys` exists before AceDB initializes
+    if not RQEDB.profileKeys then
+        RQEDB.profileKeys = {}
+    end
 
-	-- Initialize tables for storing StepsText, CoordsText, and WaypointButtons
-	RQE.StepsText = RQE.StepsText or {}
-	RQE.CoordsText = RQE.CoordsText or {}
-	RQE.WaypointButtons = RQE.WaypointButtons or {}
+    -- Create AceDB-3.0 database **without forcing a default profile yet**
+    self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults)
 
-	-- Register the profile changed callback
-	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
-	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
-	self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+    -- Ensure AceDB does not overwrite stored profileKeys
+    self.db.profileKeys = RQEDB.profileKeys
 
-	-- Now call UpdateFrameFromProfile to set the frame's position
-	self:UpdateFrameFromProfile()
+    -- Debugging: Print all stored profile keys before restoring profile
+    print("Checking stored profileKeys before restoration...")
+    for key, value in pairs(self.db.profileKeys) do
+        print("Found profile key: " .. key .. " -> " .. value)
+    end
 
-	-- Initialize character-specific data
-	self:GetCharacterInfo()
+    -- Restore the correct profile from SavedVariables
+    self:RestoreSavedProfile()
 
-	-- Register the main options table with a light purple name
-	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
-	self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
+    -- Debugging: Confirm the correct profile was restored
+    print("Profile after OnInitialize():", self.db:GetCurrentProfile())
 
-	-- Register the "Frame" options table as a separate tab
-	AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
-	self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+    -- Register profile callbacks
+    self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
+    self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
+    self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
 
-	-- Register the "Font" options table as a separate tab
-	AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
-	self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+    -- Initialize UI components
+    RQE.StepsText = RQE.StepsText or {}
+    RQE.CoordsText = RQE.CoordsText or {}
+    RQE.WaypointButtons = RQE.WaypointButtons or {}
 
-	-- Register the "Debug" options table as a separate tab
-	AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
-	self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
+    -- Set UI Frame Position
+    self:UpdateFrameFromProfile()
 
-	-- Add profiles (if needed)
-	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
-	AC:RegisterOptionsTable("RQE_Profiles", profiles)
-	ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
+    -- Load character-specific data
+    self:GetCharacterInfo()
 
-	-- Auto-set profile based on some condition
-	local characterName = UnitName("player")
-	local characterRealm = GetRealmName()
-	if characterName == "SomeSpecificName" and characterRealm == "SomeSpecificRealm" then
-		self.db:SetProfile(characterName .. " - " .. characterRealm)
-	end
+    -- Register UI Options
+    AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
+    self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Register chat commands (if needed)
-	self:RegisterChatCommand("rqe", "SlashCommand")
+    -- Register UI Pages
+    AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
+    self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Ensure that MAP ID value is set to default values
-	local showMapID = RQE.db.profile.showMapID
-	if showMapID then
-		-- Code to display MapID
-		RQEFrame.MapIDText:Show()
-	else
-		-- Code to hide MapID
-		RQEFrame.MapIDText:Hide()
-	end
+    AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
+    self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Ensure that frame opacity is set to default values
-	local MainOpacity = RQE.db.profile.MainFrameOpacity
-	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
-	RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
-	RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+    AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
+    self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Override the print function
-	local originalPrint = print
-	print = function(...)
-		local message = table.concat({...}, " ")
-		RQE.AddToDebugLog(message)
-		originalPrint(...)
-	end
+    -- Register Profiles Section
+    local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+    AC:RegisterOptionsTable("RQE_Profiles", profiles)
+    ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	self:UpdateFramePosition()
-	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
-	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
+    -- Register chat commands
+    self:RegisterChatCommand("rqe", "SlashCommand")
+
+    -- Override print function for debug logging
+    local originalPrint = print
+    print = function(...)
+        local args = {...}
+        local output = {}
+
+        for i, v in ipairs(args) do
+            if v == nil then
+                output[i] = "nil"  -- Replace nil values with "nil" string
+            elseif type(v) == "table" then
+                output[i] = "[Table]"  -- Prevent error from printing tables
+            else
+                output[i] = tostring(v)  -- Convert all other values to strings
+            end
+        end
+
+        local message = table.concat(output, " ")
+
+        -- Add to debug log
+        RQE.AddToDebugLog(message)
+
+        -- Call original print function
+        originalPrint(message)
+    end
+
+    -- Final UI Setup
+    self:UpdateFramePosition()
+    RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
+    UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
+end
+
+
+-- AceAddon calls this after the addon is fully loaded
+function RQE:OnEnable()
+    -- Restore profile only if not already set
+    if not self.db:GetCurrentProfile() or self.db:GetCurrentProfile() == "Default" then
+        self:RestoreSavedProfile()
+    end
+
+    -- Debugging Output
+    print("Currently loaded profile:", self.db:GetCurrentProfile())
+
+    -- Apply UI settings after profile is set
+    self:ApplyUISettings()
+end
+
+
+-- Function to restore the correct profile from SavedVariables
+function RQE:RestoreSavedProfile()
+    local characterName = UnitName("player")
+    local characterRealm = GetRealmName()
+    local profileKey = characterName .. " - " .. characterRealm
+
+    -- Ensure the profileKeys table exists
+    self.db.profileKeys = self.db.profileKeys or {}
+
+    -- Debugging: Check if profileKey exists
+    if not self.db.profileKeys[profileKey] then
+        print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
+        self.db.profileKeys[profileKey] = "Default"
+    end
+
+    local savedProfile = self.db.profileKeys[profileKey]
+
+    -- Debugging: Print loaded profile information
+    print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
+
+    -- Ensure profile exists before setting it
+    if self.db.profiles and self.db.profiles[savedProfile] then
+        self.db:SetProfile(savedProfile)
+        print("Successfully restored profile: " .. savedProfile)
+    else
+        print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
+        self.db:SetProfile("Default")
+    end
+
+    -- Final Debug Output
+    print("Final profile loaded:", self.db:GetCurrentProfile())
+end
+
+
+-- Function to apply UI settings after restoring profile
+function RQE:ApplyUISettings()
+    -- Ensure that MAP ID value is set to default values
+    local showMapID = RQE.db.profile.showMapID
+    if showMapID then
+        -- Code to display MapID
+        RQEFrame.MapIDText:Show()
+    else
+        -- Code to hide MapID
+        RQEFrame.MapIDText:Hide()
+    end
+
+    -- Ensure that frame opacity is set to default values
+    local MainOpacity = RQE.db.profile.MainFrameOpacity
+    local QuestOpacity = RQE.db.profile.QuestFrameOpacity
+    RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
+    RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
 end
 
 
@@ -2109,6 +2191,41 @@ function RQE.CheckAndClickWButton()
 end
 
 
+-- Function to check for waypoint text and create a waypoint if available
+function RQE:CheckAndCreateSuperTrackedQuestWaypoint()
+	-- Ensure the frame is shown before proceeding
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden, skipping waypoint check")
+		end
+		return
+	end
+
+	-- Retrieve the currently super-tracked quest ID
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super-tracked quest found.")
+		end
+		return
+	end
+
+	-- Retrieve the Next Waypoint text
+	local waypointText = C_QuestLog.GetNextWaypointText(questID)
+	if waypointText and waypointText ~= "" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Waypoint text found:", waypointText, "- Creating a waypoint.")
+		end
+		-- Call the function to create the waypoint
+		RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No Next Waypoint text available for questID:", questID)
+		end
+	end
+end
+
+
 -- Create the tooltip when mousing over certain assets
 function RQE:CreateQuestTooltip(self, questID, questTitle)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT", -30, 0)  -- Anchor the tooltip to the cursor
@@ -2251,6 +2368,35 @@ function RQE:GetClosestTrackedQuest()
 	end
 
 	return closestQuestID
+end
+
+
+-- Function to Auto Supertrack the Nearest Watched Quest
+function RQE:AutoSuperTrackClosestQuest()
+	if not RQE.db.profile.enableAutoSuperTrackSwap then return end
+
+	-- Get the closest tracked quest ID
+	local closestQuestID = RQE:GetClosestTrackedQuest()
+
+	-- Ensure a valid quest ID is found
+	if closestQuestID and closestQuestID ~= 0 then
+		-- Set the closest quest as the super-tracked quest
+		C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+		RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+
+		-- Debug info
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Supertracking closest quest:", closestQuestID)
+		end
+	else
+		-- No valid quest found to supertrack
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No valid tracked quest found for supertracking.")
+		end
+	end
+
+	RQE:SaveSuperTrackedQuestToCharacter()
+	RQE.CheckAndClickWButton()
 end
 
 
@@ -4500,14 +4646,18 @@ function RQE:StartPeriodicChecks()
 		print("~~~ Running RQE:StartPeriodicChecks() ~~~")
 	end
 
-	if not RQE.IsQuestSuperTracked() then return end
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
 
-	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Current superTrackedQuestID:", superTrackedQuestID)
 	end
 
 	if not superTrackedQuestID then return end
+
+	RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
 
 	local questData = self.getQuestData(superTrackedQuestID)
 	if not questData then
