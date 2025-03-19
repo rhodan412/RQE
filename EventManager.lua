@@ -1021,6 +1021,8 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5) -- Light Salmon
 	end
 
+	RQE:AutoSuperTrackClosestQuest()
+
 	if RQE.CheckNClickWButtonAfterCombat then
 		C_Timer.After(1.5, function()
 			RQE.CheckAndClickWButton()
@@ -1137,6 +1139,8 @@ function RQE.handlePlayerMountDisplayChanged()
 			end)
 		end
 	end
+
+	RQE:AutoSuperTrackClosestQuest()
 
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
@@ -1279,8 +1283,29 @@ function RQE.handlePlayerLogin()
 	-- Debugging: Print the current charKey
 	RQE.debugLog("Current charKey is:", charKey)
 
-	-- This will set the profile to "Default"
-	RQE.db:SetProfile("Default")
+	-- Only set the profile to "Default" if one is not already assigned
+	if not RQE.db.profileKeys or not RQE.db.profileKeys[charKey] then
+		RQE:RestoreSavedProfile()
+		if RQE.db.profile.debugLevel == "INFO+" then
+			DEFAULT_CHAT_FRAME:AddMessage("Debug: No profile found, setting to Default.", 0.68, 0.85, 0.9)
+		end
+	else
+		-- Restore the saved profile
+		local savedProfile = RQE.db.profileKeys[charKey]
+		if RQE.db.profiles and RQE.db.profiles[savedProfile] then
+			RQE.db:SetProfile(savedProfile)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				DEFAULT_CHAT_FRAME:AddMessage("Debug: Restored saved profile: " .. savedProfile, 0.68, 0.85, 0.9)
+			end
+		else
+			-- Fallback to default if saved profile is missing
+			RQE:RestoreSavedProfile()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				DEFAULT_CHAT_FRAME:AddMessage("Debug: Saved profile not found, falling back to Default.", 0.68, 0.85, 0.9)
+			end
+		end
+	end
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Profile set to Default.", 0.68, 0.85, 0.9)	-- Light Blue
 	end
@@ -2642,6 +2667,10 @@ function RQE.handleQuestAccepted(...)
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
+	C_Timer.After(1.3, function()
+		RQE:AutoSuperTrackClosestQuest()
+	end)
+
 	-- -- Check if the quest is a bonus objective
 	-- if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
 		-- UpdateRQEBonusQuestFrame(questID)
@@ -3182,6 +3211,8 @@ function RQE.handleZoneNewAreaChange()
 	if RQE.HasDragonraceAura() then
 		return
 	end
+
+	RQE:AutoSuperTrackClosestQuest()
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
