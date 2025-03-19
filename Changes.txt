@@ -7,10 +7,14 @@
 		- Fixed issue with RQE:GetBonusQuestsInCurrentZone() function as bonus quests weren't showing up in the frame (2025.03.14)
 		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
 		- Added ability to read progress bar percent to better direct player to waypoints when this is the objective type (2025.03.16)
+		- Major fix/update to OnInit to correctly save/restore DB profiles as profiles weren't being correctly restored (2025.03.19)
+		- Added option to supertrack the nearest quest even if player is already supertracking a question. This is an experimental feature (2025.03.19)
+		- Added feature that creates a waypoint if direction text exists directing the player to travel to a portal to reach the next step (2025.03.19)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
 		- Added option to include timestamps with the debug log (2025.03.13)
+		- Added enableAutoSuperTrackSwap option (experimental feature) to update the player's supertracked quest with the nearest quest, even if an existing quest is currently being super tracked (2025.03.19)
 
 	Core.lua
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
@@ -20,6 +24,8 @@
 		- Added delay before running RQE.PrintQuestlineDetails after selected from right-click menu so that info is populated properly (2025.03.14)
 		- Added ability to read progress bar percent to better direct player to waypoints when this is the objective type (2025.03.16)
 		- Additional fixes for the RQE.PrintQuestlineDetails to prevent/minimize chance of questTitles not properly loading (2025.03.16)
+		- Major fix/update to OnInit to correctly save/restore DB profiles as profiles weren't being correctly restored (2025.03.19)
+		- Added option to supertrack the nearest quest even if player is already supertracking a question. This is an experimental feature (2025.03.19)
 
 	DatabaseMain.lua
 		- Set up for game version checks of the upcoming Midnight and future Last Titan expansions (2025.03.13)
@@ -31,6 +37,7 @@
 
 	EventManager.lua
 		- Updates call to check CPU usage in the same circumstances as a memory usage update check occurs (2025.03.08)
+		- Fix for profiles not being properly restored on reload and login (2025.03.19)
 
 	QuestingModule.lua
 		- Removed old code that had been commented out relating to a long, old method for bonus quests in the tracker (2025.03.14)
@@ -49,10 +56,14 @@
 		- Made fixes to the Undermine campaign quest DB (2025.03.12)
 		- Added preliminary side quests for Isle of Dorn, Ringing Deeps, Hallowfall and Azj-Kahet (2025.03.16)
 		- Added Teldrassil and Felwood (Alliance/Neutral) quests to DB (2025.03.17)
+		- Added some Alliance and neutral Stormheim (Legion) quests to DB (2025.03.19)
 
 	RQEFrame.lua
 		- Added display (above mem usage) to show the CPU usage of the addon (2025.03.08)
 		- Fixed world quest for Undermine world boss (2025.03.11)
+
+	WaypointManager.lua
+		- Added feature that creates a waypoint if direction text exists directing the player to travel to a portal to reach the next step (2025.03.19)
 
 
 11.1.0.2 (2025-03-05)
