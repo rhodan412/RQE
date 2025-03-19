@@ -9,7 +9,7 @@
 		- Added ability to read progress bar percent to better direct player to waypoints when this is the objective type (2025.03.16)
 		- Major fix/update to OnInit to correctly save/restore DB profiles as profiles weren't being correctly restored (2025.03.19)
 		- Added option to supertrack the nearest quest even if player is already supertracking a question. This is an experimental feature (2025.03.19)
-		- Added feature that creates a waypoint if direction text exists directing the player to travel to a portal to reach the next step (2025.03.19)
+		- Added feature that creates a waypoint if direction text exists directing the player to travel to a portal to reach the next step, including an exclusion list of questIDs (2025.03.19)
 
 	Config.lua
 		- Added checkboxes to toggle CPU profiling/check to the settings pane and addon-specific configuration window (2025.03.08)
@@ -64,6 +64,7 @@
 
 	WaypointManager.lua
 		- Added feature that creates a waypoint if direction text exists directing the player to travel to a portal to reach the next step (2025.03.19)
+		- Added a questID exclusion list for quests where direction text exists directing player to portal, for example in the event that something is needed to be done in a given zone before proceeding (2025.03.19)
 
 
 11.1.0.2 (2025-03-05)
