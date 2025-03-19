@@ -584,7 +584,7 @@ function RQE:CreateQuestWaypointFromNextWaypoint(questID)
 end
 
 
--- Create a Waypoint Using C_QuestLog.GetNextWaypointForMap
+-- Create a Waypoint Using C_QuestLog.GetNextWaypointForMap with Exclusion List
 function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 	-- Ensure the frame is shown before proceeding
 	if not RQEFrame:IsShown() then
@@ -594,8 +594,16 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 		return
 	end
 
+	-- Define a list of excluded quest IDs
+	local excludedQuestIDs = {
+		-- 74359,  -- Example Quest ID 1 (Replace with actual IDs)
+		-- 76000   -- Example Quest ID 2
+	}
+
+	-- Extract Quest ID from UI if applicable
+	local extractedQuestID = nil
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	-- Retrieve the currently super-tracked quest ID
@@ -605,6 +613,16 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 			print("No super-tracked quest found.")
 		end
 		return
+	end
+
+	-- Check if the quest is in the exclusion list
+	for _, excludedID in ipairs(excludedQuestIDs) do
+		if questID == excludedID then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ID", questID, "is in the exclusion list. Skipping waypoint creation.")
+			end
+			return
+		end
 	end
 
 	-- Retrieve the Next Waypoint text
