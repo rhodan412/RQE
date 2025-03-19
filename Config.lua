@@ -307,12 +307,24 @@ RQE.options = {
 					end,
 					width = "full",
 				},
+				enableAutoSuperTrackSwap = {
+					type = "toggle",
+					name = "Enable SuperTrack Nearest on Movement",
+					desc = "Enable the super tracking to change to the nearest watched non-world quest\n\n" ..
+							"|cFFFF3333EXPERIMENTAL feature designed to auto update nearest supertracked quest based on proximity when the player moves|r",
+					order = 17,
+					get = function() return RQE.db.profile.enableAutoSuperTrackSwap end,
+					set = function(_, newValue)
+						RQE.db.profile.enableAutoSuperTrackSwap = newValue;
+					end,
+					width = "full",
+				},
 				enableNearestSuperTrack = {
 					type = "toggle",
-					name = "Enable SuperTrack Nearest",
+					name = "Enable SuperTrack Nearest when not Tracking",
 					desc = "Enable SuperTracking nearest when quest frame changes, such as turning in a quest, if not already supertracking\n\n" ..
 							"|cFFFF3333This setting will prioritize regular quests within the player's current zone that are being watched unless one of the two below 'Enable SuperTrack Nearest Campaign...' have been selected.|r",
-					order = 17,
+					order = 18,
 					get = function() return RQE.db.profile.enableNearestSuperTrack end,
 					set = function(_, newValue)
 						RQE.db.profile.enableNearestSuperTrack = newValue;
@@ -325,7 +337,7 @@ RQE.options = {
 						return "Enable SuperTrack Nearest Campaign Quest [Max Level: " .. GetMaxPlayerLevel() .. "]"
 					end,
 					desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking",
-					order = 18,
+					order = 19,
 					get = function() return RQE.db.profile.enableNearestSuperTrackCampaign end,
 					set = function(_, newValue)
 						RQE.db.profile.enableNearestSuperTrackCampaign = newValue;
@@ -339,7 +351,7 @@ RQE.options = {
 						return "Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. UnitLevel("player") .. "/" .. GetMaxPlayerLevel() .. "]"
 					end,
 					desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling",
-					order = 19,
+					order = 20,
 					get = function() return RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly end,
 					set = function(_, newValue)
 						RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly = newValue;
@@ -351,7 +363,7 @@ RQE.options = {
 					type = "toggle",
 					name = "Enable Quest Type Display",
 					desc = "Enable visual information of the quest type in the Quest Tracker",
-					order = 20,
+					order = 21,
 					get = function() return RQE.db.profile.enableQuestTypeDisplay end,
 					set = function(_, newValue)
 						RQE.db.profile.enableQuestTypeDisplay = newValue;
@@ -369,13 +381,13 @@ RQE.options = {
 						RQE.db.profile.keyBindSetting = value
 						RQE:ReapplyMacroBinding()	-- RQE:SetupOverrideMacroBinding()  -- Update the binding whenever the user changes it
 					end,
-					order = 21,
+					order = 22,
 				},
 				enableGossipModeAutomation = {
 					type = "toggle",
 					name = "Enable Gossip Mode",
 					desc = "Enable Gossip Mode where the correct option will be chosen as part of the macro",
-					order = 22,
+					order = 23,
 					get = function() return RQE.db.profile.enableGossipModeAutomation end,
 					set = function(_, newValue)
 						RQE.db.profile.enableGossipModeAutomation = newValue;
@@ -1673,8 +1685,31 @@ function RQE:AddGeneralSettingsWidgets(container)
 	scrollFrame:AddChild(enableCarboniteCompatibilityCheckbox)
 
 	-- Enable SuperTrack Nearest Checkbox
+	local enableAutoSuperTrackSwap = AceGUI:Create("CheckBox")
+	enableAutoSuperTrackSwap:SetLabel("Enable SuperTrack Nearest on Movement")
+	enableAutoSuperTrackSwap:SetValue(RQE.db.profile.enableAutoSuperTrackSwap)
+	enableAutoSuperTrackSwap:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableAutoSuperTrackSwap = value
+	end)
+
+	enableAutoSuperTrackSwap:SetFullWidth(false)
+	enableAutoSuperTrackSwap:SetWidth(300)
+
+	-- Add a tooltip description for enableAutoSuperTrackSwap (RQE.db.profile.enableAutoSuperTrackSwap)
+	enableAutoSuperTrackSwap:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable the super tracking to change to the nearest watched non-world quest\n\n|cFFFF3333EXPERIMENTAL feature designed to auto update nearest supertracked quest based on proximity when the player moves.|r", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableAutoSuperTrackSwap:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableAutoSuperTrackSwap)
+
+	-- Enable SuperTrack Nearest Checkbox
 	local enableNearestSuperTrack = AceGUI:Create("CheckBox")
-	enableNearestSuperTrack:SetLabel("Enable SuperTrack Nearest")
+	enableNearestSuperTrack:SetLabel("Enable SuperTrack Nearest when not Tracking")
 	enableNearestSuperTrack:SetValue(RQE.db.profile.enableNearestSuperTrack)
 	enableNearestSuperTrack:SetCallback("OnValueChanged", function(widget, event, value)
 		RQE.db.profile.enableNearestSuperTrack = value
