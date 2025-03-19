@@ -514,6 +514,158 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 end
 
 
+-- Create a Waypoint Using C_QuestLog.GetNextWaypoint
+function RQE:CreateQuestWaypointFromNextWaypoint(questID)
+	-- Ensure the frame is shown before proceeding
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden, skipping waypoint creation for NextWaypoint")
+		end
+		return
+	end
+
+	-- Ensure a valid questID is available
+	if not questID then
+		questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if not questID or questID == 0 then
+			print("No valid questID found for waypoint creation.")
+			return
+		end
+	end
+
+	-- Retrieve the Next Waypoint text
+	local waypointText = C_QuestLog.GetNextWaypointText(questID)
+	if not waypointText or waypointText == "" then
+		print("No Next Waypoint text available for questID:", questID)
+		return
+	end
+
+	-- Retrieve the next waypoint coordinates
+	local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+	if not mapID or not x or not y then
+		print("No waypoint data available for questID:", questID)
+		return
+	end
+
+	-- Convert to percentage format
+	x = x * 100
+	y = y * 100
+
+	-- Debug info
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("Setting Waypoint: QuestID: %d, MapID: %d, X: %.2f, Y: %.2f", questID, mapID, x, y))
+	end
+
+	-- Clear existing waypoint
+	C_Map.ClearUserWaypoint()
+
+	-- Create a new user waypoint
+	local waypointData = {
+		uiMapID = mapID,
+		position = CreateVector2D(x / 100, y / 100),
+		name = waypointText
+	}
+	C_Map.SetUserWaypoint(waypointData)
+	C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+
+	-- TomTom Integration (if enabled)
+	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
+		print("Waypoint added to TomTom for questID:", questID)
+	end
+
+	-- Carbonite Integration (if enabled)
+	local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+	if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
+		Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointText })
+		print("Waypoint added to Carbonite for questID:", questID)
+	end
+end
+
+
+-- Create a Waypoint Using C_QuestLog.GetNextWaypointForMap
+function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
+	-- Ensure the frame is shown before proceeding
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden, skipping waypoint creation for NextWaypoint")
+		end
+		return
+	end
+
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+
+	-- Retrieve the currently super-tracked quest ID
+	local questID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+	if not questID or questID == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super-tracked quest found.")
+		end
+		return
+	end
+
+	-- Retrieve the Next Waypoint text
+	local waypointText = C_QuestLog.GetNextWaypointText(questID)
+	if not waypointText or waypointText == "" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No Next Waypoint text available for questID:", questID)
+		end
+		return
+	end
+
+	-- Retrieve the next waypoint coordinates
+	local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+	if not mapID or not x or not y then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No waypoint data available for questID:", questID)
+		end
+		return
+	end
+
+	-- Convert to percentage format
+	x = x * 100
+	y = y * 100
+
+	-- Debug info
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("Setting Waypoint: QuestID: %d, MapID: %d, X: %.2f, Y: %.2f", questID, mapID, x, y))
+	end
+
+	-- Clear existing waypoint
+	C_Map.ClearUserWaypoint()
+
+	-- Create a new user waypoint
+	local waypointData = {
+		uiMapID = mapID,
+		position = CreateVector2D(x / 100, y / 100),
+		name = waypointText
+	}
+	C_Map.SetUserWaypoint(waypointData)
+	C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+
+	-- TomTom Integration (if enabled)
+	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Waypoint added to TomTom for questID:", questID)
+		end
+	end
+
+	-- Carbonite Integration (if enabled)
+	local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+	if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
+		Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointText })
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Waypoint added to Carbonite for questID:", questID)
+		end
+	end
+end
+
+
 -- Function: RemoveWaypoint
 -- Removes an existing waypoint.
 -- @param waypoint: The waypoint object to remove
