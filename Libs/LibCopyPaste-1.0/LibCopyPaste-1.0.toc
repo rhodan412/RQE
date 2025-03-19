@@ -1,0 +1,8 @@
+## Interface: 110100, 110105
+## Title: LibCopyPaste-1.0
+## Notes: Library for copying and pasting multi-line text
+## Author: Oppzippy
+## Version: v1.0.11
+## X-Curse-Project-ID: 310719
+
+lib.xml
