@@ -1,4 +1,4 @@
-11.1.0.3
+11.1.0.3 (2025.03.19)
 
 	**HIGHLIGHTS**
 		- Added CPU profiling for RQE addon with display of % of current CPU usage (2025.03.08)
