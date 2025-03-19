@@ -1,5 +1,8 @@
 11.1.0.4
 
+	Libraries
+		- Added LibCopyPaste with potential plan to use to better handle copy/pasting of wowhead/warcraft wiki links (2025.03.19)
+
 	RQE.toc
 		- Updated version# (2025.03.19)
 
