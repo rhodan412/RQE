@@ -3969,20 +3969,12 @@ function RQE:QuestComplete(questID)
 end
 
 
--- Function to highlight text for copying
-local function HighlightTextForCopy(editBox)
-	editBox:SetFocus()
-	editBox:HighlightText()
-	print("Press Ctrl+C to copy the link.")
-end
-
-
 -- Function to generate frame on menu choice that will display the wowhead link for a given quest
 function RQE:ShowWowheadLink(questID)
 	local wowheadURL = "https://www.wowhead.com/quest=" .. questID
 
 	-- Create and configure the frame
-	local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate") --, "DialogBoxFrame")
+	local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate")
 	linkFrame:SetSize(350, 120)  -- Increased height
 	linkFrame:SetPoint("CENTER")
 	linkFrame:SetFrameStrata("HIGH")
@@ -4026,7 +4018,7 @@ function RQE:ShowWowheadLink(questID)
 	copyButton:SetSize(100, 20)
 	copyButton:ClearAllPoints()
 	copyButton:SetPoint("TOP", wowHeadeditBox, "BOTTOM", 0, -10)  -- Adjust the Y-offset as needed
-	copyButton:SetText("Copy to Clipboard")
+	copyButton:SetText("Highlight Text")
 	copyButton:SetScript("OnClick", HighlightTextForCopy)
 
 	-- Create and configure the Close button
@@ -4141,7 +4133,7 @@ function RQE:ShowWowWikiLink(questID)
 	copyButton:SetSize(100, 20)
 	copyButton:ClearAllPoints()
 	copyButton:SetPoint("TOP", wowWikieditBox, "BOTTOM", 0, -15)  -- Adjust the Y-offset as needed
-	copyButton:SetText("Copy to Clipboard")
+	copyButton:SetText("Highlight Text")
 	copyButton:SetScript("OnClick", HighlightTextForCopy)
 
 	-- Create and configure the Close button
@@ -7705,6 +7697,37 @@ function RQE.GetMapQuests()
 
 	-- Fetch quests on the current map
 	local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+
+	-- Check if there are any quests on the map
+	if not quests or #quests == 0 then
+		print("No quests found on the current map.")
+		return
+	end
+
+	-- Print out the details of each quest on the map
+	for _, quest in ipairs(quests) do
+		print("Quest ID: " .. quest.questID)
+		print("Coordinates: (" .. quest.x .. ", " .. quest.y .. ")")
+		print("Type: " .. quest.type)
+		print("Is Map Indicator Quest: " .. tostring(quest.isMapIndicatorQuest))
+		print("-------")
+	end
+end
+
+
+-- Prints the quests that are on the current player map
+function RQE.GetWorldMapQuests()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Check if playerMapID is valid
+	if not playerMapID then
+		print("Unable to get player's map ID.")
+		return
+	end
+
+	-- Fetch quests on the current map
+	local quests = C_TaskQuest.GetQuestsOnMap(playerMapID)
 
 	-- Check if there are any quests on the map
 	if not quests or #quests == 0 then
