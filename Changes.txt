@@ -1,10 +1,17 @@
 11.1.0.4
 
-	Libraries
-		- Added LibCopyPaste with potential plan to use to better handle copy/pasting of wowhead/warcraft wiki links (2025.03.19)
+	Core.lua
+		- Fixed wording for WowheadLink and wowWiki frames dialog box button to state 'Highlight Text' instead of 'Copy to Clipbaord' for accuracy/clarity (2025.03.20)
+
+	EventManager.lua
+		- Set delay prior to running function that auto super track nearest quest after combat ends (2025.03.20)
 
 	RQE.toc
 		- Updated version# (2025.03.19)
+
+	RQEDatabase.lua
+		- Added Alliance and neutral Legion quests to DB excluding Suramar (2025.03.20)
+		- Added some Dragonflight quests to DB (2025.03.20)
 
 
 11.1.0.3 (2025.03.19)
