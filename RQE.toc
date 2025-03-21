@@ -41,7 +41,6 @@ Libs/AceTab-3.0/AceTab-3.0.xml
 Libs/AceTimer-3.0/AceTimer-3.0.xml
 Libs/AceBucket-3.0/AceBucket-3.0.xml
 Libs/LibSharedMedia-3.0/lib.xml
-Libs/LibCopyPaste-1.0/LibCopyPaste-1.0.lua
 
 # TaintLess
 TaintLess.xml
