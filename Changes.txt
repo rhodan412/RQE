@@ -11,7 +11,7 @@
 
 	RQEDatabase.lua
 		- Added Alliance and neutral Legion quests to DB excluding Suramar (2025.03.20)
-		- Added some Dragonflight quests to DB (2025.03.20)
+		- Added Waking Shores and some Ohn'aharan Plains quests to DB (2025.03.22)
 
 
 11.1.0.3 (2025.03.19)
