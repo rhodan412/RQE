@@ -1,5 +1,8 @@
 11.1.0.4
 
+	**Libraries**
+		- Updated LibDBIcon-1.0 and LibSharedMedia-3.0 (2025.03.23)
+
 	Core.lua
 		- Fixed wording for WowheadLink and wowWiki frames dialog box button to state 'Highlight Text' instead of 'Copy to Clipbaord' for accuracy/clarity (2025.03.20)
 
@@ -11,7 +14,8 @@
 
 	RQEDatabase.lua
 		- Added Alliance and neutral Legion quests to DB excluding Suramar (2025.03.20)
-		- Added Waking Shores and some Ohn'aharan Plains quests to DB (2025.03.22)
+		- Added Waking Shores quests to DB (2025.03.22)
+		- Added Ohn'aharan Plains and some Azure Span quests to DB (2025.03.23)
 
 
 11.1.0.3 (2025.03.19)
