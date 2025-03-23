@@ -5,9 +5,11 @@
 
 	Core.lua
 		- Fixed wording for WowheadLink and wowWiki frames dialog box button to state 'Highlight Text' instead of 'Copy to Clipbaord' for accuracy/clarity (2025.03.20)
+		- Fixed taint related to RQE:AutoSuperTrackClosestQuest() attempting to fire sometimes during combat (2025.03.23)
 
 	EventManager.lua
 		- Set delay prior to running function that auto super track nearest quest after combat ends (2025.03.20)
+		- Increased delay, after combat ending, before RQE:AutoSuperTrackClosestQuest() fires (2025.03.23)
 
 	RQE.toc
 		- Updated version# (2025.03.19)
@@ -15,7 +17,7 @@
 	RQEDatabase.lua
 		- Added Alliance and neutral Legion quests to DB excluding Suramar (2025.03.20)
 		- Added Waking Shores quests to DB (2025.03.22)
-		- Added Ohn'aharan Plains and some Azure Span quests to DB (2025.03.23)
+		- Added Ohn'aharan Plains and Azure Span campaign/story quests to DB (2025.03.23)
 
 
 11.1.0.3 (2025.03.19)
