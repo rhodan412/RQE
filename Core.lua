@@ -2374,6 +2374,7 @@ end
 -- Function to Auto Supertrack the Nearest Watched Quest
 function RQE:AutoSuperTrackClosestQuest()
 	if not RQE.db.profile.enableAutoSuperTrackSwap then return end
+	if InCombatLockdown() then return end
 
 	-- Get the closest tracked quest ID
 	local closestQuestID = RQE:GetClosestTrackedQuest()
