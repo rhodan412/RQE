@@ -1021,7 +1021,7 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5) -- Light Salmon
 	end
 
-	C_Timer.After(0.3, function()
+	C_Timer.After(0.8, function()
 		RQE:AutoSuperTrackClosestQuest()
 	end)
 
