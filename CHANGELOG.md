@@ -1,15 +1,22 @@
 11.1.0.4
 
+	**HIGHLIGHTS**
+		- Modified code to now accept multiple gossip options instead of just the first one allowing smoother control when multiple options appear in sequence when completing a quest (2025.03.24)
+
 	**Libraries**
 		- Updated LibDBIcon-1.0 and LibSharedMedia-3.0 (2025.03.23)
 
 	Core.lua
 		- Fixed wording for WowheadLink and wowWiki frames dialog box button to state 'Highlight Text' instead of 'Copy to Clipbaord' for accuracy/clarity (2025.03.20)
 		- Fixed taint related to RQE:AutoSuperTrackClosestQuest() attempting to fire sometimes during combat (2025.03.23)
+		- Modified code to now accept multiple gossip options instead of just the first one (2025.03.24)
 
 	EventManager.lua
 		- Set delay prior to running function that auto super track nearest quest after combat ends (2025.03.20)
 		- Increased delay, after combat ending, before RQE:AutoSuperTrackClosestQuest() fires (2025.03.23)
+
+	QuestingModule.lua
+		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEQuestFrame (2025.03.24)
 
 	RQE.toc
 		- Updated version# (2025.03.19)
@@ -18,6 +25,10 @@
 		- Added Alliance and neutral Legion quests to DB excluding Suramar (2025.03.20)
 		- Added Waking Shores quests to DB (2025.03.22)
 		- Added Ohn'aharan Plains, Azure Span and Thaldraszus campaign/story quests, along with many side quests to DB (2025.03.23)
+		- Added additional Dragonflight expansion side quests to DB (2025.03.24)
+
+	RQEFrame.lua
+		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEFrame (2025.03.24)
 
 
 11.1.0.3 (2025.03.19)
