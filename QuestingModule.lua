@@ -1123,7 +1123,7 @@ function ShowQuestDropdown(self, questID)
 			rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
 		end
 
-		rootDescription:CreateButton("Stop Tracking", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
+		rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
 		rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
 		rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
