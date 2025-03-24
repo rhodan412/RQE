@@ -17,7 +17,7 @@
 	RQEDatabase.lua
 		- Added Alliance and neutral Legion quests to DB excluding Suramar (2025.03.20)
 		- Added Waking Shores quests to DB (2025.03.22)
-		- Added Ohn'aharan Plains and Azure Span campaign/story quests to DB (2025.03.23)
+		- Added Ohn'aharan Plains, Azure Span and Thaldraszus campaign/story quests, along with many side quests to DB (2025.03.23)
 
 
 11.1.0.3 (2025.03.19)
