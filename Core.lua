@@ -8850,57 +8850,174 @@ end
 -- Frame to handle the gossip event securely
 local RQEGossipFrame = CreateFrame("Frame", "RQEGossipFrame", UIParent)
 RQEGossipFrame:RegisterEvent("GOSSIP_SHOW")
+RQEGossipFrame:RegisterEvent("GOSSIP_CLOSED")
 
--- Function to store the selected gossip option criteria
+
+-- Table to store multiple gossip selection criteria
 local selectedGossipOption = {
+	npcName = nil,
+	optionIndexes = {}, -- Store multiple option indexes
+	currentIndex = 1
+}
+
+-- Table to store multiple gossip selection criteria
+local selectedGossipMultiple = {
+	npcName = nil,
+	optionIndexes = {}, -- Store multiple option indexes
+	currentIndex = 1
+}
+
+-- Table to store **single** gossip selection criteria
+local selectedGossipSingle = {
 	npcName = nil,
 	optionIndex = nil
 }
 
 
--- Securely hook the frame's event handler
-RQEGossipFrame:HookScript("OnEvent", function(self, event)
-	-- Fetch available gossip options
+-- Function to process the next gossip selection in queue
+local function ProcessNextGossipOption()
 	local options = C_GossipInfo.GetOptions()
 
-	-- Check if options exist
+	-- If no options are available, stop processing
 	if not options or #options == 0 then
 		return
 	end
 
-	-- Get the current NPC name
+	-- Ensure we are interacting with the correct NPC
 	local currentNPCName = UnitName("npc")
+	if not currentNPCName or currentNPCName ~= selectedGossipOption.npcName then
+		return
+	end
 
-	-- Check if the selection criteria match the current NPC
-	if selectedGossipOption.npcName and currentNPCName == selectedGossipOption.npcName then
-		-- Iterate through options and select based on specified index
-		for i, option in ipairs(options) do
-			if option.orderIndex == selectedGossipOption.optionIndex then
+	-- If we have an option left to process
+	if selectedGossipOption.currentIndex <= #selectedGossipOption.optionIndexes then
+		local targetOption = selectedGossipOption.optionIndexes[selectedGossipOption.currentIndex]
+
+		for _, option in ipairs(options) do
+			if option.orderIndex == targetOption then
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Selecting gossip option:", option.orderIndex, "for NPC Name:", selectedGossipOption.npcName)
+					print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipOption.npcName)
 				end
+
+				-- Select the option
 				C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+
+				-- Move to the next option
+				selectedGossipOption.currentIndex = selectedGossipOption.currentIndex + 1
+
+				-- Schedule next selection
+				C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
 				break
 			end
 		end
 	end
-end)
+end
 
 
--- Function to set the gossip selection criteria for the current NPC
+-- Function to set a single gossip option
 function RQE.SelectGossipOption(npcName, optionIndex)
-	-- Adding check to make sure that Gossip Mode is enabled
+	-- Ensure gossip automation is enabled
 	if not RQE.db.profile.enableGossipModeAutomation then return end
 
 	-- Set the selected gossip option for future use
 	if npcName == "target" then
-		selectedGossipOption.npcName = UnitName("target")
+		selectedGossipSingle.npcName = UnitName("target")
 	else
-		selectedGossipOption.npcName = npcName
+		selectedGossipSingle.npcName = npcName
 	end
-	selectedGossipOption.optionIndex = optionIndex
+	selectedGossipSingle.optionIndex = optionIndex
 
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Gossip selection set for NPC Name:", npcName, "to select option:", optionIndex)
+		print("Single gossip selection set for NPC:", npcName, "to select option:", optionIndex)
+	end
+end
+
+
+-- Function to set multiple gossip selections
+function RQE.SelectMultipleGossipOptions(npcName, ...)
+	-- Ensure gossip automation is enabled
+	if not RQE.db.profile.enableGossipModeAutomation then return end
+
+	-- Reset previous queue
+	selectedGossipOption.npcName = npcName
+	selectedGossipOption.optionIndexes = { ... }
+	selectedGossipOption.currentIndex = 1
+
+	-- Debug logging
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Gossip selection set for NPC:", npcName, "to select options:", table.concat(selectedGossipOption.optionIndexes, ", "))
+	end
+
+	-- If the NPC gossip window is already open, process immediately
+	if UnitName("npc") == npcName then
+		ProcessNextGossipOption()
+	end
+end
+
+
+-- Securely hook event handler to process gossip
+RQEGossipFrame:SetScript("OnEvent", function(self, event)
+	if event == "GOSSIP_SHOW" then
+		-- If selectedGossipOption has active selections, start processing
+		if selectedGossipOption.npcName then
+			ProcessNextGossipOption()
+		end
+	elseif event == "GOSSIP_CLOSED" then
+		-- Reset queue when gossip window closes
+		selectedGossipOption.npcName = nil
+		selectedGossipOption.optionIndexes = {}
+		selectedGossipOption.currentIndex = 1
+	end
+end)
+
+
+-- Securely hook the frame's event handler for single gossip
+RQEGossipFrame:HookScript("OnEvent", function(self, event)
+	if event == "GOSSIP_SHOW" then
+		-- Fetch available gossip options
+		local options = C_GossipInfo.GetOptions()
+
+		-- Check if options exist
+		if not options or #options == 0 then
+			return
+		end
+
+		-- Get the current NPC name
+		local currentNPCName = UnitName("npc")
+
+		-- Check if the selection criteria match the current NPC
+		if selectedGossipSingle.npcName and currentNPCName == selectedGossipSingle.npcName then
+			-- Iterate through options and select based on specified index
+			for i, option in ipairs(options) do
+				if option.orderIndex == selectedGossipSingle.optionIndex then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipSingle.npcName)
+					end
+					C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+					break
+				end
+			end
+		end
+	elseif event == "GOSSIP_CLOSED" then
+		-- Reset both queues when gossip window closes
+		selectedGossipMultiple.npcName = nil
+		selectedGossipMultiple.optionIndexes = {}
+		selectedGossipMultiple.currentIndex = 1
+
+		selectedGossipSingle.npcName = nil
+		selectedGossipSingle.optionIndex = nil
+	end
+end)
+
+
+-- Closes the gossip window to ensure that the options are clean slate
+function RQE.ResetGossipWindow()
+	if UnitExists("npc") then
+		C_GossipInfo.CloseGossip() -- Close the gossip window
+		-- C_Timer.After(0.2, function() -- Wait a moment before reopening
+			-- C_PlayerInteractionManager.InteractUnit("npc") -- Reopen the gossip window
+		-- end)
+	-- else
+		-- print("No NPC is currently targeted.")
 	end
 end
