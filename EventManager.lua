@@ -1022,7 +1022,7 @@ function RQE.handlePlayerRegenEnabled()
 	end
 
 	C_Timer.After(0.8, function()
-		RQE:AutoSuperTrackClosestQuest()
+		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the PLAYER_REGEN_ENABLED event
 	end)
 
 	if RQE.CheckNClickWButtonAfterCombat then
@@ -1142,7 +1142,7 @@ function RQE.handlePlayerMountDisplayChanged()
 		end
 	end
 
-	RQE:AutoSuperTrackClosestQuest()
+	RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
 
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
@@ -2670,7 +2670,7 @@ function RQE.handleQuestAccepted(...)
 	RQE.SetInitialFromAccept = true
 
 	C_Timer.After(1.3, function()
-		RQE:AutoSuperTrackClosestQuest()
+		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
 	end)
 
 	-- -- Check if the quest is a bonus objective
@@ -3214,7 +3214,7 @@ function RQE.handleZoneNewAreaChange()
 		return
 	end
 
-	RQE:AutoSuperTrackClosestQuest()
+	RQE:AutoSuperTrackClosestQuest()	-- Fires with the ZONE_CHANGED_NEW_AREA event
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -4002,6 +4002,13 @@ function RQE.handleInstanceInfoUpdate()
 	C_Timer.After(1.5, function()
 		RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
 	end)
+
+	-- Clicks the button to trigger a waypoint creation shortly after login of the current supertracked quest
+	if not C_Scenario.IsInScenario() then
+		C_Timer.After(1.15, function()
+			RQE.CheckAndClickWButton()
+		end)
+	end
 
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
@@ -5018,6 +5025,10 @@ function RQE.handleQuestTurnIn(...)
 			end
 		end
 	end
+
+	C_Timer.After(0.7, function()
+		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_TURNED_IN event
+	end)
 
 	C_Timer.After(0.5, function()
 		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
