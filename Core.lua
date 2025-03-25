@@ -2397,7 +2397,10 @@ function RQE:AutoSuperTrackClosestQuest()
 	end
 
 	RQE:SaveSuperTrackedQuestToCharacter()
-	RQE.CheckAndClickWButton()
+
+	C_Timer.After(0.3, function()
+		RQE.CheckAndClickWButton()
+	end)
 end
 
 
