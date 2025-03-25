@@ -10,10 +10,13 @@
 		- Fixed wording for WowheadLink and wowWiki frames dialog box button to state 'Highlight Text' instead of 'Copy to Clipbaord' for accuracy/clarity (2025.03.20)
 		- Fixed taint related to RQE:AutoSuperTrackClosestQuest() attempting to fire sometimes during combat (2025.03.23)
 		- Modified code to now accept multiple gossip options instead of just the first one (2025.03.24)
+		- Added delay before firing function that clicks the "W" button when RQE:AutoSuperTrackClosestQuest fires (2025.03.24)
 
 	EventManager.lua
 		- Set delay prior to running function that auto super track nearest quest after combat ends (2025.03.20)
 		- Increased delay, after combat ending, before RQE:AutoSuperTrackClosestQuest() fires (2025.03.23)
+		- Added RQE.CheckAndClickWButton(), after brief delay and not in scenario, following the firing of UPDATE_INSTANCE_INFO event (2025.03.24)
+		- Added RQE:AutoSuperTrackClosestQuest, after brief delay, following the firing of QUEST_TURNED_IN event (2025.03.24)
 
 	QuestingModule.lua
 		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEQuestFrame (2025.03.24)
