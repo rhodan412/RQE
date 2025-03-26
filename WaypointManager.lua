@@ -653,7 +653,7 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 	end
 
 	-- Clear existing waypoint
-	C_Map.ClearUserWaypoint()
+	--C_Map.ClearUserWaypoint()
 
 	-- Create a new user waypoint
 	local waypointData = {
@@ -661,8 +661,8 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 		position = CreateVector2D(x / 100, y / 100),
 		name = waypointText
 	}
-	C_Map.SetUserWaypoint(waypointData)
-	C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+	--C_Map.SetUserWaypoint(waypointData)
+	--C_SuperTrack.SetSuperTrackedUserWaypoint(true)
 
 	-- TomTom Integration (if enabled)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
