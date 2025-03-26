@@ -34,6 +34,7 @@
 		- Added Ohn'aharan Plains, Azure Span and Thaldraszus campaign/story quests, along with many side quests to DB (2025.03.23)
 		- Added additional Dragonflight expansion side quests to DB (2025.03.24)
 		- Fixes for The War Within quests' coding in DB (2025.03.25)
+		- Updates to DB for Dornogol quests and WQ in War Within, Dragonflight and Shadowlands (2025.03.26)
 
 	RQEFrame.lua
 		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEFrame (2025.03.24)
