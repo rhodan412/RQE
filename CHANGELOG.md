@@ -11,6 +11,7 @@
 		- Fixed taint related to RQE:AutoSuperTrackClosestQuest() attempting to fire sometimes during combat (2025.03.23)
 		- Modified code to now accept multiple gossip options instead of just the first one (2025.03.24)
 		- Added delay before firing function that clicks the "W" button when RQE:AutoSuperTrackClosestQuest fires (2025.03.24)
+		- Fixed section of code within RQE that caused the hiding of quest steps if quest in different zone/direction text is list (2025.03.25)
 
 	EventManager.lua
 		- Set delay prior to running function that auto super track nearest quest after combat ends (2025.03.20)
@@ -34,6 +35,9 @@
 
 	RQEFrame.lua
 		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEFrame (2025.03.24)
+
+	WaypointManager.lua
+		- Fix issue with waypoint being cleared when using waypoint system to travel to separate zone with direction text (2025.03.25)
 
 
 11.1.0.3 (2025.03.19)
