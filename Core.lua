@@ -197,7 +197,6 @@ local defaults = {
 		debugTimeStampCheckbox = true,
 		displayRQEcpuUsage = false,
 		displayRQEmemUsage = false,
-		enableAutoSuperTrackSwap = false,
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
 		enableGossipModeAutomation = false,
@@ -358,150 +357,57 @@ function RQE:OnInitialize()
 	-- Start the timer
 	RQE.startTime = debugprofilestop()
 
-	-- Ensure SavedVariables `profileKeys` exists before AceDB initializes
-	if not RQEDB.profileKeys then
-		RQEDB.profileKeys = {}
-	end
+	-- Create AceDB-3.0 database
+	--self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults, true) -- Set default profile to the character
+	self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults, "Default")
 
-	-- Create AceDB-3.0 database **without forcing a default profile yet**
-	self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults)
-
-	-- Ensure AceDB does not overwrite stored profileKeys
-	self.db.profileKeys = RQEDB.profileKeys
-
-	-- Debugging: Print all stored profile keys before restoring profile
-	print("Checking stored profileKeys before restoration...")
-	for key, value in pairs(self.db.profileKeys) do
-		print("Found profile key: " .. key .. " -> " .. value)
-	end
-
-	-- Restore the correct profile from SavedVariables
-	self:RestoreSavedProfile()
-
-	-- Debugging: Confirm the correct profile was restored
-	print("Profile after OnInitialize():", self.db:GetCurrentProfile())
-
-	-- Register profile callbacks
-	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
-	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
-	self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
-
-	-- Initialize UI components
+	-- Initialize tables for storing StepsText, CoordsText, and WaypointButtons
 	RQE.StepsText = RQE.StepsText or {}
 	RQE.CoordsText = RQE.CoordsText or {}
 	RQE.WaypointButtons = RQE.WaypointButtons or {}
 
-	-- Set UI Frame Position
+	-- Register the profile changed callback
+	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
+	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
+	self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+
+	-- Now call UpdateFrameFromProfile to set the frame's position
 	self:UpdateFrameFromProfile()
 
-	-- Load character-specific data
+	-- Initialize character-specific data
 	self:GetCharacterInfo()
 
-	-- Register UI Options
+	-- Register the main options table with a light purple name
 	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
 	self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Register UI Pages
+	-- Register the "Frame" options table as a separate tab
 	AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
 	self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
+	-- Register the "Font" options table as a separate tab
 	AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
 	self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
 
+	-- Register the "Debug" options table as a separate tab
 	AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
 	self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Register Profiles Section
+	-- Add profiles (if needed)
 	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
 	AC:RegisterOptionsTable("RQE_Profiles", profiles)
 	ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
 
-	-- Register chat commands
-	self:RegisterChatCommand("rqe", "SlashCommand")
-
-	-- Override print function for debug logging
-	local originalPrint = print
-	print = function(...)
-		local args = {...}
-		local output = {}
-
-		for i, v in ipairs(args) do
-			if v == nil then
-				output[i] = "nil"  -- Replace nil values with "nil" string
-			elseif type(v) == "table" then
-				output[i] = "[Table]"  -- Prevent error from printing tables
-			else
-				output[i] = tostring(v)  -- Convert all other values to strings
-			end
-		end
-
-		local message = table.concat(output, " ")
-
-		-- Add to debug log
-		RQE.AddToDebugLog(message)
-
-		-- Call original print function
-		originalPrint(message)
-	end
-
-	-- Final UI Setup
-	self:UpdateFramePosition()
-	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
-	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
-end
-
-
--- AceAddon calls this after the addon is fully loaded
-function RQE:OnEnable()
-	-- Restore profile only if not already set
-	if not self.db:GetCurrentProfile() or self.db:GetCurrentProfile() == "Default" then
-		self:RestoreSavedProfile()
-	end
-
-	-- Debugging Output
-	print("Currently loaded profile:", self.db:GetCurrentProfile())
-
-	-- Apply UI settings after profile is set
-	self:ApplyUISettings()
-end
-
-
--- Function to restore the correct profile from SavedVariables
-function RQE:RestoreSavedProfile()
+	-- Auto-set profile based on some condition
 	local characterName = UnitName("player")
 	local characterRealm = GetRealmName()
-	local profileKey = characterName .. " - " .. characterRealm
-
-	-- Ensure the profileKeys table exists
-	self.db.profileKeys = self.db.profileKeys or {}
-
-	-- Debugging: Check if profileKey exists
-	if not self.db.profileKeys[profileKey] then
-		print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
-		self.db.profileKeys[profileKey] = "Default"
+	if characterName == "SomeSpecificName" and characterRealm == "SomeSpecificRealm" then
+		self.db:SetProfile(characterName .. " - " .. characterRealm)
 	end
 
-	local savedProfile = self.db.profileKeys[profileKey]
+	-- Register chat commands (if needed)
+	self:RegisterChatCommand("rqe", "SlashCommand")
 
-	-- Debugging: Print loaded profile information
-	print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
-
-	-- Ensure profile exists before setting it
-	if self.db.profiles and self.db.profiles[savedProfile] then
-		self.db:SetProfile(savedProfile)
-		print("Successfully restored profile: " .. savedProfile)
-	else
-		print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
-		self.db:SetProfile("Default")
-	end
-
-	-- Final Debug Output
-	print("Final profile loaded:", self.db:GetCurrentProfile())
-end
-
-
--- Function to apply UI settings after restoring profile
-function RQE:ApplyUISettings()
 	-- Ensure that MAP ID value is set to default values
 	local showMapID = RQE.db.profile.showMapID
 	if showMapID then
@@ -517,6 +423,18 @@ function RQE:ApplyUISettings()
 	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
 	RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
 	RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+
+	-- Override the print function
+	local originalPrint = print
+	print = function(...)
+		local message = table.concat({...}, " ")
+		RQE.AddToDebugLog(message)
+		originalPrint(...)
+	end
+
+	self:UpdateFramePosition()
+	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
+	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 end
 
 
@@ -2191,41 +2109,6 @@ function RQE.CheckAndClickWButton()
 end
 
 
--- Function to check for waypoint text and create a waypoint if available
-function RQE:CheckAndCreateSuperTrackedQuestWaypoint()
-	-- Ensure the frame is shown before proceeding
-	if not RQEFrame:IsShown() then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Frame is hidden, skipping waypoint check")
-		end
-		return
-	end
-
-	-- Retrieve the currently super-tracked quest ID
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	if not questID or questID == 0 then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No super-tracked quest found.")
-		end
-		return
-	end
-
-	-- Retrieve the Next Waypoint text
-	local waypointText = C_QuestLog.GetNextWaypointText(questID)
-	if waypointText and waypointText ~= "" then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Waypoint text found:", waypointText, "- Creating a waypoint.")
-		end
-		-- Call the function to create the waypoint
-		RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No Next Waypoint text available for questID:", questID)
-		end
-	end
-end
-
-
 -- Create the tooltip when mousing over certain assets
 function RQE:CreateQuestTooltip(self, questID, questTitle)
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT", -30, 0)  -- Anchor the tooltip to the cursor
@@ -2368,39 +2251,6 @@ function RQE:GetClosestTrackedQuest()
 	end
 
 	return closestQuestID
-end
-
-
--- Function to Auto Supertrack the Nearest Watched Quest
-function RQE:AutoSuperTrackClosestQuest()
-	if not RQE.db.profile.enableAutoSuperTrackSwap then return end
-	if InCombatLockdown() then return end
-
-	-- Get the closest tracked quest ID
-	local closestQuestID = RQE:GetClosestTrackedQuest()
-
-	-- Ensure a valid quest ID is found
-	if closestQuestID and closestQuestID ~= 0 then
-		-- Set the closest quest as the super-tracked quest
-		C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-		RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
-
-		-- Debug info
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Supertracking closest quest:", closestQuestID)
-		end
-	else
-		-- No valid quest found to supertrack
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No valid tracked quest found for supertracking.")
-		end
-	end
-
-	RQE:SaveSuperTrackedQuestToCharacter()
-
-	C_Timer.After(0.3, function()
-		RQE.CheckAndClickWButton()
-	end)
 end
 
 
@@ -3973,12 +3823,20 @@ function RQE:QuestComplete(questID)
 end
 
 
+-- Function to highlight text for copying
+local function HighlightTextForCopy(editBox)
+	editBox:SetFocus()
+	editBox:HighlightText()
+	print("Press Ctrl+C to copy the link.")
+end
+
+
 -- Function to generate frame on menu choice that will display the wowhead link for a given quest
 function RQE:ShowWowheadLink(questID)
 	local wowheadURL = "https://www.wowhead.com/quest=" .. questID
 
 	-- Create and configure the frame
-	local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate")
+	local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate") --, "DialogBoxFrame")
 	linkFrame:SetSize(350, 120)  -- Increased height
 	linkFrame:SetPoint("CENTER")
 	linkFrame:SetFrameStrata("HIGH")
@@ -4022,7 +3880,7 @@ function RQE:ShowWowheadLink(questID)
 	copyButton:SetSize(100, 20)
 	copyButton:ClearAllPoints()
 	copyButton:SetPoint("TOP", wowHeadeditBox, "BOTTOM", 0, -10)  -- Adjust the Y-offset as needed
-	copyButton:SetText("Highlight Text")
+	copyButton:SetText("Copy to Clipboard")
 	copyButton:SetScript("OnClick", HighlightTextForCopy)
 
 	-- Create and configure the Close button
@@ -4137,7 +3995,7 @@ function RQE:ShowWowWikiLink(questID)
 	copyButton:SetSize(100, 20)
 	copyButton:ClearAllPoints()
 	copyButton:SetPoint("TOP", wowWikieditBox, "BOTTOM", 0, -15)  -- Adjust the Y-offset as needed
-	copyButton:SetText("Highlight Text")
+	copyButton:SetText("Copy to Clipboard")
 	copyButton:SetScript("OnClick", HighlightTextForCopy)
 
 	-- Create and configure the Close button
@@ -4642,18 +4500,14 @@ function RQE:StartPeriodicChecks()
 		print("~~~ Running RQE:StartPeriodicChecks() ~~~")
 	end
 
-	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	end
+	if not RQE.IsQuestSuperTracked() then return end
 
-	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Current superTrackedQuestID:", superTrackedQuestID)
 	end
 
 	if not superTrackedQuestID then return end
-
-	RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
 
 	local questData = self.getQuestData(superTrackedQuestID)
 	if not questData then
@@ -7719,37 +7573,6 @@ function RQE.GetMapQuests()
 end
 
 
--- Prints the quests that are on the current player map
-function RQE.GetWorldMapQuests()
-	-- Get the player's current map ID
-	local playerMapID = C_Map.GetBestMapForUnit("player")
-
-	-- Check if playerMapID is valid
-	if not playerMapID then
-		print("Unable to get player's map ID.")
-		return
-	end
-
-	-- Fetch quests on the current map
-	local quests = C_TaskQuest.GetQuestsOnMap(playerMapID)
-
-	-- Check if there are any quests on the map
-	if not quests or #quests == 0 then
-		print("No quests found on the current map.")
-		return
-	end
-
-	-- Print out the details of each quest on the map
-	for _, quest in ipairs(quests) do
-		print("Quest ID: " .. quest.questID)
-		print("Coordinates: (" .. quest.x .. ", " .. quest.y .. ")")
-		print("Type: " .. quest.type)
-		print("Is Map Indicator Quest: " .. tostring(quest.isMapIndicatorQuest))
-		print("-------")
-	end
-end
-
-
 -- Pulls map information for quests in the present zone and saves them
 function RQE.PullDataFromMapQuests()
 	-- Get the player's current map ID
@@ -8853,174 +8676,57 @@ end
 -- Frame to handle the gossip event securely
 local RQEGossipFrame = CreateFrame("Frame", "RQEGossipFrame", UIParent)
 RQEGossipFrame:RegisterEvent("GOSSIP_SHOW")
-RQEGossipFrame:RegisterEvent("GOSSIP_CLOSED")
 
-
--- Table to store multiple gossip selection criteria
+-- Function to store the selected gossip option criteria
 local selectedGossipOption = {
-	npcName = nil,
-	optionIndexes = {}, -- Store multiple option indexes
-	currentIndex = 1
-}
-
--- Table to store multiple gossip selection criteria
-local selectedGossipMultiple = {
-	npcName = nil,
-	optionIndexes = {}, -- Store multiple option indexes
-	currentIndex = 1
-}
-
--- Table to store **single** gossip selection criteria
-local selectedGossipSingle = {
 	npcName = nil,
 	optionIndex = nil
 }
 
 
--- Function to process the next gossip selection in queue
-local function ProcessNextGossipOption()
+-- Securely hook the frame's event handler
+RQEGossipFrame:HookScript("OnEvent", function(self, event)
+	-- Fetch available gossip options
 	local options = C_GossipInfo.GetOptions()
 
-	-- If no options are available, stop processing
+	-- Check if options exist
 	if not options or #options == 0 then
 		return
 	end
 
-	-- Ensure we are interacting with the correct NPC
+	-- Get the current NPC name
 	local currentNPCName = UnitName("npc")
-	if not currentNPCName or currentNPCName ~= selectedGossipOption.npcName then
-		return
-	end
 
-	-- If we have an option left to process
-	if selectedGossipOption.currentIndex <= #selectedGossipOption.optionIndexes then
-		local targetOption = selectedGossipOption.optionIndexes[selectedGossipOption.currentIndex]
-
-		for _, option in ipairs(options) do
-			if option.orderIndex == targetOption then
+	-- Check if the selection criteria match the current NPC
+	if selectedGossipOption.npcName and currentNPCName == selectedGossipOption.npcName then
+		-- Iterate through options and select based on specified index
+		for i, option in ipairs(options) do
+			if option.orderIndex == selectedGossipOption.optionIndex then
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipOption.npcName)
+					print("Selecting gossip option:", option.orderIndex, "for NPC Name:", selectedGossipOption.npcName)
 				end
-
-				-- Select the option
 				C_GossipInfo.SelectOptionByIndex(option.orderIndex)
-
-				-- Move to the next option
-				selectedGossipOption.currentIndex = selectedGossipOption.currentIndex + 1
-
-				-- Schedule next selection
-				C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
 				break
 			end
 		end
 	end
-end
+end)
 
 
--- Function to set a single gossip option
+-- Function to set the gossip selection criteria for the current NPC
 function RQE.SelectGossipOption(npcName, optionIndex)
-	-- Ensure gossip automation is enabled
+	-- Adding check to make sure that Gossip Mode is enabled
 	if not RQE.db.profile.enableGossipModeAutomation then return end
 
 	-- Set the selected gossip option for future use
 	if npcName == "target" then
-		selectedGossipSingle.npcName = UnitName("target")
+		selectedGossipOption.npcName = UnitName("target")
 	else
-		selectedGossipSingle.npcName = npcName
+		selectedGossipOption.npcName = npcName
 	end
-	selectedGossipSingle.optionIndex = optionIndex
+	selectedGossipOption.optionIndex = optionIndex
 
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Single gossip selection set for NPC:", npcName, "to select option:", optionIndex)
-	end
-end
-
-
--- Function to set multiple gossip selections
-function RQE.SelectMultipleGossipOptions(npcName, ...)
-	-- Ensure gossip automation is enabled
-	if not RQE.db.profile.enableGossipModeAutomation then return end
-
-	-- Reset previous queue
-	selectedGossipOption.npcName = npcName
-	selectedGossipOption.optionIndexes = { ... }
-	selectedGossipOption.currentIndex = 1
-
-	-- Debug logging
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Gossip selection set for NPC:", npcName, "to select options:", table.concat(selectedGossipOption.optionIndexes, ", "))
-	end
-
-	-- If the NPC gossip window is already open, process immediately
-	if UnitName("npc") == npcName then
-		ProcessNextGossipOption()
-	end
-end
-
-
--- Securely hook event handler to process gossip
-RQEGossipFrame:SetScript("OnEvent", function(self, event)
-	if event == "GOSSIP_SHOW" then
-		-- If selectedGossipOption has active selections, start processing
-		if selectedGossipOption.npcName then
-			ProcessNextGossipOption()
-		end
-	elseif event == "GOSSIP_CLOSED" then
-		-- Reset queue when gossip window closes
-		selectedGossipOption.npcName = nil
-		selectedGossipOption.optionIndexes = {}
-		selectedGossipOption.currentIndex = 1
-	end
-end)
-
-
--- Securely hook the frame's event handler for single gossip
-RQEGossipFrame:HookScript("OnEvent", function(self, event)
-	if event == "GOSSIP_SHOW" then
-		-- Fetch available gossip options
-		local options = C_GossipInfo.GetOptions()
-
-		-- Check if options exist
-		if not options or #options == 0 then
-			return
-		end
-
-		-- Get the current NPC name
-		local currentNPCName = UnitName("npc")
-
-		-- Check if the selection criteria match the current NPC
-		if selectedGossipSingle.npcName and currentNPCName == selectedGossipSingle.npcName then
-			-- Iterate through options and select based on specified index
-			for i, option in ipairs(options) do
-				if option.orderIndex == selectedGossipSingle.optionIndex then
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipSingle.npcName)
-					end
-					C_GossipInfo.SelectOptionByIndex(option.orderIndex)
-					break
-				end
-			end
-		end
-	elseif event == "GOSSIP_CLOSED" then
-		-- Reset both queues when gossip window closes
-		selectedGossipMultiple.npcName = nil
-		selectedGossipMultiple.optionIndexes = {}
-		selectedGossipMultiple.currentIndex = 1
-
-		selectedGossipSingle.npcName = nil
-		selectedGossipSingle.optionIndex = nil
-	end
-end)
-
-
--- Closes the gossip window to ensure that the options are clean slate
-function RQE.ResetGossipWindow()
-	if UnitExists("npc") then
-		C_GossipInfo.CloseGossip() -- Close the gossip window
-		-- C_Timer.After(0.2, function() -- Wait a moment before reopening
-			-- C_PlayerInteractionManager.InteractUnit("npc") -- Reopen the gossip window
-		-- end)
-	-- else
-		-- print("No NPC is currently targeted.")
+		print("Gossip selection set for NPC Name:", npcName, "to select option:", optionIndex)
 	end
 end
