@@ -17,6 +17,8 @@
 		- Increased delay, after combat ending, before RQE:AutoSuperTrackClosestQuest() fires (2025.03.23)
 		- Added RQE.CheckAndClickWButton(), after brief delay and not in scenario, following the firing of UPDATE_INSTANCE_INFO event (2025.03.24)
 		- Added RQE:AutoSuperTrackClosestQuest, after brief delay, following the firing of QUEST_TURNED_IN event (2025.03.24)
+		- Added additional commented lines for clarity as well as arg print option for UI_INFO_MESSAGE event (2025.03.25)
+		- Added a save tracked quests to character profile when UI_INFO_MESSAGE event fires (2025.03.25)
 
 	QuestingModule.lua
 		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEQuestFrame (2025.03.24)
