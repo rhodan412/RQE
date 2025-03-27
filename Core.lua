@@ -963,6 +963,85 @@ function RQE.GetDataForAddon()
 end
 
 
+-- Obtain WQ Information for Expansion: The War Within
+function RQE.GetTheWarWithinWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	RQE_Contribution.GetMissingWQ(11)
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain WQ Information for Expansion: Dragonflight
+function RQE.GetDragonflightWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	RQE_Contribution.GetMissingWQ(10)
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain WQ Information for Expansion: Shadowlands
+function RQE.GetShadowlandsWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	RQE_Contribution.GetMissingWQ(9)
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain WQ Information for Expansion: Battle for Azeroth
+function RQE.GetBFAWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	RQE_Contribution.GetMissingWQ(8)
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain WQ Information for Expansion: Legion
+function RQE.GetLegionWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	RQE_Contribution.GetMissingWQ(7)
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain WQ Information for Expansion: Misc
+function RQE.MiscWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	RQE_Contribution.GetAllWQ(6)
+	--RQE_Contribution.GetMissingWQ(6)
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain addon Contribution Data
+function RQE.GetDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE:ClearDebugLog()
+		RQE_Contribution.GetAllContributionInfo()
+		RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(2, function()
+			RQE:ShowDeleteConfirmationDialog()
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
 -- Function to Show Confirmation Dialog for Deleting Data
 function RQE:ShowDeleteConfirmationDialog()
 	-- Define the dialog structure
@@ -6377,115 +6456,17 @@ end
 -- end
 
 
--- Function to check the current scenario stage (Array/Checks or Check compatible)
-function RQE:CheckScenarioStage(questID, stepIndex, check, neededAmt)
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("~~ Running RQE:CheckScenarioStage ~~")
-	end
+-- -- Function to check the current scenario stage (Array/Checks or Check compatible)
+-- function RQE:CheckScenarioStage(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckScenarioStage ~~")
+	-- end
 
-	-- Ensure the player is in a scenario
-	if not C_Scenario.IsInScenario() then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - Player is not in a scenario.")
-		end
-		return false
-	end
-
-	-- Fetch general scenario information
-	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-	if not scenarioInfo then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - No active scenario information available.")
-		end
-		return false
-	end
-
-	local currentStage = scenarioInfo.currentStage
-
-	-- Use provided `check` and `neededAmt` if available
-	check = check or {}
-	neededAmt = neededAmt or {}
-
-	-- Evaluate `check` directly if provided
-	if #check > 0 and #neededAmt > 0 then
-		for i, requiredStage in ipairs(check) do
-			local requiredStageNumber = tonumber(requiredStage) or 1
-			if currentStage < requiredStageNumber then
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("CheckScenarioStage() - Current stage (" .. currentStage .. ") does not meet required stage (" .. requiredStageNumber .. ").")
-				end
-				return false
-			end
-		end
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - All scenario stage checks met.")
-		end
-		self:ClickWaypointButtonForIndex(stepIndex)
-		return true
-	end
-
-	-- Fallback to quest data if `check` and `neededAmt` are not provided
-	local questData = self.getQuestData(questID)
-	if not questData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - No quest data found for quest ID:", questID)
-		end
-		return false
-	end
-
-	local stepData = questData[stepIndex]
-	if not stepData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - No step data found for quest ID:", questID)
-		end
-		return false
-	end
-
-	-- Handle multiple `checks`
-	if stepData.checks then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - Using EvaluateStepChecks for multiple checks.")
-		end
-		local success = self:EvaluateStepChecks(questID, stepIndex)
-		if success then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckScenarioStage() - Scenario stage checks met for stepIndex:", stepIndex)
-			end
-			self:ClickWaypointButtonForIndex(stepIndex)
-			return true
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckScenarioStage() - Scenario stage checks NOT met for stepIndex:", stepIndex)
-			end
-			return false
-		end
-	end
-
-	-- Handle single `check`
-	local neededStage = tonumber(stepData.neededAmt and stepData.neededAmt[1]) or 1
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("CheckScenarioStage() - Current stage:", currentStage, "Needed stage:", neededStage)
-	end
-
-	if currentStage >= neededStage then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - Scenario stage requirement met. Advancing to next step.")
-		end
-		self:ClickWaypointButtonForIndex(stepIndex)
-		return true
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioStage() - Current scenario stage (" .. currentStage .. ") does not meet required stage (" .. neededStage .. ").")
-		end
-		return false
-	end
-end
-
-
--- -- Function to check the current scenario stage
--- function RQE:CheckScenarioStage(questID, stepIndex)
 	-- -- Ensure the player is in a scenario
 	-- if not C_Scenario.IsInScenario() then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioStage() - Player is not in a scenario.")
+		-- end
 		-- return false
 	-- end
 
@@ -6493,85 +6474,97 @@ end
 	-- local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
 	-- if not scenarioInfo then
 		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("No active scenario information available.")
+			-- print("CheckScenarioStage() - No active scenario information available.")
 		-- end
 		-- return false
 	-- end
 
 	-- local currentStage = scenarioInfo.currentStage
 
-	-- -- Fetch quest data and step information
-	-- local questData = self.getQuestData(questID)
-	-- local stepData = questData and questData[stepIndex]
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
 
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, requiredStage in ipairs(check) do
+			-- local requiredStageNumber = tonumber(requiredStage) or 1
+			-- if currentStage < requiredStageNumber then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckScenarioStage() - Current stage (" .. currentStage .. ") does not meet required stage (" .. requiredStageNumber .. ").")
+				-- end
+				-- return false
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioStage() - All scenario stage checks met.")
+		-- end
+		-- self:ClickWaypointButtonForIndex(stepIndex)
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not provided
+	-- local questData = self.getQuestData(questID)
 	-- if not questData then
 		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("No quest data found in RQEDatabase for quest ID:", questID)
+			-- print("CheckScenarioStage() - No quest data found for quest ID:", questID)
 		-- end
 		-- return false
 	-- end
 
+	-- local stepData = questData[stepIndex]
 	-- if not stepData then
 		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("No step data found for quest ID:", questID)
+			-- print("CheckScenarioStage() - No step data found for quest ID:", questID)
 		-- end
 		-- return false
 	-- end
 
-	-- -- Compare current scenario stage with needed stage
-	-- local neededStage = tonumber(stepData.neededAmt[1]) or 1
-	-- if RQE.db.profile.debugLevel == "INFO+" then
-		-- print("Current scenario stage:", currentStage, "Needed stage:", neededStage)
+	-- -- Handle multiple `checks`
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioStage() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioStage() - Scenario stage checks met for stepIndex:", stepIndex)
+			-- end
+			-- self:ClickWaypointButtonForIndex(stepIndex)
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioStage() - Scenario stage checks NOT met for stepIndex:", stepIndex)
+			-- end
+			-- return false
+		-- end
 	-- end
 
-	-- -- Check if the current stage meets or exceeds the needed stage
+	-- -- Handle single `check`
+	-- local neededStage = tonumber(stepData.neededAmt and stepData.neededAmt[1]) or 1
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("CheckScenarioStage() - Current stage:", currentStage, "Needed stage:", neededStage)
+	-- end
+
 	-- if currentStage >= neededStage then
-		-- -- Correctly identify the next step index based on scenario progression
-		-- local nextStepIndex = stepIndex
-
-		-- -- Only advance if we have reached or surpassed the needed stage for the next step
-		-- for i = stepIndex + 1, #questData do
-			-- local step = questData[i]
-			-- local stepNeededStage = tonumber(step.neededAmt[1]) or 1
-
-			-- -- Only advance if the current scenario stage is equal to the stepNeededStage
-			-- if currentStage == stepNeededStage then
-				-- nextStepIndex = i
-				-- break
-			-- elseif currentStage < stepNeededStage then
-				-- break
-			-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioStage() - Scenario stage requirement met. Advancing to next step.")
 		-- end
-
-		-- -- Advance to the next correct step only if it differs from the current step index
-		-- if nextStepIndex > stepIndex then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Scenario stage requirement met. Advancing to next step index:", nextStepIndex)
-			-- end
-			-- self:ClickWaypointButtonForIndex(nextStepIndex)
-			-- return true
-		-- end
+		-- self:ClickWaypointButtonForIndex(stepIndex)
+		-- return true
 	-- else
 		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Current scenario stage (" .. currentStage .. ") does not meet required stage (" .. neededStage .. ").")
+			-- print("CheckScenarioStage() - Current scenario stage (" .. currentStage .. ") does not meet required stage (" .. neededStage .. ").")
 		-- end
+		-- return false
 	-- end
-
-	-- return false
 -- end
 
 
--- Function to check scenario criteria progress (Array/Checks or Check compatible)
-function RQE:CheckScenarioCriteria(questID, stepIndex, check, neededAmt)
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("~~ Running RQE:CheckScenarioCriteria ~~")
-	end
-
+-- Function to check the current scenario stage
+function RQE:CheckScenarioStage(questID, stepIndex)
 	-- Ensure the player is in a scenario
 	if not C_Scenario.IsInScenario() then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioCriteria() - Player is not in a scenario.")
-		end
 		return false
 	end
 
@@ -6579,101 +6572,85 @@ function RQE:CheckScenarioCriteria(questID, stepIndex, check, neededAmt)
 	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
 	if not scenarioInfo then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioCriteria() - No active scenario information available.")
+			print("No active scenario information available.")
 		end
 		return false
 	end
 
-	-- Use provided `check` and `neededAmt` if available
-	check = check or {}
-	neededAmt = neededAmt or {}
+	local currentStage = scenarioInfo.currentStage
 
-	-- Evaluate `check` directly if provided
-	if #check > 0 and #neededAmt > 0 then
-		for i, criteriaIndex in ipairs(check) do
-			local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
-			if criteriaInfo then
-				if criteriaInfo.quantity < tonumber(neededAmt[i] or criteriaInfo.totalQuantity) then
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("CheckScenarioCriteria() - Criteria " .. criteriaIndex .. " not yet met. Progress:", criteriaInfo.quantity, "/", neededAmt[i])
-					end
-					return false
-				end
-			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("CheckScenarioCriteria() - Invalid criteria index:", criteriaIndex)
-				end
-				return false
-			end
-		end
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioCriteria() - All criteria checks met.")
-		end
-		self:ClickWaypointButtonForIndex(stepIndex)
-		return true
-	end
-
-	-- Fallback to quest data if `check` and `neededAmt` are not provided
+	-- Fetch quest data and step information
 	local questData = self.getQuestData(questID)
+	local stepData = questData and questData[stepIndex]
+
 	if not questData then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioCriteria() - No quest data found for quest ID:", questID)
+			print("No quest data found in RQEDatabase for quest ID:", questID)
 		end
 		return false
 	end
 
-	local stepData = questData[stepIndex]
 	if not stepData then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioCriteria() - No step data found for quest ID:", questID)
+			print("No step data found for quest ID:", questID)
 		end
 		return false
 	end
 
-	-- Handle multiple `checks`
-	if stepData.checks then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckScenarioCriteria() - Using EvaluateStepChecks for multiple checks.")
-		end
-		local success = self:EvaluateStepChecks(questID, stepIndex)
-		if success then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckScenarioCriteria() - Scenario criteria checks met for stepIndex:", stepIndex)
-			end
-			self:ClickWaypointButtonForIndex(stepIndex)
-			return true
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckScenarioCriteria() - Scenario criteria checks NOT met for stepIndex:", stepIndex)
-			end
-			return false
-		end
-	end
-
-	-- Check single scenario criteria
-	local numCriteria = select(3, C_Scenario.GetStepInfo())
-	for criteriaIndex = 1, numCriteria do
-		local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-		if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckScenarioCriteria() - Scenario criteria met. Advancing to next step.")
-			end
-			self:ClickWaypointButtonForIndex(stepIndex)
-			return true
-		end
-	end
-
+	-- Compare current scenario stage with needed stage
+	local neededStage = tonumber(stepData.neededAmt[1]) or 1
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("CheckScenarioCriteria() - Scenario criteria not yet met.")
+		print("Current scenario stage:", currentStage, "Needed stage:", neededStage)
 	end
+
+	-- Check if the current stage meets or exceeds the needed stage
+	if currentStage >= neededStage then
+		-- Correctly identify the next step index based on scenario progression
+		local nextStepIndex = stepIndex
+
+		-- Only advance if we have reached or surpassed the needed stage for the next step
+		for i = stepIndex + 1, #questData do
+			local step = questData[i]
+			local stepNeededStage = tonumber(step.neededAmt[1]) or 1
+
+			-- Only advance if the current scenario stage is equal to the stepNeededStage
+			if currentStage == stepNeededStage then
+				nextStepIndex = i
+				break
+			elseif currentStage < stepNeededStage then
+				break
+			end
+		end
+
+		-- Advance to the next correct step only if it differs from the current step index
+		if nextStepIndex > stepIndex then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Scenario stage requirement met. Advancing to next step index:", nextStepIndex)
+			end
+			self:ClickWaypointButtonForIndex(nextStepIndex)
+			return true
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Current scenario stage (" .. currentStage .. ") does not meet required stage (" .. neededStage .. ").")
+		end
+	end
+
 	return false
 end
 
 
--- -- Function to check scenario criteria progress
--- function RQE:CheckScenarioCriteria(questID, stepIndex)
+-- -- Function to check scenario criteria progress (Array/Checks or Check compatible)
+-- function RQE:CheckScenarioCriteria(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckScenarioCriteria ~~")
+	-- end
+
 	-- -- Ensure the player is in a scenario
 	-- if not C_Scenario.IsInScenario() then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - Player is not in a scenario.")
+		-- end
 		-- return false
 	-- end
 
@@ -6681,32 +6658,134 @@ end
 	-- local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
 	-- if not scenarioInfo then
 		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("No active scenario information available.")
+			-- print("CheckScenarioCriteria() - No active scenario information available.")
 		-- end
 		-- return false
 	-- end
 
-	-- -- Iterate through scenario criteria
-	-- local stepID = scenarioInfo.currentStage
-	-- local numCriteria = select(3, C_Scenario.GetStepInfo())
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
 
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, criteriaIndex in ipairs(check) do
+			-- local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
+			-- if criteriaInfo then
+				-- if criteriaInfo.quantity < tonumber(neededAmt[i] or criteriaInfo.totalQuantity) then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("CheckScenarioCriteria() - Criteria " .. criteriaIndex .. " not yet met. Progress:", criteriaInfo.quantity, "/", neededAmt[i])
+					-- end
+					-- return false
+				-- end
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckScenarioCriteria() - Invalid criteria index:", criteriaIndex)
+				-- end
+				-- return false
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - All criteria checks met.")
+		-- end
+		-- self:ClickWaypointButtonForIndex(stepIndex)
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not provided
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - No quest data found for quest ID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - No step data found for quest ID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Handle multiple `checks`
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioCriteria() - Scenario criteria checks met for stepIndex:", stepIndex)
+			-- end
+			-- self:ClickWaypointButtonForIndex(stepIndex)
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioCriteria() - Scenario criteria checks NOT met for stepIndex:", stepIndex)
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Check single scenario criteria
+	-- local numCriteria = select(3, C_Scenario.GetStepInfo())
 	-- for criteriaIndex = 1, numCriteria do
 		-- local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-
 		-- if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
 			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Scenario criteria met. Advancing to next step.")
+				-- print("CheckScenarioCriteria() - Scenario criteria met. Advancing to next step.")
 			-- end
-			-- self:AdvanceQuestStep(questID, stepIndex)
+			-- self:ClickWaypointButtonForIndex(stepIndex)
 			-- return true
 		-- end
 	-- end
 
 	-- if RQE.db.profile.debugLevel == "INFO+" then
-		-- print("Scenario criteria not yet met.")
+		-- print("CheckScenarioCriteria() - Scenario criteria not yet met.")
 	-- end
 	-- return false
 -- end
+
+
+-- Function to check scenario criteria progress
+function RQE:CheckScenarioCriteria(questID, stepIndex)
+	-- Ensure the player is in a scenario
+	if not C_Scenario.IsInScenario() then
+		return false
+	end
+
+	-- Fetch general scenario information
+	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+	if not scenarioInfo then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No active scenario information available.")
+		end
+		return false
+	end
+
+	-- Iterate through scenario criteria
+	local stepID = scenarioInfo.currentStage
+	local numCriteria = select(3, C_Scenario.GetStepInfo())
+
+	for criteriaIndex = 1, numCriteria do
+		local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+
+		if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Scenario criteria met. Advancing to next step.")
+			end
+			self:AdvanceQuestStep(questID, stepIndex)
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Scenario criteria not yet met.")
+	end
+	return false
+end
 
 
 ---------------------------------------------------
