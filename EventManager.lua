@@ -4045,6 +4045,12 @@ function RQE.handleInstanceInfoUpdate()
 		end)
 	end
 
+	RQE.isCheckingMacroContents = true
+	RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UPDATE_INSTANCE_INFO event fires
+	C_Timer.After(0.2, function()
+		RQE.isCheckingMacroContents = false
+	end)
+
 	-- Update RQEFrame and Refresh Quest Tracker
 	UpdateFrame()
 	RQE:QuestType()
