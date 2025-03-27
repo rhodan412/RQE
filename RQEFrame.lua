@@ -100,10 +100,15 @@ function ShowQuestDropdownRQEFrame(self, questID)
 
 		rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
 		rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
+		rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
 		local uiMapID = C_Map.GetBestMapForUnit("player")
 		local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
 		if questLineInfo and questLineInfo.questLineID then
+			RQE.PrintQuestDetails = 1
+			RQE.RePrintQuestDetailAttempts = 0
+			RQE.PrintQuestDetailsSuccess = false
+			RQE.PrintQuestLineFailed = false
 			rootDescription:CreateButton("Print Questline", function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end)
 		end
 
