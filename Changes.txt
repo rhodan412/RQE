@@ -3,6 +3,9 @@
 	RQE.toc
 		- Updated version# (2025.03.26)
 
+	RQEDatabase.lua
+		- Finished proofing campaign quests in Hallowfall and some of Azj-Kahet (2025.03.27)
+
 
 11.1.0.4 (2025.03.26)
 
