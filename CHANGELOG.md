@@ -1,8 +1,11 @@
-11.1.0.4
+11.1.0.4 (2025.03.26)
 
 	**HIGHLIGHTS**
 		- Modified code to now accept multiple gossip options instead of just the first one allowing smoother control when multiple options appear in sequence when completing a quest (2025.03.24)
 		- Fixed issue where waypoints and steps were being hidden when a quest was present in the DB and direction text is available (2025.03.25)
+		- Fixed issue where CheckScenarioStage and CheckScenarioCriteria weren't working as intended (2025.03.26)
+		- Fixed coordinates on campaign quests at The Ringing Deeps as coordinates off likely following Patch 11.1 Undermined (2025.03.26)
+		- Fixed issue where Print Questline wasn't working when chosen in the RQEFrame (2025.03.26)
 
 	**Libraries**
 		- Updated LibDBIcon-1.0 and LibSharedMedia-3.0 (2025.03.23)
@@ -13,6 +16,7 @@
 		- Modified code to now accept multiple gossip options instead of just the first one (2025.03.24)
 		- Added delay before firing function that clicks the "W" button when RQE:AutoSuperTrackClosestQuest fires (2025.03.24)
 		- Fixed section of code within RQE that caused the hiding of quest steps if quest in different zone/direction text is list (2025.03.25)
+		- Fixed issue where CheckScenarioStage and CheckScenarioCriteria weren't working when under the 'checks' system and now only works under the 'check' system (2025.03.26)
 
 	EventManager.lua
 		- Set delay prior to running function that auto super track nearest quest after combat ends (2025.03.20)
@@ -21,6 +25,7 @@
 		- Added RQE:AutoSuperTrackClosestQuest, after brief delay, following the firing of QUEST_TURNED_IN event (2025.03.24)
 		- Added additional commented lines for clarity as well as arg print option for UI_INFO_MESSAGE event (2025.03.25)
 		- Added a save tracked quests to character profile when UI_INFO_MESSAGE event fires (2025.03.25)
+		- Added a macro check following a brief delay when UPDATE_INSTANCE_INFO fires (2025.03.26)
 
 	QuestingModule.lua
 		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEQuestFrame (2025.03.24)
@@ -34,10 +39,14 @@
 		- Added Ohn'aharan Plains, Azure Span and Thaldraszus campaign/story quests, along with many side quests to DB (2025.03.23)
 		- Added additional Dragonflight expansion side quests to DB (2025.03.24)
 		- Fixes for The War Within quests' coding in DB (2025.03.25)
-		- Updates to DB for Dornogol quests and WQ in War Within, Dragonflight and Shadowlands (2025.03.26)
+		- Updates to DB for Isle of Dorn quests and WQ in War Within, Dragonflight and Shadowlands (2025.03.26)
+		- Finished proofing campaign quests in Isle of Dorn (2025.03.26)
+		- Fixed coordinates on campaign quests at The Ringing Deeps as coordinates off likely following Patch 11.1 Undermined (2025.03.26)
 
 	RQEFrame.lua
 		- Changed "Stop Tracking" to "Untrack Quest" in the drop down menu when right-clicking on a quest in the RQEFrame (2025.03.24)
+		- Fixed issue where Print Questline wasn't working when chosen in the RQEFrame (2025.03.26)
+		- Added "View Quest" option in the RQEFrame right-click dropdown options (2025.03.26)
 
 	WaypointManager.lua
 		- Fix issue with waypoint being cleared when using waypoint system to travel to separate zone with direction text (2025.03.25)
@@ -577,7 +586,7 @@
 		- Added Chains of Domination Korthia campaign (Shadowlands) to DB
 		- Added remainder of Zereth Mortis campaign quests to DB
 		- Fixed some quests for the Darkmoon Faire for the CheckDBObjectiveStatus and CheckDBComplete as well as cleaned up for Blacksmithing quest in Darkmoon Faire to better handle item count checks
-		- Added Enchanting weekly Dornogol questID 84084 to DB
+		- Added Enchanting weekly Dornogal questID 84084 to DB
 		- Changed some questTitles in DB to move the type of quest to commented out lines when it comes to the profession of the Darkmoon Faire quests
 		- Modified questID 29509 to include CheckDBInventory for cleaner macros
 		- Updated waypoints, macros, etc for Maw and some Bastion campaign quests in DB
@@ -612,7 +621,7 @@
 		- Added Maw introduction quests from Shadowlands expansion, as well as Bastion, Maldraxxus, Ardenweald and Revendreth campaign quests
 		- Added 'Cursed Tome' quest picked up from Shadowmoon Valley (Draenor) which is part of the Legion expansion of quests
 		- Added many horde zone intro quests to DB
-		- Added some weekly quests (including more in Dornogol) and cleaned up DB
+		- Added some weekly quests (including more in Dornogal) and cleaned up DB
 		- Added some raid quests to DB for Castle Nathria and Sanctum of Domination
 
 	RQEFrame.lua
@@ -644,7 +653,7 @@
 		- Added Hero's Call (Hero's Call Board) quests to the DB
 		- Added many Hellfire Peninsula, Zangarmarsh, Nagrand, Terokkar Forest, Netherstorm, and Shadowmoon Valley (Alliance) quests
 		- Added Candy Buckets across Azeroth (more to come)
-		- Added additional weekly quests in Dornogol
+		- Added additional weekly quests in Dornogal
 
 	RQEFrame.lua
 		- Added function in preparation of tracking certain event quests (such as the pumpkin quests)
