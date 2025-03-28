@@ -1,11 +1,26 @@
 11.1.0.5
 
+	**HIGHLIGHTS**
+		- Fixed RQE:StartPeriodicChecks(), RQE:CheckDBObjectiveStatus and RQE:CheckDBComplete to properly handle updates when quest is ready for turn in as this was giving a false positive previously with some quests (2025.03.28)
+
+	Core.lua
+		- Added functionality to obtain WQ information, but this requires the author-only RQE Contribution addon (2025.03.28)
+		- Fixed RQE:StartPeriodicChecks(), RQE:CheckDBObjectiveStatus and RQE:CheckDBComplete to properly handle updates when quest is ready for turn in as this was giving a false positive previously with some quests (2025.03.28)
+
+	EventManager.lua
+		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
+		- Updated QUEST_ACCEPTED and QUEST_DETAILS to print out information if the quest is present in the DB or not and # of steps when these two functions fire (2025.03.28)
+
+	QuestingModule.lua
+		- Added functionality to obtain WQ information, but this requires the author-only RQE Contribution addon (2025.03.28)
+
 	RQE.toc
 		- Updated version# (2025.03.26)
 
 	RQEDatabase.lua
 		- Finished proofing campaign quests in Hallowfall and some of Azj-Kahet (2025.03.27)
 		- Added a number of Dragonflight dungeon quests to DB (2025.03.27)
+		- Added more WQ from Legion, Battle for Azeroth, Shadowlands, Dragonflight and The War Within (2025.03.28)
 
 
 11.1.0.4 (2025.03.26)
