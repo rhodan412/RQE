@@ -508,6 +508,9 @@ end
 
 -- Function that handles the GOSSIP_CONFIRM_CANCEL event
 function RQE.handleGossipConfirmCancel()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then return end
+
 	-- Nils out the npcName and Gossip optionIndex so that the same selection won't be run over and over again
 	RQE.SelectGossipOption(nil, nil)
 end
@@ -534,6 +537,9 @@ function RQE.handleGossipShow(...)
 			end
 		end
 	end
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then return end
 
 	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 		RQE.GetAvailableQuests()
@@ -817,6 +823,24 @@ end
 function RQE.handleMailSuccess(...)
 	local event = select(2, ...)
 	local itemID = select(3, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then return end
 
 	C_Timer.After(3, function()
 		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after MAIL_SUCCESS fires
@@ -1460,6 +1484,9 @@ function RQE.handleBossKill(...)
 			end
 		end
 
+		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+		if not isSuperTracking then return end
+
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.BossKill then
 			DEFAULT_CHAT_FRAME:AddMessage("BOSS_KILL event triggered. EncounterID: " .. tostring(encounterID) .. ", Encounter Name: " .. tostring(encounterName), 0.85, 0.33, 0.83)  -- Fuchsia Color
 		end
@@ -1485,6 +1512,9 @@ function RQE.handleBossKill(...)
 				end
 			end
 		end
+
+		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+		if not isSuperTracking then return end
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.EncounterEnd then
 			DEFAULT_CHAT_FRAME:AddMessage("ENCOUNTER_END event triggered: EncounterID: " .. tostring(encounterID) .. ", Encounter Name: " .. tostring(encounterName) .. ", DifficultyID: " .. difficultyID .. ", Group Size: " .. tostring(groupSize) .. ", Success Check: " .. tostring(success), 0, 1, 0)  -- Bright Green
@@ -2661,10 +2691,6 @@ function RQE.handleQuestAccepted(...)
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	local questLink = GetQuestLink(questID)
 
-	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-		DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. tostring(questID) .. " (accepted): " .. questLink, 0.9, 0.7, 0.9)	-- French Lilac
-	end
-
 	RQE.QuestStepsBlocked(questID)	-- Function call that checks to see if quest is in the DB already, but nothing is printed unless debug mode is set to 'Info'
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
@@ -2718,6 +2744,28 @@ function RQE.handleQuestAccepted(...)
 		local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)  -- Applies when world quest is manually watched and then accepted when player travels to world quest spot
 		local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
 		local playerMapID = C_Map.GetBestMapForUnit("player")
+
+		local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+		local messagePrefix = "QuestID (accepted): " .. tostring(questID) .. " - " .. questName
+
+		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+			local questData = RQE.getQuestData(questID)
+
+			if not questData then
+				-- Quest is NOT in the DB at all
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.9, 0.7, 0.9)	-- French Lilac
+			else
+				local totalSteps = #questData
+
+				if totalSteps == 0 then
+					-- Quest is in the DB but has no steps
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.9, 0.7, 0.9)	-- French Lilac
+				else
+					-- Quest is in the DB and has steps
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.9, 0.7, 0.9)	-- French Lilac
+				end
+			end
+		end
 
 		-- Debug Messages
 		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
@@ -5136,19 +5184,56 @@ function RQE.handleQuestTurnIn(...)
 end
 
 
-
 -- Function that handles the QUEST_DETAIL event
 function RQE.handleQuestDetail(...)
 	local event = select(2, ...)
 	local questStartItemID = select(3, ...)
 
-	local questID = GetQuestID()
-	local questName = C_QuestLog.GetTitleForQuestID(questID)
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
 
-	if questName then
-		DEFAULT_CHAT_FRAME:AddMessage("QuestID (displayed): " .. tostring(questID) .. " - " .. questName, 0.46, 0.82, 0.95)	-- Sky Blue
-	else
-		DEFAULT_CHAT_FRAME:AddMessage("QuestID (displayed): " .. tostring(questID), 0.46, 0.82, 0.95)	-- Sky Blue
+	local questID = GetQuestID()
+	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+	local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+
+	if RQE.db.profile.debugLevel == "NONE" then
+		if questName then
+			DEFAULT_CHAT_FRAME:AddMessage("QuestID (displayed): " .. tostring(questID) .. " - " .. questName, 0.46, 0.82, 0.95)	-- Sky Blue
+		else
+			DEFAULT_CHAT_FRAME:AddMessage("QuestID (displayed): " .. tostring(questID), 0.46, 0.82, 0.95)	-- Sky Blue
+		end
+		return
+	end
+
+	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		local questData = RQE.getQuestData(questID)
+
+		if not questData then
+			-- Quest is NOT in the DB at all
+			DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
+		else
+			local totalSteps = #questData
+
+			if totalSteps == 0 then
+				-- Quest is in the DB but has no steps
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+			else
+				-- Quest is in the DB and has steps
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
+			end
+		end
 	end
 end
 
@@ -5265,9 +5350,9 @@ for _, eventName in ipairs(eventsToRegister) do
 end
 
 
----------------------------
+--------------------------
 -- 5. Event Callbacks
----------------------------
+--------------------------
 
 -- Add a click event to SearchButton
 if RQE.SearchButton then
