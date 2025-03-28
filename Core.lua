@@ -6,9 +6,9 @@ Core file linking all other modules
 ]]
 
 
----------------------------------------------------
+--------------------------------------------------
 -- 1. Global Declarations
----------------------------------------------------
+--------------------------------------------------
 
 RQE = RQE or {}
 
@@ -967,7 +967,19 @@ end
 function RQE.GetTheWarWithinWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
-	RQE_Contribution.GetMissingWQ(11)
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ_WithDuplicates(11)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(11)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQInclDuplicates(11)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
 end
@@ -977,7 +989,19 @@ end
 function RQE.GetDragonflightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
-	RQE_Contribution.GetMissingWQ(10)
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ_WithDuplicates(10)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(10)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQInclDuplicates(10)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
 end
@@ -987,7 +1011,19 @@ end
 function RQE.GetShadowlandsWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
-	RQE_Contribution.GetMissingWQ(9)
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ_WithDuplicates(9)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(9)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQInclDuplicates(9)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
 end
@@ -997,7 +1033,19 @@ end
 function RQE.GetBFAWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
-	RQE_Contribution.GetMissingWQ(8)
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ_WithDuplicates(8)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(8)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQInclDuplicates(8)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
 end
@@ -1007,7 +1055,19 @@ end
 function RQE.GetLegionWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
-	RQE_Contribution.GetMissingWQ(7)
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ_WithDuplicates(7)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(7)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQInclDuplicates(7)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
 end
@@ -1017,8 +1077,18 @@ end
 function RQE.MiscWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
-	RQE_Contribution.GetAllWQ(6)
-	--RQE_Contribution.GetMissingWQ(6)
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ_WithDuplicates(6)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(6)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQInclDuplicates(6)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
 end
@@ -4782,7 +4852,7 @@ function RQE:StartPeriodicChecks()
 			-- end
 		-- end
 		-- self:ClickWaypointButtonForIndex(finalStepIndex)
-		-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- if RQE.db.profile.debugLevel == "INFO" then
 			-- print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
 		-- end
 		-- return
@@ -4798,6 +4868,7 @@ function RQE:StartPeriodicChecks()
 		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
 		CheckScenarioStage = "CheckScenarioStage",
 		CheckScenarioCriteria = "CheckScenarioCriteria",
+		--CheckDBComplete = "CheckDBComplete",
 	}
 
 	-- Iterate over all steps to evaluate which one should be active
@@ -4818,13 +4889,25 @@ function RQE:StartPeriodicChecks()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
 					end
+					-- Only advance if result is true
 					stepIndex = i + 1
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
-						print(parentFunctionName, "did not succeed for stepIndex:", i)
+						print(parentFunctionName, "did not succeed for stepIndex:", i, ". Stopping evaluation.")
 					end
-					break
+					break -- Stop advancing further
 				end
+				-- if funcResult then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
+					-- end
+					-- stepIndex = i + 1
+				-- else
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print(parentFunctionName, "did not succeed for stepIndex:", i)
+					-- end
+					-- break
+				-- end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Invalid or missing function for funct:", stepData.funct)
@@ -5993,11 +6076,21 @@ end
 
 -- Function will check if the quest is ready for turn-in from what is passed by the RQEDatabase.
 function RQE:CheckDBComplete(questID, stepIndex)
-	-- print("~~ Running RQE:CheckDBComplete ~~")
-
-	if C_QuestLog.ReadyForTurnIn(questID) then
-		self:AdvanceQuestStep(questID, stepIndex)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBComplete ~~")
 	end
+
+	-- if C_QuestLog.ReadyForTurnIn(questID) then
+		-- self:AdvanceQuestStep(questID, stepIndex)
+	-- end
+
+	local isReady = C_QuestLog.ReadyForTurnIn(questID)
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("CheckDBComplete: Quest", questID, isReady and "IS" or "is NOT", "ready for turn-in.")
+	end
+
+	return isReady
 end
 
 
@@ -6162,23 +6255,23 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 		return false
 	end
 
-	-- Turn-in readiness check
-	local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
-	if isReadyTurnIn then
-		local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
-		if hasCheckDBComplete then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Quest ready for turn-in. Clicking the last step.")
-			end
-			self:ClickWaypointButtonForIndex(finalStepIndex)
-			return true
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
-			end
-			return false
-		end
-	end
+	-- -- Turn-in readiness check
+	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+	-- if isReadyTurnIn then
+		-- local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		-- if hasCheckDBComplete then
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print("Quest ready for turn-in. Clicking the last step.")
+			-- end
+			-- self:ClickWaypointButtonForIndex(finalStepIndex)
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
+			-- end
+			-- return false
+		-- end
+	-- end
 
 	-- -- Turn-in readiness check
 	-- local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
@@ -6219,12 +6312,24 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 				end
 			else
 				-- Regular check for other objective types (fallback)
-				if not objective or objective.numFulfilled < amount then
+				if not objective then
+					return false
+				end
+
+				-- Require BOTH number fulfilled AND finished status
+				if objective.numFulfilled < amount or not objective.finished then
 					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+						print(string.format("Evaluating Objective %d: %s - Fulfilled: %d/%d - Finished: %s",
+							objectiveIndex, objective.text or "N/A", objective.numFulfilled, amount, tostring(objective.finished)))
 					end
 					return false
 				end
+				-- if not objective or objective.numFulfilled < amount then
+					-- if RQE.db.profile.debugLevel == "INFO" then
+						-- print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+					-- end
+					-- return false
+				-- end
 			end
 		end
 		if RQE.db.profile.debugLevel == "INFO+" then
