@@ -6,9 +6,9 @@ For advanced quest tracking features linked with RQEFrame
 ]]
 
 
----------------------------
+----------------------------
 -- 1. Global Declarations
----------------------------
+----------------------------
 
 -- Initialize RQE global table
 RQE = RQE or {}
@@ -888,6 +888,93 @@ local function shouldSortQuestsWhileDragonRiding()
 end
 
 
+-- Function that adds world quests with no steps to the watch list
+--[[ 
+/run RQE:AddEmptyWorldQuestsToWatch(2248)
+/run RQE:AddEmptyWorldQuestsToWatch(2339, { [10] = true, [9] = true })
+/run RQE:AddEmptyWorldQuestsToWatch()
+]]
+function RQE:AddEmptyWorldQuestsToWatch(mapID, allowedClassifications)
+	-- Default to current zone if none passed
+	mapID = mapID or C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print("Could not determine map ID.")
+		return
+	end
+
+	-- Default to classification 10 (World Quest) only if no override
+	allowedClassifications = allowedClassifications or { [10] = true }
+	--allowedClassifications = allowedClassifications or { [10] = true, [9] = true }
+
+	-- Fetch world quests on the map
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(mapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		print("No world quests found on this map.")
+		return
+	end
+
+	for _, poi in ipairs(taskPOIs) do
+		local questID = poi.questID
+		if questID then
+			-- Check classification
+			local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+			if allowedClassifications[classification] then
+				local questData = RQE.getQuestData(questID)
+				local stepIndex = RQE.AddonSetStepIndex or 1
+				local totalSteps = questData and #questData or 0
+
+				if questData and stepIndex == 1 and totalSteps == 0 then
+					-- Add to world quest watch
+					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+
+					if RQE.db.profile.debugLevel == "INFO" then
+						print(string.format("Watching empty WQ: %d - '%s'", questID, C_QuestLog.GetTitleForQuestID(questID) or "Unknown"))
+					end
+				end
+			end
+		end
+	end
+end
+
+
+-- Function to clear all watched quests and add only those in DB with zero steps
+function RQE:WatchQuestsInDBWithNoSteps()
+	-- Clear all currently watched quests
+	for i = 1, C_QuestLog.GetNumQuestWatches() do
+		local watchedID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if watchedID then
+			C_QuestLog.RemoveQuestWatch(watchedID)
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO" then
+		print("Cleared all quest watches. Scanning for empty quests in DB...")
+	end
+
+	-- Loop through all quest log entries
+	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+		local info = C_QuestLog.GetInfo(i)
+		if info and not info.isHeader then
+			local questID = info.questID
+			local questData = RQE.getQuestData(questID)
+
+			if questData then
+				local totalSteps = #questData
+				if totalSteps == 0 then
+					-- Add to quest watch
+					C_QuestLog.AddQuestWatch(questID)
+					if RQE.db.profile.debugLevel == "INFO" then
+						local title = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+						print(string.format("Watching quest with no steps: %d - '%s'", questID, title))
+					end
+				end
+			end
+		end
+	end
+end
+
+
+-- Function that iterates through the watched quests and sorts them by proximity
 function SortQuestsByProximity()
 	if RQE.PlayerMountStatus == "Dragonriding" then
 		if shouldSortQuestsWhileDragonRiding() or RQE.canSortQuests then
