@@ -5,6 +5,7 @@
 
 	RQEDatabase.lua
 		- Finished proofing campaign quests in Hallowfall and some of Azj-Kahet (2025.03.27)
+		- Added a number of Dragonflight dungeon quests to DB (2025.03.27)
 
 
 11.1.0.4 (2025.03.26)
