@@ -1425,9 +1425,9 @@ function RQE.Buttons.CreateDebugLogCloseButton(logFrame)
 end
 
 
-----------------------------------------------------
+---------------------------------------------------
 -- 8. Finalization
-----------------------------------------------------
+---------------------------------------------------
 
 -- Function to create and initialize the SearchBox
 function RQE.Buttons.CreateSearchBox(RQEFrame)

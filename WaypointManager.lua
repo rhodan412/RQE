@@ -808,8 +808,8 @@ function RQE:OnCoordinateClicked()
 end
 
 
----------------------------
+--------------------------
 -- 4. Finalization
----------------------------
+--------------------------
 
 -- Final steps and exporting functions for use in other files

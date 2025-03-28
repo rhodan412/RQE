@@ -6,9 +6,9 @@ Manages the main frame design
 ]]
 
 
----------------------------
+----------------------------
 -- 1. Global Declarations
----------------------------
+----------------------------
 
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 
