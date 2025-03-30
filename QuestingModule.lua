@@ -2299,6 +2299,9 @@ function UpdateRQEQuestFrame()
 								-- Click the "W" Button is autoclick is selected and no steps or questData exist
 								RQE.CheckAndClickWButton()
 							end
+
+							RQE.ObtainSuperTrackQuestDetails()
+
 							C_Timer.After(0.2, function()
 								RQE:StartPeriodicChecks()
 							end)
@@ -2896,6 +2899,8 @@ function UpdateRQEWorldQuestFrame()
 						RQE.shouldCheckFinalStep = true
 						RQE.CheckAndSetFinalStep()
 					end
+
+					RQE.ObtainSuperTrackQuestDetails()
 
 					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					RQE:PerformClearActions()
