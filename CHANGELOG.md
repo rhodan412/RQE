@@ -7,6 +7,8 @@
 		- Added functionality to obtain WQ information, but this requires the author-only RQE Contribution addon (2025.03.28)
 		- Fixed RQE:StartPeriodicChecks(), RQE:CheckDBObjectiveStatus and RQE:CheckDBComplete to properly handle updates when quest is ready for turn in as this was giving a false positive previously with some quests (2025.03.28)
 		- Added function [RQE.ObtainSuperTrackQuestDetails()] to obtain quest details of super tracked quests for purpose of adding additional quests to the DB (2025.03.29)
+		- Additional fix to RQE:CheckDBObjectiveStatus as some quests were still not properly advancing (2025.03.29)
+		- Updated RQE:CheckDBObjectiveStatus handling of the progress bar to fall back to neededAmt 1 meaning 100% and 0.01 meaning 1% (2025.03.30)
 
 	EventManager.lua
 		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
@@ -23,6 +25,7 @@
 		- Added a number of Dragonflight dungeon quests to DB (2025.03.27)
 		- Added more WQ from Legion, Battle for Azeroth, Shadowlands, Dragonflight and The War Within (2025.03.28)
 		- Added Forbidden Reach and Zaralek Cavern quests to DB from Dragonflight expansion (2025.03.29)
+		- Added Emerald Dream campaign quests to DB (2025.03.30)
 
 
 11.1.0.4 (2025.03.26)
