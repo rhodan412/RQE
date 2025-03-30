@@ -1112,6 +1112,38 @@ function RQE.GetDataForAddon()
 end
 
 
+-- Function to obtain the quest details and print them on screen
+function RQE.ObtainSuperTrackQuestDetails()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest() or RQE.isSuperTracking
+	if not isSuperTracking then return end
+
+	C_Timer.After(0.15, function()
+		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+			local questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+			local messagePrefix = "QuestID (supertracked): " .. tostring(questID) .. " - " .. questName
+
+			local questData = RQE.getQuestData(questID)
+
+			if not questData then
+				-- Quest is NOT in the DB at all
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
+			else
+				local totalSteps = #questData
+
+				if totalSteps == 0 then
+					-- Quest is in the DB but has no steps
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+				else
+					-- Quest is in the DB and has steps
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
 -- Function to Show Confirmation Dialog for Deleting Data
 function RQE:ShowDeleteConfirmationDialog()
 	-- Define the dialog structure
@@ -6316,20 +6348,47 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 					return false
 				end
 
-				-- Require BOTH number fulfilled AND finished status
-				if objective.numFulfilled < amount or not objective.finished then
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print(string.format("Evaluating Objective %d: %s - Fulfilled: %d/%d - Finished: %s",
-							objectiveIndex, objective.text or "N/A", objective.numFulfilled, amount, tostring(objective.finished)))
-					end
-					return false
-				end
-				-- if not objective or objective.numFulfilled < amount then
-					-- if RQE.db.profile.debugLevel == "INFO" then
-						-- print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+				-- -- Require BOTH number fulfilled AND finished status
+				-- if objective.numFulfilled < amount or not objective.finished then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print(string.format("Evaluating Objective %d: %s - Fulfilled: %d/%d - Finished: %s",
+							-- objectiveIndex, objective.text or "N/A", objective.numFulfilled, amount, tostring(objective.finished)))
 					-- end
 					-- return false
 				-- end
+
+				-- if not objective or objective.numFulfilled < amount then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Objective status check failed for objectiveIndex:", objectiveIndex, "needed:", amount, "fulfilled:", objective and objective.numFulfilled or 0)
+					-- end
+					-- return false
+
+				-- Enhanced evaluation logic that ensures both fulfillment and status
+				if not objective then
+					return false
+				end
+
+				local fulfilled = objective.numFulfilled or 0
+				local required = amount or 1
+				local needsFinished = true -- Always require .finished for safety
+
+				-- Debug info before deciding
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("Evaluating Objective %d: %s - Fulfilled: %d/%d - Finished: %s",
+						objectiveIndex,
+						objective.text or "N/A",
+						fulfilled,
+						required,
+						tostring(objective.finished)
+					))
+				end
+
+				-- Final condition
+				if fulfilled < required or (needsFinished and not objective.finished) then
+					return false
+				end
+
+				return true
 			end
 		end
 		if RQE.db.profile.debugLevel == "INFO+" then
