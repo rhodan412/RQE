@@ -6336,6 +6336,19 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 					print(string.format("Quest %d Objective %d is a progress bar: %d%% complete (Required: %d%%)", questID, objectiveIndex, progress, amount))
 				end
 
+				-- Treat 1% as 100% if that's all Blizzard gives us
+				if amount == 1 then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("needAmt is exactly 1, likely full — treating as 100%.")
+					end
+					amount = 100
+				elseif amount == 0.01 then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("needAmt is exactly 0.01, — treating as 1%.")
+					end
+					amount = 1
+				end
+
 				-- Return true if progress is equal to or greater than neededAmt (now representing percentage)
 				if progress >= amount then
 					return true
