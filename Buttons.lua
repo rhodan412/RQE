@@ -65,6 +65,43 @@ end
 RQE.UnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 		RQE.hoveringOnRQEFrameAndButton = true
+		local searchedQuestID = RQE.searchedQuestID
+		if searchedQuestID then
+			local dbEntry = RQE.getQuestData(searchedQuestID)
+			local isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
+			local isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
+
+			if dbEntry and not isComplete and not isInLog and type(dbEntry.location) == "table" then
+				local x = tonumber(dbEntry.location.x)
+				local y = tonumber(dbEntry.location.y)
+				local mapID = tonumber(dbEntry.location.mapID)
+
+				if x and y and mapID then
+					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(mapID))
+
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText(tooltipText)
+					GameTooltip:Show()
+
+					RQE.WPxPos = x
+					RQE.WPyPos = y
+					RQE.WPmapID = mapID
+
+					if RQE.db.profile.debugLevel == "INFO" then
+						DEFAULT_CHAT_FRAME:AddMessage("From searchedQuestID fallback | QuestID: " .. searchedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
+					end
+
+					return
+				end
+			end
+
+			-- Fallback message if not found or failed conditions
+			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			GameTooltip:SetText("Coordinates unavailable for searched quest.")
+			GameTooltip:Show()
+			return
+		end
+
 		if RQE.db.profile.autoClickWaypointButton then
 			if RQE.db.profile.debugLevel == "INFO" then
 				RQE.ClickWButton()
@@ -539,6 +576,7 @@ function RQE.Buttons.ClearButtonPressed()
 	RQE:ClearSeparateFocusFrame()
 	RQE.searchedQuestID = nil
 	RQE.ManualSuperTrack = nil
+	RQE.DontUpdateFrame = false
 	RQE.ClearButtonPressed = true
 	RQE.isSuperTracking = false			-- This is the variable that gets checked when RQE.isPlayerSuperTrackingQuest() runs
 	RQE.CurrentlySuperQuestID = nil		-- This is the variable that gets saved when RQE.isPlayerSuperTrackingQuest() runs and a quest is being super tracked
