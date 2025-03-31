@@ -1391,6 +1391,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
 	RQE.OkayCheckBonusQuests = false
+	RQE.OkayToUpdateFollowingTrack = true
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
@@ -4133,10 +4134,10 @@ function RQE.handleQuestStatusUpdate()
 		RQE.ReadyToRestoreAutoWorldQuests = false
 	end
 
-	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
-	if RQE.HasDragonraceAura() then
-		return
-	end
+	-- -- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
+	-- if RQE.HasDragonraceAura() then
+		-- return
+	-- end
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -4955,9 +4956,9 @@ function RQE.handleQuestWatchListChanged(...)
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
 	-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
-	if RQE.HasDragonraceAura() then
-		return
-	end
+	-- if RQE.HasDragonraceAura() then
+		-- return
+	-- end
 
 	RQE.UpdateInstanceInfoOkay = true	-- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
 
