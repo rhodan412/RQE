@@ -2291,6 +2291,8 @@ function UpdateRQEQuestFrame()
 						UpdateRQEQuestFrame()
 					else
 						if RQE.hoveringOnFrame then
+							RQE.DontUpdateFrame = false
+
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
 
@@ -2487,6 +2489,16 @@ function UpdateRQEQuestFrame()
 				QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
 					if button == "RightButton" then
 						ShowQuestDropdown(self, questID)
+					else
+						if RQE.searchedQuestID ~= nil then
+							RQE.Buttons.ClearButtonPressed()
+						end
+					end
+				end)
+
+				QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
+					if RQE.searchedQuestID ~= nil then
+						RQE.Buttons.ClearButtonPressed()
 					end
 				end)
 
