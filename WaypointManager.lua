@@ -57,7 +57,9 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	waypoint.title = title
 
 	if mapID and x and y then -- Check if x and y are not nil
-		print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
+		end
 		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = title })
 		-- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 		-- TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
@@ -98,12 +100,96 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 
 		local waypointText = C_QuestLog.GetNextWaypointText(questID)
 
+		if RQE.searchedQuestID then
+				RQE:CreateSearchedQuestWaypoint(questID, mapID)
+			return
+		end
+
 		if waypointText then
 			RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		else
 			RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 		end
 	end)
+end
+
+
+-- Create a Waypoint when searching for a quest based on the location coordinates in the DB file
+function RQE:CreateSearchedQuestWaypoint(questID, mapID)
+	local dbEntry = RQE.getQuestData(questID)
+	if not dbEntry then
+		RQE.debugLog("No DB entry found for QuestID:", questID)
+		return
+	end
+
+	local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID)
+	local isInLog = C_QuestLog.GetLogIndexForQuestID(questID)
+
+	if isComplete then
+		RQE.debugLog("QuestID", questID, "is already completed.")
+		return
+	end
+
+	if isInLog then
+		RQE.debugLog("QuestID", questID, "is in player log, skipping location-based waypoint.")
+		return
+	end
+
+	if not dbEntry.location then
+		RQE.debugLog("No location field for QuestID:", questID)
+		return
+	end
+
+	local x = tonumber(dbEntry.location.x)
+	local y = tonumber(dbEntry.location.y)
+	local finalMapID = mapID or tonumber(dbEntry.location.mapID)
+
+	if not x or not y or not finalMapID then
+		RQE.debugLog("Invalid coordinates for QuestID:", questID)
+		return
+	end
+
+	local label = "Waypoint for " .. (dbEntry.title or ("Quest ID: " .. questID))
+
+	-- ✅ Prefer wrapper function if it exists
+	if RQE.CreateWaypoint then
+		RQE:CreateWaypoint(x, y, finalMapID, label)
+	else
+		-- ✅ Fallback to TomTom if available
+		if TomTom and TomTom.AddWaypoint then
+			TomTom:AddWaypoint(finalMapID, x, y, {
+				title = label,
+				from = "RQE",
+				persistent = nil,
+				minimap = true,
+				world = true
+			})
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("TomTom Waypoint created for QuestID:", questID, "at", x, y, "on MapID:", finalMapID)
+			end
+		else
+			RQE.debugLog("No TomTom or CreateWaypoint available.")
+		end
+	end
+
+	-- Store for internal use if needed
+	RQE.WPxPos = x
+	RQE.WPyPos = y
+	RQE.WPmapID = finalMapID
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		local mapInfo = C_Map.GetMapInfo(mapID)
+		if mapInfo then
+			if not mapInfo then return "Unknown", "Unknown" end
+
+			local zoneName = mapInfo.name or "Unknown"
+
+			local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
+			local continentName = parentMapInfo and parentMapInfo.name or "Unknown"
+			print("Travel to " .. zoneName .. ", " .. continentName)
+		end
+	end
 end
 
 
@@ -489,7 +575,9 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 		-- Add waypoint for TomTom if available and enabled
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			if mapID and x and y then -- Check if x and y are not nil
-				print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+				end
 				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
 				print("Could not create waypoint for unknown quest.")
