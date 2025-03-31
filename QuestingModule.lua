@@ -2413,19 +2413,6 @@ function UpdateRQEQuestFrame()
 
 				RQE.QuestLogIndexButtons[i].QuestObjectives = QuestObjectives
 
-				-- Quest Details and Menu
-				QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
-					if IsShiftKeyDown() and button == "LeftButton" then
-						-- Untrack the quest
-						C_QuestLog.RemoveQuestWatch(questID)
-						RQE:ClearRQEQuestFrame()
-					elseif button == "RightButton" then
-						ShowQuestDropdown(self, questID)
-					elseif button == "LeftButton" then
-						OpenQuestLogToQuestDetails(questID)
-					end
-				end)
-
 				-- Anchor logic based on the quest type and index of lastelement/first
 				if lastElement then
 					QuestLevelAndName:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
@@ -2499,6 +2486,17 @@ function UpdateRQEQuestFrame()
 				QuestLevelAndName:SetScript("OnMouseDown", function(self, button)
 					if RQE.searchedQuestID ~= nil then
 						RQE.Buttons.ClearButtonPressed()
+					else
+						-- Quest Details and Menu
+						if IsShiftKeyDown() and button == "LeftButton" then
+							-- Untrack the quest
+							C_QuestLog.RemoveQuestWatch(questID)
+							RQE:ClearRQEQuestFrame()
+						elseif button == "RightButton" then
+							ShowQuestDropdown(self, questID)
+						elseif button == "LeftButton" then
+							OpenQuestLogToQuestDetails(questID)
+						end
 					end
 				end)
 
