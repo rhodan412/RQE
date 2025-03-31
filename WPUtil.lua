@@ -35,6 +35,23 @@ end
 -- Assume CloseWorldMap() closes the world map
 RQE.UnknownQuestButtonCalcNTrack = function()
 	RQE.UnknownQuestButton:SetScript("OnClick", function()
+		if RQE.searchedQuestID then 
+			local questID = RQE.searchedQuestID
+			if questID then
+				local dbEntry = RQE.getQuestData(questID)
+				if dbEntry and dbEntry.location then
+					local mapID = tonumber(dbEntry.location.mapID)
+					if mapID then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Calling CreateSearchedQuestWaypoint with:", questID, mapID)
+						end
+						RQE:CreateSearchedQuestWaypoint(questID, mapID)
+						return
+					end
+				end
+			end			
+		end
+
 		if RQE.hoveringOnRQEFrameAndButton then
 			RQE:StartPeriodicChecks()
 			C_Timer.After(0.2, function()
