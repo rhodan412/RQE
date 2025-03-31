@@ -1386,6 +1386,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForSetInitialWaypoint = false
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
 	RQE.DataDeletedfromDBFile = false
+	RQE.DontUpdateFrame = false
 	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingMacroContents = false
@@ -2687,6 +2688,10 @@ end
 function RQE.handleQuestAccepted(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
+
+	if questID == RQE.searchedQuestID then
+		RQE.DontUpdateFrame = false
+	end
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	local questLink = GetQuestLink(questID)
@@ -4568,6 +4573,24 @@ function RQE.handleQuestRemoved(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 	local wasReplayQuest = select(4, ...)
+
+	if questID == RQE.searchedQuestID then
+		RQE.DontUpdateFrame = false
+
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		if extractedQuestID == questID then
+			print("Clearing frame")
+			RQE.Buttons.ClearButtonPressed()
+		end
+		
+		C_Timer.After(0.1, function()
+			UpdateFrame()
+		end)
+	end
 
 	RQE:SaveAutomaticWorldQuestWatches()
 	RQE.ReadyToRestoreAutoWorldQuests = true
