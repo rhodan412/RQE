@@ -2090,8 +2090,10 @@ end
 
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	if RQE.DontUpdateFrame then return end
+
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	if not isSuperTracking then return end
+	if not isSuperTracking and not RQE.searchedQuestID then return end
 
 	-- Checks flag to see if the Blacklist underway is presently in process
 	if RQE.BlacklistUnderway then return end
@@ -2209,12 +2211,36 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	-- Fetch the next waypoint text for the quest
-	local DirectionText = C_QuestLog.GetNextWaypointText(questID)
-	RQEFrame.DirectionText = DirectionText  -- Save to addon table
-	RQE.UnknownQuestButtonCalcNTrack()
+	if RQE.searchedQuestID then
+		RQEFrame.DirectionText = DirectionText  -- Save to addon table
 
-	if RQE.DirectionTextFrame then
-		RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
+		if RQE.DirectionTextFrame then
+			local dbEntry = RQE.getQuestData(RQE.searchedQuestID)
+			if dbEntry and dbEntry.location then
+				local mapID = dbEntry.location.mapID
+				local zoneName, continentName = "Unknown", "Unknown"
+				if mapID then
+					local mapInfo = C_Map.GetMapInfo(mapID)
+					if mapInfo then
+						zoneName = mapInfo.name or "Unknown"
+						local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
+						continentName = parentMapInfo and parentMapInfo.name or "Unknown"
+					end
+				end
+				RQE.DirectionTextFrame:SetText("Travel to " .. zoneName .. ", " .. continentName)
+			else
+				RQE.DirectionTextFrame:SetText("No direction available.")
+			end
+		end
+		RQE.DontUpdateFrame = true
+	else
+		local DirectionText = C_QuestLog.GetNextWaypointText(questID)
+		RQEFrame.DirectionText = DirectionText  -- Save to addon table
+		RQE.UnknownQuestButtonCalcNTrack()
+
+		if RQE.DirectionTextFrame then
+			RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
+		end
 	end
 
 	-- Always show the UnknownQuestButton
@@ -2457,6 +2483,80 @@ function RQE:CreateQuestTooltip(self, questID, questTitle)
 	GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
 
 	GameTooltip:Show()
+end
+
+
+-- /run RQE:ShowCustomQuestTooltip(66635)
+-- Function that displays a tooltip when mousing over quests in the chat log after doing a 'print questline'
+function RQE:ShowCustomQuestTooltip(questID)
+	local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+	local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	local isOnQuest = C_QuestLog.IsOnQuest(questID)
+	local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
+
+	-- Define status color and text
+	local statusText, statusR, statusG, statusB
+	if isOnQuest then
+		statusText, statusR, statusG, statusB = "You are on this quest", 0, 1, 0
+	elseif isComplete then
+		statusText, statusR, statusG, statusB = "You have completed this quest", 1, 0.65, 0
+	else
+		statusText, statusR, statusG, statusB = "You are not on this quest", 1, 0, 0
+	end
+
+	-- Fetch description and objective text if possible
+	local descriptionText = ""
+	local objectivesText = ""
+	if logIndex then
+		local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
+		descriptionText = questDesc or ""
+		objectivesText = questObjectives or ""
+	end
+
+	local objText = GetQuestObjectiveInfo(questID, 1, false)
+	local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
+
+	C_Timer.After(0.1, function()
+		if not GameTooltip:IsShown() then
+			GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
+
+			-- 🟨 Quest title (always gold)
+			GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
+
+			-- 🔴🟢🟠 Status message
+			GameTooltip:AddLine(statusText, statusR, statusG, statusB, true)
+
+			-- 📜 Description
+			if descriptionText ~= "" then
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+			else
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
+			end
+
+			-- ✅ Requirements
+			if objectivesText ~= "" or showFallbackObjective then
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+				if objectivesText ~= "" then
+					GameTooltip:AddLine("- " .. objectivesText, 1, 1, 1, true)
+				elseif showFallbackObjective then
+					GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
+				end
+			else
+				GameTooltip:AddLine("Objective info unavailable", 0.8, 0.8, 0.8, true)
+			end
+
+			-- Add Rewards
+			GameTooltip:AddLine(" ")
+			RQE:QuestRewardsTooltip(GameTooltip, questID)
+
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
+			GameTooltip:Show()
+		end
+	end)
 end
 
 
@@ -7603,7 +7703,11 @@ function RQE.PrintQuestlineDetails(questLineID)
 					if questLink then
 						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
 					else
-						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
+						--questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
+
+						-- Create a custom clickable link for the quest title
+						local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", questID, questTitle)
+						questDetails[i] = string.format("|cFFADD8E6%d. Quest# %d - %s|r", i, questID, clickableQuestTitle)
 					end
 
 					-- Fail check if the initial printing would've come back as "Loading" for any of the values of questTitle
@@ -7628,6 +7732,18 @@ function RQE.PrintQuestlineDetails(questLineID)
 		end
 	end)
 end
+
+
+-- Custom handler for clickable quest titles
+hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+	local linkType, questID = strsplit(":", link)
+	if linkType == "questtip" then
+		questID = tonumber(questID)
+		if questID then
+			RQE:ShowCustomQuestTooltip(questID)
+		end
+	end
+end)
 
 
 -- Returns the available quests at a quest giver when GOSSIP_SHOW is called from EventManager
