@@ -971,11 +971,11 @@ function RQE.GetTheWarWithinWQ()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ_WithDuplicates(11)
+		RQE_Contribution.PrintIncorrectMapIDs(11)
 	elseif clicked == "LeftButton" then
 		RQE_Contribution.GetMissingWQ(11)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQInclDuplicates(11)
+		RQE_Contribution.GetAllWQ(11)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
@@ -993,11 +993,11 @@ function RQE.GetDragonflightWQ()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ_WithDuplicates(10)
+		RQE_Contribution.PrintIncorrectMapIDs(10)
 	elseif clicked == "LeftButton" then
 		RQE_Contribution.GetMissingWQ(10)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQInclDuplicates(10)
+		RQE_Contribution.GetAllWQ(10)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
@@ -1015,11 +1015,11 @@ function RQE.GetShadowlandsWQ()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ_WithDuplicates(9)
+		RQE_Contribution.PrintIncorrectMapIDs(9)
 	elseif clicked == "LeftButton" then
 		RQE_Contribution.GetMissingWQ(9)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQInclDuplicates(9)
+		RQE_Contribution.GetAllWQ(9)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
@@ -1037,11 +1037,11 @@ function RQE.GetBFAWQ()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ_WithDuplicates(8)
+		RQE_Contribution.PrintIncorrectMapIDs(8)
 	elseif clicked == "LeftButton" then
 		RQE_Contribution.GetMissingWQ(8)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQInclDuplicates(8)
+		RQE_Contribution.GetAllWQ(8)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
@@ -1059,11 +1059,11 @@ function RQE.GetLegionWQ()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ_WithDuplicates(7)
+		RQE_Contribution.PrintIncorrectMapIDs(7)
 	elseif clicked == "LeftButton" then
 		RQE_Contribution.GetMissingWQ(7)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQInclDuplicates(7)
+		RQE_Contribution.GetAllWQ(7)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
@@ -1080,11 +1080,11 @@ function RQE.MiscWQ()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ_WithDuplicates(6)
+		RQE_Contribution.PrintIncorrectMapIDs(6)
 	elseif clicked == "LeftButton" then
 		RQE_Contribution.GetMissingWQ(6)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQInclDuplicates(6)
+		RQE_Contribution.GetAllWQ(6)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
@@ -2128,14 +2128,10 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		return
 	end
 
-	if not questID then  -- Check if questID is nil
-		return  -- Exit the function
-	end
-
 	-- Check if the currently super-tracked quest is different from the extractedQuestID and if manual tracking is enabled
 	if RQE.ManualSuperTrack ~= true and currentSuperTrackedQuestID ~= extractedQuestID and extractedQuestID then
 		-- Re-super-track the extractedQuestID
-		RQE.infoLog("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
+		print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
 		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end
@@ -3679,8 +3675,10 @@ function RQE.SearchModule:CreateSearchBox()
 			if questLink then
 				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
 			else
-				local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
-				print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+				C_Timer.After(0.8, function()
+					local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+				end)
 			end
 
 			if isQuestCompleted then
@@ -3711,6 +3709,7 @@ function RQE.SearchModule:CreateSearchBox()
 		-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 		RQE:PerformClearActions()
 		RQE:ClearWaypointButtonData()
+		RQE.DontUpdateFrame = false -- Flag to enable the UpdateFrame to run once in order to populate field (only applicable if player had the RQEFrame populated with a different questID before doing another search)
 
 		if not questID then
 			for id, questData in pairs(RQEDatabase) do
@@ -3755,13 +3754,15 @@ function RQE.SearchModule:CreateSearchBox()
 			end
 
 			-- Print quest link or name
-			local questLink = GetQuestLink(foundQuestID)
-			if questLink then
-				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
-			else
-				local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
-				print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
-			end
+			C_Timer.After(0.2, function()
+				local questLink = GetQuestLink(foundQuestID)
+				if questLink then
+					print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+				else
+					local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+				end
+			end)
 
 			-- Call UpdateFrame to populate RQEFrame with quest details, if the quest exists in RQEDatabase
 			-- This is the new line added to trigger the update based on the foundQuestID
