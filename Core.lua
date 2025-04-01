@@ -2131,7 +2131,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	-- Check if the currently super-tracked quest is different from the extractedQuestID and if manual tracking is enabled
 	if RQE.ManualSuperTrack ~= true and currentSuperTrackedQuestID ~= extractedQuestID and extractedQuestID then
 		-- Re-super-track the extractedQuestID
-		print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
+		end
 		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end
@@ -2626,19 +2628,21 @@ function RQE:GetClosestTrackedQuest()
 			-- Case 3: Super track nearest quest
 			elseif RQE.db.profile.enableNearestSuperTrack then
 				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
-				if classification == not Enum.QuestClassification.Campaign or not Enum.QuestClassification.Meta then
-
-					-- Call the fallback function to supertrack the first watched quest in the current zone
-					RQE:SuperTrackFirstWatchedQuestInCurrentZone()
+				if classification ~= Enum.QuestClassification.Campaign and classification ~= Enum.QuestClassification.Meta then
+					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+					if distance and distance < closestDistance then
+						closestDistance = distance
+						closestQuestID = info.questID
+					end
 				end
 			end
 
-			-- Case 3B: Super track nearest quest if nothing is being super tracked
-			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-			if RQE.db.profile.enableNearestSuperTrack and not isSuperTracking then
-				-- Call the fallback function to supertrack the first watched quest in the current zone
-				RQE:SuperTrackFirstWatchedQuestInCurrentZone()
-			end
+			-- -- Case 3B: Super track nearest quest if nothing is being super tracked
+			-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			-- if RQE.db.profile.enableNearestSuperTrack and not isSuperTracking then
+				-- -- Call the fallback function to supertrack the first watched quest in the current zone
+				-- RQE:SuperTrackFirstWatchedQuestInCurrentZone()
+			-- end
 		end
 	end
 
@@ -2647,6 +2651,8 @@ function RQE:GetClosestTrackedQuest()
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No tracked quests found. Attempting fallback to first watched quest in the current zone.")
 		end
+		-- Call the fallback function to supertrack the first watched quest in the current zone
+		RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -8787,6 +8793,36 @@ function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
 	end
 
 	print(reagentsString)
+end
+
+
+-- Function to obtain the index of a given itemID and pass that onto a function used for purchasing that item
+function RQE:BuyItemByItemID(itemID, quantity)
+	local itemFound = false
+
+	for index = 1, GetMerchantNumItems() do
+		local merchantItemID = GetMerchantItemID(index)
+
+		if merchantItemID == itemID then
+			itemFound = true
+
+			-- Print debug for confirmation
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Found itemID", itemID, "at merchant index", index)
+			end
+
+			-- Call your existing purchase logic
+			RQE:ConfirmAndBuyMerchantItem(index, quantity)
+
+			break -- Stop after first match
+		end
+	end
+
+	if not itemFound then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ItemID", itemID, "not found at this merchant.")
+		end
+	end
 end
 
 
