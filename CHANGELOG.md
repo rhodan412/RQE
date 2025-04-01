@@ -8,6 +8,8 @@
 		- Added special tooltip that would display quest information when clicking on a questName in the chat log after player opts to print specific questline (2025.03.30)
 		- Added functionality that allows players to search for a questID (provided they have TomTom), using the "S" button, and if the quest is in the DB it will direct player where to go - but player needs to be on the continent for the waypoint arrow to appear (2025.03.30)
 		- Fixed issue where dropdown menu wasn't appearing on right-clicking of the QuestLevelAndName string (2025.03.30)
+		- Fixed issue where TrackClosestQuest wasn't working correctly and would not track the closest (2025.04.01)
+		- Added function that first obtains the index from the itemID when purchasing an item. This will allow for greater reliability for when an objective/macro requires the purchase of an item from a merchant (2025.04.01)
 
 	Buttons.lua
 		- Creates tooltip for the location of where to pick up a searched quest if the player doesn't have this quest in their log, hasn't completed it, and it is present in the DB file of the addon (2025.03.30)
@@ -24,12 +26,15 @@
 		- Added special tooltip that would display quest information when clicking on a questName in the chat log after player opts to print specific questline (2025.03.30)
 		- Fixes to the way quest information is gathered from contribution addon (2025.03.30)
 		- Added brief delay before printing out quest information following a search as it was coming back "Unknown Quest" (2025.03.30)
+		- Fixed issue where TrackClosestQuest wasn't working correctly and would not track the closest (2025.04.01)
+		- Added function that first obtains the index from the itemID when purchasing an item. This will allow for greater reliability for when an objective/macro requires the purchase of an item from a merchant (2025.04.01)
 
 	EventManager.lua
 		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
 		- Updated QUEST_ACCEPTED and QUEST_DETAIL to print out information if the quest is present in the DB or not and # of steps when these two functions fire (2025.03.28)
 		- Created flags that prevent the RQEFrame from updating when a quest is being searched unless the frame is cleared, or the player has picked up the quest that was being searched for (2025.03.30)
 		- Removed 'return' of RQE.HasDragonraceAura from QUEST_LOG_UPDATE and QUEST_WATCH_LIST_CHANGED as this was preventing some quests from updating RQEFrame during dragonriding/skyriding races with objectives (2025.03.30)
+		- Added functionality to track nearest, if that option is selected, after the firing of certain messageType within the UI_INFO_MESSAGE event (2025.04.01)
 
 	QuestingModule.lua
 		- Added functionality to obtain WQ information, but this requires the author-only RQE Contribution addon (2025.03.28)
@@ -49,6 +54,7 @@
 		- Added post-Emerald Dream (Amirdrassil) quests to the DB (2025.03.30)
 		- Added a few more WQ and dragonriding/skyriding quests from Dragonflight to DB (2025.03.30)
 		- Corrected mapID information for many WQ that were stored in DB (2025.03.30)
+		- Added additional Thaldraszus side-quests, from Dragonflight expansion, into the DB (2025.04.01)
 
 	WaypointManager.lua
 		- Added function that creates a waypoint to where the player should pick up a quest that they don't have, and haven't completed, if they are using the search "S" function for the quest (2025.03.30)
