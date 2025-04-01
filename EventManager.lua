@@ -3479,32 +3479,8 @@ function RQE.handleUIInfoMessage(...)
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
-	-- -- Check if the message is Exploration objective complete (messageType 308)
-	-- if messageType == 308 then
-		-- if RQE.db.profile.autoClickWaypointButton then
-			-- C_Timer.After(1.5, function()
-				-- RQE.UIInfoUpdateFired = true
-				-- RQE:StartPeriodicChecks()
-				-- C_Timer.After(0.2, function()
-					-- RQE.UIInfoUpdateFired = false
-				-- end)
-				-- -- RQE.ClickQuestLogIndexButton(questID)
-			-- end)
-		-- end
-	-- end
-
-	if messageType == 311 or messageType == 312 then
-		if RQE.BagNewItemsRunning then
-			C_Timer.After(0.1, function()
-				RQE:StartPeriodicChecks()
-				RQE.BagNewItemsRunning = false
-			end)
-		end
-	end
-
 	-- Check if the message is Travel to a specific location such as for exploration objective (messageType 308)
 	if messageType == 309 then
-	--if messageType == 309 and message == "Objective Complete." then
 		RQE.BlacklistUnderway = false
 		RQE.Buttons.ClearButtonPressed()
 		C_Timer.After(2.5, function()
@@ -3518,54 +3494,50 @@ function RQE.handleUIInfoMessage(...)
 					C_Timer.After(0.2, function()
 						RQE.UIInfoUpdateFired = false
 					end)
-					-- RQE.ClickQuestLogIndexButton(questID)
 				end
 				UpdateFrame()
 			end)
 		end)
 	end
 
-	-- -- Check if the message is Monster Kill (messageType 310)
-	-- if messageType == 310 then
-		-- if RQE.db.profile.autoClickWaypointButton then
-			-- C_Timer.After(1.5, function()
-				-- RQE.UIInfoUpdateFired = true
-				-- RQE:StartPeriodicChecks()
-				-- C_Timer.After(0.2, function()
-					-- RQE.UIInfoUpdateFired = false
-				-- end)
-				-- -- RQE.ClickQuestLogIndexButton(questID)
-			-- end)
-		-- end
-	-- end
+	if messageType == 311 or messageType == 312 then
+		if RQE.BagNewItemsRunning then
+			C_Timer.After(0.1, function()
+				RQE:StartPeriodicChecks()
+				RQE.BagNewItemsRunning = false
+			end)
+		end
+	end
 
-	-- -- Check if the message is Collecting an object from ground or speaking to NPC (messageType 311)
-	-- if messageType == 311 then
-		-- if RQE.db.profile.autoClickWaypointButton then
-			-- C_Timer.After(1.5, function()
-				-- RQE.UIInfoUpdateFired = true
-				-- RQE:StartPeriodicChecks()
-				-- C_Timer.After(0.2, function()
-					-- RQE.UIInfoUpdateFired = false
-				-- end)
-				-- -- RQE.ClickQuestLogIndexButton(questID)
-			-- end)
-		-- end
-	-- end
+	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	if messageType == 308 or messageType == 309 or messageType == 310 or messageType == 311 or messageType == 312 or messageType == 313 then
+		if RQE.db.profile.enableNearestSuperTrack then
+			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+				if not RQEFrame:IsShown() then return end
+				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+				if closestQuestID then
+					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
+					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
+					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+						DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
+					end
+				else
+					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+						DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
+					end
+				end
+				RQE.TrackClosestQuest()
+			end
 
-	-- -- Check if the message is Collecting an object from ground or quest loot from mob (messageType 312)
-	-- if messageType == 312 then
-		-- if RQE.db.profile.autoClickWaypointButton then
-			-- C_Timer.After(1.5, function()
-				-- RQE.UIInfoUpdateFired = true
-				-- RQE:StartPeriodicChecks()
-				-- C_Timer.After(0.2, function()
-					-- RQE.UIInfoUpdateFired = false
-				-- end)
-				-- -- RQE.ClickQuestLogIndexButton(questID)
-			-- end)
-		-- end
-	-- end
+			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+			if RQEFrame and not RQEFrame:IsMouseOver() then
+				RQE.ScrollFrameToTop()
+			end
+			RQE.FocusScrollFrameToTop()
+		end
+	end
 end
 
 
