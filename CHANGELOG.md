@@ -10,6 +10,7 @@
 		- Fixed issue where dropdown menu wasn't appearing on right-clicking of the QuestLevelAndName string (2025.03.30)
 		- Fixed issue where TrackClosestQuest wasn't working correctly and would not track the closest (2025.04.01)
 		- Added function that first obtains the index from the itemID when purchasing an item. This will allow for greater reliability for when an objective/macro requires the purchase of an item from a merchant (2025.04.01)
+		- Changed DB entries with RQE:ConfirmAndBuyMerchantItem(itemIndex, quantity) to instead use RQE:BuyItemByItemID(itemID, quantity) (2025.04.01)
 
 	Buttons.lua
 		- Creates tooltip for the location of where to pick up a searched quest if the player doesn't have this quest in their log, hasn't completed it, and it is present in the DB file of the addon (2025.03.30)
@@ -28,6 +29,8 @@
 		- Added brief delay before printing out quest information following a search as it was coming back "Unknown Quest" (2025.03.30)
 		- Fixed issue where TrackClosestQuest wasn't working correctly and would not track the closest (2025.04.01)
 		- Added function that first obtains the index from the itemID when purchasing an item. This will allow for greater reliability for when an objective/macro requires the purchase of an item from a merchant (2025.04.01)
+		- Modification to RQE:GetClosestTrackedQuest() to print what the closest quest is to act as a debug tool (2025.04.03)
+		- Adjustment to PrintQuestlineDetails function with delay timers (2025.04.03)
 
 	EventManager.lua
 		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
@@ -55,6 +58,8 @@
 		- Added a few more WQ and dragonriding/skyriding quests from Dragonflight to DB (2025.03.30)
 		- Corrected mapID information for many WQ that were stored in DB (2025.03.30)
 		- Added additional Thaldraszus side-quests, from Dragonflight expansion, into the DB (2025.04.01)
+		- Changed DB entries with RQE:ConfirmAndBuyMerchantItem(itemIndex, quantity) to instead use RQE:BuyItemByItemID(itemID, quantity) (2025.04.01)
+		- Added more preliminary world quests to DB as well as more Dragonflight quests (2025.04.03)
 
 	WaypointManager.lua
 		- Added function that creates a waypoint to where the player should pick up a quest that they don't have, and haven't completed, if they are using the search "S" function for the quest (2025.03.30)
