@@ -2656,7 +2656,16 @@ function RQE:GetClosestTrackedQuest()
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("The closest quest to your current location is " .. tostring(closestQuestID))
+		local extractedQuestID
+		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		if currentSuperTrackedQuestID ~= extractedQuestID then
+			print("The closest quest to your current location is " .. tostring(closestQuestID))
+		end
 	end
 
 	return closestQuestID
@@ -7547,6 +7556,7 @@ function RQE.PrintQuestLineInfo(questID, uiMapID)
 		print("Is Daily:", questLineInfo.isDaily and "Yes" or "No")
 		print("Is Campaign:", questLineInfo.isCampaign and "Yes" or "No")
 		print("Floor Location:", questLineInfo.floorLocation)
+		print("Starting MapID:", questLineInfo.startMapID)
 	else
 		-- No quest line info was found for the given questID and uiMapID, or an error occurred
 		print("No quest line information found for Quest ID " .. questID .. " and Map ID " .. uiMapID .. ", or an error occurred.")
@@ -7675,49 +7685,52 @@ function RQE.PrintQuestlineDetails(questLineID)
 		RQE.PrintQuestDetails = 1 -- Initialize state if not set
 	end
 
-	C_Timer.After(0.2, function()
+	C_Timer.After(0.4, function()
 		local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
 		local questDetails = {}
 		local questsToLoad = #questIDs -- Number of quests to load data for
 
+		local questLineName = "Unknown Questline"
+		if #questIDs > 0 then
+			local lineInfo = C_QuestLine.GetQuestLineInfo(questIDs[1])
+			if lineInfo and lineInfo.questLineName then
+				questLineName = lineInfo.questLineName
+			end
+		end
+
 		if questsToLoad > 0 then
 			if RQE.PrintQuestDetails == 1 then
-				-- First run: Load data only, do not print
 				RQE.debugLog("|cFFFFA500Questline ID " .. questLineID .. " data is being retrieved...|r")
 
-				-- Schedule second run after 0.5s
-				C_Timer.After(0.5, function()
-					if RQE.PrintQuestDetails == 1 then  -- Ensure second run happens
-						RQE.PrintQuestDetails = 2  -- Mark function as completed
-						RQE.PrintQuestLineFailed = true -- Mark as true for the initial run
+				-- Delay second run
+				C_Timer.After(0.8, function()
+					if RQE.PrintQuestDetails == 1 then
+						RQE.PrintQuestDetails = 2
+						RQE.PrintQuestLineFailed = true
 					end
 				end)
 			end
 
-			-- Second run: Print header
 			if not RQE.PrintQuestLineFailed then
-				print("|cFFFFA500Quests in Questline ID " .. questLineID .. ":|r")
+				print("|cFFFFA500Quests in Questline ID " .. questLineID .. ": " .. questLineName .. "|r")
 			end
 
-			-- Second run: Print quest details
 			for i, questID in ipairs(questIDs) do
 				local questTitle = C_QuestLog.GetTitleForQuestID(questID) or "Loading..."
 				if questTitle == "Loading..." then
 					RQE.PrintQuestLineFailed = true
 				end
-				C_Timer.After(0.5, function()
+
+				C_Timer.After(0.7, function()
 					local questLink = GetQuestLink(questID)
 					if questLink then
 						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
 					else
-						--questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - [" .. questTitle .. "]|r"
-
-						-- Create a custom clickable link for the quest title
 						local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", questID, questTitle)
 						questDetails[i] = string.format("|cFFADD8E6%d. Quest# %d - %s|r", i, questID, clickableQuestTitle)
 					end
 
-					-- Fail check if the initial printing would've come back as "Loading" for any of the values of questTitle
+					-- Retry if still loading on first pass
 					if RQE.PrintQuestLineFailed then
 						RQE.RePrintQuestDetailAttempts = RQE.RePrintQuestDetailAttempts + 1
 						if RQE.RePrintQuestDetailAttempts == 1 then
@@ -7726,7 +7739,7 @@ function RQE.PrintQuestlineDetails(questLineID)
 						end
 					end
 
-					-- Check if all quests have been processed (if questTitle has failed the 2nd time thru with questTitle being Loading, it will print what it has)
+					-- Print when all data loaded
 					questsToLoad = questsToLoad - 1
 					if questsToLoad <= 0 then
 						for j = 1, #questDetails do
