@@ -1828,6 +1828,90 @@ function RQE.QuestStepsBlocked(questID)
 end
 
 
+-- Function that track quests that are in the DB but have no steps
+function RQE.TrackDBQuestsWithoutSteps()
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	C_Timer.After(0.5, function()
+		for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(i)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+				local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+				local questData = RQE.getQuestData(questID)
+
+				if questData and #questData == 0 then
+					C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function that track quests that are in the DB and have steps
+function RQE.TrackDBQuestsWithSteps()
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	C_Timer.After(0.5, function()
+		for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(i)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+				local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+				local questData = RQE.getQuestData(questID)
+
+				if questData and #questData > 0 then
+					C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", #questData), 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function that track quests that are NOT in the DB at all
+function RQE.TrackQuestsNotInDB()
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	C_Timer.After(0.5, function()
+		for i = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(i)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
+				local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+				local questData = RQE.getQuestData(questID)
+
+				if not questData then
+					C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Check if the SeparateFocusFrame exists
@@ -5114,8 +5198,11 @@ function RQE:StartPeriodicChecks()
 			print("No further steps to process.")
 		end
 	end
-	RQEMacro:CreateMacroForCurrentStep()
-	RQE.isCheckingMacroContents = false
+
+	C_Timer.After(0.15, function()
+		RQEMacro:CreateMacroForCurrentStep()
+		RQE.isCheckingMacroContents = false
+	end)
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
@@ -6499,7 +6586,10 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 
 				local fulfilled = objective.numFulfilled or 0
 				local required = amount or 1
-				local needsFinished = true -- Always require .finished for safety
+
+				-- Only enforce .finished if this step requires full completion
+				local enforceFinished = (fulfilled >= objective.numRequired)
+				--local needsFinished = true -- Always require .finished for safety
 
 				-- Debug info before deciding
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -6508,12 +6598,17 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 						objective.text or "N/A",
 						fulfilled,
 						required,
-						tostring(objective.finished)
+						objective.numRequired or -1,
+						tostring(objective.finished),
+						tostring(enforceFinished)
 					))
 				end
 
-				-- Final condition
-				if fulfilled < required or (needsFinished and not objective.finished) then
+				if fulfilled < required then
+					return false
+				end
+
+				if enforceFinished and not objective.finished then
 					return false
 				end
 
@@ -8683,17 +8778,49 @@ function RQE:UpdateRecipeTrackingFrame(recipeID)
 	-- Get reagents
 	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false, recipeInfo.unlockedRecipeLevel)
 	local reagents = {}
-
+	local seenReagentNames = {}
+		
 	if schematic and schematic.reagentSlotSchematics then
 		for _, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
-			for _, reagent in ipairs(slotSchematic.reagents) do
-				local reagentName = GetItemInfo(reagent.itemID)
-				local playerReagentCount = GetItemCount(reagent.itemID)
-				table.insert(reagents, {
-					name = reagentName,
-					required = slotSchematic.quantityRequired,
-					playerCount = playerReagentCount
-				})
+			local isBasic = slotSchematic.reagentType == Enum.CraftingReagentType.Basic
+			local isSpark = slotSchematic.reagentType == Enum.CraftingReagentType.Modifying
+				and slotSchematic.slotInfo
+				and slotSchematic.slotInfo.name
+				and slotSchematic.slotInfo.name:lower():find("spark")
+
+			if isBasic or isSpark then
+				local addedName = false
+
+				for _, reagent in ipairs(slotSchematic.reagents) do
+					local itemID = reagent.itemID
+					local name = itemID and C_Item.GetItemInfo(itemID)
+
+					if not name then
+						name = slotSchematic.slotInfo and slotSchematic.slotInfo.name or "Unknown Reagent"
+					end
+
+					if name and not seenReagentNames[name] then
+						table.insert(reagents, {
+							name = name,
+							required = slotSchematic.quantityRequired,
+							playerCount = itemID and C_Item.GetItemCount(itemID) or 0
+						})
+						seenReagentNames[name] = true
+						addedName = true
+					end
+				end
+
+				if not addedName then
+					local fallbackName = slotSchematic.slotInfo and slotSchematic.slotInfo.name
+					if fallbackName and not seenReagentNames[fallbackName] then
+						table.insert(reagents, {
+							name = fallbackName,
+							required = slotSchematic.quantityRequired,
+							playerCount = 0
+						})
+						seenReagentNames[fallbackName] = true
+					end
+				end
 			end
 		end
 	end
