@@ -11,6 +11,7 @@
 		- Fixed issue where TrackClosestQuest wasn't working correctly and would not track the closest (2025.04.01)
 		- Added function that first obtains the index from the itemID when purchasing an item. This will allow for greater reliability for when an objective/macro requires the purchase of an item from a merchant (2025.04.01)
 		- Changed DB entries with RQE:ConfirmAndBuyMerchantItem(itemIndex, quantity) to instead use RQE:BuyItemByItemID(itemID, quantity) (2025.04.01)
+		- Fix made for recipe tracking as it was listing some duplicate names based on if they had different itemIDs for other qualities (2025.04.09)
 
 	Buttons.lua
 		- Creates tooltip for the location of where to pick up a searched quest if the player doesn't have this quest in their log, hasn't completed it, and it is present in the DB file of the addon (2025.03.30)
@@ -31,6 +32,10 @@
 		- Added function that first obtains the index from the itemID when purchasing an item. This will allow for greater reliability for when an objective/macro requires the purchase of an item from a merchant (2025.04.01)
 		- Modification to RQE:GetClosestTrackedQuest() to print what the closest quest is to act as a debug tool (2025.04.03)
 		- Adjustment to PrintQuestlineDetails function with delay timers (2025.04.03)
+		- Added functions to track certain quests as based on the DB - this is an author-only function (2025.04.09)
+		- Added brief delay in RQE:StartPeriodicChecks before checking the macro for the current step (2025.04.09)
+		- Additional fix RQE:CheckDBObjectiveStatus to handle additional quest types to ensure that they advance in counter quests following a single count in the first objective, but haven't tested progress bar type quests (2025.04.09)
+		- Fixed tracking of recipes to no longer list duplicate names based on those items that have different itemIDs based on quality, but still not listing 'Sparks' in the recipe being tracked (2025.04.09)
 
 	EventManager.lua
 		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
@@ -38,12 +43,14 @@
 		- Created flags that prevent the RQEFrame from updating when a quest is being searched unless the frame is cleared, or the player has picked up the quest that was being searched for (2025.03.30)
 		- Removed 'return' of RQE.HasDragonraceAura from QUEST_LOG_UPDATE and QUEST_WATCH_LIST_CHANGED as this was preventing some quests from updating RQEFrame during dragonriding/skyriding races with objectives (2025.03.30)
 		- Added functionality to track nearest, if that option is selected, after the firing of certain messageType within the UI_INFO_MESSAGE event (2025.04.01)
+		- Increased delay slightly before the firing of RQE:StartPeriodicChecks in the ITEM_COUNT_CHANGED event (2025.04.09)
 
 	QuestingModule.lua
 		- Added functionality to obtain WQ information, but this requires the author-only RQE Contribution addon (2025.03.28)
 		- Added flags that when the questLogIndexButton, in the RQEQuestFrame, are pressed the flag that prevents the UpdateFrame from updating, in Core.lua, is set to false (2025.03.30)
 		- Clears RQEFrame, if the frame is populated by a searched quest when the player clicks on different quest in the RQEQuestFrame (2025.03.30)
 		- Fixed issue where dropdown menu wasn't appearing on right-clicking of the QuestLevelAndName string (2025.03.30)
+		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
 
 	RQE.toc
 		- Updated version# (2025.03.26)
@@ -60,6 +67,10 @@
 		- Added additional Thaldraszus side-quests, from Dragonflight expansion, into the DB (2025.04.01)
 		- Changed DB entries with RQE:ConfirmAndBuyMerchantItem(itemIndex, quantity) to instead use RQE:BuyItemByItemID(itemID, quantity) (2025.04.01)
 		- Added more preliminary world quests to DB as well as more Dragonflight quests (2025.04.03)
+		- Added additional WQ to the DB along with alliance quests for The Jade Forest zone of the Mists of Pandaria expansion (2025.04.09)
+
+	RQEFrame.lua
+		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
 
 	WaypointManager.lua
 		- Added function that creates a waypoint to where the player should pick up a quest that they don't have, and haven't completed, if they are using the search "S" function for the quest (2025.03.30)
