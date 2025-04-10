@@ -617,14 +617,14 @@ function RQE.handleItemCountChanged(...)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("ITEM_COUNT_CHANGED related to questID:", questID, "due to CheckDBInventory presence.")
 		end
-		C_Timer.After(0.2, function()
+		C_Timer.After(0.25, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from ITEM_COUNT_CHANGED ~~")
 			end
 			RQE.StartPerioFromItemCountChanged = true
 			RQE.ItemCountRanStartPeriodicChecks = true
 			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
-			C_Timer.After(0.5, function()
+			C_Timer.After(0.55, function()
 				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				C_Timer.After(3, function()
 					RQE.StartPerioFromItemCountChanged = false
