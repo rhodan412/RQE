@@ -122,6 +122,13 @@ end
 -- Function to Show Right-Click Dropdown Menu
 function ShowDropdownRQEFrame(self)
 	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		-- Only show RQE buttons if the RQE_Contribution addon is loaded
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+			rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+			rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
+		end
 		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 	end)
 end
