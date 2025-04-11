@@ -68,7 +68,8 @@
 		- Changed DB entries with RQE:ConfirmAndBuyMerchantItem(itemIndex, quantity) to instead use RQE:BuyItemByItemID(itemID, quantity) (2025.04.01)
 		- Added more preliminary world quests to DB as well as more Dragonflight quests (2025.04.03)
 		- Added additional WQ to the DB along with alliance quests for The Jade Forest zone of the Mists of Pandaria expansion (2025.04.09)
-		- Added remaining of The Jade Forest zone and part of Valley of the Four Winds [alliance] to DB (2025.04.10)
+		- Added remaining of The Jade Forest zone to DB (2025.04.10)
+		- Added Valley of the Four Winds and Krasarang Wilds alliance quests to DB (2025.04.10)
 
 	RQEFrame.lua
 		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
