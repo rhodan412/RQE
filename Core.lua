@@ -2830,13 +2830,16 @@ function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 	for _, questID in ipairs(watchedQuestIDs) do
 		-- Get the map ID associated with the quest
 		local questMapID = GetQuestUiMapID(questID)
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		if questMapID then
 			-- Check if the quest's map ID matches the player's current map ID
 			if questMapID == playerMapID then
 				-- Supertrack this quest
-				C_SuperTrack.SetSuperTrackedQuestID(questID)
-				UpdateFrame()
-				return
+				if not isWorldQuest then
+					C_SuperTrack.SetSuperTrackedQuestID(questID)
+					UpdateFrame()
+					return
+				end
 			end
 		end
 	end
