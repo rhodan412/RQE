@@ -3591,7 +3591,7 @@ function RQE.handleUnitAura(...)
 					local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unitTarget, instanceID)
 					if auraData then
 						print(string.format(
-							"	Updated Aura: %s, SpellID: %d, Applications: %d, ExpirationTime: %s",
+							"Updated Aura: %s, SpellID: %d, Applications: %d, ExpirationTime: %s",
 							auraData.name or "Unknown",
 							auraData.spellId or 0,
 							auraData.applications or 0,
@@ -3609,7 +3609,7 @@ function RQE.handleUnitAura(...)
 			if updateInfo.removedAuraInstanceIDs then
 				print("  Removed Auras:")
 				for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-					print(string.format("	Removed Aura InstanceID: %d", instanceID))
+					print(string.format("Removed Aura InstanceID: %d", instanceID))
 				end
 			else
 				print("  Removed Auras: None")
@@ -4540,7 +4540,7 @@ function RQE.HandleClientSceneClosed()
 end
 
 
--- Handling QUEST_REMOVED event
+-- Handling  ED event
 function RQE.handleQuestRemoved(...)
 	-- Extract questID and wasReplayQuest from the correct argument positions
 	local event = select(2, ...)
@@ -4563,6 +4563,11 @@ function RQE.handleQuestRemoved(...)
 		C_Timer.After(0.1, function()
 			UpdateFrame()
 		end)
+	end
+
+	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	if isWorldQuest then
+		RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
 	end
 
 	RQE:SaveAutomaticWorldQuestWatches()
@@ -5040,10 +5045,13 @@ function RQE.handleQuestWatchListChanged(...)
 	end
 
 	-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
-	if RQE.QuestAddedForWatchListChanged and not (isSuperTracking and isWorldQuest) then
-		C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
-		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
-		UpdateFrame()
+	if RQE.QuestAddedForWatchListChanged and not isSuperTracking then
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		if not isWorldQuest then
+			C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
+			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
+			UpdateFrame()
+		end
 	end
 
 	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
