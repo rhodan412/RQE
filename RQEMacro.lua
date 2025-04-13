@@ -154,6 +154,37 @@ function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharact
 end
 
 
+-- Generates a macro on a searched quest from the DB file if it is valid and player doesn't yet have the searched quest (and wasn't flagged as completed)
+function RQE:GenerateNpcMacroIfNeeded(questID)
+	-- Check if quest is in player log
+	if C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.GetLogIndexForQuestID(questID) then
+		return -- Player already has or completed the quest
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData or not questData.npc or #questData.npc == 0 or questData.npc[1] == "" then
+		return -- No NPC data to create a macro
+	end
+
+	local npcName = questData.npc[1]
+	if not npcName or npcName == "" then return end
+
+	-- Generate the macro text
+	local macroLines = {
+		"#showtooltip item:153541",
+		"/tar " .. npcName,
+		'/script SetRaidTarget("target",3)'
+	}
+
+	print("Creating macro for searched NPC:", npcName)
+	RQEMacro:SetQuestStepMacro(questID, 1, macroLines, true)
+
+	C_Timer.After(0.35, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
+end
+
+
 -- Updated to use the existing structure
 function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
 	if InCombatLockdown() then
@@ -288,6 +319,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		[28885] = true,
 		[30817] = true,
 		[118474] = true,
+		[153541] = true,
 	}
 
 	-- Create or reuse the count text overlay
@@ -351,6 +383,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 118474 then
 					GameTooltip:SetText("Look Follow/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 153541 then
+					GameTooltip:SetText("Pickup the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				else
 					GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 					-- GameTooltip:AddLine("\n(Item Exception ID: " .. itemID .. ")", 1, 1, 0)
