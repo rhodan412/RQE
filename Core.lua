@@ -3838,6 +3838,7 @@ function RQE.SearchModule:CreateSearchBox()
 
 			-- Found a quest, now set it as the searchedQuestID
 			RQE.searchedQuestID = foundQuestID
+			RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
 
 			-- Super Track the Searched Quest if in the Quest Log
 			if isQuestInLog then
