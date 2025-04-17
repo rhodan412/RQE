@@ -25,8 +25,19 @@ else
 end
 
 
+-------------------------------
+-- 2. Waypoint Exclusion Logic
+-------------------------------
+
+-- List of quests excluded from waypoint creation
+RQE.ExcludedWaypointQuests = {
+	--[82957] = true,
+	-- Add other questIDs here
+}
+
+
 ---------------------------
--- 2. Waypoint Logic
+-- 3. Waypoint Logic
 ---------------------------
 
 -- Function: InitializeWaypointManager
@@ -149,6 +160,7 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 		return
 	end
 
+	-- print("~~~ Waypoint Set: 152 ~~~")
 	local label = "Waypoint for " .. (dbEntry.title or ("Quest ID: " .. questID))
 
 	-- ✅ Prefer wrapper function if it exists
@@ -233,6 +245,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 			end
 		end
 
+		-- print("~~~ Waypoint Set: 237 ~~~")
 		waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
 		if x and y then
@@ -389,6 +402,14 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			end
 
 			-- Set a default title if questID is still nil or 0
+			local questType = C_QuestLog.GetQuestType(questID)
+			if RQE.ExcludedWaypointQuests[questID] or questType == 265 then		-- Prevents a waypoint from being created 'hidden' type quests
+				if RQE.db.profile.debugLevel == "INFO" then
+					print(questID .. " is excluded (explicitly or by quest type 265); waypoint will not be generated")
+				end
+				return 
+			end
+			-- print("~~~ Waypoint Set: 394 ~~~")
 			local waypointTitle = questID > 0 and ("Quest ID: " .. questID .. ", Quest Name: " .. (questName or "Unknown")) or "Unknown Quest"
 
 			--waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
@@ -477,6 +498,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	-- Ensure x and y are numbers before setting the waypoint
 	x = tonumber(x) or 0
 	y = tonumber(y) or 0
+	-- print("~~~ Waypoint Set: 483 ~~~")
 	waypointTitle = waypointTitle or ("Quest ID: " .. questID .. ", Quest Name: " .. questName)
 
 	RQE.infoLog("Attempting to set waypoint for:", questName, "at coordinates:", x, ",", y, "on mapID:", mapID)
@@ -542,6 +564,7 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 	local stepData = questData[stepIndex]
 	local x, y, mapID = stepData.coordinates.x, stepData.coordinates.y, stepData.coordinates.mapID
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	-- print("~~~ Waypoint Set: 549 ~~~")
 	local waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
 	-- Fetch the description from the specific stepIndex, if available
@@ -819,7 +842,7 @@ end
 
 
 ---------------------------
--- 3. Event Handlers
+-- 4. Event Handlers
 ---------------------------
 
 -- Function: OnCoordinateClicked
@@ -855,6 +878,7 @@ function RQE:OnCoordinateClicked()
 	end
 
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	-- print("~~~ Waypoint Set: 863 ~~~")
 	local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
 	-- Fetch the description from the specific stepIndex, if available
@@ -897,7 +921,7 @@ end
 
 
 --------------------------
--- 4. Finalization
+-- 5. Finalization
 --------------------------
 
 -- Final steps and exporting functions for use in other files
