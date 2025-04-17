@@ -1543,6 +1543,7 @@ end
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickRandomQuestLogIndexButton(bigQuestID)
 	local randomQuestID = 81930
+	-- print("~~~ SetSuperTrack: 1546~~~")
 	C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
 
 	RQE.ClickQuestLogIndexButton(randomQuestID)
@@ -1601,6 +1602,7 @@ function RQE.ClickUnknownQuestButton()
 		RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 	end
 
+	-- print("~~~ SetSuperTrack: 1605~~~")
 	C_SuperTrack.SetSuperTrackedQuestID(questID)
 	RQE:SaveSuperTrackedQuestToCharacter()
 
