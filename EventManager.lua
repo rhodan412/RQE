@@ -1169,15 +1169,13 @@ function RQE.handlePlayerMountDisplayChanged()
 	RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
 
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
-	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(0.5, function()
-			RQE.isCheckingMacroContents = true
-			RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
-			C_Timer.After(3, function()
-				RQE.isCheckingMacroContents = false
-			end)
+	C_Timer.After(0.5, function()
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
+		C_Timer.After(3, function()
+			RQE.isCheckingMacroContents = false
 		end)
-	end
+	end)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -1359,6 +1357,10 @@ function RQE.handlePlayerLogin()
 			-- end)
 			RQE.ClickQuestLogIndexButton(currentSuperTrackedQuestID)
 		end
+	end)
+
+	C_Timer.After(6, function()
+		RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 	end)
 end
 
@@ -2233,6 +2235,7 @@ function RQE.handlePlayerEnterWorld(...)
 			if not isSuperTracking then
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
+					-- print("~~~ SetSuperTrack: 2236~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 					--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the charcter's currently supertracked quest when PLAYER_ENTERING_WORLD event fires
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
@@ -2436,6 +2439,14 @@ function RQE.handlePlayerEnterWorld(...)
 
 	-- Clicks Waypoint Button if autoClickWaypointButton is true
 	RQE:AutoClickQuestLogIndexWaypointButton()
+
+	C_Timer.After(0.5, function()
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
+		C_Timer.After(2.5, function()
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
 end
 
 
@@ -2558,6 +2569,7 @@ function RQE.handleSuperTracking()
 				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
+					-- print("~~~ SetSuperTrack: 2562~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when SUPER_TRACKING_CHANGED event fires
 					--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when SUPER_TRACKING_CHANGED event fires
@@ -2690,6 +2702,10 @@ function RQE.handleQuestAccepted(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 
+	C_Timer.After(2.5, function()
+		RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
+	end)
+
 	if questID == RQE.searchedQuestID then
 		RQE.DontUpdateFrame = false
 	end
@@ -2742,6 +2758,7 @@ function RQE.handleQuestAccepted(...)
 	RQE.alreadyPrintedSchematics = false
 
 	if questID then
+		if questID == 82957 then return end
 		RQE.LastAcceptedQuest = questID
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		local isTaskQuest = C_QuestLog.IsQuestTask(questID)
@@ -2803,6 +2820,7 @@ function RQE.handleQuestAccepted(...)
 		if RQE.ManualSuperTrack then
 			local superTrackIDToApply = RQE.ManualSuperTrackedQuestID
 			if superTrackIDToApply and superTrackIDToApply ~= C_SuperTrack.GetSuperTrackedQuestID() then
+				-- print("~~~ SetSuperTrack: 2808~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
 				RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_ACCEPTED event fires
 				RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_ACCEPTED event fires
@@ -2827,7 +2845,7 @@ function RQE.handleQuestAccepted(...)
 	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
 		C_Timer.After(2, function()
 			RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
-			RQE.ClickQuestLogIndexButton(questID)
+			RQE.ClickQuestLogIndexButton(questID)	-- May need to remove if issues
 		end)
 	else
 		RQE.infoLog("RQEFrame is not blank, skipping QuestLogIndexButton click.")
@@ -2846,7 +2864,7 @@ function RQE.handleQuestAccepted(...)
 			C_Timer.After(1, function()  -- Delay of 1 second
 				UpdateFrame()
 			end)
-			RQE.SetInitialWaypointToOne()
+			RQE.SetInitialWaypointToOne()	-- May need to remove if issues
 			RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_ACCEPTED event fires
 		end
 		RQE:UpdateRQEFrameVisibility()
@@ -2860,7 +2878,7 @@ function RQE.handleQuestAccepted(...)
 				if not RQE.SuperTrackChangeRanStartPeriodicChecks then
 					local currentSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					if RQE.LastAcceptedQuest == currentSuperQuestID then
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires
+						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires	-- May need to remove if issues
 					end
 					C_Timer.After(3, function()
 						RQE.StartPerioFromQuestAccepted = false
@@ -3484,6 +3502,7 @@ function RQE.handleUIInfoMessage(...)
 		RQE.BlacklistUnderway = false
 		RQE.Buttons.ClearButtonPressed()
 		C_Timer.After(2.5, function()
+			-- print("~~~ SetSuperTrack: 3490~~~")
 			C_SuperTrack.SetSuperTrackedQuestID(RQE.BlackListedQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
 			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
@@ -3517,6 +3536,7 @@ function RQE.handleUIInfoMessage(...)
 				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
+					-- print("~~~ SetSuperTrack: 3524~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
@@ -4132,6 +4152,7 @@ function RQE.handleQuestStatusUpdate()
 		C_Timer.After(0.7, function()
 			if questID then
 				if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
+					-- print("~~~ SetSuperTrack: 4140~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events fire
@@ -4774,6 +4795,7 @@ function RQE.handleQuestWatchUpdate(...)
 		end
 
 	elseif not isSuperTracking then
+		-- print("~~~ SetSuperTrack: 4783~~~")
 		C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
 		RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_UPDATE event fires
 		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_UPDATE event fires
@@ -5024,6 +5046,7 @@ function RQE.handleQuestWatchListChanged(...)
 			if not RQEFrame:IsShown() then return end
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
+				-- print("~~~ SetSuperTrack: 5034~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 				RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
@@ -5048,6 +5071,7 @@ function RQE.handleQuestWatchListChanged(...)
 	if RQE.QuestAddedForWatchListChanged and not isSuperTracking then
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		if not isWorldQuest then
+			-- print("~~~ SetSuperTrack: 5059~~~")
 			C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 			UpdateFrame()
@@ -5257,6 +5281,7 @@ function RQE.handleQuestFinished()
 			if not RQEFrame:IsShown() then return end
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
+				-- print("~~~ SetSuperTrack: 5269~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 				RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
 				RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
