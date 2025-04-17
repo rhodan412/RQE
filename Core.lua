@@ -867,6 +867,7 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 
 			if isWorldQuestStillAvailable then
 				-- Restore the world quest as supertracked
+				-- print("~~~ SetSuperTrack: 870~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Restored supertracked world quest for this character: " .. savedQuestID)
@@ -882,6 +883,7 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 		else
 			-- Check if the regular quest is still valid and in the quest log
 			if C_QuestLog.IsOnQuest(savedQuestID) then
+				-- print("~~~ SetSuperTrack: 886~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Restored supertracked quest for this character: " .. savedQuestID)
@@ -1091,6 +1093,17 @@ function RQE.MiscWQ()
 
 	RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+end
+
+
+-- Obtain Quest Objectives and Quest Description Text for quests in player log where an empty set exists for either in the DB (that will contain data and isn't a hidden/emissary quest)
+function RQE.GetMissingQuestData()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+
+	RQE_Contribution:CheckMissingQuestTextData()
+
+	RQE.db.profile.debugLoggingCheckbox = false
 end
 
 
@@ -2218,6 +2231,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
 		end
+		-- print("~~~ SetSuperTrack: 2223~~~")
 		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end
@@ -2767,6 +2781,7 @@ function RQE:AutoSuperTrackClosestQuest()
 	-- Ensure a valid quest ID is found
 	if closestQuestID and closestQuestID ~= 0 then
 		-- Set the closest quest as the super-tracked quest
+		-- print("~~~ SetSuperTrack: 2773~~~")
 		C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 		RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
 
@@ -2836,6 +2851,7 @@ function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 			if questMapID == playerMapID then
 				-- Supertrack this quest
 				if not isWorldQuest then
+					-- print("~~~ SetSuperTrack: 2843~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
 					UpdateFrame()
 					return
@@ -2866,6 +2882,7 @@ function RQE.TrackClosestQuest()
 
 		-- If a closest quest was found, set it as the supertracked quest
 		if closestQuestID then
+			-- print("~~~ SetSuperTrack: 2874~~~")
 			C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -3845,6 +3862,7 @@ function RQE.SearchModule:CreateSearchBox()
 
 			-- Super Track the Searched Quest if in the Quest Log
 			if isQuestInLog then
+				-- print("~~~ SetSuperTrack: 3854~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
 				RQE:SaveSuperTrackedQuestToCharacter()
 			end
@@ -9322,6 +9340,7 @@ function RQE:CheckSuperTrackedQuestAndStep()
 
 		if nextClosestQuestID then
 			-- Set the supertracked quest to the next closest non-blacklisted quest
+			-- print("~~~ SetSuperTrack: 9332~~~")
 			C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -9347,6 +9366,7 @@ function RQE:SupertrackRandomQuest()
 		local info = C_QuestLog.GetInfo(i)
 		if info and info.questID then
 			-- Found a quest, supertrack it
+			-- print("~~~ SetSuperTrack: 9358~~~")
 			C_SuperTrack.SetSuperTrackedQuestID(info.questID)
 			RQE:SaveSuperTrackedQuestToCharacter()
 
