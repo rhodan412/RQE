@@ -41,6 +41,7 @@
 		- Fixed tracking of recipes to no longer list duplicate names based on those items that have different itemIDs based on quality, but still not listing 'Sparks' in the recipe being tracked (2025.04.09)
 		- Generates macro when the player presses "Track" after searching for a quest that targets and marks the quest giver (2025.04.12)
 		- Fixed issue where world quests were automatically being supertracked when the RQEFrame was empty and overriding potentially waypoint (2025.04.13)
+		- Function to gather missing objectiveText and descriptionText for DB [author-only] (2025.04.16)
 
 	EventManager.lua
 		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
@@ -57,6 +58,9 @@
 		- Clears RQEFrame, if the frame is populated by a searched quest when the player clicks on different quest in the RQEQuestFrame (2025.03.30)
 		- Fixed issue where dropdown menu wasn't appearing on right-clicking of the QuestLevelAndName string (2025.03.30)
 		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
+		- Removed requirement of IF.. THEN statement relating to the creation of macro after PLAYER_MOUNT_DISPLAY_CHANGED (2025.04.16)
+		- Call for a function after PLAYER_LOGIN and QUEST_ACCEPTED to gather objectiveText and descriptionText for DB [author-only] (2025.04.16)
+		- Added call to update macro after a brief delay of PLAYER_ENTERING_WORLD event function fires (2025.04.16)
 
 	RQE.toc
 		- Updated version# (2025.03.26)
@@ -78,6 +82,7 @@
 		- Added Valley of the Four Winds and Krasarang Wilds alliance quests to DB (2025.04.10)
 		- Added many alliance quests of Kun-Lai Summit to the quest DB (2025.04.12)
 		- Added additional WQ to the quest DB (2025.04.13)
+		- Added Townlong Steppes [alliance/neutral] quests to DB (2025.04.16)
 
 	RQEFrame.lua
 		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
@@ -87,6 +92,7 @@
 
 	WaypointManager.lua
 		- Added function that creates a waypoint to where the player should pick up a quest that they don't have, and haven't completed, if they are using the search "S" function for the quest (2025.03.30)
+		- Added functionality to prevent a waypoint from being created for hidden questTypes (2025.04.16)
 
 	WPUtil.lua
 		- Calls a function to create a waypoint if the RQEFrame is populated by a searched quest that the player doesn't have. This waypoint is created to direct the player to the location of where to pick up the quest (2025.03.30)
