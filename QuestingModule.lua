@@ -2356,6 +2356,7 @@ function UpdateRQEQuestFrame()
 						-- This will re-super track the quest even if it's the same as the currently super tracked quest
 						RQE.ManualSuperTrack = true
 						RQE.ManualSuperTrackedQuestID = questID
+						-- print("~~~ SetSuperTrack: 2359~~~")
 						C_SuperTrack.SetSuperTrackedQuestID(questID)
 						RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -2937,6 +2938,7 @@ function UpdateRQEWorldQuestFrame()
 					RQE.ScrollFrameToTop()
 					RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 					RQE.ManualSuperTrack = true
+					-- print("~~~ SetSuperTrack: 2941~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
 					RQE:SaveSuperTrackedQuestToCharacter()
 					RQE.ManualSuperTrackedQuestID = questID
