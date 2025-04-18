@@ -1,4 +1,4 @@
-11.1.0.5
+11.1.0.5 (2025.04.18)
 
 	**HIGHLIGHTS**
 		- Fixed RQE:StartPeriodicChecks(), RQE:CheckDBObjectiveStatus and RQE:CheckDBComplete to properly handle updates when quest is ready for turn in as this was giving a false positive previously with some quests (2025.03.28)
@@ -89,6 +89,7 @@
 		- Added additional WQ to the quest DB (2025.04.13)
 		- Added Townlong Steppes [alliance/neutral] quests to DB (2025.04.16)
 		- Added some Dread Wastes [alliance/neutral] quests to DB (2025.04.17)
+		- Added additional WQ to the quest DB (2025.04.18)
 
 	RQEFrame.lua
 		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
