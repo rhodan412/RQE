@@ -2288,19 +2288,29 @@ function RQE:AttachTooltipToCButton()
 end
 
 
--- Continuous checking with OnUpdate to enforce the visibility state of RQE frames (may not do anything)
-local checkRQEFrames = CreateFrame("Frame")
-checkRQEFrames:SetScript("OnUpdate", function()
+-- Check which visibility state the RQEFrame and RQEQuestFrame should be
+function RQE:CheckFrameVisibility()
+-- local checkRQEFrames = CreateFrame("Frame")
+-- checkRQEFrames:SetScript("OnUpdate", function()
+
 	-- Check for the RQEFrame visibility setting
 	if RQE.db.profile.enableFrame then
 		-- Show the RQEFrame if it should be enabled and is not currently shown
-		if not RQEFrame:IsShown() then
-			RQEFrame:Show()
+		if not InCombatLockdown() then
+			if not RQEFrame:IsShown() then
+				if RQEFrame then 
+					RQEFrame:Show()
+				end
+			end
 		end
 	else
 		-- Hide the RQEFrame if it should not be shown
-		if RQEFrame:IsShown() then
-			RQEFrame:Hide()
+		if not InCombatLockdown() then
+			if RQEFrame:IsShown() then
+				if RQEFrame then
+					RQEFrame:Hide()
+				end
+			end
 		end
 	end
 
@@ -2316,4 +2326,11 @@ checkRQEFrames:SetScript("OnUpdate", function()
 			RQE.RQEQuestFrame:Hide()
 		end
 	end
+end
+
+
+-- Frequent checking with OnUpdate to enforce the visibility state of RQE frames (may not do anything)
+C_Timer.NewTicker(10, function()
+	if InCombatLockdown() then return end
+	RQE:CheckFrameVisibility()
 end)
