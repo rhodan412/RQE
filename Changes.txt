@@ -15,6 +15,7 @@
 		- Creates a macro for a quest to target and mark the quest giver on a searched quest that the player hasn't yet completed (2025.04.12)
 		- Fixed issue where world quests were automatically being supertracked when the RQEFrame was empty and overriding potentially waypoint (2025.04.13)
 		- Fixed issue where world quests that were automatically tracked wouldn't disappear when leaving the world quest's blob (2025.04.13)
+		- Fixed bug caused when RQEFrame is checking visibility status when combat is taking place (2025.04.17)
 
 	Buttons.lua
 		- Creates tooltip for the location of where to pick up a searched quest if the player doesn't have this quest in their log, hasn't completed it, and it is present in the DB file of the addon (2025.03.30)
@@ -42,6 +43,7 @@
 		- Generates macro when the player presses "Track" after searching for a quest that targets and marks the quest giver (2025.04.12)
 		- Fixed issue where world quests were automatically being supertracked when the RQEFrame was empty and overriding potentially waypoint (2025.04.13)
 		- Function to gather missing objectiveText and descriptionText for DB [author-only] (2025.04.16)
+		- Added check for Contribution sister-companion add-on before running function to obtain objectiveText and descriptionText for DB [author-only] (2025.04.17)
 
 	EventManager.lua
 		- Updated GOSSIP_CONFIRM_CANCEL, GOSSIP_SHOW, MAIL_SUCCESS, BOSS_KILL to check if a quest is being super tracked before continuing through event function in order to improve performance (2025.03.28)
@@ -51,6 +53,8 @@
 		- Added functionality to track nearest, if that option is selected, after the firing of certain messageType within the UI_INFO_MESSAGE event (2025.04.01)
 		- Increased delay slightly before the firing of RQE:StartPeriodicChecks in the ITEM_COUNT_CHANGED event (2025.04.09)
 		- Fixed issue where world quests that were automatically tracked wouldn't disappear when leaving the world quest's blob (2025.04.13)
+		- Added check for combat before allowing toggle of RQE Objective Tracker (2025.04.17)
+		- Added visibility display for RQEFrame/RQEQuestFrame when PLAYER_REGEN_ENABLED [combat ending], PLAYER_STARTED_MOVING, and ZONE_CHANGED_NEW_AREA (2025.04.17)
 
 	QuestingModule.lua
 		- Added functionality to obtain WQ information, but this requires the author-only RQE Contribution addon (2025.03.28)
@@ -61,6 +65,7 @@
 		- Removed requirement of IF.. THEN statement relating to the creation of macro after PLAYER_MOUNT_DISPLAY_CHANGED (2025.04.16)
 		- Call for a function after PLAYER_LOGIN and QUEST_ACCEPTED to gather objectiveText and descriptionText for DB [author-only] (2025.04.16)
 		- Added call to update macro after a brief delay of PLAYER_ENTERING_WORLD event function fires (2025.04.16)
+		- Removed UpdateRQEQuestFrameVisibility from UpdateRQEQuestFrame as this was being called too often (2025.04.17)
 
 	RQE.toc
 		- Updated version# (2025.03.26)
@@ -83,12 +88,17 @@
 		- Added many alliance quests of Kun-Lai Summit to the quest DB (2025.04.12)
 		- Added additional WQ to the quest DB (2025.04.13)
 		- Added Townlong Steppes [alliance/neutral] quests to DB (2025.04.16)
+		- Added some Dread Wastes [alliance/neutral] quests to DB (2025.04.17)
 
 	RQEFrame.lua
 		- Added additional menu items [author-only] to track specific quests based on their status in the DB (2025.04.09)
+		- Modified function for checking RQEFrame and RQEQuestFrame to fire when a function is called or every 10 seconds, instead of firing OnUpdate [as this was previously firing too often] (2025.04.17)
 
 	RQEMacro.lua
 		- Creates a macro for a quest to target and mark the quest giver on a searched quest that the player hasn't yet completed (2025.04.12)
+
+	RQEMinimap.lua
+		- Added combat check before allowing toggle (RQE Minimap/LDB button) to successfully toggle hiding/showing the RQEFrame (2025.04.17)
 
 	WaypointManager.lua
 		- Added function that creates a waypoint to where the player should pick up a quest that they don't have, and haven't completed, if they are using the search "S" function for the quest (2025.03.30)
