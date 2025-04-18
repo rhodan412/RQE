@@ -1098,12 +1098,16 @@ end
 
 -- Obtain Quest Objectives and Quest Description Text for quests in player log where an empty set exists for either in the DB (that will contain data and isn't a hidden/emissary quest)
 function RQE.GetMissingQuestData()
-	RQE.db.profile.debugLoggingCheckbox = true
-	RQE:ClearDebugLog()
+	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			RQE.db.profile.debugLoggingCheckbox = true
+			RQE:ClearDebugLog()
 
-	RQE_Contribution:CheckMissingQuestTextData()
+			RQE_Contribution:CheckMissingQuestTextData()
 
-	RQE.db.profile.debugLoggingCheckbox = false
+			RQE.db.profile.debugLoggingCheckbox = false
+		end
+	end
 end
 
 
