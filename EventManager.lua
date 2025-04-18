@@ -82,6 +82,7 @@ end
 
 -- Function to Display or Hide the Objective Tracker
 function RQE:ToggleObjectiveTracker()
+	if InCombatLockdown() then return end
 	if RQE.db.profile.toggleBlizzObjectiveTracker then
 		-- Hide RQE frames and show Blizzard Tracker
 		if RQEFrame and RQEFrame:IsShown() then
@@ -1049,6 +1050,8 @@ function RQE.handlePlayerRegenEnabled()
 		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the PLAYER_REGEN_ENABLED event
 	end)
 
+	RQE:CheckFrameVisibility()
+
 	if RQE.CheckNClickWButtonAfterCombat then
 		C_Timer.After(1.5, function()
 			RQE.CheckAndClickWButton()
@@ -1882,6 +1885,8 @@ function RQE.handlePlayerStartedMoving()
 			RQE:StartUpdatingCoordinates()
 		end)
 	end
+
+	RQE:CheckFrameVisibility()
 
 	-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
 	if C_Scenario.IsInScenario() then return end
@@ -3243,6 +3248,7 @@ function RQE.handleZoneNewAreaChange()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
+	RQE:CheckFrameVisibility()
 
 	local onTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
