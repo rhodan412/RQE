@@ -118,7 +118,11 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 function RQE.ToggleBothFramesfromLDB()
 	if RQEFrame:IsShown() then
 		RQE:SaveSuperTrackedQuestToCharacter()
-		RQEFrame:Hide()
+		if not InCombatLockdown() then
+			if RQEFrame then
+				RQEFrame:Hide()
+			end
+		end
 		RQE.db.profile.enableFrame = false
 
 		C_Map.ClearUserWaypoint()
@@ -129,9 +133,12 @@ function RQE.ToggleBothFramesfromLDB()
 			TomTom.waydb:ResetProfile()
 		end
 
-		if RQE.MagicButton then
-			RQE.MagicButton:Hide()
+		if not InCombatLockdown() then
+			if RQE.MagicButton then
+				RQE.MagicButton:Hide()
+			end
 		end
+
 		RQE.RQEQuestFrame:Hide()
 		RQE.db.profile.enableQuestFrame = false
 		RQE.isRQEFrameManuallyClosed = true
@@ -145,11 +152,18 @@ function RQE.ToggleBothFramesfromLDB()
 	else
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
-		RQEFrame:Show()
+
+		if not InCombatLockdown() then
+			if RQEFrame then
+				RQEFrame:Show()
+			end
+		end
 		RQE.db.profile.enableFrame = true
 
-		if RQE.MagicButton then
-			RQE.MagicButton:Show()
+		if not InCombatLockdown() then
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
 		end
 
 		RQE.RQEQuestFrame:Show()
