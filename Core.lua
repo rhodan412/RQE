@@ -10,6 +10,11 @@ Core file linking all other modules
 -- 1. Global Declarations
 --------------------------------------------------
 
+RQEDB = RQEDB or {}
+RQEDB.profile = RQEDB.profile or {}
+RQEDB.char = RQEDB.char or {}
+RQEDB.profileKeys = RQEDB.profileKeys or {}
+
 RQE = RQE or {}
 
 RQE.db = RQE.db or {}
@@ -358,6 +363,8 @@ function RQE:OnInitialize()
 	-- Start the timer
 	RQE.startTime = debugprofilestop()
 
+	RQEDB = RQEDB or {}	-- Ensure the saved var exists
+
 	-- Ensure SavedVariables `profileKeys` exists before AceDB initializes
 	if not RQEDB.profileKeys then
 		RQEDB.profileKeys = {}
@@ -458,11 +465,23 @@ function RQE:OnEnable()
 		self:RestoreSavedProfile()
 	end
 
+	-- Ensure defaults are in place
+	self:EnsureDefaults()
+
 	-- Debugging Output
 	print("Currently loaded profile:", self.db:GetCurrentProfile())
 
 	-- Apply UI settings after profile is set
 	self:ApplyUISettings()
+end
+
+
+-- Helper function for default frame positions
+function RQE:EnsureDefaults()
+	self.db.profile.framePosition = self.db.profile.framePosition or CopyTable(defaults.profile.framePosition)
+	self.db.profile.QuestFramePosition = self.db.profile.QuestFramePosition or CopyTable(defaults.profile.QuestFramePosition)
+	self.db.profile.textSettings = self.db.profile.textSettings or CopyTable(defaults.profile.textSettings)
+	self.db.char = self.db.char or CopyTable(defaults.char or {})
 end
 
 
@@ -1658,6 +1677,17 @@ end
 
 -- Function to update the frame based on the current profile settings
 function RQE:UpdateFramePosition()
+	-- Ensure framePosition exists to avoid nil errors
+	if not self.db.profile.framePosition then
+		self.db.profile.framePosition = {
+			xPos = -40,
+			yPos = -285,
+			anchorPoint = "TOPRIGHT",
+			frameWidth = 420,
+			frameHeight = 300
+		}
+	end
+
 	-- When reading from DB
 	local anchorPoint = self.db.profile.framePosition.anchorPoint or "TOPRIGHT"
 	RQE.debugLog("anchorPoint in RQE:UpdateFramePosition is ", anchorPoint)  -- Debug statement
