@@ -2081,6 +2081,11 @@ function RQE.handleVariablesLoaded()
 	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
 	SortQuestsByProximity()
 
+	-- Initialize StepsText (or other fields that need early initialization)
+	if not RQE.StepsText then
+		RQE.StepsText = {}  -- Code to initialize StepsText
+	end
+
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
@@ -2118,11 +2123,6 @@ function RQE.handleVariablesLoaded()
 		-- Create/Initialize QuestNameText on PLAYER_LOGIN
 		RQE.QuestNameText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		RQE.QuestNameText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -10)
-	end
-
-	-- Initialize StepsText (or other fields that need early initialization)
-	if not RQE.StepsText then
-		RQE.StepsText = {}  -- Code to initialize StepsText
 	end
 
 	-- Initialize the minimap icon based on saved settings
