@@ -1813,6 +1813,8 @@ end
 
 -- Function to update the content size dynamically based on the number of steps
 function RQE:UpdateContentSize()
+	self.StepsText = self.StepsText or {}	-- Failsafe to ensure that table is loaded following VARIABLES_LOADED event firing
+
 	local n = #self.StepsText	-- The number of steps
 	local totalHeight = 110 + (40 * n) + (40 * n) + 40 * (n - 1) + 25
 	content:SetHeight(totalHeight)
@@ -1843,6 +1845,10 @@ end)
 
 -- Define the function to save frame position
 function RQE:SaveFramePosition()
+	-- Defensive checks
+	if not RQE.db or not RQE.db.profile then return end
+
+	-- Load from profile
 	local yourProfile = RQE.db:GetCurrentProfile()
 
 	-- Ensure framePosition table exists
@@ -1878,6 +1884,17 @@ end
 
 -- Define the function to save frame position
 function SaveRQEFrameSize()
+	if not RQE.db or not RQE.db.profile then return end
+
+	-- Ensure framePosition table exists
+	if not RQE.db.profile.framePosition then
+		RQE.db.profile.framePosition = {
+			xPos = -40,
+			yPos = -285,
+			anchorPoint = "TOPRIGHT",
+		}
+	end
+
 	local width, height = RQEFrame:GetSize()
 	RQE.db.profile.framePosition.frameWidth = width
 	RQE.db.profile.framePosition.frameHeight = height
