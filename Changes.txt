@@ -1,3 +1,26 @@
+11.1.0.6 (2025.04.20)
+
+	**HIGHLIGHTS**
+		- Fixed issue of StepsText table and DB being nil, particularly on fresh installs (2025.04.20)
+
+	Core.lua
+		- Added DB tables to the top of global declarations before AceDB initializes (2025.04.20)
+		- Created helper function for default frame positions (2025.04.20)
+
+	EventManager.lua
+		- Moved code to initialize StepsText table further up in the VARIABLES_LOADED event function (2025.04.20)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.04.18)
+
+	RQEDatabase.lua
+		- Added additional WQ to DB of quests (2025.04.20)
+
+	RQEFrame.lua
+		- Ensure that StepsText table is initialized when UpdateContentSize function is called (2025.04.20)
+		- Fail safe to make sure the framePosition is properly loaded, even if the DB file doesn't yet exist (2025.04.20)
+
+
 11.1.0.5 (2025.04.18)
 
 	**HIGHLIGHTS**
