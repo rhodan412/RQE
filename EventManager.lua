@@ -395,7 +395,7 @@ function RQE.handleAchievementTracking(...)
 	local alreadyEarned = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventAchievementEarned and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -425,7 +425,7 @@ function RQE.handleContentUpdate(...)
 	local isTracked = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventContentTrackingUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -491,7 +491,7 @@ function RQE.handleGossipConfirm(...)
 	local cost = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -525,7 +525,7 @@ function RQE.handleGossipShow(...)
 	local uiTextureKit = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -556,7 +556,7 @@ function RQE.handleItemCountChanged(...)
 	local itemID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showItemCountChanged and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -721,7 +721,7 @@ function RQE.ReagentBagUpdate(...)
 	}
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -826,7 +826,7 @@ function RQE.handleMailSuccess(...)
 	local itemID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -928,7 +928,7 @@ function RQE.handleUnitInventoryChange(...)
 	}
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1050,7 +1050,10 @@ function RQE.handlePlayerRegenEnabled()
 		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the PLAYER_REGEN_ENABLED event
 	end)
 
-	RQE:CheckFrameVisibility()
+	if RQE.ReClickQuestLogIndexButtonAfterCombat then
+		RQE.ClickQuestLogIndexButton(RQE.QuestButtonToReClickAfterCombat)
+		RQE.ReClickQuestLogIndexButtonAfterCombat = false
+	end
 
 	if RQE.CheckNClickWButtonAfterCombat then
 		C_Timer.After(1.5, function()
@@ -1223,7 +1226,7 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 	local inBlobState = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventAchievementEarned and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1402,6 +1405,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.QuestWatchUpdateFired = false
 	RQE.ReEnableRQEFrames = false
+	RQE.ReClickQuestLogIndexButtonAfterCombat = false
 	RQE.ShapeshiftUpdated = false
 	RQE.SortOnly = false
 	RQE.StartPerioFromInstanceInfoUpdate = false
@@ -1477,7 +1481,7 @@ function RQE.handleBossKill(...)
 		local encounterName = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.BossKill and RQE.db.profile.showArgPayloadInfo then
+		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1506,7 +1510,7 @@ function RQE.handleBossKill(...)
 		local success = select(7, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.EncounterEnd and RQE.db.profile.showArgPayloadInfo then
+		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1536,7 +1540,7 @@ function RQE.handleLFGActive(...)
 	local created = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.LFGActiveEntryUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1570,7 +1574,7 @@ function RQE.handleScenarioComplete(...)
 	local money = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCompleted and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1597,7 +1601,7 @@ function RQE.handleScenarioUpdate(...)
 	local newStep = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1643,7 +1647,7 @@ function RQE.handleScenarioCriteriaUpdate(...)
 	local criteriaID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1714,7 +1718,7 @@ function RQE.handleStartTimer(...)
 	local totalTime = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.StartTimer and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1741,7 +1745,7 @@ function RQE.handleWorldStateTimerStart(...)
 	local timerID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.WorldStateTimerStart and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1774,7 +1778,7 @@ function RQE.handleWorldStateTimerStop(...)
 	local timerID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.WorldStateTimerStop and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1804,7 +1808,7 @@ function RQE.handleJailersUpdate(...)
 	local type = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1886,7 +1890,11 @@ function RQE.handlePlayerStartedMoving()
 		end)
 	end
 
-	RQE:CheckFrameVisibility()
+	C_Timer.After(0.3, function()
+		RQE.CanCheckFrame = true
+		RQE:CheckFrameVisibility()
+		RQE.CanCheckFrame = false
+	end)
 
 	-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
 	if C_Scenario.IsInScenario() then return end
@@ -2047,7 +2055,7 @@ function RQE.handleUpdateWidgetID(...)
 	if RQE.db.profile.debugLevel ~= "INFO+" then return end
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -2218,7 +2226,7 @@ function RQE.handlePlayerEnterWorld(...)
 	local isReload = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -2271,6 +2279,10 @@ function RQE.handlePlayerEnterWorld(...)
 		else
 			RQE:UpdateContentSize()
 		end
+	end)
+
+	C_Timer.After(3.3, function()
+		RQE:CheckFrameVisibility()
 	end)
 
 	if isLogin then
@@ -2707,6 +2719,21 @@ function RQE.handleQuestAccepted(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
 	C_Timer.After(2.5, function()
 		RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 	end)
@@ -2732,7 +2759,7 @@ function RQE.handleQuestAccepted(...)
 	-- end
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -2934,7 +2961,7 @@ function RQE.handleUnitEnterVehicle(...)
 	local hasPitch = select(9, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.WorldStateTimerStop and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -3248,7 +3275,6 @@ function RQE.handleZoneNewAreaChange()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
-	RQE:CheckFrameVisibility()
 
 	local onTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
@@ -3451,7 +3477,7 @@ function RQE.handleTrackedRecipeUpdate(...)
 	local tracked = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -3485,7 +3511,7 @@ function RQE.handleUIInfoMessage(...)
 	local message = select(4, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -3579,7 +3605,7 @@ function RQE.handleUnitAura(...)
 	end
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		print("Unit Target:", unitTarget)
 
 		-- Handle `updateInfo` (ensure it's a table and display all details)
@@ -3730,7 +3756,7 @@ function RQE.handleUnitModelChange(...)
 	if unitTarget ~= "player" then return end
 	
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -3822,7 +3848,7 @@ function RQE.handleUnitQuestLogChange(...)
 	local unitTarget = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4220,7 +4246,7 @@ function RQE.handleQuestCurrencyLootReceived(...)
 	local quantity = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestCurrencyLootReceived and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4261,7 +4287,7 @@ function RQE.handleQuestLogCriteriaUpdate(...)
 	local numRequired = select(8, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLogCriteriaUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4316,7 +4342,7 @@ function RQE.handleQuestLootReceived(...)
 	local quantity = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLootReceived and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4349,7 +4375,7 @@ function RQE.handleQuestlineUpdate(...)
 	local requestRequired = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestlineUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4465,7 +4491,7 @@ function RQE.handleQuestAutoComplete(...)
 	local questID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAutocomplete and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4531,7 +4557,7 @@ function RQE.HandleClientSceneOpened(...)
 	local sceneType = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ClientSceneOpened and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4604,7 +4630,7 @@ function RQE.handleQuestRemoved(...)
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4735,7 +4761,7 @@ function RQE.handleQuestWatchUpdate(...)
 	end
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -4942,7 +4968,7 @@ function RQE.handleQuestWatchListChanged(...)
 	end
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -5117,7 +5143,7 @@ function RQE.handleQuestTurnIn(...)
 	local moneyReward = select(5, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -5224,7 +5250,7 @@ function RQE.handleQuestDetail(...)
 	local questStartItemID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
