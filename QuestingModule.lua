@@ -2283,13 +2283,12 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
-					-- -- Check if the player is in combat
-					-- if InCombatLockdown() then
-						-- -- If in combat, check if the mouse is over the RQEFrame
-						-- if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver() then
-							-- return
-						-- end
-					-- end
+					-- Check if the player is in combat and return if an automatic click
+					if InCombatLockdown() then
+						if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
+							return
+						end
+					end
 
 					if IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
@@ -2338,8 +2337,10 @@ function UpdateRQEQuestFrame()
 
 						-- Scrolls the RQEFrame to top on super track
 						RQE.ScrollFrameToTop()
+
 						-- Reset the "Clicked" WaypointButton to nil
 						RQE.LastClickedIdentifier = nil
+
 						-- Reset the Last Clicked WaypointButton to be "1"
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 
@@ -3241,6 +3242,67 @@ function UpdateRQEWorldQuestFrame()
 			end
 		end
 	end
+end
+
+
+-- Function that simulates a click of the QuestLogIndexButton
+function RQE.ClickQuestLogIndexButton(questID)
+	-- Check if the player is in combat
+	if InCombatLockdown() then
+		RQE.QuestButtonToReClickAfterCombat = questID
+		RQE.ReClickQuestLogIndexButtonAfterCombat = true
+	end
+
+	-- Ensure the table is initialized
+	if not RQE.QuestLogIndexButtons then
+		RQE.QuestLogIndexButtons = {}
+	end
+
+	local found = false
+	for i, button in ipairs(RQE.QuestLogIndexButtons) do
+		if button and button.questID == questID then
+			if button:IsVisible() and button:IsEnabled() then
+				button:Click()
+				found = true
+				break
+			end
+		end
+	end
+
+	if not found then
+		RQE.debugLog("No button found for questID: " .. tostring(questID))
+	end
+
+	-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE.CreateMacroForQuestLogIndexButton = true
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(3, function()
+			RQE.CreateMacroForQuestLogIndexButton = false
+		end)
+	end
+end
+
+
+-- Function that simulates a click of the UnknownQuestButton but streamlined
+function RQE.ClickRandomQuestLogIndexButton(bigQuestID)
+	local randomQuestID = 81930
+	-- print("~~~ SetSuperTrack: 1546~~~")
+	C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
+
+	RQE.ClickQuestLogIndexButton(randomQuestID)
+
+	C_Timer.After(0.2, function()
+		RQE.CheckAndClickWButton()
+	end)
+
+	C_Timer.After(0.3, function()
+		RQE.ClickQuestLogIndexButton(bigQuestID)
+
+		C_Timer.After(0.2, function()
+			RQE.CheckAndClickWButton()
+		end)
+	end)
 end
 
 
