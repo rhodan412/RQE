@@ -1507,61 +1507,6 @@ function RQE:AreAllObjectivesCompleted(questID)
 end
 
 
--- Function that simulates a click of the QuestLogIndexButton
-function RQE.ClickQuestLogIndexButton(questID)
-	-- Ensure the table is initialized
-	if not RQE.QuestLogIndexButtons then
-		RQE.QuestLogIndexButtons = {}
-	end
-
-	local found = false
-	for i, button in ipairs(RQE.QuestLogIndexButtons) do
-		if button and button.questID == questID then
-			if button:IsVisible() and button:IsEnabled() then
-				button:Click()
-				found = true
-				break
-			end
-		end
-	end
-
-	if not found then
-		RQE.debugLog("No button found for questID: " .. tostring(questID))
-	end
-
-	-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
-	if RQE.db.profile.autoClickWaypointButton then
-		RQE.CreateMacroForQuestLogIndexButton = true
-		RQEMacro:CreateMacroForCurrentStep()
-		C_Timer.After(3, function()
-			RQE.CreateMacroForQuestLogIndexButton = false
-		end)
-	end
-end
-
-
--- Function that simulates a click of the UnknownQuestButton but streamlined
-function RQE.ClickRandomQuestLogIndexButton(bigQuestID)
-	local randomQuestID = 81930
-	-- print("~~~ SetSuperTrack: 1546~~~")
-	C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
-
-	RQE.ClickQuestLogIndexButton(randomQuestID)
-
-	C_Timer.After(0.2, function()
-		RQE.CheckAndClickWButton()
-	end)
-
-	C_Timer.After(0.3, function()
-		RQE.ClickQuestLogIndexButton(bigQuestID)
-
-		C_Timer.After(0.2, function()
-			RQE.CheckAndClickWButton()
-		end)
-	end)
-end
-
-
 -- Function that simulates a click of the UnknownQuestButton but streamlined
 function RQE.ClickUnknownQuestButton()
 	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
@@ -2343,11 +2288,17 @@ function RQE:CheckFrameVisibility()
 			RQE.RQEQuestFrame:Hide()
 		end
 	end
+
+	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
 
 -- Frequent checking with OnUpdate to enforce the visibility state of RQE frames (may not do anything)
-C_Timer.NewTicker(10, function()
+C_Timer.NewTicker(0, function()
 	if InCombatLockdown() then return end
-	RQE:CheckFrameVisibility()
+	local isMoving = IsPlayerMoving()
+
+	if RQE.CanCheckFrame or not isMoving then
+		RQE:CheckFrameVisibility()
+	end
 end)
