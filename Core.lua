@@ -1155,11 +1155,16 @@ function RQE.ObtainSuperTrackQuestDetails()
 
 	C_Timer.After(0.15, function()
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			local questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-			local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown Quest"
-			local messagePrefix = "QuestID (supertracked): " .. tostring(questID) .. " - " .. questName
+			if RQEFrame and RQEFrame:IsShown() then
+				RQE.TheSuperQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			else
+				RQE.TheSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+			end
 
-			local questData = RQE.getQuestData(questID)
+			local questName = C_QuestLog.GetTitleForQuestID(RQE.TheSuperQuestID) or "Unknown Quest"
+			local messagePrefix = "QuestID (supertracked): " .. tostring(RQE.TheSuperQuestID) .. " - " .. questName
+
+			local questData = RQE.getQuestData(RQE.TheSuperQuestID)
 
 			if not questData then
 				-- Quest is NOT in the DB at all
@@ -2629,19 +2634,43 @@ function RQE:ShowCustomQuestTooltip(questID)
 	if isOnQuest then
 		statusText, statusR, statusG, statusB = "You are on this quest", 0, 1, 0
 	elseif isComplete then
-		statusText, statusR, statusG, statusB = "You have completed this quest", 1, 0.65, 0
+		statusText, statusR, statusG, statusB = "You have completed this quest", 0.95, 0.95, 0.7  -- Faded Yellow Color		--1, 0.65, 0
 	else
 		statusText, statusR, statusG, statusB = "You are not on this quest", 1, 0, 0
 	end
 
 	-- Fetch description and objective text if possible
+	local questData = RQE.getQuestData(questID)
 	local descriptionText = ""
 	local objectivesText = ""
-	if logIndex then
-		local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
-		descriptionText = questDesc or ""
-		objectivesText = questObjectives or ""
+	local objectivesQuestText = ""
+
+	if questData then
+		if questData.descriptionQuestText and type(questData.descriptionQuestText) == "table" and questData.descriptionQuestText[1] ~= "" then
+			descriptionText = questData.descriptionQuestText[1]
+		end
+
+		if questData.objectivesText and type(questData.objectivesText) == "table" and questData.objectivesText[1] ~= "" then
+			objectivesText = questData.objectivesText[1]
+		end
+
+		if questData.objectivesQuestText and type(questData.objectivesQuestText) == "table" and questData.objectivesQuestText[1] ~= "" then
+			objectivesQuestText = questData.objectivesQuestText[1]
+		end
 	end
+
+	-- Fallback if not found in DB
+	if (descriptionText == "" or objectivesText == "") and logIndex then
+		local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
+		descriptionText = descriptionText ~= "" and descriptionText or (questDesc or "")
+		objectivesText = objectivesText ~= "" and objectivesText or (questObjectives or "")
+	end
+
+	-- if logIndex then
+		-- local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
+		-- descriptionText = questDesc or ""
+		-- objectivesText = questObjectives or ""
+	-- end
 
 	local objText = GetQuestObjectiveInfo(questID, 1, false)
 	local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
@@ -2659,10 +2688,17 @@ function RQE:ShowCustomQuestTooltip(questID)
 			-- 📜 Description
 			if descriptionText ~= "" then
 				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+				GameTooltip:AddLine(descriptionText, 1.0, 0.75, 0.79, true)
 			else
 				GameTooltip:AddLine(" ", 1, 1, 1, false)
 				GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
+			end
+
+			-- 📘 Objectives Comment (if present)
+			if objectivesQuestText ~= "" then
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("Objective:", 1, 0.82, 0, true)
+				GameTooltip:AddLine(objectivesQuestText, 0.9, 0.95, 1, true)
 			end
 
 			-- ✅ Requirements
