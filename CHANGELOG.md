@@ -1,7 +1,58 @@
-11.1.0.6
+11.1.0.7
+
+	**HIGHLIGHTS**
+		- Fix taint related to the clicking of the QuestLogIndexButton in the RQEQuestFrame (2025.04.20)
+		- Improved performance related to the checking of the RQEFrame visibility (2025.04.20)
+		- Prints questText (descriptionQuestText) and objectivesQuestText in the custom quest tooltip following a print-out on the questline of the specified quest (2025.04.20)
+
+	Core.lua
+		- Modified RQE.ObtainSuperTrackQuestDetails() to use the supertrackedquestID if the RQEFrame is not visible when obtaining debug information (2025.04.20)
+		- Modified RQE:ShowCustomQuestTooltip(questID) to include the descriptionQuestText and objectivesQuestText, if available, and place in custom quest tooltip when clicking on a quest printed to chat following PrintQuestlineDetails (2025.04.20)
+
+	EventManager.lua
+		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.20)
+		- Removed RQE:CheckFrameVisibility from PLAYER_REGEN_ENABLED event function and ZONE_CHANGED_NEW_AREA, and modified that it be allowed to fire when PLAYER_STARTED_MOVING has fired (2025.04.20)
+		- Check if ClickQuestLogIndexButton function attempted to run while in combat and if so to re-run it for the last quest it attempted to run with (2025.04.20)
+		- Added ArgPayload to QUEST_ACCEPTED event function (2025.04.20)
+
+	QuestingModule.lua
+		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.20)
+		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.20)
 
 	RQE.toc
-		- Updated Interface# and version#
+		- Updated Interface# and version# (2025.04.20)
+
+	RQEDatabase.lua
+		- Changed objectivesText to instead be objectivesQuestText (2025.04.20)
+		- Added additional alliance/neutral quests to DB for Mists of Pandaria expansion (2025.04.20)
+
+	RQEFrame.lua
+		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.20)
+		- Added a check for MagicButton visibility after RQE:CheckFrameVisibility has run (2025.04.20)
+		- Modified RQE:CheckFrameVisibility to run continuously as long as player is not in combat and not moving (2025.04.20)
+
+
+11.1.0.6 (2025.04.20)
+
+	**HIGHLIGHTS**
+		- Fixed issue of StepsText table and DB being nil, particularly on fresh installs (2025.04.20)
+
+	Core.lua
+		- Added DB tables to the top of global declarations before AceDB initializes (2025.04.20)
+		- Created helper function for default frame positions (2025.04.20)
+
+	EventManager.lua
+		- Moved code to initialize StepsText table further up in the VARIABLES_LOADED event function (2025.04.20)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.04.18)
+
+	RQEDatabase.lua
+		- Added additional WQ to DB of quests (2025.04.20)
+
+	RQEFrame.lua
+		- Ensure that StepsText table is initialized when UpdateContentSize function is called (2025.04.20)
+		- Fail safe to make sure the framePosition is properly loaded, even if the DB file doesn't yet exist (2025.04.20)
 
 
 11.1.0.5 (2025.04.18)
