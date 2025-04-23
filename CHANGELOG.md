@@ -8,6 +8,7 @@
 	Core.lua
 		- Modified RQE.ObtainSuperTrackQuestDetails() to use the supertrackedquestID if the RQEFrame is not visible when obtaining debug information (2025.04.20)
 		- Modified RQE:ShowCustomQuestTooltip(questID) to include the descriptionQuestText and objectivesQuestText, if available, and place in custom quest tooltip when clicking on a quest printed to chat following PrintQuestlineDetails (2025.04.21)
+		- Recognizes "x" for the quantity when running/calling RQE:SearchPreparePurchaseConfirmAH(itemID, quantity) function as this will check how many are needed by looking at required and fulfilled quantity for the objective (2025.04.22)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
