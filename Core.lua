@@ -9119,12 +9119,56 @@ end
 
 -- Function that handles a series of functions related to purchasing an item from the AH
 function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
-	-- Check if either TomTom or TradeSkillMaster is loaded
-	if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
-		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
+	local finalQuantity
+
+	-- Case 1: If a valid number is passed, use it directly
+	if type(quantity) == "number" and quantity > 0 then
+		finalQuantity = quantity
+
+	-- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
 	else
-		RQE:SearchAndPrepareAuctionItem(itemID, quantity)
-		RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if questID and questID > 0 then
+			local _, _, _, _fulfilled = GetQuestObjectiveInfo(questID, 1, false)
+			local _, _, _, _, _required = GetQuestObjectiveInfo(questID, 1, false)
+
+			local fulfilled = tonumber(_fulfilled or 0)
+			local required = tonumber(_required or 0)
+
+			if fulfilled and required and required > fulfilled then
+				finalQuantity = required - fulfilled
+				if RQE.db.profile.debugLevel == "INFO" then
+					print("Required: " .. required .. " & Fulfilled: " .. fulfilled)
+					print("Resolved Quantity: " .. finalQuantity)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Could not determine required purchase quantity from quest.")
+				end
+				return
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No supertracked quest found for dynamic quantity resolution.")
+			end
+			return
+		end
+	end
+
+	-- Final check
+	if not finalQuantity then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Invalid quantity. Aborting.")
+		end
+		return
+	end
+
+	-- Purchase logic
+	if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+	else
+		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+		RQE:ConfirmAndPurchaseCommodity(itemID, finalQuantity)
 	end
 end
 
@@ -9160,7 +9204,9 @@ function RQE:SearchAndPrepareAuctionItem(itemID, quantity)
 				end
 			end
 		else
-			print("No results found for itemID:", itemID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("May not be correct, but no results found for itemID:", itemID)
+			end
 		end
 	end)
 end
