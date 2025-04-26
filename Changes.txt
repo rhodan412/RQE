@@ -34,6 +34,7 @@
 	RQEDatabase.lua
 		- Changed objectivesText to instead be objectivesQuestText (2025.04.21)
 		- Added additional alliance/neutral quests to DB for Mists of Pandaria expansion (2025.04.21)
+		- Added 11.1.5 Sureki (Hallowfall) and Radiant (Azj-Kahet) Incursion quests to DB (2025.04.26)
 
 	RQEFrame.lua
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
