@@ -23,6 +23,7 @@ RQE.db.profile = RQE.db.profile or {}
 RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
 RQEMacro = RQEMacro or {}
+RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
 
 -- Table to hold campaigns, quest types and quest lines
 RQE.Campaigns = RQE.Campaigns or {}
@@ -819,7 +820,7 @@ end
 -- Function to save the current supertracked quest to the character-specific table
 function RQE:SaveSuperTrackedQuestToCharacter()
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
+		-- print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
 	end
 
 	-- Get the currently supertracked quest ID
@@ -854,6 +855,9 @@ function RQE:SaveTrackedQuestsToCharacter()
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
 			-- Save the tracked quest ID
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("QuestID: " .. questID .. " saved to RQECharacterDB.trackedQuests")
+			end
 			table.insert(RQECharacterDB.trackedQuests, questID)
 		end
 	end
@@ -1885,6 +1889,7 @@ function RQE.TrackDBQuestsWithoutSteps()
 	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
+			-- print("~~~ Remove Quest Watch: 1889 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -1913,6 +1918,7 @@ function RQE.TrackDBQuestsWithSteps()
 	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
+			-- print("~~~ Remove Quest Watch: 1918 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -1941,6 +1947,7 @@ function RQE.TrackQuestsNotInDB()
 	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
+			-- print("~~~ Remove Quest Watch: 1947 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -7282,6 +7289,7 @@ RQE.filterCompleteQuests = function()
 			if C_QuestLog.IsComplete(questInfo.questID) then
 				C_QuestLog.AddQuestWatch(questInfo.questID)
 			elseif questInfo.questID then
+				-- print("~~~ Remove Quest Watch: 7289 ~~~")
 				C_QuestLog.RemoveQuestWatch(questInfo.questID)
 			end
 		end
@@ -7306,6 +7314,7 @@ function RQE:HideCompletedWatchedQuests()
 			-- Check if the quest is completed
 			if isQuestComplete then
 				-- Remove the quest from the watch list if it is completed
+				-- print("~~~ Remove Quest Watch: 7314 ~~~")
 				C_QuestLog.RemoveQuestWatch(qID)
 			end
 		end
@@ -7350,6 +7359,7 @@ RQE.filterDailyWeeklyQuests = function()
 	local numQuestWatches = C_QuestLog.GetNumQuestWatches()
 	for i = numQuestWatches, 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- print("~~~ Remove Quest Watch: 7359 ~~~")
 		C_QuestLog.RemoveQuestWatch(questID)
 	end
 
@@ -7426,6 +7436,7 @@ function RQE.UpdateTrackedQuestsToCurrentZone()
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		-- If a watched quest is not on the current map, untrack it
 		if questID and not questIDSet[questID] then
+			-- print("~~~ Remove Quest Watch: 7436 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -7506,6 +7517,7 @@ function RQE.filterByZone(zoneID)
 	for i = numQuestWatches, 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if not questIDSet[questID] then
+			-- print("~~~ Remove Quest Watch: 7517 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -7588,6 +7600,7 @@ function RQE.filterByQuestType(questType)
 			if shouldWatch then
 				C_QuestLog.AddQuestWatch(questInfo.questID)
 			else
+				-- print("~~~ Remove Quest Watch: 7600 ~~~")
 				C_QuestLog.RemoveQuestWatch(questInfo.questID)
 			end
 		end
@@ -7698,6 +7711,7 @@ function RQE.filterByCampaign(campaignID)
 			if questCampaignID == campaignID then
 				C_QuestLog.AddQuestWatch(questInfo.questID)
 			else
+				-- print("~~~ Remove Quest Watch: 7711 ~~~")
 				C_QuestLog.RemoveQuestWatch(questInfo.questID)
 			end
 		end
@@ -7840,6 +7854,7 @@ function RQE.filterByQuestLine(questLineID)
 	for i = numQuestWatches, 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if not questIDSet[questID] then
+			-- print("~~~ Remove Quest Watch: 7854 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -9447,6 +9462,7 @@ function RQE:CheckSuperTrackedQuestAndStep()
 		RQE.BlacklistUnderway = true
 
 		-- Temporarily remove the quest from the watch list
+		-- print("~~~ Remove Quest Watch: 9462 ~~~")
 		C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
 		RQE.Buttons.ClearButtonPressed()
 
