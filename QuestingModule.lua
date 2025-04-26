@@ -16,6 +16,7 @@ RQE.modules = RQE.modules or {}
 RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQE.TrackedQuests = RQE.TrackedQuests or {}
 RQE.TrackedAchievementIDs = RQE.TrackedAchievementIDs or {}
+RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
 
 -- Initialization of RQE.ManuallyTrackedQuests
 if not RQE.ManuallyTrackedQuests then
@@ -943,6 +944,7 @@ function RQE:WatchQuestsInDBWithNoSteps()
 	for i = 1, C_QuestLog.GetNumQuestWatches() do
 		local watchedID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if watchedID then
+			-- print("~~~ Remove Quest Watch: 947 ~~~")
 			C_QuestLog.RemoveQuestWatch(watchedID)
 		end
 	end
@@ -1198,6 +1200,32 @@ end
 
 	-- return bonusQuests
 -- end
+
+
+-- Helper function to watch quests that are rapidly chosen from a single NPC
+function RQE:VerifyWatchedQuests()
+	if not RQE.DelayedQuestWatchCheck then return end
+
+	-- Build a lookup of currently watched quests
+	local watched = {}
+	for i = 1, C_QuestLog.GetNumQuestWatches() do
+		local id = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if id then
+			watched[id] = true
+		end
+	end
+
+	-- Compare against accepted list and add missing
+	for _, questID in ipairs(RQE.DelayedQuestWatchCheck) do
+		if C_QuestLog.IsOnQuest(questID) and not watched[questID] then
+			C_QuestLog.AddQuestWatch(questID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				DEFAULT_CHAT_FRAME:AddMessage("Repair Watch: Added questID " .. questID, 0.46, 0.96, 0.46)
+			end
+		end
+	end
+end
+
 
 
 -- Function to Show Right-Click Dropdown Menu
@@ -1835,6 +1863,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 	local rewardXP = GetQuestLogRewardXP(questID)	-- The presence of questID here is necessary to determine the reward for XP of different quests, otherwise the same amount of XP would appear in the tooltips of the frame for all quests
 	local rewardMoney = GetQuestLogRewardMoney(questID)
 	local rewardArtifactXP = GetQuestLogRewardArtifactXP(questID)
+	local numQuestCurrencies = #C_QuestLog.GetQuestRewardCurrencies(questID)
 	local rewardItemsCount = GetNumQuestLogRewards(questID)
 	local choiceItemsCount = GetNumQuestLogChoices(questID, true)
 	local reputationRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
@@ -1880,6 +1909,11 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 		-- Add artifact power reward
 		if rewardArtifactXP > 0 then
 			tooltip:AddLine("Artifact Power: " .. FormatLargeNumber(rewardArtifactXP), 1, 1, 1)
+		end
+
+		-- currencies
+		if numQuestCurrencies > 0 then
+			QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip)
 		end
 
 		-- Add item rewards
@@ -2070,6 +2104,11 @@ function RQE:QuestType()
 	if worldQuestUpdated then
 		UpdateRQEWorldQuestFrame()
 	end
+
+	-- Ensures that the tracker is updated
+	-- print("~~~ SaveTrackedQuestsToCharacter: 2109 ~~~")
+	RQE:SaveTrackedQuestsToCharacter()
+	RQE:SaveSuperTrackedQuestToCharacter()
 end
 
 
@@ -2291,7 +2330,15 @@ function UpdateRQEQuestFrame()
 					end
 
 					if IsShiftKeyDown() and button == "LeftButton" then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
+								print("Not hovering over RQEQuestFrame!")
+								return
+							end
+						end
+
 						-- Untrack the quest
+						-- print("~~~ Remove Quest Watch: 2333 ~~~")
 						C_QuestLog.RemoveQuestWatch(questID)
 
 						local extractedQuestID
@@ -2509,7 +2556,15 @@ function UpdateRQEQuestFrame()
 					else
 						-- Quest Details and Menu
 						if IsShiftKeyDown() and button == "LeftButton" then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
+									print("Not hovering over RQEQuestFrame!")
+									return
+								end
+							end
+
 							-- Untrack the quest
+							-- print("~~~ Remove Quest Watch: 2552 ~~~")
 							C_QuestLog.RemoveQuestWatch(questID)
 							RQE:ClearRQEQuestFrame()
 						elseif button == "RightButton" then
@@ -3026,6 +3081,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
+					-- print("~~~ Remove Quest Watch: 3069 ~~~")
 					C_QuestLog.RemoveQuestWatch(questID)
 					RQE:ClearRQEQuestFrame()
 				elseif button == "RightButton" then
@@ -3112,6 +3168,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
+					-- print("~~~ Remove Quest Watch: 3156 ~~~")
 					C_QuestLog.RemoveQuestWatch(questID)
 				end
 			end)
