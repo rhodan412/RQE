@@ -820,7 +820,7 @@ end
 -- Function to save the current supertracked quest to the character-specific table
 function RQE:SaveSuperTrackedQuestToCharacter()
 	if RQE.db.profile.debugLevel == "INFO+" then
-		-- print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
+		print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
 	end
 
 	-- Get the currently supertracked quest ID
