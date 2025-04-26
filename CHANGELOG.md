@@ -4,24 +4,32 @@
 		- Fix taint related to the clicking of the QuestLogIndexButton in the RQEQuestFrame (2025.04.21)
 		- Improved performance related to the checking of the RQEFrame visibility (2025.04.21)
 		- Prints questText (descriptionQuestText) and objectivesQuestText in the custom quest tooltip following a print-out on the questline of the specified quest (2025.04.21)
+		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
 
 	Core.lua
 		- Modified RQE.ObtainSuperTrackQuestDetails() to use the supertrackedquestID if the RQEFrame is not visible when obtaining debug information (2025.04.20)
 		- Modified RQE:ShowCustomQuestTooltip(questID) to include the descriptionQuestText and objectivesQuestText, if available, and place in custom quest tooltip when clicking on a quest printed to chat following PrintQuestlineDetails (2025.04.21)
 		- Recognizes "x" for the quantity when running/calling RQE:SearchPreparePurchaseConfirmAH(itemID, quantity) function as this will check how many are needed by looking at required and fulfilled quantity for the objective (2025.04.22)
+		- Initialized RQE.DelayedQuestWatchCheck() for the purpose of watching quests that are rapidly accepted from an NPC (2025.04.26)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
 		- Removed RQE:CheckFrameVisibility from PLAYER_REGEN_ENABLED event function and ZONE_CHANGED_NEW_AREA, and modified that it be allowed to fire when PLAYER_STARTED_MOVING has fired (2025.04.21)
 		- Check if ClickQuestLogIndexButton function attempted to run while in combat and if so to re-run it for the last quest it attempted to run with (2025.04.21)
 		- Added ArgPayload to QUEST_ACCEPTED event function (2025.04.20)
+		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
+		- Added InCombatLockdown() prior to ClearAllPoints from RQEFrame and RQEQuestFrame after QUEST_WATCH_UPDATE event fires (2025.04.26)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
+		- Added helper function to verify that batch of accepted quests are watched/tracked properly (2025.04.26)
+		- Added numQuestCurrencies for the purpose of reward tooltip (2025.04.26)
+		- Updated DB record of saved tracked and saved supertracked quests player currently has (2025.04.26)
+		- Failsafe to check to ensure that the player is mousing over RQEQuestFrame before accepting a mouse click (2025.04.26)
 
 	RQE.toc
-		- Updated Interface# and version# (2025.04.20)
+		- Updated Interface# (2025.04.26)
 
 	RQEDatabase.lua
 		- Changed objectivesText to instead be objectivesQuestText (2025.04.21)
