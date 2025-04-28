@@ -63,3 +63,6 @@ The ability to search through different filters such as specific campaign quests
 
 Search for specific quests whether you are on the quest or not
 ![Search for specific quests whether you are on the quest or not.](https://github.com/user-attachments/assets/636ae204-33e9-4973-b791-e4d14116aeb2)
+
+Mythic/Scenario Mode to automatically enable default Blizzard Tracker when transitioning into scenario
+![mythic mode](https://github.com/user-attachments/assets/bcb934dd-d354-407d-882d-a3943d0894cb)
