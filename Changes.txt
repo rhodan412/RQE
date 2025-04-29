@@ -10,6 +10,7 @@
 
 	Config.lua
 		- Added mythicScenarioMode option to the configuration panels (2025.04.28)
+		- Updated enableQuestFrame to immediately run RQE:UpdateTrackerVisibility() instead of RQE:ToggleRQEQuestFrame() when box is checked/unchecked (2025.04.29)
 
 	Core.lua
 		- Modified RQE.ObtainSuperTrackQuestDetails() to use the supertrackedquestID if the RQEFrame is not visible when obtaining debug information (2025.04.20)
@@ -18,6 +19,9 @@
 		- Initialized RQE.DelayedQuestWatchCheck() for the purpose of watching quests that are rapidly accepted from an NPC (2025.04.26)
 		- Added function to display current visibility of the RQEQuestFrame for new Mythic/Scenario mode (2025.04.28)
 		- Fixed track closest watched quest on player movement based on proximity due to change Blizzard made with the release of patch 11.1.5 (2025.04.28)
+		- Set mythicScenarioMode to true for local defaults (2025.04.29)
+		- Updated RQE:UpdateTrackerVisibility() to include a compatibility fix for Carbonite Quests and ability to hide the RQEQuestFrame by clicking the close button or unchecking the box in the configuration panel (2025.04.29)
+		- Added some debug prints within RQE:ToggleRQEQuestFrame() function (2025.04.29)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -37,6 +41,7 @@
 		- Failsafe to check to ensure that the player is mousing over RQEQuestFrame before accepting a mouse click (2025.04.26)
 		- Fix to issue being generated where quests were removed from watch list when holding shift and turning in a quest (2025.04.28)
 		- Added functionality to check RQEQuestFrame visibility based on mythicScenarioMode (2025.04.28)
+		- Fixed issue with the QuestLogIndexButton click not working if mythicScenarioMode is enabled by changing OnClick to OnMouseDown (2025.04.29)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.04.28)
