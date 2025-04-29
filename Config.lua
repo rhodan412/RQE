@@ -411,6 +411,18 @@ RQE.options = {
 					width = "full",
 					order = 1, -- Adjust the order as needed
 				},
+				mythicScenarioMode = {
+					type = "toggle",
+					name = "Mythic/Scenario Mode",
+					desc = "Toggle to use Blizzard Objective Tracker instead of the RQE quest tracker when in scenario (including mythic dungeon).",
+					get = function(info) return RQE.db.profile.mythicScenarioMode end,
+					set = function(info, value)
+						RQE.db.profile.mythicScenarioMode = value
+						RQE:UpdateTrackerVisibility()
+					end,
+					width = "full",
+					order = 2,
+				},
 				framePosition = {
 					type = "group",
 					name = "Main Frame Position",
@@ -1893,6 +1905,30 @@ function RQE:AddFrameSettingsWidgets(container)
 
 	-- Add the checkbox to the desired group (e.g., framePositionGroup)
 	framePositionGroup:AddChild(toggleBlizzObjectiveTrackerCheckbox)
+
+	-- Hide Quest Frame When Empty Checkbox
+	local mythicScenarioModeCheckbox = AceGUI:Create("CheckBox")
+	mythicScenarioModeCheckbox:SetLabel("Mythic/Scenario Mode")
+	mythicScenarioModeCheckbox:SetValue(RQE.db.profile.mythicScenarioMode)
+	mythicScenarioModeCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.mythicScenarioMode = value
+		RQE:UpdateTrackerVisibility()
+	end)
+
+	mythicScenarioModeCheckbox:SetFullWidth(false)
+	mythicScenarioModeCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for mythicScenarioModeCheckbox (RQE.db.profile.mythicScenarioMode)
+	mythicScenarioModeCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Toggle to use Blizzard Objective Tracker instead of the RQE quest tracker when in scenario (including mythic dungeon).", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	mythicScenarioModeCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(mythicScenarioModeCheckbox)
 
 	-- Main Frame Position Group
 	local framePositionGroup = AceGUI:Create("InlineGroup")
