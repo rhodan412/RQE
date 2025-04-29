@@ -2332,7 +2332,9 @@ function UpdateRQEQuestFrame()
 				QuestLogIndexButton.number = number  -- Save for future reference
 
 				-- Quest Watch List
-				QuestLogIndexButton:SetScript("OnClick", function(self, button)
+				QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
+				QuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
+				-- QuestLogIndexButton:SetScript("OnClick", function(self, button)	-- changed as was causing issues when Mythic/Scenario mode was enabled the button wouldn't click
 					-- Make sure player is actually hovering over the button
 					if not self:IsMouseOver() then return end
 
@@ -2353,7 +2355,7 @@ function UpdateRQEQuestFrame()
 
 						-- Explicitly double-check mouseover on *this* button
 						if not self:IsMouseOver() then
-							if RQE.db.profile.debugLevel == "INFO" then
+							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Not hovering over this button, aborting RemoveQuestWatch.")
 							end
 							return
