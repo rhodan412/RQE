@@ -231,6 +231,7 @@ local defaults = {
 		LFGActiveEntryUpdate = false,
 		MainFrameOpacity = 0.55,
 		minimapButtonAngle = 125,
+		mythicScenarioMode = false,
 		PlayerEnteringWorld = false,
 		PlayerStartedMoving = false,
 		PlayerStoppedMoving = false,
@@ -1544,10 +1545,92 @@ function RQE:InitializeObjectiveTracker()
 end
 
 
+-- Helper function to toggle display of the RQEQuestFrame in the mythicScenarioMode
+function RQE:UpdateTrackerVisibility()
+	if self.db.profile.mythicScenarioMode then
+		if C_Scenario.IsInScenario() and ObjectiveTrackerFrame:IsShown() and not self.RQEQuestFrame:IsShown() then 
+			return
+		elseif C_Scenario.IsInScenario() and ObjectiveTrackerFrame:IsShown() and self.RQEQuestFrame:IsShown() then
+			RQE.db.profile.enableQuestFrame = false
+			self.RQEQuestFrame:Hide()
+			return
+		elseif not C_Scenario.IsInScenario() and self.RQEQuestFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+			return
+		else
+			ObjectiveTrackerFrame:Hide()
+		end
+
+		-- Mythic/Scenario Mode active
+		if self.RQEQuestFrame and self.RQEQuestFrame:IsShown() then
+			if C_Scenario.IsInScenario() then
+				RQE.db.profile.enableQuestFrame = false
+				self.RQEQuestFrame:Hide()
+			end
+		end
+
+		if C_Scenario.IsInScenario() then
+			ObjectiveTrackerFrame:Show()
+			-- self:AnchorObjectiveTracker()
+		end
+	else
+		-- Mythic/Scenario Mode OFF
+		-- Explicitly hide Blizzard Tracker, show RQEQuestFrame
+		if ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+		end
+
+		if self.db.profile.enableQuestFrame and not InCombatLockdown() then
+			self.RQEQuestFrame:Show()
+		end
+	end
+
+	-- Post Scenario checks
+	if not C_Scenario.IsInScenario() then
+		RQE.db.profile.enableQuestFrame = true
+		RQE:ToggleRQEQuestFrame()
+
+		if ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+		end
+	end
+
+	RQE.updateScenarioUI()
+end
+
+
+-- Anchor the Objective Tracker to the RQEFrame
+function RQE:AnchorObjectiveTracker()
+	if not ObjectiveTrackerFrame or not RQEFrame then return end
+
+	-- Tell Blizzard: STOP repositioning it
+	ObjectiveTrackerFrame.ignoreFramePositionManager = true
+
+	if ObjectiveTrackerFrame:IsUserPlaced() ~= true then
+		ObjectiveTrackerFrame:SetMovable(true)
+		ObjectiveTrackerFrame:SetUserPlaced(true)
+	end
+
+	-- Clear existing anchors
+	ObjectiveTrackerFrame:ClearAllPoints()
+
+	-- Anchor it under RQEFrame
+	ObjectiveTrackerFrame:SetPoint("TOPLEFT", RQEFrame, "BOTTOMLEFT", 0, -10)
+
+	-- Resize ObjectiveTrackerFrame to fit (optional)
+	ObjectiveTrackerFrame:SetWidth(300)
+	ObjectiveTrackerFrame:SetHeight(600)  -- Slightly taller for scenarios with many steps
+
+	ObjectiveTrackerFrame.isBeingMoved = true
+end
+
+
 -- Hook the Objective Tracker's OnShow event to enforce the state based on visibility conditions
 ObjectiveTrackerFrame:HookScript("OnShow", function()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker or RQEFrame:IsShown() or RQE.RQEQuestFrame:IsShown() then
-		ObjectiveTrackerFrame:Hide()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			ObjectiveTrackerFrame:Hide()
+		end
 	end
 end)
 
@@ -1555,9 +1638,10 @@ end)
 -- Continuous checking with OnUpdate to enforce the visibility state of the Blizzard Objective Tracker
 local hideObjectiveTrackerFrame = CreateFrame("Frame")
 hideObjectiveTrackerFrame:SetScript("OnUpdate", function()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker or RQEFrame:IsShown() or RQE.RQEQuestFrame:IsShown() then
-		-- Hide the Blizzard Objective Tracker if the conditions are met
-		ObjectiveTrackerFrame:Hide()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			ObjectiveTrackerFrame:Hide()
+		end
 	end
 end)
 
@@ -1889,7 +1973,7 @@ function RQE.TrackDBQuestsWithoutSteps()
 	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
-			-- print("~~~ Remove Quest Watch: 1889 ~~~")
+			-- -- print("~~~ Remove Quest Watch: 1889 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -1918,7 +2002,7 @@ function RQE.TrackDBQuestsWithSteps()
 	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
-			-- print("~~~ Remove Quest Watch: 1918 ~~~")
+			-- -- print("~~~ Remove Quest Watch: 1918 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -1947,7 +2031,7 @@ function RQE.TrackQuestsNotInDB()
 	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
-			-- print("~~~ Remove Quest Watch: 1947 ~~~")
+			-- -- print("~~~ Remove Quest Watch: 1947 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -2801,7 +2885,7 @@ function RQE:GetClosestTrackedQuest()
 				end
 
 			-- Case 3: Super track nearest quest
-			elseif RQE.db.profile.enableNearestSuperTrack then
+			elseif RQE.db.profile.enableNearestSuperTrack or RQE.db.profile.enableAutoSuperTrackSwap then
 				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
 				if classification ~= Enum.QuestClassification.Campaign and classification ~= Enum.QuestClassification.Meta then
 					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
@@ -2809,6 +2893,15 @@ function RQE:GetClosestTrackedQuest()
 						closestDistance = distance
 						closestQuestID = info.questID
 					end
+				end
+			end
+
+			-- After your other IF blocks
+			if not (RQE.db.profile.enableNearestSuperTrackCampaign or RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly or RQE.db.profile.enableNearestSuperTrack) then
+				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+				if distance and distance < closestDistance then
+					closestDistance = distance
+					closestQuestID = info.questID
 				end
 			end
 
@@ -2855,28 +2948,83 @@ function RQE:AutoSuperTrackClosestQuest()
 	-- Get the closest tracked quest ID
 	local closestQuestID = RQE:GetClosestTrackedQuest()
 
-	-- Ensure a valid quest ID is found
 	if closestQuestID and closestQuestID ~= 0 then
-		-- Set the closest quest as the super-tracked quest
-		-- print("~~~ SetSuperTrack: 2773~~~")
-		C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-		RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+		-- Force watch + supertrack properly
+		RQE:ForceSuperTrackQuestProperly(closestQuestID)
 
-		-- Debug info
+		RQE.ClickQuestLogIndexButton(closestQuestID)
+
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Supertracking closest quest:", closestQuestID)
+			print("Supertracking closest quest (full reset method):", closestQuestID)
 		end
+
+		RQE:SaveSuperTrackedQuestToCharacter()
+
+		C_Timer.After(0.2, function()
+			RQE:ForceSuperTrackQuestProperly(closestQuestID)
+		end)
 	else
-		-- No valid quest found to supertrack
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No valid tracked quest found for supertracking.")
 		end
 	end
 
-	RQE:SaveSuperTrackedQuestToCharacter()
+	UpdateFrame()
 
 	C_Timer.After(0.3, function()
 		RQE.CheckAndClickWButton()
+	end)
+end
+
+
+-- Helper function to RQE:AutoSuperTrackClosestQuest() to force the nearest quest to be supertracked
+function RQE:ForceSuperTrackQuestProperly(questID)
+	if not questID or questID == 0 then return end
+
+	-- Step 1: Save all currently watched quests BEFORE nuking them
+	RQE.SavedQuestWatches = {}
+	local numWatches = C_QuestLog.GetNumQuestWatches()
+	for i = 1, numWatches do
+		local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if watchedQuestID then
+			table.insert(RQE.SavedQuestWatches, watchedQuestID)
+		end
+	end
+
+	-- Step 2: Remove all watched quests
+	for _, qid in ipairs(RQE.SavedQuestWatches) do
+		C_QuestLog.RemoveQuestWatch(qid)
+	end
+
+	-- Step 3: Add the target quest back
+	C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
+
+	-- Step 4: Force supertrack
+	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	SetCVar("superTrackedQuestID", questID)
+
+	-- Step 5: After a slight delay, re-add previously watched quests (except the one we supertracked)
+	C_Timer.After(0.1, function()
+		for _, qid in ipairs(RQE.SavedQuestWatches) do
+			if qid ~= questID then
+				C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
+			end
+		end
+
+		-- Debug
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Restored previous watched quests (excluding supertracked):", questID)
+		end
+	end)
+
+	-- Step 6: Additional delay to re-force supertracking after Blizzard refreshes
+	C_Timer.After(0.1, function()
+		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		SetCVar("superTrackedQuestID", questID)
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Final forced SuperTracking quest ID after rewatch:", questID)
+		end
 	end)
 end
 
@@ -7289,7 +7437,7 @@ RQE.filterCompleteQuests = function()
 			if C_QuestLog.IsComplete(questInfo.questID) then
 				C_QuestLog.AddQuestWatch(questInfo.questID)
 			elseif questInfo.questID then
-				-- print("~~~ Remove Quest Watch: 7289 ~~~")
+				-- -- print("~~~ Remove Quest Watch: 7289 ~~~")
 				C_QuestLog.RemoveQuestWatch(questInfo.questID)
 			end
 		end
@@ -7314,7 +7462,7 @@ function RQE:HideCompletedWatchedQuests()
 			-- Check if the quest is completed
 			if isQuestComplete then
 				-- Remove the quest from the watch list if it is completed
-				-- print("~~~ Remove Quest Watch: 7314 ~~~")
+				-- -- print("~~~ Remove Quest Watch: 7314 ~~~")
 				C_QuestLog.RemoveQuestWatch(qID)
 			end
 		end
@@ -7359,7 +7507,7 @@ RQE.filterDailyWeeklyQuests = function()
 	local numQuestWatches = C_QuestLog.GetNumQuestWatches()
 	for i = numQuestWatches, 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-		-- print("~~~ Remove Quest Watch: 7359 ~~~")
+		-- -- print("~~~ Remove Quest Watch: 7359 ~~~")
 		C_QuestLog.RemoveQuestWatch(questID)
 	end
 
@@ -7436,7 +7584,7 @@ function RQE.UpdateTrackedQuestsToCurrentZone()
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		-- If a watched quest is not on the current map, untrack it
 		if questID and not questIDSet[questID] then
-			-- print("~~~ Remove Quest Watch: 7436 ~~~")
+			-- -- print("~~~ Remove Quest Watch: 7436 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -7517,7 +7665,7 @@ function RQE.filterByZone(zoneID)
 	for i = numQuestWatches, 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if not questIDSet[questID] then
-			-- print("~~~ Remove Quest Watch: 7517 ~~~")
+			-- -- print("~~~ Remove Quest Watch: 7517 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -7600,7 +7748,7 @@ function RQE.filterByQuestType(questType)
 			if shouldWatch then
 				C_QuestLog.AddQuestWatch(questInfo.questID)
 			else
-				-- print("~~~ Remove Quest Watch: 7600 ~~~")
+				-- -- print("~~~ Remove Quest Watch: 7600 ~~~")
 				C_QuestLog.RemoveQuestWatch(questInfo.questID)
 			end
 		end
@@ -7711,7 +7859,7 @@ function RQE.filterByCampaign(campaignID)
 			if questCampaignID == campaignID then
 				C_QuestLog.AddQuestWatch(questInfo.questID)
 			else
-				-- print("~~~ Remove Quest Watch: 7711 ~~~")
+				-- -- print("~~~ Remove Quest Watch: 7711 ~~~")
 				C_QuestLog.RemoveQuestWatch(questInfo.questID)
 			end
 		end
@@ -7854,7 +8002,7 @@ function RQE.filterByQuestLine(questLineID)
 	for i = numQuestWatches, 1, -1 do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if not questIDSet[questID] then
-			-- print("~~~ Remove Quest Watch: 7854 ~~~")
+			-- -- print("~~~ Remove Quest Watch: 7854 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 	end
@@ -9462,7 +9610,7 @@ function RQE:CheckSuperTrackedQuestAndStep()
 		RQE.BlacklistUnderway = true
 
 		-- Temporarily remove the quest from the watch list
-		-- print("~~~ Remove Quest Watch: 9462 ~~~")
+		-- -- print("~~~ Remove Quest Watch: 9462 ~~~")
 		C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
 		RQE.Buttons.ClearButtonPressed()
 
