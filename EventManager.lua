@@ -47,7 +47,7 @@ end
 
 -- Function to Hide the Objective Tracker (only if the toggle is enabled)
 function HideObjectiveTracker()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker then
+	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
 		-- Hide the tracker only if the toggle is disabled
 		if ObjectiveTrackerFrame:IsShown() then
 			ObjectiveTrackerFrame:Hide()
@@ -90,6 +90,16 @@ end
 -- Function to Display or Hide the Objective Tracker
 function RQE:ToggleObjectiveTracker()
 	if InCombatLockdown() then return end
+
+	-- If Mythic/Scenario mode is active, always show Blizzard Tracker and hide only RQEQuestFrame
+	if self.db.profile.mythicScenarioMode then
+		if self.RQEQuestFrame and self.RQEQuestFrame:IsShown() then
+			self.RQEQuestFrame:Hide()
+		end
+		ObjectiveTrackerFrame:Show()
+		return -- Exit early
+	end
+
 	if RQE.db.profile.toggleBlizzObjectiveTracker then
 		-- Hide RQE frames and show Blizzard Tracker
 		if RQEFrame and RQEFrame:IsShown() then
@@ -1294,6 +1304,10 @@ function RQE.handlePlayerLogin()
 	-- Fetch current MapID to have option of appearing with Frame
 	RQE:UpdateMapIDDisplay()
 
+	C_Timer.After(1.75, function()
+		RQE:UpdateTrackerVisibility()
+	end)
+
 	-- Make sure RQE.db is initialized
 	if RQE.db == nil then
 		RQE.db = RQE.db or {}
@@ -1477,6 +1491,10 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		end
 	end)
 
+	C_Timer.After(2, function()
+		RQE:UpdateTrackerVisibility()
+	end)
+
 	-- Updates frame with data from the super tracked quest (if any)
 	if RQE.CurrentlySuperQuestID == nil then
 		RQE:ClearWaypointButtonData()
@@ -1606,7 +1624,10 @@ function RQE.handleScenarioComplete(...)
 		DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)	-- French Lilac
 	end
 
-	RQE.updateScenarioUI()
+	C_Timer.After(0.5, function()
+		RQE:UpdateTrackerVisibility()
+		-- RQE.updateScenarioUI()
+	end)
 end
 
 -- Function to handle SCENARIO_UPDATE event
@@ -1628,6 +1649,10 @@ function RQE.handleScenarioUpdate(...)
 			end
 		end
 	end
+
+	C_Timer.After(0.1, function()
+		RQE:UpdateTrackerVisibility()
+	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)	-- French Lilac
@@ -2254,6 +2279,10 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	C_Timer.After(3.3, function()
+		RQE:CheckFrameVisibility()
+	end)
+
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	C_Timer.After(3, function()
 		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -2293,10 +2322,6 @@ function RQE.handlePlayerEnterWorld(...)
 		else
 			RQE:UpdateContentSize()
 		end
-	end)
-
-	C_Timer.After(3.3, function()
-		RQE:CheckFrameVisibility()
 	end)
 
 	if isLogin then
@@ -3012,9 +3037,11 @@ end
 function RQE.handleZoneChange(...)
 	local event = select(2, ...)
 
-	if C_Scenario.IsInScenario() then
-		RQE.updateScenarioUI()
-	end
+	RQE:UpdateTrackerVisibility()
+
+	-- if C_Scenario.IsInScenario() then
+		-- RQE.updateScenarioUI()
+	-- end
 
 	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
 		local onTaxi = UnitOnTaxi("player")
@@ -3294,6 +3321,10 @@ function RQE.handleZoneNewAreaChange()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
+
+	-- C_Timer.After(0.5, function()
+		-- RQE:UpdateTrackerVisibility()
+	-- end)
 
 	local onTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
@@ -4127,6 +4158,12 @@ function RQE.handleInstanceInfoUpdate()
 
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
+
+	C_Timer.After(0.5, function()
+		RQE:UpdateTrackerVisibility()
+	end)
+
+	RQE.updateScenarioUI()
 
 	if not RQE.UpdateInstanceInfoOkay then
 		return
@@ -4983,6 +5020,10 @@ function RQE.handleQuestWatchListChanged(...)
 	local questID = select(3, ...)
 	local added = select(4, ...)
 
+	C_Timer.After(0.1, function()
+		RQE:UpdateTrackerVisibility()
+	end)
+
 	if not questID then
 		return
 	end
@@ -5466,8 +5507,16 @@ SearchEditBox:SetScript("OnEnterPressed", function(self)
 	-- Implement search logic here, likely the same as the click event
 end)
 
+
 -- Hooking the Objective Tracker's OnShow and OnHide events
-ObjectiveTrackerFrame:HookScript("OnShow", HideObjectiveTracker)
+ObjectiveTrackerFrame:HookScript("OnShow", function()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			ObjectiveTrackerFrame:Hide()
+		end
+	end
+end)
+
 
 -- Optionally, use OnUpdate for continuous checking
 local hideObjectiveTrackerFrame = CreateFrame("Frame")
