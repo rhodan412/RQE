@@ -231,7 +231,7 @@ local defaults = {
 		LFGActiveEntryUpdate = false,
 		MainFrameOpacity = 0.55,
 		minimapButtonAngle = 125,
-		mythicScenarioMode = false,
+		mythicScenarioMode = true,
 		PlayerEnteringWorld = false,
 		PlayerStartedMoving = false,
 		PlayerStoppedMoving = false,
@@ -1547,56 +1547,101 @@ end
 
 -- Helper function to toggle display of the RQEQuestFrame in the mythicScenarioMode
 function RQE:UpdateTrackerVisibility()
-	if self.db.profile.mythicScenarioMode then
-		if C_Scenario.IsInScenario() and ObjectiveTrackerFrame:IsShown() and not self.RQEQuestFrame:IsShown() then 
-			return
-		elseif C_Scenario.IsInScenario() and ObjectiveTrackerFrame:IsShown() and self.RQEQuestFrame:IsShown() then
-			RQE.db.profile.enableQuestFrame = false
-			self.RQEQuestFrame:Hide()
-			return
-		elseif not C_Scenario.IsInScenario() and self.RQEQuestFrame:IsShown() then
-			ObjectiveTrackerFrame:Hide()
-			return
-		else
-			ObjectiveTrackerFrame:Hide()
-		end
+	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
+	end
 
-		-- Mythic/Scenario Mode active
-		if self.RQEQuestFrame and self.RQEQuestFrame:IsShown() then
-			if C_Scenario.IsInScenario() then
-				RQE.db.profile.enableQuestFrame = false
+	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		C_AddOns.LoadAddOn("Blizzard_ScenarioObjectiveTracker")
+	end
+
+	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		C_AddOns.LoadAddOn("Blizzard_BonusObjectiveTracker")
+	end
+
+	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
+	end
+
+	if InCombatLockdown() then
+		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
+		return
+	end
+
+	local inScenario = C_Scenario.IsInScenario()
+	local mythicMode = self.db.profile.mythicScenarioMode
+	local configWantsQuestFrame = self.db.profile.enableQuestFrame
+
+	-- print(">> UpdateTrackerVisibility: inScenario =", inScenario, "| mythicMode =", mythicMode, "| configWantsQuestFrame =", configWantsQuestFrame)
+
+	if not C_AddOns.IsAddOnLoaded("Carbonite Quests") then
+		if mythicMode and inScenario then
+			if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
+				self.RQEQuestFrame:Hide()
+			else
+				print("Mythic/Scenario mode may not work correctly with current Carbonite Quests settings!\n\nGo to Carbonite addon settings > Quest Module > Watch Options\nCHECK: \"Hide Quest Watch Window\"\nUN-CHECK: \"Hide Blizzards Quest Track Window\"\nThen do reload your UI via \"/reload\"")
+				return
+			end
+		end
+	end
+
+	if mythicMode and inScenario then
+		-- print(">> Scenario + MythicMode active – forcing hide RQEQuestFrame")
+		RQE.forceHideRQEQuestFrame = true
+
+		if self.RQEQuestFrame then
+			-- Patch Show() so Blizzard layout code can't force show
+			if not self.RQEQuestFrame._originalShow then
+				self.RQEQuestFrame._originalShow = self.RQEQuestFrame.Show
+			end
+			self.RQEQuestFrame.Show = function() end
+
+			if self.RQEQuestFrame:IsShown() then
+				-- print(">> Hiding RQEQuestFrame")
 				self.RQEQuestFrame:Hide()
 			end
 		end
 
-		if C_Scenario.IsInScenario() then
+		if ObjectiveTrackerFrame then
+			-- print(">> Showing ObjectiveTrackerFrame")
+			ObjectiveTrackerFrame.ignoreFramePositionManager = true
+			ObjectiveTrackerFrame:SetParent(UIParent)
+			ObjectiveTrackerFrame:ClearAllPoints()
+			ObjectiveTrackerFrame:SetPoint("TOPLEFT", RQEFrame, "BOTTOMLEFT", 0, -10)
 			ObjectiveTrackerFrame:Show()
-			-- self:AnchorObjectiveTracker()
-		end
-	else
-		-- Mythic/Scenario Mode OFF
-		-- Explicitly hide Blizzard Tracker, show RQEQuestFrame
-		if ObjectiveTrackerFrame:IsShown() then
-			ObjectiveTrackerFrame:Hide()
 		end
 
-		if self.db.profile.enableQuestFrame and not InCombatLockdown() then
-			self.RQEQuestFrame:Show()
-		end
+		return -- Exit early to avoid post-scenario logic
 	end
 
-	-- Post Scenario checks
-	if not C_Scenario.IsInScenario() then
-		RQE.db.profile.enableQuestFrame = true
-		RQE:ToggleRQEQuestFrame()
+	-- === Post-scenario OR MythicMode disabled ===
+	-- print(">> Scenario ended or MythicMode off – restoring visibility from config")
+	RQE.forceHideRQEQuestFrame = false
 
-		if ObjectiveTrackerFrame:IsShown() then
-			ObjectiveTrackerFrame:Hide()
+	-- Restore original Show method if it was patched
+	if self.RQEQuestFrame and self.RQEQuestFrame._originalShow then
+		self.RQEQuestFrame.Show = self.RQEQuestFrame._originalShow
+		self.RQEQuestFrame._originalShow = nil
+	end
+
+	if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
+		-- print(">> Hiding ObjectiveTrackerFrame")
+		ObjectiveTrackerFrame:Hide()
+	end
+
+	if self.RQEQuestFrame then
+		if configWantsQuestFrame then
+			-- print(">> Showing RQEQuestFrame (config enabled)")
+			self.RQEQuestFrame:Show()
+		else
+			-- print(">> Hiding RQEQuestFrame (config disabled)")
+			self.RQEQuestFrame:Hide()
 		end
 	end
 
 	RQE.updateScenarioUI()
 end
+
 
 
 -- Anchor the Objective Tracker to the RQEFrame
@@ -4204,11 +4249,19 @@ end
 
 -- Function to toggle the visibility of the RQEQuestFrame
 function RQE:ToggleRQEQuestFrame()
+	-- print(">> ToggleRQEQuestFrame called – forceHide =", RQE.forceHideRQEQuestFrame)
+
+	if RQE.forceHideRQEQuestFrame then
+		-- print(">> Force-hide is active – hiding RQEQuestFrame")
+		self.RQEQuestFrame:Hide()
+		return
+	end
+
 	if self.db.profile.enableQuestFrame then
-		-- Code to show the Quest Frame
+		-- print(">> Config enabled – showing RQEQuestFrame")
 		RQE.RQEQuestFrame:Show()
 	else
-		-- Code to hide the Quest Frame
+		-- print(">> Config disabled – hiding RQEQuestFrame")
 		RQE.RQEQuestFrame:Hide()
 	end
 end
