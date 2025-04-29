@@ -227,6 +227,17 @@ local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
 end
 
 
+-- Failsafe check handled regularly to ensure that RQEQuestFrame is being correctly managed
+local objectiveTrackerWatchdog = CreateFrame("Frame")
+objectiveTrackerWatchdog:SetScript("OnUpdate", function()
+	if RQE.db.profile.mythicScenarioMode then
+		if not C_Scenario.IsInScenario() then
+			RQE:UpdateTrackerVisibility()
+		end
+	end
+end)
+
+
 -- Create the ScenarioChildFrame, anchored to the content frame
 RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 110)
 
@@ -2322,6 +2333,9 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Watch List
 				QuestLogIndexButton:SetScript("OnClick", function(self, button)
+					-- Make sure player is actually hovering over the button
+					if not self:IsMouseOver() then return end
+
 					-- Check if the player is in combat and return if an automatic click
 					if InCombatLockdown() then
 						if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
@@ -2337,7 +2351,16 @@ function UpdateRQEQuestFrame()
 							end
 						end
 
+						-- Explicitly double-check mouseover on *this* button
+						if not self:IsMouseOver() then
+							if RQE.db.profile.debugLevel == "INFO" then
+								print("Not hovering over this button, aborting RemoveQuestWatch.")
+							end
+							return
+						end
+
 						-- Untrack the quest
+						if not RQE.hoveringOnFrame then return end
 						-- print("~~~ Remove Quest Watch: 2333 ~~~")
 						C_QuestLog.RemoveQuestWatch(questID)
 
