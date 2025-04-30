@@ -1063,9 +1063,9 @@ function RQE.handlePlayerRegenEnabled()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5) -- Light Salmon
 	end
 
-	C_Timer.After(0.8, function()
-		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the PLAYER_REGEN_ENABLED event
-	end)
+	-- C_Timer.After(0.8, function()
+		-- RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the PLAYER_REGEN_ENABLED event	-- COMMENTED OUT AS A RESULT OF LARGE CPU RESOURCE (LAG) INCREASE WHEN THIS EVENT FIRES
+	-- end)
 
 	if RQE.ReClickQuestLogIndexButtonAfterCombat then
 		RQE.ClickQuestLogIndexButton(RQE.QuestButtonToReClickAfterCombat)
@@ -1196,7 +1196,7 @@ function RQE.handlePlayerMountDisplayChanged()
 		end
 	end
 
-	RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
+	-- RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event	-- COMMENTED OUT AS A RESULT OF CPU RESOURCE (LAG) INCREASE WHEN THIS EVENT FIRES
 
 	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	C_Timer.After(0.5, function()
@@ -1899,6 +1899,8 @@ function RQE.handlePlayerControlGained()
 		end
 	end
 
+	RQE:AutoSuperTrackClosestQuest()
+
 	RQE.canSortQuests = true
 	SortQuestsByProximity()
 	RQE:AutoClickQuestLogIndexWaypointButton()
@@ -1918,6 +1920,10 @@ end
 
 -- Handling PLAYER_STARTED_MOVING Event
 function RQE.handlePlayerStartedMoving()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		RQE:EstimatePlayerSpeed(5)
+	end
+
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStartedMoving then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)	-- Light Green
 	end
