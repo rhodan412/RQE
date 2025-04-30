@@ -2385,6 +2385,12 @@ function UpdateRQEQuestFrame()
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
 
+							if RQE.db.profile.debugLevel == "INFO" then
+								C_Timer.After(0.8, function()
+									RQE:RecommendFastestTravelMethod()
+								end)
+							end
+
 							-- Check if autoClickWaypointButton is selected in the configuration
 							if RQE.db.profile.autoClickWaypointButton then
 								-- Click the "W" Button is autoclick is selected and no steps or questData exist
