@@ -1547,6 +1547,19 @@ end
 
 -- Helper function to toggle display of the RQEQuestFrame in the mythicScenarioMode
 function RQE:UpdateTrackerVisibility()
+	local inScenario = C_Scenario.IsInScenario()
+	local mythicMode = self.db.profile.mythicScenarioMode
+	local configWantsQuestFrame = self.db.profile.enableQuestFrame
+
+	if not mythicMode then return end
+
+	if InCombatLockdown() then
+		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
+		return
+	end
+
+	-- print(">> UpdateTrackerVisibility: inScenario =", inScenario, "| mythicMode =", mythicMode, "| configWantsQuestFrame =", configWantsQuestFrame)
+
 	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
 		C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
 	end
@@ -1562,17 +1575,6 @@ function RQE:UpdateTrackerVisibility()
 	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
 		C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
 	end
-
-	if InCombatLockdown() then
-		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
-		return
-	end
-
-	local inScenario = C_Scenario.IsInScenario()
-	local mythicMode = self.db.profile.mythicScenarioMode
-	local configWantsQuestFrame = self.db.profile.enableQuestFrame
-
-	-- print(">> UpdateTrackerVisibility: inScenario =", inScenario, "| mythicMode =", mythicMode, "| configWantsQuestFrame =", configWantsQuestFrame)
 
 	if not C_AddOns.IsAddOnLoaded("Carbonite Quests") then
 		if mythicMode and inScenario then
@@ -2989,6 +2991,9 @@ end
 function RQE:AutoSuperTrackClosestQuest()
 	if not RQE.db.profile.enableAutoSuperTrackSwap then return end
 	if InCombatLockdown() then return end
+
+	local onTaxi = UnitOnTaxi("player")
+	if onTaxi then return end
 
 	-- Get the closest tracked quest ID
 	local closestQuestID = RQE:GetClosestTrackedQuest()
@@ -9938,4 +9943,278 @@ function RQE.ResetGossipWindow()
 	-- else
 		-- print("No NPC is currently targeted.")
 	end
+end
+
+
+-- Prints the closest flight master to the player's current location
+function RQE:GetClosestFlightMaster()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print(">> No valid mapID found.")
+		return nil
+	end
+
+	local position = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not position then
+		print(">> Unable to get player map position.")
+		return nil
+	end
+
+	local px, py = position:GetXY()
+	if not px or not py then
+		print(">> Invalid player position.")
+		return nil
+	end
+
+	local closestNode = nil
+	local shortestDistance = math.huge
+	local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+
+	for _, node in ipairs(nodes or {}) do
+		if not node.isUndiscovered then
+			local nx, ny = node.position.x, node.position.y
+			local dist = math.sqrt((px - nx)^2 + (py - ny)^2)
+			if dist < shortestDistance then
+				shortestDistance = dist
+				closestNode = node
+			end
+		end
+	end
+
+	if closestNode then
+		print(string.format(">> Closest flight master: %s (%.2f, %.2f, mapID %d)", closestNode.name, closestNode.position.x * 100, closestNode.position.y * 100, mapID))
+	else
+		print(">> No discovered flight master found on this map.")
+	end
+
+	return closestNode
+end
+
+
+-- Obtains the closest flight master that is known to a map position
+function RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY)
+	if not mapID or not targetX or not targetY then
+		print(">> Invalid coordinates or mapID provided.")
+		return nil
+	end
+
+	local closestNode = nil
+	local shortestDistance = math.huge
+	local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+
+	for _, node in ipairs(nodes or {}) do
+		if not node.isUndiscovered then
+			local nx, ny = node.position.x, node.position.y
+			local dist = math.sqrt((targetX - nx)^2 + (targetY - ny)^2)
+			if dist < shortestDistance then
+				shortestDistance = dist
+				closestNode = node
+			end
+		end
+	end
+
+	if closestNode then
+		print(string.format(">> Closest flight master to (%.2f, %.2f) is %s (%.1f, %.1f, mapID %d)",
+			targetX * 100, targetY * 100,
+			closestNode.name,
+			closestNode.position.x * 100,
+			closestNode.position.y * 100,
+			mapID
+		))
+	else
+		print(">> No discovered flight master found on that map.")
+	end
+
+	return closestNode
+end
+
+
+-- Determines and prints the closest flight master to the questID that is passed to the function
+function RQE:GetClosestFlightMasterToQuest(questID)
+	if not questID then
+		print(">> No quest ID provided.")
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		print(">> Quest not found in internal database:", questID)
+		return
+	end
+
+	local mapID, x, y
+
+	-- Try to use coordinates from the current step (first numeric step with coords)
+	for i = 1, 10 do
+		local step = questData[i]
+		if step and step.coordinates then
+			mapID = step.coordinates.mapID
+			x = step.coordinates.x / 100
+			y = step.coordinates.y / 100
+			break
+		end
+	end
+
+	-- Fallback to quest.location if no step with coordinates was found
+	if not mapID then
+		if questData.location then
+			mapID = questData.location.mapID
+			x = questData.location.x / 100
+			y = questData.location.y / 100
+		else
+			print(">> No usable coordinates found for quest:", questID)
+			return
+		end
+	end
+
+	-- Call the coord-based function to get closest flight master
+	local closest = RQE:GetClosestFlightMasterToCoords(mapID, x, y)
+
+	if not closest then
+		print(string.format(">> No known flight master found near %.2f, %.2f on map %d", x * 100, y * 100, mapID))
+	end
+end
+
+
+-- Function that determines the fastest travel method to reach a given quest
+function RQE:RecommendFastestTravelMethod(questID)
+	if not questID then
+		RQE.SuperTrackedQuestIDForSpeed = C_SuperTrack.GetSuperTrackedQuestID()
+	else
+		RQE.SuperTrackedQuestIDForSpeed = questID
+	end
+
+	local questData = RQE.getQuestData(RQE.SuperTrackedQuestIDForSpeed)
+	if not questData then
+		print(">> Quest not found in internal DB:", RQE.SuperTrackedQuestIDForSpeed)
+		return
+	end
+
+	-- Determine correct coordinates based on active step
+	local activeStepIndex = RQE.AddonSetStepIndex or 1
+	local activeStep = questData[activeStepIndex]
+
+	if not activeStep or not activeStep.coordinates then
+		print(">> No valid coordinates found for step", activeStepIndex, "of questID", RQE.SuperTrackedQuestIDForSpeed)
+		return
+	end
+
+	local stepCoords = activeStep.coordinates
+
+	-- local stepCoords
+	-- for i = 1, 10 do
+		-- local step = questData[i]
+		-- if step and step.coordinates then
+			-- stepCoords = step.coordinates
+			-- break
+		-- end
+	-- end
+
+	-- if not stepCoords then
+		-- print(">> No coordinates found in steps for questID", RQE.SuperTrackedQuestIDForSpeed)
+		-- return
+	-- end
+
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+	if not playerPos then
+		print(">> Unable to determine player position.")
+		return
+	end
+
+	local px, py = playerPos:GetXY()
+
+	-- Distances
+	print("QuestID: " .. RQE.SuperTrackedQuestIDForSpeed)
+	local directDistance = RQE:GetDistance(playerMapID, px, py, stepCoords.mapID, stepCoords.x / 100, stepCoords.y / 100)
+
+	-- Flight Masters
+	local startFM = RQE:GetClosestFlightMaster()
+	local endFM = RQE:GetClosestFlightMasterToCoords(stepCoords.mapID, stepCoords.x / 100, stepCoords.y / 100)
+
+	-- Calculate taxi route distance if both FMs are available
+	local taxiDistance, walkToFM_Distance, walkFromFM_Distance = math.huge, math.huge, math.huge
+	if startFM and endFM then
+		walkToFM_Distance = RQE:GetDistance(playerMapID, px, py, playerMapID, startFM.position.x, startFM.position.y)
+		taxiDistance = RQE:GetDistance(startFM.mapID or playerMapID, startFM.position.x, startFM.position.y, endFM.mapID or stepCoords.mapID, endFM.position.x, endFM.position.y)
+		walkFromFM_Distance = RQE:GetDistance(stepCoords.mapID, endFM.position.x, endFM.position.y, stepCoords.mapID, stepCoords.x / 100, stepCoords.y / 100)
+	end
+
+	-- Travel speeds (measured)
+	local walkSpeed = 11
+	local flySpeed = 50
+	local skyridingSpeed = 110
+	local taxiSpeed = 85
+
+	-- Time estimates
+	local walkTime = directDistance / walkSpeed
+	local flyTime = directDistance / flySpeed
+	local taxiTime = (walkToFM_Distance / walkSpeed) + (taxiDistance / taxiSpeed) + (walkFromFM_Distance / walkSpeed)
+
+	-- Print time breakdowns
+	if type(walkTime) ~= "number" or walkTime == math.huge or
+		type(flyTime) ~= "number" or flyTime == math.huge or
+		type(taxiTime) ~= "number" or taxiTime == math.huge then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Recommended: Unable to determine route reliably (map mismatch or unknown FMs).")
+		end
+		return
+	end
+
+	-- Print time breakdowns
+	print(string.format(">> Estimated times: Walk = %.1fs | Fly = %.1fs | Taxi = %.1fs", walkTime, flyTime, taxiTime))
+
+	-- Decision logic
+	if flyTime < walkTime and flyTime < taxiTime then
+		print(">> Recommended: Use flying mount (fastest travel method).")
+	elseif taxiTime < walkTime then
+		print(string.format(">> Recommended: Take taxi from %s to %s", startFM.name, endFM.name))
+	else
+		print(">> Recommended: Travel directly on foot or ground mount.")
+	end
+end
+
+
+-- Returns normalized Euclidean distance for same-map coords
+function RQE:GetDistance(mapID1, x1, y1, mapID2, x2, y2)
+	if not (x1 and y1 and x2 and y2) then return math.huge end
+
+	-- If different maps, we can't calculate — bail with huge value
+	if mapID1 ~= mapID2 then return math.huge end
+
+	-- Convert to actual game space units (normalize to 0–1 range assumed)
+	local dx = (x2 - x1)
+	local dy = (y2 - y1)
+	return math.sqrt(dx * dx + dy * dy) * 10000 -- scale to approx "yards"
+end
+
+
+-- Gather the estimated speed the player is currently traveling
+function RQE:EstimatePlayerSpeed(sampleTime)
+	sampleTime = sampleTime or 1  -- default to 1 second
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	local startPos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not startPos then
+		print(">> Unable to get player position.")
+		return
+	end
+
+	local x1, y1 = startPos:GetXY()
+
+	C_Timer.After(sampleTime, function()
+		local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
+		if not newPos then
+			print(">> Unable to get player position (after delay).")
+			return
+		end
+
+		local x2, y2 = newPos:GetXY()
+
+		-- Use the same GetDistance logic
+		local distance = RQE:GetDistance(mapID, x1, y1, mapID, x2, y2)
+		local speed = distance / sampleTime
+
+		print(string.format(">> Estimated player speed: %.2f yards/sec over %.1f sec", speed, sampleTime))
+	end)
 end
