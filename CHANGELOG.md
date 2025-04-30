@@ -22,6 +22,9 @@
 		- Set mythicScenarioMode to true for local defaults (2025.04.29)
 		- Updated RQE:UpdateTrackerVisibility() to include a compatibility fix for Carbonite Quests and ability to hide the RQEQuestFrame by clicking the close button or unchecking the box in the configuration panel (2025.04.29)
 		- Added some debug prints within RQE:ToggleRQEQuestFrame() function (2025.04.29)
+		- Added failsafe to RQE:UpdateTrackerVisibility() to check to make sure that the player has selected mythicMode before continuing (2025.04.30)
+		- Added check to see if player was OnTaxi within the RQE:AutoSuperTrackClosestQuest() and 'returns' if this is the case to minimize lag on taxi (2025.04.30)
+		- Added RQE:GetClosestFlightMaster(), RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY), RQE:GetClosestFlightMasterToQuest(questID), RQE:RecommendFastestTravelMethod(questID), RQE:GetDistance(mapID1, x1, y1, mapID2, x2, y2), and RQE:EstimatePlayerSpeed(sampleTime) for future editions for adding waypoint travel to flight masters if this is closer than flying/walking (2025.04.30)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -31,6 +34,7 @@
 		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
 		- Added InCombatLockdown() prior to ClearAllPoints from RQEFrame and RQEQuestFrame after QUEST_WATCH_UPDATE event fires (2025.04.26)
 		- Modified the coding to display/hide the objective tracker based on new Mythic/Scenario mode (2025.04.28)
+		- Removed RQE:AutoSuperTrackClosestQuest() from PLAYER_REGEN_ENABLED and PLAYER_MOUNT_DISPLAY_CHANGED event functions as this was causing a performance/CPU loss when run (2025.04.30)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -42,6 +46,7 @@
 		- Fix to issue being generated where quests were removed from watch list when holding shift and turning in a quest (2025.04.28)
 		- Added functionality to check RQEQuestFrame visibility based on mythicScenarioMode (2025.04.28)
 		- Fixed issue with the QuestLogIndexButton click not working if mythicScenarioMode is enabled by changing OnClick to OnMouseDown (2025.04.29)
+		- Added RQE:RecommendFastestTravelMethod() [author-mode only] (2025.04.30)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.04.28)
@@ -51,6 +56,7 @@
 		- Added additional alliance/neutral quests to DB for Mists of Pandaria expansion (2025.04.21)
 		- Added 11.1.5 Sureki (Hallowfall) and Radiant (Azj-Kahet) Incursion quests to DB (2025.04.26)
 		- Added additional WQ to the DB (2025.04.28)
+		- Added additional weekly profession Valdrakken quests to the DB (2025.04.30)
 
 	RQEFrame.lua
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
