@@ -153,7 +153,7 @@ RQE.options = {
 					get = function(info) return RQE.db.profile.enableQuestFrame end,
 					set = function(info, value)
 						RQE.db.profile.enableQuestFrame = value
-						RQE:UpdateTrackerVisibility()	--RQE:ToggleRQEQuestFrame()
+						RQE:ToggleRQEQuestFrame()
 					end,
 					order = 3,
 				},
@@ -1398,7 +1398,7 @@ function RQE:AddGeneralSettingsWidgets(container)
 	enableQuestFrameCheckbox:SetValue(RQE.db.profile.enableQuestFrame)
 	enableQuestFrameCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 		RQE.db.profile.enableQuestFrame = value
-		RQE:UpdateTrackerVisibility()	--RQE:ToggleRQEQuestFrame()
+		RQE:ToggleRQEQuestFrame()
 	end)
 
 	-- Add a tooltip description for enableQuestFrameCheckbox (RQE.db.profile.enableQuestFrame)
