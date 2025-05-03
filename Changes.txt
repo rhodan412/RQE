@@ -25,6 +25,9 @@
 		- Added failsafe to RQE:UpdateTrackerVisibility() to check to make sure that the player has selected mythicMode before continuing (2025.04.30)
 		- Added check to see if player was OnTaxi within the RQE:AutoSuperTrackClosestQuest() and 'returns' if this is the case to minimize lag on taxi (2025.04.30)
 		- Added RQE:GetClosestFlightMaster(), RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY), RQE:GetClosestFlightMasterToQuest(questID), RQE:RecommendFastestTravelMethod(questID), RQE:GetDistance(mapID1, x1, y1, mapID2, x2, y2), and RQE:EstimatePlayerSpeed(sampleTime) for future editions for adding waypoint travel to flight masters if this is closer than flying/walking (2025.04.30)
+		- Modified return check within RQE:UpdateTrackerVisibility() function to check if 'InCombatLockdown' AND 'inScenario' (2025.05.03)
+		- Fixed 'Carbonite Quests' to be 'Carbonite Quest' within the RQE:UpdateTrackerVisibility() function (2025.05.03)
+		- Commented out UpdateRQEQuestFrame() within the RQE:UpdateTrackerVisibility() function to minimize lag when this function fires as this update isn't required with every update event (2025.05.03)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -35,6 +38,9 @@
 		- Added InCombatLockdown() prior to ClearAllPoints from RQEFrame and RQEQuestFrame after QUEST_WATCH_UPDATE event fires (2025.04.26)
 		- Modified the coding to display/hide the objective tracker based on new Mythic/Scenario mode (2025.04.28)
 		- Removed RQE:AutoSuperTrackClosestQuest() from PLAYER_REGEN_ENABLED and PLAYER_MOUNT_DISPLAY_CHANGED event functions as this was causing a performance/CPU loss when run (2025.04.30)
+		- Updated code within the PLAYER_REGEN_ENABLED to only update the scenarioUI if mythicMode is turned off to reduce redundancy. (2025.05.03)
+		- Removed ClearAllPoints within PLAYER_REGEN_ENABLED, QUEST_COMPLETE and QUEST_REMOVED (2025.05.03)
+		- Updated PLAYER_MOUNT_DISPLAY_CHANGED to reduce firings in order to improve add-on performance (2025.05.03)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -57,6 +63,7 @@
 		- Added 11.1.5 Sureki (Hallowfall) and Radiant (Azj-Kahet) Incursion quests to DB (2025.04.26)
 		- Added additional WQ to the DB (2025.04.28)
 		- Added additional weekly profession Valdrakken quests to the DB (2025.04.30)
+		 - Added additional notations to quests in DB for the objectiveText, descriptionText and npc info (2025.05.03)
 
 	RQEFrame.lua
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
