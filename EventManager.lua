@@ -1059,6 +1059,8 @@ end
 -- Fired after ending combat, as regen rates return to normal. Useful for determining when a player has left combat. 
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
+	local mythicMode = RQE.db.profile.mythicScenarioMode
+
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5) -- Light Salmon
 	end
@@ -1073,23 +1075,25 @@ function RQE.handlePlayerRegenEnabled()
 	end
 
 	if RQE.CheckNClickWButtonAfterCombat then
-		C_Timer.After(1.5, function()
+		C_Timer.After(0.7, function()
 			RQE.CheckAndClickWButton()
 		end)
 		RQE.CheckNClickWButtonAfterCombat = false
 	end
 
-	-- Check and execute any deferred scenario updates
-	if RQE.deferredScenarioCriteriaUpdate then
-		--RQE.canUpdateFromCriteria = true
-		RQE.updateScenarioCriteriaUI()
-		RQE.deferredScenarioCriteriaUpdate = false
-	end
+	if not mythicMode then
+		-- Check and execute any deferred scenario updates
+		if RQE.deferredScenarioCriteriaUpdate then
+			--RQE.canUpdateFromCriteria = true
+			RQE.updateScenarioCriteriaUI()
+			RQE.deferredScenarioCriteriaUpdate = false
+		end
 
-	-- Check and execute any deferred scenario updates
-	if RQE.deferredScenarioUpdate then
-		RQE.updateScenarioUI()
-		RQE.deferredScenarioUpdate = false
+		-- Check and execute any deferred scenario updates
+		if RQE.deferredScenarioUpdate then
+			RQE.updateScenarioUI()
+			RQE.deferredScenarioUpdate = false
+		end
 	end
 
 	C_Timer.After(2, function()
@@ -1160,12 +1164,12 @@ function RQE.handlePlayerRegenEnabled()
 		RQE:CheckCPUUsage()
 	end
 
-	C_Timer.After(0.4, function()
-		if not InCombatLockdown() then
-			RQEFrame:ClearAllPoints()
-			RQE.RQEQuestFrame:ClearAllPoints()
-		end
-	end)
+	-- C_Timer.After(0.4, function()
+		-- if not InCombatLockdown() then
+			-- RQEFrame:ClearAllPoints()
+			-- RQE.RQEQuestFrame:ClearAllPoints()
+		-- end
+	-- end)
 
 	-- if RQE.db.profile.autoClickWaypointButton then
 		-- C_Timer.After(1.3, function()
@@ -1196,16 +1200,28 @@ function RQE.handlePlayerMountDisplayChanged()
 		end
 	end
 
-	-- RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event	-- COMMENTED OUT AS A RESULT OF CPU RESOURCE (LAG) INCREASE WHEN THIS EVENT FIRES
-
-	-- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
-	C_Timer.After(0.5, function()
-		RQE.isCheckingMacroContents = true
-		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
-		C_Timer.After(3, function()
-			RQE.isCheckingMacroContents = false
+	if not InCombatLockdown() then
+		local isMounted = IsMounted()
+		C_Timer.After(0.2, function()
+			if isMounted then
+				RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
+				if RQE.db.profile.autoClickWaypointButton then
+					C_Timer.After(0.5, function()
+						RQE:StartPeriodicChecks()
+					end)
+				end
+			end
 		end)
-	end)
+	end
+
+	-- -- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
+	-- C_Timer.After(0.5, function()
+		-- RQE.isCheckingMacroContents = true
+		-- RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_MOUNT_DISPLAY_CHANGED event fires
+		-- C_Timer.After(3, function()
+			-- RQE.isCheckingMacroContents = false
+		-- end)
+	-- end)
 
 	-- Check to advance to next step in quest
 	if RQE.db.profile.autoClickWaypointButton then
@@ -2204,7 +2220,11 @@ function RQE.handleVariablesLoaded()
 	-- Initialize frame maximized/minimized state
 	if RQE.db.profile.isFrameMaximized then
 		-- Code to maximize the frame
-		RQEFrame:ClearAllPoints()
+		C_Timer.After(0.3, function()
+			if not InCombatLockdown() then
+				RQEFrame:ClearAllPoints()
+			end
+		end)
 		RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
 		RQE:MaximizeFrame()
 		if RQE.ScrollFrame then
@@ -2255,8 +2275,12 @@ function RQE.handleVariablesLoaded()
 	local validAnchorPoints = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT", "CENTER" }
 
 	if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
-		RQE.RQEQuestFrame:ClearAllPoints()  -- Clear any existing anchoring
-		RQE.RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+		C_Timer.After(0.45, function()
+			if not InCombatLockdown() then
+				RQE.RQEQuestFrame:ClearAllPoints() -- Clear any existing anchoring
+				RQE.RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+			end
+		end)
 	else
 		RQE.debugLog("Invalid quest frame position or anchor point.")
 	end
@@ -3043,6 +3067,9 @@ end
 function RQE.handleZoneChange(...)
 	local event = select(2, ...)
 
+	local onTaxi = UnitOnTaxi("player")
+	local isResting = IsResting()
+
 	RQE:UpdateTrackerVisibility()
 
 	-- if C_Scenario.IsInScenario() then
@@ -3050,9 +3077,6 @@ function RQE.handleZoneChange(...)
 	-- end
 
 	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
-		local onTaxi = UnitOnTaxi("player")
-		local isResting = IsResting()
-
 		-- print(tostring(event))
 
 		if not OnTaxi and not isResting then
@@ -3064,6 +3088,12 @@ function RQE.handleZoneChange(...)
 				end)
 			end
 		end
+	end
+
+	if not onTaxi or not isResting then
+		C_Timer.After(0.05, function()
+			RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the ZONE_CHANGED and ZONE_CHANGED_INDOORS event
+		end)
 	end
 
 	-- RQE:UpdateMapIDDisplay()
@@ -4518,8 +4548,12 @@ function RQE.handleQuestComplete()
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
 	RQE:QuestType()
 
-	RQEFrame:ClearAllPoints()
-	RQE.RQEQuestFrame:ClearAllPoints()
+	-- C_Timer.After(0.4, function()
+		-- if not InCombatLockdown() then
+			-- RQEFrame:ClearAllPoints()
+			-- RQE.RQEQuestFrame:ClearAllPoints()
+		-- end
+	-- end)
 	SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
@@ -4595,8 +4629,12 @@ function RQE.handleQuestAutoComplete(...)
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	RQE:QuestType()
 
-	RQEFrame:ClearAllPoints()
-	RQE.RQEQuestFrame:ClearAllPoints()
+	C_Timer.After(0.25, function()
+		if not InCombatLockdown() then
+			RQEFrame:ClearAllPoints()
+			RQE.RQEQuestFrame:ClearAllPoints()
+		end
+	end)
 	SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
@@ -4723,8 +4761,13 @@ function RQE.handleQuestRemoved(...)
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
 	end
 
-	RQEFrame:ClearAllPoints()
-	RQE.RQEQuestFrame:ClearAllPoints()
+	-- C_Timer.After(0.4, function()
+		-- if not InCombatLockdown() then
+			-- RQEFrame:ClearAllPoints()
+			-- RQE.RQEQuestFrame:ClearAllPoints()
+		-- end
+	-- end)
+
 	RQE:QuestType()
 	SortQuestsByProximity()
 
@@ -4911,10 +4954,12 @@ function RQE.handleQuestWatchUpdate(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(RQE.currentSuperTrackedQuestID) .. " / " .. tostring(superTrackedQuestName), 0.56, 0.93, 0.56)	-- Light Green
 	end
 
-	if not InCombatLockdown() then
-		RQEFrame:ClearAllPoints()
-		RQE.RQEQuestFrame:ClearAllPoints()
-	end
+	C_Timer.After(0.45, function()
+		if not InCombatLockdown() then
+			RQEFrame:ClearAllPoints()
+			RQE.RQEQuestFrame:ClearAllPoints()
+		end
+	end)
 
 	-- Further processing
 	RQE:QuestType()
