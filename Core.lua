@@ -1553,7 +1553,7 @@ function RQE:UpdateTrackerVisibility()
 
 	if not mythicMode then return end
 
-	if InCombatLockdown() then
+	if InCombatLockdown() and inScenario then
 		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
 		return
 	end
@@ -1576,7 +1576,7 @@ function RQE:UpdateTrackerVisibility()
 		C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
 	end
 
-	if not C_AddOns.IsAddOnLoaded("Carbonite Quests") then
+	if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
 		if mythicMode and inScenario then
 			if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
 				self.RQEQuestFrame:Hide()
@@ -1609,7 +1609,7 @@ function RQE:UpdateTrackerVisibility()
 			ObjectiveTrackerFrame.ignoreFramePositionManager = true
 			ObjectiveTrackerFrame:SetParent(UIParent)
 			ObjectiveTrackerFrame:ClearAllPoints()
-			ObjectiveTrackerFrame:SetPoint("TOPLEFT", RQEFrame, "BOTTOMLEFT", 0, -10)
+			ObjectiveTrackerFrame:SetPoint("TOPLEFT", RQEFrame, "BOTTOMLEFT", 0, -10)	-- TO DO: change the 0, -10 to be variables to be changed in the configuration for player customization
 			ObjectiveTrackerFrame:Show()
 		end
 
@@ -2413,7 +2413,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end
 
-	UpdateRQEQuestFrame()
+	--UpdateRQEQuestFrame()
 
 	if not StepsText or not CoordsText or not MapIDs then
 		return
