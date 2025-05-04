@@ -7,6 +7,7 @@
 		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
 		- New Feature: Mythic/Scenario Mode allows the display of the default blizzard tracker when player is in scenario [off by default] allowing player to see countdown timers associated with scenario stages (2025.04.28)
 		- Fixed track closest watched quest on player movement based on proximity due to change Blizzard made with the release of patch 11.1.5 (2025.04.28)
+		- Major performance fix for QUEST_WATCH_LIST_CHANGED firing too frequently (2025.05.04)
 
 	Config.lua
 		- Added mythicScenarioMode option to the configuration panels (2025.04.28)
@@ -47,6 +48,8 @@
 		- Moved UpdateRQEQuestFrame/UpdateCampaignFrameAnchor functions outside of RQE.updateScenarioUI (2025.05.04)
 		- Performance improvements to PLAYER_STOPPED_MOVING, QUEST_ACCEPTED, ZONE_CHANGED... events (2025.05.04)
 		- Added debug messages to file (2025.05.04)
+		- Modified call to UpdateRQEQuestFrame to instead use RQE:QuestType when QUEST_ACCEPTED fires in order to handle world quests (2025.05.04)
+		- Major update to QUEST_WATCH_LIST_CHANGED event function to clean up order and improve performance. It will only handle the bulk of the updates if following UNIT_QUEST_LOG_CHANGED fires and only the one time (2025.05.04)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -60,6 +63,8 @@
 		- Fixed issue with the QuestLogIndexButton click not working if mythicScenarioMode is enabled by changing OnClick to OnMouseDown (2025.04.29)
 		- Added RQE:RecommendFastestTravelMethod() [author-mode only] (2025.04.30)
 		- Modification to RQE:QuestRewardsTooltip(tooltip, questID) function to include profession skill points (2025.05.04)
+		- Added RQE:CheckWatchedQuestsSync() function that checks the tracked quests and compares with the quests listed in the RQEQuestFrame to ensure that all applicably tracked quests are being properly shown (2025.05.04)
+		- Ensured that the RQE:CheckWatchedQuestsSync() function only fires when player is not in combat, not casting, not channeling, not moving and the player is hovering over the WorldMapFrame or the RQEQuestFrame and still no more than once per second (2025.05.04)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.04.28)
