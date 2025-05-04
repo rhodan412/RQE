@@ -2293,7 +2293,7 @@ function RQE:CheckFrameVisibility()
 end
 
 
--- Frequent checking with OnUpdate to enforce the visibility state of RQE frames (may not do anything)
+-- Frequent checking with OnUpdate to enforce the visibility state of RQE frames
 C_Timer.NewTicker(0, function()
 	if InCombatLockdown() then return end
 	local isMoving = IsPlayerMoving()
