@@ -3641,3 +3641,54 @@ function UpdateRQEAchievementsFrame()
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
 end
+
+
+-- Function that checks the watch list and compares that with the quests displayed in the RQEQuestFrame
+function RQE:CheckWatchedQuestsSync()
+	local watchedQuests = {}
+	local displayedQuests = {}
+
+	-- Build list of all watched normal quests
+	for i = 1, C_QuestLog.GetNumQuestWatches() do
+		local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if qID then
+			watchedQuests[qID] = true
+		end
+	end
+
+	-- Build list of all watched world quests
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if qID then
+			watchedQuests[qID] = true
+		end
+	end
+
+	-- Populate displayedQuests from your RQEQuestFrame (update as per your actual tracking structure)
+	if RQE.RQEQuestFrame and RQE.RQEQuestFrame.QuestBlocks then
+		for questID in pairs(RQE.RQEQuestFrame.QuestBlocks) do
+			displayedQuests[questID] = true
+		end
+	end
+
+	-- Compare sets
+	for qID in pairs(watchedQuests) do
+		if not displayedQuests[qID] then
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
+				DEFAULT_CHAT_FRAME:AddMessage("WatchListSync: Missing questID " .. qID .. " from RQEQuestFrame. Refreshing...", 1, 0.75, 0.79)
+			end
+			RQE:QuestType() -- Refresh layout
+			return
+		end
+	end
+end
+
+
+-- Frequent checking to enforce the visibility of quests being tracked to be displayed in RQEQuestFrame
+C_Timer.NewTicker(1, function()
+	if InCombatLockdown() then return end
+
+	if not UnitCastingInfo("player") and not UnitChannelInfo("player") and not IsPlayerMoving() and (WorldMapFrame:IsMouseOver() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver())) then
+		RQE:CheckWatchedQuestsSync()
+	end
+end)
