@@ -635,16 +635,16 @@ function RQE.handleItemCountChanged(...)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("ITEM_COUNT_CHANGED related to questID:", questID, "due to CheckDBInventory presence.")
 		end
-		C_Timer.After(0.25, function()
+		C_Timer.After(0.3, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from ITEM_COUNT_CHANGED ~~")
 			end
 			RQE.StartPerioFromItemCountChanged = true
 			RQE.ItemCountRanStartPeriodicChecks = true
 			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
-			C_Timer.After(0.55, function()
+			C_Timer.After(0.65, function()
 				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
-				C_Timer.After(3, function()
+				C_Timer.After(1, function()
 					RQE.StartPerioFromItemCountChanged = false
 				end)
 			end)
@@ -710,7 +710,7 @@ function RQE.BagNewItemsAdded()
 			print("BAG_NEW_ITEMS_UPDATED related to questID:", questID, "due to CheckDBInventory presence.")
 			RQE.BagNewItemsRunning = false
 		end
-		C_Timer.After(0.9, function()
+		C_Timer.After(1.2, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
 			end
@@ -823,7 +823,7 @@ function RQE.ReagentBagUpdate(...)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("BAG_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
 		end
-		C_Timer.After(1.5, function()
+		C_Timer.After(1.65, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
 			end
@@ -1193,6 +1193,7 @@ function RQE.handlePlayerMountDisplayChanged()
 	if not OnTaxi and not isResting then
 		if not RQE.hoveringOnFrame then
 			RQE.SortOnly = true
+			-- print("~~~ UpdateRQEQuestFrame(): 1196 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
 			C_Timer.After(0.5, function()
 				RQE.SortOnly = false
@@ -1202,11 +1203,11 @@ function RQE.handlePlayerMountDisplayChanged()
 
 	if not InCombatLockdown() then
 		local isMounted = IsMounted()
-		C_Timer.After(0.2, function()
+		C_Timer.After(0.1, function()
 			if isMounted then
 				RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
 				if RQE.db.profile.autoClickWaypointButton then
-					C_Timer.After(0.5, function()
+					C_Timer.After(0.3, function()
 						RQE:StartPeriodicChecks()
 					end)
 				end
@@ -1288,12 +1289,21 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 	if not OnTaxi and not isResting then
 		if not RQE.hoveringOnFrame then
 			RQE.SortOnly = true
+			-- print("~~~ UpdateRQEQuestFrame(): 1292 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
 			C_Timer.After(0.5, function()
 				RQE.SortOnly = false
 			end)
 		end
 	end
+
+	C_Timer.After(0.55, function()
+		RQE.isCheckingMacroContents = true
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(0.2, function()
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
 end
 
 
@@ -1691,6 +1701,9 @@ function RQE.handleScenarioUpdate(...)
 
 	--RQE.saveScenarioData(RQE, event, newStep)
 	RQE.updateScenarioUI()
+	RQE.UpdateCampaignFrameAnchor()
+	-- print("~~~ UpdateRQEQuestFrame(): xx ~~~")
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 	RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 end
@@ -1824,6 +1837,8 @@ function RQE.handleWorldStateTimerStart(...)
 	RQE.HandleTimerStart(timerID)
 
 	RQE.updateScenarioUI()
+	-- print("~~~ UpdateRQEQuestFrame(): xx ~~~")
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 end
 
 
@@ -1888,6 +1903,8 @@ function RQE.handleJailersUpdate(...)
 	end
 	C_Timer.After(4, function()
 		RQE.updateScenarioUI()
+		-- print("~~~ UpdateRQEQuestFrame(): xx ~~~")
+		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Initialized Scenario Frame.", 0.0, 1.0, 1.0)	-- Aqua
 		end
@@ -1908,6 +1925,7 @@ function RQE.handlePlayerControlGained()
 	if not OnTaxi then
 		if not RQE.hoveringOnFrame then
 			RQE.SortOnly = true
+			-- print("~~~ UpdateRQEQuestFrame(): 1913 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
 			C_Timer.After(0.5, function()
 				RQE.SortOnly = false
@@ -1918,6 +1936,7 @@ function RQE.handlePlayerControlGained()
 	RQE:AutoSuperTrackClosestQuest()
 
 	RQE.canSortQuests = true
+	-- print("~~~ SortQuestsByProximity(): 1924 ~~~")
 	SortQuestsByProximity()
 	RQE:AutoClickQuestLogIndexWaypointButton()
 
@@ -1978,6 +1997,7 @@ function RQE.handlePlayerStartedMoving()
 	if not OnTaxi and not isResting then
 		if not RQE.hoveringOnFrame then
 			RQE.SortOnly = true
+			-- print("~~~ UpdateRQEQuestFrame(): 1984 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_STARTED_MOVING event fires
 			C_Timer.After(0.5, function()
 				RQE.SortOnly = false
@@ -2010,11 +2030,18 @@ end
 
 -- Handling PLAYER_STOPPED_MOVING Event
 function RQE.handlePlayerStoppedMoving()
+	local isInRaid = IsInRaid()
+	local groupSize = GetNumGroupMembers()
+
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStoppedMoving then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Player stopped moving.", 0.93, 0.82, 0.25)	-- Festival
 	end
+ 
 	RQE:StopUpdatingCoordinates()
-	SortQuestsByProximity()
+
+	-- if not isInRaid and groupSize < 6 then
+		-- SortQuestsByProximity()
+	-- end
 
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths()
@@ -2029,10 +2056,24 @@ function RQE.handlePlayerStoppedMoving()
 		end
 	end
 
-	-- Update Display of CPU Usage of Addon
-	if RQE.db and RQE.db.profile.displayRQEcpuUsage then
-		RQE:CheckCPUUsage()
-	end
+	-- if not isInRaid and groupSize < 6 then
+		-- if not C_Scenario.IsInScenario() then
+			-- if not InCombatLockdown() then
+				-- C_Timer.After(0.25, function()
+					-- RQE.isCheckingMacroContents = true
+					-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STOPPED_MOVING event fires
+					-- C_Timer.After(0.3, function()
+						-- RQE.isCheckingMacroContents = false
+					-- end)
+				-- end)
+			-- end
+		-- end
+	-- end
+
+	-- -- Update Display of CPU Usage of Addon
+	-- if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+		-- RQE:CheckCPUUsage()
+	-- end
 end
 
 
@@ -2147,7 +2188,9 @@ function RQE.handleVariablesLoaded()
 		RQE.ScenarioChildFrame:Hide()
 	end
 
+	-- print("~~~ RQE:QuestType(): 2176 ~~~")
 	RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
+	-- print("~~~ SortQuestsByProximity(): 2177 ~~~")
 	SortQuestsByProximity()
 
 	-- Initialize StepsText (or other fields that need early initialization)
@@ -2436,6 +2479,7 @@ function RQE.handlePlayerEnterWorld(...)
 
 		RQE:RestoreTrackedQuestsForCharacter()
 		RQE:RestoreSuperTrackedQuestForCharacter()
+		-- print("~~~ UpdateRQEQuestFrame(): 2464 ~~~")
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
 
 		local extractedQuestID
@@ -2476,6 +2520,7 @@ function RQE.handlePlayerEnterWorld(...)
 	end
 
 	C_Timer.After(2, function()
+		-- print("~~~ RQE:QuestType(): 2508 ~~~")
 		RQE:QuestType()
 
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2684,6 +2729,22 @@ function RQE.handleSuperTracking()
 		end
 	end)
 
+	-- Check if the objective is a progress bar
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	if RQE.currentSuperTrackedQuestID then
+		local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(RQE.currentSuperTrackedQuestID, stepIndex, false)
+		if objectiveType == "progressbar" then
+			local progress = GetQuestProgressBarPercent(RQE.currentSuperTrackedQuestID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format(">> Checking progress bar for quest %s at step %s", RQE.currentSuperTrackedQuestID, stepIndex))
+			end
+
+			if progress == 100 then
+				RQE:StartPeriodicChecks()
+			end
+		end
+	end
+
 	-- Tier Two Importance: SUPER_TRACKING_CHANGED event
 	if RQE.db.profile.autoClickWaypointButton then
 		RQE.StartPerioFromSuperTrackChange = true
@@ -2712,6 +2773,7 @@ function RQE.handleSuperTracking()
 	-- Reset the manual super tracking flag now that we're handling it
 	RQE.ManualSuperTrack = nil
 
+	-- print("~~~ RQE:QuestType(): 2761 ~~~")
 	RQE:QuestType()
 	RQE.superTrackingChanged = true
 
@@ -2843,6 +2905,7 @@ function RQE.handleQuestAccepted(...)
 	-- end
 
 	C_Timer.After(1, function()
+		-- print("~~~ UpdateRQEQuestFrame(): 2888 ~~~")
 		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest (fires during QUEST_ACCEPTED event) - possible duplicate
 	end)
 
@@ -2953,6 +3016,7 @@ function RQE.handleQuestAccepted(...)
 		end
 	end
 
+	-- print("~~~ RQE:QuestType(): 3004 ~~~")
 	RQE:QuestType()
 	--UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_ACCEPTED event fires - possible duplicate
 	RQE:UpdateRQEQuestFrameVisibility()
@@ -2988,23 +3052,28 @@ function RQE.handleQuestAccepted(...)
 		RQE:UpdateRQEFrameVisibility()
 	end
 
-	-- Tier Four Importance: QUEST_ACCEPTED event
+	-- -- Tier Four Importance: QUEST_ACCEPTED event
 	if RQE.db.profile.autoClickWaypointButton then
-		C_Timer.After(1, function()
-			RQE.StartPerioFromQuestAccepted = true
-			if not RQE.StartPerioFromUQLC then
-				if not RQE.SuperTrackChangeRanStartPeriodicChecks then
+		C_Timer.After(2.3, function()
+			-- RQE.StartPerioFromQuestAccepted = true
+			-- if not RQE.StartPerioFromUQLC then
+				-- if not RQE.SuperTrackChangeRanStartPeriodicChecks then
 					local currentSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 					if RQE.LastAcceptedQuest == currentSuperQuestID then
+						-- print("RQE.LastAcceptedQuest is " .. RQE.LastAcceptedQuest)
+						-- print("currentSuperQuestID is " .. currentSuperQuestID)
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires	-- May need to remove if issues
+					-- else
+						-- print("RQE.LastAcceptedQuest is " .. RQE.LastAcceptedQuest)
+						-- print("currentSuperQuestID is " .. currentSuperQuestID)
 					end
-					C_Timer.After(3, function()
-						RQE.StartPerioFromQuestAccepted = false
-					end)
-				end
-				RQE.SuperTrackChangeRanStartPeriodicChecks = false
-			end
-			RQE.StartPerioFromUQLC = false
+					-- C_Timer.After(3, function()
+						-- RQE.StartPerioFromQuestAccepted = false
+					-- end)
+				-- end
+				-- RQE.SuperTrackChangeRanStartPeriodicChecks = false
+			-- end
+			-- RQE.StartPerioFromUQLC = false
 		end)
 	end
 
@@ -3082,6 +3151,7 @@ function RQE.handleZoneChange(...)
 		if not OnTaxi and not isResting then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
+				-- print("~~~ UpdateRQEQuestFrame(): 3133 ~~~")
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
@@ -3093,6 +3163,11 @@ function RQE.handleZoneChange(...)
 	if not onTaxi or not isResting then
 		C_Timer.After(0.05, function()
 			RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the ZONE_CHANGED and ZONE_CHANGED_INDOORS event
+			-- C_Timer.After(0.3, function()
+				-- if C_QuestLog.ReadyForTurnIn(C_SuperTrack.GetSuperTrackedQuestID()) then
+					-- RQE:StartPeriodicChecks()
+				-- end
+			-- end)
 		end)
 	end
 
@@ -3368,6 +3443,7 @@ function RQE.handleZoneNewAreaChange()
 	if not OnTaxi and not isResting then
 		if not RQE.hoveringOnFrame then
 			RQE.SortOnly = true
+			-- print("~~~ UpdateRQEQuestFrame(): 3425 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
 			C_Timer.After(0.5, function()
 				RQE.SortOnly = false
@@ -3456,6 +3532,7 @@ function RQE.handleZoneNewAreaChange()
 				RQE.DisplayCurrentZoneQuests()
 			end
 
+			-- print("~~~ SortQuestsByProximity(): 3516 ~~~")
 			SortQuestsByProximity()
 
 			AdjustRQEFrameWidths()
@@ -4010,6 +4087,7 @@ function RQE.handleUnitQuestLogChange(...)
 			if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then return end
 
 			-- Ensure that the RQEQuestFrame updates when the quest is accepted (including World Quests)
+			-- print("~~~ RQE:QuestType(): 4075 ~~~")
 			RQE:QuestType()
 		end)
 	end
@@ -4083,6 +4161,7 @@ function RQE.updateScenarioCriteriaUI()
 		RQE.StopTimer()
 	end
 
+	-- print("~~~ UpdateRQEQuestFrame(): 4141 ~~~")
 	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when SCENARIO_CRITERA_UPDATE event fires
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("updateScenarioCriteriaUI: Called UpdateRQEQuestFrame (1431).", 1, 0.75, 0.79)		-- Pink
@@ -4120,11 +4199,6 @@ function RQE.updateScenarioUI()
 			RQE.StopTimer()
 		end
 
-		RQE.UpdateCampaignFrameAnchor()
-		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
-		if RQE.db.profile.debugLevel == "INFO+" or (RQE.db.profile.ScenarioCriteriaUpdate or RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
-			DEFAULT_CHAT_FRAME:AddMessage("updateScenarioUI: Called UpdateRQEQuestFrame (1470).", 1, 0.75, 0.79)		-- Pink
-		end
 		return
 	end
 
@@ -4161,6 +4235,7 @@ function RQE.updateScenarioUI()
 		RQE.StopTimer()
 	end
 
+	-- print("~~~ UpdateRQEQuestFrame(): 4221 ~~~")
 	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 	if RQE.db.profile.debugLevel == "INFO+" or (RQE.db.profile.ScenarioCriteriaUpdate or RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
@@ -4201,6 +4276,10 @@ function RQE.handleInstanceInfoUpdate()
 
 	RQE.updateScenarioUI()
 
+	RQE.UpdateCampaignFrameAnchor()
+	-- print("~~~ UpdateRQEQuestFrame(): xx ~~~")
+	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
+
 	if not RQE.UpdateInstanceInfoOkay then
 		return
 	end
@@ -4225,6 +4304,7 @@ function RQE.handleInstanceInfoUpdate()
 
 	-- Update RQEFrame and Refresh Quest Tracker
 	UpdateFrame()
+	-- print("~~~ RQE:QuestType(): 4294 ~~~")
 	RQE:QuestType()
 
 	RQE.UpdateInstanceInfoOkay = false
@@ -4323,6 +4403,7 @@ function RQE.handleQuestStatusUpdate()
 		end)
 	end
 
+	-- print("~~~ UpdateRQEQuestFrame(): 4384 ~~~")
 	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires
 	UpdateRQEWorldQuestFrame()
 
@@ -4546,6 +4627,7 @@ function RQE.handleQuestComplete()
 
 	-- Update RQEFrame and Refresh Quest Tracker
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
+	-- print("~~~ RQE:QuestType(): 4617 ~~~")
 	RQE:QuestType()
 
 	-- C_Timer.After(0.4, function()
@@ -4554,6 +4636,7 @@ function RQE.handleQuestComplete()
 			-- RQE.RQEQuestFrame:ClearAllPoints()
 		-- end
 	-- end)
+	-- print("~~~ SortQuestsByProximity(): 4619 ~~~")
 	SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
@@ -4627,6 +4710,7 @@ function RQE.handleQuestAutoComplete(...)
 
 	-- Update RQEFrame and Refresh Quest Tracker
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	-- print("~~~ RQE:QuestType(): 4700 ~~~")
 	RQE:QuestType()
 
 	C_Timer.After(0.25, function()
@@ -4635,6 +4719,7 @@ function RQE.handleQuestAutoComplete(...)
 			RQE.RQEQuestFrame:ClearAllPoints()
 		end
 	end)
+	-- print("~~~ SortQuestsByProximity(): 4701 ~~~")
 	SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
@@ -4698,7 +4783,7 @@ function RQE.HandleClientSceneClosed()
 end
 
 
--- Handling  ED event
+-- Handling QUEST_REMOVED event
 function RQE.handleQuestRemoved(...)
 	-- Extract questID and wasReplayQuest from the correct argument positions
 	local event = select(2, ...)
@@ -4750,6 +4835,7 @@ function RQE.handleQuestRemoved(...)
 	end
 
 	C_Timer.After(1, function()
+		-- print("~~~ UpdateRQEQuestFrame(): 4812 ~~~")
 		UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest (fires during QUEST_REMOVED event)
 	end)
 
@@ -4768,7 +4854,9 @@ function RQE.handleQuestRemoved(...)
 		-- end
 	-- end)
 
+	-- print("~~~ RQE:QuestType(): 4844 ~~~")
 	RQE:QuestType()
+	-- print("~~~ SortQuestsByProximity(): 4837 ~~~")
 	SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
@@ -4962,7 +5050,9 @@ function RQE.handleQuestWatchUpdate(...)
 	end)
 
 	-- Further processing
+	-- print("~~~ RQE:QuestType(): 5040 ~~~")
 	RQE:QuestType()
+	-- print("~~~ SortQuestsByProximity(): 5032 ~~~")
 	SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
@@ -5112,6 +5202,7 @@ function RQE.handleQuestWatchListChanged(...)
 
 	RQE.UpdateInstanceInfoOkay = true	-- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
 
+	-- print("~~~ RQE:QuestType(): 5192 ~~~")
 	RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
 
 	if isWorldQuest then
@@ -5120,6 +5211,7 @@ function RQE.handleQuestWatchListChanged(...)
 			DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)		-- Pink
 		end
 	else
+		-- print("~~~ UpdateRQEQuestFrame(): 5183 ~~~")
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 			DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)		-- Pink
@@ -5229,6 +5321,7 @@ function RQE.handleQuestWatchListChanged(...)
 		end
 	end
 
+	-- print("~~~ UpdateRQEQuestFrame(): 5293 ~~~")
 	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 	-- print("~~~ SaveTrackedQuestsToCharacter: 5134 ~~~")
 	RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
@@ -5312,6 +5405,7 @@ function RQE.handleQuestTurnIn(...)
 			-- Update the visibility or content of RQEFrame as needed
 			RQE:UpdateRQEFrameVisibility()
 		end
+		-- print("~~~ RQE:QuestType(): 5395 ~~~")
 		RQE:QuestType()
 	end)
 
@@ -5494,6 +5588,7 @@ function RQE.handleQuestFinished()
 	end
 
 	-- Refresh Quest Tracker
+	-- print("~~~ RQE:QuestType(): 5578 ~~~")
 	RQE:QuestType()
 
 	-- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
