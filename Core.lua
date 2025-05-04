@@ -5505,8 +5505,11 @@ function RQE:StartPeriodicChecks()
 	end
 
 	C_Timer.After(0.15, function()
+		RQE.isCheckingMacroContents = true
 		RQEMacro:CreateMacroForCurrentStep()
-		RQE.isCheckingMacroContents = false
+		C_Timer.After(0.2, function()
+			RQE.isCheckingMacroContents = false
+		end)
 	end)
 
 	-- Final cleanup
