@@ -28,6 +28,7 @@
 		- Modified return check within RQE:UpdateTrackerVisibility() function to check if 'InCombatLockdown' AND 'inScenario' (2025.05.03)
 		- Fixed 'Carbonite Quests' to be 'Carbonite Quest' within the RQE:UpdateTrackerVisibility() function (2025.05.03)
 		- Commented out UpdateRQEQuestFrame() within the RQE:UpdateTrackerVisibility() function to minimize lag when this function fires as this update isn't required with every update event (2025.05.03)
+		- Fixed macro check not firing with the RQE:StartPerdiodicChecks() function (2025.05.04)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -41,6 +42,11 @@
 		- Updated code within the PLAYER_REGEN_ENABLED to only update the scenarioUI if mythicMode is turned off to reduce redundancy. (2025.05.03)
 		- Removed ClearAllPoints within PLAYER_REGEN_ENABLED, QUEST_COMPLETE and QUEST_REMOVED (2025.05.03)
 		- Updated PLAYER_MOUNT_DISPLAY_CHANGED to reduce firings in order to improve add-on performance (2025.05.03)
+		- Adjusted timed delays (2025.05.04)
+		- Added macro check within PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event (2025.05.04)
+		- Moved UpdateRQEQuestFrame/UpdateCampaignFrameAnchor functions outside of RQE.updateScenarioUI (2025.05.04)
+		- Performance improvements to PLAYER_STOPPED_MOVING, QUEST_ACCEPTED, ZONE_CHANGED... events (2025.05.04)
+		- Added debug messages to file (2025.05.04)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -53,6 +59,7 @@
 		- Added functionality to check RQEQuestFrame visibility based on mythicScenarioMode (2025.04.28)
 		- Fixed issue with the QuestLogIndexButton click not working if mythicScenarioMode is enabled by changing OnClick to OnMouseDown (2025.04.29)
 		- Added RQE:RecommendFastestTravelMethod() [author-mode only] (2025.04.30)
+		- Modification to RQE:QuestRewardsTooltip(tooltip, questID) function to include profession skill points (2025.05.04)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.04.28)
@@ -63,7 +70,8 @@
 		- Added 11.1.5 Sureki (Hallowfall) and Radiant (Azj-Kahet) Incursion quests to DB (2025.04.26)
 		- Added additional WQ to the DB (2025.04.28)
 		- Added additional weekly profession Valdrakken quests to the DB (2025.04.30)
-		 - Added additional notations to quests in DB for the objectiveText, descriptionText and npc info (2025.05.03)
+		- Added additional notations to quests in DB for the objectiveText, descriptionText and npc info (2025.05.03)
+		- Fixes/adjustments to quest in Darkmoon Faire within quest DB (2025.05.04)
 
 	RQEFrame.lua
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
