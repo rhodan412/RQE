@@ -30,6 +30,7 @@
 		- Fixed 'Carbonite Quests' to be 'Carbonite Quest' within the RQE:UpdateTrackerVisibility() function (2025.05.03)
 		- Commented out UpdateRQEQuestFrame() within the RQE:UpdateTrackerVisibility() function to minimize lag when this function fires as this update isn't required with every update event (2025.05.03)
 		- Fixed macro check not firing with the RQE:StartPerdiodicChecks() function (2025.05.04)
+		- Tweaked the handling of RQE:AutoSuperTrackClosestQuest() - but is broken now since removing QUEST_WATCH_LIST_CHANGED (2025.05.04)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -50,6 +51,8 @@
 		- Added debug messages to file (2025.05.04)
 		- Modified call to UpdateRQEQuestFrame to instead use RQE:QuestType when QUEST_ACCEPTED fires in order to handle world quests (2025.05.04)
 		- Major update to QUEST_WATCH_LIST_CHANGED event function to clean up order and improve performance. It will only handle the bulk of the updates if following UNIT_QUEST_LOG_CHANGED fires and only the one time (2025.05.04)
+		- Removed QUEST_WATCH_LIST_CHANGED event function from being listened to in order to further increase addon performance (2025.05.04)
+		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function (2025.05.04)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
