@@ -3019,9 +3019,12 @@ function RQE:AutoSuperTrackClosestQuest()
 		end
 	end
 
-	UpdateFrame()
-
 	C_Timer.After(0.3, function()
+		UpdateFrame()
+		UpdateRQEQuestFrame()
+	end)
+
+	C_Timer.After(0.4, function()
 		RQE.CheckAndClickWButton()
 	end)
 end
