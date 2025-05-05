@@ -244,7 +244,7 @@ local eventsToRegister = {
 	-- "QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
-	"QUEST_WATCH_LIST_CHANGED",
+	--"QUEST_WATCH_LIST_CHANGED",	-- Frequent fires... trying to move bits out of this function into better locations that won't trigger as frequently
 	"QUEST_WATCH_UPDATE",
 	-- "QUESTLINE_UPDATE",			-- Commenting out as this fires too often resulting in some lag
 	"SCENARIO_COMPLETED",
@@ -555,6 +555,12 @@ function RQE.handleGossipShow(...)
 			end
 		end
 	end
+
+	-- C_Timer.After(0.1, function()
+		-- if not InCombatLockdown() then
+			-- RQE:CheckWatchedQuestsSync()	-- Fires when GOSSIP_SHOW event is called
+		-- end
+	-- end)
 
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	if not isSuperTracking then return end
@@ -1193,27 +1199,27 @@ function RQE.handlePlayerMountDisplayChanged()
 	if not OnTaxi and not isResting then
 		if not RQE.hoveringOnFrame then
 			RQE.SortOnly = true
-			-- print("~~~ UpdateRQEQuestFrame(): 1196 ~~~")
-			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
+			-- print("~~~ RQE:SortWatchedQuestsByProximity(): 1196 ~~~")
+			RQE:SortWatchedQuestsByProximity()	-- Sorts RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
 			C_Timer.After(0.5, function()
 				RQE.SortOnly = false
 			end)
 		end
 	end
 
-	if not InCombatLockdown() then
-		local isMounted = IsMounted()
-		C_Timer.After(0.1, function()
-			if isMounted then
-				RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
-				if RQE.db.profile.autoClickWaypointButton then
-					C_Timer.After(0.3, function()
-						RQE:StartPeriodicChecks()
-					end)
-				end
-			end
-		end)
-	end
+	-- if not InCombatLockdown() then
+		-- local isMounted = IsMounted()
+		-- C_Timer.After(0.1, function()
+			-- if isMounted then
+				-- RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
+				-- if RQE.db.profile.autoClickWaypointButton then
+					-- C_Timer.After(0.3, function()
+						-- RQE:StartPeriodicChecks()
+					-- end)
+				-- end
+			-- end
+		-- end)
+	-- end
 
 	-- -- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	-- C_Timer.After(0.5, function()
@@ -1281,29 +1287,39 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 		end
 	end
 
-	if not inBlobState then return end
+	--if not inBlobState then return end
 
 	local onTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
-	if not OnTaxi and not isResting then
-		if not RQE.hoveringOnFrame then
-			RQE.SortOnly = true
-			-- print("~~~ RQE:SortWatchedQuestsByProximity(): 1292 ~~~")
-			RQE:SortWatchedQuestsByProximity()
-			C_Timer.After(0.5, function()
-				RQE.SortOnly = false
-			end)
+	if not inBlobState then
+		if not OnTaxi and not isResting then
+			if not RQE.hoveringOnFrame then
+				RQE.SortOnly = true
+				-- print("~~~ RQE:SortWatchedQuestsByProximity(): 1292 ~~~")
+				RQE:SortWatchedQuestsByProximity()
+				C_Timer.After(0.5, function()
+					RQE.SortOnly = false
+				end)
+			end
 		end
 	end
 
-	C_Timer.After(0.55, function()
-		RQE.isCheckingMacroContents = true
-		RQEMacro:CreateMacroForCurrentStep()
-		C_Timer.After(0.2, function()
-			RQE.isCheckingMacroContents = false
-		end)
+	C_Timer.After(0.1, function()
+		if questID == C_SuperTrack.GetSuperTrackedQuestID() then
+			RQE:StartPeriodicChecks()
+		end
 	end)
+
+	if not inBlobState then
+		C_Timer.After(0.55, function()
+			RQE.isCheckingMacroContents = true
+			RQEMacro:CreateMacroForCurrentStep()
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
+			end)
+		end)
+	end
 end
 
 
@@ -2896,9 +2912,9 @@ function RQE.handleQuestAccepted(...)
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
-	C_Timer.After(1.3, function()
-		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
-	end)
+	-- C_Timer.After(1.3, function()
+		-- RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
+	-- end)
 
 	-- -- Check if the quest is a bonus objective
 	-- if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
@@ -3149,26 +3165,30 @@ function RQE.handleZoneChange(...)
 	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
 		-- print(tostring(event))
 
-		if not OnTaxi and not isResting then
-			if not RQE.hoveringOnFrame then
-				RQE.SortOnly = true
-				-- print("~~~ UpdateRQEQuestFrame(): 3133 ~~~")
-				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
-				C_Timer.After(0.5, function()
-					RQE.SortOnly = false
-				end)
+		C_Timer.After(0.1, function()
+			if not InCombatLockdown() then
+				RQE:CheckWatchedQuestsSync()	-- Fires when ZONE_CHANGED or ZONE_CHANGED_INDOORS event is called
 			end
-		end
-	end
 
-	if not onTaxi or not isResting then
-		C_Timer.After(0.05, function()
-			RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the ZONE_CHANGED and ZONE_CHANGED_INDOORS event
-			-- C_Timer.After(0.3, function()
-				-- if C_QuestLog.ReadyForTurnIn(C_SuperTrack.GetSuperTrackedQuestID()) then
-					-- RQE:StartPeriodicChecks()
-				-- end
-			-- end)
+			if not OnTaxi and not isResting then
+				if not RQE.hoveringOnFrame then
+					RQE.SortOnly = true
+					-- print("~~~ UpdateRQEQuestFrame(): 3133 ~~~")
+					UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
+					C_Timer.After(0.5, function()
+						RQE.SortOnly = false
+					end)
+				end
+
+				-- C_Timer.After(0.05, function()
+					-- RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the ZONE_CHANGED and ZONE_CHANGED_INDOORS event
+					-- C_Timer.After(0.3, function()
+						-- if C_QuestLog.ReadyForTurnIn(C_SuperTrack.GetSuperTrackedQuestID()) then
+							-- RQE:StartPeriodicChecks()
+						-- end
+					-- end)
+				-- end)
+			end
 		end)
 	end
 
@@ -3701,8 +3721,8 @@ function RQE.handleUIInfoMessage(...)
 			-- print("~~~ SetSuperTrack: 3490~~~")
 			C_SuperTrack.SetSuperTrackedQuestID(RQE.BlackListedQuestID)
 			-- print("~~~ SaveTrackedQuestsToCharacter: 3551 ~~~")
-			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
-			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
+			-- RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
+			-- RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
 			C_Timer.After(1.5, function()
 				if RQE.db.profile.autoClickWaypointButton then
 					RQE.UIInfoUpdateFired = true
@@ -3736,8 +3756,8 @@ function RQE.handleUIInfoMessage(...)
 					-- print("~~~ SetSuperTrack: 3524~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
 					-- print("~~~ SaveTrackedQuestsToCharacter: 3586 ~~~")
-					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
-					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
+					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
+					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 						DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
 					end
@@ -4659,6 +4679,11 @@ function RQE.handleQuestComplete()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 	end
 
+	RQE:AutoSuperTrackClosestQuest()
+
+	RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_COMPLETE event fires
+	RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_COMPLETE event fires
+
 	-- Tier Four Importance: QUEST_COMPLETE event
 	if RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(1.3, function()
@@ -4810,6 +4835,10 @@ function RQE.handleQuestRemoved(...)
 		end
 	end
 
+	if not InCombatLockdown() then
+		RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
+	end
+	
 	if questID == RQE.searchedQuestID then
 		RQE.DontUpdateFrame = false
 
@@ -4819,7 +4848,6 @@ function RQE.handleQuestRemoved(...)
 		end
 
 		if extractedQuestID == questID then
-			print("Clearing frame")
 			RQE.Buttons.ClearButtonPressed()
 		end
 		
@@ -5488,6 +5516,10 @@ function RQE.handleQuestDetail(...)
 				print("Arg " .. i .. ": " .. tostring(arg))
 			end
 		end
+	end
+
+	if not InCombatLockdown() then
+		RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_DETAIL event is called
 	end
 
 	local questID = GetQuestID()
