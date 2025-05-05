@@ -3645,6 +3645,10 @@ end
 
 -- Function that checks the watch list and compares that with the quests displayed in the RQEQuestFrame
 function RQE:CheckWatchedQuestsSync()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:CheckWatchedQuestsSync() ~~~")
+	end
+
 	local watchedQuests = {}
 	local displayedQuests = {}
 
