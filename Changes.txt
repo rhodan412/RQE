@@ -6,11 +6,7 @@
 		- Prints questText (descriptionQuestText) and objectivesQuestText in the custom quest tooltip following a print-out on the questline of the specified quest (2025.04.21)
 		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
 		- New Feature: Mythic/Scenario Mode allows the display of the default blizzard tracker when player is in scenario [off by default] allowing player to see countdown timers associated with scenario stages (2025.04.28)
-		- Major performance fix for QUEST_WATCH_LIST_CHANGED firing too frequently (2025.05.04)
-		- Improved overall performance of the add-on by modifying code within event functions and reducing redundancy on multiple firings (2025.05.06)
-
-	**BREAKING CHANGE (needs further testing to determine if fix is good)**
-		- The experimental supertrack nearest quest based on proximity, on movement, is broken due to the change in enhancing the addon's performance. This feature was disabled, by default, due to its experimental nature. This feature will return fixed at a later time when performance will not be impacted (2025.05.04)
+		- Major performance fixes for inefficient code and their firing too often, especially following combat ending (2025.05.07)
 
 	Config.lua
 		- Added mythicScenarioMode option to the configuration panels (2025.04.28)
@@ -36,6 +32,7 @@
 		- Tweaked the handling of RQE:AutoSuperTrackClosestQuest() - but is broken now since removing QUEST_WATCH_LIST_CHANGED (2025.05.04)
 		- Disabled the loading of several ObjectiveTracker bits within the RQE:UpdateTrackerVisibility() function (2025.05.06)
 		- Fixed RQE:GetClosestTrackedQuest() and RQE:AutoSuperTrackClosestQuest() functions to integrate into the coordinates within the DB in assisting to determine closest quest and then supertracking it (2025.05.06)
+		- Removed/edited debug messages and inefficient code (2025.05.07)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -61,6 +58,8 @@
 		- Enabled, once again, the QUEST_WATCH_LIST_CHANGED event function (2025.05.06)
 		- Improved performance in the modification of the PLAYER_REGEN_ENABLED, PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED, PLAYER_STARTED_MOVING and QUEST_WATCH_UPDATE event function (2025.05.06)
 		- Cleaned up function to update the scenario frame by only allowing this event function to be carried out if mythicMode is disabled (2025.05.06)
+		- Removed redundant code from within RQE:ToggleFramesAndTracker() and PLAYER_REGEN_ENABLED event function (2025.05.07)
+		- Added call to UpdateRQEQuestFrame() within UI_INFO_MESSAGE, if certain messageType fires, and QUEST_WATCH_UPDATE as the frame wasn't being updated immediately after a quest had been flagged as complete (2025.05.07)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -96,6 +95,9 @@
 		- Added a check for MagicButton visibility after RQE:CheckFrameVisibility has run (2025.04.21)
 		- Modified RQE:CheckFrameVisibility to run continuously as long as player is not in combat and not moving (2025.04.21)
 		- Increased the timer from 0 to 1.5 seconds when firing RQE:CheckFrameVisibility() function and also requiring player not be inside a scenario or moving (2025.05.06)
+
+	RQEMacro.lua
+		- Removed code to check macro after PLAYER_REGEN_ENABLED as this firing was causing massive lag as a result of inefficient code that wasn't needed, as the proper checks are already being handled at the proper events (2025.05.07)
 
 
 11.1.0.6 (2025.04.20)
