@@ -1581,7 +1581,7 @@ function RQE:UpdateTrackerVisibility()
 			if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
 				self.RQEQuestFrame:Hide()
 			else
-				print("Mythic/Scenario mode may not work correctly with current Carbonite Quests settings!\n\nGo to Carbonite addon settings > Quest Module > Watch Options\nCHECK: \"Hide Quest Watch Window\"\nUN-CHECK: \"Hide Blizzards Quest Track Window\"\nThen do reload your UI via \"/reload\"")
+				print("Mythic/Scenario mode may not work correctly with current Carbonite Quests settings!\n\nGo to Carbonite addon settings > Quest Module > Watch Options\nCHECK: \"Hide Quest Watch Window\"\nUN-CHECK: \"Hide Blizzards Quest Track Window\"\nThen reload your UI via \"/reload\"")
 				return
 			end
 		end
@@ -1643,7 +1643,6 @@ function RQE:UpdateTrackerVisibility()
 
 	RQE.updateScenarioUI()
 end
-
 
 
 -- Anchor the Objective Tracker to the RQEFrame
@@ -1802,17 +1801,6 @@ function RQE:UpdateMapIDDisplay()
 		RQEFrame.MapIDText:SetText("")
 	end
 end
-
-
--- -- Function to update Memory Usage display
--- function RQE:UpdateMemUsageDisplay()
-	-- local mapID = C_Map.GetBestMapForUnit("player")
-	-- if RQE.db.profile.showMapID and mapID then
-		-- RQEFrame.MemoryUsageText:SetText("RQE Usage: " .. memUsageText)
-	-- else
-		-- RQEFrame.MemoryUsageText:SetText("")
-	-- end
--- end
 
 
 -- Function to update the frame based on the current profile settings
@@ -2246,8 +2234,6 @@ function RQE:ShouldClearFrame()
 		end
 	end
 
-	-- RQE.CheckQuestInfoExists()
-
 	-- Call the delayed clear check
 	RQE:DelayedClearCheck()
 end
@@ -2312,8 +2298,6 @@ function RQE:DelayedClearCheck()
 			end
 		end
 	end)
-
-	-- RQE.CheckQuestInfoExists()
 end
 
 
