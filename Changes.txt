@@ -76,6 +76,7 @@
 		- Modification to RQE:QuestRewardsTooltip(tooltip, questID) function to include profession skill points (2025.05.04)
 		- Added RQE:CheckWatchedQuestsSync() function that checks the tracked quests and compares with the quests listed in the RQEQuestFrame to ensure that all applicably tracked quests are being properly shown (2025.05.04)
 		- Ensured that the RQE:CheckWatchedQuestsSync() function only fires when player is not in combat, not casting, not channeling, not moving and the player is hovering over the WorldMapFrame or the RQEQuestFrame and still no more than once per second (2025.05.04)
+		- Modified function that handles RQE:CheckWatchedQuestsSync() to include if the world map frame is open or the classic quest log frame (assuming player has this addon) is also open (2025.05.06)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.04.28)
