@@ -1560,21 +1560,21 @@ function RQE:UpdateTrackerVisibility()
 
 	-- print(">> UpdateTrackerVisibility: inScenario =", inScenario, "| mythicMode =", mythicMode, "| configWantsQuestFrame =", configWantsQuestFrame)
 
-	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-		C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
-	end
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
+	-- end
 
-	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-		C_AddOns.LoadAddOn("Blizzard_ScenarioObjectiveTracker")
-	end
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_ScenarioObjectiveTracker")
+	-- end
 
-	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-		C_AddOns.LoadAddOn("Blizzard_BonusObjectiveTracker")
-	end
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_BonusObjectiveTracker")
+	-- end
 
-	if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-		C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
-	end
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
+	-- end
 
 	if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
 		if mythicMode and inScenario then
@@ -2866,121 +2866,48 @@ end
 
 -- Function to find the closest quest currently being tracked
 function RQE:GetClosestTrackedQuest()
-	local closestQuestID = nil
-	local closestDistance = math.huge -- Initialize with a very large number
+	local closestQuestID, closestDistance = nil, math.huge
 	local playerMapID = C_Map.GetBestMapForUnit("player")
-	local playerLevel = UnitLevel("player")
-	local maxPlayerLevel = GetMaxPlayerLevel()
+	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+	if not playerPos then return end
+	local px, py = playerPos:GetXY()
 
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("playerLevel is " .. playerLevel .. " and maxPlayerLevel is " .. maxPlayerLevel)
-	end
-
-	-- Helper function to check if the quest is being actively watched
-	local function IsQuestWatched(questID)
-		-- -- Check world quest watches
-		-- for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			-- if questID == C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i) then
-				-- return true
-			-- end
-		-- end
-
-		-- Check regular quest watches
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			if questID == C_QuestLog.GetQuestIDForQuestWatchIndex(i) then
-				return true
-			end
-		end
-
-		return false
-	end
-
-	-- Fallback case to find a quest in the current zone
-	local fallbackQuestID = nil
-
-	-- Iterate through all quests in the player's quest log
-	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-		local info = C_QuestLog.GetInfo(i)
-
-		-- Only consider quests that are being tracked, on the map, and actively watched
-		if info and info.isOnMap and C_QuestLog.IsOnQuest(info.questID) and IsQuestWatched(info.questID) then
-
-			-- Case 1: Super track nearest non-campaign quest if campaign tracking is disabled
-			if RQE.db.profile.enableNearestSuperTrackCampaign and playerLevel == maxPlayerLevel then
-				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
-				if classification == Enum.QuestClassification.Campaign or Enum.QuestClassification.Meta then
-					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
-
-					-- Update closest quest if this one is closer
-					if distance and distance < closestDistance then
-						closestDistance = distance
-						closestQuestID = info.questID
-					end
-				end
-
-			-- Case 2: Super track nearest campaign quest while leveling if "Leveling Only" is enabled
-			elseif RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly and playerLevel < maxPlayerLevel then
-				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
-				if classification == Enum.QuestClassification.Campaign or Enum.QuestClassification.Meta then
-					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
-
-					-- Update closest campaign quest if this one is closer
-					if distance and distance < closestDistance then
-						closestDistance = distance
-						closestQuestID = info.questID
-					end
-				end
-
-			-- Case 3: Super track nearest quest
-			elseif RQE.db.profile.enableNearestSuperTrack or RQE.db.profile.enableAutoSuperTrackSwap then
-				local classification = C_QuestInfoSystem.GetQuestClassification(info.questID)
-				if classification ~= Enum.QuestClassification.Campaign and classification ~= Enum.QuestClassification.Meta then
-					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
-					if distance and distance < closestDistance then
-						closestDistance = distance
-						closestQuestID = info.questID
-					end
+	-- Use internal DB if distance via Blizzard fails
+	local function fallbackDistanceFromDB(questID)
+		local questData = RQE.getQuestData(questID)
+		if questData then
+			for i = 1, 10 do
+				local step = questData[i]
+				if step and step.coordinates then
+					return RQE:GetDistance(playerMapID, px, py, step.coordinates.mapID, step.coordinates.x / 100, step.coordinates.y / 100)
 				end
 			end
-
-			-- After your other IF blocks
-			if not (RQE.db.profile.enableNearestSuperTrackCampaign or RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly or RQE.db.profile.enableNearestSuperTrack) then
-				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
-				if distance and distance < closestDistance then
-					closestDistance = distance
-					closestQuestID = info.questID
-				end
-			end
-
-			-- -- Case 3B: Super track nearest quest if nothing is being super tracked
-			-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-			-- if RQE.db.profile.enableNearestSuperTrack and not isSuperTracking then
-				-- -- Call the fallback function to supertrack the first watched quest in the current zone
-				-- RQE:SuperTrackFirstWatchedQuestInCurrentZone()
-			-- end
 		end
+		return math.huge
 	end
 
-	-- Handle the case where closestQuestID is nil
-	if not closestQuestID then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No tracked quests found. Attempting fallback to first watched quest in the current zone.")
+	-- Iterate all watched quests
+	for i = 1, C_QuestLog.GetNumQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			local distance, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			local finalDist = math.huge
+
+			if distance and onContinent then
+				finalDist = math.sqrt(distance)
+			else
+				finalDist = fallbackDistanceFromDB(questID)
+			end
+
+			if finalDist < closestDistance then
+				closestDistance = finalDist
+				closestQuestID = questID
+			end
 		end
-		-- Call the fallback function to supertrack the first watched quest in the current zone
-		RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
-		local extractedQuestID
-		local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		if currentSuperTrackedQuestID ~= extractedQuestID then
-			print("The closest quest to your current location is " .. tostring(closestQuestID))
-		end
+		print("Determined closest tracked quest:", closestQuestID, "- Distance:", closestDistance)
 	end
 
 	return closestQuestID
@@ -2990,43 +2917,40 @@ end
 -- Function to Auto Supertrack the Nearest Watched Quest
 function RQE:AutoSuperTrackClosestQuest()
 	if not RQE.db.profile.enableAutoSuperTrackSwap then return end
-	if InCombatLockdown() then return end
+	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") then return end
 
-	local onTaxi = UnitOnTaxi("player")
-	if onTaxi then return end
-
-	-- Get the closest tracked quest ID
 	local closestQuestID = RQE:GetClosestTrackedQuest()
+	local supertrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	if closestQuestID and closestQuestID ~= 0 then
-		-- Force watch + supertrack properly
-		RQE:ForceSuperTrackQuestProperly(closestQuestID)
+		if closestQuestID ~= supertrackedQuestID then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Supertracked questID is: " ..  supertrackedQuestID)
+				print("This doesn't match with the closest questID: " .. closestQuestID)
+			end
+			RQE.Buttons.ClearButtonPressed()
+			C_SuperTrack.SetSuperTrackedQuestID(0)
 
-		RQE.ClickQuestLogIndexButton(closestQuestID)
+			C_Timer.After(0.3, function()
+				RQE:ForceSuperTrackQuestProperly(closestQuestID)
+				RQE.ClickQuestLogIndexButton(closestQuestID)
+				RQE:SaveSuperTrackedQuestToCharacter()
 
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Supertracking closest quest (full reset method):", closestQuestID)
-		end
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Supertracking closest quest:", closestQuestID)
+				end
 
-		RQE:SaveSuperTrackedQuestToCharacter()
+				C_Timer.After(0.3, function()
+					UpdateFrame()
+					UpdateRQEQuestFrame()
+				end)
 
-		C_Timer.After(0.2, function()
-			RQE:ForceSuperTrackQuestProperly(closestQuestID)
-		end)
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No valid tracked quest found for supertracking.")
+				C_Timer.After(0.4, function()
+					RQE.CheckAndClickWButton()
+				end)
+			end)
 		end
 	end
-
-	C_Timer.After(0.3, function()
-		UpdateFrame()
-		UpdateRQEQuestFrame()
-	end)
-
-	C_Timer.After(0.4, function()
-		RQE.CheckAndClickWButton()
-	end)
 end
 
 
