@@ -1,4 +1,4 @@
-11.1.5.1
+11.1.5.1 (2025.05.07)
 
 	**HIGHLIGHTS**
 		- Fix taint related to the clicking of the QuestLogIndexButton in the RQEQuestFrame (2025.04.21)
