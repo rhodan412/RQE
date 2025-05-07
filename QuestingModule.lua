@@ -3692,7 +3692,12 @@ end
 C_Timer.NewTicker(1, function()
 	if InCombatLockdown() then return end
 
-	if not UnitCastingInfo("player") and not UnitChannelInfo("player") and not IsPlayerMoving() and (WorldMapFrame:IsMouseOver() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver())) then
+	local isMapOpen = WorldMapFrame:IsShown()
+	local isClassicQuestLogOpen = ClassicQuestLog and ClassicQuestLog:IsShown()
+	local isPlayerStationary = not UnitCastingInfo("player") and not UnitChannelInfo("player") and not IsPlayerMoving()
+	local isMouseOverRelevantFrames = WorldMapFrame:IsMouseOver() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver())
+
+	if isPlayerStationary and (isMapOpen or isClassicQuestLogOpen or isMouseOverRelevantFrames) then
 		RQE:CheckWatchedQuestsSync()
 	end
 end)
