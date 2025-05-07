@@ -6,8 +6,11 @@
 		- Prints questText (descriptionQuestText) and objectivesQuestText in the custom quest tooltip following a print-out on the questline of the specified quest (2025.04.21)
 		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
 		- New Feature: Mythic/Scenario Mode allows the display of the default blizzard tracker when player is in scenario [off by default] allowing player to see countdown timers associated with scenario stages (2025.04.28)
-		- Fixed track closest watched quest on player movement based on proximity due to change Blizzard made with the release of patch 11.1.5 (2025.04.28)
 		- Major performance fix for QUEST_WATCH_LIST_CHANGED firing too frequently (2025.05.04)
+		- Improved overall performance of the add-on by modifying code within event functions and reducing redundancy on multiple firings (2025.05.06)
+
+	**BREAKING CHANGE (needs further testing to determine if fix is good)**
+		- The experimental supertrack nearest quest based on proximity, on movement, is broken due to the change in enhancing the addon's performance. This feature was disabled, by default, due to its experimental nature. This feature will return fixed at a later time when performance will not be impacted (2025.05.04)
 
 	Config.lua
 		- Added mythicScenarioMode option to the configuration panels (2025.04.28)
@@ -31,6 +34,8 @@
 		- Commented out UpdateRQEQuestFrame() within the RQE:UpdateTrackerVisibility() function to minimize lag when this function fires as this update isn't required with every update event (2025.05.03)
 		- Fixed macro check not firing with the RQE:StartPerdiodicChecks() function (2025.05.04)
 		- Tweaked the handling of RQE:AutoSuperTrackClosestQuest() - but is broken now since removing QUEST_WATCH_LIST_CHANGED (2025.05.04)
+		- Disabled the loading of several ObjectiveTracker bits within the RQE:UpdateTrackerVisibility() function (2025.05.06)
+		- Fixed RQE:GetClosestTrackedQuest() and RQE:AutoSuperTrackClosestQuest() functions to integrate into the coordinates within the DB in assisting to determine closest quest and then supertracking it (2025.05.06)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -53,6 +58,9 @@
 		- Major update to QUEST_WATCH_LIST_CHANGED event function to clean up order and improve performance. It will only handle the bulk of the updates if following UNIT_QUEST_LOG_CHANGED fires and only the one time (2025.05.04)
 		- Removed QUEST_WATCH_LIST_CHANGED event function from being listened to in order to further increase addon performance (2025.05.04)
 		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function (2025.05.04)
+		- Enabled, once again, the QUEST_WATCH_LIST_CHANGED event function (2025.05.06)
+		- Improved performance in the modification of the PLAYER_REGEN_ENABLED, PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED, PLAYER_STARTED_MOVING and QUEST_WATCH_UPDATE event function (2025.05.06)
+		- Cleaned up function to update the scenario frame by only allowing this event function to be carried out if mythicMode is disabled (2025.05.06)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -80,11 +88,13 @@
 		- Added additional weekly profession Valdrakken quests to the DB (2025.04.30)
 		- Added additional notations to quests in DB for the objectiveText, descriptionText and npc info (2025.05.03)
 		- Fixes/adjustments to quest in Darkmoon Faire within quest DB (2025.05.04)
+		- Added some additional objectiveText, descriptionText and npc info to the quest DB (2025.05.06)
 
 	RQEFrame.lua
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
 		- Added a check for MagicButton visibility after RQE:CheckFrameVisibility has run (2025.04.21)
 		- Modified RQE:CheckFrameVisibility to run continuously as long as player is not in combat and not moving (2025.04.21)
+		- Increased the timer from 0 to 1.5 seconds when firing RQE:CheckFrameVisibility() function and also requiring player not be inside a scenario or moving (2025.05.06)
 
 
 11.1.0.6 (2025.04.20)
