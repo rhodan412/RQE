@@ -2294,11 +2294,13 @@ end
 
 
 -- Frequent checking with OnUpdate to enforce the visibility state of RQE frames
-C_Timer.NewTicker(0, function()
+C_Timer.NewTicker(1.5, function()
 	if InCombatLockdown() then return end
 	local isMoving = IsPlayerMoving()
+	local inScenario = C_Scenario.IsInScenario()
 
-	if RQE.CanCheckFrame or not isMoving then
+	--if RQE.CanCheckFrame or not isMoving then
+	if not isMoving or inScenario then
 		RQE:CheckFrameVisibility()
 	end
 end)
