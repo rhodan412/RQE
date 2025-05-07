@@ -133,14 +133,14 @@ end
 
 -- Function to Toggle RQE Frames and Blizzard Objective Tracker
 function RQE:ToggleFramesAndTracker()
-	if InCombatLockdown() then
-		-- If in combat, queue the toggle for after combat and return early
-		RQE:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-			RQE:ToggleFramesAndTracker() -- Try to toggle again once combat ends
-			RQE:UnregisterEvent("PLAYER_REGEN_ENABLED") -- Unregister the event to avoid repeated triggers
-		end)
-		return
-	end
+	-- if InCombatLockdown() then
+		-- -- If in combat, queue the toggle for after combat and return early
+		-- RQE:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+			-- RQE:ToggleFramesAndTracker() -- Try to toggle again once combat ends
+			-- RQE:UnregisterEvent("PLAYER_REGEN_ENABLED") -- Unregister the event to avoid repeated triggers
+		-- end)
+		-- return
+	-- end
 
 	if RQEFrame:IsShown() then
 		-- Hide RQE frames
@@ -1157,13 +1157,13 @@ function RQE.handlePlayerRegenEnabled()
 		-- end
 	-- end
 
-	-- Update Display of Memory Usage of Addon
-	if RQE.db and RQE.db.profile.displayRQEmemUsage then
-		RQE:CheckMemoryUsage()
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
-			DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)	-- Cornflower Blue
-		end
-	end
+	-- -- Update Display of Memory Usage of Addon
+	-- if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		-- RQE:CheckMemoryUsage()
+		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
+			-- DEFAULT_CHAT_FRAME:AddMessage("PLAYER_REGEN_ENABLED Debug: Checked memory usage.", 0.46, 0.62, 1)	-- Cornflower Blue
+		-- end
+	-- end
 
 	-- -- Update Display of CPU Usage of Addon
 	-- if RQE.db and RQE.db.profile.displayRQEcpuUsage then
@@ -3182,7 +3182,7 @@ function RQE.handleZoneChange(...)
 				end
 
 				-- C_Timer.After(0.05, function()
-					-- -- RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the ZONE_CHANGED and ZONE_CHANGED_INDOORS event
+					RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the ZONE_CHANGED and ZONE_CHANGED_INDOORS event
 					-- C_Timer.After(0.3, function()
 						-- if C_QuestLog.ReadyForTurnIn(C_SuperTrack.GetSuperTrackedQuestID()) then
 							-- RQE:StartPeriodicChecks()
@@ -3694,7 +3694,7 @@ function RQE.handleUIInfoMessage(...)
 	local event = select(2, ...)
 	local messageType = select(3, ...)
 	local message = select(4, ...)
-
+	
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -3769,6 +3769,10 @@ function RQE.handleUIInfoMessage(...)
 				end
 				RQE.TrackClosestQuest()
 			end
+
+			C_Timer.After(0.7, function()
+				UpdateRQEQuestFrame()
+			end)
 
 			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
 			if RQEFrame and not RQEFrame:IsMouseOver() then
@@ -5191,6 +5195,8 @@ function RQE.handleQuestWatchUpdate(...)
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
 	end
+
+	UpdateRQEQuestFrame()
 end
 
 
