@@ -276,29 +276,29 @@ RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 
--- Handle the queued macro creation and clear requests after combat
-RQEMacro.macroClearEventFrame = CreateFrame("Frame")
-RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
-	if event == "PLAYER_REGEN_ENABLED" then
-		-- Process queued macro set/update operations
-		for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
-			RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
-		end
-		wipe(RQEMacro.pendingMacroSets)
+-- -- Handle the queued macro creation and clear requests after combat
+-- RQEMacro.macroClearEventFrame = CreateFrame("Frame")
+-- RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+-- RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
+	-- if event == "PLAYER_REGEN_ENABLED" then
+		-- -- Process queued macro set/update operations
+		-- for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
+			-- RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
+		-- end
+		-- wipe(RQEMacro.pendingMacroSets)
 
-		for _, op in ipairs(RQEMacro.pendingMacroOperations) do
-			RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
-		end
-		wipe(RQEMacro.pendingMacroOperations)
+		-- for _, op in ipairs(RQEMacro.pendingMacroOperations) do
+			-- RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
+		-- end
+		-- wipe(RQEMacro.pendingMacroOperations)
 
-		-- Process queued macro clear operations
-		for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
-			RQEMacro:ActuallyClearMacroContentByName(macroName)
-		end
-		wipe(RQEMacro.pendingMacroClears)
-	end
-end)
+		-- -- Process queued macro clear operations
+		-- for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
+			-- RQEMacro:ActuallyClearMacroContentByName(macroName)
+		-- end
+		-- wipe(RQEMacro.pendingMacroClears)
+	-- end
+-- end)
 
 
 -- Function to update the Magic Button Tooltip dynamically
