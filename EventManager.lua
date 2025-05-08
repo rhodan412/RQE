@@ -4135,7 +4135,9 @@ function RQE.handleUnitQuestLogChange(...)
 		end
 	end
 
-	UpdateRQEQuestFrame()
+	C_Timer.After(0.45, function()
+		UpdateRQEQuestFrame()
+	end)
 end
 
 
@@ -4436,7 +4438,7 @@ function RQE.handleQuestStatusUpdate()
 		end)
 	end
 
-	if not IsPlayerMoving() then
+	if not IsPlayerMoving() then	-- Might need to remove IsPlayerMoving if quest complete doesn't properly update when it should show as complete
 		-- print("~~~ UpdateRQEQuestFrame(): 4384 ~~~")
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires	-- FIRES FAIRLY OFTEN, BUT MAY NEED TO RE-ENABLE
 		UpdateRQEWorldQuestFrame()
@@ -5196,7 +5198,9 @@ function RQE.handleQuestWatchUpdate(...)
 		end)
 	end
 
-	UpdateRQEQuestFrame()
+	C_Timer.After(0.7, function()
+		UpdateRQEQuestFrame()
+	end)
 end
 
 
