@@ -1,3 +1,15 @@
+11.1.5.2
+
+	EventManager.lua
+		- Added UpdateRQEQuestFrame(), following brief delay within UNIT_QUEST_LOG_CHANGED and QUEST_WATCH_UPDATE functions (2025.05.07)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.05.07)
+
+	RQEDatabase.lua
+		- Added additional War Within quests to DB (2025.05.07)
+
+
 11.1.5.1 (2025.05.07)
 
 	**HIGHLIGHTS**
