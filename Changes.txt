@@ -1,7 +1,13 @@
-11.1.5.2
+11.1.5.2 (2025.05.10)
+
+	**HIGHLIGHTS**
+		- Fixed issue where RQEQuestFrame (quest tracker frame) wouldn't update following a scenario and sometimes not update when a quest should be flagged as complete (2025.05.07)
 
 	EventManager.lua
 		- Added UpdateRQEQuestFrame(), following brief delay within UNIT_QUEST_LOG_CHANGED and QUEST_WATCH_UPDATE functions (2025.05.07)
+		- Enabled the firing of RQE:AutoSuperTrackClosestQuest() when PLAYER_MOUNT_DISPLAY_CHANGED and if player is going from not mounted to mounted (2025.05.10)
+		- Added the calling of UpdateRQEQuestFrame() when SCENARIO_COMPLETED and SCENARIO_UPDATE events fire as well as when the RQE.updateScenarioUI() function is called (2025.05.10)
+		- Removed the firing of UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() functions when QUEST_LOG_UPDATE occurs as this results in intermittent lag spikes (2025.05.10)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.05.07)
