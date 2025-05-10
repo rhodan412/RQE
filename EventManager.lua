@@ -1207,19 +1207,19 @@ function RQE.handlePlayerMountDisplayChanged()
 		end
 	end
 
-	-- if not InCombatLockdown() then
-		-- local isMounted = IsMounted()
-		-- C_Timer.After(0.1, function()
-			-- if isMounted then
-				-- -- RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
+	if not InCombatLockdown() then
+		local isMounted = IsMounted()
+		C_Timer.After(0.1, function()
+			if isMounted then
+				RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
 				-- if RQE.db.profile.autoClickWaypointButton then
 					-- C_Timer.After(0.3, function()
 						-- RQE:StartPeriodicChecks()
 					-- end)
 				-- end
-			-- end
-		-- end)
-	-- end
+			end
+		end)
+	end
 
 	-- -- Tier Five Importance: PLAYER_MOUNT_DISPLAY_CHANGED event
 	-- C_Timer.After(0.5, function()
@@ -1668,6 +1668,14 @@ function RQE.handleScenarioComplete(...)
 		DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)	-- French Lilac
 	end
 
+	C_Timer.After(1.6, function()
+		if not C_Scenario.IsInScenario() then
+			if RQE.ScenarioChildFrame:IsVisible() then
+				UpdateRQEQuestFrame()
+			end
+		end
+	end)
+
 	C_Timer.After(0.5, function()
 		RQE:UpdateTrackerVisibility()
 		-- RQE.updateScenarioUI()
@@ -1694,23 +1702,29 @@ function RQE.handleScenarioUpdate(...)
 		end
 	end
 
+	C_Timer.After(1.2, function()
+		if RQE.ScenarioChildFrame:IsVisible() then
+			UpdateRQEQuestFrame()
+		end
+	end)
+
+	-- if not C_Scenario.IsInScenario() then
+		-- if not RQE.ScenarioChildFrame:IsVisible() then
+			-- -- print("Not in scenario... Ending")
+			-- return
+		-- -- else
+			-- -- print("In scenario... Continuing")
+		-- end
+	-- -- else
+		-- -- print("In scenario... Continuing")
+	-- end
+
 	C_Timer.After(0.1, function()
 		RQE:UpdateTrackerVisibility()
 	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("SU Debug: " .. tostring(event) .. " triggered. New Step: " .. tostring(newStep), 0.9, 0.7, 0.9)	-- French Lilac
-	end
-
-	if not C_Scenario.IsInScenario() then
-		if not RQE.ScenarioChildFrame:IsVisible() then
-			-- print("Not in scenario... Ending")
-			return
-		-- else
-			-- print("In scenario... Continuing")
-		end
-	-- else
-		-- print("In scenario... Continuing")
 	end
 
 	if RQE.db.profile.autoClickWaypointButton then
@@ -1721,7 +1735,7 @@ function RQE.handleScenarioUpdate(...)
 	RQE.updateScenarioUI()
 	RQE.UpdateCampaignFrameAnchor()
 	-- print("~~~ UpdateRQEQuestFrame(): 1723 ~~~")
-	UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
+	--UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 	RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 end
@@ -4251,6 +4265,7 @@ function RQE.updateScenarioUI()
 			end
 
 			RQE.UpdateCampaignFrameAnchor()
+			UpdateRQEQuestFrame()
 			return
 		end
 
@@ -4438,11 +4453,11 @@ function RQE.handleQuestStatusUpdate()
 		end)
 	end
 
-	if not IsPlayerMoving() then	-- Might need to remove IsPlayerMoving if quest complete doesn't properly update when it should show as complete
-		-- print("~~~ UpdateRQEQuestFrame(): 4384 ~~~")
-		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires	-- FIRES FAIRLY OFTEN, BUT MAY NEED TO RE-ENABLE
-		UpdateRQEWorldQuestFrame()
-	end
+	-- if not IsPlayerMoving() then	-- Might need to remove IsPlayerMoving if quest complete doesn't properly update when it should show as complete
+		-- -- print("~~~ UpdateRQEQuestFrame(): 4384 ~~~")
+		-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires	-- FIRES FAIRLY OFTEN, BUT MAY NEED TO RE-ENABLE
+		-- UpdateRQEWorldQuestFrame()
+	-- end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("handleQuestStatusUpdate: Called UpdateRQEQuestFrame (1686).", 1, 0.75, 0.79)		-- Pink
