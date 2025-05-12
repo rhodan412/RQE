@@ -1,3 +1,23 @@
+11.1.5.3
+
+	**HIGHLIGHTS**
+		- Search function, within RQE addon, now also includes ability to search through description or objectives in the DB, and also includes clickable custom tooltip for when player is not on the searched quest (2025.05.12)
+
+	Core.lua
+		- Can now use search function to search quest description or quest objectives, in addition to the already existing questID and/or questName (2025.05.12)
+		- Added custom tooltip functionality for searched quests so player can see the description and objectives when clicking the questName following a search (2025.05.12)
+
+	EventManager.lua
+		- Added some debug and comment lines (2025.05.12)
+		- Added UpdateRQEQuestFrame when SCENARIO_COMPLETED event function fires or PLAYER_STARTED_MOVING, as long as player is mounted (2025.05.12)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.05.12)
+
+	RQEDatabase.lua
+		- Added additional WQ and description/objectives text to the DB (2025.05.12)
+
+
 11.1.5.2 (2025.05.10)
 
 	**HIGHLIGHTS**
