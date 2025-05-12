@@ -2833,7 +2833,9 @@ function RQE:ShowCustomQuestTooltip(questID)
 					GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
 				end
 			else
-				GameTooltip:AddLine("Objective info unavailable", 0.8, 0.8, 0.8, true)
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+				GameTooltip:AddLine("Objective requirements unavailable", 0.8, 0.8, 0.8, true)
 			end
 
 			-- Add Rewards
@@ -3950,8 +3952,8 @@ RQE.SearchModule = {}
 -- Function to create the Search Box with an Examine button
 function RQE.SearchModule:CreateSearchBox()
 	local editBox = AceGUI:Create("EditBox")
-	editBox:SetLabel("Enter Quest ID or Title:")
-	editBox:SetWidth(200)
+	editBox:SetLabel("Enter Quest ID, Title, Description or Objective:")
+	editBox:SetWidth(350)
 	editBox:SetCallback("OnEnterPressed", function(widget, event, text)
 		local questID = tonumber(text)
 		local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
@@ -3962,11 +3964,38 @@ function RQE.SearchModule:CreateSearchBox()
 			-- Direct use of numeric ID
 			table.insert(foundQuestIDs, questID)
 		else
-			-- Search across all databases for matching quest titles
+			-- Search across all databases for matches in title, description, or objectives
 			for dbName, db in pairs(RQEDatabase) do
 				for id, questData in pairs(db) do
+					local matchFound = false
+
+					-- Title match
 					if questData.title and string.find(string.lower(questData.title), inputTextLower) then
-						table.insert(foundQuestIDs, id) -- Add all matching IDs
+						matchFound = true
+					end
+
+					-- Description match
+					if not matchFound and questData.descriptionQuestText and type(questData.descriptionQuestText) == "table" then
+						for _, desc in ipairs(questData.descriptionQuestText) do
+							if string.find(string.lower(desc), inputTextLower) then
+								matchFound = true
+								break
+							end
+						end
+					end
+
+					-- Objectives match
+					if not matchFound and questData.objectivesQuestText and type(questData.objectivesQuestText) == "table" then
+						for _, obj in ipairs(questData.objectivesQuestText) do
+							if string.find(string.lower(obj), inputTextLower) then
+								matchFound = true
+								break
+							end
+						end
+					end
+
+					if matchFound then
+						table.insert(foundQuestIDs, id)
 					end
 				end
 			end
@@ -3974,23 +4003,24 @@ function RQE.SearchModule:CreateSearchBox()
 
 		-- Handling multiple found quest IDs
 		for _, foundQuestID in ipairs(foundQuestIDs) do
-			local questLink = GetQuestLink(foundQuestID)
 			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
 
-			if questLink then
-				print("Quest ID: " .. foundQuestID .. " - " .. questLink)
-			else
-				C_Timer.After(0.8, function()
+			C_Timer.After(0.2, function()
+				local questLink = GetQuestLink(foundQuestID)
+				if questLink then
+					print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+				else
 					local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
-					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
-				end)
-			end
+					local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", foundQuestID, questName)
+					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6" .. clickableQuestTitle .. "|r")
+				end
 
-			if isQuestCompleted then
-				DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)  -- Green text
-			else
-				DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)  -- Red text
-			end
+				if isQuestCompleted then
+					DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)	-- Green text
+				else
+					DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)	-- Red text
+				end
+			end)
 		end
 
 		-- Additional handling for no matches or multiple matches as needed
@@ -4067,7 +4097,9 @@ function RQE.SearchModule:CreateSearchBox()
 					print("Quest ID: " .. foundQuestID .. " - " .. questLink)
 				else
 					local questName = C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
-					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6[" .. questName .. "]|r")
+					-- ⬇Custom tooltip is created
+					local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", foundQuestID, C_QuestLog.GetTitleForQuestID(foundQuestID) or "Unknown Quest")
+					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6" .. clickableQuestTitle .. "|r")
 				end
 			end)
 
