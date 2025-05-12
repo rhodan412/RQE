@@ -649,6 +649,9 @@ function RQE.handleItemCountChanged(...)
 			RQE.ItemCountRanStartPeriodicChecks = true
 			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
 			C_Timer.After(0.65, function()
+			if RQE.db.profile.debugLevel == "INFO" then
+				print("RQE:StartPeriodicChecks() fired from ITEM_COUNT_CHANGED event")
+			end
 				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				C_Timer.After(1, function()
 					RQE.StartPerioFromItemCountChanged = false
@@ -721,6 +724,9 @@ function RQE.BagNewItemsAdded()
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
 			end
 			RQE.BagNewItemsRunning = true
+			if RQE.db.profile.debugLevel == "INFO" then
+				print("RQE:StartPeriodicChecks() fired from BAG_NEW_ITEMS_UPDATED event")
+			end
 			RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
 		end)
 	else
@@ -733,15 +739,10 @@ end
 
 
 -- Handles BAG_UPDATE event:
+-- Fired when a bags inventory changes
 function RQE.ReagentBagUpdate(...)
 	local event = select(2, ...)
 	local bagID = select(3, ...)
-
-	-- Array of allowed questID and minimap zone text pairs
-	local allowedQuests = {
-		["12000"] = { "Dragonblight", "Moonrest Gardens" },
-		-- Add more questIDs and zones as needed
-	}
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
@@ -761,6 +762,15 @@ function RQE.ReagentBagUpdate(...)
 	-- Return if the auto-click option is disabled
 	if not RQE.db.profile.autoClickWaypointButton then return end
 
+	-- Array of allowed questID and minimap zone text pairs
+	local allowedQuests = {
+		["12000"] = { "Dragonblight", "Moonrest Gardens" },
+		-- Add more questIDs and zones as needed
+	}
+
+	-- Get the current minimap zone text
+	local currentMinimapZone = GetMinimapZoneText() or ""
+
 	-- Get the currently super-tracked quest
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then
@@ -769,9 +779,6 @@ function RQE.ReagentBagUpdate(...)
 		end
 		return
 	end
-
-	-- Get the current minimap zone text
-	local currentMinimapZone = GetMinimapZoneText() or ""
 
 	-- Check if the questID and minimap zone match the allowed pairs
 	local isAllowedQuest = false
@@ -832,6 +839,9 @@ function RQE.ReagentBagUpdate(...)
 		C_Timer.After(1.65, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
+			end
+			if RQE.db.profile.debugLevel == "INFO" then
+				print("RQE:StartPeriodicChecks() fired from BAG_UPDATE event")
 			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
 		end)
@@ -1670,9 +1680,7 @@ function RQE.handleScenarioComplete(...)
 
 	C_Timer.After(1.6, function()
 		if not C_Scenario.IsInScenario() then
-			if RQE.ScenarioChildFrame:IsVisible() then
-				UpdateRQEQuestFrame()
-			end
+			UpdateRQEQuestFrame()
 		end
 	end)
 
@@ -2054,6 +2062,14 @@ function RQE.handlePlayerStartedMoving()
 						RQE.isCheckingMacroContents = false
 					end)
 				end
+			end
+		end)
+	end
+
+	if IsMounted() then
+		C_Timer.After(1.1, function()
+			if not C_Scenario.IsInScenario() then
+				UpdateRQEQuestFrame()
 			end
 		end)
 	end
