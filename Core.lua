@@ -9107,6 +9107,70 @@ function RQE:UpdateRecipeTrackingFrame(recipeID)
 end
 
 
+-- -- Smart crafting function: crafts a specified number, or determines remaining amount via quest objectives if 'x' is passed
+-- function RQE:CraftRecipeSmart(spellID, quantity)
+	-- if not spellID then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Crafting failed: No spellID provided.")
+		-- end
+		-- return
+	-- end
+
+	-- local amountToCraft
+
+	-- if type(quantity) == "number" and quantity > 0 then
+		-- amountToCraft = quantity
+
+	-- elseif quantity == "x" or tostring(quantity or "x") == "x" then
+		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		-- if not questID or questID == 0 then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("No supertracked quest found for dynamic crafting.")
+			-- end
+			-- return
+		-- end
+
+		-- local text = select(1, GetQuestObjectiveInfo(questID, 1, false)) or ""
+		-- local fulfilled, required = string.match(text, "(%d+)%s*/%s*(%d+)")
+		-- fulfilled = tonumber(fulfilled)
+		-- required = tonumber(required)
+
+		-- if not fulfilled or not required then
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print("Could not parse crafting requirement from objective text:", text)
+			-- end
+			-- return
+		-- end
+
+		-- amountToCraft = required - fulfilled
+		-- if amountToCraft <= 0 then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Objective already fulfilled or no crafting needed.")
+			-- end
+			-- return
+		-- end
+
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("Crafting quantity resolved from quest: " .. amountToCraft)
+		-- end
+
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Invalid quantity value passed to CraftRecipeSmart.")
+		-- end
+		-- return
+	-- end
+
+	-- if amountToCraft and amountToCraft > 0 then
+		-- C_TradeSkillUI.CraftRecipe(spellID, amountToCraft)
+
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("Crafting " .. amountToCraft .. " item(s) for spellID: " .. spellID)
+		-- end
+	-- end
+-- end
+
+
 -- Craft Specific Item for Quest
 function RQE:CraftSpecificItem(recipeSpellID)
 	if RQE.db.profile.debugLevel ~= "INFO+" then return end
