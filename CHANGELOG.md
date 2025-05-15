@@ -6,6 +6,7 @@
 	Core.lua
 		- Can now use search function to search quest description or quest objectives, in addition to the already existing questID and/or questName (2025.05.12)
 		- Added custom tooltip functionality for searched quests so player can see the description and objectives when clicking the questName following a search (2025.05.12)
+		- Added & Removed RQE:CraftRecipeSmart(spellID, quantity) as this is a feature that won't work to craft a number of items based on objective status as the C_TradeSkillUI.CraftRecipe API is restricted (2025.05.14)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
@@ -16,6 +17,7 @@
 
 	RQEDatabase.lua
 		- Added additional WQ and description/objectives text to the DB (2025.05.12)
+		- Added TBC Horde quests to the DB (2025.05.14)
 
 
 11.1.5.2 (2025.05.10)
