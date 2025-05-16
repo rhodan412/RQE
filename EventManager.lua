@@ -649,7 +649,7 @@ function RQE.handleItemCountChanged(...)
 			RQE.ItemCountRanStartPeriodicChecks = true
 			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
 			C_Timer.After(0.65, function()
-			if RQE.db.profile.debugLevel == "INFO" then
+			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE:StartPeriodicChecks() fired from ITEM_COUNT_CHANGED event")
 			end
 				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
@@ -724,7 +724,7 @@ function RQE.BagNewItemsAdded()
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
 			end
 			RQE.BagNewItemsRunning = true
-			if RQE.db.profile.debugLevel == "INFO" then
+			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE:StartPeriodicChecks() fired from BAG_NEW_ITEMS_UPDATED event")
 			end
 			RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
