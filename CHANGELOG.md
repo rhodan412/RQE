@@ -17,7 +17,8 @@
 
 	RQEDatabase.lua
 		- Added additional WQ and description/objectives text to the DB (2025.05.12)
-		- Added TBC Horde quests to the DB (2025.05.14)
+		- Added TBC Hellfire Peninsula Horde quests to the DB (2025.05.14)
+		- Added TBC Zangarmarsh, Nagrand, Blade's Edge Mountain and some Shadowmoon Valley Horde quests to the DB (2025.05.16)
 
 
 11.1.5.2 (2025.05.10)
