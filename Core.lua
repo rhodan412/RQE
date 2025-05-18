@@ -3917,6 +3917,125 @@ RQE.eventQuests = {
 	--[324] = {12397, 13437} -- Hallow's End Holiday event
 }
 
+
+-- Targeting function defined
+function RQE:TargetNearestQuestMob(questID)
+	local mobList = RQE.QuestMobTargetData[questID]
+	if not mobList then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("No mob list defined for quest:", questID)
+		end
+		return
+	end
+
+	for i = 1, 40 do  -- Scan nameplates (you could use a different method if not using nameplates)
+		local unitID = "nameplate" .. i
+		if UnitExists(unitID) then
+			local unitName = UnitName(unitID)
+			local isDead = UnitIsDead(unitID)
+
+			for _, mob in ipairs(mobList) do
+				if unitName == mob.name then
+					if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
+						--TargetUnit(unitID)
+
+						if mob.marker then
+							SetRaidTarget(unitID, mob.marker)
+						end
+
+						if RQE.db.profile.debugLevel == "INFO" then
+							print("Targeted:", unitName)
+						end
+						return
+					end
+				end
+			end
+		end
+	end
+	if RQE.db.profile.debugLevel == "INFO" then
+		print("No matching mob found nearby for quest:", questID)
+	end
+end
+
+
+-- Helper function to return the texture icon for the marker
+local function GetRaidMarkerIcon(marker)
+	if not marker then return "" end
+	return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. marker .. ":0|t"
+end
+
+
+-- Core marking logic for a given unitID (e.g., "mouseover", "target")
+local function TryMarkUnit(unitID, mobList)
+	if not UnitExists(unitID) then return end
+
+	local unitName = UnitName(unitID)
+	local isDead = UnitIsDead(unitID)
+	local currentMarker = GetRaidTargetIndex(unitID)
+
+	for _, mob in ipairs(mobList) do
+		if unitName == mob.name then
+			if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
+				if not currentMarker then
+					SetRaidTarget(unitID, mob.marker)
+					if RQE.db.profile.debugLevel == "INFO" then
+						print("Marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
+					end
+				end
+				return
+			end
+		end
+	end
+end
+
+
+-- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB
+function RQE:MarkQuestMobOnMouseover()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if (not questID or questID == 0) and RQE.searchedQuestID then
+		questID = RQE.searchedQuestID
+	end
+	if not questID or questID == 0 then return end
+
+	local mobList = {}
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then return end
+
+	-- Add all npcTargets from steps
+	for stepIndex, stepData in pairs(questData) do
+		if type(stepIndex) == "number" and type(stepData) == "table" then
+			if stepData.npcTargets and type(stepData.npcTargets) == "table" then
+				for _, mob in ipairs(stepData.npcTargets) do
+					if mob.name then
+						table.insert(mobList, mob)
+					end
+				end
+			end
+		end
+	end
+
+	-- Add DB.npc (quest turn-in) as marker=3 IF using searchedQuestID (not supertracked)
+	if questID == RQE.searchedQuestID then
+		if questData.npc and type(questData.npc) == "table" then
+			for _, npcName in ipairs(questData.npc) do
+				if npcName ~= "" then
+					table.insert(mobList, {
+						name = npcName,
+						marker = 3,
+						mustBeAlive = true
+					})
+				end
+			end
+		end
+	end
+
+	-- Pass to marker function
+	TryMarkUnit("mouseover", mobList)
+	TryMarkUnit("target", mobList)
+end
+
+
 ---------------------------------------------------
 -- 13. UI Components
 ---------------------------------------------------
