@@ -2480,18 +2480,28 @@ function UpdateRQEQuestFrame()
 					end
 				end
 
-				local questTitle, questLevel
+				local questTitle, questLevel, suggestedSize
 
-				-- Use the regular quest title and level
+				-- Use the regular quest title, level, and suggestedSize of party
 				questTitle = info.title
 				questLevel = info.level
+				suggestedSize = C_QuestLog.GetSuggestedGroupSize(questID)
 
 				-- Create or reuse the QuestLevelAndName label
 				local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")--, content)
 				QuestLogIndexButton.QuestLevelAndName = QuestLevelAndName
 				QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 				QuestLevelAndName:SetTextColor(137/255, 95/255, 221/255)  -- Medium Purple
-				QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
+
+				local levelText
+				if suggestedSize and suggestedSize > 1 then
+					levelText = string.format("[%s - Suggested: %s+]", questLevel, suggestedSize)
+				else
+					levelText = string.format("[%s]", questLevel)
+				end
+
+				QuestLevelAndName:SetText(levelText .. " " .. questTitle)
+				--QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
 				-- Create or reuse the QuestObjectives label
 				local QuestObjectives = RQE.QuestLogIndexButtons[i].QuestObjectives or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
