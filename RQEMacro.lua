@@ -173,7 +173,7 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 	local macroLines = {
 		"#showtooltip item:153541",
 		"/tar " .. npcName,
-		'/script SetRaidTarget("target",3)'
+		--'/script SetRaidTarget("target",3)'	-- COMMENTING OUT BECAUSE: the RQE:MarkQuestMobOnMouseover() function is handling the marking itself and the macro should only be designed for the targeting
 	}
 
 	print("Creating macro for searched NPC:", npcName)
