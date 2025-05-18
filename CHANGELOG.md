@@ -19,6 +19,7 @@
 		- Added additional WQ and description/objectives text to the DB (2025.05.12)
 		- Added TBC Hellfire Peninsula Horde quests to the DB (2025.05.14)
 		- Added TBC Zangarmarsh, Nagrand, Blade's Edge Mountain and some Shadowmoon Valley Horde quests to the DB (2025.05.16)
+		- Added TBC Shadowmoon Valley Horde and some Netherstorm Scryer quests to the DB (2025.05.18)
 
 
 11.1.5.2 (2025.05.10)
