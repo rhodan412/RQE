@@ -2,15 +2,24 @@
 
 	**HIGHLIGHTS**
 		- Search function, within RQE addon, now also includes ability to search through description or objectives in the DB, and also includes clickable custom tooltip for when player is not on the searched quest (2025.05.12)
+		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
+		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
+		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it reccomends a group to complete quest (2025.05.18)
 
 	Core.lua
 		- Can now use search function to search quest description or quest objectives, in addition to the already existing questID and/or questName (2025.05.12)
 		- Added custom tooltip functionality for searched quests so player can see the description and objectives when clicking the questName following a search (2025.05.12)
 		- Added & Removed RQE:CraftRecipeSmart(spellID, quantity) as this is a feature that won't work to craft a number of items based on objective status as the C_TradeSkillUI.CraftRecipe API is restricted (2025.05.14)
+		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
 		- Added UpdateRQEQuestFrame when SCENARIO_COMPLETED event function fires or PLAYER_STARTED_MOVING, as long as player is mounted (2025.05.12)
+		- Added PLAYER_TARGET_CHANGED and UPDATE_MOUSEOVER_UNIT event functions that call RQE:MarkQuestMobOnMouseover() when fired (2025.05.18)
+		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
+
+	QuestingModule.lua
+		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it reccomends a group to complete quest (2025.05.18)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.05.12)
@@ -20,6 +29,9 @@
 		- Added TBC Hellfire Peninsula Horde quests to the DB (2025.05.14)
 		- Added TBC Zangarmarsh, Nagrand, Blade's Edge Mountain and some Shadowmoon Valley Horde quests to the DB (2025.05.16)
 		- Added TBC Shadowmoon Valley Horde and some Netherstorm Scryer quests to the DB (2025.05.18)
+
+	RQEMacro.lua
+		- Removed (commented out) code to set raid marker on target for searched quest as this is instead being handled through the RQE:MarkQuestMobOnMouseover() function (2025.05.18)
 
 
 11.1.5.2 (2025.05.10)
