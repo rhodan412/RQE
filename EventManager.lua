@@ -232,6 +232,7 @@ local eventsToRegister = {
 	"PLAYER_REGEN_ENABLED",
 	"PLAYER_STARTED_MOVING",
 	"PLAYER_STOPPED_MOVING",
+	"PLAYER_TARGET_CHANGED",
 	"QUEST_ACCEPTED",
 	"QUEST_AUTOCOMPLETE",
 	"QUEST_COMPLETE",
@@ -263,6 +264,7 @@ local eventsToRegister = {
 	"UNIT_MODEL_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
+	"UPDATE_MOUSEOVER_UNIT",
 	-- "UPDATE_SHAPESHIFT_COOLDOWN",
 	-- "UPDATE_SHAPESHIFT_FORM",
 	-- "UPDATE_UI_WIDGET",
@@ -348,6 +350,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
 		PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 		PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
+		PLAYER_TARGET_CHANGED = RQE.handleUpdateMouseoverUnit,
 		QUEST_ACCEPTED = RQE.handleQuestAccepted,
 		QUEST_AUTOCOMPLETE = RQE.handleQuestAutoComplete,
 		QUEST_COMPLETE = RQE.handleQuestComplete,
@@ -379,6 +382,7 @@ local function HandleEvents(frame, event, ...)
 		UNIT_MODEL_CHANGED = RQE.handleUnitModelChange,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
+		UPDATE_MOUSEOVER_UNIT = RQE.handleUpdateMouseoverUnit,
 		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
 		UPDATE_SHAPESHIFT_FORM = RQE.handleUpdateShapeShiftForm,
 		-- UPDATE_UI_WIDGET = RQE.handleUpdateWidgetID,
@@ -2125,6 +2129,14 @@ function RQE.handlePlayerStoppedMoving()
 end
 
 
+-- Function handling the UPDATE_MOUSEOVER_UNIT and PLAYER_TARGET_CHANGED event
+-- Fired when the mouseover object needs to be updated. 
+-- This event is fired whenever the player's target is changed, including when the target is lost. 
+function RQE.handleUpdateMouseoverUnit()
+	RQE:MarkQuestMobOnMouseover()
+end
+
+
 -- Handling UPDATE_SHAPESHIFT_COOLDOWN event
 function RQE.handleUpdateShapeShiftCD()
 	-- local isBearFormSpellKnown = IsPlayerSpell(5487)
@@ -2528,7 +2540,9 @@ function RQE.handlePlayerEnterWorld(...)
 		RQE:RestoreTrackedQuestsForCharacter()
 		RQE:RestoreSuperTrackedQuestForCharacter()
 		-- print("~~~ UpdateRQEQuestFrame(): 2464 ~~~")
-		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
+		C_Timer.After(8, function()
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
+		end)
 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
