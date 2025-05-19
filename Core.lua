@@ -1160,7 +1160,7 @@ function RQE.ObtainSuperTrackQuestDetails()
 
 	C_Timer.After(0.15, function()
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			if RQEFrame and RQEFrame:IsShown() then
+			if RQEFrame and RQEFrame:IsShown() and RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				RQE.TheSuperQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			else
 				RQE.TheSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1172,16 +1172,12 @@ function RQE.ObtainSuperTrackQuestDetails()
 			local questData = RQE.getQuestData(RQE.TheSuperQuestID)
 
 			if not questData then
-				-- Quest is NOT in the DB at all
 				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
 			else
 				local totalSteps = #questData
-
 				if totalSteps == 0 then
-					-- Quest is in the DB but has no steps
 					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
 				else
-					-- Quest is in the DB and has steps
 					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
 				end
 			end
@@ -3992,20 +3988,23 @@ end
 -- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB
 function RQE:MarkQuestMobOnMouseover()
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local usingSearch = false
+
 	if (not questID or questID == 0) and RQE.searchedQuestID then
 		questID = RQE.searchedQuestID
+		usingSearch = true
 	end
 	if not questID or questID == 0 then return end
-
-	local mobList = {}
 
 	local questData = RQE.getQuestData(questID)
 	if not questData then return end
 
-	-- Add all npcTargets from steps
-	for stepIndex, stepData in pairs(questData) do
-		if type(stepIndex) == "number" and type(stepData) == "table" then
-			if stepData.npcTargets and type(stepData.npcTargets) == "table" then
+	local mobList = {}
+
+	-- If using searchedQuestID (not in log), pull ALL npcTargets + npc (turn-in)
+	if usingSearch then
+		for _, stepData in pairs(questData) do
+			if type(stepData) == "table" and stepData.npcTargets then
 				for _, mob in ipairs(stepData.npcTargets) do
 					if mob.name then
 						table.insert(mobList, mob)
@@ -4013,10 +4012,8 @@ function RQE:MarkQuestMobOnMouseover()
 				end
 			end
 		end
-	end
 
-	-- Add DB.npc (quest turn-in) as marker=3 IF using searchedQuestID (not supertracked)
-	if questID == RQE.searchedQuestID then
+		-- Add DB.npc turn-in marker as marker 3
 		if questData.npc and type(questData.npc) == "table" then
 			for _, npcName in ipairs(questData.npc) do
 				if npcName ~= "" then
@@ -4028,9 +4025,20 @@ function RQE:MarkQuestMobOnMouseover()
 				end
 			end
 		end
+
+	else
+		-- Quest is active and supertracked → Only use current step's npcTargets
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
+			for _, mob in ipairs(questData[stepIndex].npcTargets) do
+				if mob.name then
+					table.insert(mobList, mob)
+				end
+			end
+		end
 	end
 
-	-- Pass to marker function
+	-- Run the marker logic
 	TryMarkUnit("mouseover", mobList)
 	TryMarkUnit("target", mobList)
 end
