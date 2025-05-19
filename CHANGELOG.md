@@ -11,6 +11,8 @@
 		- Added custom tooltip functionality for searched quests so player can see the description and objectives when clicking the questName following a search (2025.05.12)
 		- Added & Removed RQE:CraftRecipeSmart(spellID, quantity) as this is a feature that won't work to craft a number of items based on objective status as the C_TradeSkillUI.CraftRecipe API is restricted (2025.05.14)
 		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
+		- Fixed RQE.ObtainSuperTrackQuestDetails() function that was causing nil error when RQEFrame was hidden at times (2025.05.18)
+		- Fixed RQE:MarkQuestMobOnMouseover() function to better handle stepIndex by using RQE.AddonSetStepIndex of the supertracked quest (2025.05.18)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
