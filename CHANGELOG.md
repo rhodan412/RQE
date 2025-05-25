@@ -13,12 +13,15 @@
 		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
 		- Fixed RQE.ObtainSuperTrackQuestDetails() function that was causing nil error when RQEFrame was hidden at times (2025.05.18)
 		- Fixed RQE:MarkQuestMobOnMouseover() function to better handle stepIndex by using RQE.AddonSetStepIndex of the supertracked quest (2025.05.18)
+		- Added WQ Fetcher for WoD [author-only] (2025.05.24)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
 		- Added UpdateRQEQuestFrame when SCENARIO_COMPLETED event function fires or PLAYER_STARTED_MOVING, as long as player is mounted (2025.05.12)
 		- Added PLAYER_TARGET_CHANGED and UPDATE_MOUSEOVER_UNIT event functions that call RQE:MarkQuestMobOnMouseover() when fired (2025.05.18)
 		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
+		- Enabled RQE:AutoSuperTrackClosestQuest() in the QUEST_ACCEPTED event function (2025.05.24)
+		- Enabled RQE.CheckAndClickWButton() in handleZoneChange event set functions (2025.05.24)
 
 	QuestingModule.lua
 		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it reccomends a group to complete quest (2025.05.18)
@@ -32,6 +35,7 @@
 		- Added TBC Zangarmarsh, Nagrand, Blade's Edge Mountain and some Shadowmoon Valley Horde quests to the DB (2025.05.16)
 		- Added TBC Shadowmoon Valley Horde and some Netherstorm Scryer quests to the DB (2025.05.18)
 		- Added some Warlords of Draenor (Tanaan Intro & Frostfire Ridge) and Legion (Horde) quests to DB (2025.05.19)
+		- Added Gorgrond and Taladar Horde quests to DB (2025.05.24)
 
 	RQEMacro.lua
 		- Removed (commented out) code to set raid marker on target for searched quest as this is instead being handled through the RQE:MarkQuestMobOnMouseover() function (2025.05.18)
