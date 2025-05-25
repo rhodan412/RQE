@@ -1100,7 +1100,7 @@ end
 
 
 -- Obtain WQ Information for Expansion: Misc
-function RQE.MiscWQ()
+function RQE.GetWoDWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE:ClearDebugLog()
 	local clicked = GetMouseButtonClicked()
@@ -1111,6 +1111,27 @@ function RQE.MiscWQ()
 		RQE_Contribution.GetMissingWQ(6)
 	elseif clicked == "RightButton" then
 		RQE_Contribution.GetAllWQ(6)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+end
+
+
+-- Obtain WQ Information for Expansion: Misc
+function RQE.MiscWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE:ClearDebugLog()
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(5)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(5)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(5)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
