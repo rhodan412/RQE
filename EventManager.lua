@@ -2957,9 +2957,9 @@ function RQE.handleQuestAccepted(...)
 	RQE.QuestAcceptedToSuperTrackOkay = true
 	RQE.SetInitialFromAccept = true
 
-	-- C_Timer.After(1.3, function()
-		-- -- RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
-	-- end)
+	C_Timer.After(1.3, function()
+		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
+	end)
 
 	-- -- Check if the quest is a bonus objective
 	-- if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
@@ -3351,11 +3351,11 @@ function RQE.handleZoneChange(...)
 
 	RQE.canSortQuests = true
 
-	-- -- Check if autoClickWaypointButton is selected in the configuration
-	-- if RQE.db.profile.autoClickWaypointButton then
-		-- -- Click the "W" Button is autoclick is selected and no steps or questData exist
-		-- RQE.CheckAndClickWButton()
-	-- end
+	-- Check if autoClickWaypointButton is selected in the configuration
+	if RQE.db.profile.autoClickWaypointButton then
+		-- Click the "W" Button is autoclick is selected and no steps or questData exist
+		RQE.CheckAndClickWButton()
+	end
 
 	if event == "UNIT_EXITING_VEHICLE" then
 		local unitTarget = select(3, ...)
