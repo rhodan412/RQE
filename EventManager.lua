@@ -120,6 +120,7 @@ function RQE:ToggleObjectiveTracker()
 		print("Showing RQE frames and hiding Blizzard Tracker")
 		-- Show RQE frames and hide Blizzard Tracker
 		if RQEFrame and not RQEFrame:IsShown() then
+			-- print("~~ RQEFrame:Show: 123 ~~")
 			RQEFrame:Show()
 		end
 		if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
@@ -172,6 +173,7 @@ function RQE:ToggleFramesAndTracker()
 		RQE:ClearFrameData()
 		RQE:ClearWaypointButtonData()
 		RQE:ClearSeparateFocusFrame()
+		-- print("~~ RQEFrame:Show: 176 ~~")
 		RQEFrame:Show()
 		UpdateFrame()
 
@@ -2269,6 +2271,7 @@ function RQE.handleVariablesLoaded()
 
 	-- Initialize the frame based on saved settings
 	if RQE.db.profile.enableFrame then
+		-- print("~~ RQEFrame:Show: 2274 ~~")
 		RQEFrame:Show()
 		if RQE.MagicButton then
 			RQE.MagicButton:Show()
