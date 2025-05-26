@@ -155,6 +155,7 @@ function RQE.ToggleBothFramesfromLDB()
 
 		if not InCombatLockdown() then
 			if RQEFrame then
+				-- print("~~ RQEFrame:Show: 158 ~~")
 				RQEFrame:Show()
 			end
 		end
