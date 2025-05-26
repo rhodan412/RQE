@@ -4,7 +4,7 @@
 		- Search function, within RQE addon, now also includes ability to search through description or objectives in the DB, and also includes clickable custom tooltip for when player is not on the searched quest (2025.05.12)
 		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
 		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
-		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it reccomends a group to complete quest (2025.05.18)
+		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it recommends a group to complete quest (2025.05.18)
 
 	Core.lua
 		- Can now use search function to search quest description or quest objectives, in addition to the already existing questID and/or questName (2025.05.12)
@@ -14,6 +14,9 @@
 		- Fixed RQE.ObtainSuperTrackQuestDetails() function that was causing nil error when RQEFrame was hidden at times (2025.05.18)
 		- Fixed RQE:MarkQuestMobOnMouseover() function to better handle stepIndex by using RQE.AddonSetStepIndex of the supertracked quest (2025.05.18)
 		- Added WQ Fetcher for WoD [author-only] (2025.05.24)
+		- Modified fetcher for npc name for missing bits in DB [author-only] (2025.05.25)
+		- Fixed issue where RQEFrame was coming up intermittently when enableFrame was unchecked (2025.05.25)
+		- Fixed taint as it relates to the addon clicking the quest log index button in certain circumstances, now has an InCombat check (2025.05.25)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
@@ -36,6 +39,7 @@
 		- Added TBC Shadowmoon Valley Horde and some Netherstorm Scryer quests to the DB (2025.05.18)
 		- Added some Warlords of Draenor (Tanaan Intro & Frostfire Ridge) and Legion (Horde) quests to DB (2025.05.19)
 		- Added Gorgrond and Taladar Horde quests to DB (2025.05.24)
+		- Added Spires of Arak and Nagrand and some Eversong Horde quests to DB (2025.05.25)
 
 	RQEMacro.lua
 		- Removed (commented out) code to set raid marker on target for searched quest as this is instead being handled through the RQE:MarkQuestMobOnMouseover() function (2025.05.18)
