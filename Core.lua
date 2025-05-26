@@ -1150,6 +1150,26 @@ function RQE.GetMissingQuestData()
 
 			RQE_Contribution:CheckMissingQuestTextData()
 
+			-- Then also check the last accepted quest for missing NPC info
+			local questID = RQE.LastAcceptedQuest
+			if questID then
+				local questData = RQE.getQuestData(questID)
+
+				if questData then
+					local objectives = questData.objectivesQuestText
+					local description = questData.descriptionQuestText
+					local npc = questData.npc
+
+					local hasObjectives = objectives and type(objectives) == "table" and objectives[1] and objectives[1] ~= ""
+					local hasDescription = description and type(description) == "table" and description[1] and description[1] ~= ""
+					local missingNPC = not npc or type(npc) ~= "table" or npc[1] == nil or npc[1] == ""
+
+					if hasObjectives and hasDescription and missingNPC then
+						RQE_Contribution:CheckMissingNPCOnQuestAccept(questID)
+					end
+				end
+			end
+
 			RQE.db.profile.debugLoggingCheckbox = false
 		end
 	end
@@ -1412,6 +1432,7 @@ function RQE:SlashCommand(input)
 				RQE.MagicButton:Hide()
 			end
 		else
+			-- print("~~ RQEFrame:Show: 1415 ~~")
 			RQEFrame:Show()
 			if RQE.MagicButton then
 				RQE.MagicButton:Show()
@@ -1542,6 +1563,7 @@ end
 function RQE:ShowRQEFramesOnLogin()
 	-- Show the frames only if they are not already shown
 	if not RQEFrame:IsShown() then
+		-- print("~~ RQEFrame:Show: 1546 ~~")
 		RQEFrame:Show()
 	end
 	if not RQE.RQEQuestFrame:IsShown() then
@@ -1747,14 +1769,19 @@ function RQE:UpdateRQEFrameVisibility()
 	local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
 
 	if (self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking)) or self.isRQEFrameManuallyClosed then
-		RQEFrame:Hide()
-		if RQE.MagicButton then
-			RQE.MagicButton:Hide()
+		if not RQE.db.profile.enableFrame then
+			RQEFrame:Hide()
+			if RQE.MagicButton then
+				RQE.MagicButton:Hide()
+			end
 		end
 	else
-		RQEFrame:Show()
-		if RQE.MagicButton then
-			RQE.MagicButton:Show()
+		if RQE.db.profile.enableFrame then
+			-- print("~~ RQEFrame:Show: 1757 ~~")
+			RQEFrame:Show()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
 		end
 	end
 
@@ -4330,6 +4357,7 @@ function RQE:ToggleRQEFrame()
 		end
 		self.db.profile.enableFrame = false
 	else
+		-- print("~~ RQEFrame:Show: 4336 ~~")
 		RQEFrame:Show()
 		if RQE.MagicButton then
 			RQE.MagicButton:Show()
@@ -8935,6 +8963,8 @@ end)
 
 -- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
 function RQE:AutoClickQuestLogIndexWaypointButton()
+	if InCombatLockdown() then return end
+
 	if RQE.db.profile.autoClickWaypointButton then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		if not questID then
