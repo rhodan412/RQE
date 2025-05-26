@@ -2261,6 +2261,7 @@ function RQE:CheckFrameVisibility()
 		if not InCombatLockdown() then
 			if not RQEFrame:IsShown() then
 				if RQEFrame then 
+					-- print("~~ RQEFrame:Show: 2264 ~~")
 					RQEFrame:Show()
 				end
 			end
