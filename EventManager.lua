@@ -2415,6 +2415,25 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	if isLogin then
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+			DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)	-- Violet
+		end
+		RQE.RequestAndCacheQuestLines()
+		RQE:ClickSuperTrackedQuestButton()
+	elseif isReload then
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+			DEFAULT_CHAT_FRAME:AddMessage("PEW 04 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)	-- Violet
+		end
+
+		RQE.RequestAndCacheQuestLines()
+		RQE:ClickSuperTrackedQuestButton()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
+			DEFAULT_CHAT_FRAME:AddMessage("PEW 05 Debug: Zoned between map instances.", 0.93, 0.51, 0.93)	-- Violet
+		end
+	end
+
 	C_Timer.After(3.3, function()
 		RQE:CheckFrameVisibility()
 	end)
@@ -2459,25 +2478,6 @@ function RQE.handlePlayerEnterWorld(...)
 			RQE:UpdateContentSize()
 		end
 	end)
-
-	if isLogin then
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
-			DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)	-- Violet
-		end
-		RQE.RequestAndCacheQuestLines()
-		RQE:ClickSuperTrackedQuestButton()
-	elseif isReload then
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
-			DEFAULT_CHAT_FRAME:AddMessage("PEW 04 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)	-- Violet
-		end
-
-		RQE.RequestAndCacheQuestLines()
-		RQE:ClickSuperTrackedQuestButton()
-	else
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
-			DEFAULT_CHAT_FRAME:AddMessage("PEW 05 Debug: Zoned between map instances.", 0.93, 0.51, 0.93)	-- Violet
-		end
-	end
 
 	C_Timer.After(2, function()
 		-- Check for Dragonriding & Capture and print the current states for debugging purposes
@@ -2543,9 +2543,9 @@ function RQE.handlePlayerEnterWorld(...)
 		RQE:RestoreTrackedQuestsForCharacter()
 		RQE:RestoreSuperTrackedQuestForCharacter()
 		-- print("~~~ UpdateRQEQuestFrame(): 2464 ~~~")
-		C_Timer.After(8, function()
-			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
-		end)
+		-- C_Timer.After(10, function()
+			-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
+		-- end)
 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -3354,11 +3354,11 @@ function RQE.handleZoneChange(...)
 
 	RQE.canSortQuests = true
 
-	-- Check if autoClickWaypointButton is selected in the configuration
-	if RQE.db.profile.autoClickWaypointButton then
-		-- Click the "W" Button is autoclick is selected and no steps or questData exist
-		RQE.CheckAndClickWButton()
-	end
+	-- -- Check if autoClickWaypointButton is selected in the configuration
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- -- Click the "W" Button is autoclick is selected and no steps or questData exist
+		-- RQE.CheckAndClickWButton()
+	-- end
 
 	if event == "UNIT_EXITING_VEHICLE" then
 		local unitTarget = select(3, ...)
@@ -4357,11 +4357,13 @@ function RQE.handleInstanceInfoUpdate()
 		RQE:UpdateTrackerVisibility()
 	end)
 
+	C_Timer.After(0.3, function()
+		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when UPDATE_INSTANCE_INFO event fires
+	end)
+
 	RQE.updateScenarioUI()
 
 	RQE.UpdateCampaignFrameAnchor()
-	-- -- print("~~~ UpdateRQEQuestFrame(): 4307 ~~~")
-	-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 	if not RQE.UpdateInstanceInfoOkay then
 		return
@@ -5045,11 +5047,11 @@ function RQE.handleQuestWatchUpdate(...)
 		RQE:CheckCPUUsage()
 	end
 
-	-- Check if autoClickWaypointButton is selected in the configuration
-	if RQE.db.profile.autoClickWaypointButton then
-		-- Click the "W" Button is autoclick is selected and no steps or questData exist
-		RQE.CheckAndClickWButton()
-	end
+	-- -- Check if autoClickWaypointButton is selected in the configuration
+	-- if RQE.db.profile.autoClickWaypointButton then
+		-- -- Click the "W" Button is autoclick is selected and no steps or questData exist	-- commented out as this is handled further down in this event function
+		-- RQE.CheckAndClickWButton()
+	-- end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
