@@ -17,6 +17,7 @@
 		- Modified fetcher for npc name for missing bits in DB [author-only] (2025.05.25)
 		- Fixed issue where RQEFrame was coming up intermittently when enableFrame was unchecked (2025.05.25)
 		- Fixed taint as it relates to the addon clicking the quest log index button in certain circumstances, now has an InCombat check (2025.05.25)
+		- Modified search function to also include searching step descriptions (2025.05.27)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
@@ -25,6 +26,8 @@
 		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
 		- Enabled RQE:AutoSuperTrackClosestQuest() in the QUEST_ACCEPTED event function (2025.05.24)
 		- Enabled RQE.CheckAndClickWButton() in handleZoneChange event set functions (2025.05.24)
+		- Moved isLogin and isReload code within PLAYER_ENTERING_WORLD event function further up in the function (2025.05.27)
+		- Added UpdateRQEQuestFrame() to UPDATE_INSTANCE_INFO event function and removed it from PLAYER_ENTERING_WORLD event function (2025.05.27)
 
 	QuestingModule.lua
 		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it reccomends a group to complete quest (2025.05.18)
