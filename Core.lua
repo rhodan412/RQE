@@ -4169,6 +4169,18 @@ function RQE.SearchModule:CreateSearchBox()
 						end
 					end
 
+					-- Step description match (checks numbered keys)
+					if not matchFound then
+						for k, v in pairs(questData) do
+							if type(k) == "number" and type(v) == "table" and v.description then
+								if string.find(string.lower(v.description), inputTextLower) then
+									matchFound = true
+									break
+								end
+							end
+						end
+					end
+
 					if matchFound then
 						table.insert(foundQuestIDs, id)
 					end
@@ -4193,7 +4205,7 @@ function RQE.SearchModule:CreateSearchBox()
 				if isQuestCompleted then
 					DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)	-- Green text
 				else
-					DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character", 1, 0, 0)	-- Red text
+					DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character or is a repeatable quest", 1, 0, 0)	-- Red text
 				end
 			end)
 		end
@@ -10226,7 +10238,9 @@ function RQE:GetClosestFlightMasterToQuest(questID)
 
 	local questData = RQE.getQuestData(questID)
 	if not questData then
-		print(">> Quest not found in internal database:", questID)
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(">> Quest not found in internal database:", questID)
+		end
 		return
 	end
 
@@ -10274,7 +10288,9 @@ function RQE:RecommendFastestTravelMethod(questID)
 
 	local questData = RQE.getQuestData(RQE.SuperTrackedQuestIDForSpeed)
 	if not questData then
-		print(">> Quest not found in internal DB:", RQE.SuperTrackedQuestIDForSpeed)
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(">> Quest not found in internal DB:", RQE.SuperTrackedQuestIDForSpeed)
+		end
 		return
 	end
 
