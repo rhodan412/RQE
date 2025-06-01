@@ -18,6 +18,7 @@
 		- Fixed issue where RQEFrame was coming up intermittently when enableFrame was unchecked (2025.05.25)
 		- Fixed taint as it relates to the addon clicking the quest log index button in certain circumstances, now has an InCombat check (2025.05.25)
 		- Modified search function to also include searching step descriptions (2025.05.27)
+		- Modified TryMarkUnit(unitID, mobList) function to mark an already existing target/mouseover if it should be marked something else, but ignore re-marking if the correct mark already exists on target/mouseover (2025.06.01)
 
 	EventManager.lua
 		- Added some debug and comment lines (2025.05.12)
@@ -43,6 +44,7 @@
 		- Added some Warlords of Draenor (Tanaan Intro & Frostfire Ridge) and Legion (Horde) quests to DB (2025.05.19)
 		- Added Gorgrond and Taladar Horde quests to DB (2025.05.24)
 		- Added Spires of Arak and Nagrand and some Eversong Horde quests to DB (2025.05.25)
+		- Added Ghostlands and some Howling Fjord quests to DB (2025.06.01)
 
 	RQEMacro.lua
 		- Removed (commented out) code to set raid marker on target for searched quest as this is instead being handled through the RQE:MarkQuestMobOnMouseover() function (2025.05.18)
