@@ -4020,10 +4020,16 @@ local function TryMarkUnit(unitID, mobList)
 	for _, mob in ipairs(mobList) do
 		if unitName == mob.name then
 			if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
-				if not currentMarker then
+				-- Only change the marker if it's different from what it should be
+				if currentMarker ~= mob.marker then
 					SetRaidTarget(unitID, mob.marker)
 					if RQE.db.profile.debugLevel == "INFO" then
-						print("Marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
+						print("Re-marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
+					end
+				else
+					-- Marker is already correct → skip re-marking
+					if RQE.db.profile.debugLevel == "INFO" then
+						print("Marker on " .. unitID .. " (" .. unitName .. ") is already correct.")
 					end
 				end
 				return
