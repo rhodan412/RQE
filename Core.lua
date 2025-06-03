@@ -2898,8 +2898,21 @@ end
 function RQE:GetClosestTrackedQuest()
 	local closestQuestID, closestDistance = nil, math.huge
 	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~ No valid playerMapID found. Exiting GetClosestTrackedQuest. ~~")
+		end
+		return
+	end
+
 	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
-	if not playerPos then return end
+	if not playerPos then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~ No valid player position found for mapID:", playerMapID)
+		end
+		return
+	end
+
 	local px, py = playerPos:GetXY()
 
 	-- Use internal DB if distance via Blizzard fails
@@ -10228,7 +10241,9 @@ function RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY)
 			mapID
 		))
 	else
-		print(">> No discovered flight master found on that map.")
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(">> No discovered flight master found on that map.")
+		end
 	end
 
 	return closestNode
