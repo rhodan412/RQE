@@ -3843,7 +3843,22 @@ function RQE.handleUnitAura(...)
 	end
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Unit Target:", unitTarget)
 
 		-- Handle `updateInfo` (ensure it's a table and display all details)
