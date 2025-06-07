@@ -1,3 +1,16 @@
+11.1.5.4
+
+	EventManager.lua
+		- Added arg info for UNIT_AURA event function (2025.06.06)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.06.03)
+
+	RQEDatabase.lua
+		- Added remainder of Dragonblight (Horde/Neutral) quests to DB (2025.06.06)
+		- Added Grizzly Hills, Storm Peaks and Icecrown (Horde/Neutral) quests to DB (2025.06.06)
+
+
 11.1.5.3 (2025.06.03)
 
 	**HIGHLIGHTS**
@@ -32,7 +45,7 @@
 		- Added UpdateRQEQuestFrame() to UPDATE_INSTANCE_INFO event function and removed it from PLAYER_ENTERING_WORLD event function (2025.05.27)
 
 	QuestingModule.lua
-		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it reccomends a group to complete quest (2025.05.18)
+		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it recommends a group to complete quest (2025.05.18)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.05.12)
