@@ -9,6 +9,11 @@
 	RQEDatabase.lua
 		- Added remainder of Dragonblight (Horde/Neutral) quests to DB (2025.06.06)
 		- Added Grizzly Hills, Storm Peaks and Icecrown (Horde/Neutral) quests to DB (2025.06.06)
+		- Added Stormheim (Horde/Neutral) quests to DB (2025.06.06)
+		- Added some Zuldazar (Horde/Neutral) quests to DB (2025.06.07)
+
+	NYI
+		- Cataclysm, Mists of Pandaria, and Battle for Azeroth (Horde/Neutral) quests needed!
 
 
 11.1.5.3 (2025.06.03)
