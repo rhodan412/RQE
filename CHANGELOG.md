@@ -2,6 +2,7 @@
 
 	EventManager.lua
 		- Added arg info for UNIT_AURA event function (2025.06.06)
+		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.06.03)
@@ -11,6 +12,8 @@
 		- Added Grizzly Hills, Storm Peaks and Icecrown (Horde/Neutral) quests to DB (2025.06.06)
 		- Added Stormheim (Horde/Neutral) quests to DB (2025.06.06)
 		- Added some Zuldazar (Horde/Neutral) quests to DB (2025.06.07)
+		- Finished Zuldazar (Horde/Neutral) quests for DB (2025.06.08)
+		- Added some Nazmir (Horde/Neutral) quests to DB (2025.06.08)
 
 	NYI
 		- Cataclysm, Mists of Pandaria, and Battle for Azeroth (Horde/Neutral) quests needed!
