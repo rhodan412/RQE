@@ -14,6 +14,7 @@
 		- Added some Zuldazar (Horde/Neutral) quests to DB (2025.06.07)
 		- Finished Zuldazar (Horde/Neutral) quests for DB (2025.06.08)
 		- Added some Nazmir (Horde/Neutral) quests to DB (2025.06.08)
+		- Added remainder of Nazmir (Horde/Neutral) quests to DB (2025.06.09)
 
 	NYI
 		- Cataclysm, Mists of Pandaria, and Battle for Azeroth (Horde/Neutral) quests needed!
