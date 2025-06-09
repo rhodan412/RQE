@@ -224,6 +224,8 @@ local eventsToRegister = {
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
 	"MAIL_SUCCESS",
 	"MERCHANT_UPDATE",
+	--"OBJECT_ENTERED_AOI",
+	--"OBJECT_LEFT_AOI",
 	"PLAYER_CONTROL_GAINED",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED",
@@ -342,6 +344,8 @@ local function HandleEvents(frame, event, ...)
 		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
 		MAIL_SUCCESS = RQE.handleMailSuccess,
 		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
+		OBJECT_ENTERED_AOI = RQE.handleObjectEnteredLeft,
+		OBJECT_LEFT_AOI = RQE.handleObjectEnteredLeft,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED = RQE.PlayerInsideQuestBlobStateChanged,
@@ -1955,6 +1959,28 @@ function RQE.handleJailersUpdate(...)
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Initialized Scenario Frame.", 0.0, 1.0, 1.0)	-- Aqua
 		end
 	end)
+end
+
+
+-- Function that handles OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI
+function RQE.handleObjectEnteredLeft(...)
+	local event = select(2, ...)
+	local guid = select(3, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
 end
 
 
