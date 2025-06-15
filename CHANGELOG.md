@@ -15,9 +15,10 @@
 		- Finished Zuldazar (Horde/Neutral) quests for DB (2025.06.08)
 		- Added some Nazmir (Horde/Neutral) quests to DB (2025.06.08)
 		- Added remainder of Nazmir (Horde/Neutral) quests to DB (2025.06.09)
+		- Added Vul'dun, start of Nazjatar (Horde) and War Campaign (Horde) quests to DB (2025.06.14)
 
 	NYI
-		- Cataclysm, Mists of Pandaria, and Battle for Azeroth (Horde/Neutral) quests needed!
+		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
 
 
 11.1.5.3 (2025.06.03)
