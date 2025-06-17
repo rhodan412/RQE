@@ -1176,24 +1176,6 @@ function RQE.GetMissingQuestData()
 end
 
 
--- Obtain addon Contribution Data
-function RQE.GetDataForAddon()
-	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-		RQE.db.profile.debugLoggingCheckbox = true
-		RQE:ClearDebugLog()
-		RQE_Contribution.GetAllContributionInfo()
-		RQE.db.profile.debugLoggingCheckbox = false
-		RQE.DebugLogFrame()
-
-		C_Timer.After(2, function()
-			RQE:ShowDeleteConfirmationDialog()
-		end)
-	else
-		print("RQE Contribution addon is not presently loaded. Please request this from the author")
-	end
-end
-
-
 -- Function to obtain the quest details and print them on screen
 function RQE.ObtainSuperTrackQuestDetails()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest() or RQE.isSuperTracking
