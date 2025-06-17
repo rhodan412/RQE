@@ -1,5 +1,8 @@
 11.1.5.4
 
+	Core.lua
+		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
+
 	EventManager.lua
 		- Added arg info for UNIT_AURA event function (2025.06.06)
 		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
@@ -16,6 +19,7 @@
 		- Added some Nazmir (Horde/Neutral) quests to DB (2025.06.08)
 		- Added remainder of Nazmir (Horde/Neutral) quests to DB (2025.06.09)
 		- Added Vul'dun, start of Nazjatar (Horde) and War Campaign (Horde) quests to DB (2025.06.14)
+		- Added Tirisfal Glades, Silverpine Forest, Hillsbrad Foothills, Hinterlands, Western Plaguelands, Burning Steppes, Swamp of Sorrows, Blasted Lands, Badlands, and Arathi Highlands (Horde) quests to DB (2025.06.16)
 
 	NYI
 		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
