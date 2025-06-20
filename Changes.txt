@@ -1,5 +1,8 @@
 11.1.5.4
 
+	**HIGHLIGHTS**
+		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
+
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
 
@@ -14,13 +17,12 @@
 		- Added remainder of Dragonblight (Horde/Neutral) quests to DB (2025.06.06)
 		- Added Grizzly Hills, Storm Peaks and Icecrown (Horde/Neutral) quests to DB (2025.06.06)
 		- Added Stormheim (Horde/Neutral) quests to DB (2025.06.06)
-		- Added some Zuldazar (Horde/Neutral) quests to DB (2025.06.07)
-		- Finished Zuldazar (Horde/Neutral) quests for DB (2025.06.08)
-		- Added some Nazmir (Horde/Neutral) quests to DB (2025.06.08)
-		- Added remainder of Nazmir (Horde/Neutral) quests to DB (2025.06.09)
+		- Added Zuldazar (Horde/Neutral) quests for DB (2025.06.08)
+		- Added Nazmir (Horde/Neutral) quests to DB (2025.06.09)
 		- Added Vul'dun, start of Nazjatar (Horde) and War Campaign (Horde) quests to DB (2025.06.14)
 		- Added Tirisfal Glades, Silverpine Forest, Hillsbrad Foothills, Hinterlands, Western Plaguelands, Burning Steppes, Swamp of Sorrows, Blasted Lands, Badlands, and Arathi Highlands (Horde) quests to DB (2025.06.16)
 		- Added Northern Stranglethorn (Horde/Neutral) quests to DB (2025.06.18)
+		- Added Cape of Stranglethorn, Northern Barrens and Durotar (Horde/Neutral) quests to DB (2025.06.19)
 
 	NYI
 		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
