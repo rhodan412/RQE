@@ -22,7 +22,8 @@
 		- Added Vul'dun, start of Nazjatar (Horde) and War Campaign (Horde) quests to DB (2025.06.14)
 		- Added Tirisfal Glades, Silverpine Forest, Hillsbrad Foothills, Hinterlands, Western Plaguelands, Burning Steppes, Swamp of Sorrows, Blasted Lands, Badlands, and Arathi Highlands (Horde) quests to DB (2025.06.16)
 		- Added Northern Stranglethorn (Horde/Neutral) quests to DB (2025.06.18)
-		- Added Cape of Stranglethorn, Northern Barrens and Durotar (Horde/Neutral) quests to DB (2025.06.19)
+		- Added Cape of Stranglethorn, Northern Barrens, and Durotar (Horde/Neutral) quests to DB (2025.06.19)
+		- Added Ashenvale, Southern Barrens, Dustwallow Marsh, and Stonetalon Mountains (Horde/Neutral) quests to DB (2025.06.21)
 
 	NYI
 		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
