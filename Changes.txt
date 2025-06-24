@@ -24,6 +24,9 @@
 		- Added Northern Stranglethorn (Horde/Neutral) quests to DB (2025.06.18)
 		- Added Cape of Stranglethorn, Northern Barrens, and Durotar (Horde/Neutral) quests to DB (2025.06.19)
 		- Added Ashenvale, Southern Barrens, Dustwallow Marsh, and Stonetalon Mountains (Horde/Neutral) quests to DB (2025.06.21)
+		- Added Alliance quests for Midsummer Festival (Honor the Flame/Desecrate this Fire) quests to DB (2025.06.23)
+		- Added Legion Anduin Wrynn questline to DB (2025.06.23)
+		- Added Thousand Needles and Desolace (Horde/Neutral) quests to DB (2025.06.23)
 
 	NYI
 		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
