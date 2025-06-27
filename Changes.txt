@@ -29,6 +29,7 @@
 		- Added Thousand Needles and Desolace (Horde/Neutral) quests to DB (2025.06.23)
 		- Added Feralas (Horde/Neutral) quests to DB (2025.06.25)
 		- Added Horde quests for Midsummer Festival (Honor the Flame/Desecrate this Fire) quests to DB (2025.06.25)
+		- Added Azshara, Mulgore and Felwood (Horde/Neutral) quests to DB (2025.06.27)
 
 	NYI
 		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
