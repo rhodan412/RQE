@@ -30,9 +30,10 @@
 		- Added Feralas (Horde/Neutral) quests to DB (2025.06.25)
 		- Added Horde quests for Midsummer Festival (Honor the Flame/Desecrate this Fire) quests to DB (2025.06.25)
 		- Added Azshara, Mulgore and Felwood (Horde/Neutral) quests to DB (2025.06.27)
+		- Added Mount Hyjal and Vashj'ir (Horde/Neutral) quests to DB (2025.06.28)
 
 	NYI
-		- Cataclysm and Mists of Pandaria (Horde/Neutral) quests needed!
+		- Mists of Pandaria (Horde/Neutral) quests needed!
 
 
 11.1.5.3 (2025.06.03)
