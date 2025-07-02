@@ -32,6 +32,7 @@
 		- Added Azshara, Mulgore and Felwood (Horde/Neutral) quests to DB (2025.06.27)
 		- Added Mount Hyjal and Vashj'ir (Horde/Neutral) quests to DB (2025.06.28)
 		- Added Deepholm (Horde/Neutral) quests to DB (2025.06.29)
+		- Added Uldum (Horde/Neutral) quests to DB (2025.07.01)
 
 	NYI
 		- Mists of Pandaria (Horde/Neutral) quests needed!
