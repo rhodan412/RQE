@@ -5,6 +5,7 @@
 
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
+		- Added questID 27779 "Gnomebliteration" stepIndex 1 to the blacklist for improvement (2025.07.03)
 
 	EventManager.lua
 		- Added arg info for UNIT_AURA event function (2025.06.06)
@@ -33,6 +34,10 @@
 		- Added Mount Hyjal and Vashj'ir (Horde/Neutral) quests to DB (2025.06.28)
 		- Added Deepholm (Horde/Neutral) quests to DB (2025.06.29)
 		- Added Uldum (Horde/Neutral) quests to DB (2025.07.01)
+		- Added Twilight Highlands (Horde/Neutral) quests to DB (2025.07.03)
+
+	RQEMacro.lua
+		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
 
 	NYI
 		- Mists of Pandaria (Horde/Neutral) quests needed!
