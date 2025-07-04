@@ -9817,6 +9817,7 @@ end
 -- Table to hold the questID and stepIndex conditions (blacklist/exclude/exclusion)
 RQE.questConditions = {
 	[78640] = 3,  -- Example questID 78640 with stepIndex 3
+	[27779] = 1,
 }
 
 
