@@ -318,6 +318,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		[28372] = true,
 		[28885] = true,
 		[30817] = true,
+		[615102] = true,
 		[118474] = true,
 		[153541] = true,
 	}
@@ -375,6 +376,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5830 then
 					GameTooltip:SetText("Speak with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 615102 then
+					GameTooltip:SetText("Weaken\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 23784 then
 					GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
 				elseif itemID == 28372 then
