@@ -35,12 +35,10 @@
 		- Added Deepholm (Horde/Neutral) quests to DB (2025.06.29)
 		- Added Uldum (Horde/Neutral) quests to DB (2025.07.01)
 		- Added Twilight Highlands (Horde/Neutral) quests to DB (2025.07.03)
+		- Added The Jade Forest (Horde/Neutral) quests to DB (2025.07.05)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
-
-	NYI
-		- Mists of Pandaria (Horde/Neutral) quests needed!
 
 
 11.1.5.3 (2025.06.03)
