@@ -36,9 +36,11 @@
 		- Added Uldum (Horde/Neutral) quests to DB (2025.07.01)
 		- Added Twilight Highlands (Horde/Neutral) quests to DB (2025.07.03)
 		- Added The Jade Forest (Horde/Neutral) quests to DB (2025.07.05)
+		- Added Valley of the Four Winds (Horde/Neutral) quests to DB (2025.07.10)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
+		- Modified macro information to include option for "Collect" (2025.07.10)
 
 
 11.1.5.3 (2025.06.03)
