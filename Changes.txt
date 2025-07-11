@@ -37,6 +37,7 @@
 		- Added Twilight Highlands (Horde/Neutral) quests to DB (2025.07.03)
 		- Added The Jade Forest (Horde/Neutral) quests to DB (2025.07.05)
 		- Added Valley of the Four Winds (Horde/Neutral) quests to DB (2025.07.10)
+		- Added Krasarang Wilds (Horde/Neutral) quests to DB (2025.07.11)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
