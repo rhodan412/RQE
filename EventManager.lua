@@ -2352,11 +2352,12 @@ function RQE.handleVariablesLoaded()
 	-- Initialize frame maximized/minimized state
 	if RQE.db.profile.isFrameMaximized then
 		-- Code to maximize the frame
-		C_Timer.After(0.3, function()
-			if not InCombatLockdown() then
-				RQEFrame:ClearAllPoints()
-			end
-		end)
+		-- C_Timer.After(0.3, function()
+			-- if not InCombatLockdown() then
+				-- RQEFrame:ClearAllPoints()
+			-- end
+		-- end)
+		RQEFrame:ClearAllPoints()
 		RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
 		RQE:MaximizeFrame()
 		if RQE.ScrollFrame then
