@@ -2261,6 +2261,7 @@ function RQE:CheckFrameVisibility()
 		if not InCombatLockdown() then
 			if not RQEFrame:IsShown() then
 				if RQEFrame then 
+					-- print("~~ RQEFrame:Show: 2264 ~~")
 					RQEFrame:Show()
 				end
 			end
@@ -2293,12 +2294,14 @@ function RQE:CheckFrameVisibility()
 end
 
 
--- Frequent checking with OnUpdate to enforce the visibility state of RQE frames (may not do anything)
-C_Timer.NewTicker(0, function()
+-- Frequent checking with OnUpdate to enforce the visibility state of RQE frames
+C_Timer.NewTicker(1.5, function()
 	if InCombatLockdown() then return end
 	local isMoving = IsPlayerMoving()
+	local inScenario = C_Scenario.IsInScenario()
 
-	if RQE.CanCheckFrame or not isMoving then
+	--if RQE.CanCheckFrame or not isMoving then
+	if not isMoving or inScenario then
 		RQE:CheckFrameVisibility()
 	end
 end)

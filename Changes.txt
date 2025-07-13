@@ -1,4 +1,124 @@
-11.1.5.1
+11.1.5.4
+
+	**HIGHLIGHTS**
+		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
+
+	Core.lua
+		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
+		- Added questID 27779 "Gnomebliteration" stepIndex 1 to the blacklist for improvement (2025.07.03)
+
+	EventManager.lua
+		- Added arg info for UNIT_AURA event function (2025.06.06)
+		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.06.03)
+
+	RQEDatabase.lua
+		- Added remainder of Dragonblight (Horde/Neutral) quests to DB (2025.06.06)
+		- Added Grizzly Hills, Storm Peaks and Icecrown (Horde/Neutral) quests to DB (2025.06.06)
+		- Added Stormheim (Horde/Neutral) quests to DB (2025.06.06)
+		- Added Zuldazar (Horde/Neutral) quests for DB (2025.06.08)
+		- Added Nazmir (Horde/Neutral) quests to DB (2025.06.09)
+		- Added Vul'dun, start of Nazjatar (Horde) and War Campaign (Horde) quests to DB (2025.06.14)
+		- Added Tirisfal Glades, Silverpine Forest, Hillsbrad Foothills, Hinterlands, Western Plaguelands, Burning Steppes, Swamp of Sorrows, Blasted Lands, Badlands, and Arathi Highlands (Horde) quests to DB (2025.06.16)
+		- Added Northern Stranglethorn (Horde/Neutral) quests to DB (2025.06.18)
+		- Added Cape of Stranglethorn, Northern Barrens, and Durotar (Horde/Neutral) quests to DB (2025.06.19)
+		- Added Ashenvale, Southern Barrens, Dustwallow Marsh, and Stonetalon Mountains (Horde/Neutral) quests to DB (2025.06.21)
+		- Added Alliance quests for Midsummer Festival (Honor the Flame/Desecrate this Fire) quests to DB (2025.06.23)
+		- Added Legion Anduin Wrynn questline to DB (2025.06.23)
+		- Added Thousand Needles and Desolace (Horde/Neutral) quests to DB (2025.06.23)
+		- Added Feralas (Horde/Neutral) quests to DB (2025.06.25)
+		- Added Horde quests for Midsummer Festival (Honor the Flame/Desecrate this Fire) quests to DB (2025.06.25)
+		- Added Azshara, Mulgore and Felwood (Horde/Neutral) quests to DB (2025.06.27)
+		- Added Mount Hyjal and Vashj'ir (Horde/Neutral) quests to DB (2025.06.28)
+		- Added Deepholm (Horde/Neutral) quests to DB (2025.06.29)
+		- Added Uldum (Horde/Neutral) quests to DB (2025.07.01)
+		- Added Twilight Highlands (Horde/Neutral) quests to DB (2025.07.03)
+		- Added The Jade Forest (Horde/Neutral) quests to DB (2025.07.05)
+		- Added Valley of the Four Winds (Horde/Neutral) quests to DB (2025.07.10)
+		- Added Krasarang Wilds and Kun-lai Summit (Horde/Neutral) quests to DB (2025.07.11)
+		- Added Townlong Steppes (Horde/Neutral) quests to DB (2025.07.12)
+		- Added Dread Wastes (Horde/Neutral) quests to DB (2025.07.13)
+
+	RQEMacro.lua
+		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
+		- Modified macro information to include option for "Collect" (2025.07.10)
+
+
+11.1.5.3 (2025.06.03)
+
+	**HIGHLIGHTS**
+		- Search function, within RQE addon, now also includes ability to search through description or objectives in the DB, and also includes clickable custom tooltip for when player is not on the searched quest (2025.05.12)
+		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
+		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
+		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it recommends a group to complete quest (2025.05.18)
+
+	Core.lua
+		- Can now use search function to search quest description or quest objectives, in addition to the already existing questID and/or questName (2025.05.12)
+		- Added custom tooltip functionality for searched quests so player can see the description and objectives when clicking the questName following a search (2025.05.12)
+		- Added & Removed RQE:CraftRecipeSmart(spellID, quantity) as this is a feature that won't work to craft a number of items based on objective status as the C_TradeSkillUI.CraftRecipe API is restricted (2025.05.14)
+		- Added RQE:MarkQuestMobOnMouseover() function for the purpose of setting raid marker on mouseover/target of specific mob(s) in DB for the supertracked quest (2025.05.18)
+		- Fixed RQE.ObtainSuperTrackQuestDetails() function that was causing nil error when RQEFrame was hidden at times (2025.05.18)
+		- Fixed RQE:MarkQuestMobOnMouseover() function to better handle stepIndex by using RQE.AddonSetStepIndex of the supertracked quest (2025.05.18)
+		- Added WQ Fetcher for WoD [author-only] (2025.05.24)
+		- Modified fetcher for npc name for missing bits in DB [author-only] (2025.05.25)
+		- Fixed issue where RQEFrame was coming up intermittently when enableFrame was unchecked (2025.05.25)
+		- Fixed taint as it relates to the addon clicking the quest log index button in certain circumstances, now has an InCombat check (2025.05.25)
+		- Modified search function to also include searching step descriptions (2025.05.27)
+		- Modified TryMarkUnit(unitID, mobList) function to mark an already existing target/mouseover if it should be marked something else, but ignore re-marking if the correct mark already exists on target/mouseover (2025.06.01)
+		- Fixed nil error within RQE:GetClosestTrackedQuest() function (2025.06.03)
+
+	EventManager.lua
+		- Added some debug and comment lines (2025.05.12)
+		- Added UpdateRQEQuestFrame when SCENARIO_COMPLETED event function fires or PLAYER_STARTED_MOVING, as long as player is mounted (2025.05.12)
+		- Added PLAYER_TARGET_CHANGED and UPDATE_MOUSEOVER_UNIT event functions that call RQE:MarkQuestMobOnMouseover() when fired (2025.05.18)
+		- Set small delay following PLAYER_ENTERING_WORLD before UpdateRQEQuestFrame() fires as the RQEQuestFrame wasn't updating the quest objectives reliably (2025.05.18)
+		- Enabled RQE:AutoSuperTrackClosestQuest() in the QUEST_ACCEPTED event function (2025.05.24)
+		- Enabled RQE.CheckAndClickWButton() in handleZoneChange event set functions (2025.05.24)
+		- Moved isLogin and isReload code within PLAYER_ENTERING_WORLD event function further up in the function (2025.05.27)
+		- Added UpdateRQEQuestFrame() to UPDATE_INSTANCE_INFO event function and removed it from PLAYER_ENTERING_WORLD event function (2025.05.27)
+
+	QuestingModule.lua
+		- Added suggestedSize and levelText to include suggested group size for a quest within the questLevel brackets if it recommends a group to complete quest (2025.05.18)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.05.12)
+
+	RQEDatabase.lua
+		- Added additional WQ and description/objectives text to the DB (2025.05.12)
+		- Added TBC Hellfire Peninsula Horde quests to the DB (2025.05.14)
+		- Added TBC Zangarmarsh, Nagrand, Blade's Edge Mountain and some Shadowmoon Valley Horde quests to the DB (2025.05.16)
+		- Added TBC Shadowmoon Valley Horde and some Netherstorm Scryer quests to the DB (2025.05.18)
+		- Added some Warlords of Draenor (Tanaan Intro & Frostfire Ridge) and Legion (Horde) quests to DB (2025.05.19)
+		- Added Gorgrond and Taladar Horde quests to DB (2025.05.24)
+		- Added Spires of Arak and Nagrand and some Eversong Horde quests to DB (2025.05.25)
+		- Added Ghostlands and Howling Fjord (Horde) quests to DB (2025.06.01)
+		- Added Borean Tundra and some Dragonblight (Horde/Neutral) quests to DB (2025.06.03)
+
+	RQEMacro.lua
+		- Removed (commented out) code to set raid marker on target for searched quest as this is instead being handled through the RQE:MarkQuestMobOnMouseover() function (2025.05.18)
+
+
+11.1.5.2 (2025.05.10)
+
+	**HIGHLIGHTS**
+		- Fixed issue where RQEQuestFrame (quest tracker frame) wouldn't update following a scenario and sometimes not update when a quest should be flagged as complete (2025.05.07)
+
+	EventManager.lua
+		- Added UpdateRQEQuestFrame(), following brief delay within UNIT_QUEST_LOG_CHANGED and QUEST_WATCH_UPDATE functions (2025.05.07)
+		- Enabled the firing of RQE:AutoSuperTrackClosestQuest() when PLAYER_MOUNT_DISPLAY_CHANGED and if player is going from not mounted to mounted (2025.05.10)
+		- Added the calling of UpdateRQEQuestFrame() when SCENARIO_COMPLETED and SCENARIO_UPDATE events fire as well as when the RQE.updateScenarioUI() function is called (2025.05.10)
+		- Removed the firing of UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() functions when QUEST_LOG_UPDATE occurs as this results in intermittent lag spikes (2025.05.10)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.05.07)
+
+	RQEDatabase.lua
+		- Added additional War Within quests to DB (2025.05.07)
+
+
+11.1.5.1 (2025.05.07)
 
 	**HIGHLIGHTS**
 		- Fix taint related to the clicking of the QuestLogIndexButton in the RQEQuestFrame (2025.04.21)
@@ -6,7 +126,7 @@
 		- Prints questText (descriptionQuestText) and objectivesQuestText in the custom quest tooltip following a print-out on the questline of the specified quest (2025.04.21)
 		- Added coding to watch/track quests when rapidly accepted, as this would previously only track a few of the quests (2025.04.26)
 		- New Feature: Mythic/Scenario Mode allows the display of the default blizzard tracker when player is in scenario [off by default] allowing player to see countdown timers associated with scenario stages (2025.04.28)
-		- Fixed track closest watched quest on player movement based on proximity due to change Blizzard made with the release of patch 11.1.5 (2025.04.28)
+		- Major performance fixes for inefficient code and their firing too often, especially following combat ending (2025.05.07)
 
 	Config.lua
 		- Added mythicScenarioMode option to the configuration panels (2025.04.28)
@@ -25,6 +145,14 @@
 		- Added failsafe to RQE:UpdateTrackerVisibility() to check to make sure that the player has selected mythicMode before continuing (2025.04.30)
 		- Added check to see if player was OnTaxi within the RQE:AutoSuperTrackClosestQuest() and 'returns' if this is the case to minimize lag on taxi (2025.04.30)
 		- Added RQE:GetClosestFlightMaster(), RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY), RQE:GetClosestFlightMasterToQuest(questID), RQE:RecommendFastestTravelMethod(questID), RQE:GetDistance(mapID1, x1, y1, mapID2, x2, y2), and RQE:EstimatePlayerSpeed(sampleTime) for future editions for adding waypoint travel to flight masters if this is closer than flying/walking (2025.04.30)
+		- Modified return check within RQE:UpdateTrackerVisibility() function to check if 'InCombatLockdown' AND 'inScenario' (2025.05.03)
+		- Fixed 'Carbonite Quests' to be 'Carbonite Quest' within the RQE:UpdateTrackerVisibility() function (2025.05.03)
+		- Commented out UpdateRQEQuestFrame() within the RQE:UpdateTrackerVisibility() function to minimize lag when this function fires as this update isn't required with every update event (2025.05.03)
+		- Fixed macro check not firing with the RQE:StartPerdiodicChecks() function (2025.05.04)
+		- Tweaked the handling of RQE:AutoSuperTrackClosestQuest() - but is broken now since removing QUEST_WATCH_LIST_CHANGED (2025.05.04)
+		- Disabled the loading of several ObjectiveTracker bits within the RQE:UpdateTrackerVisibility() function (2025.05.06)
+		- Fixed RQE:GetClosestTrackedQuest() and RQE:AutoSuperTrackClosestQuest() functions to integrate into the coordinates within the DB in assisting to determine closest quest and then supertracking it (2025.05.06)
+		- Removed/edited debug messages and inefficient code (2025.05.07)
 
 	EventManager.lua
 		- Updated ArgPayload to only need debugMode Info instead of Info+ AND the specific event function chosen [ie RQE.db.profile.showEventAchievementEarned] (2025.04.21)
@@ -35,6 +163,23 @@
 		- Added InCombatLockdown() prior to ClearAllPoints from RQEFrame and RQEQuestFrame after QUEST_WATCH_UPDATE event fires (2025.04.26)
 		- Modified the coding to display/hide the objective tracker based on new Mythic/Scenario mode (2025.04.28)
 		- Removed RQE:AutoSuperTrackClosestQuest() from PLAYER_REGEN_ENABLED and PLAYER_MOUNT_DISPLAY_CHANGED event functions as this was causing a performance/CPU loss when run (2025.04.30)
+		- Updated code within the PLAYER_REGEN_ENABLED to only update the scenarioUI if mythicMode is turned off to reduce redundancy. (2025.05.03)
+		- Removed ClearAllPoints within PLAYER_REGEN_ENABLED, QUEST_COMPLETE and QUEST_REMOVED (2025.05.03)
+		- Updated PLAYER_MOUNT_DISPLAY_CHANGED to reduce firings in order to improve add-on performance (2025.05.03)
+		- Adjusted timed delays (2025.05.04)
+		- Added macro check within PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event (2025.05.04)
+		- Moved UpdateRQEQuestFrame/UpdateCampaignFrameAnchor functions outside of RQE.updateScenarioUI (2025.05.04)
+		- Performance improvements to PLAYER_STOPPED_MOVING, QUEST_ACCEPTED, ZONE_CHANGED... events (2025.05.04)
+		- Added debug messages to file (2025.05.04)
+		- Modified call to UpdateRQEQuestFrame to instead use RQE:QuestType when QUEST_ACCEPTED fires in order to handle world quests (2025.05.04)
+		- Major update to QUEST_WATCH_LIST_CHANGED event function to clean up order and improve performance. It will only handle the bulk of the updates if following UNIT_QUEST_LOG_CHANGED fires and only the one time (2025.05.04)
+		- Removed QUEST_WATCH_LIST_CHANGED event function from being listened to in order to further increase addon performance (2025.05.04)
+		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function (2025.05.04)
+		- Enabled, once again, the QUEST_WATCH_LIST_CHANGED event function (2025.05.06)
+		- Improved performance in the modification of the PLAYER_REGEN_ENABLED, PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED, PLAYER_STARTED_MOVING and QUEST_WATCH_UPDATE event function (2025.05.06)
+		- Cleaned up function to update the scenario frame by only allowing this event function to be carried out if mythicMode is disabled (2025.05.06)
+		- Removed redundant code from within RQE:ToggleFramesAndTracker() and PLAYER_REGEN_ENABLED event function (2025.05.07)
+		- Added call to UpdateRQEQuestFrame() within UI_INFO_MESSAGE, if certain messageType fires, and QUEST_WATCH_UPDATE as the frame wasn't being updated immediately after a quest had been flagged as complete (2025.05.07)
 
 	QuestingModule.lua
 		- Checks if InCombatLockdown() when QuestLogIndexButton registers a click and then "refuses" to accept the click if the player isn't mousing over the RQEQuestFrame (2025.04.21)
@@ -47,6 +192,10 @@
 		- Added functionality to check RQEQuestFrame visibility based on mythicScenarioMode (2025.04.28)
 		- Fixed issue with the QuestLogIndexButton click not working if mythicScenarioMode is enabled by changing OnClick to OnMouseDown (2025.04.29)
 		- Added RQE:RecommendFastestTravelMethod() [author-mode only] (2025.04.30)
+		- Modification to RQE:QuestRewardsTooltip(tooltip, questID) function to include profession skill points (2025.05.04)
+		- Added RQE:CheckWatchedQuestsSync() function that checks the tracked quests and compares with the quests listed in the RQEQuestFrame to ensure that all applicably tracked quests are being properly shown (2025.05.04)
+		- Ensured that the RQE:CheckWatchedQuestsSync() function only fires when player is not in combat, not casting, not channeling, not moving and the player is hovering over the WorldMapFrame or the RQEQuestFrame and still no more than once per second (2025.05.04)
+		- Modified function that handles RQE:CheckWatchedQuestsSync() to include if the world map frame is open or the classic quest log frame (assuming player has this addon) is also open (2025.05.06)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.04.28)
@@ -57,11 +206,18 @@
 		- Added 11.1.5 Sureki (Hallowfall) and Radiant (Azj-Kahet) Incursion quests to DB (2025.04.26)
 		- Added additional WQ to the DB (2025.04.28)
 		- Added additional weekly profession Valdrakken quests to the DB (2025.04.30)
+		- Added additional notations to quests in DB for the objectiveText, descriptionText and npc info (2025.05.03)
+		- Fixes/adjustments to quest in Darkmoon Faire within quest DB (2025.05.04)
+		- Added some additional objectiveText, descriptionText and npc info to the quest DB (2025.05.06)
 
 	RQEFrame.lua
 		- Moved RQE.ClickQuestLogIndexButton(questID) and RQE.ClickRandomQuestLogIndexButton(bigQuestID) from RQEFrame.lua to QuestingModule.lua (2025.04.21)
 		- Added a check for MagicButton visibility after RQE:CheckFrameVisibility has run (2025.04.21)
 		- Modified RQE:CheckFrameVisibility to run continuously as long as player is not in combat and not moving (2025.04.21)
+		- Increased the timer from 0 to 1.5 seconds when firing RQE:CheckFrameVisibility() function and also requiring player not be inside a scenario or moving (2025.05.06)
+
+	RQEMacro.lua
+		- Removed code to check macro after PLAYER_REGEN_ENABLED as this firing was causing massive lag as a result of inefficient code that wasn't needed, as the proper checks are already being handled at the proper events (2025.05.07)
 
 
 11.1.0.6 (2025.04.20)
