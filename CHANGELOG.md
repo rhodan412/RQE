@@ -2,6 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
+		- Fixed error with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
@@ -10,6 +11,7 @@
 	EventManager.lua
 		- Added arg info for UNIT_AURA event function (2025.06.06)
 		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
+		- Fixed error with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.06.03)
@@ -38,6 +40,8 @@
 		- Added The Jade Forest (Horde/Neutral) quests to DB (2025.07.05)
 		- Added Valley of the Four Winds (Horde/Neutral) quests to DB (2025.07.10)
 		- Added Krasarang Wilds and Kun-lai Summit (Horde/Neutral) quests to DB (2025.07.11)
+		- Added Townlong Steppes (Horde/Neutral) quests to DB (2025.07.12)
+		- Added Dread Wastes (Horde/Neutral) quests to DB (2025.07.13)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
