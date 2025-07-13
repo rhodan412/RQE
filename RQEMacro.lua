@@ -173,7 +173,7 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 	local macroLines = {
 		"#showtooltip item:153541",
 		"/tar " .. npcName,
-		--'/script SetRaidTarget("target",3)'	-- COMMENTING OUT BECAUSE: the RQE:MarkQuestMobOnMouseover() function is handling the marking itself and the macro should only be designed for the targeting
+		'/script SetRaidTarget("target",3)'
 	}
 
 	print("Creating macro for searched NPC:", npcName)
@@ -276,29 +276,29 @@ RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 
--- -- Handle the queued macro creation and clear requests after combat
--- RQEMacro.macroClearEventFrame = CreateFrame("Frame")
--- RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
--- RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
-	-- if event == "PLAYER_REGEN_ENABLED" then
-		-- -- Process queued macro set/update operations
-		-- for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
-			-- RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
-		-- end
-		-- wipe(RQEMacro.pendingMacroSets)
+-- Handle the queued macro creation and clear requests after combat
+RQEMacro.macroClearEventFrame = CreateFrame("Frame")
+RQEMacro.macroClearEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+RQEMacro.macroClearEventFrame:SetScript("OnEvent", function(self, event)
+	if event == "PLAYER_REGEN_ENABLED" then
+		-- Process queued macro set/update operations
+		for _, macroData in ipairs(RQEMacro.pendingMacroSets) do
+			RQEMacro:ActuallySetMacro(macroData.name, macroData.iconFileID, macroData.body, macroData.perCharacter)
+		end
+		wipe(RQEMacro.pendingMacroSets)
 
-		-- for _, op in ipairs(RQEMacro.pendingMacroOperations) do
-			-- RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
-		-- end
-		-- wipe(RQEMacro.pendingMacroOperations)
+		for _, op in ipairs(RQEMacro.pendingMacroOperations) do
+			RQEMacro:ActuallySetMacro(op.name, op.iconFileID, op.body, op.perCharacter)
+		end
+		wipe(RQEMacro.pendingMacroOperations)
 
-		-- -- Process queued macro clear operations
-		-- for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
-			-- RQEMacro:ActuallyClearMacroContentByName(macroName)
-		-- end
-		-- wipe(RQEMacro.pendingMacroClears)
-	-- end
--- end)
+		-- Process queued macro clear operations
+		for _, macroName in ipairs(RQEMacro.pendingMacroClears) do
+			RQEMacro:ActuallyClearMacroContentByName(macroName)
+		end
+		wipe(RQEMacro.pendingMacroClears)
+	end
+end)
 
 
 -- Function to update the Magic Button Tooltip dynamically
@@ -318,7 +318,6 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		[28372] = true,
 		[28885] = true,
 		[30817] = true,
-		[615102] = true,
 		[118474] = true,
 		[153541] = true,
 	}
@@ -369,15 +368,13 @@ function RQEMacro:UpdateMagicButtonTooltip()
 				elseif itemID == 4588 then
 					GameTooltip:SetText("Kill Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 4787 then
-					GameTooltip:SetText("Collect/Loot Item from Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+					GameTooltip:SetText("Loot Item from Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5061 then
 					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 30817 then
 					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5830 then
 					GameTooltip:SetText("Speak with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 615102 then
-					GameTooltip:SetText("Weaken\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 23784 then
 					GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
 				elseif itemID == 28372 then

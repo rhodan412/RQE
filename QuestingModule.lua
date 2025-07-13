@@ -1867,84 +1867,92 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 		[3] = { r = 0.00, g = 0.44, b = 0.87 },  -- Rare (blue)
 		[4] = { r = 0.64, g = 0.21, b = 0.93 },  -- Epic (purple)
 		[5] = { r = 1.00, g = 0.50, b = 0.00 },  -- Legendary (orange)
+		-- Add more custom colors for higher qualities as needed
 	}
 
-	-- Retrieve rewards
-	local rewardXP = GetQuestLogRewardXP(questID)
+	-- Retrieve the quest rewards data
+	local rewardXP = GetQuestLogRewardXP(questID)	-- The presence of questID here is necessary to determine the reward for XP of different quests, otherwise the same amount of XP would appear in the tooltips of the frame for all quests
 	local rewardMoney = GetQuestLogRewardMoney(questID)
 	local rewardArtifactXP = GetQuestLogRewardArtifactXP(questID)
-	local rewardHonor = GetQuestLogRewardHonor(questID)
-	local playerTitle = GetQuestLogRewardTitle(questID)
 	local numQuestCurrencies = #C_QuestLog.GetQuestRewardCurrencies(questID)
 	local rewardItemsCount = GetNumQuestLogRewards(questID)
 	local choiceItemsCount = GetNumQuestLogChoices(questID, true)
 	local reputationRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
-	local spellIDs = C_QuestInfoSystem.GetQuestRewardSpells(questID) or {}
 
-	local skillName, skillIcon, rawSkillPoints = GetQuestLogRewardSkillPoints()
-	local rewardSkillPoints = tonumber(rawSkillPoints) or 0
-
-	-- Choice rewards
+	-- Determine if there are multiple choice rewards
 	if choiceItemsCount > 0 then
-		tooltip:AddLine(choiceItemsCount == 1 and "You will receive:" or "Choose one of the following rewards:")
+		if choiceItemsCount == 1 then
+			tooltip:AddLine("You will receive:")
+		else
+			tooltip:AddLine("Choose one of the following rewards:")
+		end
+
+		-- Add choice rewards to the tooltip
 		for i = 1, choiceItemsCount do
-			local itemName, _, numItems, quality = GetQuestLogChoiceInfo(i)
+			local itemName, itemTexture, numItems, quality, isUsable = GetQuestLogChoiceInfo(i)
 			if itemName then
-				local text = (numItems > 1) and (numItems .. "x " .. itemName) or itemName
-				local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
+				local text = numItems > 1 and (numItems .. "x " .. itemName) or itemName
+				local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }  -- Default to white if no match
 				tooltip:AddLine(text, color.r, color.g, color.b)
 			end
 		end
 	end
 
-	-- Any static rewards?
-	local hasOtherRewards = rewardXP > 0 or rewardMoney > 0 or rewardArtifactXP > 0 or rewardItemsCount > 0 or reputationRewards and #reputationRewards > 0 or rewardHonor > 0 or playerTitle or rewardSkillPoints > 0 or #spellIDs > 0
-	if hasOtherRewards then
-		if choiceItemsCount > 0 then tooltip:AddLine("\nAdditional rewards:") else tooltip:AddLine("Rewards:") end
-
-		if rewardXP > 0 then tooltip:AddLine("XP: " .. FormatLargeNumber(rewardXP), 1, 1, 1) end
-		if rewardMoney > 0 then tooltip:AddLine("Gold: " .. GetCoinTextureString(rewardMoney), 1, 1, 1) end
-		if rewardArtifactXP > 0 then tooltip:AddLine("Artifact Power: " .. FormatLargeNumber(rewardArtifactXP), 1, 1, 1) end
-		if rewardHonor > 0 then tooltip:AddLine("Honor: " .. rewardHonor, 1, 1, 1) end
-		if playerTitle then tooltip:AddLine("Title: " .. playerTitle, 1, 1, 1) end
-
-		if rewardSkillPoints > 0 and skillName then
-			tooltip:AddLine("Profession: +" .. rewardSkillPoints .. " to " .. skillName, 1, 1, 1)
+	-- Check if there are any unconditional rewards
+	if rewardXP > 0 or rewardMoney > 0 or rewardArtifactXP > 0 or rewardItemsCount > 0 or (reputationRewards and #reputationRewards > 0) then
+		if choiceItemsCount > 0 then
+			tooltip:AddLine(" ")
+			tooltip:AddLine("Additional rewards:")
+		else
+			tooltip:AddLine("Rewards:")
 		end
 
+		-- Add experience reward
+		if rewardXP > 0 then
+			tooltip:AddLine("XP: " .. FormatLargeNumber(rewardXP), 1, 1, 1)
+		end
+
+		-- Add money reward
+		if rewardMoney > 0 then
+			tooltip:AddLine("Gold: " .. GetCoinTextureString(rewardMoney), 1, 1, 1)
+		end
+
+		-- Add artifact power reward
+		if rewardArtifactXP > 0 then
+			tooltip:AddLine("Artifact Power: " .. FormatLargeNumber(rewardArtifactXP), 1, 1, 1)
+		end
+
+		-- currencies
 		if numQuestCurrencies > 0 then
 			QuestUtils_AddQuestCurrencyRewardsToTooltip(questID, tooltip)
 		end
 
+		-- Add item rewards
 		for i = 1, rewardItemsCount do
-			local itemName, _, numItems, quality = GetQuestLogRewardInfo(i, questID)
+			local itemName, itemTexture, numItems, quality, isUsable = GetQuestLogRewardInfo(i, questID)
 			if itemName then
-				local text = (numItems > 1) and (numItems .. "x " .. itemName) or itemName
+				local text = numItems > 1 and (numItems .. "x " .. itemName) or itemName
 				local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
 				tooltip:AddLine(text, color.r, color.g, color.b)
 			end
 		end
 
-		if #spellIDs > 0 then
-			tooltip:AddLine("\nReward Spells:")
-			for _, spellID in ipairs(spellIDs) do
-				local info = C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
-				if info and info.name and not IsSpellKnownOrOverridesKnown(spellID) and (not info.isBoostSpell or IsCharacterNewlyBoosted()) and (not info.garrFollowerID or not C_Garrison.IsFollowerCollected(info.garrFollowerID)) then
-					local icon = info.texture or 134400
-					tooltip:AddLine("|T" .. icon .. ":16|t " .. info.name, 1, 1, 1)
-				end
-			end
-		end
-
+		-- Add major faction reputation rewards
 		if reputationRewards and #reputationRewards > 0 then
-			tooltip:AddLine("\nReputation:")
 			for _, reward in ipairs(reputationRewards) do
-				local data = C_MajorFactions.GetMajorFactionData(reward.factionID)
-				tooltip:AddLine((data and data.name or ("Faction ID " .. reward.factionID)) .. ": " .. reward.rewardAmount, 0, 1, 0)
+				-- Fetch major faction data to get the faction name
+				local majorFactionData = C_MajorFactions.GetMajorFactionData(reward.factionID)
+				local factionName = majorFactionData and majorFactionData.name or ("Faction ID " .. reward.factionID)
+
+				-- Display the reputation reward with the faction name
+				tooltip:AddLine(" ")
+				tooltip:AddLine("Reputation:")
+				tooltip:AddLine(factionName .. ": " .. reward.rewardAmount, 0, 1, 0)
 			end
 		end
 	end
 
+	-- Finalize the tooltip
 	tooltip:Show()
 end
 
@@ -2480,28 +2488,18 @@ function UpdateRQEQuestFrame()
 					end
 				end
 
-				local questTitle, questLevel, suggestedSize
+				local questTitle, questLevel
 
-				-- Use the regular quest title, level, and suggestedSize of party
+				-- Use the regular quest title and level
 				questTitle = info.title
 				questLevel = info.level
-				suggestedSize = C_QuestLog.GetSuggestedGroupSize(questID)
 
 				-- Create or reuse the QuestLevelAndName label
 				local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")--, content)
 				QuestLogIndexButton.QuestLevelAndName = QuestLevelAndName
 				QuestLevelAndName:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
 				QuestLevelAndName:SetTextColor(137/255, 95/255, 221/255)  -- Medium Purple
-
-				local levelText
-				if suggestedSize and suggestedSize > 1 then
-					levelText = string.format("[%s - Suggested: %s+]", questLevel, suggestedSize)
-				else
-					levelText = string.format("[%s]", questLevel)
-				end
-
-				QuestLevelAndName:SetText(levelText .. " " .. questTitle)
-				--QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
+				QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
 				-- Create or reuse the QuestObjectives label
 				local QuestObjectives = RQE.QuestLogIndexButtons[i].QuestObjectives or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -3651,63 +3649,3 @@ function UpdateRQEAchievementsFrame()
 	-- Visibility Update Check for RQEQuestFrame
 	RQE:UpdateRQEQuestFrameVisibility()
 end
-
-
--- Function that checks the watch list and compares that with the quests displayed in the RQEQuestFrame
-function RQE:CheckWatchedQuestsSync()
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("~~~ Running RQE:CheckWatchedQuestsSync() ~~~")
-	end
-
-	local watchedQuests = {}
-	local displayedQuests = {}
-
-	-- Build list of all watched normal quests
-	for i = 1, C_QuestLog.GetNumQuestWatches() do
-		local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-		if qID then
-			watchedQuests[qID] = true
-		end
-	end
-
-	-- Build list of all watched world quests
-	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-		local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-		if qID then
-			watchedQuests[qID] = true
-		end
-	end
-
-	-- Populate displayedQuests from your RQEQuestFrame (update as per your actual tracking structure)
-	if RQE.RQEQuestFrame and RQE.RQEQuestFrame.QuestBlocks then
-		for questID in pairs(RQE.RQEQuestFrame.QuestBlocks) do
-			displayedQuests[questID] = true
-		end
-	end
-
-	-- Compare sets
-	for qID in pairs(watchedQuests) do
-		if not displayedQuests[qID] then
-			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-				DEFAULT_CHAT_FRAME:AddMessage("WatchListSync: Missing questID " .. qID .. " from RQEQuestFrame. Refreshing...", 1, 0.75, 0.79)
-			end
-			RQE:QuestType() -- Refresh layout
-			return
-		end
-	end
-end
-
-
--- Frequent checking to enforce the visibility of quests being tracked to be displayed in RQEQuestFrame
-C_Timer.NewTicker(1, function()
-	if InCombatLockdown() then return end
-
-	local isMapOpen = WorldMapFrame:IsShown()
-	local isClassicQuestLogOpen = ClassicQuestLog and ClassicQuestLog:IsShown()
-	local isPlayerStationary = not UnitCastingInfo("player") and not UnitChannelInfo("player") and not IsPlayerMoving()
-	local isMouseOverRelevantFrames = WorldMapFrame:IsMouseOver() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver())
-
-	if isPlayerStationary and (isMapOpen or isClassicQuestLogOpen or isMouseOverRelevantFrames) then
-		RQE:CheckWatchedQuestsSync()
-	end
-end)
