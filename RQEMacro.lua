@@ -385,7 +385,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 				elseif itemID == 28885 then
 					GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 118474 then
-					GameTooltip:SetText("Look Follow/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+					GameTooltip:SetText("Look/Follow/Escort/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 153541 then
 					GameTooltip:SetText("Pickup the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				else
