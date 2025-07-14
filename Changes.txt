@@ -5,6 +5,7 @@
 		- Added Mists of Pandaria (Horde) quests to DB (2025.07.13)
 		- Added Rise of the Red Dawn quests to DB and the first chapter of the 11.2 K'aresh campaign quests to DB (2025.07.13)
 		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
+		- Fixed issue with ClearAllPoints() within QUEST_WATCH_UPDATE and QUEST_WATCH_UPDATE event functions as it was invalidating frame in 11.2 (2025.07.14)
 
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
@@ -14,6 +15,7 @@
 		- Added arg info for UNIT_AURA event function (2025.06.06)
 		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
 		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
+		- Fixed issue with ClearAllPoints() within QUEST_WATCH_UPDATE and QUEST_WATCH_UPDATE event functions as it was invalidating frame in 11.2 (2025.07.14)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.06.03)
