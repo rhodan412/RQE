@@ -2410,7 +2410,7 @@ function RQE.handleVariablesLoaded()
 	if xPos and yPos and anchorPoint and tContains(validAnchorPoints, anchorPoint) then
 		C_Timer.After(0.45, function()
 			if not InCombatLockdown() then
-				RQE.RQEQuestFrame:ClearAllPoints() -- Clear any existing anchoring
+				RQE.RQEQuestFrame:ClearAllPoints()
 				RQE.RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
 			end
 		end)
@@ -4847,12 +4847,12 @@ function RQE.handleQuestAutoComplete(...)
 	-- print("~~~ RQE:QuestType(): 4700 ~~~")
 	RQE:QuestType()
 
-	C_Timer.After(0.25, function()
-		if not InCombatLockdown() then
-			RQEFrame:ClearAllPoints()
-			RQE.RQEQuestFrame:ClearAllPoints()
-		end
-	end)
+	-- C_Timer.After(0.25, function()
+		-- if not InCombatLockdown() then
+			-- RQEFrame:ClearAllPoints()		-- ClearsAllPoints within QUEST_AUTOCOMPLETE without a SetPoint	(possible issue with 11.2)
+			-- RQE.RQEQuestFrame:ClearAllPoints()
+		-- end
+	-- end)
 	-- print("~~~ SortQuestsByProximity(): 4701 ~~~")
 	SortQuestsByProximity()
 
@@ -5179,12 +5179,12 @@ function RQE.handleQuestWatchUpdate(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(RQE.currentSuperTrackedQuestID) .. " / " .. tostring(superTrackedQuestName), 0.56, 0.93, 0.56)	-- Light Green
 	end
 
-	C_Timer.After(0.45, function()
-		if not InCombatLockdown() then
-			RQEFrame:ClearAllPoints()
-			RQE.RQEQuestFrame:ClearAllPoints()
-		end
-	end)
+	-- C_Timer.After(0.45, function()
+		-- if not InCombatLockdown() then
+			-- RQEFrame:ClearAllPoints()		-- ClearsAllPoints within QUEST_WATCH_UPDATE without a SetPoint	(possible issue with 11.2)
+			-- RQE.RQEQuestFrame:ClearAllPoints()
+		-- end
+	-- end)
 
 	-- -- Further processing
 	-- -- print("~~~ RQE:QuestType(): 5040 ~~~")
