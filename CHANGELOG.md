@@ -2,7 +2,9 @@
 
 	**HIGHLIGHTS**
 		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
-		- Fixed error with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
+		- Added Mists of Pandaria (Horde) quests to DB (2025.07.13)
+		- Added Rise of the Red Dawn quests to DB and the first chapter of the 11.2 K'aresh campaign quests to DB (2025.07.13)
+		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
@@ -11,10 +13,13 @@
 	EventManager.lua
 		- Added arg info for UNIT_AURA event function (2025.06.06)
 		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
-		- Fixed error with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
+		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.06.03)
+
+	RQEMacro.lua
+		- Added details to denote the correct tooltip iconID for escort quests (2025.07.13)
 
 	RQEDatabase.lua
 		- Added remainder of Dragonblight (Horde/Neutral) quests to DB (2025.06.06)
@@ -41,6 +46,8 @@
 		- Added Valley of the Four Winds (Horde/Neutral) quests to DB (2025.07.10)
 		- Added Krasarang Wilds and Kun-lai Summit (Horde/Neutral) quests to DB (2025.07.11)
 		- Added Townlong Steppes (Horde/Neutral) quests to DB (2025.07.12)
+		- Added Rise of the Red Dawn quests to DB (2025.07.13)
+		- Added chapter 1 of 5 for The Knife's Edge (K'aresh) campaign to DB (2025.07.13)
 		- Added Dread Wastes (Horde/Neutral) quests to DB (2025.07.13)
 
 	RQEMacro.lua
