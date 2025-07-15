@@ -20,9 +20,6 @@
 	RQE.toc
 		- Updated Interface# and version# (2025.06.03)
 
-	RQEMacro.lua
-		- Added details to denote the correct tooltip iconID for escort quests (2025.07.13)
-
 	RQEDatabase.lua
 		- Added remainder of Dragonblight (Horde/Neutral) quests to DB (2025.06.06)
 		- Added Grizzly Hills, Storm Peaks and Icecrown (Horde/Neutral) quests to DB (2025.06.06)
@@ -51,10 +48,12 @@
 		- Added Rise of the Red Dawn quests to DB (2025.07.13)
 		- Added chapter 1 of 5 for The Knife's Edge (K'aresh) campaign to DB (2025.07.13)
 		- Added Dread Wastes (Horde/Neutral) quests to DB (2025.07.13)
+		- Added additional side quests for K'aresh to the DB (2025.07.14)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
 		- Modified macro information to include option for "Collect" (2025.07.10)
+		- Added details to denote the correct tooltip iconID for escort quests (2025.07.13)
 
 
 11.1.5.3 (2025.06.03)
