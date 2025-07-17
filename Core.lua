@@ -9586,7 +9586,8 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	end
 
 	-- Purchase logic
-	if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+	if C_AddOns.IsAddOnLoaded("CraftSim") then
+	--if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
 		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
 	else
 		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
