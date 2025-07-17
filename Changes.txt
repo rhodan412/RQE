@@ -3,13 +3,15 @@
 	**HIGHLIGHTS**
 		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
 		- Added Mists of Pandaria (Horde) quests to DB (2025.07.13)
-		- Added Rise of the Red Dawn quests to DB and the first chapter of the 11.2 K'aresh campaign quests to DB (2025.07.13)
+		- Added Rise of the Red Dawn quests to DB (2025.07.13)
+		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
 		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 		- Fixed issue with ClearAllPoints() within QUEST_WATCH_UPDATE and QUEST_WATCH_UPDATE event functions as it was invalidating frame in 11.2 (2025.07.14)
 
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
 		- Added questID 27779 "Gnomebliteration" stepIndex 1 to the blacklist for improvement (2025.07.03)
+		- Fixed RQE:SearchPreparePurchaseConfirmAH that prevented auction purchase macro from purchasing if player had TSM loaded (2025.07.15)
 
 	EventManager.lua
 		- Added arg info for UNIT_AURA event function (2025.06.06)
@@ -46,9 +48,10 @@
 		- Added Krasarang Wilds and Kun-lai Summit (Horde/Neutral) quests to DB (2025.07.11)
 		- Added Townlong Steppes (Horde/Neutral) quests to DB (2025.07.12)
 		- Added Rise of the Red Dawn quests to DB (2025.07.13)
-		- Added chapter 1 of 5 for The Knife's Edge (K'aresh) campaign to DB (2025.07.13)
 		- Added Dread Wastes (Horde/Neutral) quests to DB (2025.07.13)
 		- Added additional side quests for K'aresh to the DB (2025.07.14)
+		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
+		- Added many Suramar campaign quests to DB (2025.07.17)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
