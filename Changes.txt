@@ -7,6 +7,7 @@
 		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
 		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 		- Fixed issue with ClearAllPoints() within QUEST_WATCH_UPDATE and QUEST_WATCH_UPDATE event functions as it was invalidating frame in 11.2 (2025.07.14)
+		- Added Suramar and Argus campaign quests to DB (2025.07.19)
 
 	Core.lua
 		- Removed RQE.GetDataForAddon() duplicate function (2025.06.16)
@@ -51,7 +52,7 @@
 		- Added Dread Wastes (Horde/Neutral) quests to DB (2025.07.13)
 		- Added additional side quests for K'aresh to the DB (2025.07.14)
 		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
-		- Added many Suramar campaign quests to DB (2025.07.17)
+		- Added Suramar and Argus campaign quests to DB (2025.07.19)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
