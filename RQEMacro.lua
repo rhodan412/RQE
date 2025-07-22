@@ -375,7 +375,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 				elseif itemID == 30817 then
 					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5830 then
-					GameTooltip:SetText("Speak with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+					GameTooltip:SetText("Speak/Interact with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 615102 then
 					GameTooltip:SetText("Weaken\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 23784 then
