@@ -53,11 +53,13 @@
 		- Added additional side quests for K'aresh to the DB (2025.07.14)
 		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
 		- Added Suramar and Argus campaign quests to DB (2025.07.19)
+		- Added some Warrior, Hunter, Warlock class quests, from Legion expansion, to DB (2025.07.21)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
 		- Modified macro information to include option for "Collect" (2025.07.10)
 		- Added details to denote the correct tooltip iconID for escort quests (2025.07.13)
+		- Modified macro information to include option for "Interact" (2025.07.21)
 
 
 11.1.5.3 (2025.06.03)
