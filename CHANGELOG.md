@@ -54,6 +54,8 @@
 		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
 		- Added Suramar and Argus campaign quests to DB (2025.07.19)
 		- Added some Warrior, Hunter, Warlock class quests, from Legion expansion, to DB (2025.07.21)
+		- Removed thousands of duplicate quests, mostly from Legion expansion, from the DB (2025.07.22)
+		- Added more Warrior, Hunter, Warlock, Death Knight, Demon Hunter, Paladin Legion class order hall quests to DB (2025.07.26)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
