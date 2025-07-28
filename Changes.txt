@@ -4,7 +4,7 @@
 		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
 		- Added Mists of Pandaria (Horde) quests to DB (2025.07.13)
 		- Added Rise of the Red Dawn quests to DB (2025.07.13)
-		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.07.16)
+		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB, but only the preliminary data is within the DB (2025.07.16)
 		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 		- Fixed issue with ClearAllPoints() within QUEST_WATCH_UPDATE and QUEST_WATCH_UPDATE event functions as it was invalidating frame in 11.2 (2025.07.14)
 		- Added Suramar and Argus campaign quests to DB (2025.07.19)
@@ -56,12 +56,19 @@
 		- Added some Warrior, Hunter, Warlock class quests, from Legion expansion, to DB (2025.07.21)
 		- Removed thousands of duplicate quests, mostly from Legion expansion, from the DB (2025.07.22)
 		- Added more Warrior, Hunter, Warlock, Death Knight, Demon Hunter, Paladin Legion class order hall quests to DB (2025.07.26)
+		- Added some Monk, Mage, and Rogue Legion class order hall quests to DB (2025.07.27)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
 		- Modified macro information to include option for "Collect" (2025.07.10)
 		- Added details to denote the correct tooltip iconID for escort quests (2025.07.13)
 		- Modified macro information to include option for "Interact" (2025.07.21)
+
+	TO-DO:
+		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
+		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
+		- Druid Order Hall and Feral artifact weapon
+		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
 
 
 11.1.5.3 (2025.06.03)
