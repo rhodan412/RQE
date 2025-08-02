@@ -57,6 +57,7 @@
 		- Removed thousands of duplicate quests, mostly from Legion expansion, from the DB (2025.07.22)
 		- Added more Warrior, Hunter, Warlock, Death Knight, Demon Hunter, Paladin Legion class order hall quests to DB (2025.07.26)
 		- Added some Monk, Mage, and Rogue Legion class order hall quests to DB (2025.07.27)
+		- Added additional Legion class order hall quests and updated Cataclysm quest details in DB (2025.08.01)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
