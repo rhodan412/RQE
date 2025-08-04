@@ -3237,6 +3237,12 @@ function RQE.handleZoneChange(...)
 		-- RQE.updateScenarioUI()
 	-- end
 
+	if event == "UNIT_EXITING_VEHICLE" then
+		C_Timer.After(1.8, function()
+			RQE:StartPeriodicChecks()
+		end)
+	end
+
 	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
 		-- print(tostring(event))
 
