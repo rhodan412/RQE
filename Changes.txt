@@ -1,4 +1,4 @@
-11.1.5.4
+11.1.5.4 (2025.08.04)
 
 	**HIGHLIGHTS**
 		- Added Wrath of the Lich King and Battle for Azeroth (Horde) quests to DB (2025.06.14)
@@ -19,6 +19,7 @@
 		- Added arg info for OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI event functions (2025.06.08)
 		- Fixed issue with ClearPoints in VARIABLES_LOADED that was preventing RQEFrame from displaying in patch 11.2 (2025.07.13)
 		- Fixed issue with ClearAllPoints() within QUEST_WATCH_UPDATE and QUEST_WATCH_UPDATE event functions as it was invalidating frame in 11.2 (2025.07.14)
+		- Added separate section for UNIT_EXITING_VEHICLE to include function that checks quest progress status (2025.08.04)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.06.03)
@@ -57,7 +58,7 @@
 		- Removed thousands of duplicate quests, mostly from Legion expansion, from the DB (2025.07.22)
 		- Added more Warrior, Hunter, Warlock, Death Knight, Demon Hunter, Paladin Legion class order hall quests to DB (2025.07.26)
 		- Added some Monk, Mage, and Rogue Legion class order hall quests to DB (2025.07.27)
-		- Added additional Legion class order hall quests and updated Cataclysm quest details in DB (2025.08.01)
+		- Added additional Legion class order hall quests and updated Cataclysm quest details in DB (2025.08.04)
 
 	RQEMacro.lua
 		- Added 'Weaken' to list of macro icons for the RQE Button (2025.07.03)
