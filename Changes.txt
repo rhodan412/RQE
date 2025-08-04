@@ -1,3 +1,18 @@
+11.1.5.5
+
+	**HIGHLIGHTS**
+		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.08.04)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.08.04)
+
+	TO-DO:
+		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
+		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
+		- Druid Order Hall and Feral artifact weapon
+		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
+
+
 11.1.5.4 (2025.08.04)
 
 	**HIGHLIGHTS**
@@ -65,12 +80,6 @@
 		- Modified macro information to include option for "Collect" (2025.07.10)
 		- Added details to denote the correct tooltip iconID for escort quests (2025.07.13)
 		- Modified macro information to include option for "Interact" (2025.07.21)
-
-	TO-DO:
-		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
-		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
-		- Druid Order Hall and Feral artifact weapon
-		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
 
 
 11.1.5.3 (2025.06.03)
