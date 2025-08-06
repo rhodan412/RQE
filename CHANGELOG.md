@@ -1,10 +1,13 @@
-11.1.5.5
+11.2.0.0
 
 	**HIGHLIGHTS**
-		- Added chapters 4 of 5 on the 11.2 K'aresh campaign quests to DB (2025.08.04)
+		- Completed chapter 1 of K'aresh campaign quests in DB for player access (2025.08.06)
 
 	RQE.toc
-		- Updated Interface# and version# (2025.08.04)
+		- Updated Interface# and version# (2025.08.05)
+
+	RQEDatabase.lua
+		- Completed chapter 1 of K'aresh campaign quests in DB for player access (2025.08.06)
 
 	TO-DO:
 		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
