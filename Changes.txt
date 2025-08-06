@@ -1,19 +1,13 @@
-11.2.0.0
+11.2.0.0 (2025.08.06)
 
 	**HIGHLIGHTS**
-		- Completed chapter 1 of K'aresh campaign quests in DB for player access (2025.08.06)
+		- Completed chapter 1 and 2 of K'aresh campaign quests in DB for player access (2025.08.06)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.08.05)
 
 	RQEDatabase.lua
-		- Completed chapter 1 of K'aresh campaign quests in DB for player access (2025.08.06)
-
-	TO-DO:
-		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
-		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
-		- Druid Order Hall and Feral artifact weapon
-		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
+		- Completed chapter 1 and 2 of K'aresh campaign quests in DB for player access (2025.08.06)
 
 
 11.1.5.4 (2025.08.04)
