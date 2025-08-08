@@ -350,7 +350,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		end
 
 		-- Debug mode: Show raw macro text
-		if debugLevel == "INFO+" or IsShiftKeyDown() then
+		if RQE.db.profile.debugLevel == "INFO+" or IsShiftKeyDown() then
+		--if debugLevel == "INFO+" or IsShiftKeyDown() then
 			GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 			GameTooltip:Show()
 			return
