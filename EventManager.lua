@@ -1132,14 +1132,14 @@ function RQE.handlePlayerRegenEnabled()
 
 		-- local isFlying = IsFlying("player")
 		-- local isMounted = IsMounted()
-		-- local onTaxi = UnitOnTaxi("player")
+		-- local OnTaxi = UnitOnTaxi("player")
 
 		-- -- Update RQE.PlayerMountStatus based on conditions
 		-- if not RQE.isDragonRiding and isFlying and isMounted then
 			-- RQE.PlayerMountStatus = "Flying"
 		-- elseif RQE.isDragonRiding then
 			-- RQE.PlayerMountStatus = "Dragonriding"
-		-- elseif onTaxi then
+		-- elseif OnTaxi then
 			-- RQE.PlayerMountStatus = "Taxi"
 		-- elseif isMounted then
 			-- RQE.PlayerMountStatus = "Mounted"
@@ -1213,7 +1213,7 @@ function RQE.handlePlayerMountDisplayChanged()
 
 	RQE:UpdateCoordinates()
 
-	local onTaxi = UnitOnTaxi("player")
+	local OnTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
 	if not OnTaxi and not isResting then
@@ -1309,7 +1309,7 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 
 	--if not inBlobState then return end
 
-	local onTaxi = UnitOnTaxi("player")
+	local OnTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
 	-- if not inBlobState then		-- Heavy Lag
@@ -1992,7 +1992,7 @@ function RQE.handlePlayerControlGained()
 		RQE:UpdateCoordinates()
 	end)
 
-	local onTaxi = UnitOnTaxi("player")
+	local OnTaxi = UnitOnTaxi("player")
 
 	if not OnTaxi then
 		if not RQE.hoveringOnFrame then
@@ -2063,7 +2063,7 @@ function RQE.handlePlayerStartedMoving()
 
 	local isFlying = IsFlying("player")
 	local isMounted = IsMounted()
-	local onTaxi = UnitOnTaxi("player")
+	local OnTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
 	-- if not OnTaxi and not isResting then	-- Heavy Lag
@@ -2077,7 +2077,7 @@ function RQE.handlePlayerStartedMoving()
 		-- end
 	-- end
 
-	if not IsFlying and not isMounted and not onTaxi then
+	if not IsFlying and not isMounted and not OnTaxi then
 		C_Timer.After(0.3, function()
 			-- Get the macro index for 'RQE Macro'
 			local macroIndex = GetMacroIndexByName("RQE Macro")
@@ -2516,14 +2516,14 @@ function RQE.handlePlayerEnterWorld(...)
 
 		local isFlying = IsFlying("player")
 		local isMounted = IsMounted()
-		local onTaxi = UnitOnTaxi("player")
+		local OnTaxi = UnitOnTaxi("player")
 
 		-- Update RQE.PlayerMountStatus based on conditions
 		if not RQE.isDragonRiding and isFlying and isMounted then
 			RQE.PlayerMountStatus = "Flying"
 		elseif RQE.isDragonRiding then
 			RQE.PlayerMountStatus = "Dragonriding"
-		elseif onTaxi then
+		elseif OnTaxi then
 			RQE.PlayerMountStatus = "Taxi"
 		elseif isMounted then
 			RQE.PlayerMountStatus = "Mounted"
@@ -3228,7 +3228,7 @@ end
 function RQE.handleZoneChange(...)
 	local event = select(2, ...)
 
-	local onTaxi = UnitOnTaxi("player")
+	local OnTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
 	RQE:UpdateTrackerVisibility()
@@ -3302,14 +3302,14 @@ function RQE.handleZoneChange(...)
 
 		local isFlying = IsFlying("player")
 		local isMounted = IsMounted()
-		local onTaxi = UnitOnTaxi("player")
+		local OnTaxi = UnitOnTaxi("player")
 
 		-- Update RQE.PlayerMountStatus based on conditions
 		if not RQE.isDragonRiding and isFlying and isMounted then
 			RQE.PlayerMountStatus = "Flying"
 		elseif RQE.isDragonRiding then
 			RQE.PlayerMountStatus = "Dragonriding"
-		elseif onTaxi then
+		elseif OnTaxi then
 			RQE.PlayerMountStatus = "Taxi"
 		elseif isMounted then
 			RQE.PlayerMountStatus = "Mounted"
@@ -3403,10 +3403,10 @@ function RQE.handleZoneChange(...)
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
 
-	-- -- Clears World Quest that are Automatically Tracked when switching to a new area
-	-- local isFlying = IsFlying("player")
-	-- local isMounted = IsMounted()
-	-- local onTaxi = UnitOnTaxi("player")
+	-- Clears World Quest that are Automatically Tracked when switching to a new area
+	local isFlying = IsFlying("player")
+	local isMounted = IsMounted()
+	local OnTaxi = UnitOnTaxi("player")
 
 	local questData = RQE.getQuestData(questID)
 	if not questData then
@@ -3482,6 +3482,7 @@ function RQE.handleZoneChange(...)
 	end
 
 	-- Avoid frequent firing by checking state
+	local currentMinimapZone = GetMinimapZoneText() or ""
 	if (lastCheckedZone ~= currentMinimapZone or lastCheckedStepIndex ~= stepIndex) then
 		lastCheckedZone = currentMinimapZone
 		lastCheckedStepIndex = stepIndex
@@ -3519,7 +3520,7 @@ function RQE.handleZoneChange(...)
 	end
 
 
-	if not IsFlying and not isMounted and not onTaxi then
+	if not IsFlying and not isMounted and not OnTaxi then
 		RQE.UntrackAutomaticWorldQuests()
 	end
 end
@@ -3539,7 +3540,7 @@ function RQE.handleZoneNewAreaChange()
 		-- RQE:UpdateTrackerVisibility()
 	-- end)
 
-	local onTaxi = UnitOnTaxi("player")
+	local OnTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
 	if not OnTaxi and not isResting then
@@ -4308,6 +4309,8 @@ end
 
 -- Function that handles the Scenario UI Updates
 function RQE.updateScenarioUI()
+	local mythicMode = RQE.db.profile.mythicScenarioMode
+
 	if not mythicMode then
 		-- If we're in combat, defer the update
 		if InCombatLockdown() then
