@@ -5108,7 +5108,8 @@ end
 function RQE.getCurrentBuffs()
 	local buffs = {}
 	for i = 1, 40 do  -- Typically there are not more than 40 buffs
-		local name = UnitBuff("player", i)
+		local name = C_UnitAuras.GetBuffDataByIndex("player", i)
+		--local name = UnitBuff("player", i)
 		if not name then break end
 		table.insert(buffs, name)
 	end
