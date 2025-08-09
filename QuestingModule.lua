@@ -1459,6 +1459,12 @@ end
 
 -- Function to update the scenario frame with the latest information
 function RQE.UpdateScenarioFrame()
+	-- Fast exit if we are not in a scenario (most reliable first check)
+	if not C_Scenario.IsInScenario or not C_Scenario.IsInScenario() then
+		if RQE.ScenarioChildFrame then RQE.ScenarioChildFrame:Hide() end
+		return
+	end
+
 	-- Get the full scenario information once at the beginning of the function
 	local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
 	local scenarioStepInfo = C_ScenarioInfo.GetScenarioInfo()
