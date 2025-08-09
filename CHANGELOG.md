@@ -21,6 +21,12 @@
 	RQEMacro.lua
 		- Fixed debugLog definition to be RQE.db.profile.debugLevel within RQEMacro:UpdateMagicButtonTooltip() function (2025.08.08)
 
+	TO-DO:
+		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
+		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
+		- Druid Order Hall and Feral artifact weapon
+		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
+
 
 11.2.0.0 (2025.08.06)
 

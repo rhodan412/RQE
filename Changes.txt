@@ -1,3 +1,15 @@
+11.2.0.2
+
+	RQE.toc
+		- Updated Interface# and version# (2025.08.08)
+
+	TO-DO:
+		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
+		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
+		- Druid Order Hall and Feral artifact weapon
+		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
+
+
 11.2.0.1 (2025.08.08)
 
 	**HIGHLIGHTS**
