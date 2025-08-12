@@ -1470,13 +1470,13 @@ function RQE.UpdateScenarioFrame()
 	local scenarioStepInfo = C_ScenarioInfo.GetScenarioInfo()
 	local numCriteria = select(3, C_Scenario.GetStepInfo())
 
-	-- Assuming currentStage is the stepID list first criteria
-	local stepID = scenarioStepInfo.currentStage
+	-- Only set stepID if scenarioStepInfo exists
+	local stepID = scenarioStepInfo and scenarioStepInfo.currentStage
 	local criteriaIndex = 1
 	local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 
 	-- Check if we have valid scenario information
-	if scenarioStepInfo and type(scenarioStepInfo) == "table" then
+	if scenarioStepInfo and type(scenarioStepInfo) == "table" and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.title then
 		if scenarioStepInfo.title then
 			RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
 		else
@@ -1493,7 +1493,7 @@ function RQE.UpdateScenarioFrame()
 		RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
 
 		-- Update the title with the scenario step title
-		RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
+		RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title or "Title is not available")
 
 		-- Update the main frame with criteria
 		local criteriaText = ""
