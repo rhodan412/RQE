@@ -3233,6 +3233,10 @@ function RQE.handleZoneChange(...)
 
 	RQE:UpdateTrackerVisibility()
 
+	C_Timer.After(2.75, function()
+		RQE.UpdateScenarioFrame()
+	end)
+
 	-- if C_Scenario.IsInScenario() then
 		-- RQE.updateScenarioUI()
 	-- end
