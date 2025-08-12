@@ -1,4 +1,11 @@
-11.2.0.2
+11.2.0.2 (2025.08.12)
+
+	**HIGHLIGHTS**
+		- Fixed several campaign quests in chapters 1 thru 3 of the K'aresh campaign (2025.08.11)
+		- Completed chapter 4 of K'aresh campaign quests in DB for player access (2025.08.12)
+
+	EventManager.lua
+		- Update Scenario Frame after a brief delay following a zone change (2025.08.11)
 
 	QuestingModule.lua
 		- Fix for scenario frame continuing to exist after scenario is finished (2025.08.09)
@@ -8,12 +15,8 @@
 
 	RQEDatabase.lua
 		- Added/updated world quests in the K'aresh zone (2025.08.09)
-
-	TO-DO:
-		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
-		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
-		- Druid Order Hall and Feral artifact weapon
-		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
+		- Fixed several campaign quests in chapters 1 thru 3 of the K'aresh campaign (2025.08.11)
+		- Completed chapter 4 of K'aresh campaign quests in DB for player access (2025.08.12)
 
 
 11.2.0.1 (2025.08.08)
