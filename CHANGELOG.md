@@ -1,3 +1,24 @@
+11.2.0.3
+
+	Core.lua
+		- Fixed error when running the RQE:ConfirmAndPurchaseCommodity(itemID, quantity) function for purchasing an item from the auction house via RQE magic macro button (2025.08.14)
+
+	EventManager.lua
+		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
+
+	RQE.toc
+		- Updated Interface# and version# (2025.08.14)
+
+	RQEDatabase.lua
+		- Added a few profession quests in the K'aresh zone (2025.08.14)
+
+	TO-DO:
+		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
+		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
+		- Druid Order Hall and Feral artifact weapon
+		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
+
+
 11.2.0.2 (2025.08.12)
 
 	**HIGHLIGHTS**
