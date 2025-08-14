@@ -9738,9 +9738,11 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 					hideOnEscape = true,
 					preferredIndex = 3,  -- Avoid taint from UIParent
 				OnShow = function(self)
-					self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+					if self.text then
+						self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+					end
 					local itemFrame = CreateFrame("Frame", nil, self)
-					itemFrame:SetAllPoints(self.text)
+					itemFrame:SetAllPoints(self.text or self)  -- fallback to whole popup if self.text is nil
 					itemFrame:SetScript("OnEnter", function()
 						GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
 						GameTooltip:SetHyperlink(itemLink)
