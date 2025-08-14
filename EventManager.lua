@@ -3233,9 +3233,9 @@ function RQE.handleZoneChange(...)
 
 	RQE:UpdateTrackerVisibility()
 
-	C_Timer.After(2.75, function()
-		RQE.UpdateScenarioFrame()
-	end)
+	-- C_Timer.After(2.75, function()
+		-- RQE.UpdateScenarioFrame()
+	-- end)
 
 	-- if C_Scenario.IsInScenario() then
 		-- RQE.updateScenarioUI()
@@ -4412,11 +4412,14 @@ function RQE.handleInstanceInfoUpdate()
 		RQE:UpdateTrackerVisibility()
 	end)
 
+	C_Timer.After(2.75, function()
+		RQE.UpdateScenarioFrame()
+	end)
+	RQE.updateScenarioUI()
+
 	C_Timer.After(0.3, function()
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when UPDATE_INSTANCE_INFO event fires
 	end)
-
-	RQE.updateScenarioUI()
 
 	RQE.UpdateCampaignFrameAnchor()
 
