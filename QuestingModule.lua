@@ -1487,13 +1487,19 @@ function RQE.UpdateScenarioFrame()
 	-- Check if we have valid scenario information
 	if scenarioName and scenarioStepInfo then
 		-- Update the scenarioTitle with the scenario name
-		RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
+		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.scenarioTitle then
+			RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
+		end
 
 		-- Update the stage with the current stage and total stages
-		RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
+		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.stage then
+			RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
+		end
 
 		-- Update the title with the scenario step title
-		RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title or "Title is not available")
+		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.title then
+			RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title or "Title is not available")
+		end
 
 		-- Update the main frame with criteria
 		local criteriaText = ""
@@ -1516,17 +1522,21 @@ function RQE.UpdateScenarioFrame()
 			end
 		end
 
-		RQE.ScenarioChildFrame.body:SetText(criteriaText)
+		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.body then
+			RQE.ScenarioChildFrame.body:SetText(criteriaText)
+		end
 
 		-- Update the timer, if applicable
 		local duration = criteriaInfo and criteriaInfo.duration
 		local elapsed = criteriaInfo and criteriaInfo.elapsed
 
-		if duration and elapsed then
-			local timeLeft = duration - elapsed
-			RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-		else
-			RQE.ScenarioChildFrame.timer:SetText("")
+		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.timer then
+			if duration and elapsed then
+				local timeLeft = duration - elapsed
+				RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+			else
+				RQE.ScenarioChildFrame.timer:SetText("")
+			end
 		end
 
 		-- Display the frame if it's not already shown
@@ -1536,6 +1546,10 @@ function RQE.UpdateScenarioFrame()
 		-- Hide the scenario frame since we're not in a scenario
 		RQE.ScenarioChildFrame:Hide()
 	end
+
+	C_Timer.After(0.35, function()
+		UpdateRQEQuestFrame()
+	end)
 end
 
 
