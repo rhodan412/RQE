@@ -5,6 +5,7 @@
 
 	EventManager.lua
 		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
+		- Added RQE.UpdateScenarioFrame() function call to SCENARIO_CRITERIA_UPDATE event function (2025.08.19)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.08.14)
@@ -13,15 +14,11 @@
 		- Added a few profession quests in the K'aresh zone (2025.08.14)
 		- Updated info for questID 85949 in the DB (2025.08.15)
 		- Added several Legion class order hall quests to the DB (2025.08.18)
+		- Added intro to additional Legion class order hall for Druid, Priest, Rogue and Monk to the DB (2025.08.19)
+		- Updated K'aresh campaign quests for raid story mode in DB (2025.08.19)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
-
-	TO-DO:
-		- Monk Order Hall (up to Tech It Up A Notch) and Windwalker? artifact weapon
-		- Rogue Order Hall (up to What Winstone Suggests) and Assassination artifact weapon
-		- Druid Order Hall and Feral artifact weapon
-		- Priest Order Hall (up to Tech It Up A Notch) and Shadow artifact weapon
 
 
 11.2.0.2 (2025.08.12)
