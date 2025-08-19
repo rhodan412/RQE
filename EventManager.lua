@@ -1784,6 +1784,7 @@ function RQE.handleScenarioCriteriaUpdate(...)
 	end
 
 	RQE.scenarioCriteriaUpdate = true
+	RQE.UpdateScenarioFrame()
 	RQE.updateScenarioCriteriaUI()
 
 	RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
