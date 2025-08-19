@@ -12,6 +12,7 @@
 	RQEDatabase.lua
 		- Added a few profession quests in the K'aresh zone (2025.08.14)
 		- Updated info for questID 85949 in the DB (2025.08.15)
+		- Added several Legion class order hall quests to the DB (2025.08.18)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
