@@ -16,6 +16,7 @@
 		- Added several Legion class order hall quests to the DB (2025.08.18)
 		- Added intro to additional Legion class order hall for Druid, Priest, Rogue and Monk to the DB (2025.08.19)
 		- Updated K'aresh campaign quests for raid story mode in DB (2025.08.19)
+		- Added most of the Warlock class order hall quests to DB (2025.08.20)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
