@@ -2,6 +2,7 @@
 
 	Core.lua
 		- Fixed error when running the RQE:ConfirmAndPurchaseCommodity(itemID, quantity) function for purchasing an item from the auction house via RQE magic macro button (2025.08.14)
+		- Added additional debug info for Saving/Restoring Tracked quests for character (2025.08.22)
 
 	EventManager.lua
 		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
@@ -17,7 +18,7 @@
 		- Added intro to additional Legion class order hall for Druid, Priest, Rogue and Monk to the DB (2025.08.19)
 		- Updated K'aresh campaign quests for raid story mode in DB (2025.08.19)
 		- Added most of the Warlock class order hall quests to DB (2025.08.20)
-		- Added additional class order hall quests to DB (2025.08.21)
+		- Added additional class order hall quests to DB (2025.08.22)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
