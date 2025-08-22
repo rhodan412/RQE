@@ -848,6 +848,10 @@ end
 
 -- Function to save the currently watched/tracked quests to the character-specific table
 function RQE:SaveTrackedQuestsToCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:SaveTrackedQuestsToCharacter() ~~~")
+	end
+
 	-- Initialize the trackedQuests table for this character
 	RQECharacterDB.trackedQuests = {}
 
@@ -935,6 +939,10 @@ end
 
 -- Function to restore the watched/tracked quests for the current character
 function RQE:RestoreTrackedQuestsForCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:RestoreTrackedQuestsForCharacter() ~~~")
+	end
+
 	if not RQECharacterDB or not RQECharacterDB.trackedQuests then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No tracked quests saved for this character.")
