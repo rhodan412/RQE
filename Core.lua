@@ -10338,7 +10338,9 @@ function RQE:RecommendFastestTravelMethod(questID)
 	local playerMapID = C_Map.GetBestMapForUnit("player")
 	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
 	if not playerPos then
-		print(">> Unable to determine player position.")
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(">> Unable to determine player position.")
+		end
 		return
 	end
 
