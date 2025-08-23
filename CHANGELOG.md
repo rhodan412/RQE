@@ -3,10 +3,14 @@
 	Core.lua
 		- Fixed error when running the RQE:ConfirmAndPurchaseCommodity(itemID, quantity) function for purchasing an item from the auction house via RQE magic macro button (2025.08.14)
 		- Added additional debug info for Saving/Restoring Tracked quests for character (2025.08.22)
+		- Adjustment to debug print messages within the RQE:RecommendFastestTravelMethod(questID) function (2025.08.22)
 
 	EventManager.lua
 		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
 		- Added RQE.UpdateScenarioFrame() function call to SCENARIO_CRITERIA_UPDATE event function (2025.08.19)
+
+	QuestingModule.lua
+		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.08.14)
@@ -19,9 +23,6 @@
 		- Updated K'aresh campaign quests for raid story mode in DB (2025.08.19)
 		- Added most of the Warlock class order hall quests to DB (2025.08.20)
 		- Added additional class order hall quests to DB (2025.08.22)
-
-	QuestingModule.lua
-		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
 
 
 11.2.0.2 (2025.08.12)
