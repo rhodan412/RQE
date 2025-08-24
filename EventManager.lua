@@ -224,6 +224,7 @@ local eventsToRegister = {
 	"LFG_LIST_ACTIVE_ENTRY_UPDATE",
 	"MAIL_SUCCESS",
 	"MERCHANT_UPDATE",
+	"MINIMAP_UPDATE_ZOOM",
 	--"OBJECT_ENTERED_AOI",
 	--"OBJECT_LEFT_AOI",
 	"PLAYER_CONTROL_GAINED",
@@ -231,6 +232,7 @@ local eventsToRegister = {
 	"PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED",
 	"PLAYER_LOGIN",
 	"PLAYER_LOGOUT",
+	"PLAYER_MAP_CHANGED",
 	"PLAYER_MOUNT_DISPLAY_CHANGED",
 	-- "PLAYER_REGEN_DISABLED",
 	"PLAYER_REGEN_ENABLED",
@@ -344,6 +346,7 @@ local function HandleEvents(frame, event, ...)
 		LFG_LIST_ACTIVE_ENTRY_UPDATE = RQE.handleLFGActive,
 		MAIL_SUCCESS = RQE.handleMailSuccess,
 		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
+		MINIMAP_UPDATE_ZOOM =  RQE.handleMiniMapZoom,
 		OBJECT_ENTERED_AOI = RQE.handleObjectEnteredLeft,
 		OBJECT_LEFT_AOI = RQE.handleObjectEnteredLeft,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
@@ -351,6 +354,7 @@ local function HandleEvents(frame, event, ...)
 		PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED = RQE.PlayerInsideQuestBlobStateChanged,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
 		PLAYER_LOGOUT = RQE.handlePlayerLogout,
+		PLAYER_MAP_CHANGED = RQE.handlePlayerMapChanged,
 		PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerMountDisplayChanged,
 		--PLAYER_REGEN_DISABLED = RQE.handlePlayerRegenDisabled,
 		PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
@@ -1205,6 +1209,29 @@ function RQE.handlePlayerRegenEnabled()
 end
 
 
+-- Function that handles the PLAYER_MAP_CHANGED event
+function RQE.handlePlayerMapChanged(...)
+	local event = select(2, ...)
+	local oldMapID = select(3, ...)
+	local newMapID = select(4, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+end
+
+
 -- Function that runs after leaving combat or PLAYER_MOUNT_DISPLAY_CHANGED
 function RQE.handlePlayerMountDisplayChanged()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
@@ -1961,6 +1988,126 @@ function RQE.handleJailersUpdate(...)
 		end
 	end)
 end
+
+
+-- Handles the MINIMAP_UPDATE_ZOOM event
+-- Fired when the minimap scaling factor is changed. This happens, generally, whenever the player moves indoors from outside, or vice versa. To test the player's location, compare the minimapZoom and minimapInsideZoom CVars with the current minimap zoom level (see Minimap:GetZoom). 
+function RQE.handleMiniMapZoom()
+	--print("[RQE] handleMiniMapZoom() firing")
+
+	-- Persistent state to avoid redundant checks
+	local lastCheckedZone = ""
+	local lastCheckedStepIndex = nil
+
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("[RQE] No supertracked questID found.")
+		end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("[RQE] No quest data available for questID:", questID)
+		end
+		return
+	end
+
+	-- Normalize current minimap zone text
+	local currentMinimapZone = GetMinimapZoneText() or ""
+	currentMinimapZone = currentMinimapZone:lower()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("[RQE] Current Minimap Zone:", currentMinimapZone)
+	end
+
+	-- Track if any step has a CheckDBZoneChange
+	local isZoneChangeCheck = false
+	local isFailedZoneCheck = false
+	local matchedStepIndex = nil
+
+	-- Helper: Loop through steps
+	for stepIndex, step in ipairs(questData) do
+		if step.funct == "CheckDBZoneChange" then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("[RQE] Found top-level CheckDBZoneChange in step", stepIndex)
+			end
+			isZoneChangeCheck = true
+			matchedStepIndex = stepIndex
+		end
+
+		local checks = step.checks or (step.funct == "CheckDBZoneChange" and { step }) or {}
+		for _, checkData in ipairs(checks) do
+			if checkData.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+				matchedStepIndex = stepIndex
+
+				local requiredZones = type(checkData.check) == "table" and checkData.check or { checkData.check }
+				for _, zone in ipairs(requiredZones) do
+					local requiredZone = tostring(zone):lower()
+					if checkData.logic == "NOT" then
+						if currentMinimapZone == requiredZone then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("[RQE] Failed NOT zone check: current minimap zone matches forbidden zone:", requiredZone)
+							end
+							isFailedZoneCheck = true
+							break
+						end
+					else
+						if currentMinimapZone == requiredZone then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("[RQE] Passed zone check: current minimap zone matches required zone:", requiredZone)
+							end
+							isFailedZoneCheck = false
+							break
+						end
+					end
+				end
+
+				if isFailedZoneCheck then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("[RQE] Breaking early due to failed zone match.")
+					end
+					break
+				end
+			end
+		end
+
+		if isZoneChangeCheck then
+			break -- We only need to find one relevant match
+		end
+	end
+
+	-- Handle firing logic
+	if isZoneChangeCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("[RQE] Detected CheckDBZoneChange logic. Scheduling RQE:StartPeriodicChecks()...")
+		end
+
+		C_Timer.After(1.3, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("[RQE] RQE:StartPeriodicChecks() running from MINIMAP_UPDATE_ZOOM")
+			end
+			RQE:StartPeriodicChecks()
+		end)
+
+		-- Optional: Trigger quest button click on zone mismatch
+		if isFailedZoneCheck and matchedStepIndex == RQE.AddonSetStepIndex then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("[RQE] Failed zone check matches AddonSetStepIndex. Triggering button click.")
+			end
+			C_Timer.After(0.2, function()
+				RQE.ClickQuestLogIndexButton(questID)
+			end)
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("[RQE] No CheckDBZoneChange logic found for any step in questID:", questID)
+		end
+	end
+end
+
 
 
 -- Function that handles OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI
