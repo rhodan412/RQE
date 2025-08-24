@@ -4,6 +4,7 @@
 		- Fixed error when running the RQE:ConfirmAndPurchaseCommodity(itemID, quantity) function for purchasing an item from the auction house via RQE magic macro button (2025.08.14)
 		- Added additional debug info for Saving/Restoring Tracked quests for character (2025.08.22)
 		- Adjustment to debug print messages within the RQE:RecommendFastestTravelMethod(questID) function (2025.08.22)
+		- Adjusted placement of the ObjectiveTrackerFrame to conform with the default location of the RQEQuestFrame (2025.08.23)
 
 	EventManager.lua
 		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
