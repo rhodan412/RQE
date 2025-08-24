@@ -214,6 +214,7 @@ local eventsToRegister = {
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	"ENCOUNTER_END",
+	"GARRISON_MISSION_COMPLETE_RESPONSE",
 	"GOSSIP_CLOSED",
 	-- "GOSSIP_CONFIRM",
 	"GOSSIP_CONFIRM_CANCEL",
@@ -336,6 +337,7 @@ local function HandleEvents(frame, event, ...)
 		CONTENT_TRACKING_UPDATE = RQE.handleContentUpdate,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
 		ENCOUNTER_END = RQE.handleBossKill,
+		GARRISON_MISSION_COMPLETE_RESPONSE = RQE.handleGarrisonMissionComplete,
 		GOSSIP_CLOSED = RQE.handleGossipClosed,
 		--GOSSIP_CONFIRM = RQE.handleGossipConfirm,
 		GOSSIP_CONFIRM_CANCEL = RQE.handleGossipConfirmCancel,
@@ -497,6 +499,41 @@ function RQE.handleTrackedAchieveUpdate(achievementID, criteriaID, elapsed, dura
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: TRACKED_ACHIEVEMENT_UPDATE event triggered for achievementID: " .. tostring(achievementID) .. ", criteriaID: " .. tostring(criteriaID) .. ", elapsed: " .. tostring(elapsed) .. ", duration: " .. tostring(duration), 0xFA, 0x80, 0x72) -- Salmon color		
 	end
 	RQE.UpdateTrackedAchievementList()
+end
+
+
+-- Handles the GARRISON_MISSION_COMPLETE_RESPONSE event function
+-- Fires when the player views the outcome of missions at a Command Table. 
+function RQE.handleGarrisonMissionComplete(...)
+	local event = select(2, ...)
+	local missionID = select(3, ...)
+	local canComplete = select(4, ...)
+	local success = select(5, ...)
+	local overmaxSucceeded = select(6, ...)
+	local followerDeaths = select(7, ...)
+	local autoCombatResult = select(8, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	UpdateRQEQuestFrame()
+
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	if isSuperTracking then
+		UpdateFrame()
+	end
 end
 
 
@@ -772,6 +809,8 @@ function RQE.ReagentBagUpdate(...)
 			end
 		end
 	end
+
+	UpdateRQEQuestFrame()
 
 	-- Return if the auto-click option is disabled
 	if not RQE.db.profile.autoClickWaypointButton then return end
