@@ -8,6 +8,7 @@
 	EventManager.lua
 		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
 		- Added RQE.UpdateScenarioFrame() function call to SCENARIO_CRITERIA_UPDATE event function (2025.08.19)
+		- Added MINIMAP_UPDATE_ZOOM with proper handle for the CheckDBZoneChange with the MINIMAP_UPDATE_ZOOM event function and created PLAYER_MAP_CHANGED event function (2025.08.23)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
@@ -23,6 +24,7 @@
 		- Updated K'aresh campaign quests for raid story mode in DB (2025.08.19)
 		- Added most of the Warlock class order hall quests to DB (2025.08.20)
 		- Added additional class order hall quests to DB (2025.08.22)
+		- Updated to Elwynn Forest quest DB (2025.08.23)
 
 
 11.2.0.2 (2025.08.12)
