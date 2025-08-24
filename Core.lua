@@ -1638,7 +1638,7 @@ function RQE:UpdateTrackerVisibility()
 			ObjectiveTrackerFrame.ignoreFramePositionManager = true
 			ObjectiveTrackerFrame:SetParent(UIParent)
 			ObjectiveTrackerFrame:ClearAllPoints()
-			ObjectiveTrackerFrame:SetPoint("TOPLEFT", RQEFrame, "BOTTOMLEFT", 0, -10)	-- TO DO: change the 0, -10 to be variables to be changed in the configuration for player customization
+			ObjectiveTrackerFrame:SetPoint("TOPRIGHT", RQEFrame, "BOTTOMRIGHT", 0, -10)	-- TO DO: change the 0, -10 to be variables to be changed in the configuration for player customization
 			ObjectiveTrackerFrame:Show()
 		end
 
@@ -1690,7 +1690,7 @@ function RQE:AnchorObjectiveTracker()
 	ObjectiveTrackerFrame:ClearAllPoints()
 
 	-- Anchor it under RQEFrame
-	ObjectiveTrackerFrame:SetPoint("TOPLEFT", RQEFrame, "BOTTOMLEFT", 0, -10)
+	ObjectiveTrackerFrame:SetPoint("TOPRIGHT", RQEFrame, "BOTTOMRIGHT", 0, -10)
 
 	-- Resize ObjectiveTrackerFrame to fit (optional)
 	ObjectiveTrackerFrame:SetWidth(300)
