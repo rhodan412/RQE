@@ -5619,7 +5619,7 @@ function RQE.handleQuestWatchListChanged(...)
 				-- Check to advance to next step in quest
 				if RQE.db.profile.autoClickWaypointButton then
 					C_Timer.After(0.5, function()
-						--RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_LIST_CHANGED fires
+						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_LIST_CHANGED fires
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 							DEFAULT_CHAT_FRAME:AddMessage("QWLC 09 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)		-- Pink
 						end
