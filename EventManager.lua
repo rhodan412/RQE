@@ -5666,6 +5666,11 @@ function RQE.handleQuestWatchListChanged(...)
 			end
 		end
 
+		C_Timer.After(1.3, function()
+			RQE.UpdateScenarioFrame()
+		end)
+		RQE.updateScenarioUI()
+
 		-- print("~~~ UpdateRQEQuestFrame(): 5293 ~~~")
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 		-- print("~~~ SaveTrackedQuestsToCharacter: 5134 ~~~")
