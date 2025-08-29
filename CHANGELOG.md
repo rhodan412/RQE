@@ -12,6 +12,7 @@
 		- Added MINIMAP_UPDATE_ZOOM with proper handle for the CheckDBZoneChange with the MINIMAP_UPDATE_ZOOM event function and created PLAYER_MAP_CHANGED event function (2025.08.23)
 		- Added GARRISON_MISSION_COMPLETE_RESPONSE event function with updates to the RQEFrame and RQEQuestFrame (2025.08.23)
 		- Update to BAG_UPDATE event function to update RQEQuestFrame (2025.08.23)
+		- Added RQE:StartPeriodicChecks() function call to within QUEST_WATCH_LIST_CHANGED, but may remove later (2025.08.28)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
@@ -29,6 +30,7 @@
 		- Added additional class order hall quests to DB (2025.08.22)
 		- Updated to Elwynn Forest quest DB (2025.08.23)
 		- Updates to world quests in Legion (2025.08.23)
+		- Added Eastern Kingdoms Cup courses, some Dragonflight profession quests, and world quests to DB (2025.08.28)
 
 
 11.2.0.2 (2025.08.12)
