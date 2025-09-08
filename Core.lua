@@ -207,6 +207,8 @@ local defaults = {
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
 		enableGossipModeAutomation = false,
+		enableMouseOverMarking = true,
+		enableTravelSuggestions = false,
 		enableNearestSuperTrack = true,
 		enableNearestSuperTrackCampaign = false,
 		enableNearestSuperTrackCampaignOnlyWhileLeveling = false,
@@ -3969,7 +3971,7 @@ RQE.eventQuests = {
 function RQE:TargetNearestQuestMob(questID)
 	local mobList = RQE.QuestMobTargetData[questID]
 	if not mobList then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No mob list defined for quest:", questID)
 		end
 		return
@@ -3990,7 +3992,7 @@ function RQE:TargetNearestQuestMob(questID)
 							SetRaidTarget(unitID, mob.marker)
 						end
 
-						if RQE.db.profile.debugLevel == "INFO" then
+						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Targeted:", unitName)
 						end
 						return
@@ -3999,9 +4001,71 @@ function RQE:TargetNearestQuestMob(questID)
 			end
 		end
 	end
-	if RQE.db.profile.debugLevel == "INFO" then
+	if RQE.db.profile.debugLevel == "INFO+" then
 		print("No matching mob found nearby for quest:", questID)
 	end
+end
+
+
+-- Helper: true if the quest is relevant (supertracked, searched, watched, or in RQE's tracked sets)
+function RQE:IsQuestRelevant(questID)
+	if not questID then return false end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestID for RQE:IsQuestRelevant is " .. tostring(questID))
+	end
+
+	-- Super-tracked
+	local isSuperTracking = (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) or RQE.isSuperTracking
+	if isSuperTracking then
+		local st = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Supertracked is " .. tostring(st))
+		end
+		if st and st == questID then
+			return true
+		end
+	end
+
+	-- In quest log & watched (covers world quests too if watched)
+	local logIndex = C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID)
+	if logIndex then
+		if (C_QuestLog.IsQuestWatched and C_QuestLog.IsQuestWatched(questID)) or (C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(questID)) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest of tracked quest is " .. tostring(questID))
+			end
+			return true
+		end
+	end
+
+	-- RQE search / tracking tables
+	if RQE.searchedQuestID and RQE.searchedQuestID == questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.searchedQuestID:")
+			if questID then
+				print("Searched QuestID is: " .. tostring(questID))
+			end
+		end
+		return true
+	end
+
+	if RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ManuallyTrackedQuests QuestID is: " .. tostring(questID))
+		end
+		return true
+	end
+
+	if RQE.TrackedQuests and RQE.TrackedQuests[questID] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.TrackedQuests:")
+			if questID then
+				print("TrackedQuests QuestID is: " .. tostring(questID))
+			end
+		end
+		return true
+	end
+
+	return false
 end
 
 
@@ -4026,12 +4090,12 @@ local function TryMarkUnit(unitID, mobList)
 				-- Only change the marker if it's different from what it should be
 				if currentMarker ~= mob.marker then
 					SetRaidTarget(unitID, mob.marker)
-					if RQE.db.profile.debugLevel == "INFO" then
+					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Re-marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
 					end
 				else
 					-- Marker is already correct → skip re-marking
-					if RQE.db.profile.debugLevel == "INFO" then
+					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Marker on " .. unitID .. " (" .. unitName .. ") is already correct.")
 					end
 				end
@@ -4044,6 +4108,8 @@ end
 
 -- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB
 function RQE:MarkQuestMobOnMouseover()
+	if not RQE.db.profile.enableMouseOverMarking then return end
+
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local usingSearch = false
 
@@ -4098,6 +4164,33 @@ function RQE:MarkQuestMobOnMouseover()
 	-- Run the marker logic
 	TryMarkUnit("mouseover", mobList)
 	TryMarkUnit("target", mobList)
+end
+
+
+-- Safely set a raid marker only if needed.
+-- unitID: "target" (default), "mouseover", "nameplateX", etc.
+-- desired: 1-8 (⭐=1, ◯=2, ◆=3, △=4, ☾=5, ◼=6, ✖=7, ☠=8)
+function RQE:SetMarkerIfNeeded(unitID, desired)
+	unitID = unitID or "target"
+	local idx = tonumber(desired)
+	if not idx or idx < 1 or idx > 8 then return false end
+	if not UnitExists(unitID) then return false end
+
+	local current = GetRaidTargetIndex(unitID)
+	if current == idx then
+		-- Already correct; do nothing.
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("Marker already correct (%d) on %s."):format(idx, unitID))
+		end
+		return false
+	end
+
+	SetRaidTarget(unitID, idx)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		local name = UnitName(unitID) or unitID
+		print(("Applied marker %d to %s."):format(idx, name))
+	end
+	return true
 end
 
 
@@ -10170,13 +10263,17 @@ function RQE:GetClosestFlightMaster()
 
 	local position = C_Map.GetPlayerMapPosition(mapID, "player")
 	if not position then
-		print(">> Unable to get player map position.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Unable to get player map position.")
+		end
 		return nil
 	end
 
 	local px, py = position:GetXY()
 	if not px or not py then
-		print(">> Invalid player position.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Invalid player position.")
+		end
 		return nil
 	end
 
@@ -10198,7 +10295,9 @@ function RQE:GetClosestFlightMaster()
 	if closestNode then
 		print(string.format(">> Closest flight master: %s (%.2f, %.2f, mapID %d)", closestNode.name, closestNode.position.x * 100, closestNode.position.y * 100, mapID))
 	else
-		print(">> No discovered flight master found on this map.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> No discovered flight master found on this map.")
+		end
 	end
 
 	return closestNode
@@ -10236,7 +10335,7 @@ function RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY)
 			mapID
 		))
 	else
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print(">> No discovered flight master found on that map.")
 		end
 	end
@@ -10296,6 +10395,8 @@ end
 
 -- Function that determines the fastest travel method to reach a given quest
 function RQE:RecommendFastestTravelMethod(questID)
+	if not RQE.db.profile.enableTravelSuggestions then return end
+
 	if not questID then
 		RQE.SuperTrackedQuestIDForSpeed = C_SuperTrack.GetSuperTrackedQuestID()
 	else
@@ -10304,9 +10405,7 @@ function RQE:RecommendFastestTravelMethod(questID)
 
 	local questData = RQE.getQuestData(RQE.SuperTrackedQuestIDForSpeed)
 	if not questData then
-		if RQE.db.profile.debugLevel == "INFO" then
-			print(">> Quest not found in internal DB:", RQE.SuperTrackedQuestIDForSpeed)
-		end
+		print(">> Quest not found in internal DB:", RQE.SuperTrackedQuestIDForSpeed)
 		return
 	end
 
@@ -10338,7 +10437,7 @@ function RQE:RecommendFastestTravelMethod(questID)
 	local playerMapID = C_Map.GetBestMapForUnit("player")
 	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
 	if not playerPos then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print(">> Unable to determine player position.")
 		end
 		return
