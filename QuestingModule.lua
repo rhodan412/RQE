@@ -2899,6 +2899,7 @@ function UpdateRQEQuestFrame()
 	end
 
 	-- Visibility Update Check for RQEQuestFrame
+	--RQE.UpdateScenarioFrame()
 	UpdateRQEWorldQuestFrame()
 	--UpdateRQEBonusQuestFrame(questID)
 end
