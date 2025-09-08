@@ -243,7 +243,7 @@ local eventsToRegister = {
 	"QUEST_ACCEPTED",
 	"QUEST_AUTOCOMPLETE",
 	"QUEST_COMPLETE",
-	-- "QUEST_CURRENCY_LOOT_RECEIVED",
+	"QUEST_CURRENCY_LOOT_RECEIVED",
 	"QUEST_DETAIL",
 	"QUEST_FINISHED",
 	"QUEST_LOG_CRITERIA_UPDATE",
@@ -542,9 +542,19 @@ end
 function RQE.handleGossipClosed()
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when GOSSIP_CLOSED event fires acting as a fail safe for some "gossip' quests that may not trigger what is necessary to update this frame otherwise
 
-	-- Clear the raid marker from the current target
+	-- Clear the raid marker from the current target only if it's circle or "2" for the idx
 	if UnitExists("target") then
-		SetRaidTarget("target", 0)
+		local idx = GetRaidTargetIndex("target")
+		if idx == 2 then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
+			end
+			SetRaidTarget("target", 0)
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
+			end
+		end
 	end
 
 	RQE.SelectGossipOption(nil, nil)
@@ -3420,9 +3430,9 @@ function RQE.handleZoneChange(...)
 
 	RQE:UpdateTrackerVisibility()
 
-	-- C_Timer.After(2.75, function()
-		-- RQE.UpdateScenarioFrame()
-	-- end)
+	C_Timer.After(2.75, function()
+		RQE.UpdateScenarioFrame()
+	end)
 
 	-- if C_Scenario.IsInScenario() then
 		-- RQE.updateScenarioUI()
@@ -3773,6 +3783,11 @@ function RQE.handleZoneNewAreaChange()
 	if RQE.HasDragonraceAura() then
 		return
 	end
+
+	C_Timer.After(1.1, function()
+		RQE.UpdateScenarioFrame()
+	end)
+	RQE.updateScenarioUI()
 
 	RQE:AutoSuperTrackClosestQuest()	-- Fires with the ZONE_CHANGED_NEW_AREA event
 
@@ -4747,7 +4762,6 @@ end
 
 -- Handling QUEST_CURRENCY_LOOT_RECEIVED event
 function RQE.handleQuestCurrencyLootReceived(...)
-
 	local event = select(2, ...)
 	local questID = select(3, ...)
 	local currencyId = select(4, ...)
@@ -4768,17 +4782,33 @@ function RQE.handleQuestCurrencyLootReceived(...)
 		end
 	end
 
+	-- Clear the raid marker from the current target
+	if UnitExists("target") then
+		C_Timer.After(1, function()
+			if questID and not RQE:IsQuestRelevant(questID) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
+				end
+				SetRaidTarget("target", 0)
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
+				end
+			end
+		end)
+	end
+
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestCurrencyLootReceived then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_CURRENCY_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", CurrencyID: " .. tostring(currencyId) .. ", Quantity: " .. tostring(quantity), 0, 1, 0)  -- Bright Green
 	end
 
-	-- Saving event specific information before calling the status update function
-	RQE.latestEventInfo = {
-		eventType = "QUEST_CURRENCY_LOOT_RECEIVED",
-		questID = questID,
-		currencyId = currencyId,
-		quantity = quantity
-	}
+	-- -- Saving event specific information before calling the status update function
+	-- RQE.latestEventInfo = {
+		-- eventType = "QUEST_CURRENCY_LOOT_RECEIVED",
+		-- questID = questID,
+		-- currencyId = currencyId,
+		-- quantity = quantity
+	-- }
 
 	--RQE.handleQuestStatusUpdate()
 
@@ -4849,6 +4879,22 @@ function RQE.handleQuestLootReceived(...)
 	local itemLink = select(4, ...)
 	local quantity = select(5, ...)
 
+	-- Clear the raid marker from the current target
+	if UnitExists("target") then
+		C_Timer.After(1, function()
+			if questID and not RQE:IsQuestRelevant(questID) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
+				end
+				SetRaidTarget("target", 0)
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
+				end
+			end
+		end)
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -4864,13 +4910,13 @@ function RQE.handleQuestLootReceived(...)
 		end
 	end
 
-	-- Saving event specific information before calling the status update function
-	RQE.latestEventInfo = {
-		eventType = "QUEST_LOOT_RECEIVED",
-		questID = questID,
-		itemLink = itemLink,
-		quantity = quantity
-	}
+	-- -- Saving event specific information before calling the status update function
+	-- RQE.latestEventInfo = {
+		-- eventType = "QUEST_LOOT_RECEIVED",
+		-- questID = questID,
+		-- itemLink = itemLink,
+		-- quantity = quantity
+	-- }
 
 	--RQE.handleQuestStatusUpdate()
 end
@@ -5877,9 +5923,9 @@ end
 function RQE.handleQuestFinished()
 	-- print("~~~ Running Event Function: RQE.handleQuestFinished() ~~~")
 	-- Clear the raid marker from the current target
-	if UnitExists("target") then
-		SetRaidTarget("target", 0)
-	end
+	-- if UnitExists("target") then
+		-- SetRaidTarget("target", 0)
+	-- end
 
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	if RQE.db.profile.enableNearestSuperTrack then
