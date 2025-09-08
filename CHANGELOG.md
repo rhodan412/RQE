@@ -1,10 +1,23 @@
-11.2.0.3
+11.2.0.3 (2025.09.08)
+		
+	**HIGHLIGHTS**
+		- Adjusted placement of the ObjectiveTrackerFrame to conform with the default location of the RQEQuestFrame (2025.08.23)
+		- Added GARRISON_MISSION_COMPLETE_RESPONSE event function with updates to the RQEFrame and RQEQuestFrame (2025.08.23)
+		- Added enableMouseOverMarking and enableTravelSuggestions to configuration options (2025.09.08)
+		- Added function that checks to see if target has correct raid marker following press of RQE Macro button, and marks target if it doesn't (2025.09.08)
+		- Adjusted when and how raid markers clear when pressing RQE Macro button as this was previously resulting in raid marker clearing due to raid marker already being applied on mouseover and target acquisition before mark would've been applied (2025.09.08)
+
+	Config.lua
+		- Added enableMouseOverMarking and enableTravelSuggestions options to configuration (2025.09.08)
 
 	Core.lua
 		- Fixed error when running the RQE:ConfirmAndPurchaseCommodity(itemID, quantity) function for purchasing an item from the auction house via RQE magic macro button (2025.08.14)
 		- Added additional debug info for Saving/Restoring Tracked quests for character (2025.08.22)
 		- Adjustment to debug print messages within the RQE:RecommendFastestTravelMethod(questID) function (2025.08.22)
 		- Adjusted placement of the ObjectiveTrackerFrame to conform with the default location of the RQEQuestFrame (2025.08.23)
+		- Added enableMouseOverMarking and enableTravelSuggestions options to local defaults (2025.09.08)
+		- Added helper function to see if quest was being searched/tracked/watched (2025.09.08)
+		- Added function that checks to see if target has correct raid marker following press of RQE Macro button, and marks target if it doesn't (2025.09.08)
 
 	EventManager.lua
 		- Additional fixes for the scenario frame remaining with completed objectives even after the conclusion of the scenario (2025.08.14)
@@ -14,9 +27,16 @@
 		- Update to BAG_UPDATE event function to update RQEQuestFrame (2025.08.23)
 		- Added RQE:StartPeriodicChecks() function call to within QUEST_WATCH_LIST_CHANGED, but may remove later (2025.08.28)
 		- Added RQE.UpdateScenarioFrame() and RQE.updateScenarioUI() for scenario frame updates to the QUEST_WATCH_LIST_CHANGED event function (2025.08.29)
+		- Enabled QUEST_CURRENCY_LOOT_RECEIVED event function (2025.09.08)
+		- After GOSSIP_CLOSED fires will only clear the raid marker from target if it has the circle or "2" for the raid marker idx as this corresponds to the gossip choices fired from the RQE Macro button press (2025.09.08)
+		- After the firing of ZONE_CHANGE and ZONE_CHANGED_NEW_AREA an update to the scenario frame is fired (2025.09.08)
+		- Clears the raid marker on target if quest is no longer being tracked/watched when QUEST_CURRENCY_LOOT_RECEIVED or QUEST_LOOT_RECEIVED event functions fire (2025.09.08)
+		- Commented out the code to save event info when QUEST_CURRENCY_LOOT_RECEIVED or QUEST_LOOT_RECEIVED event functions fire (2025.09.08)
+		- Removed clearing of raid marker from target when QUEST_FINISHED event function fires as this was clearing the raid marker at an incorrect time (2025.09.08)
 
 	QuestingModule.lua
 		- Added additional nil checks within the RQE.UpdateScenarioFrame() function as well as a call to update the RQEQuestFrame (2025.08.15)
+		- Removed the RQE.UpdateScenarioFrame() function call when updating the RQE Quest Frame as this was causing increased lag (2025.09.08)
 
 	RQE.toc
 		- Updated Interface# and version# (2025.08.14)
@@ -33,6 +53,10 @@
 		- Updates to world quests in Legion (2025.08.23)
 		- Added Eastern Kingdoms Cup courses, some Dragonflight profession quests, and world quests to DB (2025.08.28)
 		- Added additional delve and WQ to the quest DB (2025.08.29)
+		- Adjusted macros so that a check is carried out of the target before actually applying/improper clearing of marker from target (2025.09.08)
+
+	RQEMacro.lua
+		- Enabled the macro creation for setting a raid marker on target if quest is being searched due to the player not having the quest and needing directions for quest pickup (2025.09.08)
 
 
 11.2.0.2 (2025.08.12)
