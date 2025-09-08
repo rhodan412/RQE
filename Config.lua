@@ -394,6 +394,28 @@ RQE.options = {
 					end,
 					width = "full",
 				},
+				enableMouseOverMarking = {
+					type = "toggle",
+					name = "Enable Mouseover marking",
+					desc = "If enabled will mark NPC targets that are associated with the step of your currently supertracked quest",
+					order = 24,
+					get = function() return RQE.db.profile.enableMouseOverMarking end,
+					set = function(_, newValue)
+						RQE.db.profile.enableMouseOverMarking = newValue;
+					end,
+					width = "full",
+				},
+				enableTravelSuggestions = {
+					type = "toggle",
+					name = "Enable Travel Suggestion",
+					desc = "If enabled will print out travel suggestion into chat",
+					order = 25,
+					get = function() return RQE.db.profile.enableTravelSuggestions end,
+					set = function(_, newValue)
+						RQE.db.profile.enableTravelSuggestions = newValue;
+					end,
+					width = "full",
+				},
 			},
 		},
 		frame = {
@@ -1858,6 +1880,75 @@ function RQE:AddGeneralSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(enableGossipModeAutomation)
+
+	-- Enable GossipMode Display Checkbox
+	local enableGossipModeAutomation = AceGUI:Create("CheckBox")
+	enableGossipModeAutomation:SetLabel("Enable Gossip Mode")
+	enableGossipModeAutomation:SetValue(RQE.db.profile.enableGossipModeAutomation)
+	enableGossipModeAutomation:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableGossipModeAutomation = value
+	end)
+
+	enableGossipModeAutomation:SetFullWidth(false)
+	enableGossipModeAutomation:SetWidth(300)
+
+	-- Add a tooltip description for enableGossipModeAutomation (RQE.db.profile.enableGossipModeAutomation)
+	enableGossipModeAutomation:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enable Gossip Mode where the correct option will be chosen as part of the macro", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableGossipModeAutomation:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableGossipModeAutomation)
+
+	-- Enable Mouseover marking Checkbox
+	local enableMouseoverMarkingCheckbox = AceGUI:Create("CheckBox")
+	enableMouseoverMarkingCheckbox:SetLabel("Enable Mouseover Marking")
+	enableMouseoverMarkingCheckbox:SetValue(RQE.db.profile.enableMouseOverMarking)
+	enableMouseoverMarkingCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableMouseOverMarking = value
+	end)
+
+	enableMouseoverMarkingCheckbox:SetFullWidth(false)
+	enableMouseoverMarkingCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for enableMouseoverMarkingCheckbox (RQE.db.profile.enableMouseOverMarking)
+	enableMouseoverMarkingCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("If enabled will mark NPC targets that are associated with the step of your currently supertracked quest.", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableMouseoverMarkingCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableMouseoverMarkingCheckbox)
+
+	-- Enable Travel Suggestion Checkbox
+	local enableTravelSuggestionCheckbox = AceGUI:Create("CheckBox")
+	enableTravelSuggestionCheckbox:SetLabel("Enable Travel Suggestion")
+	enableTravelSuggestionCheckbox:SetValue(RQE.db.profile.enableTravelSuggestions)
+	enableTravelSuggestionCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableTravelSuggestions = value
+	end)
+
+	enableTravelSuggestionCheckbox:SetFullWidth(false)
+	enableTravelSuggestionCheckbox:SetWidth(300)
+
+	-- Add a tooltip description for enableTravelSuggestionCheckbox (RQE.db.profile.enableTravelSuggestions)
+	enableTravelSuggestionCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("If enabled will print out travel suggestion into chat", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableTravelSuggestionCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableTravelSuggestionCheckbox)
 
 	-- Spacer to ensure the scroll goes to the bottom
 	local spacer = AceGUI:Create("Label")
