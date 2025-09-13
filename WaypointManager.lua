@@ -117,7 +117,8 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 		end
 
 		if waypointText then
-			RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+			RQE:FindQuestZoneTransition(questID)
+			--RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		else
 			RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 		end
@@ -209,97 +210,145 @@ end
 function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Frame is hidden and won't display waypoint information WithDirectionText")
+			print("Frame is hidden and won't display waypoint information for NoDirectionText")
 		end
 		return
 	end
 
+	-- 1) Resolve questID if omitted
 	if not questID then
+		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
-			return
+			return -- Exit if questID and QuestIDText are both unavailable
 		end
 	end
 
-	local questData = RQE.getQuestData(questID)
-	local x, y
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-	local waypointTitle
+	local waypointTitle = ("Quest ID: %d, Quest Name: %s"):format(questID, questName)
 
-	if questData and questID and not C_QuestLog.IsOnQuest(questID) and questData.location then
-		x = questData.location.x
-		y = questData.location.y
-		mapID = questData.location.mapID
-		waypointTitle = "Quest Start: " .. questData.title
-	else
-		-- Directly fetch the super tracked quest data
-		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-		if superTrackedQuestID then
-			mapID = C_TaskQuest.GetQuestZoneID(superTrackedQuestID) or GetQuestUiMapID(superTrackedQuestID)
-			local isWorldQuest = C_QuestLog.IsWorldQuest(superTrackedQuestID)
-			if isWorldQuest then
-				x, y = C_TaskQuest.GetQuestLocation(superTrackedQuestID, mapID)
-			else
-				x, y = C_QuestLog.GetNextWaypointForMap(superTrackedQuestID, mapID)
+	-- 2) Exclusions / hidden quest type
+	local qType = C_QuestLog.GetQuestType(questID)
+	if (RQE.ExcludedWaypointQuests and RQE.ExcludedWaypointQuests[questID]) or qType == 265 then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(questID .. " is excluded (explicitly or by quest type 265); waypoint will not be generated")
+		end
+		return 
+	end
+
+	-- 3) Prefer caller/player map
+	mapID = mapID or RQE.WPmapID or C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		return
+	end
+
+	-- 4) Utility to accept either normalized (0..1) or percent (0..100)
+	local xPct, yPct
+	local function setFrom(posX, posY, mid)
+		if not posX or not posY then return false end
+		posX, posY = tonumber(posX), tonumber(posY)
+		if not posX or not posY then return false end
+		if posX <= 1 and posY <= 1 then
+			xPct, yPct = posX * 100, posY * 100
+		else
+			xPct, yPct = posX, posY
+		end
+		if mid then mapID = mid end
+		return true
+	end
+
+	-- 5) FAST PATH: coords stashed by your transition finder (percent)
+	if RQE.WPxPos and RQE.WPyPos then
+		setFrom(RQE.WPxPos, RQE.WPyPos, RQE.WPmapID or mapID)
+		--print(("Using stashed transition coords %.2f, %.2f on map %d"):format(xPct or -1, yPct or -1, mapID))
+	end
+
+	-- 6) FALLBACK A: exact quest waypoint for this map
+	if not (xPct and yPct) then
+		local xn, yn = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		if xn and yn then
+			setFrom(xn, yn, mapID)
+			--print(("Using GetNextWaypointForMap -> %.2f, %.2f on map %d"):format(xPct, yPct, mapID))
+		end
+	end
+
+	-- 7) FALLBACK B: generic next waypoint (vec or areaPoiID)
+	if not (xPct and yPct) then
+		local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
+		if wpMapID then
+			if type(wpData) == "table" then
+				if wpData.x and wpData.y then
+					setFrom(wpData.x, wpData.y, wpMapID)
+				elseif wpData.position and wpData.position.x and wpData.position.y then
+					setFrom(wpData.position.x, wpData.position.y, wpMapID)
+				end
+				-- if RQE.db.profile.debugLevel == "INFO" then
+					-- if xPct and yPct then
+						-- print(("GetNextWaypoint(table) -> %.2f, %.2f on map %d"):format(xPct, yPct, mapID))
+					-- end
+				-- end
+			elseif type(wpData) == "number" then
+				local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+				if poiInfo and poiInfo.position then
+					setFrom(poiInfo.position.x, poiInfo.position.y, wpMapID)
+					-- if RQE.db.profile.debugLevel == "INFO" then
+						-- print(("GetNextWaypoint(poi %d) -> %.2f, %.2f on map %d"):format(wpData, xPct, yPct, mapID))
+					-- end
+				end
 			end
 		end
-
-		-- print("~~~ Waypoint Set: 237 ~~~")
-		waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
-
-		if x and y then
-			x = x * 100
-			y = y * 100
-		else
-			RQE.debugLog("Could not fetch coordinates for the quest")
-			return
-		end
 	end
 
-	-- Ensure x and y are numbers before attempting arithmetic
-	x = tonumber(x) or 0
-	y = tonumber(y) or 0
+	-- 8) FALLBACK C: DB quest.location
+	if not (xPct and yPct) then
+		local qd = RQE.getQuestData and RQE.getQuestData(questID)
+		-- if qd and qd.location then
+			-- if setFrom(qd.location.x, qd.location.y, qd.location.mapID or mapID) then
+				-- print(("Using DB location -> %.2f, %.2f on map %d"):format(xPct, yPct, mapID))
+			-- end
+		-- end
+	end
 
-	RQE.infoLog("Old method coordinates: x =", x, "y =", y, "mapID =", mapID)
+	if not (mapID and xPct and yPct) then
+		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+			print(("Unable to determine coords for quest %d."):format(questID))
+		end
+		return
+	end
 
+	-- 9) Include direction text if any
+	if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
+		waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText
+	end
+
+	-- 10) Place waypoint(s)
 	C_Map.ClearUserWaypoint()
 
-	-- Check if TomTom is loaded and compatibility is enabled
-	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	-- IMPORTANT: IsAddOnLoaded returns ONE boolean (not two)
+	local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-		TomTom.waydb:ResetProfile()
+		-- TomTom expects normalized 0..1
+		TomTom:AddWaypoint(mapID, xPct / 100, yPct / 100, { title = waypointTitle })
+		-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+			-- print(("TomTom waypoint => map %d @ (%.2f, %.2f)"):format(mapID, xPct, yPct))
+		-- end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("TomTom not available or disabled.")
+		end
 	end
 
-	C_Timer.After(0.5, function()
-		if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
-			waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText -- Append DirectionText on a new line if available
-		end
+	local isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+	if isCarboniteLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableCarboniteCompatibility then
+		Nx:TTAddWaypoint(mapID, xPct / 100, yPct / 100, { opt = waypointTitle })
+		-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+			-- print(("Carbonite waypoint => map %d @ (%.2f, %.2f)"):format(mapID, xPct, yPct))
+		-- end
+	end
 
-		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			if mapID and x and y then -- Check if x and y are not nil
-				RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
-			else
-				RQE.debugLog("Could not create waypoint for unknown quest.")
-			end
-		else
-			RQE.debugLog("TomTom is not available.")
-		end
-
-		-- Check if Carbonite is loaded and compatibility is enabled
-		local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
-		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
-			if mapID and x and y then -- Check if x and y are not nil
-				RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-				Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
-			else
-				RQE.debugLog("Could not create waypoint for unknown quest.")
-			end
-		else
-			RQE.debugLog("Carbonite is not available.")
-		end
-	end)
+	-- 11) Clear stash to avoid reuse
+	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = nil, nil, nil
 end
 
 
