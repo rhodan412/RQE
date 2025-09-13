@@ -1432,55 +1432,55 @@ function RQE:GetTotalObjectiveIndexes(questData)
 end
 
 
--- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
-function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
-	-- If the quest is completed, prioritize clicking the button for objectiveIndex 99
-	if nextObjectiveIndex == 99 then
-		for stepIndex, stepData in ipairs(questData) do
-			if stepData.objectiveIndex == 99 then
-				local button = RQE.WaypointButtons[stepIndex]
-				if button then
-					RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
-					button:Click()
-					RQE.lastClickedObjectiveIndex = 99
+-- -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
+-- function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
+	-- -- If the quest is completed, prioritize clicking the button for objectiveIndex 99
+	-- if nextObjectiveIndex == 99 then
+		-- for stepIndex, stepData in ipairs(questData) do
+			-- if stepData.objectiveIndex == 99 then
+				-- local button = RQE.WaypointButtons[stepIndex]
+				-- if button then
+					-- RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
+					-- button:Click()
+					-- RQE.lastClickedObjectiveIndex = 99
 
-					-- Call to update the waypoint for the quest completion objective
-					C_Timer.After(1, function()  -- Delay of 1 second
-						RQE.ClickUnknownQuestButton()
-					end)
-					return
-				end
-			end
-		end
-	end
+					-- -- Call to update the waypoint for the quest completion objective
+					-- C_Timer.After(1, function()  -- Delay of 1 second
+						-- RQE.ClickUnknownQuestButton()
+					-- end)
+					-- return
+				-- end
+			-- end
+		-- end
+	-- end
 
-	-- Check if this is a new objectiveIndex, not the same as the last clicked one.
-	if RQE.lastClickedObjectiveIndex == nextObjectiveIndex then
-		RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex .. " was already clicked. Skipping.")
-		return
-	end
+	-- -- Check if this is a new objectiveIndex, not the same as the last clicked one.
+	-- if RQE.lastClickedObjectiveIndex == nextObjectiveIndex then
+		-- RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex .. " was already clicked. Skipping.")
+		-- return
+	-- end
 
-	for _, stepData in ipairs(questData) do
-		if stepData.objectiveIndex == nextObjectiveIndex then
-			local button = RQE.WaypointButtons[_] -- Assuming WaypointButtons are stored in a manner that mirrors questData
-			if button then
-				-- Simulate the click
-				RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
-				button:Click() -- `OnClick` will now use the button's direct data
-				-- Update the lastClickedObjectiveIndex since we've moved to a new objective.
-				RQE.lastClickedObjectiveIndex = nextObjectiveIndex
+	-- for _, stepData in ipairs(questData) do
+		-- if stepData.objectiveIndex == nextObjectiveIndex then
+			-- local button = RQE.WaypointButtons[_] -- Assuming WaypointButtons are stored in a manner that mirrors questData
+			-- if button then
+				-- -- Simulate the click
+				-- RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
+				-- button:Click() -- `OnClick` will now use the button's direct data
+				-- -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
+				-- RQE.lastClickedObjectiveIndex = nextObjectiveIndex
 
-				-- Call to update the waypoint for the quest completion objective
-				C_Timer.After(1, function()  -- Delay of 1 second
-					RQE.ClickUnknownQuestButton()
-				end)
-				return
-			end
-		end
-	end
-	UpdateRQEQuestFrame()
-	UpdateRQEWorldQuestFrame()
-end
+				-- -- Call to update the waypoint for the quest completion objective
+				-- C_Timer.After(1, function()  -- Delay of 1 second
+					-- RQE.ClickUnknownQuestButton()
+				-- end)
+				-- return
+			-- end
+		-- end
+	-- end
+	-- UpdateRQEQuestFrame()
+	-- UpdateRQEWorldQuestFrame()
+-- end
 
 
 -- Function to check if all objectives for a given quest are completed
@@ -1520,39 +1520,39 @@ function RQE.ClickUnknownQuestButton()
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
-	if not RQE:AreAllObjectivesCompleted(questID) then
-		return
-	end
+	-- if not RQE:AreAllObjectivesCompleted(questID) then
+		-- return
+	-- end
 
-	if not questID then
-		return
-	end
+	-- if not questID then
+		-- return
+	-- end
 
-	local foundButton = false
-	for i, button in ipairs(RQE.QuestLogIndexButtons) do
-		if button and button.questID == questID then
-			button:Click()
-			foundButton = true
-			break
-		end
-	end
+	-- local foundButton = false
+	-- for i, button in ipairs(RQE.QuestLogIndexButtons) do
+		-- if button and button.questID == questID then
+			-- button:Click()
+			-- foundButton = true
+			-- break
+		-- end
+	-- end
 
-	if not foundButton then
-		RQE.debugLog("Did not find a button for questID:", questID)
-	else
-		-- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
-		if not RQE.mapID then
-			RQE.mapID = C_Map.GetBestMapForUnit("player")
-		end
-		RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-	end
+	-- if not foundButton then
+		-- RQE.debugLog("Did not find a button for questID:", questID)
+	-- else
+		-- -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
+		-- if not RQE.mapID then
+			-- RQE.mapID = C_Map.GetBestMapForUnit("player")
+		-- end
+		-- RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+	-- end
 
-	-- print("~~~ SetSuperTrack: 1605~~~")
-	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	-- -- print("~~~ SetSuperTrack: 1605~~~")
+	-- C_SuperTrack.SetSuperTrackedQuestID(questID)
 	RQE:SaveSuperTrackedQuestToCharacter()
 
 	-- Call function to create a waypoint using stored coordinates and mapID
-	RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+	RQE:FindQuestZoneTransition(questID)
 end
 
 
