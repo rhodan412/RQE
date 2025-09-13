@@ -1249,6 +1249,7 @@ function ShowQuestDropdown(self, questID)
 			rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
 		end
 
+		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 		rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
 		rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
 		rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
@@ -2398,6 +2399,7 @@ function UpdateRQEQuestFrame()
 							RQE.CheckAndSetFinalStep()
 							C_Timer.After(0.1, function()
 								RQE.ClickUnknownQuestButton()
+								RQE.NearestFlightMasterSet = false
 
 								if RQE.db.profile.enableTravelSuggestions then
 									C_Timer.After(0.8, function()
