@@ -1,3 +1,37 @@
+11.2.0.4
+
+	**HIGHLIGHTS**
+		- Better handling of waypoint creation when waypointText exists directing player to a portal or other transition method between zones (2025.09.12)
+
+	Core.lua
+		- Updated RQE:StartPeriodicChecks() function to better handle situations with waypointText and CheckDBZoneChange scenarios (2025.09.12)
+		- Updated RQE:GetClosestFlightMaster() function to only check the Alliance/Neutral or Horde/Neutral flight paths based on current faction info for taxi suggestion (2025.09.12)
+		- Added RQE:FindQuestZoneTransition() function to handle when waypointText exists and points to location other than current step's (see RQE:StartPeriodicChecks() changes) waypoint information (2025.09.12)
+
+	EventManager.lua
+		- After firing of ZONE_CHANGED_NEW_AREA event function will run the RQE:FindQuestZoneTransition() function to find correct location to place waypoint for next step (2025.09.12)
+		- Cleaned up debug language within the ZONE_CHANGED_NEW_AREA event function (2025.09.12)
+
+	QuestingModule.lua
+		- Cleaned up debug language within the clicking of the QuestLogIndexButton inside the RQEQuestFrame (2025.09.12)
+		- Modified the print out following clicking of QuestLogIndexButton to check if enableTravelSuggestions is enabled before running the RQE:RecommendFastestTravelMethod() function (2025.09.12)
+
+	RQE.toc
+		- Updated version# (2025.09.08)
+
+	RQEDatabase.lua
+		- Added some Delve quests for The War Within expansion (2025.09.12)
+
+	RQEFrame.lua
+		- Commented out the RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData) function as this is no longer used (2025.09.12)
+		- Modified the RQE.ClickUnknownQuestButton() function for better handling of waypoint creation when waypointText exists (2025.09.12)
+		- Removed the RQE:CreateUnknownQuestWaypoint() function call within RQE.ClickUnknownQuestButton() as this now first calls RQE:FindQuestZoneTransition(), which then does waypoint creation (2025.09.12)
+
+	WaypointManager.lua
+		- Within the RQE:CreateUnknownQuestWaypoint() function a call is made to RQE:FindQuestZoneTransition() instead of the RQE:CreateUnknownQuestWaypointWithDirectionText() function (2025.09.12)
+		- Mostly rewrite of RQE:CreateUnknownQuestWaypointWithDirectionText() to handle waypoint creation when waypointText exists (2025.09.12)
+
+
 11.2.0.3 (2025.09.08)
 		
 	**HIGHLIGHTS**
