@@ -5571,16 +5571,30 @@ function RQE:StartPeriodicChecks()
 		print("~~~ Running RQE:StartPeriodicChecks() ~~~")
 	end
 
+	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
-
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Current superTrackedQuestID:", superTrackedQuestID)
 	end
 
 	if not superTrackedQuestID then return end
+
+	-- Define the function map for parent functions
+	local functionMap = {
+		CheckDBBuff = "CheckDBBuff",
+		CheckDBDebuff = "CheckDBDebuff",
+		--CheckDBModel = "CheckDBModel",	-- NYI, but meant to reduce firings from CheckDBBuff and CheckDBDebuff
+		CheckDBInventory = "CheckDBInventory",
+		CheckDBZoneChange = "CheckDBZoneChange",
+		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
+		CheckScenarioStage = "CheckScenarioStage",
+		CheckScenarioCriteria = "CheckScenarioCriteria",
+		--CheckDBComplete = "CheckDBComplete",
+	}
 
 	RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
 
@@ -5628,19 +5642,6 @@ function RQE:StartPeriodicChecks()
 		-- end
 		-- return
 	-- end
-
-	-- Define the function map for parent functions
-	local functionMap = {
-		CheckDBBuff = "CheckDBBuff",
-		CheckDBDebuff = "CheckDBDebuff",
-		--CheckDBModel = "CheckDBModel",	-- NYI, but meant to reduce firings from CheckDBBuff and CheckDBDebuff
-		CheckDBInventory = "CheckDBInventory",
-		CheckDBZoneChange = "CheckDBZoneChange",
-		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
-		CheckScenarioStage = "CheckScenarioStage",
-		CheckScenarioCriteria = "CheckScenarioCriteria",
-		--CheckDBComplete = "CheckDBComplete",
-	}
 
 	-- Iterate over all steps to evaluate which one should be active
 	for i, stepData in ipairs(questData) do
@@ -5723,6 +5724,41 @@ function RQE:StartPeriodicChecks()
 				end
 				break
 			end
+		end
+	end
+
+	-- Early-return if waypoint text exists AND current step is not a zone-change step
+	local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+	if waypointText then
+		local cur = questData[stepIndex]
+		local isZoneChangeCheck = false
+
+		if cur then
+			if cur.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+			elseif cur.checks then
+				for _, checkData in ipairs(cur.checks) do
+					if checkData.funct == "CheckDBZoneChange" then
+						isZoneChangeCheck = true
+						break
+					end
+				end
+			end
+		end
+
+		if not isZoneChangeCheck then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("WaypointText present; current step has no CheckDBZoneChange -> early return.")
+			end
+			return
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("WaypointText present; current step requires CheckDBZoneChange -> continuing periodic checks.")
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("StartPeriodicChecks continuing (no waypoint text).")
 		end
 	end
 
@@ -10281,16 +10317,34 @@ function RQE:GetClosestFlightMaster()
 	local shortestDistance = math.huge
 	local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
 
+	local playerFaction = UnitFactionGroup("player")  -- "Alliance", "Horde", or "Neutral"
+
 	for _, node in ipairs(nodes or {}) do
 		if not node.isUndiscovered then
-			local nx, ny = node.position.x, node.position.y
-			local dist = math.sqrt((px - nx)^2 + (py - ny)^2)
-			if dist < shortestDistance then
-				shortestDistance = dist
-				closestNode = node
+			-- Filter by faction (allow Neutral or same-faction only)
+			if node.faction == 0 or
+				(node.faction == 1 and playerFaction == "Horde") or (node.faction == 2 and playerFaction == "Alliance") or (playerFaction == "Neutral") then	-- Allow all nodes if player is Neutral (e.g. fresh Pandaren)
+
+				local nx, ny = node.position.x, node.position.y
+				local dist = math.sqrt((px - nx)^2 + (py - ny)^2)
+				if dist < shortestDistance then
+					shortestDistance = dist
+					closestNode = node
+				end
 			end
 		end
 	end
+
+	-- for _, node in ipairs(nodes or {}) do
+		-- if not node.isUndiscovered then
+			-- local nx, ny = node.position.x, node.position.y
+			-- local dist = math.sqrt((px - nx)^2 + (py - ny)^2)
+			-- if dist < shortestDistance then
+				-- shortestDistance = dist
+				-- closestNode = node
+			-- end
+		-- end
+	-- end
 
 	if closestNode then
 		print(string.format(">> Closest flight master: %s (%.2f, %.2f, mapID %d)", closestNode.name, closestNode.position.x * 100, closestNode.position.y * 100, mapID))
@@ -10301,6 +10355,87 @@ function RQE:GetClosestFlightMaster()
 	end
 
 	return closestNode
+end
+
+
+-- Returns { mapID, x, y, xPct, yPct, label, source="waypoint" } or nil.
+-- Prints a test line and then calls CreateUnknownQuestWaypointNoDirectionText to place the waypoint.
+function RQE:FindQuestZoneTransition(questID)
+	if not questID then
+		return nil
+	end
+
+	local waypointText = C_QuestLog.GetNextWaypointText(questID)
+	if not waypointText then return end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		return nil
+	end
+
+	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local label = C_QuestLog.GetNextWaypointText(questID) or "Quest waypoint"
+
+	-- Preferred: exact waypoint on the player's current map
+	local xNorm, yNorm = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+
+	-- Fallback: generic waypoint (may be vec or POI id)
+	if not (xNorm and yNorm) then
+		local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
+		if wpMapID then
+			if type(wpData) == "table" then
+				if wpData.x and wpData.y then
+					xNorm, yNorm = wpData.x, wpData.y
+					mapID = wpMapID
+				elseif wpData.position and wpData.position.x and wpData.position.y then
+					xNorm, yNorm = wpData.position.x, wpData.position.y
+					mapID = wpMapID
+				end
+			elseif type(wpData) == "number" then
+				local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+				if poiInfo and poiInfo.position then
+					xNorm, yNorm = poiInfo.position.x, poiInfo.position.y
+					mapID = wpMapID
+					label = poiInfo.name or label
+				end
+			end
+		end
+	end
+
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			if not (xNorm and yNorm) then
+				print(string.format("FindQuestZoneTransition: no waypoint for quest %d on map %d.", questID, mapID))
+				return nil
+			end
+		end
+	end
+
+	-- Percent (for display) + rounded for print
+	local xPct = xNorm * 100
+	local yPct = yNorm * 100
+
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format(
+				">> Transition (waypoint): Quest %d \"%s\" — %s (%.2f, %.2f, mapID %d)",
+				questID, questName, label, xPct, yPct, mapID
+			))
+		end
+	end
+
+	-- Stash for the creator (fast path in CreateUnknownQuestWaypointWithDirectionText)
+	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = xPct, yPct, mapID
+	RQE.x, RQE.y = xPct, yPct  -- legacy helpers you were using before
+
+	-- Create the actual waypoint (this function handles TomTom/Carbonite)
+	C_Timer.After(1.2, function()
+		if RQE.CreateUnknownQuestWaypointWithDirectionText then
+			RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+		end
+	end)
+
+	return { mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct, label = label, source = "waypoint" }
 end
 
 
