@@ -2396,23 +2396,26 @@ function UpdateRQEQuestFrame()
 
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
+							C_Timer.After(0.1, function()
+								RQE.ClickUnknownQuestButton()
 
-							if RQE.db.profile.debugLevel == "INFO" then
-								C_Timer.After(0.8, function()
-									RQE:RecommendFastestTravelMethod()
+								if RQE.db.profile.enableTravelSuggestions then
+									C_Timer.After(0.8, function()
+										RQE:RecommendFastestTravelMethod()
+									end)
+								end
+
+								-- Check if autoClickWaypointButton is selected in the configuration
+								if RQE.db.profile.autoClickWaypointButton then
+									-- Click the "W" Button is autoclick is selected and no steps or questData exist
+									RQE.CheckAndClickWButton()
+								end
+
+								RQE.ObtainSuperTrackQuestDetails()
+
+								C_Timer.After(0.1, function()
+									RQE:StartPeriodicChecks()
 								end)
-							end
-
-							-- Check if autoClickWaypointButton is selected in the configuration
-							if RQE.db.profile.autoClickWaypointButton then
-								-- Click the "W" Button is autoclick is selected and no steps or questData exist
-								RQE.CheckAndClickWButton()
-							end
-
-							RQE.ObtainSuperTrackQuestDetails()
-
-							C_Timer.After(0.2, function()
-								RQE:StartPeriodicChecks()
 							end)
 						end
 
