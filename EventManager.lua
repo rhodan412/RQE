@@ -229,6 +229,7 @@ local eventsToRegister = {
 	--"OBJECT_ENTERED_AOI",
 	--"OBJECT_LEFT_AOI",
 	"PLAYER_CONTROL_GAINED",
+	"PLAYER_CONTROL_LOST",
 	"PLAYER_ENTERING_WORLD",
 	"PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED",
 	"PLAYER_LOGIN",
@@ -352,6 +353,7 @@ local function HandleEvents(frame, event, ...)
 		OBJECT_ENTERED_AOI = RQE.handleObjectEnteredLeft,
 		OBJECT_LEFT_AOI = RQE.handleObjectEnteredLeft,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
+		PLAYER_CONTROL_LOST = RQE.handlePlayerControlLost,
 		PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
 		PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED = RQE.PlayerInsideQuestBlobStateChanged,
 		PLAYER_LOGIN = RQE.handlePlayerLogin,
@@ -1541,7 +1543,9 @@ function RQE.handlePlayerLogin()
 			if isSuperTracking then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 				-- print("/run RQE:FindQuestZoneTransition(" .. tostring(questID) .. ")")
+				RQE.DontPrintTransitionBits = true
 				RQE:FindQuestZoneTransition(questID)
+				RQE.DontPrintTransitionBits = false
 			end
 		end)
 	end
@@ -1578,6 +1582,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.isCheckingMacroContents = false
 	RQE.OkayCheckBonusQuests = false
 	RQE.OkayToUpdateFollowingTrack = true
+	RQE.NearestFlightMasterSet = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
@@ -2230,6 +2235,27 @@ function RQE.handlePlayerControlGained()
 			end)
 		end)
 	end
+
+	-- Validation check
+	if not RQE.QuestIDText or not RQE.QuestIDText:GetText() then
+		return
+	end
+
+	local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+	RQE:FindQuestZoneTransition(questID)
+end
+
+
+-- Handling PLAYER_CONTROL_LOST event
+-- Fires whenever the player is unable to control the character. Examples are when afflicted by fear, mind controlled, or when using a taxi. 
+function RQE.handlePlayerControlLost()
+	C_Timer.After(2.5, function()
+		if UnitOnTaxi("player") then
+			RQE.NearestFlightMasterSet = false
+		end
+	end)
 end
 
 
@@ -3751,7 +3777,9 @@ function RQE.handleZoneNewAreaChange()
 	C_Timer.After(0.5, function()
 		if isSuperTracking then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.DontPrintTransitionBits = true
 			RQE:FindQuestZoneTransition(questID)
+			RQE.DontPrintTransitionBits = false
 		end
 	end)
 
