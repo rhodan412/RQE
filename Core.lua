@@ -2606,7 +2606,7 @@ end
 function RQE.CheckAndClickWButton()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	if not isSuperTracking then return end
-
+	
 	if InCombatLockdown() then
 		RQE.CheckNClickWButtonAfterCombat = true
 		return
@@ -2651,7 +2651,11 @@ function RQE.CheckAndClickWButton()
 		RQE.ClickWButton()
 		return
 	else
-		RQE.CheckAndClickSeparateWaypointButtonButton()
+		local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		if not waypointText then
+			RQE.CheckAndClickSeparateWaypointButtonButton()
+			return
+		end
 		return
 	end
 
@@ -2682,9 +2686,12 @@ function RQE.CheckAndClickWButton()
 			end
 			RQE.ClickWButton()
 		else
-			RQE.CheckAndClickSeparateWaypointButtonButton()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Quest has steps, no need to click the 'W' button.")
+			local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			if not waypointText then
+				RQE.CheckAndClickSeparateWaypointButtonButton()
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest has steps, no need to click the 'W' button.")
+				end
 			end
 		end
 	end)
@@ -2711,6 +2718,7 @@ function RQE:CheckAndCreateSuperTrackedQuestWaypoint()
 	end
 
 	-- Retrieve the Next Waypoint text
+	local questData = RQE.getQuestData(questID)
 	local waypointText = C_QuestLog.GetNextWaypointText(questID)
 	if waypointText and waypointText ~= "" then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -5596,11 +5604,10 @@ function RQE:StartPeriodicChecks()
 		--CheckDBComplete = "CheckDBComplete",
 	}
 
-	RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
-
 	local questData = self.getQuestData(superTrackedQuestID)
 	if not questData then
 		if RQE.db.profile.debugLevel == "INFO+" then
+			RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
 			print("No quest data for superTrackedQuestID:", superTrackedQuestID)
 		end
 		return
@@ -5615,32 +5622,55 @@ function RQE:StartPeriodicChecks()
 	if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
 		local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
 		if hasCheckDBComplete then
-			self:ClickWaypointButtonForIndex(finalStepIndex)
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+			local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+			if not waypointText then
+				-- No Blizzard waypoint text: advance to final step and stop here.
+				self:ClickWaypointButtonForIndex(finalStepIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+				end
+				return
+			else
+				-- Blizzard is already guiding the player.
+				-- Keep our logic running, but make the UI reflect the turn-in step.
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest ready for turn-in and waypointText present; syncing UI to final step (no auto-advance).")
+				end
+
+				-- Make RQE display step 2/2 (final) without forcing our own waypoint.
+				stepIndex = finalStepIndex
+				RQE.AddonSetStepIndex = finalStepIndex
+
+				-- Refresh frames so Separate Focus shows 2/2
+				if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+				if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
+				-- Optionally, if you want your transition/portal waypoint to appear too:
+				-- RQE:FindQuestZoneTransition(superTrackedQuestID)
+				-- (leave commented if you only want Blizzard's arrow)
 			end
-			return
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
 			end
+			-- keep going
 		end
 	end
 
 	-- -- Handle turn-in readiness
 	-- if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-		-- local finalStepIndex = #questData
-		-- for index, step in ipairs(questData) do
-			-- if step.objectiveIndex == 99 then
-				-- finalStepIndex = index
-				-- break
+		-- local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		-- if hasCheckDBComplete then
+			-- self:ClickWaypointButtonForIndex(finalStepIndex)
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+			-- end
+			-- return
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
 			-- end
 		-- end
-		-- self:ClickWaypointButtonForIndex(finalStepIndex)
-		-- if RQE.db.profile.debugLevel == "INFO" then
-			-- print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
-		-- end
-		-- return
 	-- end
 
 	-- Iterate over all steps to evaluate which one should be active
@@ -5669,17 +5699,6 @@ function RQE:StartPeriodicChecks()
 					end
 					break -- Stop advancing further
 				end
-				-- if funcResult then
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
-					-- end
-					-- stepIndex = i + 1
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print(parentFunctionName, "did not succeed for stepIndex:", i)
-					-- end
-					-- break
-				-- end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Invalid or missing function for funct:", stepData.funct)
@@ -10354,6 +10373,33 @@ function RQE:GetClosestFlightMaster()
 		end
 	end
 
+	-- if not UnitOnTaxi("player") then
+		-- -- Only bother the player if TomTom is installed and enabled in your settings
+		-- local tomtomLoaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TomTom")
+		-- if tomtomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			-- local nearestName = (startFM and startFM.name) and startFM.name or "nearest flight master"
+
+			-- StaticPopupDialogs["RQE_CONFIRM_WP_CLOSEST_FM"] = {
+				-- text = ("Set a TomTom waypoint to the closest flight master?\n\nNearest: %s"):format(nearestName),
+				-- button1 = "Yes",
+				-- button2 = "No",
+				-- OnAccept = function()
+					-- -- Uses your existing function to compute & set the waypoint
+					-- RQE:SetTomTomWaypointToClosestFlightMaster()
+					-- RQE.NearestFlightMasterSet = true
+				-- end,
+				-- OnCancel = function()
+					-- RQE.NearestFlightMasterSet = false
+				-- end,
+				-- timeout = 3,
+				-- whileDead = true,
+				-- hideOnEscape = true,
+				-- preferredIndex = 3, -- avoid UIParent taint
+			-- }
+			-- StaticPopup_Show("RQE_CONFIRM_WP_CLOSEST_FM")
+		-- end
+	-- end
+
 	return closestNode
 end
 
@@ -10416,7 +10462,7 @@ function RQE:FindQuestZoneTransition(questID)
 	local yPct = yNorm * 100
 
 	if RQE.db.profile.enableTravelSuggestions then
-		if RQE.db.profile.debugLevel == "INFO+" then
+		if not RQE.DontPrintTransitionBits then
 			print(string.format(
 				">> Transition (waypoint): Quest %d \"%s\" — %s (%.2f, %.2f, mapID %d)",
 				questID, questName, label, xPct, yPct, mapID
@@ -10537,6 +10583,8 @@ function RQE:RecommendFastestTravelMethod(questID)
 	else
 		RQE.SuperTrackedQuestIDForSpeed = questID
 	end
+
+	RQE:AskSetWaypointToClosestFlightMaster()
 
 	local questData = RQE.getQuestData(RQE.SuperTrackedQuestIDForSpeed)
 	if not questData then
@@ -10673,4 +10721,84 @@ function RQE:EstimatePlayerSpeed(sampleTime)
 
 		print(string.format(">> Estimated player speed: %.2f yards/sec over %.1f sec", speed, sampleTime))
 	end)
+end
+
+
+-- Ask the player if they want a TomTom waypoint to the closest flight master, then set it on Yes.
+function RQE:AskSetWaypointToClosestFlightMaster()
+	if UnitOnTaxi("player") then return end  -- No popups while flying
+	local tomtomLoaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TomTom")
+	if not (tomtomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility) then
+		return
+	end
+
+	local node = RQE:GetClosestFlightMaster()  -- pure; safe to call
+	local nearestName = (node and node.name) or "nearest flight master"
+
+	StaticPopupDialogs["RQE_CONFIRM_WP_CLOSEST_FM"] = {
+		text = ("Set a TomTom waypoint to the closest flight master?\n\nNearest: %s"):format(nearestName),
+		button1 = "Yes",
+		button2 = "No",
+		OnAccept = function()
+			RQE:SetTomTomWaypointToClosestFlightMaster()
+			RQE.NearestFlightMasterSet = true
+		end,
+		timeout = 3,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- avoid UIParent taint
+	}
+	StaticPopup_Show("RQE_CONFIRM_WP_CLOSEST_FM")
+end
+
+
+-- Create a TomTom (or Blizzard) waypoint to the closest discovered flight master on the current map.
+function RQE:SetTomTomWaypointToClosestFlightMaster()
+	local node = RQE:GetClosestFlightMaster()
+	if not node then
+		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			print(">> No suitable flight master to waypoint.")
+		end
+		return
+	end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print(">> No valid mapID found (cannot set waypoint).")
+		return
+	end
+
+	local xNorm, yNorm = node.position.x, node.position.y
+	if not xNorm or not yNorm then
+		print(">> Flight master node has no position (cannot set waypoint).")
+		return
+	end
+
+	local xPct, yPct = xNorm * 100, yNorm * 100
+	local title = string.format('Flight Master: %s', node.name or "Unknown")
+
+	C_Map.ClearUserWaypoint()
+
+	local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility then
+		if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
+			TomTom.waydb:ResetProfile()
+		end
+		TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title })
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format(">> TomTom waypoint => %s (%.2f, %.2f, mapID %d)", title, xPct, yPct, mapID))
+		end
+	else
+		-- Blizzard fallback
+		local wp = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = title }
+		C_Map.SetUserWaypoint(wp)
+		C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+
+		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format(">> Blizzard waypoint => %s (%.2f, %.2f, mapID %d) [TomTom not available/disabled]", title, xPct, yPct, mapID))
+		end
+	end
+
+	return { name = node.name, mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct }
 end
