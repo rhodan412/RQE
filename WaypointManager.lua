@@ -55,6 +55,12 @@ end
 -- @param title: Title of the waypoint
 -- @return: Returns the created waypoint object
 function RQE:CreateWaypoint(x, y, mapID, title)
+	-- print("~~~ Waypoint Creation Function: 58 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
 
 	-- If x and y are nil, use stored values from RQE.x and RQE.y
 	x = x or RQE.x
@@ -89,6 +95,13 @@ end
 
 -- Main function to determine which method to use based on waypoint text
 function RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	-- print("~~~ Waypoint Creation Function: 92 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	-- Reset coordinates at the start
 	RQE.x = nil
 	RQE.y = nil
@@ -117,7 +130,9 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 		end
 
 		if waypointText then
+			RQE.DontPrintTransitionBits = true
 			RQE:FindQuestZoneTransition(questID)
+			RQE.DontPrintTransitionBits = false
 			--RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		else
 			RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
@@ -128,6 +143,13 @@ end
 
 -- Create a Waypoint when searching for a quest based on the location coordinates in the DB file
 function RQE:CreateSearchedQuestWaypoint(questID, mapID)
+	-- print("~~~ Waypoint Creation Function: 132 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	local dbEntry = RQE.getQuestData(questID)
 	if not dbEntry then
 		RQE.debugLog("No DB entry found for QuestID:", questID)
@@ -208,6 +230,13 @@ end
 
 -- Create a Waypoint when there is Direction Text available
 function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+	-- print("~~~ Waypoint Creation Function: 213 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Frame is hidden and won't display waypoint information for NoDirectionText")
@@ -226,7 +255,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	end
 
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-	local waypointTitle = ("Quest ID: %d, Quest Name: %s"):format(questID, questName)
+	local waypointTitle = questID > 0 and string.format('QID: %d, "%s"', questID, questName or "Unknown") or "Unknown Quest"
 
 	-- 2) Exclusions / hidden quest type
 	local qType = C_QuestLog.GetQuestType(questID)
@@ -317,22 +346,66 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		return
 	end
 
-	-- 9) Include direction text if any
-	if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
-		waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText
+	-- 9) Build title lines for arrow (single-line) + multiline preview for debug
+	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
+
+	-- Helper to trim overly long strings so the arrow doesn't hard-truncate mid-word
+	local function ellipsize(s, max)
+		if not s or s == "" then return nil end
+		if #s <= max then return s end
+		return s:sub(1, max - 1) .. "…"
 	end
+
+	-- What we *show* on the arrow: single line (TomTom can't do newlines)
+	-- Keep this concise to avoid visual truncation.
+	local arrowTitle
+	do
+		-- Keep the quest name fairly short; put the guidance after an em dash.
+		local left  = ("QID %d — %s"):format(questID, ellipsize(questName, 28))
+		local right = blizzWaypointText and ellipsize(blizzWaypointText, 48) or nil
+
+		if right and right ~= "" then
+			arrowTitle = ("%s — %s"):format(left, right)
+		else
+			arrowTitle = left
+		end
+	end
+
+	-- What we *print* for debugging: multi-line (so you can verify the full text)
+	local debugTitle = arrowTitle
+	if blizzWaypointText and blizzWaypointText ~= "" then
+		-- Build a clean two-line preview for chat/debug
+		debugTitle = ("QID %d — %s\n%s"):format(questID, questName, blizzWaypointText)
+	end
+
+	-- If you also have RQE.DirectionText and it's different, append only to debug
+	if RQE.DirectionText
+	   and RQE.DirectionText ~= ""
+	   and RQE.DirectionText ~= "No direction available."
+	   and RQE.DirectionText ~= blizzWaypointText
+	then
+		debugTitle = debugTitle .. "\n" .. RQE.DirectionText
+	end
+
+	-- Use arrowTitle for the waypoint itself
+	local waypointTitle = arrowTitle
+
+	-- -- Optional: print the multi-line preview so you can confirm it's correct
+	-- if RQE.db and RQE.db.profile and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") then
+		-- print("Waypoint title preview:\n" .. debugTitle)
+	-- end
 
 	-- 10) Place waypoint(s)
 	C_Map.ClearUserWaypoint()
 
-	-- IMPORTANT: IsAddOnLoaded returns ONE boolean (not two)
 	local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-		-- TomTom expects normalized 0..1
+		-- Important: clear TomTom's prior waypoints so the new title takes effect
+		if TomTom.waydb and TomTom.waydb.ResetProfile then
+			TomTom.waydb:ResetProfile()
+		end
 		TomTom:AddWaypoint(mapID, xPct / 100, yPct / 100, { title = waypointTitle })
-		-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			-- print(("TomTom waypoint => map %d @ (%.2f, %.2f)"):format(mapID, xPct, yPct))
-		-- end
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("TomTom not available or disabled.")
@@ -342,9 +415,6 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	local isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
 	if isCarboniteLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableCarboniteCompatibility then
 		Nx:TTAddWaypoint(mapID, xPct / 100, yPct / 100, { opt = waypointTitle })
-		-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			-- print(("Carbonite waypoint => map %d @ (%.2f, %.2f)"):format(mapID, xPct, yPct))
-		-- end
 	end
 
 	-- 11) Clear stash to avoid reuse
@@ -354,6 +424,12 @@ end
 
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+	-- print("~~~ Waypoint Creation Function: 401 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Frame is hidden and won't display waypoint information for NoDirectionText")
@@ -459,7 +535,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				return 
 			end
 			-- print("~~~ Waypoint Set: 394 ~~~")
-			local waypointTitle = questID > 0 and ("Quest ID: " .. questID .. ", Quest Name: " .. (questName or "Unknown")) or "Unknown Quest"
+			local waypointTitle = questID > 0 and ("QID: " .. questID .. ", Quest Name: " .. (questName or "Unknown")) or "Unknown Quest"
 
 			--waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
@@ -511,6 +587,13 @@ end
 
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+	-- print("~~~ Waypoint Creation Function: 559 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Frame is hidden and won't display waypoint information for ForEvent")
@@ -548,7 +631,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	x = tonumber(x) or 0
 	y = tonumber(y) or 0
 	-- print("~~~ Waypoint Set: 483 ~~~")
-	waypointTitle = waypointTitle or ("Quest ID: " .. questID .. ", Quest Name: " .. questName)
+	waypointTitle = waypointTitle or string.format('QID: %d, "%s"', questID, questName or "Unknown")
 
 	RQE.infoLog("Attempting to set waypoint for:", questName, "at coordinates:", x, ",", y, "on mapID:", mapID)
 
@@ -596,6 +679,13 @@ end
 
 -- Create a Waypoint for a specific quest step using questID and stepIndex
 function RQE:CreateWaypointForStep(questID, stepIndex)
+	-- print("~~~ Waypoint Creation Function: 645 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	-- Ensure questID and stepIndex are valid
 	if not questID or not stepIndex then
 		print("Invalid questID or stepIndex provided for waypoint creation.")
@@ -614,7 +704,7 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 	local x, y, mapID = stepData.coordinates.x, stepData.coordinates.y, stepData.coordinates.mapID
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	-- print("~~~ Waypoint Set: 549 ~~~")
-	local waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
+	local waypointTitle = string.format('QID: %d, "%s"', questID, questName or "Unknown")
 
 	-- Fetch the description from the specific stepIndex, if available
 	local stepData = questData[stepIndex]
@@ -676,6 +766,13 @@ end
 
 -- Create a Waypoint Using C_QuestLog.GetNextWaypoint
 function RQE:CreateQuestWaypointFromNextWaypoint(questID)
+	-- print("~~~ Waypoint Creation Function: 726 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	-- Ensure the frame is shown before proceeding
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -746,6 +843,13 @@ end
 
 -- Create a Waypoint Using C_QuestLog.GetNextWaypointForMap with Exclusion List
 function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
+	-- print("~~~ Waypoint Creation Function: 797 ~~~")
+	if RQE.db.profile.enableTravelSuggestions then
+		if RQE.NearestFlightMasterSet then return end
+	else
+		RQE.NearestFlightMasterSet = false
+	end
+
 	-- Ensure the frame is shown before proceeding
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -928,7 +1032,7 @@ function RQE:OnCoordinateClicked()
 
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	-- print("~~~ Waypoint Set: 863 ~~~")
-	local title = "Quest ID: " .. questID .. ", Quest Name: " .. questName
+	local title = string.format('QID: %d, "%s"', questID, questName or "Unknown")
 
 	-- Fetch the description from the specific stepIndex, if available
 	local stepData = questData[stepIndex]
