@@ -1534,6 +1534,17 @@ function RQE.handlePlayerLogin()
 	C_Timer.After(6, function()
 		RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 	end)
+
+	if RQE.db.profile.autoClickWaypointButton then
+		C_Timer.After(12, function()
+			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			if isSuperTracking then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+				-- print("/run RQE:FindQuestZoneTransition(" .. tostring(questID) .. ")")
+				RQE:FindQuestZoneTransition(questID)
+			end
+		end)
+	end
 end
 
 
@@ -3701,7 +3712,7 @@ function RQE.handleZoneChange(...)
 		-- If the current step relies on CheckDBZoneChange, re-run periodic checks
 		if isZoneChangeCheck then
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
+				print("ZONE_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
 			C_Timer.After(1.3, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -3711,7 +3722,7 @@ function RQE.handleZoneChange(...)
 			end)
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
+				print("ZONE_CHANGED not related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
 		end
 	else
@@ -3730,11 +3741,20 @@ end
 -- Handles the event ZONE_CHANGED_NEW_AREA
 -- Fires when the player enters a new zone
 function RQE.handleZoneNewAreaChange()
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	RQE.OkayCheckBonusQuests = true
 
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateCoordinates()
 	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
+
+	C_Timer.After(0.5, function()
+		if isSuperTracking then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			RQE:FindQuestZoneTransition(questID)
+		end
+	end)
+
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
 	-- C_Timer.After(0.5, function()
