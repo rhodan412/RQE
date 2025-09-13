@@ -94,6 +94,9 @@ function ShowQuestDropdownRQEFrame(self, questID)
 		local isPlayerInGroup = IsInGroup()
 		local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 
+		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
+		rootDescription:CreateButton("|cff888888-----------------------------------|r", function() end)
+
 		if isPlayerInGroup and isQuestShareable then
 			rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
 		end
@@ -122,6 +125,8 @@ end
 -- Function to Show Right-Click Dropdown Menu
 function ShowDropdownRQEFrame(self)
 	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
+
 		-- Only show RQE buttons if the RQE_Contribution addon is loaded
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
@@ -129,6 +134,7 @@ function ShowDropdownRQEFrame(self)
 			rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 		end
+
 		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 	end)
 end
@@ -1207,7 +1213,16 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end
 
 			-- Code for RWButton functionality here
-			C_Map.ClearUserWaypoint()
+			local extractedQuestID
+			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			end
+			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
+			local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			if not waypointText then
+				C_Map.ClearUserWaypoint()
+			end
 
 			-- Check if TomTom is loaded and compatibility is enabled
 			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
@@ -1520,35 +1535,6 @@ function RQE.ClickUnknownQuestButton()
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
-	-- if not RQE:AreAllObjectivesCompleted(questID) then
-		-- return
-	-- end
-
-	-- if not questID then
-		-- return
-	-- end
-
-	-- local foundButton = false
-	-- for i, button in ipairs(RQE.QuestLogIndexButtons) do
-		-- if button and button.questID == questID then
-			-- button:Click()
-			-- foundButton = true
-			-- break
-		-- end
-	-- end
-
-	-- if not foundButton then
-		-- RQE.debugLog("Did not find a button for questID:", questID)
-	-- else
-		-- -- Ensure mapID is defined before calling CreateUnknownQuestWaypoint
-		-- if not RQE.mapID then
-			-- RQE.mapID = C_Map.GetBestMapForUnit("player")
-		-- end
-		-- RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-	-- end
-
-	-- -- print("~~~ SetSuperTrack: 1605~~~")
-	-- C_SuperTrack.SetSuperTrackedQuestID(questID)
 	RQE:SaveSuperTrackedQuestToCharacter()
 
 	-- Call function to create a waypoint using stored coordinates and mapID
