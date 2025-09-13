@@ -2,34 +2,55 @@
 
 	**HIGHLIGHTS**
 		- Better handling of waypoint creation when waypointText exists directing player to a portal or other transition method between zones (2025.09.12)
+		- When quest was complete waypoint wouldn't be created unless player was already in correct zone, but now will provide better waypoint direction to quest turn in when zone transitions/portals exist (2025.09.13)
+		- Added variable checks of RQE.DontPrintTransitionBits to ensure that text wasn't excessively/unintentionally printing for transition direction (2025.09.13)
+		- Drop-down option exists for player to get directions to closest flight master, but enableTravelSuggestions must be enabled in the configuration settings (2025.09.13)
+
+	Buttons.lua
+		- Fixed nil error of missing RQE.AddonSetStepIndex within RQE.UnknownButtonTooltip = function() and nil check for RQE.WPxPos (2025.09.13)
+		- Fixed issue where waypoint was disappearing when mousing over "W" button in RQEFrame when waypointText existed for quest either in or not in DB (2025.09.13)
+		- Removed RQE:StartPeriodicChecks() function call within RQE.UnknownButtonTooltip to improve addon performance (2025.09.13)
 
 	Core.lua
 		- Updated RQE:StartPeriodicChecks() function to better handle situations with waypointText and CheckDBZoneChange scenarios (2025.09.12)
 		- Updated RQE:GetClosestFlightMaster() function to only check the Alliance/Neutral or Horde/Neutral flight paths based on current faction info for taxi suggestion (2025.09.12)
 		- Added RQE:FindQuestZoneTransition() function to handle when waypointText exists and points to location other than current step's (see RQE:StartPeriodicChecks() changes) waypoint information (2025.09.12)
+		- Added check for waypointText to RQE.CheckAndClickWButton() function and if waypointText exists it will no longer call RQE.CheckAndClickSeparateWaypointButtonButton() function (2025.09.13)
+		- Added RQE.getQuestData to the RQE:CheckAndCreateSuperTrackedQuestWaypoint() function (2025.09.13)
+		- Modified RQE:StartPeriodicChecks() function to only run the self:ClickWaypointButtonForIndex(finalStepIndex), with quest ready for turn in if there is no waypointText (2025.09.13)
+		- Added RQE:AskSetWaypointToClosestFlightMaster() and RQE:SetTomTomWaypointToClosestFlightMaster() functions to provide a pop-up asking player if they want directions to closest flight master (2025.09.13)
 
 	EventManager.lua
 		- After firing of ZONE_CHANGED_NEW_AREA event function will run the RQE:FindQuestZoneTransition() function to find correct location to place waypoint for next step (2025.09.12)
 		- Cleaned up debug language within the ZONE_CHANGED_NEW_AREA event function (2025.09.12)
+		- Added call to RQE:FindQuestZoneTransition() function within PLAYER_CONTROL_GAINED event function to check for waypointText for next step upon landing from Taxi (2025.09.13)
+		- Added PLAYER_CONTROL_LOST event function to include when waypoints could be created once again following landing from Taxi (2025.09.13)
 
 	QuestingModule.lua
 		- Cleaned up debug language within the clicking of the QuestLogIndexButton inside the RQEQuestFrame (2025.09.12)
 		- Modified the print out following clicking of QuestLogIndexButton to check if enableTravelSuggestions is enabled before running the RQE:RecommendFastestTravelMethod() function (2025.09.12)
+		- Added drop-down menu option to RQE Quest Frame to call RQE:SetTomTomWaypointToClosestFlightMaster() function (2025.09.13)
 
 	RQE.toc
 		- Updated version# (2025.09.08)
 
 	RQEDatabase.lua
-		- Added some Delve quests for The War Within expansion (2025.09.12)
+		- Added some Delve quests for The War Within expansion (2025.09.13)
 
 	RQEFrame.lua
 		- Commented out the RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData) function as this is no longer used (2025.09.12)
 		- Modified the RQE.ClickUnknownQuestButton() function for better handling of waypoint creation when waypointText exists (2025.09.12)
 		- Removed the RQE:CreateUnknownQuestWaypoint() function call within RQE.ClickUnknownQuestButton() as this now first calls RQE:FindQuestZoneTransition(), which then does waypoint creation (2025.09.12)
+		- Added drop-down menu option to RQEFrame to call RQE:SetTomTomWaypointToClosestFlightMaster() function (2025.09.13)
+		- Added validation check to see if waypointText exists within the RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function and if not it will C_Map.ClearUserWaypoint() (2025.09.13)
+		- Simplified the RQE.ClickUnknownQuestButton() function by removing unnecessary code (2025.09.13)
 
 	WaypointManager.lua
 		- Within the RQE:CreateUnknownQuestWaypoint() function a call is made to RQE:FindQuestZoneTransition() instead of the RQE:CreateUnknownQuestWaypointWithDirectionText() function (2025.09.12)
 		- Mostly rewrite of RQE:CreateUnknownQuestWaypointWithDirectionText() to handle waypoint creation when waypointText exists (2025.09.12)
+		- Added RQE.NearestFlightMasterSet variable check within functions that create waypoints to ensure that waypoint isn't overridden when player is seeking direction to nearest flight master (2025.09.13)
+		- Fixed RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID) function as waypoint wasn't being created when flagged C_QuestLog.ReadyForTurnIn() and had waypointText (2025.09.13)
+		- Cleaned up waypointTitle so that more information would be shown and now also when waypointText exists will include this information in the waypointTitle (2025.09.13)
 
 
 11.2.0.3 (2025.09.08)
