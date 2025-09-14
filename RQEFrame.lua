@@ -581,6 +581,41 @@ if QuestDescription_settings then
 	end
 end
 
+-- Hook SetText so we can truncate before displaying
+local oldSetText = RQE.QuestDescription.SetText
+function RQE.QuestDescription:SetText(text)
+	if type(text) == "string" and text ~= "" then
+		-- Step 1: Isolate only the first paragraph
+		local firstPara, rest = text:match("^(.-)\r?\n\r?\n(.*)")
+		if not firstPara then
+			firstPara, rest = text:match("^([^\r\n]+)[\r\n]+(.*)")
+		end
+		if not firstPara then
+			firstPara, rest = text, nil
+		end
+
+		-- Step 2: Trim trailing spaces/punctuation
+		firstPara = firstPara:gsub("[%s%.]+$", "")
+
+		-- Step 3: Enforce 100 character max
+		local truncated = firstPara
+		local tooLong = false
+		if #truncated > 100 then
+			truncated = truncated:sub(1, 100):gsub("[%s%.]+$", "")
+			tooLong = true
+		end
+
+		-- Step 4: Append "..." if more content exists OR if trimmed by char limit
+		if (rest and #rest > 0) or tooLong then
+			truncated = truncated .. "..."
+		end
+
+		return oldSetText(self, truncated)
+	end
+
+	return oldSetText(self, text)
+end
+
 RQE.QuestDescription:SetJustifyH("LEFT")
 RQE.QuestDescription:SetJustifyV("TOP")
 RQE.QuestDescription:SetWordWrap(true)
