@@ -5,6 +5,7 @@
 		- When quest was complete waypoint wouldn't be created unless player was already in correct zone, but now will provide better waypoint direction to quest turn in when zone transitions/portals exist (2025.09.13)
 		- Added variable checks of RQE.DontPrintTransitionBits to ensure that text wasn't excessively/unintentionally printing for transition direction (2025.09.13)
 		- Drop-down option exists for player to get directions to closest flight master, but enableTravelSuggestions must be enabled in the configuration settings (2025.09.13)
+		- Quest Objectives truncated for better visibility of quest objective step and addon's stepText guidance (2025.09.14)
 
 	Buttons.lua
 		- Fixed nil error of missing RQE.AddonSetStepIndex within RQE.UnknownButtonTooltip = function() and nil check for RQE.WPxPos (2025.09.13)
@@ -36,6 +37,7 @@
 
 	RQEDatabase.lua
 		- Added some Delve quests for The War Within expansion (2025.09.13)
+		- Added a few WQ for Legion/Battle for Azeroth and some additional quests in The War Within (2025.09.14)
 
 	RQEFrame.lua
 		- Commented out the RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData) function as this is no longer used (2025.09.12)
@@ -44,6 +46,7 @@
 		- Added drop-down menu option to RQEFrame to call RQE:SetTomTomWaypointToClosestFlightMaster() function (2025.09.13)
 		- Added validation check to see if waypointText exists within the RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function and if not it will C_Map.ClearUserWaypoint() (2025.09.13)
 		- Simplified the RQE.ClickUnknownQuestButton() function by removing unnecessary code (2025.09.13)
+		- Quest Objectives are truncated (limit to one paragraph and also truncated to limit to set number of characters) so that objective steps and addon's step guidance is better able to be displayed (2025.09.14)
 
 	WaypointManager.lua
 		- Within the RQE:CreateUnknownQuestWaypoint() function a call is made to RQE:FindQuestZoneTransition() instead of the RQE:CreateUnknownQuestWaypointWithDirectionText() function (2025.09.12)
