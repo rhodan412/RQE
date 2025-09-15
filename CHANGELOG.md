@@ -1,4 +1,4 @@
-11.2.0.4
+11.2.0.4 (2025.09.15)
 
 	**HIGHLIGHTS**
 		- Better handling of waypoint creation when waypointText exists directing player to a portal or other transition method between zones (2025.09.12)
