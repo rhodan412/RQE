@@ -1262,6 +1262,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- Check if TomTom is loaded and compatibility is enabled
 			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
+				RQE._currentTomTomUID = nil
 			end
 
 			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
