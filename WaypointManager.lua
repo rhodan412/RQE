@@ -70,32 +70,50 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	if x and x > 1 then x = x / 100 end
 	if y and y > 1 then y = y / 100 end
 
-	-- Create the waypoint data
-	-- local waypoint = {}
-	-- waypoint.x = x
-	-- waypoint.y = y
-	-- waypoint.mapID = mapID
-	-- waypoint.title = title
+	-- Normalize once: accept either 0–1 or 0–100
+	local xNorm = (x and x > 1) and (x / 100) or x
+	local yNorm = (y and y > 1) and (y / 100) or y
+	if not (mapID and xNorm and yNorm) then return end
 
-	if mapID and x and y then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
-		end
-		TomTom:AddWaypoint(mapID, x, y, { title = title })	-- already normalized
-		-- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-		-- TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+	-- Skip if coords haven’t changed meaningfully
+	if RQE._lastWP
+		and RQE._lastWP.mapID == mapID
+		and math.abs(RQE._lastWP.x - xNorm) < 1e-4
+		and math.abs(RQE._lastWP.y - yNorm) < 1e-4 then
+		return
 	end
+
+	-- Title fallback uses supertracked quest
+	local questID  = (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) and C_SuperTrack.GetSuperTrackedQuestID() or 0
+	local questName = (questID ~= 0 and C_QuestLog.GetTitleForQuestID(questID)) or "Unknown"
+	local finalTitle = title or string.format('QID: %d, "%s"', questID, questName)
+
+	-- Replace any existing waypoint (TomTom + Blizzard pin)
+	if RQE.Waypoints and RQE.Waypoints.Replace then
+		RQE.Waypoints:Replace(mapID, xNorm, yNorm, finalTitle)
+	end
+
+	-- Update normalized stash & last waypoint memo
+	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = xNorm, yNorm, mapID
+	RQE._lastWP = { mapID = mapID, x = xNorm, y = yNorm }
+
+	-- if mapID and x and y then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
+		-- end
+		-- TomTom:AddWaypoint(mapID, x, y, { title = title })	-- already normalized
+		-- -- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+		-- -- TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+	-- end
 
 	-- Add the waypoint to the RQEWaypoints table
 	--table.insert(RQEWaypoints, waypoint)
 
 	-- Create a Map Pin to represent the waypoint
-	self:CreateMapPin(mapID, (x or 0) * 100, (y or 0) * 100)
-	--self:CreateMapPin(waypoint.mapID, waypoint.x, waypoint.y)
+	--self:CreateMapPin(mapID, (x or 0) * 100, (y or 0) * 100)
 
 	RQE.debugLog("Exiting CreateWaypoint Function")
 	return { x = x, y = y, mapID = mapID, title = title }
-	--return waypoint
 end
 
 
@@ -198,13 +216,14 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 	else
 		-- ✅ Fallback to TomTom if available
 		if TomTom and TomTom.AddWaypoint then
-			TomTom:AddWaypoint(finalMapID, x, y, {
-				title = label,
-				from = "RQE",
-				persistent = nil,
-				minimap = true,
-				world = true
-			})
+			RQE._currentTomTomUID = RQE.Waypoints:Replace(finalMapID, x, y, label)
+			-- TomTom:AddWaypoint(finalMapID, x, y, {
+				-- title = label,
+				-- from = "RQE",
+				-- persistent = nil,
+				-- minimap = true,
+				-- world = true
+			-- })
 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("TomTom Waypoint created for QuestID:", questID, "at", x, y, "on MapID:", finalMapID)
@@ -410,8 +429,10 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		-- Important: clear TomTom's prior waypoints so the new title takes effect
 		if TomTom.waydb and TomTom.waydb.ResetProfile then
 			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
 		end
-		TomTom:AddWaypoint(mapID, xPct / 100, yPct / 100, { title = waypointTitle })
+		RQE.Waypoints:Replace(mapID, xPct / 100, yPct / 100, waypointTitle)
+		--TomTom:AddWaypoint(mapID, xPct / 100, yPct / 100, { title = waypointTitle })
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("TomTom not available or disabled.")
@@ -555,6 +576,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
+				RQE._currentTomTomUID = nil
 			end
 
 			C_Timer.After(0.5, function()
@@ -566,7 +588,8 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 					if mapID and x and y then
 						RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-						TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+						RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
+						--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 					else
 						RQE.debugLog("Could not create waypoint for unknown quest.")
 					end
@@ -648,10 +671,12 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		TomTom.waydb:ResetProfile()
+		RQE._currentTomTomUID = nil
 		C_Timer.After(0.5, function()
 			if mapID and x and y then
 				RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+				RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
+				--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
 				RQE.debugLog("Could not create TomTom waypoint for:", questID)
 			end
@@ -740,6 +765,7 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		TomTom.waydb:ResetProfile()
+		RQE._currentTomTomUID = nil
 	end
 
 	-- Set a timer to handle waypoint setting (with delay for compatibility reasons)
@@ -754,7 +780,8 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 				end
-				TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
+				RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
+				--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
 				print("Could not create waypoint for unknown quest.")
 			end
@@ -842,7 +869,8 @@ function RQE:CreateQuestWaypointFromNextWaypoint(questID)
 	-- TomTom Integration (if enabled)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
+		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointText)
+		--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
 		print("Waypoint added to TomTom for questID:", questID)
 	end
 
@@ -945,7 +973,8 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 	-- TomTom Integration (if enabled)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
+		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointText)
+		--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Waypoint added to TomTom for questID:", questID)
 		end
@@ -1066,13 +1095,14 @@ function RQE:OnCoordinateClicked()
 		RQE.debugLog("TomTom is available.")
 
 		-- Add waypoint using TomTom
-		local uid = TomTom:AddWaypoint(mapID, x, y, {
-			title = title,
-			from = "RQE",
-			persistent = nil,
-			minimap = true,
-			world = true
-		})
+		local uid = RQE.Waypoints:Replace(mapID, x, y, title)
+		-- local uid = TomTom:AddWaypoint(mapID, x, y, {
+			-- title = title,
+			-- from = "RQE",
+			-- persistent = nil,
+			-- minimap = true,
+			-- world = true
+		-- })
 
 		if uid then
 			if RQE.db.profile.debugLevel == "INFO+" then
