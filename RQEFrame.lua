@@ -2221,29 +2221,64 @@ end
 function RQE.GetTooltipDataForCButton()
 	local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
+	local questData = RQE.getQuestData(questID)
 
-	-- Ensure quest data exists and has the coordinate data
-	if questData and questData[stepIndex] and questData[stepIndex].coordinates then
-		-- Extract coordinate information for the current stepIndex
-		local coordData = questData[stepIndex].coordinates
-		local x, y, mapID = coordData.x, coordData.y, coordData.mapID
+	if questData and questData[stepIndex] then
+		local step = questData[stepIndex]
 
-		-- Format the coordinate text
-		local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
-		--local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
-		RQE.SeparateFocusCoordData = coordsText
-
-		if RQE.db.profile.debugLevel == "INFO" then
-			DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+		-- Prefer hotspots if present; else legacy single coordinates
+		if step.coordinateHotspots then
+			local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
+			if smap and sx and sy then
+				local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", sx * 100, sy * 100, smap)
+				RQE.SeparateFocusCoordData = coordsText
+				if RQE.db.profile.debugLevel == "INFO" then
+					DEFAULT_CHAT_FRAME:AddMessage("Step " .. stepIndex .. " coords: " .. coordsText, 1, 1, 0)
+				end
+				return coordsText
+			end
+		elseif step.coordinates then
+			local x, y, mapID = step.coordinates.x, step.coordinates.y, step.coordinates.mapID
+			if x and y and mapID then
+				local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
+				RQE.SeparateFocusCoordData = coordsText
+				if RQE.db.profile.debugLevel == "INFO" then
+					DEFAULT_CHAT_FRAME:AddMessage("Step " .. stepIndex .. " coords: " .. coordsText, 1, 1, 0)
+				end
+				return coordsText
+			end
 		end
-
-		-- Return the formatted coordinate text
-		return coordsText
-	else
-		return "No tooltip available."  -- Fallback if no data is available
 	end
+
+	return "No tooltip available."
 end
+
+-- function RQE.GetTooltipDataForCButton()	-- OLD METHOD RELYING ON THE SINGLE COORDINATE BLOCK METHOD AND NOT THE MULTI ARRAY
+	-- local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
+
+	-- -- Ensure quest data exists and has the coordinate data
+	-- if questData and questData[stepIndex] and questData[stepIndex].coordinates then
+		-- -- Extract coordinate information for the current stepIndex
+		-- local coordData = questData[stepIndex].coordinates
+		-- local x, y, mapID = coordData.x, coordData.y, coordData.mapID
+
+		-- -- Format the coordinate text
+		-- local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
+		-- --local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
+		-- RQE.SeparateFocusCoordData = coordsText
+
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+		-- end
+
+		-- -- Return the formatted coordinate text
+		-- return coordsText
+	-- else
+		-- return "No tooltip available."  -- Fallback if no data is available
+	-- end
+-- end
 
 
 -- Function to attach tooltip to the "C" button
