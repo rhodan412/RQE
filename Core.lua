@@ -5634,6 +5634,8 @@ function RQE:StartPeriodicChecks()
 
 	if not superTrackedQuestID then return end
 
+	RQE.CheckAndClickSeparateWaypointButtonButton()	-- If this button exists and is valid it will click the button automatically at start, but might need to check that a waypoint doesn't already exist before running this call
+
 	-- Define the function map for parent functions
 	local functionMap = {
 		CheckDBBuff = "CheckDBBuff",
@@ -8644,17 +8646,54 @@ RQE.savedWorldQuestWatches = RQE.savedWorldQuestWatches or {}
 -- Player Movement that is associated for the creation of current coordinates location text
 local isMoving = false
 
+-- Movement-driven waypoint refresh (integer % cells)
+local updAccum = updAccum or 0
+local lastGridMap, lastGridX, lastGridY
 
 -- OnUpdate function to be triggered while moving
 local function OnPlayerMoving(self, elapsed)
 	RQE:UpdateCoordinates()
 	RQE:UpdateMapIDDisplay()
+	--RQE:MaybeUpdateWaypointOnSnap(elapsed)
+
+	-- Throttle: ~4x/sec while moving
+	updAccum = (updAccum or 0) + (elapsed or 0)
+	if updAccum < 0.25 then return end
+	updAccum = 0
+
+	-- Only care if something is super-tracked
+	if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then
+		return
+	end
+
+	-- Player pos in normalized space
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then return end
+	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not pos then return end
+	local px, py = pos:GetXY()
+	if not (px and py) then return end
+
+	-- “Integer percent” grid (e.g. 42.72 -> 42)
+	local gx = math.floor(px * 100 + 0.0001)
+	local gy = math.floor(py * 100 + 0.0001)
+
+	-- Only re-evaluate when the grid cell OR map changed
+	if lastGridMap ~= mapID or lastGridX ~= gx or lastGridY ~= gy then
+		lastGridMap, lastGridX, lastGridY = mapID, gx, gy
+
+		-- This will only replace the live waypoint if the chosen hotspot changed.
+		if RQE.EnsureWaypointForSupertracked then
+			RQE:EnsureWaypointForSupertracked()
+		end
+	end
 end
 
 
 -- Function to start the OnUpdate script
 function RQE:StartUpdatingCoordinates()
 	if not isMoving then
+		updAccum, lastGridMap, lastGridX, lastGridY = 0, nil, nil, nil
 		RQEFrame:SetScript("OnUpdate", OnPlayerMoving)
 		isMoving = true
 	end
@@ -10867,8 +10906,10 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 	if isTomTomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility then
 		if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
 			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
 		end
-		TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title })
+		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
+		--TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title })
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(string.format(">> TomTom waypoint => %s (%.2f, %.2f, mapID %d)", title, xPct, yPct, mapID))
