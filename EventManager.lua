@@ -2699,6 +2699,25 @@ function RQE.handlePlayerEnterWorld(...)
 		RQE:CheckFrameVisibility()
 	end)
 
+	-- Clear hotspot choice so next read re-evaluates on the new map
+	if C_SuperTrack.IsSuperTrackingQuest() then
+		local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		-- Clear just the current step (safe + light)
+		local sidx = RQE.AddonSetStepIndex or 1
+		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+			RQE.WPUtil.ClearHotspotState(qid, sidx)
+		end
+	end
+
+	-- Optional: auto-refresh stash so tooltips/arrow update without /reload
+	if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		local sidx = RQE.AddonSetStepIndex or 1
+		local x, y, mid = RQE:GetStepCoordinates(sidx)
+		if x and y and mid then
+			RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+		end
+	end
+
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	C_Timer.After(3, function()
 		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -3484,6 +3503,25 @@ function RQE.handleZoneChange(...)
 	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
 		-- print(tostring(event))
 
+		-- Clear hotspot choice so next read re-evaluates on the new map
+		if C_SuperTrack.IsSuperTrackingQuest() then
+			local qid = C_SuperTrack.GetSuperTrackedQuestID()
+			-- Clear just the current step (safe + light)
+			local sidx = RQE.AddonSetStepIndex or 1
+			if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+				RQE.WPUtil.ClearHotspotState(qid, sidx)
+			end
+		end
+
+		-- Optional: auto-refresh stash so tooltips/arrow update without /reload
+		if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+			local sidx = RQE.AddonSetStepIndex or 1
+			local x, y, mid = RQE:GetStepCoordinates(sidx)
+			if x and y and mid then
+				RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+			end
+		end
+
 		C_Timer.After(0.1, function()
 			if not InCombatLockdown() then
 				RQE:CheckWatchedQuestsSync()	-- Fires when ZONE_CHANGED or ZONE_CHANGED_INDOORS event is called
@@ -3782,6 +3820,25 @@ function RQE.handleZoneNewAreaChange()
 			RQE.DontPrintTransitionBits = false
 		end
 	end)
+
+	-- Clear hotspot choice so next read re-evaluates on the new map
+	if C_SuperTrack.IsSuperTrackingQuest() then
+		local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		-- Clear just the current step (safe + light)
+		local sidx = RQE.AddonSetStepIndex or 1
+		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+			RQE.WPUtil.ClearHotspotState(qid, sidx)
+		end
+	end
+
+	-- Optional: auto-refresh stash so tooltips/arrow update without /reload
+	if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		local sidx = RQE.AddonSetStepIndex or 1
+		local x, y, mid = RQE:GetStepCoordinates(sidx)
+		if x and y and mid then
+			RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+		end
+	end
 
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
@@ -4707,6 +4764,25 @@ end
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
+	-- Clear hotspot choice so next read re-evaluates on the new map
+	if C_SuperTrack.IsSuperTrackingQuest() then
+		local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		-- Clear just the current step (safe + light)
+		local sidx = RQE.AddonSetStepIndex or 1
+		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+			RQE.WPUtil.ClearHotspotState(qid, sidx)
+		end
+	end
+
+	-- Optional: auto-refresh stash so tooltips/arrow update without /reload
+	if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		local sidx = RQE.AddonSetStepIndex or 1
+		local x, y, mid = RQE:GetStepCoordinates(sidx)
+		if x and y and mid then
+			RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+		end
+	end
+
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
 
 	-- Resets the flag that prevents UNIT_QUEST_LOG_CHANGED from firing immediately following QUEST_WATCH_UPDATE
@@ -5530,12 +5606,28 @@ function RQE.handleQuestWatchUpdate(...)
 	end
 
 	if questInfo then
-		-- If you need details about the quest, fetch them here
 		for i, step in ipairs(questInfo) do
-			StepsText[i] = step.description
-			CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
-			MapIDs[i] = step.coordinates.mapID
-			questHeader[i] = step.description:match("^(.-)\n") or step.description
+			local desc = step and step.description or ""
+			StepsText[i] = desc
+
+			-- Prefer hotspots; else legacy single
+			local cText, mID
+			if step and step.coordinateHotspots then
+				local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+				if smap and sx and sy then
+					cText = string.format("%.1f, %.1f", sx * 100, sy * 100)
+					mID = smap
+				end
+			elseif step and step.coordinates
+				and step.coordinates.x and step.coordinates.y and step.coordinates.mapID
+			then
+				cText = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+				mID = step.coordinates.mapID
+			end
+
+			CoordsText[i] = cText or "--"
+			MapIDs[i] = mID
+			questHeader[i] = desc:match("^(.-)\n") or desc
 
 			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 				-- DEFAULT_CHAT_FRAME:AddMessage("QWU 08 Debug: Step " .. i .. ": " .. StepsText[i], 0.56, 0.93, 0.56)	-- Light Green
@@ -5545,6 +5637,16 @@ function RQE.handleQuestWatchUpdate(...)
 			-- end
 		end
 	end
+
+	-- if questInfo then
+		-- -- If you need details about the quest, fetch them here
+		-- for i, step in ipairs(questInfo) do
+			-- StepsText[i] = step.description
+			-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+			-- MapIDs[i] = step.coordinates.mapID
+			-- questHeader[i] = step.description:match("^(.-)\n") or step.description
+		-- end
+	-- end
 
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
