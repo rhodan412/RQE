@@ -131,6 +131,7 @@ function RQE.ToggleBothFramesfromLDB()
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
 		end
 
 		if not InCombatLockdown() then
