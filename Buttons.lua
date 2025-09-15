@@ -641,6 +641,7 @@ function RQE.Buttons.ClearButtonPressed()
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		TomTom.waydb:ResetProfile()
+		RQE._currentTomTomUID = nil
 	end
 
 	-- Clearing the frame data a second time
@@ -691,6 +692,7 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
 		end
 	end)
 
