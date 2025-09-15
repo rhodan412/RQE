@@ -2425,6 +2425,7 @@ function UpdateRQEQuestFrame()
 						-- Check if TomTom is loaded and compatibility is enabled
 						if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 							TomTom.waydb:ResetProfile()
+							RQE._currentTomTomUID = nil
 						end
 
 						-- Simulates click of the "W" Button and then the Waypoint Button[1] to start to ensure correct waypoint coord creation
