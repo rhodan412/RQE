@@ -153,6 +153,7 @@ function RQE:ToggleFramesAndTracker()
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
 		end
 
 		if RQE.MagicButton then
@@ -2632,6 +2633,7 @@ function RQE.handleVariablesLoaded()
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		TomTom.waydb:ResetProfile()
+		RQE._currentTomTomUID = nil
 	end
 
 	-- Initialize RQEQuestFrame position based on saved variables
@@ -5402,6 +5404,7 @@ function RQE.handleQuestRemoved(...)
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
 		end
 
 		local extractedQuestID
@@ -5945,6 +5948,7 @@ function RQE.handleQuestTurnIn(...)
 			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
+				RQE._currentTomTomUID = nil
 			end
 
 			RQE:ClearSeparateFocusFrame()
