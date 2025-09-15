@@ -66,18 +66,22 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	x = x or RQE.x
 	y = y or RQE.y
 
-	-- Create the waypoint data
-	local waypoint = {}
-	waypoint.x = x
-	waypoint.y = y
-	waypoint.mapID = mapID
-	waypoint.title = title
+	-- Normalize once: accept either 0–1 or 0–100
+	if x and x > 1 then x = x / 100 end
+	if y and y > 1 then y = y / 100 end
 
-	if mapID and x and y then -- Check if x and y are not nil
+	-- Create the waypoint data
+	-- local waypoint = {}
+	-- waypoint.x = x
+	-- waypoint.y = y
+	-- waypoint.mapID = mapID
+	-- waypoint.title = title
+
+	if mapID and x and y then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
 		end
-		TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = title })
+		TomTom:AddWaypoint(mapID, x, y, { title = title })	-- already normalized
 		-- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 		-- TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 	end
@@ -86,10 +90,12 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	--table.insert(RQEWaypoints, waypoint)
 
 	-- Create a Map Pin to represent the waypoint
-	self:CreateMapPin(waypoint.mapID, waypoint.x, waypoint.y)
+	self:CreateMapPin(mapID, (x or 0) * 100, (y or 0) * 100)
+	--self:CreateMapPin(waypoint.mapID, waypoint.x, waypoint.y)
 
 	RQE.debugLog("Exiting CreateWaypoint Function")
-	return waypoint
+	return { x = x, y = y, mapID = mapID, title = title }
+	--return waypoint
 end
 
 
@@ -701,7 +707,15 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 
 	-- Retrieve step data and coordinates
 	local stepData = questData[stepIndex]
-	local x, y, mapID = stepData.coordinates.x, stepData.coordinates.y, stepData.coordinates.mapID
+
+	-- Get normalized coords for either legacy or hotspots
+	local x, y, mapID = RQE:GetStepCoordinates(stepIndex)
+	--local x, y, mapID = stepData.coordinates.x, stepData.coordinates.y, stepData.coordinates.mapID
+	if not (x and y and mapID) then
+		print("Invalid coordinates for questID:", questID, "stepIndex:", stepIndex)
+		return
+	end
+
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	-- print("~~~ Waypoint Set: 549 ~~~")
 	local waypointTitle = string.format('QID: %d, "%s"', questID, questName or "Unknown")
