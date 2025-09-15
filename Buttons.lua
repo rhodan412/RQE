@@ -116,42 +116,83 @@ RQE.UnknownButtonTooltip = function()
 							local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
 
 							-- Ensure quest data exists and has the coordinate data
-							if questData and questData[stepIndex] and questData[stepIndex].coordinates then
-								-- Extract coordinate information for the current stepIndex
-								local coordData = questData[stepIndex].coordinates
-								local x, y, mapID = coordData.x, coordData.y, coordData.mapID
+							if questData and questData[stepIndex] then
+								local coordsText
+								-- One true place to resolve coords (handles hotspots + legacy)
+								local sx, sy, smap = RQE:GetStepCoordinates(stepIndex)  -- returns normalized (0–1)
+								if sx and sy and smap then
+									coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", sx * 100, sy * 100, smap)
+								end
 
-								-- Format the coordinate text
-								local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
-								RQE.SeparateFocusCoordData = coordsText
+								if coordsText then
+									RQE.SeparateFocusCoordData = coordsText
 
-								if RQE.db.profile.debugLevel == "INFO" then
-									RQE.AddonSetStepIndex = RQE.AddonSetStepIndex or 1
-									DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+									if RQE.db.profile.debugLevel == "INFO" then
+										RQE.AddonSetStepIndex = RQE.AddonSetStepIndex or 1
+										DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
 
-									if RQE.WCoordData == RQE.SeparateFocusCoordData then
-										RQE:PlayThrottledSound(45024)
-									else
-										print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
-										RQE:PlayThrottledSound(135755)
+										if RQE.WCoordData == RQE.SeparateFocusCoordData then
+											RQE:PlayThrottledSound(45024)
+										else
+											print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
+											RQE:PlayThrottledSound(135755)
+										end
 									end
-								end
 
-								-- Return the formatted coordinate text
-								RQE.DontPrintTransitionBits = true
-								RQE.ClickUnknownQuestButton()
-								RQE.DontPrintTransitionBits = false
-								return coordsText
-							else
-								if RQE.db.profile.debugLevel == "INFO" then
-									print("DB Coordinates missing for quest step!")
-									RQE:PlayThrottledSound(5927)
+									RQE.DontPrintTransitionBits = true
+									RQE.ClickUnknownQuestButton()
+									RQE.DontPrintTransitionBits = false
+									return coordsText
+								else
+									if RQE.db.profile.debugLevel == "INFO" then
+										print("DB Coordinates missing for quest step!")
+										RQE:PlayThrottledSound(5927)
+									end
+									RQE.DontPrintTransitionBits = true
+									RQE.ClickUnknownQuestButton()
+									RQE.DontPrintTransitionBits = false
+									return "No tooltip available."
 								end
-								RQE.DontPrintTransitionBits = true
-								RQE.ClickUnknownQuestButton()
-								RQE.DontPrintTransitionBits = false
-								return "No tooltip available."  -- Fallback if no data is available
 							end
+
+							-- Ensure quest data exists and has the coordinate data		-- USES ONLY THE 'COORDINATES' METHOD AND NOT THE NEWER 'coordinateHotspots'
+							-- if questData and questData[stepIndex] and questData[stepIndex].coordinates then
+								-- -- Extract coordinate information for the current stepIndex
+								-- local coordData = questData[stepIndex].coordinates
+								-- local x, y, mapID = coordData.x, coordData.y, coordData.mapID
+
+								-- -- Format the coordinate text
+								-- local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
+								-- RQE.SeparateFocusCoordData = coordsText
+
+								-- if RQE.db.profile.debugLevel == "INFO" then
+									-- RQE.AddonSetStepIndex = RQE.AddonSetStepIndex or 1
+									-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+
+									-- if RQE.WCoordData == RQE.SeparateFocusCoordData then
+										-- RQE:PlayThrottledSound(45024)
+									-- else
+										-- print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
+										-- RQE:PlayThrottledSound(135755)
+									-- end
+								-- end
+
+								-- -- Return the formatted coordinate text
+								-- RQE.DontPrintTransitionBits = true
+								-- RQE.ClickUnknownQuestButton()
+								-- RQE.DontPrintTransitionBits = false
+								-- return coordsText
+							-- else
+								-- if RQE.db.profile.debugLevel == "INFO" then
+									-- print("DB Coordinates missing for quest step!")
+									-- RQE:PlayThrottledSound(5927)
+								-- end
+								-- RQE.DontPrintTransitionBits = true
+								-- RQE.ClickUnknownQuestButton()
+								-- RQE.DontPrintTransitionBits = false
+								-- return "No tooltip available."  -- Fallback if no data is available
+							-- end
+						-- end
 						end
 					end)
 				end)
