@@ -1,3 +1,48 @@
+11.2.0.5
+
+	**HIGHLIGHTS**
+		- Waypoints for coordinateHotspots update on player movement to direct player to the correct quest blob for the supertracked quest (2025.09.15)
+
+	Buttons.lua
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE.Buttons.ClearButtonPressed() and RQE.Buttons.CreateRWButton(RQEFrame) functions (2025.09.15)
+
+	Core.lua
+		- Added call to RQE.CheckAndClickSeparateWaypointButtonButton(), at the top of the StartPerdiodicChecks function call to click the that button when initially run as sometimes a waypoint can be created even if the mapID for waypoint doesn't match that of player currentmapID (2025.09.15)
+		- Added functionality to update waypoint location when player moves, but only on the whole number for the x, y coordinates (2025.09.15)
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:SetTomTomWaypointToClosestFlightMaster() function. (2025.09.15)
+
+	EventManager.lua
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:ToggleFramesAndTracker() functions and VARIABLES_LOADED, QUEST_REMOVED and QUEST_TURNED_IN event functions (2025.09.15)
+
+	QuestingModule.lua
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in UpdateRQEQuestFrame() function, after QuestLogIndexButton is pressed. (2025.09.15)
+
+	RQE.toc
+		- Updated version# (2025.09.15)
+
+	RQEDatabase.lua
+		- Added coordinateHotspots in place of coordinates in questID 84776: "A Call to Delves" due to the multiple locations for delves, but only in Isle of Dorn, for now (2025.09.15)
+		- Updated questID 90705: "Lorewalking" description to better describe the alternate turn-in locations (2025.09.15)
+
+	RQEFrame.lua
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function. (2025.09.15)
+
+	RQEMinimap.lua
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE.ToggleBothFramesfromLDB() function. (2025.09.15)
+
+	WaypointManager.lua
+		- Updated RQE:CreateWaypoint(x, y, mapID, title) function to generate waypoints correctly when dealing with same mapID for coordinateHotspots and commented out the code to generate map pin (2025.09.15)
+		- Many examples of 'TomTom:AddWaypoint' being replaced with the RQE.Waypoints:Replace() function call in WPUtil (2025.09.15)
+		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:CreateUnknownQuestWaypointWithDirectionText(), RQE:CreateUnknownQuestWaypointNoDirectionText() and RQE:CreateUnknownQuestWaypointForEvent(), and RQE:CreateWaypointForStep() functions (2025.09.15)
+
+	WPUtil.lua
+		- Added RQE.Waypoints = RQE.Waypoints or {} to list of addon tables (2025.09.15)
+		- Added RQE.Waypoints:Replace(mapID, xNorm, yNorm, title) function for replacing waypoints when new waypoints for a supertracked quest are closer (2025.09.15)
+		- Added _playerDistanceSqFlexible(hmap, hx, hy) helper to determine squared distance, in yards, to nearest coordinate block (2025.09.15)
+		- Significant updates to RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step) function to better handle when coordinateHotspots are on the same mapID as player (2025.09.15)
+		- Added temporary RQE:MaybeUpdateWaypointOnSnap(elapsed) function, which after initial testing failed to live up to expectations and was replaced, but keeping this dead function in place, for now (2025.09.15)
+
+
 11.2.0.4 (2025.09.15)
 
 	**HIGHLIGHTS**
