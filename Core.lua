@@ -2919,12 +2919,34 @@ function RQE:GetClosestTrackedQuest()
 	local function fallbackDistanceFromDB(questID)
 		local questData = RQE.getQuestData(questID)
 		if questData then
+			-- Loop for coord data using either coordinateHotspots or the legacy coordinates method
 			for i = 1, 10 do
 				local step = questData[i]
-				if step and step.coordinates then
-					return RQE:GetDistance(playerMapID, px, py, step.coordinates.mapID, step.coordinates.x / 100, step.coordinates.y / 100)
+				if step then
+					-- Prefer hotspots
+					if step.coordinateHotspots then
+						local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+						if smap and sx and sy then
+							mapID, x, y = smap, sx, sy	-- sx/sy are normalized
+							break
+						end
+					-- Legacy single
+					elseif step.coordinates
+						and step.coordinates.x and step.coordinates.y and step.coordinates.mapID
+					then
+						mapID = step.coordinates.mapID
+						x = step.coordinates.x / 100
+						y = step.coordinates.y / 100
+						break
+					end
 				end
 			end
+			-- for i = 1, 10 do
+				-- local step = questData[i]
+				-- if step and step.coordinates then
+					-- return RQE:GetDistance(playerMapID, px, py, step.coordinates.mapID, step.coordinates.x / 100, step.coordinates.y / 100)
+				-- end
+			-- end
 		end
 		return math.huge
 	end
@@ -4766,10 +4788,31 @@ function PrintQuestStepsToChat(questID)
 	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
 	for i, step in ipairs(questInfo) do
-		StepsText[i] = step.description
-		CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
-		MapIDs[i] = step.coordinates.mapID
-		questHeader[i] = step.description:match("^(.-)\n") or step.description
+		local desc = step and step.description or ""
+		StepsText[i] = desc
+
+		-- choose display coords from hotspots (preferred) or legacy single
+		local cText, mID
+		if step and step.coordinateHotspots then
+			local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+			if smap and sx and sy then
+				cText = string.format("%.1f, %.1f", sx * 100, sy * 100)
+				mID = smap
+			end
+		elseif step and step.coordinates and step.coordinates.x and step.coordinates.y and step.coordinates.mapID then
+			cText = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+			mID = step.coordinates.mapID
+		end
+
+		CoordsText[i] = cText or "--"
+		MapIDs[i] = mID
+		questHeader[i] = desc:match("^(.-)\n") or desc
+
+	-- for i, step in ipairs(questInfo) do
+		-- StepsText[i] = step.description
+		-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+		-- MapIDs[i] = step.coordinates.mapID
+		-- questHeader[i] = step.description:match("^(.-)\n") or step.description
 
 		-- if RQE.db.profile.debugLevel == "INFO+" then
 			-- -- Debug messages
@@ -10425,7 +10468,7 @@ function RQE:FindQuestZoneTransition(questID)
 	-- Preferred: exact waypoint on the player's current map
 	local xNorm, yNorm = C_QuestLog.GetNextWaypointForMap(questID, mapID)
 
-	-- Fallback: generic waypoint (may be vec or POI id)
+	-- Fallback 1: generic waypoint (may be vec or POI id)
 	if not (xNorm and yNorm) then
 		local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
 		if wpMapID then
@@ -10448,12 +10491,32 @@ function RQE:FindQuestZoneTransition(questID)
 		end
 	end
 
-	if RQE.db.profile.enableTravelSuggestions then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			if not (xNorm and yNorm) then
-				print(string.format("FindQuestZoneTransition: no waypoint for quest %d on map %d.", questID, mapID))
-				return nil
+	-- Fallback 2: our DB (hotspots or legacy coords)
+	if not (xNorm and yNorm) then
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		local questData = RQE.getQuestData and RQE.getQuestData(questID)
+		local step = questData and questData[stepIndex]
+		if step then
+			if step.coordinateHotspots then
+				local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
+				if smap and sx and sy then
+					mapID, xNorm, yNorm = smap, sx, sy
+				end
+			elseif step.coordinates and step.coordinates.x and step.coordinates.y and step.coordinates.mapID then
+				mapID = step.coordinates.mapID
+				-- DB coords are 0–100, normalize back to 0–1
+				xNorm, yNorm = step.coordinates.x / 100, step.coordinates.y / 100
 			end
+		end
+	end
+
+	-- Still nothing? Bail safely.
+	if RQE.db.profile.enableTravelSuggestions then
+		if not (xNorm and yNorm) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("FindQuestZoneTransition: no waypoint for quest %d on map %d.", questID, mapID))
+			end
+			return nil
 		end
 	end
 
@@ -10545,13 +10608,34 @@ function RQE:GetClosestFlightMasterToQuest(questID)
 	-- Try to use coordinates from the current step (first numeric step with coords)
 	for i = 1, 10 do
 		local step = questData[i]
-		if step and step.coordinates then
-			mapID = step.coordinates.mapID
-			x = step.coordinates.x / 100
-			y = step.coordinates.y / 100
-			break
+		if step then
+			-- Prefer hotspots
+			if step.coordinateHotspots then
+				local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+				if smap and sx and sy then
+					mapID, x, y = smap, sx, sy	-- sx/sy are normalized
+					break
+				end
+			-- Legacy single
+			elseif step.coordinates
+				and step.coordinates.x and step.coordinates.y and step.coordinates.mapID
+			then
+				mapID = step.coordinates.mapID
+				x = step.coordinates.x / 100
+				y = step.coordinates.y / 100
+				break
+			end
 		end
 	end
+	-- for i = 1, 10 do
+		-- local step = questData[i]
+		-- if step and step.coordinates then
+			-- mapID = step.coordinates.mapID
+			-- x = step.coordinates.x / 100
+			-- y = step.coordinates.y / 100
+			-- break
+		-- end
+	-- end
 
 	-- Fallback to quest.location if no step with coordinates was found
 	if not mapID then
