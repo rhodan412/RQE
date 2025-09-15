@@ -6,11 +6,13 @@
 		- Added variable checks of RQE.DontPrintTransitionBits to ensure that text wasn't excessively/unintentionally printing for transition direction (2025.09.13)
 		- Drop-down option exists for player to get directions to closest flight master, but enableTravelSuggestions must be enabled in the configuration settings (2025.09.13)
 		- Quest Objectives truncated for better visibility of quest objective step and addon's stepText guidance (2025.09.14)
+		- Added new feature to direct player to best coordinates when dealing with multiple quest blobs/turn-in locations for a given quest step (2025.09.15)
 
 	Buttons.lua
 		- Fixed nil error of missing RQE.AddonSetStepIndex within RQE.UnknownButtonTooltip = function() and nil check for RQE.WPxPos (2025.09.13)
 		- Fixed issue where waypoint was disappearing when mousing over "W" button in RQEFrame when waypointText existed for quest either in or not in DB (2025.09.13)
 		- Removed RQE:StartPeriodicChecks() function call within RQE.UnknownButtonTooltip to improve addon performance (2025.09.13)
+		- Updated RQE.UnknownButtonTooltip = function() so that coordinates and coordinateHotspots are assessed in determining coordText in the array (2025.09.15)
 
 	Core.lua
 		- Updated RQE:StartPeriodicChecks() function to better handle situations with waypointText and CheckDBZoneChange scenarios (2025.09.12)
@@ -20,12 +22,15 @@
 		- Added RQE.getQuestData to the RQE:CheckAndCreateSuperTrackedQuestWaypoint() function (2025.09.13)
 		- Modified RQE:StartPeriodicChecks() function to only run the self:ClickWaypointButtonForIndex(finalStepIndex), with quest ready for turn in if there is no waypointText (2025.09.13)
 		- Added RQE:AskSetWaypointToClosestFlightMaster() and RQE:SetTomTomWaypointToClosestFlightMaster() functions to provide a pop-up asking player if they want directions to closest flight master (2025.09.13)
+		- Modified RQE:GetClosestTrackedQuest(), PrintQuestStepsToChat(questID), RQE:FindQuestZoneTransition(questID) and RQE:GetClosestFlightMasterToQuest(questID) to work with 'coordinates' and 'coordinateHotspots' (2025.09.15)
 
 	EventManager.lua
 		- After firing of ZONE_CHANGED_NEW_AREA event function will run the RQE:FindQuestZoneTransition() function to find correct location to place waypoint for next step (2025.09.12)
 		- Cleaned up debug language within the ZONE_CHANGED_NEW_AREA event function (2025.09.12)
 		- Added call to RQE:FindQuestZoneTransition() function within PLAYER_CONTROL_GAINED event function to check for waypointText for next step upon landing from Taxi (2025.09.13)
 		- Added PLAYER_CONTROL_LOST event function to include when waypoints could be created once again following landing from Taxi (2025.09.13)
+		- Added helper calls for clearing and adding hotspot coordinate information for updating code prior to creating waypoint on PLAYER_ENTERING_WORLD, ZONE_CHANGED, ZONE_CHANGED_NEW_AREA, QUEST_LOG_UPDATE (2025.09.15)
+		- Modified code for QUEST_WATCH_UPDATE to obtain coordinate information when dealing with coordinateHotspots (2025.09.15)
 
 	QuestingModule.lua
 		- Cleaned up debug language within the clicking of the QuestLogIndexButton inside the RQEQuestFrame (2025.09.12)
@@ -38,6 +43,7 @@
 	RQEDatabase.lua
 		- Added some Delve quests for The War Within expansion (2025.09.13)
 		- Added a few WQ for Legion/Battle for Azeroth and some additional quests in The War Within (2025.09.14)
+		- Added coordinateHotspots in place of coordinates in questID 90705: "Lorewalking" due to the multiple turn-in locations which include Stormwind, Orgrimmar and Dornogal (2025.09.15)
 
 	RQEFrame.lua
 		- Commented out the RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData) function as this is no longer used (2025.09.12)
@@ -47,6 +53,7 @@
 		- Added validation check to see if waypointText exists within the RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function and if not it will C_Map.ClearUserWaypoint() (2025.09.13)
 		- Simplified the RQE.ClickUnknownQuestButton() function by removing unnecessary code (2025.09.13)
 		- Quest Objectives are truncated (limit to one paragraph and also truncated to limit to set number of characters) so that objective steps and addon's step guidance is better able to be displayed (2025.09.14)
+		- Modified the RQE.GetTooltipDataForCButton() function so that tooltip of coordText is correct when hovering over the "*" button in that frame for 'coordinates' and 'coordinateHotspots' (2025.09.15)
 
 	WaypointManager.lua
 		- Within the RQE:CreateUnknownQuestWaypoint() function a call is made to RQE:FindQuestZoneTransition() instead of the RQE:CreateUnknownQuestWaypointWithDirectionText() function (2025.09.12)
@@ -54,6 +61,13 @@
 		- Added RQE.NearestFlightMasterSet variable check within functions that create waypoints to ensure that waypoint isn't overridden when player is seeking direction to nearest flight master (2025.09.13)
 		- Fixed RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID) function as waypoint wasn't being created when flagged C_QuestLog.ReadyForTurnIn() and had waypointText (2025.09.13)
 		- Cleaned up waypointTitle so that more information would be shown and now also when waypointText exists will include this information in the waypointTitle (2025.09.13)
+		- Fixed waypoint creation in RQE:CreateWaypoint(), RQE:CreateWaypoint(), and RQE:CreateWaypointForStep() functions to work with 'coordinates' and 'coordinateHotspots' array (2025.09.15)
+
+	WPUtil.lua
+		- Added RQE.WPUtil and RQE.WPUtil._hotspotState tables (2025.09.15)
+		- Added coordinateHotspot Defaults (2025.09.15)
+		- Modified RQE:GetStepCoordinates(stepIndex) function to work with either 'coordinates' or 'coordinateHotspots' (2025.09.15)
+		- Added helpers to deal with 'coordinateHotspots' functionality (2025.09.15)
 
 
 11.2.0.3 (2025.09.08)
