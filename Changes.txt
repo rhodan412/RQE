@@ -2,6 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Waypoints for coordinateHotspots update on player movement to direct player to the correct quest blob for the supertracked quest (2025.09.15)
+		- Waypoints in use for coordinateHotspots will now select the best location for doing a quest step and create waypoint to another location on proximity after previous hotspot visited with better drops (2025.09.15)
 
 	Buttons.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE.Buttons.ClearButtonPressed() and RQE.Buttons.CreateRWButton(RQEFrame) functions (2025.09.15)
@@ -13,16 +14,20 @@
 
 	EventManager.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:ToggleFramesAndTracker() functions and VARIABLES_LOADED, QUEST_REMOVED and QUEST_TURNED_IN event functions (2025.09.15)
+		- Added coding calls for RQE.WPUtil.ClearHotspotState() to be either hard (true) or soft (false) resets for the visitRadius and unlocked priorityBias (2025.09.15)
+		- Removed RQE.WPUtil.ClearHotspotState() function call within QUEST_LOG_CHANGE and placed in SUPER_TRACKING_CHANGED and QUEST_WATCH_LIST_CHANGED as soft resets (2025.09.15)
 
 	QuestingModule.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in UpdateRQEQuestFrame() function, after QuestLogIndexButton is pressed. (2025.09.15)
 
 	RQE.toc
 		- Updated version# (2025.09.15)
+		- Added HereBeDragons to the list of libraries for distance calculation (2025.09.15)
 
 	RQEDatabase.lua
 		- Added coordinateHotspots in place of coordinates in questID 84776: "A Call to Delves" due to the multiple locations for delves, but only in Isle of Dorn, for now (2025.09.15)
 		- Updated questID 90705: "Lorewalking" description to better describe the alternate turn-in locations (2025.09.15)
+		- Updated and finished testing questID 52: "Protect the Frontier" with coordinateHotspots and priorityBias functional (2025.09.15)
 
 	RQEFrame.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function. (2025.09.15)
@@ -41,6 +46,14 @@
 		- Added _playerDistanceSqFlexible(hmap, hx, hy) helper to determine squared distance, in yards, to nearest coordinate block (2025.09.15)
 		- Significant updates to RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step) function to better handle when coordinateHotspots are on the same mapID as player (2025.09.15)
 		- Added temporary RQE:MaybeUpdateWaypointOnSnap(elapsed) function, which after initial testing failed to live up to expectations and was replaced, but keeping this dead function in place, for now (2025.09.15)
+		- Added HereBeDragons and local variables to the top of file (2025.09.15)
+		- Added RQE.WPUtil.DebugDumpBands for debug langauge on distance to the priorityBias bands within the coordinateHotspots (2025.09.15)
+		- Added _fmtHotspot and _dbgMarkVisited to flag when a priorityBias has been unlocked following visitedRadius being reached for previous priorityBias (2025.09.15)
+		- Added _dbgEligibleBands and updated _eligibleBands functions to list which priorityBias has been unlocked for waypoint creation (2025.09.15)
+		- Added  _getHBD(), _zoneDeltaYards and RQE.WPUtil.DeltaYards to calculate the distance to waypoint associated with the coordinateHotspot used (2025.09.15)
+		- Updated RQE.WPUtil.NormalizeCoordinates() as well as _updateVisitedBands to update band unlock (2025.09.15)
+		- Updated RQE.WPUtil.SelectBestHotspot() and RQE.WPUtil.ClearHotspotState() functions to better handle the priorityBias and visitedRadius in the DB entries while continuing to work with 'coordinates' (2025.09.15)
+		- Added SlashCmdList.RQEDUMP = function() to call debug print out of distance and information on which bands are unlocked (2025.09.15)
 
 
 11.2.0.4 (2025.09.15)
