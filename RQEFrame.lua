@@ -1254,9 +1254,12 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end
 			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
-			local waypointText = C_QuestLog.GetNextWaypointText(questID)
-			if not waypointText then
-				C_Map.ClearUserWaypoint()
+
+			if questID then
+				local waypointText = C_QuestLog.GetNextWaypointText(questID)
+				if not waypointText then
+					C_Map.ClearUserWaypoint()
+				end
 			end
 
 			-- Check if TomTom is loaded and compatibility is enabled
