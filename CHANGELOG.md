@@ -31,6 +31,7 @@
 
 	RQEFrame.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function. (2025.09.15)
+		- Fixed nil error within waypointText of WaypointButton:SetScript("OnClick", function() within the larger RQE:CreateStepsText() function (2025.09.15)
 
 	RQEMinimap.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE.ToggleBothFramesfromLDB() function. (2025.09.15)
