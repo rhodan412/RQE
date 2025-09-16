@@ -21,6 +21,14 @@ RQE._snapState = RQE._snapState or { lastX=nil, lastY=nil, lastMap=nil, lastIdx=
 RQE.posX = nil
 RQE.posY = nil
 
+local HBD = LibStub and LibStub("HereBeDragons-2.0", true)
+
+
+-- Forward declarations for locals referenced before their definitions
+local _playerDistanceSqFlexible
+local _dbgEligibleBands
+local _dbgMarkVisited
+
 
 ------------------------------------
 -- 2. coordinateHotspot Defaults
@@ -308,6 +316,86 @@ local function _playerDistanceSqYards(mapID, x, y)
 end
 
 
+-- Pretty line for a hotspot (idx + key fields)
+local function _fmtHotspot(idx, h)
+	return string.format(
+		"#%d p=%d map=%s (%.2f, %.2f) minSwitch=%s visitR=%s",
+		idx,
+		tonumber(h.priority) or -1,
+		tostring(h.mapID),
+		(h.x or 0) * 100, (h.y or 0) * 100,
+		tostring(h.minSwitchYards or "nil"),
+		tostring(h.visitedRadius or "nil")
+	)
+end
+
+
+-- Debug print tool to show where in band ladder player is (with distances)
+-- /run RQE.WPUtil.DebugDumpBands(C_SuperTrack.GetSuperTrackedQuestID(), RQE.AddonSetStepIndex or 1)
+function RQE.WPUtil.DebugDumpBands(questID, stepIndex)
+	local st = RQE.WPUtil._hotspotState[questID] and RQE.WPUtil._hotspotState[questID][stepIndex]
+	local step = RQE.getQuestData(questID) and RQE.getQuestData(questID)[stepIndex]
+	local norm = step and RQE.WPUtil.NormalizeCoordinates(step)
+	if not norm or not norm.hotspots or #norm.hotspots == 0 then print("No hotspots.") return end
+
+	-- Build band → { minD2, unit } and figure target band with current visited set
+	local byBand = {}
+	for _,h in ipairs(norm.hotspots) do
+		local d2, unit = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
+		if d2 then
+			local b = byBand[h.priority]
+			if not b or d2 < b.minD2 then byBand[h.priority] = { minD2 = d2, unit = unit } end
+		end
+	end
+
+	local visited = (st and st.visited) or {}
+	local target
+	for _,p in ipairs(norm.priorityBands) do
+		if not visited[p] then target = p; break end
+	end
+	if not target then target = norm.priorityBands[#norm.priorityBands] end
+
+	-- Compose line
+	local parts = {}
+	for _,p in ipairs(norm.priorityBands) do
+		local tag = (p == target) and "[TARGET]" or (visited[p] and "[VISITED]" or "[LOCKED]")
+		local b = byBand[p]
+		local dist = b and (b.unit == "yards" and string.format(" d=%.0fyd", math.sqrt(b.minD2))
+			or string.format(" d~=%.1f%%", math.sqrt(b.minD2)*100)) or ""
+		table.insert(parts, string.format("p=%d%s%s", p, tag, dist))
+	end
+	print(string.format("|cff00ffffRQE(INFO)|r Q%d S%d bands => %s",
+		tonumber(questID) or -1, tonumber(stepIndex) or -1, table.concat(parts, "  ")))
+end
+
+
+-- Emit once when a band becomes visited
+function _dbgMarkVisited(questID, stepIndex, p, idx, h)
+	if not (RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+") then return end
+	print(string.format(
+		"|cff00ffffRQE(INFO)|r Q%d S%d visited band p=%d via hotspot %s",
+		tonumber(questID) or -1, tonumber(stepIndex) or -1, tonumber(p) or -1, _fmtHotspot(idx, h)
+	))
+end
+
+
+-- Dump current eligible/locked bands (called only when target band changes)
+function _dbgEligibleBands(questID, stepIndex, priorityBands, visitedSet, targetBand)
+	if not (RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+") then return end
+	local parts = {}
+	for p,_ in pairs(priorityBands) do
+		local v = visitedSet and visitedSet[p]
+		local tag = (p == targetBand) and "[TARGET]" or (v and "[VISITED]" or "[LOCKED]")
+		table.insert(parts, string.format("p=%d%s", p, tag))
+	end
+	table.sort(parts) -- stable-ish print
+	print(string.format(
+		"|cff00ffffRQE(INFO)|r Q%d S%d bands => %s",
+		tonumber(questID) or -1, tonumber(stepIndex) or -1, table.concat(parts, "  ")
+	))
+end
+
+
 -- Centralized replace helper for TomTom/Blizzard pins
 function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
 	-- Normalize safety: require numbers in 0–1
@@ -338,10 +426,15 @@ function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
 	local uid
 
 	-- Add TomTom waypoint
-	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility and TomTom and TomTom.AddWaypoint then
-		TomTom.waydb:ResetProfile()
-		local uid = TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title, from = "RQE", minimap = true, world = true })
-		RQE._currentTomTomUID = uid
+	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility and TomTom then
+		if TomTom.waydb and TomTom.waydb.ResetProfile then
+			TomTom.waydb:ResetProfile()
+		end
+
+		if TomTom.AddWaypoint then
+			uid = TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title, from = "RQE", minimap = true, world = true })
+			RQE._currentTomTomUID = uid
+		end
 	end
 
 	-- -- Optionally show a Blizzard user pin (comment this block out if you don’t want it)
@@ -392,9 +485,9 @@ end
 
 
 -- Normalize either:
---	step.coordinates = { x=.., y=.., mapID=.. } (legacy)
---	step.coordinates = { {..}, {..}, ... } 		(multi, if you ever store it here)
---	step.coordinateHotspots = { {..}, {..}, ... } 	(preferred multi key)
+-- step.coordinates = { x=.., y=.., mapID=.. } (legacy)
+-- step.coordinates = { {..}, {..}, ... } 		(multi, if you ever store it here)
+-- step.coordinateHotspots = { {..}, {..}, ... } 	(preferred multi key)
 function RQE.WPUtil.NormalizeCoordinates(step)
 	if not step then return nil end
 	local raw = step.coordinateHotspots or step.coordinates
@@ -470,9 +563,15 @@ local function _stateFor(questID, stepIndex)
 	local st = RQE.WPUtil._hotspotState[questID][stepIndex]
 	if not st then
 		st = {
-			visitedBands = {},	-- [priority] = true once visited
-			currentIdx = nil, -- index into normalized hotspot list
+			-- visitedBands = {},	-- [priority] = true once visited
+			-- currentIdx = nil, -- index into normalized hotspot list
+			-- lastEval = { t=0, mapID=nil, px=nil, py=nil },
+			visited = {},             -- p=>true after visit (your new table name)
+			currentIdx = nil,
 			lastEval = { t=0, mapID=nil, px=nil, py=nil },
+			questID = questID,        -- << add
+			stepIndex = stepIndex,    -- << add
+			_lastTargetBand = nil,    -- << for debug change detection
 		}
 		RQE.WPUtil._hotspotState[questID][stepIndex] = st
 	end
@@ -480,54 +579,230 @@ local function _stateFor(questID, stepIndex)
 end
 
 
--- Mark current target band as visited if inside its visitedRadius
+-- Yard math via HereBeDragons (if present)
+-- Tries to resolve HBD once and cache it.
+local function _getHBD()
+	if RQE._HBD ~= nil then return RQE._HBD end
+	local HBD = nil
+	if LibStub then
+		HBD = LibStub("HereBeDragons-2.0", true)
+	end
+	-- TomTom ships HBD too; some builds expose it directly
+	if not HBD and TomTom and TomTom.HBD then
+		HBD = TomTom.HBD
+	end
+	RQE._HBD = HBD or false
+	return RQE._HBD or nil
+end
+
+
+-- Returns dx, dy in YARDS between two points on the SAME map.
+-- Args are normalized 0–1 coordinates.
+-- World distance in yards^2 between two zone points.
+-- Returns dx, dy in yards (not normalized), or nil if we can't translate.
+local function _zoneDeltaYards(zm, zx, zy, zm2, zx2, zy2)
+	if not (HBD and zm and zx and zy and zm2 and zx2 and zy2) then return nil end
+	-- Translate both points into the same world space and measure
+	local wx1, wy1 = HBD:GetWorldCoordinatesFromZone(zx, zy, zm)
+	local wx2, wy2 = HBD:GetWorldCoordinatesFromZone(zx2, zy2, zm2)
+	if not (wx1 and wy1 and wx2 and wy2) then return nil end
+	return (wx2 - wx1), (wy2 - wy1)
+end
+
+
+-- Public adapter used by the rest of the file (kept for readability elsewhere)
+function RQE.WPUtil.DeltaYards(zm, x1, y1, x2, y2)
+	return _zoneDeltaYards(zm, x1, y1, zm, x2, y2)
+end
+
+
+-- function RQE.WPUtil.DeltaYards(mapID, x1, y1, x2, y2)
+	-- local HBD = _getHBD()
+	-- if not HBD then return nil, nil end
+
+	-- -- Prefer HBD:GetZoneDistance (gives dx,dy in yards on one call)
+	-- if HBD.GetZoneDistance then
+		-- local dist, dx, dy = HBD:GetZoneDistance(mapID, x1, y1, mapID, x2, y2)
+		-- -- HBD returns nil if map isn't world-position resolvable
+		-- if dx and dy then return dx, dy end
+	-- end
+
+	-- -- Fallback: convert both to world coords, then diff
+	-- if HBD.GetWorldCoordinatesFromZone then
+		-- local wx1, wy1 = HBD:GetWorldCoordinatesFromZone(x1, y1, mapID)
+		-- local wx2, wy2 = HBD:GetWorldCoordinatesFromZone(x2, y2, mapID)
+		-- if wx1 and wy1 and wx2 and wy2 then
+			-- return (wx2 - wx1), (wy2 - wy1)  -- world coords are yards in HBD
+		-- end
+	-- end
+
+	-- return nil, nil
+-- end
+
+
+-- Mark current target band as visited if player is within its visitedRadius
 local function _updateVisitedBands(st, norm)
-	if not st.currentIdx then return end
-	local h = norm.hotspots[st.currentIdx]; if not h then return end
-	local d2 = _playerDistanceSqYards(h.mapID, h.x, h.y)
+	-- st.currentIdx is the hotspot we’re currently targeting
+	local idx = st.currentIdx
+	if not idx then return end
+	local h = norm.hotspots[idx]
+	if not h then return end
+
+	local d2, unit = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
 	if not d2 then return end
-	local r = h.visitedRadius or norm.defaults.visitedRadius
-	if r and (d2 <= (r*r)) then
-		st.visitedBands[h.priority] = true
+
+	-- threshold in yards if we have them; otherwise use a conservative normalized fallback
+	local thresholdYards = h.visitedRadius or norm.defaults.visitedRadius or 80
+
+	if unit == "yards" then
+		if d2 <= (thresholdYards * thresholdYards) then
+			st.visited = st.visited or {}
+			if not st.visited[h.priority] then
+				st.visited[h.priority] = true
+				_dbgMarkVisited(st.questID, st.stepIndex, h.priority, idx, h)
+			end
+		end
+	else
+		-- Normalized fallback: only mark if extremely close (about 0.25% of the map)
+		-- This avoids premature unlocks when we don’t have yard math.
+		local normThresh = 0.0025
+		if d2 <= (normThresh * normThresh) then
+			st.visited = st.visited or {}
+			if not st.visited[h.priority] then
+				st.visited[h.priority] = true
+				_dbgMarkVisited(st.questID, st.stepIndex, h.priority, idx, h)
+			end
+		end
 	end
+
+	if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+		if unit == "yards" then
+			print(string.format("|cff00ffffRQE(INFO)|r visitCheck unit=yards d=%.1f (radius=%.1f)",
+				math.sqrt(d2), thresholdYards))
+		else
+			print(string.format("|cff00ffffRQE(INFO)|r visitCheck unit=norm d~=%.2f%% (norm fallback)",
+				math.sqrt(d2) * 100))
+		end
+	end
+
+	-- if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO" then
+		-- print(string.format("|cff00ffffRQE(INFO)|r visitCheck unit=%s d=%.1f",
+			-- unit or "nil", (unit=="yards" and math.sqrt(d2) or math.sqrt(d2)*100)))
+	-- end
 end
 
 
--- Which bands are eligible now?
-local function _eligibleBands(st, bands)
-	local eligible = {}
-	if #bands == 0 then return eligible end
-	-- Lowest band is always eligible; unlock consecutive bands once previous visited
-	local unlock = true
-	for _,p in ipairs(bands) do
-		if unlock then eligible[p] = true end
-		if not st.visitedBands[p] then unlock = false end
+-- local function _updateVisitedBands(st, norm)
+	-- if not st.currentIdx then return end
+	-- local h = norm.hotspots[st.currentIdx]; if not h then return end
+	-- local d2 = _playerDistanceSqYards(h.mapID, h.x, h.y)
+	-- if not d2 then return end
+	-- local r = h.visitedRadius or norm.defaults.visitedRadius
+	-- if r and (d2 <= (r*r)) then
+		-- st.visitedBands[h.priority] = true
+	-- end
+-- end
+
+
+-- Return a set of bands eligible for selection:
+--   • all already-visited bands stay eligible
+--   • plus the next not-yet-visited band (the “frontier”)
+local function _eligibleBands(st, priorityBands)
+	-- priorityBands is a sorted array (NormalizeCoordinates guarantees this)
+	if not priorityBands or #priorityBands == 0 then return {} end
+
+	local visited = st.visited or {}
+
+	-- 1) Find the next frontier band (lowest p that is NOT visited)
+	local frontier
+	for _, p in ipairs(priorityBands) do
+		if not visited[p] then
+			frontier = p
+			break
+		end
 	end
-	-- already-visited higher bands always remain eligible
-	for p,_ in pairs(st.visitedBands) do eligible[p] = true end
-	return eligible
+	-- If all are visited, keep the highest band as the "frontier"
+	if not frontier then frontier = priorityBands[#priorityBands] end
+
+	-- 2) Allow all visited bands + the frontier band
+	local allowed = {}
+	for _, p in ipairs(priorityBands) do
+		if visited[p] then
+			allowed[p] = true
+		end
+	end
+	allowed[frontier] = true
+
+	-- Optional debug (prints once per change)
+	if st._lastTargetBand ~= frontier and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+		_dbgEligibleBands(st.questID, st.stepIndex, priorityBands, visited, frontier)
+	end
+	st._lastTargetBand = frontier
+
+	return allowed
 end
 
 
--- Returns squared distance and a unit tag: "yards" or "norm"
-local function _playerDistanceSqFlexible(hmap, hx, hy)
+-- local function _eligibleBands(st, bands)
+	-- local eligible = {}
+	-- if #bands == 0 then return eligible end
+	-- -- Lowest band is always eligible; unlock consecutive bands once previous visited
+	-- local unlock = true
+	-- for _,p in ipairs(bands) do
+		-- if unlock then eligible[p] = true end
+		-- if not st.visitedBands[p] then unlock = false end
+	-- end
+	-- -- already-visited higher bands always remain eligible
+	-- for p,_ in pairs(st.visitedBands) do eligible[p] = true end
+	-- return eligible
+-- end
+
+
+-- Returns squared distance and unit tag: "yards" or "norm"
+function _playerDistanceSqFlexible(hmap, hx, hy)
 	local pmid, px, py = _playerMapAndXY()
 	if not pmid or not px or not py then return nil end
 
-	-- Same-map: always computable in normalized space
-	if pmid == hmap and px and py and hx and hy then
-		local dx, dy = px - hx, py - hy
-		return dx*dx + dy*dy, "norm"
-	end
-
-	-- Cross-map: try yard math if available
-	if RQE.WPUtil and RQE.WPUtil.DeltaYards then
-		local dx, dy = RQE.WPUtil.DeltaYards(hmap, hx, hy, px, py)
+	-- Same-map first choice = yards via HBD
+	if pmid == hmap and HBD then
+		local dx, dy = RQE.WPUtil.DeltaYards(hmap, px, py, hx, hy)
 		if dx and dy then return dx*dx + dy*dy, "yards" end
 	end
 
+	-- Fallbacks
+	if pmid == hmap then
+		local dx, dy = px - hx, py - hy
+		return dx*dx + dy*dy, "norm"
+	else
+		-- cross-map: only yards makes sense
+		if HBD then
+			local dx, dy = _zoneDeltaYards(pmid, px, py, hmap, hx, hy)
+			if dx and dy then return dx*dx + dy*dy, "yards" end
+		end
+	end
 	return nil
 end
+
+
+-- -- Returns squared distance and a unit tag: "yards" or "norm"
+-- function _playerDistanceSqFlexible(hmap, hx, hy)
+	-- local pmid, px, py = _playerMapAndXY()
+	-- if not pmid or not px or not py then return nil end
+
+	-- -- Same-map: always computable in normalized space
+	-- if pmid == hmap and px and py and hx and hy then
+		-- local dx, dy = px - hx, py - hy
+		-- return dx*dx + dy*dy, "norm"
+	-- end
+
+	-- -- Cross-map: try yard math if available
+	-- if RQE.WPUtil and RQE.WPUtil.DeltaYards then
+		-- local dx, dy = RQE.WPUtil.DeltaYards(hmap, hx, hy, px, py)
+		-- if dx and dy then return dx*dx + dy*dy, "yards" end
+	-- end
+
+	-- return nil
+-- end
 
 
 -- Decide the best hotspot for a quest/step, honoring bands + yard delta switching
@@ -577,42 +852,35 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 			for idx, h in ipairs(norm.hotspots) do
 				if h.mapID == pmid and eligibleBands[h.priority] then
 					local d2 = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
-						if d2 then
-							if not bestD2 or d2 < bestD2 then
-								bestIdx, bestD2 = idx, d2
-							end
-						else
-							-- same-map but no distance? extremely unlikely; keep author order fallback
-							if not bestIdx then bestIdx = idx end
+					if d2 then
+						if not bestD2 or d2 < bestD2 then
+							bestIdx, bestD2 = idx, d2
 						end
+					-- same-map but no distance? extremely unlikely; keep author order fallback
+					elseif not bestIdx then
+						bestIdx = idx
 					end
 				end
+			end
 			if bestIdx then
 				st.currentIdx = bestIdx
 				local now = GetTime and GetTime() or 0
 				st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
+
+				-- DEBUG (INFO): first selection
+				if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+					local h = norm.hotspots[bestIdx]
+					print(string.format(
+						"|cff00ffffRQE(INFO)|r Q%d S%d select initial target %s",
+						st.questID or -1, st.stepIndex or -1, _fmtHotspot(bestIdx, h)
+					))
+				end
+
 				local c = norm.hotspots[bestIdx]
 				return c.mapID, c.x, c.y, bestIdx
 			end
 		end
 	end
-
-	-- if not st.currentIdx then
-		-- local pmid = select(1, _playerMapAndXY())
-		-- if pmid then
-			-- for idx, h in ipairs(norm.hotspots) do
-				-- if h.mapID == pmid and eligibleBands[h.priority] then
-					-- -- choose the first eligible on the current map (respects priority+author order)
-					-- st.currentIdx = idx
-					-- local c = norm.hotspots[idx]
-					-- local now = GetTime and GetTime() or 0
-					-- local _, px, py = _playerMapAndXY()
-					-- st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
-					-- return c.mapID, c.x, c.y, idx
-				-- end
-			-- end
-		-- end
-	-- end
 
 	-- Scan for best candidate
 	local bestIdx, bestD2, bestBand, bestUnit
@@ -656,6 +924,7 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 		chosenIdx = bestIdx
 	else
 		local switch = false
+		local reason = nil
 		if bestIdx then
 			local cur = norm.hotspots[curIdx]
 			local curD2, curUnit = _playerDistanceSqFlexible(cur.mapID, cur.x, cur.y)
@@ -664,39 +933,70 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 				if bestUnit == "yards" and curUnit == "yards" then
 					local yardDelta = math.sqrt(curD2) - math.sqrt(bestD2)
 					local need = (norm.hotspots[bestIdx].minSwitchYards or norm.defaults.minSwitchYards or 0)
-					if yardDelta >= need then switch = true end
+					if yardDelta >= need then
+						switch = true
+						reason = string.format("closer by %.1f yards (need %.1f)", yardDelta, need)
+					end
 				else
 					-- normalized fallback (same-map or no yard math): switch if clearly closer
 					-- factor 0.85 ~= 15% closer; tweak if you want more/less hysteresis
-					if bestD2 < (curD2 * 0.85) then switch = true end
+					if bestD2 < (curD2 * 0.85) then
+						switch = true
+						reason = "normalized distance much lower (>15%)"
+					end
 				end
 			elseif bestD2 and not curD2 then
 				-- current is cross-map/unknown; candidate is measurable => switch
 				switch = true
+				reason = "candidate measurable; current not"
 			elseif not bestD2 and not curD2 then
 				-- both unknown: prefer lower band, then author order
-				if norm.hotspots[bestIdx].priority < norm.hotspots[curIdx].priority then switch = true end
+				if norm.hotspots[bestIdx].priority < norm.hotspots[curIdx].priority then
+					switch = true
+					reason = "lower priority band"
+				end
 			end
 		end
-		if switch then chosenIdx = bestIdx end
+		if switch then
+			-- DEBUG (INFO): switching target
+			if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+				local oldH = norm.hotspots[curIdx]
+				local newH = norm.hotspots[bestIdx]
+				print(string.format(
+					"|cff00ffffRQE(INFO)|r Q%d S%d switch %s  →  %s  (%s)",
+					st.questID or -1, st.stepIndex or -1, _fmtHotspot(curIdx, oldH), _fmtHotspot(bestIdx, newH), reason or "reason n/a"
+				))
+			end
+			chosenIdx = bestIdx
+		end
 	end
 
-	-- -- Decide whether to switch
 	-- local chosenIdx = curIdx
 	-- if not chosenIdx then
 		-- chosenIdx = bestIdx
 	-- else
 		-- local switch = false
-		-- if bestIdx and bestD2 and curD2 then
-			-- local yardDelta = math.sqrt(curD2) - math.sqrt(bestD2)
-			-- local need = norm.hotspots[bestIdx].minSwitchYards or norm.defaults.minSwitchYards
-			-- if yardDelta >= (need or 0) then switch = true end
-		-- elseif bestIdx and bestD2 and not curD2 then
-			-- -- current is cross-map, candidate is on our map
-			-- switch = true
-		-- elseif bestIdx and not bestD2 and not curD2 then
-			-- -- both cross-map: prefer lower band, then author order (already reflected in bestIdx)
-			-- if norm.hotspots[bestIdx].priority < norm.hotspots[curIdx].priority then switch = true end
+		-- if bestIdx then
+			-- local cur = norm.hotspots[curIdx]
+			-- local curD2, curUnit = _playerDistanceSqFlexible(cur.mapID, cur.x, cur.y)
+
+			-- if bestD2 and curD2 then
+				-- if bestUnit == "yards" and curUnit == "yards" then
+					-- local yardDelta = math.sqrt(curD2) - math.sqrt(bestD2)
+					-- local need = (norm.hotspots[bestIdx].minSwitchYards or norm.defaults.minSwitchYards or 0)
+					-- if yardDelta >= need then switch = true end
+				-- else
+					-- -- normalized fallback (same-map or no yard math): switch if clearly closer
+					-- -- factor 0.85 ~= 15% closer; tweak if you want more/less hysteresis
+					-- if bestD2 < (curD2 * 0.85) then switch = true end
+				-- end
+			-- elseif bestD2 and not curD2 then
+				-- -- current is cross-map/unknown; candidate is measurable => switch
+				-- switch = true
+			-- elseif not bestD2 and not curD2 then
+				-- -- both unknown: prefer lower band, then author order
+				-- if norm.hotspots[bestIdx].priority < norm.hotspots[curIdx].priority then switch = true end
+			-- end
 		-- end
 		-- if switch then chosenIdx = bestIdx end
 	-- end
@@ -715,80 +1015,45 @@ end
 
 
 -- Helper function to clear sticky state on zone/login change
-function RQE.WPUtil.ClearHotspotState(questID, stepIndex)
-	if questID and stepIndex then
-		if RQE.WPUtil._hotspotState[questID] then
-			RQE.WPUtil._hotspotState[questID][stepIndex] = nil
-		end
-	else
-		RQE.WPUtil._hotspotState = {}
-	end
-end
-
-
-function RQE:MaybeUpdateWaypointOnSnap(elapsed)
-	-- throttle the reevaluation (adjust to taste)
-	local ss = RQE._snapState
-	ss.acc = (ss.acc or 0) + (elapsed or 0)
-	if ss.acc < 0.15 then return end
-	ss.acc = 0
-
-	-- must have a super-tracked quest and a current step
-	if not C_SuperTrack.IsSuperTrackingQuest() then return end
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	if not questID then return end
-	local stepIndex = RQE.AddonSetStepIndex or 1
-
-	-- figure out current best coords (normalized 0–1) + chosen hotspot index when applicable
-	local xNorm, yNorm, mapID, chosenIdx
-	do
-		local questData = RQE.getQuestData(questID)
-		local step = questData and questData[stepIndex]
-		if step and step.coordinateHotspots and RQE.WPUtil and RQE.WPUtil.SelectBestHotspot then
-			local smap, sx, sy, sidx = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
-			if smap and sx and sy then
-				xNorm, yNorm, mapID, chosenIdx = sx, sy, smap, sidx
-			end
-		else
-			-- legacy/single or general fallback
-			if RQE.GetStepCoordinates then
-				local sx, sy, smap = RQE:GetStepCoordinates(stepIndex)
-				if sx and sy and smap then
-					xNorm, yNorm, mapID = sx, sy, smap
-				end
-			end
-		end
-	end
-
-	if not (xNorm and yNorm and mapID) then return end
-
-	-- snapped integer percents (e.g., 42.72 → 42)
-	local snapX = math.floor(xNorm * 100 + 0.0001)
-	local snapY = math.floor(yNorm * 100 + 0.0001)
-
-	-- only proceed if something *meaningful* changed
-	if ss.lastMap == mapID and ss.lastX == snapX and ss.lastY == snapY and ss.lastIdx == chosenIdx then
+function RQE.WPUtil.ClearHotspotState(questID, stepIndex, hard)
+	-- hard = true  -> wipe everything (use on login/reload/new area)
+	-- hard = false -> keep visited ladder; only forget current choice + eval cache
+	if not (questID and stepIndex) then
+		if hard then RQE.WPUtil._hotspotState = {} end
 		return
 	end
 
-	-- update stash (normalized)
-	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = xNorm, yNorm, mapID
+	local bucket = RQE.WPUtil._hotspotState[questID]
+	if not bucket then return end
+	local st = bucket[stepIndex]
+	if not st then return end
 
-	-- build a title (reuse your typical format)
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-	local title = string.format('QID: %d, "%s"', questID, questName)
-
-	-- CreateWaypoint expects 0–100 values, so multiply
-	if RQE.CreateWaypoint then
-		RQE:CreateWaypoint(snapX, snapY, mapID, title)
-	elseif TomTom and TomTom.AddWaypoint then
-		TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title })
+	if hard then
+		bucket[stepIndex] = nil
+	else
+		st.currentIdx = nil
+		st.lastEval = { t=0, mapID=nil, px=nil, py=nil }
+		-- keep st.visited intact
 	end
+end
 
-	-- remember last
-	ss.lastMap, ss.lastX, ss.lastY, ss.lastIdx = mapID, snapX, snapY, chosenIdx
+-- function RQE.WPUtil.ClearHotspotState(questID, stepIndex)
+	-- if questID and stepIndex then
+		-- if RQE.WPUtil._hotspotState[questID] then
+			-- RQE.WPUtil._hotspotState[questID][stepIndex] = nil
+		-- end
+	-- else
+		-- RQE.WPUtil._hotspotState = {}
+	-- end
+-- end
 
-	if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
-		print(string.format("Snap update → map:%d x:%d y:%d idx:%s", mapID, snapX, snapY, tostring(chosenIdx)))
+
+-- Slash command to easier access the dump
+SLASH_RQEDUMP1 = "/rqedump"
+SlashCmdList.RQEDUMP = function()
+	local qid = C_SuperTrack.GetSuperTrackedQuestID()
+	local sidx = RQE.AddonSetStepIndex or 1
+	if RQE.WPUtil and RQE.WPUtil.DebugDumpBands then
+		RQE.WPUtil.DebugDumpBands(qid, sidx)
 	end
 end
