@@ -2707,7 +2707,7 @@ function RQE.handlePlayerEnterWorld(...)
 		-- Clear just the current step (safe + light)
 		local sidx = RQE.AddonSetStepIndex or 1
 		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
-			RQE.WPUtil.ClearHotspotState(qid, sidx)
+			RQE.WPUtil.ClearHotspotState(qid, sidx, true)
 		end
 	end
 
@@ -2949,6 +2949,25 @@ function RQE.handleSuperTracking()
 	end
 
 	RQE.OkayCheckBonusQuests = true
+
+	-- Clear hotspot choice so next read re-evaluates on the new map
+	if C_SuperTrack.IsSuperTrackingQuest() then
+		local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		-- Clear just the current step (safe + light)
+		local sidx = RQE.AddonSetStepIndex or 1
+		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+			RQE.WPUtil.ClearHotspotState(qid, sidx, false)
+		end
+	end
+
+	-- Optional: auto-refresh stash so tooltips/arrow update without /reload
+	if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		local sidx = RQE.AddonSetStepIndex or 1
+		local x, y, mid = RQE:GetStepCoordinates(sidx)
+		if x and y and mid then
+			RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+		end
+	end
 
 	C_Timer.After(1.5, function()
 		RQE:UpdateContentSize()
@@ -3511,7 +3530,7 @@ function RQE.handleZoneChange(...)
 			-- Clear just the current step (safe + light)
 			local sidx = RQE.AddonSetStepIndex or 1
 			if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
-				RQE.WPUtil.ClearHotspotState(qid, sidx)
+				RQE.WPUtil.ClearHotspotState(qid, sidx, false)
 			end
 		end
 
@@ -3829,7 +3848,7 @@ function RQE.handleZoneNewAreaChange()
 		-- Clear just the current step (safe + light)
 		local sidx = RQE.AddonSetStepIndex or 1
 		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
-			RQE.WPUtil.ClearHotspotState(qid, sidx)
+			RQE.WPUtil.ClearHotspotState(qid, sidx, true)
 		end
 	end
 
@@ -4766,24 +4785,24 @@ end
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
-	-- Clear hotspot choice so next read re-evaluates on the new map
-	if C_SuperTrack.IsSuperTrackingQuest() then
-		local qid = C_SuperTrack.GetSuperTrackedQuestID()
-		-- Clear just the current step (safe + light)
-		local sidx = RQE.AddonSetStepIndex or 1
-		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
-			RQE.WPUtil.ClearHotspotState(qid, sidx)
-		end
-	end
+	-- -- Clear hotspot choice so next read re-evaluates on the new map
+	-- if C_SuperTrack.IsSuperTrackingQuest() then
+		-- local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		-- -- Clear just the current step (safe + light)
+		-- local sidx = RQE.AddonSetStepIndex or 1
+		-- if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+			-- RQE.WPUtil.ClearHotspotState(qid, sidx, false)
+		-- end
+	-- end
 
-	-- Optional: auto-refresh stash so tooltips/arrow update without /reload
-	if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
-		local sidx = RQE.AddonSetStepIndex or 1
-		local x, y, mid = RQE:GetStepCoordinates(sidx)
-		if x and y and mid then
-			RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
-		end
-	end
+	-- -- Optional: auto-refresh stash so tooltips/arrow update without /reload
+	-- if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		-- local sidx = RQE.AddonSetStepIndex or 1
+		-- local x, y, mid = RQE:GetStepCoordinates(sidx)
+		-- if x and y and mid then
+			-- RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+		-- end
+	-- end
 
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
 
@@ -5732,6 +5751,25 @@ function RQE.handleQuestWatchListChanged(...)
 
 	-- print("~~~ RQE:QuestType(): 5192 ~~~")
 	-- RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
+
+	-- Clear hotspot choice so next read re-evaluates on the new map
+	if C_SuperTrack.IsSuperTrackingQuest() then
+		local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		-- Clear just the current step (safe + light)
+		local sidx = RQE.AddonSetStepIndex or 1
+		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
+			RQE.WPUtil.ClearHotspotState(qid, sidx, false)
+		end
+	end
+
+	-- Optional: auto-refresh stash so tooltips/arrow update without /reload
+	if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		local sidx = RQE.AddonSetStepIndex or 1
+		local x, y, mid = RQE:GetStepCoordinates(sidx)
+		if x and y and mid then
+			RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
+		end
+	end
 
 	if RQE.UnitQuestLogChangedFired then	-- may need to place this flag in other locations too to ensure that RQEQuestFrame updates, but keep lag low
 		C_Timer.After(0.1, function()
