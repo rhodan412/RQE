@@ -16,6 +16,7 @@
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:ToggleFramesAndTracker() functions and VARIABLES_LOADED, QUEST_REMOVED and QUEST_TURNED_IN event functions (2025.09.15)
 		- Added coding calls for RQE.WPUtil.ClearHotspotState() to be either hard (true) or soft (false) resets for the visitRadius and unlocked priorityBias (2025.09.15)
 		- Removed RQE.WPUtil.ClearHotspotState() function call within QUEST_LOG_CHANGE and placed in SUPER_TRACKING_CHANGED and QUEST_WATCH_LIST_CHANGED as soft resets (2025.09.15)
+		- Fixes to better update the scenario/dungeon/mythic frame when leaving an instance (UPDATE_INSTANCE_INFO) or on ZONE_CHANGED, ZONE_CHANGED_NEW_AREA, QUEST_WATCH_LIST_CHANGED (2025.09.16)
 
 	QuestingModule.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in UpdateRQEQuestFrame() function, after QuestLogIndexButton is pressed. (2025.09.15)
@@ -28,6 +29,7 @@
 		- Added coordinateHotspots in place of coordinates in questID 84776: "A Call to Delves" due to the multiple locations for delves, but only in Isle of Dorn, for now (2025.09.15)
 		- Updated questID 90705: "Lorewalking" description to better describe the alternate turn-in locations (2025.09.15)
 		- Updated and finished testing questID 52: "Protect the Frontier" with coordinateHotspots and priorityBias functional (2025.09.15)
+		- Added additional fixes and updates to the DB which include more of the coordinateHotspots to be used with multiple waypoints for a single objective (2025.09.16)
 
 	RQEFrame.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function. (2025.09.15)
