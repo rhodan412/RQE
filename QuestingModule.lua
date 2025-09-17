@@ -1596,8 +1596,9 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 
 	-- Add the click event for the bonusQuestLabel
 	RQE.bonusQuestLabel:SetScript("OnMouseDown", function(self, button)
-		if button == "LeftButton" then
+		if button == "LeftButton" and not IsShiftKeyDown() then
 			OpenQuestLogToQuestDetails(questID)
+			return
 		end
 	end)
 
@@ -1808,73 +1809,125 @@ end
 local function colorizeObjectives(questID)
 	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
 	local colorizedText = ""
+	local t = {}
 
 	-- Check if the quest is ready for turn-in
 	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
-	if objectivesData then  -- Check if the data is not nil
-		for _, objective in ipairs(objectivesData) do
-			local description = objective.text
-			if isReadyForTurnIn then
-				-- Entire quest is ready for turn-in, colorize all objectives in green
-				colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"	-- Green
-				-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"	-- Yellow
-				-- colorizedText = colorizedText .. "|cff0000ff" .. description .. "|r\n"	-- Blue
-			else
-				if objective.finished then
-					-- Objective complete, colorize in green
-					colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-				elseif objective.numFulfilled > 0 then
-					-- Objective partially complete, colorize in yellow
-					colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-				else
-					-- Objective has not started or no progress, leave as white
-					colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
-				end
-			end
-		end
-	else
-		colorizedText = "Objective data unavailable."  -- Default text or handle as needed
-	end
+    if objectivesData then
+        for _, objective in ipairs(objectivesData) do
+            local desc = objective.text
+            if isReadyForTurnIn then
+                t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+            else
+                if objective.finished then
+                    t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
+                elseif (objective.numFulfilled or 0) > 0 then
+                    t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+                else
+                    t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
+                end
+            end
+        end
+        if isAuto then
+            t[#t+1] = RQE.ColorORANGE .. "Click to Complete Quest" .. RQE.ColorRESET .. "\n"
+        end
+    else
+        t[#t+1] = "Objective data unavailable."
+    end
 
-	return colorizedText
+    return table.concat(t)
+
+	-- if objectivesData then  -- Check if the data is not nil
+		-- for _, objective in ipairs(objectivesData) do
+			-- local description = objective.text
+			-- if isReadyForTurnIn then
+				-- -- Entire quest is ready for turn-in, colorize all objectives in green
+				-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"	-- Green
+				-- -- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"	-- Yellow
+				-- -- colorizedText = colorizedText .. "|cff0000ff" .. description .. "|r\n"	-- Blue
+			-- else
+				-- if objective.finished then
+					-- -- Objective complete, colorize in green
+					-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+				-- elseif objective.numFulfilled > 0 then
+					-- -- Objective partially complete, colorize in yellow
+					-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+				-- else
+					-- -- Objective has not started or no progress, leave as white
+					-- colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				-- end
+			-- end
+		-- end
+	-- else
+		-- colorizedText = "Objective data unavailable."  -- Default text or handle as needed
+	-- end
+
+	-- return colorizedText
 end
 
 
--- Function to Colorize the Quest Tracker Module based on objective progress using the API
+-- Function to Colorize the Quest Tracker Module based on objective progress using the API (currently applies to tooltip within RQEFrame only)
 function RQE.colorizeObjectives(questID)
 	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
 	local colorizedText = ""
+	local t = {}
 
 	-- Check if the quest is ready for turn-in
 	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
-	if objectivesData then  -- Check if the data is not nil
-		for _, objective in ipairs(objectivesData) do
-			local description = objective.text
-			if isReadyForTurnIn then
-				-- Entire quest is ready for turn-in, colorize all objectives in green
-				colorizedText = colorizedText .. "|cff00ff00" .. description .. " (Complete) |r\n"	-- Green
-				-- colorizedText = colorizedText .. "|cffffff00" .. description .. " (Complete) |r\n"	-- Yellow
-				-- colorizedText = colorizedText .. "|cff0000ff" .. description .. " (Complete) |r\n"	-- Blue
-			else
-				if objective.finished then
-					-- Objective complete, colorize in green
-					colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-				elseif objective.numFulfilled > 0 then
-					-- Objective partially complete, colorize in yellow
-					colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-				else
-					-- Objective has not started or no progress, leave as white
-					colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
-				end
-			end
-		end
-	else
-		colorizedText = "Objective data unavailable."  -- Default text or handle as needed
-	end
+    if objectivesData then
+        for _, objective in ipairs(objectivesData) do
+            local desc = objective.text
+            if isReadyForTurnIn then
+                t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+            else
+                if objective.finished then
+                    t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
+                elseif (objective.numFulfilled or 0) > 0 then
+                    t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+                else
+                    t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
+                end
+            end
+        end
+        -- if isAuto then
+            -- t[#t+1] = RQE.ColorORANGE .. "Click QuestID/QuestName to Complete Quest" .. RQE.ColorRESET .. "\n"
+        -- end
+    else
+        t[#t+1] = "Objective data unavailable."
+    end
 
-	return colorizedText
+    return table.concat(t)
+
+	-- if objectivesData then  -- Check if the data is not nil
+		-- for _, objective in ipairs(objectivesData) do
+			-- local description = objective.text
+			-- if isReadyForTurnIn then
+				-- -- Entire quest is ready for turn-in, colorize all objectives in green
+				-- colorizedText = colorizedText .. "|cff00ff00" .. description .. " (Complete) |r\n"	-- Green
+				-- -- colorizedText = colorizedText .. "|cffffff00" .. description .. " (Complete) |r\n"	-- Yellow
+				-- -- colorizedText = colorizedText .. "|cff0000ff" .. description .. " (Complete) |r\n"	-- Blue
+			-- else
+				-- if objective.finished then
+					-- -- Objective complete, colorize in green
+					-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
+				-- elseif objective.numFulfilled > 0 then
+					-- -- Objective partially complete, colorize in yellow
+					-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+				-- else
+					-- -- Objective has not started or no progress, leave as white
+					-- colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				-- end
+			-- end
+		-- end
+	-- else
+		-- colorizedText = "Objective data unavailable."  -- Default text or handle as needed
+	-- end
+
+	-- return colorizedText
 end
 
 
@@ -2602,9 +2655,14 @@ function UpdateRQEQuestFrame()
 				QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
 					if button == "RightButton" then
 						ShowQuestDropdown(self, questID)
+						return
+					elseif button == "LeftButton" and not IsShiftKeyDown() then
+						OpenQuestLogToQuestDetails(questID)
+						return
 					else
 						if RQE.searchedQuestID ~= nil then
 							RQE.Buttons.ClearButtonPressed()
+							return
 						end
 					end
 				end)
@@ -2628,8 +2686,10 @@ function UpdateRQEQuestFrame()
 							RQE:ClearRQEQuestFrame()
 						elseif button == "RightButton" then
 							ShowQuestDropdown(self, questID)
-						elseif button == "LeftButton" then
+							return
+						elseif button == "LeftButton" and not IsShiftKeyDown() then
 							OpenQuestLogToQuestDetails(questID)
+							return
 						end
 					end
 				end)
