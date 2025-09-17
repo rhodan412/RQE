@@ -1,8 +1,9 @@
-11.2.0.5
+11.2.0.5 (2025.09.17)
 
 	**HIGHLIGHTS**
 		- Waypoints for coordinateHotspots update on player movement to direct player to the correct quest blob for the supertracked quest (2025.09.15)
 		- Waypoints in use for coordinateHotspots will now select the best location for doing a quest step and create waypoint to another location on proximity after previous hotspot visited with better drops (2025.09.15)
+		- Functionality finally added to quests where auto-completable is available (2025.09.17)
 
 	Buttons.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE.Buttons.ClearButtonPressed() and RQE.Buttons.CreateRWButton(RQEFrame) functions (2025.09.15)
@@ -11,15 +12,21 @@
 		- Added call to RQE.CheckAndClickSeparateWaypointButtonButton(), at the top of the StartPerdiodicChecks function call to click the that button when initially run as sometimes a waypoint can be created even if the mapID for waypoint doesn't match that of player currentmapID (2025.09.15)
 		- Added functionality to update waypoint location when player moves, but only on the whole number for the x, y coordinates (2025.09.15)
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:SetTomTomWaypointToClosestFlightMaster() function. (2025.09.15)
+		- Modified colorizeObjectives to use hex color helpers, in Core.lua (2025.09.17)
+		- Added functionality to show dialog box Auto Complete dialog box when clicking on questID or questName in the RQEFrame/RQEQuestFrame, and objectives in RQEQuestFrame (2025.09.17)
+		- Added functions that check to see if any quests, not being watched, have an auto-complete dialog available for immediate turn in and if so will watch quest or quests (2025.09.17)
 
 	EventManager.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:ToggleFramesAndTracker() functions and VARIABLES_LOADED, QUEST_REMOVED and QUEST_TURNED_IN event functions (2025.09.15)
 		- Added coding calls for RQE.WPUtil.ClearHotspotState() to be either hard (true) or soft (false) resets for the visitRadius and unlocked priorityBias (2025.09.15)
 		- Removed RQE.WPUtil.ClearHotspotState() function call within QUEST_LOG_CHANGE and placed in SUPER_TRACKING_CHANGED and QUEST_WATCH_LIST_CHANGED as soft resets (2025.09.15)
 		- Fixes to better update the scenario/dungeon/mythic frame when leaving an instance (UPDATE_INSTANCE_INFO) or on ZONE_CHANGED, ZONE_CHANGED_NEW_AREA, QUEST_WATCH_LIST_CHANGED (2025.09.16)
+		- Added function call to PLAYER_ENTERING_WORLD to watch any quests, not currently watched, that can be immediately turned in (2025.09.17)
 
 	QuestingModule.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in UpdateRQEQuestFrame() function, after QuestLogIndexButton is pressed. (2025.09.15)
+		- Added 'return' to button clicks within RQE.bonusQuestLabel:SetScript("OnMouseDown"... and UpdateRQEQuestFrame() function (2025.09.17)
+		- Modified colorizeObjectives to use hex color helpers, in Core.lua (2025.09.17)
 
 	RQE.toc
 		- Updated version# (2025.09.15)
@@ -30,10 +37,13 @@
 		- Updated questID 90705: "Lorewalking" description to better describe the alternate turn-in locations (2025.09.15)
 		- Updated and finished testing questID 52: "Protect the Frontier" with coordinateHotspots and priorityBias functional (2025.09.15)
 		- Added additional fixes and updates to the DB which include more of the coordinateHotspots to be used with multiple waypoints for a single objective (2025.09.16)
+		- Updated description and macros that used the old 'RQE:BlizzObjectiveTracker()' method to hide the tracker for blizzard tracker to come up for auto-complete quests as this functionality is now part of add-on. (2025.09.17)
 
 	RQEFrame.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE:CreateStepsText(StepsText, CoordsText, MapIDs) function. (2025.09.15)
 		- Fixed nil error within waypointText of WaypointButton:SetScript("OnClick", function() within the larger RQE:CreateStepsText() function (2025.09.15)
+		- Added 'return' to button clicks within RQE.QuestIDText:SetScript("OnMouseDown"... and RQE.QuestNameText:SetScript("OnMouseDown"... (2025.09.17)
+		- RQEFrame quest tooltip now uses the RQE.colorizeObjective function (2025.09.17)
 
 	RQEMinimap.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in RQE.ToggleBothFramesfromLDB() function. (2025.09.15)
