@@ -792,9 +792,10 @@ end)
 
 -- Add a click event to open the quest details for the current QuestID
 RQE.QuestIDText:SetScript("OnMouseDown", function(self, button)
-	if button == "LeftButton" then
+	if button == "LeftButton" and not IsShiftKeyDown() then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		OpenQuestLogToQuestDetails(questID)
+		return
 	end
 end)
 
@@ -802,9 +803,10 @@ end)
 -- Add a click event to open the map for the current QuestName
 if RQE.QuestNameText then  -- Check if QuestNameText is initialized
 	RQE.QuestNameText:SetScript("OnMouseDown", function(self, button)
-		if button == "LeftButton" then
+		if button == "LeftButton" and not IsShiftKeyDown() then
 			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 			OpenQuestLogToQuestDetails(questID)
+			return
 		end
 	end)
 else
@@ -875,7 +877,8 @@ local function CreateQuestTooltip(frame, questID)
 			objectivesText = objectivesText .. objective.text .. "\n"
 		end
 
-		local colorizedObjectives = colorizeObjectives(questID)
+		local colorizedObjectives = RQE.colorizeObjectives(questID)
+		--local colorizedObjectives = colorizeObjectives(questID)
 		GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)  -- true for wrap
 		GameTooltip:AddLine(" ")
 	end
