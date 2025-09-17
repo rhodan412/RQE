@@ -1509,6 +1509,8 @@ function RQE.handlePlayerLogin()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Profile set to Default.", 0.68, 0.85, 0.9)	-- Light Blue
 	end
 
+	RQE:WatchAutoCompletableUnwatchedQuests(true)	-- Auto-watch only auto-completable quests on login
+
 	if RQE.db.profile.autoTrackZoneQuests then
 		RQE.DisplayCurrentZoneQuests()
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -5161,7 +5163,7 @@ function RQE.handleQuestComplete()
 		-- end
 	-- end)
 	-- print("~~~ SortQuestsByProximity(): 4619 ~~~")
-	SortQuestsByProximity()
+	--SortQuestsByProximity()
 
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
@@ -5178,7 +5180,7 @@ function RQE.handleQuestComplete()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 	end
 
-	RQE:AutoSuperTrackClosestQuest()
+	--RQE:AutoSuperTrackClosestQuest()
 
 	RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_COMPLETE event fires
 	RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_COMPLETE event fires
@@ -5218,10 +5220,17 @@ function RQE.handleQuestAutoComplete(...)
 		end
 	end
 
-	-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-	local questID = RQE.searchedQuestID or questID --or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-	local questInfo = RQE.getQuestData(questID)
-	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+    -- Pop the dialog immediately if eligible
+    if questID and RQE:ShowAutoCompleteDialog(questID) then
+        if RQE.db.profile.debugLevel == "INFO" then --and RQE.db.profile.QuestAutocomplete then
+            print(("QAC: ShowQuestComplete -> %d"):format(questID))
+        end
+    end
+
+	-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
+	-- local questID = RQE.searchedQuestID or questID --or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	-- local questInfo = RQE.getQuestData(questID)
+	-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAutocomplete then
 		DEFAULT_CHAT_FRAME:AddMessage("QAC 03 Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
