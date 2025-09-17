@@ -3507,13 +3507,12 @@ function RQE.handleZoneChange(...)
 
 	RQE:UpdateTrackerVisibility()
 
-	C_Timer.After(2.75, function()
+	C_Timer.After(2.1, function()
 		RQE.UpdateScenarioFrame()
+		C_Timer.After(0.2, function()
+			RQE.updateScenarioUI()
+		end)
 	end)
-
-	-- if C_Scenario.IsInScenario() then
-		-- RQE.updateScenarioUI()
-	-- end
 
 	if event == "UNIT_EXITING_VEHICLE" then
 		C_Timer.After(1.8, function()
@@ -3910,10 +3909,13 @@ function RQE.handleZoneNewAreaChange()
 		return
 	end
 
-	C_Timer.After(1.1, function()
+	C_Timer.After(1.15, function()
 		RQE.UpdateScenarioFrame()
+		C_Timer.After(0.15, function()
+			RQE.updateScenarioUI()
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
+		end)
 	end)
-	RQE.updateScenarioUI()
 
 	RQE:AutoSuperTrackClosestQuest()	-- Fires with the ZONE_CHANGED_NEW_AREA event
 
@@ -4740,13 +4742,12 @@ function RQE.handleInstanceInfoUpdate()
 		RQE:UpdateTrackerVisibility()
 	end)
 
-	C_Timer.After(2.75, function()
+	C_Timer.After(1.2, function()
 		RQE.UpdateScenarioFrame()
-	end)
-	RQE.updateScenarioUI()
-
-	C_Timer.After(0.3, function()
-		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when UPDATE_INSTANCE_INFO event fires
+		C_Timer.After(0.15, function()
+			RQE.updateScenarioUI()
+			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when UPDATE_INSTANCE_INFO event fires
+		end)
 	end)
 
 	RQE.UpdateCampaignFrameAnchor()
@@ -5903,13 +5904,14 @@ function RQE.handleQuestWatchListChanged(...)
 			end
 		end
 
-		C_Timer.After(1.3, function()
+		C_Timer.After(1.2, function()
 			RQE.UpdateScenarioFrame()
+			C_Timer.After(0.15, function()
+				RQE.updateScenarioUI()
+				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
+			end)
 		end)
-		RQE.updateScenarioUI()
 
-		-- print("~~~ UpdateRQEQuestFrame(): 5293 ~~~")
-		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 		-- print("~~~ SaveTrackedQuestsToCharacter: 5134 ~~~")
 		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 		RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
