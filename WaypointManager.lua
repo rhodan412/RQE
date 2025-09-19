@@ -97,18 +97,6 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = xNorm, yNorm, mapID
 	RQE._lastWP = { mapID = mapID, x = xNorm, y = yNorm }
 
-	-- if mapID and x and y then
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", title)
-		-- end
-		-- TomTom:AddWaypoint(mapID, x, y, { title = title })	-- already normalized
-		-- -- print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
-		-- -- TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
-	-- end
-
-	-- Add the waypoint to the RQEWaypoints table
-	--table.insert(RQEWaypoints, waypoint)
-
 	-- Create a Map Pin to represent the waypoint
 	--self:CreateMapPin(mapID, (x or 0) * 100, (y or 0) * 100)
 
