@@ -1,3 +1,28 @@
+11.2.0.6 (2025.09.19)
+
+	**HIGHLIGHTS**
+		- Players can now use the Blizzard Objective Tracker to super track quests and have the RQEFrame (quest help direction frame) populate correctly (2025.09.19)
+
+	Core.lua
+		- Cleaned up old debug code (2025.09.19)
+		- Better handling during UpdateFrame of RQEFrame so that the supertracked quest isn't being registered twice in the event handling (2025.09.19)
+
+	EventManager.lua
+		- Added coding to SUPER_TRACKING_CHANGED event function to correctly handle super tracking button presses within the default Blizzard Objective Frame (2025.09.19)
+
+	RQE.toc
+		- Updated version# (2025.09.15)
+
+	RQEDatabase.lua
+		- Updated some side-quest direction for Horrific Vision: Orgrimmar (2025.09.15)
+
+	RQEMacro.lua
+		- Cleaned up old debug code (2025.09.19)
+
+	WaypointManager.lua
+		- Cleaned up old debug code (2025.09.19)
+
+
 11.2.0.5 (2025.09.17)
 
 	**HIGHLIGHTS**
