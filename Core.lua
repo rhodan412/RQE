@@ -2548,15 +2548,19 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	RQE:CheckSuperTrackedQuestAndStep()
 
-	-- Retrieve the current super-tracked quest ID for debugging
+	-- Priority: explicit param > search override > current super-tracked
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	local extractedQuestID
-	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	end
+	questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
-	-- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
-	questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+	-- -- Retrieve the current super-tracked quest ID for debugging
+	-- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local extractedQuestID
+	-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	-- end
+
+	-- -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
+	-- questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
 	-- Fetch questInfo from RQEDatabase using the determined questID
 	questInfo = RQE.getQuestData(questID) or questInfo
@@ -10590,17 +10594,6 @@ function RQE:GetClosestFlightMaster()
 		end
 	end
 
-	-- for _, node in ipairs(nodes or {}) do
-		-- if not node.isUndiscovered then
-			-- local nx, ny = node.position.x, node.position.y
-			-- local dist = math.sqrt((px - nx)^2 + (py - ny)^2)
-			-- if dist < shortestDistance then
-				-- shortestDistance = dist
-				-- closestNode = node
-			-- end
-		-- end
-	-- end
-
 	if closestNode then
 		print(string.format(">> Closest flight master: %s (%.2f, %.2f, mapID %d)", closestNode.name, closestNode.position.x * 100, closestNode.position.y * 100, mapID))
 	else
@@ -10608,33 +10601,6 @@ function RQE:GetClosestFlightMaster()
 			print(">> No discovered flight master found on this map.")
 		end
 	end
-
-	-- if not UnitOnTaxi("player") then
-		-- -- Only bother the player if TomTom is installed and enabled in your settings
-		-- local tomtomLoaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TomTom")
-		-- if tomtomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			-- local nearestName = (startFM and startFM.name) and startFM.name or "nearest flight master"
-
-			-- StaticPopupDialogs["RQE_CONFIRM_WP_CLOSEST_FM"] = {
-				-- text = ("Set a TomTom waypoint to the closest flight master?\n\nNearest: %s"):format(nearestName),
-				-- button1 = "Yes",
-				-- button2 = "No",
-				-- OnAccept = function()
-					-- -- Uses your existing function to compute & set the waypoint
-					-- RQE:SetTomTomWaypointToClosestFlightMaster()
-					-- RQE.NearestFlightMasterSet = true
-				-- end,
-				-- OnCancel = function()
-					-- RQE.NearestFlightMasterSet = false
-				-- end,
-				-- timeout = 3,
-				-- whileDead = true,
-				-- hideOnEscape = true,
-				-- preferredIndex = 3, -- avoid UIParent taint
-			-- }
-			-- StaticPopup_Show("RQE_CONFIRM_WP_CLOSEST_FM")
-		-- end
-	-- end
 
 	return closestNode
 end
@@ -10820,15 +10786,6 @@ function RQE:GetClosestFlightMasterToQuest(questID)
 			end
 		end
 	end
-	-- for i = 1, 10 do
-		-- local step = questData[i]
-		-- if step and step.coordinates then
-			-- mapID = step.coordinates.mapID
-			-- x = step.coordinates.x / 100
-			-- y = step.coordinates.y / 100
-			-- break
-		-- end
-	-- end
 
 	-- Fallback to quest.location if no step with coordinates was found
 	if not mapID then
@@ -10879,20 +10836,6 @@ function RQE:RecommendFastestTravelMethod(questID)
 	end
 
 	local stepCoords = activeStep.coordinates
-
-	-- local stepCoords
-	-- for i = 1, 10 do
-		-- local step = questData[i]
-		-- if step and step.coordinates then
-			-- stepCoords = step.coordinates
-			-- break
-		-- end
-	-- end
-
-	-- if not stepCoords then
-		-- print(">> No coordinates found in steps for questID", RQE.SuperTrackedQuestIDForSpeed)
-		-- return
-	-- end
 
 	local playerMapID = C_Map.GetBestMapForUnit("player")
 	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
