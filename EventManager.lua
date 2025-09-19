@@ -39,165 +39,6 @@ RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
 local Frame = CreateFrame("Frame")
 
 
--- Function to Show the Objective Tracker
-function ShowObjectiveTracker()
-	ObjectiveTrackerFrame:Show()
-end
-
-
--- Function to Hide the Objective Tracker (only if the toggle is enabled)
-function HideObjectiveTracker()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-		-- Hide the tracker only if the toggle is disabled
-		if ObjectiveTrackerFrame:IsShown() then
-			ObjectiveTrackerFrame:Hide()
-		end
-		-- Recheck after a delay to ensure it remains hidden
-		C_Timer.After(0.1, function()
-			if ObjectiveTrackerFrame:IsShown() then
-				ObjectiveTrackerFrame:Hide()
-			end
-		end)
-	end
-end
-
-
--- Function to Hide the RQE Tracker and display the Blizzard Objective Tracker for quests that require Blizzard's Tracker to complete or accept quest
-function RQE:BlizzObjectiveTracker()
-	RQE.ToggleBothFramesfromLDB()
-
-	C_Timer.After(0.5, function()
-		RQE:ToggleObjectiveTracker()
-	end)
-
-	RQE.ReEnableRQEFrames = true
-end
-
-
--- Function to Hide the RQE Tracker and display the Blizzard Objective Tracker for quests that require Blizzard's Tracker to complete or accept quest
-function RQE:TempBlizzObjectiveTracker()
-	RQE.ToggleBothFramesfromLDB()
-
-	C_Timer.After(0.5, function()
-		RQE:ToggleObjectiveTracker()
-	end)
-
-	C_Timer.After(10, function()
-		RQE.ToggleBothFramesfromLDB()
-	end)
-end
-
--- Function to Display or Hide the Objective Tracker
-function RQE:ToggleObjectiveTracker()
-	if InCombatLockdown() then return end
-
-	-- If Mythic/Scenario mode is active, always show Blizzard Tracker and hide only RQEQuestFrame
-	if self.db.profile.mythicScenarioMode then
-		if self.RQEQuestFrame and self.RQEQuestFrame:IsShown() then
-			self.RQEQuestFrame:Hide()
-		end
-		ObjectiveTrackerFrame:Show()
-		return -- Exit early
-	end
-
-	if RQE.db.profile.toggleBlizzObjectiveTracker then
-		-- Hide RQE frames and show Blizzard Tracker
-		if RQEFrame and RQEFrame:IsShown() then
-			RQEFrame:Hide()
-			C_Timer.After(0.5, function()
-				RQE:ToggleObjectiveTracker()
-			end)
-		end
-		if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
-			RQE.RQEQuestFrame:Hide()
-			C_Timer.After(0.5, function()
-				RQE:ToggleObjectiveTracker()
-			end)
-		end
-		-- Ensure the Blizzard Objective Tracker is shown
-		ObjectiveTrackerFrame:Show()
-	else
-		print("Showing RQE frames and hiding Blizzard Tracker")
-		-- Show RQE frames and hide Blizzard Tracker
-		if RQEFrame and not RQEFrame:IsShown() then
-			-- print("~~ RQEFrame:Show: 123 ~~")
-			RQEFrame:Show()
-		end
-		if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
-			RQE.RQEQuestFrame:Show()
-		end
-		-- Ensure the Blizzard Objective Tracker is hidden
-		HideObjectiveTracker()
-	end
-end
-
-
--- Function to Toggle RQE Frames and Blizzard Objective Tracker
-function RQE:ToggleFramesAndTracker()
-	-- if InCombatLockdown() then
-		-- -- If in combat, queue the toggle for after combat and return early
-		-- RQE:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-			-- RQE:ToggleFramesAndTracker() -- Try to toggle again once combat ends
-			-- RQE:UnregisterEvent("PLAYER_REGEN_ENABLED") -- Unregister the event to avoid repeated triggers
-		-- end)
-		-- return
-	-- end
-
-	if RQEFrame:IsShown() then
-		-- Hide RQE frames
-		RQEFrame:Hide()
-
-		C_Map.ClearUserWaypoint()
-
-		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
-			RQE._currentTomTomUID = nil
-		end
-
-		if RQE.MagicButton then
-			RQE.MagicButton:Hide()
-		end
-		RQE.RQEQuestFrame:Hide()
-		RQE.isRQEFrameManuallyClosed = true
-		RQE.isRQEQuestFrameManuallyClosed = true
-
-		-- Show Blizzard Tracker if the toggle is enabled
-		if RQE.db.profile.toggleBlizzObjectiveTracker then
-			ObjectiveTrackerFrame:Show()
-		else
-			ObjectiveTrackerFrame:Hide() -- Ensure it stays hidden if the toggle is disabled
-		end
-	else
-		-- Show RQE frames
-		RQE:ClearFrameData()
-		RQE:ClearWaypointButtonData()
-		RQE:ClearSeparateFocusFrame()
-		-- print("~~ RQEFrame:Show: 176 ~~")
-		RQEFrame:Show()
-		UpdateFrame()
-
-		if RQE.MagicButton then
-			RQE.MagicButton:Show()
-		end
-
-		if RQE.db.profile.enableQuestFrame then
-			RQE.RQEQuestFrame:Show()
-		end
-
-		RQE.isRQEFrameManuallyClosed = false
-		RQE.isRQEQuestFrameManuallyClosed = false
-
-		-- Hide Blizzard Tracker if the toggle is disabled or if RQE frames are shown
-		ObjectiveTrackerFrame:Hide()
-
-		-- Check if MagicButton should be visible based on macro body
-		RQE.Buttons.UpdateMagicButtonVisibility()
-	end
-end
-
-
 ---------------------------
 -- 3. Event Registration
 ---------------------------
@@ -2937,6 +2778,26 @@ function RQE.handleSuperTracking()
 		-- startTime = debugprofilestop()  -- Start timer
 	-- end
 
+	-- Set for situations where the RQEQuestFrame isn't being shown (mythicMode with Blizzard Tracker) and event fires
+	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
+		if not C_SuperTrack.IsSuperTrackingQuest() then
+			RQE.Buttons.ClearButtonPressed()
+		else
+			local superQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		end
+		RQE:ClearStepsTextInFrame()
+		-- Check if TomTom is loaded and compatibility is enabled and if so to clear the waypoint
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
+		end
+		UpdateFrame()
+		if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+		RQE:StartPeriodicChecks()
+		return
+	end
+		
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
 		RQE:CheckMemoryUsage()
@@ -6267,6 +6128,160 @@ ObjectiveTrackerFrame:HookScript("OnShow", function()
 		end
 	end
 end)
+
+
+--------------------------
+-- 6. Frame Updates
+--------------------------
+
+-- Function to Show the Objective Tracker
+function ShowObjectiveTracker()
+	ObjectiveTrackerFrame:Show()
+end
+
+
+-- Function to Hide the Objective Tracker (only if the toggle is enabled)
+function HideObjectiveTracker()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		-- Hide the tracker only if the toggle is disabled
+		if ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+		end
+		-- Recheck after a delay to ensure it remains hidden
+		C_Timer.After(0.1, function()
+			if ObjectiveTrackerFrame:IsShown() then
+				ObjectiveTrackerFrame:Hide()
+			end
+		end)
+	end
+end
+
+
+-- Function to Hide the RQE Tracker and display the Blizzard Objective Tracker for quests that require Blizzard's Tracker to complete or accept quest
+function RQE:BlizzObjectiveTracker()
+	RQE.ToggleBothFramesfromLDB()
+
+	C_Timer.After(0.5, function()
+		RQE:ToggleObjectiveTracker()
+	end)
+
+	RQE.ReEnableRQEFrames = true
+end
+
+
+-- Function to Hide the RQE Tracker and display the Blizzard Objective Tracker for quests that require Blizzard's Tracker to complete or accept quest
+function RQE:TempBlizzObjectiveTracker()
+	RQE.ToggleBothFramesfromLDB()
+
+	C_Timer.After(0.5, function()
+		RQE:ToggleObjectiveTracker()
+	end)
+
+	C_Timer.After(10, function()
+		RQE.ToggleBothFramesfromLDB()
+	end)
+end
+
+-- Function to Display or Hide the Objective Tracker
+function RQE:ToggleObjectiveTracker()
+	if InCombatLockdown() then return end
+
+	-- If Mythic/Scenario mode is active, always show Blizzard Tracker and hide only RQEQuestFrame
+	if self.db.profile.mythicScenarioMode then
+		if self.RQEQuestFrame and self.RQEQuestFrame:IsShown() then
+			self.RQEQuestFrame:Hide()
+		end
+		ObjectiveTrackerFrame:Show()
+		return -- Exit early
+	end
+
+	if RQE.db.profile.toggleBlizzObjectiveTracker then
+		-- Hide RQE frames and show Blizzard Tracker
+		if RQEFrame and RQEFrame:IsShown() then
+			RQEFrame:Hide()
+			C_Timer.After(0.5, function()
+				RQE:ToggleObjectiveTracker()
+			end)
+		end
+		if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
+			RQE.RQEQuestFrame:Hide()
+			C_Timer.After(0.5, function()
+				RQE:ToggleObjectiveTracker()
+			end)
+		end
+		-- Ensure the Blizzard Objective Tracker is shown
+		ObjectiveTrackerFrame:Show()
+	else
+		print("Showing RQE frames and hiding Blizzard Tracker")
+		-- Show RQE frames and hide Blizzard Tracker
+		if RQEFrame and not RQEFrame:IsShown() then
+			-- print("~~ RQEFrame:Show: 123 ~~")
+			RQEFrame:Show()
+		end
+		if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
+			RQE.RQEQuestFrame:Show()
+		end
+		-- Ensure the Blizzard Objective Tracker is hidden
+		HideObjectiveTracker()
+	end
+end
+
+
+-- Function to Toggle RQE Frames and Blizzard Objective Tracker
+function RQE:ToggleFramesAndTracker()
+	if RQEFrame:IsShown() then
+		-- Hide RQE frames
+		RQEFrame:Hide()
+
+		C_Map.ClearUserWaypoint()
+
+		-- Check if TomTom is loaded and compatibility is enabled
+		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
+		end
+
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
+		RQE.RQEQuestFrame:Hide()
+		RQE.isRQEFrameManuallyClosed = true
+		RQE.isRQEQuestFrameManuallyClosed = true
+
+		-- Show Blizzard Tracker if the toggle is enabled
+		if RQE.db.profile.toggleBlizzObjectiveTracker then
+			ObjectiveTrackerFrame:Show()
+		else
+			ObjectiveTrackerFrame:Hide() -- Ensure it stays hidden if the toggle is disabled
+		end
+	else
+		-- Show RQE frames
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+		RQE:ClearSeparateFocusFrame()
+		-- print("~~ RQEFrame:Show: 176 ~~")
+		RQEFrame:Show()
+		UpdateFrame()
+
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
+
+		if RQE.db.profile.enableQuestFrame then
+			RQE.RQEQuestFrame:Show()
+		end
+
+		RQE.isRQEFrameManuallyClosed = false
+		RQE.isRQEQuestFrameManuallyClosed = false
+
+		-- Hide Blizzard Tracker if the toggle is disabled or if RQE frames are shown
+		ObjectiveTrackerFrame:Hide()
+
+		-- Check if MagicButton should be visible based on macro body
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end
+end
 
 
 -- Optionally, use OnUpdate for continuous checking
