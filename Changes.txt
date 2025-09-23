@@ -2,12 +2,14 @@
 
 	**HIGHLIGHTS**
 		- Fixed RQE:QuestRewardsTooltip() function to include additional choice rewards as these were previously not showing up reliably (2025.09.22)
+		- Improved multi-zone quest support: hotspot progress is now preserved when moving between zones (2025.09.22)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
+		- Updated ZONE_CHANGED_NEW_AREA handling: RQE.WPUtil.ClearHotspotState now performs a full reset of visited hotspot states only for single-zone quest steps. For multi-zone quest steps (DB entries with hotspots across multiple mapIDs), it uses a light reset to preserve visited progress (2025-09-23)
 
 	QuestingModule.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -21,9 +23,10 @@
 
 	RQEDatabase.lua
 		- Added some additional description and objective text within the DB (2025.09.22)
+		- Added additional quests including questID 72396 that has multi-map visited bands support (2025.09.23)
 
 	WPUtil.lua
-		- Cleaned up spacing in the code (2025.09.22)
+		- Cleaned up spacing in the code (2025.09.23)
 
 
 11.2.0.6 (2025.09.19)
