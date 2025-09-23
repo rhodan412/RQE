@@ -566,12 +566,12 @@ local function _stateFor(questID, stepIndex)
 			-- visitedBands = {},	-- [priority] = true once visited
 			-- currentIdx = nil, -- index into normalized hotspot list
 			-- lastEval = { t=0, mapID=nil, px=nil, py=nil },
-			visited = {},             -- p=>true after visit (your new table name)
+			visited = {},			 -- p=>true after visit (your new table name)
 			currentIdx = nil,
 			lastEval = { t=0, mapID=nil, px=nil, py=nil },
-			questID = questID,        -- << add
-			stepIndex = stepIndex,    -- << add
-			_lastTargetBand = nil,    -- << for debug change detection
+			questID = questID,		-- << add
+			stepIndex = stepIndex,	-- << add
+			_lastTargetBand = nil,	-- << for debug change detection
 		}
 		RQE.WPUtil._hotspotState[questID][stepIndex] = st
 	end
