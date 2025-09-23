@@ -892,7 +892,10 @@ local function CreateQuestTooltip(frame, questID)
 
 	-- Check if RQE.SeparateStepText exists and has text
 	if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
-		GameTooltip:AddLine(" ")
+		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+		if not isWorldQuest then
+			GameTooltip:AddLine(" ")
+		end
 		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
 		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
 		GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
