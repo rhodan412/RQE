@@ -1,3 +1,31 @@
+11.2.0.7
+
+	**HIGHLIGHTS**
+		- Fixed RQE:QuestRewardsTooltip() function to include additional choice rewards as these were previously not showing up reliably (2025.09.22)
+
+	Core.lua
+		- Cleaned up spacing in the code (2025.09.22)
+
+	EventManager.lua
+		- Cleaned up spacing in the code (2025.09.22)
+
+	QuestingModule.lua
+		- Cleaned up spacing in the code (2025.09.22)
+		- Fixed RQE:QuestRewardsTooltip() function to include additional choice rewards as these were previously not showing up reliably (2025.09.22)
+
+	RQE.toc
+		- Updated version# (2025.09.19)
+
+	RQEFrame.lua
+		- Added check for if tracked quest was world quest so that the tooltip would only add an extra line above the RQE.SeparateStepText if it was not a world quest (2025.09.22)
+
+	RQEDatabase.lua
+		- Added some additional description and objective text within the DB (2025.09.22)
+
+	WPUtil.lua
+		- Cleaned up spacing in the code (2025.09.22)
+
+
 11.2.0.6 (2025.09.19)
 
 	**HIGHLIGHTS**
@@ -14,7 +42,7 @@
 		- Updated version# (2025.09.15)
 
 	RQEDatabase.lua
-		- Updated some side-quest direction for Horrific Vision: Orgrimmar (2025.09.15)
+		- Updated some side-quest direction for Horrific Vision: Orgrimmar (2025.09.19)
 
 	RQEMacro.lua
 		- Cleaned up old debug code (2025.09.19)
