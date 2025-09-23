@@ -1815,29 +1815,29 @@ local function colorizeObjectives(questID)
 	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
 	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
-    if objectivesData then
-        for _, objective in ipairs(objectivesData) do
-            local desc = objective.text
-            if isReadyForTurnIn then
-                t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
-            else
-                if objective.finished then
-                    t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
-                elseif (objective.numFulfilled or 0) > 0 then
-                    t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
-                else
-                    t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
-                end
-            end
-        end
-        if isAuto then
-            t[#t+1] = RQE.ColorORANGE .. "Click to Complete Quest" .. RQE.ColorRESET .. "\n"
-        end
-    else
-        t[#t+1] = "Objective data unavailable."
-    end
+	if objectivesData then
+		for _, objective in ipairs(objectivesData) do
+			local desc = objective.text
+			if isReadyForTurnIn then
+				t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+			else
+				if objective.finished then
+					t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
+				elseif (objective.numFulfilled or 0) > 0 then
+					t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+				else
+					t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
+				end
+			end
+		end
+		if isAuto then
+			t[#t+1] = RQE.ColorORANGE .. "Click to Complete Quest" .. RQE.ColorRESET .. "\n"
+		end
+	else
+		t[#t+1] = "Objective data unavailable."
+	end
 
-    return table.concat(t)
+	return table.concat(t)
 
 	-- if objectivesData then  -- Check if the data is not nil
 		-- for _, objective in ipairs(objectivesData) do
@@ -1878,29 +1878,29 @@ function RQE.colorizeObjectives(questID)
 	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
 	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
-    if objectivesData then
-        for _, objective in ipairs(objectivesData) do
-            local desc = objective.text
-            if isReadyForTurnIn then
-                t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
-            else
-                if objective.finished then
-                    t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
-                elseif (objective.numFulfilled or 0) > 0 then
-                    t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
-                else
-                    t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
-                end
-            end
-        end
-        -- if isAuto then
-            -- t[#t+1] = RQE.ColorORANGE .. "Click QuestID/QuestName to Complete Quest" .. RQE.ColorRESET .. "\n"
-        -- end
-    else
-        t[#t+1] = "Objective data unavailable."
-    end
+	if objectivesData then
+		for _, objective in ipairs(objectivesData) do
+			local desc = objective.text
+			if isReadyForTurnIn then
+				t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+			else
+				if objective.finished then
+					t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
+				elseif (objective.numFulfilled or 0) > 0 then
+					t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+				else
+					t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
+				end
+			end
+		end
+		-- if isAuto then
+			-- t[#t+1] = RQE.ColorORANGE .. "Click QuestID/QuestName to Complete Quest" .. RQE.ColorRESET .. "\n"
+		-- end
+	else
+		t[#t+1] = "Objective data unavailable."
+	end
 
-    return table.concat(t)
+	return table.concat(t)
 
 	-- if objectivesData then  -- Check if the data is not nil
 		-- for _, objective in ipairs(objectivesData) do
@@ -1943,6 +1943,10 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 		[5] = { r = 1.00, g = 0.50, b = 0.00 },  -- Legendary (orange)
 	}
 
+	-- Stores the current selected quest, then select the one we’re building tooltip for
+	local prevSelectedQuest = C_QuestLog.GetSelectedQuest()
+	C_QuestLog.SetSelectedQuest(questID)
+
 	-- Retrieve rewards
 	local rewardXP = GetQuestLogRewardXP(questID)
 	local rewardMoney = GetQuestLogRewardMoney(questID)
@@ -1958,15 +1962,78 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 	local skillName, skillIcon, rawSkillPoints = GetQuestLogRewardSkillPoints()
 	local rewardSkillPoints = tonumber(rawSkillPoints) or 0
 
+	-- If it's a World Quest or Task Quest, handle differently
+	if C_QuestLog.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
+		tooltip:AddLine("Rewards:", 1, 1, 1)
+
+		-- XP and money
+		local xp = GetQuestLogRewardXP(questID)
+		if xp and xp > 0 then
+			tooltip:AddLine("XP: " .. FormatLargeNumber(xp), 1, 1, 1)
+			tooltip:AddLine(" ")
+		end
+
+		local money = GetQuestLogRewardMoney(questID)
+		if money and money > 0 then
+			tooltip:AddLine("Gold: " .. GetCoinTextureString(money), 1, 1, 1)
+			tooltip:AddLine(" ")
+		end
+
+		-- Currencies
+		local currencies = C_QuestLog.GetQuestRewardCurrencies(questID) or {}
+		for i, currencyInfo in ipairs(currencies) do
+			if currencyInfo and currencyInfo.name and currencyInfo.texture then
+				local amount = FormatLargeNumber(currencyInfo.totalRewardAmount or 0)
+				local text = "|T" .. currencyInfo.texture .. ":16|t " .. amount .. " " .. currencyInfo.name
+				local color = ITEM_QUALITY_COLORS[currencyInfo.quality] or { r = 1, g = 1, b = 1 }
+				tooltip:AddLine(text, color.r, color.g, color.b)
+				tooltip:AddLine(" ")
+			end
+		end
+
+		-- Items
+		local numQuestRewards = GetNumQuestLogRewards(questID) or 0
+		for i = 1, numQuestRewards do
+			local name, texture, numItems, quality = GetQuestLogRewardInfo(i, questID)
+			if name then
+				local countText = (numItems > 1) and (numItems .. "x ") or ""
+				local text = (texture and "|T" .. texture .. ":16|t " or "") .. countText .. name
+				local color = ITEM_QUALITY_COLORS[quality] or { r = 1, g = 1, b = 1 }
+				tooltip:AddLine(text, color.r, color.g, color.b)
+				tooltip:AddLine(" ")
+			end
+		end
+
+		tooltip:Show()
+		-- Restore selected quest if needed
+		if prevSelectedQuest then
+			C_QuestLog.SetSelectedQuest(prevSelectedQuest)
+		end
+		return
+	end
+
 	-- Choice rewards
 	if choiceItemsCount > 0 then
 		tooltip:AddLine(choiceItemsCount == 1 and "You will receive:" or "Choose one of the following rewards:")
 		for i = 1, choiceItemsCount do
-			local itemName, _, numItems, quality = GetQuestLogChoiceInfo(i)
-			if itemName then
-				local text = (numItems > 1) and (numItems .. "x " .. itemName) or itemName
-				local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
-				tooltip:AddLine(text, color.r, color.g, color.b)
+			local lootType = GetQuestLogChoiceInfoLootType(i)
+			if lootType == 0 then
+				-- Item choice
+				local itemName, _, numItems, quality = GetQuestLogChoiceInfo(i)
+				if itemName then
+					local text = (numItems > 1) and (numItems .. "x " .. itemName) or itemName
+					local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
+					tooltip:AddLine(text, color.r, color.g, color.b)
+				end
+			elseif lootType == 1 then
+				-- Currency choice
+				local currencyInfo = C_QuestLog.GetQuestRewardCurrencyInfo(questID, i, true)
+				if currencyInfo and currencyInfo.name and currencyInfo.texture then
+					local amount = FormatLargeNumber(currencyInfo.totalRewardAmount or 0)
+					local text = "|T" .. currencyInfo.texture .. ":16|t " .. amount .. " " .. currencyInfo.name
+					local color = customItemQualityColors[currencyInfo.quality] or { r = 1, g = 1, b = 1 }
+					tooltip:AddLine(text, color.r, color.g, color.b)
+				end
 			end
 		end
 	end
@@ -2017,6 +2084,11 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 				tooltip:AddLine((data and data.name or ("Faction ID " .. reward.factionID)) .. ": " .. reward.rewardAmount, 0, 1, 0)
 			end
 		end
+	end
+
+	-- Restore previously selected quest
+	if prevSelectedQuest then
+		C_QuestLog.SetSelectedQuest(prevSelectedQuest)
 	end
 
 	tooltip:Show()
