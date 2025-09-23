@@ -3707,10 +3707,49 @@ function RQE.handleZoneNewAreaChange()
 	-- Clear hotspot choice so next read re-evaluates on the new map
 	if C_SuperTrack.IsSuperTrackingQuest() then
 		local qid = C_SuperTrack.GetSuperTrackedQuestID()
-		-- Clear just the current step (safe + light)
 		local sidx = RQE.AddonSetStepIndex or 1
-		if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
-			RQE.WPUtil.ClearHotspotState(qid, sidx, true)
+
+		-- Guard against missing questID
+		if not qid or qid == 0 then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Skipped ClearHotspotState: questID=0 at zone change")
+			end
+		else
+			-- Delay slightly to allow supertrack data to settle
+			C_Timer.After(0.3, function()
+				local questData = RQE.getQuestData(qid)
+				local step = questData and questData[sidx]
+
+				if step and step.coordinateHotspots then
+					local uniqueMaps = {}
+					for _, hs in ipairs(step.coordinateHotspots) do
+						uniqueMaps[hs.mapID] = true
+					end
+					local multiZone = (next(uniqueMaps, next(uniqueMaps)) ~= nil)
+
+					if RQE.db.profile.debugLevel == "INFO+" then
+						local mapsList = {}
+						for mid in pairs(uniqueMaps) do
+							table.insert(mapsList, tostring(mid))
+						end
+						print(string.format(
+							"ClearHotspotState decision: questID=%d step=%d multiZone=%s maps={%s}",
+							qid, sidx, tostring(multiZone), table.concat(mapsList, ",")
+						))
+					end
+
+					-- true = full reset, false = light reset
+					RQE.WPUtil.ClearHotspotState(qid, sidx, not multiZone)
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format(
+							"ClearHotspotState fallback: questID=%d step=%d (no hotspots) -> full reset",
+							qid, sidx
+						))
+					end
+					RQE.WPUtil.ClearHotspotState(qid, sidx, true)
+				end
+			end)
 		end
 	end
 
