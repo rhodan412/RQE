@@ -5081,12 +5081,12 @@ function RQE.handleQuestAutoComplete(...)
 		end
 	end
 
-    -- Pop the dialog immediately if eligible
-    if questID and RQE:ShowAutoCompleteDialog(questID) then
-        if RQE.db.profile.debugLevel == "INFO" then --and RQE.db.profile.QuestAutocomplete then
-            print(("QAC: ShowQuestComplete -> %d"):format(questID))
-        end
-    end
+	-- Pop the dialog immediately if eligible
+	if questID and RQE:ShowAutoCompleteDialog(questID) then
+		if RQE.db.profile.debugLevel == "INFO" then --and RQE.db.profile.QuestAutocomplete then
+			print(("QAC: ShowQuestComplete -> %d"):format(questID))
+		end
+	end
 
 	-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
 	-- local questID = RQE.searchedQuestID or questID --or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
