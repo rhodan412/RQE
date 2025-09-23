@@ -742,13 +742,13 @@ function OpenQuestLogToQuestDetails(questID)
 		return
 	end
 
-    -- If this is a completed, auto-completable quest, show the turn-in dialog instead
-    if RQE:ShowAutoCompleteDialog(questID) then
+	-- If this is a completed, auto-completable quest, show the turn-in dialog instead
+	if RQE:ShowAutoCompleteDialog(questID) then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(("RQE:ShowAutoCompleteDialog fired for questID %d"):format(questID))
 		end
-        return
-    end
+		return
+	end
 
 	---@type number|nil
 	local mapID = GetQuestUiMapID(questID) or C_TaskQuest.GetQuestZoneID(questID)
@@ -760,113 +760,113 @@ end
 
 -- Helper function to see if a given quest is being watched
 function RQE:IsQuestWatched(questID)
-    if not questID then return false end
-    if C_QuestLog.GetQuestWatchType then
-        return C_QuestLog.GetQuestWatchType(questID) ~= nil
-    end
-    local n = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
-    for i = 1, n do
-        if C_QuestLog.GetQuestIDForQuestWatchIndex(i) == questID then
-            return true
-        end
-    end
-    return false
+	if not questID then return false end
+	if C_QuestLog.GetQuestWatchType then
+		return C_QuestLog.GetQuestWatchType(questID) ~= nil
+	end
+	local n = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
+	for i = 1, n do
+		if C_QuestLog.GetQuestIDForQuestWatchIndex(i) == questID then
+			return true
+		end
+	end
+	return false
 end
 
 
 -- Function to auto-watch only auto-completable quests
 function RQE:WatchAutoCompletableUnwatchedQuests(verbose)
-    local added = 0
-    local numEntries = C_QuestLog.GetNumQuestLogEntries()
-    for i = 1, numEntries do
-        local info = C_QuestLog.GetInfo(i)
-        if info and not info.isHeader then
-            local qid = info.questID
-            if qid and self:IsQuestAutoComplete(qid) and not self:IsQuestWatched(qid) then
-                local ok = C_QuestLog.AddQuestWatch(qid)
-                if ok then added = added + 1 end
-                if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO" then
-                    print(("RQE: watching auto-completable quest %d (%s)"):format(qid, info.title or ""))
-                end
-            end
-        end
-    end
-    if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO" then
-        print(("RQE: added %d auto-completable quest(s) to watch on login."):format(added))
-    end
+	local added = 0
+	local numEntries = C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local info = C_QuestLog.GetInfo(i)
+		if info and not info.isHeader then
+			local qid = info.questID
+			if qid and self:IsQuestAutoComplete(qid) and not self:IsQuestWatched(qid) then
+				local ok = C_QuestLog.AddQuestWatch(qid)
+				if ok then added = added + 1 end
+				if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO" then
+					print(("RQE: watching auto-completable quest %d (%s)"):format(qid, info.title or ""))
+				end
+			end
+		end
+	end
+	if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO" then
+		print(("RQE: added %d auto-completable quest(s) to watch on login."):format(added))
+	end
 end
 
 
 -- Returns true if the given quest is complete and can be auto-turned-in anywhere
 function RQE:IsQuestAutoComplete(questID)
-    if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
-        print(("IsQuestAutoComplete check start: questID=%s"):format(tostring(questID)))
-    end
+	if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+		print(("IsQuestAutoComplete check start: questID=%s"):format(tostring(questID)))
+	end
 
-    if not questID then
-        if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
-            print("IsQuestAutoComplete: no questID")
-        end
-        return false
-    end
+	if not questID then
+		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			print("IsQuestAutoComplete: no questID")
+		end
+		return false
+	end
 
-    if C_QuestLog.IsFailed and C_QuestLog.IsFailed(questID) then
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print(("IsQuestAutoComplete: quest %d is failed"):format(questID))
-        end
-        return false
-    end
+	if C_QuestLog.IsFailed and C_QuestLog.IsFailed(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("IsQuestAutoComplete: quest %d is failed"):format(questID))
+		end
+		return false
+	end
 
-    local isComplete = C_QuestLog.IsComplete(questID)
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print(("IsQuestAutoComplete: C_QuestLog.IsComplete=%s"):format(tostring(isComplete)))
-    end
-    if not isComplete then return false end
+	local isComplete = C_QuestLog.IsComplete(questID)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(("IsQuestAutoComplete: C_QuestLog.IsComplete=%s"):format(tostring(isComplete)))
+	end
+	if not isComplete then return false end
 
-    local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print(("IsQuestAutoComplete: logIndex=%s"):format(tostring(logIndex)))
-    end
-    if not logIndex then return false end
+	local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(("IsQuestAutoComplete: logIndex=%s"):format(tostring(logIndex)))
+	end
+	if not logIndex then return false end
 
-    local info = C_QuestLog.GetInfo(logIndex)
-    local isAuto = info and info.isAutoComplete == true
-    if RQE.db.profile.debugLevel == "INFO+" then
+	local info = C_QuestLog.GetInfo(logIndex)
+	local isAuto = info and info.isAutoComplete == true
+	if RQE.db.profile.debugLevel == "INFO+" then
 		print("IsQuestAutoComplete: info=", info and info.questID, info and tostring(info.isAutoComplete))
-        print(("IsQuestAutoComplete: isAutoComplete=%s"):format(tostring(isAuto)))
-    end
-    return isAuto
+		print(("IsQuestAutoComplete: isAutoComplete=%s"):format(tostring(isAuto)))
+	end
+	return isAuto
 end
 
 
 -- Attempts to show the native Blizzard auto-complete dialog; returns true if shown
 function RQE:ShowAutoCompleteDialog(questID)
-    if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
-        print(("ShowAutoCompleteDialog: questID=%s"):format(tostring(questID)))
-    end
+	if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+		print(("ShowAutoCompleteDialog: questID=%s"):format(tostring(questID)))
+	end
 
-    if not questID then return false end
+	if not questID then return false end
 
-    -- Optional: avoid double opening if the Complete/Reward UI is already up
-    if QuestFrame and QuestFrame:IsShown() then
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print("ShowAutoCompleteDialog: QuestFrame already shown; skipping")
-        end
-        return false
-    end
+	-- Optional: avoid double opening if the Complete/Reward UI is already up
+	if QuestFrame and QuestFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ShowAutoCompleteDialog: QuestFrame already shown; skipping")
+		end
+		return false
+	end
 
-    if RQE:IsQuestAutoComplete(questID) then
-        if RQE.db.profile.debugLevel == "INFO+" then
-            print(("ShowAutoCompleteDialog: calling ShowQuestComplete(%d)"):format(questID))
-        end
-        ShowQuestComplete(questID)
-        return true
-    end
+	if RQE:IsQuestAutoComplete(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("ShowAutoCompleteDialog: calling ShowQuestComplete(%d)"):format(questID))
+		end
+		ShowQuestComplete(questID)
+		return true
+	end
 
-    if RQE.db.profile.debugLevel == "INFO+" then
-        print("ShowAutoCompleteDialog: not auto-completable")
-    end
-    return false
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("ShowAutoCompleteDialog: not auto-completable")
+	end
+	return false
 end
 
 
@@ -2285,29 +2285,29 @@ local function colorizeObjectives(questID)
 	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
 	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
-    if objectivesData then
-        for _, objective in ipairs(objectivesData) do
-            local desc = objective.text
-            if isReadyForTurnIn then
-                t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
-            else
-                if objective.finished then
-                    t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
-                elseif (objective.numFulfilled or 0) > 0 then
-                    t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
-                else
-                    t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
-                end
-            end
-        end
-        if isAuto then
-            t[#t+1] = RQE.ColorORANGE .. "Click QuestID/QuestName to Complete Quest" .. RQE.ColorRESET .. "\n"
-        end
-    else
-        t[#t+1] = "Objective data unavailable."
-    end
+	if objectivesData then
+		for _, objective in ipairs(objectivesData) do
+			local desc = objective.text
+			if isReadyForTurnIn then
+				t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+			else
+				if objective.finished then
+					t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
+				elseif (objective.numFulfilled or 0) > 0 then
+					t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+				else
+					t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
+				end
+			end
+		end
+		if isAuto then
+			t[#t+1] = RQE.ColorORANGE .. "Click QuestID/QuestName to Complete Quest" .. RQE.ColorRESET .. "\n"
+		end
+	else
+		t[#t+1] = "Objective data unavailable."
+	end
 
-    return table.concat(t)
+	return table.concat(t)
 
 	-- if objectivesData then  -- Check if the data is not nil
 		-- for _, objective in ipairs(objectivesData) do
