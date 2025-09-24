@@ -1327,7 +1327,10 @@ function RQE.ObtainSuperTrackQuestDetails()
 				RQE.TheSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 			end
 
-			local questName = C_QuestLog.GetTitleForQuestID(RQE.TheSuperQuestID) or "Unknown Quest"
+			local questName = "Unknown Quest"
+			if RQE.TheSuperQuestID and type(RQE.TheSuperQuestID) == "number" then
+				questName = C_QuestLog.GetTitleForQuestID(RQE.TheSuperQuestID) or "Unknown Quest"
+			end
 			local messagePrefix = "QuestID (supertracked): " .. tostring(RQE.TheSuperQuestID) .. " - " .. questName
 
 			local questData = RQE.getQuestData(RQE.TheSuperQuestID)
