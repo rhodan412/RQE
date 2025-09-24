@@ -2604,6 +2604,12 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end)
 
+	C_Timer.After(5, function()
+		local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		local playerMapID = C_Map.GetBestMapForUnit("player")
+		RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
+	end)
+
 	C_Timer.After(2, function()
 		-- Check for Dragonriding & Capture and print the current states for debugging purposes
 		if RQE.CheckForDragonMounts() then
