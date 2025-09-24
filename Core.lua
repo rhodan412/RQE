@@ -5968,11 +5968,23 @@ function RQE:StartPeriodicChecks()
 			end
 		end
 
+		-- if not isZoneChangeCheck then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("WaypointText present; current step has no CheckDBZoneChange -> early return.")
+			-- end
+			-- return
 		if not isZoneChangeCheck then
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("WaypointText present; current step has no CheckDBZoneChange -> early return.")
+				print("WaypointText present; suppressing waypoint creation but still updating step index.")
 			end
-			return
+
+			-- ✅ Update step index / UI without creating a waypoint
+			RQE.AddonSetStepIndex = stepIndex
+			local playerMapID = C_Map.GetBestMapForUnit("player")
+			if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
+			return  -- Skip waypoint creation only
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("WaypointText present; current step requires CheckDBZoneChange -> continuing periodic checks.")
