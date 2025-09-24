@@ -5667,6 +5667,7 @@ function RQE.handleQuestWatchListChanged(...)
 
 	-- print("~~~ RQE:QuestType(): 5192 ~~~")
 	-- RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
+	UpdateFrame()
 
 	-- Clear hotspot choice so next read re-evaluates on the new map
 	if C_SuperTrack.IsSuperTrackingQuest() then
