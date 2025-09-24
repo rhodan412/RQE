@@ -9,11 +9,13 @@
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
 		- Resolved an issue in RQE:StartPeriodicChecks() where step progression would not update when waypointText was present. Steps now advance correctly while waypoints continue to follow Blizzard’s provided waypointText. (2025.09.23)
+		- Fixed nil error when fetching questName within RQE.ObtainSuperTrackQuestDetails() function (2025.09.23)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
 		- Updated ZONE_CHANGED_NEW_AREA handling: RQE.WPUtil.ClearHotspotState now performs a full reset of visited hotspot states only for single-zone quest steps. For multi-zone quest steps (DB entries with hotspots across multiple mapIDs), it uses a light reset to preserve visited progress (2025-09-23)
 		- Added delayed waypoint creation in EventManager.lua: when a super-tracked quest provides waypointText, RQE now waits 5 seconds before calling CreateUnknownQuestWaypointWithDirectionText, ensuring a fallback waypoint is placed using Blizzard’s direction text. (2025.09.23)
+		- Added an UpdateFrame() function call within QUEST_WATCH_LIST_CHANGED event function higher up in the function (2025.09.23)
 
 	QuestingModule.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -29,6 +31,7 @@
 		- Added some additional description and objective text within the DB (2025.09.22)
 		- Added additional quests including questID 72396 that has multi-map visited bands support (2025.09.23)
 		- Updated some of the profession quests to better handle coordinateHotspots and the applicable waypoint(s) in the DB entries (2025.09.23)
+		- Fixed some quests in DB for Elwynn Forest (2025.09.23)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
