@@ -696,6 +696,14 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 	norm.hotspots = FilterEligibleHotspots(questID, norm.hotspots)
 	if not norm.hotspots or #norm.hotspots == 0 then return nil end
 
+	-- Ensure st.currentIdx is still valid after filtering
+	if st.currentIdx then
+		local cur = norm.hotspots[st.currentIdx]
+		if not cur then
+			st.currentIdx = nil -- force reselection
+		end
+	end
+
 	-- Rebuild priorityBands from filtered hotspots
 	local bandSet, bands = {}, {}
 	for _,h in ipairs(norm.hotspots) do
