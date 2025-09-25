@@ -48,6 +48,7 @@
 		- Added helpers `IsObjectiveComplete()` and `FilterEligibleHotspots()`; filtering is applied at the start of `SelectBestHotspot()` (2025.09.24)
 		- Rebuilds `priorityBands` after filtering to keep band/debug logic accurate; preserves `minSwitchYards` / `visitedRadius` per hotspot (2025.09.24)
 		- Added a safety guard so throttled early-returns don’t reference a filtered-out hotspot (2025.09.24)
+		- Fixed a rare crash in SelectBestHotspot: if a hotspot tied to a completed objective was filtered out, the function could still reference an invalid st.currentIdx. The index is now validated after filtering, preventing nil errors and ensuring a new hotspot is properly reselected. (2025.09.24)
 
 
 11.2.0.6 (2025.09.19)
