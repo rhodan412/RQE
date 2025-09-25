@@ -6,6 +6,7 @@
 		- Fixed step progression with Blizzard waypoints: objectives now advance correctly even when waypointText is present (2025.09.23)
 		- Improved waypoint reliability: fallback waypoints are now automatically created from Blizzard’s quest directions (2025.09.23)
 		- Objective-aware guidance and marking: hotspots (`oI`) and npcTargets (`obj`) tied to completed objectives are now automatically filtered out, improving accuracy and reducing noise (2025.09.24)
+		- Custom waypoint labels: coordinateHotspots may now include a wayText field. If present, the waypoint will display this custom text instead of the default “QID QuestName”. This allows authors to show context-specific guidance like “Collect the Book” or “Open the Chest” right on the map (2025.09.25)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -40,6 +41,9 @@
 		- Updated some of the profession quests to better handle coordinateHotspots and the applicable waypoint(s) in the DB entries (2025.09.23)
 		- Fixed some quests in DB for Elwynn Forest (2025.09.23)
 		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [Core.lua] (2025.09.24)
+
+	WaypointManager.lua
+		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
