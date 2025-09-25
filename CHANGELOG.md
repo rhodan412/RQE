@@ -5,11 +5,18 @@
 		- Improved multi-zone quest support: hotspot progress is now preserved when moving between zones (2025.09.23)
 		- Fixed step progression with Blizzard waypoints: objectives now advance correctly even when waypointText is present (2025.09.23)
 		- Improved waypoint reliability: fallback waypoints are now automatically created from Blizzard’s quest directions (2025.09.23)
+		- Objective-aware guidance and marking: hotspots (`oI`) and npcTargets (`obj`) tied to completed objectives are now automatically filtered out, improving accuracy and reducing noise (2025.09.24)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
 		- Resolved an issue in RQE:StartPeriodicChecks() where step progression would not update when waypointText was present. Steps now advance correctly while waypoints continue to follow Blizzard’s provided waypointText. (2025.09.23)
 		- Fixed nil error when fetching questName within RQE.ObtainSuperTrackQuestDetails() function (2025.09.23)
+		- Added objective-aware NPC marking: `npcTargets` may now include `obj` (objectiveIndex). Mobs tied to completed objectives are skipped automatically (2025.09.24)
+		- Introduced local `_IsObjectiveComplete()` to decouple from WPUtil scope and ensure reliable checks (2025.09.24)
+		- Filter `npcTargets` when building the current step’s `mobList`; only unfinished-objective entries are included (backwards compatible when `obj` is omitted) (2025.09.24)
+		- `TryMarkUnit()` also short-circuits marking if a mob has `obj` and its objective is complete (belt-and-suspenders) (2025.09.24)
+		- Reduced mouseover lag: added a small cache of the current step’s `mobList` keyed by `questID`/`stepIndex`; the list rebuilds only when those change (2025.09.24)
+		- Removed noisy debug print during list construction; marking/debug output now occurs only when a unit is actually processed (2025.09.24)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -32,9 +39,15 @@
 		- Added additional quests including questID 72396 that has multi-map visited bands support (2025.09.23)
 		- Updated some of the profession quests to better handle coordinateHotspots and the applicable waypoint(s) in the DB entries (2025.09.23)
 		- Fixed some quests in DB for Elwynn Forest (2025.09.23)
+		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [Core.lua] (2025.09.24)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
+		- Added objective-aware hotspot filtering: hotspots can now include `oI` (objectiveIndex). When the associated objective is complete, those hotspots are automatically excluded from selection (2025.09.24)
+		- NormalizeCoordinates now carries `oI` through from DB entries (no change required for legacy `coordinates` or hotspots without `oI`) (2025.09.24)
+		- Added helpers `IsObjectiveComplete()` and `FilterEligibleHotspots()`; filtering is applied at the start of `SelectBestHotspot()` (2025.09.24)
+		- Rebuilds `priorityBands` after filtering to keep band/debug logic accurate; preserves `minSwitchYards` / `visitedRadius` per hotspot (2025.09.24)
+		- Added a safety guard so throttled early-returns don’t reference a filtered-out hotspot (2025.09.24)
 
 
 11.2.0.6 (2025.09.19)
