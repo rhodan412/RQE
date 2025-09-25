@@ -4267,6 +4267,15 @@ local function GetRaidMarkerIcon(marker)
 end
 
 
+-- Local helper: is a specific quest objective complete?
+local function _IsObjectiveComplete(questID, objectiveIndex)
+	if not questID or not objectiveIndex then return false end
+	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	if not objectives or not objectives[objectiveIndex] then return false end
+	return objectives[objectiveIndex].finished
+end
+
+
 -- Core marking logic for a given unitID (e.g., "mouseover", "target")
 local function TryMarkUnit(unitID, mobList)
 	if not UnitExists(unitID) then return end
@@ -4274,26 +4283,63 @@ local function TryMarkUnit(unitID, mobList)
 	local unitName = UnitName(unitID)
 	local isDead = UnitIsDead(unitID)
 	local currentMarker = GetRaidTargetIndex(unitID)
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	for _, mob in ipairs(mobList) do
 		if unitName == mob.name then
-			if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
-				-- Only change the marker if it's different from what it should be
-				if currentMarker ~= mob.marker then
-					SetRaidTarget(unitID, mob.marker)
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Re-marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
-					end
-				else
-					-- Marker is already correct → skip re-marking
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Marker on " .. unitID .. " (" .. unitName .. ") is already correct.")
-					end
+			-- If mob.obj is present, skip if that quest objective is already complete
+			if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+                if RQE.db.profile.debugLevel == "INFO+" then
+					print("Skipping marker for " .. unitName .. " (objective " .. tostring(mob.obj) .. " complete).")
 				end
-				return
+			else
+				if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
+					-- Only change the marker if it's different from what it should be
+					if currentMarker ~= mob.marker then
+						SetRaidTarget(unitID, mob.marker)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Re-marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
+						end
+					else
+						-- Marker is already correct → skip re-marking
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Marker on " .. unitID .. " (" .. unitName .. ") is already correct.")
+						end
+					end
+					return
+				end
 			end
 		end
 	end
+end
+
+
+-- Cached mob list to avoid rebuilding every mouseover
+local _cachedQuestID, _cachedStepIndex, _cachedMobList = nil, nil, nil
+
+local function GetMobListForCurrentStep(questID, stepIndex, questData)
+	-- Rebuild only if questID or stepIndex changed
+	if questID ~= _cachedQuestID or stepIndex ~= _cachedStepIndex then
+		_cachedQuestID, _cachedStepIndex = questID, stepIndex
+		_cachedMobList = {}
+
+		if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
+			for _, mob in ipairs(questData[stepIndex].npcTargets) do
+				if mob.name then
+					-- If mob.obj is present, skip if complete
+					if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Skipping mob " .. mob.name .. " (objective " .. tostring(mob.obj) .. " complete).")
+						end
+					else
+						table.insert(_cachedMobList, mob)
+					end
+				end
+			end
+		end
+	end
+
+	return _cachedMobList or {}
 end
 
 
@@ -4346,7 +4392,23 @@ function RQE:MarkQuestMobOnMouseover()
 		if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
 			for _, mob in ipairs(questData[stepIndex].npcTargets) do
 				if mob.name then
-					table.insert(mobList, mob)
+					-- If mob.obj is present, skip if that objective is already complete
+					if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Skipping mob " .. mob.name .. " (objective " .. tostring(mob.obj) .. " complete).")
+						end
+					else
+						-- Extra safeguard: make sure this mob really belongs to npcTargets of this step
+						for _, validMob in ipairs(questData[stepIndex].npcTargets) do
+							if validMob.name == mob.name then
+								table.insert(mobList, mob)
+								if RQE.db.profile.debugLevel == "INFO+" then
+									print("Inserted mob " .. mob.name .. " for stepIndex " .. stepIndex)
+								end
+								break
+							end
+						end
+					end
 				end
 			end
 		end
@@ -4377,7 +4439,7 @@ function RQE:SetMarkerIfNeeded(unitID, desired)
 	end
 
 	SetRaidTarget(unitID, idx)
-	if RQE.db.profile.debugLevel == "INFO+" then
+	if RQE.db.profile.debugLevel == "INFO" then
 		local name = UnitName(unitID) or unitID
 		print(("Applied marker %d to %s."):format(idx, name))
 	end
