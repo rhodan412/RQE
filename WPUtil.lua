@@ -448,6 +448,7 @@ function RQE.WPUtil.NormalizeCoordinates(step)
 				priority = tonumber(pt.priorityBias) or 1,
 				minSwitchYards = tonumber(pt.minSwitchYards) or stepMinSwitchYards,
 				visitedRadius = tonumber(pt.visitedRadius) or stepVisitedRadius,
+				oI = pt.oI, -- carry through if present
 				__authorIndex = i,
 			})
 		end
@@ -519,6 +520,31 @@ local function _getHBD()
 	end
 	RQE._HBD = HBD or false
 	return RQE._HBD or nil
+end
+
+
+-- Check if an objective is complete
+local function IsObjectiveComplete(questID, objectiveIndex)
+	if not questID or not objectiveIndex then return false end
+	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	if not objectives or not objectives[objectiveIndex] then return false end
+	return objectives[objectiveIndex].finished
+end
+
+
+-- Filter hotspots so completed objectives are excluded
+local function FilterEligibleHotspots(questID, hotspots)
+	local results = {}
+	for _, hs in ipairs(hotspots) do
+		if hs.oI then
+			if not IsObjectiveComplete(questID, hs.oI) then
+				table.insert(results, hs)
+			end
+		else
+			table.insert(results, hs) -- always include if no objectiveIndex
+		end
+	end
+	return results
 end
 
 
@@ -665,6 +691,19 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 	local norm = RQE.WPUtil.NormalizeCoordinates(step)
 	if not norm or not norm.hotspots or #norm.hotspots == 0 then return nil end
 	local st = _stateFor(questID, stepIndex)
+
+	-- Filter out completed-objective hotspots if oI is present
+	norm.hotspots = FilterEligibleHotspots(questID, norm.hotspots)
+	if not norm.hotspots or #norm.hotspots == 0 then return nil end
+
+	-- Rebuild priorityBands from filtered hotspots
+	local bandSet, bands = {}, {}
+	for _,h in ipairs(norm.hotspots) do
+		if h.priority then bandSet[h.priority] = true end
+	end
+	for p,_ in pairs(bandSet) do table.insert(bands, p) end
+	table.sort(bands)
+	norm.priorityBands = bands
 
 	-- Throttle by time + movement (only if we can measure movement in yards)
 	local now = GetTime and GetTime() or 0
