@@ -52,10 +52,9 @@ end
 -- @param x: X-coordinate
 -- @param y: Y-coordinate
 -- @param mapID: ID of the map
--- @param title: Title of the waypoint
+-- @param title: Title of the waypoint (optional override)
 -- @return: Returns the created waypoint object
 function RQE:CreateWaypoint(x, y, mapID, title)
-	-- print("~~~ Waypoint Creation Function: 58 ~~~")
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
 	else
@@ -70,7 +69,6 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	if x and x > 1 then x = x / 100 end
 	if y and y > 1 then y = y / 100 end
 
-	-- Normalize once: accept either 0–1 or 0–100
 	local xNorm = (x and x > 1) and (x / 100) or x
 	local yNorm = (y and y > 1) and (y / 100) or y
 	if not (mapID and xNorm and yNorm) then return end
@@ -83,25 +81,52 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 		return
 	end
 
-	-- Title fallback uses supertracked quest
-	local questID  = (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) and C_SuperTrack.GetSuperTrackedQuestID() or 0
-	local questName = (questID ~= 0 and C_QuestLog.GetTitleForQuestID(questID)) or "Unknown"
-	local finalTitle = title or string.format('QID: %d, "%s"', questID, questName)
+	-- Default title: use supertracked quest
+	local questID  = (C_SuperTrack.IsSuperTrackingQuest() and C_SuperTrack.GetSuperTrackedQuestID())
+	local questData = questID and RQE.getQuestData(questID)
 
-	-- Replace any existing waypoint (TomTom + Blizzard pin)
-	if RQE.Waypoints and RQE.Waypoints.Replace then
-		RQE.Waypoints:Replace(mapID, xNorm, yNorm, finalTitle)
+	if not title and questData then
+		title = questData.title or ("Quest " .. tostring(questID))
+
+		-- Step-specific logic
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		local step = questData[stepIndex]
+
+		if step then
+			-- DirectionText has highest priority (do NOT override with wayText)
+			if step.directionText then
+				title = questID .. " " .. questData.title .. " - " .. step.directionText
+			elseif step.coordinateHotspots then
+				-- Look for a matching hotspot with wayText
+				for _, hotspot in ipairs(step.coordinateHotspots) do
+					local hx = (hotspot.x > 1) and (hotspot.x / 100) or hotspot.x
+					local hy = (hotspot.y > 1) and (hotspot.y / 100) or hotspot.y
+					if hotspot.mapID == mapID
+						and math.abs(hx - xNorm) < 1e-4
+						and math.abs(hy - yNorm) < 1e-4 then
+						if hotspot.wayText then
+							title = hotspot.wayText
+						end
+					end
+				end
+			end
+		end
 	end
-
-	-- Update normalized stash & last waypoint memo
-	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = xNorm, yNorm, mapID
-	RQE._lastWP = { mapID = mapID, x = xNorm, y = yNorm }
 
 	-- Create a Map Pin to represent the waypoint
 	--self:CreateMapPin(mapID, (x or 0) * 100, (y or 0) * 100)
 
 	RQE.debugLog("Exiting CreateWaypoint Function")
-	return { x = x, y = y, mapID = mapID, title = title }
+
+	-- Store last waypoint info
+	RQE._lastWP = { mapID = mapID, x = xNorm, y = yNorm, title = title }
+
+	-- Create with TomTom (if loaded)
+	if TomTom and TomTom.AddWaypoint then
+		return TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title or "Waypoint" })
+	elseif Nx and Nx.WaypointAdd then
+		return Nx:WaypointAdd(mapID, xNorm, yNorm, title or "Waypoint")
+	end
 end
 
 
