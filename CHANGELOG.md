@@ -7,6 +7,7 @@
 		- Improved waypoint reliability: fallback waypoints are now automatically created from Blizzard’s quest directions (2025.09.23)
 		- Objective-aware guidance and marking: hotspots (`oI`) and npcTargets (`obj`) tied to completed objectives are now automatically filtered out, improving accuracy and reducing noise (2025.09.24)
 		- Custom waypoint labels: coordinateHotspots may now include a wayText field. If present, the waypoint will display this custom text instead of the default “QID QuestName”. This allows authors to show context-specific guidance like “Collect the Book” or “Open the Chest” right on the map (2025.09.25)
+		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -31,6 +32,10 @@
 
 	RQE.toc
 		- Updated version# (2025.09.19)
+		- Added RQE_API.lua to the TOC call (2025.09.26)
+
+	RQE_API.lua
+		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
 
 	RQEFrame.lua
 		- Added check for if tracked quest was world quest so that the tooltip would only add an extra line above the RQE.SeparateStepText if it was not a world quest (2025.09.22)
