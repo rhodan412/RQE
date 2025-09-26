@@ -19,6 +19,7 @@ Usage:
 
 ]]
 
+
 -- API.lua
 RQE = RQE or {}
 RQE.API = RQE.API or {}
@@ -372,10 +373,46 @@ if major >= 11 then
 	RQE.API.GetQuestProgressBarInfo = function(questID)
 		return C_TaskQuest.GetQuestProgressBarInfo(questID)
 	end
+
+	-- Use: local questLines = RQE.API.GetAvailableQuestLines(uiMapID)	instead of: C_QuestLine.GetAvailableQuestLines(uiMapID)
+	RQE.API.GetAvailableQuestLines = function(uiMapID)
+		return C_QuestLine.GetAvailableQuestLines(uiMapID)
+	end
+
+	-- Use: local questIDs = RQE.API.GetForceVisibleQuests(uiMapID)	instead of: C_QuestLine.GetForceVisibleQuests(uiMapID)
+	RQE.API.GetForceVisibleQuests = function(uiMapID)
+		return C_QuestLine.GetForceVisibleQuests(uiMapID)
+	end
+
+	-- Use: local questIDs = RQE.API.GetQuestLineQuests(questLineID)	instead of: C_QuestLine.GetQuestLineQuests(questLineID)
+	RQE.API.GetQuestLineQuests = function(questLineID)
+		return C_QuestLine.GetQuestLineQuests(questLineID)
+	end
+
+	-- Use: local isComplete = RQE.API.IsQuestLineComplete(questLineID)	instead of: C_QuestLine.IsComplete(questLineID)
+	RQE.API.IsQuestLineComplete = function(questLineID)
+		return C_QuestLine.IsComplete(questLineID)
+	end
+
+	-- Use: local ignore = RQE.API.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID)	instead of: C_QuestLine.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID)
+	RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineID)
+		return C_QuestLine.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID)
+	end
+
+	-- Use: RQE.API.RequestQuestLinesForMap(uiMapID)	instead of: C_QuestLine.RequestQuestLinesForMap(uiMapID)
+	RQE.API.RequestQuestLinesForMap = function(uiMapID)
+		return C_QuestLine.RequestQuestLinesForMap(uiMapID)
+	end
 else
 	RQE.API.GetQuestLineInfo = function(questLineID, uiMapID) return nil end
 	RQE.API.GetQuestObjectiveInfo_Task = function(questID, objectiveIndex) return nil end
 	RQE.API.GetQuestProgressBarInfo = function(questID) return nil end
+	RQE.API.GetAvailableQuestLines = function(uiMapID) return {} end
+	RQE.API.GetForceVisibleQuests = function(uiMapID) return {} end
+	RQE.API.GetQuestLineQuests = function(questLineID) return {} end
+	RQE.API.IsQuestLineComplete = function(questLineID) return false end
+	RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineID) return false end
+	RQE.API.RequestQuestLinesForMap = function(uiMapID) return nil end
 end
 
 
@@ -424,6 +461,121 @@ if major >= 11 then
 	RQE.API.GetQuestRewardSpellInfo = function(questID, spellID)
 		return C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
 	end
+
+	-- Use: RQE.API.AbandonQuest()	instead of: C_QuestLog.AbandonQuest()
+	RQE.API.AbandonQuest = function()
+		return C_QuestLog.AbandonQuest()
+	end
+
+	-- Use: local canAbandon = RQE.API.CanAbandonQuest(questID)	instead of: C_QuestLog.CanAbandonQuest(questID)
+	RQE.API.CanAbandonQuest = function(questID)
+		return C_QuestLog.CanAbandonQuest(questID)
+	end
+
+	-- Use: local questID = RQE.API.GetAbandonQuest()	instead of: C_QuestLog.GetAbandonQuest()
+	RQE.API.GetAbandonQuest = function()
+		return C_QuestLog.GetAbandonQuest()
+	end
+
+	-- Use: local questIDs = RQE.API.GetAllCompletedQuestIDs()	instead of: C_QuestLog.GetAllCompletedQuestIDs()
+	RQE.API.GetAllCompletedQuestIDs = function()
+		return C_QuestLog.GetAllCompletedQuestIDs()
+	end
+
+	-- Use: local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)	instead of: C_QuestLog.GetLogIndexForQuestID(questID)
+	RQE.API.GetLogIndexForQuestID = function(questID)
+		return C_QuestLog.GetLogIndexForQuestID(questID)
+	end
+
+	-- Use: local questID = RQE.API.GetQuestIDForLogIndex(questLogIndex)	instead of: C_QuestLog.GetQuestIDForLogIndex(questLogIndex)
+	RQE.API.GetQuestIDForLogIndex = function(questLogIndex)
+		return C_QuestLog.GetQuestIDForLogIndex(questLogIndex)
+	end
+
+	-- Use: local requiredMoney = RQE.API.GetRequiredMoney(questID)	instead of: C_QuestLog.GetRequiredMoney(questID)
+	RQE.API.GetRequiredMoney = function(questID)
+		return C_QuestLog.GetRequiredMoney(questID)
+	end
+
+	-- Use: local ready = RQE.API.ReadyForTurnIn(questID)	instead of: C_QuestLog.ReadyForTurnIn(questID)
+	RQE.API.ReadyForTurnIn = function(questID)
+		return C_QuestLog.ReadyForTurnIn(questID)
+	end
+
+	-- Use: local isOnQuest = RQE.API.IsOnQuest(questID)	instead of: C_QuestLog.IsOnQuest(questID)
+	RQE.API.IsOnQuest = function(questID)
+		return C_QuestLog.IsOnQuest(questID)
+	end
+
+	-- Use: local isWorldQuest = RQE.API.IsWorldQuest(questID)	instead of: C_QuestLog.IsWorldQuest(questID)
+	RQE.API.IsWorldQuest = function(questID)
+		return C_QuestLog.IsWorldQuest(questID)
+	end
+
+	-- Use: local wasWatched = RQE.API.AddQuestWatch(questID) instead of: C_QuestLog.AddQuestWatch(questID)
+	RQE.API.AddQuestWatch = function(questID)
+		return C_QuestLog.AddQuestWatch(questID)
+	end
+
+	-- Use: local wasWatched = RQE.API.AddWorldQuestWatch(questID [, watchType]) instead of: C_QuestLog.AddWorldQuestWatch(...)
+	RQE.API.AddWorldQuestWatch = function(questID, watchType)
+		return C_QuestLog.AddWorldQuestWatch(questID, watchType)
+	end
+
+	-- Use: local awards = RQE.API.DoesQuestAwardReputationWithFaction(questID, factionID) instead of: C_QuestLog.DoesQuestAwardReputationWithFaction(...)
+	RQE.API.DoesQuestAwardReputationWithFaction = function(questID, factionID)
+		return C_QuestLog.DoesQuestAwardReputationWithFaction(questID, factionID)
+	end
+
+	-- Use: local items = RQE.API.GetAbandonQuestItems() instead of: C_QuestLog.GetAbandonQuestItems()
+	RQE.API.GetAbandonQuestItems = function()
+		return C_QuestLog.GetAbandonQuestItems()
+	end
+
+	-- Use: local maps = RQE.API.GetActiveThreatMaps() instead of: C_QuestLog.GetActiveThreatMaps()
+	RQE.API.GetActiveThreatMaps = function()
+		return C_QuestLog.GetActiveThreatMaps()
+	end
+
+	-- Use: local bounties = RQE.API.GetBountiesForMapID(uiMapID) instead of: C_QuestLog.GetBountiesForMapID(uiMapID)
+	RQE.API.GetBountiesForMapID = function(uiMapID)
+		return C_QuestLog.GetBountiesForMapID(uiMapID)
+	end
+
+	-- Use: local info = RQE.API.GetBountySetInfoForMapID(uiMapID) instead of: C_QuestLog.GetBountySetInfoForMapID(uiMapID)
+	RQE.API.GetBountySetInfoForMapID = function(uiMapID)
+		return C_QuestLog.GetBountySetInfoForMapID(uiMapID)
+	end
+
+	-- Use: local dist, onContinent = RQE.API.GetDistanceSqToQuest(questID) instead of: C_QuestLog.GetDistanceSqToQuest(questID)
+	RQE.API.GetDistanceSqToQuest = function(questID)
+		return C_QuestLog.GetDistanceSqToQuest(questID)
+	end
+
+	-- Use: local index = RQE.API.GetHeaderIndexForQuest(questID) instead of: C_QuestLog.GetHeaderIndexForQuest(questID)
+	RQE.API.GetHeaderIndexForQuest = function(questID)
+		return C_QuestLog.GetHeaderIndexForQuest(questID)
+	end
+
+	-- Use: local uiMapID = RQE.API.GetMapForQuestPOIs() instead of: C_QuestLog.GetMapForQuestPOIs()
+	RQE.API.GetMapForQuestPOIs = function()
+		return C_QuestLog.GetMapForQuestPOIs()
+	end
+
+	-- Use: local max = RQE.API.GetMaxNumQuests() instead of: C_QuestLog.GetMaxNumQuests()
+	RQE.API.GetMaxNumQuests = function()
+		return C_QuestLog.GetMaxNumQuests()
+	end
+
+	-- Use: local max = RQE.API.GetMaxNumQuestsCanAccept() instead of: C_QuestLog.GetMaxNumQuestsCanAccept()
+	RQE.API.GetMaxNumQuestsCanAccept = function()
+		return C_QuestLog.GetMaxNumQuestsCanAccept()
+	end
+
+	-- Use: local mapID, x, y = RQE.API.GetNextWaypoint(questID) instead of: C_QuestLog.GetNextWaypoint(questID)
+	RQE.API.GetNextWaypoint = function(questID)
+		return C_QuestLog.GetNextWaypoint(questID)
+	end
 else
 
 	-- Use: local numObjectives = RQE.API.GetNumQuestObjectives(questID)	instead of: C_QuestLog.GetNumQuestObjectives(questID)
@@ -440,6 +592,174 @@ else
 	RQE.API.GetQuestObjectiveInfo = function(questID, objectiveIndex, displayProgressText) return nil end
 	RQE.API.GetQuestLogRewardInfo = function(index, questID) return nil end
 	RQE.API.GetQuestRewardSpellInfo = function(questID, spellID) return nil end
+	RQE.API.AbandonQuest = function() return nil end
+	RQE.API.CanAbandonQuest = function(questID) return false end
+	RQE.API.GetAbandonQuest = function() return nil end
+	RQE.API.GetAllCompletedQuestIDs = function() return {} end
+	RQE.API.GetLogIndexForQuestID = function(questID) return nil end
+	RQE.API.GetQuestIDForLogIndex = function(questLogIndex) return nil end
+	RQE.API.GetRequiredMoney = function(questID) return 0 end
+	RQE.API.ReadyForTurnIn = function(questID) return false end
+	RQE.API.IsOnQuest = function(questID) return false end
+	RQE.API.IsWorldQuest = function() return nil end
+	RQE.API.AddQuestWatch = function(questID) return false end
+	RQE.API.AddWorldQuestWatch = function(questID, watchType) return false end
+	RQE.API.DoesQuestAwardReputationWithFaction = function(questID, factionID) return false end
+	RQE.API.GetAbandonQuestItems = function() return {} end
+	RQE.API.GetActiveThreatMaps = function() return {} end
+	RQE.API.GetBountiesForMapID = function(uiMapID) return {} end
+	RQE.API.GetBountySetInfoForMapID = function(uiMapID) return nil end
+	RQE.API.GetDistanceSqToQuest = function(questID) return 0, false end
+	RQE.API.GetHeaderIndexForQuest = function(questID) return nil end
+	RQE.API.GetMapForQuestPOIs = function() return nil end
+	RQE.API.GetMaxNumQuests = function() return 20 end
+	RQE.API.GetMaxNumQuestsCanAccept = function() return 20 end
+	RQE.API.GetNextWaypoint = function(questID) return nil, nil, nil end
+	RQE.API.GetNumQuestWatches = function() return 0 end
+	RQE.API.GetNumWorldQuestWatches = function() return 0 end
+	RQE.API.GetQuestAdditionalHighlights = function(questID) return nil end
+	RQE.API.GetQuestDetailsTheme = function(questID) return nil end
+	RQE.API.GetQuestDifficultyLevel = function(questID) return nil end
+	RQE.API.GetQuestIDForQuestWatchIndex = function(index) return nil end
+	RQE.API.GetQuestIDForWorldQuestWatchIndex = function(index) return nil end
+	RQE.API.GetQuestLogMajorFactionReputationRewards = function(questID) return {} end
+	RQE.API.GetQuestLogPortraitGiver = function(questLogIndex) return nil end
+	RQE.API.GetQuestRewardCurrencies = function(questID) return {} end
+	RQE.API.GetQuestRewardCurrencyInfo = function(questID, index, isChoice) return nil end
+	RQE.API.GetQuestsOnMap = function(uiMapID) return {} end
+	RQE.API.GetQuestTagInfo = function(questID) return nil end
+	RQE.API.GetQuestType = function(questID) return nil end
+	RQE.API.GetQuestWatchType = function(questID) return nil end
+	RQE.API.GetSelectedQuest = function() return nil end
+	RQE.API.GetSuggestedGroupSize = function(questID) return nil end
+	RQE.API.GetTimeAllowed = function(questID) return nil, nil end
+	RQE.API.GetTitleForLogIndex = function(index) return nil end
+	RQE.API.GetZoneStoryInfo = function(uiMapID) return nil, nil end
+	RQE.API.HasActiveThreats = function() return false end
+	RQE.API.IsComplete = function(questID) return false end
+	RQE.API.IsFailed = function(questID) return false end
+	RQE.API.IsImportantQuest = function(questID) return false end
+	RQE.API.IsQuestTrivial = function(questID) return false end
+	RQE.API.IsRepeatableQuest = function(questID) return false end
+	RQE.API.UnitIsRelatedToActiveQuest = function(unit) return false end
+end
+
+
+-------------------------------------------------
+-- 🤝 Quest Session APIs
+-------------------------------------------------
+
+if major >= 11 then
+	-- Use: local allowed = RQE.API.CanStartQuestSession()	instead of: C_QuestSession.CanStart()
+	RQE.API.CanStartQuestSession = function()
+		return C_QuestSession.CanStart()
+	end
+
+	-- Use: local exists = RQE.API.QuestSessionExists()	instead of: C_QuestSession.Exists()
+	RQE.API.QuestSessionExists = function()
+		return C_QuestSession.Exists()
+	end
+
+	-- Use: local hasJoined = RQE.API.QuestSessionHasJoined()	instead of: C_QuestSession.HasJoined()
+	RQE.API.QuestSessionHasJoined = function()
+		return C_QuestSession.HasJoined()
+	end
+
+	-- Use: RQE.API.RequestSessionStart()	instead of: C_QuestSession.RequestSessionStart()
+	RQE.API.RequestSessionStart = function()
+		return C_QuestSession.RequestSessionStart()
+	end
+
+	-- Use: RQE.API.RequestSessionStop()	instead of: C_QuestSession.RequestSessionStop()
+	RQE.API.RequestSessionStop = function()
+		return C_QuestSession.RequestSessionStop()
+	end
+else
+	RQE.API.CanStartQuestSession = function() return false end
+	RQE.API.QuestSessionExists = function() return false end
+	RQE.API.QuestSessionHasJoined = function() return false end
+	RQE.API.RequestSessionStart = function() return nil end
+	RQE.API.RequestSessionStop = function() return nil end
+end
+
+
+-------------------------------------------------
+-- 🗂️ Quest Task APIs
+-------------------------------------------------
+
+if major >= 11 then
+	-- Use: local taskPOIs = RQE.API.GetQuestsOnMap(uiMapID)	instead of: C_TaskQuest.GetQuestsOnMap(uiMapID)
+	RQE.API.GetQuestsOnMap_Task = function(uiMapID)
+		return C_TaskQuest.GetQuestsOnMap(uiMapID)
+	end
+
+	-- Use: local minutesLeft = RQE.API.GetQuestTimeLeftMinutes(questID)	instead of: C_TaskQuest.GetQuestTimeLeftMinutes(questID)
+	RQE.API.GetQuestTimeLeftMinutes = function(questID)
+		return C_TaskQuest.GetQuestTimeLeftMinutes(questID)
+	end
+
+	-- Use: local secondsLeft = RQE.API.GetQuestTimeLeftSeconds(questID)	instead of: C_TaskQuest.GetQuestTimeLeftSeconds(questID)
+	RQE.API.GetQuestTimeLeftSeconds = function(questID)
+		return C_TaskQuest.GetQuestTimeLeftSeconds(questID)
+	end
+
+	-- Use: local active = RQE.API.IsTaskQuestActive(questID)	instead of: C_TaskQuest.IsActive(questID)
+	RQE.API.IsTaskQuestActive = function(questID)
+		return C_TaskQuest.IsActive(questID)
+	end
+
+	-- Use: local shows = RQE.API.DoesMapShowTaskQuestObjectives(uiMapID)	instead of: C_TaskQuest.DoesMapShowTaskQuestObjectives(uiMapID)
+	RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID)
+		return C_TaskQuest.DoesMapShowTaskQuestObjectives(uiMapID)
+	end
+
+	-- Use: local widgetSet = RQE.API.GetQuestIconUIWidgetSet(questID)	instead of: C_TaskQuest.GetQuestIconUIWidgetSet(questID)
+	RQE.API.GetQuestIconUIWidgetSet = function(questID)
+		return C_TaskQuest.GetQuestIconUIWidgetSet(questID)
+	end
+
+	-- Use: local title, factionID, capped, displayAsObjective = RQE.API.GetQuestInfoByQuestID(questID)	instead of: C_TaskQuest.GetQuestInfoByQuestID(questID)
+	RQE.API.GetQuestInfoByQuestID = function(questID)
+		return C_TaskQuest.GetQuestInfoByQuestID(questID)
+	end
+
+	-- Use: local x, y = RQE.API.GetQuestLocation(questID, uiMapID)	instead of: C_TaskQuest.GetQuestLocation(questID, uiMapID)
+	RQE.API.GetQuestLocation = function(questID, uiMapID)
+		return C_TaskQuest.GetQuestLocation(questID, uiMapID)
+	end
+
+	-- Use: local widgetSet = RQE.API.GetQuestTooltipUIWidgetSet(questID)	instead of: C_TaskQuest.GetQuestTooltipUIWidgetSet(questID)
+	RQE.API.GetQuestTooltipUIWidgetSet = function(questID)
+		return C_TaskQuest.GetQuestTooltipUIWidgetSet(questID)
+	end
+
+	-- Use: local uiMapID = RQE.API.GetQuestZoneID(questID)	instead of: C_TaskQuest.GetQuestZoneID(questID)
+	RQE.API.GetQuestZoneID = function(questID)
+		return C_TaskQuest.GetQuestZoneID(questID)
+	end
+
+	-- Use: local quests = RQE.API.GetThreatQuests()	instead of: C_TaskQuest.GetThreatQuests()
+	RQE.API.GetThreatQuests = function()
+		return C_TaskQuest.GetThreatQuests()
+	end
+
+	-- Use: RQE.API.RequestPreloadRewardData(questID)	instead of: C_TaskQuest.RequestPreloadRewardData(questID)
+	RQE.API.RequestPreloadRewardData = function(questID)
+		return C_TaskQuest.RequestPreloadRewardData(questID)
+	end
+else
+	RQE.API.GetQuestsOnMap_Task = function(uiMapID) return {} end
+	RQE.API.GetQuestTimeLeftMinutes = function(questID) return 0 end
+	RQE.API.GetQuestTimeLeftSeconds = function(questID) return 0 end
+	RQE.API.IsTaskQuestActive = function(questID) return false end
+	RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID) return false end
+	RQE.API.GetQuestIconUIWidgetSet = function(questID) return nil end
+	RQE.API.GetQuestInfoByQuestID = function(questID) return nil end
+	RQE.API.GetQuestLocation = function(questID, uiMapID) return nil, nil end
+	RQE.API.GetQuestTooltipUIWidgetSet = function(questID) return nil end
+	RQE.API.GetQuestZoneID = function(questID) return nil end
+	RQE.API.GetThreatQuests = function() return {} end
+	RQE.API.RequestPreloadRewardData = function(questID) return nil end
 end
 
 
@@ -491,12 +811,37 @@ if major >= 11 then
 
 else
 	-- Classic (1.13.2 etc.) – Scenarios don’t exist here, return nil or empty
-
 	RQE.API.GetScenarioInfo = function() return nil end
 	RQE.API.GetScenarioStepInfo = function(_) return nil end
 	RQE.API.GetCriteriaInfo = function(_) return nil end
 	RQE.API.GetCriteriaInfoByStep = function(_, _) return nil end
 	RQE.API.GetJailersTowerTypeString = function(_) return nil end
+end
+
+
+-------------------------------------------------
+-- 🎯 SuperTrack APIs
+-------------------------------------------------
+
+if major >= 11 then
+	-- Use: RQE.API.ClearAllSuperTracked()	instead of: C_SuperTrack.ClearAllSuperTracked()
+	RQE.API.ClearAllSuperTracked = function()
+		return C_SuperTrack.ClearAllSuperTracked()
+	end
+
+	-- Use: local name = RQE.API.GetSuperTrackedItemName()	instead of: C_SuperTrack.GetSuperTrackedItemName()
+	RQE.API.GetSuperTrackedItemName = function()
+		return C_SuperTrack.GetSuperTrackedItemName()
+	end
+
+	-- Use: local isTracking = RQE.API.IsSuperTrackingAnything()	instead of: C_SuperTrack.IsSuperTrackingAnything()
+	RQE.API.IsSuperTrackingAnything = function()
+		return C_SuperTrack.IsSuperTrackingAnything()
+	end
+else
+	RQE.API.ClearAllSuperTracked = function() return nil end
+	RQE.API.GetSuperTrackedItemName = function() return nil end
+	RQE.API.IsSuperTrackingAnything = function() return false end
 end
 
 
@@ -547,7 +892,7 @@ else
 	RQE.API.UnitName = function(unit)
 		return UnitName(unit)
 	end
-endGetNextWaypoint
+end
 
 
 -------------------------------------------------
