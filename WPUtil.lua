@@ -23,7 +23,6 @@ RQE.posY = nil
 
 local HBD = LibStub and LibStub("HereBeDragons-2.0", true)
 
-
 -- Forward declarations for locals referenced before their definitions
 local _playerDistanceSqFlexible
 local _dbgEligibleBands
