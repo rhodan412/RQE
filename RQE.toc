@@ -70,3 +70,6 @@ RQEFrame.lua
 
 # Waypoint and Map Modules
 WaypointManager.lua
+
+# API Module
+RQE_API.lua
