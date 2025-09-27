@@ -36,6 +36,7 @@
 
 	RQE_API.lua
 		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
+		- Added and updated API calls and saving them to a table (2025.09.27)
 
 	RQEFrame.lua
 		- Added check for if tracked quest was world quest so that the tooltip would only add an extra line above the RQE.SeparateStepText if it was not a world quest (2025.09.22)
