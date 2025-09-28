@@ -8,6 +8,7 @@
 		- Objective-aware guidance and marking: hotspots (`oI`) and npcTargets (`obj`) tied to completed objectives are now automatically filtered out, improving accuracy and reducing noise (2025.09.24)
 		- Custom waypoint labels: coordinateHotspots may now include a wayText field. If present, the waypoint will display this custom text instead of the default “QID QuestName”. This allows authors to show context-specific guidance like “Collect the Book” or “Open the Chest” right on the map (2025.09.25)
 		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
+		- Waypoint labels are now more consistent: when Blizzard directions or DB hotspots aren’t available, fallback waypoints always use “QID: ###, Quest Name” instead of sometimes reverting to just the quest name (2025.09.27)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -25,6 +26,7 @@
 		- Updated ZONE_CHANGED_NEW_AREA handling: RQE.WPUtil.ClearHotspotState now performs a full reset of visited hotspot states only for single-zone quest steps. For multi-zone quest steps (DB entries with hotspots across multiple mapIDs), it uses a light reset to preserve visited progress (2025-09-23)
 		- Added delayed waypoint creation in EventManager.lua: when a super-tracked quest provides waypointText, RQE now waits 5 seconds before calling CreateUnknownQuestWaypointWithDirectionText, ensuring a fallback waypoint is placed using Blizzard’s direction text. (2025.09.23)
 		- Added an UpdateFrame() function call within QUEST_WATCH_LIST_CHANGED event function higher up in the function (2025.09.23)
+		- Added forced refresh of supertracked waypoint by removing the simulates RWButton click and then call instead ForceWaypointForSupertracked with a short delay to ensure the correct waypoint is set. (2025.09.27)
 
 	QuestingModule.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -46,10 +48,12 @@
 		- Added additional quests including questID 72396 that has multi-map visited bands support (2025.09.23)
 		- Updated some of the profession quests to better handle coordinateHotspots and the applicable waypoint(s) in the DB entries (2025.09.23)
 		- Fixed some quests in DB for Elwynn Forest (2025.09.23)
-		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [Core.lua] (2025.09.24)
+		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [see Core.lua] (2025.09.24)
 
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
+		- Updated RQE:CreateWaypoint(): default title now uses GetWaypointTitle() so fallbacks are always in “QID: ###, Quest Name” format instead of plain questName. (2025.09.27)
+		- Adjusted duplicate-coordinate skip logic: waypoint is only skipped if both coordinates and title match, allowing title refresh without coordinate change. (2025.09.27)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
@@ -59,6 +63,7 @@
 		- Rebuilds `priorityBands` after filtering to keep band/debug logic accurate; preserves `minSwitchYards` / `visitedRadius` per hotspot (2025.09.24)
 		- Added a safety guard so throttled early-returns don’t reference a filtered-out hotspot (2025.09.24)
 		- Fixed a rare crash in SelectBestHotspot: if a hotspot tied to a completed objective was filtered out, the function could still reference an invalid st.currentIdx. The index is now validated after filtering, preventing nil errors and ensuring a new hotspot is properly reselected. (2025.09.24)
+		- EnsureWaypointForSupertracked() now passes a title from GetWaypointTitle() instead of nil, preventing unwanted fallbacks to plain questName. (2025.09.27)
 
 
 11.2.0.6 (2025.09.19)
