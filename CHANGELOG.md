@@ -27,6 +27,7 @@
 		- Added delayed waypoint creation in EventManager.lua: when a super-tracked quest provides waypointText, RQE now waits 5 seconds before calling CreateUnknownQuestWaypointWithDirectionText, ensuring a fallback waypoint is placed using Blizzard’s direction text. (2025.09.23)
 		- Added an UpdateFrame() function call within QUEST_WATCH_LIST_CHANGED event function higher up in the function (2025.09.23)
 		- Added forced refresh of supertracked waypoint by removing the simulates RWButton click and then call instead ForceWaypointForSupertracked with a short delay to ensure the correct waypoint is set. (2025.09.27)
+		- Added NAVIGATION_DESTINATION_REACHED and NEW_WMO_CHUNK event functions for the updating of the RQEFrame and waypoint via the SeparateButton as DirectionText would get updating [leaving SW Mage Tower/Wizard's Sanctum] and not update waypointText correctly (2025.09.27)
 
 	QuestingModule.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -49,6 +50,7 @@
 		- Updated some of the profession quests to better handle coordinateHotspots and the applicable waypoint(s) in the DB entries (2025.09.23)
 		- Fixed some quests in DB for Elwynn Forest (2025.09.23)
 		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [see Core.lua] (2025.09.24)
+		- Added additional quests in Legion and Duskwood (2025.09.27)
 
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
