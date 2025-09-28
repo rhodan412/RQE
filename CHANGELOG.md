@@ -28,6 +28,7 @@
 		- Added an UpdateFrame() function call within QUEST_WATCH_LIST_CHANGED event function higher up in the function (2025.09.23)
 		- Added forced refresh of supertracked waypoint by removing the simulates RWButton click and then call instead ForceWaypointForSupertracked with a short delay to ensure the correct waypoint is set. (2025.09.27)
 		- Added NAVIGATION_DESTINATION_REACHED and NEW_WMO_CHUNK event functions for the updating of the RQEFrame and waypoint via the SeparateButton as DirectionText would get updating [leaving SW Mage Tower/Wizard's Sanctum] and not update waypointText correctly (2025.09.27)
+		- Fixed issue with SUPER_TRACKING_CHANGED where RQEFrame bits weren't updating properly when RQEQuestFrame wasn't visible [mythicMode enabled] (2025.09.27)
 
 	QuestingModule.lua
 		- Cleaned up spacing in the code (2025.09.22)
