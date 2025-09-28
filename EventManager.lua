@@ -3046,10 +3046,16 @@ function RQE.handleSuperTracking()
 		end
 	end
 
-	-- Simulate clicking the RWButton
-	if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
-		RQE.RWButton:GetScript("OnClick")()
-	end
+	-- -- Simulate clicking the RWButton
+	-- if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
+		-- RQE.RWButton:GetScript("OnClick")()
+	-- end
+
+	C_Timer.After(0.05, function()
+		local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		local pid = C_Map.GetBestMapForUnit("player")
+		RQE:ForceWaypointForSupertracked(qid, pid)
+	end)
 
 	-- Checks to make sure if UpdateFrame occurred as a result of more information in the code above with StepsText, CoordsText and MapIDs. If so, this doesn't need to also run
 	if not RQE.SuperTrackUpdatingFrameWithStepTextInfo then
