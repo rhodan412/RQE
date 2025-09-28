@@ -403,9 +403,14 @@ function RQE:EnsureWaypointForSupertracked()
 		return
 	end
 
+	-- -- Switch: replace the live waypoint
+	-- RQE._currentHotspotIdx = idx
+	-- RQE:CreateWaypoint(xNorm, yNorm, mapID, nil)
+
 	-- Switch: replace the live waypoint
 	RQE._currentHotspotIdx = idx
-	RQE:CreateWaypoint(xNorm, yNorm, mapID, nil)
+	local ttl = RQE:GetWaypointTitle(C_SuperTrack.GetSuperTrackedQuestID(), mapID, xNorm, yNorm)
+	RQE:CreateWaypoint(xNorm, yNorm, mapID, ttl)
 end
 
 
