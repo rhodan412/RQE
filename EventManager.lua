@@ -47,6 +47,7 @@ local Frame = CreateFrame("Frame")
 -- Define a list of events to register
 local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
+	-- "AREA_POIS_UPDATED",
 	"ADDON_LOADED",
 	"BAG_NEW_ITEMS_UPDATED",
 	"BAG_UPDATE",
@@ -56,6 +57,7 @@ local eventsToRegister = {
 	"CONTENT_TRACKING_UPDATE",
 	"CRITERIA_EARNED",
 	"ENCOUNTER_END",
+	-- "FOG_OF_WAR_UPDATED",
 	"GARRISON_MISSION_COMPLETE_RESPONSE",
 	"GOSSIP_CLOSED",
 	-- "GOSSIP_CONFIRM",
@@ -68,6 +70,8 @@ local eventsToRegister = {
 	"MAIL_SUCCESS",
 	"MERCHANT_UPDATE",
 	"MINIMAP_UPDATE_ZOOM",
+	"NAVIGATION_DESTINATION_REACHED",
+	"NEW_WMO_CHUNK",
 	--"OBJECT_ENTERED_AOI",
 	--"OBJECT_LEFT_AOI",
 	"PLAYER_CONTROL_GAINED",
@@ -118,7 +122,9 @@ local eventsToRegister = {
 	-- "UPDATE_SHAPESHIFT_COOLDOWN",
 	-- "UPDATE_SHAPESHIFT_FORM",
 	-- "UPDATE_UI_WIDGET",
+	-- "USER_WAYPOINT_UPDATED",
 	"VARIABLES_LOADED",
+	-- "WAYPOINT_UPDATE",
 	"WORLD_STATE_TIMER_START",
 	"WORLD_STATE_TIMER_STOP",
 	"ZONE_CHANGED",
@@ -171,6 +177,7 @@ local function HandleEvents(frame, event, ...)
 
 	local handlers = {
 		ACHIEVEMENT_EARNED = RQE.handleAchievementTracking,
+		AREA_POIS_UPDATED = RQE.handleAreaPOI,
 		ADDON_LOADED = RQE.handleAddonLoaded,
 		BAG_NEW_ITEMS_UPDATED = RQE.BagNewItemsAdded,
 		BAG_UPDATE = RQE.ReagentBagUpdate,
@@ -180,6 +187,7 @@ local function HandleEvents(frame, event, ...)
 		CONTENT_TRACKING_UPDATE = RQE.handleContentUpdate,
 		CRITERIA_EARNED = RQE.handleCriteriaEarned,
 		ENCOUNTER_END = RQE.handleBossKill,
+		FOG_OF_WAR_UPDATED = RQE.handleFogOfWarUpdate,
 		GARRISON_MISSION_COMPLETE_RESPONSE = RQE.handleGarrisonMissionComplete,
 		GOSSIP_CLOSED = RQE.handleGossipClosed,
 		--GOSSIP_CONFIRM = RQE.handleGossipConfirm,
@@ -192,6 +200,8 @@ local function HandleEvents(frame, event, ...)
 		MAIL_SUCCESS = RQE.handleMailSuccess,
 		MERCHANT_UPDATE = RQE.handleMerchantUpdate,
 		MINIMAP_UPDATE_ZOOM =  RQE.handleMiniMapZoom,
+		NAVIGATION_DESTINATION_REACHED = RQE.handleNavDestinationReached,
+		NEW_WMO_CHUNK = RQE.handleNewWMOChunk,
 		OBJECT_ENTERED_AOI = RQE.handleObjectEnteredLeft,
 		OBJECT_LEFT_AOI = RQE.handleObjectEnteredLeft,
 		PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
@@ -242,7 +252,9 @@ local function HandleEvents(frame, event, ...)
 		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
 		UPDATE_SHAPESHIFT_FORM = RQE.handleUpdateShapeShiftForm,
 		-- UPDATE_UI_WIDGET = RQE.handleUpdateWidgetID,
+		USER_WAYPOINT_UPDATED = RQE.handleUserWaypointUpdated,
 		VARIABLES_LOADED = RQE.handleVariablesLoaded,
+		WAYPOINT_UPDATE = RQE.handleWaypointUpdate,
 		WORLD_STATE_TIMER_START = RQE.handleWorldStateTimerStart,
 		WORLD_STATE_TIMER_STOP = RQE.handleWorldStateTimerStop,
 		ZONE_CHANGED = RQE.handleZoneChange,
@@ -343,6 +355,13 @@ function RQE.handleTrackedAchieveUpdate(achievementID, criteriaID, elapsed, dura
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: TRACKED_ACHIEVEMENT_UPDATE event triggered for achievementID: " .. tostring(achievementID) .. ", criteriaID: " .. tostring(criteriaID) .. ", elapsed: " .. tostring(elapsed) .. ", duration: " .. tostring(duration), 0xFA, 0x80, 0x72) -- Salmon color		
 	end
 	RQE.UpdateTrackedAchievementList()
+end
+
+
+-- Handles the FOG_OF_WAR_UPDATED event function
+function RQE.handleFogOfWarUpdate()
+	if IsFlying("player") then return end
+	if IsMounted() then return end
 end
 
 
@@ -1396,6 +1415,11 @@ function RQE.handlePlayerLogin()
 end
 
 
+-- Handles the AREA_POIS_UPDATED event function
+function RQE.handleAreaPOI()
+end
+
+
 -- Function to handle ADDON_LOADED
 -- Fires after an AddOn has been loaded and is typically the first event to fire (running after all .lua files have been run and SavedVariables have loaded)
 function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
@@ -1426,6 +1450,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.isCheckingMacroContents = false
 	RQE.OkayCheckBonusQuests = false
 	RQE.OkayToUpdateFollowingTrack = true
+	RQE.NavigationDestinationReached = false
 	RQE.NearestFlightMasterSet = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
@@ -1794,6 +1819,11 @@ function RQE.handleStartTimer(...)
 end
 
 
+-- Handles the WAYPOINT_UPDATE event Function
+function RQE.handleWaypointUpdate()
+end
+
+
 -- Function to handle WORLD_STATE_TIMER_START:
 function RQE.handleWorldStateTimerStart(...)
 	local event = select(2, ...)
@@ -1902,7 +1932,7 @@ end
 -- Handles the MINIMAP_UPDATE_ZOOM event
 -- Fired when the minimap scaling factor is changed. This happens, generally, whenever the player moves indoors from outside, or vice versa. To test the player's location, compare the minimapZoom and minimapInsideZoom CVars with the current minimap zoom level (see Minimap:GetZoom). 
 function RQE.handleMiniMapZoom()
-	--print("[RQE] handleMiniMapZoom() firing")
+	-- print("[RQE] handleMiniMapZoom() firing")
 
 	-- Persistent state to avoid redundant checks
 	local lastCheckedZone = ""
@@ -2017,6 +2047,44 @@ function RQE.handleMiniMapZoom()
 	end
 end
 
+
+-- Handles the NAVIGATION_DESTINATION_REACHED event function
+function RQE.handleNavDestinationReached(...)
+	local event = select(2, ...)
+	local isWaypoint = select(3, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	RQE.NavigationDestinationReached = true
+end
+
+
+-- Handles the NEW_WMO_CHUNK event function
+function RQE.handleNewWMOChunk()
+	if IsFlying("player") then return end
+	if IsMounted() then return end
+
+	C_Timer.After(1.4, function()
+		if RQE.NavigationDestinationReached then
+			UpdateFrame()
+			RQE.CheckAndClickSeparateWaypointButtonButton()
+			RQE.NavigationDestinationReached = false
+		end
+	end)
+end
 
 
 -- Function that handles OBJECT_ENTERED_AOI and OBJECT_LEFT_AOI
@@ -2336,6 +2404,11 @@ function RQE.handleUpdateWidgetID(...)
 			end
 		end
 	end
+end
+
+
+-- Handles the USER_WAYPOINT_UPDATED event function
+function RQE.handleUserWaypointUpdated()
 end
 
 
@@ -3442,6 +3515,8 @@ function RQE.handleZoneChange(...)
 				-- end)
 			end
 		end)
+		UpdateFrame()
+		RQE.CheckAndClickSeparateWaypointButtonButton()
 	end
 
 	-- RQE:UpdateMapIDDisplay()
