@@ -95,7 +95,7 @@ local eventsToRegister = {
 	"QUEST_FINISHED",
 	"QUEST_LOG_CRITERIA_UPDATE",
 	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
-	"QUEST_LOOT_RECEIVED",
+	"QUEST_LOOT_RECEIVED",		-- ONLY AVAILABLE in RETAIL (7.0.3+)
 	-- "QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
 	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
@@ -106,7 +106,7 @@ local eventsToRegister = {
 	"SCENARIO_CRITERIA_UPDATE",
 	"SCENARIO_UPDATE",
 	"START_TIMER",
-	"SUPER_TRACKING_CHANGED",
+	"SUPER_TRACKING_CHANGED",	-- USE: SUPER_TRACKED_QUEST_CHANGED for classic projects
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
 	"TRACKED_RECIPE_UPDATE",
@@ -2864,19 +2864,29 @@ function RQE.handleSuperTracking()
 		else
 			local superQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		end
+
+		UpdateFrame()	-- Necessary for updating RQEFrame when in mythicMode
 		RQE:ClearStepsTextInFrame()
+
+		-- Reset step index and related state when super-tracking changes in mythicMode
+		RQE.LastClickedIdentifier = nil
+		RQE.CurrentStepIndex = 1
+		RQE.AddonSetStepIndex = 1
+		RQE.LastClickedButtonRef = nil
+		RQE.previousSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
 		-- Check if TomTom is loaded and compatibility is enabled and if so to clear the waypoint
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
-		UpdateFrame()
+
 		if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
 		RQE:StartPeriodicChecks()
 		return
 	end
-		
+
 	-- Update Display of Memory Usage of Addon
 	if RQE.db and RQE.db.profile.displayRQEmemUsage then
 		RQE:CheckMemoryUsage()
@@ -3152,6 +3162,10 @@ function RQE.handleSuperTracking()
 
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
+
+	C_Timer.After(1.5, function()
+		UpdateFrame()
 	end)
 
 	RQE.OkayCheckBonusQuests = false
