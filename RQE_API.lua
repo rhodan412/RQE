@@ -1,4 +1,5 @@
 --[[
+
 RQE_API.lua
 Centralized API abstraction layer for Rhodan's Quest Explorer (RQE)
 
