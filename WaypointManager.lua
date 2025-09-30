@@ -106,8 +106,11 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 					if hotspot.mapID == mapID
 						and math.abs(hx - xNorm) < 1e-4
 						and math.abs(hy - yNorm) < 1e-4 then
-						if hotspot.wayText then
+						if hotspot.wayText and hotspot.wayText ~= "" then
 							title = hotspot.wayText
+						else
+							-- fallback if wayText is missing or empty
+							title = step.description or questData.title or ("Quest " .. tostring(questID))
 						end
 					end
 				end
@@ -135,6 +138,7 @@ end
 -- Main function to determine which method to use based on waypoint text
 function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	-- print("~~~ Waypoint Creation Function: 92 ~~~")
+
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
 	else
@@ -183,6 +187,7 @@ end
 -- Create a Waypoint when searching for a quest based on the location coordinates in the DB file
 function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 	-- print("~~~ Waypoint Creation Function: 132 ~~~")
+
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
 	else
@@ -270,7 +275,8 @@ end
 
 -- Create a Waypoint when there is Direction Text available
 function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
-	-- print("~~~ Waypoint Creation Function: 213 ~~~")
+	-- print("~~~ Waypoint Creation Function: 276 ~~~")
+
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
 	else
@@ -294,8 +300,11 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		end
 	end
 
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-	local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = questID > 0 and string.format('QID: %d, "%s"', questID, questName or "Unknown") or "Unknown Quest"
+	-- local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	-- local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = questID > 0 and string.format('QID: %d, "%s"', questID, questName or "Unknown") or "Unknown Quest"
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("waypointTitle - 302: " .. tostring(waypointTitle))
+	-- end
 
 	-- 2) Exclusions / hidden quest type
 	local qType = C_QuestLog.GetQuestType(questID)
@@ -390,6 +399,11 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
 
+	-- Bail out early if there is no actual direction text
+	if (not blizzWaypointText or blizzWaypointText == "") and (not RQE.DirectionText or RQE.DirectionText == "" or RQE.DirectionText == "No direction available.") then
+		return RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+	end
+
 	-- Helper to trim overly long strings so the arrow doesn't hard-truncate mid-word
 	local function ellipsize(s, max)
 		if not s or s == "" then return nil end
@@ -402,6 +416,9 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	local arrowTitle
 	do
 		-- Keep the quest name fairly short; put the guidance after an em dash.
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~~ wayText fix: 417 ~~~~")
+		end
 		local left  = ("QID %d — %s"):format(questID, ellipsize(questName, 28))
 		local right = blizzWaypointText and ellipsize(blizzWaypointText, 48) or nil
 
@@ -416,6 +433,9 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	local debugTitle = arrowTitle
 	if blizzWaypointText and blizzWaypointText ~= "" then
 		-- Build a clean two-line preview for chat/debug
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~~ wayText fix: 432 ~~~~")
+		end
 		debugTitle = ("QID %d — %s\n%s"):format(questID, questName, blizzWaypointText)
 	end
 
@@ -430,6 +450,9 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 
 	-- Use arrowTitle for the waypoint itself
 	local waypointTitle = RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm, arrowTitle)	--local waypointTitle = arrowTitle
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("waypointTitle - 451: " .. tostring(waypointTitle))
+	end
 
 	-- -- Optional: print the multi-line preview so you can confirm it's correct
 	-- if RQE.db and RQE.db.profile and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") then
@@ -576,9 +599,17 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				end
 				return 
 			end
-			-- print("~~~ Waypoint Set: 394 ~~~")
-			local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = questID > 0 and ("QID: " .. questID .. ", Quest Name: " .. (questName or "Unknown")) or "Unknown Quest"
 
+			-- print("~~~ Waypoint Set: 394 ~~~")
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~~~ wayText fix: 596 ~~~~")
+			end
+
+			local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = questID > 0 and ("QID: " .. questID .. ", Quest Name: " .. (questName or "Unknown")) or "Unknown Quest"
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("waypointTitle - 606: " .. tostring(waypointTitle))
+			end
 			--waypointTitle = "Quest ID: " .. questID .. ", Quest Name: " .. questName
 
 			x = tonumber(x) or 0
@@ -677,6 +708,9 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	-- print("~~~ Waypoint Set: 483 ~~~")
 	-- Decide final waypoint title with centralized logic
 	waypointTitle = RQE:GetWaypointTitle(questID, mapID, x / 100, y / 100, waypointTitle)	--waypointTitle = waypointTitle or string.format('QID: %d, "%s"', questID, questName or "Unknown")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("waypointTitle - 706: " .. tostring(waypointTitle))
+	end
 
 	RQE.infoLog("Attempting to set waypoint for:", questName, "at coordinates:", x, ",", y, "on mapID:", mapID)
 
@@ -760,6 +794,9 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
 	-- print("~~~ Waypoint Set: 549 ~~~")
 	local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = string.format('QID: %d, "%s"', questID, questName or "Unknown")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("waypointTitle - 790: " .. tostring(waypointTitle))
+	end
 
 	-- Fetch the description from the specific stepIndex, if available
 	local stepData = questData[stepIndex]
@@ -788,6 +825,9 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 	C_Timer.After(0.5, function()
 		if RQE.DescriptionText and RQE.DescriptionText ~= "No direction available." then
 			waypointTitle = waypointTitle .. "\n" .. RQE.DescriptionText -- Append DirectionText on a new line if available
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("waypointTitle - 819: " .. tostring(waypointTitle))
+			end
 		end
 
 		-- Add waypoint for TomTom if available and enabled
@@ -1089,10 +1129,16 @@ function RQE:OnCoordinateClicked()
 		return -- Exit if no data found for the questID
 	end
 
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
-	-- print("~~~ Waypoint Set: 863 ~~~")
-	--local title = RQE:GetWaypointTitle(questID, mapID, x, y)	
-	local title = string.format('QID: %d, "%s"', questID, questName or "Unknown")
+	-- print("~~~ Waypoint Set: 1111 ~~~")
+
+	-- Always resolve the base title using our centralized logic
+	-- local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	-- local title = RQE:GetWaypointTitle(questID, mapID, x, y)	
+	local title = RQE:GetWaypointTitle(questID, mapID, x, y)
+	-- local title = string.format('QID: %d, "%s"', questID, questName or "Unknown")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("waypointTitle - 1113: " .. tostring(title))
+	end
 
 	-- Fetch the description from the specific stepIndex, if available
 	local stepData = questData[stepIndex]
@@ -1183,7 +1229,13 @@ end
 
 -- Centralized function to decide what the waypoint title should be
 function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
+	-- print("~~ RQE:GetWaypointTitle running ~~")
+
+	-- Build a sane default up-front
 	local questData = questID and RQE.getQuestData(questID)
+	local qname = (questID and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)) or (questData and questData.title) or "Waypoint"
+	local defaultTitle = string.format('QID: %d, "%s"', questID or -1, qname)
+
 	if not questData then return defaultTitle end
 
 	local stepIndex = RQE.AddonSetStepIndex or 1
@@ -1191,34 +1243,64 @@ function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 
 	-- 1) Direction text has top priority
 	if step and step.directionText and step.directionText ~= "" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~~ wayText fix: 1224 ~~~~")
+		end
 		return string.format("QID %d — %s — %s", questID, questData.title or "Quest", step.directionText)
 	end
 
-	-- 2) Match coordinateHotspots and use wayText
+	-- 1a) Use the *currently selected* hotspot index → robust, no float compare needed
+	--	 (EnsureWaypointForSupertracked sets RQE._currentHotspotIdx right before calling us)
+	if step and step.coordinateHotspots and RQE._currentHotspotIdx then
+		local norm = RQE.WPUtil.NormalizeCoordinates(step)
+		local cur  = norm and norm.hotspots and norm.hotspots[RQE._currentHotspotIdx]
+		if cur and cur.__authorIndex and step.coordinateHotspots[cur.__authorIndex] then
+			local hOrig = step.coordinateHotspots[cur.__authorIndex]
+			if hOrig.wayText and hOrig.wayText ~= "" then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("~~~~ wayText fix: 1247 (via currentIdx) ~~~~")
+				end
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("waypointTitle - 1250: " .. tostring(hOrig.wayText))
+				end
+				return hOrig.wayText
+			end
+		end
+	end
+
+	-- 2) Match coordinateHotspots and use wayText (fallback if no currentIdx or no wayText on that hotspot)
 	if step and step.coordinateHotspots and xNorm and yNorm then
 		for _, hotspot in ipairs(step.coordinateHotspots) do
 			local hx = (hotspot.x > 1) and (hotspot.x / 100) or hotspot.x
 			local hy = (hotspot.y > 1) and (hotspot.y / 100) or hotspot.y
+			-- Slightly looser epsilon to avoid float drift
 			if hotspot.mapID == mapID
-			   and math.abs(hx - xNorm) < 1e-4
-			   and math.abs(hy - yNorm) < 1e-4
+			   and math.abs(hx - xNorm) < 5e-4
+			   and math.abs(hy - yNorm) < 5e-4
 			   and hotspot.wayText
 			   and hotspot.wayText ~= "" then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("~~~~ wayText fix: 1221 (via coord match) ~~~~")
+				end
 				return hotspot.wayText
 			end
 		end
 	end
 
 	-- 3) Blizzard fallback (if available)
-	local blizzText = C_QuestLog.GetNextWaypointText(questID)
+	local blizzText = C_QuestLog.GetNextWaypointText and C_QuestLog.GetNextWaypointText(questID)
 	if blizzText and blizzText ~= "" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~~ wayText fix: 1263 ~~~~")
+		end
 		return string.format("QID %d — %s — %s", questID, questData.title or "Quest", blizzText)
 	end
 
 	-- 4) Default to quest title with QID
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or (questData and questData.title) or "Unknown"
+	local questName = (C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)) or (questData and questData.title) or "Unknown"
 	return defaultTitle or string.format('QID: %d, "%s"', questID, questName)
 end
+
 
 
 --------------------------
