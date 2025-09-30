@@ -9,6 +9,8 @@
 		- Custom waypoint labels: coordinateHotspots may now include a wayText field. If present, the waypoint will display this custom text instead of the default “QID QuestName”. This allows authors to show context-specific guidance like “Collect the Book” or “Open the Chest” right on the map (2025.09.25)
 		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
 		- Waypoint labels are now more consistent: when Blizzard directions or DB hotspots aren’t available, fallback waypoints always use “QID: ###, Quest Name” instead of sometimes reverting to just the quest name (2025.09.27)
+		- Fixed auction house purchase macros: `"x"` quantities are now resolved dynamically from quest objectives, ensuring correct counts across all objectives (2025.09.30)
+		- Improved waypoint title handling in WaypointManager.lua: waypoints now consistently use hotspot wayText (via _currentHotspotIdx), correctly fall back when no direction text is available, and no longer revert to raw "QID: ###, Quest Name" strings. (2025.09.30)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -20,6 +22,7 @@
 		- `TryMarkUnit()` also short-circuits marking if a mob has `obj` and its objective is complete (belt-and-suspenders) (2025.09.24)
 		- Reduced mouseover lag: added a small cache of the current step’s `mobList` keyed by `questID`/`stepIndex`; the list rebuilds only when those change (2025.09.24)
 		- Removed noisy debug print during list construction; marking/debug output now occurs only when a unit is actually processed (2025.09.24)
+		- Updated RQE:SearchPreparePurchaseConfirmAH(): quantity `"x"` is now resolved dynamically using quest objectives (`numFulfilled` / `numRequired`) instead of hard-coded objective #1. The function loops across all objectives to match the relevant item and calculates the remaining needed count correctly. This fixes auction-house macros that previously showed `0` quantity or fractional purchases. (2025.09.30)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -52,11 +55,15 @@
 		- Fixed some quests in DB for Elwynn Forest (2025.09.23)
 		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [see Core.lua] (2025.09.24)
 		- Added additional quests in Legion and Duskwood (2025.09.27)
+		- Updated profession quests for the coordinateHotspots for Valdrakken (Dragonflight) quests (2025.09.30)
 
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
 		- Updated RQE:CreateWaypoint(): default title now uses GetWaypointTitle() so fallbacks are always in “QID: ###, Quest Name” format instead of plain questName. (2025.09.27)
 		- Adjusted duplicate-coordinate skip logic: waypoint is only skipped if both coordinates and title match, allowing title refresh without coordinate change. (2025.09.27)
+		- Updated RQE:GetWaypointTitle() to respect the currently selected hotspot index (RQE._currentHotspotIdx) before falling back to coordinate-matching. This ensures the waypoint label stays stable as the player moves instead of reverting to the quest’s base title. (2025.09.30)
+		- Fixed RQE:CreateUnknownQuestWaypointWithDirectionText() running even when no valid direction text was available. Added an early bail-out to re-route to the NoDirectionText handler. (2025.09.30)
+		- Updated RQE:OnCoordinateClicked() to use GetWaypointTitle() for all waypoint creation instead of building raw "QID: ###, Quest Name" strings. Prevents title regressions and ensures hotspot wayText is consistently honored. (2025.09.30)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
@@ -67,6 +74,7 @@
 		- Added a safety guard so throttled early-returns don’t reference a filtered-out hotspot (2025.09.24)
 		- Fixed a rare crash in SelectBestHotspot: if a hotspot tied to a completed objective was filtered out, the function could still reference an invalid st.currentIdx. The index is now validated after filtering, preventing nil errors and ensuring a new hotspot is properly reselected. (2025.09.24)
 		- EnsureWaypointForSupertracked() now passes a title from GetWaypointTitle() instead of nil, preventing unwanted fallbacks to plain questName. (2025.09.27)
+		- Updated debug print for the waypointTitle labeled "ttl" within the RQE:EnsureWaypointForSupertracked() function (2025.09.30)
 
 
 11.2.0.6 (2025.09.19)
