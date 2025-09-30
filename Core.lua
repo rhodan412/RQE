@@ -4289,7 +4289,7 @@ local function TryMarkUnit(unitID, mobList)
 		if unitName == mob.name then
 			-- If mob.obj is present, skip if that quest objective is already complete
 			if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
-                if RQE.db.profile.debugLevel == "INFO+" then
+				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Skipping marker for " .. unitName .. " (objective " .. tostring(mob.obj) .. " complete).")
 				end
 			else
@@ -10013,7 +10013,75 @@ function RQE:ConfirmAndBuyMerchantItem(index, quantity)
 end
 
 
--- Function that handles a series of functions related to purchasing an item from the AH
+-- -- Function that handles a series of functions related to purchasing an item from the AH	FIX MADE FOR 'X' RETURNING NIL (2025.09.30)
+-- function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
+	-- local finalQuantity
+
+	-- -- Case 1: If a valid number is passed, use it directly
+	-- if type(quantity) == "number" and quantity > 0 then
+		-- finalQuantity = quantity
+
+	-- -- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
+	-- else
+		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		-- if questID and questID > 0 then
+			-- -- local _, _, _, _fulfilled = GetQuestObjectiveInfo(questID, 1, false)
+			-- -- local _, _, _, _, _required = GetQuestObjectiveInfo(questID, 1, false)
+
+			-- -- local fulfilled = tonumber(_fulfilled or 0)
+			-- -- local required = tonumber(_required or 0)
+
+			-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+			-- if objectives and objectives[1] then
+				-- local fulfilled = tonumber(objectives[1].numFulfilled or 0)
+				-- local required  = tonumber(objectives[1].numRequired or 0)
+
+				-- if fulfilled and required and required > fulfilled then
+					-- finalQuantity = required - fulfilled
+					-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Required: " .. required .. " & Fulfilled: " .. fulfilled)
+						-- print("Resolved Quantity: " .. finalQuantity)
+					-- end
+				-- else
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Could not determine required purchase quantity from quest objectives.")
+					-- end
+					-- return
+				-- end
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Quest has no objectives or objectives[1] missing.")
+				-- end
+				-- return
+			-- end
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("No supertracked quest found for dynamic quantity resolution.")
+			-- end
+			-- return
+		-- end
+	-- end
+
+	-- -- Final check
+	-- if not finalQuantity then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Invalid quantity. Aborting.")
+		-- end
+		-- return
+	-- end
+
+	-- -- Purchase logic
+	-- if C_AddOns.IsAddOnLoaded("CraftSim") then
+	-- --if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+		-- RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+	-- else
+		-- RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+		-- RQE:ConfirmAndPurchaseCommodity(itemID, finalQuantity)
+	-- end
+-- end
+
+
+-- Function that handles a series of functions related to purchasing an item from the AH	-- FIX TO MAKE WORK WITH DIFFERENT OBJECTIVE NUMBERS (OTHER THAN JUST OBJECTIVE #1) (2025.09.30)
 function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	local finalQuantity
 
@@ -10025,21 +10093,34 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	else
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		if questID and questID > 0 then
-			local _, _, _, _fulfilled = GetQuestObjectiveInfo(questID, 1, false)
-			local _, _, _, _, _required = GetQuestObjectiveInfo(questID, 1, false)
+			local objectives = C_QuestLog.GetQuestObjectives(questID)
+			if objectives and #objectives > 0 then
+				for i, obj in ipairs(objectives) do
+					-- Some objectives expose itemID directly, others only in text
+					local fulfilled = tonumber(obj.numFulfilled or 0)
+					local required  = tonumber(obj.numRequired or 0)
 
-			local fulfilled = tonumber(_fulfilled or 0)
-			local required = tonumber(_required or 0)
+					-- If this looks like an item collection objective
+					if required and required > 0 then
+						-- Try to match itemID if Blizzard provides it
+						if obj.type == "item" and obj.itemID and obj.itemID == itemID then
+							finalQuantity = required - fulfilled
+						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
+							finalQuantity = required - fulfilled
+						end
 
-			if fulfilled and required and required > fulfilled then
-				finalQuantity = required - fulfilled
-				if RQE.db.profile.debugLevel == "INFO" then
-					print("Required: " .. required .. " & Fulfilled: " .. fulfilled)
-					print("Resolved Quantity: " .. finalQuantity)
+						if finalQuantity and finalQuantity > 0 then
+							if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+								print("Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
+								print("Resolved Quantity = " .. finalQuantity)
+							end
+							break -- stop once we find a match
+						end
+					end
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Could not determine required purchase quantity from quest.")
+					print("Quest has no objectives.")
 				end
 				return
 			end
@@ -10052,16 +10133,15 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	end
 
 	-- Final check
-	if not finalQuantity then
+	if not finalQuantity or finalQuantity <= 0 then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Invalid quantity. Aborting.")
+			print("Invalid or zero quantity. Aborting.")
 		end
 		return
 	end
 
 	-- Purchase logic
 	if C_AddOns.IsAddOnLoaded("CraftSim") then
-	--if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
 		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
 	else
 		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
