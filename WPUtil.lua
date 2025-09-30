@@ -410,6 +410,9 @@ function RQE:EnsureWaypointForSupertracked()
 	-- Switch: replace the live waypoint
 	RQE._currentHotspotIdx = idx
 	local ttl = RQE:GetWaypointTitle(C_SuperTrack.GetSuperTrackedQuestID(), mapID, xNorm, yNorm)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("waypointTitle - 414: " .. tostring(ttl))
+	end
 	RQE:CreateWaypoint(xNorm, yNorm, mapID, ttl)
 end
 
