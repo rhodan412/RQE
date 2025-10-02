@@ -3824,7 +3824,19 @@ function RQE.handleZoneNewAreaChange()
 				if step and step.coordinateHotspots then
 					local uniqueMaps = {}
 					for _, hs in ipairs(step.coordinateHotspots) do
-						uniqueMaps[hs.mapID] = true
+						if hs.mapID then
+							uniqueMaps[hs.mapID] = true
+						elseif hs.continentID then
+							--print("continentID is true at ID: " .. tostring(hs.continentID))
+							uniqueMaps[hs.continentID] = true
+						else
+							if RQE.db.profile.debugLevel == "INFO" then
+								print(string.format(
+									"Warning: hotspot missing both mapID and continentID for questID=%d step=%d",
+									qid or -1, sidx or -1
+								))
+							end
+						end
 					end
 					local multiZone = (next(uniqueMaps, next(uniqueMaps)) ~= nil)
 
