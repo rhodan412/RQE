@@ -440,6 +440,8 @@ function RQE.WPUtil.NormalizeCoordinates(step)
 			x = tonumber(raw.x) and (tonumber(raw.x) / 100) or nil,
 			y = tonumber(raw.y) and (tonumber(raw.y) / 100) or nil,
 			mapID = raw.mapID,
+			continentID = raw.continentID,
+			wayText = raw.wayText,
 			priority = tonumber(raw.priorityBias) or 1,
 			minSwitchYards = tonumber(raw.minSwitchYards) or stepMinSwitchYards,
 			visitedRadius = tonumber(raw.visitedRadius) or stepVisitedRadius,
@@ -452,6 +454,8 @@ function RQE.WPUtil.NormalizeCoordinates(step)
 				x = tonumber(pt.x) and (tonumber(pt.x) / 100) or nil,
 				y = tonumber(pt.y) and (tonumber(pt.y) / 100) or nil,
 				mapID = pt.mapID,
+				continentID = pt.continentID,
+				wayText = pt.wayText,
 				priority = tonumber(pt.priorityBias) or 1,
 				minSwitchYards = tonumber(pt.minSwitchYards) or stepMinSwitchYards,
 				visitedRadius = tonumber(pt.visitedRadius) or stepVisitedRadius,
@@ -707,7 +711,18 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 	if st.currentIdx then
 		local cur = norm.hotspots[st.currentIdx]
 		if not cur then
-			st.currentIdx = nil -- force reselection
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("DEBUG: st.currentIdx was invalid, resetting it")
+			end
+			st.currentIdx = nil
+		else
+			local playerMapID = C_Map.GetBestMapForUnit("player")
+			if playerMapID and cur.mapID and cur.mapID ~= playerMapID then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("DEBUG: st.currentIdx mapID", cur.mapID, "does not match player map", playerMapID, "- resetting it")
+				end
+				st.currentIdx = nil
+			end
 		end
 	end
 
@@ -756,37 +771,69 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 	if not st.currentIdx then
 		local pmid, px, py = _playerMapAndXY()
 		if pmid and px and py then
-			local bestIdx, bestD2
-			for idx, h in ipairs(norm.hotspots) do
-				if h.mapID == pmid and eligibleBands[h.priority] then
-					local d2 = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
-					if d2 then
-						if not bestD2 or d2 < bestD2 then
-							bestIdx, bestD2 = idx, d2
-						end
-					-- same-map but no distance? extremely unlikely; keep author order fallback
-					elseif not bestIdx then
-						bestIdx = idx
+            local bestIdx, bestD2
+            for idx, h in ipairs(norm.hotspots) do
+                if h.mapID == pmid and eligibleBands[h.priority] then
+                    local d2 = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
+                    if d2 then
+                        if not bestD2 or d2 < bestD2 then
+                            bestIdx, bestD2 = idx, d2
+                        end
+                    elseif not bestIdx then
+                        bestIdx = idx
+                    end
+                end
+            end
+            if bestIdx then
+                st.currentIdx = bestIdx
+                local now = GetTime and GetTime() or 0
+                st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
+
+                -- DEBUG (INFO): first selection
+                if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+                    local h = norm.hotspots[bestIdx]
+                    print(string.format(
+                        "|cff00ffffRQE(INFO)|r Q%d S%d select initial target %s",
+                        st.questID or -1, st.stepIndex or -1, _fmtHotspot(bestIdx, h)
+                    ))
+                end
+
+                local c = norm.hotspots[bestIdx]
+                return c.mapID, c.x, c.y, bestIdx
+            end
+
+            -- 🔽 ContinentID fallback if no same-map hotspot matched
+            local playerMapID = C_Map.GetBestMapForUnit("player")
+            if playerMapID then
+                -- climb to continent
+                local continentID, continentName
+                local m = playerMapID
+                while m do
+                    local info = C_Map.GetMapInfo(m)
+                    if not info then break end
+                    if info.mapType == 2 then
+                        continentID, continentName = info.mapID, info.name
+                        break
+                    end
+                    m = info.parentMapID
+                end
+
+                if continentID then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("DEBUG: Player is on continent", continentName, continentID)
 					end
-				end
-			end
-			if bestIdx then
-				st.currentIdx = bestIdx
-				local now = GetTime and GetTime() or 0
-				st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
-
-				-- DEBUG (INFO): first selection
-				if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
-					local h = norm.hotspots[bestIdx]
-					print(string.format(
-						"|cff00ffffRQE(INFO)|r Q%d S%d select initial target %s",
-						st.questID or -1, st.stepIndex or -1, _fmtHotspot(bestIdx, h)
-					))
-				end
-
-				local c = norm.hotspots[bestIdx]
-				return c.mapID, c.x, c.y, bestIdx
-			end
+                    for idx, h in ipairs(norm.hotspots) do
+                        if h.continentID and h.continentID == continentID and (not h.priority or eligibleBands[h.priority]) then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("DEBUG: Using continent hotspot idx", idx, "x", h.x, "y", h.y)
+							end
+                            st.currentIdx = idx
+                            st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, playerMapID, nil, nil
+                            return h.continentID, h.x, h.y, idx
+                        end
+                    end
+                end
+            end
 		end
 	end
 
@@ -847,17 +894,64 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 				end
 			end
 		end
+
 		if switch then
-			-- DEBUG (INFO): switching target
-			if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			-- Checks to see if waypointText (or DirectionText) exists and will run if it is not 'No Direction Available' in the RQEFrame
+			if waypointText then
+				-- Prevent switching from continent hotspot → zone hotspot unless player is actually in that zone
+				if cur and cur.continentID and bestIdx then
+					local newH = norm.hotspots[bestIdx]
+					local playerMapID = C_Map.GetBestMapForUnit("player")
+					if newH and newH.mapID and newH.mapID ~= playerMapID then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("DEBUG: Staying on continent hotspot until player enters zone", newH.mapID)
+						end
+						switch = false
+					else
+						-- propagate wayText forward so title doesn't fall back
+						if newH and not newH.wayText then
+							newH.wayText = cur.wayText
+							st._lastWayText = cur.wayText
+						end
+					end
+				end
+
+				if switch then
+					-- DEBUG (INFO): switching target
+					if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+						local oldH = norm.hotspots[curIdx]
+						local newH = norm.hotspots[bestIdx]
+						print(string.format(
+							"|cff00ffffRQE(INFO)|r Q%d S%d switch %s  →  %s  (%s)",
+							st.questID or -1, st.stepIndex or -1, _fmtHotspot(curIdx, oldH), _fmtHotspot(bestIdx, newH), reason or "reason n/a"
+						))
+					end
+					chosenIdx = bestIdx
+				end
+			else
 				local oldH = norm.hotspots[curIdx]
 				local newH = norm.hotspots[bestIdx]
-				print(string.format(
-					"|cff00ffffRQE(INFO)|r Q%d S%d switch %s  →  %s  (%s)",
-					st.questID or -1, st.stepIndex or -1, _fmtHotspot(curIdx, oldH), _fmtHotspot(bestIdx, newH), reason or "reason n/a"
-				))
+
+				-- If we’re moving from a continent hotspot to a zone hotspot (or vice versa),
+				-- make sure wayText is carried forward so the title doesn’t fall back to quest title.
+				if oldH and oldH.wayText and (not newH.wayText or newH.continentID) then
+					newH.wayText = oldH.wayText
+					st._lastWayText = oldH.wayText
+					if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format("DEBUG: Propagated wayText '%s' from old hotspot to new", oldH.wayText))
+					end
+				end
+
+				-- DEBUG (INFO): switching target
+				if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format(
+						"|cff00ffffRQE(INFO)|r Q%d S%d switch %s  →  %s  (%s)",
+						st.questID or -1, st.stepIndex or -1, _fmtHotspot(curIdx, oldH), _fmtHotspot(bestIdx, newH), reason or "reason n/a"
+					))
+				end
+				chosenIdx = bestIdx
 			end
-			chosenIdx = bestIdx
 		end
 	end
 
@@ -867,6 +961,10 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 		st.currentIdx = chosenIdx
 		st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
 		local c = norm.hotspots[chosenIdx]
+
+		-- store wayText into state so EnsureWaypointForSupertracked can pick it up
+		st._lastWayText = c.wayText
+
 		return c.mapID, c.x, c.y, chosenIdx
 	end
 
