@@ -771,69 +771,69 @@ function RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
 	if not st.currentIdx then
 		local pmid, px, py = _playerMapAndXY()
 		if pmid and px and py then
-            local bestIdx, bestD2
-            for idx, h in ipairs(norm.hotspots) do
-                if h.mapID == pmid and eligibleBands[h.priority] then
-                    local d2 = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
-                    if d2 then
-                        if not bestD2 or d2 < bestD2 then
-                            bestIdx, bestD2 = idx, d2
-                        end
-                    elseif not bestIdx then
-                        bestIdx = idx
-                    end
-                end
-            end
-            if bestIdx then
-                st.currentIdx = bestIdx
-                local now = GetTime and GetTime() or 0
-                st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
+			local bestIdx, bestD2
+			for idx, h in ipairs(norm.hotspots) do
+				if h.mapID == pmid and eligibleBands[h.priority] then
+					local d2 = _playerDistanceSqFlexible(h.mapID, h.x, h.y)
+					if d2 then
+						if not bestD2 or d2 < bestD2 then
+							bestIdx, bestD2 = idx, d2
+						end
+					elseif not bestIdx then
+						bestIdx = idx
+					end
+				end
+			end
+			if bestIdx then
+				st.currentIdx = bestIdx
+				local now = GetTime and GetTime() or 0
+				st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
 
-                -- DEBUG (INFO): first selection
-                if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
-                    local h = norm.hotspots[bestIdx]
-                    print(string.format(
-                        "|cff00ffffRQE(INFO)|r Q%d S%d select initial target %s",
-                        st.questID or -1, st.stepIndex or -1, _fmtHotspot(bestIdx, h)
-                    ))
-                end
+				-- DEBUG (INFO): first selection
+				if RQE and RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+					local h = norm.hotspots[bestIdx]
+					print(string.format(
+						"|cff00ffffRQE(INFO)|r Q%d S%d select initial target %s",
+						st.questID or -1, st.stepIndex or -1, _fmtHotspot(bestIdx, h)
+					))
+				end
 
-                local c = norm.hotspots[bestIdx]
-                return c.mapID, c.x, c.y, bestIdx
-            end
+				local c = norm.hotspots[bestIdx]
+				return c.mapID, c.x, c.y, bestIdx
+			end
 
-            -- 🔽 ContinentID fallback if no same-map hotspot matched
-            local playerMapID = C_Map.GetBestMapForUnit("player")
-            if playerMapID then
-                -- climb to continent
-                local continentID, continentName
-                local m = playerMapID
-                while m do
-                    local info = C_Map.GetMapInfo(m)
-                    if not info then break end
-                    if info.mapType == 2 then
-                        continentID, continentName = info.mapID, info.name
-                        break
-                    end
-                    m = info.parentMapID
-                end
+			-- 🔽 ContinentID fallback if no same-map hotspot matched
+			local playerMapID = C_Map.GetBestMapForUnit("player")
+			if playerMapID then
+				-- climb to continent
+				local continentID, continentName
+				local m = playerMapID
+				while m do
+					local info = C_Map.GetMapInfo(m)
+					if not info then break end
+					if info.mapType == 2 then
+						continentID, continentName = info.mapID, info.name
+						break
+					end
+					m = info.parentMapID
+				end
 
-                if continentID then
+				if continentID then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("DEBUG: Player is on continent", continentName, continentID)
 					end
-                    for idx, h in ipairs(norm.hotspots) do
-                        if h.continentID and h.continentID == continentID and (not h.priority or eligibleBands[h.priority]) then
+					for idx, h in ipairs(norm.hotspots) do
+						if h.continentID and h.continentID == continentID and (not h.priority or eligibleBands[h.priority]) then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("DEBUG: Using continent hotspot idx", idx, "x", h.x, "y", h.y)
 							end
-                            st.currentIdx = idx
-                            st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, playerMapID, nil, nil
-                            return h.continentID, h.x, h.y, idx
-                        end
-                    end
-                end
-            end
+							st.currentIdx = idx
+							st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, playerMapID, nil, nil
+							return h.continentID, h.x, h.y, idx
+						end
+					end
+				end
+			end
 		end
 	end
 
