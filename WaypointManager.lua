@@ -1241,6 +1241,16 @@ function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 	local stepIndex = RQE.AddonSetStepIndex or 1
 	local step = questData[stepIndex]
 
+	-- 🔽 Check for last stored wayText from SelectBestHotspot
+	local st = RQE.WPUtil._hotspotState[questID] and RQE.WPUtil._hotspotState[questID][stepIndex]
+	if st and st._lastWayText and st._lastWayText ~= "" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~~ wayText fix: using st._lastWayText ~~~~")
+			print("waypointTitle - stored: " .. tostring(st._lastWayText))
+		end
+		return st._lastWayText
+	end
+
 	-- 1) Direction text has top priority
 	if step and step.directionText and step.directionText ~= "" then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -1300,7 +1310,6 @@ function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 	local questName = (C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)) or (questData and questData.title) or "Unknown"
 	return defaultTitle or string.format('QID: %d, "%s"', questID, questName)
 end
-
 
 
 --------------------------
