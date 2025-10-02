@@ -11,6 +11,10 @@
 		- Waypoint labels are now more consistent: when Blizzard directions or DB hotspots aren’t available, fallback waypoints always use “QID: ###, Quest Name” instead of sometimes reverting to just the quest name (2025.09.27)
 		- Fixed auction house purchase macros: `"x"` quantities are now resolved dynamically from quest objectives, ensuring correct counts across all objectives (2025.09.30)
 		- Improved waypoint title handling in WaypointManager.lua: waypoints now consistently use hotspot wayText (via _currentHotspotIdx), correctly fall back when no direction text is available, and no longer revert to raw "QID: ###, Quest Name" strings. (2025.09.30)
+		- Improved waypoint stability and accuracy:
+			• Added continent-level fallback waypoints when zone locations aren’t available, so guidance never disappears.  
+			• Waypoints now respect Blizzard’s built-in directions when present, avoiding confusing switches.  
+			• Custom waypoint labels (wayText) are preserved more reliably when moving between hotspots. (2025.10.02)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -56,6 +60,7 @@
 		- Added coding for the oI for coordinateHotspots [see WPUtil.lua] and obj for the npcTargets [see Core.lua] (2025.09.24)
 		- Added additional quests in Legion and Duskwood (2025.09.27)
 		- Updated profession quests for the coordinateHotspots for Valdrakken (Dragonflight) quests (2025.09.30)
+		- Updates to some quests and added 'continentID' to questID 8149 (2025.10.02)
 
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
@@ -64,6 +69,7 @@
 		- Updated RQE:GetWaypointTitle() to respect the currently selected hotspot index (RQE._currentHotspotIdx) before falling back to coordinate-matching. This ensures the waypoint label stays stable as the player moves instead of reverting to the quest’s base title. (2025.09.30)
 		- Fixed RQE:CreateUnknownQuestWaypointWithDirectionText() running even when no valid direction text was available. Added an early bail-out to re-route to the NoDirectionText handler. (2025.09.30)
 		- Updated RQE:OnCoordinateClicked() to use GetWaypointTitle() for all waypoint creation instead of building raw "QID: ###, Quest Name" strings. Prevents title regressions and ensures hotspot wayText is consistently honored. (2025.09.30)
+		- Added support for remembering and reusing the last stored wayText from SelectBestHotspot. This ensures waypoint titles remain consistent when switching between continent and zone hotspots, instead of falling back prematurely to quest titles or Blizzard waypoint text. (2025.10.02)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
@@ -75,6 +81,9 @@
 		- Fixed a rare crash in SelectBestHotspot: if a hotspot tied to a completed objective was filtered out, the function could still reference an invalid st.currentIdx. The index is now validated after filtering, preventing nil errors and ensuring a new hotspot is properly reselected. (2025.09.24)
 		- EnsureWaypointForSupertracked() now passes a title from GetWaypointTitle() instead of nil, preventing unwanted fallbacks to plain questName. (2025.09.27)
 		- Updated debug print for the waypointTitle labeled "ttl" within the RQE:EnsureWaypointForSupertracked() function (2025.09.30)
+		- Added continent-level fallback resolution for hotspot selection when no same-map hotspot is available. This allows quests to retain meaningful waypoint guidance at the continent scale before zone entry. (2025.10.02)
+		- Updated hotspot switching logic to respect Blizzard’s waypointText when available. Now prevents premature switching from continent → zone hotspots unless the player is physically in the destination zone, while still propagating custom wayText when Blizzard does not provide one. (2025.10.02)
+		- Persisted last used wayText into _hotspotState when selecting a hotspot. This ensures that EnsureWaypointForSupertracked and GetWaypointTitle can consistently reuse the same text across hotspot transitions, instead of falling back to quest titles. (2025.10.02)
 
 
 11.2.0.6 (2025.09.19)
@@ -126,6 +135,7 @@
 		- Removed RQE.WPUtil.ClearHotspotState() function call within QUEST_LOG_CHANGE and placed in SUPER_TRACKING_CHANGED and QUEST_WATCH_LIST_CHANGED as soft resets (2025.09.15)
 		- Fixes to better update the scenario/dungeon/mythic frame when leaving an instance (UPDATE_INSTANCE_INFO) or on ZONE_CHANGED, ZONE_CHANGED_NEW_AREA, QUEST_WATCH_LIST_CHANGED (2025.09.16)
 		- Added function call to PLAYER_ENTERING_WORLD to watch any quests, not currently watched, that can be immediately turned in (2025.09.17)
+		- Fixed issue with hs.mapID being invalid if hs.continentID was used in coordinateHotspots (2025.10.02)
 
 	QuestingModule.lua
 		- Set 'RQE._currentTomTomUID' to nil after TomTom.waydb:ResetProfile() in UpdateRQEQuestFrame() function, after QuestLogIndexButton is pressed. (2025.09.15)
