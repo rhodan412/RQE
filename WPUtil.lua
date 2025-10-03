@@ -1013,28 +1013,56 @@ end
 
 -- Utility to fetch location data from dbEntry
 function RQE.GetPrimaryLocation(dbEntry)
-	if not dbEntry then return nil end
+    if not dbEntry then return nil end
 
-	local function extract(loc)
-		if loc and loc.x and loc.y then
-			return loc.x, loc.y, loc.mapID, loc.continentID
-		end
-	end
+    local function extract(loc)
+        if loc and loc.x and loc.y then
+            return loc.x, loc.y, loc.mapID, loc.continentID
+        end
+    end
 
-	-- single location
-	if dbEntry.location then
-		return extract(dbEntry.location)
-	end
+    -- Check single location first
+    if dbEntry.location then
+        return extract(dbEntry.location)
+    end
 
-	-- multiple locations (take first valid)
-	if dbEntry.locations then
-		for _, loc in ipairs(dbEntry.locations) do
-			local x, y, mapID, continentID = extract(loc)
-			if x and y and (mapID or continentID) then
-				return x, y, mapID, continentID
-			end
-		end
-	end
+    -- Handle multiple locations
+    if dbEntry.locations then
+        local playerMapID = C_Map.GetBestMapForUnit("player")
+        local bestMatch, mapChoice, continentChoice
 
-	return nil
+        for _, loc in ipairs(dbEntry.locations) do
+            local x, y, mapID, continentID = extract(loc)
+
+            -- ✅ Exact map match
+            if x and y and mapID and playerMapID == mapID then
+                return x, y, mapID, nil
+            end
+
+            -- ✅ Store first valid mapID as a candidate
+            if x and y and mapID and not mapChoice then
+                mapChoice = { x, y, mapID }
+            end
+
+            -- ✅ Store first valid continentID if it matches player's continent
+            if x and y and continentID then
+                local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+                if parent == continentID then
+                    continentChoice = { x, y, continentID }
+                end
+            end
+        end
+
+        -- Prefer exact continent match if no direct map match
+        if continentChoice then
+            return continentChoice[1], continentChoice[2], nil, continentChoice[3]
+        end
+
+        -- Otherwise, fallback to any mapID we found
+        if mapChoice then
+            return mapChoice[1], mapChoice[2], mapChoice[3], nil
+        end
+    end
+
+    return nil
 end
