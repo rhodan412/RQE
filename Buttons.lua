@@ -76,34 +76,40 @@ RQE.UnknownButtonTooltip = function()
 				-- local y = tonumber(dbEntry.location.y)
 				-- local mapID = tonumber(dbEntry.location.mapID)
 
-			if dbEntry and not isComplete and not isInLog then
-				local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
-				local finalMapID = mapID or continentID
-				-- if x and y and mapID then
-				if x and y and finalMapID then
-					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(mapID))
+			local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+			local finalMapID
 
-					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-					GameTooltip:SetText(tooltipText)
-					GameTooltip:Show()
-
-					RQE.WPxPos = x
-					RQE.WPyPos = y
-					RQE.WPmapID = mapID
-
-					if RQE.db.profile.debugLevel == "INFO" then
-						DEFAULT_CHAT_FRAME:AddMessage("From searchedQuestID fallback | QuestID: " .. searchedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
-					end
-
-					return
+			if mapID then
+				finalMapID = mapID
+			elseif continentID then
+				-- Only fallback if player is on that continent
+				local playerMapID = C_Map.GetBestMapForUnit("player")
+				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				if parent == continentID then
+					finalMapID = continentID
 				end
 			end
 
-			-- Fallback message if not found or failed conditions
-			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText("Coordinates unavailable for searched quest.")
-			GameTooltip:Show()
-			return
+			if x and y and finalMapID then
+				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(finalMapID))
+
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+				GameTooltip:SetText(tooltipText)
+				GameTooltip:Show()
+
+				RQE.WPxPos = x
+				RQE.WPyPos = y
+				RQE.WPmapID = finalMapID
+
+				if RQE.db.profile.debugLevel == "INFO" then
+					DEFAULT_CHAT_FRAME:AddMessage("From searchedQuestID fallback | QuestID: " .. searchedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
+				end
+			else
+				-- Fallback message if not found or failed conditions
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+				GameTooltip:SetText("Coordinates unavailable for searched quest.")
+				GameTooltip:Show()
+			end
 		end
 
 		if RQE.db.profile.autoClickWaypointButton then
@@ -343,8 +349,46 @@ RQE.UnknownQuestButtonMouseDown = function()
 	RQE.UnknownQuestButton:SetScript("OnMouseDown", function(self, button)
 		if button == "LeftButton" then
 			RQE.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
-		end
-	end)
+			print("Clicky")
+            if RQE.searchedQuestID then
+                local questID = RQE.searchedQuestID
+                local dbEntry = RQE.getQuestData(questID)
+
+                if dbEntry then
+                    -- ✅ Use unified resolver
+                    local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+                    local finalMapID, finalX, finalY
+
+                    if mapID then
+                        finalMapID = mapID
+                        finalX, finalY = x/100, y/100
+                    elseif continentID then
+                        local playerMapID = C_Map.GetBestMapForUnit("player")
+                        if playerMapID then
+                            local parent = C_Map.GetMapInfo(playerMapID).parentMapID
+                            if parent == continentID then
+                                finalMapID = playerMapID
+                                finalX, finalY = x/100, y/100
+                            end
+                        end
+                    end
+
+                    if finalMapID and finalX and finalY then
+                        local waypoint = UiMapPoint.CreateFromCoordinates(finalMapID, finalX, finalY)
+                        C_Map.SetUserWaypoint(waypoint)
+                        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+
+                        if RQE.db.profile.debugLevel == "INFO" then
+                            print(("W-button Waypoint set: Quest %d at Map %d (%.2f, %.2f)"):format(
+                                questID, finalMapID, finalX*100, finalY*100))
+                        end
+                    else
+                        print("W-button: Unable to resolve waypoint for QuestID", questID)
+                    end
+                end
+            end
+        end
+    end)
 end
 
 
