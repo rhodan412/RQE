@@ -877,11 +877,17 @@ function RQE.SaveCoordData()
 		if questID then
 			-- Logic for updating location data
 			local questData = RQE.getQuestData(questID)
-			if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
-				-- Update the location data for the examined quest
-				RQE.DatabaseSuperX = questData.location.x / 100
-				RQE.DatabaseSuperY = questData.location.y / 100
-				RQE.DatabaseSuperMapID = questData.location.mapID
+			-- if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
+				-- -- Update the location data for the examined quest
+				-- RQE.DatabaseSuperX = questData.location.x / 100
+				-- RQE.DatabaseSuperY = questData.location.y / 100
+				-- RQE.DatabaseSuperMapID = questData.location.mapID
+			local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
+			local finalMapID = mapID or continentID
+			if x and y and finalMapID then
+				RQE.DatabaseSuperX = x / 100
+				RQE.DatabaseSuperY = y / 100
+				RQE.DatabaseSuperMapID = finalMapID
 			else
 				-- Debug message or fallback to prevent further errors
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -2664,16 +2670,49 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.debugLog("RQE.QuestObjectives is not initialized.")
 	end
 
+	-- -- Fetch the next waypoint text for the quest
+	-- if RQE.searchedQuestID then
+		-- RQEFrame.DirectionText = DirectionText  -- Save to addon table
+
+		-- if RQE.DirectionTextFrame then
+			-- local dbEntry = RQE.getQuestData(RQE.searchedQuestID)
+			-- if dbEntry and dbEntry.location then
+				-- local mapID = dbEntry.location.mapID
+				-- local zoneName, continentName = "Unknown", "Unknown"
+				-- if mapID then
+					-- local mapInfo = C_Map.GetMapInfo(mapID)
+					-- if mapInfo then
+						-- zoneName = mapInfo.name or "Unknown"
+						-- local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
+						-- continentName = parentMapInfo and parentMapInfo.name or "Unknown"
+					-- end
+				-- end
+				-- RQE.DirectionTextFrame:SetText("Travel to " .. zoneName .. ", " .. continentName)
+			-- else
+				-- RQE.DirectionTextFrame:SetText("No direction available.")
+			-- end
+		-- end
+		-- RQE.DontUpdateFrame = true
+	-- else
+		-- local DirectionText = C_QuestLog.GetNextWaypointText(questID)
+		-- RQEFrame.DirectionText = DirectionText  -- Save to addon table
+		-- RQE.UnknownQuestButtonCalcNTrack()
+
+		-- if RQE.DirectionTextFrame then
+			-- RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
+		-- end
+	-- end
+
 	-- Fetch the next waypoint text for the quest
 	if RQE.searchedQuestID then
 		RQEFrame.DirectionText = DirectionText  -- Save to addon table
 
 		if RQE.DirectionTextFrame then
 			local dbEntry = RQE.getQuestData(RQE.searchedQuestID)
-			if dbEntry and dbEntry.location then
-				local mapID = dbEntry.location.mapID
-				local zoneName, continentName = "Unknown", "Unknown"
-				if mapID then
+			if dbEntry then
+				local _, _, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+				local finalMapID = mapID or continentID
+				if finalMapID then
 					local mapInfo = C_Map.GetMapInfo(mapID)
 					if mapInfo then
 						zoneName = mapInfo.name or "Unknown"
@@ -4602,11 +4641,17 @@ function RQE.SearchModule:CreateSearchBox()
 		if foundQuestID then
 			-- Logic for updating location data
 			local questData = RQE.getQuestData(foundQuestID)
-			if questData and questData.location then
-				-- Update the location data for the examined quest
-				RQE.DatabaseSuperX = questData.location.x / 100
-				RQE.DatabaseSuperY = questData.location.y / 100
-				RQE.DatabaseSuperMapID = questData.location.mapID
+			-- if questData and questData.location then
+				-- -- Update the location data for the examined quest
+				-- RQE.DatabaseSuperX = questData.location.x / 100
+				-- RQE.DatabaseSuperY = questData.location.y / 100
+				-- RQE.DatabaseSuperMapID = questData.location.mapID
+			local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
+			local finalMapID = mapID or continentID
+			if x and y and finalMapID then
+				RQE.DatabaseSuperX = x / 100
+				RQE.DatabaseSuperY = y / 100
+				RQE.DatabaseSuperMapID = finalMapID
 			end
 
 			-- Local Variables for World Quest/Quest in Log
@@ -10946,10 +10991,16 @@ function RQE:GetClosestFlightMasterToQuest(questID)
 
 	-- Fallback to quest.location if no step with coordinates was found
 	if not mapID then
-		if questData.location then
-			mapID = questData.location.mapID
-			x = questData.location.x / 100
-			y = questData.location.y / 100
+		-- if questData.location then
+			-- mapID = questData.location.mapID
+			-- x = questData.location.x / 100
+			-- y = questData.location.y / 100
+		local xLoc, yLoc, mapID, continentID = RQE.GetPrimaryLocation(questData)
+		local finalMapID = mapID or continentID
+		if xLoc and yLoc and finalMapID then
+			mapID = finalMapID
+			x = xLoc / 100
+			y = yLoc / 100
 		else
 			print(">> No usable coordinates found for quest:", questID)
 			return
