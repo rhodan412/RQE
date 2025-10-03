@@ -883,7 +883,18 @@ function RQE.SaveCoordData()
 				-- RQE.DatabaseSuperY = questData.location.y / 100
 				-- RQE.DatabaseSuperMapID = questData.location.mapID
 			local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
-			local finalMapID = mapID or continentID
+			local finalMapID
+
+			if mapID then
+				finalMapID = mapID
+			elseif continentID then
+				local playerMapID = C_Map.GetBestMapForUnit("player")
+				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				if parent == continentID then
+					finalMapID = continentID
+				end
+			end
+
 			if x and y and finalMapID then
 				RQE.DatabaseSuperX = x / 100
 				RQE.DatabaseSuperY = y / 100
@@ -2709,22 +2720,42 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 		if RQE.DirectionTextFrame then
 			local dbEntry = RQE.getQuestData(RQE.searchedQuestID)
+			local zoneName, continentName = "Unknown", "Unknown"
+
 			if dbEntry then
 				local _, _, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
-				local finalMapID = mapID or continentID
+				local finalMapID
+
+				if mapID then
+					finalMapID = mapID
+				elseif continentID then
+					-- Only fall back to continentID if player is on that continent
+					local playerMapID = C_Map.GetBestMapForUnit("player")
+					local pInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+					local parent = pInfo and pInfo.parentMapID
+					if parent == continentID then
+						finalMapID = continentID
+					end
+				end
+
 				if finalMapID then
-					local mapInfo = C_Map.GetMapInfo(mapID)
+					local mapInfo = C_Map.GetMapInfo(finalMapID)
 					if mapInfo then
 						zoneName = mapInfo.name or "Unknown"
 						local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
-						continentName = parentMapInfo and parentMapInfo.name or "Unknown"
+						if parentMapInfo then
+							continentName = parentMapInfo.name or "Unknown"
+						end
 					end
+					RQE.DirectionTextFrame:SetText("Travel to " .. zoneName .. ", " .. continentName)
+				else
+					RQE.DirectionTextFrame:SetText("No direction available.")
 				end
-				RQE.DirectionTextFrame:SetText("Travel to " .. zoneName .. ", " .. continentName)
 			else
 				RQE.DirectionTextFrame:SetText("No direction available.")
 			end
 		end
+
 		RQE.DontUpdateFrame = true
 	else
 		local DirectionText = C_QuestLog.GetNextWaypointText(questID)
@@ -4647,7 +4678,18 @@ function RQE.SearchModule:CreateSearchBox()
 				-- RQE.DatabaseSuperY = questData.location.y / 100
 				-- RQE.DatabaseSuperMapID = questData.location.mapID
 			local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
-			local finalMapID = mapID or continentID
+			local finalMapID
+
+			if mapID then
+				finalMapID = mapID
+			elseif continentID then
+				local playerMapID = C_Map.GetBestMapForUnit("player")
+				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				if parent == continentID then
+					finalMapID = continentID
+				end
+			end
+
 			if x and y and finalMapID then
 				RQE.DatabaseSuperX = x / 100
 				RQE.DatabaseSuperY = y / 100
@@ -10996,7 +11038,18 @@ function RQE:GetClosestFlightMasterToQuest(questID)
 			-- x = questData.location.x / 100
 			-- y = questData.location.y / 100
 		local xLoc, yLoc, mapID, continentID = RQE.GetPrimaryLocation(questData)
-		local finalMapID = mapID or continentID
+		local finalMapID
+
+		if mapID then
+			finalMapID = mapID
+		elseif continentID then
+			local playerMapID = C_Map.GetBestMapForUnit("player")
+			local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+			if parent == continentID then
+				finalMapID = continentID
+			end
+		end
+
 		if xLoc and yLoc and finalMapID then
 			mapID = finalMapID
 			x = xLoc / 100
