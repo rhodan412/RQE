@@ -27,6 +27,7 @@
 		- Reduced mouseover lag: added a small cache of the current step’s `mobList` keyed by `questID`/`stepIndex`; the list rebuilds only when those change (2025.09.24)
 		- Removed noisy debug print during list construction; marking/debug output now occurs only when a unit is actually processed (2025.09.24)
 		- Updated RQE:SearchPreparePurchaseConfirmAH(): quantity `"x"` is now resolved dynamically using quest objectives (`numFulfilled` / `numRequired`) instead of hard-coded objective #1. The function loops across all objectives to match the relevant item and calculates the remaining needed count correctly. This fixes auction-house macros that previously showed `0` quantity or fractional purchases. (2025.09.30)
+		- Added RQE.DebugPrintPlayerContinentPosition() debug function to obtain current player coords as related to the continentID and coords (2025.10.02)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
