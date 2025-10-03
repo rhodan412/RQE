@@ -71,12 +71,16 @@ RQE.UnknownButtonTooltip = function()
 			local isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
 			local isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
 
-			if dbEntry and not isComplete and not isInLog and type(dbEntry.location) == "table" then
-				local x = tonumber(dbEntry.location.x)
-				local y = tonumber(dbEntry.location.y)
-				local mapID = tonumber(dbEntry.location.mapID)
+			-- if dbEntry and not isComplete and not isInLog and type(dbEntry.location) == "table" then
+				-- local x = tonumber(dbEntry.location.x)
+				-- local y = tonumber(dbEntry.location.y)
+				-- local mapID = tonumber(dbEntry.location.mapID)
 
-				if x and y and mapID then
+			if dbEntry and not isComplete and not isInLog then
+				local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+				local finalMapID = mapID or continentID
+				-- if x and y and mapID then
+				if x and y and finalMapID then
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(mapID))
 
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
