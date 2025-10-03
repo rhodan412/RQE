@@ -11181,3 +11181,55 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 
 	return { name = node.name, mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct }
 end
+
+
+-- Fetches the player's position in relation to their current continent
+function RQE.DebugPrintPlayerContinentPosition()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print("Unable to determine current map.")
+		return
+	end
+
+	-- Get normalized x, y for the current map
+	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not pos then
+		print("Unable to get player position on mapID:", mapID)
+		return
+	end
+
+	local x, y = pos.x, pos.y
+
+	-- Climb to continent
+	local continentID, continentName
+	local m = mapID
+	while m do
+		local info = C_Map.GetMapInfo(m)
+		if not info then break end
+		if info.mapType == 2 then -- 2 = continent
+			continentID, continentName = info.mapID, info.name
+			break
+		end
+		m = info.parentMapID
+	end
+
+	if not continentID then
+		print("Unable to determine continent for mapID:", mapID)
+		return
+	end
+
+	-- Convert coords to continent-normalized space
+	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+	if not contPos then
+		print("Unable to get player position on continentID:", continentID)
+		return
+	end
+
+	local cx, cy = contPos.x, contPos.y
+
+	-- Print to chat
+	print(string.format(
+		"Player continent position: Continent=%s (%d), X=%.2f, Y=%.2f",
+		continentName or "Unknown", continentID, cx * 100, cy * 100
+	))
+end
