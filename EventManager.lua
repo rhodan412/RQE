@@ -2840,10 +2840,10 @@ function RQE.handlePlayerEnterWorld(...)
 	-- Clicks Waypoint Button if autoClickWaypointButton is true
 	RQE:AutoClickQuestLogIndexWaypointButton()
 
-	C_Timer.After(0.5, function()
+	C_Timer.After(5.5, function()
 		RQE.isCheckingMacroContents = true
 		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
-		C_Timer.After(2.5, function()
+		C_Timer.After(1.5, function()
 			RQE.isCheckingMacroContents = false
 		end)
 	end)
