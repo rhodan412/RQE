@@ -15,6 +15,10 @@
 			• Added continent-level fallback waypoints when zone locations aren’t available, so guidance never disappears.  
 			• Waypoints now respect Blizzard’s built-in directions when present, avoiding confusing switches.  
 			• Custom waypoint labels (wayText) are preserved more reliably when moving between hotspots. (2025.10.02)
+		- Added functionality to track location by a set location or that of coordinates in an array, to also include mapID and/or continentID (2025.10.02)
+
+	Buttons.lua
+		- Modified code in the RQE.UnknownButtonTooltip function to use RQE.GetPrimaryLocation instead of dbEntry.location to accommodate a location array in the DB (2025.10.02)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -28,6 +32,7 @@
 		- Removed noisy debug print during list construction; marking/debug output now occurs only when a unit is actually processed (2025.09.24)
 		- Updated RQE:SearchPreparePurchaseConfirmAH(): quantity `"x"` is now resolved dynamically using quest objectives (`numFulfilled` / `numRequired`) instead of hard-coded objective #1. The function loops across all objectives to match the relevant item and calculates the remaining needed count correctly. This fixes auction-house macros that previously showed `0` quantity or fractional purchases. (2025.09.30)
 		- Added RQE.DebugPrintPlayerContinentPosition() debug function to obtain current player coords as related to the continentID and coords (2025.10.02)
+		- Modified code in the RQE.SaveCoordData(), UpdateFrame(), RQE.SearchModule:CreateSearchBox() and RQE:GetClosestFlightMasterToQuest() functions to use RQE.GetPrimaryLocation instead of dbEntry.location to accomodate a location array in the DB (2025.10.02)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -85,6 +90,7 @@
 		- Added continent-level fallback resolution for hotspot selection when no same-map hotspot is available. This allows quests to retain meaningful waypoint guidance at the continent scale before zone entry. (2025.10.02)
 		- Updated hotspot switching logic to respect Blizzard’s waypointText when available. Now prevents premature switching from continent → zone hotspots unless the player is physically in the destination zone, while still propagating custom wayText when Blizzard does not provide one. (2025.10.02)
 		- Persisted last used wayText into _hotspotState when selecting a hotspot. This ensures that EnsureWaypointForSupertracked and GetWaypointTitle can consistently reuse the same text across hotspot transitions, instead of falling back to quest titles. (2025.10.02)
+		- Added RQE.GetPrimaryLocation(dbEntry) helper function that is now called within Buttons.lua and Core.lua when tracking the location of the quest start (2025.10.02)
 
 
 11.2.0.6 (2025.09.19)
