@@ -19,6 +19,8 @@
 
 	Buttons.lua
 		- Modified code in the RQE.UnknownButtonTooltip function to use RQE.GetPrimaryLocation instead of dbEntry.location to accommodate a location array in the DB (2025.10.02)
+		- Updated RQE.UnknownButtonTooltip to reflect more accurate coordinate with locations array (2025.10.03.1419)
+		- Fix for the waypoint creation to direct player to searched quests flagged as not yet picked up & completed in the RQE.UnknownQuestButtonMouseDown function (2025.10.03.1419)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -33,6 +35,7 @@
 		- Updated RQE:SearchPreparePurchaseConfirmAH(): quantity `"x"` is now resolved dynamically using quest objectives (`numFulfilled` / `numRequired`) instead of hard-coded objective #1. The function loops across all objectives to match the relevant item and calculates the remaining needed count correctly. This fixes auction-house macros that previously showed `0` quantity or fractional purchases. (2025.09.30)
 		- Added RQE.DebugPrintPlayerContinentPosition() debug function to obtain current player coords as related to the continentID and coords (2025.10.02)
 		- Modified code in the RQE.SaveCoordData(), UpdateFrame(), RQE.SearchModule:CreateSearchBox() and RQE:GetClosestFlightMasterToQuest() functions to use RQE.GetPrimaryLocation instead of dbEntry.location to accomodate a location array in the DB (2025.10.02)
+		- Updated RQE.SaveCoordData(), UpdateFrame(), RQE.SearchModule:CreateSearchBox() and RQE:GetClosestFlightMasterToQuest(questID) functions to reflect more accurate coordinate with locations array (2025.10.03.1419)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -42,6 +45,7 @@
 		- Added forced refresh of supertracked waypoint by removing the simulates RWButton click and then call instead ForceWaypointForSupertracked with a short delay to ensure the correct waypoint is set. (2025.09.27)
 		- Added NAVIGATION_DESTINATION_REACHED and NEW_WMO_CHUNK event functions for the updating of the RQEFrame and waypoint via the SeparateButton as DirectionText would get updating [leaving SW Mage Tower/Wizard's Sanctum] and not update waypointText correctly (2025.09.27)
 		- Fixed issue with SUPER_TRACKING_CHANGED where RQEFrame bits weren't updating properly when RQEQuestFrame wasn't visible [mythicMode enabled] (2025.09.27)
+		- Increased C_Timer in PLAYER_ENTERING_WORLD event function to check if RQE macro is correct with the supertracked quest as this was a problem when dealing with the macro being from a searched quest on previous login (2025.10.03.1419)
 
 	QuestingModule.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -67,6 +71,7 @@
 		- Added additional quests in Legion and Duskwood (2025.09.27)
 		- Updated profession quests for the coordinateHotspots for Valdrakken (Dragonflight) quests (2025.09.30)
 		- Updates to some quests and added 'continentID' to questID 8149 (2025.10.02)
+		- Added additional quests with continentIDs for quests in the coordinateHotspots (2025.10.03.1419)
 
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
@@ -76,6 +81,7 @@
 		- Fixed RQE:CreateUnknownQuestWaypointWithDirectionText() running even when no valid direction text was available. Added an early bail-out to re-route to the NoDirectionText handler. (2025.09.30)
 		- Updated RQE:OnCoordinateClicked() to use GetWaypointTitle() for all waypoint creation instead of building raw "QID: ###, Quest Name" strings. Prevents title regressions and ensures hotspot wayText is consistently honored. (2025.09.30)
 		- Added support for remembering and reusing the last stored wayText from SelectBestHotspot. This ensures waypoint titles remain consistent when switching between continent and zone hotspots, instead of falling back prematurely to quest titles or Blizzard waypoint text. (2025.10.02)
+		- Updated RQE:CreateSearchedQuestWaypoint to more accurately create waypoint when pointing to a quest giver for a searched quest that the player doesn't have and is incomplete following the creation of the  locations array (2025.10.03.1419)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
@@ -91,6 +97,7 @@
 		- Updated hotspot switching logic to respect Blizzard’s waypointText when available. Now prevents premature switching from continent → zone hotspots unless the player is physically in the destination zone, while still propagating custom wayText when Blizzard does not provide one. (2025.10.02)
 		- Persisted last used wayText into _hotspotState when selecting a hotspot. This ensures that EnsureWaypointForSupertracked and GetWaypointTitle can consistently reuse the same text across hotspot transitions, instead of falling back to quest titles. (2025.10.02)
 		- Added RQE.GetPrimaryLocation(dbEntry) helper function that is now called within Buttons.lua and Core.lua when tracking the location of the quest start (2025.10.02)
+		- Fix to RQE.GetPrimaryLocation helper function for the handling of the location code and locations array (2025.10.03.1419)
 
 
 11.2.0.6 (2025.09.19)
