@@ -1005,3 +1005,36 @@ SlashCmdList.RQEDUMP = function()
 		RQE.WPUtil.DebugDumpBands(qid, sidx)
 	end
 end
+
+
+---------------------------------------------------------
+-- 6. Waypoint Quest Start Location - Helper function
+---------------------------------------------------------
+
+-- Utility to fetch location data from dbEntry
+function RQE.GetPrimaryLocation(dbEntry)
+	if not dbEntry then return nil end
+
+	local function extract(loc)
+		if loc and loc.x and loc.y then
+			return loc.x, loc.y, loc.mapID, loc.continentID
+		end
+	end
+
+	-- single location
+	if dbEntry.location then
+		return extract(dbEntry.location)
+	end
+
+	-- multiple locations (take first valid)
+	if dbEntry.locations then
+		for _, loc in ipairs(dbEntry.locations) do
+			local x, y, mapID, continentID = extract(loc)
+			if x and y and (mapID or continentID) then
+				return x, y, mapID, continentID
+			end
+		end
+	end
+
+	return nil
+end
