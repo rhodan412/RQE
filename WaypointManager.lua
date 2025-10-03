@@ -213,17 +213,41 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 		return
 	end
 
-	if not dbEntry.location then
-		RQE.debugLog("No location field for QuestID:", questID)
-		return
+	-- if not dbEntry.location then
+		-- RQE.debugLog("No location field for QuestID:", questID)
+		-- return
+	-- end
+
+	-- local x = tonumber(dbEntry.location.x)
+	-- local y = tonumber(dbEntry.location.y)
+	-- local finalMapID = mapID or tonumber(dbEntry.location.mapID)
+
+	-- if not x or not y or not finalMapID then
+		-- RQE.debugLog("Invalid coordinates for QuestID:", questID)
+		-- return
+	-- end
+
+	-- Use new unified location resolver
+	local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+	local finalMapID, finalX, finalY
+
+	if locMapID then
+		finalMapID = locMapID
+		finalX, finalY = x/100, y/100
+	elseif continentID then
+		local playerMapID = C_Map.GetBestMapForUnit("player")
+		if playerMapID then
+			local parent = C_Map.GetMapInfo(playerMapID).parentMapID
+			if parent == continentID then
+				finalMapID = playerMapID
+				finalX, finalY = x/100, y/100
+			end
+		end
 	end
 
-	local x = tonumber(dbEntry.location.x)
-	local y = tonumber(dbEntry.location.y)
-	local finalMapID = mapID or tonumber(dbEntry.location.mapID)
-
-	if not x or not y or not finalMapID then
-		RQE.debugLog("Invalid coordinates for QuestID:", questID)
+	if not (finalMapID and finalX and finalY) then
+		RQE.debugLog("Unable to resolve waypoint coords for QuestID:", questID)
+		print("Unable to resolve waypoint coords for QuestID:", questID)
 		return
 	end
 
