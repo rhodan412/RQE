@@ -243,32 +243,35 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 		-- return
 	-- end
 
-	-- Use new unified location resolver
-	local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry, mapID)
+	-- ✅ FIX: Use playerMapID for resolution logic, not mapID from the W-button
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- ✅ Pass the W-button-provided mapID as targetMapID (a hint)
+	-- local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry, mapID)
 	-- local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+	local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry, mapID or playerMapID)
+
 	local finalMapID, finalX, finalY
 
 	if locMapID then
 		finalMapID = locMapID
-		finalX, finalY = x/100, y/100
+		finalX, finalY = x / 100, y / 100
 	elseif continentID then
-		local playerMapID = C_Map.GetBestMapForUnit("player")
-		if playerMapID then
-			local parent = C_Map.GetMapInfo(playerMapID).parentMapID
-			if parent == continentID then
-				finalMapID = playerMapID
-				finalX, finalY = x/100, y/100
-			end
+		-- ✅ Force the waypoint to be created on the continent itself
+		finalMapID = continentID
+		finalX, finalY = x / 100, y / 100
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("Continent fallback resolved: Quest %d using continent %d (%.2f, %.2f)"):format(questID, finalMapID, finalX * 100, finalY * 100))
 		end
 	end
 
 	if not (finalMapID and finalX and finalY) then
-		RQE.debugLog("Unable to resolve waypoint coords for QuestID:", questID)
-		print("Unable to resolve waypoint coords for QuestID:", questID)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to resolve waypoint coords for QuestID:", questID)
+		end
 		return
 	end
 
-	-- print("~~~ Waypoint Set: 152 ~~~")
 	local label = "Waypoint for " .. (dbEntry.title or ("Quest ID: " .. questID))
 
 	-- ✅ Prefer wrapper function if it exists
@@ -280,14 +283,6 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 		-- ✅ Fallback to TomTom if available
 		if TomTom and TomTom.AddWaypoint then
 			RQE._currentTomTomUID = RQE.Waypoints:Replace(finalMapID, x, y, label)
-			-- TomTom:AddWaypoint(finalMapID, x, y, {
-				-- title = label,
-				-- from = "RQE",
-				-- persistent = nil,
-				-- minimap = true,
-				-- world = true
-			-- })
-
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("TomTom Waypoint created for QuestID:", questID, "at", x, y, "on MapID:", finalMapID)
 			end
@@ -296,24 +291,11 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 		end
 	end
 
-	-- Store for internal use if needed
 	RQE.WPxPos = x
 	RQE.WPyPos = y
 	RQE.WPmapID = finalMapID
-
-	if RQE.db.profile.debugLevel == "INFO+" then
-		local mapInfo = C_Map.GetMapInfo(mapID)
-		if mapInfo then
-			if not mapInfo then return "Unknown", "Unknown" end
-
-			local zoneName = mapInfo.name or "Unknown"
-
-			local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
-			local continentName = parentMapInfo and parentMapInfo.name or "Unknown"
-			print("Travel to " .. zoneName .. ", " .. continentName)
-		end
-	end
 end
+
 
 
 -- Create a Waypoint when there is Direction Text available
