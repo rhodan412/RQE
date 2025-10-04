@@ -350,17 +350,20 @@ RQE.UnknownQuestButtonMouseDown = function()
 		if button ~= "LeftButton" then return end
 
 		RQE.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
-		print("Clicky")
 
 		local questID = RQE.searchedQuestID
 		if not questID then
-			print("No searched quest available.")
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No searched quest available.")
+			end
 			return
 		end
 
 		local dbEntry = RQE.getQuestData(questID)
 		if not dbEntry then
-			print("No DB entry found for quest", questID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No DB entry found for quest", questID)
+			end
 			return
 		end
 
@@ -384,27 +387,31 @@ RQE.UnknownQuestButtonMouseDown = function()
 				end
 			end
 
-			if not matchedZone then
+			-- ✅ Prefer zone if player is physically in that zone
+			if matchedZone then
+				selectedMapID = matchedZone
+			else
+				-- Player not in the quest zone, fallback to continent-level coords
 				for _, loc in ipairs(dbEntry.locations) do
 					if loc.continentID then
-						continentCandidate = loc.continentID
+						selectedMapID = loc.continentID
 						break
 					end
 				end
 			end
-
-			selectedMapID = matchedZone or continentCandidate
 		end
 
 		if not selectedMapID then
-			print("Unable to determine which mapID/continentID to use for quest:", questID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Unable to determine which mapID/continentID to use for quest:", questID)
+			end
 			return
 		end
 
 		-- ✅ Create the waypoint via the proper function
 		RQE:CreateSearchedQuestWaypoint(questID, selectedMapID)
 
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print(("W-button: CreateSearchedQuestWaypoint called for Quest %d on map %d"):format(questID, selectedMapID))
 		end
 	end)
