@@ -1012,57 +1012,81 @@ end
 ---------------------------------------------------------
 
 -- Utility to fetch location data from dbEntry
-function RQE.GetPrimaryLocation(dbEntry)
-    if not dbEntry then return nil end
+function RQE.GetPrimaryLocation(dbEntry, targetMapID)
+	if not dbEntry then return nil end
 
-    local function extract(loc)
-        if loc and loc.x and loc.y then
-            return loc.x, loc.y, loc.mapID, loc.continentID
-        end
-    end
+	local function extract(loc)
+		if loc and loc.x and loc.y then
+			return loc.x, loc.y, loc.mapID, loc.continentID
+		end
+	end
 
-    -- Check single location first
-    if dbEntry.location then
-        return extract(dbEntry.location)
-    end
+	-- Check single location first
+	if dbEntry.location then
+		return extract(dbEntry.location)
+	end
 
-    -- Handle multiple locations
-    if dbEntry.locations then
-        local playerMapID = C_Map.GetBestMapForUnit("player")
-        local bestMatch, mapChoice, continentChoice
+	-- Handle multiple locations
+	if dbEntry.locations then
+		local playerMapID = C_Map.GetBestMapForUnit("player")
+		local mapInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+		local parentContinentID = mapInfo and mapInfo.parentMapID
+		local topMostContinent = mapInfo
 
-        for _, loc in ipairs(dbEntry.locations) do
-            local x, y, mapID, continentID = extract(loc)
+		-- Walk up until we find the actual top continent (mapType == 2)
+		while topMostContinent and topMostContinent.parentMapID and topMostContinent.mapType and topMostContinent.mapType ~= 2 do
+			topMostContinent = C_Map.GetMapInfo(topMostContinent.parentMapID)
+		end
+		local trueContinentID = topMostContinent and topMostContinent.mapID
 
-            -- ✅ Exact map match
-            if x and y and mapID and playerMapID == mapID then
-                return x, y, mapID, nil
-            end
+		local bestMap, bestContinent, firstValid
 
-            -- ✅ Store first valid mapID as a candidate
-            if x and y and mapID and not mapChoice then
-                mapChoice = { x, y, mapID }
-            end
+		for _, loc in ipairs(dbEntry.locations) do
+			local x, y, mapID, continentID = extract(loc)
 
-            -- ✅ Store first valid continentID if it matches player's continent
-            if x and y and continentID then
-                local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
-                if parent == continentID then
-                    continentChoice = { x, y, continentID }
-                end
-            end
-        end
+			-- ✅ If the button explicitly requested a map or continent, use it immediately
+			if targetMapID and (mapID == targetMapID or continentID == targetMapID) then
+				return x, y, mapID, continentID
+			end
 
-        -- Prefer exact continent match if no direct map match
-        if continentChoice then
-            return continentChoice[1], continentChoice[2], nil, continentChoice[3]
-        end
+			if x and y then
+				-- ✅ 1. Exact map match wins immediately (based on where player is)
+				if mapID and playerMapID == mapID then
+					return x, y, mapID, nil
+				end
 
-        -- Otherwise, fallback to any mapID we found
-        if mapChoice then
-            return mapChoice[1], mapChoice[2], mapChoice[3], nil
-        end
-    end
+				-- ✅ 2. Store any mapID as fallback
+				if mapID and not bestMap then
+					bestMap = { x, y, mapID }
+				end
 
-    return nil
+				-- ✅ 3. Store if continentID matches player's true continent
+				if continentID and (continentID == parentContinentID or continentID == trueContinentID) then
+					bestContinent = { x, y, continentID }
+				end
+
+				-- ✅ 4. Store first valid coordinate just in case
+				if not firstValid then
+					firstValid = { x, y, mapID or continentID }
+				end
+			end
+		end
+
+		-- ✅ Prefer continent if available
+		if bestContinent then
+			return bestContinent[1], bestContinent[2], nil, bestContinent[3]
+		end
+
+		-- ✅ Otherwise, use map fallback
+		if bestMap then
+			return bestMap[1], bestMap[2], bestMap[3], nil
+		end
+
+		-- ✅ Absolute last resort: first valid
+		if firstValid then
+			return firstValid[1], firstValid[2], firstValid[3], nil
+		end
+	end
+
+	return nil
 end
