@@ -347,48 +347,67 @@ end
 -- Add a mouse down event to simulate a button press
 RQE.UnknownQuestButtonMouseDown = function()
 	RQE.UnknownQuestButton:SetScript("OnMouseDown", function(self, button)
-		if button == "LeftButton" then
-			RQE.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
-			print("Clicky")
-            if RQE.searchedQuestID then
-                local questID = RQE.searchedQuestID
-                local dbEntry = RQE.getQuestData(questID)
+		if button ~= "LeftButton" then return end
 
-                if dbEntry then
-                    -- ✅ Use unified resolver
-                    local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
-                    local finalMapID, finalX, finalY
+		RQE.bg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
+		print("Clicky")
 
-                    if mapID then
-                        finalMapID = mapID
-                        finalX, finalY = x/100, y/100
-                    elseif continentID then
-                        local playerMapID = C_Map.GetBestMapForUnit("player")
-                        if playerMapID then
-                            local parent = C_Map.GetMapInfo(playerMapID).parentMapID
-                            if parent == continentID then
-                                finalMapID = playerMapID
-                                finalX, finalY = x/100, y/100
-                            end
-                        end
-                    end
+		local questID = RQE.searchedQuestID
+		if not questID then
+			print("No searched quest available.")
+			return
+		end
 
-                    if finalMapID and finalX and finalY then
-                        local waypoint = UiMapPoint.CreateFromCoordinates(finalMapID, finalX, finalY)
-                        C_Map.SetUserWaypoint(waypoint)
-                        C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+		local dbEntry = RQE.getQuestData(questID)
+		if not dbEntry then
+			print("No DB entry found for quest", questID)
+			return
+		end
 
-                        if RQE.db.profile.debugLevel == "INFO" then
-                            print(("W-button Waypoint set: Quest %d at Map %d (%.2f, %.2f)"):format(
-                                questID, finalMapID, finalX*100, finalY*100))
-                        end
-                    else
-                        print("W-button: Unable to resolve waypoint for QuestID", questID)
-                    end
-                end
-            end
-        end
-    end)
+		-- ✅ Figure out which mapID or continentID to use
+		local playerMapID = C_Map.GetBestMapForUnit("player")
+		local selectedMapID = nil
+
+		-- Single-location quests
+		if dbEntry.location then
+			selectedMapID = dbEntry.location.mapID or dbEntry.location.continentID
+
+		-- Multi-location quests
+		elseif dbEntry.locations then
+			local matchedZone = nil
+			local continentCandidate = nil
+
+			for _, loc in ipairs(dbEntry.locations) do
+				if loc.mapID == playerMapID then
+					matchedZone = loc.mapID
+					break
+				end
+			end
+
+			if not matchedZone then
+				for _, loc in ipairs(dbEntry.locations) do
+					if loc.continentID then
+						continentCandidate = loc.continentID
+						break
+					end
+				end
+			end
+
+			selectedMapID = matchedZone or continentCandidate
+		end
+
+		if not selectedMapID then
+			print("Unable to determine which mapID/continentID to use for quest:", questID)
+			return
+		end
+
+		-- ✅ Create the waypoint via the proper function
+		RQE:CreateSearchedQuestWaypoint(questID, selectedMapID)
+
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(("W-button: CreateSearchedQuestWaypoint called for Quest %d on map %d"):format(questID, selectedMapID))
+		end
+	end)
 end
 
 
