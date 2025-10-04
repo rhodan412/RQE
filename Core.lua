@@ -11288,7 +11288,7 @@ end
 
 
 -- Fetches the player's position in relation to their current continent
-function RQE.DebugPrintPlayerContinentPosition()
+function RQE.DebugPrintPlayerContinentPosition(questID)
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if not mapID then
 		print("Unable to determine current map.")
@@ -11332,8 +11332,37 @@ function RQE.DebugPrintPlayerContinentPosition()
 	local cx, cy = contPos.x, contPos.y
 
 	-- Print to chat
-	print(string.format(
-		"Player continent position: Continent=%s (%d), X=%.2f, Y=%.2f",
-		continentName or "Unknown", continentID, cx * 100, cy * 100
-	))
+	if RQE.MapAndContinentFromQuestAccepted or RQE.MapAndContinentFromQuestTurnIn then
+		-- null
+	else
+		print(string.format(
+			"Player continent position: Continent=%s (%d), X=%.2f, Y=%.2f",
+			continentName or "Unknown", continentID, cx * 100, cy * 100
+		))
+	end
+
+	-- Print in locations array format
+	if RQE.MapAndContinentFromQuestAccepted then
+		if questID then
+			print(tostring(questID))
+		end
+		print("			locations = {")
+		print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
+		print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
+		print("			},")
+	end
+
+	-- Print in coordinateHotspots format
+	if RQE.MapAndContinentFromQuestTurnIn then
+		if questID then
+			print(tostring(questID))
+		end
+		print("				coordinateHotspots = {")
+		print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
+		print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+		print("				},")
+	end
+
+	RQE.MapAndContinentFromQuestAccepted = false
+	RQE.MapAndContinentFromQuestTurnIn = false
 end
