@@ -1021,68 +1021,63 @@ function RQE.GetPrimaryLocation(dbEntry, targetMapID)
 		end
 	end
 
-	-- Check single location first
+	-- Single location first
 	if dbEntry.location then
 		return extract(dbEntry.location)
 	end
 
-	-- Handle multiple locations
+	-- Multiple locations
 	if dbEntry.locations then
 		local playerMapID = C_Map.GetBestMapForUnit("player")
 		local mapInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
-		local parentContinentID = mapInfo and mapInfo.parentMapID
 		local topMostContinent = mapInfo
-
-		-- Walk up until we find the actual top continent (mapType == 2)
 		while topMostContinent and topMostContinent.parentMapID and topMostContinent.mapType and topMostContinent.mapType ~= 2 do
 			topMostContinent = C_Map.GetMapInfo(topMostContinent.parentMapID)
 		end
 		local trueContinentID = topMostContinent and topMostContinent.mapID
+		local parentContinentID = mapInfo and mapInfo.parentMapID
 
 		local bestMap, bestContinent, firstValid
 
 		for _, loc in ipairs(dbEntry.locations) do
 			local x, y, mapID, continentID = extract(loc)
-
-			-- ✅ If the button explicitly requested a map or continent, use it immediately
-			if targetMapID and (mapID == targetMapID or continentID == targetMapID) then
-				return x, y, mapID, continentID
-			end
-
 			if x and y then
-				-- ✅ 1. Exact map match wins immediately (based on where player is)
+				-- 1) If player is physically in this map, it wins outright
 				if mapID and playerMapID == mapID then
 					return x, y, mapID, nil
 				end
 
-				-- ✅ 2. Store any mapID as fallback
+				-- 2) Honor explicit target (from "W" button) ONLY if we're not already in that map
+				if targetMapID and (mapID ~= playerMapID) and (mapID == targetMapID or continentID == targetMapID) then
+					return x, y, mapID, continentID
+				end
+
+				-- 3) Store fallbacks
 				if mapID and not bestMap then
 					bestMap = { x, y, mapID }
 				end
 
-				-- ✅ 3. Store if continentID matches player's true continent
 				if continentID and (continentID == parentContinentID or continentID == trueContinentID) then
 					bestContinent = { x, y, continentID }
 				end
 
-				-- ✅ 4. Store first valid coordinate just in case
 				if not firstValid then
 					firstValid = { x, y, mapID or continentID }
 				end
 			end
 		end
 
-		-- ✅ Prefer continent if available
+		-- Prefer continent if available
 		if bestContinent then
 			return bestContinent[1], bestContinent[2], nil, bestContinent[3]
 		end
 
-		-- ✅ Otherwise, use map fallback
+		-- Otherwise use map fallback
 		if bestMap then
 			return bestMap[1], bestMap[2], bestMap[3], nil
 		end
 
-		-- ✅ Absolute last resort: first valid
+		-- Last resort
 		if firstValid then
 			return firstValid[1], firstValid[2], firstValid[3], nil
 		end
