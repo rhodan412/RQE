@@ -173,10 +173,13 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 	local macroLines = {
 		"#showtooltip item:153541",
 		"/tar " .. npcName,
-		'/script SetRaidTarget("target",3)'
+		-- '/script SetRaidTarget("target",3)'
+		"/run RQE:SetMarkerIfNeeded('target', 3)"
 	}
 
-	print("Creating macro for searched NPC:", npcName)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Creating macro for searched NPC:", npcName)
+	end
 	RQEMacro:SetQuestStepMacro(questID, 1, macroLines, true)
 
 	C_Timer.After(0.35, function()
