@@ -16,12 +16,19 @@
 			• Waypoints now respect Blizzard’s built-in directions when present, avoiding confusing switches.  
 			• Custom waypoint labels (wayText) are preserved more reliably when moving between hotspots. (2025.10.02)
 		- Added functionality to track location by a set location or that of coordinates in an array, to also include mapID and/or continentID (2025.10.02)
+		- Improved waypoint accuracy for searched quests: waypoints now correctly prioritize zone locations and only use continent fallbacks when outside the target area. (2025.10.04.1513)
+		- Fixed an issue where waypoints sometimes appeared in the wrong map or wouldn’t recreate after the first click. (2025.10.04.1513)
+		- Smarter searched-quest behavior: the “W” button now reliably creates or refreshes waypoints for quests you haven’t picked up yet. (2025.10.04.1513)
+		- Updated NPC interaction macros to automatically use RQE’s built-in marker system, ensuring more consistent marking of quest givers and targets. (2025.10.04.1513)
 
 	Buttons.lua
 		- Modified code in the RQE.UnknownButtonTooltip function to use RQE.GetPrimaryLocation instead of dbEntry.location to accommodate a location array in the DB (2025.10.02)
 		- Updated RQE.UnknownButtonTooltip to reflect more accurate coordinate with locations array (2025.10.03.1419)
 		- Fix for the waypoint creation to direct player to searched quests flagged as not yet picked up & completed in the RQE.UnknownQuestButtonMouseDown function (2025.10.03.1419)
 		- Updated RQE.UnknownQuestButtonMouseDown function (2025.10.04.1402)
+		- Updated RQE.UnknownQuestButtonMouseDown to correctly handle searched-quest waypoint creation across both mapID and continentID contexts. The function now passes the appropriate map or continent reference into RQE:CreateSearchedQuestWaypoint, ensuring accurate resolution of DB location arrays. (2025.10.04.1513)
+		- Replaced redundant final debug print using undefined coordinate variables with context-aware output reflecting the selected map/continentID target for clearer feedback. (2025.10.04.1513)
+		- Cleaned up click event logic and ensured that the W-button consistently creates waypoints on repeated clicks, resolving the “only creates once” behavior. (2025.10.04.1513)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -77,6 +84,9 @@
 		- Added additional quests with continentIDs for quests in the coordinateHotspots (2025.10.03.1419)
 		- Updates to some Duskwood quests to the DB (2025.10.04.1402)
 
+	RQEMacro.lua
+		- Updated RQE:GenerateNpcMacroIfNeeded(questID) to replace legacy /script SetRaidTarget("target",3) line with /run RQE:SetMarkerIfNeeded('target', 8). This change standardizes marker assignment through RQE’s internal handler, ensuring consistent icon logic and compatibility with NPC marker validation routines. (2025.10.04.1513)
+
 	WaypointManager.lua
 		- Extended RQE:CreateWaypoint() to support hotspot-specific wayText. If the current step uses coordinateHotspots and the active hotspot includes wayText, that string overrides the default waypoint title. (2025.09.25)
 		- Updated RQE:CreateWaypoint(): default title now uses GetWaypointTitle() so fallbacks are always in “QID: ###, Quest Name” format instead of plain questName. (2025.09.27)
@@ -88,6 +98,9 @@
 		- Updated RQE:CreateSearchedQuestWaypoint to more accurately create waypoint when pointing to a quest giver for a searched quest that the player doesn't have and is incomplete following the creation of the  locations array (2025.10.03.1419)
 		- Updated RQE:CreateWaypoint() to support forced waypoint recreation via the RQE.isForcedWaypoint flag, bypassing duplicate-coordinate suppression for searched quests and manual waypoint triggers. Added corresponding debug output for transparency (2025.10.04.1402)
 		- Updated RQE:CreateSearchedQuestWaypoint() to pass mapID into RQE.GetPrimaryLocation() for precise resolution of locations entries, including continentID-based coordinates. Added forced waypoint creation handling to allow multiple re-creations and fixed the “only creates once” behavior for searched quests (2025.10.04.1402)
+		- Fixed location prioritization logic in RQE:CreateSearchedQuestWaypoint(questID, mapID) where continent-level coordinates were being used even when the player was inside the specific zone (mapID match). The function now correctly prefers mapID-based waypoints when present and falls back to continentID only when necessary. (2025.10.04.1513)
+		- Adjusted continent waypoint creation to use the actual continent mapID rather than the current player zone, preventing misplaced continent-level waypoints. (2025.10.04.1513)
+		- Verified consistency with forced waypoint creation via RQE.isForcedWaypoint, ensuring repeated searched-quest clicks always trigger fresh waypoint placement. (2025.10.04.1513)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
@@ -105,7 +118,9 @@
 		- Added RQE.GetPrimaryLocation(dbEntry) helper function that is now called within Buttons.lua and Core.lua when tracking the location of the quest start (2025.10.02)
 		- Fix to RQE.GetPrimaryLocation helper function for the handling of the location code and locations array (2025.10.03.1419)
 		- Extended RQE.GetPrimaryLocation(dbEntry) to accept an optional targetMapID argument, enabling direct resolution of specific map or continent coordinates. Added short-circuit check within iteration loop to immediately return the matching entry. This ensures continent-level waypoints (e.g., mapID 13) resolve correctly when invoked via searched-quest buttons (2025.10.04.1402)
-
+		- Refined RQE.GetPrimaryLocation(dbEntry, targetMapID) to improve map priority resolution logic. The function now strictly prioritizes player mapID matches before evaluating explicit targetMapID and continentID entries, ensuring correct location selection in multi-map DB entries. (2025.10.04.1513)
+		- Added internal guards to skip invalid coordinate entries and prevent cross-map preference inversion (ensuring mapID entries always take precedence when both exist). (2025.10.04.1513)
+		- Finalized reliable fallback chain: mapID → targetMapID → continentID → first valid, guaranteeing predictable behavior across all search and creation contexts. (2025.10.04.1513)
 
 11.2.0.6 (2025.09.19)
 
