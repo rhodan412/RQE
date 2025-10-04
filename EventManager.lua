@@ -3202,6 +3202,12 @@ function RQE.handleQuestAccepted(...)
 		RQE.DontUpdateFrame = false
 	end
 
+	-- Print in locations array format
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.MapAndContinentFromQuestAccepted = true
+		RQE.DebugPrintPlayerContinentPosition(questID)
+	end
+
 	if questID and not C_QuestLog.IsWorldQuest(questID) then
 		table.insert(RQE.DelayedQuestWatchCheck, questID)
 
@@ -5968,6 +5974,12 @@ function RQE.handleQuestTurnIn(...)
 	local questID = select(3, ...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
+
+	-- Print in coordinateHotspots format
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.MapAndContinentFromQuestTurnIn = true
+		RQE.DebugPrintPlayerContinentPosition(questID)
+	end
 
 	-- print("~~~ Running Event Function: RQE.handleQuestTurnIn(...) ~~~")
 
