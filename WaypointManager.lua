@@ -57,6 +57,12 @@ end
 function RQE:CreateWaypoint(x, y, mapID, title)
 	-- print("~~~ Waypoint Creation Function: 58 ~~~")
 
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if RQE.isForcedWaypoint then
+			print("Forcing new waypoint creation (ignore duplicate check).")
+		end
+	end
+
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
 	else
@@ -75,13 +81,23 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	local yNorm = (y and y > 1) and (y / 100) or y
 	if not (mapID and xNorm and yNorm) then return end
 
-	-- Skip if coords haven’t changed meaningfully
-	if RQE._lastWP
-		and RQE._lastWP.mapID == mapID
-		and math.abs(RQE._lastWP.x - xNorm) < 1e-4
-		and math.abs(RQE._lastWP.y - yNorm) < 1e-4 then
-		return
+	-- Skip if coords haven’t changed meaningfully (unless forced)
+	if not RQE.isForcedWaypoint then
+		if RQE._lastWP
+			and RQE._lastWP.mapID == mapID
+			and math.abs(RQE._lastWP.x - xNorm) < 1e-4
+			and math.abs(RQE._lastWP.y - yNorm) < 1e-4 then
+			return
+		end
 	end
+
+	-- -- Skip if coords haven’t changed meaningfully
+	-- if RQE._lastWP
+		-- and RQE._lastWP.mapID == mapID
+		-- and math.abs(RQE._lastWP.x - xNorm) < 1e-4
+		-- and math.abs(RQE._lastWP.y - yNorm) < 1e-4 then
+		-- return
+	-- end
 
 	-- Default title: use supertracked quest
 	local questID  = (C_SuperTrack.IsSuperTrackingQuest() and C_SuperTrack.GetSuperTrackedQuestID())
@@ -228,7 +244,8 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 	-- end
 
 	-- Use new unified location resolver
-	local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+	local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry, mapID)
+	-- local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry)
 	local finalMapID, finalX, finalY
 
 	if locMapID then
@@ -255,8 +272,10 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 	local label = "Waypoint for " .. (dbEntry.title or ("Quest ID: " .. questID))
 
 	-- ✅ Prefer wrapper function if it exists
+	RQE.isForcedWaypoint = true
 	if RQE.CreateWaypoint then
 		RQE:CreateWaypoint(x, y, finalMapID, label)
+		RQE.isForcedWaypoint = nil
 	else
 		-- ✅ Fallback to TomTom if available
 		if TomTom and TomTom.AddWaypoint then
