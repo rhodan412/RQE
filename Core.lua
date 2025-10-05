@@ -5956,7 +5956,7 @@ function RQE:StartPeriodicChecks()
 		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
 		CheckScenarioStage = "CheckScenarioStage",
 		CheckScenarioCriteria = "CheckScenarioCriteria",
-		--CheckDBComplete = "CheckDBComplete",
+		CheckDBComplete = "CheckDBComplete",
 	}
 
 	local questData = self.getQuestData(superTrackedQuestID)
@@ -7274,19 +7274,20 @@ end
 
 
 -- Function will check if the quest is ready for turn-in from what is passed by the RQEDatabase.
-function RQE:CheckDBComplete(questID, stepIndex)
+function RQE:CheckDBComplete(questID, stepIndex, check, neededAmt)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~ Running RQE:CheckDBComplete ~~")
 	end
 
-	-- if C_QuestLog.ReadyForTurnIn(questID) then
-		-- self:AdvanceQuestStep(questID, stepIndex)
-	-- end
+	-- Safeguard: if `check` is a table, extract first element as the questID override
+	if type(check) == "table" and tonumber(check[1]) then
+		questID = tonumber(check[1])
+	end
 
 	local isReady = C_QuestLog.ReadyForTurnIn(questID)
 
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("CheckDBComplete: Quest", questID, isReady and "IS" or "is NOT", "ready for turn-in.")
+		print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
 	end
 
 	return isReady
@@ -11360,6 +11361,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			end
 			print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
 			print("			},")
+			PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
 		end
 	end
 
@@ -11407,11 +11409,13 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
 				print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
 				print("				},")
+				PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
 			else
 				print("Turn in step for the quest " .. trackedQuestID .. " already uses a coordinateHotspots array")
 			end
 
 		else
+			-- Handling for the manually activation of the function
 			local hasDBCoords = (dbX and dbY and dbMapID)
 
 			if hasDBCoords then
@@ -11420,7 +11424,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				end
 				print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
 			else
-				print("-- Using player position fallback (no DB coordinates for this quest step)")
+				print("Using player position fallback (no DB coordinates for this quest step)")
 			end
 
 			print("				coordinateHotspots = {")
