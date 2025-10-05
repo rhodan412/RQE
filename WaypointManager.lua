@@ -226,6 +226,12 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 
 	if isInLog then
 		RQE.debugLog("QuestID", questID, "is in player log, skipping location-based waypoint.")
+		local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
+
+		-- Bail out early if there is no actual direction text
+		if (not blizzWaypointText or blizzWaypointText == "") and (not RQE.DirectionText or RQE.DirectionText == "" or RQE.DirectionText == "No direction available.") then
+			return RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+		end
 		return
 	end
 
@@ -295,7 +301,6 @@ function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 	RQE.WPyPos = y
 	RQE.WPmapID = finalMapID
 end
-
 
 
 -- Create a Waypoint when there is Direction Text available
@@ -680,6 +685,24 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 					RQE.debugLog("Carbonite is not available.")
 				end
 			end)
+			-- ✅ Update tooltip coordinate variables
+			if mapID and x and y then
+				RQE.DatabaseSuperMapID = mapID
+				RQE.DatabaseSuperX = x / 100
+				RQE.DatabaseSuperY = y / 100
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(("Tooltip sync → MapID: %s | X: %.2f | Y: %.2f"):format(mapID or "?", x, y))
+				end
+				
+				-- ✅ Force tooltip refresh if the button is visible
+				if RQE.UnknownQuestButton and RQE.UnknownQuestButton:IsShown() then
+					if RQE.UpdateTooltipForButton then
+						RQE:UpdateTooltipForButton(RQE.UnknownQuestButton, questID)
+					elseif RQE.Buttons and RQE.Buttons.UpdateMagicButtonTooltip then
+						RQE.Buttons.UpdateMagicButtonTooltip()
+					end
+				end
+			end
 		end)
 	end
 end
