@@ -65,50 +65,53 @@ end
 RQE.UnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
 		RQE.hoveringOnRQEFrameAndButton = true
+
 		local searchedQuestID = RQE.searchedQuestID
 		if searchedQuestID then
 			local dbEntry = RQE.getQuestData(searchedQuestID)
 			local isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
 			local isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
 
-			-- if dbEntry and not isComplete and not isInLog and type(dbEntry.location) == "table" then
-				-- local x = tonumber(dbEntry.location.x)
-				-- local y = tonumber(dbEntry.location.y)
-				-- local mapID = tonumber(dbEntry.location.mapID)
+			if not isInLog then
+				-- if dbEntry and not isComplete and not isInLog and type(dbEntry.location) == "table" then
+					-- local x = tonumber(dbEntry.location.x)
+					-- local y = tonumber(dbEntry.location.y)
+					-- local mapID = tonumber(dbEntry.location.mapID)
 
-			local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
-			local finalMapID
+				local x, y, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+				local finalMapID
 
-			if mapID then
-				finalMapID = mapID
-			elseif continentID then
-				-- Only fallback if player is on that continent
-				local playerMapID = C_Map.GetBestMapForUnit("player")
-				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
-				if parent == continentID then
-					finalMapID = continentID
+				if mapID then
+					finalMapID = mapID
+				elseif continentID then
+					-- Only fallback if player is on that continent
+					local playerMapID = C_Map.GetBestMapForUnit("player")
+					local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					if parent == continentID then
+						finalMapID = continentID
+					end
 				end
-			end
 
-			if x and y and finalMapID then
-				local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(finalMapID))
+				if x and y and finalMapID then
+					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(finalMapID))
 
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText(tooltipText)
-				GameTooltip:Show()
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText(tooltipText)
+					GameTooltip:Show()
 
-				RQE.WPxPos = x
-				RQE.WPyPos = y
-				RQE.WPmapID = finalMapID
+					RQE.WPxPos = x
+					RQE.WPyPos = y
+					RQE.WPmapID = finalMapID
 
-				if RQE.db.profile.debugLevel == "INFO" then
-					DEFAULT_CHAT_FRAME:AddMessage("From searchedQuestID fallback | QuestID: " .. searchedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
+					if RQE.db.profile.debugLevel == "INFO" then
+						DEFAULT_CHAT_FRAME:AddMessage("From searchedQuestID fallback | QuestID: " .. searchedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
+					end
+				else
+					-- Fallback message if not found or failed conditions
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Coordinates unavailable for searched quest.")
+					GameTooltip:Show()
 				end
-			else
-				-- Fallback message if not found or failed conditions
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText("Coordinates unavailable for searched quest.")
-				GameTooltip:Show()
 			end
 		end
 
@@ -164,45 +167,6 @@ RQE.UnknownButtonTooltip = function()
 									return "No tooltip available."
 								end
 							end
-
-							-- Ensure quest data exists and has the coordinate data		-- USES ONLY THE 'COORDINATES' METHOD AND NOT THE NEWER 'coordinateHotspots'
-							-- if questData and questData[stepIndex] and questData[stepIndex].coordinates then
-								-- -- Extract coordinate information for the current stepIndex
-								-- local coordData = questData[stepIndex].coordinates
-								-- local x, y, mapID = coordData.x, coordData.y, coordData.mapID
-
-								-- -- Format the coordinate text
-								-- local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
-								-- RQE.SeparateFocusCoordData = coordsText
-
-								-- if RQE.db.profile.debugLevel == "INFO" then
-									-- RQE.AddonSetStepIndex = RQE.AddonSetStepIndex or 1
-									-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
-
-									-- if RQE.WCoordData == RQE.SeparateFocusCoordData then
-										-- RQE:PlayThrottledSound(45024)
-									-- else
-										-- print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
-										-- RQE:PlayThrottledSound(135755)
-									-- end
-								-- end
-
-								-- -- Return the formatted coordinate text
-								-- RQE.DontPrintTransitionBits = true
-								-- RQE.ClickUnknownQuestButton()
-								-- RQE.DontPrintTransitionBits = false
-								-- return coordsText
-							-- else
-								-- if RQE.db.profile.debugLevel == "INFO" then
-									-- print("DB Coordinates missing for quest step!")
-									-- RQE:PlayThrottledSound(5927)
-								-- end
-								-- RQE.DontPrintTransitionBits = true
-								-- RQE.ClickUnknownQuestButton()
-								-- RQE.DontPrintTransitionBits = false
-								-- return "No tooltip available."  -- Fallback if no data is available
-							-- end
-						-- end
 						end
 					end)
 				end)
@@ -281,6 +245,9 @@ RQE.UnknownButtonTooltip = function()
 					if RQE.db.profile.debugLevel == "INFO" then
 						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 						RQE.WCoordData = tooltipText
+						-- if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+							-- RQE.DebugPrintPlayerContinentPosition(RQE.CurrentTrackedQuestID)
+						-- end
 						-- C_Timer.After(5, function()
 							-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 228 ~~")
 							-- RQE:StartPeriodicChecks()
