@@ -1,4 +1,4 @@
-11.2.0.7
+11.2.0.7 (2025.10.05)
 
 	**HIGHLIGHTS**
 		- Fixed RQE:QuestRewardsTooltip() function to include additional choice rewards as these were previously not showing up reliably (2025.09.22)
