@@ -11331,16 +11331,6 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 
 	local cx, cy = contPos.x, contPos.y
 
-	-- Print to chat
-	-- if RQE.MapAndContinentFromQuestAccepted or RQE.MapAndContinentFromQuestTurnIn then
-		-- -- null
-	-- else
-		-- print(string.format(
-			-- "Player continent position: Continent=%s (%d), X=%.2f, Y=%.2f",
-			-- continentName or "Unknown", continentID, cx * 100, cy * 100
-		-- ))
-	-- end
-
 	-- Print in locations array format (include DB "location" line above it)
 	if RQE.MapAndContinentFromQuestAccepted then
 		local dbEntry = questID and RQE.getQuestData(questID)
@@ -11360,13 +11350,6 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			if questID then
 				print(tostring(questID))
 			end
-
-			-- -- Print DB's existing single "location" line first
-			-- if dbX and dbY and dbMapID then
-				-- print(string.format("			location = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			-- else
-				-- print("No valid single location found in DB.")
-			-- end
 
 			-- Then print the new generated "locations" array block
 			print("			locations = {")
@@ -11401,6 +11384,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 
 		if RQE.MapAndContinentFromQuestTurnIn then
 			local hasDBCoords = (dbX and dbY and dbMapID)
+			local hasHotspots = dbEntry and dbEntry[stepIndex] and dbEntry[stepIndex].coordinateHotspots ~= nil
 
 			if hasDBCoords then
 				-- Print DB-based coordinate + player-based continent hotspot
@@ -11413,16 +11397,19 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				print("Using player position fallback (no DB coordinates for this quest step)")
 			end
 
-			print("				coordinateHotspots = {")
+			if not hasHotspots then
+				-- ✅ Use DB coords if available, otherwise fallback to player’s current map position
+				local hotspotX = hasDBCoords and dbX or (x * 100)
+				local hotspotY = hasDBCoords and dbY or (y * 100)
+				local hotspotMapID = hasDBCoords and dbMapID or mapID
 
-			-- ✅ Use DB coords if available, otherwise fallback to player’s current map position
-			local hotspotX = hasDBCoords and dbX or (x * 100)
-			local hotspotY = hasDBCoords and dbY or (y * 100)
-			local hotspotMapID = hasDBCoords and dbMapID or mapID
-
-			print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
-			print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-			print("				},")
+				print("				coordinateHotspots = {")
+				print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
+				print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+				print("				},")
+			else
+				print("Turn in step for the quest " .. trackedQuestID .. " already uses a coordinateHotspots array")
+			end
 
 		else
 			local hasDBCoords = (dbX and dbY and dbMapID)
@@ -11445,32 +11432,6 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
 			print("				},")
 		end
-
-		-- if RQE.MapAndContinentFromQuestTurnIn then
-			-- if dbX and dbY and dbMapID then
-				-- -- Print DB-based coordinate + player-based continent hotspot
-				-- print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			-- else
-				-- print("No valid DB coordinates found for current quest step.")
-			-- end
-
-			-- print("				coordinateHotspots = {")
-			-- print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", dbX, dbY, dbMapID))
-			-- print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-			-- print("				},")
-		-- else
-			-- if dbX and dbY and dbMapID then
-				-- -- Print DB-based coordinate + player-based continent hotspot
-				-- print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			-- else
-				-- print("No valid DB coordinates found for current quest step.")
-			-- end
-
-			-- print("				coordinateHotspots = {")
-			-- print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
-			-- print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-			-- print("				},")
-		-- end
 	end
 
 	RQE.MapAndContinentFromQuestAccepted = false
