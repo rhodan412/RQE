@@ -48,6 +48,7 @@
 		- Updated RQE.SaveCoordData(), UpdateFrame(), RQE.SearchModule:CreateSearchBox() and RQE:GetClosestFlightMasterToQuest(questID) functions to reflect more accurate coordinate with locations array (2025.10.03.1419)
 		- Updated RQE.DebugPrintPlayerContinentPosition() function to print location and coordinateHotspots depending on flag from EventManager (2025.10.04.1402)
 		- Enhanced RQE.DebugPrintPlayerContinentPosition(questID) to include database coordinate validation, prevent nil formatting errors, and dynamically print location or coordinateHotspots data based on quest state and DB structure. (2025.10.04.2046)
+		- Updated RQE.DebugPrintPlayerContinentPosition() to skip coordinateHotspots output when the current quest step already defines them in the DB, preventing redundant prints and ensuring cleaner debug output. (2025.10.04.2148)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
