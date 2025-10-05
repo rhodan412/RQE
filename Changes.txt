@@ -20,6 +20,7 @@
 		- Fixed an issue where waypoints sometimes appeared in the wrong map or wouldn’t recreate after the first click. (2025.10.04.1513)
 		- Smarter searched-quest behavior: the “W” button now reliably creates or refreshes waypoints for quests you haven’t picked up yet. (2025.10.04.1513)
 		- Updated NPC interaction macros to automatically use RQE’s built-in marker system, ensuring more consistent marking of quest givers and targets. (2025.10.04.1513)
+		- Improved waypoint creation logic: searched quests without Blizzard direction text now correctly generate fallback waypoints, and tooltip data auto-refreshes for more accurate coordinate display. (2025.10.04.2046)
 
 	Buttons.lua
 		- Modified code in the RQE.UnknownButtonTooltip function to use RQE.GetPrimaryLocation instead of dbEntry.location to accommodate a location array in the DB (2025.10.02)
@@ -29,6 +30,7 @@
 		- Updated RQE.UnknownQuestButtonMouseDown to correctly handle searched-quest waypoint creation across both mapID and continentID contexts. The function now passes the appropriate map or continent reference into RQE:CreateSearchedQuestWaypoint, ensuring accurate resolution of DB location arrays. (2025.10.04.1513)
 		- Replaced redundant final debug print using undefined coordinate variables with context-aware output reflecting the selected map/continentID target for clearer feedback. (2025.10.04.1513)
 		- Cleaned up click event logic and ensured that the W-button consistently creates waypoints on repeated clicks, resolving the “only creates once” behavior. (2025.10.04.1513)
+		- Cleaned up code (2025.10.04.2046)
 
 	Core.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -45,6 +47,7 @@
 		- Modified code in the RQE.SaveCoordData(), UpdateFrame(), RQE.SearchModule:CreateSearchBox() and RQE:GetClosestFlightMasterToQuest() functions to use RQE.GetPrimaryLocation instead of dbEntry.location to accomodate a location array in the DB (2025.10.02)
 		- Updated RQE.SaveCoordData(), UpdateFrame(), RQE.SearchModule:CreateSearchBox() and RQE:GetClosestFlightMasterToQuest(questID) functions to reflect more accurate coordinate with locations array (2025.10.03.1419)
 		- Updated RQE.DebugPrintPlayerContinentPosition() function to print location and coordinateHotspots depending on flag from EventManager (2025.10.04.1402)
+		- Enhanced RQE.DebugPrintPlayerContinentPosition(questID) to include database coordinate validation, prevent nil formatting errors, and dynamically print location or coordinateHotspots data based on quest state and DB structure. (2025.10.04.2046)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -101,6 +104,8 @@
 		- Fixed location prioritization logic in RQE:CreateSearchedQuestWaypoint(questID, mapID) where continent-level coordinates were being used even when the player was inside the specific zone (mapID match). The function now correctly prefers mapID-based waypoints when present and falls back to continentID only when necessary. (2025.10.04.1513)
 		- Adjusted continent waypoint creation to use the actual continent mapID rather than the current player zone, preventing misplaced continent-level waypoints. (2025.10.04.1513)
 		- Verified consistency with forced waypoint creation via RQE.isForcedWaypoint, ensuring repeated searched-quest clicks always trigger fresh waypoint placement. (2025.10.04.1513)
+		- Added conditional direction text handling in RQE:CreateSearchedQuestWaypoint(questID, mapID). The function now checks C_QuestLog.GetNextWaypointText() for valid Blizzard direction text and automatically falls back to RQE:CreateUnknownQuestWaypointNoDirectionText() when none is found. This prevents the creation of empty or misleading waypoints for quests without waypointText. (2025.10.04.2046)
+		- Updated RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID) to synchronize tooltip coordinate variables (DatabaseSuperX, DatabaseSuperY, and DatabaseSuperMapID) when a waypoint is created. Added automatic tooltip refresh for the “W” button when visible, ensuring coordinate display updates instantly without requiring mouseover. (2025.10.04.2046)
 
 	WPUtil.lua
 		- Cleaned up spacing in the code (2025.09.23)
