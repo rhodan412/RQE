@@ -21,6 +21,7 @@
 		- Smarter searched-quest behavior: the “W” button now reliably creates or refreshes waypoints for quests you haven’t picked up yet. (2025.10.04.1513)
 		- Updated NPC interaction macros to automatically use RQE’s built-in marker system, ensuring more consistent marking of quest givers and targets. (2025.10.04.1513)
 		- Improved waypoint creation logic: searched quests without Blizzard direction text now correctly generate fallback waypoints, and tooltip data auto-refreshes for more accurate coordinate display. (2025.10.04.2046)
+		- Improved event-type quest handling: RQE now advances steps for quests that are Ready for Turn-In even when objectives never flag as completed [via new CheckDBComplete support in Core.lua]. (2025.10.05.0301)
 
 	Buttons.lua
 		- Modified code in the RQE.UnknownButtonTooltip function to use RQE.GetPrimaryLocation instead of dbEntry.location to accommodate a location array in the DB (2025.10.02)
@@ -49,6 +50,7 @@
 		- Updated RQE.DebugPrintPlayerContinentPosition() function to print location and coordinateHotspots depending on flag from EventManager (2025.10.04.1402)
 		- Enhanced RQE.DebugPrintPlayerContinentPosition(questID) to include database coordinate validation, prevent nil formatting errors, and dynamically print location or coordinateHotspots data based on quest state and DB structure. (2025.10.04.2046)
 		- Updated RQE.DebugPrintPlayerContinentPosition() to skip coordinateHotspots output when the current quest step already defines them in the DB, preventing redundant prints and ensuring cleaner debug output. (2025.10.04.2148)
+		- Improved event-type quest handling: RQE now advances steps for quests that are Ready for Turn-In even when objectives never flag as completed [via new CheckDBComplete support in Core.lua]. (2025.10.05.0301)
 
 	EventManager.lua
 		- Cleaned up spacing in the code (2025.09.22)
@@ -87,6 +89,7 @@
 		- Updates to some quests and added 'continentID' to questID 8149 (2025.10.02)
 		- Added additional quests with continentIDs for quests in the coordinateHotspots (2025.10.03.1419)
 		- Updates to some Duskwood quests to the DB (2025.10.04.1402)
+		- Added some quests for Westfall to the quest DB (2025.10.05.0301)
 
 	RQEMacro.lua
 		- Updated RQE:GenerateNpcMacroIfNeeded(questID) to replace legacy /script SetRaidTarget("target",3) line with /run RQE:SetMarkerIfNeeded('target', 8). This change standardizes marker assignment through RQE’s internal handler, ensuring consistent icon logic and compatibility with NPC marker validation routines. (2025.10.04.1513)
