@@ -9,12 +9,17 @@
 			• RQE.RenderTextWithItemTags(text) – Converts item tags into formatted text links for display. (2025.10.05.2235)
 			• RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor) – Full rendering function that replaces {item:id:name} tags with clickable hover regions supporting dynamic tooltips, line wrapping, and adaptive alignment within quest descriptions. (2025.10.05.2235)
 			• RQE:CreateItemTooltip(frame, itemID) – Generates item tooltips with item counts and contextual info on hover. (2025.10.05.2235)
+			- Fixed an issue where steps weren't clearing before they were rendered in UpdateFrame() (2025.10.06.0401)
 
+	EventManager.lua
+		- Removed call to RQE:ClearStepsTextInFrame() after UpdateFrame() fires within the SUPER_TRACKING_CHANGED event function (2025.10.06.0401)
+		
 	RQE.toc
 		- Updated Interface# and version# (2025.10.05.0608)
 
 	RQEDatabase.lua
 		- Added some quests with the new item tooltip functionality in the descriptions (2025.10.05.2235)
+		- Added more Darkmoon Faire quests to the DB (2025.10.06.0401)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
