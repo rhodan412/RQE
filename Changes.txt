@@ -1,7 +1,24 @@
 11.2.5.0
 
+	**HIGHLIGHTS**
+		- Added functionality for tooltips to appear in the step descriptions in the SeparateFocusFrame and those of the individual steps (2025.10.05.2235)
+
+	Core.lua
+		- Added new parsing and rendering system for item tags within quest text:
+			• RQE.ParseItemTag(text) – Parses {item:id:name} tags and returns item data in structured form. (2025.10.05.2235)
+			• RQE.RenderTextWithItemTags(text) – Converts item tags into formatted text links for display. (2025.10.05.2235)
+			• RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor) – Full rendering function that replaces {item:id:name} tags with clickable hover regions supporting dynamic tooltips, line wrapping, and adaptive alignment within quest descriptions. (2025.10.05.2235)
+			• RQE:CreateItemTooltip(frame, itemID) – Generates item tooltips with item counts and contextual info on hover. (2025.10.05.2235)
+
 	RQE.toc
 		- Updated Interface# and version# (2025.10.05.0608)
+
+	RQEDatabase.lua
+		- Added some quests with the new item tooltip functionality in the descriptions (2025.10.05.2235)
+
+	RQEFrame.lua
+		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
+		- Updated tooltip and text-rendering logic to use RQE.GetSeparateStepText() instead of directly accessing RQE.SeparateStepText:GetText(), ensuring dynamic compatibility with the new rich-text rendering system. (2025.10.05.2235)
 
 
 11.2.0.7 (2025.10.05)
