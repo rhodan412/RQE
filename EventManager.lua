@@ -31,6 +31,7 @@ RQEDatabase = RQEDatabase or {}
 RQEMacro = RQEMacro or {}
 RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
 
+
 ------------------------------
 -- 2. Constants and Settings
 ------------------------------
