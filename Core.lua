@@ -4578,7 +4578,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	parentFrame._rqeSegments = {}
 
 	-- Replace {item:id:name} with [name] visually
-	local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
+	local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 	parentFrame:SetText(displayText)
 
 	-- Font metrics
