@@ -814,6 +814,24 @@ else
 end
 
 
+-- Safe wrapper function that extracts the text from the new structure
+function RQE.GetSeparateStepText()
+	if not RQE.SeparateStepText then return "" end
+	if RQE.SeparateStepText.GetText then
+		return RQE.SeparateStepText:GetText() or ""
+	elseif RQE.SeparateStepText._rqeSegments then
+		local collected = {}
+		for _, seg in ipairs(RQE.SeparateStepText._rqeSegments) do
+			if seg:IsObjectType("FontString") then
+				table.insert(collected, seg:GetText() or "")
+			end
+		end
+		return table.concat(collected, "")
+	end
+	return ""
+end
+
+
 -- Function to create tooltip for QuestID and QuestName
 local function CreateQuestTooltip(frame, questID)
 	local effectiveQuestID = RQE.searchedQuestID or questID
@@ -898,7 +916,8 @@ local function CreateQuestTooltip(frame, questID)
 		end
 		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
 		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
-		GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
+		GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
+		--GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
 	else
 		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 	end
@@ -1167,7 +1186,20 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		StepText:SetSize(350, 0) -- Controls length you have across the frame before it will force a line break
 		StepText:SetHeight(0)  -- Auto height
 		StepText:SetWordWrap(true)  -- Allow word wrap
-		StepText:SetText(StepsText[i] or "No description available.")
+
+		--StepText:SetText(StepsText[i] or "No description available.")
+
+		-- -- Parse step text for {item:id:name} or [item:id:name]
+		-- local raw = StepsText[i] or "No description available."
+		-- local itemID = RQE.ParseItemTag(raw)
+		-- local rendered = RQE.RenderTextWithItemTags(raw)
+		-- StepText:SetText(rendered)
+		-- RQE.AttachItemHover(StepText, itemID)
+
+		local raw = StepsText[i] or "No description available."
+		StepText:SetText("")  -- Clear main fontstring
+		RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8})
+
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
 
 		-- Create CoordsText
@@ -2061,7 +2093,16 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.StepIndexForCoordMatch = stepIndex
 		RQE.totalStepforQuest = totalSteps
 
-		RQE.SeparateStepText:SetText(formattedText)
+		--RQE.SeparateStepText:SetText(formattedText)
+
+		-- local itemID = RQE.ParseItemTag(formattedText)
+		-- local rendered = RQE.RenderTextWithItemTags(formattedText)
+		-- RQE.SeparateStepText:SetText(rendered)
+		-- RQE.AttachItemHover(RQE.SeparateStepText, itemID)
+
+		RQE.SeparateStepText:SetText("")  -- clear any previous text
+		RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
+
 		RQE.SeparateStepText:Show()
 
 		RQE.InitializeSeparateFocusWaypoints()
@@ -2201,7 +2242,8 @@ function RQE.ShowFocusScrollFrameTooltip(self)
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
 		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
-		GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
+		GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
+		-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
 	else
 		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 	end
