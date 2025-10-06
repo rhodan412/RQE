@@ -2866,7 +2866,7 @@ function RQE.handleSuperTracking()
 		end
 
 		UpdateFrame()	-- Necessary for updating RQEFrame when in mythicMode
-		RQE:ClearStepsTextInFrame()
+		--RQE:ClearStepsTextInFrame()
 
 		-- Reset step index and related state when super-tracking changes in mythicMode
 		RQE.LastClickedIdentifier = nil
