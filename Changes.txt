@@ -14,6 +14,7 @@
 		- Updated function signature to support a custom hover frame container (2025.10.06.0640)
 		- Modified parent assignment logic to prefer the provided hover container over default frame hierarchy (2025.10.06.0640)
 		- Improved hover frame input handling to prevent unintended mouse propagation (2025.10.06.0640)
+		- Adjusted the tooltip text to be light pink instead of white in order to stand out from the canary color in the description text (2025.10.06.1341)
 
 	EventManager.lua
 		- Removed call to RQE:ClearStepsTextInFrame() after UpdateFrame() fires within the SUPER_TRACKING_CHANGED event function (2025.10.06.0401)
