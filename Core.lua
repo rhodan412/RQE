@@ -2644,6 +2644,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.infoLog("Line 1692: questInfo.objectives is ", questInfo.objectives)
 
 		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+			RQE:ClearStepsTextInFrame()
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		end
 	end
