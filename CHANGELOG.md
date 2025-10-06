@@ -2,6 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Added functionality for tooltips to appear in the step descriptions in the SeparateFocusFrame and those of the individual steps (2025.10.05.2235)
+		- Isolated item tooltip overlays into a dedicated hover container to prevent ghost tooltips from persisting between step updates (2025.10.06.0640)
 
 	Core.lua
 		- Added new parsing and rendering system for item tags within quest text:
@@ -9,7 +10,10 @@
 			• RQE.RenderTextWithItemTags(text) – Converts item tags into formatted text links for display. (2025.10.05.2235)
 			• RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor) – Full rendering function that replaces {item:id:name} tags with clickable hover regions supporting dynamic tooltips, line wrapping, and adaptive alignment within quest descriptions. (2025.10.05.2235)
 			• RQE:CreateItemTooltip(frame, itemID) – Generates item tooltips with item counts and contextual info on hover. (2025.10.05.2235)
-			- Fixed an issue where steps weren't clearing before they were rendered in UpdateFrame() (2025.10.06.0401)
+		- Fixed an issue where steps weren't clearing before they were rendered in UpdateFrame() (2025.10.06.0401)
+		- Updated function signature to support a custom hover frame container (2025.10.06.0640)
+		- Modified parent assignment logic to prefer the provided hover container over default frame hierarchy (2025.10.06.0640)
+		- Improved hover frame input handling to prevent unintended mouse propagation (2025.10.06.0640)
 
 	EventManager.lua
 		- Removed call to RQE:ClearStepsTextInFrame() after UpdateFrame() fires within the SUPER_TRACKING_CHANGED event function (2025.10.06.0401)
@@ -19,11 +23,13 @@
 
 	RQEDatabase.lua
 		- Added some quests with the new item tooltip functionality in the descriptions (2025.10.05.2235)
-		- Added more Darkmoon Faire quests to the DB (2025.10.06.0401)
+		- Updated all profession quests in Darkmoon Faire quests in the DB (2025.10.06.0640)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
 		- Updated tooltip and text-rendering logic to use RQE.GetSeparateStepText() instead of directly accessing RQE.SeparateStepText:GetText(), ensuring dynamic compatibility with the new rich-text rendering system. (2025.10.05.2235)
+		- Added a dedicated container for hover buttons inside RQE:CreateStepsText(StepsText, CoordsText, MapIDs) to isolate tooltip overlays from the global UI (2025.10.06.0640)
+		- Updated the rendering call for quest step text to specify the new container (2025.10.06.0640)
 
 
 11.2.0.7 (2025.10.05)
