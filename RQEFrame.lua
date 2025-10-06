@@ -1155,6 +1155,18 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	local yOffset = -20  -- Vertical distance to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	local baseYOffset = -20
 
+	-- 🧹 Create or reuse a dedicated container for hover buttons
+	if not RQE.StepsHoverContainer then
+		RQE.StepsHoverContainer = CreateFrame("Frame", "RQE_StepsHoverContainer", content)
+		RQE.StepsHoverContainer:SetAllPoints(content)
+	else
+		-- Clean up any old children from the last quest
+		for _, child in ipairs({RQE.StepsHoverContainer:GetChildren()}) do
+			child:Hide()
+			child:SetParent(nil)
+		end
+	end
+
 	if self.CoordsText then
 		for i, textElement in ipairs(self.CoordsText) do
 			textElement:Hide()
@@ -1189,16 +1201,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		--StepText:SetText(StepsText[i] or "No description available.")
 
-		-- -- Parse step text for {item:id:name} or [item:id:name]
-		-- local raw = StepsText[i] or "No description available."
-		-- local itemID = RQE.ParseItemTag(raw)
-		-- local rendered = RQE.RenderTextWithItemTags(raw)
-		-- StepText:SetText(rendered)
-		-- RQE.AttachItemHover(StepText, itemID)
-
 		local raw = StepsText[i] or "No description available."
 		StepText:SetText("")  -- Clear main fontstring
-		RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8})
+		RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
+		-- RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8})
 
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
 
