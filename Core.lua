@@ -4543,6 +4543,352 @@ SearchEditBox:SetFontObject("GameFontNormal")
 SearchEditBox:SetText("Edit...")  -- Default text
 
 
+-- Parse one {item:id:name} or [item:id:name] tag (returns itemID and display name)
+function RQE.ParseItemTag(text)
+	if not text or text == "" then return nil end
+	local id, name = text:match("{item:(%d+):([^}]+)}")
+	if id then return tonumber(id), name end
+	id, name = text:match("%[item:(%d+):([^%]]+)%]")
+	if id then return tonumber(id), name end
+	return nil
+end
+
+
+-- Render text by replacing tags with colored [Name]
+function RQE.RenderTextWithItemTags(text)
+	if not text then return text end
+	text = text:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
+	text = text:gsub("%[item:(%d+):([^%]]+)%]", "|cffffffff[%2]|r")
+	return text
+end
+
+
+-- Render rich text with multiple {item:id:name} tags and attach separate hover frames
+function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor)
+	if not rawText or rawText == "" or not parentFrame then return end
+
+	-- Clean up any old hover frames
+	if parentFrame._rqeSegments then
+		for _, seg in ipairs(parentFrame._rqeSegments) do
+			if seg.Hide then seg:Hide() end
+			if seg.SetParent then seg:SetParent(nil) end
+		end
+	end
+	parentFrame._rqeSegments = {}
+
+	-- Replace {item:id:name} with [name] visually
+	local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
+	parentFrame:SetText(displayText)
+
+	-- Font metrics
+	local fontPath, size, flags = parentFrame:GetFont()
+	local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	measureFS:SetFont(font or fontPath, fontSize or size, flags)
+
+	local baseParent = parentFrame:GetParent() or UIParent
+	local lineHeight = parentFrame:GetLineHeight()
+	local yOffset, rawPos = 0, 1
+
+	-- Helper: resolve the true owning frame name, even if deeply nested
+	local function GetTopParentName(frame)
+		local limit = 5 -- safety to avoid infinite loops
+		local cur = frame
+		while cur and limit > 0 do
+			if cur.GetName and cur:GetName() then
+				return cur:GetName()
+			end
+			cur = cur:GetParent()
+			limit = limit - 1
+		end
+		return nil
+	end
+
+	for line in displayText:gmatch("([^\n]*)\n?") do
+		if line and line ~= "" then
+			local nl = rawText:find("\n", rawPos, true) or (#rawText + 1)
+			local rawLine = rawText:sub(rawPos, nl - 1)
+			local patternPos = 1
+
+			while true do
+				local startTag, endTag, itemID, itemName = rawLine:find("{item:(%d+):([^}]+)}", patternPos)
+				if not startTag then break end
+				itemID = tonumber(itemID)
+
+				if itemID and itemName then
+					local beforeText = rawLine:sub(1, startTag - 1)
+					beforeText = beforeText
+						:gsub("{item:%d+:[^}]+}", function(full)
+							local _, _, _, nm = full:find("{item:(%d+):([^}]+)}")
+							return "[" .. (nm or "?") .. "]"
+						end)
+						:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+
+					measureFS:SetText(beforeText)
+					local cursorX = measureFS:GetStringWidth()
+
+					measureFS:SetText("[" .. itemName .. "]")
+					local tagWidth = measureFS:GetStringWidth()
+					local maxWidth = parentFrame:GetWidth() or 400
+
+					-- Wrapping fix: split hover across lines if it exceeds width
+					if (cursorX + tagWidth) > maxWidth then
+						local overflow = (cursorX + tagWidth) - maxWidth
+						local firstWidth = tagWidth - overflow
+
+						-- Part 1: end of current line
+						local hover1 = CreateFrame("Button", nil, baseParent)
+						hover1:SetFrameStrata("TOOLTIP")
+						hover1:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+						hover1:SetAlpha(0.01)
+						hover1:SetSize(firstWidth, lineHeight)
+						hover1:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
+						hover1:SetScript("OnEnter", function()
+							GameTooltip:SetOwner(hover1, "ANCHOR_CURSOR_RIGHT")
+							GameTooltip:SetItemByID(itemID)
+							local count = GetItemCount(itemID) or 0
+							GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+							GameTooltip:Show()
+						end)
+						hover1:SetScript("OnLeave", function() GameTooltip:Hide() end)
+						table.insert(parentFrame._rqeSegments, hover1)
+
+						-- Part 2: start of next wrapped line
+						local hover2 = CreateFrame("Button", nil, baseParent)
+						hover2:SetFrameStrata("TOOLTIP")
+						hover2:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+						hover2:SetAlpha(0.01)
+						hover2:SetSize(overflow, lineHeight)
+						hover2:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -(yOffset + lineHeight))
+						hover2:SetScript("OnEnter", hover1:GetScript("OnEnter"))
+						hover2:SetScript("OnLeave", hover1:GetScript("OnLeave"))
+						table.insert(parentFrame._rqeSegments, hover2)
+					else
+						-- Fits entirely on one line
+						local hover = CreateFrame("Button", nil, baseParent)
+						hover:SetFrameStrata("TOOLTIP")
+						hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+						hover:SetAlpha(0.01)
+						hover:SetSize(tagWidth + 6, lineHeight)
+						local yAdj = yOffset
+
+						-- Use parent chain to identify which frame owns this text (even if nested)
+						local parentName = GetTopParentName(parentFrame) or ""
+						if parentName:find("RQE_SeparateContentFrame", 1, true) then
+							-- Adaptive vertical correction: deeper lines in larger frames get a bit more offset
+							local extraAdjust = 0
+							if yOffset > lineHeight * 2 then
+								extraAdjust = (yOffset / lineHeight) * 0.08  -- small multiplier grows with depth
+							end
+
+							-- Separate frame correction (moves tooltip hover slightly down)
+							yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))	-- smaller offset of x in the (x + extraAdjust) means move everything higher vertically
+						end
+
+						hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yAdj)
+						hover:SetScript("OnEnter", function()
+							GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
+							GameTooltip:SetItemByID(itemID)
+							local count = C_Item.GetItemCount(itemID) or 0
+							GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+							GameTooltip:Show()
+						end)
+						hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+						table.insert(parentFrame._rqeSegments, hover)
+					end
+				end
+
+				patternPos = endTag + 1
+			end
+		end
+
+		yOffset = yOffset + lineHeight
+		local nextLine = rawText:find("\n", rawPos, true)
+		rawPos = nextLine and (nextLine + 1) or (#rawText + 1)
+	end
+
+	measureFS:Hide()
+end
+
+
+-- -- Render rich text with multiple {item:id:name} tags and attach separate hover frames
+-- function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor)
+	-- if not rawText or rawText == "" or not parentFrame then return end
+
+	-- -- Clean up any old hover frames
+	-- if parentFrame._rqeSegments then
+		-- for _, seg in ipairs(parentFrame._rqeSegments) do
+			-- if seg.Hide then seg:Hide() end
+			-- if seg.SetParent then seg:SetParent(nil) end
+		-- end
+	-- end
+	-- parentFrame._rqeSegments = {}
+
+	-- -- Replace {item:id:name} with [name] visually
+	-- local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
+	-- parentFrame:SetText(displayText)
+
+	-- -- Font metrics
+	-- local fontPath, size, flags = parentFrame:GetFont()
+	-- local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	-- measureFS:SetFont(font or fontPath, fontSize or size, flags)
+
+	-- local baseParent = parentFrame:GetParent() or UIParent
+	-- local lineHeight = parentFrame:GetLineHeight()
+	-- local yOffset, rawPos = 0, 1
+
+	-- for line in displayText:gmatch("([^\n]*)\n?") do
+		-- if line and line ~= "" then
+			-- local nl = rawText:find("\n", rawPos, true) or (#rawText + 1)
+			-- local rawLine = rawText:sub(rawPos, nl - 1)
+			-- local patternPos = 1
+
+			-- while true do
+				-- local startTag, endTag, itemID, itemName = rawLine:find("{item:(%d+):([^}]+)}", patternPos)
+				-- if not startTag then break end
+				-- itemID = tonumber(itemID)
+
+				-- if itemID and itemName then
+					-- local beforeText = rawLine:sub(1, startTag - 1)
+					-- beforeText = beforeText
+						-- :gsub("{item:%d+:[^}]+}", function(full)
+							-- local _, _, _, nm = full:find("{item:(%d+):([^}]+)}")
+							-- return "[" .. (nm or "?") .. "]"
+						-- end)
+						-- :gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+
+					-- measureFS:SetText(beforeText)
+					-- local cursorX = measureFS:GetStringWidth()
+
+					-- measureFS:SetText("[" .. itemName .. "]")
+					-- local tagWidth = measureFS:GetStringWidth()
+					-- local maxWidth = parentFrame:GetWidth() or 400
+
+					-- -- Wrapping fix: split hover across lines if it exceeds width
+					-- if (cursorX + tagWidth) > maxWidth then
+						-- local overflow = (cursorX + tagWidth) - maxWidth
+						-- local firstWidth = tagWidth - overflow
+
+						-- -- Part 1: end of current line
+						-- local hover1 = CreateFrame("Button", nil, baseParent)
+						-- hover1:SetFrameStrata("TOOLTIP")
+						-- hover1:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+						-- hover1:SetAlpha(0.01)
+						-- hover1:SetSize(firstWidth, lineHeight)
+						-- hover1:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
+						-- hover1:SetScript("OnEnter", function()
+							-- GameTooltip:SetOwner(hover1, "ANCHOR_CURSOR_RIGHT")
+							-- GameTooltip:SetItemByID(itemID)
+							-- local count = GetItemCount(itemID) or 0
+							-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+							-- GameTooltip:Show()
+						-- end)
+						-- hover1:SetScript("OnLeave", function() GameTooltip:Hide() end)
+						-- table.insert(parentFrame._rqeSegments, hover1)
+
+						-- -- Part 2: start of next wrapped line
+						-- local hover2 = CreateFrame("Button", nil, baseParent)
+						-- hover2:SetFrameStrata("TOOLTIP")
+						-- hover2:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+						-- hover2:SetAlpha(0.01)
+						-- hover2:SetSize(overflow, lineHeight)
+						-- hover2:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -(yOffset + lineHeight))
+						-- hover2:SetScript("OnEnter", hover1:GetScript("OnEnter"))
+						-- hover2:SetScript("OnLeave", hover1:GetScript("OnLeave"))
+						-- table.insert(parentFrame._rqeSegments, hover2)
+					-- else
+						-- -- Fits entirely on one line
+						-- local hover = CreateFrame("Button", nil, baseParent)
+						-- hover:SetFrameStrata("TOOLTIP")
+						-- hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+						-- hover:SetAlpha(0.01)
+						-- hover:SetSize(tagWidth + 6, lineHeight)
+						-- hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
+						-- hover:SetScript("OnEnter", function()
+							-- GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
+							-- GameTooltip:SetItemByID(itemID)
+							-- local count = GetItemCount(itemID) or 0
+							-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+							-- GameTooltip:Show()
+						-- end)
+						-- hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+						-- table.insert(parentFrame._rqeSegments, hover)
+					-- end
+				-- end
+
+				-- patternPos = endTag + 1
+			-- end
+		-- end
+
+		-- yOffset = yOffset + lineHeight
+		-- local nextLine = rawText:find("\n", rawPos, true)
+		-- rawPos = nextLine and (nextLine + 1) or (#rawText + 1)
+	-- end
+
+	-- measureFS:Hide()
+-- end
+
+
+-- -- Attach an invisible hover button over a FontString to drive the tooltip
+-- function RQE.AttachItemHover(fs, itemID)
+	-- -- Clear any old hover
+	-- if fs._rqeHover then
+		-- fs._rqeHover:Hide()
+		-- fs._rqeHover:SetParent(nil)
+		-- fs._rqeHover = nil
+	-- end
+	-- if not itemID then return end
+
+	-- local parent = fs:GetParent() or UIParent
+	-- local hover = CreateFrame("Button", nil, parent)
+	-- hover:SetPoint("TOPLEFT", fs, "TOPLEFT", -2, 2)
+	-- hover:SetPoint("BOTTOMRIGHT", fs, "BOTTOMRIGHT", 2, -2)
+	-- hover:EnableMouse(true)
+	-- hover:SetAlpha(0.01) -- tiny alpha so it still receives mouse events
+	-- hover:SetFrameLevel((parent.GetFrameLevel and parent:GetFrameLevel() or 0) + 5)
+
+	-- -- Tooltip via your helper; anchored to cursor
+	-- hover:SetScript("OnEnter", function(self)
+		-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
+		-- GameTooltip:SetItemByID(itemID)
+		-- local count = GetItemCount and GetItemCount(itemID, true) or (C_Item and C_Item.GetItemCount and C_Item.GetItemCount(itemID, true)) or 0
+		-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+		-- GameTooltip:Show()
+	-- end)
+	-- hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+	-- -- Pass clicks through to the underlying FontString behavior, if any
+	-- hover:SetScript("OnMouseDown", function(_, btn)
+		-- local f = fs:GetScript("OnMouseDown")
+		-- if f then f(fs, btn) end
+	-- end)
+
+	-- fs._rqeHover = hover
+-- end
+
+
+-- Utility function for showing item tooltips on hover (for quest descriptions, etc.)
+function RQE:CreateItemTooltip(frame, itemID)
+	frame:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- follow the mouse
+		GameTooltip:SetItemByID(itemID)
+
+		-- Append the player's current quantity in bags
+		local itemName = GetItemInfo(itemID)
+		if itemName then
+			local count = GetItemCount(itemID, false, false) or 0
+			GameTooltip:AddLine(" ")
+			GameTooltip:AddLine("|cFF00FF00You have:|r " .. count, 1, 1, 1)
+		end
+
+		GameTooltip:Show()
+	end)
+
+	frame:SetScript("OnLeave", function(self)
+		GameTooltip:Hide()
+	end)
+end
+
+
 ---------------------------------------------------
 -- 14. Search Module
 ---------------------------------------------------
@@ -10782,6 +11128,10 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if not mapID then
 		print("Unable to determine current map.")
+		return
+	end
+
+	if mapID == 407 then
 		return
 	end
 
