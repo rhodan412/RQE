@@ -4911,6 +4911,7 @@ function RQE.handleQuestStatusUpdate()
 				end
 			end
 
+			-- Absolutely essential that this be listed exactly this way!
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
 	end
