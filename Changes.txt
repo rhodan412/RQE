@@ -3,6 +3,7 @@
 	**HIGHLIGHTS**
 		- Added functionality for tooltips to appear in the step descriptions in the SeparateFocusFrame and those of the individual steps (2025.10.05.2235)
 		- Isolated item tooltip overlays into a dedicated hover container to prevent ghost tooltips from persisting between step updates (2025.10.06.0640)
+		- Resolved issue where item tooltips were still present in the main RQEFrame [quest helper] even after tracking a different quest (2025.10.06.2234) 
 
 	Core.lua
 		- Added new parsing and rendering system for item tags within quest text:
@@ -15,6 +16,9 @@
 		- Modified parent assignment logic to prefer the provided hover container over default frame hierarchy (2025.10.06.0640)
 		- Improved hover frame input handling to prevent unintended mouse propagation (2025.10.06.0640)
 		- Adjusted the tooltip text to be light pink instead of white in order to stand out from the cream color in the description text (2025.10.06.1341)
+		- Added RQE.LastMapChangeTime variable for future optimization of QUEST_WATCH_LIST_CHANGED, ZONE_CHANGED_NEW_AREA and RQE:AutoSuperTrackClosestQuest() (2025.10.06.2234)
+		- Added functionality to clear the stepsText in frame before CreateStepsText is called within UpdateFrame (2025.10.06.2234)
+		- Fixed ghosting of item tooltips in the RQEFrame when a new quest populates the field [still issue with ghosting if frame is cleared until repopulated by a different quest] (2025.10.06.2234)
 
 	EventManager.lua
 		- Removed call to RQE:ClearStepsTextInFrame() after UpdateFrame() fires within the SUPER_TRACKING_CHANGED event function (2025.10.06.0401)
@@ -31,6 +35,9 @@
 		- Updated tooltip and text-rendering logic to use RQE.GetSeparateStepText() instead of directly accessing RQE.SeparateStepText:GetText(), ensuring dynamic compatibility with the new rich-text rendering system. (2025.10.05.2235)
 		- Added a dedicated container for hover buttons inside RQE:CreateStepsText(StepsText, CoordsText, MapIDs) to isolate tooltip overlays from the global UI (2025.10.06.0640)
 		- Updated the rendering call for quest step text to specify the new container (2025.10.06.0640)
+
+	WaypointManager.lua
+		- Modified debug print to require specific debugLevel setting (2025.10.06.2234)
 
 
 11.2.0.7 (2025.10.05)
