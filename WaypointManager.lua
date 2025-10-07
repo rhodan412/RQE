@@ -413,7 +413,9 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		local qd = RQE.getQuestData and RQE.getQuestData(questID)
 		if qd and qd.location then
 			if setFrom(qd.location.x, qd.location.y, qd.location.mapID or mapID) then
-				print(("Using DB location -> %.2f, %.2f on map %d"):format(xPct, yPct, mapID))
+				if RQE.db.profile.debugLevel == "INFO" then
+					print(("Using DB location -> %.2f, %.2f on map %d"):format(xPct, yPct, mapID))
+				end
 			end
 		end
 	end
