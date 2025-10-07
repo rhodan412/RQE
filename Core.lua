@@ -340,6 +340,8 @@ RQE.QToriginalWidth = RQE.QToriginalWidth or 0
 RQE.QToriginalHeight = RQE.QToriginalHeight or 0
 
 
+RQE.LastMapChangeTime = 0
+
 -- Initializes Local Variables
 local isMacroCreationInProgress = false		-- Declare a variable to track if macro creation is currently in progress
 local isPeriodicCheckInProgress = false		-- Declare a variable to track if periodic checks are currently in progress
@@ -2644,6 +2646,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.infoLog("Line 1692: questInfo.objectives is ", questInfo.objectives)
 
 		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+			RQE:ClearStepsTextInFrame()
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		end
 	end
@@ -3212,8 +3215,25 @@ end
 
 -- Function to Auto Supertrack the Nearest Watched Quest
 function RQE:AutoSuperTrackClosestQuest()
-	if not RQE.db.profile.enableAutoSuperTrackSwap then return end
 	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") then return end
+
+	-- -- Debounce: prevent multiple zone-change triggers within 2 seconds
+	-- local now = GetTime()
+	-- if RQE.LastZoneChangeTime and (now - RQE.LastZoneChangeTime) < 2 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Debounce: Skipping AutoSuperTrackClosestQuest (zone change spam)")
+		-- end
+		-- return
+	-- end
+	-- RQE.LastZoneChangeTime = now
+
+	-- -- Continue with delayed AutoSuperTrackClosestQuest
+	-- C_Timer.After(1.0, function()
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("From ZONE_CHANGED_NEW_AREA event — tracking nearest quest.")
+		-- end
+		-- RQE:AutoSuperTrackClosestQuest()
+	-- end)
 
 	local closestQuestID = RQE:GetClosestTrackedQuest()
 	local supertrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -4564,7 +4584,7 @@ end
 
 
 -- Render rich text with multiple {item:id:name} tags and attach separate hover frames
-function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor)
+function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor, customParent)
 	if not rawText or rawText == "" or not parentFrame then return end
 
 	-- Clean up any old hover frames
@@ -4577,7 +4597,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	parentFrame._rqeSegments = {}
 
 	-- Replace {item:id:name} with [name] visually
-	local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
+	local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 	parentFrame:SetText(displayText)
 
 	-- Font metrics
@@ -4585,7 +4605,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	measureFS:SetFont(font or fontPath, fontSize or size, flags)
 
-	local baseParent = parentFrame:GetParent() or UIParent
+	local baseParent = customParent or parentFrame:GetParent() or UIParent
 	local lineHeight = parentFrame:GetLineHeight()
 	local yOffset, rawPos = 0, 1
 
@@ -4637,6 +4657,11 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 
 						-- Part 1: end of current line
 						local hover1 = CreateFrame("Button", nil, baseParent)
+						hover1:EnableMouse(true)
+						hover1:EnableMouseWheel(false)
+						hover1:SetPropagateMouseClicks(false)
+						hover1:SetPropagateMouseMotion(false)
+
 						hover1:SetFrameStrata("TOOLTIP")
 						hover1:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
 						hover1:SetAlpha(0.01)
@@ -4654,6 +4679,11 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 
 						-- Part 2: start of next wrapped line
 						local hover2 = CreateFrame("Button", nil, baseParent)
+						hover2:EnableMouse(true)
+						hover2:EnableMouseWheel(false)
+						hover2:SetPropagateMouseClicks(false)
+						hover2:SetPropagateMouseMotion(false)
+
 						hover2:SetFrameStrata("TOOLTIP")
 						hover2:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
 						hover2:SetAlpha(0.01)
@@ -4665,6 +4695,11 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 					else
 						-- Fits entirely on one line
 						local hover = CreateFrame("Button", nil, baseParent)
+						hover:EnableMouse(true)
+						hover:EnableMouseWheel(false)
+						hover:SetPropagateMouseClicks(false)
+						hover:SetPropagateMouseMotion(false)
+
 						hover:SetFrameStrata("TOOLTIP")
 						hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
 						hover:SetAlpha(0.01)
@@ -4709,64 +4744,27 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	measureFS:Hide()
 end
 
--- Attach an invisible hover button over a FontString to drive the tooltip
-function RQE.AttachItemHover(fs, itemID)
-	-- Clear any old hover
-	if fs._rqeHover then
-		fs._rqeHover:Hide()
-		fs._rqeHover:SetParent(nil)
-		fs._rqeHover = nil
-	end
-	if not itemID then return end
-
-	local parent = fs:GetParent() or UIParent
-	local hover = CreateFrame("Button", nil, parent)
-	hover:SetPoint("TOPLEFT", fs, "TOPLEFT", -2, 2)
-	hover:SetPoint("BOTTOMRIGHT", fs, "BOTTOMRIGHT", 2, -2)
-	hover:EnableMouse(true)
-	hover:SetAlpha(0.01) -- tiny alpha so it still receives mouse events
-	hover:SetFrameLevel((parent.GetFrameLevel and parent:GetFrameLevel() or 0) + 5)
-
-	-- Tooltip via your helper; anchored to cursor
-	hover:SetScript("OnEnter", function(self)
-		GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
-		GameTooltip:SetItemByID(itemID)
-		local count = GetItemCount and GetItemCount(itemID, true) or (C_Item and C_Item.GetItemCount and C_Item.GetItemCount(itemID, true)) or 0
-		GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-		GameTooltip:Show()
-	end)
-	hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-
-	-- Pass clicks through to the underlying FontString behavior, if any
-	hover:SetScript("OnMouseDown", function(_, btn)
-		local f = fs:GetScript("OnMouseDown")
-		if f then f(fs, btn) end
-	end)
-
-	fs._rqeHover = hover
-end
-
 
 -- Utility function for showing item tooltips on hover (for quest descriptions, etc.)
 function RQE:CreateItemTooltip(frame, itemID)
-    frame:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- follow the mouse
-        GameTooltip:SetItemByID(itemID)
+	frame:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- follow the mouse
+		GameTooltip:SetItemByID(itemID)
 
-        -- Append the player's current quantity in bags
-        local itemName = GetItemInfo(itemID)
-        if itemName then
-            local count = GetItemCount(itemID, false, false) or 0
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddLine("|cFF00FF00You have:|r " .. count, 1, 1, 1)
-        end
+		-- Append the player's current quantity in bags
+		local itemName = GetItemInfo(itemID)
+		if itemName then
+			local count = GetItemCount(itemID, false, false) or 0
+			GameTooltip:AddLine(" ")
+			GameTooltip:AddLine("|cFF00FF00You have:|r " .. count, 1, 1, 1)
+		end
 
-        GameTooltip:Show()
-    end)
+		GameTooltip:Show()
+	end)
 
-    frame:SetScript("OnLeave", function(self)
-        GameTooltip:Hide()
-    end)
+	frame:SetScript("OnLeave", function(self)
+		GameTooltip:Hide()
+	end)
 end
 
 
