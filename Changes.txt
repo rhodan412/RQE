@@ -29,6 +29,7 @@
 	RQEDatabase.lua
 		- Added some quests with the new item tooltip functionality in the descriptions (2025.10.05.2235)
 		- Updated all profession quests in Darkmoon Faire quests in the DB (2025.10.06.0640)
+		- Updates to location and coordinateHotspots, in Valdrakken, for quest DB (2025.10.08.1314)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
