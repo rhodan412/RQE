@@ -35,6 +35,7 @@
 		- Updates to location and coordinateHotspots, in Valdrakken, for quest DB (2025.10.08.1314)
 		- Added initial Legion Remix quests to the DB (2025.10.08.2214)
 		- Updated several quests in DB for Val'Sharah as well as completed most of the leveling campaign quests of Azsuna for Legion Remix (2025.10.10.0655)
+		- Updated some of the quests in the DB and sorted them (2025.10.10.1427)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
