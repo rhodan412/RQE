@@ -244,6 +244,17 @@ RQE.UnknownButtonTooltip = function()
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x * 100, y * 100, tostring(mapID))
 					if RQE.db.profile.debugLevel == "INFO" then
 						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+
+						-- Extract x, y, and mapID directly from tooltipText (ensures identical Blizzard values)
+						local bx, by, bmap = string.match(tooltipText, "%(([%d%.]+),%s*([%d%.]+)%)%s*%-%s*MapID:%s*(%d+)")
+
+						if bx and by and bmap then
+							DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", tonumber(bx), tonumber(by), tonumber(bmap)), 0, 1, 1)
+						else
+							-- Fallback if parsing fails
+							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
+						end
+
 						RQE.WCoordData = tooltipText
 						-- if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 							-- RQE.DebugPrintPlayerContinentPosition(RQE.CurrentTrackedQuestID)
