@@ -5,6 +5,9 @@
 		- Isolated item tooltip overlays into a dedicated hover container to prevent ghost tooltips from persisting between step updates (2025.10.06.0640)
 		- Resolved issue where item tooltips were still present in the main RQEFrame [quest helper] even after tracking a different quest (2025.10.06.2234) 
 
+	Buttons.lua
+		- Added coding to display Blizzard's coordinates for step in chat [author-mode only] (2025.10.10.0655)
+
 	Core.lua
 		- Added new parsing and rendering system for item tags within quest text:
 			• RQE.ParseItemTag(text) – Parses {item:id:name} tags and returns item data in structured form. (2025.10.05.2235)
@@ -31,6 +34,7 @@
 		- Updated all profession quests in Darkmoon Faire quests in the DB (2025.10.06.0640)
 		- Updates to location and coordinateHotspots, in Valdrakken, for quest DB (2025.10.08.1314)
 		- Added initial Legion Remix quests to the DB (2025.10.08.2214)
+		- Updated several quests in DB for Val'Sharah as well as completed most of the leveling campaign quests of Azsuna for Legion Remix (2025.10.10.0655)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
