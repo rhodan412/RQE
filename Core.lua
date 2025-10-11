@@ -104,31 +104,41 @@ function RQE:CustomDebugLog(index, color, message, ...)
 end
 
 
--- Custom Info Message Function
-function RQE:CustomLogMsg(color, message, ...)
-	local output = "|c" .. color .. message  -- Removed the line number part
-	local args = {...}
-	for i = 1, select("#", ...) do
+-- Custom Info Message Function (exact format: " RQE Info (Core.lua @ Line 3640): ...")
+function RQE:CustomLogMsg(line, color, filePath, message, ...)
+	-- reduce "Interface/AddOns/RQE/Core.lua" to just "Core.lua"
+	local shortFile = tostring(filePath):match("([^/\\]+)$") or tostring(filePath)
+
+	local output = "|c" .. color .. " RQE Info (" .. shortFile .. " @ Line " .. tostring(line) .. "): " .. tostring(message)
+
+	-- append any extra args separated by spaces
+	local args = { ... }
+	for i = 1, #args do
 		output = output .. " " .. tostring(args[i])
 	end
+
 	output = output .. "|r"
 
 	-- Add to logTable
 	RQE.AddToDebugLog(output)
 
-	-- Update the log frame to display the new log entry
+	-- Update the log frame if it’s visible
 	if RQE.DebugLogFrameRef and RQE.DebugLogFrameRef:IsShown() then
 		RQE.UpdateLogFrame()
 	end
 end
 
 
--- Function to log general info messages
+-- Function to log general info messages (now includes file + line)
 function RQE.infoLog(message, ...)
 	if RQE.db and RQE.db.profile.debugMode then
 		local debugLevel = RQE.db.profile.debugLevel
 		if debugLevel == "INFO" or debugLevel == "INFO+" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
-			RQE:CustomLogMsg("cf9999FF", " RQE Info: " .. message, ...)
+			-- grab the caller's file and line
+			local stack = debugstack(2, 1, 0)
+			-- capture "anything up to colon" as filePath, then the line number
+			local _, _, filePath, line = string.find(stack, "([^:]-):(%d+):")
+			RQE:CustomLogMsg(line, "cf9999FF", filePath or "Unknown.lua", message, ...)
 		end
 	end
 end
@@ -171,6 +181,55 @@ function RQE.criticalLog(message, ...)
 			local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
 			fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
 			RQE:CustomDebugLog(line, "ffD63333", fileName .. " Critical: " .. message, ...)
+		end
+	end
+end
+
+
+--- Prints a message with contextual info (file, provided function name, line number).
+--- Works safely even inside C_Timer, hooks, or callbacks.
+--- @param funcName string The function name (e.g., "RQE.handleQuestStatusUpdate")
+--- @param message string The message to print
+--- @param ... any Additional values to append
+function RQE.smartPrint(funcName, message, ...)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	if RQE.db and RQE.db.profile.debugMode then
+		local debugLevel = RQE.db.profile.debugLevel
+		if debugLevel == "INFO+" then
+		-- if debugLevel == "INFO" or debugLevel == "INFO+" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
+			local stack = debugstack(2, 1, 0)
+			local _, _, filePath, line = string.find(stack, "([^:]-):(%d+):")
+
+			local shortFile = (filePath and filePath:match("([^/\\]+)$")) or "Unknown.lua"
+			shortFile = shortFile:gsub("%]", "") -- clean any trailing bracket
+			line = line or "???"
+
+			-- build message
+			local output = string.format("~~ %s ~~\nFile: %s\nFunction: %s\nLine: %s",
+				tostring(message),
+				shortFile,
+				funcName or "Unknown",
+				tostring(line)
+			)
+
+			-- append extra args if given
+			local args = { ... }
+			if #args > 0 then
+				output = output .. "\nArgs: " .. table.concat(args, ", ")
+			end
+
+			-- print to chat
+			DEFAULT_CHAT_FRAME:AddMessage(output, 1, 1, 1)
+
+			-- log to debug frame
+			if RQE.AddToDebugLog then
+				RQE.AddToDebugLog("|cffffffff" .. output .. "|r")
+			end
+
+			-- update visible log frame
+			if RQE.DebugLogFrameRef and RQE.DebugLogFrameRef:IsShown() then
+				RQE.UpdateLogFrame()
+			end
 		end
 	end
 end
@@ -665,9 +724,9 @@ end
 
 -- InitializeFrame function
 function RQE:InitializeFrame()
+	local functionName = "RQE:InitializeFrame()"
+
 	--self:Initialize()  -- Call Initialize() within InitializeFrame
-
-
 
 	-- Call the function to initialize the separate focus frame
 	RQE.InitializeSeparateFocusFrame()
@@ -678,6 +737,7 @@ function RQE:InitializeFrame()
 		local questInfo = RQE.getQuestData(questID)
 		if questInfo then
 			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 681 ~~")
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
@@ -1029,6 +1089,8 @@ end
 
 -- Function to restore the saved supertracked quest for the current character
 function RQE:RestoreSuperTrackedQuestForCharacter()
+	local functionName = "RQE:RestoreSuperTrackedQuestForCharacter()"
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
 	end
@@ -1081,6 +1143,7 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 	end
 
 	C_Timer.After(0.1, function()
+		RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 1085 ~~")
 		UpdateFrame()
 	end)
 end
@@ -1508,6 +1571,8 @@ end
 
 -- Function controls the restoration of the quest that is super tracked to the RQEFrame
 function RQE:HandleSuperTrackedQuestUpdate()
+	local functionName = "RQE:HandleSuperTrackedQuestUpdate()"
+
 	-- Save the current super tracked quest ID
 	local savedSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local isWorldQuest = C_QuestLog.IsWorldQuest(savedSuperTrackedQuestID)
@@ -1539,6 +1604,7 @@ function RQE:HandleSuperTrackedQuestUpdate()
 			local questInfo = RQE.getQuestData(savedSuperTrackedQuestID)
 			if questInfo then
 				local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(savedSuperTrackedQuestID)
+				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 1544 ~~")
 				UpdateFrame(savedSuperTrackedQuestID, questInfo, StepsText, CoordsText, MapIDs)
 				AdjustRQEFrameWidths()
 			end
@@ -2574,16 +2640,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
-	-- -- Retrieve the current super-tracked quest ID for debugging
-	-- local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	-- local extractedQuestID
-	-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-	-- end
-
-	-- -- Use RQE.searchedQuestID if available; otherwise, fallback to extractedQuestID, then to currentSuperTrackedQuestID
-	-- questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
-
 	-- Fetch questInfo from RQEDatabase using the determined questID
 	questInfo = RQE.getQuestData(questID) or questInfo
 
@@ -2612,8 +2668,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end
-
-	--UpdateRQEQuestFrame()
 
 	if not StepsText or not CoordsText or not MapIDs then
 		return
@@ -2683,39 +2737,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	else
 		RQE.debugLog("RQE.QuestObjectives is not initialized.")
 	end
-
-	-- -- Fetch the next waypoint text for the quest
-	-- if RQE.searchedQuestID then
-		-- RQEFrame.DirectionText = DirectionText  -- Save to addon table
-
-		-- if RQE.DirectionTextFrame then
-			-- local dbEntry = RQE.getQuestData(RQE.searchedQuestID)
-			-- if dbEntry and dbEntry.location then
-				-- local mapID = dbEntry.location.mapID
-				-- local zoneName, continentName = "Unknown", "Unknown"
-				-- if mapID then
-					-- local mapInfo = C_Map.GetMapInfo(mapID)
-					-- if mapInfo then
-						-- zoneName = mapInfo.name or "Unknown"
-						-- local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
-						-- continentName = parentMapInfo and parentMapInfo.name or "Unknown"
-					-- end
-				-- end
-				-- RQE.DirectionTextFrame:SetText("Travel to " .. zoneName .. ", " .. continentName)
-			-- else
-				-- RQE.DirectionTextFrame:SetText("No direction available.")
-			-- end
-		-- end
-		-- RQE.DontUpdateFrame = true
-	-- else
-		-- local DirectionText = C_QuestLog.GetNextWaypointText(questID)
-		-- RQEFrame.DirectionText = DirectionText  -- Save to addon table
-		-- RQE.UnknownQuestButtonCalcNTrack()
-
-		-- if RQE.DirectionTextFrame then
-			-- RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
-		-- end
-	-- end
 
 	-- Fetch the next waypoint text for the quest
 	if RQE.searchedQuestID then
@@ -3217,6 +3238,8 @@ end
 function RQE:AutoSuperTrackClosestQuest()
 	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") then return end
 
+	local functionName = "RQE:AutoSuperTrackClosestQuest()"
+
 	-- -- Debounce: prevent multiple zone-change triggers within 2 seconds
 	-- local now = GetTime()
 	-- if RQE.LastZoneChangeTime and (now - RQE.LastZoneChangeTime) < 2 then
@@ -3257,6 +3280,7 @@ function RQE:AutoSuperTrackClosestQuest()
 				end
 
 				C_Timer.After(0.3, function()
+					RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3219 ~~")
 					UpdateFrame()
 					UpdateRQEQuestFrame()
 				end)
@@ -3330,6 +3354,8 @@ function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 		return
 	end
 
+	local functionName = "RQE:SuperTrackFirstWatchedQuestInCurrentZone()"
+
 	-- Helper function to get watched quest IDs
 	local function GetWatchedQuestIDs()
 		local watchedQuestIDs = {}
@@ -3371,6 +3397,7 @@ function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 				if not isWorldQuest then
 					-- print("~~~ SetSuperTrack: 2843~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
+					RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3334 ~~")
 					UpdateFrame()
 					return
 				end
@@ -3388,6 +3415,8 @@ end
 -- Function that tracks the closest quest on certain events in the Event Manager
 function RQE.TrackClosestQuest()
 	if not RQEFrame:IsShown() then return end
+
+	local functionName = "RQE.TrackClosestQuest()"
 
 	-- Ensure supertracking is enabled in the profile
 	if RQE.db.profile.enableNearestSuperTrack or RQE.db.profile.enableNearestSuperTrackCampaign or RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly then
@@ -3415,6 +3444,7 @@ function RQE.TrackClosestQuest()
 
 		-- Optionally trigger an update to the frame
 		C_Timer.After(1.5, function()
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3379 ~~")
 			UpdateFrame()
 		end)
 
@@ -4118,6 +4148,8 @@ end
 
 
 function RQE:PopulateNextQuestInEventSeries(eventID)
+	local functionName = "RQE:PopulateNextQuestInEventSeries(eventID)"
+
 	-- Check if the eventID matches Hallow's End (324)
 	if eventID ~= 324 then
 		return -- Exit if it's not the right event
@@ -4146,6 +4178,7 @@ function RQE:PopulateNextQuestInEventSeries(eventID)
 			questInfo.objectives = questInfo.objectives or "No objectives available."
 
 			-- Display the quest in RQEFrame by calling UpdateFrame
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 4111 ~~")
 			UpdateFrame(questID, questInfo)
 
 			-- Manual fallback to populate RQEFrame if UpdateFrame does not display it
@@ -4776,6 +4809,8 @@ RQE.SearchModule = {}
 
 -- Function to create the Search Box with an Examine button
 function RQE.SearchModule:CreateSearchBox()
+	local functionName = "RQE.SearchModule:CreateSearchBox()"
+
 	local editBox = AceGUI:Create("EditBox")
 	editBox:SetLabel("Enter Quest ID, Title, Description or Objective:")
 	editBox:SetWidth(350)
@@ -4961,6 +4996,7 @@ function RQE.SearchModule:CreateSearchBox()
 			-- This is the new line added to trigger the update based on the foundQuestID
 			if questData then
 				local questInfo = RQE.getQuestData(foundQuestID)
+				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 4927 ~~")
 				UpdateFrame(foundQuestID, questInfo, {}, {}, {}) -- Assuming UpdateFrame handles empty tables gracefully
 			end
 		else
@@ -10257,6 +10293,8 @@ end
 
 -- Function to supertrack a random quest
 function RQE:SupertrackRandomQuest()
+	local functionName = "RQE:SupertrackRandomQuest()"
+
 	local numQuests = C_QuestLog.GetNumQuestLogEntries()
 	local randomIndex = math.random(1, numQuests)
 
@@ -10273,6 +10311,7 @@ function RQE:SupertrackRandomQuest()
 			print("Supertracking random questID: " .. tostring(info.questID))
 
 			-- Call UpdateFrame to refresh the UI
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 10240 ~~")
 			UpdateFrame(info.questID)
 			return  -- Exit after setting one random quest
 		end
@@ -11112,9 +11151,9 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 					print(tostring(trackedQuestID))
 				end
 				print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			else
-				-- Don't spam with "No valid DB coordinates..." — just fallback gracefully
-				print("Using player position fallback (no DB coordinates for this quest step)")
+			-- else
+				-- -- Don't spam with "No valid DB coordinates..." — just fallback gracefully
+				-- print("Using player position fallback (no DB coordinates for this quest step)")
 			end
 
 			if not hasHotspots then
@@ -11141,8 +11180,8 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 					print(tostring(trackedQuestID))
 				end
 				print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			else
-				print("Using player position fallback (no DB coordinates for this quest step)")
+			-- else
+				-- print("Using player position fallback (no DB coordinates for this quest step)")
 			end
 
 			print("				coordinateHotspots = {")
