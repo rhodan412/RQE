@@ -4,6 +4,7 @@
 		- Added functionality for tooltips to appear in the step descriptions in the SeparateFocusFrame and those of the individual steps (2025.10.05.2235)
 		- Isolated item tooltip overlays into a dedicated hover container to prevent ghost tooltips from persisting between step updates (2025.10.06.0640)
 		- Resolved issue where item tooltips were still present in the main RQEFrame [quest helper] even after tracking a different quest (2025.10.06.2234) 
+		- Fixed Initialize/UpdateSeparateFocusFrame function as it was displaying no step information when DirectionText exists starting with a 2/1 denoting steps (2025.10.11.1452)
 
 	Buttons.lua
 		- Added coding to display Blizzard's coordinates for step in chat [author-mode only] (2025.10.10.0655)
@@ -22,6 +23,8 @@
 		- Added RQE.LastMapChangeTime variable for future optimization of QUEST_WATCH_LIST_CHANGED, ZONE_CHANGED_NEW_AREA and RQE:AutoSuperTrackClosestQuest() (2025.10.06.2234)
 		- Added functionality to clear the stepsText in frame before CreateStepsText is called within UpdateFrame (2025.10.06.2234)
 		- Fixed ghosting of item tooltips in the RQEFrame when a new quest populates the field [still issue with ghosting if frame is cleared until repopulated by a different quest] (2025.10.06.2234)
+		- Updated the way that the RQE.infoLog displays including the file name and line number it originates from. Also created RQE.smartPrint as an additional debug bit to show also the function that a print command is called from (2025.10.11.1452)
+		- Removed old commented out code within UpdateFrame() function (2025.10.11.1452)
 
 	EventManager.lua
 		- Removed call to RQE:ClearStepsTextInFrame() after UpdateFrame() fires within the SUPER_TRACKING_CHANGED event function (2025.10.06.0401)
@@ -34,15 +37,17 @@
 		- Updated all profession quests in Darkmoon Faire quests in the DB (2025.10.06.0640)
 		- Updates to location and coordinateHotspots, in Valdrakken, for quest DB (2025.10.08.1314)
 		- Added initial Legion Remix quests to the DB (2025.10.08.2214)
-		- Updated several quests in DB for Val'Sharah as well as completed most of the leveling campaign quests of Azsuna for Legion Remix (2025.10.10.0655)
+		- Updated several quests in DB for Val'sharah as well as completed most of the leveling campaign quests of Azsuna for Legion Remix (2025.10.10.0655)
 		- Updated some of the quests in the DB and sorted them (2025.10.10.1427)
 		- Added most of the Val'sharah campaign leveling quests and a few of the intro quests in Highmountain to the DB (2025.10.10.0025)
+		- Added several world quests to Legion quest DB (2025.10.11.1452)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
 		- Updated tooltip and text-rendering logic to use RQE.GetSeparateStepText() instead of directly accessing RQE.SeparateStepText:GetText(), ensuring dynamic compatibility with the new rich-text rendering system. (2025.10.05.2235)
 		- Added a dedicated container for hover buttons inside RQE:CreateStepsText(StepsText, CoordsText, MapIDs) to isolate tooltip overlays from the global UI (2025.10.06.0640)
 		- Updated the rendering call for quest step text to specify the new container (2025.10.06.0640)
+		- Fixed Initialize/UpdateSeparateFocusFrame function as it was displaying no step information when DirectionText exists starting with a 2/1 denoting steps (2025.10.11.1452)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.06.2234)
