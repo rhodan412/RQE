@@ -2052,30 +2052,37 @@ function RQE.InitializeSeparateFocusFrame()
 			return
 		end
 
-		local stepIndex = RQE.AddonSetStepIndex or 1
+		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		local questData = RQE.getQuestData(questID)
+		local questData = RQE.getQuestData(questID) or {}
+		-- local questData = RQE.getQuestData(questID)
 
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-			end
+		-- if not questData then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- end
 
-			-- Ensure RQE.SeparateStepText is initialized before use
-			if not RQE.SeparateStepText then
-				RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				RQE.SeparateStepText:SetJustifyH("LEFT")
-				RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
-				RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
-				RQE.SeparateStepText:SetHeight(0)  -- Auto height
-				RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
-				RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-			end
+			-- -- Ensure RQE.SeparateStepText is initialized before use
+			-- if not RQE.SeparateStepText then
+				-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				-- RQE.SeparateStepText:SetJustifyH("LEFT")
+				-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
+				-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
+				-- RQE.SeparateStepText:SetHeight(0)  -- Auto height
+				-- RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
+				-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+			-- end
 
-			-- Update the step text dynamically
-			RQE.SeparateStepText:SetText("No step description available for this step.")
-			RQE.SeparateStepText:Show()
-			return
-		end
+			-- -- Update the step text dynamically
+			-- RQE.SeparateStepText:SetText("No step description available for this step.")
+			-- RQE.SeparateStepText:Show()
+			-- return
+		-- end
+
+		-- clamp and normalize
+		local totalSteps = #questData
+		if totalSteps == 0 then totalSteps = 1 end
+		if stepIndex < 1 then stepIndex = 1 end
+		if stepIndex > totalSteps then stepIndex = totalSteps end
 
 		local stepData = questData[stepIndex]
 
@@ -2091,8 +2098,10 @@ function RQE.InitializeSeparateFocusFrame()
 		end
 
 		-- Update the step text dynamically to include the step index
-		local stepDescription = (stepData and stepData.description) or "No step description available for this step."
+		local stepDescription = (stepData and stepData.description and stepData.description ~= "") and stepData.description	or "No step description available for this step."
+		-- local stepDescription = (stepData and stepData.description) or "No step description available for this step."
 		-- local formattedText = string.format("%d: %s", stepIndex, stepDescription) -- Prepend the stepIndex to the description
+
 		-- Function to update the step text dynamically to include the current and final step index
 		local totalSteps = #questData  -- Get the total number of steps from the questData
 		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
