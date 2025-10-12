@@ -41,6 +41,7 @@
 		- Updated some of the quests in the DB and sorted them (2025.10.10.1427)
 		- Added most of the Val'sharah campaign leveling quests and a few of the intro quests in Highmountain to the DB (2025.10.10.0025)
 		- Added several world quests to Legion quest DB (2025.10.11.1452)
+		- Added early to mid campaign Stormheim (Alliance/Neutral) leveling quests to DB (2025.10.12.0716)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
@@ -48,6 +49,7 @@
 		- Added a dedicated container for hover buttons inside RQE:CreateStepsText(StepsText, CoordsText, MapIDs) to isolate tooltip overlays from the global UI (2025.10.06.0640)
 		- Updated the rendering call for quest step text to specify the new container (2025.10.06.0640)
 		- Fixed Initialize/UpdateSeparateFocusFrame function as it was displaying no step information when DirectionText exists starting with a 2/1 denoting steps (2025.10.11.1452)
+		- Fixed SeparateFocusFrame that was displaying "1/0: No step..." when quest not in DB (2025.10.12.0716)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.06.2234)
