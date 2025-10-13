@@ -70,5 +70,3 @@ Mythic/Scenario Mode to automatically enable default Blizzard Tracker when trans
 **New in v11.2.5.0: Tooltips and ready for Legion Remix!**
 
 <img width="681" height="586" alt="RQE with tooltips" src="https://github.com/user-attachments/assets/a5b135f6-5484-48a5-bfcb-802bb5b5dd3e" />
-
-[RQE for Lemix](https://github.com/user-attachments/assets/ac0cfb6d-9e5f-4009-985e-c3dec4866671)
