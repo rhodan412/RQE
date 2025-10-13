@@ -1,10 +1,11 @@
-11.2.5.0
+11.2.5.0 (2025.10.13)
 
 	**HIGHLIGHTS**
 		- Added functionality for tooltips to appear in the step descriptions in the SeparateFocusFrame and those of the individual steps (2025.10.05.2235)
 		- Isolated item tooltip overlays into a dedicated hover container to prevent ghost tooltips from persisting between step updates (2025.10.06.0640)
 		- Resolved issue where item tooltips were still present in the main RQEFrame [quest helper] even after tracking a different quest (2025.10.06.2234) 
 		- Fixed Initialize/UpdateSeparateFocusFrame function as it was displaying no step information when DirectionText exists starting with a 2/1 denoting steps (2025.10.11.1452)
+		- Many Legion Remix quests have been added to the quest DB (2025.10.13.0220)
 
 	Buttons.lua
 		- Added coding to display Blizzard's coordinates for step in chat [author-mode only] (2025.10.10.0655)
@@ -28,7 +29,10 @@
 
 	EventManager.lua
 		- Removed call to RQE:ClearStepsTextInFrame() after UpdateFrame() fires within the SUPER_TRACKING_CHANGED event function (2025.10.06.0401)
-		
+
+	QuestingModule.lua
+		- Adjusted position of the WQuestLogIndexButton as it was too far to the left and being cut off by frame (2025.10.13.0220)
+
 	RQE.toc
 		- Updated Interface# and version# (2025.10.05.0608)
 
@@ -42,6 +46,7 @@
 		- Added most of the Val'sharah campaign leveling quests and a few of the intro quests in Highmountain to the DB (2025.10.10.0025)
 		- Added several world quests to Legion quest DB (2025.10.11.1452)
 		- Added early to mid campaign Stormheim (Alliance/Neutral) leveling quests to DB (2025.10.12.0716)
+		- Added more Stormheim and other Legion Remix quests to the DB (2025.10.13.0220)
 
 	RQEFrame.lua
 		- Added new function RQE.GetSeparateStepText() to standardize how separate step text is retrieved for tooltips and frame rendering, improving maintainability and consistency. (2025.10.05.2235)
