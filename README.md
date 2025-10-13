@@ -66,3 +66,6 @@ Search for specific quests whether you are on the quest or not
 
 Mythic/Scenario Mode to automatically enable default Blizzard Tracker when transitioning into scenario
 ![mythic mode](https://github.com/user-attachments/assets/bcb934dd-d354-407d-882d-a3943d0894cb)
+
+**Tooltips!**
+[New in v11.2.5.0: Tooltips!]("https://github.com/user-attachments/assets/cf3e67ef-823a-4027-beb7-efaab8f24a7e")
