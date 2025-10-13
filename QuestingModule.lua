@@ -3282,7 +3282,7 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Position WQuestLogIndexButton relative to WQuestLevelAndName
-			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", -5, 0)
+			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", 0, 0)
 
 			-- Function to format time left based on seconds
 			local function FormatTimeLeft(secondsLeft)
