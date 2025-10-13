@@ -67,6 +67,8 @@ Search for specific quests whether you are on the quest or not
 Mythic/Scenario Mode to automatically enable default Blizzard Tracker when transitioning into scenario
 ![mythic mode](https://github.com/user-attachments/assets/bcb934dd-d354-407d-882d-a3943d0894cb)
 
-**New in v11.2.5.0: Tooltips!**
+**New in v11.2.5.0: Tooltips and ready for Legion Remix!**
 
 <img width="681" height="586" alt="RQE with tooltips" src="https://github.com/user-attachments/assets/a5b135f6-5484-48a5-bfcb-802bb5b5dd3e" />
+
+[RQE for Lemix](https://github.com/user-attachments/assets/ac0cfb6d-9e5f-4009-985e-c3dec4866671)
