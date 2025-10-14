@@ -4686,10 +4686,55 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 
 				-- ✨ If this is a spell tag, divert to the spell handler
 				if tagType == "spell" then
-					local hover = RQE.HandleSpellTag(parentFrame, tagID, tagName, cursorX, yOffset, baseParent, lineHeight)
-					if hover then
-						table.insert(parentFrame._rqeSegments, hover)
+					-- Measure tag with the SAME font used by the renderer
+					measureFS:SetText("[" .. tagName .. "]")
+					local tagWidth = measureFS:GetStringWidth()
+					local maxWidth = parentFrame:GetWidth() or 400
+
+					if (cursorX + tagWidth) > maxWidth then
+						-- split across the line wrap (same behavior as item)
+						local overflow = (cursorX + tagWidth) - maxWidth
+						local firstWidth = tagWidth - overflow
+
+						local hover1 = RQE.HandleSpellTag(
+							parentFrame, tagID, tagName,
+							cursorX, yOffset, baseParent, lineHeight,
+							firstWidth  -- explicit width for part 1
+						)
+						if hover1 then table.insert(parentFrame._rqeSegments, hover1) end
+
+						local hover2 = RQE.HandleSpellTag(
+							parentFrame, tagID, tagName,
+							0, yOffset + lineHeight, baseParent, lineHeight,
+							overflow     -- explicit width for part 2 (next line)
+						)
+						if hover2 then table.insert(parentFrame._rqeSegments, hover2) end
+
+					else
+						-- one-line spell hover
+						local yAdj = yOffset
+						local parentName = GetTopParentName(parentFrame) or ""
+						if parentName:find("RQE_SeparateContentFrame", 1, true) then
+							local extraAdjust = 0
+							if yOffset > lineHeight * 2 then
+								extraAdjust = (yOffset / lineHeight) * 0.08
+							end
+							yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))
+						end
+
+						local hover = RQE.HandleSpellTag(
+							parentFrame, tagID, tagName,
+							cursorX, yAdj, baseParent, lineHeight,
+							tagWidth + 6 -- explicit width when single-line
+						)
+						if hover then table.insert(parentFrame._rqeSegments, hover) end
 					end
+
+				-- if tagType == "spell" then
+					-- local hover = RQE.HandleSpellTag(parentFrame, tagID, tagName, cursorX, yOffset, baseParent, lineHeight)
+					-- if hover then
+						-- table.insert(parentFrame._rqeSegments, hover)
+					-- end
 
 				else
 
@@ -4877,33 +4922,37 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 end
 
 
--- Render tooltips {spellid:name} tags and attach separate hover frames
-function RQE.HandleSpellTag(parentFrame, spellID, spellName, cursorX, yOffset, baseParent, lineHeight)
-	local hover = CreateFrame("Button", nil, baseParent)
+-- Render tooltips {spell:id:name} tags with a provided width
+-- width: exact pixel width of the hover (already measured by the caller)
+function RQE.HandleSpellTag(parentFrame, spellID, spellName, cursorX, yOffset, baseParent, lineHeight, width)
+	local hover = CreateFrame("Button", "RQE_SpellHover_" .. spellID .. "_" .. math.random(10000,99999), baseParent)
 	hover:EnableMouse(true)
+	hover:EnableMouseWheel(false)
+	if hover.SetPropagateMouseClicks then hover:SetPropagateMouseClicks(false) end
+	if hover.SetPropagateMouseMotion then hover:SetPropagateMouseMotion(false) end
+
 	hover:SetFrameStrata("TOOLTIP")
 	hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
 	hover:SetAlpha(0.01)
-	hover:SetSize(120, lineHeight)
+
+	hover:SetSize(width or 120, lineHeight)
 	hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
 
-	hover:SetScript("OnEnter", function()
-		-- Always start from a clean tooltip state
+	hover:SetScript("OnEnter", function(self)
+		-- Force a fresh spell tooltip context
 		GameTooltip:Hide()
-		GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
-		GameTooltip:SetSpellByID(spellID)
+		GameTooltip:ClearLines()
+		GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
+
+		-- Using hyperlink eliminates weird “same-line, second-spell” cache issues
+		GameTooltip:SetHyperlink(("spell:%d"):format(spellID))
 		GameTooltip:Show()
 	end)
 
-	-- hover:SetScript("OnLeave", function()
-		-- GameTooltip:FadeOut()	-- softer hide, ensures re-entry refresh
-		-- C_Timer.After(0.1, function()
-			-- if not GameTooltip:IsOwned(hover) then GameTooltip:Hide() end
-		-- end)
-	-- end)
-
-	hover:SetScript("OnLeave", function()
-		GameTooltip:Hide()
+	hover:SetScript("OnLeave", function(self)
+		if GameTooltip:IsOwned(self) then
+			GameTooltip:Hide()
+		end
 	end)
 
 	return hover
