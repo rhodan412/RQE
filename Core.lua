@@ -4724,7 +4724,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						hover1:SetSize(firstWidth, lineHeight)
 						hover1:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
 						hover1:SetScript("OnEnter", function()
-							GameTooltip:Hide()                                    -- ensure fresh draw
+							GameTooltip:Hide()									-- ensure fresh draw
 							GameTooltip:SetOwner(hover1, "ANCHOR_CURSOR_RIGHT")
 							GameTooltip:SetItemByID(tagID)
 							local count = C_Item.GetItemCount(tagID) or 0
@@ -4765,7 +4765,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 
 						hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yAdj)
 						hover:SetScript("OnEnter", function()
-							GameTooltip:Hide()                                    -- ensure refresh
+							GameTooltip:Hide()									-- ensure refresh
 							GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
 							GameTooltip:SetItemByID(tagID)
 							local count = C_Item.GetItemCount(tagID) or 0
@@ -4888,17 +4888,22 @@ function RQE.HandleSpellTag(parentFrame, spellID, spellName, cursorX, yOffset, b
 	hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
 
 	hover:SetScript("OnEnter", function()
-		GameTooltip:Hide()	-- 🔧 important fix: clear old tooltip first
+		-- Always start from a clean tooltip state
+		GameTooltip:Hide()
 		GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
 		GameTooltip:SetSpellByID(spellID)
 		GameTooltip:Show()
 	end)
 
+	-- hover:SetScript("OnLeave", function()
+		-- GameTooltip:FadeOut()	-- softer hide, ensures re-entry refresh
+		-- C_Timer.After(0.1, function()
+			-- if not GameTooltip:IsOwned(hover) then GameTooltip:Hide() end
+		-- end)
+	-- end)
+
 	hover:SetScript("OnLeave", function()
-		GameTooltip:FadeOut()	-- softer hide, ensures re-entry refresh
-		C_Timer.After(0.1, function()
-			if not GameTooltip:IsOwned(hover) then GameTooltip:Hide() end
-		end)
+		GameTooltip:Hide()
 	end)
 
 	return hover
@@ -6153,9 +6158,11 @@ function RQE.CheckAndSetFinalStep()
 				RQE.infoLog("Final Index is: " .. finalStepIndex)
 				-- Tier Four Importance: RQE.CHECKANDSETFINALSTEP Function
 				RQE.CreateMacroForCheckAndSetFinalStep = true
+				RQE.isCheckingMacroContents = true
 				RQEMacro:CreateMacroForCurrentStep()
 				C_Timer.After(3, function()
 					RQE.CreateMacroForCheckAndSetFinalStep = false
+					RQE.isCheckingMacroContents = false
 				end)
 				-- RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
 			else
@@ -6286,12 +6293,36 @@ function RQEMacro:CreateMacroForCurrentStep()
 
 	-- Fetch the macro data for the current step
 	local stepData = questData[stepIndex]
-	if not stepData or not stepData.macro then
+	if not stepData or (not stepData.macro and not stepData.macroArray) then
 		return
 	end
 
+	-- ✅ Determine if we're using the new macroArray or legacy macro
+	local macroContent
+	if stepData.macroArray then
+		-- New array-style macro (contains spellIDTooltip, iconFileID)
+		macroContent = stepData.macroArray
+	elseif type(stepData.macro) == "table" then
+		-- Legacy multi-line macro
+		local allStrings = true
+		for _, v in ipairs(stepData.macro) do
+			if type(v) ~= "string" then
+				allStrings = false
+				break
+			end
+		end
+		if allStrings then
+			macroContent = table.concat(stepData.macro, "\n")
+		else
+			macroContent = stepData.macro
+		end
+	else
+		-- Simple string macro
+		macroContent = stepData.macro
+	end
+
 	-- Combine the macro data into a single string
-	local macroContent = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+	-- local macroContent = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
 
 	-- Print the macro content for debugging
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -6299,7 +6330,8 @@ function RQEMacro:CreateMacroForCurrentStep()
 	end
 
 	-- Set or update the macro using the provided content
-	RQEMacro:SetMacro("RQE Macro", "INV_MISC_QUESTIONMARK", macroContent, false)
+	RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, false)
+	-- RQEMacro:SetMacro("RQE Macro", "INV_MISC_QUESTIONMARK", macroContent, false)
 	RQE.Buttons.UpdateMagicButtonVisibility()
 end
 
@@ -7856,6 +7888,13 @@ function RQE:CheckDBComplete(questID, stepIndex, check, neededAmt)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
 	end
+
+	RQE.isCheckingMacroContents = true
+	RQEMacro:CreateMacroForCurrentStep()
+	C_Timer.After(3, function()
+		RQE.CreateMacroForCheckAndSetFinalStep = false
+		RQE.isCheckingMacroContents = false
+	end)
 
 	return isReady
 end
@@ -11136,6 +11175,14 @@ function RQE:FindQuestZoneTransition(questID)
 			end
 			return nil
 		end
+	end
+
+	-- Bail safely if xNorm and yNorm values are nil when hovering over the "W" button
+	if not (xNorm and yNorm) then
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("xNorm and yNorm values are nil - leaving function early")
+		-- end
+		return nil
 	end
 
 	-- Percent (for display) + rounded for print
