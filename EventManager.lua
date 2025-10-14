@@ -1447,7 +1447,9 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.DontUpdateFrame = false
 	RQE.GreaterThanOneProgress = false
 	RQE.hoveringOnRQEFrameAndButton = false
+	RQE.isCheckingCoordinateDistanceConditional = false
 	RQE.isCheckingMacroContents = false
+	RQE.isMonitoringCoordinateDistance = false
 	RQE.OkayCheckBonusQuests = false
 	RQE.OkayToUpdateFollowingTrack = true
 	RQE.NavigationDestinationReached = false
@@ -2180,6 +2182,10 @@ function RQE.handlePlayerStartedMoving()
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStartedMoving then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Player started moving.", 0.56, 0.93, 0.56)	-- Light Green
 	end
+
+	-- Enable coordinate-distance monitoring
+	RQE.isMonitoringCoordinateDistance = true
+	RQE.lastWholeX, RQE.lastWholeY = nil, nil
 
 	-- Checks to see if showCoordinates is selected as true for an option before calling the applicable function
 	if RQE.db.profile.showCoordinates then
