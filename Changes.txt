@@ -11,6 +11,7 @@
 		- Improved quest step macro handling for smoother transitions between objectives and final turn-in steps (no more disappearing or outdated macros).
 		- Added automatic support for quest steps that use Extra Action Buttons — including proper spell tooltips and class-appropriate icons.
 		- Fixed intermittent issues where macros would clear or fail to regenerate when selecting a quest from the Quest Log.
+		- Fixed issue where only the first spell tooltip on a single line would appear; multiple spells on the same line now all display correctly.
 
 	Core.lua
 		- New Conditional Functionality for Step Logic:
@@ -44,6 +45,11 @@
 		- Updated RQE:CheckDBComplete() to rebuild macros on quest readiness and added throttled logic to prevent macro spam. (2025.10.14.0801)
 		- Enhanced RQE.CheckAndSetFinalStep() to ensure macro persistence when switching or re-selecting quests in the Quest Log. (2025.10.14.0801)
 		- Added full macroArray compatibility to RQEMacro:CreateMacroForCurrentStep(), allowing hybrid macro definitions with tooltip and icon metadata. (2025.10.14.0801)
+		- Extended RQE.RenderTextWithItems() to dynamically handle both {item:id:name} and {spell:id:name} tags with distinct color codes and unified rendering logic. (2025.10.14.1921)
+		- Added new handler function RQE.HandleSpellTag(parentFrame, spellID, spellName, cursorX, yOffset, baseParent, lineHeight, width) to manage spell tooltip hover regions using GameTooltip:SetHyperlink("spell:ID") for reliable refresh behavior. (2025.10.14.1921)
+		- Updated hover generation logic to measure font width using shared measureFS object, ensuring pixel-accurate hitboxes for multiple spells or items appearing on the same line. (2025.10.14.1921)
+		- Refined line-wrapping system to allow spell hover regions to split across lines in the same way as item tooltips, improving multi-line description consistency. (2025.10.14.1921)
+		- Fixed bug causing only the first spell tooltip on a line to appear; all subsequent tooltips now render independently and correctly, even without line breaks. (2025.10.14.1921)
 
 	EventManager.lua
 		- Added Coordinate-Distance Monitoring State Flags:
