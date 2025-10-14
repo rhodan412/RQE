@@ -7,52 +7,57 @@
 		- Added support for conditional logic functions like RQE.CheckMap(), RQE.CheckQuestState(), and RQE.CheckCoordinateDistance().
 		- Improved internal debug logging to make conditional evaluations more transparent for advanced users.
 		- Additions and fixes to the Legion quest DB
+		- Added the ability to see spell tooltips in the RQEFrame
 
 	Core.lua
 		- New Conditional Functionality for Step Logic:
-			• Extended RQE:StartPeriodicChecks() to support dynamically parsed conditional expressions defined within quest step data (cond = "RQE.CheckFunction(...)"). (2025.10.13.0142)
-			• Added conditional parsing and execution system capable of handling multiple parameters and mixed argument types [numeric or string]. (2025.10.13.0142)
-			• Added a detection mechanism that identifies if the active step contains a coordinate-distance conditional (RQE.CheckCoordinateDistance) and flags it accordingly via RQE.isCheckingCoordinateDistanceConditional. (2025.10.13.0142)
-			• Reordered and modularized logic flow to ensure coordinate-distance conditionals only activate when relevant to the player’s current step. (2025.10.13.0142)
-			• Added per-step detection for the presence of coordinate-distance checks, setting the internal flag at the end of the periodic evaluation for accuracy and efficiency. (2025.10.13.0142)
+			• Extended RQE:StartPeriodicChecks() to support dynamically parsed conditional expressions defined within quest step data (cond = "RQE.CheckFunction(...)"). (2025.10.14.0142)
+			• Added conditional parsing and execution system capable of handling multiple parameters and mixed argument types [numeric or string]. (2025.10.14.0142)
+			• Added a detection mechanism that identifies if the active step contains a coordinate-distance conditional (RQE.CheckCoordinateDistance) and flags it accordingly via RQE.isCheckingCoordinateDistanceConditional. (2025.10.14.0142)
+			• Reordered and modularized logic flow to ensure coordinate-distance conditionals only activate when relevant to the player’s current step. (2025.10.14.0142)
+			• Added per-step detection for the presence of coordinate-distance checks, setting the internal flag at the end of the periodic evaluation for accuracy and efficiency. (2025.10.14.0142)
 		- Enhanced Movement-Aware Updates:
-			• Updated OnPlayerMoving(self, elapsed) to include support for monitoring coordinate-distance conditionals. (2025.10.13.0142)
-			• Added logic to check both RQE.isMonitoringCoordinateDistance and RQE.isCheckingCoordinateDistanceConditional before invoking coordinate-distance updates, significantly reducing unnecessary calls. (2025.10.13.0142)
-			• Improved grid-based coordinate change detection using sub-percent (tenths) granularity for smoother, lower-latency triggering of coordinate-based progressions. (2025.10.13.0142)
+			• Updated OnPlayerMoving(self, elapsed) to include support for monitoring coordinate-distance conditionals. (2025.10.14.0142)
+			• Added logic to check both RQE.isMonitoringCoordinateDistance and RQE.isCheckingCoordinateDistanceConditional before invoking coordinate-distance updates, significantly reducing unnecessary calls. (2025.10.14.0142)
+			• Improved grid-based coordinate change detection using sub-percent (tenths) granularity for smoother, lower-latency triggering of coordinate-based progressions. (2025.10.14.0142)
 		- New Conditional Functions:
 			• RQE.CheckMap(self, ...)
-				• Checks if the player’s current map matches any in a provided list of map IDs. (2025.10.13.0142)
-				• Supports multiple numeric arguments (e.g., RQE.CheckMap(1, 10, 199)), returning true if the player is in any of those maps. (2025.10.13.0142)
+				• Checks if the player’s current map matches any in a provided list of map IDs. (2025.10.14.0142)
+				• Supports multiple numeric arguments (e.g., RQE.CheckMap(1, 10, 199)), returning true if the player is in any of those maps. (2025.10.14.0142)
 			• RQE.CheckQuestState(self, questID, state)
-				• Evaluates if a specific quest is COMPLETED or INCOMPLETE based on its current state in C_QuestLog. (2025.10.13.0142)
-				• Used as a flexible step conditional within quest logic to manage branching progression. (2025.10.13.0142)
+				• Evaluates if a specific quest is COMPLETED or INCOMPLETE based on its current state in C_QuestLog. (2025.10.14.0142)
+				• Used as a flexible step conditional within quest logic to manage branching progression. (2025.10.14.0142)
 			• RQE.CheckCoordinateDistance(self, x, y, mapID, maxYards)
-				• Determines if the player is within a specified yard distance (maxYards) of a coordinate on a given map. (2025.10.13.0142)
-				• Automatically applies a +10 yard buffer to improve range detection accuracy, allowing database entries to specify the intended distance directly. (2025.10.13.0142)
-				• Utilizes HereBeDragons-2.0 for accurate yard-based distance computation and includes a fallback normalized distance approximation if unavailable. (2025.10.13.0142)
+				• Determines if the player is within a specified yard distance (maxYards) of a coordinate on a given map. (2025.10.14.0142)
+				• Automatically applies a +10 yard buffer to improve range detection accuracy, allowing database entries to specify the intended distance directly. (2025.10.14.0142)
+				• Utilizes HereBeDragons-2.0 for accurate yard-based distance computation and includes a fallback normalized distance approximation if unavailable. (2025.10.14.0142)
 			• RQE:CheckCoordinateDistanceConditional()
-				• Dynamically scans the current step’s checks for coordinate-distance conditionals. (2025.10.13.0142)
-				• Automatically evaluates and advances the current quest step when the player moves within range of the specified coordinates. (2025.10.13.0142)
-				• Includes robust error handling and debug trace support for precise runtime monitoring. (2025.10.13.0142)
+				• Dynamically scans the current step’s checks for coordinate-distance conditionals. (2025.10.14.0142)
+				• Automatically evaluates and advances the current quest step when the player moves within range of the specified coordinates. (2025.10.14.0142)
+				• Includes robust error handling and debug trace support for precise runtime monitoring. (2025.10.14.0142)
+		- Modified the RQE.RenderTextWithItems() function to also include functionality on spell tooltips, while retaining ability to see item tooltips, which diverts the function to call RQE.HandleSpellTag() function instead. (2025.10.14.0319)
 
 	EventManager.lua
 		- Added Coordinate-Distance Monitoring State Flags:
 			• Introduced two new global flags to coordinate movement and distance evaluation:
-				• RQE.isMonitoringCoordinateDistance – toggled true when the player begins moving (PLAYER_STARTED_MOVING) and false when movement stops (PLAYER_STOPPED_MOVING). (2025.10.13.0142)
-				• RQE.isCheckingCoordinateDistanceConditional – toggled by the step logic in Core.lua to control whether coordinate-distance checks should be performed. (2025.10.13.0142)
-			• Integrated initialization of these flags within the ADDON_LOADED event to ensure predictable startup behavior. (2025.10.13.0142)
+				• RQE.isMonitoringCoordinateDistance – toggled true when the player begins moving (PLAYER_STARTED_MOVING) and false when movement stops (PLAYER_STOPPED_MOVING). (2025.10.14.0142)
+				• RQE.isCheckingCoordinateDistanceConditional – toggled by the step logic in Core.lua to control whether coordinate-distance checks should be performed. (2025.10.14.0142)
+			• Integrated initialization of these flags within the ADDON_LOADED event to ensure predictable startup behavior. (2025.10.14.0142)
 		- Updated Movement Event Handlers
-			• Updated RQE.handlePlayerStartedMoving() to initialize coordinate monitoring and reset last known grid data, activating coordinate-based distance tracking only when relevant. (2025.10.13.0142)
-			• Updated RQE.handlePlayerStoppedMoving() to cleanly disable coordinate monitoring and stop OnUpdate loops to conserve system resources. (2025.10.13.0142)
+			• Updated RQE.handlePlayerStartedMoving() to initialize coordinate monitoring and reset last known grid data, activating coordinate-based distance tracking only when relevant. (2025.10.14.0142)
+			• Updated RQE.handlePlayerStoppedMoving() to cleanly disable coordinate monitoring and stop OnUpdate loops to conserve system resources. (2025.10.14.0142)
+
+	README.md
+		- Updated to reflect upcoming change of the spell tooltips being visible in the RQEFrame (2025.10.14.0319)
 
 	RQE.toc
-		- Updated Interface# and version# (2025.10.13.0142)
+		- Updated Interface# and version# (2025.10.14.0142)
 
 	RQEDatabase.lua
-		- Updated quest DB for more additions to the Legion expansion (2025.10.13.0209)
+		- Updated quest DB for more additions to the Legion expansion (2025.10.14.0209)
 
 	WaypointManager.lua
-		- Modified debug print to require specific debugLevel setting (2025.10.13.0142)
+		- Modified debug print to require specific debugLevel setting (2025.10.14.0142)
 
 
 11.2.5.0 (2025.10.13)
