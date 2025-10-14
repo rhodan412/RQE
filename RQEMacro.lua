@@ -137,10 +137,38 @@ end
 function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharacter)
 	local macroName = "RQE Macro"
 	local iconFileID = "INV_MISC_QUESTIONMARK"
-	local macroBody = type(macroContent) == "table" and table.concat(macroContent, "\n") or macroContent
+	local macroBody = ""
+
+	-- Case 1: New array macro { { macro="/click ...", spellIDTooltip=215173, iconFileID="Inv_helm_..." } }
+	if type(macroContent) == "table" and type(macroContent[1]) == "table" and macroContent[1].macro then
+		local entry = macroContent[1]
+		macroBody = entry.macro or ""
+
+		-- Choose the icon
+		if entry.iconFileID then
+			iconFileID = entry.iconFileID
+		elseif entry.spellIDTooltip then
+			local spellInfo = C_Spell.GetSpellInfo(entry.spellIDTooltip)
+			if spellInfo and spellInfo.iconID then
+				iconFileID = spellInfo.iconID
+			end
+		end
+
+	-- Case 2: Legacy macros
+	elseif macroContent then
+		macroBody = type(macroContent) == "table" and table.concat(macroContent, "\n") or macroContent
+	end
+
+	-- Normalize numeric IDs
+	if type(iconFileID) == "number" then
+		iconFileID = tostring(iconFileID)
+	end
+
+	-- 🧩 Local variable to store return value (so we can still trigger the tooltip refresh after)
+	local result
 
 	if InCombatLockdown() then
-		-- Queue the macro set operation for after combat
+		-- Queue for after combat
 		table.insert(self.pendingMacroSets, {
 			name = macroName,
 			iconFileID = iconFileID,
@@ -148,9 +176,17 @@ function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharact
 			perCharacter = perCharacter
 		})
 	else
-		-- Not in combat, set the macro immediately
 		return self:SetMacro(macroName, iconFileID, macroBody, perCharacter)
 	end
+
+
+	-- >>> NEW: Refresh Magic Button tooltip after macro is set/queued
+	if RQEMacro and RQEMacro.UpdateMagicButtonTooltip then
+		RQEMacro:UpdateMagicButtonTooltip()
+	end
+	-- <<< END NEW TOOLTIP REFRESH
+
+	return result
 end
 
 
@@ -202,6 +238,11 @@ end
 
 -- Internal function that actually creates the macro content
 function RQEMacro:ActuallySetMacro(name, iconFileID, body, perCharacter)
+	-- Normalize numeric icon IDs
+	if type(iconFileID) == "number" then
+		iconFileID = tostring(iconFileID)
+	end
+
 	local macroIndex = GetMacroIndexByName(name)
 	if macroIndex == 0 then -- Macro doesn't exist, create a new one
 		local numAccountMacros, numCharacterMacros = GetNumMacros()
@@ -283,6 +324,33 @@ end)
 function RQEMacro:UpdateMagicButtonTooltip()
 	local MagicButton = RQE.MagicButton -- Reference to the magic button
 	if not MagicButton then return end
+
+	-- >>> NEW: check if current macroArray step defines a spell tooltip
+	local questID = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
+	if questID and RQE and RQE.getQuestData then
+		local questData = RQE.getQuestData(questID)
+		local stepIndex = RQE.AddonSetStepIndex
+		local step = questData and stepIndex and questData[stepIndex]
+
+		if step and step.macroArray and type(step.macroArray) == "table" then
+			local entry = step.macroArray[1]
+			if entry and entry.spellIDTooltip then
+				local spellID = entry.spellIDTooltip
+
+				-- Override existing OnEnter/OnLeave behavior for spell tooltip
+				MagicButton:SetScript("OnEnter", function(self)
+					GameTooltip:Hide()
+					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+					GameTooltip:SetSpellByID(spellID)
+					GameTooltip:Show()
+				end)
+				MagicButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+				-- ✅ End here so we don't run the old logic afterward
+				return
+			end
+		end
+	end
 
 	-- List of exception itemIDs
 	local exceptionItemIDs = {
