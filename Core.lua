@@ -404,6 +404,7 @@ RQE.LastMapChangeTime = 0
 -- Initializes Local Variables
 local isMacroCreationInProgress = false		-- Declare a variable to track if macro creation is currently in progress
 local isPeriodicCheckInProgress = false		-- Declare a variable to track if periodic checks are currently in progress
+RQE.lastWholeX, RQE.lastWholeY = nil, nil
 
 
 -- Initialize Waypoint System
@@ -6274,22 +6275,6 @@ function RQE:StartPeriodicChecks()
 		end
 	end
 
-	-- -- Handle turn-in readiness
-	-- if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-		-- local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
-		-- if hasCheckDBComplete then
-			-- self:ClickWaypointButtonForIndex(finalStepIndex)
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
-			-- end
-			-- return
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
-			-- end
-		-- end
-	-- end
-
 	-- Iterate over all steps to evaluate which one should be active
 	for i, stepData in ipairs(questData) do
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -6329,8 +6314,103 @@ function RQE:StartPeriodicChecks()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~~ StepData contains checks. Evaluating each check. ~~~")
 			end
+
 			local results = {}
+			local conditionalTriggered = false
+
 			for j, checkData in ipairs(stepData.checks) do
+				-- ✅ NEW CONDITIONAL LOGIC
+				if checkData.cond and type(checkData.cond) == "string" then
+					-- Example: "RQE.CheckMap(84)"
+					-- local funcName, param = checkData.cond:match("RQE%.([%w_]+)%((%d+)%)")
+					-- if funcName and RQE[funcName] then
+						-- local conditionResult = RQE[funcName](RQE, tonumber(param))
+						-- if RQE.db.profile.debugLevel == "INFO+" then
+							-- print("Conditional check", checkData.cond, "returned:", conditionResult)
+						-- end
+
+						-- if conditionResult then
+							-- -- ✅ If condition true, skip rest of this step and advance immediately
+							-- conditionalTriggered = true
+							-- break
+						-- end
+					-- end
+
+					-- -- Supports multiple numeric arguments, e.g. RQE.CheckMap(10, 1, 199)
+					-- local funcName, params = checkData.cond:match("RQE%.([%w_]+)%(([%d,%s]+)%)")
+					-- if funcName and RQE[funcName] then
+						-- local args = {}
+						-- for num in string.gmatch(params or "", "%d+") do
+							-- table.insert(args, tonumber(num))
+						-- end
+
+						-- if RQE.db.profile.debugLevel == "INFO+" then
+							-- print("Conditional detected:", checkData.cond, "| Function:", funcName, "| Args:", table.concat(args, ", "))
+						-- end
+
+						-- local conditionResult = RQE[funcName](RQE, unpack(args))
+
+						-- if RQE.db.profile.debugLevel == "INFO+" then
+							-- print("Conditional check result:", tostring(conditionResult))
+						-- end
+
+						-- if conditionResult then
+							-- -- ✅ If condition true, skip rest of this step and advance immediately
+							-- conditionalTriggered = true
+							-- break
+						-- end
+					-- end
+
+					-- Match something like RQE.FunctionName(any, number, "string")
+					--[[
+						cond = "RQE.CheckBuff('Blessing of Kings', 'Arcane Intellect')"
+						cond = "RQE.CheckScenarioStage(2)"
+						cond = "RQE.CheckQuestState(12345, 'COMPLETED')"
+					]]
+
+					local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+
+					if funcName and RQE[funcName] then
+						local args = {}
+
+						-- Parse both numbers and strings from inside parentheses
+						for param in string.gmatch(rawParams or "", "[^,%s]+") do
+							local num = tonumber(param)
+							if num then
+								table.insert(args, num)
+							else
+								-- Strip quotes from string params like "Blessing of Kings"
+								param = param:gsub("^['\"]", ""):gsub("['\"]$", "")
+								table.insert(args, param)
+							end
+						end
+
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print(string.format(
+								"Conditional detected: %s | Function: %s | Args: %s",
+								checkData.cond, funcName, table.concat(args, ", ")
+							))
+						end
+
+						-- Dynamically call the RQE.<function> with all parsed arguments
+						local ok, conditionResult = pcall(RQE[funcName], RQE, unpack(args))
+
+						if not ok then
+							print(string.format("Error running conditional '%s': %s", checkData.cond, conditionResult))
+						else
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Conditional check result:", tostring(conditionResult))
+							end
+
+							if conditionResult then
+								conditionalTriggered = true
+								break
+							end
+						end
+					end
+				end
+
+				-- Continue with normal function-based check logic if conditional doesn't exist in any of the 'checks' for that stepIndex
 				local parentFunctionName = checkData.funct
 				if self[parentFunctionName] then
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6344,6 +6424,15 @@ function RQE:StartPeriodicChecks()
 					end
 					results[j] = false
 				end
+			end
+
+			-- If conditional triggered, skip combining logic
+			if conditionalTriggered then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Conditional triggered; auto-passing stepIndex:", i)
+				end
+				stepIndex = i + 1
+				break
 			end
 
 			-- Combine results using mod logic
@@ -6382,11 +6471,6 @@ function RQE:StartPeriodicChecks()
 			end
 		end
 
-		-- if not isZoneChangeCheck then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("WaypointText present; current step has no CheckDBZoneChange -> early return.")
-			-- end
-			-- return
 		if not isZoneChangeCheck then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("WaypointText present; suppressing waypoint creation but still updating step index.")
@@ -6430,9 +6514,245 @@ function RQE:StartPeriodicChecks()
 		end)
 	end)
 
+	-- ✅ Determine if current step includes a coordinate-distance conditional
+	RQE.isCheckingCoordinateDistanceConditional = false
+
+	local curStep = questData[stepIndex]
+	if curStep and curStep.checks then
+		for _, checkData in ipairs(curStep.checks) do
+			if checkData.cond and checkData.cond:find("RQE%.CheckCoordinateDistance") then
+				RQE.isCheckingCoordinateDistanceConditional = true
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Found coordinate-distance conditional in current step.")
+				end
+				break
+			end
+		end
+	end
+
 	-- Final cleanup
 	RQE.NewZoneChange = false
 	RQE:UpdateSeparateFocusFrame()
+end
+
+
+-- Check if the player is currently in one or more possible mapIDs
+-- Usage: cond = "RQE.CheckMap(1, 10, 199)"
+function RQE.CheckMap(self, ...)
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local mapIDs = { ... } -- captures all args
+	if not playerMapID then return false end
+
+	for _, mapID in ipairs(mapIDs) do
+		if tonumber(mapID) == playerMapID then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("RQE.CheckMap(): Player is in mapID %d (matched)", playerMapID))
+			end
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("RQE.CheckMap(): PlayerMapID %d did not match any target IDs", playerMapID))
+	end
+
+	return false
+end
+
+
+-- Check if the player has completed the quest or not
+-- Usage: cond = "RQE.CheckQuestState(42484, 'COMPLETED')" or "RQE.CheckQuestState(42484, 'INCOMPLETE')"
+function RQE.CheckQuestState(self, questID, state)
+	local numEntries = C_QuestLog.GetNumQuestLogEntries()
+	local foundInfo
+
+	-- Find the quest entry by ID
+	for questLogIndex = 1, numEntries do
+		local info = C_QuestLog.GetInfo(questLogIndex)
+		if info and info.questID == questID then
+			foundInfo = info
+			break
+		end
+	end
+
+	-- If the quest isn't in the log, it may already be turned in
+	if not foundInfo then
+		local isComplete = C_QuestLog.IsComplete(questID)
+		if isComplete and state == "COMPLETED" then
+			return true
+		elseif not isComplete and state == "INCOMPLETE" then
+			return true
+		else
+			return false
+		end
+	end
+
+	-- If the quest is in the log, use its info
+	local isComplete = foundInfo.isComplete or C_QuestLog.IsComplete(questID)
+
+	if state == "COMPLETED" then
+		return isComplete
+	elseif state == "INCOMPLETE" then
+		return not isComplete
+	else
+		-- Optional: handle other states like ACTIVE or NOTACTIVE
+		if state == "ACTIVE" then
+			return C_QuestLog.IsOnQuest(questID)
+		elseif state == "NOTACTIVE" then
+			return not C_QuestLog.IsOnQuest(questID)
+		end
+	end
+
+	return false
+end
+
+
+-- Checks if the player is within `maxYards` of (x, y) on `mapID`.
+-- Accepts x/y as either 0–100 (percent coords like 32.42) or 0–1 normalized.
+-- Usage in DB: cond = "RQE.CheckCoordinateDistance(32.42, 48.17, 1, 25)"
+-- OR: RQE.CheckCoordinateDistance(x, y,  mapID, distanceToTarget)
+function RQE.CheckCoordinateDistance(self, x, y, mapID, maxYards)
+	-- Basic arg validation
+	if not (x and y and mapID and maxYards) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckCoordinateDistance(): missing args; expected (x, y, mapID, maxYards)")
+		end
+		return false
+	end
+
+	-- Auto-adjust threshold: add +10 yards buffer for accuracy compensation
+	local originalMaxYards = maxYards
+	maxYards = (tonumber(maxYards) or 0) + 10
+
+	-- Normalize 0–100 coords to 0–1 if needed
+	if x > 1 then x = x / 100 end
+	if y > 1 then y = y / 100 end
+
+	-- Prefer HereBeDragons for true yard distances
+	local HBD = LibStub and LibStub("HereBeDragons-2.0", true)
+	if HBD then
+		-- Get the player's current zone position (map + normalized coords)
+		local pMapID = C_Map.GetBestMapForUnit("player")
+		local pPos = pMapID and C_Map.GetPlayerMapPosition(pMapID, "player")
+		if not (pMapID and pPos) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE.CheckCoordinateDistance(): cannot get player position")
+			end
+			return false
+		end
+		local px, py = pPos:GetXY()
+
+		-- Compute yard distance between (player) and (x,y,mapID)
+		local distOrDx, dy = HBD:GetZoneDistance(pMapID, px, py, mapID, x, y)
+
+		-- Some versions of HBD return a single distance (yards),
+		-- others return dx, dy (yard components). Handle both gracefully.
+		local dist
+		if dy == nil then
+			-- Newer HBD: single return value (total distance in yards)
+			dist = distOrDx
+		else
+			-- Older HBD: two return values (dx, dy)
+			dist = math.sqrt((distOrDx or 0)^2 + (dy or 0)^2)
+		end
+
+		if not dist then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(("RQE.CheckCoordinateDistance(): no zone distance between %s and %s"):format(tostring(pMapID), tostring(mapID)))
+			end
+			return false
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format("RQE.CheckCoordinateDistance(): ~ dist=%.1f yards (threshold=%d)", dist, originalMaxYards))
+		end
+		return dist <= maxYards
+
+		-- local dx, dy = HBD:GetZoneDistance(pMapID, px, py, mapID, x, y)
+		-- if not (dx and dy) then
+			-- -- Different instances/continents or an unmapped transition — treat as not in range
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print(("RQE.CheckCoordinateDistance(): no zone distance between %s and %s"):format(tostring(pMapID), tostring(mapID)))
+			-- end
+			-- return false
+		-- end
+
+		-- local dist = math.sqrt(dx*dx + dy*dy)
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print(string.format("RQE.CheckCoordinateDistance(): dist=%.1f yards (threshold=%d)", dist, maxYards))
+		-- end
+		-- return dist <= maxYards
+	end
+
+	-- Fallback (no HBD): approximate using normalized distance on same map only
+	local pMapID = C_Map.GetBestMapForUnit("player")
+	if pMapID ~= mapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckCoordinateDistance(): HBD missing and player not on target map — returning false")
+		end
+		return false
+	end
+
+	local pPos = C_Map.GetPlayerMapPosition(pMapID, "player")
+	if not pPos then return false end
+	local px, py = pPos:GetXY()
+
+	-- Very rough heuristic: treat 0.01 normalized as ~ yard-scale chunk; tune if desired
+	local nx = (px - x)
+	local ny = (py - y)
+	local normDist = math.sqrt(nx*nx + ny*ny)
+
+	-- Heuristic scale factor (map-size dependent; only for emergency fallback)
+	local APPROX_YARDS_PER_NORM = 1000 -- conservative guess; avoids false positives
+	local approxYards = normDist * APPROX_YARDS_PER_NORM
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("RQE.CheckCoordinateDistance(): HBD missing; approxDist=%.1f yards (threshold=%d)", approxYards, maxYards))
+	end
+	return approxYards <= maxYards
+end
+
+
+-- Helper function to find the x, y and mapID that exists for the RQE.CheckCoordinateDistance() conditional in the DB file
+function RQE:CheckCoordinateDistanceConditional()
+	local extractedQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+	if not superTrackedQuestID then return end
+
+	local questData = self.getQuestData(superTrackedQuestID)
+	if not questData then return end
+
+	local stepIndex = RQE.AddonSetStepIndex or (self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex) or 1
+	local stepData = questData[stepIndex]
+	if not stepData or not stepData.checks then return end
+
+	for _, checkData in ipairs(stepData.checks) do
+		if checkData.cond and checkData.cond:find("RQE%.CheckCoordinateDistance") then
+			local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+			if funcName and RQE[funcName] then
+				local args = {}
+				for param in string.gmatch(rawParams or "", "[^,%s]+") do
+					local num = tonumber(param)
+					if num then
+						table.insert(args, num)
+					end
+				end
+
+				local ok, result = pcall(RQE[funcName], RQE, unpack(args))
+				if ok and result then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format("RQE: Within %.0f yards of target — advancing step %d.", args[4] or 0, stepIndex))
+					end
+					self:ClickWaypointButtonForIndex(stepIndex + 1)
+					RQE.isMonitoringCoordinateDistance = false
+					break
+				end
+			end
+		end
+	end
 end
 
 
@@ -8776,6 +9096,20 @@ local function OnPlayerMoving(self, elapsed)
 		if RQE.EnsureWaypointForSupertracked then
 			RQE:EnsureWaypointForSupertracked()
 		end
+
+		-- Only run if we’re actively monitoring coordinate distance
+		if RQE.isMonitoringCoordinateDistance then
+			if not RQE.isCheckingCoordinateDistanceConditional then return end
+
+			-- “Tenths of a percent” grid (e.g. 47.654 -> 476) - Reset handling to tenths so that it works in the case of checks for this DB checks conditional
+			local gx = math.floor(px * 1000 + 0.0001)
+			local gy = math.floor(py * 1000 + 0.0001)
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("RQE: Grid changed to %.2f,%.2f on map %d — checking coordinate distance.", gx / 10, gy / 10, mapID))
+			end
+			RQE:CheckCoordinateDistanceConditional()
+		end
 	end
 end
 
@@ -8792,6 +9126,7 @@ end
 
 -- Function to stop the OnUpdate script
 function RQE:StopUpdatingCoordinates()
+	RQE.isMonitoringCoordinateDistance = false
 	if isMoving then
 		RQEFrame:SetScript("OnUpdate", nil)
 		isMoving = false
@@ -11197,4 +11532,54 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 
 	RQE.MapAndContinentFromQuestAccepted = false
 	RQE.MapAndContinentFromQuestTurnIn = false
+end
+
+
+-- Utility to print detailed C_QuestLog.GetInfo data for a given questID
+function RQE.DebugQuestInfo(self, questID)
+	if not questID then
+		print("|cFFFF3333[RQE]|r You must pass a questID. Example: /run RQE:DebugQuestInfo(62)")
+		return
+	end
+
+	local numEntries = C_QuestLog.GetNumQuestLogEntries()
+	local foundInfo
+
+	for questLogIndex = 1, numEntries do
+		local info = C_QuestLog.GetInfo(questLogIndex)
+		if info and info.questID == questID then
+			foundInfo = info
+			break
+		end
+	end
+
+	if not foundInfo then
+		print(string.format("|cFFFF3333[RQE]|r QuestID %d not found in your quest log.", questID))
+		return
+	end
+
+	print("|cff33FF99[RQE:DebugQuestInfo]|r ---------------------------")
+	print(string.format("|cFFFFFF00Quest Title:|r %s", foundInfo.title or ""))
+	print(string.format("|cFFFFFF00Quest ID:|r %d", foundInfo.questID or 0))
+	print(string.format("|cFFFFFF00Quest Log Index:|r %d", foundInfo.questLogIndex or 0))
+	print(string.format("|cFFFFFF00Level:|r %d |cFFFFFF00Difficulty:|r %d",
+		foundInfo.level or 0, foundInfo.difficultyLevel or 0))
+	print(string.format("|cFFFFFF00Campaign ID:|r %s", tostring(foundInfo.campaignID)))
+	print(string.format("|cFFFFFF00Group Size:|r %d", foundInfo.suggestedGroup or 0))
+	print(string.format("|cFFFFFF00Frequency:|r %s", tostring(foundInfo.frequency)))
+	print(string.format("|cFFFFFF00Classification:|r %s", tostring(foundInfo.questClassification)))
+	print(string.format("|cFFFFFF00Header:|r %s |cFFFFFF00Collapsed:|r %s",
+		tostring(foundInfo.isHeader), tostring(foundInfo.isCollapsed)))
+	print(string.format("|cFFFFFF00Task:|r %s |cFFFFFF00Bounty:|r %s |cFFFFFF00Story:|r %s",
+		tostring(foundInfo.isTask), tostring(foundInfo.isBounty), tostring(foundInfo.isStory)))
+	print(string.format("|cFFFFFF00Scaling:|r %s |cFFFFFF00On Map:|r %s |cFFFFFF00Has POI:|r %s",
+		tostring(foundInfo.isScaling), tostring(foundInfo.isOnMap), tostring(foundInfo.hasLocalPOI)))
+	print(string.format("|cFFFFFF00Hidden:|r %s |cFFFFFF00AutoComplete:|r %s",
+		tostring(foundInfo.isHidden), tostring(foundInfo.isAutoComplete)))
+	print(string.format("|cFFFFFF00Abandon On Disable:|r %s", tostring(foundInfo.isAbandonOnDisable)))
+	print(string.format("|cFFFFFF00Internal Only:|r %s", tostring(foundInfo.isInternalOnly)))
+	print(string.format("|cFFFFFF00Ready For Translation:|r %s", tostring(foundInfo.readyForTranslation)))
+	print(string.format("|cFFFFFF00Header Sort Key:|r %s", tostring(foundInfo.headerSortKey)))
+	print(string.format("|cFFFFFF00Overrides Sort Order:|r %s", tostring(foundInfo.overridesSortOrder)))
+	print("|cff33FF99-------------------------------------------|r")
 end
