@@ -6,6 +6,7 @@
 		- Improved movement detection and performance optimization for distance checks, ensuring minimal CPU overhead during player motion.
 		- Added support for conditional logic functions like RQE.CheckMap(), RQE.CheckQuestState(), and RQE.CheckCoordinateDistance().
 		- Improved internal debug logging to make conditional evaluations more transparent for advanced users.
+		- Additions and fixes to the Legion quest DB
 
 	Core.lua
 		- New Conditional Functionality for Step Logic:
@@ -46,6 +47,9 @@
 
 	RQE.toc
 		- Updated Interface# and version# (2025.10.13.0142)
+
+	RQEDatabase.lua
+		- Updated quest DB for more additions to the Legion expansion (2025.10.13.0209)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.13.0142)
