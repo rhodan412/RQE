@@ -7,7 +7,10 @@
 		- Added support for conditional logic functions like RQE.CheckMap(), RQE.CheckQuestState(), and RQE.CheckCoordinateDistance().
 		- Improved internal debug logging to make conditional evaluations more transparent for advanced users.
 		- Additions and fixes to the Legion quest DB
-		- Added the ability to see spell tooltips in the RQEFrame
+		- Added the ability to see spell tooltips in the quest helper frame
+		- Improved quest step macro handling for smoother transitions between objectives and final turn-in steps (no more disappearing or outdated macros).
+		- Added automatic support for quest steps that use Extra Action Buttons — including proper spell tooltips and class-appropriate icons.
+		- Fixed intermittent issues where macros would clear or fail to regenerate when selecting a quest from the Quest Log.
 
 	Core.lua
 		- New Conditional Functionality for Step Logic:
@@ -36,6 +39,11 @@
 				• Automatically evaluates and advances the current quest step when the player moves within range of the specified coordinates. (2025.10.14.0142)
 				• Includes robust error handling and debug trace support for precise runtime monitoring. (2025.10.14.0142)
 		- Modified the RQE.RenderTextWithItems() function to also include functionality on spell tooltips, while retaining ability to see item tooltips, which diverts the function to call RQE.HandleSpellTag() function instead. (2025.10.14.0319)
+		- Removed fade on spell tooltip (2025.10.14.0801)
+		- Fixed nil error with xNorm, yNorm in the RQE:FindQuestZoneTransition() function (2025.10.14.0801)
+		- Updated RQE:CheckDBComplete() to rebuild macros on quest readiness and added throttled logic to prevent macro spam. (2025.10.14.0801)
+		- Enhanced RQE.CheckAndSetFinalStep() to ensure macro persistence when switching or re-selecting quests in the Quest Log. (2025.10.14.0801)
+		- Added full macroArray compatibility to RQEMacro:CreateMacroForCurrentStep(), allowing hybrid macro definitions with tooltip and icon metadata. (2025.10.14.0801)
 
 	EventManager.lua
 		- Added Coordinate-Distance Monitoring State Flags:
@@ -53,8 +61,14 @@
 	RQE.toc
 		- Updated Interface# and version# (2025.10.14.0142)
 
+	RQEMacro.lua
+		- Refactored SetQuestStepMacro() to support both legacy and array-based macros, with automatic spell tooltip and icon assignment. (2025.10.14.0801)
+		- Improved UpdateMagicButtonTooltip() to dynamically show spell tooltips for macroArray steps. (2025.10.14.0801)
+		- Added normalization for numeric icon IDs to prevent API mismatches during macro creation. (2025.10.14.0801)
+
 	RQEDatabase.lua
 		- Updated quest DB for more additions to the Legion expansion (2025.10.14.0209)
+		- Updates to the quest DB for Legion quests and also added macroArray for questID 42537 to display spell tooltip and ability to click extra action button (2025.10.14.0801)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.14.0142)
