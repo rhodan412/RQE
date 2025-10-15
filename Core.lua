@@ -4706,7 +4706,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						local hover2 = RQE.HandleSpellTag(
 							parentFrame, tagID, tagName,
 							0, yOffset + lineHeight, baseParent, lineHeight,
-							overflow     -- explicit width for part 2 (next line)
+							overflow	 -- explicit width for part 2 (next line)
 						)
 						if hover2 then table.insert(parentFrame._rqeSegments, hover2) end
 
