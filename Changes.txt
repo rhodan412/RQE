@@ -70,11 +70,12 @@
 	RQEMacro.lua
 		- Refactored SetQuestStepMacro() to support both legacy and array-based macros, with automatic spell tooltip and icon assignment. (2025.10.14.0801)
 		- Improved UpdateMagicButtonTooltip() to dynamically show spell tooltips for macroArray steps. (2025.10.14.0801)
-		- Added normalization for numeric icon IDs to prevent API mismatches during macro creation. (2025.10.14.0801)
+		- Added normalization for numeric icon IDs to prevent API mismatches during macro creation. (2025.10.14.1959)
 
 	RQEDatabase.lua
 		- Updated quest DB for more additions to the Legion expansion (2025.10.14.0209)
 		- Updates to the quest DB for Legion quests and also added macroArray for questID 42537 to display spell tooltip and ability to click extra action button (2025.10.14.0801)
+		- Added additional Legion quests to the DB for Remix (2025.10.14.0801)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.14.0142)
