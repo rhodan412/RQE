@@ -12,6 +12,7 @@
 		- Added automatic support for quest steps that use Extra Action Buttons — including proper spell tooltips and class-appropriate icons.
 		- Fixed intermittent issues where macros would clear or fail to regenerate when selecting a quest from the Quest Log.
 		- Fixed issue where only the first spell tooltip on a single line would appear; multiple spells on the same line now all display correctly.
+		- Cooldowns will now appear in the RQE Magic/Macro button to the left of the quest helper [RQEFrame].
 
 	Core.lua
 		- New Conditional Functionality for Step Logic:
@@ -60,6 +61,7 @@
 		- Updated Movement Event Handlers
 			• Updated RQE.handlePlayerStartedMoving() to initialize coordinate monitoring and reset last known grid data, activating coordinate-based distance tracking only when relevant. (2025.10.14.0142)
 			• Updated RQE.handlePlayerStoppedMoving() to cleanly disable coordinate monitoring and stop OnUpdate loops to conserve system resources. (2025.10.14.0142)
+		- Added SPELLS_CHANGED event function for the purpose to update the magic [macro] button when changing between different artifact trees in Legion Remix (2025.10.16.1726)
 
 	README.md
 		- Updated to reflect upcoming change of the spell tooltips being visible in the RQEFrame (2025.10.14.0319)
@@ -71,6 +73,7 @@
 		- Refactored SetQuestStepMacro() to support both legacy and array-based macros, with automatic spell tooltip and icon assignment. (2025.10.14.0801)
 		- Improved UpdateMagicButtonTooltip() to dynamically show spell tooltips for macroArray steps. (2025.10.14.0801)
 		- Added normalization for numeric icon IDs to prevent API mismatches during macro creation. (2025.10.14.1959)
+		- Updated Magic macro button to include cooldown for both items and spells (2025.10.16.1726)
 
 	RQEDatabase.lua
 		- Updated quest DB for more additions to the Legion expansion (2025.10.14.0209)
