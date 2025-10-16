@@ -487,46 +487,195 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		GameTooltip:Show()
 	end)
 
-	MagicButton:SetScript("OnUpdate", function()
+	-- MagicButton:SetScript("OnUpdate", function()
+		-- local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- if not macroIndex or macroIndex == 0 then
+			-- MagicButton.CountText:SetText("")
+			-- return
+		-- end
+
+		-- local _, _, macroBody = GetMacroInfo(macroIndex)
+		-- if not macroBody or macroBody == "" then
+			-- MagicButton.CountText:SetText("")
+			-- return
+		-- end
+
+		-- -- Extract item ID directly if available
+		-- local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
+
+		-- -- If no item ID is found, extract the item name from `/use`
+		-- if not itemID then
+			-- local itemName = macroBody:match("/use%s+(.+)")
+			-- if itemName then
+				-- -- Resolve item name to item ID
+				-- itemID = C_Item.GetItemInfoInstant(itemName)
+			-- end
+		-- end
+
+		-- -- Continue with item count logic if itemID is resolved
+		-- if itemID then
+			-- local itemCount = C_Item.GetItemCount(itemID)
+			-- if not itemCount or itemCount < 1 then
+				-- MagicButton.CountText:SetText("") -- Hide count if less than 1
+			-- else
+				-- if itemCount > 999 then
+					-- itemCount = 999 -- Cap at 999
+				-- end
+				-- MagicButton.CountText:SetText(itemCount) -- Display count
+			-- end
+		-- else
+			-- MagicButton.CountText:SetText("") -- Clear the count if no valid item ID
+		-- end
+	-- end)
+
+	---------------------------------------------------------------------
+	-- NEW: Cooldown handler (visual greying + tooltip update)
+	---------------------------------------------------------------------
+	if not MagicButton.CooldownUpdater then
+		MagicButton.CooldownUpdater = CreateFrame("Cooldown", nil, MagicButton, "CooldownFrameTemplate")
+		MagicButton.CooldownUpdater:SetAllPoints(MagicButton)
+		MagicButton.CooldownUpdater:SetDrawEdge(false)
+		MagicButton.CooldownUpdater:SetSwipeColor(0, 0, 0, 0.6)
+	end
+
+	-- Hook tooltip refresh so the remaining cooldown shows live
+	MagicButton:HookScript("OnEnter", function(self)
+		local macroIndex = GetMacroIndexByName("RQE Macro")
+		if not macroIndex or macroIndex == 0 then return end
+		local _, _, macroBody = GetMacroInfo(macroIndex)
+		if not macroBody or macroBody == "" then return end
+
+		local spellName = macroBody:match("/cast%s+(.+)")
+		local itemName = macroBody:match("/use%s+(.+)")
+
+		local cdStart, cdDur, cdEnable
+
+		if spellName then
+			local spellInfo = C_Spell.GetSpellInfo(spellName)
+			if spellInfo then
+				local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+				if cd and cd.isEnabled then
+					cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+				end
+			end
+		elseif itemName then
+			cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+		end
+
+		if cdEnable and cdDur and cdDur > 1 then
+			GameTooltip:AddLine(string.format("|cff00ffffCooldown remaining: %.0f sec|r",
+				math.max(0, (cdStart + cdDur) - GetTime())), 1, 1, 1)
+			GameTooltip:Show()
+		end
+	end)
+
+	-- ✅ Unified OnUpdate: Handles both item count + cooldown greyout
+	MagicButton:SetScript("OnUpdate", function(self)
 		local macroIndex = GetMacroIndexByName("RQE Macro")
 		if not macroIndex or macroIndex == 0 then
-			MagicButton.CountText:SetText("")
+			if self.CountText then self.CountText:SetText("") end
+			if self.CooldownUpdater then self.CooldownUpdater:Clear() end
+			self:SetAlpha(1)
 			return
 		end
 
 		local _, _, macroBody = GetMacroInfo(macroIndex)
 		if not macroBody or macroBody == "" then
-			MagicButton.CountText:SetText("")
+			if self.CountText then self.CountText:SetText("") end
+			if self.CooldownUpdater then self.CooldownUpdater:Clear() end
+			self:SetAlpha(1)
 			return
 		end
 
-		-- Extract item ID directly if available
+		----------------------------------------------------------
+		-- 🧩 ITEM COUNT HANDLER
+		----------------------------------------------------------
 		local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
-
-		-- If no item ID is found, extract the item name from `/use`
 		if not itemID then
 			local itemName = macroBody:match("/use%s+(.+)")
 			if itemName then
-				-- Resolve item name to item ID
 				itemID = C_Item.GetItemInfoInstant(itemName)
 			end
 		end
 
-		-- Continue with item count logic if itemID is resolved
 		if itemID then
 			local itemCount = C_Item.GetItemCount(itemID)
-			if not itemCount or itemCount < 1 then
-				MagicButton.CountText:SetText("") -- Hide count if less than 1
+			if itemCount and itemCount > 0 then
+				if itemCount > 999 then itemCount = 999 end
+				self.CountText:SetText(itemCount)
 			else
-				if itemCount > 999 then
-					itemCount = 999 -- Cap at 999
-				end
-				MagicButton.CountText:SetText(itemCount) -- Display count
+				self.CountText:SetText("")
 			end
 		else
-			MagicButton.CountText:SetText("") -- Clear the count if no valid item ID
+			self.CountText:SetText("")
+		end
+
+		----------------------------------------------------------
+		-- 🧩 COOLDOWN & GREYOUT HANDLER
+		----------------------------------------------------------
+		local spellName = macroBody:match("/cast%s+(.+)")
+		local itemName = macroBody:match("/use%s+(.+)")
+		local cdStart, cdDur, cdEnable
+
+		if spellName then
+			local spellInfo = C_Spell.GetSpellInfo(spellName)
+			if spellInfo then
+				local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+				if cd and cd.isEnabled then
+					cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+				end
+			end
+		elseif itemName then
+			cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+		end
+
+		if cdEnable and cdDur and cdDur > 1 then
+			self.CooldownUpdater:SetCooldown(cdStart, cdDur)
+			self:SetAlpha(0.5) -- grey out while on cooldown
+		else
+			self.CooldownUpdater:Clear()
+			self:SetAlpha(1)
 		end
 	end)
+
+	-- -- NEW: Periodically grey out icon if cooldown active
+	-- MagicButton:SetScript("OnUpdate", function(self)
+		-- local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- if not macroIndex or macroIndex == 0 then
+			-- self.CooldownUpdater:Clear()
+			-- return
+		-- end
+
+		-- local _, _, macroBody = GetMacroInfo(macroIndex)
+		-- if not macroBody or macroBody == "" then
+			-- self.CooldownUpdater:Clear()
+			-- return
+		-- end
+
+		-- local spellName = macroBody:match("/cast%s+(.+)")
+		-- local itemName = macroBody:match("/use%s+(.+)")
+		-- local cdStart, cdDur, cdEnable
+
+		-- if spellName then
+			-- local spellInfo = C_Spell.GetSpellInfo(spellName)
+			-- if spellInfo then
+				-- local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+				-- if cd and cd.isEnabled then
+					-- cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+				-- end
+			-- end
+		-- elseif itemName then
+			-- cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+		-- end
+
+		-- if cdEnable and cdDur and cdDur > 1 then
+			-- self.CooldownUpdater:SetCooldown(cdStart, cdDur)
+			-- self:SetAlpha(0.5) -- grey out while on cooldown
+		-- else
+			-- self.CooldownUpdater:Clear()
+			-- self:SetAlpha(1)
+		-- end
+	-- end)
 
 	MagicButton:SetScript("OnLeave", function()
 		GameTooltip:Hide()
