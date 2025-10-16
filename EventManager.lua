@@ -105,6 +105,7 @@ local eventsToRegister = {
 	"SCENARIO_COMPLETED",
 	"SCENARIO_CRITERIA_UPDATE",
 	"SCENARIO_UPDATE",
+	"SPELLS_CHANGED",
 	"START_TIMER",
 	"SUPER_TRACKING_CHANGED",	-- USE: SUPER_TRACKED_QUEST_CHANGED for classic projects
 	"TASK_PROGRESS_UPDATE",
@@ -235,6 +236,7 @@ local function HandleEvents(frame, event, ...)
 		SCENARIO_COMPLETED = RQE.handleScenarioComplete,
 		SCENARIO_CRITERIA_UPDATE = RQE.handleScenarioCriteriaUpdate,
 		SCENARIO_UPDATE = RQE.handleScenarioUpdate,
+		SPELLS_CHANGED = RQE.handleSpellsChanged,
 		START_TIMER = RQE.handleStartTimer,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
@@ -1789,6 +1791,19 @@ function RQE.saveScenarioData(self, event, ...)
 			end
 		end
 	end
+end
+
+
+-- Function to handle SPELLS_CHANGED event
+-- Fires when spells in the spellbook change in any way. Can be trivial (e.g.: icon changes only), or substantial (e.g.: learning or unlearning spells/skills). 
+function RQE.handleSpellsChanged()
+	RQE.CreateMacroForCheckAndSetFinalStep = true
+	RQE.isCheckingMacroContents = true
+	RQEMacro:CreateMacroForCurrentStep()
+	C_Timer.After(0.2, function()
+		RQE.CreateMacroForCheckAndSetFinalStep = false
+		RQE.isCheckingMacroContents = false
+	end)
 end
 
 
