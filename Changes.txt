@@ -12,7 +12,7 @@
 		- Added automatic support for quest steps that use Extra Action Buttons — including proper spell tooltips and class-appropriate icons.
 		- Fixed intermittent issues where macros would clear or fail to regenerate when selecting a quest from the Quest Log.
 		- Fixed issue where only the first spell tooltip on a single line would appear; multiple spells on the same line now all display correctly.
-		- Cooldowns will now appear in the RQE Magic/Macro button to the left of the quest helper [RQEFrame].
+		- Cooldowns will now appear, for items and spells, inside the RQE Magic/Macro button to the left of the quest helper [RQEFrame].
 
 	Core.lua
 		- New Conditional Functionality for Step Logic:
@@ -79,6 +79,7 @@
 		- Updated quest DB for more additions to the Legion expansion (2025.10.14.0209)
 		- Updates to the quest DB for Legion quests and also added macroArray for questID 42537 to display spell tooltip and ability to click extra action button (2025.10.14.0801)
 		- Added additional Legion quests to the DB for Remix (2025.10.14.0801)
+		- Updated quests for Legion Remix, including some order hall campaigns, and added some profession quests from Dragonflight to the DB (2025.10.16.2358)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.14.0142)
