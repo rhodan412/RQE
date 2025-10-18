@@ -1,4 +1,4 @@
-11.2.5.1
+11.2.5.1 (2025.10.18)
 
 	**HIGHLIGHTS**
 		- Added smart conditional checking system for quests — steps can now advance automatically based on location, quest state, or map ID.
@@ -80,6 +80,7 @@
 		- Updates to the quest DB for Legion quests and also added macroArray for questID 42537 to display spell tooltip and ability to click extra action button (2025.10.14.0801)
 		- Added additional Legion quests to the DB for Remix (2025.10.14.0801)
 		- Updated quests for Legion Remix, including some order hall campaigns, and added some profession quests from Dragonflight to the DB (2025.10.16.2358)
+		- Added some world quests and early player housing quests [preliminary] to DB (2025.10.18.1450)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.14.0142)
