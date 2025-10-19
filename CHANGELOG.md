@@ -1,3 +1,15 @@
+11.2.5.2
+
+	Core.lua
+		- Cleaned up some debug print (2025.10.19.1527)
+
+	RQE.toc
+		- Updated Interface# (2025.10.19.1527)
+
+	RQEDatabase.lua
+		- Added additional campaign and Legion remix quests to DB (2025.10.19.1527)
+
+
 11.2.5.1 (2025.10.18)
 
 	**HIGHLIGHTS**
@@ -27,19 +39,19 @@
 			• Improved grid-based coordinate change detection using sub-percent (tenths) granularity for smoother, lower-latency triggering of coordinate-based progressions. (2025.10.14.0142)
 		- New Conditional Functions:
 			• RQE.CheckMap(self, ...)
-				• Checks if the player’s current map matches any in a provided list of map IDs. (2025.10.14.0142)
-				• Supports multiple numeric arguments (e.g., RQE.CheckMap(1, 10, 199)), returning true if the player is in any of those maps. (2025.10.14.0142)
+				•• Checks if the player’s current map matches any in a provided list of map IDs. (2025.10.14.0142)
+				•• Supports multiple numeric arguments (e.g., RQE.CheckMap(1, 10, 199)), returning true if the player is in any of those maps. (2025.10.14.0142)
 			• RQE.CheckQuestState(self, questID, state)
-				• Evaluates if a specific quest is COMPLETED or INCOMPLETE based on its current state in C_QuestLog. (2025.10.14.0142)
-				• Used as a flexible step conditional within quest logic to manage branching progression. (2025.10.14.0142)
+				•• Evaluates if a specific quest is COMPLETED or INCOMPLETE based on its current state in C_QuestLog. (2025.10.14.0142)
+				•• Used as a flexible step conditional within quest logic to manage branching progression. (2025.10.14.0142)
 			• RQE.CheckCoordinateDistance(self, x, y, mapID, maxYards)
-				• Determines if the player is within a specified yard distance (maxYards) of a coordinate on a given map. (2025.10.14.0142)
-				• Automatically applies a +10 yard buffer to improve range detection accuracy, allowing database entries to specify the intended distance directly. (2025.10.14.0142)
-				• Utilizes HereBeDragons-2.0 for accurate yard-based distance computation and includes a fallback normalized distance approximation if unavailable. (2025.10.14.0142)
+				•• Determines if the player is within a specified yard distance (maxYards) of a coordinate on a given map. (2025.10.14.0142)
+				•• Automatically applies a +10 yard buffer to improve range detection accuracy, allowing database entries to specify the intended distance directly. (2025.10.14.0142)
+				•• Utilizes HereBeDragons-2.0 for accurate yard-based distance computation and includes a fallback normalized distance approximation if unavailable. (2025.10.14.0142)
 			• RQE:CheckCoordinateDistanceConditional()
-				• Dynamically scans the current step’s checks for coordinate-distance conditionals. (2025.10.14.0142)
-				• Automatically evaluates and advances the current quest step when the player moves within range of the specified coordinates. (2025.10.14.0142)
-				• Includes robust error handling and debug trace support for precise runtime monitoring. (2025.10.14.0142)
+				•• Dynamically scans the current step’s checks for coordinate-distance conditionals. (2025.10.14.0142)
+				•• Automatically evaluates and advances the current quest step when the player moves within range of the specified coordinates. (2025.10.14.0142)
+				•• Includes robust error handling and debug trace support for precise runtime monitoring. (2025.10.14.0142)
 		- Modified the RQE.RenderTextWithItems() function to also include functionality on spell tooltips, while retaining ability to see item tooltips, which diverts the function to call RQE.HandleSpellTag() function instead. (2025.10.14.0319)
 		- Removed fade on spell tooltip (2025.10.14.0801)
 		- Fixed nil error with xNorm, yNorm in the RQE:FindQuestZoneTransition() function (2025.10.14.0801)
@@ -55,8 +67,8 @@
 	EventManager.lua
 		- Added Coordinate-Distance Monitoring State Flags:
 			• Introduced two new global flags to coordinate movement and distance evaluation:
-				• RQE.isMonitoringCoordinateDistance – toggled true when the player begins moving (PLAYER_STARTED_MOVING) and false when movement stops (PLAYER_STOPPED_MOVING). (2025.10.14.0142)
-				• RQE.isCheckingCoordinateDistanceConditional – toggled by the step logic in Core.lua to control whether coordinate-distance checks should be performed. (2025.10.14.0142)
+				•• RQE.isMonitoringCoordinateDistance – toggled true when the player begins moving (PLAYER_STARTED_MOVING) and false when movement stops (PLAYER_STOPPED_MOVING). (2025.10.14.0142)
+				•• RQE.isCheckingCoordinateDistanceConditional – toggled by the step logic in Core.lua to control whether coordinate-distance checks should be performed. (2025.10.14.0142)
 			• Integrated initialization of these flags within the ADDON_LOADED event to ensure predictable startup behavior. (2025.10.14.0142)
 		- Updated Movement Event Handlers
 			• Updated RQE.handlePlayerStartedMoving() to initialize coordinate monitoring and reset last known grid data, activating coordinate-based distance tracking only when relevant. (2025.10.14.0142)
