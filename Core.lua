@@ -11613,7 +11613,9 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 	-- Get normalized x, y for the current map
 	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
 	if not pos then
-		print("Unable to get player position on mapID:", mapID)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player position on mapID:", mapID)
+		end
 		return
 	end
 
@@ -11640,7 +11642,9 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 	-- Convert coords to continent-normalized space
 	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
 	if not contPos then
-		print("Unable to get player position on continentID:", continentID)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player position on continentID:", continentID)
+		end
 		return
 	end
 
