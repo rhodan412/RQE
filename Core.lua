@@ -11492,7 +11492,9 @@ function RQE:EstimatePlayerSpeed(sampleTime)
 	local mapID = C_Map.GetBestMapForUnit("player")
 	local startPos = C_Map.GetPlayerMapPosition(mapID, "player")
 	if not startPos then
-		print(">> Unable to get player position.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Unable to get player position.")
+		end
 		return
 	end
 
@@ -11501,7 +11503,9 @@ function RQE:EstimatePlayerSpeed(sampleTime)
 	C_Timer.After(sampleTime, function()
 		local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
 		if not newPos then
-			print(">> Unable to get player position (after delay).")
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(">> Unable to get player position (after delay).")
+			end
 			return
 		end
 
