@@ -8,6 +8,7 @@
 
 	RQEDatabase.lua
 		- Added additional campaign and Legion remix quests to DB (2025.10.19.1527)
+		- Added many Highmountain leveling quests to DB (2025.10.20.0636)
 
 
 11.2.5.1 (2025.10.18)
