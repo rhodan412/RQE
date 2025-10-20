@@ -72,6 +72,10 @@ Mythic/Scenario Mode to automatically enable default Blizzard Tracker when trans
 <img width="681" height="586" alt="RQE with tooltips" src="https://github.com/user-attachments/assets/a5b135f6-5484-48a5-bfcb-802bb5b5dd3e" />
 <img width="421" height="676" alt="RQE spell tooltips in v11 2 5 1" src="https://github.com/user-attachments/assets/4f5e7996-a5bf-44a2-b99c-b338b8fe2f87" />
 
-** Cooldown timers in 11.2.5.1 **
+** Cooldown timers with 11.2.5.1 **
 
 ![RQE CD in Magic Button GIF 2](https://github.com/user-attachments/assets/7faca85a-6175-4422-b279-e5779c15f890)
+
+Click the Extra Action Button via the RQE Button
+
+<img width="684" height="300" alt="RQE Extra Action Button" src="https://github.com/user-attachments/assets/93a13e45-9a17-435f-b9c1-e578705f1638" />
