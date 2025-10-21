@@ -2,6 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Added conditionals to the quest checks to see if player has a particular spell known and also if a certain objective has been registered as completed
+		- Added conditionals for checking player faction, race and class in deciding if a stepIndex should be advanced to the next step.
 
 	Core.lua
 		- Cleaned up some debug print (2025.10.19.1527)
@@ -10,6 +11,13 @@
 				•• Checks if any of the listed spells in the conditional register as known for the player. (2025.10.20.2320)
 			• RQE.CheckObjectiveStatus(self, ...)
 				•• Checks if any of the listed objectiveIndexes in the conditional register as complete for the supertracked quest. (2025.10.20.2320)
+			• RQE.CheckPlayerFaction(self, ...)
+				•• Checks if any of the listed faction in the conditional register as the player's faction. (2025.10.21.0257)
+			• RQE.CheckPlayerRace(self, ...)
+				•• Checks if any of the listed races in the conditional register as the player's race. (2025.10.21.0257)
+			• RQE.CheckPlayerClass(self, ...)
+				•• Checks if any of the listed classes in the conditional register as the player's class. (2025.10.21.0257)
+		- Added new code to the functionMap of RQE:StartPeriodicChecks that is 'CheckDBConditionalsOnly' which does nothing but assesses the conditional (2025.10.21.0257)
 
 	EventManager.lua
 		- Added function call to RQE:StartPeriodicChecks() function within the SPELLS_CHANGED event function (2025.10.20.2320)
