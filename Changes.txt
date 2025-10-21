@@ -3,6 +3,7 @@
 	**HIGHLIGHTS**
 		- Added conditionals to the quest checks to see if player has a particular spell known and also if a certain objective has been registered as completed
 		- Added conditionals for checking player faction, race and class in deciding if a stepIndex should be advanced to the next step.
+		- Added inverse conditionals to check for not faction, not race and not class before deciding if it should advance to the next step.
 
 	Core.lua
 		- Cleaned up some debug print (2025.10.19.1527)
@@ -18,6 +19,7 @@
 			• RQE.CheckPlayerClass(self, ...)
 				•• Checks if any of the listed classes in the conditional register as the player's class. (2025.10.21.0257)
 		- Added new code to the functionMap of RQE:StartPeriodicChecks that is 'CheckDBConditionalsOnly' which does nothing but assesses the conditional (2025.10.21.0257)
+		- Added inverse conditionals to: RQE.CheckPlayerFaction(self, ...), RQE.CheckPlayerRace(self, ...) and RQE.CheckPlayerClass(self, ...) that are RQE.CheckNotPlayerFaction(self, ...), RQE.CheckNotPlayerRace(self, ...) and RQE.CheckNotPlayerClass(self, ...) to the listing (2025.10.21.0308)
 
 	EventManager.lua
 		- Added function call to RQE:StartPeriodicChecks() function within the SPELLS_CHANGED event function (2025.10.20.2320)
