@@ -1,7 +1,18 @@
 11.2.5.2
 
+	**HIGHLIGHTS**
+		- Added conditionals to the quest checks to see if player has a particular spell known and also if a certain objective has been registered as completed
+
 	Core.lua
 		- Cleaned up some debug print (2025.10.19.1527)
+		- New Conditional Functions:
+			• RQE.CheckKnownSpell(self, ...)
+				•• Checks if any of the listed spells in the conditional register as known for the player. (2025.10.20.2320)
+			• RQE.CheckObjectiveStatus(self, ...)
+				•• Checks if any of the listed objectiveIndexes in the conditional register as complete for the supertracked quest. (2025.10.20.2320)
+
+	EventManager.lua
+		- Added function call to RQE:StartPeriodicChecks() function within the SPELLS_CHANGED event function (2025.10.20.2320)
 
 	RQE.toc
 		- Updated Interface# (2025.10.19.1527)
@@ -9,6 +20,10 @@
 	RQEDatabase.lua
 		- Added additional campaign and Legion remix quests to DB (2025.10.19.1527)
 		- Added many Highmountain leveling quests to DB (2025.10.20.0636)
+		- Updated more quests in Legion Remix for the infinite research and some world quests (2025.10.20.2320)
+
+	RQEMacro.lua
+		- Added item:28912 to be used for 'Learn ability' in the tooltip of RQE Button (2025.10.20.2320)
 
 
 11.2.5.1 (2025.10.18)
