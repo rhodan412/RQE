@@ -364,6 +364,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		[28372] = true,
 		[28885] = true,
 		[30817] = true,
+		[28912] = true,
 		[615102] = true,
 		[118474] = true,
 		[153541] = true,
@@ -431,6 +432,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 28885 then
 					GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
+				elseif itemID == 28912 then
+					GameTooltip:SetText("Learn ability\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 118474 then
 					GameTooltip:SetText("Look/Follow/Escort/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 153541 then
