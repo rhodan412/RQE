@@ -6316,6 +6316,7 @@ function RQE:StartPeriodicChecks()
 		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
 		CheckScenarioStage = "CheckScenarioStage",
 		CheckScenarioCriteria = "CheckScenarioCriteria",
+		CheckDBConditionalsOnly = "CheckDBConditionalsOnly",
 		CheckDBComplete = "CheckDBComplete",
 	}
 
@@ -7003,6 +7004,195 @@ function RQE.CheckObjectiveStatus(self, ...)
 		print(string.format(
 			"RQE.CheckObjectiveStatus(): None of the objectives (%s) are complete for questID %d — conditional FALSE",
 			list, questID
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckPlayerFaction(...)
+Checks if the player's faction matches any of the provided names.
+Supports multiple faction names (OR logic).
+Example usage in DB:
+    cond = "RQE.CheckPlayerFaction('Horde', 'Neutral')"
+--------------------------------------------------------------
+]]
+function RQE.CheckPlayerFaction(self, ...)
+	local allowedFactions = { ... }
+
+	-- Retrieve the player's faction
+	local playerFaction, localizedFaction = UnitFactionGroup("player")
+	if not playerFaction then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckPlayerFaction(): Unable to determine player faction.")
+		end
+		return false
+	end
+
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Normalize case for comparisons
+	local playerFactionNormalized = string.lower(playerFaction)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckPlayerFaction(): Player faction detected: %s", playerFaction))
+	end
+
+	-- If no args passed, it's an invalid conditional
+	if not allowedFactions or #allowedFactions == 0 then
+		if debugEnabled then
+			print("RQE.CheckPlayerFaction(): No factions provided for comparison.")
+		end
+		return false
+	end
+
+	-- Iterate over allowed faction names (OR logic)
+	for _, factionName in ipairs(allowedFactions) do
+		local normalized = string.lower(tostring(factionName))
+		if normalized == playerFactionNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckPlayerFaction(): Matched faction '%s' — conditional TRUE", factionName))
+			end
+			return true
+		elseif normalized == "neutral" then
+			-- Neutral is a special case — playerFactionGroup() returns nil for Pandaren before choosing
+			local isNeutral = (playerFaction == "Neutral" or playerFaction == "Pandaren")
+			if isNeutral then
+				if debugEnabled then
+					print("RQE.CheckPlayerFaction(): Player is Neutral — conditional TRUE")
+				end
+				return true
+			end
+		end
+	end
+
+	-- ❌ No matches
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckPlayerFaction(): Player faction '%s' did not match any of the allowed factions: %s — conditional FALSE",
+			playerFaction,
+			table.concat(allowedFactions, ", ")
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckPlayerRace(...)
+Checks if the player's race matches any provided names.
+Supports multiple race names (OR logic).
+Example:
+    cond = "RQE.CheckPlayerRace('Human', 'Orc', 'Dwarf')"
+--------------------------------------------------------------
+]]
+function RQE.CheckPlayerRace(self, ...)
+	local allowedRaces = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Retrieve player's race
+	local playerRace, localizedRace = UnitRace("player")
+	if not playerRace then
+		if debugEnabled then
+			print("RQE.CheckPlayerRace(): Unable to determine player race.")
+		end
+		return false
+	end
+
+	local playerRaceNormalized = string.lower(playerRace)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckPlayerRace(): Player race detected: %s", playerRace))
+	end
+
+	-- Handle missing args
+	if not allowedRaces or #allowedRaces == 0 then
+		if debugEnabled then
+			print("RQE.CheckPlayerRace(): No races provided for comparison.")
+		end
+		return false
+	end
+
+	-- Compare with OR logic
+	for _, raceName in ipairs(allowedRaces) do
+		local normalized = string.lower(tostring(raceName))
+		if normalized == playerRaceNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckPlayerRace(): Matched race '%s' — conditional TRUE", raceName))
+			end
+			return true
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckPlayerRace(): Player race '%s' did not match any allowed races: %s — conditional FALSE",
+			playerRace,
+			table.concat(allowedRaces, ", ")
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckPlayerClass(...)
+Checks if the player's class matches any provided names.
+Supports multiple class names (OR logic).
+Example:
+    cond = "RQE.CheckPlayerClass('Evoker', 'Warrior')"
+--------------------------------------------------------------
+]]
+function RQE.CheckPlayerClass(self, ...)
+	local allowedClasses = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Retrieve player's class
+	local playerClass, localizedClass = UnitClass("player")
+	if not playerClass then
+		if debugEnabled then
+			print("RQE.CheckPlayerClass(): Unable to determine player class.")
+		end
+		return false
+	end
+
+	local playerClassNormalized = string.lower(playerClass)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckPlayerClass(): Player class detected: %s", playerClass))
+	end
+
+	-- Handle missing args
+	if not allowedClasses or #allowedClasses == 0 then
+		if debugEnabled then
+			print("RQE.CheckPlayerClass(): No classes provided for comparison.")
+		end
+		return false
+	end
+
+	-- Compare with OR logic
+	for _, className in ipairs(allowedClasses) do
+		local normalized = string.lower(tostring(className))
+		if normalized == playerClassNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckPlayerClass(): Matched class '%s' — conditional TRUE", className))
+			end
+			return true
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckPlayerClass(): Player class '%s' did not match any allowed classes: %s — conditional FALSE",
+			playerClass,
+			table.concat(allowedClasses, ", ")
 		))
 	end
 
@@ -8258,6 +8448,111 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("No conditions met for questID:", questID, "stepIndex:", stepIndex)
 	end
+	return false
+end
+
+
+--[[ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RQE:CheckDBConditionalsOnly()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Used for steps that only contain 'cond' logic within their checks.
+Example DB usage:
+	funct = "CheckDBConditionalsOnly",
+	checks = {
+		{ cond = "RQE.CheckKnownSpell(1251045)" },
+	}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]
+function RQE:CheckDBConditionalsOnly(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBConditionalsOnly() ~~")
+	end
+
+	-- Validate basic inputs
+	if not questID or not stepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE:CheckDBConditionalsOnly(): Missing questID or stepIndex.")
+		end
+		return false
+	end
+
+	-- Retrieve quest and step data
+	local questData = self.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE:CheckDBConditionalsOnly(): No quest data for questID:", questID)
+		end
+		return false
+	end
+
+	local stepData = questData[stepIndex]
+	if not stepData or not stepData.checks then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE:CheckDBConditionalsOnly(): No checks for stepIndex:", stepIndex)
+		end
+		return false
+	end
+
+	-- Loop through all checks for this step
+	for j, checkData in ipairs(stepData.checks) do
+		if checkData.cond and type(checkData.cond) == "string" then
+			local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+
+			if funcName and RQE[funcName] then
+				-- Extract arguments from parentheses (numbers and strings)
+				local args = {}
+				for param in string.gmatch(rawParams or "", "[^,%s]+") do
+					local num = tonumber(param)
+					if num then
+						table.insert(args, num)
+					else
+						param = param:gsub("^['\"]", ""):gsub("['\"]$", "")
+						table.insert(args, param)
+					end
+				end
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format(
+						"RQE:CheckDBConditionalsOnly(): Evaluating cond '%s' -> Function: %s | Args: %s",
+						checkData.cond,
+						funcName,
+						table.concat(args, ", ")
+					))
+				end
+
+				-- Run the conditional safely
+				local ok, result = pcall(RQE[funcName], RQE, unpack(args))
+				if not ok then
+					print(string.format("RQE: Error running conditional '%s': %s", checkData.cond, result))
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format("RQE: Conditional '%s' returned: %s", checkData.cond, tostring(result)))
+					end
+					if result then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("RQE: Conditional passed — advancing to next step.")
+						end
+						self:ClickWaypointButtonForIndex(stepIndex + 1)
+						return true
+					end
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Unknown or missing conditional function for cond:", checkData.cond)
+				end
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE:CheckDBConditionalsOnly(): Skipping non-conditional entry for check index:", j)
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("RQE:CheckDBConditionalsOnly(): No conditionals passed — staying on current step.")
+	end
+
 	return false
 end
 
