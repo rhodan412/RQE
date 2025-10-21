@@ -7017,7 +7017,7 @@ RQE.CheckPlayerFaction(...)
 Checks if the player's faction matches any of the provided names.
 Supports multiple faction names (OR logic).
 Example usage in DB:
-    cond = "RQE.CheckPlayerFaction('Horde', 'Neutral')"
+	cond = "RQE.CheckPlayerFaction('Horde', 'Neutral')"
 --------------------------------------------------------------
 ]]
 function RQE.CheckPlayerFaction(self, ...)
@@ -7088,7 +7088,7 @@ RQE.CheckPlayerRace(...)
 Checks if the player's race matches any provided names.
 Supports multiple race names (OR logic).
 Example:
-    cond = "RQE.CheckPlayerRace('Human', 'Orc', 'Dwarf')"
+	cond = "RQE.CheckPlayerRace('Human', 'Orc', 'Dwarf')"
 --------------------------------------------------------------
 ]]
 function RQE.CheckPlayerRace(self, ...)
@@ -7147,7 +7147,7 @@ RQE.CheckPlayerClass(...)
 Checks if the player's class matches any provided names.
 Supports multiple class names (OR logic).
 Example:
-    cond = "RQE.CheckPlayerClass('Evoker', 'Warrior')"
+	cond = "RQE.CheckPlayerClass('Evoker', 'Warrior')"
 --------------------------------------------------------------
 ]]
 function RQE.CheckPlayerClass(self, ...)
@@ -7197,6 +7197,180 @@ function RQE.CheckPlayerClass(self, ...)
 	end
 
 	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckNotPlayerFaction(...)
+Checks if the player's faction does NOT match any provided names.
+Supports multiple faction names (OR logic for exclusion).
+Example:
+	cond = "RQE.CheckNotPlayerFaction('Alliance', 'Neutral')"
+--------------------------------------------------------------
+]]
+function RQE.CheckNotPlayerFaction(self, ...)
+	local blockedFactions = { ... }
+	local playerFaction, localizedFaction = UnitFactionGroup("player")
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	if not playerFaction then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerFaction(): Unable to determine player faction.")
+		end
+		return false
+	end
+
+	local playerFactionNormalized = string.lower(playerFaction)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckNotPlayerFaction(): Player faction detected: %s", playerFaction))
+	end
+
+	if not blockedFactions or #blockedFactions == 0 then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerFaction(): No factions provided for exclusion check.")
+		end
+		return false
+	end
+
+	for _, factionName in ipairs(blockedFactions) do
+		local normalized = string.lower(tostring(factionName))
+		if normalized == playerFactionNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckNotPlayerFaction(): Player IS faction '%s' — conditional FALSE", factionName))
+			end
+			return false
+		elseif normalized == "neutral" then
+			local isNeutral = (playerFaction == "Neutral" or playerFaction == "Pandaren")
+			if isNeutral then
+				if debugEnabled then
+					print("RQE.CheckNotPlayerFaction(): Player is Neutral — conditional FALSE")
+				end
+				return false
+			end
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckNotPlayerFaction(): Player faction '%s' did not match any blocked factions (%s) — conditional TRUE",
+			playerFaction,
+			table.concat(blockedFactions, ", ")
+		))
+	end
+
+	return true
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckNotPlayerRace(...)
+Checks if the player's race does NOT match any provided names.
+Example:
+	cond = "RQE.CheckNotPlayerRace('Human', 'Orc')"
+--------------------------------------------------------------
+]]
+function RQE.CheckNotPlayerRace(self, ...)
+	local blockedRaces = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	local playerRace, localizedRace = UnitRace("player")
+	if not playerRace then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerRace(): Unable to determine player race.")
+		end
+		return false
+	end
+
+	local playerRaceNormalized = string.lower(playerRace)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckNotPlayerRace(): Player race detected: %s", playerRace))
+	end
+
+	if not blockedRaces or #blockedRaces == 0 then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerRace(): No races provided for exclusion check.")
+		end
+		return false
+	end
+
+	for _, raceName in ipairs(blockedRaces) do
+		local normalized = string.lower(tostring(raceName))
+		if normalized == playerRaceNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckNotPlayerRace(): Player IS race '%s' — conditional FALSE", raceName))
+			end
+			return false
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckNotPlayerRace(): Player race '%s' did not match any blocked races (%s) — conditional TRUE",
+			playerRace,
+			table.concat(blockedRaces, ", ")
+		))
+	end
+
+	return true
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckNotPlayerClass(...)
+Checks if the player's class does NOT match any provided names.
+Example:
+	cond = "RQE.CheckNotPlayerClass('Warrior', 'Evoker')"
+--------------------------------------------------------------
+]]
+function RQE.CheckNotPlayerClass(self, ...)
+	local blockedClasses = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	local playerClass, localizedClass = UnitClass("player")
+	if not playerClass then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerClass(): Unable to determine player class.")
+		end
+		return false
+	end
+
+	local playerClassNormalized = string.lower(playerClass)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckNotPlayerClass(): Player class detected: %s", playerClass))
+	end
+
+	if not blockedClasses or #blockedClasses == 0 then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerClass(): No classes provided for exclusion check.")
+		end
+		return false
+	end
+
+	for _, className in ipairs(blockedClasses) do
+		local normalized = string.lower(tostring(className))
+		if normalized == playerClassNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckNotPlayerClass(): Player IS class '%s' — conditional FALSE", className))
+			end
+			return false
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckNotPlayerClass(): Player class '%s' did not match any blocked classes (%s) — conditional TRUE",
+			playerClass,
+			table.concat(blockedClasses, ", ")
+		))
+	end
+
+	return true
 end
 
 
