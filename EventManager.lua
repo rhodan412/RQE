@@ -1797,6 +1797,8 @@ end
 -- Function to handle SPELLS_CHANGED event
 -- Fires when spells in the spellbook change in any way. Can be trivial (e.g.: icon changes only), or substantial (e.g.: learning or unlearning spells/skills). 
 function RQE.handleSpellsChanged()
+	RQE:StartPeriodicChecks()
+
 	RQE.CreateMacroForCheckAndSetFinalStep = true
 	RQE.isCheckingMacroContents = true
 	RQEMacro:CreateMacroForCurrentStep()
