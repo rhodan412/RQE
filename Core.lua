@@ -4634,7 +4634,6 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	local displayText = rawText
 	displayText = displayText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 	displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
-	-- local displayText = rawText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 
 	parentFrame:SetText(displayText)
 
@@ -4729,29 +4728,7 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						)
 						if hover then table.insert(parentFrame._rqeSegments, hover) end
 					end
-
-				-- if tagType == "spell" then
-					-- local hover = RQE.HandleSpellTag(parentFrame, tagID, tagName, cursorX, yOffset, baseParent, lineHeight)
-					-- if hover then
-						-- table.insert(parentFrame._rqeSegments, hover)
-					-- end
-
 				else
-
-			-- while true do
-				-- local startTag, endTag, itemID, itemName = rawLine:find("{item:(%d+):([^}]+)}", patternPos)
-				-- if not startTag then break end
-				-- itemID = tonumber(itemID)
-
-				-- if itemID and itemName then
-					-- local beforeText = rawLine:sub(1, startTag - 1)
-					-- beforeText = beforeText
-						-- :gsub("{item:%d+:[^}]+}", function(full)
-							-- local _, _, _, nm = full:find("{item:(%d+):([^}]+)}")
-							-- return "[" .. (nm or "?") .. "]"
-						-- end)
-						-- :gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
-
 					-- ✨ Regular item handling
 					measureFS:SetText("[" .. tagName .. "]")  -- FIXED: use tagName, not itemName
 					local tagWidth = measureFS:GetStringWidth()
@@ -4819,93 +4796,6 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						end)
 						hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
 						table.insert(parentFrame._rqeSegments, hover)
-
-					-- measureFS:SetText(beforeText)
-					-- local cursorX = measureFS:GetStringWidth()
-
-					-- measureFS:SetText("[" .. itemName .. "]")
-					-- local tagWidth = measureFS:GetStringWidth()
-					-- local maxWidth = parentFrame:GetWidth() or 400
-
-					-- -- Wrapping fix: split hover across lines if it exceeds width
-					-- if (cursorX + tagWidth) > maxWidth then
-						-- local overflow = (cursorX + tagWidth) - maxWidth
-						-- local firstWidth = tagWidth - overflow
-
-						-- -- Part 1: end of current line
-						-- local hover1 = CreateFrame("Button", nil, baseParent)
-						-- hover1:EnableMouse(true)
-						-- hover1:EnableMouseWheel(false)
-						-- hover1:SetPropagateMouseClicks(false)
-						-- hover1:SetPropagateMouseMotion(false)
-
-						-- hover1:SetFrameStrata("TOOLTIP")
-						-- hover1:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-						-- hover1:SetAlpha(0.01)
-						-- hover1:SetSize(firstWidth, lineHeight)
-						-- hover1:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
-						-- hover1:SetScript("OnEnter", function()
-							-- GameTooltip:SetOwner(hover1, "ANCHOR_CURSOR_RIGHT")
-							-- GameTooltip:SetItemByID(itemID)
-							-- local count = GetItemCount(itemID) or 0
-							-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-							-- GameTooltip:Show()
-						-- end)
-						-- hover1:SetScript("OnLeave", function() GameTooltip:Hide() end)
-						-- table.insert(parentFrame._rqeSegments, hover1)
-
-						-- -- Part 2: start of next wrapped line
-						-- local hover2 = CreateFrame("Button", nil, baseParent)
-						-- hover2:EnableMouse(true)
-						-- hover2:EnableMouseWheel(false)
-						-- hover2:SetPropagateMouseClicks(false)
-						-- hover2:SetPropagateMouseMotion(false)
-
-						-- hover2:SetFrameStrata("TOOLTIP")
-						-- hover2:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-						-- hover2:SetAlpha(0.01)
-						-- hover2:SetSize(overflow, lineHeight)
-						-- hover2:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -(yOffset + lineHeight))
-						-- hover2:SetScript("OnEnter", hover1:GetScript("OnEnter"))
-						-- hover2:SetScript("OnLeave", hover1:GetScript("OnLeave"))
-						-- table.insert(parentFrame._rqeSegments, hover2)
-					-- else
-						-- -- Fits entirely on one line
-						-- local hover = CreateFrame("Button", nil, baseParent)
-						-- hover:EnableMouse(true)
-						-- hover:EnableMouseWheel(false)
-						-- hover:SetPropagateMouseClicks(false)
-						-- hover:SetPropagateMouseMotion(false)
-
-						-- hover:SetFrameStrata("TOOLTIP")
-						-- hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-						-- hover:SetAlpha(0.01)
-						-- hover:SetSize(tagWidth + 6, lineHeight)
-						-- local yAdj = yOffset
-
-						-- -- Use parent chain to identify which frame owns this text (even if nested)
-						-- local parentName = GetTopParentName(parentFrame) or ""
-						-- if parentName:find("RQE_SeparateContentFrame", 1, true) then
-							-- -- Adaptive vertical correction: deeper lines in larger frames get a bit more offset
-							-- local extraAdjust = 0
-							-- if yOffset > lineHeight * 2 then
-								-- extraAdjust = (yOffset / lineHeight) * 0.08  -- small multiplier grows with depth
-							-- end
-
-							-- -- Separate frame correction (moves tooltip hover slightly down)
-							-- yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))	-- smaller offset of x in the (x + extraAdjust) means move everything higher vertically
-						-- end
-
-						-- hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yAdj)
-						-- hover:SetScript("OnEnter", function()
-							-- GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
-							-- GameTooltip:SetItemByID(itemID)
-							-- local count = C_Item.GetItemCount(itemID) or 0
-							-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-							-- GameTooltip:Show()
-						-- end)
-						-- hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-						-- table.insert(parentFrame._rqeSegments, hover)
 					end
 				end
 
@@ -6960,6 +6850,163 @@ function RQE:CheckCoordinateDistanceConditional()
 			end
 		end
 	end
+end
+
+
+-- Check if the player knows one or more spells (OR logic)
+-- Usage examples:
+--   cond = "RQE.CheckKnownSpell(12345)"
+--   cond = "RQE.CheckKnownSpell(12345, 67890, 13579)"
+function RQE.CheckKnownSpell(self, ...)
+	local spellIDs = { ... }
+
+	-- Validate arguments
+	if not spellIDs or #spellIDs == 0 then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckKnownSpell(): No spellIDs provided.")
+		end
+		return false
+	end
+
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Iterate through all spellIDs provided
+	for _, spellID in ipairs(spellIDs) do
+		local numericID = tonumber(spellID)
+		if numericID then
+			local isKnown = IsSpellKnown(numericID)
+			if debugEnabled then
+				print(string.format("RQE.CheckKnownSpell(): Checking spellID %d -> %s", numericID, tostring(isKnown)))
+			end
+
+			-- ✅ If the player knows *any* of the spells, return true immediately
+			if isKnown then
+				if debugEnabled then
+					print(string.format("RQE.CheckKnownSpell(): Player knows spellID %d — conditional TRUE", numericID))
+				end
+				return true
+			end
+		else
+			if debugEnabled then
+				print(string.format("RQE.CheckKnownSpell(): Invalid spellID argument: %s", tostring(spellID)))
+			end
+		end
+	end
+
+	-- ❌ If none of the spells are known
+	if debugEnabled then
+		local idList = table.concat(spellIDs, ", ")
+		print(string.format("RQE.CheckKnownSpell(): None of the provided spellIDs are known (%s) — conditional FALSE", idList))
+	end
+
+	return false
+end
+
+-- -- Check if the player knows a given spellID
+-- -- Usage: cond = "RQE.CheckKnownSpell(23922)"
+-- function RQE.CheckKnownSpell(self, spellID)
+	-- -- Validate input
+	-- if not spellID or type(spellID) ~= "number" then
+		-- if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			-- print("RQE.CheckKnownSpell(): Invalid or missing spellID")
+		-- end
+		-- return false
+	-- end
+
+	-- -- Use the Blizzard API to check if the player knows the spell
+	-- local isKnown = IsSpellKnown(spellID)
+
+	-- if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+		-- if isKnown then
+			-- print(string.format("RQE.CheckKnownSpell(): Player knows spellID %d — conditional TRUE", spellID))
+		-- else
+			-- print(string.format("RQE.CheckKnownSpell(): Player does NOT know spellID %d — conditional FALSE", spellID))
+		-- end
+	-- end
+
+	-- return isKnown
+-- end
+
+
+-- Check if one or more objectives of the currently super-tracked quest are complete (OR logic)
+-- Usage examples:
+--   cond = "RQE.CheckObjectiveStatus(1)"
+--   cond = "RQE.CheckObjectiveStatus(1, 2, 3)"
+function RQE.CheckObjectiveStatus(self, ...)
+	local objectiveIndexes = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO")
+
+	-- Get the currently super-tracked questID
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		if debugEnabled then
+			print("RQE.CheckObjectiveStatus(): No super-tracked quest found.")
+		end
+		return false
+	end
+
+	-- Get the objectives for that quest
+	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	if not objectives or #objectives == 0 then
+		if debugEnabled then
+			print(string.format("RQE.CheckObjectiveStatus(): No objectives found for questID %d.", questID))
+		end
+		return false
+	end
+
+	if not objectiveIndexes or #objectiveIndexes == 0 then
+		if debugEnabled then
+			print("RQE.CheckObjectiveStatus(): No objective indexes provided.")
+		end
+		return false
+	end
+
+	-- Check if *any* of the provided objective indexes are complete
+	for _, objIndex in ipairs(objectiveIndexes) do
+		local idx = tonumber(objIndex)
+		local objInfo = objectives[idx]
+
+		if objInfo then
+			local isComplete = objInfo.finished or false
+			if debugEnabled then
+				print(string.format(
+					"RQE.CheckObjectiveStatus(): Objective #%d (%s) -> %s",
+					idx,
+					objInfo.text or "No description",
+					tostring(isComplete)
+				))
+			end
+
+			if isComplete then
+				if debugEnabled then
+					print(string.format(
+						"RQE.CheckObjectiveStatus(): Objective #%d is complete — conditional TRUE",
+						idx
+					))
+				end
+				return true
+			end
+		else
+			if debugEnabled then
+				print(string.format(
+					"RQE.CheckObjectiveStatus(): Invalid objective index %s for quest %d",
+					tostring(objIndex),
+					questID
+				))
+			end
+		end
+	end
+
+	-- ❌ None of the objectives were complete
+	if debugEnabled then
+		local list = table.concat(objectiveIndexes, ", ")
+		print(string.format(
+			"RQE.CheckObjectiveStatus(): None of the objectives (%s) are complete for questID %d — conditional FALSE",
+			list, questID
+		))
+	end
+
+	return false
 end
 
 
