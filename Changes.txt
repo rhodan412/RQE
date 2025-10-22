@@ -30,7 +30,7 @@
 	RQEDatabase.lua
 		- Added additional campaign and Legion remix quests to DB (2025.10.19.1527)
 		- Added many Highmountain leveling quests to DB (2025.10.20.0636)
-		- Updated more quests in Legion Remix for the infinite research and some world quests (2025.10.20.2320)
+		- Updated more quests in Legion Remix for the infinite research and some world quests (2025.10.22.0036)
 
 	RQEMacro.lua
 		- Added item:28912 to be used for 'Learn ability' in the tooltip of RQE Button (2025.10.20.2320)
