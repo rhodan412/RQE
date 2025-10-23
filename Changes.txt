@@ -4,6 +4,7 @@
 		- Added conditionals to the quest checks to see if player has a particular spell known and also if a certain objective has been registered as completed
 		- Added conditionals for checking player faction, race and class in deciding if a stepIndex should be advanced to the next step.
 		- Added inverse conditionals to check for not faction, not race and not class before deciding if it should advance to the next step.
+		- RQE Button will now update the macro and display when inside a raid or dungeon group but only if the player manually presses the button to supertrack a quest
 
 	Core.lua
 		- Cleaned up some debug print (2025.10.19.1527)
@@ -20,9 +21,11 @@
 				•• Checks if any of the listed classes in the conditional register as the player's class. (2025.10.21.0257)
 		- Added new code to the functionMap of RQE:StartPeriodicChecks that is 'CheckDBConditionalsOnly' which does nothing but assesses the conditional (2025.10.21.0257)
 		- Added inverse conditionals to: RQE.CheckPlayerFaction(self, ...), RQE.CheckPlayerRace(self, ...) and RQE.CheckPlayerClass(self, ...) that are RQE.CheckNotPlayerFaction(self, ...), RQE.CheckNotPlayerRace(self, ...) and RQE.CheckNotPlayerClass(self, ...) to the listing (2025.10.21.0308)
+		- Updated RQEMacro:CreateMacroForCurrentStep() to work inside raid and dungeon groups, but will only update the macro if the player presses the button to supertrack the quest (2025.10.23.0249)
 
 	EventManager.lua
 		- Added function call to RQE:StartPeriodicChecks() function within the SPELLS_CHANGED event function (2025.10.20.2320)
+		- Added flag to SUPER_TRACKING_CHANGED for the updating of the RQE (macro) button when supertracking a quest as the RQEQuestFrame is not visible (2025.10.23.0249)
 
 	RQE.toc
 		- Updated Interface# (2025.10.19.1527)
@@ -31,6 +34,7 @@
 		- Added additional campaign and Legion remix quests to DB (2025.10.19.1527)
 		- Added many Highmountain leveling quests to DB (2025.10.20.0636)
 		- Updated more quests in Legion Remix for the infinite research and some world quests (2025.10.22.0036)
+		- Added additional order hall campaign quests to the DB [particularly demon hunter, death knight and druid, but more to go for these classes] (2025.10.23.0249)
 
 	RQEMacro.lua
 		- Added item:28912 to be used for 'Learn ability' in the tooltip of RQE Button (2025.10.20.2320)
