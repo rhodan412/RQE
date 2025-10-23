@@ -2,6 +2,10 @@ Rhodan's Quest Explorer (RQE)
 =============================
 Unlock your full questing potential in World of Warcraft with Rhodan’s Quest Explorer (RQE), your ultimate guide to navigating Azeroth’s challenges more efficiently. RQE not only guides you step-by-step through each quest, but also integrates seamlessly with your game to enhance every part of the questing experience.
 
+**What does RQE do? Check out the video to learn more:**
+
+[![What does RQE add-on do?](https://img.youtube.com/vi/JKvJi32zfag/0.jpg)](https://www.youtube.com/watch?v=JKvJi32zfag "RQE addon")
+
 **Key Features:**
 Detailed Quest Insights: Provides in-depth details for each quest, including objectives, locations, and step-by-step navigation, ensuring you never miss a beat.
 Interactive Map Points: Automatically sets waypoints to your next objective, complete with coordinates and customized navigation options.
