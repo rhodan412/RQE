@@ -1,4 +1,4 @@
-11.2.5.2
+11.2.5.2 (2025.10.23)
 
 	**HIGHLIGHTS**
 		- Added conditionals to the quest checks to see if player has a particular spell known and also if a certain objective has been registered as completed
@@ -35,6 +35,7 @@
 		- Added many Highmountain leveling quests to DB (2025.10.20.0636)
 		- Updated more quests in Legion Remix for the infinite research and some world quests (2025.10.22.0036)
 		- Added additional order hall campaign quests to the DB [particularly demon hunter, death knight and druid, but more to go for these classes] (2025.10.23.0249)
+		- Added some campaign quests for Hunter order hall to the quest DB (2025.10.23.1822)
 
 	RQEMacro.lua
 		- Added item:28912 to be used for 'Learn ability' in the tooltip of RQE Button (2025.10.20.2320)
