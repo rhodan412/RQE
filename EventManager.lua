@@ -1458,6 +1458,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.NearestFlightMasterSet = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
+	RQE.QuestTrackerHiddenSuperTrackedPressed = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.QuestWatchUpdateFired = false
 	RQE.ReClickQuestLogIndexButtonAfterCombat = false
@@ -2906,7 +2907,11 @@ function RQE.handleSuperTracking()
 		end
 
 		if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+		RQE.QuestTrackerHiddenSuperTrackedPressed = true
 		RQE:StartPeriodicChecks()
+		C_Timer.After(0.15, function()
+			RQE.QuestTrackerHiddenSuperTrackedPressed = false
+		end)
 		return
 	end
 
