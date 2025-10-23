@@ -6196,13 +6196,16 @@ function RQEMacro:CreateMacroForCurrentStep()
 
 	if not RQE.NewZoneChange then
 		-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
-		if isInInstance and (instanceType == "raid") then
-		-- if isInInstance and (instanceType == "party" or instanceType == "raid") then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
+		if RQE.QuestTrackerHiddenSuperTrackedPressed then
+		-- if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
+			if isInInstance and (instanceType == "raid") then
+			-- if isInInstance and (instanceType == "party" or instanceType == "raid") then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
+				end
+				RQE.isCheckingMacroContents = false
+				return
 			end
-			RQE.isCheckingMacroContents = false
-			return
 		end
 	end
 
