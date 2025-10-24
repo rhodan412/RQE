@@ -1,3 +1,12 @@
+11.2.5.3
+
+	RQE.toc
+		- Updated Interface# (2025.10.24.0030)
+
+	RQEDatabase.lua
+		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
+
+
 11.2.5.2 (2025.10.23)
 
 	**HIGHLIGHTS**
@@ -5,6 +14,7 @@
 		- Added conditionals for checking player faction, race and class in deciding if a stepIndex should be advanced to the next step.
 		- Added inverse conditionals to check for not faction, not race and not class before deciding if it should advance to the next step.
 		- RQE Button will now update the macro and display when inside a raid or dungeon group but only if the player manually presses the button to supertrack a quest
+		- Added many order hall campaign quests to the DB
 
 	Core.lua
 		- Cleaned up some debug print (2025.10.19.1527)
