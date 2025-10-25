@@ -1249,6 +1249,12 @@ function ShowQuestDropdown(self, questID)
 			rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
 		end
 
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+		end
+
 		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 		rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
 		rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
@@ -1266,13 +1272,13 @@ function ShowQuestDropdown(self, questID)
 
 		-- Only show RQE buttons if the RQE_Contribution addon is loaded
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-			rootDescription:CreateButton("|cff888888-----------------------------------|r", function() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
 			rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
 			rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
-			rootDescription:CreateButton("|cff888888-----------------------------------|r", function() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 		else
-			rootDescription:CreateButton("|cff888888--------------------|r", function() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 		end
 
 		rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
