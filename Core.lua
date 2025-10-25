@@ -12252,7 +12252,9 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				print("				},")
 				PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
 			else
-				print("Turn in step for the quest " .. trackedQuestID .. " already uses a coordinateHotspots array")
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Turn in step for the quest " .. trackedQuestID .. " already uses a coordinateHotspots array")
+				end
 			end
 
 		else
