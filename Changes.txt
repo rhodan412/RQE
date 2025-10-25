@@ -1,5 +1,8 @@
 11.2.5.3
 
+	**HIGHLIGHTS**
+		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory
+
 	Core.lua
 		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
 
@@ -8,6 +11,7 @@
 
 	RQEDatabase.lua
 		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
+		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory (2025.10.25.0026)
 		- Added early order hall campaign quests for mage (2025.10.25.0026)
 
 	WaypointManager.lua
