@@ -6422,46 +6422,6 @@ function RQE:StartPeriodicChecks()
 			for j, checkData in ipairs(stepData.checks) do
 				-- ✅ NEW CONDITIONAL LOGIC
 				if checkData.cond and type(checkData.cond) == "string" then
-					-- Example: "RQE.CheckMap(84)"
-					-- local funcName, param = checkData.cond:match("RQE%.([%w_]+)%((%d+)%)")
-					-- if funcName and RQE[funcName] then
-						-- local conditionResult = RQE[funcName](RQE, tonumber(param))
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("Conditional check", checkData.cond, "returned:", conditionResult)
-						-- end
-
-						-- if conditionResult then
-							-- -- ✅ If condition true, skip rest of this step and advance immediately
-							-- conditionalTriggered = true
-							-- break
-						-- end
-					-- end
-
-					-- -- Supports multiple numeric arguments, e.g. RQE.CheckMap(10, 1, 199)
-					-- local funcName, params = checkData.cond:match("RQE%.([%w_]+)%(([%d,%s]+)%)")
-					-- if funcName and RQE[funcName] then
-						-- local args = {}
-						-- for num in string.gmatch(params or "", "%d+") do
-							-- table.insert(args, tonumber(num))
-						-- end
-
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("Conditional detected:", checkData.cond, "| Function:", funcName, "| Args:", table.concat(args, ", "))
-						-- end
-
-						-- local conditionResult = RQE[funcName](RQE, unpack(args))
-
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("Conditional check result:", tostring(conditionResult))
-						-- end
-
-						-- if conditionResult then
-							-- -- ✅ If condition true, skip rest of this step and advance immediately
-							-- conditionalTriggered = true
-							-- break
-						-- end
-					-- end
-
 					-- Match something like RQE.FunctionName(any, number, "string")
 					--[[
 						cond = "RQE.CheckBuff('Blessing of Kings', 'Arcane Intellect')"
@@ -11529,6 +11489,22 @@ function RQE.SelectMultipleGossipOptions(npcName, ...)
 	-- Ensure gossip automation is enabled
 	if not RQE.db.profile.enableGossipModeAutomation then return end
 
+	-- If no npcName is provided, default to current target's name
+	if not npcName or npcName == "" then
+		local targetName = UnitName("target")
+		if targetName then
+			npcName = targetName
+			if RQE.db.profile.debugLevel == "INFO" then
+				print(string.format("RQE.SelectMultipleGossipOptions(): Using current target '%s' as npcName.", npcName))
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE.SelectMultipleGossipOptions(): No npcName provided and no target selected — aborting.")
+			end
+			return
+		end
+	end
+
 	-- Reset previous queue
 	selectedGossipOption.npcName = npcName
 	selectedGossipOption.optionIndexes = { ... }
@@ -12333,4 +12309,130 @@ function RQE.DebugQuestInfo(self, questID)
 	print(string.format("|cFFFFFF00Header Sort Key:|r %s", tostring(foundInfo.headerSortKey)))
 	print(string.format("|cFFFFFF00Overrides Sort Order:|r %s", tostring(foundInfo.overridesSortOrder)))
 	print("|cff33FF99-------------------------------------------|r")
+end
+
+
+-- Prints the supertracked quest from Sandbox (or DB if not found)
+function RQE.PrintSupertrackedQuest()
+	local questID = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		print("|cffff6666[RQE]|r No supertracked quest found.")
+		return
+	end
+
+	local questData
+
+	-- Prefer Sandbox data if active and available
+	if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries and RQE_Sandbox.entries[questID] then
+		questData = RQE_Sandbox.entries[questID]
+		print("|cff33ff99[RQE Sandbox]|r Printing Sandbox data for quest ID:", questID)
+	else
+		questData = RQE.getQuestData(questID)
+		print("|cffffff00[RQE]|r Printing Database data for quest ID:", questID)
+	end
+
+	if not questData then
+		print(string.format("|cffff6666[RQE]|r No quest data found for quest ID %d", questID))
+		return
+	end
+
+	-- Utility for consistent tab indentation
+	local function tprintTabs(text, level)
+		print(string.rep("\t", level) .. text)
+	end
+
+	-- Helper for safe string escaping
+	local function esc(str)
+		return tostring(str):gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub("\"", "\\\"")
+	end
+
+	-- Begin quest table
+	tprintTabs(string.format("[%d] = {", questID), 2)
+
+	-- Title
+	if questData.title then
+		tprintTabs(string.format('title = "%s",', esc(questData.title)), 3)
+	end
+
+	-- Location
+	if questData.location then
+		tprintTabs(string.format("location = { x = %.2f, y = %.2f, mapID = %d },",
+			questData.location.x or 0, questData.location.y or 0, questData.location.mapID or 0), 3)
+	end
+
+	-- Objectives text
+	if questData.objectivesQuestText and questData.objectivesQuestText[1] then
+		tprintTabs(string.format('objectivesQuestText = { "%s" },', esc(questData.objectivesQuestText[1])), 3)
+	end
+
+	-- Description text
+	if questData.descriptionQuestText and questData.descriptionQuestText[1] then
+		tprintTabs(string.format('descriptionQuestText = { "%s" },', esc(questData.descriptionQuestText[1])), 3)
+	end
+
+	-- NPC line
+	if questData.npc and questData.npc[1] then
+		tprintTabs(string.format('npc = { "%s" },', esc(questData.npc[1])), 3)
+	end
+
+	-- Steps
+	for index, step in ipairs(questData) do
+		tprintTabs(string.format("[%d] = {", index), 3)
+
+		if step.description then
+			tprintTabs(string.format('description = "%s",', esc(step.description)), 4)
+		end
+
+		if step.coordinates then
+			tprintTabs(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },",
+				step.coordinates.x or 0, step.coordinates.y or 0, step.coordinates.mapID or 0), 4)
+		end
+
+		if step.checks and #step.checks > 0 then
+			tprintTabs("checks = {", 4)
+			for _, chk in ipairs(step.checks) do
+				local checkTable = string.format(
+					'{ mod = "%s", logic = "%s", check = { "%s" }, neededAmt = { "%s" }, funct = "%s" },',
+					chk.mod or "", chk.logic or "", table.concat(chk.check or {}, '", "'),
+					table.concat(chk.neededAmt or {}, '", "'), chk.funct or ""
+				)
+				tprintTabs(checkTable, 5)
+			end
+			tprintTabs("},", 4)
+		end
+
+		if step.check then
+			tprintTabs(string.format('check = { "%s" },', table.concat(step.check, '", "')), 4)
+		end
+
+		if step.neededAmt then
+			tprintTabs(string.format('neededAmt = { "%s" },', table.concat(step.neededAmt, '", "')), 4)
+		end
+
+		if step.funct then
+			tprintTabs(string.format('funct = "%s",', esc(step.funct)), 4)
+		end
+
+		if step.npcTargets then
+			tprintTabs("npcTargets = {", 4)
+			for _, npc in ipairs(step.npcTargets) do
+				tprintTabs(string.format('{ name = "%s", marker = %d, mustBeAlive = %s },',
+					esc(npc.name or ""), npc.marker or 8, tostring(npc.mustBeAlive)), 5)
+			end
+			tprintTabs("},", 4)
+		end
+
+		if step.macro then
+			local macroText = table.concat(step.macro, "\\n")
+			tprintTabs(string.format('macro = { "%s" },', esc(macroText)), 4)
+		end
+
+		if step.objectiveIndex then
+			tprintTabs(string.format("objectiveIndex = %d,", step.objectiveIndex), 4)
+		end
+
+		tprintTabs("},", 3)
+	end
+
+	tprintTabs("},", 2)
 end
