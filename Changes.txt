@@ -1,10 +1,17 @@
 11.2.5.3
 
+	Core.lua
+		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
+
 	RQE.toc
 		- Updated Interface# (2025.10.24.0030)
 
 	RQEDatabase.lua
 		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
+		- Added early order hall campaign quests for mage (2025.10.25.0026)
+
+	WaypointManager.lua
+		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
 
 
 11.2.5.2 (2025.10.23)
