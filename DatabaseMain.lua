@@ -16,6 +16,14 @@ RQE.db = RQE.db or {}
 RQEDatabase = RQEDatabase or {}
 RQE.db.profile = RQE.db.profile or {}
 
+-- Ensure sandbox globals exist
+if not RQE_SandboxDB then
+	RQE_SandboxDB = { entries = {} }
+end
+if not RQE_Sandbox then
+	RQE_Sandbox = { entries = RQE_SandboxDB.entries, active = false }
+end
+
 if RQE and RQE.debugLog then
 	RQE.debugLog("Message here")
 else
@@ -33,6 +41,34 @@ function RQE.getQuestData(questID)
 		RQE.debugLog("Error: questID is not a number, it is: ", tostring(questID))
 		-- Further diagnostics to identify the caller or source of the error
 		return nil
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestID: " .. questID .. ". Sandbox active:", RQE_Sandbox.active, "Entry found:", RQE_Sandbox.entries[questID] ~= nil)
+	end
+
+	-- ✅ SANDBOX OVERRIDE CHECK
+	if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries then
+		local sandboxEntry = RQE_Sandbox.entries[questID]
+
+		if sandboxEntry then
+			-- Handle possible nested forms (some saves wrap it in another table layer)
+			if type(sandboxEntry) == "table" and sandboxEntry.entries then
+				sandboxEntry = sandboxEntry.entries
+			end
+
+			-- Optional: verify that this is a valid quest-like table
+			if type(sandboxEntry) == "table" and (sandboxEntry.title or sandboxEntry[1]) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cff33ff99[RQE Sandbox]|r Using SANDBOX data for questID:", questID)
+				end
+				return sandboxEntry
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cffff6666[RQE Sandbox]|r Invalid Sandbox entry structure for questID:", questID)
+				end
+			end
+		end
 	end
 
 	-- Get the build info to determine the game version
