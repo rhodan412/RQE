@@ -339,7 +339,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	-- 2) Exclusions / hidden quest type
 	local qType = C_QuestLog.GetQuestType(questID)
 	if (RQE.ExcludedWaypointQuests and RQE.ExcludedWaypointQuests[questID]) or qType == 265 then
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print(questID .. " is excluded (explicitly or by quest type 265); waypoint will not be generated")
 		end
 		return 
@@ -626,7 +626,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			-- Set a default title if questID is still nil or 0
 			local questType = C_QuestLog.GetQuestType(questID)
 			if RQE.ExcludedWaypointQuests[questID] or questType == 265 then		-- Prevents a waypoint from being created 'hidden' type quests
-				if RQE.db.profile.debugLevel == "INFO" then
+				if RQE.db.profile.debugLevel == "INFO+" then
 					print(questID .. " is excluded (explicitly or by quest type 265); waypoint will not be generated")
 				end
 				return 
