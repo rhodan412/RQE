@@ -16,7 +16,8 @@
 ## Notes: A handy tool for questing.|cFFCC99FFThis addon has known compatibility issues with the "World Quest Tracker" addon. There are partial issues with "Carbonite Quests" addon, but only when turning in quests thru the default Blizzard Objective Tracker. If you experience problems, consider disabling these addons while using RQE.|r
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
-## SavedVariables: RQEDB
+## SavedVariables: RQEDB, RQE_SandboxDB
+
 ## SavedVariablesPerCharacter: RQECharacterDB
 ## OptionalDeps: TomTom, Carbonite
 
@@ -50,6 +51,11 @@ TaintLess.xml
 Core.lua
 DebugLog.lua
 RQEMinimap.lua
+
+# Sandbox
+RQE_Sandbox.lua
+
+# Database and Event Handlers
 DatabaseMain.lua
 RQEDatabase.lua
 EventManager.lua
