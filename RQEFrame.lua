@@ -94,8 +94,14 @@ function ShowQuestDropdownRQEFrame(self, questID)
 		local isPlayerInGroup = IsInGroup()
 		local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+		end
+
 		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
-		rootDescription:CreateButton("|cff888888-----------------------------------|r", function() end)
+		rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 
 		if isPlayerInGroup and isQuestShareable then
 			rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
@@ -125,6 +131,12 @@ end
 -- Function to Show Right-Click Dropdown Menu
 function ShowDropdownRQEFrame(self)
 	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+		end
+
 		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 
 		-- Only show RQE buttons if the RQE_Contribution addon is loaded
@@ -132,7 +144,7 @@ function ShowDropdownRQEFrame(self)
 			rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
 			rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
 			rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
-			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 		end
 
 		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
