@@ -5,6 +5,7 @@ RQE Contribution Sandbox Editor
 
 ]]
 
+
 --------------------------------------------------
 -- 1. Initialize Sandbox
 --------------------------------------------------
@@ -234,6 +235,7 @@ local function InitializeSandbox()
 	print("|cff33ccff[RQE Sandbox Initialized]|r Use /rqesandbox to open the editor.")
 end
 
+
 -------------------------------------------------------
 -- 2. Helper functions
 -------------------------------------------------------
@@ -267,6 +269,7 @@ local function TableToLuaString(tbl, indent)
 	table.insert(lines, pad .. "},")
 	return table.concat(lines, "\n")
 end
+
 
 -------------------------------------------------------
 -- 3. Load only after RQE_Contribution
