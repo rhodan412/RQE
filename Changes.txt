@@ -2,7 +2,7 @@
 
 	**HIGHLIGHTS**
 		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory
-		- Created RQE_Sandbox [author-mode ONLY] to override the RQEDatabase DB entry with what is used in the sandbox. This will speed up updating of quests in the DB for future versions
+		- Created RQE_Sandbox [author-mode ONLY] to override the RQEDatabase DB entry with what is used in the sandbox. This will speed up updating of quests in the DB for future versions.
 
 	Core.lua
 		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
@@ -27,7 +27,7 @@
 		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
 		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory (2025.10.25.0026)
 		- Added early order hall campaign quests for mage (2025.10.25.0026)
-		- Added additional quests for the mage order hall campaign (2025.10.25.1924)
+		- Added additional quests for the mage order hall campaign (2025.10.26.0308)
 
 	RQEFrame.lua
 		- Added options to menu to show the Sandbox window and print information from the supertracked quest if a Sandbox entry exists [author-mode ONLY] (2025.10.25.1924)
