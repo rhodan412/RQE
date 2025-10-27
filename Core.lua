@@ -7337,6 +7337,120 @@ function RQE.CheckNotPlayerClass(self, ...)
 end
 
 
+----------------------------------------------------------------------
+-- Check if a given scenario stage has been completed (or the player is further along)
+-- Usage: cond = "RQE.CheckScenarioStageCompleted(43090, 1)"
+----------------------------------------------------------------------
+function RQE.CheckScenarioStageCompleted(self, questID, scenarioStage)
+	-- Validate arguments
+	if not questID or not scenarioStage then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckScenarioStageCompleted(): Missing questID or scenarioStage")
+		end
+		return false
+	end
+
+	-- Ensure the player is in a scenario
+	if not C_Scenario.IsInScenario() then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE.CheckScenarioStageCompleted(): Player is not in a scenario (questID=%d)"):format(questID))
+		end
+		return false
+	end
+
+	-- Retrieve scenario info safely
+	local name, currentStage, numStages = C_Scenario.GetInfo()
+	currentStage = tonumber(currentStage) or 0
+	local targetStage = tonumber(scenarioStage) or 0
+
+	if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+		print(("RQE.CheckScenarioStageCompleted(): questID=%d currentStage=%d targetStage=%d totalStages=%s")
+			:format(questID, currentStage, targetStage, tostring(numStages)))
+	end
+
+	-- ✅ Pass if player is on or beyond the target stage
+	if currentStage >= targetStage then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE.CheckScenarioStageCompleted(): TRUE — current stage (%d) >= required stage (%d)")
+				:format(currentStage, targetStage))
+		end
+		return true
+	else
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE.CheckScenarioStageCompleted(): FALSE — current stage (%d) < required stage (%d)")
+				:format(currentStage, targetStage))
+		end
+		return false
+	end
+end
+
+
+----------------------------------------------------------------------
+-- Improved Zone/Subzone or mapID conditional check
+-- Usage:
+--   cond = "RQE.CheckDBZoneName('The Halls of Winter', 'Ulduar')"
+--   cond = "RQE.CheckDBZoneName(746)"
+----------------------------------------------------------------------
+function RQE.CheckDBZoneName(self, ...)
+	local args = { ... }
+	if #args == 0 then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+			print("RQE.CheckDBZoneName(): No arguments provided.")
+		end
+		return false
+	end
+
+	local currentMapID = C_Map.GetBestMapForUnit("player")
+	local zone = (GetZoneText() or ""):gsub("%s+$", "")
+	local subzone = (GetSubZoneText() or ""):gsub("%s+$", "")
+	if subzone == "" then subzone = zone end
+
+	-- Normalize (strip punctuation, parentheses, lowercase)
+	local function normalize(str)
+		return str:lower():gsub("[%s%p]+", "")
+	end
+
+	local zNorm = normalize(zone)
+	local sNorm = normalize(subzone)
+
+	if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+		print(("RQE.CheckDBZoneName(): Player at mapID=%s, zone='%s', subzone='%s'")
+			:format(tostring(currentMapID), zone, subzone))
+	end
+
+	for _, arg in ipairs(args) do
+		local target = tostring(arg):gsub("^%s*(.-)%s*$", "%1")
+		local numeric = tonumber(target)
+
+		-- Numeric mapID match
+		if numeric and currentMapID == numeric then
+			if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+				print(("RQE.CheckDBZoneName(): TRUE — matched mapID %s"):format(numeric))
+			end
+			return true
+		end
+
+		-- Normalize target for string match
+		local tNorm = normalize(target)
+
+		-- Exact or partial match (zone or subzone)
+		if zNorm:find(tNorm, 1, true) or sNorm:find(tNorm, 1, true) then
+			if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+				print(("RQE.CheckDBZoneName(): TRUE — matched zone/subzone '%s'"):format(target))
+			end
+			return true
+		end
+	end
+
+	if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+		print(("RQE.CheckDBZoneName(): FALSE — zone='%s' subzone='%s' mapID=%s did not match any targets.")
+			:format(zone, subzone, tostring(currentMapID)))
+	end
+
+	return false
+end
+
+
 -- This function will check to see if there is quest info being tracked in the RQEFrame
 function RQE.CheckQuestInfoExists()
 	local questID = RQE.QuestIDText and RQE.QuestIDText:GetText()
