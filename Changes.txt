@@ -9,6 +9,7 @@
 		- Cleaned up unused code (2025.10.25.1924)
 		- Added setting within the SelectMultipleGossipOptions to use the target. This is helpful when multiple mobs that start with the same name can be used, such as Empyrean Conjuror and Empyrean Disciple using the macro entry: macro = { "#showtooltip item:5830\n/tar Empyrean\n/run RQE.SelectMultipleGossipOptions(\"\", 0)" }, (2025.10.25.1924)
 		- Added setting to print the sandbox for the current supertracked quest if an entry exists [author-mode ONLY] (2025.10.25.1924)
+		- Added RQE.CheckScenarioStageCompleted and RQE.CheckDBZoneName conditions [still experimental] (2025.10.26.2233)
 
 	DatabaseMain.lua
 		- Added option within the RQE.getQuestData(questID) to use information from the sandbox instead of the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
@@ -22,12 +23,14 @@
 
 	RQE_Sandbox.lua
 		- New file added for the purpose of inputting an entry to take the place of a DB entry from the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
+		- Updated function that when 'Save Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.26.2233)
 
 	RQEDatabase.lua
 		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
 		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory (2025.10.25.0026)
 		- Added early order hall campaign quests for mage (2025.10.25.0026)
 		- Added additional quests for the mage order hall campaign (2025.10.26.0308)
+		- Added some Warrior order hall quests to the DB (2025.10.26.2233)
 
 	RQEFrame.lua
 		- Added options to menu to show the Sandbox window and print information from the supertracked quest if a Sandbox entry exists [author-mode ONLY] (2025.10.25.1924)
