@@ -161,6 +161,9 @@ local function InitializeSandbox()
 
 		RQE_Sandbox.entries[id] = data
 		SaveSandbox()
+		RQE.AddonSetStepIndex = 1
+		UpdateFrame()
+		RQE:StartPeriodicChecks()
 		print("|cff00ff00Saved Sandbox data for Quest ID:|r", id)
 	end)
 
