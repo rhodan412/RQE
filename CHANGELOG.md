@@ -32,6 +32,7 @@
 		- Added additional quests for the mage order hall campaign (2025.10.26.0308)
 		- Added some Warrior order hall quests to the DB (2025.10.26.2233)
 		- Added intro Suramar quests to the DB (2025.10.27.0144)
+		- Added intro Monk and Priest order hall quests along with several chapters of Suramar campaign to DB (2025.10.28.0558)
 
 	RQEFrame.lua
 		- Added options to menu to show the Sandbox window and print information from the supertracked quest if a Sandbox entry exists [author-mode ONLY] (2025.10.25.1924)
