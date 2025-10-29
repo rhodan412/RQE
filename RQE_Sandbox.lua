@@ -178,6 +178,9 @@ local function InitializeSandbox()
 		if id and RQE_Sandbox.entries[id] then
 			RQE_Sandbox.entries[id] = nil
 			SaveSandbox()
+			RQE.AddonSetStepIndex = 1
+			UpdateFrame()
+			RQE:StartPeriodicChecks()
 			editBox:SetText("")
 			print("|cffff6666Removed Sandbox data for quest ID:|r", id)
 		else
