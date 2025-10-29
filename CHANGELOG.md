@@ -23,7 +23,8 @@
 
 	RQE_Sandbox.lua
 		- New file added for the purpose of inputting an entry to take the place of a DB entry from the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
-		- Updated function that when 'Save Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.26.2233)
+		- Updated function that when 'Save the Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.26.2233)
+		- Updated function that when 'Clear Sandbox' is pressed it will set the stepIndex to 1, UpdateFrame() and RQE:StartPeriodicChecks() (2025.10.28.2059)
 
 	RQEDatabase.lua
 		- Added additional campaign quests for Hunter order hall to the quest DB (2025.10.24.0030)
@@ -33,6 +34,7 @@
 		- Added some Warrior order hall quests to the DB (2025.10.26.2233)
 		- Added intro Suramar quests to the DB (2025.10.27.0144)
 		- Added intro Monk and Priest order hall quests along with several chapters of Suramar campaign to DB (2025.10.28.0558)
+		- Added additional Legion expansion and Le'mix quests to DB (2025.10.28.2059)
 
 	RQEFrame.lua
 		- Added options to menu to show the Sandbox window and print information from the supertracked quest if a Sandbox entry exists [author-mode ONLY] (2025.10.25.1924)
