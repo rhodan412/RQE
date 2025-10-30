@@ -4,6 +4,9 @@
 		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory
 		- Created RQE_Sandbox [author-mode ONLY] to override the RQEDatabase DB entry with what is used in the sandbox. This will speed up updating of quests in the DB for future versions.
 
+	Ace3
+		- Library Updates to 12.0 (2025.10.30.0758)
+
 	Core.lua
 		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
 		- Cleaned up unused code (2025.10.25.1924)
@@ -35,6 +38,7 @@
 		- Added intro Suramar quests to the DB (2025.10.27.0144)
 		- Added intro Monk and Priest order hall quests along with several chapters of Suramar campaign to DB (2025.10.28.0558)
 		- Added additional Legion expansion and Le'mix quests to DB (2025.10.28.2059)
+		- Added additional quests for order hall campaigns in Legion and Suramar quests (2025.10.30.0758)
 
 	RQEFrame.lua
 		- Added options to menu to show the Sandbox window and print information from the supertracked quest if a Sandbox entry exists [author-mode ONLY] (2025.10.25.1924)
