@@ -154,6 +154,13 @@ function RQE.getQuestData(questID)
 		dbOrder = { "Vanilla" }
 	end
 
+	if type(RQEDatabase) ~= "table" then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("|cFFFF3333[RQE]|r getQuestData(): RQEDatabase is invalid type:", type(RQEDatabase))
+		end
+		return nil
+	end
+
 	for _, dbName in ipairs(dbOrder) do
 		if RQEDatabase[dbName] then
 			local questData = RQEDatabase[dbName][questID]
