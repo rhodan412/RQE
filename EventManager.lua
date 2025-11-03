@@ -47,7 +47,7 @@ local Frame = CreateFrame("Frame")
 -- Define a list of events to register
 local eventsToRegister = {
 	"ACHIEVEMENT_EARNED",
-	-- "AREA_POIS_UPDATED",
+	"AREA_POIS_UPDATED",
 	"ADDON_LOADED",
 	"BAG_NEW_ITEMS_UPDATED",
 	"BAG_UPDATE",
@@ -108,6 +108,7 @@ local eventsToRegister = {
 	"SPELLS_CHANGED",
 	"START_TIMER",
 	"SUPER_TRACKING_CHANGED",	-- USE: SUPER_TRACKED_QUEST_CHANGED for classic projects
+	"SUPER_TRACKING_PATH_UPDATED",
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
 	"TRACKED_RECIPE_UPDATE",
@@ -239,6 +240,7 @@ local function HandleEvents(frame, event, ...)
 		SPELLS_CHANGED = RQE.handleSpellsChanged,
 		START_TIMER = RQE.handleStartTimer,
 		SUPER_TRACKING_CHANGED = RQE.handleSuperTracking,
+		SUPER_TRACKING_PATH_UPDATED = RQE.handleSuperTrackingPathUpdate,
 		TASK_PROGRESS_UPDATE = RQE.handleQuestStatusUpdate,
 		TRACKED_ACHIEVEMENT_UPDATE = RQE.handleTrackedAchieveUpdate,
 		TRACKED_RECIPE_UPDATE = RQE.handleTrackedRecipeUpdate,
@@ -1419,6 +1421,18 @@ end
 
 -- Handles the AREA_POIS_UPDATED event function
 function RQE.handleAreaPOI()
+	if IsFlying("player") then return end
+
+	local isInRaid = IsInRaid()
+	local isResting = IsResting()
+	local isIndoors = IsIndoors()
+
+	if not isInRaid then
+		if isResting and isIndoors then
+			UpdateFrame()
+			RQE:StartPeriodicChecks()
+		end
+	end
 end
 
 
@@ -3201,6 +3215,21 @@ function RQE.handleSuperTracking()
 end
 
 
+-- Function that handles the SUPER_TRACKING_PATH_UPDATED event
+function RQE.handleSuperTrackingPathUpdate()
+	if C_Scenario.IsInScenario() then return end
+
+	local isResting = IsResting()
+	local isFlyable = IsFlyableArea()
+
+	if not isResting then return end
+	if isFlyable then return end
+
+	UpdateFrame()
+	RQE:StartPeriodicChecks() 
+end
+
+
 -- Handling QUEST_ACCEPTED Event
 -- Fires whenever the player accepts a quest
 function RQE.handleQuestAccepted(...)
@@ -3274,6 +3303,7 @@ function RQE.handleQuestAccepted(...)
 	-- Clear the raid marker from the current target
 	if UnitExists("target") then
 		SetRaidTarget("target", 0)
+		-- RemoveRaidTargets()
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
@@ -4986,6 +5016,7 @@ function RQE.handleQuestCurrencyLootReceived(...)
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
 				SetRaidTarget("target", 0)
+				-- RemoveRaidTargets()
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -5083,6 +5114,7 @@ function RQE.handleQuestLootReceived(...)
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
 				SetRaidTarget("target", 0)
+				-- RemoveRaidTargets()
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
