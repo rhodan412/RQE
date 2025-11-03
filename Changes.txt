@@ -4,6 +4,7 @@
 		- Updated crafting profession quests for Dragonflight to better handle when player has some of the items in their inventory
 		- Created RQE_Sandbox [author-mode ONLY] to override the RQEDatabase DB entry with what is used in the sandbox. This will speed up updating of quests in the DB for future versions.
 		- Better handling for step transition when dealing with indoor spaces such as order hall with multiple mapIDs
+		- Fixed issue where screen would have tinted background when using RQE:ConfirmAndBuyMerchantItem to purchase an item, using macro, from a merchant
 
 	Ace3
 		- Library Updates to 12.0 (2025.10.30.0758)
@@ -15,6 +16,7 @@
 		- Added setting to print the sandbox for the current supertracked quest if an entry exists [author-mode ONLY] (2025.10.25.1924)
 		- Added RQE.CheckScenarioStageCompleted and RQE.CheckDBZoneName conditions [still experimental] (2025.10.26.2233)
 		- Updated line spacing within PrintSupertrackedQuest for sandbox (2025.11.03.0311)
+		- Fixed issue where screen would have tinted background when using RQE:ConfirmAndBuyMerchantItem to purchase an item, using macro, from a merchant (2025.11.03.1858)
 
 	DatabaseMain.lua
 		- Added option within the RQE.getQuestData(questID) to use information from the sandbox instead of the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
@@ -48,6 +50,7 @@
 		- Added additional Suramar quests into the DB [7016/17522] (2025.10.31.0253)
 		- Added Warlock, Death Knight and Demon Hunter class order halls & additional Suramar quests into the DB [7044/17530] (2025.11.01.0214)
 		- Added many quests in Suramar campaign to the DB (2025.11.03.0311)
+		- Updated Suramar and Highmountain quests in the DB (2025.11.03.1858)
 
 	RQEMacro.lua
 		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
