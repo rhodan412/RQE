@@ -10953,40 +10953,28 @@ end
 
 -- Function to confirm and buy an item from a merchant
 function RQE:ConfirmAndBuyMerchantItem(index, quantity)
-	local itemName = C_MerchantFrame.GetItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
-	--local itemName, _, _, _, _, _, _, _, _, _, _, = C_MerchantFrame.GetItemInfo(index)
+	local itemName = C_MerchantFrame.GetItemInfo(index)
 	local maxStack = GetMerchantItemMaxStack(index)
 	local itemLink = GetMerchantItemLink(index)
-	quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
-	maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
+	quantity = tonumber(quantity) or 1
+	maxStack = tonumber(maxStack) or 1
 
 	if not itemName then
 		RQE.debugLog("Error: Unable to retrieve item name for merchant index " .. tostring(index))
 		return
 	end
 
-	if not itemLink then
-		RQE.debugLog("Warning: Unable to retrieve item link for merchant index " .. tostring(index) .. ", using item name instead.")
-	end
+	-- Get pricing information
+	local price = select(3, GetMerchantItemInfo(index)) or 0	-- C_MerchantFrame.GetItemInfo() doesn't work for an unknown reason and returns free, so using older API
+	local totalCost = price * quantity
+	local priceString = (totalCost > 0) and C_CurrencyInfo.GetCoinTextureString(totalCost) or "free"
 
 	local itemDisplay = itemLink or itemName
 
 	StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
-		text = "Do you want to buy " .. quantity .. " of " .. itemDisplay .. "?",
+		text = string.format("Do you want to buy %d of %s for %s?", quantity, itemDisplay, priceString),
 		button1 = "Yes",
 		button2 = "No",
-		OnShow = function(self)
-			local itemFrame = CreateFrame("Frame", nil, self)
-			itemFrame:SetAllPoints(self.text)
-			itemFrame:SetScript("OnEnter", function()
-				GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
-				GameTooltip:SetHyperlink(itemLink)
-				GameTooltip:Show()
-			end)
-			itemFrame:SetScript("OnLeave", function()
-				GameTooltip:Hide()
-			end)
-		end,
 		OnAccept = function()
 			if quantity > maxStack then
 				local fullStacks = math.floor(quantity / maxStack)
@@ -11001,13 +10989,95 @@ function RQE:ConfirmAndBuyMerchantItem(index, quantity)
 				BuyMerchantItem(index, quantity)
 			end
 		end,
+		OnShow = function(self)
+			if itemLink and self.text then
+				-- Create a small clickable region just over the text, not the entire popup
+				local itemFrame = CreateFrame("Frame", nil, self)
+				itemFrame:SetPoint("TOPLEFT", self.text, "TOPLEFT", 0, 0)
+				itemFrame:SetPoint("BOTTOMRIGHT", self.text, "BOTTOMRIGHT", 0, 0)
+				itemFrame:SetFrameStrata("TOOLTIP")
+				itemFrame:SetFrameLevel(self:GetFrameLevel() + 10)
+				itemFrame:SetAlpha(0)
+
+				-- Do NOT intercept mouse clicks
+				itemFrame:EnableMouse(false)
+
+				itemFrame:SetScript("OnEnter", function()
+					GameTooltip:SetOwner(self, "ANCHOR_TOP")
+					GameTooltip:SetHyperlink(itemLink)
+					GameTooltip:Show()
+				end)
+				itemFrame:SetScript("OnLeave", function()
+					GameTooltip:Hide()
+				end)
+			end
+		end,
 		timeout = 0,
 		whileDead = true,
 		hideOnEscape = true,
-		preferredIndex = 3,  -- Avoid taint from UIParent
+		preferredIndex = 3, -- Avoid UIParent taint
 	}
 	StaticPopup_Show("RQE_CONFIRM_PURCHASE")
 end
+
+
+-- -- Function to confirm and buy an item from a merchant
+-- function RQE:ConfirmAndBuyMerchantItem(index, quantity)
+	-- local itemName = C_MerchantFrame.GetItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
+	-- --local itemName, _, _, _, _, _, _, _, _, _, _, = C_MerchantFrame.GetItemInfo(index)
+	-- local maxStack = GetMerchantItemMaxStack(index)
+	-- local itemLink = GetMerchantItemLink(index)
+	-- quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
+	-- maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
+
+	-- if not itemName then
+		-- RQE.debugLog("Error: Unable to retrieve item name for merchant index " .. tostring(index))
+		-- return
+	-- end
+
+	-- if not itemLink then
+		-- RQE.debugLog("Warning: Unable to retrieve item link for merchant index " .. tostring(index) .. ", using item name instead.")
+	-- end
+
+	-- local itemDisplay = itemLink or itemName
+
+	-- StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
+		-- text = "Do you want to buy " .. quantity .. " of " .. itemDisplay .. "?",
+		-- button1 = "Yes",
+		-- button2 = "No",
+		-- OnShow = function(self)
+			-- local itemFrame = CreateFrame("Frame", nil, self)
+			-- itemFrame:SetAllPoints(self.text)
+			-- itemFrame:SetScript("OnEnter", function()
+				-- GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
+				-- GameTooltip:SetHyperlink(itemLink)
+				-- GameTooltip:Show()
+			-- end)
+			-- itemFrame:SetScript("OnLeave", function()
+				-- GameTooltip:Hide()
+			-- end)
+		-- end,
+		-- OnAccept = function()
+			-- if quantity > maxStack then
+				-- local fullStacks = math.floor(quantity / maxStack)
+				-- local remainder = quantity % maxStack
+				-- for i = 1, fullStacks do
+					-- BuyMerchantItem(index, maxStack)
+				-- end
+				-- if remainder > 0 then
+					-- BuyMerchantItem(index, remainder)
+				-- end
+			-- else
+				-- BuyMerchantItem(index, quantity)
+			-- end
+		-- end,
+		-- timeout = 0,
+		-- whileDead = true,
+		-- hideOnEscape = true,
+		-- preferredIndex = 3,  -- Avoid taint from UIParent
+	-- }
+	-- StaticPopup_Show("RQE_CONFIRM_PURCHASE")
+-- end
 
 
 -- -- Function that handles a series of functions related to purchasing an item from the AH	FIX MADE FOR 'X' RETURNING NIL (2025.09.30)
