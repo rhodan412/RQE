@@ -51,6 +51,7 @@
 		- Added Warlock, Death Knight and Demon Hunter class order halls & additional Suramar quests into the DB [7044/17530] (2025.11.01.0214)
 		- Added many quests in Suramar campaign to the DB (2025.11.03.0311)
 		- Updated Suramar and Highmountain quests in the DB (2025.11.03.1858)
+		- Added many leveling quests in Highmountain to the DB (2025.11.04.0346)
 
 	RQEMacro.lua
 		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
