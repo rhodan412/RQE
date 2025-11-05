@@ -52,6 +52,7 @@
 		- Added many quests in Suramar campaign to the DB (2025.11.03.0311)
 		- Updated Suramar and Highmountain quests in the DB (2025.11.03.1858)
 		- Added many leveling quests in Highmountain to the DB (2025.11.04.0346)
+		- Added remainder of Highmountain leveling campaign quests to the DB [7132/17564] (2025.11.05.0340)
 
 	RQEMacro.lua
 		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
