@@ -17,6 +17,7 @@
 		- Added RQE.CheckScenarioStageCompleted and RQE.CheckDBZoneName conditions [still experimental] (2025.10.26.2233)
 		- Updated line spacing within PrintSupertrackedQuest for sandbox (2025.11.03.0311)
 		- Fixed issue where screen would have tinted background when using RQE:ConfirmAndBuyMerchantItem to purchase an item, using macro, from a merchant (2025.11.03.1858)
+		- Updated some print out related to coordinateHotspots [author-mode ONLY] (2025.11.08.0416)
 
 	DatabaseMain.lua
 		- Added option within the RQE.getQuestData(questID) to use information from the sandbox instead of the RQEDatabase file [author-mode ONLY] (2025.10.25.1924)
@@ -54,7 +55,8 @@
 		- Added many leveling quests in Highmountain to the DB (2025.11.04.0346)
 		- Added remainder of Highmountain leveling campaign quests to the DB [7132/17564] (2025.11.05.0340)
 		- Added early available Broken Shore campaign quests to DB for Breaching the Tomb (2025.11.06.0405)
-		- Added remainder campaign quests in Val'sharah, Highmountain, and Stormheim to the DB [7203/17622 WQ: 2601] (2025.11.07.2024)
+		- Added remainder campaign quests in Val'sharah, Highmountain, and Stormheim to the DB [7203/17622 2026-06-19 WQ: 2601] (2025.11.07.2024)
+		- Added most side quests in Highmountain to the quest DB (2025.11.08.0416)
 
 	RQEMacro.lua
 		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
