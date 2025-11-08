@@ -12289,7 +12289,10 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 		return
 	end
 
-	if mapID == 407 then
+	if mapID == 407 or mapID == 408 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Returning due to mapID being a continentID of " .. tostring(mapID))
+		end
 		return
 	end
 
@@ -12332,6 +12335,21 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 	end
 
 	local cx, cy = contPos.x, contPos.y
+
+	if continentID == mapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ContinentID is " .. tostring(continentID) .. " and mapID is " .. tostring(mapID) .. ". Returning as these match")
+		end
+
+		print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
+
+		-- print("				coordinateHotspots = {")
+		-- print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
+		-- print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+		-- print("				},")
+
+		return
+	end
 
 	-- Print in locations array format (include DB "location" line above it)
 	if RQE.MapAndContinentFromQuestAccepted then
