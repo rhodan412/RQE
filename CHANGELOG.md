@@ -54,6 +54,7 @@
 		- Added many leveling quests in Highmountain to the DB (2025.11.04.0346)
 		- Added remainder of Highmountain leveling campaign quests to the DB [7132/17564] (2025.11.05.0340)
 		- Added early available Broken Shore campaign quests to DB for Breaching the Tomb (2025.11.06.0405)
+		- Added remainder campaign quests in Val'sharah, Highmountain, and Stormheim to the DB [7203/17622 WQ: 2601] (2025.11.07.2024)
 
 	RQEMacro.lua
 		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
