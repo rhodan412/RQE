@@ -12346,7 +12346,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 		-- print("				coordinateHotspots = {")
 		-- print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
 		-- print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-		-- print("				},")
+		-- print("				},") 
 
 		return
 	end
