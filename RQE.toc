@@ -12,7 +12,7 @@
 ## Category-zhCN: 任务
 ## Category-zhTW: 任務
 ## Author: Rhodan {Aurleis}
-## Version: 11.2.5.3
+## Version: 11.2.5.4
 ## Notes: A handy tool for questing.|cFFCC99FFThis addon has known compatibility issues with the "World Quest Tracker" addon. There are partial issues with "Carbonite Quests" addon, but only when turning in quests thru the default Blizzard Objective Tracker. If you experience problems, consider disabling these addons while using RQE.|r
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
