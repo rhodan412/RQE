@@ -4638,12 +4638,45 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	parentFrame:SetText(displayText)
 
 	-- Font metrics
-	local fontPath, size, flags = parentFrame:GetFont()
+	local fontPath, size, flags
+
+	-- Handle both FontStrings and SimpleHTML frames
+	if parentFrame.GetFont then
+		local ok, f1, f2, f3
+
+		-- Try SimpleHTML paragraph font first
+		ok, f1, f2, f3 = pcall(function() return parentFrame:GetFont("p") end)
+		if ok and f1 then
+			fontPath, size, flags = f1, f2, f3
+		else
+			-- Fall back to normal FontString behavior
+			ok, f1, f2, f3 = pcall(function() return parentFrame:GetFont() end)
+			if ok and f1 then
+				fontPath, size, flags = f1, f2, f3
+			else
+				-- Ultimate fallback
+				fontPath, size, flags = "Fonts\\FRIZQT__.TTF", 12, ""
+			end
+		end
+	else
+		-- Fallback for frames without GetFont at all
+		fontPath, size, flags = "Fonts\\FRIZQT__.TTF", 12, ""
+	end
+
+	-- local fontPath, size, flags = parentFrame:GetFont()
+
 	local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	measureFS:SetFont(font or fontPath, fontSize or size, flags)
 
 	local baseParent = customParent or parentFrame:GetParent() or UIParent
-	local lineHeight = parentFrame:GetLineHeight()
+	local lineHeight = 14
+	if parentFrame.GetLineHeight then
+		local ok, lh = pcall(function() return parentFrame:GetLineHeight() end)
+		if ok and lh then lineHeight = lh end
+	elseif type(size) == "number" then
+		lineHeight = size + 2
+	end
+	-- local lineHeight = parentFrame:GetLineHeight()
 	local yOffset, rawPos = 0, 1
 
 	-- Helper: resolve the true owning frame name, even if deeply nested
@@ -4738,7 +4771,8 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						local overflow = (cursorX + tagWidth) - maxWidth
 						local firstWidth = tagWidth - overflow
 
-						local hover1 = CreateFrame("Button", nil, baseParent)
+						local hover1 = CreateFrame("Frame", nil, baseParent)
+						-- local hover1 = CreateFrame("Button", nil, baseParent)
 						hover1:EnableMouse(true)
 						hover1:SetFrameStrata("TOOLTIP")
 						hover1:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
@@ -4756,7 +4790,8 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						hover1:SetScript("OnLeave", function() GameTooltip:Hide() end)
 						table.insert(parentFrame._rqeSegments, hover1)
 
-						local hover2 = CreateFrame("Button", nil, baseParent)
+						local hover2 = CreateFrame("Frame", nil, baseParent)
+						-- local hover2 = CreateFrame("Button", nil, baseParent)
 						hover2:EnableMouse(true)
 						hover2:SetFrameStrata("TOOLTIP")
 						hover2:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
@@ -4768,7 +4803,8 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 						table.insert(parentFrame._rqeSegments, hover2)
 
 					else
-						local hover = CreateFrame("Button", nil, baseParent)
+						local hover = CreateFrame("Frame", nil, baseParent)
+						-- local hover = CreateFrame("Button", nil, baseParent)
 						hover:EnableMouse(true)
 						hover:SetFrameStrata("TOOLTIP")
 						hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
