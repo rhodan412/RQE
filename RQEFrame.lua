@@ -826,22 +826,93 @@ else
 end
 
 
--- Safe wrapper function that extracts the text from the new structure
+-- Unified helper: works for SimpleHTML, plain FontString, and old segmented text
 function RQE.GetSeparateStepText()
-	if not RQE.SeparateStepText then return "" end
-	if RQE.SeparateStepText.GetText then
-		return RQE.SeparateStepText:GetText() or ""
-	elseif RQE.SeparateStepText._rqeSegments then
+	local sst = RQE.SeparateStepText
+	if not sst then
+		return ""
+	end
+
+	-- 1) New path: SeparateStepText is a SimpleHTML (used when step has {coords:...})
+	if sst.GetObjectType and sst:GetObjectType() == "SimpleHTML" then
+		-- we stored this when we did: StepText.htmlText = wrappedHTML
+		local html = sst.htmlText or ""
+
+		-- strip HTML tags and WoW color codes so the tooltip doesn't look weird
+		local text = html
+			:gsub("<[^>]+>", "")			   -- remove all HTML tags
+			:gsub("|c%x%x%x%x%x%x%x%x", "")	-- remove |cAARRGGBB
+			:gsub("|r", "")					-- remove reset
+			:gsub("%s+", " ")				  -- collapse whitespace
+			:match("^%s*(.-)%s*$") or ""	   -- trim
+
+		return text
+	end
+
+	-- 2) Plain FontString path (what you had originally)
+	if sst.GetText then
+		local txt = sst:GetText()
+		if txt and txt ~= "" then
+			return txt
+		end
+	end
+
+	-- 3) Legacy/segmented path (your original word-wrap structure)
+	--	sst._rqeSegments is a table of FontStrings we need to stitch together
+	if sst._rqeSegments then
 		local collected = {}
-		for _, seg in ipairs(RQE.SeparateStepText._rqeSegments) do
-			if seg:IsObjectType("FontString") then
-				table.insert(collected, seg:GetText() or "")
+		for _, seg in ipairs(sst._rqeSegments) do
+			if seg and seg.GetText then
+				local t = seg:GetText()
+				if t and t ~= "" then
+					table.insert(collected, t)
+				end
 			end
 		end
 		return table.concat(collected, "")
 	end
+
 	return ""
 end
+
+
+-- -- Safe wrapper function that extracts the text from the new structure
+-- function RQE.GetSeparateStepText()
+	-- if not RQE.SeparateStepText then return "" end
+	-- if RQE.SeparateStepText.GetText then
+		-- return RQE.SeparateStepText:GetText() or ""
+	-- elseif RQE.SeparateStepText._rqeSegments then
+		-- local collected = {}
+		-- for _, seg in ipairs(RQE.SeparateStepText._rqeSegments) do
+			-- if seg:IsObjectType("FontString") then
+				-- table.insert(collected, seg:GetText() or "")
+			-- end
+		-- end
+		-- return table.concat(collected, "")
+	-- end
+	-- return ""
+-- end
+
+
+-- -- Helper function to determine if text is FontString or SimpleHTML and then normalizes
+-- function RQE.GetSeparateStepText()
+	-- if not RQE.SeparateStepText then
+		-- return ""
+	-- end
+
+	-- -- Handle SimpleHTML type (has no GetText())
+	-- if RQE.SeparateStepText:GetObjectType() == "SimpleHTML" then
+		-- local html = RQE.SeparateStepText.htmlText or ""
+		-- return html:gsub("<[^>]+>", ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+	-- end
+
+	-- -- Handle FontString type
+	-- if RQE.SeparateStepText.GetText then
+		-- return RQE.SeparateStepText:GetText() or ""
+	-- end
+
+	-- return ""
+-- end
 
 
 -- Function to create tooltip for QuestID and QuestName
@@ -921,15 +992,16 @@ local function CreateQuestTooltip(frame, questID)
 	end
 
 	-- Check if RQE.SeparateStepText exists and has text
-	if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
+	local stepText = RQE.GetSeparateStepText()
+	if stepText ~= "" then
+	-- if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
 		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 		if not isWorldQuest then
 			GameTooltip:AddLine(" ")
 		end
 		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
-		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
-		GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
-		--GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
+		GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
+		-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
 	else
 		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 	end
@@ -1202,21 +1274,130 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		local stepTextHeight = 10
 
 		-- Create StepsText
-		local StepText = content:CreateFontString(nil, "OVERLAY")
-		table.insert(RQE.StepsText, StepText)
-		StepText:SetFont("Fonts\\FRIZQT__.TTF", 12)
-		StepText:SetJustifyH("LEFT")
-		StepText:SetTextColor(1, 1, 0.8) -- Text color for RQE.StepsText in RGB
-		StepText:SetSize(350, 0) -- Controls length you have across the frame before it will force a line break
-		StepText:SetHeight(0)  -- Auto height
-		StepText:SetWordWrap(true)  -- Allow word wrap
-
-		--StepText:SetText(StepsText[i] or "No description available.")
-
 		local raw = StepsText[i] or "No description available."
-		StepText:SetText("")  -- Clear main fontstring
-		RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
-		-- RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8})
+		local hasCoords = raw:match("{coords:")
+
+		local StepText
+		if hasCoords then
+			-- 🧭 SimpleHTML for coordinate hyperlinks
+			StepText = CreateFrame("SimpleHTML", nil, content)
+			table.insert(RQE.StepsText, StepText)
+			StepText:SetFontObject("p", GameFontNormal)
+			StepText:SetFontObject("h1", GameFontNormal)
+			StepText:SetFontObject("h2", GameFontNormal)
+			StepText:SetJustifyH("p", "LEFT")
+			StepText:SetHyperlinksEnabled(true)
+			StepText:SetWidth(RQEFrame:GetWidth() - 80)
+
+			-- Apply color to all HTML text types (paragraph and headings)
+			StepText:SetTextColor("p", 1, 1, 0.8)
+			StepText:SetTextColor("h1", 1, 1, 0.8)
+			StepText:SetTextColor("h2", 1, 1, 0.8)
+
+			-- Format the coords cleanly for display
+			local html = raw:gsub("{coords:([^}]+)}", function(data)
+				local x, y, mapID, title =
+					data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+				if not x then
+					x, y, mapID, title =
+						data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*(.+)")
+				end
+				if not x then
+					x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if not (x and y and mapID) then return data end
+
+				-- Display label
+				local label = string.format("coords: %.2f, %.2f map %s", x, y, mapID)
+
+				-- href: use ;title: again (safe when title is quoted)
+				local href
+				if title then
+					href = string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title)
+				else
+					href = string.format("coords:%s,%s,%s", x, y, mapID)
+				end
+
+				return string.format('<a href="%s">|cff00ccff[%s]|r</a>', href, label)
+			end)
+
+			-- Wrap text with HTML
+			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
+			StepText:SetText(wrappedHTML)
+			StepText.htmlText = wrappedHTML  -- store HTML string for safe retrieval later
+
+			-- Give it a provisional height so the layout engine reserves space
+			StepText:SetHeight(20)
+			StepText:Show()
+
+			-- ✅ Re-measure after a tick (this keeps step 5 from collapsing)
+			C_Timer.After(0.05, function()
+				local h = StepText:GetContentHeight()
+				if h and h > 0 then
+					StepText:SetHeight(h + 4)
+				else
+					StepText:SetHeight(20)
+				end
+			end)
+
+			-- Clickable waypoint handler
+			StepText:SetScript("OnHyperlinkClick", function(self, link, text, button)
+				local x, y, mapID, title =
+					link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
+				if not x then
+					x, y, mapID = link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if x and y and mapID then
+					RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+					RQE:CreateWaypoint(
+						tonumber(x),
+						tonumber(y),
+						tonumber(mapID),
+						title and title:gsub("\"", "") or "Custom Waypoint"
+					)
+					print(string.format(
+						"|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
+						x, y, mapID,
+						(title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""
+					))
+				end
+			end)
+
+			StepText:SetScript("OnHyperlinkEnter", function(_, link)
+				if type(link) == "string" and link:match("^coords:") then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+					GameTooltip:Show()
+				end
+			end)
+
+			StepText:SetScript("OnHyperlinkLeave", function()
+				GameTooltip:Hide()
+			end)
+
+			-- ✅ Make sure SimpleHTML sizes properly and wraps text
+			C_Timer.After(0.05, function()
+				local h = StepText:GetContentHeight()
+				if h and h > 0 then
+					StepText:SetHeight(h + 4)
+				else
+					StepText:SetHeight(20)
+				end
+				StepText:SetFrameStrata("HIGH")
+				StepText:Show()
+			end)
+		else
+			-- 🧾 Normal text (as before)
+			StepText = content:CreateFontString(nil, "OVERLAY")
+			table.insert(RQE.StepsText, StepText)
+			StepText:SetFont("Fonts\\FRIZQT__.TTF", 12)
+			StepText:SetJustifyH("LEFT")
+			StepText:SetTextColor(1, 1, 0.8)
+			StepText:SetSize(RQEFrame:GetWidth() - 80, 0)
+			StepText:SetWordWrap(true)
+			StepText:SetText("")
+			RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
+		end
 
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
 
@@ -1270,7 +1451,11 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		end
 
 		-- Get the height of the StepText element
-		local stepTextHeight = StepText:GetStringHeight()
+		if StepText.GetStringHeight then
+			stepTextHeight = StepText:GetStringHeight()
+		elseif StepText.GetContentHeight then
+			stepTextHeight = StepText:GetContentHeight()
+		end
 
 		-- Create the number label
 		local number = WaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -2069,39 +2254,8 @@ function RQE.InitializeSeparateFocusFrame()
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		local questData = RQE.getQuestData(questID)
 
-		-- local questData = RQE.getQuestData(questID)
-
-		-- if not questData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- end
-
-			-- -- Ensure RQE.SeparateStepText is initialized before use
-			-- if not RQE.SeparateStepText then
-				-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				-- RQE.SeparateStepText:SetJustifyH("LEFT")
-				-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
-				-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
-				-- RQE.SeparateStepText:SetHeight(0)  -- Auto height
-				-- RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
-				-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-			-- end
-
-			-- -- Update the step text dynamically
-			-- RQE.SeparateStepText:SetText("No step description available for this step.")
-			-- RQE.SeparateStepText:Show()
-			-- return
-		-- end
-
 		local totalSteps = 0
 		local stepData = nil
-
-		-- -- clamp and normalize
-		-- local totalSteps = #questData
-		-- if totalSteps == 0 then totalSteps = 1 end
-		-- if stepIndex < 1 then stepIndex = 1 end
-		-- if stepIndex > totalSteps then stepIndex = totalSteps end
-
-		-- local stepData = questData[stepIndex]
 
 		-- Create or update StepText element
 		-- ✅ Ensure SeparateStepText exists before anything else
@@ -2141,39 +2295,121 @@ function RQE.InitializeSeparateFocusFrame()
 			stepData = questData[stepIndex]
 		end
 
-		-- -- Create or update StepText element
-		-- if not RQE.SeparateStepText then
-			-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			-- RQE.SeparateStepText:SetJustifyH("LEFT")
-			-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
-			-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60) -- Control the width to prevent overflow
-			-- RQE.SeparateStepText:SetHeight(0)  -- Auto height
-			-- RQE.SeparateStepText:SetWordWrap(true)  -- Allow word wrap
-			-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-		-- end
-
 		-- Update the step text dynamically to include the step index
-		local stepDescription = (stepData and stepData.description and stepData.description ~= "") and stepData.description	or "No step description available."
-		-- local stepDescription = (stepData and stepData.description) or "No step description available for this step."
-		-- local formattedText = string.format("%d: %s", stepIndex, stepDescription) -- Prepend the stepIndex to the description
+		local stepDescription = (stepData and stepData.description and stepData.description ~= "")
+			and stepData.description or "No step description available."
 
-		-- Function to update the step text dynamically to include the current and final step index
-		-- local totalSteps = #questData  -- Get the total number of steps from the questData
-		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
+		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
 		RQE.StepIndexForCoordMatch = stepIndex
 		RQE.totalStepforQuest = totalSteps
 
-		--RQE.SeparateStepText:SetText(formattedText)
+		-- Remove any old SeparateStepText if it exists (since SimpleHTML can't reuse FontString)
+		if RQE.SeparateStepText then
+			RQE.SeparateStepText:Hide()
+			RQE.SeparateStepText:SetParent(nil)
+			RQE.SeparateStepText = nil
+		end
 
-		-- local itemID = RQE.ParseItemTag(formattedText)
-		-- local rendered = RQE.RenderTextWithItemTags(formattedText)
-		-- RQE.SeparateStepText:SetText(rendered)
-		-- RQE.AttachItemHover(RQE.SeparateStepText, itemID)
+		local hasCoords = formattedText:match("{coords:")
 
-		RQE.SeparateStepText:SetText("")  -- clear any previous text
-		RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
+		if hasCoords then
+			-- 🧭 SimpleHTML version (for clickable hyperlinks)
+			local StepText = CreateFrame("SimpleHTML", nil, RQE.SeparateContentFrame)
+			RQE.SeparateStepText = StepText
+			StepText:SetFontObject("p", GameFontNormal)
+			StepText:SetFontObject("h1", GameFontNormal)
+			StepText:SetFontObject("h2", GameFontNormal)
+			StepText:SetJustifyH("p", "LEFT")
+			StepText:SetHyperlinksEnabled(true)
+			StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+			StepText:SetTextColor("p", 1, 1, 0.8)
+			StepText:SetTextColor("h1", 1, 1, 0.8)
+			StepText:SetTextColor("h2", 1, 1, 0.8)
+			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+
+			-- Replace coords pattern with a clickable HTML link (supports quoted waypointTitle)
+			local html = formattedText:gsub("{coords:([^}]+)}", function(data)
+				local x, y, mapID, title =
+					data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+				if not x then
+					x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if not (x and y and mapID) then return data end
+
+				local label = string.format("coords: %.2f, %.2f map %s", x, y, mapID)
+				local href = title and
+					string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title)
+					or string.format("coords:%s,%s,%s", x, y, mapID)
+
+				return string.format('<a href="%s">|cff00ccff[%s]|r</a>', href, label)
+			end)
+
+			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
+			StepText:SetText(wrappedHTML)
+
+			-- Adjust height once rendered
+			C_Timer.After(0.05, function()
+				local h = StepText:GetContentHeight()
+				StepText:SetHeight((h and h > 0) and (h + 4) or 20)
+			end)
+
+			-- Hyperlink click handler
+			StepText:SetScript("OnHyperlinkClick", function(self, link, text, button)
+				local x, y, mapID, title =
+					link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
+				if not x then
+					x, y, mapID = link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if x and y and mapID then
+					RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+					RQE:CreateWaypoint(
+						tonumber(x),
+						tonumber(y),
+						tonumber(mapID),
+						title and title:gsub("\"", "") or "Custom Waypoint"
+					)
+					print(string.format("|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
+						x, y, mapID, (title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""))
+				end
+			end)
+
+			StepText:SetScript("OnHyperlinkEnter", function(_, link)
+				if type(link) == "string" and link:match("^coords:") then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+					GameTooltip:Show()
+				end
+			end)
+
+			StepText:SetScript("OnHyperlinkLeave", function()
+				GameTooltip:Hide()
+			end)
+		else
+			-- 🧾 Standard fontstring version
+			local StepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			RQE.SeparateStepText = StepText
+			StepText:SetJustifyH("LEFT")
+			StepText:SetTextColor(1, 1, 0.8)
+			StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+			StepText:SetWordWrap(true)
+			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+			RQE.RenderTextWithItems(StepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8})
+		end
 
 		RQE.SeparateStepText:Show()
+
+		-- -- Update the step text dynamically to include the step index
+		-- local stepDescription = (stepData and stepData.description and stepData.description ~= "") and stepData.description	or "No step description available."
+
+		-- -- Function to update the step text dynamically to include the current and final step index
+		-- local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
+		-- RQE.StepIndexForCoordMatch = stepIndex
+		-- RQE.totalStepforQuest = totalSteps
+
+		-- RQE.SeparateStepText:SetText("")  -- clear any previous text
+		-- RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
+
+		-- RQE.SeparateStepText:Show()
 
 		RQE.InitializeSeparateFocusWaypoints()
 
@@ -2308,12 +2544,13 @@ function RQE.ShowFocusScrollFrameTooltip(self)
 	GameTooltip:SetText("Hold ALT, CTRL, or SHIFT to scroll this frame.", 1, 1, 1, 1, true)
 
 	-- Check if RQE.SeparateStepText exists and has text
-	if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
+	local stepText = RQE.GetSeparateStepText()
+	if stepText ~= "" then
+	-- if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
 		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
-		-- GameTooltip:AddLine("|cff00ffffQuest Help for Current Step:|r", 1, 1, 1, true) -- Cyan title
-		GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
-		-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.SeparateStepText:GetText() .. "|r", nil, nil, nil, true) -- Light purple text
+		GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
+		-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
 	else
 		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 	end
