@@ -5,6 +5,7 @@ Unlock your full questing potential in World of Warcraft with Rhodan’s Quest E
 **What does RQE do? Check out the video to learn more:**
 
 [![What does RQE add-on do?](https://img.youtube.com/vi/JKvJi32zfag/0.jpg)](https://www.youtube.com/watch?v=JKvJi32zfag "RQE addon")
+[![ RQE Search Wowhead and Warcraft Wiki](https://img.youtube.com/vi/0jAIiBSai3I/0.jpg)](https://www.youtube.com/watch?v=0jAIiBSai3I "RQE addon2")
 
 **Key Features:**
 Detailed Quest Insights: Provides in-depth details for each quest, including objectives, locations, and step-by-step navigation, ensuring you never miss a beat.
