@@ -5,6 +5,7 @@
 
 	RQEDatabase.lua
 		- Added additional Suramar side quests to the DB (2025.11.10.0058)
+		- Added remaining campaign and side quest storylines for Suramar to the quest DB except several chapters of 'Insurrection' (2025.11.10.0637)
 
 
 11.2.5.3 (2025.11.08)
