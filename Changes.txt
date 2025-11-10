@@ -1,11 +1,25 @@
 11.2.5.4
 
+	**HIGHLIGHTS**
+		- Added ability to click sections in select quests where a waypoint is generated within the RQEFrame
+		- Fixed Button taint associated with the RQE.RenderTextWithItems() function
+
+	Core.lua
+		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
+		- Fixed button taint associated with RQE.RenderTextWithItems() function by changing local hover = CreateFrame("Button", nil, baseParent) to local hover = CreateFrame("Frame", nil, baseParent) (2025.11.10.1926)
+
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
 
 	RQEDatabase.lua
 		- Added additional Suramar side quests to the DB (2025.11.10.0058)
 		- Added remaining campaign and side quest storylines for Suramar to the quest DB except several chapters of 'Insurrection' (2025.11.10.0637)
+		- Updated the questDB to include the Jandvik's Jarl questline of Suramar (2025.11.10.1926)
+		- Updated half of the "Crafting War" storyline, part of Insurrection, of Suramar quests (2025.11.10.1926)
+
+	RQEFrame.lua
+		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
+		- Updated CreateQuestTooltip, RQE:CreateStepsText and RQE.InitializeSeparateFocusFrame() to utilize the RQE.GetSeparateStepText() helper function and updated to provide clickable blocks to create waypoints [such as if a step first requires you to enter a cave, but has no subzone, zone transition] (2025.11.10.1926)
 
 
 11.2.5.3 (2025.11.08)
