@@ -3,6 +3,9 @@
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
 
+	RQEDatabase.lua
+		- Added additional Suramar side quests to the DB (2025.11.10.0058)
+
 
 11.2.5.3 (2025.11.08)
 
