@@ -2485,7 +2485,10 @@ function RQE.InitializeSeparateFocusFrame()
 	RQE.UpdateSeparateContentHeight()
 
 	-- Call the function to update the frame's content dynamically
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when initialized
+	if RQE.OkayToUpdateSeparateFFOnce then
+		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when initialized
+	end
+	RQE.OkayToUpdateSeparateFFOnce = false
 end
 
 
