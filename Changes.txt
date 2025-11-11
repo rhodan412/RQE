@@ -5,6 +5,7 @@
 		- Fixed Button taint associated with the RQE.RenderTextWithItems() function
 		- Fixed issue with spacing and alignment of both item/spell tooltips and clickable coordinate blocks in the RQEFrame
 		- Each step description can now support multiple item/spell tooltips in a description (previously limited to one). If a description line has item/spell tooltip, clickable coordinate block is NOT permitted.
+		- Significant performance updates as stepsText and SeparateFocusFrame were being called too frequently mainly from UpdateFrame()
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -12,9 +13,24 @@
 		- Added RQE.BuildHTMLFromRichText() function that renders SimpleHTML for tooltip (2025.11.11.0120)
 		- Simplified the RQE.RenderTextWithItems() function that deals with the spell/items for the SeparateFocusFrame and also using RQE.BuildHTMLFromRichText() (2025.11.11.0120)
 		- Re-created, re-named and modified the original RQE.RenderTextWithItems() to align tooltips properly for the mouse hovering over them in the steps below the SeparateFocusFrame and this is now called RQE.RenderTextWithItemsSteps() to handle the bits that use FontStrings instead of SimpleHTML (2025.11.11.0120)
+		- Modified UpdateFrame() to only call RQE:CreateStepsText() is quest progress has taken place or a change of the supertrackedquestID, or when the RQE.OkaytoUpdateCreateSteps flag is true, which was set primarily from PLAYER_ENTERING_WORLD (2025.11.11.0631)
+		- Modified RQE:StartPeriodicChecks() function to only call RQE:UpdateSeparateFocusFrame() when either RQE.OkayToUpdateSeparateFF or RQE.OkayToUpdateSeparateFFOnce is true (2025.11.11.0631)
+		- Added some debug print functions for testing (2025.11.11.0631)
+
+	EventManager.lua
+		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
+		- Set RQE.OkayToUpdateSeparateFFOnce to be true when fired from the ADDON_LOADED, PLAYER_ENTERING_WORLD, SUPER_TRACKING_CHANGED events (2025.11.11.0631)
+		- Set RQE.OkaytoUpdateCreateSteps to be true when fired within the PLAYER_ENTERING_WORLD and UI_INFO_MESSAGE if the msgIndex was 311 for quest complete [prior to calling UpdateFrame()] (2025.11.11.0631)
+		- Updated call to RQE:UpdateSeparateFocusFrame() within the QUEST_LOG_UPDATE event function of RQE.handleQuestStatusUpdate() to only be called if player is supertracking a quest that isn't ready for turn in and has a needAmt for that step of < 50 and fulfilled < 5 as this was causing a flicker in the SeparateFocusFrame when rapidly progressing through the fulfilled (2025.11.11.0631)
+
+	QuestingModule.lua
+		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
 
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
+
+	RQE_Sandbox.lua
+		- Updated so that when Sandbox is saved or cleared it will call the RQE:UpdateSeparateFocusFrame() function (2025.11.11.0631)
 
 	RQEDatabase.lua
 		- Added additional Suramar side quests to the DB (2025.11.10.0058)
@@ -22,7 +38,7 @@
 		- Updated the questDB to include the Jandvik's Jarl questline of Suramar (2025.11.10.1926)
 		- Updated half of the "Crafting War" storyline, part of Insurrection, of Suramar quests (2025.11.10.1926)
 		- Added part of the "As Strong As Our Will" storyline, which is part of Insurrection to the questDB (2025.11.11.0120)
-		- Updated macros for qid 40307 and 40334 (steps 1 thru 3) to have the item used in the descriptionText, that also contains a coords block, placed within the macro
+		- Updated macros for qid 40307 and 40334 (steps 1 thru 3) to have the item used in the descriptionText, that also contains a coords block, placed within the macro (2025.11.11.0631)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
@@ -30,6 +46,7 @@
 		- Fixed issue where each description was limited to a single item/spell tooltip. Now additional item/spell tooltips calls will render within the same step's description (2025.11.11.0120)
 		- Added additional color choices for the coordinate block to appear in within the RQEFrame (2025.11.11.0120)
 		- Updated call within the RQE:CreateStepsText to use the modified older render, that works better when dealing with FontStrings instead of SimpleHTML (2025.11.11.0120)
+		- Modified the function call for the RQE:UpdateSeparateFocusFrame() within the RQE.InitializeSeparateFocusFrame() to only fire during initialization such as PLAYER_ENTERING_WORLD (2025.11.11.0631)
 
 
 11.2.5.3 (2025.11.08)
