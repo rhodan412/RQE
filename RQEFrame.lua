@@ -1276,6 +1276,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Create StepsText
 		local raw = StepsText[i] or "No description available."
 		local hasCoords = raw:match("{coords:")
+		local hasHoverables = raw:match("{item:") or raw:match("{spell:")
 
 		local StepText
 		if hasCoords then
@@ -1318,7 +1319,22 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 					href = string.format("coords:%s,%s,%s", x, y, mapID)
 				end
 
-				return string.format('<a href="%s">|cff00ccff[%s]|r</a>', href, label)
+				-- Colors of coordinate link in StepsText
+				-- return string.format('<a href="%s">|cff674ea7[%s]|r</a>', href, label)	-- Blue Marguerite
+				-- return string.format('<a href="%s">|cff9933ff[%s]|r</a>', href, label)	-- Blue Violet
+				-- return string.format('<a href="%s">|cff00ccff[%s]|r</a>', href, label)	-- Deep Sky Blue
+				-- return string.format('<a href="%s">|cffDBA968[%s]|r</a>', href, label)	-- Equator
+				-- return string.format('<a href="%s">|cffc080ff[%s]|r</a>', href, label)	-- Heliotrope
+				-- return string.format('<a href="%s">|cffFFB2FF[%s]|r</a>', href, label)	-- Lavender Rose
+				-- return string.format('<a href="%s">|cff33b3a6[%s]|r</a>', href, label)	-- Light Sea Green
+				-- return string.format('<a href="%s">|cffB1ffd7[%s]|r</a>', href, label)	-- Magic Mint
+				-- return string.format('<a href="%s">|cff7DBE6E[%s]|r</a>', href, label)	-- Mantis
+				-- return string.format('<a href="%s">|cffd7b1ff[%s]|r</a>', href, label)	-- Mauve
+				-- return string.format('<a href="%s">|cffb266ff[%s]|r</a>', href, label)	-- Medium Purple
+				-- return string.format('<a href="%s">|cffb2ffff[%s]|r</a>', href, label)	-- Pale Turquoise
+				-- return string.format('<a href="%s">|cff6c5ddc[%s]|r</a>', href, label)	-- Slate Blue
+				return string.format('<a href="%s">|cff40e0d0[%s]|r</a>', href, label)	-- Turquoise
+				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
 			-- Wrap text with HTML
@@ -1396,7 +1412,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			StepText:SetSize(RQEFrame:GetWidth() - 80, 0)
 			StepText:SetWordWrap(true)
 			StepText:SetText("")
-			RQE.RenderTextWithItems(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
+			RQE.RenderTextWithItemsSteps(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
 		end
 
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
@@ -1605,7 +1621,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				RQE.SaveCoordData()
 
 				-- Call function to handle the coordinate click
-				RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(i) -- Ensure stepIndex is passed here
+				RQE:OnCoordinateClicked()
 			end
 		end)
 	end
@@ -2341,7 +2357,22 @@ function RQE.InitializeSeparateFocusFrame()
 					string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title)
 					or string.format("coords:%s,%s,%s", x, y, mapID)
 
-				return string.format('<a href="%s">|cff00ccff[%s]|r</a>', href, label)
+				-- Colors of coordinate link in SeparateFocusFrame
+				-- return string.format('<a href="%s">|cff674ea7[%s]|r</a>', href, label)	-- Blue Marguerite
+				-- return string.format('<a href="%s">|cff9933ff[%s]|r</a>', href, label)	-- Blue Violet
+				-- return string.format('<a href="%s">|cff00ccff[%s]|r</a>', href, label)	-- Deep Sky Blue
+				-- return string.format('<a href="%s">|cffDBA968[%s]|r</a>', href, label)	-- Equator
+				-- return string.format('<a href="%s">|cffc080ff[%s]|r</a>', href, label)	-- Heliotrope
+				-- return string.format('<a href="%s">|cffFFB2FF[%s]|r</a>', href, label)	-- Lavender Rose
+				-- return string.format('<a href="%s">|cff33b3a6[%s]|r</a>', href, label)	-- Light Sea Green
+				-- return string.format('<a href="%s">|cffB1ffd7[%s]|r</a>', href, label)	-- Magic Mint
+				-- return string.format('<a href="%s">|cff7DBE6E[%s]|r</a>', href, label)	-- Mantis
+				-- return string.format('<a href="%s">|cffd7b1ff[%s]|r</a>', href, label)	-- Mauve
+				-- return string.format('<a href="%s">|cffb266ff[%s]|r</a>', href, label)	-- Medium Purple
+				-- return string.format('<a href="%s">|cffb2ffff[%s]|r</a>', href, label)	-- Pale Turquoise
+				-- return string.format('<a href="%s">|cff6c5ddc[%s]|r</a>', href, label)	-- Slate Blue
+				return string.format('<a href="%s">|cff40e0d0[%s]|r</a>', href, label)	-- Turquoise
+				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
 			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
@@ -2397,19 +2428,6 @@ function RQE.InitializeSeparateFocusFrame()
 		end
 
 		RQE.SeparateStepText:Show()
-
-		-- -- Update the step text dynamically to include the step index
-		-- local stepDescription = (stepData and stepData.description and stepData.description ~= "") and stepData.description	or "No step description available."
-
-		-- -- Function to update the step text dynamically to include the current and final step index
-		-- local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription) -- Format the text to show the current step index and the total number of steps
-		-- RQE.StepIndexForCoordMatch = stepIndex
-		-- RQE.totalStepforQuest = totalSteps
-
-		-- RQE.SeparateStepText:SetText("")  -- clear any previous text
-		-- RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
-
-		-- RQE.SeparateStepText:Show()
 
 		RQE.InitializeSeparateFocusWaypoints()
 
