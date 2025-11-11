@@ -163,8 +163,10 @@ local function InitializeSandbox()
 		SaveSandbox()
 		RQE.AddonSetStepIndex = 1
 		UpdateFrame()
+		RQE.OkayToUpdateSeparateFF = true
 		RQE:StartPeriodicChecks()
 		print("|cff00ff00Saved Sandbox data for Quest ID:|r", id)
+		RQE.OkayToUpdateSeparateFF = false
 	end)
 
 	toggleBtn:SetScript("OnClick", function()
@@ -180,6 +182,7 @@ local function InitializeSandbox()
 			SaveSandbox()
 			RQE.AddonSetStepIndex = 1
 			UpdateFrame()
+			RQE.OkayToUpdateSeparateFF = true
 			RQE:StartPeriodicChecks()
 			editBox:SetText("")
 			print("|cffff6666Removed Sandbox data for quest ID:|r", id)
@@ -190,6 +193,7 @@ local function InitializeSandbox()
 			editBox:SetText("")
 			print("|cffff6666All Sandbox data cleared.|r")
 		end
+		RQE.OkayToUpdateSeparateFF = false
 	end)
 
 	closeBtn:SetScript("OnClick", function() SandboxFrame:Hide() end)
