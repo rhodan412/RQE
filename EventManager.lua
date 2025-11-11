@@ -770,7 +770,7 @@ function RQE.ReagentBagUpdate(...)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
 			end
-			if RQE.db.profile.debugLevel == "INFO" then
+			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE:StartPeriodicChecks() fired from BAG_UPDATE event")
 			end
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
@@ -1468,6 +1468,8 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.isMonitoringCoordinateDistance = false
 	RQE.OkayCheckBonusQuests = false
 	RQE.OkayToUpdateFollowingTrack = true
+	RQE.OkayToUpdateSeparateFF = false
+	RQE.OkayToUpdateSeparateFFOnce = true
 	RQE.NavigationDestinationReached = false
 	RQE.NearestFlightMasterSet = false
 	RQE.QuestAddedForWatchListChanged = false
@@ -2632,6 +2634,8 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+RQE.OkayToUpdateSeparateFFOnce = true
+
 	if isLogin then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)	-- Violet
@@ -2702,7 +2706,11 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 
 			C_Timer.After(1, function()
+				RQE.OkaytoUpdateCreateSteps = true
 				UpdateFrame()
+				C_Timer.After(1, function()
+					RQE.OkaytoUpdateCreateSteps = false
+				end)
 			end)
 
 			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when PLAYER_ENTERING_WORLD event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
@@ -2894,6 +2902,9 @@ function RQE.handleSuperTracking()
 	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 		-- startTime = debugprofilestop()  -- Start timer
 	-- end
+
+	RQE.OkayToUpdateSeparateFFOnce = true
+	RQE.OkayToUpdateSeparateFF = true
 
 	-- Set for situations where the RQEQuestFrame isn't being shown (mythicMode with Blizzard Tracker) and event fires
 	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
@@ -4238,6 +4249,16 @@ function RQE.handleUIInfoMessage(...)
 				RQE.BagNewItemsRunning = false
 			end)
 		end
+
+		if messageType == 311 then
+			if RQE.DelayUpdateCreateSteps then
+				RQE.OkaytoUpdateCreateSteps = true
+				UpdateFrame()
+				C_Timer.After(0.4, function()
+					RQE.DelayUpdateCreateSteps = false
+				end)
+			end
+		end
 	end
 
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
@@ -4275,6 +4296,8 @@ function RQE.handleUIInfoMessage(...)
 			RQE.FocusScrollFrameToTop()
 		end
 	end
+
+	RQE.OkaytoUpdateCreateSteps = false
 end
 
 
@@ -4884,7 +4907,72 @@ function RQE.handleQuestStatusUpdate()
 		-- end
 	-- end
 
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+
+	if isSuperTracking then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local isComplete = C_QuestLog.IsComplete(questID)
+		local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+
+		local skipFocusUpdate = false
+
+		-- ✅ (1) If quest is completed or ready to turn in, skip
+		if isComplete or isReadyForTurnIn then
+			skipFocusUpdate = true
+		else
+			-- ✅ (3) Throttle for large-step progress objectives
+			local dbEntry = RQE.getQuestData(questID)
+			if dbEntry then
+				local stepIndex = RQE.AddonSetStepIndex or 1
+				local step = dbEntry[stepIndex]
+
+				local usesObjectiveCheck, neededAmt = false, 0
+				if step then
+					if step.funct == "CheckDBObjectiveStatus" then
+						usesObjectiveCheck = true
+						neededAmt = tonumber(step.neededAmt and step.neededAmt[1]) or 0
+					end
+					if step.checks then
+						for _, checkSet in ipairs(step.checks) do
+							if checkSet.funct == "CheckDBObjectiveStatus" then
+								usesObjectiveCheck = true
+								neededAmt = tonumber(checkSet.neededAmt and checkSet.neededAmt[1]) or neededAmt
+							end
+						end
+					end
+				end
+
+				-- Fetch fulfilled progress from quest objectives
+				local objectives = C_QuestLog.GetQuestObjectives(questID)
+				local fulfilledAmt = 0
+				if objectives then
+					for _, obj in ipairs(objectives) do
+						if obj.numFulfilled and obj.numRequired and obj.numRequired > 0 then
+							fulfilledAmt = fulfilledAmt + obj.numFulfilled
+						end
+					end
+				end
+
+				-- ✅ Skip Focus update when neededAmt ≥ 50 and fulfilledAmt > 5
+				if usesObjectiveCheck and neededAmt >= 50 and fulfilledAmt > 5 then
+					skipFocusUpdate = true
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format(
+							"[RQE] Skipping Focus Frame update for Quest %d (neededAmt=%d, fulfilledAmt=%d)",
+							questID, neededAmt, fulfilledAmt
+						))
+					end
+				end
+			end
+		end
+
+		-- ✅ Only run Focus Frame update if all conditions allow
+		if not skipFocusUpdate then
+			RQE:UpdateSeparateFocusFrame()
+		elseif RQE.db.profile.debugLevel == "INFO+" then
+			print("[RQE] Focus Frame update skipped due to throttling conditions.")
+		end
+	end
 
 	-- Resets the flag that prevents UNIT_QUEST_LOG_CHANGED from firing immediately following QUEST_WATCH_UPDATE
 	if RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded then
