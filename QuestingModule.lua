@@ -3369,6 +3369,10 @@ function UpdateRQEWorldQuestFrame()
 					-- print("~~~ Remove Quest Watch: 3156 ~~~")
 					C_QuestLog.RemoveQuestWatch(questID)
 				end
+
+				C_Timer.After(0.5, function()
+					RQE:StartPeriodicChecks()
+				end)
 			end)
 
 			-- Positioning logic for WQuestLevelAndName
