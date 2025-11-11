@@ -3,10 +3,15 @@
 	**HIGHLIGHTS**
 		- Added ability to click sections in select quests where a waypoint is generated within the RQEFrame
 		- Fixed Button taint associated with the RQE.RenderTextWithItems() function
+		- Fixed issue with spacing and alignment of both item/spell tooltips and clickable coordinate blocks in the RQEFrame
+		- Each step description can now support multiple item/spell tooltips in a description (previously limited to one). If a description line has item/spell tooltip, clickable coordinate block is NOT permitted.
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
 		- Fixed button taint associated with RQE.RenderTextWithItems() function by changing local hover = CreateFrame("Button", nil, baseParent) to local hover = CreateFrame("Frame", nil, baseParent) (2025.11.10.1926)
+		- Added RQE.BuildHTMLFromRichText() function that renders SimpleHTML for tooltip (2025.11.11.0120)
+		- Simplified the RQE.RenderTextWithItems() function that deals with the spell/items for the SeparateFocusFrame and also using RQE.BuildHTMLFromRichText() (2025.11.11.0120)
+		- Re-created, re-named and modified the original RQE.RenderTextWithItems() to align tooltips properly for the mouse hovering over them in the steps below the SeparateFocusFrame and this is now called RQE.RenderTextWithItemsSteps() to handle the bits that use FontStrings instead of SimpleHTML (2025.11.11.0120)
 
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
@@ -16,10 +21,15 @@
 		- Added remaining campaign and side quest storylines for Suramar to the quest DB except several chapters of 'Insurrection' (2025.11.10.0637)
 		- Updated the questDB to include the Jandvik's Jarl questline of Suramar (2025.11.10.1926)
 		- Updated half of the "Crafting War" storyline, part of Insurrection, of Suramar quests (2025.11.10.1926)
+		- Added part of the "As Strong As Our Will" storyline, which is part of Insurrection to the questDB (2025.11.11.0120)
+		- Updated macros for qid 40307 and 40334 (steps 1 thru 3) to have the item used in the descriptionText, that also contains a coords block, placed within the macro
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
 		- Updated CreateQuestTooltip, RQE:CreateStepsText and RQE.InitializeSeparateFocusFrame() to utilize the RQE.GetSeparateStepText() helper function and updated to provide clickable blocks to create waypoints [such as if a step first requires you to enter a cave, but has no subzone, zone transition] (2025.11.10.1926)
+		- Fixed issue where each description was limited to a single item/spell tooltip. Now additional item/spell tooltips calls will render within the same step's description (2025.11.11.0120)
+		- Added additional color choices for the coordinate block to appear in within the RQEFrame (2025.11.11.0120)
+		- Updated call within the RQE:CreateStepsText to use the modified older render, that works better when dealing with FontStrings instead of SimpleHTML (2025.11.11.0120)
 
 
 11.2.5.3 (2025.11.08)
