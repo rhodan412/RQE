@@ -2700,9 +2700,54 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.infoLog("Line 1691: questInfo.description is ", questInfo.description)
 		RQE.infoLog("Line 1692: questInfo.objectives is ", questInfo.objectives)
 
-		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+		-- Only rebuild steps if we switched quests OR made real progress
+		local shouldRebuild = false
+		local currentSuperTracked = C_SuperTrack.GetSuperTrackedQuestID()
+		local previousQuest = RQE.LastUpdatedQuestID
+		local previousProgress = RQE.LastQuestProgress or 0
+		local currentProgress = 0
+
+		-- Count completed objectives for progress comparison
+		local objectives = C_QuestLog.GetQuestObjectives(currentSuperTracked)
+		if objectives then
+			for _, obj in ipairs(objectives) do
+				if obj.finished then
+					currentProgress = currentProgress + 1
+				end
+			end
+		end
+
+		-- Conditions for rebuild:
+		if currentSuperTracked ~= previousQuest then
+			shouldRebuild = true
+		elseif currentProgress ~= previousProgress then
+			shouldRebuild = true
+		end
+
+		if shouldRebuild and RQE.CreateStepsText then
 			RQE:ClearStepsTextInFrame()
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+
+			-- Remember what we last built for
+			RQE.LastUpdatedQuestID = currentSuperTracked
+			RQE.LastQuestProgress = currentProgress
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Updating RQE:CreateStepsText()")
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Skipped re-creating steps; no quest change or progress made.")
+			end
+		end
+	end
+
+	-- Updates/creates steps only following PLAYER_ENTERING_WORLD event function
+	if questInfo then
+		if RQE.OkaytoUpdateCreateSteps then
+			if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+				RQE:ClearStepsTextInFrame()
+				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+			end
 		end
 	end
 
@@ -6634,6 +6679,7 @@ function RQE:StartPeriodicChecks()
 						print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
 					end
 					-- Only advance if result is true
+					RQE.OkayToUpdateSeparateFF = true
 					stepIndex = i + 1
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6731,6 +6777,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Conditional triggered; auto-passing stepIndex:", i)
 				end
+				RQE.OkayToUpdateSeparateFF = true
 				stepIndex = i + 1
 				break
 			end
@@ -6781,6 +6828,7 @@ function RQE:StartPeriodicChecks()
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
 			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 			return  -- Skip waypoint creation only
 		else
@@ -6832,7 +6880,11 @@ function RQE:StartPeriodicChecks()
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
-	RQE:UpdateSeparateFocusFrame()
+	if RQE.OkayToUpdateSeparateFF or RQE.OkayToUpdateSeparateFFOnce then
+		RQE:UpdateSeparateFocusFrame()
+		RQE.OkayToUpdateSeparateFF = false
+		RQE.OkayToUpdateSeparateFFOnce = false
+	end
 end
 
 
@@ -12876,4 +12928,63 @@ function RQE.PrintSupertrackedQuest()
 	end
 
 	tprintTabs("},", 2)
+end
+
+
+-- Debug utility: Prints channeling info for the player
+function RQE.CheckChannelInfo()
+	local name, displayName, textureID, startTimeMs, endTimeMs, isTradeskill,
+		  notInterruptible, spellID, isEmpowered, numEmpowerStages = UnitChannelInfo("player")
+
+	if not name then
+		print("|cff00ff00[RQE]|r You are not currently channeling any spell.")
+		return
+	end
+
+	local duration = (endTimeMs - startTimeMs) / 1000
+	local timeRemaining = (endTimeMs / 1000) - GetTime()
+
+	print("|cff00ff00[RQE]|r Channel Info:")
+	print("------------------------------------------------")
+	print(string.format("Spell Name: %s", name or "nil"))
+	print(string.format("Display Name: %s", displayName or "nil"))
+	print(string.format("Spell ID: %s", spellID or "nil"))
+	print(string.format("Texture: %s", textureID or "nil"))
+	print(string.format("Start Time (ms): %s", startTimeMs or "nil"))
+	print(string.format("End Time (ms): %s", endTimeMs or "nil"))
+	print(string.format("Duration (s): %.2f", duration))
+	print(string.format("Time Remaining (s): %.2f", timeRemaining))
+	print(string.format("Is Tradeskill: %s", tostring(isTradeskill)))
+	print(string.format("Not Interruptible: %s", tostring(notInterruptible)))
+	print(string.format("Is Empowered: %s", tostring(isEmpowered)))
+	print(string.format("Empower Stages: %s", tostring(numEmpowerStages)))
+	print("------------------------------------------------")
+end
+
+
+-- Debug utility: Prints channeling info for the player
+function RQE.CheckCastingInfo()
+	local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitChannelInfo("player")
+
+	if not name then
+		print("|cff00ff00[RQE]|r You are not currently casting any spell.")
+		return
+	end
+
+	local duration = (endTimeMs - startTimeMs) / 1000
+	local timeRemaining = (endTimeMs / 1000) - GetTime()
+
+	print("|cff00ff00[RQE]|r Channel Info:")
+	print("------------------------------------------------")
+	print(string.format("Spell Name: %s", name or "nil"))
+	print(string.format("Text: %s", text or "nil"))
+	print(string.format("Spell ID: %s", spellID or "nil"))
+	print(string.format("Texture: %s", texture or "nil"))
+	print(string.format("Start Time (ms): %s", startTimeMs or "nil"))
+	print(string.format("End Time (ms): %s", endTimeMs or "nil"))
+	print(string.format("Duration (s): %.2f", duration))
+	print(string.format("Time Remaining (s): %.2f", timeRemaining))
+	print(string.format("Is Tradeskill: %s", tostring(isTradeskill)))
+	print(string.format("Not Interruptible: %s", tostring(notInterruptible)))
+	print("------------------------------------------------")
 end
