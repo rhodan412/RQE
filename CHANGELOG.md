@@ -6,6 +6,7 @@
 		- Fixed issue with spacing and alignment of both item/spell tooltips and clickable coordinate blocks in the RQEFrame
 		- Each step description can now support multiple item/spell tooltips in a description (previously limited to one). If a description line has item/spell tooltip, clickable coordinate block is NOT permitted.
 		- Significant performance updates as stepsText and SeparateFocusFrame were being called too frequently mainly from UpdateFrame()
+		- Added campaigns for Val'sharah, Azsuna, Highmountain and Stormheim to include side quests, Suramar campaign and side quests and Suramar's  Insurrection campaign quests to the DB
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -39,6 +40,7 @@
 		- Updated half of the "Crafting War" storyline, part of Insurrection, of Suramar quests (2025.11.10.1926)
 		- Added part of the "As Strong As Our Will" storyline, which is part of Insurrection to the questDB (2025.11.11.0120)
 		- Updated macros for qid 40307 and 40334 (steps 1 thru 3) to have the item used in the descriptionText, that also contains a coords block, placed within the macro (2025.11.11.0631)
+		- Completed campaign and side quests of Suramar including Insurrection campaign (2025.11.11.0821)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
