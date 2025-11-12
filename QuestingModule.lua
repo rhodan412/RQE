@@ -2479,6 +2479,8 @@ function UpdateRQEQuestFrame()
 				QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
 				QuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 				-- QuestLogIndexButton:SetScript("OnClick", function(self, button)	-- changed as was causing issues when Mythic/Scenario mode was enabled the button wouldn't click
+					RQE.OkaytoUpdateCreateSteps = true
+
 					-- Make sure player is actually hovering over the button
 					if not self:IsMouseOver() then return end
 
