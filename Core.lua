@@ -2656,6 +2656,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	-- Validate questID before proceeding
 	if not questID or type(questID) ~= "number" then
+		RQE.OkayToUpdateSeparateFF = false
 		return
 	end
 
@@ -2671,6 +2672,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	if not StepsText or not CoordsText or not MapIDs then
+		RQE.OkayToUpdateSeparateFF = false
 		return
 	end
 
@@ -2728,6 +2730,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			RQE:ClearStepsTextInFrame()
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
+			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
 			-- Remember what we last built for
 			RQE.LastUpdatedQuestID = currentSuperTracked
 			RQE.LastQuestProgress = currentProgress
@@ -2741,12 +2745,16 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end
 	end
 
+	RQE.RebuildOnlyOnce = false
+
 	-- Updates/creates steps only following PLAYER_ENTERING_WORLD event function
 	if questInfo then
 		if RQE.OkaytoUpdateCreateSteps then
 			if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
 				RQE:ClearStepsTextInFrame()
 				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+
+				if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
 			end
 		end
 	end
@@ -2872,6 +2880,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 		end
 	end
+
+	RQE.OkayToUpdateSeparateFF = false
 
 	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
@@ -11463,14 +11473,24 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 						-- Try to match itemID if Blizzard provides it
 						if obj.type == "item" and obj.itemID and obj.itemID == itemID then
 							finalQuantity = required - fulfilled
+
+							if (not finalQuantity or finalQuantity <= 0) then
+								finalQuantity = required
+								print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
+							end
 						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
 							finalQuantity = required - fulfilled
+
+							if (not finalQuantity or finalQuantity <= 0) then
+								finalQuantity = required
+								print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
+							end
 						end
 
 						if finalQuantity and finalQuantity > 0 then
 							if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-								print("Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
-								print("Resolved Quantity = " .. finalQuantity)
+								print("|cffffff00[RQE]|r Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
+								print("|cff00ff00[RQE]|r Resolved Quantity = " .. finalQuantity)
 							end
 							break -- stop once we find a match
 						end
@@ -11491,9 +11511,9 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	end
 
 	-- Final check
-	if not finalQuantity or finalQuantity <= 0 then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Invalid or zero quantity. Aborting.")
+	if not finalQuantity or finalQuantity < 0 then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Invalid or negative quantity. Aborting.")
 		end
 		return
 	end
@@ -11621,7 +11641,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 					local quantityToBuy = min(quantityAvailable, totalQuantityNeeded)
 					totalCost = totalCost + (quantityToBuy * unitPrice)
 					totalQuantityNeeded = totalQuantityNeeded - quantityToBuy
-					print("Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
+					print("|cFFFF3333[RQE]|r Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
 				end
 				index = index + 1
 			end
@@ -11632,7 +11652,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 				if not itemLink then
 					itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
 				end
-				print("Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
+				print("|cFFFF3333[RQE]|r Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
 				-- Display the confirmation popup with the total cost
 				StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
 					text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
