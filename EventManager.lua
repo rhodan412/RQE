@@ -1477,6 +1477,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.QuestTrackerHiddenSuperTrackedPressed = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.QuestWatchUpdateFired = false
+	RQE.RebuildOnlyOnce = false
 	RQE.ReClickQuestLogIndexButtonAfterCombat = false
 	RQE.ReEnableRQEFrames = false
 	RQE.ShapeshiftUpdated = false
@@ -2634,7 +2635,7 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
-RQE.OkayToUpdateSeparateFFOnce = true
+	-- RQE.OkayToUpdateSeparateFFOnce = true
 
 	if isLogin then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
@@ -3417,6 +3418,13 @@ function RQE.handleQuestAccepted(...)
 			end
 			UpdateWorldQuestTrackingForMap(playerMapID)
 		end
+	end
+
+	local isComplete = C_QuestLog.IsComplete(RQE.LastAcceptedQuest)
+	local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(RQE.LastAcceptedQuest)
+
+	if isComplete or isReadyForTurnIn then
+		RQE.RebuildOnlyOnce = true
 	end
 
 	-- print("~~~ RQE:QuestType(): 3004 ~~~")
@@ -4251,6 +4259,8 @@ function RQE.handleUIInfoMessage(...)
 		end
 
 		if messageType == 311 then
+			RQE.RebuildOnlyOnce = true
+
 			if RQE.DelayUpdateCreateSteps then
 				RQE.OkaytoUpdateCreateSteps = true
 				UpdateFrame()
@@ -5320,6 +5330,13 @@ function RQE.handleQuestComplete()
 	RQE:QuestComplete(questID)
 
 	-- Update RQEFrame and Refresh Quest Tracker
+	local isComplete = C_QuestLog.IsComplete(questID)
+	local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+
+	if isComplete or isReadyForTurnIn then
+		RQE.RebuildOnlyOnce = true
+	end
+
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
 	-- print("~~~ RQE:QuestType(): 4617 ~~~")
 	RQE:QuestType()
@@ -5415,6 +5432,7 @@ function RQE.handleQuestAutoComplete(...)
 	RQE:QuestComplete(questID)
 
 	-- Update RQEFrame and Refresh Quest Tracker
+	RQE.RebuildOnlyOnce = true
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	-- print("~~~ RQE:QuestType(): 4700 ~~~")
 	RQE:QuestType()
@@ -5514,7 +5532,7 @@ function RQE.handleQuestRemoved(...)
 	if not InCombatLockdown() then
 		RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
 	end
-	
+
 	if questID == RQE.searchedQuestID then
 		RQE.DontUpdateFrame = false
 
@@ -5647,6 +5665,7 @@ function RQE.handleQuestWatchUpdate(...)
 
 	-- Store the questID for tracking
 	RQE.LastQuestWatchQuestID = questID
+	RQE.eventQuestID = questID
 	RQE.QuestWatchUpdateFired = true
 
 	-- Update Display of Memory Usage of Addon
@@ -5884,6 +5903,19 @@ function RQE.handleQuestWatchUpdate(...)
 		C_Timer.After(0.5, function()
 			if RQE.QuestWatchUpdateFired then
 				RQE.QuestWatchUpdateFired = false	-- Reset the flag to false if it is currently marked as true
+			end
+
+			if RQE.eventQuestID then
+				local isComplete = C_QuestLog.IsComplete(RQE.eventQuestID)
+				local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(RQE.eventQuestID)
+
+				if isComplete or isReadyForTurnIn then
+					RQE.RebuildOnlyOnce = true
+					C_Timer.After(1.3, function()
+						RQE:UpdateSeparateFocusFrame()
+						RQE.RebuildOnlyOnce = false
+					end)
+				end
 			end
 			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		end)
@@ -6176,6 +6208,7 @@ function RQE.handleQuestTurnIn(...)
 			end
 
 			RQE:ClearSeparateFocusFrame()
+			RQE.RebuildOnlyOnce = true
 			UpdateFrame()
 
 			-- Update the visibility or content of RQEFrame as needed
@@ -6351,6 +6384,8 @@ function RQE.handleQuestFinished()
 			DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)		-- Pink
 		end
 	end
+
+	RQE.RebuildOnlyOnce = true
 
 	-- Determine questID based on various fallbacks
 	local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
