@@ -4671,28 +4671,50 @@ function RQE.RenderTextWithItemTags(text)
 	return text
 end
 
+-- Converts WoW inline markup to SimpleHTML-friendly markup
+function RQE.ApplyInlineMarkup(s)
+	if not s or s == "" then return s end
 
--- Converts rich text into properly spaced SimpleHTML content
+	-- |cAARRGGBB ... |r  →  <font color="#RRGGBB"> ... </font>
+	s = s:gsub("|c(%x%x)(%x%x%x%x%x%x)(.-)|r", function(_aa, rgb, inner)
+		return string.format('<font color="#%s">%s</font>', rgb, inner)
+	end)
+
+	-- normalize newlines → <br> (single) or <br><br> (paragraph)
+	s = s:gsub("\r\n", "\n")
+	s = s:gsub("\n\n+", "<br><br>")
+	s = s:gsub("\n", "<br>")
+
+	return s
+end
+
+
 function RQE.BuildHTMLFromRichText(raw)
 	if not raw or raw == "" then
-		return '<html><body><p>No description available.</p></body></html>'
+		return "<HTML><BODY><P>No description available.</P></BODY></HTML>"
 	end
 
-	local html = raw
+	-- Start with inline WoW color codes
+	local html = RQE.ApplyInlineMarkup(raw)
 
-	-- Items
+	-- Convert \r\n and \n\n to HTML breaks
+	html = html:gsub("\r\n", "\n")
+	html = html:gsub("\n\n+", "<BR><BR>")
+	html = html:gsub("\n", "<BR>")
+
+	-- Convert {item:ID:Name} → clickable
 	html = html:gsub("{item:(%d+):([^}]+)}", function(itemID, name)
 		local shown = string.format("|cffff66cc[%s]|r", name)
-		return string.format('<a href="item:%s">%s</a>', itemID, shown)
+		return string.format('<A HREF="item:%s">%s</A>', itemID, shown)
 	end)
 
-	-- Spells
+	-- Convert {spell:ID:Name} → clickable
 	html = html:gsub("{spell:(%d+):([^}]+)}", function(spellID, name)
 		local shown = string.format("|cff66ccff[%s]|r", name)
-		return string.format('<a href="spell:%s">%s</a>', spellID, shown)
+		return string.format('<A HREF="spell:%s">%s</A>', spellID, shown)
 	end)
 
-	-- Coords
+	-- Convert {coords:x,y,mapID;waypointTitle:"Title"} → clickable turquoise link
 	html = html:gsub("{coords:([^}]+)}", function(data)
 		local x, y, mapID, title =
 			data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
@@ -4703,16 +4725,13 @@ function RQE.BuildHTMLFromRichText(raw)
 
 		local label = string.format("coords: %.2f, %.2f map %s", x, y, mapID)
 		local href = title and
-			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
-			string.format("coords:%s,%s,%s", x, y, mapID)
-		return string.format('<a href="%s">|cff40e0d0[%s]|r</a>', href, label)
+			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title)
+			or string.format("coords:%s,%s,%s", x, y, mapID)
+		return string.format('<A HREF="%s">|cff40e0d0[%s]|r</A>', href, label)
 	end)
 
-	-- Fixes possibly "scrunching":
-	html = html:gsub("\n+", "<br><br><font color='#000000'>.</font><br><br>")
-
-	-- Wrap the body content
-	return string.format('<html><body><p>%s</p></body></html>', html)
+	-- Wrap in uppercase HTML tags
+	return string.format("<HTML><BODY><P>%s</P></BODY></HTML>", html)
 end
 
 
