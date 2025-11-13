@@ -1337,10 +1337,18 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
-			-- Wrap text with HTML
-			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
-			StepText:SetText(wrappedHTML)
-			StepText.htmlText = wrappedHTML  -- store HTML string for safe retrieval later
+-- convert WoW codes/newlines, keep your coords coloring intact
+html = RQE.ApplyInlineMarkup(html)
+
+-- IMPORTANT: uppercase wrappers for SimpleHTML
+local wrappedHTML = string.format('<HTML><BODY><P>%s</P></BODY></HTML>', html)
+StepText:SetText(wrappedHTML)
+StepText.htmlText = wrappedHTML
+
+			-- -- Wrap text with HTML
+			-- local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
+			-- StepText:SetText(wrappedHTML)
+			-- StepText.htmlText = wrappedHTML  -- store HTML string for safe retrieval later
 
 			-- Give it a provisional height so the layout engine reserves space
 			StepText:SetHeight(20)
@@ -2375,8 +2383,16 @@ function RQE.InitializeSeparateFocusFrame()
 				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
-			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
-			StepText:SetText(wrappedHTML)
+-- convert WoW codes/newlines, keep your coords coloring intact
+html = RQE.ApplyInlineMarkup(html)
+
+-- IMPORTANT: uppercase wrappers for SimpleHTML
+local wrappedHTML = string.format('<HTML><BODY><P>%s</P></BODY></HTML>', html)
+StepText:SetText(wrappedHTML)
+StepText.htmlText = wrappedHTML
+
+			-- local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
+			-- StepText:SetText(wrappedHTML)
 
 			-- Adjust height once rendered
 			C_Timer.After(0.05, function()
