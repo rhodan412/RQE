@@ -2345,23 +2345,67 @@ end
 
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
-	-- Check if the SeparateFocusFrame exists
-	if not RQE.SeparateFocusFrame then
+	-- If the frame doesn't exist, nothing to clear
+	if not RQE.SeparateFocusFrame or not RQE.SeparateContentFrame then
 		return
 	end
 
-	-- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
-	RQE.InitializeSeparateFocusFrame()
-
-	-- Ensure SeparateStepText exists
-	if not RQE.SeparateStepText then
-		RQE.InitializeSeparateFocusFrame()
-	end
-
+	-- Hide and remove the main SimpleHTML/FontString (first paragraph)
 	if RQE.SeparateStepText then
-		RQE.SeparateStepText:SetText("No step description available for this step.")
+		RQE.SeparateStepText:Hide()
+		RQE.SeparateStepText:SetParent(nil)
+		RQE.SeparateStepText = nil
 	end
+
+	-- Hide and remove ALL dynamically created children (including red warning FontStrings)
+	for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
+		if child and child.Hide then
+			child:Hide()
+		end
+	end
+
+	-- Clear any stray FontStrings that might be regions rather than children
+	for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+		if region.GetObjectType and region:GetObjectType() == "FontString" then
+			region:Hide()
+			region:SetText("")
+		end
+	end
+
+	-- Reset the content area height so scrolling resets
+	RQE.SeparateContentFrame:SetHeight(1000)
+
+	-- Optional: show a placeholder message (retains your original intended behavior)
+	RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+	RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+	RQE.SeparateStepText:SetJustifyH("LEFT")
+	RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
+	RQE.SeparateStepText:SetWordWrap(true)
+	RQE.SeparateStepText:SetText("No step description available for this step.")
+	RQE.SeparateStepText:Show()
 end
+
+
+-- -- Function to clear the contents of the SeparateFocusFrame
+-- function RQE:ClearSeparateFocusFrame()
+	-- -- Check if the SeparateFocusFrame exists
+	-- if not RQE.SeparateFocusFrame then
+		-- return
+	-- end
+
+	-- -- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
+	-- RQE.InitializeSeparateFocusFrame()
+
+	-- -- Ensure SeparateStepText exists
+	-- if not RQE.SeparateStepText then
+		-- RQE.InitializeSeparateFocusFrame()
+	-- end
+
+	-- if RQE.SeparateStepText then
+		-- RQE.SeparateStepText:SetText("No step description available for this step.")
+	-- end
+-- end
 
 
 -- Colorization of the RQEFrame
@@ -2656,7 +2700,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	-- Validate questID before proceeding
 	if not questID or type(questID) ~= "number" then
-		RQE.OkayToUpdateSeparateFF = false
 		return
 	end
 
@@ -2672,7 +2715,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	if not StepsText or not CoordsText or not MapIDs then
-		RQE.OkayToUpdateSeparateFF = false
 		return
 	end
 
@@ -2702,60 +2744,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		RQE.infoLog("Line 1691: questInfo.description is ", questInfo.description)
 		RQE.infoLog("Line 1692: questInfo.objectives is ", questInfo.objectives)
 
-		-- Only rebuild steps if we switched quests OR made real progress
-		local shouldRebuild = false
-		local currentSuperTracked = C_SuperTrack.GetSuperTrackedQuestID()
-		local previousQuest = RQE.LastUpdatedQuestID
-		local previousProgress = RQE.LastQuestProgress or 0
-		local currentProgress = 0
-
-		-- Count completed objectives for progress comparison
-		local objectives = C_QuestLog.GetQuestObjectives(currentSuperTracked)
-		if objectives then
-			for _, obj in ipairs(objectives) do
-				if obj.finished then
-					currentProgress = currentProgress + 1
-				end
-			end
-		end
-
-		-- Conditions for rebuild:
-		if currentSuperTracked ~= previousQuest then
-			shouldRebuild = true
-		elseif currentProgress ~= previousProgress then
-			shouldRebuild = true
-		end
-
-		if shouldRebuild and RQE.CreateStepsText then
+		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
 			RQE:ClearStepsTextInFrame()
 			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
-
-			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
-
-			-- Remember what we last built for
-			RQE.LastUpdatedQuestID = currentSuperTracked
-			RQE.LastQuestProgress = currentProgress
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Updating RQE:CreateStepsText()")
-			end
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Skipped re-creating steps; no quest change or progress made.")
-			end
-		end
-	end
-
-	RQE.RebuildOnlyOnce = false
-
-	-- Updates/creates steps only following PLAYER_ENTERING_WORLD event function
-	if questInfo then
-		if RQE.OkaytoUpdateCreateSteps then
-			if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
-				RQE:ClearStepsTextInFrame()
-				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
-
-				if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
-			end
 		end
 	end
 
@@ -2880,8 +2871,6 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 		end
 	end
-
-	RQE.OkayToUpdateSeparateFF = false
 
 	-- Check to see if the RQEFrame should be cleared
 	RQE:ShouldClearFrame()
@@ -4671,50 +4660,28 @@ function RQE.RenderTextWithItemTags(text)
 	return text
 end
 
--- Converts WoW inline markup to SimpleHTML-friendly markup
-function RQE.ApplyInlineMarkup(s)
-	if not s or s == "" then return s end
 
-	-- |cAARRGGBB ... |r  →  <font color="#RRGGBB"> ... </font>
-	s = s:gsub("|c(%x%x)(%x%x%x%x%x%x)(.-)|r", function(_aa, rgb, inner)
-		return string.format('<font color="#%s">%s</font>', rgb, inner)
-	end)
-
-	-- normalize newlines → <br> (single) or <br><br> (paragraph)
-	s = s:gsub("\r\n", "\n")
-	s = s:gsub("\n\n+", "<br><br>")
-	s = s:gsub("\n", "<br>")
-
-	return s
-end
-
-
+-- Converts rich text into properly spaced SimpleHTML content
 function RQE.BuildHTMLFromRichText(raw)
 	if not raw or raw == "" then
-		return "<HTML><BODY><P>No description available.</P></BODY></HTML>"
+		return '<html><body><p>No description available.</p></body></html>'
 	end
 
-	-- Start with inline WoW color codes
-	local html = RQE.ApplyInlineMarkup(raw)
+	local html = raw
 
-	-- Convert \r\n and \n\n to HTML breaks
-	html = html:gsub("\r\n", "\n")
-	html = html:gsub("\n\n+", "<BR><BR>")
-	html = html:gsub("\n", "<BR>")
-
-	-- Convert {item:ID:Name} → clickable
+	-- Items
 	html = html:gsub("{item:(%d+):([^}]+)}", function(itemID, name)
 		local shown = string.format("|cffff66cc[%s]|r", name)
-		return string.format('<A HREF="item:%s">%s</A>', itemID, shown)
+		return string.format('<a href="item:%s">%s</a>', itemID, shown)
 	end)
 
-	-- Convert {spell:ID:Name} → clickable
+	-- Spells
 	html = html:gsub("{spell:(%d+):([^}]+)}", function(spellID, name)
 		local shown = string.format("|cff66ccff[%s]|r", name)
-		return string.format('<A HREF="spell:%s">%s</A>', spellID, shown)
+		return string.format('<a href="spell:%s">%s</a>', spellID, shown)
 	end)
 
-	-- Convert {coords:x,y,mapID;waypointTitle:"Title"} → clickable turquoise link
+	-- Coords
 	html = html:gsub("{coords:([^}]+)}", function(data)
 		local x, y, mapID, title =
 			data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
@@ -4725,13 +4692,16 @@ function RQE.BuildHTMLFromRichText(raw)
 
 		local label = string.format("coords: %.2f, %.2f map %s", x, y, mapID)
 		local href = title and
-			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title)
-			or string.format("coords:%s,%s,%s", x, y, mapID)
-		return string.format('<A HREF="%s">|cff40e0d0[%s]|r</A>', href, label)
+			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
+			string.format("coords:%s,%s,%s", x, y, mapID)
+		return string.format('<a href="%s">|cff40e0d0[%s]|r</a>', href, label)
 	end)
 
-	-- Wrap in uppercase HTML tags
-	return string.format("<HTML><BODY><P>%s</P></BODY></HTML>", html)
+	-- Fixes possibly "scrunching":
+	html = html:gsub("\n+", "<br><br><font color='#000000'>.</font><br><br>")
+
+	-- Wrap the body content
+	return string.format('<html><body><p>%s</p></body></html>', html)
 end
 
 
@@ -6708,7 +6678,6 @@ function RQE:StartPeriodicChecks()
 						print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
 					end
 					-- Only advance if result is true
-					RQE.OkayToUpdateSeparateFF = true
 					stepIndex = i + 1
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -6806,7 +6775,6 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Conditional triggered; auto-passing stepIndex:", i)
 				end
-				RQE.OkayToUpdateSeparateFF = true
 				stepIndex = i + 1
 				break
 			end
@@ -6857,7 +6825,6 @@ function RQE:StartPeriodicChecks()
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
 			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
-
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 			return  -- Skip waypoint creation only
 		else
@@ -6909,11 +6876,7 @@ function RQE:StartPeriodicChecks()
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
-	if RQE.OkayToUpdateSeparateFF or RQE.OkayToUpdateSeparateFFOnce then
-		RQE:UpdateSeparateFocusFrame()
-		RQE.OkayToUpdateSeparateFF = false
-		RQE.OkayToUpdateSeparateFFOnce = false
-	end
+	RQE:UpdateSeparateFocusFrame()
 end
 
 
