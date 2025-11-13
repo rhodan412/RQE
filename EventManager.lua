@@ -3420,11 +3420,15 @@ function RQE.handleQuestAccepted(...)
 		end
 	end
 
-	local isComplete = C_QuestLog.IsComplete(RQE.LastAcceptedQuest)
-	local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(RQE.LastAcceptedQuest)
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if isComplete or isReadyForTurnIn then
-		RQE.RebuildOnlyOnce = true
+	if isSuperTracking then
+		local isComplete = C_QuestLog.IsComplete(RQE.LastAcceptedQuest)
+		local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(RQE.LastAcceptedQuest)
+
+		if isComplete or isReadyForTurnIn then
+			RQE.RebuildOnlyOnce = true
+		end
 	end
 
 	-- print("~~~ RQE:QuestType(): 3004 ~~~")
@@ -5330,11 +5334,15 @@ function RQE.handleQuestComplete()
 	RQE:QuestComplete(questID)
 
 	-- Update RQEFrame and Refresh Quest Tracker
-	local isComplete = C_QuestLog.IsComplete(questID)
-	local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if isComplete or isReadyForTurnIn then
-		RQE.RebuildOnlyOnce = true
+	if isSuperTracking then
+		local isComplete = C_QuestLog.IsComplete(questID)
+		local isReadyForTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+
+		if isComplete or isReadyForTurnIn then
+			RQE.RebuildOnlyOnce = true
+		end
 	end
 
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
