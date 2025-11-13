@@ -2484,6 +2484,8 @@ function UpdateRQEQuestFrame()
 					-- Make sure player is actually hovering over the button
 					if not self:IsMouseOver() then return end
 
+					RQE:ClearSeparateFocusFrame()
+
 					-- Check if the player is in combat and return if an automatic click
 					if InCombatLockdown() then
 						if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
@@ -3371,10 +3373,6 @@ function UpdateRQEWorldQuestFrame()
 					-- print("~~~ Remove Quest Watch: 3156 ~~~")
 					C_QuestLog.RemoveQuestWatch(questID)
 				end
-
-				C_Timer.After(0.5, function()
-					RQE:StartPeriodicChecks()
-				end)
 			end)
 
 			-- Positioning logic for WQuestLevelAndName
