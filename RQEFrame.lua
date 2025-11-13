@@ -1337,18 +1337,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
--- convert WoW codes/newlines, keep your coords coloring intact
-html = RQE.ApplyInlineMarkup(html)
-
--- IMPORTANT: uppercase wrappers for SimpleHTML
-local wrappedHTML = string.format('<HTML><BODY><P>%s</P></BODY></HTML>', html)
-StepText:SetText(wrappedHTML)
-StepText.htmlText = wrappedHTML
-
-			-- -- Wrap text with HTML
-			-- local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
-			-- StepText:SetText(wrappedHTML)
-			-- StepText.htmlText = wrappedHTML  -- store HTML string for safe retrieval later
+			-- Wrap text with HTML
+			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
+			StepText:SetText(wrappedHTML)
+			StepText.htmlText = wrappedHTML  -- store HTML string for safe retrieval later
 
 			-- Give it a provisional height so the layout engine reserves space
 			StepText:SetHeight(20)
@@ -2337,7 +2329,15 @@ function RQE.InitializeSeparateFocusFrame()
 		local hasCoords = formattedText:match("{coords:")
 
 		if hasCoords then
-			-- 🧭 SimpleHTML version (for clickable hyperlinks)
+			-- ✅ Always use SimpleHTML for the first paragraph; use FontStrings only for additional lines
+			local paragraphs = {}
+			local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n")
+			for p in cleaned:gmatch("([^\n]+)") do
+				table.insert(paragraphs, p)
+			end
+			if #paragraphs == 0 then table.insert(paragraphs, cleaned) end
+
+			-- 🧭 Create SimpleHTML for the first paragraph
 			local StepText = CreateFrame("SimpleHTML", nil, RQE.SeparateContentFrame)
 			RQE.SeparateStepText = StepText
 			StepText:SetFontObject("p", GameFontNormal)
@@ -2351,8 +2351,18 @@ function RQE.InitializeSeparateFocusFrame()
 			StepText:SetTextColor("h2", 1, 1, 0.8)
 			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
 
-			-- Replace coords pattern with a clickable HTML link (supports quoted waypointTitle)
-			local html = formattedText:gsub("{coords:([^}]+)}", function(data)
+			local html = paragraphs[1]
+
+			-- 🔗 Replace {item}, {spell}, {coords}
+			html = html:gsub("{item:(%d+):([^}]+)}", function(id, name)
+				return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', id, name)
+			end)
+
+			html = html:gsub("{spell:(%d+):([^}]+)}", function(id, name)
+				return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, name)
+			end)
+
+			html = html:gsub("{coords:([^}]+)}", function(data)
 				local x, y, mapID, title =
 					data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
 				if not x then
@@ -2383,22 +2393,9 @@ function RQE.InitializeSeparateFocusFrame()
 				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
--- convert WoW codes/newlines, keep your coords coloring intact
-html = RQE.ApplyInlineMarkup(html)
-
--- IMPORTANT: uppercase wrappers for SimpleHTML
-local wrappedHTML = string.format('<HTML><BODY><P>%s</P></BODY></HTML>', html)
-StepText:SetText(wrappedHTML)
-StepText.htmlText = wrappedHTML
-
-			-- local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
-			-- StepText:SetText(wrappedHTML)
-
-			-- Adjust height once rendered
-			C_Timer.After(0.05, function()
-				local h = StepText:GetContentHeight()
-				StepText:SetHeight((h and h > 0) and (h + 4) or 20)
-			end)
+			html = html:gsub("\n", "<br>")
+			local wrappedHTML = string.format("<html><body><p>%s</p></body></html>", html)
+			StepText:SetText(wrappedHTML)
 
 			-- Hyperlink click handler
 			StepText:SetScript("OnHyperlinkClick", function(self, link, text, button)
@@ -2431,16 +2428,95 @@ StepText.htmlText = wrappedHTML
 			StepText:SetScript("OnHyperlinkLeave", function()
 				GameTooltip:Hide()
 			end)
+
+			-- Adjust height after rendering
+			C_Timer.After(0.05, function()
+				local h = StepText:GetContentHeight() or 20
+				StepText:SetHeight(h + 6)
+			end)
+
+			-- ✅ Handle following paragraphs (if \n exists)
+			if #paragraphs > 1 then
+				C_Timer.After(0.05, function()
+					local htmlHeight = StepText:GetContentHeight() or StepText:GetHeight() or 20
+					local extraPadding = math.max(20, htmlHeight * 0.3) -- at least 20px, scales a bit with height
+					local yOffset = -(htmlHeight + extraPadding)
+
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format("RQE DEBUG: SimpleHTML height calculated as %.2f, yOffset set to %.2f", htmlHeight, yOffset))
+					end
+
+					for i = 2, #paragraphs do
+						local line = paragraphs[i]
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print(string.format("RQE DEBUG: Rendering paragraph #%d below HTML: %s", i, line))
+						end
+
+						local fs = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+						fs:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, yOffset)
+						fs:SetWidth(RQE.SeparateContentFrame:GetWidth() - 70)
+						fs:SetJustifyH("LEFT")
+						fs:SetTextColor(1, 1, 0.8)
+						fs:SetWordWrap(true)
+						fs:SetText(line)
+
+						-- Render hover-capable markup (items/spells, etc.)
+						RQE.RenderTextWithItemsSteps(fs, line, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.SeparateContentFrame)
+
+						local h2 = fs.GetStringHeight and fs:GetStringHeight() or 16
+						yOffset = yOffset - (h2 + 8)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print(string.format("RQE DEBUG: FontString height %.2f, next yOffset %.2f", h2, yOffset))
+						end
+					end
+				end)
+			end
 		else
-			-- 🧾 Standard fontstring version
-			local StepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.SeparateStepText = StepText
-			StepText:SetJustifyH("LEFT")
-			StepText:SetTextColor(1, 1, 0.8)
-			StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
-			StepText:SetWordWrap(true)
-			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-			RQE.RenderTextWithItems(StepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8})
+			if RQE.db.profile.debugLevel == "INFO+" then
+				-- 🧾 Standard FontString version (no coords, still supports items/spells + line breaks)
+				print("RQE DEBUG: Entered SeparateFocusFrame FontString (no coords) block")
+			end
+
+			-- Normalize and split by newline
+			local paragraphs = {}
+			local cleaned = formattedText:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("\\n", "\n")
+			for p in cleaned:gmatch("([^\n]+)") do
+				table.insert(paragraphs, p)
+			end
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE DEBUG: FontString paragraph count:", #paragraphs)
+			end
+
+			-- Safety: if no paragraphs found, treat whole thing as one
+			if #paragraphs == 0 then
+				table.insert(paragraphs, cleaned)
+			end
+
+			local yOffset = -10
+			for i, line in ipairs(paragraphs) do
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("RQE DEBUG: Rendering FontString paragraph #%d: %s", i, line))
+				end
+
+				local StepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				RQE.SeparateStepText = StepText
+				StepText:SetJustifyH("LEFT")
+				StepText:SetTextColor(1, 1, 0.8)
+				StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+				StepText:SetWordWrap(true)
+				StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, yOffset)
+				StepText:SetText(line)
+
+				-- Handle hover-capable markup for item/spell tags even when no coords exist
+				RQE.RenderTextWithItemsSteps(StepText, line, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.SeparateContentFrame)
+
+				-- Measure line height and step down
+				local h = StepText.GetStringHeight and StepText:GetStringHeight() or 16
+				yOffset = yOffset - (h + 8)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE DEBUG: FontString paragraph height:", h)
+				end
+			end
 		end
 
 		RQE.SeparateStepText:Show()
@@ -2501,10 +2577,7 @@ StepText.htmlText = wrappedHTML
 	RQE.UpdateSeparateContentHeight()
 
 	-- Call the function to update the frame's content dynamically
-	if RQE.OkayToUpdateSeparateFFOnce then
-		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when initialized
-	end
-	RQE.OkayToUpdateSeparateFFOnce = false
+	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when initialized
 end
 
 
