@@ -1007,25 +1007,26 @@ end
 function RQE.handlePlayerRegenEnabled()
 	local mythicMode = RQE.db.profile.mythicScenarioMode
 
-	if RQE.RunQuestTypeAfterCombat then
-		C_Timer.After(1.2, function()
-			RQE:QuestType()
-			RQE.RunQuestTypeAfterCombat = false
-			C_Timer.After(1, function()
-				if RQE.RunUpdateRQEQuestFrameAfterCombat then
-					C_Timer.After(0.2, function()
-						UpdateRQEQuestFrame()
-						RQE.RunUpdateRQEQuestFrameAfterCombat = false
-					end)
-				end
+	-- Clears the SeparateFocusFrame after combat ends
+	if RQE.ClearSeparateFocusFrameAfterCombat then
+		RQE:ClearSeparateFocusFrame()
+		RQE.ClearSeparateFocusFrameAfterCombat = false
+		return
+	end
 
-				if RQE.RunUpdateRQEWorldQuestFrame then
-					C_Timer.After(0.2, function()
-						UpdateRQEWorldQuestFrame()
-						RQE.RunUpdateRQEWorldQuestFrame = false
-					end)
-				end
-			end)
+	-- Updates RQEQuestFrame after combat ends
+	if RQE.RunUpdateRQEQuestFrameAfterCombat then
+		C_Timer.After(0.2, function()
+			UpdateRQEQuestFrame()
+			RQE.RunUpdateRQEQuestFrameAfterCombat = false
+		end)
+	end
+
+	-- Updates RQEWorldQuestFrame after combat ends
+	if RQE.RunUpdateRQEWorldQuestFrame then
+		C_Timer.After(0.2, function()
+			UpdateRQEWorldQuestFrame()
+			RQE.RunUpdateRQEWorldQuestFrame = false
 		end)
 	end
 
