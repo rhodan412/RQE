@@ -5,9 +5,11 @@
 		- Fixed Button taint associated with the RQE.RenderTextWithItems() function
 		- Fixed issue with spacing and alignment of both item/spell tooltips and clickable coordinate blocks in the RQEFrame
 		- Each step description can now support multiple item/spell tooltips in a description (previously limited to one). If a description line has item/spell tooltip, clickable coordinate block is NOT permitted.
-		- Significant performance updates as stepsText and SeparateFocusFrame were being called too frequently mainly from UpdateFrame()
+		- Significant performance updates as stepsText and SeparateFocusFrame were being called too frequently mainly from UpdateFrame()	-- REVERTED FOR NOW DUE TO SEPARATEFOCUSFRAME NOT UPDATING CORRECTLY
 		- Added campaigns for Val'sharah, Azsuna, Highmountain and Stormheim to include side quests, Suramar campaign and side quests and Suramar's  Insurrection campaign quests to the DB
 		- Fixed issue where quantity needed, to be purchased from the auction house, was listed as 0 and wouldn't buy more. Now if this is invalid in this way, it will ask if you want to purchase the full quantity needed
+		- Fixed some tainting issues with QuestType, UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame
+		- SeparateFocusFrame gets cleared prior to it being updated to prevent text from layering on top of the previous text
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -24,6 +26,7 @@
 		- Reverted and fixed coding in the RQE:ClearSeparateFocusFrame() function to correctly handle not displaying HTML coding. Subsequent lines in the DB entry follow \n use FontStrings while the first paragraph will use SimpleHTML for coordinate clicking (2025.11.12.2202)
 		- Reverted RQE.BuildHTMLFromRichText(raw) to an earlier version (2025.11.12.2202)
 		- Modified UpdateFrame() and RQE:StartPeriodicChecks() functions to revert back without the performance enhancements - these will need to be added later after they can be done so safely without causing problems with SeparateFocusFrame and/or StepsText (2025.11.12.2202)
+		- Removed taint issues from OpenQuestLogToQuestDetails(questID) as it might sometimes fire during combat (2025.11.13.2156)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -33,11 +36,13 @@
 		- Added additional performance improvements and fixes related to the SeparateFocusFrame within QUEST_ACCEPTED, UI_INFO_MESSAGE(311), QUEST_COMPLETE, QUEST_AUTO_COMPLETE, QUEST_REMOVED, QUEST_TURNED_IN, QUEST_FINISHED and QUEST_WATCH_UPDATE, but might remove some to improve performance further if multifirings are taking place too often (2025.11.11.2105)
 		- Cleaned up code for the improvements to functionality in QUEST_ACCEPTED and QUEST_COMPLETE to limit frequency of frame updates (2025.11.12.0402)
 		- Reverted some of the efficiency fixes as it was causing potential problems for the displaying of the StepsText and SeparateFocusFrame text (2025.11.12.2202)
+		- Added check, following PLAYER_REGEN_ENABLED (leaving combat) to see if RQE:QuestType(), UpdateRQEQuestFrame(), and/or UpdateRQEWorldQuestFrame() should be refired (2025.11.13.2156)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
 		- Fixed issue where steps weren't being created after pressing the QuestLogIndexButton in the quest tracker section of the addon (2025.11.11.2105)
 		- Added functionality to clear the SeparateFocusFrame when pressing the QuestLogIndexButton as this was not clearling both SimpleHTML and FontStrings from this frame (2025.11.12.2202)
+		- Removed taint issues from RQE:QuestType(), UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() as it might sometimes fire during combat and pushed them to fire outside of combat via flag - but this may be reverted (2025.11.13.2156)
 
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
@@ -56,6 +61,7 @@
 		- Added continentID for auction house Dragonflight [profession] quests (2025.11.11.2105)
 		- Added additional updates to the questDB for the Monk Order Hall (2025.11.12.0402)
 		- Added a few quests to the DB for the upcoming Midnight expansion (2025.11.12.2202)
+		- Added additional Legion quests including some Druid Order Hall quests to the DB (2025.11.13.2156)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
@@ -66,6 +72,13 @@
 		- Modified the function call for the RQE:UpdateSeparateFocusFrame() within the RQE.InitializeSeparateFocusFrame() to only fire during initialization such as PLAYER_ENTERING_WORLD (2025.11.11.0631)
 		- Updates for preventing the display, within RQE:CreateStepsText and RQE.InitializeSeparateFocusFrame() from showing HTML coding in the SeparateFocusFrame and fix issues with StepsText not creating color variants within the description text of the DB entries (2025.11.12.0402)
 		- Reverted changes to the RQE:CreateStepsText and RQE:UpdateSeparateFocusFrame() functions to correctly display the text in the SeparateFocusFrame and StepsText (2025.11.12.2202)
+		- Added call to RQE:ClearSeparateFocusFrame() before the frame would get updated to prevent information in SeparateFocusFrame being placed on top of existing text (2025.11.13.2156)
+
+	RQEMinimap.lua
+		- Removed potential taint issue with the conversion of RQE.MinimapButton from Button to Frame type (2025.11.13.2156)
+
+	WPUtil.lua
+		- Added some commented out information in the event that RQE.UnknownQuestButtonCalcNTrack = function() is causing taint (2025.11.13.2156)
 
 
 11.2.5.3 (2025.11.08)
