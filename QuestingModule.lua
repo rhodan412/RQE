@@ -2236,6 +2236,11 @@ function RQE:QuestType()
 	local regularQuestUpdated = false
 	local worldQuestUpdated = false
 
+	if InCombatLockdown() then
+		RQE.RunQuestTypeAfterCombat = true
+		return
+	end
+
 	-- Loop through all tracked quests for regular and campaign quests
 	for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
@@ -2269,6 +2274,11 @@ end
 
 -- Updates the RQEQuestFrame
 function UpdateRQEQuestFrame()
+	if InCombatLockdown() then
+		RQE.RunUpdateRQEQuestFrameAfterCombat = true
+		return
+	end
+
 	RQE:SortWatchedQuestsByProximity()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
@@ -2454,7 +2464,7 @@ function UpdateRQEQuestFrame()
 				---@class QuestLogIndexButton : Button
 				---@field bg Texture
 				---@field number FontString
-				local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)
+				local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)	-- TAINT?: possibly source if run in combat
 				QuestLogIndexButton:SetSize(35, 35)
 
 				-- Create or update the background texture
@@ -3055,6 +3065,11 @@ end
 
 -- Function to update the RQE.WorldQuestFrame with tracked World Quests
 function UpdateRQEWorldQuestFrame()
+	if InCombatLockdown() then
+		RQE.RunUpdateRQEWorldQuestFrame = true
+		return
+	end
+
 	-- Define padding value
 	local padding = 10 -- Example padding value
 	local yOffset = -45 -- Y offset for the first element
@@ -3112,7 +3127,7 @@ function UpdateRQEWorldQuestFrame()
 		-- Ensure questID is valid
 		if questID then
 			-- Retrieve or initialize the WQuestLogIndexButton for the current questID
-			local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)
+			local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)	-- TAINT?: possibly source if run in combat
 			RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
 			WQuestLogIndexButton:SetSize(35, 35)
 
