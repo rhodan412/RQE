@@ -196,14 +196,35 @@ end
 ---------------------------
 
 -- Creates the Minimap Button
-RQE.MinimapButton = CreateFrame("Button", "RQEMinimapButton", Minimap)
+RQE.MinimapButton = CreateFrame("Frame", "RQEMinimapButton", Minimap)
 RQE.MinimapButton:SetSize(25, 25)
-RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
-RQE.MinimapButton:SetHighlightTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
-RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+
+local tex = RQE.MinimapButton:CreateTexture(nil, "ARTWORK")
+tex:SetAllPoints()
+tex:SetTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+RQE.MinimapButton.texture = tex
+
+-- Optional highlight on mouseover
+RQE.MinimapButton:EnableMouse(true)
+RQE.MinimapButton:SetScript("OnEnter", function(self)
+    tex:SetVertexColor(1, 1, 1, 1) -- normal
+end)
+RQE.MinimapButton:SetScript("OnLeave", function(self)
+    tex:SetVertexColor(0.8, 0.8, 0.8, 1) -- dimmed highlight
+end)
+
 RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
 RQE.MinimapButton:SetFrameStrata("MEDIUM")
 RQE.MinimapButton:SetFrameLevel(8)
+
+-- RQE.MinimapButton = CreateFrame("Button", "RQEMinimapButton", Minimap)
+-- RQE.MinimapButton:SetSize(25, 25)
+-- RQE.MinimapButton:SetNormalTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+-- RQE.MinimapButton:SetHighlightTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+-- RQE.MinimapButton:SetPushedTexture("Interface\\Addons\\RQE\\Textures\\rhodan")
+-- RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
+-- RQE.MinimapButton:SetFrameStrata("MEDIUM")
+-- RQE.MinimapButton:SetFrameLevel(8)
 
 
 -- Allow the button to be dragged
@@ -253,10 +274,11 @@ end
 ---------------------------
 
 -- Register the button for clicks
-RQE.MinimapButton:RegisterForClicks("AnyUp")
+--RQE.MinimapButton:RegisterForClicks("AnyUp")
 
 -- Updated Minimap Button OnClick Function
-RQE.MinimapButton:SetScript("OnClick", function(self, button)
+RQE.MinimapButton:SetScript("OnMouseUp", function(self, button)
+--RQE.MinimapButton:SetScript("OnClick", function(self, button)
 	if button == "LeftButton" then
 		if IsShiftKeyDown() then
 			RQE:ToggleDebugLog()  -- Shift + Left Click
