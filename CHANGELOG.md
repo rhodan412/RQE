@@ -27,6 +27,7 @@
 		- Reverted RQE.BuildHTMLFromRichText(raw) to an earlier version (2025.11.12.2202)
 		- Modified UpdateFrame() and RQE:StartPeriodicChecks() functions to revert back without the performance enhancements - these will need to be added later after they can be done so safely without causing problems with SeparateFocusFrame and/or StepsText (2025.11.12.2202)
 		- Removed taint issues from OpenQuestLogToQuestDetails(questID) as it might sometimes fire during combat (2025.11.13.2156)
+		- Added InCombatLockdown() check at the top of the RQE:ClearSeparateFocusFrame() function, to prevent stack overflow, with flag set to true to be re-run after combat ends (2025.11.14.1815)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -37,12 +38,14 @@
 		- Cleaned up code for the improvements to functionality in QUEST_ACCEPTED and QUEST_COMPLETE to limit frequency of frame updates (2025.11.12.0402)
 		- Reverted some of the efficiency fixes as it was causing potential problems for the displaying of the StepsText and SeparateFocusFrame text (2025.11.12.2202)
 		- Added check, following PLAYER_REGEN_ENABLED (leaving combat) to see if RQE:QuestType(), UpdateRQEQuestFrame(), and/or UpdateRQEWorldQuestFrame() should be refired (2025.11.13.2156)
+		- Updated PLAYER_REGEN_ENABLED to no longer run RQE:QuestType() after combat, as this was redundant, and added RQE:ClearSeparateFocusFrame() function to potential run after combat, if flag is set to true (2025.11.14.1815)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
 		- Fixed issue where steps weren't being created after pressing the QuestLogIndexButton in the quest tracker section of the addon (2025.11.11.2105)
 		- Added functionality to clear the SeparateFocusFrame when pressing the QuestLogIndexButton as this was not clearling both SimpleHTML and FontStrings from this frame (2025.11.12.2202)
 		- Removed taint issues from RQE:QuestType(), UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() as it might sometimes fire during combat and pushed them to fire outside of combat via flag - but this may be reverted (2025.11.13.2156)
+		- Removed the firing of RQE:QuestType() if InCombatLockdown() as the UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() functions, that are already included in this function will potentially run after combat finishes (2025.11.14.1815)
 
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
@@ -62,6 +65,7 @@
 		- Added additional updates to the questDB for the Monk Order Hall (2025.11.12.0402)
 		- Added a few quests to the DB for the upcoming Midnight expansion (2025.11.12.2202)
 		- Added additional Legion quests including some Druid Order Hall quests to the DB (2025.11.13.2156)
+		- Updated some quests in the class order hall of Monk (2025.11.14.1815)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
