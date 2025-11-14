@@ -2236,11 +2236,6 @@ function RQE:QuestType()
 	local regularQuestUpdated = false
 	local worldQuestUpdated = false
 
-	if InCombatLockdown() then
-		RQE.RunQuestTypeAfterCombat = true
-		return
-	end
-
 	-- Loop through all tracked quests for regular and campaign quests
 	for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
