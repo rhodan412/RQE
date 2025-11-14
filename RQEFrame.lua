@@ -347,7 +347,7 @@ end
 
 -- Create a button for unknown quests in the top-left corner of RQEFrame content
 -- Call the function from WPUtil.lua to create the button
-RQE.UnknownQuestButton = CreateFrame("Button", nil, content)
+RQE.UnknownQuestButton = CreateFrame("Button", nil, content)	-- TAINT?: possibly source if run in combat
 RQE.UnknownQuestButton:SetSize(25, 25)  -- Set size to 30x30
 RQE.UnknownQuestButton:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)  -- Adjusted Y-position
 RQE.UnknownQuestButton:Hide()  -- Initially hide the button
@@ -2264,6 +2264,8 @@ function RQE.InitializeSeparateFocusFrame()
 		if not isSuperTracking then
 			return
 		end
+
+		RQE:ClearSeparateFocusFrame()
 
 		-- ✅ Improved quest data handling (for DB-less quests)
 		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
