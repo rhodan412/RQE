@@ -61,7 +61,8 @@ end
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
 -- Assume CloseWorldMap() closes the world map
 RQE.UnknownQuestButtonCalcNTrack = function()
-	RQE.UnknownQuestButton:SetScript("OnClick", function()
+	-- RQE.UnknownQuestButton:SetScript("OnMouseDown", function()
+	RQE.UnknownQuestButton:SetScript("OnClick", function()	-- Potential taint?
 		if RQE.searchedQuestID then 
 			local questID = RQE.searchedQuestID
 			if questID then
