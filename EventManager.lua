@@ -1007,6 +1007,28 @@ end
 function RQE.handlePlayerRegenEnabled()
 	local mythicMode = RQE.db.profile.mythicScenarioMode
 
+	if RQE.RunQuestTypeAfterCombat then
+		C_Timer.After(1.2, function()
+			RQE:QuestType()
+			RQE.RunQuestTypeAfterCombat = false
+			C_Timer.After(1, function()
+				if RQE.RunUpdateRQEQuestFrameAfterCombat then
+					C_Timer.After(0.2, function()
+						UpdateRQEQuestFrame()
+						RQE.RunUpdateRQEQuestFrameAfterCombat = false
+					end)
+				end
+
+				if RQE.RunUpdateRQEWorldQuestFrame then
+					C_Timer.After(0.2, function()
+						UpdateRQEWorldQuestFrame()
+						RQE.RunUpdateRQEWorldQuestFrame = false
+					end)
+				end
+			end)
+		end)
+	end
+
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerRegenEnabled then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5) -- Light Salmon
 	end
