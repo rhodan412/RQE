@@ -801,6 +801,8 @@ end
 -- Function to open the quest log and show specific quest details
 --- @param questID number The quest ID.
 function OpenQuestLogToQuestDetails(questID)
+	if InCombatLockdown() then return end
+
 	if RQE.searchedQuestID ~= nil then
 		return
 	end
@@ -4927,7 +4929,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 						GameTooltip:Show()
 					end)
 					hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-				elseif tagType == "spell" then
+				elseif tagType == "spell" then	-- replaced call for RQE.HandleSpellTag() but may be an issue because "SetSpellByID(tagID)" isn't valid Blizzard API
 					hover:SetScript("OnEnter", function()
 						GameTooltip:Hide()
 						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
@@ -12582,7 +12584,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 		return
 	end
 
-	if mapID == 407 or mapID == 408 then
+	if mapID == 407 or mapID == 408 or mapID == 619 then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Returning due to mapID being a continentID of " .. tostring(mapID))
 		end
