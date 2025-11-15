@@ -6,10 +6,11 @@
 		- Fixed issue with spacing and alignment of both item/spell tooltips and clickable coordinate blocks in the RQEFrame
 		- Each step description can now support multiple item/spell tooltips in a description (previously limited to one). If a description line has item/spell tooltip, clickable coordinate block is NOT permitted.
 		- Significant performance updates as stepsText and SeparateFocusFrame were being called too frequently mainly from UpdateFrame()	-- REVERTED FOR NOW DUE TO SEPARATEFOCUSFRAME NOT UPDATING CORRECTLY
-		- Added campaigns for Val'sharah, Azsuna, Highmountain and Stormheim to include side quests, Suramar campaign and side quests and Suramar's  Insurrection campaign quests to the DB
+		- Added campaigns for Val'sharah, Azsuna, Highmountain and Stormheim to include side quests, Suramar campaign w/ side quests and Suramar Insurrection campaign quests to the DB
 		- Fixed issue where quantity needed, to be purchased from the auction house, was listed as 0 and wouldn't buy more. Now if this is invalid in this way, it will ask if you want to purchase the full quantity needed
 		- Fixed some tainting issues with QuestType, UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame
 		- SeparateFocusFrame gets cleared prior to it being updated to prevent text from layering on top of the previous text
+		- Most (all?) taint issues have been eliminated
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -28,6 +29,7 @@
 		- Modified UpdateFrame() and RQE:StartPeriodicChecks() functions to revert back without the performance enhancements - these will need to be added later after they can be done so safely without causing problems with SeparateFocusFrame and/or StepsText (2025.11.12.2202)
 		- Removed taint issues from OpenQuestLogToQuestDetails(questID) as it might sometimes fire during combat (2025.11.13.2156)
 		- Added InCombatLockdown() check at the top of the RQE:ClearSeparateFocusFrame() function, to prevent stack overflow, with flag set to true to be re-run after combat ends (2025.11.14.1815)
+		- Added some debug print commands to XX function (2025.11.15.0052)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -66,6 +68,7 @@
 		- Added a few quests to the DB for the upcoming Midnight expansion (2025.11.12.2202)
 		- Added additional Legion quests including some Druid Order Hall quests to the DB (2025.11.13.2156)
 		- Updated some quests in the class order hall of Monk (2025.11.14.1815)
+		- Added additional Legion Remix quests to DB (2025.11.15.0052)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
