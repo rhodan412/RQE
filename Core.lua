@@ -2348,7 +2348,9 @@ end
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	if InCombatLockdown() then
-		print("|cFFFF3333[RQE]|r SeparateFocusFrame will clear after combat ends")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333[RQE]|r SeparateFocusFrame will clear after combat ends")
+		end
 		RQE.ClearSeparateFocusFrameAfterCombat = true
 		return
 	end
@@ -2356,6 +2358,12 @@ function RQE:ClearSeparateFocusFrame()
 	-- If the frame doesn't exist, nothing to clear
 	if not RQE.SeparateFocusFrame or not RQE.SeparateContentFrame then
 		return
+	end
+
+	if RQE.ClearSeparateFocusFrameAfterCombat then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00[RQE]|r Running RQE:ClearSeparateFocusFrame()")
+		end
 	end
 
 	-- Hide and remove the main SimpleHTML/FontString (first paragraph)
