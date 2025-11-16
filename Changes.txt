@@ -10,7 +10,7 @@
 		- Fixed issue where quantity needed, to be purchased from the auction house, was listed as 0 and wouldn't buy more. Now if this is invalid in this way, it will ask if you want to purchase the full quantity needed
 		- Fixed some tainting issues with QuestType, UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame
 		- SeparateFocusFrame gets cleared prior to it being updated to prevent text from layering on top of the previous text
-		- Most (all?) taint issues have been eliminated
+		- Taint issues have been eliminated
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -69,6 +69,7 @@
 		- Added additional Legion quests including some Druid Order Hall quests to the DB (2025.11.13.2156)
 		- Updated some quests in the class order hall of Monk (2025.11.14.1815)
 		- Added additional Legion Remix quests to DB (2025.11.15.0052)
+		- Added many Rogue and Priest Order Hall quests to the DB (2025.11.15.2012)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
