@@ -70,6 +70,7 @@
 		- Updated some quests in the class order hall of Monk (2025.11.14.1815)
 		- Added additional Legion Remix quests to DB (2025.11.15.0052)
 		- Added many Rogue and Priest Order Hall quests to the DB (2025.11.15.2012)
+		- Added many Paladin Order Hall quests to the DB (2025.11.16.0245)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
