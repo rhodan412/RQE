@@ -119,7 +119,7 @@ RQE.UnknownButtonTooltip = function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				RQE.ClickWButton()
 				C_Timer.After(3.5, function()
-					RQE:StartPeriodicChecks()
+					--RQE:StartPeriodicChecks()	-- Redundant as this will get run when pressing the "W" button rather than also mousing over it
 					C_Timer.After(0.6, function()
 						RQE.CheckAndClickSeparateWaypointButtonButton()
 						-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
@@ -676,10 +676,19 @@ end
 
 -- Function to handle the clearing of the RQEFrame when the "C" button is pressed (or similar functionality is desired)
 function RQE.Buttons.ClearButtonPressed()
+	RQE.ClearButtonPressed = true	 -- FORCES the next clear (might need to add a check to make sure that the player physically pressed the button for this to actually clear the frame)
+
+	-- RESET the throttling system so next update actually fires
+	RQE.FrameState = {
+		lastQuestID = nil,
+		lastQuestName = nil,
+		lastObjectives = nil,
+		lastNumObjectives = 0,
+		lastStepIndex = nil
+	}
+
 	RQE:ClearFrameData()
 	RQE:ClearWaypointButtonData()
-
-	RQE.ClearButtonPressed = true	 -- FORCES the next clear (might need to add a check to make sure that the player physically pressed the button for this to actually clear the frame)
 	RQE:ClearSeparateFocusFrame()
 
 	RQE.searchedQuestID = nil
