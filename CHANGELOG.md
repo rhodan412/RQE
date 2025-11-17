@@ -13,9 +13,13 @@
 		- Taint issues have been eliminated
 		- Addon will check if the current step that the player is on is correct when the mapID changes
 		- Major improvements to the updating of the SeparateFocusFrame as this was being updated too frequently when it shouldn't have been
+		- Major improvements to the updating of the RQEFrame as it was updating far too often and resulting in large lag spikes
+		- Significant modifications to the inventory events as a variety of these were causing function to fire that checks if the player is on the correct stepIndex
 
 	Buttons.lua
 		- Added flag to set to true whenever the RQE.Buttons.ClearButtonPressed() function fires (2025.11.16.2003)
+		- No longer fires RQE:StartPeriodicChecks() when mousing over the "W" button as this wasn't needed since clicking the button would run it anyway (2025.11.17.0033)
+		- Reset the FrameState for lastQuestID, lastQuestName, lastObjectives, lastNumObjectives and lastStepIndex when Clear Button is pressed (2025.11.17.0033)
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -39,6 +43,12 @@
 		- Added RQE:LogSeparateFocusClear() function to save data to the RQE.ClearSeparateFocusHistory table (2025.11.16.2003)
 		- Added RQE:ShouldClearSeparateFocusFrame() function to save the currently supertracked quest to RQE.CurrentlySuperQuestID variable and make a determination if there was a change to the quest tracking, mapID or stepIndex comparing RQE.ClearSeparateFocusHistory table to current (2025.11.16.2003)
 		- Added call within RQE:ClearSeparateFocusFrame() to run RQE:ShouldClearSeparateFocusFrame() function to determine of the SeparateFocusFrame should be cleared and subsequently updated (2025.11.16.2003)
+		- Set RQE.StoredStepIndex and RQE.AddonSetStepIndex to nil along with RQE.FrameState table when Core is loaded initially (2025.11.17.0033)
+		- Modified UpdateFrame() to call RQE:ShouldUpdateFrame() for determining first if the RQEFrame should be updated or not [the RQEFrame was updating way too frequently and resulting in unnecessary massive lag] (2025.11.17.0033)
+		- Added RQE:ShouldUpdateFrame() function to run utility helper functions RQE:GetQuestObjectiveSnapshot() and RQE:CompareObjectiveTables() to determine if the RQEFrame should be updated (2025.11.17.0033)
+		- Added RQE:GetQuestObjectiveSnapshot() function to save the current objective progress to a table (2025.11.17.0033)
+		- Added RQE:CompareObjectiveTables() function to compare previous objective progress with previous snapshotted progress before returning true/false (2025.11.17.0033)
+		- Set flags for RQE.QuestLogIndexButtonPressed to false before returns in the UpdateFrame() function (2025.11.17.0033)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -54,6 +64,12 @@
 		- Removed code that clears the waypoint data and separate focus frame during PLAYER_LOGIN and ADDON_LOADED (2025.11.16.2003)
 		- Removed coding to update tracker visibility in the ADDON_LOADED as this is handled through PLAYER_LOGIN (2025.11.16.2003)
 		- Removed coding that makes a check before clearing the RQEFrame within the UPDATE_INSTANCE_INFO as this was returning an error as a result of the change to how the clearing of the SeparateFocusFrame now occurs (2025.11.16.2003)
+		- Removed UNIT_MODEL_CHANGE from event function listener (2025.11.17.0033)
+		- Updated ITEM_COUNT_CHANGED, MERCHANT_UPDATE, UNIT_INVENTORY_CHANGED, MAIL_SUCCESS, BAG_UPDATE (for reagents), and BAG_NEW_ITEMS_UPDATED to only call RQE:StartPeriodicChecks() function if CheckDBInventory exists in the current step that the player is on [this was causing massive lag anytime something was looted!] (2025.11.17.0033)
+		- Removed duplicate call for RQE:StartPeriodicChecks() in the PLAYER_ENTERING_WORLD event function [causing massive lag when changing zones via portal/hearth] (2025.11.17.0033)
+		- Updated SUPER_TRACKING_CHANGED to reset RQE.FrameState for the lastQuestID, lastQuestName, lastObjectives, lastNumObjectives and lastStepIndex (2025.11.17.0033)
+		- Removed call for the RQE:StartPeriodicChecks() function within ZONE_CHANGED_NEW_AREA as this is now done anytime the mapID changes (2025.11.17.0033)
+		- Removed call for RQE:StartPeriodicChecks() within UI_INFO_MESSAGE as this is already handled through a multide of different locations more efficiently and this was resulting in duplicate firing (2025.11.17.0033)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
@@ -61,6 +77,7 @@
 		- Added functionality to clear the SeparateFocusFrame when pressing the QuestLogIndexButton as this was not clearling both SimpleHTML and FontStrings from this frame (2025.11.12.2202)
 		- Removed taint issues from RQE:QuestType(), UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() as it might sometimes fire during combat and pushed them to fire outside of combat via flag - but this may be reverted (2025.11.13.2156)
 		- Removed the firing of RQE:QuestType() if InCombatLockdown() as the UpdateRQEQuestFrame() and UpdateRQEWorldQuestFrame() functions, that are already included in this function will potentially run after combat finishes (2025.11.14.1815)
+		- Added flag when QuestLogIndexButton is pressed so that the RQEFrame updates appropriately via UpdateFrame() function (2025.11.17.0033)
 
 	RQE.toc
 		- Updated Interface# (2025.11.08.2054)
@@ -85,6 +102,7 @@
 		- Added many Rogue and Priest Order Hall quests to the DB (2025.11.15.2012)
 		- Added many Paladin Order Hall quests to the DB (2025.11.16.0245)
 		- Updated questID 47287 to the DB file (2025.11.16.2003)
+		- Removed unnecessary code in the DB that was already commented out (2025.11.17.0033)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
@@ -100,6 +118,7 @@
 
 	RQEMinimap.lua
 		- Removed potential taint issue with the conversion of RQE.MinimapButton from Button to Frame type (2025.11.13.2156)
+		- Adjusted spacing with using tabs vs spaces for a clear handling when updating code (2025.11.17.0033)
 
 	WPUtil.lua
 		- Added some commented out information in the event that RQE.UnknownQuestButtonCalcNTrack = function() is causing taint (2025.11.13.2156)
