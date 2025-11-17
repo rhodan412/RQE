@@ -108,7 +108,7 @@ local eventsToRegister = {
 	"SPELLS_CHANGED",
 	"START_TIMER",
 	"SUPER_TRACKING_CHANGED",	-- USE: SUPER_TRACKED_QUEST_CHANGED for classic projects
-	"SUPER_TRACKING_PATH_UPDATED",
+	--"SUPER_TRACKING_PATH_UPDATED",	-- Should no longer be needed as RQE:StartPeriodicChecks() will fire when the mapID actually changes
 	"TASK_PROGRESS_UPDATE",
 	"TRACKED_ACHIEVEMENT_UPDATE",
 	"TRACKED_RECIPE_UPDATE",
@@ -1439,6 +1439,12 @@ function RQE.handlePlayerLogin()
 			end
 		end)
 	end
+
+	-- -- Updates frame with data from the super tracked quest (if any)
+	-- if RQE.CurrentlySuperQuestID == nil then
+		-- RQE:ClearWaypointButtonData()
+		-- RQE:ClearSeparateFocusFrame()
+	-- end
 end
 
 
@@ -1561,15 +1567,15 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		end
 	end)
 
-	C_Timer.After(2, function()
-		RQE:UpdateTrackerVisibility()
-	end)
+	-- C_Timer.After(2, function()
+		-- RQE:UpdateTrackerVisibility()
+	-- end)
 
-	-- Updates frame with data from the super tracked quest (if any)
-	if RQE.CurrentlySuperQuestID == nil then
-		RQE:ClearWaypointButtonData()
-		RQE:ClearSeparateFocusFrame()
-	end
+	-- -- Updates frame with data from the super tracked quest (if any)
+	-- if RQE.CurrentlySuperQuestID == nil then
+		-- RQE:ClearWaypointButtonData()
+		-- RQE:ClearSeparateFocusFrame()
+	-- end
 end
 
 
@@ -4829,9 +4835,9 @@ end
 -- Handles UPDATE_INSTANCE_INFO Event
 -- Fired when data from RequestRaidInfo is available and also when player uses portals
 function RQE.handleInstanceInfoUpdate()
-	C_Timer.After(1.5, function()
-		RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
-	end)
+	-- C_Timer.After(1.5, function()
+		-- RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
+	-- end)
 
 	-- Clicks the button to trigger a waypoint creation shortly after login of the current supertracked quest
 	if not C_Scenario.IsInScenario() then
