@@ -2483,6 +2483,7 @@ function UpdateRQEQuestFrame()
 				-- Quest Watch List
 				QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
 				QuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
+				RQE.QuestLogIndexButtonPressed = true
 				-- QuestLogIndexButton:SetScript("OnClick", function(self, button)	-- changed as was causing issues when Mythic/Scenario mode was enabled the button wouldn't click
 					RQE.OkaytoUpdateCreateSteps = true
 
