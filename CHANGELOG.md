@@ -11,6 +11,11 @@
 		- Fixed some tainting issues with QuestType, UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame
 		- SeparateFocusFrame gets cleared prior to it being updated to prevent text from layering on top of the previous text
 		- Taint issues have been eliminated
+		- Addon will check if the current step that the player is on is correct when the mapID changes
+		- Major improvements to the updating of the SeparateFocusFrame as this was being updated too frequently when it shouldn't have been
+
+	Buttons.lua
+		- Added flag to set to true whenever the RQE.Buttons.ClearButtonPressed() function fires (2025.11.16.2003)
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -29,7 +34,11 @@
 		- Modified UpdateFrame() and RQE:StartPeriodicChecks() functions to revert back without the performance enhancements - these will need to be added later after they can be done so safely without causing problems with SeparateFocusFrame and/or StepsText (2025.11.12.2202)
 		- Removed taint issues from OpenQuestLogToQuestDetails(questID) as it might sometimes fire during combat (2025.11.13.2156)
 		- Added InCombatLockdown() check at the top of the RQE:ClearSeparateFocusFrame() function, to prevent stack overflow, with flag set to true to be re-run after combat ends (2025.11.14.1815)
-		- Added some debug print commands to XX function (2025.11.15.0052)
+		- Added variables to the RQE:UpdateMapIDDisplay() function to compare previous and currentmapIDs and if there was a change it will run the RQE:StartPeriodicChecks() function to determine the correct stepIndex (2025.11.16.2003)
+		- Added RQE.ClearSeparateFocusHistory table to the top of the file along with setting RQE.lastMapID, RQE._lastSeparateQuestID and RQE._lastSeparateStepIndex as nil in the variables (2025.11.16.2003)
+		- Added RQE:LogSeparateFocusClear() function to save data to the RQE.ClearSeparateFocusHistory table (2025.11.16.2003)
+		- Added RQE:ShouldClearSeparateFocusFrame() function to save the currently supertracked quest to RQE.CurrentlySuperQuestID variable and make a determination if there was a change to the quest tracking, mapID or stepIndex comparing RQE.ClearSeparateFocusHistory table to current (2025.11.16.2003)
+		- Added call within RQE:ClearSeparateFocusFrame() to run RQE:ShouldClearSeparateFocusFrame() function to determine of the SeparateFocusFrame should be cleared and subsequently updated (2025.11.16.2003)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -41,6 +50,10 @@
 		- Reverted some of the efficiency fixes as it was causing potential problems for the displaying of the StepsText and SeparateFocusFrame text (2025.11.12.2202)
 		- Added check, following PLAYER_REGEN_ENABLED (leaving combat) to see if RQE:QuestType(), UpdateRQEQuestFrame(), and/or UpdateRQEWorldQuestFrame() should be refired (2025.11.13.2156)
 		- Updated PLAYER_REGEN_ENABLED to no longer run RQE:QuestType() after combat, as this was redundant, and added RQE:ClearSeparateFocusFrame() function to potential run after combat, if flag is set to true (2025.11.14.1815)
+		- Removed SUPER_TRACKING_PATH_UPDATED event function as no longer necessary given the improvements to the SeparateFocusFrame clearing and updating (2025.11.16.2003)
+		- Removed code that clears the waypoint data and separate focus frame during PLAYER_LOGIN and ADDON_LOADED (2025.11.16.2003)
+		- Removed coding to update tracker visibility in the ADDON_LOADED as this is handled through PLAYER_LOGIN (2025.11.16.2003)
+		- Removed coding that makes a check before clearing the RQEFrame within the UPDATE_INSTANCE_INFO as this was returning an error as a result of the change to how the clearing of the SeparateFocusFrame now occurs (2025.11.16.2003)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
@@ -71,6 +84,7 @@
 		- Added additional Legion Remix quests to DB (2025.11.15.0052)
 		- Added many Rogue and Priest Order Hall quests to the DB (2025.11.15.2012)
 		- Added many Paladin Order Hall quests to the DB (2025.11.16.0245)
+		- Updated questID 47287 to the DB file (2025.11.16.2003)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
@@ -82,6 +96,7 @@
 		- Updates for preventing the display, within RQE:CreateStepsText and RQE.InitializeSeparateFocusFrame() from showing HTML coding in the SeparateFocusFrame and fix issues with StepsText not creating color variants within the description text of the DB entries (2025.11.12.0402)
 		- Reverted changes to the RQE:CreateStepsText and RQE:UpdateSeparateFocusFrame() functions to correctly display the text in the SeparateFocusFrame and StepsText (2025.11.12.2202)
 		- Added call to RQE:ClearSeparateFocusFrame() before the frame would get updated to prevent information in SeparateFocusFrame being placed on top of existing text (2025.11.13.2156)
+		- Saves the supertracked quest to the RQE.CurrentlySuperQuestID variable when RQE:UpdateSeparateFocusFrame() function fires and before the RQE:ClearSeparateFocusFrame() function is called prior to update (2025.11.16.2003)
 
 	RQEMinimap.lua
 		- Removed potential taint issue with the conversion of RQE.MinimapButton from Button to Frame type (2025.11.13.2156)
