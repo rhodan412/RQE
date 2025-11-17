@@ -15,6 +15,7 @@
 		- Major improvements to the updating of the SeparateFocusFrame as this was being updated too frequently when it shouldn't have been
 		- Major improvements to the updating of the RQEFrame as it was updating far too often and resulting in large lag spikes
 		- Significant modifications to the inventory events as a variety of these were causing function to fire that checks if the player is on the correct stepIndex
+		- Additional improvements to reduce the firing of the RQE:StartPeriodicChecks() function that is responsible for updating the stepIndex to fire only on objective changes or change to supertracked quest
 
 	Buttons.lua
 		- Added flag to set to true whenever the RQE.Buttons.ClearButtonPressed() function fires (2025.11.16.2003)
@@ -49,6 +50,11 @@
 		- Added RQE:GetQuestObjectiveSnapshot() function to save the current objective progress to a table (2025.11.17.0033)
 		- Added RQE:CompareObjectiveTables() function to compare previous objective progress with previous snapshotted progress before returning true/false (2025.11.17.0033)
 		- Set flags for RQE.QuestLogIndexButtonPressed to false before returns in the UpdateFrame() function (2025.11.17.0033)
+		- Added check to see if objectives changed (for the purpose of running RQE:StartPeriodicChecks() from calls within the event functions (2025.11.17.0426)
+		- Added check for finding out if the DirectionText has changed before Updating the RQEFrame (2025.11.17.0426)
+		- Modified UpdateFrame() to find out if the flag is set designating the DirectionText has changed and should thus bypass RQE:ShouldUpdateFrame(questID) function and continue the UpdateFrame() function to update the RQEFrame (2025.11.17.0426)
+		- Removed RQE.DontUpdateFrame within UpdateFrame() as this was preventing the RQEFrame from updating appropriately when DirectionText changes (2025.11.17.0426)
+		- Added RQE:StepUsesZoneChange(step) helper function, called from the ZONE_CHANGED_NEW AREA and ZONE_CHANGED event functions, that checks if the current step of the supertracked quest has CheckDBZoneChange (2025.11.17.0426)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -70,6 +76,12 @@
 		- Updated SUPER_TRACKING_CHANGED to reset RQE.FrameState for the lastQuestID, lastQuestName, lastObjectives, lastNumObjectives and lastStepIndex (2025.11.17.0033)
 		- Removed call for the RQE:StartPeriodicChecks() function within ZONE_CHANGED_NEW_AREA as this is now done anytime the mapID changes (2025.11.17.0033)
 		- Removed call for RQE:StartPeriodicChecks() within UI_INFO_MESSAGE as this is already handled through a multide of different locations more efficiently and this was resulting in duplicate firing (2025.11.17.0033)
+		- Created new flag: RQE.DirectionChangedUpdateRQEFrame to record that DirectionText has changed and UpdateFrame() should fire (2025.11.17.0426)
+		- Created new flag: RQE.PeriodicIsFiring that when RQE:StartPeriodicChecks() fires it will allow the firing to click the RQE.WaypointButtons[RQE.AddonSetStepIndex] (2025.11.17.0426)
+		- Reset RQE.AddonSetStepIndex flag to 1 when SUPER_TRACKING_CHANGED fires after verifying that the current supertracked quest is different from the previously recorded supertracked quest (2025.11.17.0426)
+		- Set macro creation within SUPER_TRACKING_CHANGED if the RQEQuestFrame is hidden [such as during a scenario/instance] (2025.11.17.0426)
+		- Modified PLAYER_CONTROL_GAINED, QUEST_WATCH_UPDATE, UNIT_QUEST_LOG_CHANGED, UPDATE_INSTANCE_INFO event functions to check if objective progress has been made from previous snapshot before calling RQE:StartPeriodicChecks() greatly reducing lag and the frequency that this function runs (2025.11.17.0426)
+		- Added check within SUPER_TRACKING_CHANGED to not call RQE:StartPeriodicChecks() function unless there was a change to the previously supertracked quest and the current supertracked quest (2025.11.17.0426)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
@@ -103,6 +115,7 @@
 		- Added many Paladin Order Hall quests to the DB (2025.11.16.0245)
 		- Updated questID 47287 to the DB file (2025.11.16.2003)
 		- Removed unnecessary code in the DB that was already commented out (2025.11.17.0033)
+		- Added a few additional Legion quests to the DB, including some on Argus and some Druid Order Hall quests (2025.11.17.0426)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
