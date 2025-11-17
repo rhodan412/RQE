@@ -117,7 +117,7 @@ local eventsToRegister = {
 	"UNIT_ENTERING_VEHICLE",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_INVENTORY_CHANGED",
-	"UNIT_MODEL_CHANGED",
+	--"UNIT_MODEL_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
 	"UPDATE_MOUSEOVER_UNIT",
@@ -507,7 +507,7 @@ function RQE.handleItemCountChanged(...)
 	local itemID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -542,53 +542,100 @@ function RQE.handleItemCountChanged(...)
 		return
 	end
 
-	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
-	local function hasCheckDBInventory(data)
-		for _, step in ipairs(data) do
-			-- Check `check` field
-			if step.funct and step.funct == "CheckDBInventory" then
-				return true
-			end
+	-- -- Check if CheckDBInventory exists anywhere in the supertracked quest's data
+	-- local function hasCheckDBInventory(data)
+		-- for _, step in ipairs(data) do
+			-- -- Check `check` field
+			-- if step.funct and step.funct == "CheckDBInventory" then
+				-- return true
+			-- end
 
-			-- Check `checks` field
-			if step.checks then
-				for _, checkData in ipairs(step.checks) do
-					if checkData.funct and checkData.funct == "CheckDBInventory" then
-						return true
-					end
+			-- -- Check `checks` field
+			-- if step.checks then
+				-- for _, checkData in ipairs(step.checks) do
+					-- if checkData.funct and checkData.funct == "CheckDBInventory" then
+						-- return true
+					-- end
+				-- end
+			-- end
+		-- end
+		-- return false
+	-- end
+
+	-- local isInventoryCheck = hasCheckDBInventory(questData)
+
+	-- -- If CheckDBInventory is found, trigger StartPeriodicChecks
+	-- if isInventoryCheck then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("ITEM_COUNT_CHANGED related to questID:", questID, "due to CheckDBInventory presence.")
+		-- end
+		-- C_Timer.After(0.3, function()
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("~~ Running RQE:StartPeriodicChecks() from ITEM_COUNT_CHANGED ~~")
+			-- end
+			-- RQE.StartPerioFromItemCountChanged = true
+			-- RQE.ItemCountRanStartPeriodicChecks = true
+			-- --RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
+			-- C_Timer.After(0.65, function()
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("RQE:StartPeriodicChecks() fired from ITEM_COUNT_CHANGED event")
+			-- end
+				-- RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
+				-- C_Timer.After(1, function()
+					-- RQE.StartPerioFromItemCountChanged = false
+				-- end)
+			-- end)
+		-- end)
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("ITEM_COUNT_CHANGED not related to any CheckDBInventory in questID:", questID)
+		-- end
+	-- end
+
+	local currentStep =
+		tonumber(RQE.AddonSetStepIndex)
+		or (RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex)
+		or 1
+
+	local stepData = questData[currentStep]
+	if not stepData then return end
+
+	-- Determine whether THIS step uses CheckDBInventory
+	local function stepUsesInventoryCheck(step)
+		-- direct funct
+		if step.funct == "CheckDBInventory" then
+			return true
+		end
+
+		-- checks[] sub-entries
+		if step.checks then
+			for _, checkData in ipairs(step.checks) do
+				if checkData.funct == "CheckDBInventory" then
+					return true
 				end
 			end
 		end
+
 		return false
 	end
 
-	local isInventoryCheck = hasCheckDBInventory(questData)
+	local shouldRun = stepUsesInventoryCheck(stepData)
 
-	-- If CheckDBInventory is found, trigger StartPeriodicChecks
-	if isInventoryCheck then
+	-- ================================
+	-- ONLY RUN PERIODIC CHECKS IF CURRENT STEP NEEDS IT
+	-- ================================
+	if shouldRun then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ITEM_COUNT_CHANGED related to questID:", questID, "due to CheckDBInventory presence.")
+			print("ITEM_COUNT_CHANGED relevant for current stepIndex:", currentStep, "-> running StartPeriodicChecks()")
 		end
-		C_Timer.After(0.3, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("~~ Running RQE:StartPeriodicChecks() from ITEM_COUNT_CHANGED ~~")
-			end
-			RQE.StartPerioFromItemCountChanged = true
-			RQE.ItemCountRanStartPeriodicChecks = true
-			--RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())	-- TO DO: check for any issues with questID 12000
-			C_Timer.After(0.65, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("RQE:StartPeriodicChecks() fired from ITEM_COUNT_CHANGED event")
-			end
-				RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
-				C_Timer.After(1, function()
-					RQE.StartPerioFromItemCountChanged = false
-				end)
-			end)
+
+		-- slight delay to let item count settle
+		C_Timer.After(0.2, function()
+			RQE:StartPeriodicChecks()
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ITEM_COUNT_CHANGED not related to any CheckDBInventory in questID:", questID)
+			print("ITEM_COUNT_CHANGED ignored: current step does not require CheckDBInventory")
 		end
 	end
 end
@@ -620,48 +667,74 @@ function RQE.BagNewItemsAdded()
 	end
 
 	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
-	local function hasCheckDBInventory(data)
-		for _, step in ipairs(data) do
-			-- Check `check` field
-			if step.funct and step.funct == "CheckDBInventory" then
-				return true
-			end
+	-- local function hasCheckDBInventory(data)
+		-- for _, step in ipairs(data) do
+			-- -- Check `check` field
+			-- if step.funct and step.funct == "CheckDBInventory" then
+				-- return true
+			-- end
 
-			-- Check `checks` field
-			if step.checks then
-				for _, checkData in ipairs(step.checks) do
-					if checkData.funct and checkData.funct == "CheckDBInventory" then
-						return true
-					end
-				end
+			-- -- Check `checks` field
+			-- if step.checks then
+				-- for _, checkData in ipairs(step.checks) do
+					-- if checkData.funct and checkData.funct == "CheckDBInventory" then
+						-- return true
+					-- end
+				-- end
+			-- end
+		-- end
+		-- return false
+	-- end
+
+	-- local isInventoryCheck = hasCheckDBInventory(questData)
+
+	-- -- If CheckDBInventory is found, trigger StartPeriodicChecks
+	-- if isInventoryCheck then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("BAG_NEW_ITEMS_UPDATED related to questID:", questID, "due to CheckDBInventory presence.")
+			-- RQE.BagNewItemsRunning = false
+		-- end
+		-- C_Timer.After(1.2, function()
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
+			-- end
+			-- RQE.BagNewItemsRunning = true
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("RQE:StartPeriodicChecks() fired from BAG_NEW_ITEMS_UPDATED event")
+			-- end
+			-- RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
+		-- end)
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("BAG_NEW_ITEMS_UPDATED not related to any CheckDBInventory in questID:", questID)
+			-- RQE.BagNewItemsRunning = false
+		-- end
+	-- end
+
+	-- Check if CheckDBInventory exists anywhere in the supertracked quest's data
+	local currentStep =
+		tonumber(RQE.AddonSetStepIndex) or
+		(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex) or 1
+
+	local stepData = questData[currentStep]
+	if not stepData then return end
+
+	local function stepUsesInventoryCheck(step)
+		if step.funct == "CheckDBInventory" then return true end
+		if step.checks then
+			for _, chk in ipairs(step.checks) do
+				if chk.funct == "CheckDBInventory" then return true end
 			end
 		end
 		return false
 	end
 
-	local isInventoryCheck = hasCheckDBInventory(questData)
+	local isInventoryCheck = stepUsesInventoryCheck(stepData)
 
-	-- If CheckDBInventory is found, trigger StartPeriodicChecks
 	if isInventoryCheck then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_NEW_ITEMS_UPDATED related to questID:", questID, "due to CheckDBInventory presence.")
-			RQE.BagNewItemsRunning = false
-		end
 		C_Timer.After(1.2, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("~~ Running RQE:StartPeriodicChecks() from BAG_NEW_ITEMS_UPDATED ~~")
-			end
-			RQE.BagNewItemsRunning = true
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("RQE:StartPeriodicChecks() fired from BAG_NEW_ITEMS_UPDATED event")
-			end
-			RQE:StartPeriodicChecks() -- Checks 'funct' for current quest in DB after BAG_NEW_ITEMS_UPDATED fires
+			RQE:StartPeriodicChecks()
 		end)
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("BAG_NEW_ITEMS_UPDATED not related to any CheckDBInventory in questID:", questID)
-			RQE.BagNewItemsRunning = false
-		end
 	end
 end
 
@@ -748,18 +821,30 @@ function RQE.ReagentBagUpdate(...)
 	end
 
 	-- Check if the current step relies on inventory checks
-	local isInventoryCheck = false
-	if stepData.funct and stepData.funct == "CheckDBInventory" then
-		isInventoryCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for CheckDBInventory
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBInventory" then
-				isInventoryCheck = true
-				break
+	local function stepUsesInventoryCheck(step)
+		if step.funct == "CheckDBInventory" then return true end
+		if step.checks then
+			for _, chk in ipairs(step.checks) do
+				if chk.funct == "CheckDBInventory" then return true end
 			end
 		end
+		return false
 	end
+
+	local isInventoryCheck = stepUsesInventoryCheck(stepData)
+
+	-- local isInventoryCheck = false
+	-- if stepData.funct and stepData.funct == "CheckDBInventory" then
+		-- isInventoryCheck = true
+	-- elseif stepData.checks then
+		-- -- Also evaluate `checks` for CheckDBInventory
+		-- for _, checkData in ipairs(stepData.checks) do
+			-- if checkData.funct and checkData.funct == "CheckDBInventory" then
+				-- isInventoryCheck = true
+				-- break
+			-- end
+		-- end
+	-- end
 
 	-- If the current step is tied to inventory checks, re-run periodic checks
 	if isInventoryCheck then
@@ -806,9 +891,36 @@ function RQE.handleMailSuccess(...)
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	if not isSuperTracking then return end
 
-	C_Timer.After(3, function()
-		RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after MAIL_SUCCESS fires
-	end)
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questData = questID and RQE.getQuestData(questID)
+	if not questData then return end
+
+	local currentStep =
+		tonumber(RQE.AddonSetStepIndex) or
+		(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex) or 1
+
+	local stepData = questData[currentStep]
+	if not stepData then return end
+
+	local function stepUsesInventoryCheck(step)
+		if step.funct == "CheckDBInventory" then return true end
+		if step.checks then
+			for _, chk in ipairs(step.checks) do
+				if chk.funct == "CheckDBInventory" then return true end
+			end
+		end
+		return false
+	end
+
+	if stepUsesInventoryCheck(stepData) then
+		C_Timer.After(3, function()
+			RQE:StartPeriodicChecks()
+		end)
+	end
+
+	-- C_Timer.After(3, function()
+		-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after MAIL_SUCCESS fires
+	-- end)
 end
 
 
@@ -846,18 +958,33 @@ function RQE.handleMerchantUpdate()
 	end
 
 	-- Check if the current step relies on inventory checks
-	local isInventoryCheck = false
-	if stepData.funct and stepData.funct == "CheckDBInventory" then
-		isInventoryCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for CheckDBInventory
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBInventory" then
-				isInventoryCheck = true
-				break
+	local function stepUsesInventoryCheck(step)
+		if step.funct == "CheckDBInventory" then
+			return true
+		end
+		if step.checks then
+			for _, chk in ipairs(step.checks) do
+				if chk.funct == "CheckDBInventory" then
+					return true
+				end
 			end
 		end
+		return false
 	end
+
+	local isInventoryCheck = stepUsesInventoryCheck(stepData)
+
+	-- local isInventoryCheck = false
+	-- if stepData.funct and stepData.funct == "CheckDBInventory" then
+		-- isInventoryCheck = true
+	-- elseif stepData.checks then
+		-- for _, checkData in ipairs(stepData.checks) do
+			-- if checkData.funct and checkData.funct == "CheckDBInventory" then
+				-- isInventoryCheck = true
+				-- break
+			-- end
+		-- end
+	-- end
 
 	-- If the current step is tied to inventory checks, re-run periodic checks
 	if isInventoryCheck then
@@ -962,18 +1089,34 @@ function RQE.handleUnitInventoryChange(...)
 	end
 
 	-- Check if the current step relies on inventory checks
-	local isInventoryCheck = false
-	if stepData.funct and stepData.funct == "CheckDBInventory" then
-		isInventoryCheck = true
-	elseif stepData.checks then
-		-- Also evaluate `checks` for CheckDBInventory
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBInventory" then
-				isInventoryCheck = true
-				break
+	local function stepUsesInventoryCheck(step)
+		if step.funct == "CheckDBInventory" then
+			return true
+		end
+		if step.checks then
+			for _, chk in ipairs(step.checks) do
+				if chk.funct == "CheckDBInventory" then
+					return true
+				end
 			end
 		end
+		return false
 	end
+
+	local isInventoryCheck = stepUsesInventoryCheck(stepData)
+
+	-- local isInventoryCheck = false
+	-- if stepData.funct and stepData.funct == "CheckDBInventory" then
+		-- isInventoryCheck = true
+	-- elseif stepData.checks then
+		-- -- Also evaluate `checks` for CheckDBInventory
+		-- for _, checkData in ipairs(stepData.checks) do
+			-- if checkData.funct and checkData.funct == "CheckDBInventory" then
+				-- isInventoryCheck = true
+				-- break
+			-- end
+		-- end
+	-- end
 
 	-- If the current step is tied to inventory checks, re-run periodic checks
 	if isInventoryCheck then
@@ -1291,21 +1434,21 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 		-- end
 	-- end
 
-	C_Timer.After(0.1, function()
-		if questID == C_SuperTrack.GetSuperTrackedQuestID() then
-			RQE:StartPeriodicChecks()
-		end
-	end)
+	-- C_Timer.After(0.1, function()
+		-- if questID == C_SuperTrack.GetSuperTrackedQuestID() then
+			-- RQE:StartPeriodicChecks()
+		-- end
+	-- end)
 
-	if not inBlobState then
-		C_Timer.After(0.55, function()
-			RQE.isCheckingMacroContents = true
-			RQEMacro:CreateMacroForCurrentStep()
-			C_Timer.After(0.2, function()
-				RQE.isCheckingMacroContents = false
-			end)
-		end)
-	end
+	-- if not inBlobState then
+		-- C_Timer.After(0.55, function()
+			-- RQE.isCheckingMacroContents = true
+			-- RQEMacro:CreateMacroForCurrentStep()
+			-- C_Timer.After(0.2, function()
+				-- RQE.isCheckingMacroContents = false
+			-- end)
+		-- end)
+	-- end
 end
 
 
@@ -1503,6 +1646,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.NearestFlightMasterSet = false
 	RQE.QuestAddedForWatchListChanged = false
 	RQE.QuestRemoved = false
+	RQE.QuestLogIndexButtonPressed = false
 	RQE.QuestTrackerHiddenSuperTrackedPressed = false
 	RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded = false
 	RQE.QuestWatchUpdateFired = false
@@ -2726,11 +2870,11 @@ function RQE.handlePlayerEnterWorld(...)
 					end
 				end
 				RQE.TrackClosestQuest()
-				if RQE.db.profile.autoClickWaypointButton then
-					C_Timer.After(4, function()
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_ENTERING_WORLD fires
-					end)
-				end
+				-- if RQE.db.profile.autoClickWaypointButton then
+					-- C_Timer.After(4, function()
+						-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_ENTERING_WORLD fires (already handled further down)
+					-- end)
+				-- end
 			end
 
 			C_Timer.After(1, function()
@@ -2926,6 +3070,19 @@ function RQE.handleSuperTracking()
 	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 		-- startTime = debugprofilestop()  -- Start timer
 	-- end
+
+	local newQID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if newQID and newQID ~= RQE.FrameState.lastQuestID then
+		-- Reset FrameState, force full redraw
+		RQE.FrameState.lastQuestID = nil
+		RQE.FrameState.lastObjectives = nil
+		RQE.FrameState.lastNumObjectives = 0
+		RQE.FrameState.lastStepIndex = nil
+
+		-- Also reset StoredStepIndex (fresh quest → step 1)
+		RQE.StoredStepIndex = 1
+	end
 
 	-- Set for situations where the RQEQuestFrame isn't being shown (mythicMode with Blizzard Tracker) and event fires
 	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
@@ -4127,54 +4284,55 @@ function RQE.handleZoneNewAreaChange()
 	-- Scrolls frame to top when changing to a new area
 	RQE.QuestScrollFrameToTop()
 
-	local questData = RQE.getQuestData(questID)
-	if not questData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No quest data available for quest ID:", questID)
-		end
-		return
-	end
+	-- BELOW is to run RQE:StartPeriodicChecks(), but given that this now will run an update when the mapID changes in a more accurate manner this is now redundant
+	-- local questData = RQE.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("No quest data available for quest ID:", questID)
+		-- end
+		-- return
+	-- end
 
-	-- Determine the current stepIndex
-	local stepIndex = RQE.AddonSetStepIndex or 1
-	local stepData = questData[stepIndex]
-	if not stepData then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-		end
-		return
-	end
+	-- -- Determine the current stepIndex
+	-- local stepIndex = RQE.AddonSetStepIndex or 1
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		-- end
+		-- return
+	-- end
 
-	-- Check if the current step relies on CheckDBZoneChange
-	local isZoneChangeCheck = false
-	if stepData.funct and stepData.funct == "CheckDBZoneChange" then
-		isZoneChangeCheck = true
-	elseif stepData.checks then
-		-- Evaluate `checks` for CheckDBZoneChange
-		for _, checkData in ipairs(stepData.checks) do
-			if checkData.funct and checkData.funct == "CheckDBZoneChange" then
-				isZoneChangeCheck = true
-				break
-			end
-		end
-	end
+	-- -- Check if the current step relies on CheckDBZoneChange
+	-- local isZoneChangeCheck = false
+	-- if stepData.funct and stepData.funct == "CheckDBZoneChange" then
+		-- isZoneChangeCheck = true
+	-- elseif stepData.checks then
+		-- -- Evaluate `checks` for CheckDBZoneChange
+		-- for _, checkData in ipairs(stepData.checks) do
+			-- if checkData.funct and checkData.funct == "CheckDBZoneChange" then
+				-- isZoneChangeCheck = true
+				-- break
+			-- end
+		-- end
+	-- end
 
-	-- If the current step relies on CheckDBZoneChange, re-run periodic checks
-	if isZoneChangeCheck then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
-		end
-		C_Timer.After(0.8, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED_NEW_AREA ~~")
-			end
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED_NEW_AREA fires
-		end)
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
-		end
-	end
+	-- -- If the current step relies on CheckDBZoneChange, re-run periodic checks
+	-- if isZoneChangeCheck then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("ZONE_CHANGED_NEW_AREA related to current stepIndex:", stepIndex, "for questID:", questID)
+		-- end
+		-- C_Timer.After(0.8, function()
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED_NEW_AREA ~~")
+			-- end
+			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ZONE_CHANGED_NEW_AREA fires
+		-- end)
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("ZONE_CHANGED_NEW_AREA not related to current stepIndex:", stepIndex, "for questID:", questID)
+		-- end
+	-- end
 
 	-- Clears World Quest that are Automatically Tracked when switching to a new area
 	RQE.UntrackAutomaticWorldQuests()
@@ -4251,26 +4409,26 @@ function RQE.handleUIInfoMessage(...)
 			-- RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
 			-- RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
 			C_Timer.After(1.5, function()
-				if RQE.db.profile.autoClickWaypointButton then
-					RQE.UIInfoUpdateFired = true
-					RQE:StartPeriodicChecks()
-					C_Timer.After(0.2, function()
-						RQE.UIInfoUpdateFired = false
-					end)
-				end
+				-- if RQE.db.profile.autoClickWaypointButton then
+					-- RQE.UIInfoUpdateFired = true
+					-- RQE:StartPeriodicChecks()
+					-- C_Timer.After(0.2, function()
+						-- RQE.UIInfoUpdateFired = false
+					-- end)
+				-- end
 				UpdateFrame()
 			end)
 		end)
 	end
 
-	if messageType == 311 or messageType == 312 then
-		if RQE.BagNewItemsRunning then
-			C_Timer.After(0.1, function()
-				RQE:StartPeriodicChecks()
-				RQE.BagNewItemsRunning = false
-			end)
-		end
-	end
+	-- if messageType == 311 or messageType == 312 then
+		-- if RQE.BagNewItemsRunning then
+			-- C_Timer.After(0.1, function()
+				-- RQE:StartPeriodicChecks()
+				-- RQE.BagNewItemsRunning = false
+			-- end)
+		-- end
+	-- end
 
 	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 	if messageType == 308 or messageType == 309 or messageType == 310 or messageType == 311 or messageType == 312 or messageType == 313 then
