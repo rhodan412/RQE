@@ -411,6 +411,16 @@ RQE.lastWholeX, RQE.lastWholeY = nil, nil
 RQE.lastMapID = nil
 RQE._lastSeparateQuestID = nil
 RQE._lastSeparateStepIndex = nil
+RQE.StoredStepIndex = nil
+RQE.AddonSetStepIndex = nil
+
+RQE.FrameState = {
+	lastQuestID = nil,
+	lastObjectives = nil,   -- table of { text, fulfilled, required, finished, type }
+	lastNumObjectives = 0,
+	lastQuestName = nil,
+	lastStepIndex = nil	 -- optional but consistent with SeparateFocusFrame
+}
 
 -- Initialize Waypoint System
 RQE.waypoints = {}
@@ -882,7 +892,7 @@ function RQE:ShouldClearSeparateFocusFrame()
 	-- FORCED BY CLEAR-BUTTON PRESS
 	if RQE.ClearButtonPressed then
 		RQE:LogSeparateFocusClear("Forced by ClearButtonPressed", oldQuest, newQuest, oldStep, newStep)
-		print("if RQE.ClearButtonPressed then")
+		-- print("RQE.ClearButtonPressed recorded as pressed")
 		return true
 	end
 
@@ -2807,12 +2817,134 @@ function RQE:CheckAndClearUntrackedQuest()
 end
 
 
+-- Saves current objective progress to table
+function RQE:GetQuestObjectiveSnapshot(questID)
+	local objs = C_QuestLog.GetQuestObjectives(questID)
+	if not objs then return nil end
+
+	local snapshot = {}
+
+	for i, o in ipairs(objs) do
+		snapshot[i] = {
+			text = o.text,
+			fulfilled = o.numFulfilled,
+			required = o.numRequired,
+			finished = o.finished,
+			type = o.type
+		}
+	end
+
+	return snapshot
+end
+
+
+-- Compares progress of previous objectives completed/required of supertracked quest with the current objective status
+function RQE:CompareObjectiveTables(old, new)
+	old = old or {}
+	new = new or {}
+
+	if not old or not new then
+		return true -- missing info → must update
+	end
+
+	if #old ~= #new then
+		return true -- objective count changed
+	end
+
+	for i = 1, #old do
+		local a = old[i]
+		local b = new[i]
+
+		if not a or not b then
+			if a ~= b then return true end
+		else
+			if a.text ~= b.text then return true end
+			if a.finished ~= b.finished then return true end
+			if a.numFulfilled ~= b.numFulfilled then return true end
+			if a.numRequired ~= b.numRequired then return true end
+		end
+	end
+
+	return false
+end
+
+
+-- Determines if there was a change to the previous table of the RQE.FrameState:
+-- if new quest is supertracked, if stepIndex changed, or objectives, but will return true if first run
+function RQE:ShouldUpdateFrame(questID)
+	if not questID then return false end
+
+	local old = self.FrameState
+
+	-- ALWAYS use isolated value
+	local stepIndex = tonumber(self.StoredStepIndex) or old.lastStepIndex or 1
+
+	local name = C_QuestLog.GetTitleForQuestID(questID)
+	local objectives = self:GetQuestObjectiveSnapshot(questID)
+
+	-- FIRST RUN
+	if old.lastQuestID == nil then
+		old.lastQuestID = questID
+		old.lastQuestName = name
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		old.lastStepIndex = stepIndex
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("FIRST RUN = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	-- QUEST SWITCHED
+	if questID ~= old.lastQuestID then
+		old.lastQuestID = questID
+		old.lastQuestName = name
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		old.lastStepIndex = stepIndex
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("QUEST SWITCHED = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	-- STEP CHANGED
+	if stepIndex ~= old.lastStepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("STEP CHANGED triggered -- NEW =", stepIndex, " OLD =", old.lastStepIndex)
+		end
+		old.lastStepIndex = stepIndex
+		old.lastObjectives = objectives
+		return true
+	end
+
+	-- OBJECTIVES CHANGED
+	if self:CompareObjectiveTables(old.lastObjectives, objectives) then
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("OBJECTIVES CHANGED = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("NOTHING CHANGED. Setting false -- DBG stepIndex =", stepIndex)
+	end
+	return false
+end
+
+
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	if RQE.DontUpdateFrame then return end
 
+	-- Check if the player is supertracking anything and if not it will run the function to check if the frame should be cleared
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-	if not isSuperTracking and not RQE.searchedQuestID then return end
+	if not isSuperTracking and not RQE.searchedQuestID then
+		RQE:ShouldClearFrame()
+		return
+	end
 
 	-- Checks flag to see if the Blacklist underway is presently in process
 	if RQE.BlacklistUnderway then return end
@@ -2822,6 +2954,14 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	-- Priority: explicit param > search override > current super-tracked
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
+
+	-- NEW: Only continue if something actually changed
+	if not RQE.QuestLogIndexButtonPressed then
+		if not RQE:ShouldUpdateFrame(questID) then
+			RQE.QuestLogIndexButtonPressed = false
+			return
+		end
+	end
 
 	-- Fetch questInfo from RQEDatabase using the determined questID
 	questInfo = RQE.getQuestData(questID) or questInfo
@@ -2838,6 +2978,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	-- Validate questID before proceeding
 	if not questID or type(questID) ~= "number" then
+		RQE.QuestLogIndexButtonPressed = false
 		return
 	end
 
@@ -3017,6 +3158,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	C_Timer.After(1, function()
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end)
+
+	RQE.QuestLogIndexButtonPressed = false
 end
 
 
@@ -6708,6 +6851,349 @@ function RQE:HasCheckDBComplete(questData)
 	end
 	return false, finalStepIndex
 end
+
+
+
+-- -- Periodic check setup comparing with entry in RQEDatabase
+-- function RQE:StartPeriodicChecks()
+	-- -- === simple throttle & re-entrancy guard ===========================
+	-- local now = GetTime()
+
+	-- -- don't let it run twice at once
+	-- if self._periodicCheckRunning then
+		-- if self.db.profile.debugLevel == "INFO+" then
+			-- print("[RQE] StartPeriodicChecks skipped (already running)")
+		-- end
+		-- return
+	-- end
+
+	-- -- don't run more than once every 0.25s (tune as you like)
+	-- if self._periodicCheckLastRun and (now - self._periodicCheckLastRun) < 0.25 then
+		-- return
+	-- end
+
+	-- self._periodicCheckRunning = true
+	-- local function finish()
+		-- self._periodicCheckRunning = false
+		-- self._periodicCheckLastRun = GetTime()
+	-- end
+	-- -- ===================================================================
+
+	-- if self.db.profile.debugLevel == "INFO" then
+		-- print("~~~ Running RQE:StartPeriodicChecks() ~~~")
+	-- end
+
+	-- -- figure out questID
+	-- local extractedQuestID
+	-- if self.QuestIDText and self.QuestIDText:GetText() then
+		-- extractedQuestID = tonumber(self.QuestIDText:GetText():match("%d+"))
+	-- end
+	-- local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+
+	-- if self.db.profile.debugLevel == "INFO+" then
+		-- print("Current superTrackedQuestID:", superTrackedQuestID)
+	-- end
+
+	-- if not superTrackedQuestID then
+		-- finish()
+		-- return
+	-- end
+
+	-- self.CheckAndClickSeparateWaypointButtonButton()
+
+	-- -- function map for parent functions
+	-- local functionMap = {
+		-- CheckDBBuff			  = "CheckDBBuff",
+		-- CheckDBDebuff			= "CheckDBDebuff",
+		-- CheckDBInventory		 = "CheckDBInventory",
+		-- CheckDBZoneChange		= "CheckDBZoneChange",
+		-- CheckDBObjectiveStatus   = "CheckDBObjectiveStatus",
+		-- CheckScenarioStage	   = "CheckScenarioStage",
+		-- CheckScenarioCriteria	= "CheckScenarioCriteria",
+		-- CheckDBConditionalsOnly  = "CheckDBConditionalsOnly",
+		-- CheckDBComplete		  = "CheckDBComplete",
+	-- }
+
+	-- local questData = self.getQuestData(superTrackedQuestID)
+	-- if not questData then
+		-- if self.db.profile.debugLevel == "INFO+" then
+			-- self:CheckAndCreateSuperTrackedQuestWaypoint()
+			-- print("No quest data for superTrackedQuestID:", superTrackedQuestID)
+		-- end
+		-- finish()
+		-- return
+	-- end
+
+	-- -- === figure out current step =======================================
+	-- -- use AddonSetStepIndex if available, otherwise last clicked, otherwise 1
+	-- local currentStep = tonumber(self.AddonSetStepIndex)
+	-- if not currentStep then
+		-- if self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex then
+			-- currentStep = self.LastClickedButtonRef.stepIndex
+		-- else
+			-- currentStep = 1
+		-- end
+	-- end
+
+	-- -- never go below 1, never above number of steps
+	-- if currentStep < 1 then currentStep = 1 end
+	-- if currentStep > #questData then currentStep = #questData end
+
+	-- local originalStep = currentStep
+
+	-- if self.db.profile.debugLevel == "INFO+" then
+		-- print("StartPeriodicChecks: starting evaluation at stepIndex:", currentStep)
+	-- end
+	-- -- ===================================================================
+
+	-- -- === turn-in readiness handling ====================================
+	-- if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
+		-- local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		-- if hasCheckDBComplete then
+			-- local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+			-- if not waypointText then
+				-- -- no Blizzard waypoint → we drive to final step & stop
+				-- self:ClickWaypointButtonForIndex(finalStepIndex)
+				-- self.AddonSetStepIndex = finalStepIndex
+				-- if self.db.profile.debugLevel == "INFO+" then
+					-- print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+				-- end
+				-- finish()
+				-- return
+			-- else
+				-- -- Blizzard already has a waypoint; just sync our UI
+				-- if self.db.profile.debugLevel == "INFO+" then
+					-- print("Quest ready for turn-in and waypointText present; syncing UI to final step.")
+				-- end
+				-- currentStep = finalStepIndex
+				-- self.AddonSetStepIndex = finalStepIndex
+
+				-- if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+				-- if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
+				-- -- fall through to rest of logic
+			-- end
+		-- else
+			-- if self.db.profile.debugLevel == "INFO+" then
+				-- print("Quest ready for turn-in but final step lacks CheckDBComplete. No auto-advance.")
+			-- end
+		-- end
+	-- end
+	-- -- ===================================================================
+
+	-- -- === core step evaluation loop =====================================
+	-- for i = currentStep, #questData do
+		-- local stepData = questData[i]
+
+		-- if self.db.profile.debugLevel == "INFO+" then
+			-- print("Evaluating stepIndex:", i)
+		-- end
+
+		-- -- single-condition step (check/funct)
+		-- if stepData.check and stepData.neededAmt and stepData.funct then
+			-- local parentFunctionName = functionMap[stepData.funct]
+			-- if self[parentFunctionName] then
+				-- if self.db.profile.debugLevel == "INFO+" then
+					-- print("Calling function:", parentFunctionName, "for stepIndex:", i)
+				-- end
+				-- local ok = self[parentFunctionName](self, superTrackedQuestID, i, stepData.check, stepData.neededAmt)
+				-- if ok then
+					-- if self.db.profile.debugLevel == "INFO+" then
+						-- print(parentFunctionName, "succeeded for stepIndex:", i, " -> advance")
+					-- end
+					-- currentStep = i + 1
+				-- else
+					-- if self.db.profile.debugLevel == "INFO+" then
+						-- print(parentFunctionName, "failed for stepIndex:", i, " -> stop")
+					-- end
+					-- break
+				-- end
+			-- else
+				-- if self.db.profile.debugLevel == "INFO+" then
+					-- print("Invalid or missing function for funct:", tostring(stepData.funct))
+				-- end
+				-- break
+			-- end
+		-- end
+
+		-- -- multi-condition steps (checks[])
+		-- if stepData.checks then
+			-- if self.db.profile.debugLevel == "INFO+" then
+				-- print("Step has multiple checks; evaluating.")
+			-- end
+
+			-- local results = {}
+			-- local conditionalTriggered = false
+
+			-- for j, checkData in ipairs(stepData.checks) do
+				-- -- conditional shortcut: cond = "RQE.SomeFunc(123, \"foo\")"
+				-- if checkData.cond and type(checkData.cond) == "string" then
+					-- local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+					-- if funcName and self[funcName] then
+						-- local args = {}
+						-- for param in string.gmatch(rawParams or "", "[^,%s]+") do
+							-- local num = tonumber(param)
+							-- if num then
+								-- table.insert(args, num)
+							-- else
+								-- param = param:gsub("^['\"]", ""):gsub("['\"]$", "")
+								-- table.insert(args, param)
+							-- end
+						-- end
+
+						-- if self.db.profile.debugLevel == "INFO+" then
+							-- print("Conditional:", checkData.cond, " -> func:", funcName)
+						-- end
+
+						-- local ok, condResult = pcall(self[funcName], self, unpack(args))
+						-- if not ok then
+							-- print("Error running conditional '" .. checkData.cond .. "': " .. tostring(condResult))
+						-- else
+							-- if condResult then
+								-- conditionalTriggered = true
+								-- if self.db.profile.debugLevel == "INFO+" then
+									-- print("Conditional true; auto-passing step", i)
+								-- end
+								-- break
+							-- end
+						-- end
+					-- end
+				-- end
+
+				-- -- standard function-based check
+				-- local parentFunctionName = checkData.funct
+				-- if self[parentFunctionName] then
+					-- if self.db.profile.debugLevel == "INFO+" then
+						-- print("Calling parent function:", parentFunctionName, "for check", j)
+					-- end
+					-- results[j] = self[parentFunctionName](self, superTrackedQuestID, i, checkData.check, checkData.neededAmt)
+				-- else
+					-- if self.db.profile.debugLevel == "INFO+" then
+						-- print("Invalid or missing function for check funct:", tostring(checkData.funct))
+					-- end
+					-- results[j] = false
+				-- end
+			-- end
+
+			-- if conditionalTriggered then
+				-- currentStep = i + 1
+				-- break
+			-- end
+
+			-- local allChecksPassed = self:CombineCheckResults(results, stepData)
+			-- if allChecksPassed then
+				-- if self.db.profile.debugLevel == "INFO+" then
+					-- print("All checks passed for stepIndex:", i, " -> advance")
+				-- end
+				-- currentStep = i + 1
+			-- else
+				-- if self.db.profile.debugLevel == "INFO+" then
+					-- print("Checks failed for stepIndex:", i, " -> stop")
+				-- end
+				-- break
+			-- end
+		-- end
+	-- end
+	-- -- ===================================================================
+
+	-- -- clamp currentStep again (just in case we advanced past end)
+	-- if currentStep < 1 then currentStep = 1 end
+	-- if currentStep > #questData then currentStep = #questData + 1 end
+
+	-- -- === Blizzard waypoint interaction / zone-change special-case ======
+	-- local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+	-- if waypointText then
+		-- local cur = questData[currentStep]
+		-- local isZoneChangeCheck = false
+
+		-- if cur then
+			-- if cur.funct == "CheckDBZoneChange" then
+				-- isZoneChangeCheck = true
+			-- elseif cur.checks then
+				-- for _, checkData in ipairs(cur.checks) do
+					-- if checkData.funct == "CheckDBZoneChange" then
+						-- isZoneChangeCheck = true
+						-- break
+					-- end
+				-- end
+			-- end
+		-- end
+
+		-- if not isZoneChangeCheck then
+			-- if self.db.profile.debugLevel == "INFO+" then
+				-- print("WaypointText present; suppressing extra waypoint creation.")
+			-- end
+
+			-- self.AddonSetStepIndex = currentStep
+			-- local playerMapID = C_Map.GetBestMapForUnit("player")
+			-- if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+			-- if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
+			-- self:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
+			-- finish()
+			-- return
+		-- else
+			-- if self.db.profile.debugLevel == "INFO+" then
+				-- print("WaypointText present; current step uses CheckDBZoneChange -> continue.")
+			-- end
+		-- end
+	-- else
+		-- if self.db.profile.debugLevel == "INFO+" then
+			-- print("StartPeriodicChecks continuing (no Blizzard waypoint).")
+		-- end
+	-- end
+	-- -- ===================================================================
+
+	-- -- === only do heavy “step changed” work if it actually changed ======
+	-- if currentStep ~= originalStep then
+		-- if currentStep <= #questData then
+			-- if self.db.profile.debugLevel == "INFO+" then
+				-- print("StepIndex changed:", originalStep, "->", currentStep, " (clicking waypoint)")
+			-- end
+			-- self.AddonSetStepIndex = currentStep
+			-- self:ClickWaypointButtonForIndex(currentStep)
+		-- else
+			-- if self.db.profile.debugLevel == "INFO+" then
+				-- print("No further steps to process.")
+			-- end
+		-- end
+
+		-- -- rebuild macro only when step changed
+		-- C_Timer.After(0.15, function()
+			-- self.isCheckingMacroContents = true
+			-- RQEMacro:CreateMacroForCurrentStep()
+			-- C_Timer.After(0.2, function()
+				-- self.isCheckingMacroContents = false
+			-- end)
+		-- end)
+
+		-- -- coordinate-distance conditional flag
+		-- self.isCheckingCoordinateDistanceConditional = false
+		-- local curStep = questData[currentStep]
+		-- if curStep and curStep.checks then
+			-- for _, checkData in ipairs(curStep.checks) do
+				-- if checkData.cond and checkData.cond:find("RQE%.CheckCoordinateDistance") then
+					-- self.isCheckingCoordinateDistanceConditional = true
+					-- if self.db.profile.debugLevel == "INFO+" then
+						-- print("RQE: Found coordinate-distance conditional in current step.")
+					-- end
+					-- break
+				-- end
+			-- end
+		-- end
+
+		-- self.NewZoneChange = false
+		-- if self.UpdateSeparateFocusFrame then
+			-- self:UpdateSeparateFocusFrame()
+		-- end
+	-- else
+		-- if self.db.profile.debugLevel == "INFO+" then
+			-- print("StepIndex did not change (still at", currentStep, ") – skipping waypoint/macro rebuild.")
+		-- end
+	-- end
+	-- -- ===================================================================
+
+	-- finish()
+-- end
+
 
 
 -- Periodic check setup comparing with entry in RQEDatabase
