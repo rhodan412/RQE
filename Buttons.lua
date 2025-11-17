@@ -678,7 +678,10 @@ end
 function RQE.Buttons.ClearButtonPressed()
 	RQE:ClearFrameData()
 	RQE:ClearWaypointButtonData()
+
+	RQE.ClearButtonPressed = true	 -- FORCES the next clear (might need to add a check to make sure that the player physically pressed the button for this to actually clear the frame)
 	RQE:ClearSeparateFocusFrame()
+
 	RQE.searchedQuestID = nil
 	RQE.ManualSuperTrack = nil
 	RQE.DontUpdateFrame = false
