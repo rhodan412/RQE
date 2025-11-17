@@ -2817,6 +2817,35 @@ function RQE:CheckAndClearUntrackedQuest()
 end
 
 
+-- Checks objective progress
+function RQE:DidObjectivesChange(questID)
+	local newObj = RQE:GetQuestObjectiveSnapshot(questID)
+	local oldObj = RQE.LastObjectiveSnapshot
+
+	if not oldObj then
+		RQE.LastObjectiveSnapshot = newObj
+		return true
+	end
+
+	-- if RQE:CompareObjectiveTables(oldObj, newObj) then
+		-- RQE.LastObjectiveSnapshot = newObj
+		-- return true
+	-- end
+
+	-- return false
+
+	-- Detect real changes
+	local changed = RQE:CompareObjectiveTables(oldObj, newObj)
+
+	-- Always update the cached snapshot
+	if changed then
+		RQE.LastObjectiveSnapshot = newObj
+	end
+
+	return changed
+end
+
+
 -- Saves current objective progress to table
 function RQE:GetQuestObjectiveSnapshot(questID)
 	local objs = C_QuestLog.GetQuestObjectives(questID)
@@ -2835,6 +2864,22 @@ function RQE:GetQuestObjectiveSnapshot(questID)
 	end
 
 	return snapshot
+end
+
+
+-- Check for changes to the DirectionText and if so it should run the UpdateFrame() 
+function RQE:DidDirectionTextChange(questID)
+	if not questID then return false end
+
+	local newDir = C_QuestLog.GetNextWaypointText(questID)
+	local oldDir = RQE.LastDirectionSnapshot
+
+	if newDir ~= oldDir then
+		RQE.LastDirectionSnapshot = newDir
+		return true
+	end
+
+	return false
 end
 
 
@@ -2956,10 +3001,13 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
 	-- NEW: Only continue if something actually changed
-	if not RQE.QuestLogIndexButtonPressed then
-		if not RQE:ShouldUpdateFrame(questID) then
-			RQE.QuestLogIndexButtonPressed = false
-			return
+	if not RQE.DirectionChangedUpdateRQEFrame then
+		if not RQE.QuestLogIndexButtonPressed then
+			if not RQE:ShouldUpdateFrame(questID) then
+				RQE.QuestLogIndexButtonPressed = false
+				RQE.DirectionChangedUpdateRQEFrame = false
+				return
+			end
 		end
 	end
 
@@ -3104,7 +3152,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 		end
 
-		RQE.DontUpdateFrame = true
+		--RQE.DontUpdateFrame = true
 	else
 		local DirectionText = C_QuestLog.GetNextWaypointText(questID)
 		RQEFrame.DirectionText = DirectionText  -- Save to addon table
@@ -5738,6 +5786,28 @@ function RQE:ToggleRQEQuestFrame()
 		-- print(">> Config disabled – hiding RQEQuestFrame")
 		RQE.RQEQuestFrame:Hide()
 	end
+end
+
+
+-- Utility helper function that checks if the current step the player is on contains "CheckDBZoneChange" via either check or checks
+function RQE:StepUsesZoneChange(step)
+	if not step then return false end
+
+	-- direct funct
+	if step.funct == "CheckDBZoneChange" then
+		return true
+	end
+
+	-- checks[] multi-block
+	if step.checks then
+		for _, chk in ipairs(step.checks) do
+			if chk.funct == "CheckDBZoneChange" then
+				return true
+			end
+		end
+	end
+
+	return false
 end
 
 
