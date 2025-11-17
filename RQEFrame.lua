@@ -2265,6 +2265,8 @@ function RQE.InitializeSeparateFocusFrame()
 			return
 		end
 
+		RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
 		RQE:ClearSeparateFocusFrame()
 
 		-- ✅ Improved quest data handling (for DB-less quests)
