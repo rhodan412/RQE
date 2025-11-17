@@ -17,6 +17,9 @@ RQEDB.profileKeys = RQEDB.profileKeys or {}
 
 RQE = RQE or {}
 
+-- Table to store current SeparateFocusFrame to determine if it should be updated (cleared) or not
+RQE.ClearSeparateFocusHistory = RQE.ClearSeparateFocusHistory or {}
+
 RQE.db = RQE.db or {}
 RQE.db.profile = RQE.db.profile or {}
 
@@ -405,7 +408,9 @@ RQE.LastMapChangeTime = 0
 local isMacroCreationInProgress = false		-- Declare a variable to track if macro creation is currently in progress
 local isPeriodicCheckInProgress = false		-- Declare a variable to track if periodic checks are currently in progress
 RQE.lastWholeX, RQE.lastWholeY = nil, nil
-
+RQE.lastMapID = nil
+RQE._lastSeparateQuestID = nil
+RQE._lastSeparateStepIndex = nil
 
 -- Initialize Waypoint System
 RQE.waypoints = {}
@@ -835,6 +840,81 @@ function RQE:IsQuestWatched(questID)
 			return true
 		end
 	end
+	return false
+end
+
+
+-- Helper function to determine if the SeparateFocusFrame should be cleared for an update
+function RQE:LogSeparateFocusClear(reason, oldQuestID, newQuestID, oldStep, newStep)
+	-- SAFETY: Ensure the history table exists
+	RQE.ClearSeparateFocusHistory = RQE.ClearSeparateFocusHistory or {}
+
+	table.insert(RQE.ClearSeparateFocusHistory, {
+		time = date("%H:%M:%S"),
+		reason = reason,
+		oldQuestID = oldQuestID,
+		newQuestID = newQuestID,
+		oldStepIndex = oldStep,
+		newStepIndex = newStep
+	})
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("|cff99ccff[RQE]|r ClearSeparateFocusFrame fired: %s (oldQuest=%s → newQuest=%s, oldStep=%s → newStep=%s)",
+			reason,
+			tostring(oldQuestID), tostring(newQuestID),
+			tostring(oldStep), tostring(newStep)
+		))
+	end
+end
+
+
+-- Guard function to decide whether it should clear the SeparateFocusFrame
+function RQE:ShouldClearSeparateFocusFrame()
+	 -- Always refresh the real supertracked quest
+	RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Always define these FIRST
+	local newQuest = RQE.CurrentlySuperQuestID
+	local newStep  = RQE.AddonSetStepIndex or 1
+	local oldQuest = RQE._lastSeparateQuestID
+	local oldStep  = RQE._lastSeparateStepIndex
+
+	-- FORCED BY CLEAR-BUTTON PRESS
+	if RQE.ClearButtonPressed then
+		RQE:LogSeparateFocusClear("Forced by ClearButtonPressed", oldQuest, newQuest, oldStep, newStep)
+		print("if RQE.ClearButtonPressed then")
+		return true
+	end
+
+	-- If in combat, never consume state
+	if InCombatLockdown() then
+		-- Defer the clear and do NOT check actual step changes
+		return true
+	end
+
+	-- If no quest or no DB entry, always clear
+	if not newQuest or not RQE.getQuestData(newQuest) then
+		RQE:LogSeparateFocusClear("Quest missing or not in DB", oldQuest, newQuest, oldStep, newStep)
+		return true
+	end
+
+	-- Quest changed
+	if newQuest ~= oldQuest then
+		RQE:LogSeparateFocusClear("Supertracked quest changed", oldQuest, newQuest, oldStep, newStep)
+		return true
+	end
+
+	-- Step changed
+	if newStep ~= oldStep then
+		RQE:LogSeparateFocusClear("StepIndex changed", oldQuest, newQuest, oldStep, newStep)
+		return true
+	end
+
+	-- No change → do NOT clear/update
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cff888888[RQE] SeparateFocusFrame skip — no quest or step change.|r")
+	end
+
 	return false
 end
 
@@ -2047,14 +2127,41 @@ end
 
 -- Function to update MapID display
 function RQE:UpdateMapIDDisplay()
+	local newMapID = C_Map.GetBestMapForUnit("player")
+	local oldMapID = RQE.lastMapID
+
 	local mapID = C_Map.GetBestMapForUnit("player")
 	--UpdateWorldQuestTrackingForMap(mapID)
+
+	-- Debug: always show BEFORE/AFTER even if one is nil
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("|cff33ff99[RQE] MapID check|r old=%s  new=%s",
+			tostring(oldMapID), tostring(newMapID)))
+	end
+
+	-- Skip if mapID didn’t change
+	if not newMapID or newMapID == oldMapID then
+		return
+	end
+
+	-- Debug: Only fires when map actually changed
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("|cff00ff00[RQE] Map changed!|r %s → %s",
+			tostring(oldMapID), tostring(newMapID)))
+	end
+
+	-- Update cache
+	RQE.lastMapID = mapID
 
 	if RQE.db.profile.showMapID and mapID then
 		RQEFrame.MapIDText:SetText("MapID: " .. mapID)
 	else
 		RQEFrame.MapIDText:SetText("")
 	end
+
+	-- Run check to update stepIndex of the supertracked quest but only if the player isn't on a taxi, then the StartPeriodicChecks will run after they land
+	if UnitOnTaxi("player") then return end
+	RQE:StartPeriodicChecks()	-- Fires on map change RQE:UpdateMapIDDisplay() but might need to adjust so it only fires if CheckDBZoneChange is part of the current step (or any step in the current supertracked quest)
 end
 
 
@@ -2347,6 +2454,15 @@ end
 
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
+	-- Do NOT run if nothing changed EXCEPT when forced
+	if not RQE:ShouldClearSeparateFocusFrame() then
+		return
+	end
+
+	-- Update internal tracking for next comparison
+	RQE._lastSeparateQuestID = RQE.CurrentlySuperQuestID
+	RQE._lastSeparateStepIndex = RQE.AddonSetStepIndex or 1
+
 	if InCombatLockdown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("|cFFFF3333[RQE]|r SeparateFocusFrame will clear after combat ends")
@@ -2363,6 +2479,10 @@ function RQE:ClearSeparateFocusFrame()
 	if RQE.ClearSeparateFocusFrameAfterCombat then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("|cff00ff00[RQE]|r Running RQE:ClearSeparateFocusFrame()")
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00[RQE]|r Running the RQE:ClearSeparateFocusFrame() as change occurred but not following combat")
 		end
 	end
 
@@ -2400,6 +2520,8 @@ function RQE:ClearSeparateFocusFrame()
 	RQE.SeparateStepText:SetWordWrap(true)
 	RQE.SeparateStepText:SetText("No step description available for this step.")
 	RQE.SeparateStepText:Show()
+
+	RQE.ClearButtonPressed = false
 end
 
 
