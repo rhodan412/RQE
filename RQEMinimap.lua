@@ -207,10 +207,10 @@ RQE.MinimapButton.texture = tex
 -- Optional highlight on mouseover
 RQE.MinimapButton:EnableMouse(true)
 RQE.MinimapButton:SetScript("OnEnter", function(self)
-    tex:SetVertexColor(1, 1, 1, 1) -- normal
+	tex:SetVertexColor(1, 1, 1, 1) -- normal
 end)
 RQE.MinimapButton:SetScript("OnLeave", function(self)
-    tex:SetVertexColor(0.8, 0.8, 0.8, 1) -- dimmed highlight
+	tex:SetVertexColor(0.8, 0.8, 0.8, 1) -- dimmed highlight
 end)
 
 RQE.MinimapButton:SetPoint("BOTTOMLEFT", Minimap, "BOTTOMLEFT", 0, 0)
