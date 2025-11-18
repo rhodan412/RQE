@@ -416,7 +416,8 @@ function RQE.handleGossipClosed()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
 			end
-			SetRaidTarget("target", 0)
+			-- SetRaidTarget("target", 0)
+			RemoveRaidTargets()
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
@@ -5488,8 +5489,8 @@ function RQE.handleQuestCurrencyLootReceived(...)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
-				SetRaidTarget("target", 0)
-				-- RemoveRaidTargets()
+				-- SetRaidTarget("target", 0)
+				RemoveRaidTargets()
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -5586,8 +5587,8 @@ function RQE.handleQuestLootReceived(...)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
-				SetRaidTarget("target", 0)
-				-- RemoveRaidTargets()
+				-- SetRaidTarget("target", 0)
+				RemoveRaidTargets()
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -5896,9 +5897,9 @@ function RQE.handleQuestRemoved(...)
 		end
 	end
 
-	if not InCombatLockdown() then
-		RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
-	end
+	-- if not InCombatLockdown() then
+		-- RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
+	-- end
 	
 	if questID == RQE.searchedQuestID then
 		RQE.DontUpdateFrame = false
@@ -6524,10 +6525,12 @@ function RQE.handleQuestTurnIn(...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
 
-	-- Print in coordinateHotspots format
+	-- Print in coordinateHotspots format and should show use the coordinates that are reflected in the DB file for that last step
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.MapAndContinentFromQuestTurnIn = true
-		RQE.DebugPrintPlayerContinentPosition(questID)
+		--RQE.DebugPrintPlayerContinentPosition(questID)
+		RQE.TurnInQuestID = questID
+		RQE.DebugPrintPlayerContinentPosition(RQE.TurnInQuestID)
 	end
 
 	-- print("~~~ Running Event Function: RQE.handleQuestTurnIn(...) ~~~")
