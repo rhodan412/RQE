@@ -13268,6 +13268,64 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 end
 
 
+
+-- Prints the coordinateHotspot of the current player position regardless of if the continentID exists or if the map doesn't have a continentID
+function RQE.PrintPlayerCoordinateHotspot()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print("Unable to determine current map.")
+		return
+	end
+
+	-- Get normalized x, y for the current map
+	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not pos then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Unable to get player position on mapID:", mapID)
+		end
+		return
+	end
+
+	local x, y = pos.x, pos.y
+
+	-- Climb to continent
+	local continentID, continentName
+	local m = mapID
+	while m do
+		local info = C_Map.GetMapInfo(m)
+		if not info then break end
+		if info.mapType == 2 then -- 2 = continent
+			continentID, continentName = info.mapID, info.name
+			break
+		end
+		m = info.parentMapID
+	end
+
+	-- Convert coords to continent-normalized space
+	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+	if not contPos then
+		if continentID ~= 905 and continentID ~= 1550 then	-- Argus (905) is not a true navigable parent map despite being listed as a continentID appears Shadowlands (1550) is the same
+			if RQE.db.profile.debugLevel == "INFO" then
+				print("Unable to get player position on continentID:", continentID)
+			end
+		end
+	end
+
+	-- Gathers coordinateHotspot for current player position
+	if contPos then
+		local cx, cy = contPos.x, contPos.y
+		print("				coordinateHotspots = {")
+		print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
+		print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+		print("				},") 
+	else
+		print("				coordinateHotspots = {")
+		print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
+		print("				},") 
+	end	
+end
+
+
 -- Fetches the player's position in relation to their current continent
 function RQE.DebugPrintPlayerContinentPosition(questID)
 	local mapID = C_Map.GetBestMapForUnit("player")
@@ -13315,13 +13373,12 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 	-- Convert coords to continent-normalized space
 	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
 	if not contPos then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Unable to get player position on continentID:", continentID)
+		if continentID ~= 905 and continentID ~= 1550 then	-- Argus (905) is not a true navigable parent map despite being listed as a continentID appears Shadowlands (1550) is the same
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Unable to get player position on continentID:", continentID)
+			end
 		end
-		return
 	end
-
-	local cx, cy = contPos.x, contPos.y
 
 	if continentID == mapID then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -13365,6 +13422,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			else
 				print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
 			end
+			local cx, cy = contPos.x, contPos.y
 			print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
 			print("			},")
 			PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
@@ -13410,6 +13468,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				local hotspotX = hasDBCoords and dbX or (x * 100)
 				local hotspotY = hasDBCoords and dbY or (y * 100)
 				local hotspotMapID = hasDBCoords and dbMapID or mapID
+				local cx, cy = contPos.x, contPos.y
 
 				print("				coordinateHotspots = {")
 				print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
@@ -13439,6 +13498,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			local hotspotX = hasDBCoords and dbX or (x * 100)
 			local hotspotY = hasDBCoords and dbY or (y * 100)
 			local hotspotMapID = hasDBCoords and dbMapID or mapID
+			local cx, cy = contPos.x, contPos.y
 
 			print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
 			print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
