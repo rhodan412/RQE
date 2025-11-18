@@ -55,6 +55,8 @@
 		- Modified UpdateFrame() to find out if the flag is set designating the DirectionText has changed and should thus bypass RQE:ShouldUpdateFrame(questID) function and continue the UpdateFrame() function to update the RQEFrame (2025.11.17.0426)
 		- Removed RQE.DontUpdateFrame within UpdateFrame() as this was preventing the RQEFrame from updating appropriately when DirectionText changes (2025.11.17.0426)
 		- Added RQE:StepUsesZoneChange(step) helper function, called from the ZONE_CHANGED_NEW AREA and ZONE_CHANGED event functions, that checks if the current step of the supertracked quest has CheckDBZoneChange (2025.11.17.0426)
+		- Added functionality to print current player's mapID coordinates and continental coordinates in coordinateHotspot format (2025.11.17.2021)
+		- Modified the RQE.DebugPrintPlayerContinentPosition function to ignore certain continentIDs that are not true continents (Argus/Shadowlands) from printing those (2025.11.17.2021)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -82,6 +84,9 @@
 		- Set macro creation within SUPER_TRACKING_CHANGED if the RQEQuestFrame is hidden [such as during a scenario/instance] (2025.11.17.0426)
 		- Modified PLAYER_CONTROL_GAINED, QUEST_WATCH_UPDATE, UNIT_QUEST_LOG_CHANGED, UPDATE_INSTANCE_INFO event functions to check if objective progress has been made from previous snapshot before calling RQE:StartPeriodicChecks() greatly reducing lag and the frequency that this function runs (2025.11.17.0426)
 		- Added check within SUPER_TRACKING_CHANGED to not call RQE:StartPeriodicChecks() function unless there was a change to the previously supertracked quest and the current supertracked quest (2025.11.17.0426)
+		- Updated GOSSIP_CLOSED, QUEST_CURRENCY_LOOT_RECEIVED, and QUEST_LOOT_RECEIVED to run RemoveRaidTargets() instead of SetRaidTarget("target", 0) when those event functions fire (2025.11.17.2021)
+		- Removed RQE:CheckWatchedQuestsSync() in the QUEST_REMOVED event function (2025.11.17.2021)
+		- Updated section that prints out coordinateHotspots on QUEST_TURNED_IN event function to use the map coordinates that exist in the DB instead of current player coordinates (2025.11.17.2021)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
@@ -116,6 +121,7 @@
 		- Updated questID 47287 to the DB file (2025.11.16.2003)
 		- Removed unnecessary code in the DB that was already commented out (2025.11.17.0033)
 		- Added a few additional Legion quests to the DB, including some on Argus and some Druid Order Hall quests (2025.11.17.0426)
+		- Added additional Legion quests in Argus (2025.11.17.2021)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
@@ -128,6 +134,7 @@
 		- Reverted changes to the RQE:CreateStepsText and RQE:UpdateSeparateFocusFrame() functions to correctly display the text in the SeparateFocusFrame and StepsText (2025.11.12.2202)
 		- Added call to RQE:ClearSeparateFocusFrame() before the frame would get updated to prevent information in SeparateFocusFrame being placed on top of existing text (2025.11.13.2156)
 		- Saves the supertracked quest to the RQE.CurrentlySuperQuestID variable when RQE:UpdateSeparateFocusFrame() function fires and before the RQE:ClearSeparateFocusFrame() function is called prior to update (2025.11.16.2003)
+		- Fixed anchoring issue with SeparateWaypointButton where the button was lower, in the SeparateFocusFrame, than it should've been. (2025.11.17.2021)
 
 	RQEMinimap.lua
 		- Removed potential taint issue with the conversion of RQE.MinimapButton from Button to Frame type (2025.11.13.2156)
