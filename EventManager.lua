@@ -3142,6 +3142,7 @@ function RQE.handleSuperTracking()
 	-- end
 
 	local newQID = C_SuperTrack.GetSuperTrackedQuestID()
+	RQE.LastSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local oldQID = RQE.previousSuperTrackedQuestID
 
 	if newQID and newQID ~= RQE.FrameState.lastQuestID then
@@ -6524,6 +6525,10 @@ function RQE.handleQuestTurnIn(...)
 	local questID = select(3, ...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
+
+	if RQE.LastSuperTrackedQuestID == questID then
+		RemoveRaidTargets()
+	end
 
 	-- Print in coordinateHotspots format and should show use the coordinates that are reflected in the DB file for that last step
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
