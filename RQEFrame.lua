@@ -2585,12 +2585,15 @@ function RQE.InitializeSeparateFocusFrame()
 end
 
 
+-- Initialize the waypoint button for the SeparateFocusFrame
 function RQE.InitializeSeparateFocusWaypoints()
 	-- Create or update Waypoint Button
 	if not RQE.SeparateWaypointButton then
-		RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
+		RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateFocusFrame)
+		--RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
 		RQE.SeparateWaypointButton:SetSize(30, 30)
-		RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
+		RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateFocusFrame, "TOPLEFT", 33, -5)
+		--RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
 		local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
 		bg:SetAllPoints()
 		bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
