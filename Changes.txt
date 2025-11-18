@@ -21,6 +21,7 @@
 		- Added flag to set to true whenever the RQE.Buttons.ClearButtonPressed() function fires (2025.11.16.2003)
 		- No longer fires RQE:StartPeriodicChecks() when mousing over the "W" button as this wasn't needed since clicking the button would run it anyway (2025.11.17.0033)
 		- Reset the FrameState for lastQuestID, lastQuestName, lastObjectives, lastNumObjectives and lastStepIndex when Clear Button is pressed (2025.11.17.0033)
+		- Modified RQE.UnknownButtonTooltip for better printing of waypoint information into chat for the coordinateHotspots [author-mode only] (2025.11.17.2256)
 
 	Core.lua
 		- Updated RQE.RenderTextWithItems() function to recognize SimpleHTML with the creation of the clickable waypoint within the RQEFrame (2025.11.10.1926)
@@ -57,6 +58,7 @@
 		- Added RQE:StepUsesZoneChange(step) helper function, called from the ZONE_CHANGED_NEW AREA and ZONE_CHANGED event functions, that checks if the current step of the supertracked quest has CheckDBZoneChange (2025.11.17.0426)
 		- Added functionality to print current player's mapID coordinates and continental coordinates in coordinateHotspot format (2025.11.17.2021)
 		- Modified the RQE.DebugPrintPlayerContinentPosition function to ignore certain continentIDs that are not true continents (Argus/Shadowlands) from printing those (2025.11.17.2021)
+		- Fixed nil errors associated with the modifications to RQE.DebugPrintPlayerContinentPosition(questID) function [author-mode only] (2025.11.17.2256)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -87,6 +89,8 @@
 		- Updated GOSSIP_CLOSED, QUEST_CURRENCY_LOOT_RECEIVED, and QUEST_LOOT_RECEIVED to run RemoveRaidTargets() instead of SetRaidTarget("target", 0) when those event functions fire (2025.11.17.2021)
 		- Removed RQE:CheckWatchedQuestsSync() in the QUEST_REMOVED event function (2025.11.17.2021)
 		- Updated section that prints out coordinateHotspots on QUEST_TURNED_IN event function to use the map coordinates that exist in the DB instead of current player coordinates (2025.11.17.2021)
+		- Saved supertracked questID to RQE.LastSuperTrackedQuestID when SUPER_TRACKING_CHANGED event function fires (2025.11.17.2256)
+		- Modified QUEST_TURNED_IN event function to RemoveRaidTargets() if the quest turned in was the quest last supertracked via RQE.LastSuperTrackedQuestID (2025.11.17.2256)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
