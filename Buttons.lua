@@ -205,6 +205,16 @@ RQE.UnknownButtonTooltip = function()
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID))
 					if RQE.db.profile.debugLevel == "INFO" then
 						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+						local directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+
+						if directionText then
+							DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 1)	-- Cyan color
+							DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35, wayText = %q },", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID), directionText), 0, 1, 1)	-- Cyan color
+							DEFAULT_CHAT_FRAME:AddMessage("				},", 0, 1, 1)	-- Cyan color
+						else
+							DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID)), 0, 1, 1)	-- Cyan color
+						end
+
 						RQE.WCoordData = tooltipText
 						-- C_Timer.After(5, function()
 							-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 189 ~~")
@@ -249,7 +259,10 @@ RQE.UnknownButtonTooltip = function()
 						local bx, by, bmap = string.match(tooltipText, "%(([%d%.]+),%s*([%d%.]+)%)%s*%-%s*MapID:%s*(%d+)")
 
 						if bx and by and bmap then
-							DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", tonumber(bx), tonumber(by), tonumber(bmap)), 0, 1, 1)
+							DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", tonumber(bx), tonumber(by), tonumber(bmap)), 0, 1, 1)	-- Cyan color
+							DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 0)  -- Green color
+							DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", tonumber(bx), tonumber(by), tonumber(bmap)), 0, 1, 0)
+							DEFAULT_CHAT_FRAME:AddMessage("				},", 0, 1, 0)
 						else
 							-- Fallback if parsing fails
 							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)
@@ -271,7 +284,22 @@ RQE.UnknownButtonTooltip = function()
 					if waypointX and waypointY and waypointMapID then
 						local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", waypointX * 100, waypointY * 100, tostring(waypointMapID))
 						if RQE.db.profile.debugLevel == "INFO" then
-							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+							-- DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
+							-- local directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+
+							-- -- DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", waypointX * 100, waypointY * 100, tostring(waypointMapID)), 0, 1, 1)	-- Cyan color
+							-- -- DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 1)	-- Cyan color
+							-- -- DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", waypointX * 100, waypointY * 100, tostring(waypointMapID)), 0, 1, 1)	-- Cyan color
+							-- -- DEFAULT_CHAT_FRAME:AddMessage("				},", 0, 1, 1)	-- Cyan color
+
+							-- if directionText then
+								-- DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 1)	-- Cyan color
+								-- DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35, wayText = %q },", waypointX * 100, waypointY * 100, tostring(waypointMapID), directionText), 0, 1, 1)	-- Cyan color
+								-- DEFAULT_CHAT_FRAME:AddMessage("				},", 0, 1, 1)	-- Cyan color
+							-- else
+								-- DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", waypointX * 100, waypointY * 100, tostring(waypointMapID)), 0, 1, 1)	-- Cyan color
+							-- end
+
 							RQE.WCoordData = tooltipText
 							-- C_Timer.After(5, function()
 								-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 242 ~~")
