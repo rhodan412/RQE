@@ -13416,15 +13416,18 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			end
 
 			-- Then print the new generated "locations" array block
-			print("			locations = {")
-			if dbX and dbY and dbMapID then
-				print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			else
-				print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
+			if contPos then
+				local cx, cy = contPos.x, contPos.y
+				print("			locations = {")
+				if dbX and dbY and dbMapID then
+					print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
+					print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
+				else
+					print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
+					print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
+				end
+				print("			},")
 			end
-			local cx, cy = contPos.x, contPos.y
-			print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
-			print("			},")
 			PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
 		end
 	end
@@ -13468,13 +13471,16 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				local hotspotX = hasDBCoords and dbX or (x * 100)
 				local hotspotY = hasDBCoords and dbY or (y * 100)
 				local hotspotMapID = hasDBCoords and dbMapID or mapID
-				local cx, cy = contPos.x, contPos.y
+				
+				if contPos then
+					local cx, cy = contPos.x, contPos.y
 
-				print("				coordinateHotspots = {")
-				print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
-				print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-				print("				},")
-				PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
+					print("				coordinateHotspots = {")
+					print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
+					print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+					print("				},")
+					PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
+				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Turn in step for the quest " .. trackedQuestID .. " already uses a coordinateHotspots array")
@@ -13494,15 +13500,19 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				-- print("Using player position fallback (no DB coordinates for this quest step)")
 			end
 
-			print("				coordinateHotspots = {")
-			local hotspotX = hasDBCoords and dbX or (x * 100)
-			local hotspotY = hasDBCoords and dbY or (y * 100)
-			local hotspotMapID = hasDBCoords and dbMapID or mapID
-			local cx, cy = contPos.x, contPos.y
+			if contPos then
+				print("				coordinateHotspots = {")
+				local hotspotX = hasDBCoords and dbX or (x * 100)
+				local hotspotY = hasDBCoords and dbY or (y * 100)
+				local hotspotMapID = hasDBCoords and dbMapID or mapID
+				local cx, cy = contPos.x, contPos.y
 
-			print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
-			print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-			print("				},")
+				print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
+				print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+				print("				},")
+			else
+				print("No contPos")
+			end
 		end
 	end
 
