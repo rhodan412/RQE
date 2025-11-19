@@ -16,6 +16,7 @@
 		- Major improvements to the updating of the RQEFrame as it was updating far too often and resulting in large lag spikes
 		- Significant modifications to the inventory events as a variety of these were causing function to fire that checks if the player is on the correct stepIndex
 		- Additional improvements to reduce the firing of the RQE:StartPeriodicChecks() function that is responsible for updating the stepIndex to fire only on objective changes or change to supertracked quest
+		- Added many Argus campaign quests to the DB
 
 	Buttons.lua
 		- Added flag to set to true whenever the RQE.Buttons.ClearButtonPressed() function fires (2025.11.16.2003)
@@ -59,6 +60,7 @@
 		- Added functionality to print current player's mapID coordinates and continental coordinates in coordinateHotspot format (2025.11.17.2021)
 		- Modified the RQE.DebugPrintPlayerContinentPosition function to ignore certain continentIDs that are not true continents (Argus/Shadowlands) from printing those (2025.11.17.2021)
 		- Fixed nil errors associated with the modifications to RQE.DebugPrintPlayerContinentPosition(questID) function [author-mode only] (2025.11.17.2256)
+		- Adjusted PlaySound for locations array when not yet implemented [author-mode only] (2025.11.18.2138)
 
 	EventManager.lua
 		- Set RQE.OkayToUpdateSeparateFF to be false when fired from the ADDON_LOADED event and true when fired from SUPER_TRACKING_CHANGED event (2025.11.11.0631)
@@ -91,6 +93,7 @@
 		- Updated section that prints out coordinateHotspots on QUEST_TURNED_IN event function to use the map coordinates that exist in the DB instead of current player coordinates (2025.11.17.2021)
 		- Saved supertracked questID to RQE.LastSuperTrackedQuestID when SUPER_TRACKING_CHANGED event function fires (2025.11.17.2256)
 		- Modified QUEST_TURNED_IN event function to RemoveRaidTargets() if the quest turned in was the quest last supertracked via RQE.LastSuperTrackedQuestID (2025.11.17.2256)
+		- Removed the 'return' within RQE.ClearSeparateFocusFrameAfterCombat of the PLAYER_REGEN_ENABLED (combat ended) and added a macro check if RQE.ClearSeparateFocusFrameAfterCombat was also flagged during combat (2025.11.18.2138)
 
 	QuestingModule.lua
 		- Fixed issue where a world quest had multiple objectiveIndex and would incorrectly sometimes set the stepIndex to 2 when it should be on 1 as that objective wasn't yet completed. This was done by calling RQE:StartPeriodicChecks() within the clicking of the WQuestLogIndexButton (2025.11.11.0631)
@@ -126,6 +129,7 @@
 		- Removed unnecessary code in the DB that was already commented out (2025.11.17.0033)
 		- Added a few additional Legion quests to the DB, including some on Argus and some Druid Order Hall quests (2025.11.17.0426)
 		- Added additional Legion quests in Argus (2025.11.17.2021)
+		- Added many Argus campaign quests to the DB (2025.11.18.2138)
 
 	RQEFrame.lua
 		- Updated RQE.GetSeparateStepText() helper function to handle the SimpleHTML, FontString and plain text formats with older wrapper function (2025.11.10.1926)
