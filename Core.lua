@@ -6639,10 +6639,18 @@ function RQE.SetInitialWaypointToOne()
 		local stepIndex = RQE.AddonSetStepIndex or 1
 
 		-- Tier Four Importance: RQE.SETINITIALWAYPOINTTOONE Function
-		RQE.CreateMacroForSetInitialWaypoint = true
-		RQEMacro:CreateMacroForCurrentStep()
-		C_Timer.After(3, function()
-			RQE.CreateMacroForSetInitialWaypoint = false
+		C_Timer.After(0.35, function()
+			RQE.isCheckingMacroContents = true
+			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+			if isMacroCorrect then
+				return
+			end
+
+			RQEMacro:CreateMacroForCurrentStep()
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
+			end)
 		end)
 		--RQE.SetMacroForFinalStep(questID, stepIndex)
 	end
@@ -6731,12 +6739,28 @@ function RQE.CheckAndSetFinalStep()
 				RQE.infoLog("Final Index is: " .. finalStepIndex)
 				-- Tier Four Importance: RQE.CHECKANDSETFINALSTEP Function
 				RQE.CreateMacroForCheckAndSetFinalStep = true
-				RQE.isCheckingMacroContents = true
-				RQEMacro:CreateMacroForCurrentStep()
-				C_Timer.After(3, function()
-					RQE.CreateMacroForCheckAndSetFinalStep = false
-					RQE.isCheckingMacroContents = false
+
+				C_Timer.After(0.1, function()
+					RQE.isCheckingMacroContents = true
+					local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+					if isMacroCorrect then
+						return
+					end
+
+					RQEMacro:CreateMacroForCurrentStep()
+					C_Timer.After(0.2, function()
+						RQE.isCheckingMacroContents = false
+					end)
 				end)
+
+				-- RQE.isCheckingMacroContents = true
+				-- RQEMacro:CreateMacroForCurrentStep()
+				-- C_Timer.After(3, function()
+					-- RQE.CreateMacroForCheckAndSetFinalStep = false
+					-- RQE.isCheckingMacroContents = false
+				-- end)
+
 				-- RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
 			else
 				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
@@ -6819,8 +6843,6 @@ end
 
 -- Function that creates a macro based on the current stepIndex of the current super tracked quest
 function RQEMacro:CreateMacroForCurrentStep()
-	if not RQE.isCheckingMacroContents then return end
-
 	-- Retrieve the questID that is currently being supertracked
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	local isInInstance, instanceType = IsInInstance()
@@ -6837,20 +6859,10 @@ function RQEMacro:CreateMacroForCurrentStep()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
 				end
-				RQE.isCheckingMacroContents = false
 				return
 			end
 		end
 	end
-
-	RQE.NewZoneChange = false
-	local isMacroCorrect = RQE.CheckCurrentMacroContents()
-
-	if isMacroCorrect then
-		return
-	end
-
-	RQE.isCheckingMacroContents = false
 
 	-- -- Clears the RQEMacro before creating a fresh one	-- keeping this in place resulted in the macro being cleared too frequently and sometimes being left empty at those inappropriate times
 	-- RQEMacro:ClearMacroContentByName("RQE Macro")
@@ -7546,6 +7558,12 @@ function RQE:StartPeriodicChecks()
 
 	C_Timer.After(0.15, function()
 		RQE.isCheckingMacroContents = true
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
 		RQEMacro:CreateMacroForCurrentStep()
 		C_Timer.After(0.2, function()
 			RQE.isCheckingMacroContents = false
@@ -8684,9 +8702,19 @@ function RQE:ClickWaypointButtonForIndex(index)
 	-- Ensure the macro and UI are refreshed only once
 	C_Timer.After(1, function()
 		-- Refresh the macro
-		RQE.isCheckingMacroContents = true
-		RQEMacro:CreateMacroForCurrentStep()
-		RQE.isCheckingMacroContents = false
+		C_Timer.After(0.1, function()
+			RQE.isCheckingMacroContents = true
+			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+			if isMacroCorrect then
+				return
+			end
+
+			RQEMacro:CreateMacroForCurrentStep()
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
+			end)
+		end)
 
 		-- Refresh UI (Waypoint and Focus Frames)
 		RQE:OnCoordinateClicked()
@@ -9405,11 +9433,19 @@ function RQE:CheckDBComplete(questID, stepIndex, check, neededAmt)
 		print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
 	end
 
-	RQE.isCheckingMacroContents = true
-	RQEMacro:CreateMacroForCurrentStep()
-	C_Timer.After(3, function()
-		RQE.CreateMacroForCheckAndSetFinalStep = false
-		RQE.isCheckingMacroContents = false
+	C_Timer.After(0.1, function()
+		RQE.isCheckingMacroContents = true
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(3, function()
+			RQE.CreateMacroForCheckAndSetFinalStep = false
+			RQE.isCheckingMacroContents = false
+		end)
 	end)
 
 	return isReady
@@ -11395,18 +11431,18 @@ local function CheckQuestObjectivesAndPlaySound()
 		end
 	end
 
-	RQE.isCheckingMacroContents = true
+	--RQE.isCheckingMacroContents = true
 
 	if playSoundForCompletion then
 		PlaySound(6199) -- Sound for quest completion
 		soundCooldown = true
 		C_Timer.After(5, function() soundCooldown = false end)
-		RQEMacro:CreateMacroForCurrentStep()
+		--RQEMacro:CreateMacroForCurrentStep()
 	elseif playSoundForObjectives then
 		PlaySound(6192) -- Sound for individual objective completion
 		soundCooldown = true
 		C_Timer.After(5, function() soundCooldown = false end)
-		RQEMacro:CreateMacroForCurrentStep()
+		--RQEMacro:CreateMacroForCurrentStep()
 	end
 
 	-- Failsafe to set the flag back to false if is true
