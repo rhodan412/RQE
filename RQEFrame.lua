@@ -2612,10 +2612,21 @@ function RQE.InitializeSeparateFocusWaypoints()
 				if RQE.AddonSetStepIndex == 1 then
 					-- Tier Two Importance: 
 					if RQE.db.profile.autoClickWaypointButton then
-						RQE.CreateMacroForUpdateSeparateFocusFrame = true
-						RQEMacro:CreateMacroForCurrentStep()
-						C_Timer.After(3, function()
-							RQE.CreateMacroForUpdateSeparateFocusFrame = false
+						C_Timer.After(0.1, function()
+							RQE.isCheckingMacroContents = true
+							local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+							if isMacroCorrect then
+								return
+							end
+
+							RQEMacro:CreateMacroForCurrentStep()
+							C_Timer.After(0.2, function()
+								RQE.isCheckingMacroContents = false
+								C_Timer.After(3, function()
+									RQE.CreateMacroForUpdateSeparateFocusFrame = false
+								end)
+							end)
 						end)
 						--RQE.CheckAndBuildMacroIfNeeded()
 					end
