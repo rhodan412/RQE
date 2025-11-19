@@ -1297,9 +1297,14 @@ function RQE.handlePlayerRegenEnabled()
 		-- end)
 	-- end
 
-	C_Timer.After(1.3, function()
+	C_Timer.After(0.1, function()
 		RQE.isCheckingMacroContents = true
-		print("running macro check")
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
 		RQEMacro:CreateMacroForCurrentStep()
 		C_Timer.After(0.3, function()
 			RQE.isCheckingMacroContents = false
