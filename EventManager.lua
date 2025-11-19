@@ -1158,7 +1158,7 @@ function RQE.handlePlayerRegenEnabled()
 
 		C_Timer.After(1.3, function()
 			RQE.isCheckingMacroContents = true
-			RQEMacro:CreateMacroForCurrentStep()
+			RQEMacro:CreateMacroForCurrentStep()-- Checks for macro status if PLAYER_REGEN_ENABLED event fires
 			C_Timer.After(0.3, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -1297,19 +1297,19 @@ function RQE.handlePlayerRegenEnabled()
 		-- end)
 	-- end
 
-	C_Timer.After(0.1, function()
-		RQE.isCheckingMacroContents = true
-		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+	-- C_Timer.After(0.1, function()
+		-- RQE.isCheckingMacroContents = true
+		-- local isMacroCorrect = RQE.CheckCurrentMacroContents()	-- Checks for macro status if PLAYER_REGEN_ENABLED event fires
 
-		if isMacroCorrect then
-			return
-		end
+		-- if isMacroCorrect then
+			-- return
+		-- end
 
-		RQEMacro:CreateMacroForCurrentStep()
-		C_Timer.After(0.3, function()
-			RQE.isCheckingMacroContents = false
-		end)
-	end)
+		-- RQEMacro:CreateMacroForCurrentStep()
+		-- C_Timer.After(0.3, function()
+			-- RQE.isCheckingMacroContents = false
+		-- end)
+	-- end)
 end
 
 
@@ -1465,7 +1465,7 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 	-- if not inBlobState then
 		-- C_Timer.After(0.55, function()
 			-- RQE.isCheckingMacroContents = true
-			-- RQEMacro:CreateMacroForCurrentStep()
+			-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
 			-- C_Timer.After(0.2, function()
 				-- RQE.isCheckingMacroContents = false
 			-- end)
@@ -2014,12 +2014,18 @@ end
 function RQE.handleSpellsChanged()
 	RQE:StartPeriodicChecks()
 
-	RQE.CreateMacroForCheckAndSetFinalStep = true
-	RQE.isCheckingMacroContents = true
-	RQEMacro:CreateMacroForCurrentStep()
-	C_Timer.After(0.2, function()
-		RQE.CreateMacroForCheckAndSetFinalStep = false
-		RQE.isCheckingMacroContents = false
+	C_Timer.After(0.1, function()
+		RQE.isCheckingMacroContents = true
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
+		RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SPELLS_CHANGED event fires
+		C_Timer.After(0.2, function()
+			RQE.isCheckingMacroContents = false
+		end)
 	end)
 end
 
@@ -2501,10 +2507,18 @@ function RQE.handlePlayerStartedMoving()
 
 				-- Check if the macro body has content
 				if macroBody and macroBody == "" then
-					RQE.isCheckingMacroContents = true
-					RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STARTED_MOVING event fires
-					C_Timer.After(0.2, function()
-						RQE.isCheckingMacroContents = false
+					C_Timer.After(0.25, function()
+						RQE.isCheckingMacroContents = true
+						local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+						if isMacroCorrect then
+							return
+						end
+
+						RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STARTED_MOVING event fires
+						C_Timer.After(0.1, function()
+							RQE.isCheckingMacroContents = false
+						end)
 					end)
 				end
 			end
@@ -3147,8 +3161,14 @@ function RQE.handlePlayerEnterWorld(...)
 
 	C_Timer.After(5.5, function()
 		RQE.isCheckingMacroContents = true
-		RQEMacro:CreateMacroForCurrentStep()		-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
-		C_Timer.After(1.5, function()
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
+		RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
+		C_Timer.After(0.2, function()
 			RQE.isCheckingMacroContents = false
 		end)
 	end)
@@ -3210,9 +3230,15 @@ function RQE.handleSuperTracking()
 			RQE.QuestTrackerHiddenSuperTrackedPressed = false
 		end)
 
-		C_Timer.After(0.15, function()
+		C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
-			RQEMacro:CreateMacroForCurrentStep()
+			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+			if isMacroCorrect then
+				return
+			end
+
+			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
 			C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
@@ -5343,10 +5369,18 @@ function RQE.handleInstanceInfoUpdate()
 		-- end)
 	-- end
 
-	RQE.isCheckingMacroContents = true
-	RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UPDATE_INSTANCE_INFO event fires
-	C_Timer.After(0.2, function()
-		RQE.isCheckingMacroContents = false
+	C_Timer.After(0.1, function()
+		RQE.isCheckingMacroContents = true
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
+		RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UPDATE_INSTANCE_INFO event fires
+		C_Timer.After(0.2, function()
+			RQE.isCheckingMacroContents = false
+		end)
 	end)
 
 	-- Update RQEFrame and Refresh Quest Tracker
