@@ -2,15 +2,31 @@
 
 	** HIGHLIGHTS **
 		- Removed debug language "running macro check" from PLAYER_REGEN_ENABLED (fires after combat is over) event and updated function call for better handling
+		- Updated call for updating RQEButton (macro button) to be more efficiently handled, removing duplicates and removed from several event functions that were contributing to lag
 
 	Core.lua
 		- Added delay within RQE:StartPeriodicChecks() before the call to the RQE:UpdateSeparateFocusFrame() function (2025.11.19.1715)
+		- Adjusted RQE.SetInitialWaypointToOne(), RQE.CheckAndSetFinalStep(), RQE:StartPeriodicChecks(), RQE:ClickWaypointButtonForIndex(), and RQE:CheckDBComplete() functions to handling RQEButton (macro) checks before running RQEMacro:CreateMacroForCurrentStep() to update the macro if update is needed - meant to increase efficiency (2025.11.19.1735)
+		- Removed macro update within CheckQuestObjectivesAndPlaySound() as the other functions should be able to handle more efficiently - may add this back handling checks if macro isn't being properly updated (2025.11.19.1735)
+		- RQEMacro:CreateMacroForCurrentStep() will no longer do macro checks as this is handled prior to the function call as this is handled with RQE.CheckCurrentMacroContents() (2025.11.19.1735)
 
 	EventManager.lua
 		- Cleaned up macro creation and removed debug language following combat conclusion (2025.11.19.1715)
+		- Updated PLAYER_REGEN_ENABLED, SPELLS_CHANGED, PLAYER_ENTERING_WORLD, SUPER_TRACKING_CHANGED, and UPDATE_INSTANCE_INFO event functions to handling RQEButton (macro) checks before running RQEMacro:CreateMacroForCurrentStep() to update the macro if update is needed - meant to increase efficiency (2025.11.19.1735)
+		- Removed duplicate function call for RQEMacro:CreateMacroForCurrentStep() within PLAYER_REGEN_ENABLED and now only fires if the RQE.ClearSeparateFocusFrameAfterCombat flag is set to true (2025.11.19.1735)
+		- Removed call for RQEMacro:CreateMacroForCurrentStep() within PLAYER_STARTED_MOVING event function (2025.11.19.1735)
+
+	QuestingModule.lua
+		- Updated RQE.ClickQuestLogIndexButton() function to call a check for macro confirmation prior to the call to create/update when fired (2025.11.19.1735)
 
 	RQE.toc
 		- Updated Interface# (2025.11.19.1715)
+
+	RQEFrame.lua
+		- Updated RQE.InitializeSeparateFocusWaypoints() function to call a check for macro confirmation prior to the call to create/update when fired (2025.11.19.1735)
+
+	WPUtil.lua
+		- Updated RQE.UnknownQuestButtonCalcNTrack click script to call a check for macro confirmation prior to the call to create/update when fired (2025.11.19.1735)
 
 
 11.2.5.4
