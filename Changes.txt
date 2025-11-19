@@ -1,3 +1,18 @@
+11.2.5.5
+
+	** HIGHLIGHTS **
+		- Removed debug language "running macro check" from PLAYER_REGEN_ENABLED (fires after combat is over) event and updated function call for better handling
+
+	Core.lua
+		- Added delay within RQE:StartPeriodicChecks() before the call to the RQE:UpdateSeparateFocusFrame() function (2025.11.19.1715)
+
+	EventManager.lua
+		- Cleaned up macro creation and removed debug language following combat conclusion (2025.11.19.1715)
+
+	RQE.toc
+		- Updated Interface# (2025.11.19.1715)
+
+
 11.2.5.4
 
 	**HIGHLIGHTS**
