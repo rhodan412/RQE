@@ -1155,7 +1155,14 @@ function RQE.handlePlayerRegenEnabled()
 	if RQE.ClearSeparateFocusFrameAfterCombat then
 		RQE:ClearSeparateFocusFrame()
 		RQE.ClearSeparateFocusFrameAfterCombat = false
-		return
+
+		C_Timer.After(1.3, function()
+			RQE.isCheckingMacroContents = true
+			RQEMacro:CreateMacroForCurrentStep()
+			C_Timer.After(0.3, function()
+				RQE.isCheckingMacroContents = false
+			end)
+		end)
 	end
 
 	-- Updates RQEQuestFrame after combat ends
@@ -1289,6 +1296,15 @@ function RQE.handlePlayerRegenEnabled()
 			-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after PLAYER_REGEN_ENABLED fires
 		-- end)
 	-- end
+
+	C_Timer.After(1.3, function()
+		RQE.isCheckingMacroContents = true
+		print("running macro check")
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(0.3, function()
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
 end
 
 
