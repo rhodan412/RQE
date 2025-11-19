@@ -7570,7 +7570,9 @@ function RQE:StartPeriodicChecks()
 
 	-- Final cleanup
 	RQE.NewZoneChange = false
-	RQE:UpdateSeparateFocusFrame()
+	C_Timer.After(0.45, function()
+		RQE:UpdateSeparateFocusFrame()
+	end)
 end
 
 
