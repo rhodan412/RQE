@@ -3545,10 +3545,18 @@ function RQE.ClickQuestLogIndexButton(questID)
 
 	-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
 	if RQE.db.profile.autoClickWaypointButton then
-		RQE.CreateMacroForQuestLogIndexButton = true
-		RQEMacro:CreateMacroForCurrentStep()
 		C_Timer.After(3, function()
-			RQE.CreateMacroForQuestLogIndexButton = false
+			RQE.isCheckingMacroContents = true
+			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+			if isMacroCorrect then
+				return
+			end
+
+			RQEMacro:CreateMacroForCurrentStep()
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
+			end)
 		end)
 	end
 end
