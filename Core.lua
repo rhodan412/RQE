@@ -13427,8 +13427,8 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 					print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
 				end
 				print("			},")
+				PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
 			end
-			PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
 		end
 	end
 
