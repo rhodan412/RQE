@@ -1,4 +1,4 @@
-11.2.5.5
+11.2.5.5 (2025.11.19)
 
 	** HIGHLIGHTS **
 		- Removed debug language "running macro check" from PLAYER_REGEN_ENABLED (fires after combat is over) event and updated function call for better handling
@@ -22,6 +22,9 @@
 	RQE.toc
 		- Updated Interface# (2025.11.19.1715)
 
+	RQEDatabase.lua
+		- Added most of the Legion Argus campaign quests to the DB (2025.11.19.2143)
+
 	RQEFrame.lua
 		- Updated RQE.InitializeSeparateFocusWaypoints() function to call a check for macro confirmation prior to the call to create/update when fired (2025.11.19.1735)
 
@@ -29,7 +32,7 @@
 		- Updated RQE.UnknownQuestButtonCalcNTrack click script to call a check for macro confirmation prior to the call to create/update when fired (2025.11.19.1735)
 
 
-11.2.5.4
+11.2.5.4 (2025.11.18)
 
 	**HIGHLIGHTS**
 		- Added ability to click sections in select quests where a waypoint is generated within the RQEFrame
