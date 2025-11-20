@@ -1,6 +1,22 @@
+11.2.5.6 (2025.11.20)
+
+	**HIGHLIGHTS**
+		- Fixed many Legion Argus quests in chapters 1 and 2 including waypoints and steps
+		- Steps should not update more reliably without impacting performance since 11.2.5.5 (previous version)
+
+	Core.lua
+		- Allowed checks for the correct stepIndex player should be on when objective progress is made as well as quest completion. This will help update the steps during times when it should've but didn't [done w/o impacting performance] (2025.11.20.0149)
+
+	RQE.toc
+		- Updated Interface# (2025.11.20.0149)
+
+	RQEDatabase.lua
+		- Added most of the Legion Argus campaign quests to the DB (2025.11.20.0149)
+
+
 11.2.5.5 (2025.11.19)
 
-	** HIGHLIGHTS **
+	**HIGHLIGHTS**
 		- Removed debug language "running macro check" from PLAYER_REGEN_ENABLED (fires after combat is over) event and updated function call for better handling
 		- Updated call for updating RQEButton (macro button) to be more efficiently handled, removing duplicates and removed from several event functions that were contributing to lag
 
