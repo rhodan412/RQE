@@ -11445,10 +11445,33 @@ local function CheckQuestObjectivesAndPlaySound()
 		--RQEMacro:CreateMacroForCurrentStep()
 	end
 
-	-- Failsafe to set the flag back to false if is true
-	if RQE.isCheckingMacroContents then
-		RQE.isCheckingMacroContents = false
+	-- Only run periodic checks if objectives actually changed
+	if RQE.db.profile.autoClickWaypointButton then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+		if questID then
+			C_Timer.After(0.65, function()
+
+				if RQE:DidObjectivesChange(questID) then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Objective Sound Played → objective change → StartPeriodicChecks()")
+					end
+
+					C_Timer.After(0.35, function()
+						RQE:StartPeriodicChecks()
+					end)
+
+				elseif RQE.db.profile.debugLevel == "INFO+" then
+					print("Objective Sound Played → no objective change for supertracked quest → skipping StartPeriodicChecks()")
+				end
+			end)
+		end
 	end
+
+	-- -- Failsafe to set the flag back to false if is true
+	-- if RQE.isCheckingMacroContents then
+		-- RQE.isCheckingMacroContents = false
+	-- end
 end
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
