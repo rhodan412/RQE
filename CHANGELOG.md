@@ -1,3 +1,13 @@
+11.2.5.7
+
+	RQE.toc
+		- Updated version# (2025.11.20.2150)
+
+	RQEDatabase.lua
+		- Fixed several quests in Legion DB, including qid 48280 "Visions of Another" that had a mislabeling preventing the entry from being registered properly (2025.11.20.2150)
+		- Added additional Legion remix quests and profession quests to the DB (2025.11.20.2150)
+
+
 11.2.5.6 (2025.11.20)
 
 	**HIGHLIGHTS**
