@@ -3300,7 +3300,7 @@ function RQE.CheckAndClickWButton()
 
 				if RQE.CheckClickWButtonPossible and RQE.AddonSetStepIndex == 1 then
 					if not RQE.GreaterThanOneProgress then
-						RQE:ClickWaypointButtonForIndex(1)
+						RQE:ClickWaypointButtonForIndex(1)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 						RQE.CheckClickWButtonPossible = false
 						RQE.GreaterThanOneProgress = false
 					end
@@ -7804,7 +7804,7 @@ function RQE:CheckCoordinateDistanceConditional()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(string.format("RQE: Within %.0f yards of target — advancing step %d.", args[4] or 0, stepIndex))
 					end
-					self:ClickWaypointButtonForIndex(stepIndex + 1)
+					self:ClickWaypointButtonForIndex(stepIndex + 1)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 					RQE.isMonitoringCoordinateDistance = false
 					break
 				end
@@ -8581,7 +8581,7 @@ function RQE.CheckThatQuestStep()
 			print("Mismatch detected. Expected stepIndex:", correctStepIndex, "but currently on:", currentStepIndex)
 			print("Clicking the correct step button.")
 		end
-		RQE:ClickWaypointButtonForIndex(correctStepIndex)
+		RQE:ClickWaypointButtonForIndex(correctStepIndex)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 	else
 		print("Current stepIndex matches expected stepIndex. No action needed.")
 	end
@@ -8702,19 +8702,19 @@ function RQE:ClickWaypointButtonForIndex(index)
 	-- Ensure the macro and UI are refreshed only once
 	C_Timer.After(1, function()
 		-- Refresh the macro
-		C_Timer.After(0.1, function()
-			RQE.isCheckingMacroContents = true
-			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+		-- C_Timer.After(0.1, function()
+			-- RQE.isCheckingMacroContents = true
+			-- local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
-			if isMacroCorrect then
-				return
-			end
+			-- if isMacroCorrect then
+				-- return
+			-- end
 
-			RQEMacro:CreateMacroForCurrentStep()
-			C_Timer.After(0.2, function()
-				RQE.isCheckingMacroContents = false
-			end)
-		end)
+			-- RQEMacro:CreateMacroForCurrentStep()
+			-- C_Timer.After(0.2, function()
+				-- RQE.isCheckingMacroContents = false
+			-- end)
+		-- end)
 
 		-- Refresh UI (Waypoint and Focus Frames)
 		RQE:OnCoordinateClicked()
@@ -8758,13 +8758,13 @@ function RQE:HandleFactionLogicAfterAdvance()
 			print("Player is not Alliance. Skipping stepIndex:", stepIndex)
 		end
 		RQE.AddonSetStepIndex = stepIndex + 1
-		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 	elseif description:find("^HORDE:") and englishFaction ~= "Horde" then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Player is not Horde. Skipping stepIndex:", stepIndex)
 		end
 		RQE.AddonSetStepIndex = stepIndex + 1
-		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 	end
 
 	-- After faction logic, check failedfunc
@@ -8870,7 +8870,7 @@ function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("CheckDBBuff() - All buffs matched for provided `check`.")
 		end
-		self:ClickWaypointButtonForIndex(stepIndex)
+		--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 		return true
 	end
 
@@ -8898,7 +8898,7 @@ function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
 		end
 		local success = self:EvaluateStepChecks(questID, stepIndex)
 		if success then
-			self:ClickWaypointButtonForIndex(stepIndex)
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
 			end
@@ -8923,7 +8923,7 @@ function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
 	for _, buffName in ipairs(check) do
 		local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
 		if aura then
-			self:ClickWaypointButtonForIndex(stepIndex)
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
 			end
@@ -8970,7 +8970,7 @@ function RQE:CheckDBDebuff(questID, stepIndex, check, neededAmt)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("CheckDBDebuff() - All debuffs matched for provided `check`.")
 		end
-		self:ClickWaypointButtonForIndex(stepIndex)
+		--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 		return true
 	end
 
@@ -8998,7 +8998,7 @@ function RQE:CheckDBDebuff(questID, stepIndex, check, neededAmt)
 		end
 		local success = self:EvaluateStepChecks(questID, stepIndex)
 		if success then
-			self:ClickWaypointButtonForIndex(stepIndex)
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("CheckDBDebuff() - Debuff checks succeeded. Advancing quest step.")
 			end
@@ -9023,7 +9023,7 @@ function RQE:CheckDBDebuff(questID, stepIndex, check, neededAmt)
 	for _, debuffName in ipairs(check) do
 		local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
 		if aura then
-			self:ClickWaypointButtonForIndex(stepIndex)
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("CheckDBDebuff() - Debuff active:", debuffName, ". Advancing quest step.")
 			end
@@ -9377,7 +9377,7 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("All zone conditions satisfied for stepIndex:", stepIndex)
 			end
-			self:ClickWaypointButtonForIndex(stepIndex)
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			return true -- Indicate successful advancement
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -9479,7 +9479,7 @@ function RQE:CheckFactionGroupAlliance(questID, stepIndex, check, neededAmt)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Alliance-specific check passed. Advancing quest step.")
 				end
-				self:ClickWaypointButtonForIndex(stepIndex)
+				self:ClickWaypointButtonForIndex(stepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 				return true
 			end
 		end
@@ -9495,7 +9495,7 @@ function RQE:CheckFactionGroupAlliance(questID, stepIndex, check, neededAmt)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("All Alliance-specific checks passed. Advancing quest step.")
 			end
-			self:ClickWaypointButtonForIndex(stepIndex)
+			self:ClickWaypointButtonForIndex(stepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 			return true
 		end
 	end
@@ -9686,7 +9686,7 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Adjusted to correctStepIndex:", correctStepIndex, "from stepIndex:", stepIndex)
 		end
-		self:ClickWaypointButtonForIndex(correctStepIndex)
+		--self:ClickWaypointButtonForIndex(correctStepIndex)	-- FIRES from StartPeriodicChecks function, this is redundant!
 		return true
 	end
 
@@ -9799,7 +9799,7 @@ function RQE:CheckDBConditionalsOnly(questID, stepIndex, check, neededAmt)
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("RQE: Conditional passed — advancing to next step.")
 						end
-						self:ClickWaypointButtonForIndex(stepIndex + 1)
+						self:ClickWaypointButtonForIndex(stepIndex + 1)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 						return true
 					end
 				end
@@ -9889,7 +9889,7 @@ function RQE:CheckScenarioStage(questID, stepIndex)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Scenario stage requirement met. Advancing to next step index:", nextStepIndex)
 			end
-			self:ClickWaypointButtonForIndex(nextStepIndex)
+			self:ClickWaypointButtonForIndex(nextStepIndex)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 			return true
 		end
 	else
