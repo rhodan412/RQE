@@ -1485,8 +1485,10 @@ function RQE.handlePlayerLogin()
 	RQE:InitializeAddon()
 	RQE:InitializeFrame()
 
-	RQE:RestoreTrackedQuestsForCharacter()
-	RQE:RestoreSuperTrackedQuestForCharacter()
+	C_Timer.After(0.6, function()
+		RQE:RestoreTrackedQuestsForCharacter()
+		RQE:RestoreSuperTrackedQuestForCharacter()
+	end)
 
 	-- Add this line to update coordinates when player logs in
 	RQE:UpdateCoordinates()
@@ -1643,6 +1645,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE:RestoreFramePosition()
 
 	-- Initialize Flags
+	RQE.AddonLoadedonPlayerEnteringWorldFirstTime = true
 	RQE.BagNewItemsRunning = false
 	RQE.BlacklistUnderway = false
 	RQE.CheckClickWButtonPossible = false
@@ -1657,6 +1660,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.DontUpdateFrame = false
 	RQE.DirectionChangedUpdateRQEFrame = false
 	RQE.GreaterThanOneProgress = false
+	RQE.HasPortaledOrHearthed = false
 	RQE.hoveringOnRQEFrameAndButton = false
 	RQE.isCheckingCoordinateDistanceConditional = false
 	RQE.isCheckingMacroContents = false
@@ -1696,11 +1700,6 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.UIInfoUpdateFired = false
 	RQE.UnitQuestLogChangedFired = false
 	RQE.WaypointButtonHover = false
-
-	C_Timer.After(3, function()
-		RQE:RestoreTrackedQuestsForCharacter()
-		RQE:RestoreSuperTrackedQuestForCharacter()
-	end)
 
 	-- Making sure that the variables are cleared
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
@@ -2876,10 +2875,24 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 	end
 
+	-- Checks if player logged in, but also accounts for zone transitions via portals or hearthstone
 	if isLogin then
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 03 Debug: Loaded the UI from Login.", 0.93, 0.51, 0.93)	-- Violet
 		end
+
+		if RQE.AddonLoadedonPlayerEnteringWorldFirstTime then
+			print("RQE.AddonLoadedonPlayerEnteringWorldFirstTime is true from ADDON_LOADED")
+			RQE.HasPortaledOrHearthed = false
+			RQE.HasLoggedIn = true
+			RQE.HasReloaded = false
+			RQE.AddonLoadedonPlayerEnteringWorldFirstTime = false
+		else
+			RQE.HasPortaledOrHearthed = true
+			RQE.HasLoggedIn = false
+			RQE.HasReloaded = false
+		end
+
 		RQE.RequestAndCacheQuestLines()
 		RQE:ClickSuperTrackedQuestButton()
 	elseif isReload then
@@ -2887,17 +2900,49 @@ function RQE.handlePlayerEnterWorld(...)
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 04 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)	-- Violet
 		end
 
+		RQE.HasPortaledOrHearthed = false
+		RQE.HasLoggedIn = false
+		RQE.HasReloaded = true
+
 		RQE.RequestAndCacheQuestLines()
 		RQE:ClickSuperTrackedQuestButton()
 	else
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 05 Debug: Zoned between map instances.", 0.93, 0.51, 0.93)	-- Violet
 		end
+
+		RQE.HasPortaledOrHearthed = true
+		RQE.HasLoggedIn = false
+		RQE.HasReloaded = false
 	end
 
 	C_Timer.After(3.3, function()
 		RQE:CheckFrameVisibility()
 	end)
+
+	C_Timer.After(10, function()
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.HasLoggedIn is: " .. tostring(RQE.HasLoggedIn) .. " & RQE.HasReloaded is: " .. tostring(RQE.HasReloaded) .. " & RQE.HasPortaledOrHearthed is: " .. tostring(RQE.HasPortaledOrHearthed))
+		end
+	end)
+
+	-- Updates appropriate frames of SeparateFocusFrame, RQEFrame and StepsText if PLAYER_ENTERING_WORLD is fired from isReload or isLogin, but not portal or hearthing
+	if RQE.HasLoggedIn or RQE.HasReloaded then
+		RQE.AllFramesShouldUpdate = true
+		C_Timer.After(1.3, function()
+			RQE.Buttons.ClearButtonPressed()
+			RQE:ClearSeparateFocusFrame()
+			UpdateFrame()
+			C_Timer.After(0.2, function()
+				RQE.AllFramesShouldUpdate = false
+			end)
+		end)
+
+		C_Timer.After(5, function()
+			RQE:RestoreTrackedQuestsForCharacter()
+			RQE:RestoreSuperTrackedQuestForCharacter()
+		end)
+	end
 
 	-- Clear hotspot choice so next read re-evaluates on the new map
 	if C_SuperTrack.IsSuperTrackingQuest() then
@@ -3026,8 +3071,6 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 		end
 
-		RQE:RestoreTrackedQuestsForCharacter()
-		RQE:RestoreSuperTrackedQuestForCharacter()
 		-- print("~~~ UpdateRQEQuestFrame(): 2464 ~~~")
 		-- C_Timer.After(10, function()
 			-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
