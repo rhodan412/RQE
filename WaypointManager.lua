@@ -496,11 +496,11 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 
 	local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-		-- Important: clear TomTom's prior waypoints so the new title takes effect
-		if TomTom.waydb and TomTom.waydb.ResetProfile then
-			TomTom.waydb:ResetProfile()
-			RQE._currentTomTomUID = nil
-		end
+		-- Important: clear TomTom's prior waypoints so the new title takes effect	-- HANDLED WHEN RQE.Waypoints:Replace fires
+		-- if TomTom.waydb and TomTom.waydb.ResetProfile then
+			-- TomTom.waydb:ResetProfile()
+			-- RQE._currentTomTomUID = nil
+		-- end
 		RQE.Waypoints:Replace(mapID, xPct / 100, yPct / 100, waypointTitle)
 		--TomTom:AddWaypoint(mapID, xPct / 100, yPct / 100, { title = waypointTitle })
 	else
@@ -1152,6 +1152,7 @@ end
 -- This version also creates waypoints using TomTom if available.
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked()
+	-- print("RQE:OnCoordinateClicked() is running")
 	local stepIndex = RQE.AddonSetStepIndex or 1
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
