@@ -465,16 +465,22 @@ function RQE:OnInitialize()
 	self.db.profileKeys = RQEDB.profileKeys
 
 	-- Debugging: Print all stored profile keys before restoring profile
-	print("Checking stored profileKeys before restoration...")
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking stored profileKeys before restoration...")
+	end
 	for key, value in pairs(self.db.profileKeys) do
-		print("Found profile key: " .. key .. " -> " .. value)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Found profile key: " .. key .. " -> " .. value)
+		end
 	end
 
 	-- Restore the correct profile from SavedVariables
 	self:RestoreSavedProfile()
 
 	-- Debugging: Confirm the correct profile was restored
-	print("Profile after OnInitialize():", self.db:GetCurrentProfile())
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Profile after OnInitialize():", self.db:GetCurrentProfile())
+	end
 
 	-- Register profile callbacks
 	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
@@ -557,7 +563,9 @@ function RQE:OnEnable()
 	self:EnsureDefaults()
 
 	-- Debugging Output
-	print("Currently loaded profile:", self.db:GetCurrentProfile())
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Currently loaded profile:", self.db:GetCurrentProfile())
+	end
 
 	-- Apply UI settings after profile is set
 	self:ApplyUISettings()
@@ -584,26 +592,36 @@ function RQE:RestoreSavedProfile()
 
 	-- Debugging: Check if profileKey exists
 	if not self.db.profileKeys[profileKey] then
-		print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
+		end
 		self.db.profileKeys[profileKey] = "Default"
 	end
 
 	local savedProfile = self.db.profileKeys[profileKey]
 
 	-- Debugging: Print loaded profile information
-	print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
+	end
 
 	-- Ensure profile exists before setting it
 	if self.db.profiles and self.db.profiles[savedProfile] then
 		self.db:SetProfile(savedProfile)
-		print("Successfully restored profile: " .. savedProfile)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Successfully restored profile: " .. savedProfile)
+		end
 	else
-		print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
+		end
 		self.db:SetProfile("Default")
 	end
 
 	-- Final Debug Output
-	print("Final profile loaded:", self.db:GetCurrentProfile())
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Final profile loaded:", self.db:GetCurrentProfile())
+	end
 end
 
 
@@ -1184,60 +1202,62 @@ end
 function RQE:RestoreSuperTrackedQuestForCharacter()
 	local functionName = "RQE:RestoreSuperTrackedQuestForCharacter()"
 
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
-	end
+	C_Timer.After(0.6, function()
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
+		end
 
-	if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
-		local savedQuestID = RQECharacterDB.superTrackedQuestID
-		local isWorldQuest = RQECharacterDB.isWorldQuest
+		if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
+			local savedQuestID = RQECharacterDB.superTrackedQuestID
+			local isWorldQuest = RQECharacterDB.isWorldQuest
 
-		-- Check if it's a world quest
-		if isWorldQuest then
-			-- Check if the world quest is still available
-			local isWorldQuestStillAvailable = C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
+			-- Check if it's a world quest
+			if isWorldQuest then
+				-- Check if the world quest is still available
+				local isWorldQuestStillAvailable = C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
 
-			if isWorldQuestStillAvailable then
-				-- Restore the world quest as supertracked
-				-- print("~~~ SetSuperTrack: 870~~~")
-				C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Restored supertracked world quest for this character: " .. savedQuestID)
+				if isWorldQuestStillAvailable then
+					-- Restore the world quest as supertracked
+					-- print("~~~ SetSuperTrack: 870~~~")
+					C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Restored supertracked world quest for this character: " .. savedQuestID)
+					end
+				else
+					-- World quest is no longer available, clear supertracked quest
+					RQECharacterDB.superTrackedQuestID = nil
+					RQECharacterDB.isWorldQuest = nil
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Saved supertracked world quest is no longer valid.")
+					end
 				end
 			else
-				-- World quest is no longer available, clear supertracked quest
-				RQECharacterDB.superTrackedQuestID = nil
-				RQECharacterDB.isWorldQuest = nil
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Saved supertracked world quest is no longer valid.")
+				-- Check if the regular quest is still valid and in the quest log
+				if C_QuestLog.IsOnQuest(savedQuestID) then
+					-- print("~~~ SetSuperTrack: 886~~~")
+					C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Restored supertracked quest for this character: " .. savedQuestID)
+					end
+				else
+					-- If the quest is no longer valid, clear the supertracked quest
+					RQECharacterDB.superTrackedQuestID = nil
+					RQECharacterDB.isWorldQuest = nil
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Saved supertracked quest is no longer valid.")
+					end
 				end
 			end
 		else
-			-- Check if the regular quest is still valid and in the quest log
-			if C_QuestLog.IsOnQuest(savedQuestID) then
-				-- print("~~~ SetSuperTrack: 886~~~")
-				C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Restored supertracked quest for this character: " .. savedQuestID)
-				end
-			else
-				-- If the quest is no longer valid, clear the supertracked quest
-				RQECharacterDB.superTrackedQuestID = nil
-				RQECharacterDB.isWorldQuest = nil
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Saved supertracked quest is no longer valid.")
-				end
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No saved supertracked quest found for this character.")
 			end
 		end
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("No saved supertracked quest found for this character.")
-		end
-	end
 
-	C_Timer.After(0.1, function()
-		RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 1085 ~~")
-		UpdateFrame()
+		C_Timer.After(0.1, function()
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 1085 ~~")
+			UpdateFrame()
+		end)
 	end)
 end
 
@@ -3000,13 +3020,15 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
-	-- NEW: Only continue if something actually changed
-	if not RQE.DirectionChangedUpdateRQEFrame then
-		if not RQE.QuestLogIndexButtonPressed then
-			if not RQE:ShouldUpdateFrame(questID) then
-				RQE.QuestLogIndexButtonPressed = false
-				RQE.DirectionChangedUpdateRQEFrame = false
-				return
+	-- Only continue if something actually changed
+	if not RQE.AllFramesShouldUpdate then
+		if not RQE.DirectionChangedUpdateRQEFrame then
+			if not RQE.QuestLogIndexButtonPressed then
+				if not RQE:ShouldUpdateFrame(questID) then
+					RQE.QuestLogIndexButtonPressed = false
+					RQE.DirectionChangedUpdateRQEFrame = false
+					return
+				end
 			end
 		end
 	end
