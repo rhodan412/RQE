@@ -7,12 +7,12 @@ RQE Contribution Sandbox Editor
 
 
 --------------------------------------------------
--- 1. Initialize Sandbox
+-- #1. Initialize Sandbox
 --------------------------------------------------
 	
 local function InitializeSandbox()
 	-------------------------------------------------------
-	-- 1a. Persistent SavedVariables Setup
+	-- #1a. Persistent SavedVariables Setup
 	-------------------------------------------------------
 	RQE_SandboxDB = RQE_SandboxDB or {}
 	RQE_SandboxDB.entries = RQE_SandboxDB.entries or {}
@@ -22,7 +22,7 @@ local function InitializeSandbox()
 	RQE_Sandbox.entries = RQE_SandboxDB.entries
 
 	-------------------------------------------------------
-	-- 1b. GetDataSource override
+	-- #1b. GetDataSource override
 	-------------------------------------------------------
 	function RQE:GetDataSource(questID)
 		if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries[questID] then
@@ -33,7 +33,7 @@ local function InitializeSandbox()
 	end
 
 	-------------------------------------------------------
-	-- 1c. Helper Functions
+	-- #1c. Helper Functions
 	-------------------------------------------------------
 	local function SaveSandbox()
 		RQE_SandboxDB.entries = RQE_Sandbox.entries
@@ -59,7 +59,7 @@ local function InitializeSandbox()
 	end
 
 	-------------------------------------------------------
-	-- 1d. Editor Frame
+	-- #1d. Editor Frame
 	-------------------------------------------------------
 	local SandboxFrame = CreateFrame("Frame", "RQE_SandboxEditor", UIParent, "BackdropTemplate")
 	SandboxFrame:SetSize(700, 500)
@@ -82,7 +82,7 @@ local function InitializeSandbox()
 	SandboxFrame.Title:SetText("|cffFFD100RQE Contribution Sandbox|r")
 
 	-------------------------------------------------------
-	-- 1e. Quest ID Input
+	-- #1e. Quest ID Input
 	-------------------------------------------------------
 	local questIDBox = CreateFrame("EditBox", nil, SandboxFrame, "InputBoxTemplate")
 	questIDBox:SetSize(120, 25)
@@ -96,7 +96,7 @@ local function InitializeSandbox()
 	questIDLabel:SetText("Quest ID")
 
 	-------------------------------------------------------
-	-- 1f. Edit Box
+	-- #1f. Edit Box
 	-------------------------------------------------------
 	local scrollFrame = CreateFrame("ScrollFrame", nil, SandboxFrame, "UIPanelScrollFrameTemplate")
 	scrollFrame:SetSize(650, 350)
@@ -118,7 +118,7 @@ local function InitializeSandbox()
 	end)
 
 	-------------------------------------------------------
-	-- 1g. Buttons
+	-- #1g. Buttons
 	-------------------------------------------------------
 	local saveBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
 	saveBtn:SetSize(140, 25)
@@ -141,7 +141,7 @@ local function InitializeSandbox()
 	closeBtn:SetText("Close")
 
 	-------------------------------------------------------
-	-- 1h. Logic
+	-- #1h. Logic
 	-------------------------------------------------------
 	saveBtn:SetScript("OnClick", function()
 		local id = tonumber(questIDBox:GetText())
@@ -199,7 +199,7 @@ local function InitializeSandbox()
 	closeBtn:SetScript("OnClick", function() SandboxFrame:Hide() end)
 
 	-------------------------------------------------------
-	-- 1i. Load Current Quest Data on Open
+	-- #1i. Load Current Quest Data on Open
 	-------------------------------------------------------
 	SandboxFrame:SetScript("OnShow", function()
 		local questID = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
@@ -231,7 +231,7 @@ local function InitializeSandbox()
 	RQE_Sandbox.active = true
 
 	-------------------------------------------------------
-	-- 1j. Slash Command
+	-- #1j. Slash Command
 	-------------------------------------------------------
 	SLASH_RQESANDBOX1 = "/rqesandbox"
 	SlashCmdList["RQESANDBOX"] = function()
@@ -247,7 +247,7 @@ end
 
 
 -------------------------------------------------------
--- 2. Helper functions
+-- #2. Helper functions
 -------------------------------------------------------
 
 local function sortKeys(tbl)
@@ -282,7 +282,7 @@ end
 
 
 -------------------------------------------------------
--- 3. Load only after RQE_Contribution
+-- #3. Load only after RQE_Contribution
 -------------------------------------------------------
 if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 	InitializeSandbox()
