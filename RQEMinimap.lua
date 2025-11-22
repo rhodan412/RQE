@@ -7,7 +7,7 @@ Creates minimap button that will toggle the RQEFrame
 
 
 ---------------------------
--- 1. Declarations
+-- #1. Declarations
 ---------------------------
 
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
@@ -19,7 +19,7 @@ RQE.hoverTimers = {}
 local RQEMinimapButton = {}
 
 --------------------------
--- 2. Debug Logic
+-- #2. Debug Logic
 --------------------------
 
 if RQE and RQE.debugLog then
@@ -29,7 +29,7 @@ else
 end
 
 ---------------------------
--- 3. Function/Utilities
+-- #3. Function/Utilities
 ---------------------------
 
 -- Toggle Debug Log window function
@@ -55,7 +55,7 @@ end
 
 
 ---------------------------
--- 4. Data Broker Handling
+-- #4. Data Broker Handling
 ---------------------------
 
 local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
@@ -192,7 +192,7 @@ function RQE.ToggleBothFramesfromLDB()
 end
 
 ---------------------------
--- 5. Minimap Button
+-- #5. Minimap Button
 ---------------------------
 
 -- Creates the Minimap Button
@@ -270,7 +270,7 @@ end
 
 
 ---------------------------
--- 6. Event Handler
+-- #6. Event Handler
 ---------------------------
 
 -- Register the button for clicks
@@ -346,7 +346,7 @@ end)
 
 
 ---------------------------
--- 7. Menu Creation Functions
+-- #7. Menu Creation Functions
 ---------------------------
 
 -- Custom Mixin for Buttons & Menus
