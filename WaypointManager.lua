@@ -7,7 +7,7 @@ This add-on file handles the creation logic of the Waypoint and Map Pin creation
 
 
 ---------------------------------------
--- 1. Library and AddOn Initialization
+-- #1. Library and AddOn Initialization
 ---------------------------------------
 
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
@@ -26,7 +26,7 @@ end
 
 
 -------------------------------
--- 2. Waypoint Exclusion Logic
+-- #2. Waypoint Exclusion Logic
 -------------------------------
 
 -- List of quests excluded from waypoint creation
@@ -37,7 +37,7 @@ RQE.ExcludedWaypointQuests = {
 
 
 ---------------------------
--- 3. Waypoint Logic
+-- #3. Waypoint Logic
 ---------------------------
 
 -- Function: InitializeWaypointManager
@@ -1144,7 +1144,7 @@ end
 
 
 ---------------------------
--- 4. Event Handlers
+-- #4. Event Handlers
 ---------------------------
 
 -- Function: OnCoordinateClicked
@@ -1364,7 +1364,7 @@ end
 
 
 --------------------------
--- 5. Finalization
+-- #5. Finalization
 --------------------------
 
 -- Final steps and exporting functions for use in other files
