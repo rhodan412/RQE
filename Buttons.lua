@@ -7,7 +7,7 @@ Manages button designs for the main frame
 
 
 ------------------------------
--- 1. Global Declarations
+-- #1. Global Declarations
 ------------------------------
 
 RQE = RQE or {}
@@ -25,7 +25,7 @@ RQE.debugLog("RQE.content initialized: " .. tostring(RQE.content ~= nil))
 
 
 ----------------------------------------------------
--- 2. Utility Functions
+-- #2. Utility Functions
 ----------------------------------------------------
 
 -- Function to show tooltips
@@ -516,7 +516,7 @@ end
 
 
 ----------------------------------------------------
--- 3. Button Initialization (RQEFrame)
+-- #3. Button Initialization (RQEFrame)
 ----------------------------------------------------
 
 -- Parent function to Create Magic Button for Super Tracked quest (runs the RQE Macro)
@@ -929,7 +929,7 @@ end
 
 
 ----------------------------------------------------
--- 4. Button Initialization (RQEQuestFrame)
+-- #4. Button Initialization (RQEQuestFrame)
 ----------------------------------------------------
 
 -- Parent function to Create CQButton
@@ -1497,7 +1497,7 @@ end
 
 
 ------------------------------------------------------
--- 5. Special Quest Item Buttons
+-- #5. Special Quest Item Buttons
 ------------------------------------------------------
 
 -- -- Creates or Updates the Special Quest Item to be placed in line with its quest within the RQEQuestFrame
@@ -1587,14 +1587,14 @@ end
 
 
 ----------------------------------------------------
--- 6. Button Initialization (QuestFrame headers)
+-- #6. Button Initialization (QuestFrame headers)
 ----------------------------------------------------
 
 -- Code to be used for any buttons that are placed on the child headers of RQEQuestFrame
 
 
 ----------------------------------------------------
--- 7. Button Initialization (DebugFrame)
+-- #7. Button Initialization (DebugFrame)
 ----------------------------------------------------
 
 function RQE.Buttons.CreateDebugLogCloseButton(logFrame)
@@ -1611,7 +1611,7 @@ end
 
 
 ---------------------------------------------------
--- 8. Finalization
+-- #8. Finalization
 ---------------------------------------------------
 
 -- Function to create and initialize the SearchBox
