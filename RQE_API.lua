@@ -41,7 +41,7 @@ RQE.API.GameVersion = {
 
 
 -------------------------------------------------
--- 🏆 Achievements / 📚 Encounter Journal APIs
+-- #🏆 Achievements / 📚 Encounter Journal APIs
 -------------------------------------------------
 
 if major >= 3 then
@@ -93,7 +93,7 @@ end
 
 
 -------------------------------------------------
--- 🧾 Adventure Journal / Factions APIs
+-- #🧾 Adventure Journal / Factions APIs
 -------------------------------------------------
 
 if major >= 10 then
@@ -134,7 +134,7 @@ end
 
 
 -------------------------------------------------
--- 🎯 Gossip / NPC Interaction APIs
+-- #🎯 Gossip / NPC Interaction APIs
 -------------------------------------------------
 
 if major >= 9 then
@@ -217,7 +217,7 @@ end
 
 
 -------------------------------------------------
--- 📢 Group / LFG APIs
+-- #📢 Group / LFG APIs
 -------------------------------------------------
 
 if major >= 6 then
@@ -299,7 +299,7 @@ end
 
 
 -------------------------------------------------
--- 🗺️ Map APIs
+-- #🗺️ Map APIs
 -------------------------------------------------
 
 if major >= 9 then
@@ -754,7 +754,7 @@ end
 
 
 -------------------------------------------------
--- 🛒 Merchant APIs
+-- #🛒 Merchant APIs
 -------------------------------------------------
 
 if major >= 12 then
@@ -956,7 +956,7 @@ end
 
 
 -------------------------------------------------
--- 🧭 Quest APIs
+-- #🧭 Quest APIs
 -------------------------------------------------
 
 if major >= 9 then
@@ -1022,7 +1022,7 @@ end
 
 
 -------------------------------------------------
--- 🗂️ Quest Line / Task / World Quests APIs
+-- #🗂️ Quest Line / Task / World Quests APIs
 -------------------------------------------------
 
 if major > 11 then
@@ -1123,7 +1123,7 @@ end
 
 
 -------------------------------------------------
--- 📜 Quest Log / Quest Info APIs
+-- #📜 Quest Log / Quest Info APIs
 -------------------------------------------------
 
 if major >= 11 then
@@ -2915,7 +2915,7 @@ end
 
 
 -------------------------------------------------
--- 🤝 Quest Session APIs
+-- #🤝 Quest Session APIs
 -------------------------------------------------
 
 if (major > 8) or (major == 8 and minor >= 2 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
@@ -2971,7 +2971,7 @@ end
 
 
 -------------------------------------------------
--- 🗂️ Quest Task APIs
+-- #🗂️ Quest Task APIs
 -------------------------------------------------
 
 if (major > 11) or (major == 11 and minor >= 0 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and toc >= 11505) then
@@ -3380,7 +3380,7 @@ end
 
 
 -------------------------------------------------
--- 🎯 SuperTrack APIs
+-- #🎯 SuperTrack APIs
 -------------------------------------------------
 
 if major >= 11 then
@@ -3410,7 +3410,7 @@ end
 
 
 -------------------------------------------------
--- 🛠️ TradeSkill / Crafting APIs
+-- #🛠️ TradeSkill / Crafting APIs
 -------------------------------------------------
 
 if major >= 11 then
@@ -3461,7 +3461,7 @@ end
 
 
 -------------------------------------------------
--- 💬 Unit / Buff / Debuff APIs
+-- #💬 Unit / Buff / Debuff APIs
 -------------------------------------------------
 
 if (major > 10) or (major == 10 and minor >= 2 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 1 and minor >= 15) then
@@ -3527,7 +3527,7 @@ end
 
 
 -------------------------------------------------
--- 📍 POI APIs
+-- #📍 POI APIs
 -------------------------------------------------
 
 if major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
@@ -3591,7 +3591,7 @@ end
 
 
 -------------------------------------------------
--- 🛠️ Miscellaneous APIs
+-- #🛠️ Miscellaneous APIs
 -------------------------------------------------
 
 if major > 10 or (major == 10 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 1 and minor >= 15) then
