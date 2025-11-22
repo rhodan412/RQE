@@ -8,7 +8,7 @@ It uses the Ace3 library for creating the configuration interface.
 
 
 -----------------------------
--- 1. Library and Main Table
+-- #1. Library and Main Table
 -----------------------------
 
 -- Ace3 Libraries
@@ -35,7 +35,7 @@ RQE.db.profile = RQE.db.profile or {}
 
 
 ---------------------------
--- 2. ProfileManager Logic (Commented out for removal of profile management)
+-- #2. ProfileManager Logic (Commented out for removal of profile management)
 ---------------------------
 
 -- This section is responsible for initializing and handling the profile logic related to the Add-On Options system.
@@ -46,7 +46,7 @@ end
 
 
 ---------------------------
--- 3. Settings Logic
+-- #3. Settings Logic
 ---------------------------
 
 -- This section controls the default settings if the Profile section for the Add-On configuration doesn't contain that information
@@ -82,7 +82,7 @@ end
 
 
 ---------------------------
--- 4. Config Logic
+-- #4. Config Logic
 ---------------------------
 
 -- Valid Anchor Point Options
@@ -1281,7 +1281,7 @@ RQE:RegisterChatCommand("RQE_Profiles", "OpenProfiles")
 
 
 ---------------------------
--- 5. Config Frame
+-- #5. Config Frame
 ---------------------------
 
 local AceGUI = LibStub("AceGUI-3.0")
