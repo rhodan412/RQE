@@ -7,7 +7,7 @@ Main Database control file linking all other dbase modules
 
 
 ------------------------------
--- 1. Global Declarations
+-- #1. Global Declarations
 ------------------------------
 
 RQE = RQE or {}
@@ -32,7 +32,7 @@ end
 
 
 ---------------------------------------------------
--- 2. Database Access Functions
+-- #2. Database Access Functions
 ---------------------------------------------------
 
 -- Function to fetch quest data from the applicable expansion
