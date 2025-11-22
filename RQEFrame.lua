@@ -1500,9 +1500,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Add the click event for WaypointButtons
 		WaypointButton:SetScript("OnClick", function()
-			if RQE.WaypointButtonHover then
-				RQE:ClickWaypointButtonForIndex(i)
-			end
+			-- if RQE.WaypointButtonHover then
+				-- RQE:ClickWaypointButtonForIndex(i)
+			-- end
 
 			-- Code for RWButton functionality here
 			local extractedQuestID
@@ -1519,19 +1519,29 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				end
 			end
 
-			-- Check if TomTom is loaded and compatibility is enabled
-			if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
-				TomTom.waydb:ResetProfile()
-				RQE._currentTomTomUID = nil
+			if RQE.WaypointButtonHover or RQE.hoveringOnRQEFrameAndButton then
+				-- Check if TomTom is loaded and compatibility is enabled
+				if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+					TomTom.waydb:ResetProfile()
+					RQE._currentTomTomUID = nil
+				end
+
+				local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
+				x, y = tonumber(x), tonumber(y)
+				local mapID = MapIDs[i]		-- Fetch the mapID from the MapIDs array
+
+				-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON and may cause some post-combat lag)
+				RQE.SaveCoordData()
+				RQE:OnCoordinateClicked() --RQE:OnCoordinateClicked(i)
 			end
 
-			local x, y = string.match(CoordsText[i], "([^,]+),%s*([^,]+)")
-			x, y = tonumber(x), tonumber(y)
-			local mapID = MapIDs[i]		-- Fetch the mapID from the MapIDs array
-
-			-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON and may cause some post-combat lag)
-			RQE.SaveCoordData()
-			RQE:OnCoordinateClicked() --RQE:OnCoordinateClicked(i)
+			-- if not UnitOnTaxi("player") then
+				-- local IsAdvancedFlyableArea = IsAdvancedFlyableArea()
+				-- if IsAdvancedFlyableArea then
+				-- RQE.SaveCoordData()
+				-- RQE:OnCoordinateClicked() -- Necessary to keep waypoint from disappearing when mousing over or clicking the "W" Button but fires frequently when on dragonriding
+				-- end
+			-- end
 
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
