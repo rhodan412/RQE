@@ -7,7 +7,7 @@ Core file linking all other modules
 
 
 --------------------------------------------------
--- 1. Global Declarations
+-- #1. Global Declarations
 --------------------------------------------------
 
 RQEDB = RQEDB or {}
@@ -40,7 +40,7 @@ end
 
 
 ---------------------------------------------------
--- 2. Imports
+-- #2. Imports
 ---------------------------------------------------
 
 --- @class AceAddon
@@ -67,7 +67,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 
 ---------------------------------------------------
--- 3. Debugging Functions
+-- #3. Debugging Functions
 ---------------------------------------------------
 
 --- Safe Print Function
@@ -247,7 +247,7 @@ end
 
 
 ---------------------------------------------------
--- 4. Default Settings
+-- #4. Default Settings
 ---------------------------------------------------
 
 -- Global color helpers
@@ -392,7 +392,7 @@ local defaults = {
 
 
 ---------------------------------------------------
--- 5. Initialization
+-- #5. Initialization
 ---------------------------------------------------
 
 -- Initialize original dimensions
@@ -810,7 +810,7 @@ end
 
 
 ---------------------------------------------------
--- 6. Saving/Restoring SuperTrack Data
+-- #6. Saving/Restoring SuperTrack Data
 ---------------------------------------------------
 
 -- Function to open the quest log and show specific quest details
@@ -1792,7 +1792,7 @@ end
 
 
 ---------------------------------------------------
--- 7. Profile Core Creation
+-- #7. Profile Core Creation
 ---------------------------------------------------
 
 -- Initialize variable to keep track of whether the profile has been set
@@ -1857,7 +1857,7 @@ end
 
 
 ---------------------------------------------------
--- 8. Toggle Frames
+-- #8. Toggle Frames
 ---------------------------------------------------
 
 -- Function to show RQE frames by default on login
@@ -2132,7 +2132,7 @@ end
 
 
 ---------------------------------------------------
--- 9. Update Frames
+-- #9. Update Frames
 ---------------------------------------------------
 
 -- Function to update MapID display
@@ -4076,7 +4076,7 @@ end
 
 
 ---------------------------------------------------
--- 10. Scenario Functions
+-- #10. Scenario Functions
 ---------------------------------------------------
 
 -- Function to fetch/print Scenario Criteria Step by Step updated for Patch 11.0
@@ -4353,7 +4353,7 @@ end
 
 
 ---------------------------------------------------
--- 11. Maximize/Minimize/Opacity Change to Frames
+-- #11. Maximize/Minimize/Opacity Change to Frames
 ---------------------------------------------------
 
 -- Function for Button in Configuration that will reset the anchorPoint, xPos and yPos to what is listed in the DB file
@@ -4467,7 +4467,7 @@ end
 
 
 ---------------------------------------------------
--- 12. Event Handling
+-- #12. Event Handling
 ---------------------------------------------------
 
 -- Table to store active events
@@ -4945,7 +4945,7 @@ end
 
 
 ---------------------------------------------------
--- 13. UI Components
+-- #13. UI Components
 ---------------------------------------------------
 
 -- Initialize RQEFrame
@@ -5485,7 +5485,7 @@ end
 
 
 ---------------------------------------------------
--- 14. Search Module
+-- #14. Search Module
 ---------------------------------------------------
 
 RQE.SearchModule = {}
@@ -5692,7 +5692,7 @@ end
 
 
 ---------------------------------------------------
--- 15. Utility Functions
+-- #15. Utility Functions
 ---------------------------------------------------
 
 -- InitializeAddon function
@@ -5908,7 +5908,7 @@ end
 
 
 ---------------------------------------------------
--- 16. Quest Info Functions
+-- #16. Quest Info Functions
 ---------------------------------------------------
 -- [Functions related to quest information handling and processing.]
 
@@ -7337,6 +7337,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
 				end
+				RQE.OkayWaypointButtonToMove = true
 				return
 			else
 				-- Blizzard is already guiding the player.
@@ -7384,6 +7385,7 @@ function RQE:StartPeriodicChecks()
 						print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
 					end
 					-- Only advance if result is true
+					RQE.OkayWaypointButtonToMove = true
 					stepIndex = i + 1
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -7481,6 +7483,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Conditional triggered; auto-passing stepIndex:", i)
 				end
+				RQE.OkayWaypointButtonToMove = true
 				stepIndex = i + 1
 				break
 			end
@@ -7492,6 +7495,7 @@ function RQE:StartPeriodicChecks()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("All checks succeeded for stepIndex:", i, ". Advancing to the next step.")
 				end
+				RQE.OkayWaypointButtonToMove = true
 				stepIndex = i + 1
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -8549,6 +8553,7 @@ function RQE.CheckThatQuestStep()
 
 			-- If the objective is completed, skip steps with this objectiveIndex
 			if objective.finished then
+				RQE.OkayWaypointButtonToMove = true
 				correctStepIndex = i + 1
 				-- Continue to find the next step with the next objectiveIndex
 			elseif objective.numFulfilled == neededAmt then
@@ -9667,6 +9672,7 @@ function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
 
 		if objective then
 			if objective.finished or objective.numFulfilled >= neededAmount then
+				RQE.OkayWaypointButtonToMove = true
 				correctStepIndex = i + 1
 			elseif objective.numFulfilled < neededAmount then
 				correctStepIndex = i
@@ -10051,7 +10057,7 @@ end
 
 
 ---------------------------------------------------
--- 17. Filtering Functions
+-- #17. Filtering Functions
 ---------------------------------------------------
 
 -- Contain filters for the RQEQuestingFrame
@@ -10868,7 +10874,7 @@ end
 
 
 ---------------------------------------------------
--- 18. Additional Features
+-- #18. Additional Features
 ---------------------------------------------------
 
 -- Ensure the table exists
@@ -12454,7 +12460,7 @@ end
 
 
 ---------------------------------------------------
--- 19. Finalization
+-- #19. Finalization
 ---------------------------------------------------
 
 -- Function to update DB profile frame position
@@ -12466,7 +12472,7 @@ end
 
 
 ---------------------------------------------------
--- 20. Experimental Testing Ground
+-- #20. Experimental Testing Ground
 ---------------------------------------------------
 
 -- Table to hold the questID and stepIndex conditions (blacklist/exclude/exclusion)
