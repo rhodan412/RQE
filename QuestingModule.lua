@@ -7,7 +7,7 @@ For advanced quest tracking features linked with RQEFrame
 
 
 ----------------------------
--- 1. Global Declarations
+-- #1. Global Declarations
 ----------------------------
 
 -- Initialize RQE global table
@@ -34,7 +34,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 
 ---------------------------
--- 2. Frame Creation/Initialization
+-- #2. Frame Creation/Initialization
 ---------------------------
 
 -- Create the frame
@@ -214,7 +214,7 @@ end
 
 
 ---------------------------
--- 3. Child Frames
+-- #3. Child Frames
 ---------------------------
 
 ---@class RQEChildFrame : Frame
@@ -442,7 +442,7 @@ end
 
 
 ---------------------------
--- 4. Child Frame Anchors
+-- #4. Child Frame Anchors
 ---------------------------
 
 function UpdateFrameAnchors()
@@ -628,7 +628,7 @@ end
 
 
 ---------------------------
--- 5. Button Creation
+-- #5. Button Creation
 ---------------------------
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Right Side)
@@ -648,7 +648,7 @@ RQE.Buttons.ZQButton(RQE.RQEQuestFrame)
 
 
 ---------------------------
--- 6. Event Handlers
+-- #6. Event Handlers
 ---------------------------
 
 -- Event to update text widths when the frame is resized
@@ -856,7 +856,7 @@ end
 
 
 ---------------------------
--- 7. Utility Functions
+-- #7. Utility Functions
 ---------------------------
 
 -- [Utility functions like AdjustQuestItemWidths, SaveQuestFramePosition, colorizeObjectives, RQE:QuestRewardsTooltip, etc.]
@@ -1303,7 +1303,7 @@ function ShowDropdownRQEQuestFrame(self)
 end
 
 -------------------------------
--- 8. Scenario Frame Handling
+-- #8. Scenario Frame Handling
 -------------------------------
 
 -- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
@@ -1561,7 +1561,7 @@ end
 
 
 ----------------------------------
--- 9. Bonus Quest Frame Handling
+-- #9. Bonus Quest Frame Handling
 ----------------------------------
 
 -- Clears the Bonus Quest Elements in order to refresh them when changes occur to tracking or objectives completed
@@ -1683,7 +1683,7 @@ end
 
 
 ----------------------------
--- 10. Timer Functionality
+-- #10. Timer Functionality
 ----------------------------
 
 -- Create a FontString for the timer text inside RQE.ScenarioChildFrame
@@ -1737,7 +1737,7 @@ end
 
 
 ---------------------------
--- 11. Quest Frame Updates
+-- #11. Quest Frame Updates
 ---------------------------
 
 -- [Functions for updating the quest frames, such as UpdateRQEQuestFrame, UpdateRQEWorldQuestFrame, RQE:ClearRQEQuestFrame, etc.]
