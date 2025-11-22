@@ -1,11 +1,27 @@
 11.2.5.7
 
+	**HIGHLIGHTS**
+		- Further improvements to performance with unnecessary frequency of waypoint updates removed
+
+	Core.lua
+		- Added some notations to RQE:ClickWaypointButtonForIndex/self:ClickWaypointButtonForIndex to denote possible/probably redundancy (2025.11.22.1449)
+		- Removed macro check from the RQE:ClickWaypointButtonForIndex(index) function as this was firing too frequently and unnecessarily (2025.11.22.1449)
+		- Removed redundant calls to self:ClickWaypointButtonForIndex(stepIndex) within RQE:CheckDBBuff(), RQE:CheckDBDebuff(), RQE:CheckDBZoneChange(), and RQE:CheckDBObjectiveStatus() as this was handled thru RQE:StartPeriodicChecks() already (2025.11.22.1449)
+
 	RQE.toc
 		- Updated version# (2025.11.20.2150)
 
 	RQEDatabase.lua
 		- Fixed several quests in Legion DB, including qid 48280 "Visions of Another" that had a mislabeling preventing the entry from being registered properly (2025.11.20.2150)
 		- Added additional Legion remix quests and profession quests to the DB (2025.11.20.2150)
+		- Updates to several Legion remix quests in the quest DB (2025.11.22.1449)
+
+	RQEFrame.lua
+		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
+		- Requires player to be hovering over the stepInded or "W" button in the RQEFrame for TomTom profile to reset, CoordsText to be generated or clicked reducing lag caused from frequent calls to this especially when skyriding between subzones (2025.11.22.1449)
+
+	WaypointManager.lua
+		- Removed initial call to reset TomTom profile and set UID to nil every time RQE:CreateUnknownQuestWaypointWithDirectionText fires as this was something that was checked and updated appropriately within the RQE.Waypoints:Replace call a few lines further down (2025.11.22.1449)
 
 
 11.2.5.6 (2025.11.20)
