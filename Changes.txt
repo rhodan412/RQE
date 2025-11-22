@@ -2,15 +2,25 @@
 
 	**HIGHLIGHTS**
 		- Further improvements to performance with unnecessary frequency of waypoint updates removed
+		- Removed debug msgs associated with profile from the addon
+		- Fixed issue where previous supertracked quest wasn't restored to the RQEFrame on reload or login
 
 	Core.lua
 		- Added some notations to RQE:ClickWaypointButtonForIndex/self:ClickWaypointButtonForIndex to denote possible/probably redundancy (2025.11.22.1449)
 		- Removed macro check from the RQE:ClickWaypointButtonForIndex(index) function as this was firing too frequently and unnecessarily (2025.11.22.1449)
 		- Removed redundant calls to self:ClickWaypointButtonForIndex(stepIndex) within RQE:CheckDBBuff(), RQE:CheckDBDebuff(), RQE:CheckDBZoneChange(), and RQE:CheckDBObjectiveStatus() as this was handled thru RQE:StartPeriodicChecks() already (2025.11.22.1449)
 		- Updated RQE:StartPeriodicChecks() to set the RQE.OkayWaypointButtonToMove flag to true when a step advances (2025.11.22.1603)
+		- Removed debug messages associated with profile that were being displayed on log in for most player (2025.11.22.1851)
+		- Added delay before the supertracked quest would be restored on reload and login (2025.11.22.1851)
 
 	EventManager.lua
 		- Added RQE.OkayWaypointButtonToMove flag (set to false) to ADDON_LOADED event function (2025.11.22.1603)
+		- Added to delay to restoration of watched quests and supertracked quest when PLAYER_LOGIN is fired (2025.11.22.1851)
+		- Removed call of restoration of watched quests and supertracked quest in the ADDON_LOADED event function (2025.11.22.1851)
+		- Added flags for reload/login/misc to the PLAYER_ENTERING_WORLD which should improve performance when using portals/hearthstone (2025.11.22.1851)
+
+	QuestingModule.lua
+		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
 
 	RQE.toc
 		- Updated version# (2025.11.20.2150)
@@ -19,6 +29,7 @@
 		- Fixed several quests in Legion DB, including qid 48280 "Visions of Another" that had a mislabeling preventing the entry from being registered properly (2025.11.20.2150)
 		- Added additional Legion remix quests and profession quests to the DB (2025.11.20.2150)
 		- Updates to several Legion remix quests in the quest DB (2025.11.22.1449)
+		- Updated some macros, waypoints for some Legion quests in the DB (2025.11.22.1851)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
