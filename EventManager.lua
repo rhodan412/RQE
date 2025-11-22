@@ -7,7 +7,7 @@ Specifically for the event-driven notifications. Handles alerts for quest comple
 
 
 ---------------------------
--- 1. Global Declarations
+-- #1. Global Declarations
 ---------------------------
 
 -- Initialize RQE namespace and Buttons sub-table
@@ -32,7 +32,7 @@ RQEMacro = RQEMacro or {}
 RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
 
 ------------------------------
--- 2. Constants and Settings
+-- #2. Constants and Settings
 ------------------------------
 
 -- Create an event frame
@@ -40,7 +40,7 @@ local Frame = CreateFrame("Frame")
 
 
 ---------------------------
--- 3. Event Registration
+-- #3. Event Registration
 ---------------------------
 
 -- Register events to the frame
@@ -136,7 +136,7 @@ local eventsToRegister = {
 
 
 ---------------------------
--- 4. Event Handling
+-- #4. Event Handling
 ---------------------------
 
 -- On Event Handler
@@ -1665,6 +1665,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.OkayToUpdateFollowingTrack = true
 	RQE.OkayToUpdateSeparateFF = false
 	RQE.OkayToUpdateSeparateFFOnce = true
+	RQE.OkayWaypointButtonToMove = false
 	RQE.NavigationDestinationReached = false
 	RQE.NearestFlightMasterSet = false
 	RQE.PeriodicIsFiring = false
@@ -6876,7 +6877,7 @@ end
 
 
 --------------------------
--- 5. Event Callbacks
+-- #5. Event Callbacks
 --------------------------
 
 -- Add a click event to SearchButton
@@ -6908,7 +6909,7 @@ end)
 
 
 --------------------------
--- 6. Frame Updates
+-- #6. Frame Updates
 --------------------------
 
 -- Function to Show the Objective Tracker
