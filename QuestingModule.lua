@@ -2262,8 +2262,8 @@ function RQE:QuestType()
 
 	-- Ensures that the tracker is updated
 	-- print("~~~ SaveTrackedQuestsToCharacter: 2109 ~~~")
-	RQE:SaveTrackedQuestsToCharacter()
-	RQE:SaveSuperTrackedQuestToCharacter()
+	-- RQE:SaveTrackedQuestsToCharacter()
+	-- RQE:SaveSuperTrackedQuestToCharacter()
 end
 
 
@@ -2491,6 +2491,8 @@ function UpdateRQEQuestFrame()
 					if not self:IsMouseOver() then return end
 
 					RQE:ClearSeparateFocusFrame()
+					-- RQE:SaveSuperTrackedQuestToCharacter()
+					-- RQE:SaveTrackedQuestsToCharacter()
 
 					-- Check if the player is in combat and return if an automatic click
 					if InCombatLockdown() then
@@ -3209,6 +3211,7 @@ function UpdateRQEWorldQuestFrame()
 					-- print("~~~ SetSuperTrack: 2941~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(questID)
 					RQE:SaveSuperTrackedQuestToCharacter()
+					--RQE:SaveTrackedQuestsToCharacter()
 					RQE.ManualSuperTrackedQuestID = questID
 					RQE.ManuallyTrackedQuests[questID] = true
 
@@ -3384,6 +3387,8 @@ function UpdateRQEWorldQuestFrame()
 					-- print("~~~ Remove Quest Watch: 3156 ~~~")
 					C_QuestLog.RemoveQuestWatch(questID)
 				end
+				-- RQE:SaveSuperTrackedQuestToCharacter()
+				-- RQE:SaveTrackedQuestsToCharacter()
 			end)
 
 			-- Positioning logic for WQuestLevelAndName
