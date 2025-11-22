@@ -7,7 +7,7 @@ This add-on file may be used to either store, or call coordinate information fro
 
 
 --------------------------
--- 1. Declarations
+-- #1. Declarations
 --------------------------
 
 RQE = RQE or {}
@@ -30,7 +30,7 @@ local _dbgMarkVisited
 
 
 ------------------------------------
--- 2. coordinateHotspot Defaults
+-- #2. coordinateHotspot Defaults
 ------------------------------------
 
 -- Soft defaults; can be overridden per step or hotspot
@@ -44,7 +44,7 @@ RQE.WPUtil.defaults = RQE.WPUtil.defaults or {
 
 
 ---------------------------
--- 3. Debug Logic
+-- #3. Debug Logic
 ---------------------------
 
 if RQE and RQE.debugLog then
@@ -55,7 +55,7 @@ end
 
 
 -------------------------------
--- 4. Waypoint Logic (Single)
+-- #4. Waypoint Logic (Single)
 -------------------------------
 
 -- Assume IsWorldMapOpen() returns true if the world map is open, false otherwise
@@ -212,7 +212,7 @@ end
 
 
 ------------------------------
--- 5. Waypoint Logic (Multi)
+-- #5. Waypoint Logic (Multi)
 ------------------------------
 
 -- If you expose user options somewhere (RQE.db / RQE.Config), lookup here
@@ -1019,7 +1019,7 @@ end
 
 
 ---------------------------------------------------------
--- 6. Waypoint Quest Start Location - Helper function
+-- #6. Waypoint Quest Start Location - Helper function
 ---------------------------------------------------------
 
 -- Utility to fetch location data from dbEntry
