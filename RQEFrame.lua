@@ -7,7 +7,7 @@ Manages the main frame design
 
 
 ----------------------------
--- 1. Global Declarations
+-- #1. Global Declarations
 ----------------------------
 
 RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
@@ -56,7 +56,7 @@ local frameMenu = {
 
 
 --------------------------
--- 2. Local Variables
+-- #2. Local Variables
 --------------------------
 
 -- Variable to keep track of the last known group size and type
@@ -65,7 +65,7 @@ local lastGroupType = "none" -- "none", "party", "raid", "instance"
 
 
 ---------------------------------
--- 3. RQEFrame Right-Click Menu
+-- #3. RQEFrame Right-Click Menu
 ---------------------------------
 
 -- Menu Frame Creation
@@ -153,13 +153,13 @@ end
 
 
 ---------------------------
--- 4. Imports
+-- #4. Imports
 ---------------------------
 
 local AceGUI = LibStub("AceGUI-3.0")
 
 ---------------------------
--- 5. Frame Initialization
+-- #5. Frame Initialization
 ---------------------------
 
 -- Debug to check state of main Frame
@@ -746,7 +746,7 @@ searchExecuteButton:SetPoint("LEFT", SearchEditBox, "RIGHT", 5, 0)
 searchExecuteButton:SetText(">")
 
 ---------------------------
--- 6. Event Handlers
+-- #6. Event Handlers
 ---------------------------
 
 -- Function for Update Button Visibility
@@ -1164,7 +1164,7 @@ end
 
 
 ---------------------------
--- 7. Utility Functions
+-- #7. Utility Functions
 ---------------------------
 
 -- Make this a global variable or part of the RQE table
@@ -1519,7 +1519,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				end
 			end
 
-			if RQE.WaypointButtonHover or RQE.hoveringOnRQEFrameAndButton then
+			if RQE.OkayWaypointButtonToMove or RQE.WaypointButtonHover or RQE.hoveringOnRQEFrameAndButton then
 				-- Check if TomTom is loaded and compatibility is enabled
 				if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 					TomTom.waydb:ResetProfile()
@@ -1533,6 +1533,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON and may cause some post-combat lag)
 				RQE.SaveCoordData()
 				RQE:OnCoordinateClicked() --RQE:OnCoordinateClicked(i)
+				RQE.OkayWaypointButtonToMove = false
 			end
 
 			-- if not UnitOnTaxi("player") then
@@ -1605,6 +1606,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			if questData then
 				UpdateFrame(RQE.questIDFromText, questData, StepsText, CoordsText, MapIDs)
 			end
+			RQE.OkayWaypointButtonToMove = false
 		end)
 
 		-- Add a mouse down event to simulate a button press
@@ -2060,7 +2062,7 @@ end
 
 
 ---------------------------
--- 8. Finalization
+-- #8. Finalization
 ---------------------------
 
 -- Call to function create the search frame
