@@ -30,6 +30,7 @@
 		- Added additional Legion remix quests and profession quests to the DB (2025.11.20.2150)
 		- Updates to several Legion remix quests in the quest DB (2025.11.22.1449)
 		- Updated some macros, waypoints for some Legion quests in the DB (2025.11.22.1851)
+		- Updated DB to include the Alliance Exile's Reach quests (2025.11.24.1931)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
