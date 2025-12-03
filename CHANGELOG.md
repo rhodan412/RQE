@@ -1,4 +1,4 @@
-11.2.5.7
+11.2.7.0
 
 	**HIGHLIGHTS**
 		- Further improvements to performance with unnecessary frequency of waypoint updates removed
@@ -23,7 +23,7 @@
 		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
 
 	RQE.toc
-		- Updated version# (2025.11.20.2150)
+		- Updated interface/version# (2025.12.03.0359)
 
 	RQEDatabase.lua
 		- Fixed several quests in Legion DB, including qid 48280 "Visions of Another" that had a mislabeling preventing the entry from being registered properly (2025.11.20.2150)
@@ -32,6 +32,7 @@
 		- Updated some macros, waypoints for some Legion quests in the DB (2025.11.22.1851)
 		- Updated DB to include the Alliance Exile's Reach quests (2025.11.24.1931)
 		- Updated DB for many Warrior and Paladin order hall quests (2025.11.24.2108)
+		- Added quests for Alliance Housing (2025.12.03.0359)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
