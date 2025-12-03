@@ -1,4 +1,4 @@
-## Interface: 110250, 110270
+## Interface: 110270
 ## Title: Rhodan's Quest Explorer
 ## Category-enUS: Quests
 ## Category-deDE: Quests
@@ -12,7 +12,7 @@
 ## Category-zhCN: 任务
 ## Category-zhTW: 任務
 ## Author: Rhodan {Aurleis}
-## Version: 11.2.5.7
+## Version: 11.2.7.0
 ## Notes: A handy tool for questing.|cFFCC99FFThis addon has known compatibility issues with the "World Quest Tracker" addon. There are partial issues with "Carbonite Quests" addon, but only when turning in quests thru the default Blizzard Objective Tracker. If you experience problems, consider disabling these addons while using RQE.|r
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
