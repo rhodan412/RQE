@@ -416,8 +416,8 @@ function RQE.handleGossipClosed()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
 			end
-			-- SetRaidTarget("target", 0)
-			RemoveRaidTargets()
+			SetRaidTarget("target", 0)
+			-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
@@ -3715,7 +3715,7 @@ function RQE.handleQuestAccepted(...)
 
 	-- Clear the raid marker from the current target
 	if UnitExists("target") then
-		SetRaidTarget("target", 0)
+		SetRaidTarget("target", 0)	-- possible complications in 12.0
 		-- RemoveRaidTargets()
 	end
 
@@ -5589,8 +5589,8 @@ function RQE.handleQuestCurrencyLootReceived(...)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
-				-- SetRaidTarget("target", 0)
-				RemoveRaidTargets()
+				SetRaidTarget("target", 0)
+				-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -5687,8 +5687,8 @@ function RQE.handleQuestLootReceived(...)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
-				-- SetRaidTarget("target", 0)
-				RemoveRaidTargets()
+				SetRaidTarget("target", 0)	-- possible complications in 12.0
+				-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("NOT Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -6626,7 +6626,8 @@ function RQE.handleQuestTurnIn(...)
 	local moneyReward = select(5, ...)
 
 	if RQE.LastSuperTrackedQuestID == questID then
-		RemoveRaidTargets()
+		SetRaidTarget("target", 0)	-- possible complications in 12.0
+		-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 	end
 
 	-- Print in coordinateHotspots format and should show use the coordinates that are reflected in the DB file for that last step
