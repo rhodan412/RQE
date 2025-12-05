@@ -1,4 +1,4 @@
-## Interface: 110270
+## Interface: 110270, 120000
 ## Title: Rhodan's Quest Explorer
 ## Category-enUS: Quests
 ## Category-deDE: Quests
