@@ -38,6 +38,7 @@
 		- Added quests for Alliance Housing (2025.12.03.0359)
 		- Added additional Beta quests for Midnight expansion to the DB (2025.12.05.0359)
 		- Added class order hall quests for Legion DB (2025.12.05.0359)
+		- Added many Shaman and Rogue class order hall quests to the DB (2025.12.05.2223)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
