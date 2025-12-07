@@ -2269,10 +2269,10 @@ end
 
 -- Updates the RQEQuestFrame
 function UpdateRQEQuestFrame()
-	if InCombatLockdown() then
-		RQE.RunUpdateRQEQuestFrameAfterCombat = true
-		return
-	end
+	-- if InCombatLockdown() then
+		-- RQE.RunUpdateRQEQuestFrameAfterCombat = true
+		-- return
+	-- end
 
 	RQE:SortWatchedQuestsByProximity()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
