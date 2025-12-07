@@ -1165,13 +1165,13 @@ function RQE.handlePlayerRegenEnabled()
 		end)
 	end
 
-	-- Updates RQEQuestFrame after combat ends
-	if RQE.RunUpdateRQEQuestFrameAfterCombat then
-		C_Timer.After(0.2, function()
-			UpdateRQEQuestFrame()
-			RQE.RunUpdateRQEQuestFrameAfterCombat = false
-		end)
-	end
+	-- -- Updates RQEQuestFrame after combat ends
+	-- if RQE.RunUpdateRQEQuestFrameAfterCombat then
+		-- C_Timer.After(0.2, function()
+			-- UpdateRQEQuestFrame()
+			-- RQE.RunUpdateRQEQuestFrameAfterCombat = false
+		-- end)
+	-- end
 
 	-- Updates RQEWorldQuestFrame after combat ends
 	if RQE.RunUpdateRQEWorldQuestFrame then
