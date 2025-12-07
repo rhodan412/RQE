@@ -6,6 +6,7 @@
 		- Fixed issue where previous supertracked quest wasn't restored to the RQEFrame on reload or login
 		- Added additional Legion order hall quests and Midnight Beta quests
 		- Updated some code in preparation for the 12.0 expansion to make it compatible
+		- Added functionality to have class and faction in the step description to decide if it should skip for quests that may have different coord information depending on player class
 
 	Core.lua
 		- Added some notations to RQE:ClickWaypointButtonForIndex/self:ClickWaypointButtonForIndex to denote possible/probably redundancy (2025.11.22.1449)
@@ -14,6 +15,7 @@
 		- Updated RQE:StartPeriodicChecks() to set the RQE.OkayWaypointButtonToMove flag to true when a step advances (2025.11.22.1603)
 		- Removed debug messages associated with profile that were being displayed on log in for most player (2025.11.22.1851)
 		- Added delay before the supertracked quest would be restored on reload and login (2025.11.22.1851)
+		- Added coding to have steps recognize player class and faction (including neutral) in the description similar to 'ALLIANCE:' and 'HORDE:' in the description (2025.12.06.2331)
 
 	EventManager.lua
 		- Added RQE.OkayWaypointButtonToMove flag (set to false) to ADDON_LOADED event function (2025.11.22.1603)
@@ -21,6 +23,7 @@
 		- Removed call of restoration of watched quests and supertracked quest in the ADDON_LOADED event function (2025.11.22.1851)
 		- Added flags for reload/login/misc to the PLAYER_ENTERING_WORLD which should improve performance when using portals/hearthstone (2025.11.22.1851)
 		- Removed some code to RemoveRaidTargets() when events fire as this is going away in patch 12.0 (2025.12.05.0359)
+		- Removed situation where RQEQuestFrame (quest tracker) is not being updated in combat as this is generally a very helpful thing as you make progress, but may need to add it take with modifications if problems with lag (2025.12.06.2331)
 
 	QuestingModule.lua
 		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
@@ -39,11 +42,15 @@
 		- Added additional Beta quests for Midnight expansion to the DB (2025.12.05.0359)
 		- Added class order hall quests for Legion DB (2025.12.05.0359)
 		- Added many Shaman and Rogue class order hall quests to the DB (2025.12.05.2223)
+		- Added many Rogue, Druid and Paladin class order hall quests to the DB (2025.12.06.2331)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
 		- Requires player to be hovering over the stepInded or "W" button in the RQEFrame for TomTom profile to reset, CoordsText to be generated or clicked reducing lag caused from frequent calls to this especially when skyriding between subzones (2025.11.22.1449)
 		- Updated function for the clicking (sometimes handled thru different function vs player click) of the "W" or stepsIndex Button to update waypoint also if the RQE.OkayWaypointButtonToMove flag is set to true from the RQE:StartPeriodicChecks() (2025.11.22.1603)
+
+	QuestingModule.lua
+		- Removed situation where RQEQuestFrame (quest tracker) is not being updated in combat as this is generally a very helpful thing as you make progress, but may need to add it take with modifications if problems with lag (2025.12.06.2331)
 
 	WaypointManager.lua
 		- Removed initial call to reset TomTom profile and set UID to nil every time RQE:CreateUnknownQuestWaypointWithDirectionText fires as this was something that was checked and updated appropriately within the RQE.Waypoints:Replace call a few lines further down (2025.11.22.1449)
