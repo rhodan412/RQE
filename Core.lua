@@ -8682,6 +8682,9 @@ function RQE:AdvanceQuestStep(questID, stepIndex)
 	-- Apply faction logic after ensuring state is consistent
 	C_Timer.After(0.7, function()
 		RQE:HandleFactionLogicAfterAdvance()
+		C_Timer.After(1, function()
+			RQE:HandleClassFactionLogicAfterAdvance()
+		end)
 	end)
 end
 
@@ -8756,6 +8759,9 @@ function RQE:ClickWaypointButtonForIndex(index)
 	-- Apply faction logic after ensuring state is consistent
 	C_Timer.After(0.7, function()
 		RQE:HandleFactionLogicAfterAdvance()
+		C_Timer.After(1, function()
+			RQE:HandleClassFactionLogicAfterAdvance()
+		end)
 	end)
 end
 
@@ -8801,6 +8807,149 @@ function RQE:HandleFactionLogicAfterAdvance()
 			RQE:HandleFailedFunction(superTrackedQuestID, RQE.AddonSetStepIndex)
 		end
 	end)
+end
+
+
+-- Handles description prefixes like "PALADIN-A:", "PRIEST-N:", "WARLOCK-H:".
+-- Intended to be called AFTER RQE:HandleFactionLogicAfterAdvance().
+function RQE:HandleClassFactionLogicAfterAdvance()
+	-- Allow both INFO and INFO+ to show debug
+	local debug = (RQE.db.profile.debugLevel == "INFO+")
+
+	if debug then
+		print("~~ Running RQE:HandleClassFactionLogicAfterAdvance ~~")
+	end
+
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if debug then print("ClassLogic: No supertracked quest, aborting.") end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if debug then print("ClassLogic: No questData for questID", questID) end
+		return
+	end
+
+	-- Player info
+	local englishFaction = UnitFactionGroup("player") or "Neutral" -- "Alliance", "Horde", "Neutral"
+	local _, englishClass = UnitClass("player")					-- e.g. "PRIEST", "PALADIN"
+	if englishClass then
+		englishClass = englishClass:upper()
+	end
+
+	-- Current step index
+	local stepIndex = RQE.AddonSetStepIndex or 1
+
+	if debug then
+		print(string.format(
+			"ClassLogic: questID=%s, starting stepIndex=%s, playerClass=%s, playerFaction=%s",
+			tostring(questID), tostring(stepIndex), tostring(englishClass), tostring(englishFaction)
+		))
+	end
+
+	-- Helper: should this particular step be skipped due to CLASS-TAG prefix?
+	local function ShouldSkipClassStep(idx)
+		local stepData = questData[idx]
+		if not stepData then
+			if debug then
+				print("ClassLogic: questData[", idx, "] is nil, not skipping (end of steps?).")
+			end
+			return false
+		end
+
+		local description = stepData.description or ""
+
+		if debug then
+			-- Show the first chunk of the description so we can verify the header
+			print(string.format("ClassLogic: step %d description (raw): %q", idx, description))
+		end
+
+		-- Match "CLASS-TAG:" at the start, but allow leading whitespace:
+		--   e.g. "PALADIN-H: ...", "   PRIEST-N: ...", etc.
+		local classToken, factionTag = description:match("^%s*(%u+)%-(%u):")
+		--local classToken, factionTag = description:match("^%s*(%u+)%-(A|H|N):")
+		if not classToken or not factionTag then
+			if debug then
+				print("ClassLogic: no CLASS-TAG header found on step", idx, "- not skipping due to class.")
+			end
+			-- No class header present; this function does not decide to skip it.
+			return false
+		end
+
+		classToken = classToken:upper()
+
+		if debug then
+			print(string.format(
+				"[ClassTag] Step %d header: %s-%s: | Player class=%s, faction=%s",
+				idx, tostring(classToken), tostring(factionTag),
+				tostring(englishClass), tostring(englishFaction)
+			))
+		end
+
+		-- Check class match
+		local classMatches = (englishClass == classToken)
+
+		-- Check faction part of the tag
+		local factionMatches = true
+		if factionTag == "A" then
+			factionMatches = (englishFaction == "Alliance")
+		elseif factionTag == "H" then
+			factionMatches = (englishFaction == "Horde")
+		elseif factionTag == "N" then
+			-- "N" means any faction; no additional restriction
+			factionMatches = true
+		end
+
+		-- We STAY on this step only if class AND faction match.
+		-- Otherwise, we SKIP it.
+		if classMatches and factionMatches then
+			if debug then
+				print(" -> Class/faction header matches player. Staying on step", idx)
+			end
+			return false
+		else
+			if debug then
+				print(" -> Class/faction header does NOT match player. Skipping step", idx)
+			end
+			return true
+		end
+	end
+
+	-- Auto-advance until we find a step that:
+	--  - either has a matching CLASS-TAG header, OR
+	--  - has no CLASS-TAG header at all.
+	local skippedAny = false
+	while ShouldSkipClassStep(stepIndex) do
+		skippedAny = true
+		stepIndex = stepIndex + 1
+		RQE.AddonSetStepIndex = stepIndex
+
+		if debug then
+			print("ClassLogic: Advanced to stepIndex (class/faction logic):", stepIndex)
+		end
+
+		-- If we've gone past the last step, bail out
+		if not questData[stepIndex] then
+			if debug then
+				print("ClassLogic: No further steps in questData; stopping class/faction auto-advance.")
+			end
+			break
+		end
+	end
+
+	-- Only re-fire waypoint if we actually skipped at least one step.
+	if skippedAny then
+		if debug then
+			print("ClassLogic: skipped one or more steps; clicking waypoint for stepIndex", RQE.AddonSetStepIndex)
+		end
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+	else
+		if debug then
+			print("ClassLogic: no class-based skipping performed on stepIndex", stepIndex)
+		end
+	end
 end
 
 
