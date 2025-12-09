@@ -686,6 +686,18 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 
 		-- Code for ClearButton functionality here
 		RQE.Buttons.ClearButtonPressed()
+		C_Timer.After(0.3, function()
+			RQE:SaveSuperTrackedQuestToCharacter()
+
+			-- Code for RWButton functionality here
+			C_Map.ClearUserWaypoint()
+			-- Check if TomTom is loaded and compatibility is enabled
+			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+				TomTom.waydb:ResetProfile()
+				RQE._currentTomTomUID = nil
+			end
+		end)
 
 		-- Reset manually tracked quests
 		if RQE.ManuallyTrackedQuests then
