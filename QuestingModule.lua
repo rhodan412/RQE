@@ -2534,6 +2534,11 @@ function UpdateRQEQuestFrame()
 
 						-- Refresh the UI here to update the button state
 						UpdateRQEQuestFrame()
+
+						C_Timer.After(0.25, function()
+							RQE:SaveTrackedQuestsToCharacter()
+							RQE:SaveSuperTrackedQuestToCharacter()
+						end)
 					else
 						if RQE.hoveringOnFrame then
 							RQE.DontUpdateFrame = false
@@ -2560,6 +2565,10 @@ function UpdateRQEQuestFrame()
 
 								C_Timer.After(0.1, function()
 									RQE:StartPeriodicChecks()
+								end)
+
+								C_Timer.After(0.2, function()
+									RQE:SaveSuperTrackedQuestToCharacter()
 								end)
 							end)
 						end
