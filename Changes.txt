@@ -8,6 +8,9 @@
 		- Updated some code in preparation for the 12.0 expansion to make it compatible
 		- Added functionality to have class and faction in the step description to decide if it should skip for quests that may have different coord information depending on player class
 
+	Buttons.lua
+		- When the "Clear" frame button is pressed in the RQEFrame, the waypoints are reset (2025.12.08.2356)
+
 	Core.lua
 		- Added some notations to RQE:ClickWaypointButtonForIndex/self:ClickWaypointButtonForIndex to denote possible/probably redundancy (2025.11.22.1449)
 		- Removed macro check from the RQE:ClickWaypointButtonForIndex(index) function as this was firing too frequently and unnecessarily (2025.11.22.1449)
@@ -16,6 +19,7 @@
 		- Removed debug messages associated with profile that were being displayed on log in for most player (2025.11.22.1851)
 		- Added delay before the supertracked quest would be restored on reload and login (2025.11.22.1851)
 		- Added coding to have steps recognize player class and faction (including neutral) in the description similar to 'ALLIANCE:' and 'HORDE:' in the description (2025.12.06.2331)
+		- Updated RQE:ClearSeparateFocusFrame() and RQE:ShouldClearFrame() functions to allow for the clearing of the RQEFrame when the current questID in the RQEFrame is 0 or nil or if RQE.AllFramesShouldUpdate is flagged true (2025.12.08.2356)
 
 	EventManager.lua
 		- Added RQE.OkayWaypointButtonToMove flag (set to false) to ADDON_LOADED event function (2025.11.22.1603)
@@ -24,9 +28,12 @@
 		- Added flags for reload/login/misc to the PLAYER_ENTERING_WORLD which should improve performance when using portals/hearthstone (2025.11.22.1851)
 		- Removed some code to RemoveRaidTargets() when events fire as this is going away in patch 12.0 (2025.12.05.0359)
 		- Removed situation where RQEQuestFrame (quest tracker) is not being updated in combat as this is generally a very helpful thing as you make progress, but may need to add it take with modifications if problems with lag (2025.12.06.2331)
+		- Updated the PLAYER_ENTERING_WORLD event function so that RQE.AllFramesShouldUpdate flag is set to true when player reloads or logs in along with an update to the frames during these situations (2025.12.08.2356)
+		- Adds a check to see if the RQEFrame should be cleared (if nothing is being tracked in the RQEFrame) upon the firing of QUEST_LOG_UPDATE or QUEST_WATCH_LIST_CHANGED - but this may be reverted if lag issues (2025.12.08.2356)
 
 	QuestingModule.lua
 		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
+		- After clicking the questlogindexbutton, to supertrack a quest or world quest, the list of tracked quests and supertrack quest is saved for later restoration (2025.12.08.2356)
 
 	RQE.toc
 		- Updated interface/version# (2025.12.05.0359)
@@ -43,6 +50,7 @@
 		- Added class order hall quests for Legion DB (2025.12.05.0359)
 		- Added many Shaman and Rogue class order hall quests to the DB (2025.12.05.2223)
 		- Added many Rogue, Druid and Paladin class order hall quests to the DB (2025.12.06.2331)
+		- Updated some Borean Tundra quests in the DB for the Wrath of the Lich King expansion (2025.12.08.2356)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
