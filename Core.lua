@@ -2485,8 +2485,10 @@ end
 -- Function to clear the contents of the SeparateFocusFrame
 function RQE:ClearSeparateFocusFrame()
 	-- Do NOT run if nothing changed EXCEPT when forced
-	if not RQE:ShouldClearSeparateFocusFrame() then
-		return
+	if not RQE.AllFramesShouldUpdate then
+		if not RQE:ShouldClearSeparateFocusFrame() then
+			return
+		end
 	end
 
 	-- Update internal tracking for next comparison
@@ -2667,7 +2669,10 @@ function RQE:ShouldClearFrame()
 
 	-- Early exit if there's still no valid questID
 	if not extractedQuestID or extractedQuestID == 0 then
+		RQE.AllFramesShouldUpdate = true
 		RQE:ClearSeparateFocusFrame()	-- Clears progress focus frame if nothing is being tracked
+		RQEMacro:ClearMacroContentByName("RQE Macro")	-- Clears macro if nothing is being supertracked
+		RQE.AllFramesShouldUpdate = false
 		return
 	end
 
