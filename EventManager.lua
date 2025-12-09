@@ -2924,25 +2924,36 @@ function RQE.handlePlayerEnterWorld(...)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("RQE.HasLoggedIn is: " .. tostring(RQE.HasLoggedIn) .. " & RQE.HasReloaded is: " .. tostring(RQE.HasReloaded) .. " & RQE.HasPortaledOrHearthed is: " .. tostring(RQE.HasPortaledOrHearthed))
 		end
-	end)
 
-	-- Updates appropriate frames of SeparateFocusFrame, RQEFrame and StepsText if PLAYER_ENTERING_WORLD is fired from isReload or isLogin, but not portal or hearthing
-	if RQE.HasLoggedIn or RQE.HasReloaded then
-		RQE.AllFramesShouldUpdate = true
-		C_Timer.After(1.3, function()
+		-- Updates appropriate frames of SeparateFocusFrame, RQEFrame and StepsText if PLAYER_ENTERING_WORLD is fired from isReload or isLogin, but not portal or hearthing
+		if RQE.HasLoggedIn or RQE.HasReloaded then
 			RQE.Buttons.ClearButtonPressed()
-			RQE:ClearSeparateFocusFrame()
-			UpdateFrame()
-			C_Timer.After(0.2, function()
-				RQE.AllFramesShouldUpdate = false
-			end)
-		end)
 
-		C_Timer.After(5, function()
-			RQE:RestoreTrackedQuestsForCharacter()
-			RQE:RestoreSuperTrackedQuestForCharacter()
-		end)
-	end
+			-- Code to clear waypoints for refreshing on reload and login
+			C_Map.ClearUserWaypoint()
+			-- Check if TomTom is loaded and compatibility is enabled
+			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+				TomTom.waydb:ResetProfile()
+				RQE._currentTomTomUID = nil
+			end
+
+			RQE.AllFramesShouldUpdate = true
+			C_Timer.After(2.2, function()
+				UpdateFrame()
+				--RQE:ClearSeparateFocusFrame()
+				RQE:UpdateSeparateFocusFrame()
+				C_Timer.After(1, function()
+					RQE.AllFramesShouldUpdate = false
+				end)
+
+				C_Timer.After(5, function()
+					RQE:RestoreTrackedQuestsForCharacter()
+					RQE:RestoreSuperTrackedQuestForCharacter()
+				end)
+			end)
+		end
+	end)
 
 	-- Clear hotspot choice so next read re-evaluates on the new map
 	if C_SuperTrack.IsSuperTrackingQuest() then
@@ -5458,6 +5469,10 @@ function RQE.handleQuestStatusUpdate()
 		-- end
 	-- end
 
+	C_Timer.After(0.5, function()
+		RQE:ShouldClearFrame()
+	end)
+
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
 
 	-- Resets the flag that prevents UNIT_QUEST_LOG_CHANGED from firing immediately following QUEST_WATCH_UPDATE
@@ -6430,6 +6445,11 @@ function RQE.handleQuestWatchListChanged(...)
 
 	-- print("~~~ RQE:QuestType(): 5192 ~~~")
 	-- RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
+
+	C_Timer.After(2.5, function()
+		RQE:ShouldClearFrame()
+	end)
+
 	UpdateFrame()
 
 	-- Clear hotspot choice so next read re-evaluates on the new map
