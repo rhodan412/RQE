@@ -840,6 +840,17 @@ function OpenQuestLogToQuestDetails(questID)
 		return
 	end
 
+	-- Validate questID before touching the C API
+	if type(questID) ~= "number" then
+		if RQE and RQE.db and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") then
+			print("OpenQuestLogToQuestDetails: invalid questID:", tostring(questID))
+			if debugstack then
+				print(debugstack(2, 4, 4))  -- optional: short stack trace
+			end
+		end
+		return
+	end
+
 	-- If this is a completed, auto-completable quest, show the turn-in dialog instead
 	if RQE:ShowAutoCompleteDialog(questID) then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -849,6 +860,8 @@ function OpenQuestLogToQuestDetails(questID)
 	end
 
 	---@type number|nil
+	-- you can optionally pass `true` as the second argument if you want to ignore waypoints:
+	-- local mapID = GetQuestUiMapID(questID, true) or C_TaskQuest.GetQuestZoneID(questID)
 	local mapID = GetQuestUiMapID(questID) or C_TaskQuest.GetQuestZoneID(questID)
 	if mapID == 0 then mapID = nil end
 	OpenQuestLog(mapID)
