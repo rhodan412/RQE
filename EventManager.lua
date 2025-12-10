@@ -508,7 +508,7 @@ function RQE.handleItemCountChanged(...)
 	local itemID = select(3, ...)
 
 	-- Print Event-specific Args
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showArgPayloadInfo then
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
 		for i, arg in ipairs(args) do
 			if type(arg) == "table" then
@@ -1462,15 +1462,15 @@ function RQE.PlayerInsideQuestBlobStateChanged(...)
 		-- end
 	-- end)
 
-	-- if not inBlobState then
-		-- C_Timer.After(0.55, function()
-			-- RQE.isCheckingMacroContents = true
-			-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
-			-- C_Timer.After(0.2, function()
-				-- RQE.isCheckingMacroContents = false
-			-- end)
-		-- end)
-	-- end
+	if not inBlobState then
+		C_Timer.After(0.55, function()
+			RQE.isCheckingMacroContents = true
+			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
+			end)
+		end)
+	end
 end
 
 
@@ -2091,7 +2091,7 @@ function RQE.handleWorldStateTimerStart(...)
 	RQE.StopScenarioTimer()
 	RQE.StartScenarioTimer()
 	RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
-	RQE.HandleTimerStart(timerID)
+	-- RQE.HandleTimerStart(timerID)
 
 	RQE.updateScenarioUI()
 	-- print("~~~ UpdateRQEQuestFrame(): 1858 ~~~")
@@ -2124,7 +2124,7 @@ function RQE.handleWorldStateTimerStop(...)
 	end
 
 	-- A world timer has stopped; you might want to stop your timer as well
-	RQE.StopTimer()
+	-- RQE.StopTimer()
 end
 
 
@@ -4663,76 +4663,101 @@ function RQE.handleUIInfoMessage(...)
 		end
 	end
 
-	if not RQE.BlacklistUnderway then return end
+	if messageType ~= 308 or messageType ~= 309 or messageType ~= 310 or messageType ~= 311 or messageType ~= 312 or messageType ~= 313 or messageType ~= 314 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("(Invalid) messageType is: " .. messageType)
+			print("(Invalid) message is: " .. tostring(message))
+			return
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("(Valid) messageType is: " .. messageType)
+			print("(Valid) message is: " .. tostring(message))
+		end
+	end
 
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
-	-- Check if the message is Travel to a specific location such as for exploration objective (messageType 308)
-	if messageType == 309 then
-		RQE.BlacklistUnderway = false
-		RQE.Buttons.ClearButtonPressed()
-		C_Timer.After(2.5, function()
-			-- print("~~~ SetSuperTrack: 3490~~~")
-			C_SuperTrack.SetSuperTrackedQuestID(RQE.BlackListedQuestID)
-			-- print("~~~ SaveTrackedQuestsToCharacter: 3551 ~~~")
-			-- RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
-			-- RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
-			C_Timer.After(1.5, function()
-				-- if RQE.db.profile.autoClickWaypointButton then
-					-- RQE.UIInfoUpdateFired = true
-					-- RQE:StartPeriodicChecks()
-					-- C_Timer.After(0.2, function()
-						-- RQE.UIInfoUpdateFired = false
-					-- end)
+	-- -- Check if the message is Travel to a specific location such as for exploration objective (messageType 308)
+	-- if messageType == 309 then
+		-- RQE.BlacklistUnderway = false
+		-- RQE.Buttons.ClearButtonPressed()
+		-- C_Timer.After(2.5, function()
+			-- -- print("~~~ SetSuperTrack: 3490~~~")
+			-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+			-- -- print("~~~ SaveTrackedQuestsToCharacter: 3551 ~~~")
+			-- -- RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
+			-- -- RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
+			-- C_Timer.After(1.5, function()
+				-- -- if RQE.db.profile.autoClickWaypointButton then
+					-- -- RQE.UIInfoUpdateFired = true
+					-- -- RQE:StartPeriodicChecks()
+					-- -- C_Timer.After(0.2, function()
+						-- -- RQE.UIInfoUpdateFired = false
+					-- -- end)
+				-- -- end
+				-- UpdateFrame()
+			-- end)
+		-- end)
+	-- end
+
+	-- -- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
+	-- if messageType == 308 or messageType == 309 or messageType == 310 or messageType == 312 or messageType == 313 or messageType == 314 then
+		-- if RQE.db.profile.enableNearestSuperTrack then
+			-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			-- if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+				-- if not RQEFrame:IsShown() then return end
+				-- local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+				-- if closestQuestID then
+					-- -- print("~~~ SetSuperTrack: 3524~~~")
+					-- C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					-- -- print("~~~ SaveTrackedQuestsToCharacter: 3586 ~~~")
+					-- RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
+					-- RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
+					-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+						-- DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
+					-- end
+				-- else
+					-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
+						-- DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
+					-- end
 				-- end
-				UpdateFrame()
+				-- RQE.TrackClosestQuest()
+			-- end
+
+			-- C_Timer.After(0.7, function()
+				-- UpdateRQEQuestFrame()
+			-- end)
+
+			-- -- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when UI_INFO_MESSAGE event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
+			-- if RQEFrame and not RQEFrame:IsMouseOver() then
+				-- RQE.ScrollFrameToTop()
+			-- end
+			-- RQE.FocusScrollFrameToTop()
+		-- end
+	-- end
+
+	if messageType == 311 then
+		C_Timer.After(1, function()
+			RQE.isCheckingMacroContents = true
+			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+			if isMacroCorrect then
+				return
+			end
+
+			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UI_INFO_MESSAGE event fires with idx 311 or 312
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
 			end)
 		end)
-	end
 
-	-- if messageType == 311 or messageType == 312 then
 		-- if RQE.BagNewItemsRunning then
 			-- C_Timer.After(0.1, function()
 				-- RQE:StartPeriodicChecks()
 				-- RQE.BagNewItemsRunning = false
 			-- end)
 		-- end
-	-- end
-
-	-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-	if messageType == 308 or messageType == 309 or messageType == 310 or messageType == 311 or messageType == 312 or messageType == 313 then
-		if RQE.db.profile.enableNearestSuperTrack then
-			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-			if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
-				if not RQEFrame:IsShown() then return end
-				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
-				if closestQuestID then
-					-- print("~~~ SetSuperTrack: 3524~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-					-- print("~~~ SaveTrackedQuestsToCharacter: 3586 ~~~")
-					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when UI_INFO_MESSAGE event fires
-					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when UI_INFO_MESSAGE event fires
-					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-						DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
-					end
-				else
-					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
-						DEFAULT_CHAT_FRAME:AddMessage("QF 02 Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
-					end
-				end
-				RQE.TrackClosestQuest()
-			end
-
-			C_Timer.After(0.7, function()
-				UpdateRQEQuestFrame()
-			end)
-
-			-- Sets the scroll frames of the RQEFrame and the FocusFrame within RQEFrame to top when QUEST_FINISHED event fires and player doesn't have mouse over the RQEFrame ("Super Track Frame")
-			if RQEFrame and not RQEFrame:IsMouseOver() then
-				RQE.ScrollFrameToTop()
-			end
-			RQE.FocusScrollFrameToTop()
-		end
 	end
 end
 
@@ -5213,7 +5238,7 @@ function RQE.updateScenarioCriteriaUI()
 		end
 
 		if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
-			RQE.StopTimer()
+			-- RQE.StopTimer()
 		end
 
 		RQE.UpdateCampaignFrameAnchor()
@@ -5231,7 +5256,7 @@ function RQE.updateScenarioCriteriaUI()
 		end
 
 		if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
-			RQE.StopTimer()
+			-- RQE.StopTimer()
 		end
 
 		RQE.UpdateCampaignFrameAnchor()
@@ -5247,7 +5272,7 @@ function RQE.updateScenarioCriteriaUI()
 		RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 	else
 		RQE.ScenarioChildFrame:Hide()
-		RQE.StopTimer()
+		-- RQE.StopTimer()
 	end
 
 	-- print("~~~ UpdateRQEQuestFrame(): 4141 ~~~")
@@ -5288,7 +5313,7 @@ function RQE.updateScenarioUI()
 			end
 
 			if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
-				RQE.StopTimer()
+				-- RQE.StopTimer()
 			end
 
 			return
@@ -5306,7 +5331,7 @@ function RQE.updateScenarioUI()
 
 			if RQE.ScenarioChildFrame.timerFrame and RQE.ScenarioChildFrame.timerFrame:IsVisible() then
 				--print("Hiding Timer that is visible")
-				RQE.StopTimer()
+				-- RQE.StopTimer()
 			end
 
 			RQE.UpdateCampaignFrameAnchor()
@@ -5325,7 +5350,7 @@ function RQE.updateScenarioUI()
 			RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 		else
 			RQE.ScenarioChildFrame:Hide()
-			RQE.StopTimer()
+			-- RQE.StopTimer()
 		end
 
 		-- print("~~~ UpdateRQEQuestFrame(): 4221 ~~~")
