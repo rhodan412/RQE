@@ -7,6 +7,7 @@
 		- Added additional Legion order hall quests and Midnight Beta quests
 		- Updated some code in preparation for the 12.0 expansion to make it compatible
 		- Added functionality to have class and faction in the step description to decide if it should skip for quests that may have different coord information depending on player class
+		- Fixed nil errors associated with the mapID and timers as it relates to the mythic+ dungeons
 
 	Buttons.lua
 		- When the "Clear" frame button is pressed in the RQEFrame, the waypoints are reset (2025.12.08.2356)
@@ -20,6 +21,7 @@
 		- Added delay before the supertracked quest would be restored on reload and login (2025.11.22.1851)
 		- Added coding to have steps recognize player class and faction (including neutral) in the description similar to 'ALLIANCE:' and 'HORDE:' in the description (2025.12.06.2331)
 		- Updated RQE:ClearSeparateFocusFrame() and RQE:ShouldClearFrame() functions to allow for the clearing of the RQEFrame when the current questID in the RQEFrame is 0 or nil or if RQE.AllFramesShouldUpdate is flagged true (2025.12.08.2356)
+		- Fixed nil error associated with the OpenQuestLogToQuestDetails() function (2025.12.10.0251)
 
 	EventManager.lua
 		- Added RQE.OkayWaypointButtonToMove flag (set to false) to ADDON_LOADED event function (2025.11.22.1603)
@@ -30,6 +32,9 @@
 		- Removed situation where RQEQuestFrame (quest tracker) is not being updated in combat as this is generally a very helpful thing as you make progress, but may need to add it take with modifications if problems with lag (2025.12.06.2331)
 		- Updated the PLAYER_ENTERING_WORLD event function so that RQE.AllFramesShouldUpdate flag is set to true when player reloads or logs in along with an update to the frames during these situations (2025.12.08.2356)
 		- Adds a check to see if the RQEFrame should be cleared (if nothing is being tracked in the RQEFrame) upon the firing of QUEST_LOG_UPDATE or QUEST_WATCH_LIST_CHANGED - but this may be reverted if lag issues (2025.12.08.2356)
+		- Updated debug print requirement to be 'INFO' instead of 'INFO+' for the printing of the args for the ITEM_COUNT_CHANGED event function (2025.12.10.0251)
+		- Enabled check for macro within with the PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED and UI_INFO_MESSAGE [idx 311] event functions (2025.12.10.0251)
+		- Removed RQE.HandleTimerStart(timerID) and RQE.StopTimer() calls within event handling as these are not valid (2025.12.10.0251)
 
 	QuestingModule.lua
 		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
@@ -51,6 +56,7 @@
 		- Added many Shaman and Rogue class order hall quests to the DB (2025.12.05.2223)
 		- Added many Rogue, Druid and Paladin class order hall quests to the DB (2025.12.06.2331)
 		- Updated some Borean Tundra quests in the DB for the Wrath of the Lich King expansion (2025.12.08.2356)
+		- Updated coordinate info for a number of quests within the DB for Legion expansion quests (2025.12.10.0251)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
