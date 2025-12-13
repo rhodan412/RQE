@@ -1,4 +1,4 @@
-11.2.7.0
+11.2.7.0 (2025.12.13)
 
 	**HIGHLIGHTS**
 		- Further improvements to performance with unnecessary frequency of waypoint updates removed
@@ -8,6 +8,8 @@
 		- Updated some code in preparation for the 12.0 expansion to make it compatible
 		- Added functionality to have class and faction in the step description to decide if it should skip for quests that may have different coord information depending on player class
 		- Fixed nil errors associated with the mapID and timers as it relates to the mythic+ dungeons
+		- Major improvement updates to reduce CPU load
+		- Added/updated many Legion and Wrath of the Lich King quests
 
 	Buttons.lua
 		- When the "Clear" frame button is pressed in the RQEFrame, the waypoints are reset (2025.12.08.2356)
@@ -35,6 +37,12 @@
 		- Updated debug print requirement to be 'INFO' instead of 'INFO+' for the printing of the args for the ITEM_COUNT_CHANGED event function (2025.12.10.0251)
 		- Enabled check for macro within with the PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED and UI_INFO_MESSAGE [idx 311] event functions (2025.12.10.0251)
 		- Removed RQE.HandleTimerStart(timerID) and RQE.StopTimer() calls within event handling as these are not valid (2025.12.10.0251)
+		- Removed QUEST_REMOVED event function as this was acting duplicate with a number of other more reliable events (2025.12.13.0212)
+		- Updated UI_INFO_MESSAGE to first check that a quest is being supertracked and for that supertracked quest to be ready for turn in before updating macro to the last step for turn in (2025.12.13.0212)
+		- Updated QUEST_LOG_UPDATE to no longer call a check to clear the RQEFrame as this was running in addition to other event functions (2025.12.13.0212)
+		- Added check of player configuration settings to see if a quest should be supertracked following QUEST_TURNED_IN (2025.12.13.0212)
+		- Removed/commented out calls to ClearSeparateFocusFrame, UpdateFrame [RQEFrame], UpdateRQEQuestFrame and RQE:StartPeriodicChecks when QUEST_TURNED_IN event function fires (2025.12.13.0212)
+		- Added a 'return' to the QUEST_FINISHED event function if nothing is being supertracked (2025.12.13.0212)
 
 	QuestingModule.lua
 		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
@@ -57,6 +65,7 @@
 		- Added many Rogue, Druid and Paladin class order hall quests to the DB (2025.12.06.2331)
 		- Updated some Borean Tundra quests in the DB for the Wrath of the Lich King expansion (2025.12.08.2356)
 		- Updated coordinate info for a number of quests within the DB for Legion expansion quests (2025.12.10.0251)
+		- Updated some Wrath of the Lich King and Legion quests in the DB (2025.12.13.0212)
 
 	RQEFrame.lua
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
