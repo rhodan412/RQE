@@ -97,7 +97,7 @@ local eventsToRegister = {
 	"QUEST_LOG_UPDATE",				-- Necessary for updating RQEFrame and RQEQuestFrame when partial quest progress is made
 	"QUEST_LOOT_RECEIVED",			-- ONLY AVAILABLE in RETAIL (7.0.3+)
 	-- "QUEST_POI_UPDATE",			-- Possible High Lag and unnecessary event firing/frequency
-	--"QUEST_REMOVED",
+	"QUEST_REMOVED",
 	"QUEST_TURNED_IN",
 	"QUEST_WATCH_LIST_CHANGED",		-- Frequent fires... trying to move bits out of this function into better locations that won't trigger as frequently
 	"QUEST_WATCH_UPDATE",
@@ -4747,7 +4747,7 @@ function RQE.handleUIInfoMessage(...)
 
 		if messageType == 311 then
 			C_Timer.After(1, function()
-				print("Checking contents")
+				-- print("Checking contents")
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -6047,130 +6047,132 @@ function RQE.handleQuestRemoved(...)
 		end
 	end
 
-	-- if not InCombatLockdown() then
-		-- RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
-	-- end
+	RQE:SaveTrackedQuestsToCharacter()
+
+	-- -- if not InCombatLockdown() then
+		-- -- RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
+	-- -- end
 	
-	if questID == RQE.searchedQuestID then
-		RQE.DontUpdateFrame = false
+	-- if questID == RQE.searchedQuestID then
+		-- RQE.DontUpdateFrame = false
 
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-
-		if extractedQuestID == questID then
-			RQE.Buttons.ClearButtonPressed()
-		end
-		
-		C_Timer.After(0.1, function()
-			UpdateFrame()
-		end)
-	end
-
-	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-	if isWorldQuest then
-		RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
-	end
-
-	RQE:SaveAutomaticWorldQuestWatches()
-	RQE.ReadyToRestoreAutoWorldQuests = true
-	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
-
-	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-	-- C_Timer.After(1, function()
-		-- print("~~~ UpdateRQEQuestFrame(): 4812 ~~~")
-		-- UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest (fires during QUEST_REMOVED event)
-	-- end)
-
-	if not RQE.currentSuperTrackedQuestID then
-		RQE.currentSuperTrackedQuestID = RQE.LastSuperTrackedQuestID  -- Use the last known super-tracked questID if current is nil
-	end
-
-	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-		DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
-	end
-
-	-- C_Timer.After(0.4, function()
-		-- if not InCombatLockdown() then
-			-- RQEFrame:ClearAllPoints()
-			-- RQE.RQEQuestFrame:ClearAllPoints()
+		-- local extractedQuestID
+		-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		-- end
-	-- end)
 
-	-- print("~~~ RQE:QuestType(): 4844 ~~~")
-	RQE:QuestType()
-	-- print("~~~ SortQuestsByProximity(): 4837 ~~~")
-	SortQuestsByProximity()
+		-- if extractedQuestID == questID then
+			-- RQE.Buttons.ClearButtonPressed()
+		-- end
+		
+		-- C_Timer.After(0.1, function()
+			-- UpdateFrame()
+		-- end)
+	-- end
 
-	AdjustRQEFrameWidths()
-	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+	-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	-- if isWorldQuest then
+		-- RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
+	-- end
 
-	RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
-	RQE:ShouldClearFrame()
+	-- RQE:SaveAutomaticWorldQuestWatches()
+	-- RQE.ReadyToRestoreAutoWorldQuests = true
+	-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
 
-	-- Check if the questID is valid and if it was being tracked automatically
-	if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
+	-- RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-		-- Remove the quest from the tracking list
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+	-- -- C_Timer.After(1, function()
+		-- -- print("~~~ UpdateRQEQuestFrame(): 4812 ~~~")
+		-- -- UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest (fires during QUEST_REMOVED event)
+	-- -- end)
 
-		if isWorldQuest then
-			C_QuestLog.RemoveWorldQuestWatch(questID)
-		end
+	-- if not RQE.currentSuperTrackedQuestID then
+		-- RQE.currentSuperTrackedQuestID = RQE.LastSuperTrackedQuestID  -- Use the last known super-tracked questID if current is nil
+	-- end
 
-		-- Clear the saved state for this quest
-		RQE.TrackedQuests[questID] = nil
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved  then
-			DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed automatic World Quest watch for questID: " .. tostring(questID), 0.82, 0.70, 0.55) -- Light brown color
-		end
-	end
+	-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
+		-- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
+	-- end
 
-	-- FLAG: Is the below necessary? Or redundant code that results in slowing
-	-- Check if the removed quest is the currently super-tracked quest
-	if questID == RQE.LastSuperTrackedQuestID then
-		-- Clear user waypoint and reset TomTom if loaded
-		C_Map.ClearUserWaypoint()
+	-- -- C_Timer.After(0.4, function()
+		-- -- if not InCombatLockdown() then
+			-- -- RQEFrame:ClearAllPoints()
+			-- -- RQE.RQEQuestFrame:ClearAllPoints()
+		-- -- end
+	-- -- end)
 
-		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-			TomTom.waydb:ResetProfile()
-			RQE._currentTomTomUID = nil
-		end
+	-- -- print("~~~ RQE:QuestType(): 4844 ~~~")
+	-- RQE:QuestType()
+	-- -- print("~~~ SortQuestsByProximity(): 4837 ~~~")
+	-- SortQuestsByProximity()
 
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
+	-- AdjustRQEFrameWidths()
+	-- AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
-		-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-		local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
-		local questInfo = RQE.getQuestData(questID)
-		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+	-- RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
+	-- RQE:ShouldClearFrame()
 
-		-- Update RQEFrame
-		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	-- -- Check if the questID is valid and if it was being tracked automatically
+	-- if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
 
-		-- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
-		RQE:UpdateRQEFrameVisibility()
+		-- -- Remove the quest from the tracking list
+		-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
 
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-			DEFAULT_CHAT_FRAME:AddMessage("QR 01 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)		-- Pink
-		end
+		-- if isWorldQuest then
+			-- C_QuestLog.RemoveWorldQuestWatch(questID)
+		-- end
 
-		RQE:UpdateRQEQuestFrameVisibility()
+		-- -- Clear the saved state for this quest
+		-- RQE.TrackedQuests[questID] = nil
+		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved  then
+			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed automatic World Quest watch for questID: " .. tostring(questID), 0.82, 0.70, 0.55) -- Light brown color
+		-- end
+	-- end
 
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-			DEFAULT_CHAT_FRAME:AddMessage("QR 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)		-- Pink
-		end
-	end
+	-- -- FLAG: Is the below necessary? Or redundant code that results in slowing
+	-- -- Check if the removed quest is the currently super-tracked quest
+	-- if questID == RQE.LastSuperTrackedQuestID then
+		-- -- Clear user waypoint and reset TomTom if loaded
+		-- C_Map.ClearUserWaypoint()
 
-	-- -- Resets Quest Progress ***
-	-- RQE.hasStateChanged()
-	-- RQE.hasQuestProgressChanged()
-	RQE.QuestRemoved = true
+		-- -- Check if TomTom is loaded and compatibility is enabled
+		-- local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			-- TomTom.waydb:ResetProfile()
+			-- RQE._currentTomTomUID = nil
+		-- end
+
+		-- local extractedQuestID
+		-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		-- end
+
+		-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
+		-- local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
+		-- local questInfo = RQE.getQuestData(questID)
+		-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+		-- -- Update RQEFrame
+		-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+
+		-- -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
+		-- RQE:UpdateRQEFrameVisibility()
+
+		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
+			-- DEFAULT_CHAT_FRAME:AddMessage("QR 01 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)		-- Pink
+		-- end
+
+		-- RQE:UpdateRQEQuestFrameVisibility()
+
+		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
+			-- DEFAULT_CHAT_FRAME:AddMessage("QR 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)		-- Pink
+		-- end
+	-- end
+
+	-- -- -- Resets Quest Progress ***
+	-- -- RQE.hasStateChanged()
+	-- -- RQE.hasQuestProgressChanged()
+	-- RQE.QuestRemoved = true
 end
 
 
