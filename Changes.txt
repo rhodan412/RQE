@@ -1,3 +1,17 @@
+11.2.7.1
+
+	EventManager.lua
+		- Removed debug print within the UI_INFO_MESSAGE event function idx of 311 (2025.12.25.0431)
+		- Added QUEST_REMOVED event function back in but limited it to only saves the tracked watch list for the player (2025.12.25.0431)
+
+	RQE.toc
+		- Updated interface/version# (2025.12.25.0431)
+
+	RQEDatabase.lua
+		- Added additional Legion quests to the DB (2025.12.25.0431)
+
+
+
 11.2.7.0 (2025.12.13)
 
 	**HIGHLIGHTS**
