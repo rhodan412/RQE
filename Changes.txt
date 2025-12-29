@@ -1,5 +1,8 @@
 11.2.7.1
 
+	Core.lua
+		- Updated RQE.DebugPrintPlayerContinentPosition() to print out location information in the locations array using the current player location from continentID x and y for quests in the DB (2025.12.29.0311)
+
 	EventManager.lua
 		- Removed debug print within the UI_INFO_MESSAGE event function idx of 311 (2025.12.25.0431)
 		- Added QUEST_REMOVED event function back in but limited it to only saves the tracked watch list for the player (2025.12.25.0431)
@@ -9,6 +12,7 @@
 
 	RQEDatabase.lua
 		- Added additional Legion quests to the DB (2025.12.25.0431)
+		- Added more Legion world quests to the DB (2025.12.29.0311)
 
 
 
