@@ -13747,25 +13747,89 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			-- Handling for the manually activation of the function
 			local hasDBCoords = (dbX and dbY and dbMapID)
 
-			if hasDBCoords then
-				if trackedQuestID then
-					print(tostring(trackedQuestID))
+			if trackedQuestID then
+				print(tostring(trackedQuestID))
+			end
+
+			-- NEW: Print DB "location" as a locations array + current continent coords
+			-- This is intended to replace:
+			-- location = { x = XX, y = YY, mapID = ZZZ },
+			-- with:
+			-- locations = { { ...map... }, { ...continent... }, }
+			local hasLocationsArray = dbEntry and dbEntry.locations ~= nil
+			local hasSingleLocation = dbEntry and dbEntry.location ~= nil
+
+			if contPos and (hasSingleLocation or hasLocationsArray) then
+				local locX, locY, locMapID
+
+				-- If DB uses locations array, keep the FIRST entry that has a mapID
+				if hasLocationsArray and type(dbEntry.locations) == "table" then
+					for _, loc in ipairs(dbEntry.locations) do
+						if type(loc) == "table" and loc.mapID then
+							locX = tonumber(loc.x)
+							locY = tonumber(loc.y)
+							locMapID = tonumber(loc.mapID)
+							break
+						end
+					end
 				end
-				print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
-			-- else
-				-- print("Using player position fallback (no DB coordinates for this quest step)")
+
+				-- Otherwise fall back to single location table
+				if (not locX or not locY or not locMapID) and hasSingleLocation and type(dbEntry.location) == "table" then
+					local dbLoc = dbEntry.location
+					locX = tonumber(dbLoc.x)
+					locY = tonumber(dbLoc.y)
+					locMapID = tonumber(dbLoc.mapID)
+				end
+
+				-- Final fallback (your existing behavior)
+				locX = locX or (hasDBCoords and dbX) or (x * 100)
+				locY = locY or (hasDBCoords and dbY) or (y * 100)
+				locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
+
+			--if hasSingleLocation and not hasLocationsArray and contPos then
+				-- local dbLoc = dbEntry.location
+				-- local locX = dbLoc and tonumber(dbLoc.x)
+				-- local locY = dbLoc and tonumber(dbLoc.y)
+				-- local locMapID = dbLoc and tonumber(dbLoc.mapID)
+
+				-- -- Fallback (should rarely be needed): use the same coords you already resolved
+				-- locX = locX or (hasDBCoords and dbX) or (x * 100)
+				-- locY = locY or (hasDBCoords and dbY) or (y * 100)
+				-- locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
+
+				local cx, cy = contPos.x, contPos.y
+
+				local CYAN = "|cff00ffff"
+				local RESET = "|r"
+
+				print(CYAN .. "			locations = {" .. RESET)
+				print(CYAN .. string.format("				{ x = %.2f, y = %.2f, mapID = %d },", locX, locY, locMapID) .. RESET)
+				print(CYAN .. string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID) .. RESET)
+				print(CYAN .. "			}," .. RESET)
+			end
+
+			if hasDBCoords then
+				local GREEN = "|cff00ff00"
+				local RESET = "|r"
+
+				print(GREEN .. string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID) .. RESET)
 			end
 
 			if contPos then
-				print("				coordinateHotspots = {")
+				local CHENIN = "|cffd8be70"
+				local RESET = "|r"
+
+				print(CHENIN .. "				coordinateHotspots = {" .. RESET)
 				local hotspotX = hasDBCoords and dbX or (x * 100)
 				local hotspotY = hasDBCoords and dbY or (y * 100)
 				local hotspotMapID = hasDBCoords and dbMapID or mapID
 				local cx, cy = contPos.x, contPos.y
 
-				print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
-				print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-				print("				},")
+				print(CHENIN .. string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID) .. RESET)
+				print(CHENIN .. string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID) .. RESET)
+				print(CHENIN .. "				}," .. RESET)
+
 			else
 				print("No contPos")
 			end
