@@ -13,6 +13,7 @@
 	RQEDatabase.lua
 		- Added additional Legion quests to the DB (2025.12.25.0431)
 		- Added more Legion world quests to the DB (2025.12.29.0311)
+		- Added additional world quests and some Winter's Veil quests updated in the DB (2025.12.30.1725)
 
 
 
