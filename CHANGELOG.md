@@ -6,6 +6,7 @@
 	EventManager.lua
 		- Removed debug print within the UI_INFO_MESSAGE event function idx of 311 (2025.12.25.0431)
 		- Added QUEST_REMOVED event function back in but limited it to only saves the tracked watch list for the player (2025.12.25.0431)
+		- Added RQE:StartPerdiodicChecks to UI_INFO_MESSAGE for idx 310 which handles event type quests (2026.01.04.0350)
 
 	RQE.toc
 		- Updated interface/version# (2025.12.25.0431)
@@ -14,7 +15,7 @@
 		- Added additional Legion quests to the DB (2025.12.25.0431)
 		- Added more Legion world quests to the DB (2025.12.29.0311)
 		- Added additional world quests and some Winter's Veil quests updated in the DB (2025.12.30.1725)
-
+		- Updates to The War Within, Battle for Azeroth, and Wrath of the Lich King quests in the DB (2026.01.04.0350)
 
 
 11.2.7.0 (2025.12.13)
