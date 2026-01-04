@@ -4663,6 +4663,10 @@ function RQE.handleUIInfoMessage(...)
 		end
 	end
 
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("UI_INFO_MESSAGE fired with idx " .. messageType .. ": " .. tostring(message))
+	end
+
 	if messageType ~= 308 or messageType ~= 309 or messageType ~= 310 or messageType ~= 311 or messageType ~= 312 or messageType ~= 313 or messageType ~= 314 then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("(Invalid) messageType is: " .. messageType)
@@ -4681,6 +4685,13 @@ function RQE.handleUIInfoMessage(...)
 		if not isSuperTracking then return end
 
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+		if messageType == 310 then
+			C_Timer.After(5.5, function()
+				-- print("Running RQE:StartPeriodicChecks() due to UI_INFO_MESSAGE idx 310: " .. tostring(message))
+				RQE:StartPeriodicChecks()
+			end)
+		end
 
 		local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
 
@@ -4748,6 +4759,7 @@ function RQE.handleUIInfoMessage(...)
 		if messageType == 311 then
 			C_Timer.After(1, function()
 				-- print("Checking contents")
+
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
