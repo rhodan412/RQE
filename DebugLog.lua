@@ -29,7 +29,8 @@ function RQE.AddToDebugLog(message)
 		logEntry = string.format("[%s] %s", timestamp, message)
 	else
 		-- If timestamps are disabled, use [XXX] instead
-		logEntry = string.format(message)
+		logEntry = message
+		--logEntry = string.format(message) -- commented out as this type didn't like "%" signs in objective/descriptiontext
 	end
 
 	-- Prevent duplicate messages
