@@ -6259,8 +6259,21 @@ function RQE.handleQuestWatchUpdate(...)
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 	RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 
-	if isSuperTracking and RQE.currentSuperTrackedQuestID == questID then
+	if isSuperTracking and RQE.currentSuperTrackedQuestID and RQE.currentSuperTrackedQuestID ~= questID then
+		C_Timer.After(0.7, function()
+			UpdateRQEQuestFrame()
+		end)
+		C_Timer.After(1.1, function()
+			AdjustRQEFrameWidths()
+			AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
+			RQE:UpdateRQEFrameVisibility()
+			RQE:UpdateRQEQuestFrameVisibility()
+		end)
+		return
+	end
+
+	if isSuperTracking and RQE.currentSuperTrackedQuestID == questID then
 		RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		local superTrackedQuestName = "Unknown Quest" -- Default if ID is nil or no title found
 
@@ -6284,7 +6297,6 @@ function RQE.handleQuestWatchUpdate(...)
 				end
 			end
 		end
-
 	elseif not isSuperTracking then
 		-- print("~~~ SetSuperTrack: 4783~~~")
 		C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
@@ -6408,7 +6420,9 @@ function RQE.handleQuestWatchUpdate(...)
 	end
 
 	-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-	local advanceQuestID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
+	local advanceQuestID =	RQE.searchedQuestID	or extractedQuestID	or (isSuperTracking and RQE.currentSuperTrackedQuestID)	or questID or C_SuperTrack.GetSuperTrackedQuestID()
+	--local advanceQuestID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
+
 	local questInfo = RQE.getQuestData(advanceQuestID)
 	if questInfo then
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(advanceQuestID)
