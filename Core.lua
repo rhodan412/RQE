@@ -12245,7 +12245,7 @@ function RQE:ConfirmAndBuyMerchantItem(index, quantity)
 				end)
 			end
 		end,
-		timeout = 0,
+		timeout = 3,
 		whileDead = true,
 		hideOnEscape = true,
 		preferredIndex = 3, -- Avoid UIParent taint
@@ -12596,7 +12596,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 							C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
 						end)
 					end,
-					timeout = 0,
+					timeout = 3,
 					whileDead = true,
 					hideOnEscape = true,
 					preferredIndex = 3,  -- Avoid taint from UIParent
