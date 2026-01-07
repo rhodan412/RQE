@@ -2,6 +2,10 @@
 
 	Core.lua
 		- Updated RQE.DebugPrintPlayerContinentPosition() to print out location information in the locations array using the current player location from continentID x and y for quests in the DB (2025.12.29.0311)
+		- Added timeouts to RQE:ConfirmAndBuyMerchantItem(index, quantity) and C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity) for confirmation popups (2026.01.07.1627)
+
+	DebugLog.lua
+		- Updated logEntry for message to no longer be a string as % was not carrying over into the quest details popup [author-mode only] (2026.01.07.1627)
 
 	EventManager.lua
 		- Removed debug print within the UI_INFO_MESSAGE event function idx of 311 (2025.12.25.0431)
@@ -16,6 +20,7 @@
 		- Added more Legion world quests to the DB (2025.12.29.0311)
 		- Added additional world quests and some Winter's Veil quests updated in the DB (2025.12.30.1725)
 		- Updates to The War Within, Battle for Azeroth, and Wrath of the Lich King quests in the DB (2026.01.04.0350)
+		- Updates to Borean Tundra, Dragonblight and Howling Fjord alliance quests (2026.01.07.1627)
 
 
 11.2.7.0 (2025.12.13)
