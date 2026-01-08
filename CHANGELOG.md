@@ -6,6 +6,7 @@
 	Core.lua
 		- Updated RQE.DebugPrintPlayerContinentPosition() to print out location information in the locations array using the current player location from continentID x and y for quests in the DB (2025.12.29.0311)
 		- Added timeouts to RQE:ConfirmAndBuyMerchantItem(index, quantity) and C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity) for confirmation popups (2026.01.07.1627)
+		- Added function for reseting RQEFrame and RQEQuestFrame to default size/location for debugModes that are not 'NONE' (2026.01.08.0313)
 
 	DebugLog.lua
 		- Updated logEntry for message to no longer be a string as % was not carrying over into the quest details popup [author-mode only] (2026.01.07.1627)
@@ -16,6 +17,9 @@
 		- Added RQE:StartPerdiodicChecks to UI_INFO_MESSAGE for idx 310 which handles event type quests (2026.01.04.0350)
 		- Fixed issue where the RQEFrame (supertracked quest) was being partially overridden/updates when a different quest is being supertracked (2026.01.07.1854)
 
+	QuestingModule.lua
+		- Added menu option in RQEQuestFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
+
 	RQE.toc
 		- Updated interface/version# (2025.12.25.0431)
 
@@ -25,6 +29,10 @@
 		- Added additional world quests and some Winter's Veil quests updated in the DB (2025.12.30.1725)
 		- Updates to The War Within, Battle for Azeroth, and Wrath of the Lich King quests in the DB (2026.01.04.0350)
 		- Updates to Borean Tundra, Dragonblight and Howling Fjord alliance quests (2026.01.07.1627)
+
+	RQEFrame.lua
+		- Added menu option in RQEFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
+
 
 
 11.2.7.0 (2025.12.13)
