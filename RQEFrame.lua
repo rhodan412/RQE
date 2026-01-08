@@ -124,6 +124,11 @@ function ShowQuestDropdownRQEFrame(self, questID)
 		rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 		rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
 		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
+
+		if RQE.db.profile.debugLevel ~= "NONE" then
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
+		end
 	end)
 end
 
@@ -148,6 +153,11 @@ function ShowDropdownRQEFrame(self)
 		end
 
 		rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
+
+		if RQE.db.profile.debugLevel ~= "NONE" then
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
+		end
 	end)
 end
 
