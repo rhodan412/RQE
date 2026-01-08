@@ -4439,6 +4439,14 @@ function RQE:ResetFrameSizeToDBorDefault()
 end
 
 
+-- Function that resets both the frame size and position to default
+function RQE:ResetFrameAndSizeToDefault()
+	RQE:ResetFrameSizeToDBorDefault()
+	RQE:ResetFramePositionToDBorDefault()
+	RQE:ResetQuestFramePositionToDBorDefault()
+end
+
+
 -- When the frame is maximized
 function RQE:MaximizeFrame()
 	local defaultWidth = RQE.db.profile.frameWidth or 420  -- Replace 400 with the default from Core.lua
