@@ -29,6 +29,7 @@
 		- Added additional world quests and some Winter's Veil quests updated in the DB (2025.12.30.1725)
 		- Updates to The War Within, Battle for Azeroth, and Wrath of the Lich King quests in the DB (2026.01.04.0350)
 		- Updates to Borean Tundra, Dragonblight and Howling Fjord alliance quests (2026.01.07.1627)
+		- Updates to Howling Fjord and Grizzly Hills alliance quests (2026.01.12.0513)
 
 	RQEFrame.lua
 		- Added menu option in RQEFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
