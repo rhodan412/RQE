@@ -2598,7 +2598,7 @@ local function colorizeObjectives(questID)
 	local t = {}
 
 	-- Check if the quest is ready for turn-in
-	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
 	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
 	if objectivesData then
@@ -2965,6 +2965,9 @@ function RQE:ShouldUpdateFrame(questID)
 	local name = C_QuestLog.GetTitleForQuestID(questID)
 	local objectives = self:GetQuestObjectiveSnapshot(questID)
 
+	-- Completion snapshot
+	local ready = C_QuestLog.ReadyForTurnIn(questID) or C_QuestLog.IsComplete(questID)
+
 	-- FIRST RUN
 	if old.lastQuestID == nil then
 		old.lastQuestID = questID
@@ -2972,6 +2975,8 @@ function RQE:ShouldUpdateFrame(questID)
 		old.lastObjectives = objectives
 		old.lastNumObjectives = objectives and #objectives or 0
 		old.lastStepIndex = stepIndex
+		old.lastReadyForTurnIn = ready
+
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("FIRST RUN = true -- DBG stepIndex =", stepIndex)
 		end
@@ -2985,8 +2990,21 @@ function RQE:ShouldUpdateFrame(questID)
 		old.lastObjectives = objectives
 		old.lastNumObjectives = objectives and #objectives or 0
 		old.lastStepIndex = stepIndex
+		old.lastReadyForTurnIn = ready
+
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("QUEST SWITCHED = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	-- NEW: READY STATE CHANGED
+	if ready ~= old.lastReadyForTurnIn then
+		old.lastReadyForTurnIn = ready
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("READY STATE CHANGED =", tostring(ready))
 		end
 		return true
 	end
@@ -4984,7 +5002,7 @@ function RQE:SetMarkerIfNeeded(unitID, desired)
 	end
 
 	SetRaidTarget(unitID, idx)
-	if RQE.db.profile.debugLevel == "INFO" then
+	if RQE.db.profile.debugLevel == "INFO+" then
 		local name = UnitName(unitID) or unitID
 		print(("Applied marker %d to %s."):format(idx, name))
 	end
@@ -12929,7 +12947,7 @@ function RQE.SelectMultipleGossipOptions(npcName, ...)
 		local targetName = UnitName("target")
 		if targetName then
 			npcName = targetName
-			if RQE.db.profile.debugLevel == "INFO" then
+			if RQE.db.profile.debugLevel == "INFO+" then
 				print(string.format("RQE.SelectMultipleGossipOptions(): Using current target '%s' as npcName.", npcName))
 			end
 		else
