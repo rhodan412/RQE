@@ -2,11 +2,14 @@
 
 	**HIGHLIGHTS**
 		- Increased performance by fixing issue where the RQEFrame (supertracked quest) was being partially overridden/updates when a different quest is being supertracked
+		- Fix for objectiveText sometimes not properly advancing or colorizing for certain event-style objectives such as Ring of Blood type quests
 
 	Core.lua
 		- Updated RQE.DebugPrintPlayerContinentPosition() to print out location information in the locations array using the current player location from continentID x and y for quests in the DB (2025.12.29.0311)
 		- Added timeouts to RQE:ConfirmAndBuyMerchantItem(index, quantity) and C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity) for confirmation popups (2026.01.07.1627)
 		- Added function for reseting RQEFrame and RQEQuestFrame to default size/location for debugModes that are not 'NONE' (2026.01.08.0313)
+		- Fixed issue where objectiveText wasn't colorizing green when completed following event-style quests (2026.01.15.1502)
+		- Updated debug print outs with RQE:SetMarkerIfNeeded(...) and RQE.SelectMultipleGossipOptions(...) functions (2026.01.15.1502)
 
 	DebugLog.lua
 		- Updated logEntry for message to no longer be a string as % was not carrying over into the quest details popup [author-mode only] (2026.01.07.1627)
@@ -16,9 +19,11 @@
 		- Added QUEST_REMOVED event function back in but limited it to only saves the tracked watch list for the player (2025.12.25.0431)
 		- Added RQE:StartPerdiodicChecks to UI_INFO_MESSAGE for idx 310 which handles event type quests (2026.01.04.0350)
 		- Fixed issue where the RQEFrame (supertracked quest) was being partially overridden/updates when a different quest is being supertracked (2026.01.07.1854)
+		- Fixed issue where quests were not properly advancing following certain UI_INFO_MESSAGE events (2026.01.15.1502)
 
 	QuestingModule.lua
 		- Added menu option in RQEQuestFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
+		- Fixed issue where objectiveText wasn't colorizing green when completed following event-style quests (2026.01.15.1502)
 
 	RQE.toc
 		- Updated interface/version# (2025.12.25.0431)
@@ -31,6 +36,7 @@
 		- Updates to Borean Tundra, Dragonblight and Howling Fjord alliance quests (2026.01.07.1627)
 		- Updates to Howling Fjord and Grizzly Hills alliance quests (2026.01.12.0513)
 		- Updates to Grizzly Hills alliance quests and Sholazar Basin neutral quests (2026.01.13.2042)
+		- Updates to Zul'Drak quests in the DB (2026.01.15.1502)
 
 	RQEFrame.lua
 		- Added menu option in RQEFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
