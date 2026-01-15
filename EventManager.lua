@@ -4667,7 +4667,7 @@ function RQE.handleUIInfoMessage(...)
 		print("UI_INFO_MESSAGE fired with idx " .. messageType .. ": " .. tostring(message))
 	end
 
-	if messageType ~= 308 or messageType ~= 309 or messageType ~= 310 or messageType ~= 311 or messageType ~= 312 or messageType ~= 313 or messageType ~= 314 then
+	if messageType ~= 308 and messageType ~= 309 and messageType ~= 310 and messageType ~= 311 and messageType ~= 312 and messageType ~= 313 and messageType ~= 314 then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("(Invalid) messageType is: " .. messageType)
 			print("(Invalid) message is: " .. tostring(message))
@@ -4687,15 +4687,17 @@ function RQE.handleUIInfoMessage(...)
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 		if messageType == 310 then
-			C_Timer.After(5.5, function()
-				-- print("Running RQE:StartPeriodicChecks() due to UI_INFO_MESSAGE idx 310: " .. tostring(message))
+			C_Timer.After(1.5, function()
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Running RQE:StartPeriodicChecks() due to UI_INFO_MESSAGE idx 310: " .. tostring(message))
+				end
 				RQE:StartPeriodicChecks()
 			end)
 		end
 
-		local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		-- local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
 
-		if not isReadyForTurnIn then return end
+		-- if not isReadyForTurnIn then return end
 
 		-- -- Check if the message is Travel to a specific location such as for exploration objective (messageType 308)
 		-- if messageType == 309 then
@@ -4756,8 +4758,8 @@ function RQE.handleUIInfoMessage(...)
 			-- end
 		-- end
 
-		if messageType == 311 then
-			C_Timer.After(1, function()
+		if messageType == 310 or messageType == 311 then
+			C_Timer.After(2.5, function()
 				-- print("Checking contents")
 
 				RQE.isCheckingMacroContents = true
