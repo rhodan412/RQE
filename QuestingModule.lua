@@ -1823,7 +1823,7 @@ local function colorizeObjectives(questID)
 	local t = {}
 
 	-- Check if the quest is ready for turn-in
-	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
 	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
 	if objectivesData then
@@ -1886,7 +1886,7 @@ function RQE.colorizeObjectives(questID)
 	local t = {}
 
 	-- Check if the quest is ready for turn-in
-	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) and C_QuestLog.ReadyForTurnIn(questID)
+	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
 	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
 	if objectivesData then
