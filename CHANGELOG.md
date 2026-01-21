@@ -1,8 +1,10 @@
-11.2.7.1
+12.0.0.0
 
 	**HIGHLIGHTS**
 		- Increased performance by fixing issue where the RQEFrame (supertracked quest) was being partially overridden/updates when a different quest is being supertracked
 		- Fix for objectiveText sometimes not properly advancing or colorizing for certain event-style objectives such as Ring of Blood type quests
+		- Workaround/fixed issue where marking the target via the RQE Button (Macro button) was protected
+		- Removed the code that called the RQE:MarkQuestMobOnMouseover() function that was responsible for marking mouseover target as this is protected and no known work around is available, but will re-enable if this functionality becomes available again
 
 	Core.lua
 		- Updated RQE.DebugPrintPlayerContinentPosition() to print out location information in the locations array using the current player location from continentID x and y for quests in the DB (2025.12.29.0311)
@@ -10,6 +12,7 @@
 		- Added function for reseting RQEFrame and RQEQuestFrame to default size/location for debugModes that are not 'NONE' (2026.01.08.0313)
 		- Fixed issue where objectiveText wasn't colorizing green when completed following event-style quests (2026.01.15.1502)
 		- Updated debug print outs with RQE:SetMarkerIfNeeded(...) and RQE.SelectMultipleGossipOptions(...) functions (2026.01.15.1502)
+		- Removed RQE:MarkQuestMobOnMouseover() function code as mouseover raid targeting is now protected with patch 12.0 (2026.01.21.0108)
 
 	DebugLog.lua
 		- Updated logEntry for message to no longer be a string as % was not carrying over into the quest details popup [author-mode only] (2026.01.07.1627)
@@ -26,7 +29,7 @@
 		- Fixed issue where objectiveText wasn't colorizing green when completed following event-style quests (2026.01.15.1502)
 
 	RQE.toc
-		- Updated interface/version# (2025.12.25.0431)
+		- Updated interface/version# (2026.01.21.0108)
 
 	RQEDatabase.lua
 		- Added additional Legion quests to the DB (2025.12.25.0431)
@@ -37,6 +40,7 @@
 		- Updates to Howling Fjord and Grizzly Hills alliance quests (2026.01.12.0513)
 		- Updates to Grizzly Hills alliance quests and Sholazar Basin neutral quests (2026.01.13.2042)
 		- Updates to Zul'Drak quests in the DB (2026.01.15.1502)
+		- Changed macros for quests to apply a raid marker that doesn't violate protected code (2026.01.21.0108)
 
 	RQEFrame.lua
 		- Added menu option in RQEFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
