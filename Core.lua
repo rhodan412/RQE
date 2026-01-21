@@ -4906,80 +4906,80 @@ local function GetMobListForCurrentStep(questID, stepIndex, questData)
 end
 
 
--- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB
+-- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB	-- THIS WAS KILLED BY BLIZZARD IN PATCH 12.0
 function RQE:MarkQuestMobOnMouseover()
-	if not RQE.db.profile.enableMouseOverMarking then return end
+	-- if not RQE.db.profile.enableMouseOverMarking then return end
 
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local usingSearch = false
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	-- local usingSearch = false
 
-	if (not questID or questID == 0) and RQE.searchedQuestID then
-		questID = RQE.searchedQuestID
-		usingSearch = true
-	end
-	if not questID or questID == 0 then return end
+	-- if (not questID or questID == 0) and RQE.searchedQuestID then
+		-- questID = RQE.searchedQuestID
+		-- usingSearch = true
+	-- end
+	-- if not questID or questID == 0 then return end
 
-	local questData = RQE.getQuestData(questID)
-	if not questData then return end
+	-- local questData = RQE.getQuestData(questID)
+	-- if not questData then return end
 
-	local mobList = {}
+	-- local mobList = {}
 
-	-- If using searchedQuestID (not in log), pull ALL npcTargets + npc (turn-in)
-	if usingSearch then
-		for _, stepData in pairs(questData) do
-			if type(stepData) == "table" and stepData.npcTargets then
-				for _, mob in ipairs(stepData.npcTargets) do
-					if mob.name then
-						table.insert(mobList, mob)
-					end
-				end
-			end
-		end
+	-- -- If using searchedQuestID (not in log), pull ALL npcTargets + npc (turn-in)
+	-- if usingSearch then
+		-- for _, stepData in pairs(questData) do
+			-- if type(stepData) == "table" and stepData.npcTargets then
+				-- for _, mob in ipairs(stepData.npcTargets) do
+					-- if mob.name then
+						-- table.insert(mobList, mob)
+					-- end
+				-- end
+			-- end
+		-- end
 
-		-- Add DB.npc turn-in marker as marker 3
-		if questData.npc and type(questData.npc) == "table" then
-			for _, npcName in ipairs(questData.npc) do
-				if npcName ~= "" then
-					table.insert(mobList, {
-						name = npcName,
-						marker = 3,
-						mustBeAlive = true
-					})
-				end
-			end
-		end
+		-- -- Add DB.npc turn-in marker as marker 3
+		-- if questData.npc and type(questData.npc) == "table" then
+			-- for _, npcName in ipairs(questData.npc) do
+				-- if npcName ~= "" then
+					-- table.insert(mobList, {
+						-- name = npcName,
+						-- marker = 3,
+						-- mustBeAlive = true
+					-- })
+				-- end
+			-- end
+		-- end
 
-	else
-		-- Quest is active and supertracked → Only use current step's npcTargets
-		local stepIndex = RQE.AddonSetStepIndex or 1
-		if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
-			for _, mob in ipairs(questData[stepIndex].npcTargets) do
-				if mob.name then
-					-- If mob.obj is present, skip if that objective is already complete
-					if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
-						if RQE.db.profile.debugLevel == "INFO+" then
-							print("Skipping mob " .. mob.name .. " (objective " .. tostring(mob.obj) .. " complete).")
-						end
-					else
-						-- Extra safeguard: make sure this mob really belongs to npcTargets of this step
-						for _, validMob in ipairs(questData[stepIndex].npcTargets) do
-							if validMob.name == mob.name then
-								table.insert(mobList, mob)
-								if RQE.db.profile.debugLevel == "INFO+" then
-									print("Inserted mob " .. mob.name .. " for stepIndex " .. stepIndex)
-								end
-								break
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+	-- else
+		-- -- Quest is active and supertracked → Only use current step's npcTargets
+		-- local stepIndex = RQE.AddonSetStepIndex or 1
+		-- if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
+			-- for _, mob in ipairs(questData[stepIndex].npcTargets) do
+				-- if mob.name then
+					-- -- If mob.obj is present, skip if that objective is already complete
+					-- if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+						-- if RQE.db.profile.debugLevel == "INFO+" then
+							-- print("Skipping mob " .. mob.name .. " (objective " .. tostring(mob.obj) .. " complete).")
+						-- end
+					-- else
+						-- -- Extra safeguard: make sure this mob really belongs to npcTargets of this step
+						-- for _, validMob in ipairs(questData[stepIndex].npcTargets) do
+							-- if validMob.name == mob.name then
+								-- table.insert(mobList, mob)
+								-- if RQE.db.profile.debugLevel == "INFO+" then
+									-- print("Inserted mob " .. mob.name .. " for stepIndex " .. stepIndex)
+								-- end
+								-- break
+							-- end
+						-- end
+					-- end
+				-- end
+			-- end
+		-- end
+	-- end
 
-	-- Run the marker logic
-	TryMarkUnit("mouseover", mobList)
-	TryMarkUnit("target", mobList)
+	-- -- Run the marker logic
+	-- TryMarkUnit("mouseover", mobList)
+	-- TryMarkUnit("target", mobList)
 end
 
 
