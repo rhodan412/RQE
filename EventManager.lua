@@ -409,21 +409,22 @@ end
 function RQE.handleGossipClosed()
 	RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when GOSSIP_CLOSED event fires acting as a fail safe for some "gossip' quests that may not trigger what is necessary to update this frame otherwise
 
-	-- Clear the raid marker from the current target only if it's circle or "2" for the idx
-	if UnitExists("target") then
-		local idx = GetRaidTargetIndex("target")
-		if idx == 2 then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
-			end
-			SetRaidTarget("target", 0)
-			-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
-			end
-		end
-	end
+	-- THE FOLLOWING SECTION BROKE AFTER WOW 12.0 PATCH
+	-- -- Clear the raid marker from the current target only if it's circle or "2" for the idx
+	-- if UnitExists("target") then
+		-- local idx = GetRaidTargetIndex("target")
+		-- if idx == 2 then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
+			-- end
+			-- SetRaidTarget("target", 0)
+			-- -- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
+			-- end
+		-- end
+	-- end
 
 	RQE.SelectGossipOption(nil, nil)
 end
@@ -3726,7 +3727,7 @@ function RQE.handleQuestAccepted(...)
 
 	-- Clear the raid marker from the current target
 	if UnitExists("target") then
-		SetRaidTarget("target", 0)	-- possible complications in 12.0
+		-- SetRaidTarget("target", 0)	-- possible complications in 12.0
 		-- RemoveRaidTargets()
 	end
 
@@ -5653,7 +5654,7 @@ function RQE.handleQuestCurrencyLootReceived(...)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
-				SetRaidTarget("target", 0)
+				-- SetRaidTarget("target", 0)	-- REMOVED AS A RESULT OF PROTECTED CODE FOLLOWING PATCH 12.0
 				-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -5751,7 +5752,7 @@ function RQE.handleQuestLootReceived(...)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
 				end
-				SetRaidTarget("target", 0)	-- possible complications in 12.0
+				-- SetRaidTarget("target", 0)	-- possible complications in 12.0
 				-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -6711,7 +6712,7 @@ function RQE.handleQuestTurnIn(...)
 	local moneyReward = select(5, ...)
 
 	if RQE.LastSuperTrackedQuestID == questID then
-		SetRaidTarget("target", 0)	-- possible complications in 12.0
+		-- SetRaidTarget("target", 0)	-- possible complications in 12.0
 		-- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
 	end
 
