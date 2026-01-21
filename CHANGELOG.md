@@ -1,10 +1,26 @@
-12.0.0.0
+12.0.0.1 (2026.01.21)
+
+	**HIGHLIGHTS**
+		- Removed additional coding for SetRaidTarget (placement of icon on current target) as this is a protected function
+
+	EventManager.lua
+		- Removed coding in GOSSIP_CLOSED, QUEST_ACCEPTED, QUEST_CURRENCY_LOOT_RECEIVED, QUEST_LOOT_RECEIVED, QUEST_TURNED_IN event functions that set raid marker on target since this is now protected (2026.01.21.0829)
+
+	RQE.toc
+		- Updated interface/version# (2026.01.21.0829)
+
+	RQEDatabase.lua
+		- Added initial run-through for quests related to Void Elf Demon Hunter to DB (2026.01.21.0829)
+
+
+12.0.0.0 (2026.01.21)
 
 	**HIGHLIGHTS**
 		- Increased performance by fixing issue where the RQEFrame (supertracked quest) was being partially overridden/updates when a different quest is being supertracked
 		- Fix for objectiveText sometimes not properly advancing or colorizing for certain event-style objectives such as Ring of Blood type quests
 		- Workaround/fixed issue where marking the target via the RQE Button (Macro button) was protected
 		- Removed the code that called the RQE:MarkQuestMobOnMouseover() function that was responsible for marking mouseover target as this is protected and no known work around is available, but will re-enable if this functionality becomes available again
+		- Removed additional coding for SetRaidTarget (placement of icon on current target) as this is a protected function
 
 	Core.lua
 		- Updated RQE.DebugPrintPlayerContinentPosition() to print out location information in the locations array using the current player location from continentID x and y for quests in the DB (2025.12.29.0311)
@@ -23,6 +39,7 @@
 		- Added RQE:StartPerdiodicChecks to UI_INFO_MESSAGE for idx 310 which handles event type quests (2026.01.04.0350)
 		- Fixed issue where the RQEFrame (supertracked quest) was being partially overridden/updates when a different quest is being supertracked (2026.01.07.1854)
 		- Fixed issue where quests were not properly advancing following certain UI_INFO_MESSAGE events (2026.01.15.1502)
+		- Removed coding in GOSSIP_CLOSED, QUEST_ACCEPTED, QUEST_CURRENCY_LOOT_RECEIVED, QUEST_LOOT_RECEIVED, QUEST_TURNED_IN event functions that set raid marker on target since this is now protected (2026.01.21.0829)
 
 	QuestingModule.lua
 		- Added menu option in RQEQuestFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
@@ -41,6 +58,7 @@
 		- Updates to Grizzly Hills alliance quests and Sholazar Basin neutral quests (2026.01.13.2042)
 		- Updates to Zul'Drak quests in the DB (2026.01.15.1502)
 		- Changed macros for quests to apply a raid marker that doesn't violate protected code (2026.01.21.0108)
+		- Added initial run-through for quests related to Void Elf Demon Hunter to DB (2026.01.21.0829)
 
 	RQEFrame.lua
 		- Added menu option in RQEFrame right-click to reset frame to default size/location [available if debugMode is set to anything other than 'NONE'] (2026.01.08.0313)
