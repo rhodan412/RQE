@@ -1,3 +1,18 @@
+12.0.0.2
+
+	**HIGHLIGHTS**
+		- Updated remaining Storm Peaks (alliance/netural) quests to the DB
+
+	RQE.toc
+		- Updated version# (2026.01.23.0528)
+
+	RQEDatabase.lua
+		- Updated remaining Storm Peaks (alliance/netural) quests to the DB (2026.01.23.0528)
+
+	WaypointManager.lua
+		- Updated debugLevel for print out within the RQE:CreateUnknownQuestWaypointWithDirectionText function to use INFO+ rather than INFO (2026.01.23.0528)
+
+
 12.0.0.1 (2026.01.21)
 
 	**HIGHLIGHTS**
