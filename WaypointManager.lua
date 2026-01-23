@@ -421,7 +421,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	end
 
 	if not (mapID and xPct and yPct) then
-		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			print(("Unable to determine coords for quest %d."):format(questID))
 		end
 		return
