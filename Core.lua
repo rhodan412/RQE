@@ -12224,7 +12224,7 @@ function RQE:ConfirmAndBuyMerchantItem(index, quantity)
 	end
 
 	-- Get pricing information
-	local price = select(3, GetMerchantItemInfo(index)) or 0	-- C_MerchantFrame.GetItemInfo() doesn't work for an unknown reason and returns free, so using older API
+	local price = select(3, C_MerchantFrame.GetItemInfo(index)) or 0
 	local totalCost = price * quantity
 	local priceString = (totalCost > 0) and C_CurrencyInfo.GetCoinTextureString(totalCost) or "free"
 
