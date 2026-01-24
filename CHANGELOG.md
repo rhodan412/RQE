@@ -2,12 +2,17 @@
 
 	**HIGHLIGHTS**
 		- Updated remaining Storm Peaks (alliance/netural) quests to the DB
+		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor
+
+	Core.lua
+		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor (2026.01.24.0528)
 
 	RQE.toc
 		- Updated version# (2026.01.23.0528)
 
 	RQEDatabase.lua
 		- Updated remaining Storm Peaks (alliance/netural) quests to the DB (2026.01.23.0528)
+		- Updated many quests in Icecrown (alliance/neutral) in the DB (2026.01.24.0528)
 
 	WaypointManager.lua
 		- Updated debugLevel for print out within the RQE:CreateUnknownQuestWaypointWithDirectionText function to use INFO+ rather than INFO (2026.01.23.0528)
