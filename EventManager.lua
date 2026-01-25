@@ -1344,6 +1344,9 @@ function RQE.handlePlayerMountDisplayChanged()
 	end
 
 	RQE:UpdateCoordinates()
+	RQE.StepDistanceOverride = true
+	RQE:UpdateStepDistance()
+	RQE.StepDistanceOverride = false
 
 	local OnTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
@@ -1493,6 +1496,9 @@ function RQE.handlePlayerLogin()
 
 	-- Add this line to update coordinates when player logs in
 	RQE:UpdateCoordinates()
+	RQE.StepDistanceOverride = true
+	RQE:UpdateStepDistance()
+	RQE.StepDistanceOverride = false
 
 	AdjustRQEFrameWidths()
 	AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
@@ -1696,6 +1702,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.StartPerioFromSuperTrackChange = false
 	RQE.StartPerioFromUnitQuestLogChanged = false
 	RQE.StartPerioFromUQLC = false
+	RQE.StepDistanceOverride = false
 	RQE.SuperTrackChangeRanStartPeriodicChecks = false
 	RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = false
 	RQE.UIInfoUpdateFired = false
@@ -2356,6 +2363,9 @@ function RQE.handlePlayerControlGained()
 	C_Timer.After(1.5, function()
 		RQE:UpdateMapIDDisplay()
 		RQE:UpdateCoordinates()
+		RQE.StepDistanceOverride = true
+		RQE:UpdateStepDistance()
+		RQE.StepDistanceOverride = false
 	end)
 
 	local OnTaxi = UnitOnTaxi("player")
@@ -3252,6 +3262,10 @@ function RQE.handleSuperTracking()
 		-- Also reset StoredStepIndex (fresh quest → step 1)
 		RQE.StoredStepIndex = 1
 		RQE.AddonSetStepIndex = 1
+
+		RQE.StepDistanceOverride = true
+		RQE:UpdateStepDistance()
+		RQE.StepDistanceOverride = false
 	end
 
 	-- Set for situations where the RQEQuestFrame isn't being shown (mythicMode with Blizzard Tracker) and event fires
