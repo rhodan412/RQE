@@ -141,7 +141,10 @@ end
 
 -- Function to get coordinates for the current stepIndex
 function RQE:GetStepCoordinates(stepIndex)
-	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepIndex
+	stepIndex = stepIndex or RQE.AddonSetStepIndex or 1
+	-- local stepIndex = RQE.AddonSetStepIndex or 1
+
 	local x, y, mapID
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -1092,6 +1095,96 @@ function RQE.GetPrimaryLocation(dbEntry, targetMapID)
 		if firstValid then
 			return firstValid[1], firstValid[2], firstValid[3], nil
 		end
+	end
+
+	return nil
+end
+
+
+---------------------------------------------------------
+-- #7. Waypoint Coordinate Distance - Helper function
+---------------------------------------------------------
+
+-- Public wrapper: distance from player to a (mapID, xNorm, yNorm)
+-- Returns: distance, unit  (unit is "yards" when available; otherwise something like "norm"/fallback)
+function RQE.WPUtil.PlayerDistanceTo(mapID, xNorm, yNorm)
+	if not (mapID and xNorm and yNorm) then return nil end
+
+	-- safety normalize if percent slipped in
+	if xNorm > 1 or yNorm > 1 then
+		xNorm, yNorm = xNorm / 100, yNorm / 100
+	end
+
+	local d2, unit = _playerDistanceSqFlexible(mapID, xNorm, yNorm)
+	if not d2 then return nil end
+
+	return math.sqrt(d2), unit
+end
+
+
+-- Function to update distance to waypoint display
+function RQE:UpdateStepDistance()
+	if not RQE.StepDistanceOverride then
+		if not IsPlayerMoving() then return end
+	end
+
+	if not (RQEFrame and RQEFrame.StepDistanceText) then return end
+
+	if not (RQE.db and RQE.db.profile and RQE.db.profile.showCoordinates) then
+		RQEFrame.StepDistanceText:SetText("")
+		return
+	end
+
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		RQEFrame.StepDistanceText:SetText("")
+		return
+	end
+
+	local stepIndex = RQE.AddonSetStepIndex --or 1
+
+	-- ✅ DB-only coords (stable)
+	local x, y, mapID = RQE:GetDBStepCoordinates(questID, stepIndex)
+	if not (x and y and mapID) then
+		RQEFrame.StepDistanceText:SetText("Step Distance: N/A")
+		return
+	end
+
+	local dist, unit = RQE.WPUtil.PlayerDistanceTo(mapID, x, y)
+	if not dist then
+		RQEFrame.StepDistanceText:SetText("Step Distance: N/A")
+		return
+	end
+
+	if unit == "yards" then
+		RQEFrame.StepDistanceText:SetText(string.format("%.0f yards away", dist))
+	else
+		RQEFrame.StepDistanceText:SetText(string.format("Step Distance: %.1f%%", dist * 100))
+	end
+end
+
+
+-- DB-only: returns normalized x,y (0-1) + mapID for the current quest step
+function RQE:GetDBStepCoordinates(questID, stepIndex)
+	if not questID then return nil end
+	stepIndex = stepIndex or RQE.AddonSetStepIndex or 1
+
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	local step = questData and questData[stepIndex]
+	if not step then return nil end
+
+	-- Prefer coordinateHotspots if present
+	if step.coordinateHotspots then
+		-- This returns mapID,x,y (normalized) in your system
+		local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
+		if smap and sx and sy then
+			return sx, sy, smap
+		end
+	end
+
+	-- Single-point coordinates
+	if step.coordinates and step.coordinates.x and step.coordinates.y and step.coordinates.mapID then
+		return (step.coordinates.x / 100), (step.coordinates.y / 100), step.coordinates.mapID
 	end
 
 	return nil
