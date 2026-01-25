@@ -3,19 +3,35 @@
 	**HIGHLIGHTS**
 		- Updated remaining Storm Peaks (alliance/netural) quests to the DB
 		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor
+		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest as well as the display for that distance above the coordinate block
+
+	Config.lua
+		- Added call to RQE:UpdateStepDistance() function within RQE options and when the coordinate checkbox gets updated (2026.01.24.2003)
 
 	Core.lua
 		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor (2026.01.24.0528)
+		- Added call for RQE:UpdateStepDistance() function when player is moving, at the end of RQE:StartPeriodicChecks() and the end of RQE:UpdateCoordinates() (2026.01.24.2003)
+
+	EventManager.lua
+		- Added call for RQE:UpdateStepDistance() function within PLAYER_MOUNT_DISPLAY_CHANGED, PLAYER_LOGIN, PLAYER_CONTROL_GAINED and SUPER_TRACKING_CHANGED (if a questID change occurred) event functions (2026.01.24.2003)
 
 	RQE.toc
 		- Updated version# (2026.01.23.0528)
 
+	RQEFrame.lua
+		- Added code to create the string for the display of distance to coordinate block and attach it to the coordinate block (above RQEFrame) that displays current player coordinates (2026.01.24.2003)
+
 	RQEDatabase.lua
-		- Updated remaining Storm Peaks (alliance/netural) quests to the DB (2026.01.23.0528)
+		- Updated remaining Storm Peaks (alliance/natural) quests to the DB (2026.01.23.0528)
 		- Updated many quests in Icecrown (alliance/neutral) in the DB (2026.01.24.0528)
+		- Updated most alliance/neutral quests in DB for Hellfire Peninsula (2026.01.24.2003)
 
 	WaypointManager.lua
 		- Updated debugLevel for print out within the RQE:CreateUnknownQuestWaypointWithDirectionText function to use INFO+ rather than INFO (2026.01.23.0528)
+
+	WPUtil.lua
+		- Updated RQE:GetStepCoordinates(stepIndex) to try and use stepIndex that was called when the function got called (2026.01.24.2003)
+		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest (2026.01.24.2003)
 
 
 12.0.0.1 (2026.01.21)
