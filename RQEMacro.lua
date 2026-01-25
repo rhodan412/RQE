@@ -210,7 +210,8 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 		"#showtooltip item:153541",
 		"/tar " .. npcName,
 		-- '/script SetRaidTarget("target",3)'
-		"/run RQE:SetMarkerIfNeeded('target', 3)"
+		--"/run RQE:SetMarkerIfNeeded('target', 3)"
+		"/tm 3"		-- modified as 12.0 patch broke the function that checks raid icon presence and accuracy before re-marking
 	}
 
 	if RQE.db.profile.debugLevel == "INFO+" then
