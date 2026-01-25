@@ -4,6 +4,7 @@
 		- Updated remaining Storm Peaks (alliance/netural) quests to the DB
 		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor
 		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest as well as the display for that distance above the coordinate block
+		- Fixed code for the generation of a macro to direct player to quest giver following patch 12.0 API changes
 
 	Config.lua
 		- Added call to RQE:UpdateStepDistance() function within RQE options and when the coordinate checkbox gets updated (2026.01.24.2003)
@@ -25,6 +26,10 @@
 		- Updated remaining Storm Peaks (alliance/natural) quests to the DB (2026.01.23.0528)
 		- Updated many quests in Icecrown (alliance/neutral) in the DB (2026.01.24.0528)
 		- Updated most alliance/neutral quests in DB for Hellfire Peninsula (2026.01.24.2003)
+		- Updated most alliance/neutral quests in DB for Nagrand (2026.01.25.0555)
+
+	RQEMacro.lua
+		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
 
 	WaypointManager.lua
 		- Updated debugLevel for print out within the RQE:CreateUnknownQuestWaypointWithDirectionText function to use INFO+ rather than INFO (2026.01.23.0528)
