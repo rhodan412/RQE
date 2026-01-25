@@ -715,6 +715,29 @@ end
 RQEFrame.CoordinatesText = CoordinatesText
 
 
+-- -- Create Font String for Step Distance label to Waypoint Coordinates on the Quest Helper frame
+-- local StepDistanceText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+-- if StepDistanceText then
+	-- StepDistanceText = RQE.StepDistanceText or RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	-- StepDistanceText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	-- StepDistanceText:SetJustifyH("LEFT")
+	-- StepDistanceText:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -40, -25)
+-- end
+-- RQE.StepDistanceText = StepDistanceText
+
+
+-- Create Font String for Step Distance (once)
+RQEFrame.StepDistanceText = RQEFrame.StepDistanceText or RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+RQEFrame.StepDistanceText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
+RQEFrame.StepDistanceText:SetJustifyH("LEFT")
+
+
+-- Anchor it ABOVE your Coordinates text (blue arrow area)
+-- Your CoordinatesText is at TOPRIGHT (-15, 15). Put StepDistance slightly above it.
+RQEFrame.StepDistanceText:SetPoint("BOTTOMRIGHT", RQEFrame.CoordinatesText, "TOPRIGHT", 0, 2)
+RQEFrame.StepDistanceText:SetText("")
+
+
 -- Create Font String for Addon Memory Usage
 local MemoryUsageText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 if MemoryUsageText then
