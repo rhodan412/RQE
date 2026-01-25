@@ -218,6 +218,9 @@ RQE.options = {
 					set = function(_, newValue)
 						RQE.db.profile.showCoordinates = newValue;
 						RQE:UpdateCoordinates();  -- Immediately update the coordinates display
+						RQE.StepDistanceOverride = true
+						RQE:UpdateStepDistance()
+						RQE.StepDistanceOverride = false
 					end,
 				},
 				autoQuestWatch = {
@@ -1536,6 +1539,9 @@ function RQE:AddGeneralSettingsWidgets(container)
 	showCoordinatesCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 		RQE.db.profile.showCoordinates = value
 		RQE:UpdateCoordinates()
+		RQE.StepDistanceOverride = true
+		RQE:UpdateStepDistance()
+		RQE.StepDistanceOverride = false
 	end)
 
 	-- Add a tooltip description for showCoordinatesCheckbox (RQE.db.profile.showCoordinates)
