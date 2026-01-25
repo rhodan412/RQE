@@ -5778,6 +5778,7 @@ end
 
 -- Function to update Coordinates display
 function RQE:UpdateCoordinates()
+	--if not IsPlayerMoving() then return end
 	local mapID = C_Map.GetBestMapForUnit("player")
 
 	-- Check if the mapID is valid before proceeding
@@ -7661,6 +7662,7 @@ function RQE:StartPeriodicChecks()
 	C_Timer.After(0.45, function()
 		RQE:UpdateSeparateFocusFrame()
 	end)
+	RQE:UpdateStepDistance()
 end
 
 
@@ -11107,6 +11109,7 @@ local lastGridMap, lastGridX, lastGridY
 local function OnPlayerMoving(self, elapsed)
 	RQE:UpdateCoordinates()
 	RQE:UpdateMapIDDisplay()
+	RQE:UpdateStepDistance()
 	--RQE:MaybeUpdateWaypointOnSnap(elapsed)
 
 	-- Throttle: ~4x/sec while moving
