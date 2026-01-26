@@ -142,7 +142,7 @@ RQE.UnknownButtonTooltip = function()
 
 									if RQE.db.profile.debugLevel == "INFO" then
 										RQE.AddonSetStepIndex = RQE.AddonSetStepIndex or 1
-										DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
+										--DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
 
 										if RQE.WCoordData == RQE.SeparateFocusCoordData then
 											RQE:PlayThrottledSound(45024)
