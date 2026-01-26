@@ -2752,7 +2752,7 @@ function RQE.GetTooltipDataForCButton()
 			if smap and sx and sy then
 				local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", sx * 100, sy * 100, smap)
 				RQE.SeparateFocusCoordData = coordsText
-				if RQE.db.profile.debugLevel == "INFO" then
+				if RQE.db.profile.debugLevel == "INFO+" then
 					DEFAULT_CHAT_FRAME:AddMessage("Step " .. stepIndex .. " coords: " .. coordsText, 1, 1, 0)
 				end
 				return coordsText
@@ -2762,7 +2762,7 @@ function RQE.GetTooltipDataForCButton()
 			if x and y and mapID then
 				local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
 				RQE.SeparateFocusCoordData = coordsText
-				if RQE.db.profile.debugLevel == "INFO" then
+				if RQE.db.profile.debugLevel == "INFO+" then
 					DEFAULT_CHAT_FRAME:AddMessage("Step " .. stepIndex .. " coords: " .. coordsText, 1, 1, 0)
 				end
 				return coordsText
