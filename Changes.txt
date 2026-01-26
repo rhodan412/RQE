@@ -6,6 +6,9 @@
 		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest as well as the display for that distance above the coordinate block
 		- Fixed code for the generation of a macro to direct player to quest giver following patch 12.0 API changes
 
+	Buttons.lua
+		- Removed some print out information that was no longer needed (2026.01.26.0258)
+
 	Config.lua
 		- Added call to RQE:UpdateStepDistance() function within RQE options and when the coordinate checkbox gets updated (2026.01.24.2003)
 
@@ -21,12 +24,14 @@
 
 	RQEFrame.lua
 		- Added code to create the string for the display of distance to coordinate block and attach it to the coordinate block (above RQEFrame) that displays current player coordinates (2026.01.24.2003)
+		- Removed some print out information that was no longer needed (2026.01.26.0258)
 
 	RQEDatabase.lua
 		- Updated remaining Storm Peaks (alliance/natural) quests to the DB (2026.01.23.0528)
 		- Updated many quests in Icecrown (alliance/neutral) in the DB (2026.01.24.0528)
 		- Updated most alliance/neutral quests in DB for Hellfire Peninsula (2026.01.24.2003)
 		- Updated most alliance/neutral quests in DB for Nagrand (2026.01.25.0555)
+		- Updated most alliance/neutral quests in DB for Zangarmarsh (2026.01.26.0258)
 
 	RQEMacro.lua
 		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
