@@ -5,6 +5,7 @@
 		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor
 		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest as well as the display for that distance above the coordinate block
 		- Fixed code for the generation of a macro to direct player to quest giver following patch 12.0 API changes
+		- Fixed issue with spell CDs so that these won't be displayed on the RQE Button if pressed during combat, but will update when combat concludes
 
 	Buttons.lua
 		- Removed some print out information that was no longer needed (2026.01.26.0258)
@@ -32,9 +33,11 @@
 		- Updated most alliance/neutral quests in DB for Hellfire Peninsula (2026.01.24.2003)
 		- Updated most alliance/neutral quests in DB for Nagrand (2026.01.25.0555)
 		- Updated most alliance/neutral quests in DB for Zangarmarsh (2026.01.26.0258)
+		- Updated most alliance/neutral quests in DB for Terokkar Forest (2026.01.27.0338)
 
 	RQEMacro.lua
 		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
+		- Fixed issue where spell CD wasn't available for the RQE Button ("cast") when in combat, but will update the CD time after combat concludes. Item CDs are available during combat still (2026.01.27.0338)
 
 	WaypointManager.lua
 		- Updated debugLevel for print out within the RQE:CreateUnknownQuestWaypointWithDirectionText function to use INFO+ rather than INFO (2026.01.23.0528)
