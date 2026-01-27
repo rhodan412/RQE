@@ -209,7 +209,6 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 	local macroLines = {
 		"#showtooltip item:153541",
 		"/tar " .. npcName,
-		-- '/script SetRaidTarget("target",3)'
 		--"/run RQE:SetMarkerIfNeeded('target', 3)"
 		"/tm 3"		-- modified as 12.0 patch broke the function that checks raid icon presence and accuracy before re-marking
 	}
@@ -399,7 +398,6 @@ function RQEMacro:UpdateMagicButtonTooltip()
 
 		-- Debug mode: Show raw macro text
 		if RQE.db.profile.debugLevel == "INFO+" or IsShiftKeyDown() then
-		--if debugLevel == "INFO+" or IsShiftKeyDown() then
 			GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 			GameTooltip:Show()
 			return
@@ -491,49 +489,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		GameTooltip:Show()
 	end)
 
-	-- MagicButton:SetScript("OnUpdate", function()
-		-- local macroIndex = GetMacroIndexByName("RQE Macro")
-		-- if not macroIndex or macroIndex == 0 then
-			-- MagicButton.CountText:SetText("")
-			-- return
-		-- end
-
-		-- local _, _, macroBody = GetMacroInfo(macroIndex)
-		-- if not macroBody or macroBody == "" then
-			-- MagicButton.CountText:SetText("")
-			-- return
-		-- end
-
-		-- -- Extract item ID directly if available
-		-- local itemID = tonumber(macroBody:match("#showtooltip%s+item:(%d+)"))
-
-		-- -- If no item ID is found, extract the item name from `/use`
-		-- if not itemID then
-			-- local itemName = macroBody:match("/use%s+(.+)")
-			-- if itemName then
-				-- -- Resolve item name to item ID
-				-- itemID = C_Item.GetItemInfoInstant(itemName)
-			-- end
-		-- end
-
-		-- -- Continue with item count logic if itemID is resolved
-		-- if itemID then
-			-- local itemCount = C_Item.GetItemCount(itemID)
-			-- if not itemCount or itemCount < 1 then
-				-- MagicButton.CountText:SetText("") -- Hide count if less than 1
-			-- else
-				-- if itemCount > 999 then
-					-- itemCount = 999 -- Cap at 999
-				-- end
-				-- MagicButton.CountText:SetText(itemCount) -- Display count
-			-- end
-		-- else
-			-- MagicButton.CountText:SetText("") -- Clear the count if no valid item ID
-		-- end
-	-- end)
-
 	---------------------------------------------------------------------
-	-- NEW: Cooldown handler (visual greying + tooltip update)
+	-- Cooldown handler (visual greying + tooltip update)
 	---------------------------------------------------------------------
 	if not MagicButton.CooldownUpdater then
 		MagicButton.CooldownUpdater = CreateFrame("Cooldown", nil, MagicButton, "CooldownFrameTemplate")
@@ -554,12 +511,15 @@ function RQEMacro:UpdateMagicButtonTooltip()
 
 		local cdStart, cdDur, cdEnable
 
+		-- 12.0 fix for tooltips not being able to update when in combat, but this will update once combat ends
 		if spellName then
-			local spellInfo = C_Spell.GetSpellInfo(spellName)
-			if spellInfo then
-				local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
-				if cd and cd.isEnabled then
-					cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+			if not InCombatLockdown() then
+				local spellInfo = C_Spell.GetSpellInfo(spellName)
+				if spellInfo then
+					local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+					if cd and cd.isEnabled then
+						cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+					end
 				end
 			end
 		elseif itemName then
@@ -621,13 +581,18 @@ function RQEMacro:UpdateMagicButtonTooltip()
 		local itemName = macroBody:match("/use%s+(.+)")
 		local cdStart, cdDur, cdEnable
 
+		-- Fixed display of CD when during combat if the macro is a 'spell' vs an 'item'
 		if spellName then
-			local spellInfo = C_Spell.GetSpellInfo(spellName)
-			if spellInfo then
-				local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
-				if cd and cd.isEnabled then
-					cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+			if not InCombatLockdown() then
+				local spellInfo = C_Spell.GetSpellInfo(spellName)
+				if spellInfo then
+					local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+					if cd and cd.isEnabled then
+						cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
+					end
 				end
+			else
+				print("|cFFFF3333[RQE] Spell CD not available for RQE Button until after combat has ended|r")
 			end
 		elseif itemName then
 			cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
@@ -641,45 +606,6 @@ function RQEMacro:UpdateMagicButtonTooltip()
 			self:SetAlpha(1)
 		end
 	end)
-
-	-- -- NEW: Periodically grey out icon if cooldown active
-	-- MagicButton:SetScript("OnUpdate", function(self)
-		-- local macroIndex = GetMacroIndexByName("RQE Macro")
-		-- if not macroIndex or macroIndex == 0 then
-			-- self.CooldownUpdater:Clear()
-			-- return
-		-- end
-
-		-- local _, _, macroBody = GetMacroInfo(macroIndex)
-		-- if not macroBody or macroBody == "" then
-			-- self.CooldownUpdater:Clear()
-			-- return
-		-- end
-
-		-- local spellName = macroBody:match("/cast%s+(.+)")
-		-- local itemName = macroBody:match("/use%s+(.+)")
-		-- local cdStart, cdDur, cdEnable
-
-		-- if spellName then
-			-- local spellInfo = C_Spell.GetSpellInfo(spellName)
-			-- if spellInfo then
-				-- local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
-				-- if cd and cd.isEnabled then
-					-- cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
-				-- end
-			-- end
-		-- elseif itemName then
-			-- cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
-		-- end
-
-		-- if cdEnable and cdDur and cdDur > 1 then
-			-- self.CooldownUpdater:SetCooldown(cdStart, cdDur)
-			-- self:SetAlpha(0.5) -- grey out while on cooldown
-		-- else
-			-- self.CooldownUpdater:Clear()
-			-- self:SetAlpha(1)
-		-- end
-	-- end)
 
 	MagicButton:SetScript("OnLeave", function()
 		GameTooltip:Hide()
