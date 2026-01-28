@@ -1157,7 +1157,7 @@ function RQE:UpdateStepDistance()
 	end
 
 	if unit == "yards" then
-		RQEFrame.StepDistanceText:SetText(string.format("%.0f yards away", dist))
+		RQEFrame.StepDistanceText:SetText(string.format("%.1f yards away", dist))
 	else
 		RQEFrame.StepDistanceText:SetText(string.format("Step Distance: %.1f%%", dist * 100))
 	end
