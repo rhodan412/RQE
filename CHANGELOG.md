@@ -34,10 +34,12 @@
 		- Updated most alliance/neutral quests in DB for Nagrand (2026.01.25.0555)
 		- Updated most alliance/neutral quests in DB for Zangarmarsh (2026.01.26.0258)
 		- Updated most alliance/neutral quests in DB for Terokkar Forest (2026.01.27.0338)
+		- Updated many alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.28.0350)
 
 	RQEMacro.lua
 		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
 		- Fixed issue where spell CD wasn't available for the RQE Button ("cast") when in combat, but will update the CD time after combat concludes. Item CDs are available during combat still (2026.01.27.0338)
+		- Removed some old code that had been commented out (2026.01.27.0338)
 
 	WaypointManager.lua
 		- Updated debugLevel for print out within the RQE:CreateUnknownQuestWaypointWithDirectionText function to use INFO+ rather than INFO (2026.01.23.0528)
@@ -45,6 +47,7 @@
 	WPUtil.lua
 		- Updated RQE:GetStepCoordinates(stepIndex) to try and use stepIndex that was called when the function got called (2026.01.24.2003)
 		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest (2026.01.24.2003)
+		- Updated stepDistance to show distance in tenths of yards (2026.01.28.0350)
 
 
 12.0.0.1 (2026.01.21)
