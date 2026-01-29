@@ -2898,6 +2898,8 @@ function RQE.handlePlayerEnterWorld(...)
 			RQE.HasLoggedIn = true
 			RQE.HasReloaded = false
 			RQE.AddonLoadedonPlayerEnteringWorldFirstTime = false
+			RQE.QuestLogIndexButtonPressed = true
+			RQE.OkaytoUpdateCreateSteps = true
 		else
 			RQE.HasPortaledOrHearthed = true
 			RQE.HasLoggedIn = false
@@ -2911,6 +2913,8 @@ function RQE.handlePlayerEnterWorld(...)
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 04 Debug: Loaded the UI after Reload.", 0.93, 0.51, 0.93)	-- Violet
 		end
 
+		RQE.QuestLogIndexButtonPressed = true
+		RQE.OkaytoUpdateCreateSteps = true
 		RQE.HasPortaledOrHearthed = false
 		RQE.HasLoggedIn = false
 		RQE.HasReloaded = true
@@ -3696,6 +3700,16 @@ function RQE.handleQuestAccepted(...)
 
 	if questID == RQE.searchedQuestID then
 		RQE.DontUpdateFrame = false
+		RQE.Buttons.ClearButtonPressed()
+		RQE.AllFramesShouldUpdate = true
+		RQE.OkaytoUpdateCreateSteps = true
+		RQE.QuestLogIndexButtonPressed = true
+		RQE:ClearSeparateFocusFrame()
+		RQE:ShouldClearFrame()
+		C_Timer.After(1, function()
+			C_SuperTrack.SetSuperTrackedQuestID(questID)
+			UpdateFrame(questID)
+		end)
 	end
 
 	-- Print in locations array format
@@ -4934,9 +4948,11 @@ function RQE.handleUnitAura(...)
 				for _, checkData in ipairs(stepData.checks) do
 					if checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff" then
 						for _, checkValue in ipairs(checkData.check) do
-							if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
-								matchesAura = true
-								break
+							if not InCombatLockdown() then
+								if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+									matchesAura = true
+									break
+								end
 							end
 						end
 					end
