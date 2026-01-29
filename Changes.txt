@@ -1,4 +1,4 @@
-12.0.0.2
+12.0.0.2 (2026.01.29)
 
 	**HIGHLIGHTS**
 		- Updated remaining Storm Peaks (alliance/netural) quests to the DB
@@ -42,7 +42,7 @@
 		- Updated most alliance/neutral quests in DB for Terokkar Forest (2026.01.27.0338)
 		- Updated many alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.28.0350)
 		- Updated more alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.29.0021)
-		- Updated several Scryer quests in DB for Netherstorm (2026.01.29.0021)
+		- Updated several Scryer quests in DB for Netherstorm (2026.01.29.1911)
 
 	RQEMacro.lua
 		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
