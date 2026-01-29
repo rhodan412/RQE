@@ -6,6 +6,9 @@
 		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest as well as the display for that distance above the coordinate block
 		- Fixed code for the generation of a macro to direct player to quest giver following patch 12.0 API changes
 		- Fixed issue with spell CDs so that these won't be displayed on the RQE Button if pressed during combat, but will update when combat concludes
+		- Fixed issue where supertracked quest frame (RQEFrame) wasn't updating when a searched quest is accepted by the player
+		- Fixed issue of supertracked quest not being restored on reload and login
+		- Fixed issue where player's buffs can't be checked during combat [this applies to the occasional quest that checks the players buff to advance steps)
 
 	Buttons.lua
 		- Removed some print out information that was no longer needed (2026.01.26.0258)
@@ -19,6 +22,9 @@
 
 	EventManager.lua
 		- Added call for RQE:UpdateStepDistance() function within PLAYER_MOUNT_DISPLAY_CHANGED, PLAYER_LOGIN, PLAYER_CONTROL_GAINED and SUPER_TRACKING_CHANGED (if a questID change occurred) event functions (2026.01.24.2003)
+		- Fixed issue where searched quests hadn't been updating the RQEFrame when that quest had been accepted (2026.01.29.0021)
+		- Fixed issue where supertracked quest wasn't being reapplied on login and reload (2026.01.29.0021)
+		- Fixed issue to prevent CheckDBBuff from running a check of UNIT_AURA of player while in combat as this is secret during combat (2026.01.29.0021)
 
 	RQE.toc
 		- Updated version# (2026.01.23.0528)
@@ -35,6 +41,8 @@
 		- Updated most alliance/neutral quests in DB for Zangarmarsh (2026.01.26.0258)
 		- Updated most alliance/neutral quests in DB for Terokkar Forest (2026.01.27.0338)
 		- Updated many alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.28.0350)
+		- Updated more alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.29.0021)
+		- Updated several Scryer quests in DB for Netherstorm (2026.01.29.0021)
 
 	RQEMacro.lua
 		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
