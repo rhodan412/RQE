@@ -1,7 +1,22 @@
+12.0.0.3
+
+	**HIGHLIGHTS**
+		- Searched quests [not in the player log to track] give NPC name and name of map that they are in to aid guidance to pick up those searched quests
+
+	Core.lua
+		- Added code that gives NPC information and location for a searched quest that is in the DB (2026.01.31.0327)
+
+	RQE.toc
+		- Updated version# (2026.01.31.0327)
+
+	RQEDatabase.lua
+		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
+
+
 12.0.0.2 (2026.01.29)
 
 	**HIGHLIGHTS**
-		- Updated remaining Storm Peaks (alliance/netural) quests to the DB
+		- Updated remaining Storm Peaks (alliance/neutral) quests to the DB
 		- Fixed patch 12.0 API issue that resulted in not being able to use the macro (RQE "Magic" Button) to purchase a quest item from a vendor
 		- Added calculation helper to determine distance to coordinates for the current step of the current supertracked quest as well as the display for that distance above the coordinate block
 		- Fixed code for the generation of a macro to direct player to quest giver following patch 12.0 API changes
@@ -27,7 +42,7 @@
 		- Fixed issue to prevent CheckDBBuff from running a check of UNIT_AURA of player while in combat as this is secret during combat (2026.01.29.0021)
 
 	RQE.toc
-		- Updated version# (2026.01.23.0528)
+		- Updated version# (2026.01.29.1911)
 
 	RQEFrame.lua
 		- Added code to create the string for the display of distance to coordinate block and attach it to the coordinate block (above RQEFrame) that displays current player coordinates (2026.01.24.2003)
