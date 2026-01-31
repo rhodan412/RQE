@@ -3247,7 +3247,63 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end
 
 			if RQE.QuestObjectives and not isQuestCompleted then
-				RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")
+				local pickupText = "Quest not located in player's Log, please pick up quest"
+
+				local dbEntry = RQE.getQuestData(questID)
+				local npcName
+
+				-- 1) NPC name (must be non-empty after trimming)
+				if dbEntry and type(dbEntry.npc) == "table" then
+					local n = dbEntry.npc[1]
+					if type(n) == "string" then
+						n = n:match("^%s*(.-)%s*$") -- trim
+						if n ~= "" then
+							npcName = n
+							pickupText = pickupText .. " from " .. npcName
+						end
+					end
+				end
+
+				-- 2) If NPC exists, also try to append zone name from location(s)
+				if npcName and dbEntry then
+					local primaryMapID
+
+					-- Support: location = { ... mapID = X }
+					if type(dbEntry.location) == "table" and tonumber(dbEntry.location.mapID) then
+						primaryMapID = tonumber(dbEntry.location.mapID)
+
+					-- Support: locations = { { ... mapID = X }, ... }
+					elseif type(dbEntry.locations) == "table" and type(dbEntry.locations[1]) == "table" and tonumber(dbEntry.locations[1].mapID) then
+						primaryMapID = tonumber(dbEntry.locations[1].mapID)
+					end
+
+					-- Resolve mapID -> zone name
+					if primaryMapID then
+						local mapInfo = C_Map.GetMapInfo(primaryMapID)
+						local zoneName = mapInfo and mapInfo.name
+
+						if type(zoneName) == "string" then
+							zoneName = zoneName:match("^%s*(.-)%s*$") -- trim
+							if zoneName ~= "" then
+								pickupText = pickupText .. " in " .. zoneName
+							end
+						end
+					end
+				end
+
+				-- local dbEntry = RQE.getQuestData(questID)
+				-- if dbEntry and type(dbEntry.npc) == "table" then
+					-- local npcName = dbEntry.npc[1]
+					-- if type(npcName) == "string" then
+						-- npcName = npcName:match("^%s*(.-)%s*$") -- trim whitespace
+						-- if npcName ~= "" then
+							-- pickupText = pickupText .. " from " .. npcName
+						-- end
+					-- end
+				-- end
+
+				RQE.QuestObjectives:SetText(pickupText)
+				-- RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")
 				RQE.QuestObjectives:SetTextColor(1, 1, 1) -- White color for completed criteria
 			end
 			if RQE.QuestObjectives and isQuestCompleted then
