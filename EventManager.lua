@@ -30,6 +30,7 @@ RQE.WorldQuestsInfo = RQE.WorldQuestsInfo or {}
 RQEDatabase = RQEDatabase or {}
 RQEMacro = RQEMacro or {}
 RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
+RQECharacterDB.searchedQuestID = RQECharacterDB.searchedQuestID or {}
 
 ------------------------------
 -- #2. Constants and Settings
@@ -3699,17 +3700,25 @@ function RQE.handleQuestAccepted(...)
 	end)
 
 	if questID == RQE.searchedQuestID then
+		RQE.searchedQuestID = nil
 		RQE.DontUpdateFrame = false
 		RQE.Buttons.ClearButtonPressed()
 		RQE.AllFramesShouldUpdate = true
 		RQE.OkaytoUpdateCreateSteps = true
 		RQE.QuestLogIndexButtonPressed = true
-		RQE:ClearSeparateFocusFrame()
+		--RQE:ClearSeparateFocusFrame()
 		RQE:ShouldClearFrame()
 		C_Timer.After(1, function()
 			C_SuperTrack.SetSuperTrackedQuestID(questID)
 			UpdateFrame(questID)
 		end)
+	else
+		if RQE.searchedQuestID then
+			C_Timer.After(2, function()
+				RQE.DontUpdateFrame = false
+				RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
+			end)
+		end
 	end
 
 	-- Print in locations array format
@@ -5890,7 +5899,7 @@ function RQE.handleQuestComplete()
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 	end
 
-	RQE.searchedQuestID = nil	-- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
+	--RQE.searchedQuestID = nil	-- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
 		for questID in pairs(RQE.ManuallyTrackedQuests) do
@@ -5985,7 +5994,7 @@ function RQE.handleQuestAutoComplete(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QAC 03 Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 	end
 
-	RQE.searchedQuestID = nil	-- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
+	--RQE.searchedQuestID = nil	-- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 	-- Reset manually tracked quests
 	if RQE.ManuallyTrackedQuests then
 		for questID in pairs(RQE.ManuallyTrackedQuests) do
