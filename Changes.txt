@@ -2,15 +2,37 @@
 
 	**HIGHLIGHTS**
 		- Searched quests [not in the player log to track] give NPC name and name of map that they are in to aid guidance to pick up those searched quests
+		- Players can now get the right-click dropdown menu, when the RQEFrame ["supertrack" frame] is displaying a searched quest - allowing players to get the wowhead and warcraft wiki links for searched quest
+		- When RQEFrame is displaying a searched quest, this ID is saved between sessions so that the searched quest will be displayed on next reload/login
+
+	Ace3
+		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
+
+	Buttons.lua
+		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2025.02.01.2334)
 
 	Core.lua
 		- Added code that gives NPC information and location for a searched quest that is in the DB (2026.01.31.0327)
+		- Updated RQE:SaveSuperTrackedQuestToCharacter() and RQE:RestoreSuperTrackedQuestForCharacter() to work with searched quests (2025.02.01.2334)
+		- When a quest is searched ["S" Button in the RQEFrame] and player presses "Track" the addon will save the "tracked" quest as a supertracked quest for restoration in following session (2025.02.01.2334)
+
+	EventManager.lua
+		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
+		- Removed coding that sets RQE.searchedQuestID to nil after the QUEST_COMPLETE and QUEST_AUTO_COMPLETE event functions fire (2025.02.01.2334)
 
 	RQE.toc
 		- Updated version# (2026.01.31.0327)
 
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
+		- Updated many Blade's Edge Mountains alliance quests in the DB (2025.02.01.2334)
+
+	RQEFrame.lua
+		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
+		- Added ability for right-click dropdown menu to appear if the RQEFrame is displaying a searched quest to allow players to search warcraft wiki or wowhead for searched quests within the addon (2025.02.01.2334)
+
+	RQEMacro.lua
+		- Removed some unneeded comments in the code (2025.02.01.2334)
 
 
 12.0.0.2 (2026.01.29)
