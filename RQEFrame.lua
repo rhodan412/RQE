@@ -973,6 +973,23 @@ local function CreateQuestTooltip(frame, questID)
 		local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 		GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 		GameTooltip:AddLine(" ")
+	else
+		-- Searched quest (not in log): use DB fallback if available
+		if questData and questData.descriptionQuestText and questData.descriptionQuestText[1] then
+			if RQE.searchedQuestID then
+				GameTooltip:AddLine("Status: Quest not in player's log", 1, 0, 1) -- Purple color for not yet picked up
+			end
+			-- If you store multiple lines, print them all
+			for _, line in ipairs(questData.descriptionQuestText) do
+				if line and line ~= "" then
+					GameTooltip:AddLine(" ")
+					GameTooltip:AddLine(line, 1, 1, 1, true)
+				end
+			end
+		else
+			GameTooltip:AddLine("No description available.", 1, 1, 1, true)
+			GameTooltip:AddLine(" ")
+		end
 	end
 
 	if questID then
@@ -983,6 +1000,9 @@ local function CreateQuestTooltip(frame, questID)
 		elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
 			GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
 		else
+			if RQE.searchedQuestID then
+				GameTooltip:AddLine(" ")
+			end
 			GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
 		end
 		GameTooltip:AddLine(" ")
@@ -1003,6 +1023,16 @@ local function CreateQuestTooltip(frame, questID)
 		--local colorizedObjectives = colorizeObjectives(questID)
 		GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)  -- true for wrap
 		GameTooltip:AddLine(" ")
+	else
+		-- Searched quest (or API has no objectives): use DB fallback
+		if questData and questData.objectivesQuestText and questData.objectivesQuestText[1] then
+			GameTooltip:AddLine("Objectives:")
+			for _, obj in ipairs(questData.objectivesQuestText) do
+				if obj and obj ~= "" then
+					GameTooltip:AddLine(obj, 1, 1, 1, true)
+				end
+			end
+		end
 	end
 
 	if RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) and not isWorldQuest then
@@ -1012,53 +1042,55 @@ local function CreateQuestTooltip(frame, questID)
 		RQE:QuestRewardsTooltip(GameTooltip, questID)
 	end
 
-	-- Check if RQE.SeparateStepText exists and has text
-	local stepText = RQE.GetSeparateStepText()
-	if stepText ~= "" then
-	-- if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
-		local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-		if not isWorldQuest then
-			GameTooltip:AddLine(" ")
+	if C_QuestLog.IsOnQuest(questID) then
+		-- Check if RQE.SeparateStepText exists and has text
+		local stepText = RQE.GetSeparateStepText()
+		if stepText ~= "" then
+		-- if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
+			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+			if not isWorldQuest then
+				GameTooltip:AddLine(" ")
+			end
+			GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
+			GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
+			-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
+		else
+			GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 		end
-		GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
-		GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
-		-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
-	else
-		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
-	end
 
-	-- Party Members' Quest Progress
-	if IsInGroup() then
-		local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
-		if tooltipData and tooltipData.lines then
-			local player_name = UnitName("player")
-			local isFirstPartyMember = true
-			local skipPlayerLines = false
-			local skipQuestNameLine = false  -- Flag to skip quest name lines
+		-- Party Members' Quest Progress
+		if IsInGroup() then
+			local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+			if tooltipData and tooltipData.lines then
+				local player_name = UnitName("player")
+				local isFirstPartyMember = true
+				local skipPlayerLines = false
+				local skipQuestNameLine = false  -- Flag to skip quest name lines
 
-			for _, line in ipairs(tooltipData.lines) do
-				if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
-					skipQuestNameLine = true
-				end
+				for _, line in ipairs(tooltipData.lines) do
+					if line.type == Enum.TooltipDataLineType.QuestTitle then  -- Assuming quest titles have this type
+						skipQuestNameLine = true
+					end
 
-				if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
-					skipPlayerLines = true
-					isFirstPartyMember = false
-				end
-
-				if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
-					skipPlayerLines = false
-					skipQuestNameLine = false  -- Reset for the next quest
-					if isFirstPartyMember then
-						GameTooltip:AddLine(" ")
+					if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText == player_name then
+						skipPlayerLines = true
 						isFirstPartyMember = false
 					end
-				end
 
-				if not skipPlayerLines and not skipQuestNameLine then
-					local text = line.leftText
-					local r, g, b = line.leftColor:GetRGB()
-					GameTooltip:AddLine(text, r, g, b, true)
+					if line.type == Enum.TooltipDataLineType.QuestPlayer and line.leftText ~= player_name then
+						skipPlayerLines = false
+						skipQuestNameLine = false  -- Reset for the next quest
+						if isFirstPartyMember then
+							GameTooltip:AddLine(" ")
+							isFirstPartyMember = false
+						end
+					end
+
+					if not skipPlayerLines and not skipQuestNameLine then
+						local text = line.leftText
+						local r, g, b = line.leftColor:GetRGB()
+						GameTooltip:AddLine(text, r, g, b, true)
+					end
 				end
 			end
 		end
@@ -1080,7 +1112,7 @@ end
 
 -- Add mouseover event for QuestIDText
 RQE.QuestIDText:SetScript("OnEnter", function(self)
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.searchedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	if questID then
 		CreateQuestTooltip(self, questID)
 	end
@@ -1091,9 +1123,11 @@ end)
 
 RQE.QuestIDText:SetScript("OnMouseUp", function(self, button)
 	if button == "RightButton" then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 		if questID then
 			ShowQuestDropdownRQEFrame(self, questID)
+		-- elseif RQE.searchedQuestID then
+			-- ShowQuestDropdownRQEFrame(self, RQE.searchedQuestID)
 		end
 	end
 end)
@@ -1101,7 +1135,7 @@ end)
 -- Add mouseover event for QuestNameText
 if RQE.QuestNameText then
 	RQE.QuestNameText:SetScript("OnEnter", function(self)
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 		if questID then
 			CreateQuestTooltip(self, questID)
 		end
@@ -1113,11 +1147,14 @@ else
 	RQE.debugLog("RQE.QuestNameText is not initialized.")
 end
 
+
 RQE.QuestNameText:SetScript("OnMouseUp", function(self, button)
 	if button == "RightButton" then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 		if questID then
 			ShowQuestDropdownRQEFrame(self, questID)
+		-- elseif RQE.searchedQuestID then
+			-- ShowQuestDropdownRQEFrame(self, RQE.searchedQuestID)
 		end
 	end
 end)
@@ -2288,23 +2325,51 @@ function RQE.InitializeSeparateFocusFrame()
 			return
 		end
 
+		-- Decide which quest SeparateFocus should display
+		-- Only update for REAL quests (quest log or active world quest).
+		-- If the RQEFrame is showing a searched quest that's not in the log/WQ, do NOT update SeparateFocus.
+		local displayedQuestID
+
+		-- If we're in "searched quest mode" and it's not a real quest, bail out early (freeze SeparateFocus)
+		local searchedID = RQE.searchedQuestID
+		if searchedID and not C_QuestLog.IsOnQuest(searchedID) and not C_QuestLog.IsWorldQuest(searchedID) then
+			return
+		end
+
+		-- Otherwise, follow Blizzard supertrack, but only if it's valid
+		if not C_SuperTrack.IsSuperTrackingQuest() then
+			return
+		end
+
+		displayedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+		if not displayedQuestID or displayedQuestID <= 0 then
+			return
+		end
+
+		-- Optional: ensure the supertracked quest is actually real/active
+		local isLogQuest = C_QuestLog.IsOnQuest(displayedQuestID)
+		local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
+		if not (isLogQuest or isActiveWorldQuest) then
+			return
+		end
+
+		if not displayedQuestID or displayedQuestID <= 0 then
+			return
+		end
+
 		-- Clear any existing children in the content frame
 		for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
 			child:Hide()
 		end
 
-		local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		if not isSuperTracking then
-			return
-		end
-
-		RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
+		RQE.CurrentlySuperQuestID = displayedQuestID
+		-- RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		RQE:ClearSeparateFocusFrame()
 
 		-- ✅ Improved quest data handling (for DB-less quests)
 		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = displayedQuestID
+		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		local questData = RQE.getQuestData(questID)
 
 		local totalSteps = 0
