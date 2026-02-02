@@ -686,6 +686,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 
 		-- Code for ClearButton functionality here
 		RQE.Buttons.ClearButtonPressed()
+		RQE.searchedQuestID = nil
 		C_Timer.After(0.3, function()
 			RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -731,7 +732,7 @@ function RQE.Buttons.ClearButtonPressed()
 	RQE:ClearWaypointButtonData()
 	RQE:ClearSeparateFocusFrame()
 
-	RQE.searchedQuestID = nil
+	--RQE.searchedQuestID = nil
 	RQE.ManualSuperTrack = nil
 	RQE.DontUpdateFrame = false
 	RQE.ClearButtonPressed = true
