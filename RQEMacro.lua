@@ -179,12 +179,10 @@ function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharact
 		return self:SetMacro(macroName, iconFileID, macroBody, perCharacter)
 	end
 
-
 	-- >>> NEW: Refresh Magic Button tooltip after macro is set/queued
 	if RQEMacro and RQEMacro.UpdateMagicButtonTooltip then
 		RQEMacro:UpdateMagicButtonTooltip()
 	end
-	-- <<< END NEW TOOLTIP REFRESH
 
 	return result
 end
