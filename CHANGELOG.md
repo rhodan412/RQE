@@ -4,6 +4,7 @@
 		- Searched quests [not in the player log to track] give NPC name and name of map that they are in to aid guidance to pick up those searched quests
 		- Players can now get the right-click dropdown menu, when the RQEFrame ["supertrack" frame] is displaying a searched quest - allowing players to get the wowhead and warcraft wiki links for searched quest
 		- When RQEFrame is displaying a searched quest, this ID is saved between sessions so that the searched quest will be displayed on next reload/login
+		- Finished most DB quests for Outland/TBC for alliance/scryer
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -26,13 +27,17 @@
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
 		- Updated many Blade's Edge Mountains alliance quests in the DB (2025.02.01.2334)
+		- Updated most remaining alliance/scryer quests [Outland] in the DB (2025.02.03.0437)
+		- Updated Elwynn Forest and Loch Modan alliance quests in the DB (2025.02.03.0437)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
 		- Added ability for right-click dropdown menu to appear if the RQEFrame is displaying a searched quest to allow players to search warcraft wiki or wowhead for searched quests within the addon (2025.02.01.2334)
+		- Added some extra line breaks in the tooltip for quests in the RQEFrame for better, more consistent viewing (2025.02.03.0437)
 
 	RQEMacro.lua
 		- Removed some unneeded comments in the code (2025.02.01.2334)
+		- Changed debugMode from INFO to INFO+ when stating the CD is N/A for spell, within the RQE Macro Button, during combat (2025.02.03.0437)
 
 
 12.0.0.2 (2026.01.29)
