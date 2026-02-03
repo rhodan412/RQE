@@ -1055,6 +1055,7 @@ local function CreateQuestTooltip(frame, questID)
 			GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
 			-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
 		else
+			GameTooltip:AddLine(" ")
 			GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 		end
 
@@ -2778,6 +2779,7 @@ function RQE.ShowFocusScrollFrameTooltip(self)
 		GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
 		-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
 	else
+		GameTooltip:AddLine(" ")
 		GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
 	end
 
