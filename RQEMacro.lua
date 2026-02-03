@@ -590,7 +590,9 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					end
 				end
 			else
-				print("|cFFFF3333[RQE] Spell CD not available for RQE Button until after combat has ended|r")
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cFFFF3333[RQE] Spell CD not available for RQE Button until after combat has ended|r")
+				end
 			end
 		elseif itemName then
 			cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
