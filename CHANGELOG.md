@@ -29,6 +29,7 @@
 		- Updated many Blade's Edge Mountains alliance quests in the DB (2025.02.01.2334)
 		- Updated most remaining alliance/scryer quests [Outland] in the DB (2025.02.03.0437)
 		- Updated Elwynn Forest and Loch Modan alliance quests in the DB (2025.02.03.0437)
+		- Updated Westfall, Duskwood and Blasted Lands quests in the DB (2025.02.04.1632)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
