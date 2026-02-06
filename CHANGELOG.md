@@ -12,17 +12,24 @@
 	Buttons.lua
 		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2025.02.01.2334)
 
+	Config.lua
+		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2025.02.06.0327)
+
 	Core.lua
 		- Added code that gives NPC information and location for a searched quest that is in the DB (2026.01.31.0327)
 		- Updated RQE:SaveSuperTrackedQuestToCharacter() and RQE:RestoreSuperTrackedQuestForCharacter() to work with searched quests (2025.02.01.2334)
 		- When a quest is searched ["S" Button in the RQEFrame] and player presses "Track" the addon will save the "tracked" quest as a supertracked quest for restoration in following session (2025.02.01.2334)
+		- Removed coding that was clearing debugLoggingCheckbox [author-mode ONLY, not applicable for users] (2025.02.06.0327)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
 		- Removed coding that sets RQE.searchedQuestID to nil after the QUEST_COMPLETE and QUEST_AUTO_COMPLETE event functions fire (2025.02.01.2334)
+		- Fixed SUPER_TRACKING_CHANGED event function that was updating new supertrack, when nothing being tracked, even when option was not selected by player in configuration settings (2025.02.06.0327)
+		- Commented out coding in SUPER_TRACKING_CHANGED that was clearing the SeparateFocusFrame and causing possible issues (2025.02.06.0327)
 
 	RQE.toc
 		- Updated version# (2026.01.31.0327)
+		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
 
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
@@ -30,6 +37,7 @@
 		- Updated most remaining alliance/scryer quests [Outland] in the DB (2025.02.03.0437)
 		- Updated Elwynn Forest and Loch Modan alliance quests in the DB (2025.02.03.0437)
 		- Updated Westfall, Duskwood and Blasted Lands quests in the DB (2025.02.04.1632)
+		- Updated coordinateHotspot for questID 90759 (2025.02.06.0327)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
