@@ -1887,29 +1887,6 @@ function RQE:AddGeneralSettingsWidgets(container)
 
 	scrollFrame:AddChild(enableGossipModeAutomation)
 
-	-- Enable GossipMode Display Checkbox
-	local enableGossipModeAutomation = AceGUI:Create("CheckBox")
-	enableGossipModeAutomation:SetLabel("Enable Gossip Mode")
-	enableGossipModeAutomation:SetValue(RQE.db.profile.enableGossipModeAutomation)
-	enableGossipModeAutomation:SetCallback("OnValueChanged", function(widget, event, value)
-		RQE.db.profile.enableGossipModeAutomation = value
-	end)
-
-	enableGossipModeAutomation:SetFullWidth(false)
-	enableGossipModeAutomation:SetWidth(300)
-
-	-- Add a tooltip description for enableGossipModeAutomation (RQE.db.profile.enableGossipModeAutomation)
-	enableGossipModeAutomation:SetCallback("OnEnter", function(widget, event)
-		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
-		GameTooltip:SetText("Enable Gossip Mode where the correct option will be chosen as part of the macro", nil, nil, nil, nil, true)
-		GameTooltip:Show()
-	end)
-	enableGossipModeAutomation:SetCallback("OnLeave", function(widget, event)
-		GameTooltip:Hide()
-	end)
-
-	scrollFrame:AddChild(enableGossipModeAutomation)
-
 	-- Enable Mouseover marking Checkbox
 	local enableMouseoverMarkingCheckbox = AceGUI:Create("CheckBox")
 	enableMouseoverMarkingCheckbox:SetLabel("Enable Mouseover Marking")
