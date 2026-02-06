@@ -3446,40 +3446,42 @@ function RQE.handleSuperTracking()
 	-- If player is no longer super tracking, they will instead super-track the nearest quest. If there continues to be no quest super tracked it will clear the Separate Focus Frame
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
-	if not RQE.ClearButtonPressed then
-		if not isSuperTracking then
-			if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
-				if not RQEFrame:IsShown() then return end
-				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
-				if closestQuestID then
-					-- print("~~~ SetSuperTrack: 2562~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
-					-- print("~~~ SaveTrackedQuestsToCharacter: 2598 ~~~")
-					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when SUPER_TRACKING_CHANGED event fires
-					--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when SUPER_TRACKING_CHANGED event fires
-					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-						DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
-					end
-				else
-					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-						DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
+	if RQE.db.profile.enableNearestSuperTrack then
+		if not RQE.ClearButtonPressed then
+			if not isSuperTracking then
+				if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+					if not RQEFrame:IsShown() then return end
+					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
+					if closestQuestID then
+						-- print("~~~ SetSuperTrack: 2562~~~")
+						C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+						-- print("~~~ SaveTrackedQuestsToCharacter: 2598 ~~~")
+						RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when SUPER_TRACKING_CHANGED event fires
+						--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when SUPER_TRACKING_CHANGED event fires
+						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+							DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
+						end
+					else
+						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+							DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: No closest quest found to super-track.", 1, 0.75, 0.79)		-- Pink
+						end
 					end
 				end
+				RQE.TrackClosestQuest()
 			end
-			RQE.TrackClosestQuest()
+		elseif RQE.ClearButtonPressed then
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
+				print("Clear Button has been pressed, no changes made to Super Track")
+			end
+			RQE.ClearButtonPressed = false
 		end
-	elseif RQE.ClearButtonPressed then
-		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			print("Clear Button has been pressed, no changes made to Super Track")
-		end
-		RQE.ClearButtonPressed = false
 	end
 
-	C_Timer.After(0.3, function()
-		if not isSuperTracking then
-			RQE:ClearSeparateFocusFrame()
-		end
-	end)
+	-- C_Timer.After(0.3, function()
+		-- if not isSuperTracking then
+			-- RQE:ClearSeparateFocusFrame()
+		-- end
+	-- end)
 
 	-- Check if the objective is a progress bar
 	local stepIndex = RQE.AddonSetStepIndex or 1
