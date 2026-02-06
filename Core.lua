@@ -1433,10 +1433,16 @@ end
 function RQE.GetDataForAddon()
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
+		RQE.db.profile.debugTimeStampCheckbox = false
 		RQE:ClearDebugLog()
 		RQE_Contribution.GetAllContributionInfo()
-		RQE.db.profile.debugLoggingCheckbox = false
+
+		--RQE.db.profile.debugLoggingCheckbox = false
 		RQE.DebugLogFrame()
+
+		C_Timer.After(5, function()
+			RQE.db.profile.debugTimeStampCheckbox = true
+		end)
 
 		C_Timer.After(2, function()
 			RQE:ShowDeleteConfirmationDialog()
@@ -1450,6 +1456,7 @@ end
 -- Obtain WQ Information for Expansion: The War Within
 function RQE.GetTheWarWithinWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 
 	local clicked = GetMouseButtonClicked()
@@ -1464,14 +1471,18 @@ function RQE.GetTheWarWithinWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
 -- Obtain WQ Information for Expansion: Dragonflight
 function RQE.GetDragonflightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 
 	local clicked = GetMouseButtonClicked()
@@ -1486,14 +1497,18 @@ function RQE.GetDragonflightWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
 -- Obtain WQ Information for Expansion: Shadowlands
 function RQE.GetShadowlandsWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 
 	local clicked = GetMouseButtonClicked()
@@ -1508,14 +1523,18 @@ function RQE.GetShadowlandsWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
 -- Obtain WQ Information for Expansion: Battle for Azeroth
 function RQE.GetBFAWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 
 	local clicked = GetMouseButtonClicked()
@@ -1530,14 +1549,18 @@ function RQE.GetBFAWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
 -- Obtain WQ Information for Expansion: Legion
 function RQE.GetLegionWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 
 	local clicked = GetMouseButtonClicked()
@@ -1552,14 +1575,18 @@ function RQE.GetLegionWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
 -- Obtain WQ Information for Expansion: Misc
 function RQE.GetWoDWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 	local clicked = GetMouseButtonClicked()
 
@@ -1573,14 +1600,18 @@ function RQE.GetWoDWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
 -- Obtain WQ Information for Expansion: Misc
 function RQE.MiscWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
 	RQE:ClearDebugLog()
 	local clicked = GetMouseButtonClicked()
 
@@ -1594,8 +1625,11 @@ function RQE.MiscWQ()
 		print("Unknown click type:", tostring(clicked))
 	end
 
-	RQE.db.profile.debugLoggingCheckbox = false
+	--RQE.db.profile.debugLoggingCheckbox = false
 	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
 end
 
 
@@ -1604,6 +1638,7 @@ function RQE.GetMissingQuestData()
 	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			RQE.db.profile.debugLoggingCheckbox = true
+			RQE.db.profile.debugTimeStampCheckbox = false
 			RQE:ClearDebugLog()
 
 			RQE_Contribution:CheckMissingQuestTextData()
@@ -1628,7 +1663,8 @@ function RQE.GetMissingQuestData()
 				end
 			end
 
-			RQE.db.profile.debugLoggingCheckbox = false
+			RQE.db.profile.debugTimeStampCheckbox = true
+			--RQE.db.profile.debugLoggingCheckbox = false
 		end
 	end
 end
@@ -1681,7 +1717,9 @@ function RQE:ShowDeleteConfirmationDialog()
 			RQE:ExecuteDataDeletion()
 		end,
 		OnCancel = function()
-			print("Data deletion canceled.")
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Data deletion canceled.")
+			end
 			RQE.DataDeletedfromDBFile = false
 		end,
 		timeout = 0,
