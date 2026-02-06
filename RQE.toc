@@ -13,7 +13,7 @@
 ## Category-zhTW: 任務
 ## Author: Rhodan {Aurleis}
 ## Version: 12.0.0.3
-## Notes: A handy tool for questing.|cFFCC99FFThis addon has known compatibility issues with the "World Quest Tracker" addon. There are partial issues with "Carbonite Quests" addon, but only when turning in quests thru the default Blizzard Objective Tracker. If you experience problems, consider disabling these addons while using RQE.|r
+## Notes: A handy tool for step-by-step help while questing.|n|n|cFFCC99FFCompatibility notes:|n|nCarbonite Quests|n• Partial issues during turn-in via Blizzard tracker:|n- Uncheck "Hide Quest Watch Window" under Watch Options|n- Uncheck "Hide Blizzards Quest Track Window"|n|nWaypointUI users:|n• Disable "Auto-Replace Waypoint"|n|nWorld Quest Tracker|n• Known issues|r
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
 ## SavedVariables: RQEDB, RQE_SandboxDB
