@@ -26,6 +26,10 @@
 		- Removed coding that sets RQE.searchedQuestID to nil after the QUEST_COMPLETE and QUEST_AUTO_COMPLETE event functions fire (2025.02.01.2334)
 		- Fixed SUPER_TRACKING_CHANGED event function that was updating new supertrack, when nothing being tracked, even when option was not selected by player in configuration settings (2025.02.06.0327)
 		- Commented out coding in SUPER_TRACKING_CHANGED that was clearing the SeparateFocusFrame and causing possible issues (2025.02.06.0327)
+		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
+
+	QuestingModule.lua
+		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 
 	RQE.toc
 		- Updated version# (2026.01.31.0327)
@@ -38,11 +42,13 @@
 		- Updated Elwynn Forest and Loch Modan alliance quests in the DB (2025.02.03.0437)
 		- Updated Westfall, Duskwood and Blasted Lands quests in the DB (2025.02.04.1632)
 		- Updated coordinateHotspot for questID 90759 (2025.02.06.0327)
+		- Updated Arathi Highlands and The Hinterlands quests (alliance) in the DB (2025.02.07.2233)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
 		- Added ability for right-click dropdown menu to appear if the RQEFrame is displaying a searched quest to allow players to search warcraft wiki or wowhead for searched quests within the addon (2025.02.01.2334)
 		- Added some extra line breaks in the tooltip for quests in the RQEFrame for better, more consistent viewing (2025.02.03.0437)
+		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 
 	RQEMacro.lua
 		- Removed some unneeded comments in the code (2025.02.01.2334)
