@@ -2894,7 +2894,9 @@ function RQE.handlePlayerEnterWorld(...)
 		end
 
 		if RQE.AddonLoadedonPlayerEnteringWorldFirstTime then
-			print("RQE.AddonLoadedonPlayerEnteringWorldFirstTime is true from ADDON_LOADED")
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE.AddonLoadedonPlayerEnteringWorldFirstTime is true from ADDON_LOADED")
+			end
 			RQE.HasPortaledOrHearthed = false
 			RQE.HasLoggedIn = true
 			RQE.HasReloaded = false
