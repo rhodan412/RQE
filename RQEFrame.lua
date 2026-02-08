@@ -1647,14 +1647,18 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				if not RQE.questIDFromText then
 					RQE.debugLog("Error: Invalid quest ID extracted from text")
 				else
-					RQE.infoLog("Quest ID from text for macro:", RQE.questIDFromText)	-- Debug message for the current operation
+					if RQE.db.profile.debugLevel == "INFO+" then
+						RQE.infoLog("Quest ID from text for macro:", RQE.questIDFromText)	-- Debug message for the current operation
+					end
 
 					-- Dynamically create/edit macro based on the super tracked quest and the step associated with the clicked waypoint button
 					RQE.debugLog("Attempting to create macro")
 				end
 			end
 
-			RQE.infoLog("Quest ID from text for macro:", RQE.questIDFromText)  -- Debug message for the current operation
+			if RQE.db.profile.debugLevel == "INFO+" then
+				RQE.infoLog("Quest ID from text for macro:", RQE.questIDFromText)  -- Debug message for the current operation
+			end
 
 			-- Check if MagicButton should be visible based on macro body
 			C_Timer.After(1, function()
