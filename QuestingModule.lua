@@ -2818,7 +2818,9 @@ function UpdateRQEQuestFrame()
 
 					-- Add Direction Text
 					local directionText = C_QuestLog.GetNextWaypointText(questID)
-					RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)
+					if RQE.db.profile.debugLevel == "INFO+" then
+						RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)
+					end
 					if directionText and directionText ~= "" then
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: " .. directionText, 0.81, 0.5, 1, true)
@@ -2915,7 +2917,9 @@ function UpdateRQEQuestFrame()
 
 					-- Add Direction Text
 					local directionText = C_QuestLog.GetNextWaypointText(questID)
-					RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)  -- Debug print
+					if RQE.db.profile.debugLevel == "INFO+" then
+						RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)  -- Debug print
+					end
 					if directionText and directionText ~= "" then
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: " .. directionText, 0.81, 0.5, 1, true)
