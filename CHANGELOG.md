@@ -43,6 +43,7 @@
 		- Updated Westfall, Duskwood and Blasted Lands quests in the DB (2025.02.04.1632)
 		- Updated coordinateHotspot for questID 90759 (2025.02.06.0327)
 		- Updated Arathi Highlands and The Hinterlands quests (alliance) in the DB (2025.02.07.2233)
+		- Updated Western Plaguelands quests (alliance/neutral) in the DB (2025.02.09.1950)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
