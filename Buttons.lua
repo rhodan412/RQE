@@ -145,7 +145,8 @@ RQE.UnknownButtonTooltip = function()
 										--DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
 
 										if RQE.WCoordData == RQE.SeparateFocusCoordData then
-											RQE:PlayThrottledSound(45024)
+											RQE:KhadgarCoordsMatch()
+											--RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 										else
 											print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
 											RQE:PlayThrottledSound(135755)
@@ -337,6 +338,17 @@ RQE.UnknownButtonTooltip = function()
 			end
 			WorldMapFrame:Hide()
 		end)
+	end)
+end
+
+
+-- Function that handles the alert/sound when the coords match between DB and Blizz
+function RQE:KhadgarCoordsMatch()
+	local leavemessage = "** Coordinates Match **"
+	PlaySound(8959)
+	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+	C_Timer.After(0.5, function()
+		RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 	end)
 end
 
