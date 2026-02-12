@@ -47,6 +47,7 @@
 		- Updated Arathi Highlands and The Hinterlands quests (alliance) in the DB (2025.02.07.2233)
 		- Updated Western Plaguelands quests (alliance/neutral) in the DB (2025.02.09.1950)
 		- Updated Badlands quests (alliance/neutral) in the DB (2025.02.11.2106)
+		- Updated Searing Gorge and many Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.0342)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
