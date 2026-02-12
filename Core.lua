@@ -971,13 +971,13 @@ function RQE:WatchAutoCompletableUnwatchedQuests(verbose)
 			if qid and self:IsQuestAutoComplete(qid) and not self:IsQuestWatched(qid) then
 				local ok = C_QuestLog.AddQuestWatch(qid)
 				if ok then added = added + 1 end
-				if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO" then
+				if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO+" then
 					print(("RQE: watching auto-completable quest %d (%s)"):format(qid, info.title or ""))
 				end
 			end
 		end
 	end
-	if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO" then
+	if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO+" then
 		print(("RQE: added %d auto-completable quest(s) to watch on login."):format(added))
 	end
 end
