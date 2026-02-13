@@ -58,6 +58,23 @@ local function InitializeSandbox()
 		return table.concat(lines, "\n")
 	end
 
+	-- Convert escaped pipes back into real WoW codes (so |c... works)
+	local function NormalizePipesInString(s)
+		if type(s) ~= "string" then return s end
+		return s:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
+	end
+
+	local function NormalizePipesInTable(t)
+		if type(t) ~= "table" then return end
+		for k, v in pairs(t) do
+			if type(v) == "string" then
+				t[k] = NormalizePipesInString(v)
+			elseif type(v) == "table" then
+				NormalizePipesInTable(v)
+			end
+		end
+	end
+
 	-------------------------------------------------------
 	-- #1d. Editor Frame
 	-------------------------------------------------------
@@ -158,6 +175,8 @@ local function InitializeSandbox()
 		if not ok or type(data) ~= "table" then
 			print("|cffff0000Error parsing quest data.|r") return
 		end
+
+		NormalizePipesInTable(data)
 
 		RQE_Sandbox.entries[id] = data
 		SaveSandbox()
