@@ -5,6 +5,7 @@
 		- Players can now get the right-click dropdown menu, when the RQEFrame ["supertrack" frame] is displaying a searched quest - allowing players to get the wowhead and warcraft wiki links for searched quest
 		- When RQEFrame is displaying a searched quest, this ID is saved between sessions so that the searched quest will be displayed on next reload/login
 		- Finished most DB quests for Outland/TBC for alliance/scryer
+		- Fixed issue with RQEFrame SeparateFocusFrame and StepsText displaying color codes instead of the colored text in the RQEFrame
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -37,6 +38,9 @@
 		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
 		- Updated version# (2025.02.11.2106)
 
+	RQE_Sandbox.lua
+		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
+
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
 		- Updated many Blade's Edge Mountains alliance quests in the DB (2025.02.01.2334)
@@ -49,12 +53,14 @@
 		- Updated Badlands quests (alliance/neutral) in the DB (2025.02.11.2106)
 		- Updated Searing Gorge and many Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.0342)
 		- Updated Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.1920)
+		- Updated some Northern Stranglethorn Vale quests (alliance/neutral) in the DB (2025.02.13.1806)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
 		- Added ability for right-click dropdown menu to appear if the RQEFrame is displaying a searched quest to allow players to search warcraft wiki or wowhead for searched quests within the addon (2025.02.01.2334)
 		- Added some extra line breaks in the tooltip for quests in the RQEFrame for better, more consistent viewing (2025.02.03.0437)
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
+		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
 
 	RQEMacro.lua
 		- Removed some unneeded comments in the code (2025.02.01.2334)
