@@ -2422,7 +2422,19 @@ function RQE.InitializeSeparateFocusFrame()
 		local stepDescription = (stepData and stepData.description and stepData.description ~= "")
 			and stepData.description or "No step description available."
 
+		if RQE.db.profile.debugLevel == "INFO+" and stepData and stepData.description then
+			local s = stepData.description
+			local hasSingle = s:find("|c", 1, true) ~= nil      -- plain find
+			local hasDouble = s:find("||c", 1, true) ~= nil     -- plain find
+
+			-- Replace | with a visible character so you can SEE it in chat
+			local visible = s:gsub("|", "¦")
+
+			print(("DBG: has |c=%s, has ||c=%s, text=%s"):format(tostring(hasSingle), tostring(hasDouble), visible))
+		end
+
 		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
+		formattedText = formattedText:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
 		RQE.StepIndexForCoordMatch = stepIndex
 		RQE.totalStepforQuest = totalSteps
 
