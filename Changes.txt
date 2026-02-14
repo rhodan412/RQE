@@ -40,6 +40,7 @@
 
 	RQE_Sandbox.lua
 		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
+		- Added button to clear all entries from the sandbox UI (2025.02.14.0457)
 
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
@@ -53,7 +54,7 @@
 		- Updated Badlands quests (alliance/neutral) in the DB (2025.02.11.2106)
 		- Updated Searing Gorge and many Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.0342)
 		- Updated Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.1920)
-		- Updated some Northern Stranglethorn Vale quests (alliance/neutral) in the DB (2025.02.13.1806)
+		- Updated Northern Stranglethorn and Cape of Stranglethorn quests (alliance/neutral) in the DB (2025.02.14.0457)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
