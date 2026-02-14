@@ -152,6 +152,11 @@ local function InitializeSandbox()
 	clearBtn:SetPoint("LEFT", toggleBtn, "RIGHT", 10, 0)
 	clearBtn:SetText("Clear Sandbox")
 
+	local clearAllBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
+	clearAllBtn:SetSize(120, 25)
+	clearAllBtn:SetPoint("LEFT", clearBtn, "RIGHT", 10, 0)
+	clearAllBtn:SetText("Clear All Sandbox")
+
 	local closeBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
 	closeBtn:SetSize(80, 25)
 	closeBtn:SetPoint("BOTTOMRIGHT", -20, 20)
@@ -212,6 +217,15 @@ local function InitializeSandbox()
 			editBox:SetText("")
 			print("|cffff6666All Sandbox data cleared.|r")
 		end
+		RQE.OkayToUpdateSeparateFF = false
+	end)
+
+	clearAllBtn:SetScript("OnClick", function()
+		wipe(RQE_Sandbox.entries)
+		RQE_SandboxDB.entries = {}
+		SaveSandbox()
+		editBox:SetText("")
+		print("|cffff6666All Sandbox data cleared.|r")
 		RQE.OkayToUpdateSeparateFF = false
 	end)
 
