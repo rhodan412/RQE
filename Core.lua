@@ -251,11 +251,23 @@ end
 ---------------------------------------------------
 
 -- Global color helpers
-RQE.ColorGREEN  = "|cff00ff00"
+RQE.ColorGREEN = "|cff00ff00"
 RQE.ColorYELLOW = "|cffffff00"
 RQE.ColorWHITE  = "|cffffffff"
 RQE.ColorORANGE = "|cffff7f00"
-RQE.ColorRESET  = "|r"
+RQE.ColorPINK = "|cffff69b4"   -- Hot pink
+RQE.ColorCYAN = "|cff00ffff"
+RQE.ColorPURPLE = "|cffb266ff"   -- Soft purple
+RQE.ColorVIOLET = "|cff8a2be2"   -- Deeper purple
+RQE.ColorCANARY = "|cffffff66"   -- Soft neon yellow
+RQE.ColorLIME = "|cff99ff00"
+RQE.ColorTEAL = "|cff00ffcc"
+RQE.ColorGOLD = "|cffffd700"
+RQE.ColorSILVER = "|cffc0c0c0"
+RQE.ColorSKYBLUE = "|cff66ccff"
+RQE.ColorCRIMSON = "|cffdc143c"
+RQE.ColorMAGENTA = "|cffff00ff"
+RQE.ColorRESET = "|r"
 
 local defaults = {
 	profile = {
