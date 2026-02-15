@@ -336,7 +336,10 @@ RQE.UnknownButtonTooltip = function()
 				RQE.WPyPos = RQE.superY
 				RQE.WPmapID = RQE.superMapID
 			end
-			WorldMapFrame:Hide()
+			-- Fixed taint caused when mousing over "W" button while in combat
+			if not InCombatLockdown() then
+				WorldMapFrame:Hide()
+			end
 		end)
 	end)
 end
