@@ -36,7 +36,7 @@
 
 	RQE.toc
 		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
-		- Updated version# (2025.02.11.2106)
+		- Updated version# (2025.02.15.0558)
 
 	RQE_Sandbox.lua
 		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
@@ -55,6 +55,7 @@
 		- Updated Searing Gorge and many Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.0342)
 		- Updated Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.1920)
 		- Updated Northern Stranglethorn and Cape of Stranglethorn quests (alliance/neutral) in the DB (2025.02.14.0457)
+		- Updated Swamp of Sorrows and Eastern Plaguelands quests (alliance/neutral) in the DB (2025.02.15.0558)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
@@ -66,6 +67,7 @@
 	RQEMacro.lua
 		- Removed some unneeded comments in the code (2025.02.01.2334)
 		- Changed debugMode from INFO to INFO+ when stating the CD is N/A for spell, within the RQE Macro Button, during combat (2025.02.03.0437)
+		- Added tooltip for Set CVAR (2025.02.15.0558)
 
 
 12.0.0.2 (2026.01.29)
