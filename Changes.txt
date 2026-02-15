@@ -13,6 +13,7 @@
 	Buttons.lua
 		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2025.02.01.2334)
 		- Updated coding to give raid warning [author-mode ONLY] when coords are accurate between DB and Blizz waypoints (2025.02.11.2106)
+		- Fixed taint caused by WorldMapFrame:Hide during combat (2025.02.15.1834)
 
 	Config.lua
 		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2025.02.06.0327)
@@ -23,6 +24,7 @@
 		- When a quest is searched ["S" Button in the RQEFrame] and player presses "Track" the addon will save the "tracked" quest as a supertracked quest for restoration in following session (2025.02.01.2334)
 		- Removed coding that was clearing debugLoggingCheckbox [author-mode ONLY, not applicable for users] (2025.02.06.0327)
 		- Modified debugMode requirements for some of the debug print outs (2025.02.11.2106)
+		- Added more colors to the global list (2025.02.15.1834)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -56,6 +58,7 @@
 		- Updated Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.1920)
 		- Updated Northern Stranglethorn and Cape of Stranglethorn quests (alliance/neutral) in the DB (2025.02.14.0457)
 		- Updated Swamp of Sorrows and Eastern Plaguelands quests (alliance/neutral) in the DB (2025.02.15.0558)
+		- Updated some information in Wetlands and Dun Morogh (2025.02.15.1834)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
