@@ -60,6 +60,7 @@
 		- Updated Swamp of Sorrows and Eastern Plaguelands quests (alliance/neutral) in the DB (2025.02.15.0558)
 		- Updated some information in Wetlands and Dun Morogh (2025.02.15.1834)
 		- Updated Dun Morogh quests in DB (2025.02.16.0352)
+		- Updated most Wetlands quests in DB (2025.02.16.1735)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
