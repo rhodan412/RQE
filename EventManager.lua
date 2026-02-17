@@ -3756,6 +3756,10 @@ function RQE.handleQuestAccepted(...)
 		RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
 	end)
 
+	if RQE.db.profile.debugLevel == "INFO" then
+		RQE:CheckCoordHotspotsInSteps(questID)
+	end
+
 	-- -- Check if the quest is a bonus objective
 	-- if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
 		-- UpdateRQEBonusQuestFrame(questID)
