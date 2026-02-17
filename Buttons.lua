@@ -145,11 +145,12 @@ RQE.UnknownButtonTooltip = function()
 										--DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
 
 										if RQE.WCoordData == RQE.SeparateFocusCoordData then
-											RQE:KhadgarCoordsMatch()
+											RQE:KhadgarCoordsMatch(C_SuperTrack.GetSuperTrackedQuestID())
 											--RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 										else
+											RQE:CoordsNOMatch(C_SuperTrack.GetSuperTrackedQuestID())
 											print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
-											RQE:PlayThrottledSound(135755)
+											-- RQE:PlayThrottledSound(135755)
 										end
 									end
 
@@ -346,27 +347,107 @@ end
 
 
 -- Function that handles the alert/sound when the coords match between DB and Blizz
-function RQE:KhadgarCoordsMatch()
-	local leavemessage = "** Coordinates Match **"
+function RQE:KhadgarCoordsMatch(questID)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	questID = tonumber(questID) or 0
+	if questID then
+		local leavemessage = string.format("** Coordinates Match (QID: %d) **", questID)
+		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 0, b = 1 })
+	else
+		local leavemessage = "** Coordinates Match **"
+		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+	end
+
 	PlaySound(8959)
-	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+
 	C_Timer.After(0.5, function()
 		RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
+	end)
+
+	C_Timer.After(1.2, function()
+		RQE:CheckCoordHotspotsInSteps(questID)
+	end)
+end
+
+
+-- Function that handles the alert/sound when the coords do not between DB and Blizz
+function RQE:CoordsNOMatch(questID)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	questID = tonumber(questID) or 0
+	if questID then
+		local leavemessage = string.format("** NO Coordinates Match (QID: %d) **", questID)
+		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 0, b = 0 })
+	else
+		local leavemessage = "** NO Coordinates Match **"
+		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+	end
+
+	PlaySound(8959)
+
+	C_Timer.After(0.5, function()
+		RQE:PlayThrottledSound(135755)	-- VO_82_Mechagnome_Citizen_Formal_F_Greetings
+	end)
+
+	C_Timer.After(1.2, function()
+		RQE:CheckCoordHotspotsInSteps(questID)
 	end)
 end
 
 
 -- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
-function RQE:LegacyCoordsDetected()
-	local leavemessage = "** Legacy Coordinates Detected! **"
-	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+function RQE:LegacyCoordsDetected(questID)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	questID = tonumber(questID) or 0
+	local leavemessage = string.format("** Legacy Coordinates Detected! (QID: %d) **", questID)
+	-- local leavemessage = "** Legacy Coordinates Detected! **"
+
+	PlaySound(8959)
+	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 1, b = 0 })
+	-- RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+
+	C_Timer.After(0.5, function()
+		RQE:PlayThrottledSound(4574)	-- igPVPUpdate
+	end)
+end
+
+
+-- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
+function RQE:NoDBEntryForQuest(questID)
+	if C_AddOns.IsAddOnLoaded("Chattynator") then return end
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	questID = tonumber(questID) or 0
+	local leavemessage = string.format("** No DB Entries for Quest (QID: %d) **", questID)
+	-- local leavemessage = "** No DB Entries for Quest **"
+
+	--PlaySound(8959)
+	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 0, b = 0 })
+	-- RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+
+	C_Timer.After(0.5, function()
+		RQE:PlayThrottledSound(3784)	-- AirElemental
+	end)
 end
 
 
 -- Function that handles the alert when the DB entry contains NO legacy "coordinates" in any stepIndex and only coordinateHotspots
-function RQE:NoLegacyCoordsDetected()
-	local leavemessage = "** NO Legacy Coordinates Used **"
-	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+function RQE:NoLegacyCoordsDetected(questID)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	questID = tonumber(questID) or 0
+	local leavemessage = string.format("** All steps use coordinateHotspots (QID: %d) **", questID)
+	-- local leavemessage = "** All steps use coordinateHotspots **"
+
+	PlaySound(8959)
+	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 0, g = 1, b = 0 })
+	-- RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+
+	C_Timer.After(0.5, function()
+		RQE:PlayThrottledSound(888)	-- LEVELUP
+	end)
 end
 
 
