@@ -2506,6 +2506,10 @@ function UpdateRQEQuestFrame()
 						end
 					end
 
+					if RQE.db.profile.debugLevel == "INFO" then
+						RQE:CheckCoordHotspotsInSteps(questID)
+					end
+
 					if IsShiftKeyDown() and button == "LeftButton" then
 						if RQE.db.profile.debugLevel == "INFO+" then
 							if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
