@@ -4062,6 +4062,80 @@ function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 end
 
 
+-- Checks whether steps use legacy `coordinates` instead of `coordinateHotspots`
+-- /run RQE:CheckCoordHotspotsInSteps(25792)
+function RQE:CheckCoordHotspotsInSteps(questID)
+	questID = tonumber(questID)
+	if not questID then
+		print((RQE.ColorCRIMSON or "|cffff0000") .. "RQE:CheckCoordHotspotsInSteps - questID is not a number." .. (RQE.ColorRESET or "|r"))
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData or type(questData) ~= "table" then
+		print((RQE.ColorCRIMSON or "|cffff0000") .. "RQE: No DB entry found for questID: " .. questID .. (RQE.ColorRESET or "|r"))
+		return
+	end
+
+	local title = questData.title or (C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)) or "Unknown"
+
+	-- Collect numeric step indices
+	local steps = {}
+	for k, v in pairs(questData) do
+		if type(k) == "number" and type(v) == "table" then
+			steps[#steps + 1] = k
+		end
+	end
+	table.sort(steps)
+
+	print(RQE.ColorGREEN .. ("[RQE] CoordHotspot audit — QID %d: %s"):format(questID, title) .. RQE.ColorRESET)
+
+	if #steps == 0 then
+		print(RQE.ColorYELLOW .. "No step tables found on this quest entry." .. RQE.ColorRESET)
+		return
+	end
+
+	local legacyCount, hotspotCount, bothCount, noneCount = 0, 0, 0, 0
+
+	for _, stepIndex in ipairs(steps) do
+		local step = questData[stepIndex]
+
+		local hasCoords   = type(step.coordinates) == "table" and step.coordinates.x and step.coordinates.y
+		local hasHotspots = type(step.coordinateHotspots) == "table" and step.coordinateHotspots[1] ~= nil
+
+		if hasCoords and not hasHotspots then
+			legacyCount = legacyCount + 1
+			local c = step.coordinates
+			local mapText = c.mapID and ("mapID=" .. tostring(c.mapID)) or (c.continentID and ("continentID=" .. tostring(c.continentID))) or "noMap"
+			print(RQE.ColorORANGE .. ("  Step %d uses LEGACY coordinates: { x=%.2f, y=%.2f, %s }"):format(stepIndex, tonumber(c.x) or 0, tonumber(c.y) or 0, mapText) .. RQE.ColorRESET)
+
+		elseif hasHotspots and not hasCoords then
+			hotspotCount = hotspotCount + 1
+			print(RQE.ColorSKYBLUE .. ("  Step %d uses coordinateHotspots (%d points)"):format(stepIndex, #step.coordinateHotspots) .. RQE.ColorRESET)
+
+		elseif hasCoords and hasHotspots then
+			bothCount = bothCount + 1
+			print(RQE.ColorYELLOW .. ("  Step %d has BOTH coordinates + coordinateHotspots (pick one)"):format(stepIndex) .. RQE.ColorRESET)
+
+		else
+			noneCount = noneCount + 1
+			print(RQE.ColorYELLOW .. ("  Step %d has NO coordinates/coordinateHotspots"):format(stepIndex) .. RQE.ColorRESET)
+		end
+	end
+
+	-- Play a sound depending on whether legacy coords were found
+	if legacyCount > 0 then
+		PlaySound(1285)  -- legacy coords found
+		RQE:LegacyCoordsDetected()
+	else
+		PlaySound(737)  -- no legacy coords found
+		RQE:NoLegacyCoordsDetected()
+	end
+
+	print(RQE.ColorGREEN .. ("Summary: legacy=%d, hotspots=%d, both=%d, none=%d"):format(legacyCount, hotspotCount, bothCount, noneCount) .. RQE.ColorRESET)
+end
+
+
 -- Function that tracks the closest quest on certain events in the Event Manager
 function RQE.TrackClosestQuest()
 	if not RQEFrame:IsShown() then return end
