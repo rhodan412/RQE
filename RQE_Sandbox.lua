@@ -191,6 +191,7 @@ local function InitializeSandbox()
 		RQE:StartPeriodicChecks()
 		print("|cff00ff00Saved Sandbox data for Quest ID:|r", id)
 		RQE.OkayToUpdateSeparateFF = false
+		RQE:CheckCoordHotspotsInSteps(id)
 	end)
 
 	toggleBtn:SetScript("OnClick", function()
