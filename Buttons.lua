@@ -356,6 +356,20 @@ function RQE:KhadgarCoordsMatch()
 end
 
 
+-- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
+function RQE:LegacyCoordsDetected()
+	local leavemessage = "** Legacy Coordinates Detected! **"
+	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+end
+
+
+-- Function that handles the alert when the DB entry contains NO legacy "coordinates" in any stepIndex and only coordinateHotspots
+function RQE:NoLegacyCoordsDetected()
+	local leavemessage = "** NO Legacy Coordinates Used **"
+	RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
+end
+
+
 -- Hide the tooltip when the mouse leaves
 RQE.HideUnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnLeave", function()
