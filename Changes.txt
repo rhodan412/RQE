@@ -14,6 +14,7 @@
 		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2025.02.01.2334)
 		- Updated coding to give raid warning [author-mode ONLY] when coords are accurate between DB and Blizz waypoints (2025.02.11.2106)
 		- Fixed taint caused by WorldMapFrame:Hide during combat (2025.02.15.1834)
+		- Added RQE:LegacyCoordsDetected() and RQE:NoLegacyCoordsDetected() functions to provide raid warning if legacy coordinates are used in a specific quest DB entry or coordinateHotspots [author-mode ONLY] (2025.02.16.2344)
 
 	Config.lua
 		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2025.02.06.0327)
@@ -25,6 +26,7 @@
 		- Removed coding that was clearing debugLoggingCheckbox [author-mode ONLY, not applicable for users] (2025.02.06.0327)
 		- Modified debugMode requirements for some of the debug print outs (2025.02.11.2106)
 		- Added more colors to the global list (2025.02.15.1834)
+		- Added RQE:CheckCoordHotspotsInSteps() function that checks to see if a given quest uses legacy 'coordinates' versus the newer 'coordinateHotspots' that include multizone and continentID in the coordinates (2025.02.16.2344)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -32,9 +34,11 @@
 		- Fixed SUPER_TRACKING_CHANGED event function that was updating new supertrack, when nothing being tracked, even when option was not selected by player in configuration settings (2025.02.06.0327)
 		- Commented out coding in SUPER_TRACKING_CHANGED that was clearing the SeparateFocusFrame and causing possible issues (2025.02.06.0327)
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
+		- Updated QUEST_ACCEPTED to run the RQE:CheckCoordHotspotsInSteps() function to check if the accepted quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
 
 	QuestingModule.lua
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
+		- Updated QuestLogIndexButton:SetScript to run the RQE:CheckCoordHotspotsInSteps() function to check if the supertracked quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
 
 	RQE.toc
 		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
@@ -60,7 +64,7 @@
 		- Updated Swamp of Sorrows and Eastern Plaguelands quests (alliance/neutral) in the DB (2025.02.15.0558)
 		- Updated some information in Wetlands and Dun Morogh (2025.02.15.1834)
 		- Updated Dun Morogh quests in DB (2025.02.16.0352)
-		- Updated most Wetlands quests in DB (2025.02.16.1735)
+		- Updated Wetlands quests in DB (2025.02.16.2344)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
