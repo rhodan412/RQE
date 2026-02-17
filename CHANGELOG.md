@@ -15,6 +15,7 @@
 		- Updated coding to give raid warning [author-mode ONLY] when coords are accurate between DB and Blizz waypoints (2025.02.11.2106)
 		- Fixed taint caused by WorldMapFrame:Hide during combat (2025.02.15.1834)
 		- Added RQE:LegacyCoordsDetected() and RQE:NoLegacyCoordsDetected() functions to provide raid warning if legacy coordinates are used in a specific quest DB entry or coordinateHotspots [author-mode ONLY] (2025.02.16.2344)
+		- Updated calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
 
 	Config.lua
 		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2025.02.06.0327)
@@ -27,6 +28,7 @@
 		- Modified debugMode requirements for some of the debug print outs (2025.02.11.2106)
 		- Added more colors to the global list (2025.02.15.1834)
 		- Added RQE:CheckCoordHotspotsInSteps() function that checks to see if a given quest uses legacy 'coordinates' versus the newer 'coordinateHotspots' that include multizone and continentID in the coordinates (2025.02.16.2344)
+		- Updated design of calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -39,6 +41,7 @@
 	QuestingModule.lua
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 		- Updated QuestLogIndexButton:SetScript to run the RQE:CheckCoordHotspotsInSteps() function to check if the supertracked quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
+		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2025.02.17.0436)
 
 	RQE.toc
 		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
@@ -47,6 +50,7 @@
 	RQE_Sandbox.lua
 		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
 		- Added button to clear all entries from the sandbox UI (2025.02.14.0457)
+		- Updated saveBtn:SetScript to call RQE:CheckCoordHotspotsInSteps() function when button pressed (2025.02.17.0436)
 
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
@@ -65,6 +69,7 @@
 		- Updated some information in Wetlands and Dun Morogh (2025.02.15.1834)
 		- Updated Dun Morogh quests in DB (2025.02.16.0352)
 		- Updated Wetlands quests in DB (2025.02.16.2344)
+		- Updated some of the Dustwallow Marsh quests in DB (2025.02.17.0436)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
@@ -72,6 +77,7 @@
 		- Added some extra line breaks in the tooltip for quests in the RQEFrame for better, more consistent viewing (2025.02.03.0437)
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
+		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2025.02.17.0436)
 
 	RQEMacro.lua
 		- Removed some unneeded comments in the code (2025.02.01.2334)
