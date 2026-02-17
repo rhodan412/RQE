@@ -1252,6 +1252,7 @@ function ShowQuestDropdown(self, questID)
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+			rootDescription:CreateButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 		end
 
