@@ -4063,8 +4063,10 @@ end
 
 
 -- Checks whether steps use legacy `coordinates` instead of `coordinateHotspots`
--- /run RQE:CheckCoordHotspotsInSteps(25792)
 function RQE:CheckCoordHotspotsInSteps(questID)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	if C_AddOns.IsAddOnLoaded("Chattynator") then return end
+
 	questID = tonumber(questID)
 	if not questID then
 		print((RQE.ColorCRIMSON or "|cffff0000") .. "RQE:CheckCoordHotspotsInSteps - questID is not a number." .. (RQE.ColorRESET or "|r"))
@@ -4092,6 +4094,7 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 
 	if #steps == 0 then
 		print(RQE.ColorYELLOW .. "No step tables found on this quest entry." .. RQE.ColorRESET)
+		RQE:NoDBEntryForQuest(questID)
 		return
 	end
 
@@ -4109,6 +4112,10 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 			local mapText = c.mapID and ("mapID=" .. tostring(c.mapID)) or (c.continentID and ("continentID=" .. tostring(c.continentID))) or "noMap"
 			print(RQE.ColorORANGE .. ("  Step %d uses LEGACY coordinates: { x=%.2f, y=%.2f, %s }"):format(stepIndex, tonumber(c.x) or 0, tonumber(c.y) or 0, mapText) .. RQE.ColorRESET)
 
+			DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0.64, 0.41, 0.64)	-- Violet Blue
+			DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", c.x, c.y, tostring(c.mapID)), 0.64, 0.41, 0.64)	-- Violet Blue
+			DEFAULT_CHAT_FRAME:AddMessage("				},", 0.64, 0.41, 0.64)	-- Violet Blue
+
 		elseif hasHotspots and not hasCoords then
 			hotspotCount = hotspotCount + 1
 			print(RQE.ColorSKYBLUE .. ("  Step %d uses coordinateHotspots (%d points)"):format(stepIndex, #step.coordinateHotspots) .. RQE.ColorRESET)
@@ -4123,13 +4130,13 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 		end
 	end
 
-	-- Play a sound depending on whether legacy coords were found
+	-- Calls function that displays a visual and audio alert depending on whether legacy coords were found
 	if legacyCount > 0 then
-		PlaySound(1285)  -- legacy coords found
-		RQE:LegacyCoordsDetected()
+		--PlaySound(1285)  -- legacy coords found
+		RQE:LegacyCoordsDetected(questID)
 	else
-		PlaySound(737)  -- no legacy coords found
-		RQE:NoLegacyCoordsDetected()
+		--PlaySound(737)  -- no legacy coords found
+		RQE:NoLegacyCoordsDetected(questID)
 	end
 
 	print(RQE.ColorGREEN .. ("Summary: legacy=%d, hotspots=%d, both=%d, none=%d"):format(legacyCount, hotspotCount, bothCount, noneCount) .. RQE.ColorRESET)
