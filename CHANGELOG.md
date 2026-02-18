@@ -69,7 +69,8 @@
 		- Updated some information in Wetlands and Dun Morogh (2025.02.15.1834)
 		- Updated Dun Morogh quests in DB (2025.02.16.0352)
 		- Updated Wetlands quests in DB (2025.02.16.2344)
-		- Updated some of the Dustwallow Marsh quests in DB (2025.02.17.0436)
+		- Updated Dustwallow Marsh quests in DB (2025.02.17.2152)
+		- Updated some of Silithus (alliance/neutral) quests in DB (2025.02.17.2152)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
