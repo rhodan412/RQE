@@ -1104,9 +1104,18 @@ local function CreateQuestTooltip(frame, questID)
 end
 
 
+-- Sets flag to true if player is hovering over RQEFrame
+if RQEFrame then
+	RQEFrame:SetScript("OnEnter", function()
+		RQE.RQEFrameHover = true
+	end)
+end
+
+
 -- Hide tooltip for the RQEFrame when moving out of the frame
 if RQEFrame then
 	RQEFrame:SetScript("OnLeave", function()
+		RQE.RQEFrameHover = false
 		GameTooltip:Hide()
 	end)
 end
