@@ -339,7 +339,9 @@ RQE.UnknownButtonTooltip = function()
 			end
 			-- Fixed taint caused when mousing over "W" button while in combat
 			if not InCombatLockdown() then
-				WorldMapFrame:Hide()
+				if not RQE.DontCloseMap then
+					WorldMapFrame:Hide()
+				end
 			end
 		end)
 	end)
