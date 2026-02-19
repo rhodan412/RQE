@@ -6,6 +6,7 @@
 		- When RQEFrame is displaying a searched quest, this ID is saved between sessions so that the searched quest will be displayed on next reload/login
 		- Finished most DB quests for Outland/TBC for alliance/scryer
 		- Fixed issue with RQEFrame SeparateFocusFrame and StepsText displaying color codes instead of the colored text in the RQEFrame
+		- If world map is open already when player hovers over the Waypoint "W" Button in the supertrack frame, world map should now stay open
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -16,6 +17,7 @@
 		- Fixed taint caused by WorldMapFrame:Hide during combat (2025.02.15.1834)
 		- Added RQE:LegacyCoordsDetected() and RQE:NoLegacyCoordsDetected() functions to provide raid warning if legacy coordinates are used in a specific quest DB entry or coordinateHotspots [author-mode ONLY] (2025.02.16.2344)
 		- Updated calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
+		- When hovering over the "W" or "Waypoint" button in the RQEFrame the world map will more reliably stay open if it was open already (2025.02.19.0055)
 
 	Config.lua
 		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2025.02.06.0327)
@@ -29,6 +31,7 @@
 		- Added more colors to the global list (2025.02.15.1834)
 		- Added RQE:CheckCoordHotspotsInSteps() function that checks to see if a given quest uses legacy 'coordinates' versus the newer 'coordinateHotspots' that include multizone and continentID in the coordinates (2025.02.16.2344)
 		- Updated design of calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
+		- Added flag for map closure within the RQE.ExtractAndSaveQuestCoordinates() function call (2025.02.19.0055)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -37,6 +40,7 @@
 		- Commented out coding in SUPER_TRACKING_CHANGED that was clearing the SeparateFocusFrame and causing possible issues (2025.02.06.0327)
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 		- Updated QUEST_ACCEPTED to run the RQE:CheckCoordHotspotsInSteps() function to check if the accepted quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
+		- Added regular checks to see if world map is open and create a flag if it is to keep map open -- this only fires if the player is hovering over the RQEFrame (2025.02.19.0055)
 
 	QuestingModule.lua
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
@@ -70,7 +74,7 @@
 		- Updated Dun Morogh quests in DB (2025.02.16.0352)
 		- Updated Wetlands quests in DB (2025.02.16.2344)
 		- Updated Dustwallow Marsh quests in DB (2025.02.17.2152)
-		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2025.02.19.2152)
+		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2025.02.19.0055)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
@@ -79,6 +83,7 @@
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
 		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2025.02.17.0436)
+		- Added true/false flags if player is hovering over the RQEFrame (2025.02.19.0055)
 
 	RQEMacro.lua
 		- Removed some unneeded comments in the code (2025.02.01.2334)
