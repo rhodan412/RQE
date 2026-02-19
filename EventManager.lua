@@ -36,9 +36,11 @@ RQECharacterDB.searchedQuestID = RQECharacterDB.searchedQuestID or {}
 -- #2. Constants and Settings
 ------------------------------
 
--- Create an event frame
+-- Create event frames
 local Frame = CreateFrame("Frame")
+local mapRqeFrame = CreateFrame("Frame")
 
+local timeElapsedRQEMap = 0
 
 ---------------------------
 -- #3. Event Registration
@@ -1665,6 +1667,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.CreateMacroForUpdateSeparateFocusFrame = false
 	RQE.DataDeletedfromDBFile = false
 	RQE.deferredScenarioUpdate = false
+	RQE.DontCloseMap = false
 	RQE.DontUpdateFrame = false
 	RQE.DirectionChangedUpdateRQEFrame = false
 	RQE.GreaterThanOneProgress = false
@@ -7246,3 +7249,25 @@ end
 -- Optionally, use OnUpdate for continuous checking
 local hideObjectiveTrackerFrame = CreateFrame("Frame")
 hideObjectiveTrackerFrame:SetScript("OnUpdate", HideObjectiveTracker)
+
+
+-- OnUpdate function that checks if the map (quest details) are open and if so, it will resist closing the map when hovering over the "W" Button in RQEFrame
+mapRqeFrame:HookScript("OnUpdate", function(self, elapsed)
+	local isInInstance, _ = IsInInstance()
+	local isInScenario = C_Scenario.IsInScenario()
+
+	if isInInstance or isInScenario then return end
+
+	if not RQE.RQEFrameHover then return end
+
+    timeElapsedRQEMap = timeElapsedRQEMap + elapsed
+    if timeElapsedRQEMap > 0.05 then -- Do something every 0.05 seconds
+		local isMapOpen = WorldMapFrame:IsShown()
+        timeElapsedRQEMap = 0
+        if isMapOpen then
+			RQE.DontCloseMap = true
+		else
+			RQE.DontCloseMap = false
+		end
+    end
+end)
