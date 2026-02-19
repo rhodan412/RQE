@@ -1844,6 +1844,7 @@ function RQE.ExtractAndSaveQuestCoordinates()
 
 		if not isMapOpen then
 			WorldMapFrame:Hide()
+			RQE.DontCloseMap = false
 		end
 	end
 
@@ -14402,4 +14403,22 @@ function RQE.CheckCastingInfo()
 	print(string.format("Is Tradeskill: %s", tostring(isTradeskill)))
 	print(string.format("Not Interruptible: %s", tostring(notInterruptible)))
 	print("------------------------------------------------")
+end
+
+
+-- Function that prints out the distance to the current waypoint in yards
+function RQE:Debug_NavGetDistance()
+	if not C_Navigation or not C_Navigation.GetDistance then
+		print((self.ColorCRIMSON or "|cffff0000") .. "C_Navigation.GetDistance is not available on this client." .. (self.ColorRESET or "|r"))
+		return nil
+	end
+
+	local distance = C_Navigation.GetDistance()
+	if distance == nil then
+		print((self.ColorYELLOW or "|cffffff00") .. "[RQE] Nav Distance: nil (no tracked destination?)" .. (self.ColorRESET or "|r"))
+		return nil
+	end
+
+	print((self.ColorGREEN or "|cff00ff00") .. ("[RQE] Nav Distance: %.1f yards"):format(distance) .. (self.ColorRESET or "|r"))
+	return distance
 end
