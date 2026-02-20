@@ -1220,6 +1220,60 @@ function RQE.handlePlayerRegenEnabled()
 		end
 	end
 
+	-- After leaving combat, only start periodic checks if the current DB step contains a CheckDBInventory check
+	C_Timer.After(0.85, function()
+		-- Don’t do anything if we somehow re-entered combat
+		if InCombatLockdown() then
+			return
+		end
+
+		-- Get the currently super-tracked quest
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if not questID or questID <= 0 then
+			return
+		end
+
+		local questData = RQE.getQuestData(questID)
+		if not questData then
+			return
+		end
+
+		-- Determine the current stepIndex (same general approach you use elsewhere)
+		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
+		local stepData = questData[stepIndex]
+		if not stepData then
+			return
+		end
+
+		-- Check for CheckDBInventory in either stepData.funct or stepData.checks[*].funct
+		local hasInventoryCheck = false
+
+		if type(stepData.checks) == "table" then
+			for _, checkData in ipairs(stepData.checks) do
+				if checkData and checkData.funct == "CheckDBInventory" then
+					hasInventoryCheck = true
+					break
+				end
+			end
+		elseif type(stepData.funct) == "string" then
+			-- funct can be a single name or a space-separated list in your DB
+			if stepData.funct:find("CheckDBInventory", 1, true) then
+				hasInventoryCheck = true
+			end
+		end
+
+		if hasInventoryCheck then
+			RQE:StartPeriodicChecks()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				DEFAULT_CHAT_FRAME:AddMessage(("PLAYER_REGEN_ENABLED: StartPeriodicChecks() (Inventory check) | QID: %s | Step: %s"):format(tostring(questID), tostring(stepIndex)), 0.46, 0.62, 1)
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				DEFAULT_CHAT_FRAME:AddMessage(("PLAYER_REGEN_ENABLED: Skipped StartPeriodicChecks() (no Inventory check) | QID: %s | Step: %s"):format(tostring(questID), tostring(stepIndex)), 0.46, 0.62, 1)
+			end
+		end
+	end)
+
 	-- C_Timer.After(2, function()
 		-- -- Check for Dragonriding & Capture and print the current states for debugging purposes
 		-- if RQE.CheckForDragonMounts() then
@@ -7260,14 +7314,14 @@ mapRqeFrame:HookScript("OnUpdate", function(self, elapsed)
 
 	if not RQE.RQEFrameHover then return end
 
-    timeElapsedRQEMap = timeElapsedRQEMap + elapsed
-    if timeElapsedRQEMap > 0.05 then -- Do something every 0.05 seconds
+	timeElapsedRQEMap = timeElapsedRQEMap + elapsed
+	if timeElapsedRQEMap > 0.05 then -- Do something every 0.05 seconds
 		local isMapOpen = WorldMapFrame:IsShown()
-        timeElapsedRQEMap = 0
-        if isMapOpen then
+		timeElapsedRQEMap = 0
+		if isMapOpen then
 			RQE.DontCloseMap = true
 		else
 			RQE.DontCloseMap = false
 		end
-    end
+	end
 end)
