@@ -7,6 +7,7 @@
 		- Finished most DB quests for Outland/TBC for alliance/scryer
 		- Fixed issue with RQEFrame SeparateFocusFrame and StepsText displaying color codes instead of the colored text in the RQEFrame
 		- If world map is open already when player hovers over the Waypoint "W" Button in the supertrack frame, world map should now stay open
+		- Updated PLAYER_REGEN_ENABLED to check if current step of supertracked quest uses inventory check and, if so, will run check of step player should be on shortly after combat ends
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -41,6 +42,7 @@
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
 		- Updated QUEST_ACCEPTED to run the RQE:CheckCoordHotspotsInSteps() function to check if the accepted quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
 		- Added regular checks to see if world map is open and create a flag if it is to keep map open -- this only fires if the player is hovering over the RQEFrame (2025.02.19.0055)
+		- Updated PLAYER_REGEN_ENABLED to check to see if current step of supertracked quest uses an inventory check and, if so, will run RQE:StartPeriodicChecks() shortly after combat ends (2025.02.20.0008)
 
 	QuestingModule.lua
 		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
@@ -75,6 +77,7 @@
 		- Updated Wetlands quests in DB (2025.02.16.2344)
 		- Updated Dustwallow Marsh quests in DB (2025.02.17.2152)
 		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2025.02.19.0055)
+		- Updated Darkshore quests in DB (2025.02.20.0008)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
