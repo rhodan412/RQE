@@ -2434,8 +2434,8 @@ function RQE.InitializeSeparateFocusFrame()
 
 		if RQE.db.profile.debugLevel == "INFO+" and stepData and stepData.description then
 			local s = stepData.description
-			local hasSingle = s:find("|c", 1, true) ~= nil      -- plain find
-			local hasDouble = s:find("||c", 1, true) ~= nil     -- plain find
+			local hasSingle = s:find("|c", 1, true) ~= nil	  -- plain find
+			local hasDouble = s:find("||c", 1, true) ~= nil	 -- plain find
 
 			-- Replace | with a visible character so you can SEE it in chat
 			local visible = s:gsub("|", "¦")
