@@ -11,6 +11,7 @@
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
+		- Updated LibDBIcon (2025.02.22.0318)
 
 	Buttons.lua
 		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2025.02.01.2334)
@@ -78,6 +79,7 @@
 		- Updated Dustwallow Marsh quests in DB (2025.02.17.2152)
 		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2025.02.19.0055)
 		- Updated Darkshore quests in DB (2025.02.20.0008)
+		- Updated Ashenvale and Stonetalon (alliance/neutral) quests in DB (2025.02.22.0318)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
