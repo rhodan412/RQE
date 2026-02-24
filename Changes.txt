@@ -80,6 +80,8 @@
 		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2025.02.19.0055)
 		- Updated Darkshore quests in DB (2025.02.20.0008)
 		- Updated Ashenvale and Stonetalon (alliance/neutral) quests in DB (2025.02.22.0318)
+		- Updated Felwood (alliance/neutral) quests in DB (2025.02.23.0337)
+		- Updated most Desolace (alliance/neutral) quests in DB (2025.02.24.0331)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
