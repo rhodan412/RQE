@@ -82,6 +82,7 @@
 		- Updated Ashenvale and Stonetalon (alliance/neutral) quests in DB (2025.02.22.0318)
 		- Updated Felwood (alliance/neutral) quests in DB (2025.02.23.0337)
 		- Updated Desolace and Feralas (alliance/neutral) quests in DB (2025.02.25.0249)
+		- Updated Southern Barrens (alliance/neutral) quests in DB (2025.02.26.0449)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
