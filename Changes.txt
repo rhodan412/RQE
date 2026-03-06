@@ -8,6 +8,7 @@
 		- Fixed issue with RQEFrame SeparateFocusFrame and StepsText displaying color codes instead of the colored text in the RQEFrame
 		- If world map is open already when player hovers over the Waypoint "W" Button in the supertrack frame, world map should now stay open
 		- Updated PLAYER_REGEN_ENABLED to check if current step of supertracked quest uses inventory check and, if so, will run check of step player should be on shortly after combat ends
+		- Added initial quests data for Midnight's leveling campaign quests in the DB
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -34,6 +35,7 @@
 		- Added RQE:CheckCoordHotspotsInSteps() function that checks to see if a given quest uses legacy 'coordinates' versus the newer 'coordinateHotspots' that include multizone and continentID in the coordinates (2025.02.16.2344)
 		- Updated design of calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
 		- Added flag for map closure within the RQE.ExtractAndSaveQuestCoordinates() function call (2025.02.19.0055)
+		- Added requirement that the RQEFrame be displayed for coord information would be printed [author-mode ONLY] (2025.03.06.0217)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -83,6 +85,7 @@
 		- Updated Felwood (alliance/neutral) quests in DB (2025.02.23.0337)
 		- Updated Desolace and Feralas (alliance/neutral) quests in DB (2025.02.25.0249)
 		- Updated Southern Barrens (alliance/neutral) quests in DB (2025.02.26.0449)
+		- Added the initial information for campaign quests for Midnight to the DB, but most still need to be finalized (2025.03.06.0217)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
