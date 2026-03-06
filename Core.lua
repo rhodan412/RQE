@@ -13857,6 +13857,8 @@ end
 
 -- Prints the coordinateHotspot of the current player position regardless of if the continentID exists or if the map doesn't have a continentID
 function RQE.PrintPlayerCoordinateHotspot()
+	if not RQEFrame:IsShown() then return end
+
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if not mapID then
 		print("Unable to determine current map.")
@@ -13914,6 +13916,8 @@ end
 
 -- Fetches the player's position in relation to their current continent
 function RQE.DebugPrintPlayerContinentPosition(questID)
+	if not RQEFrame:IsShown() then return end
+
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if not mapID then
 		print("Unable to determine current map.")
