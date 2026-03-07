@@ -1465,6 +1465,32 @@ function RQE.GetDataForAddon()
 end
 
 
+-- Obtain WQ Information for Expansion: Midnight
+function RQE.GetMidnightWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(12)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(12)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(12)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
 -- Obtain WQ Information for Expansion: The War Within
 function RQE.GetTheWarWithinWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
