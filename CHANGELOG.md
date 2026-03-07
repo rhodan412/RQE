@@ -9,6 +9,8 @@
 		- If world map is open already when player hovers over the Waypoint "W" Button in the supertrack frame, world map should now stay open
 		- Updated PLAYER_REGEN_ENABLED to check if current step of supertracked quest uses inventory check and, if so, will run check of step player should be on shortly after combat ends
 		- Added initial quests data for Midnight's leveling campaign quests in the DB
+		- Added initial side quests for Eversong Woods into the DB
+		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -36,6 +38,7 @@
 		- Updated design of calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
 		- Added flag for map closure within the RQE.ExtractAndSaveQuestCoordinates() function call (2025.02.19.0055)
 		- Added requirement that the RQEFrame be displayed for coord information would be printed [author-mode ONLY] (2025.03.06.0217)
+		- Added coding to obtain WQ information for Midnight that are currently active [author-mode ONLY] (2025.03.07.0223)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -55,6 +58,7 @@
 	RQE.toc
 		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
 		- Updated version# (2025.02.15.0558)
+		- Updated interface# (2025.03.07.0223)
 
 	RQE_Sandbox.lua
 		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
@@ -86,6 +90,7 @@
 		- Updated Desolace and Feralas (alliance/neutral) quests in DB (2025.02.25.0249)
 		- Updated Southern Barrens (alliance/neutral) quests in DB (2025.02.26.0449)
 		- Added the initial information for campaign quests for Midnight to the DB, but most still need to be finalized (2025.03.06.0217)
+		- Added initial information for side quests in the Eversong Woods [Midnight] to the DB (2025.03.07.0223)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
@@ -100,6 +105,12 @@
 		- Removed some unneeded comments in the code (2025.02.01.2334)
 		- Changed debugMode from INFO to INFO+ when stating the CD is N/A for spell, within the RQE Macro Button, during combat (2025.02.03.0437)
 		- Added tooltip for Set CVAR (2025.02.15.0558)
+
+	WaypointManager.lua
+		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2025.03.07.0223)
+
+	WPUtil.lua
+		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2025.03.07.0223)
 
 
 12.0.0.2 (2026.01.29)
