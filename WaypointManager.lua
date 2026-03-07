@@ -57,6 +57,8 @@ end
 function RQE:CreateWaypoint(x, y, mapID, title)
 	-- print("~~~ Waypoint Creation Function: 58 ~~~")
 
+	if not RQEFrame:IsShown() then return end
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		if RQE.isForcedWaypoint then
 			print("Forcing new waypoint creation (ignore duplicate check).")
@@ -155,6 +157,8 @@ end
 function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	-- print("~~~ Waypoint Creation Function: 92 ~~~")
 
+	if not RQEFrame:IsShown() then return end
+
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
 	else
@@ -203,6 +207,8 @@ end
 -- Create a Waypoint when searching for a quest based on the location coordinates in the DB file
 function RQE:CreateSearchedQuestWaypoint(questID, mapID)
 	-- print("~~~ Waypoint Creation Function: 132 ~~~")
+
+	if not RQEFrame:IsShown() then return end
 
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
@@ -521,6 +527,8 @@ end
 
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+	if not RQEFrame:IsShown() then return end
+
 	-- print("~~~ Waypoint Creation Function: 401 ~~~")
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
@@ -1153,6 +1161,9 @@ end
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked()
 	-- print("RQE:OnCoordinateClicked() is running")
+
+	if not RQEFrame:IsShown() then return end
+
 	local stepIndex = RQE.AddonSetStepIndex or 1
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -1234,6 +1245,8 @@ end
 -- Force the waypoint for the currently super-tracked quest using the intended priority.
 function RQE:ForceWaypointForSupertracked(qid, mapID)
 	-- print("~~~ Waypoint Creation Function: 1137 ~~~")
+	if not RQEFrame:IsShown() then return end
+
 	if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
 	qid   = qid   or C_SuperTrack.GetSuperTrackedQuestID()
 	mapID = mapID or C_Map.GetBestMapForUnit("player")
@@ -1281,6 +1294,8 @@ end
 -- Centralized function to decide what the waypoint title should be
 function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 	-- print("~~ RQE:GetWaypointTitle running ~~")
+
+	if not RQEFrame:IsShown() then return end
 
 	-- Build a sane default up-front
 	local questData = questID and RQE.getQuestData(questID)
