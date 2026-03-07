@@ -63,6 +63,7 @@ end
 RQE.UnknownQuestButtonCalcNTrack = function()
 	-- RQE.UnknownQuestButton:SetScript("OnMouseDown", function()
 	RQE.UnknownQuestButton:SetScript("OnClick", function()	-- Potential taint?
+		if not RQEFrame:IsShown() then return end
 		if RQE.searchedQuestID then 
 			local questID = RQE.searchedQuestID
 			if questID then
@@ -337,6 +338,8 @@ end
 
 -- Centralized replace helper for TomTom/Blizzard pins
 function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
+	if not RQEFrame:IsShown() then return end
+
 	-- Normalize safety: require numbers in 0–1
 	if not (mapID and xNorm and yNorm) then return end
 	if xNorm > 1 or yNorm > 1 then
@@ -387,6 +390,8 @@ end
 
 -- Ensures the arrow points at the *current* chosen hotspot; switches only if the chosen index changed
 function RQE:EnsureWaypointForSupertracked()
+	if not RQEFrame:IsShown() then return end
+
 	if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then return end
@@ -988,6 +993,8 @@ end
 
 -- Helper function to clear sticky state on zone/login change
 function RQE.WPUtil.ClearHotspotState(questID, stepIndex, hard)
+	if not RQEFrame:IsShown() then return end
+
 	-- hard = true  -> wipe everything (use on login/reload/new area)
 	-- hard = false -> keep visited ladder; only forget current choice + eval cache
 	if not (questID and stepIndex) then
