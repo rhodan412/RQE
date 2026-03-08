@@ -91,6 +91,7 @@
 		- Updated Southern Barrens (alliance/neutral) quests in DB (2025.02.26.0449)
 		- Added the initial information for campaign quests for Midnight to the DB, but most still need to be finalized (2025.03.06.0217)
 		- Added initial information for side quests in the Eversong Woods [Midnight] to the DB (2025.03.07.0223)
+		- Added additional quests to the DB in an initial, non-finalized state (2025.03.07.2251)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
