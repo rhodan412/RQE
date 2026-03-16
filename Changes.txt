@@ -11,6 +11,7 @@
 		- Added initial quests data for Midnight's leveling campaign quests in the DB
 		- Added initial side quests for Eversong Woods into the DB
 		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed
+		- Added Eversong Woods, Zul'Aman and Harandar campaign quests to DB
 
 	Ace3
 		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
@@ -39,6 +40,9 @@
 		- Added flag for map closure within the RQE.ExtractAndSaveQuestCoordinates() function call (2025.02.19.0055)
 		- Added requirement that the RQEFrame be displayed for coord information would be printed [author-mode ONLY] (2025.03.06.0217)
 		- Added coding to obtain WQ information for Midnight that are currently active [author-mode ONLY] (2025.03.07.0223)
+
+	DebugLog.lua
+		- Fixed taint issue caused with debug log sometimes firing improperly while inside a scenario/instance (2025.03.15.2231)
 
 	EventManager.lua
 		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
@@ -93,6 +97,7 @@
 		- Added initial information for side quests in the Eversong Woods [Midnight] to the DB (2025.03.07.0223)
 		- Added additional quests to the DB in an initial, non-finalized state (2025.03.07.2251)
 		- Updated most of the Eversong Woods leveling campaign quests in DB (2025.03.12.0042)
+		- Updated Eversong Woods, Zul'Aman and Harandar campaign quests in DB (2025.03.15.2231)
 
 	RQEFrame.lua
 		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
