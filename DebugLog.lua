@@ -21,36 +21,24 @@ function RQE.AddToDebugLog(message)
 		return
 	end
 
-	local ok, safeMessage = pcall(tostring, message)
-	if not ok or safeMessage == nil then
-		-- Optional visible notice, but don't recurse into AddMessage again
-		if RQE and RQE.originalAddMessage and DEFAULT_CHAT_FRAME then
-			RQE.originalAddMessage(DEFAULT_CHAT_FRAME,
-				"|cffff7f00[RQE]|r A protected/secret chat value was detected and was not logged.")
-		end
-		return
-	end
-
 	local timestamp = date("%Y-%m-%d %H:%M:%S")
 	local logEntry
 
 	if RQE.db.profile.debugTimeStampCheckbox then
 		-- If timestamps are enabled, format normally
-		logEntry = string.format("[%s] %s", timestamp, safeMessage)
+		logEntry = string.format("[%s] %s", timestamp, message)
 	else
 		-- If timestamps are disabled, use [XXX] instead
-		logEntry = safeMessage
-	end
-
-	local lastEntry = logTable[#logTable]
-	if type(lastEntry) ~= "string" then
-		lastEntry = tostring(lastEntry or "")
+		logEntry = message
+		--logEntry = string.format(message) -- commented out as this type didn't like "%" signs in objective/descriptiontext
 	end
 
 	-- Prevent duplicate messages
-	if lastEntry ~= logEntry then
-		table.insert(logTable, logEntry)
-		RQE.UpdateLogFrame()
+	if not C_Scenario.IsInScenario() then
+		if logTable[#logTable] ~= logEntry then
+			table.insert(logTable, logEntry)
+			RQE.UpdateLogFrame()
+		end
 	end
 end
 
