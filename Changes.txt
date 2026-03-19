@@ -1,4 +1,19 @@
-12.0.1.0
+12.0.1.1 (2026.03.19)
+
+	**HIGHLIGHTS**
+		- Added/updated remainder of the leveling campaign quests into the DB for the Midnight expansion
+
+	DebugLog.lua
+		- Reverted changes made to debug log coding and added fail safes to not run when in an instance scenario as this resulted in errors (2025.03.19.0425)
+
+	RQE.toc
+		- Updated version# (2025.03.19.0425)
+
+	RQEDatabase.lua
+		- Updated Voidstorm leveling campaign quests in the DB (2025.03.19.0425)
+
+
+12.0.1.0 (2026.03.15)
 
 	**HIGHLIGHTS**
 		- Searched quests [not in the player log to track] give NPC name and name of map that they are in to aid guidance to pick up those searched quests
