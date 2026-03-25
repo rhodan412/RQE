@@ -12766,12 +12766,31 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 								finalQuantity = required
 								print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
 							end
-						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
-							finalQuantity = required - fulfilled
+						-- elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
+							-- finalQuantity = required - fulfilled
 
+							-- if (not finalQuantity or finalQuantity <= 0) then
+								-- finalQuantity = required
+								-- print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
+							-- end
+						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
+							-- Keep original text-matching fallback, but add a guard against fractional/invalid values
+							--finalQuantity = required - fulfilled
+
+							finalQuantity = tonumber(finalQuantity) or 0
+							finalQuantity = math.floor(finalQuantity + 0.5)
+
+							-- if finalQuantity <= 0 then
+								-- finalQuantity = required
+								-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+									-- print("|cFFFF3333[RQE]|r Sanitized quantity was invalid. Falling back to required amount = " .. finalQuantity)
+								-- end
+							-- end
 							if (not finalQuantity or finalQuantity <= 0) then
 								finalQuantity = required
-								print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
+								if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+									print("|cFFFF3333[RQE]|r Sanitized quantity was invalid. Falling back to required amount = " .. finalQuantity)
+								end
 							end
 						end
 
@@ -12805,6 +12824,10 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 		end
 		return
 	end
+
+	-- Final safety sanitization before purchase logic
+	finalQuantity = tonumber(finalQuantity) or 0
+	finalQuantity = math.floor(finalQuantity + 0.5)
 
 	-- Purchase logic
 	if C_AddOns.IsAddOnLoaded("CraftSim") then
@@ -12948,7 +12971,7 @@ function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
 					button2 = "No",
 					OnAccept = function()
 						C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
-						C_Timer.After(0.5, function()  -- Allow for server response time
+						C_Timer.After(1.5, function()  -- Allow for server response time
 							C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
 						end)
 					end,
