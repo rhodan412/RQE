@@ -1,3 +1,18 @@
+12.0.1.2
+
+	**HIGHLIGHTS**
+		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number
+
+	Core.lua
+		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number (2025.03.24.2201)
+
+	RQE.toc
+		- Updated version# (2025.03.24.2201)
+
+	RQEDatabase.lua
+		- Updated many quests in the DB that had incorrect neededAmts for objective completion (2025.03.24.2201)
+
+
 12.0.1.1 (2026.03.19)
 
 	**HIGHLIGHTS**
