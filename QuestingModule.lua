@@ -2534,7 +2534,8 @@ function UpdateRQEQuestFrame()
 
 						local extractedQuestID
 						if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-							extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+							extractedQuestID = RQE.DisplayedQuestID
+							-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 						end
 
 						if questID == extractedQuestID then
@@ -3206,7 +3207,8 @@ function UpdateRQEWorldQuestFrame()
 
 					local extractedQuestID
 					if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-						extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+						extractedQuestID = RQE.DisplayedQuestID
+						-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 					end
 
 					if questID == extractedQuestID then
