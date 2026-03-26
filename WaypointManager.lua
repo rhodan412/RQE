@@ -179,7 +179,8 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	C_Timer.After(0.5, function()
 		if not questID then
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+				-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			else
 				return
 			end
@@ -330,7 +331,8 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
 		end
@@ -545,7 +547,8 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
 		end
@@ -569,7 +572,8 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 
 			-- Ensure QuestIDText exists and is valid before extracting the quest ID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				extractedQuestID = RQE.DisplayedQuestID
+				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 
 			-- Use either extractedQuestID or current super-tracked quest ID
@@ -737,7 +741,8 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
 		end
@@ -1023,7 +1028,8 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 	-- Extract Quest ID from UI if applicable
 	local extractedQuestID = nil
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	-- Retrieve the currently super-tracked quest ID
