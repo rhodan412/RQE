@@ -1446,7 +1446,8 @@ function RQE.handlePlayerMountDisplayChanged()
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			extractedQuestID = RQE.DisplayedQuestID
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.65, 0.5) -- Light Salmon
 			end
@@ -2491,7 +2492,8 @@ function RQE.handlePlayerControlGained()
 		return
 	end
 
-	local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	local extractedQuestID = RQE.DisplayedQuestID
+	-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 	RQE:FindQuestZoneTransition(questID)
@@ -3164,7 +3166,8 @@ function RQE.handlePlayerEnterWorld(...)
 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			extractedQuestID = RQE.DisplayedQuestID
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
@@ -3457,7 +3460,8 @@ function RQE.handleSuperTracking()
 
 	-- Extract questID from RQE's custom UI if available
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	-- Check if the super-tracked quest ID has changed
@@ -4149,7 +4153,8 @@ function RQE.handleZoneChange(...)
 
 	C_Timer.After(0.5, function()
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
-			local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			local extractedQuestID = RQE.DisplayedQuestID
+			-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			if not extractedQuestID or extractedQuestID == 0 then
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 				RQE:ClearSeparateFocusFrame()
@@ -5659,7 +5664,8 @@ function RQE.handleQuestStatusUpdate()
 
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
@@ -5948,7 +5954,8 @@ function RQE.handleQuestComplete()
 	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
 
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestComplete then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for Extracted QuestID: " .. tostring(extractedQuestID), 0, 0.75, 0.75)
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for SuperTracked QuestID: " .. tostring(RQE.currentSuperTrackedQuestID), 0, 0.75, 0.75)
@@ -6520,7 +6527,8 @@ function RQE.handleQuestWatchUpdate(...)
 
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("QWU 12 Debug: Extracted quest ID from QuestIDText: " .. tostring(extractedQuestID), 0.56, 0.93, 0.56)	-- Light Green
 		end
@@ -6789,7 +6797,8 @@ function RQE.handleQuestWatchListChanged(...)
 
 	C_Timer.After(0.5, function()
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
-			local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			local extractedQuestID = RQE.DisplayedQuestID
+			-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			if not extractedQuestID or extractedQuestID == 0 then
 				RQEMacro:ClearMacroContentByName("RQE Macro")
 				RQE:ClearSeparateFocusFrame()
@@ -7037,7 +7046,8 @@ function RQE.handleQuestFinished()
 
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
