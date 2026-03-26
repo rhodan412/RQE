@@ -187,7 +187,8 @@ RQE.UnknownButtonTooltip = function()
 			-- Add check to ensure RQE.QuestIDText exists and contains valid text
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				extractedQuestID = RQE.DisplayedQuestID
+				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 
 			RQE.CurrentTrackedQuestID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
