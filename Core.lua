@@ -2503,6 +2503,11 @@ function RQE:ClearFrameData()
 	if RQE.QuestIDText then
 		RQE.QuestIDText:SetText("")
 	end
+	RQE.DisplayedQuestID = nil
+
+	-- if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("")
+	-- end
 
 	if RQE.QuestNameText then
 		RQE.QuestNameText:SetText("")
@@ -2866,7 +2871,8 @@ function RQE:ShouldClearFrame()
 	-- Attempt to directly extract questID from RQE.QuestIDText if available
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	-- Early exit if there's still no valid questID
@@ -2943,7 +2949,8 @@ function RQE:DelayedClearCheck()
 		-- Attempt to directly extract questID from RQE.QuestIDText if available
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			extractedQuestID = RQE.DisplayedQuestID
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Early exit if there's still no valid questID
@@ -3225,6 +3232,18 @@ function RQE:ShouldUpdateFrame(questID)
 end
 
 
+-- Helper function to normalize quest IDs safely
+function RQE:NormalizeQuestID(v)
+	if type(v) == "number" then
+		return v
+	end
+	if type(v) == "string" then
+		return tonumber(v:match("%d+"))
+	end
+	return nil
+end
+
+
 -- UpdateFrame function
 function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	if RQE.DontUpdateFrame then return end
@@ -3243,7 +3262,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 	-- Priority: explicit param > search override > current super-tracked
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
+	questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	-- questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
 	-- Only continue if something actually changed
 	if not RQE.AllFramesShouldUpdate then
@@ -3293,8 +3313,14 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	if RQE.QuestIDText then
-		RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+		-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+		RQE.DisplayedQuestID = RQE:NormalizeQuestID(questID)
+		RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
 	end
+
+	-- if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+	-- end
 
 	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 	local questName
@@ -4441,7 +4467,8 @@ function RQE.isPlayerSuperTrackingQuest()
 	if RQE.currentSuperTrackedQuestID == RQE.previousSuperTrackedQuestID then return end
 
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		local extractedQuestID = RQE.DisplayedQuestID
+		-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Extracted questID is: " .. tostring(extractedQuestID))
 		end
@@ -4949,8 +4976,14 @@ function RQE:PopulateNextQuestInEventSeries(eventID)
 
 			-- Manual fallback to populate RQEFrame if UpdateFrame does not display it
 			if RQE.QuestIDText then
-				RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+				-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+				RQE.DisplayedQuestID = RQE:NormalizeQuestID(questID)
+				RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
 			end
+			-- if RQE.QuestIDText then
+				-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+			-- end
+
 			if RQE.QuestNameText then
 				RQE.QuestNameText:SetText("Quest Name: " .. questInfo.title)
 			end
@@ -7680,7 +7713,8 @@ function RQE:StartPeriodicChecks()
 
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 
@@ -8174,7 +8208,8 @@ end
 function RQE:CheckCoordinateDistanceConditional()
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 	local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 	if not superTrackedQuestID then return end
@@ -11545,7 +11580,8 @@ function RQE:RemoveManuallyTrackedWorldQuest(questID)
 
 	-- Refresh the UI
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		local extractedQuestID = RQE.DisplayedQuestID
+		-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		if questID == extractedQuestID then
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
@@ -12166,7 +12202,8 @@ function RQE:AdvanceNextStep(questID)
 	if RQE.db.profile.autoClickWaypointButton then
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+			extractedQuestID = RQE.DisplayedQuestID
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Determine questID based on various fallbacks
