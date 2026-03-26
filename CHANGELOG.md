@@ -4,6 +4,7 @@
 		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number
 		- Refactored displayed quest ID handling so code no longer derives quest IDs via tonumber(RQE.QuestIDText:GetText():match("%d+")). Quest IDs are now stored in RQE.DisplayedQuestID when the frame is populated and read back from that stored value. This separates display text from internal state, improves consistency, and helps prevent taint/secret-number issues caused by parsing quest IDs back out of UI elements
 		- Improved quest ID handling by storing and normalizing the displayed quest ID internally instead of re-parsing it from UI text, which improves consistency and helps prevent quest-tracking taint issues
+		- Refined periodic quest-check scheduling so repeated event-driven updates are queued more cleanly instead of stacking redundant delayed checks, helping reduce unnecessary CPU usage
 
 	Buttons.lua
 		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
@@ -14,9 +15,11 @@
 		- Added NormalizeQuestID helper for safe quest ID normalization from numeric or string inputs used by frame and tracking logic (2025.03.26.1220)
 		- Replaced inline tonumber(questID) coercion with NormalizeQuestID(questID) in UpdateFrame quest resolution logic for safer and more consistent fallback handling (2025.03.26.1220)
 		- Changed QuestIDText update flow to store the normalized displayed quest ID in RQE.DisplayedQuestID before updating the frame text, reinforcing display-only use of QuestIDText (2025.03.26.1220)
+		- Added QueuePeriodicChecks helper to centralize delayed StartPeriodicChecks scheduling, reduce duplicate timer creation, and provide a safer event-driven path for periodic quest validation (2025.03.26.1325)
 
 	EventManager.lua
 		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Replaced selected direct delayed StartPeriodicChecks calls with QueuePeriodicChecks in event handling so periodic quest validation is scheduled through a centralized queue path rather than repeated standalone timers (2025.03.26.1325)
 
 	QuestingModule.lua
 		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
