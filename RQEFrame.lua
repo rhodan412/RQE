@@ -952,7 +952,8 @@ local function CreateQuestTooltip(frame, questID)
 
 	local extractedQuestID
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-	extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	extractedQuestID = RQE.DisplayedQuestID
+	-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
 	questID = effectiveQuestID or extractedQuestID or currentSuperTrackedQuestID
 	local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
@@ -1576,7 +1577,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- Code for RWButton functionality here
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				extractedQuestID = RQE.DisplayedQuestID
+				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
@@ -1653,7 +1655,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			RQE.LastClickedWaypointButton.bg = bg	-- Store the bg texture so it can be modified later
 
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				RQE.questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				RQE.questIDFromText = RQE.DisplayedQuestID
+				-- RQE.questIDFromText = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				if not RQE.questIDFromText then
 					RQE.debugLog("Error: Invalid quest ID extracted from text")
 				else
@@ -1723,7 +1726,8 @@ function RQE:CheckAndAdvanceStep(questID)
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()	 -- TEMPORARILY COMMENTING OUT IN ORDER TO GET RQE:StartPeriodicChecks() OPERATIONAL
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	end
 
 	-- Determine questID based on various fallbacks
@@ -1912,7 +1916,8 @@ function RQE.ClickUnknownQuestButton()
 		return
 	end
 
-	local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	local extractedQuestID = RQE.DisplayedQuestID
+	-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 	local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 	local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
