@@ -2,15 +2,40 @@
 
 	**HIGHLIGHTS**
 		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number
+		- Refactored displayed quest ID handling so code no longer derives quest IDs via tonumber(RQE.QuestIDText:GetText():match("%d+")). Quest IDs are now stored in RQE.DisplayedQuestID when the frame is populated and read back from that stored value. This separates display text from internal state, improves consistency, and helps prevent taint/secret-number issues caused by parsing quest IDs back out of UI elements
+		- Improved quest ID handling by storing and normalizing the displayed quest ID internally instead of re-parsing it from UI text, which improves consistency and helps prevent quest-tracking taint issues
+
+	Buttons.lua
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
 
 	Core.lua
 		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number (2025.03.24.2201)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Added NormalizeQuestID helper for safe quest ID normalization from numeric or string inputs used by frame and tracking logic (2025.03.26.1220)
+		- Replaced inline tonumber(questID) coercion with NormalizeQuestID(questID) in UpdateFrame quest resolution logic for safer and more consistent fallback handling (2025.03.26.1220)
+		- Changed QuestIDText update flow to store the normalized displayed quest ID in RQE.DisplayedQuestID before updating the frame text, reinforcing display-only use of QuestIDText (2025.03.26.1220)
+
+	EventManager.lua
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+
+	QuestingModule.lua
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
 
 	RQE.toc
 		- Updated version# (2025.03.24.2201)
 
 	RQEDatabase.lua
 		- Updated many quests in the DB that had incorrect neededAmts for objective completion (2025.03.24.2201)
+		- Updated the coordinates of many quests that were currently listed in the Midnight expansion section of the DB as well as coordinate instruction to leave "The Den" in Harondar (2025.03.26.1220)
+
+	RQEFrame.lua
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+
+	WaypointManager.lua
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+
+	WPUtil.lua
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
 
 
 12.0.1.1 (2026.03.19)
