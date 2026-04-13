@@ -1,44 +1,54 @@
-12.0.1.2
+12.0.1.2 (2026.04.14)
 
 	**HIGHLIGHTS**
 		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number
 		- Refactored displayed quest ID handling so code no longer derives quest IDs via tonumber(RQE.QuestIDText:GetText():match("%d+")). Quest IDs are now stored in RQE.DisplayedQuestID when the frame is populated and read back from that stored value. This separates display text from internal state, improves consistency, and helps prevent taint/secret-number issues caused by parsing quest IDs back out of UI elements
 		- Improved quest ID handling by storing and normalizing the displayed quest ID internally instead of re-parsing it from UI text, which improves consistency and helps prevent quest-tracking taint issues
 		- Refined periodic quest-check scheduling so repeated event-driven updates are queued more cleanly instead of stacking redundant delayed checks, helping reduce unnecessary CPU usage
+		- Fixed issue with frame text for supertracked quests being displayed with overlapping steps
+		- Fixed issue with AH purchasing being made via macro where it would incorrectly try to buy an invalid amount
 
 	Buttons.lua
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
 
 	Core.lua
-		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number (2025.03.24.2201)
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
-		- Added NormalizeQuestID helper for safe quest ID normalization from numeric or string inputs used by frame and tracking logic (2025.03.26.1220)
-		- Replaced inline tonumber(questID) coercion with NormalizeQuestID(questID) in UpdateFrame quest resolution logic for safer and more consistent fallback handling (2025.03.26.1220)
-		- Changed QuestIDText update flow to store the normalized displayed quest ID in RQE.DisplayedQuestID before updating the frame text, reinforcing display-only use of QuestIDText (2025.03.26.1220)
-		- Added QueuePeriodicChecks helper to centralize delayed StartPeriodicChecks scheduling, reduce duplicate timer creation, and provide a safer event-driven path for periodic quest validation (2025.03.26.1325)
+		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number (2026.03.24.2201)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
+		- Added NormalizeQuestID helper for safe quest ID normalization from numeric or string inputs used by frame and tracking logic (2026.03.26.1220)
+		- Replaced inline tonumber(questID) coercion with NormalizeQuestID(questID) in UpdateFrame quest resolution logic for safer and more consistent fallback handling (2026.03.26.1220)
+		- Changed QuestIDText update flow to store the normalized displayed quest ID in RQE.DisplayedQuestID before updating the frame text, reinforcing display-only use of QuestIDText (2026.03.26.1220)
+		- Added QueuePeriodicChecks helper to centralize delayed StartPeriodicChecks scheduling, reduce duplicate timer creation, and provide a safer event-driven path for periodic quest validation (2026.03.26.1325)
+		- Fixed issue when SeparateFocusFrame text displaying multiple steps on top of each other (2026.04.13.0248)
+		- Fixed issue where AH item counts were incorrectly displaying as values less than 1 (2026.04.13.0248)
 
 	EventManager.lua
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
-		- Replaced selected direct delayed StartPeriodicChecks calls with QueuePeriodicChecks in event handling so periodic quest validation is scheduled through a centralized queue path rather than repeated standalone timers (2025.03.26.1325)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
+		- Replaced selected direct delayed StartPeriodicChecks calls with QueuePeriodicChecks in event handling so periodic quest validation is scheduled through a centralized queue path rather than repeated standalone timers (2026.03.26.1325)
+		- Updated PLAYER_CONTROL_GAINED, PLAYER_ENTERING_WORLD, INSTANCE_INFO_UPDATE, QUEST_WATCH_LIST_CHANGED event functions to use the RQE:QueuePeriodicChecks instead of automatically going to RQE:StartPeriodicChecks() (2026.04.13.0248)
+		- Improved performance on the firing of the QUEST_WATCH_UPDATE to check if steps should advance based on a change to the status of the objective API (2026.04.13.0248)
+		- Updated usage of mapIDs to be based off the RQE.DisplayedQuestID variable when SUPER_TRACKING_CHANGED and ZONE_CHANGED event functions fire (2026.04.13.0248)
 
 	QuestingModule.lua
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
 
 	RQE.toc
-		- Updated version# (2025.03.24.2201)
+		- Updated version# (2026.03.24.2201)
 
 	RQEDatabase.lua
-		- Updated many quests in the DB that had incorrect neededAmts for objective completion (2025.03.24.2201)
-		- Updated the coordinates of many quests that were currently listed in the Midnight expansion section of the DB as well as coordinate instruction to leave "The Den" in Harondar (2025.03.26.1220)
+		- Updated many quests in the DB that had incorrect neededAmts for objective completion (2026.03.24.2201)
+		- Updated the coordinates of many quests that were currently listed in the Midnight expansion section of the DB as well as coordinate instruction to leave "The Den" in Harondar (2026.03.26.1220)
+		- Updated many quest in the Cataclysm, Mists of Pandaria, Shadowlands, Dragonflight, The War Within and Midnight expansions (2026.04.13.0248)
 
 	RQEFrame.lua
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
+		- Fixed issue when SeparateFocusFrame text displaying multiple steps on top of each other (2026.04.13.0248)
 
 	WaypointManager.lua
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
+		- Fixed issue where WQ that player would travel over would override the waypoint of an already supertracked quest (2026.04.13.0248)
 
 	WPUtil.lua
-		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2025.03.26.1220)
+		- Changed displayed quest ID handling from QuestIDText parsing to stored state (RQE.DisplayedQuestID) to reduce taint risk and prevent UI text from being used as a data source (2026.03.26.1220)
 
 
 12.0.1.1 (2026.03.19)
@@ -47,13 +57,13 @@
 		- Added/updated remainder of the leveling campaign quests into the DB for the Midnight expansion
 
 	DebugLog.lua
-		- Reverted changes made to debug log coding and added fail safes to not run when in an instance scenario as this resulted in errors (2025.03.19.0425)
+		- Reverted changes made to debug log coding and added fail safes to not run when in an instance scenario as this resulted in errors (2026.03.19.0425)
 
 	RQE.toc
-		- Updated version# (2025.03.19.0425)
+		- Updated version# (2026.03.19.0425)
 
 	RQEDatabase.lua
-		- Updated Voidstorm leveling campaign quests in the DB (2025.03.19.0425)
+		- Updated Voidstorm leveling campaign quests in the DB (2026.03.19.0425)
 
 
 12.0.1.0 (2026.03.15)
@@ -72,110 +82,110 @@
 		- Added Eversong Woods, Zul'Aman and Harandar campaign quests to DB
 
 	Ace3
-		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2025.02.01.2334)
-		- Updated LibDBIcon (2025.02.22.0318)
+		- Updated HBD TOC to 12.0 as not having this updated was preventing priorityBias, in coordinateHotspots, from working properly (2026.02.01.2334)
+		- Updated LibDBIcon (2026.02.22.0318)
 
 	Buttons.lua
-		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2025.02.01.2334)
-		- Updated coding to give raid warning [author-mode ONLY] when coords are accurate between DB and Blizz waypoints (2025.02.11.2106)
-		- Fixed taint caused by WorldMapFrame:Hide during combat (2025.02.15.1834)
-		- Added RQE:LegacyCoordsDetected() and RQE:NoLegacyCoordsDetected() functions to provide raid warning if legacy coordinates are used in a specific quest DB entry or coordinateHotspots [author-mode ONLY] (2025.02.16.2344)
-		- Updated calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
-		- When hovering over the "W" or "Waypoint" button in the RQEFrame the world map will more reliably stay open if it was open already (2025.02.19.0055)
+		- Moved code that sets RQE.searchedQuestID to nil from RQE.Buttons.ClearButtonPressed() to RQE.Buttons.CreateClearButton(RQEFrame) as we only want nil if the button is actually pressed (2026.02.01.2334)
+		- Updated coding to give raid warning [author-mode ONLY] when coords are accurate between DB and Blizz waypoints (2026.02.11.2106)
+		- Fixed taint caused by WorldMapFrame:Hide during combat (2026.02.15.1834)
+		- Added RQE:LegacyCoordsDetected() and RQE:NoLegacyCoordsDetected() functions to provide raid warning if legacy coordinates are used in a specific quest DB entry or coordinateHotspots [author-mode ONLY] (2026.02.16.2344)
+		- Updated calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2026.02.17.0436)
+		- When hovering over the "W" or "Waypoint" button in the RQEFrame the world map will more reliably stay open if it was open already (2026.02.19.0055)
 
 	Config.lua
-		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2025.02.06.0327)
+		- Removed duplicate coding for GossipOptions checkbox in configuration settings (2026.02.06.0327)
 
 	Core.lua
 		- Added code that gives NPC information and location for a searched quest that is in the DB (2026.01.31.0327)
-		- Updated RQE:SaveSuperTrackedQuestToCharacter() and RQE:RestoreSuperTrackedQuestForCharacter() to work with searched quests (2025.02.01.2334)
-		- When a quest is searched ["S" Button in the RQEFrame] and player presses "Track" the addon will save the "tracked" quest as a supertracked quest for restoration in following session (2025.02.01.2334)
-		- Removed coding that was clearing debugLoggingCheckbox [author-mode ONLY, not applicable for users] (2025.02.06.0327)
-		- Modified debugMode requirements for some of the debug print outs (2025.02.11.2106)
-		- Added more colors to the global list (2025.02.15.1834)
-		- Added RQE:CheckCoordHotspotsInSteps() function that checks to see if a given quest uses legacy 'coordinates' versus the newer 'coordinateHotspots' that include multizone and continentID in the coordinates (2025.02.16.2344)
-		- Updated design of calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2025.02.17.0436)
-		- Added flag for map closure within the RQE.ExtractAndSaveQuestCoordinates() function call (2025.02.19.0055)
-		- Added requirement that the RQEFrame be displayed for coord information would be printed [author-mode ONLY] (2025.03.06.0217)
-		- Added coding to obtain WQ information for Midnight that are currently active [author-mode ONLY] (2025.03.07.0223)
+		- Updated RQE:SaveSuperTrackedQuestToCharacter() and RQE:RestoreSuperTrackedQuestForCharacter() to work with searched quests (2026.02.01.2334)
+		- When a quest is searched ["S" Button in the RQEFrame] and player presses "Track" the addon will save the "tracked" quest as a supertracked quest for restoration in following session (2026.02.01.2334)
+		- Removed coding that was clearing debugLoggingCheckbox [author-mode ONLY, not applicable for users] (2026.02.06.0327)
+		- Modified debugMode requirements for some of the debug print outs (2026.02.11.2106)
+		- Added more colors to the global list (2026.02.15.1834)
+		- Added RQE:CheckCoordHotspotsInSteps() function that checks to see if a given quest uses legacy 'coordinates' versus the newer 'coordinateHotspots' that include multizone and continentID in the coordinates (2026.02.16.2344)
+		- Updated design of calls to check/compare quest info to see if specific DB entry is incomplete or incorrect [author-mode ONLY] (2026.02.17.0436)
+		- Added flag for map closure within the RQE.ExtractAndSaveQuestCoordinates() function call (2026.02.19.0055)
+		- Added requirement that the RQEFrame be displayed for coord information would be printed [author-mode ONLY] (2026.03.06.0217)
+		- Added coding to obtain WQ information for Midnight that are currently active [author-mode ONLY] (2026.03.07.0223)
 
 	DebugLog.lua
-		- Fixed taint issue caused with debug log sometimes firing improperly while inside a scenario/instance (2025.03.15.2231)
+		- Fixed taint issue caused with debug log sometimes firing improperly while inside a scenario/instance (2026.03.15.2231)
 
 	EventManager.lua
-		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2025.02.01.2334)
-		- Removed coding that sets RQE.searchedQuestID to nil after the QUEST_COMPLETE and QUEST_AUTO_COMPLETE event functions fire (2025.02.01.2334)
-		- Fixed SUPER_TRACKING_CHANGED event function that was updating new supertrack, when nothing being tracked, even when option was not selected by player in configuration settings (2025.02.06.0327)
-		- Commented out coding in SUPER_TRACKING_CHANGED that was clearing the SeparateFocusFrame and causing possible issues (2025.02.06.0327)
-		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
-		- Updated QUEST_ACCEPTED to run the RQE:CheckCoordHotspotsInSteps() function to check if the accepted quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
-		- Added regular checks to see if world map is open and create a flag if it is to keep map open -- this only fires if the player is hovering over the RQEFrame (2025.02.19.0055)
-		- Updated PLAYER_REGEN_ENABLED to check to see if current step of supertracked quest uses an inventory check and, if so, will run RQE:StartPeriodicChecks() shortly after combat ends (2025.02.20.0008)
+		- Fixed QUEST_ACCEPTED event function to update the frame and macro only if the searched quest was the quest picked up (2026.02.01.2334)
+		- Removed coding that sets RQE.searchedQuestID to nil after the QUEST_COMPLETE and QUEST_AUTO_COMPLETE event functions fire (2026.02.01.2334)
+		- Fixed SUPER_TRACKING_CHANGED event function that was updating new supertrack, when nothing being tracked, even when option was not selected by player in configuration settings (2026.02.06.0327)
+		- Commented out coding in SUPER_TRACKING_CHANGED that was clearing the SeparateFocusFrame and causing possible issues (2026.02.06.0327)
+		- Updated some debugModes for certain debug messages being displayed (2026.02.07.2233)
+		- Updated QUEST_ACCEPTED to run the RQE:CheckCoordHotspotsInSteps() function to check if the accepted quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2026.02.16.2344)
+		- Added regular checks to see if world map is open and create a flag if it is to keep map open -- this only fires if the player is hovering over the RQEFrame (2026.02.19.0055)
+		- Updated PLAYER_REGEN_ENABLED to check to see if current step of supertracked quest uses an inventory check and, if so, will run RQE:StartPeriodicChecks() shortly after combat ends (2026.02.20.0008)
 
 	QuestingModule.lua
-		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
-		- Updated QuestLogIndexButton:SetScript to run the RQE:CheckCoordHotspotsInSteps() function to check if the supertracked quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2025.02.16.2344)
-		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2025.02.17.0436)
+		- Updated some debugModes for certain debug messages being displayed (2026.02.07.2233)
+		- Updated QuestLogIndexButton:SetScript to run the RQE:CheckCoordHotspotsInSteps() function to check if the supertracked quest uses legacy coordinates or coordinateHotspots and prints data [author-mode ONLY] (2026.02.16.2344)
+		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2026.02.17.0436)
 
 	RQE.toc
-		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2025.02.06.0327)
-		- Updated version# (2025.02.15.0558)
-		- Updated interface# (2025.03.07.0223)
+		- Updated 'NOTES' section in TOC to provide better readability and stated what needs to be done to fix issues with Carbonite Quests and WaypointUI addons (2026.02.06.0327)
+		- Updated version# (2026.02.15.0558)
+		- Updated interface# (2026.03.07.0223)
 
 	RQE_Sandbox.lua
-		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
-		- Added button to clear all entries from the sandbox UI (2025.02.14.0457)
-		- Updated saveBtn:SetScript to call RQE:CheckCoordHotspotsInSteps() function when button pressed (2025.02.17.0436)
+		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2026.02.13.1806)
+		- Added button to clear all entries from the sandbox UI (2026.02.14.0457)
+		- Updated saveBtn:SetScript to call RQE:CheckCoordHotspotsInSteps() function when button pressed (2026.02.17.0436)
 
 	RQEDatabase.lua
 		- Updated quest DB for the remainder of Netherstorm and Shadowmoon Valley alliance/scryer and intro to Netherwing quests (2026.01.31.0327)
-		- Updated many Blade's Edge Mountains alliance quests in the DB (2025.02.01.2334)
-		- Updated most remaining alliance/scryer quests [Outland] in the DB (2025.02.03.0437)
-		- Updated Elwynn Forest and Loch Modan alliance quests in the DB (2025.02.03.0437)
-		- Updated Westfall, Duskwood and Blasted Lands quests in the DB (2025.02.04.1632)
-		- Updated coordinateHotspot for questID 90759 (2025.02.06.0327)
-		- Updated Arathi Highlands and The Hinterlands quests (alliance) in the DB (2025.02.07.2233)
-		- Updated Western Plaguelands quests (alliance/neutral) in the DB (2025.02.09.1950)
-		- Updated Badlands quests (alliance/neutral) in the DB (2025.02.11.2106)
-		- Updated Searing Gorge and many Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.0342)
-		- Updated Burning Steppes quests (alliance/neutral) in the DB (2025.02.12.1920)
-		- Updated Northern Stranglethorn and Cape of Stranglethorn quests (alliance/neutral) in the DB (2025.02.14.0457)
-		- Updated Swamp of Sorrows and Eastern Plaguelands quests (alliance/neutral) in the DB (2025.02.15.0558)
-		- Updated some information in Wetlands and Dun Morogh (2025.02.15.1834)
-		- Updated Dun Morogh quests in DB (2025.02.16.0352)
-		- Updated Wetlands quests in DB (2025.02.16.2344)
-		- Updated Dustwallow Marsh quests in DB (2025.02.17.2152)
-		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2025.02.19.0055)
-		- Updated Darkshore quests in DB (2025.02.20.0008)
-		- Updated Ashenvale and Stonetalon (alliance/neutral) quests in DB (2025.02.22.0318)
-		- Updated Felwood (alliance/neutral) quests in DB (2025.02.23.0337)
-		- Updated Desolace and Feralas (alliance/neutral) quests in DB (2025.02.25.0249)
-		- Updated Southern Barrens (alliance/neutral) quests in DB (2025.02.26.0449)
-		- Added the initial information for campaign quests for Midnight to the DB, but most still need to be finalized (2025.03.06.0217)
-		- Added initial information for side quests in the Eversong Woods [Midnight] to the DB (2025.03.07.0223)
-		- Added additional quests to the DB in an initial, non-finalized state (2025.03.07.2251)
-		- Updated most of the Eversong Woods leveling campaign quests in DB (2025.03.12.0042)
-		- Updated Eversong Woods, Zul'Aman and Harandar campaign quests in DB (2025.03.15.2231)
+		- Updated many Blade's Edge Mountains alliance quests in the DB (2026.02.01.2334)
+		- Updated most remaining alliance/scryer quests [Outland] in the DB (2026.02.03.0437)
+		- Updated Elwynn Forest and Loch Modan alliance quests in the DB (2026.02.03.0437)
+		- Updated Westfall, Duskwood and Blasted Lands quests in the DB (2026.02.04.1632)
+		- Updated coordinateHotspot for questID 90759 (2026.02.06.0327)
+		- Updated Arathi Highlands and The Hinterlands quests (alliance) in the DB (2026.02.07.2233)
+		- Updated Western Plaguelands quests (alliance/neutral) in the DB (2026.02.09.1950)
+		- Updated Badlands quests (alliance/neutral) in the DB (2026.02.11.2106)
+		- Updated Searing Gorge and many Burning Steppes quests (alliance/neutral) in the DB (2026.02.12.0342)
+		- Updated Burning Steppes quests (alliance/neutral) in the DB (2026.02.12.1920)
+		- Updated Northern Stranglethorn and Cape of Stranglethorn quests (alliance/neutral) in the DB (2026.02.14.0457)
+		- Updated Swamp of Sorrows and Eastern Plaguelands quests (alliance/neutral) in the DB (2026.02.15.0558)
+		- Updated some information in Wetlands and Dun Morogh (2026.02.15.1834)
+		- Updated Dun Morogh quests in DB (2026.02.16.0352)
+		- Updated Wetlands quests in DB (2026.02.16.2344)
+		- Updated Dustwallow Marsh quests in DB (2026.02.17.2152)
+		- Updated Silithus and Winterspring (alliance/neutral) quests in DB (2026.02.19.0055)
+		- Updated Darkshore quests in DB (2026.02.20.0008)
+		- Updated Ashenvale and Stonetalon (alliance/neutral) quests in DB (2026.02.22.0318)
+		- Updated Felwood (alliance/neutral) quests in DB (2026.02.23.0337)
+		- Updated Desolace and Feralas (alliance/neutral) quests in DB (2026.02.25.0249)
+		- Updated Southern Barrens (alliance/neutral) quests in DB (2026.02.26.0449)
+		- Added the initial information for campaign quests for Midnight to the DB, but most still need to be finalized (2026.03.06.0217)
+		- Added initial information for side quests in the Eversong Woods [Midnight] to the DB (2026.03.07.0223)
+		- Added additional quests to the DB in an initial, non-finalized state (2026.03.07.2251)
+		- Updated most of the Eversong Woods leveling campaign quests in DB (2026.03.12.0042)
+		- Updated Eversong Woods, Zul'Aman and Harandar campaign quests in DB (2026.03.15.2231)
 
 	RQEFrame.lua
-		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2025.02.01.2334)
-		- Added ability for right-click dropdown menu to appear if the RQEFrame is displaying a searched quest to allow players to search warcraft wiki or wowhead for searched quests within the addon (2025.02.01.2334)
-		- Added some extra line breaks in the tooltip for quests in the RQEFrame for better, more consistent viewing (2025.02.03.0437)
-		- Updated some debugModes for certain debug messages being displayed (2025.02.07.2233)
-		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2025.02.13.1806)
-		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2025.02.17.0436)
-		- Added true/false flags if player is hovering over the RQEFrame (2025.02.19.0055)
+		- Updated CreateQuestTooltip() function to display objectivesQuestText and descriptionQuestText, from the DB, if available, and the quest in the RQEFrame is a searched quest (2026.02.01.2334)
+		- Added ability for right-click dropdown menu to appear if the RQEFrame is displaying a searched quest to allow players to search warcraft wiki or wowhead for searched quests within the addon (2026.02.01.2334)
+		- Added some extra line breaks in the tooltip for quests in the RQEFrame for better, more consistent viewing (2026.02.03.0437)
+		- Updated some debugModes for certain debug messages being displayed (2026.02.07.2233)
+		- Fixed issue with display of Sandbox data in the frame as the color codes were being displayed literally instead of the colored text in the RQEFrame (2026.02.13.1806)
+		- Added menu option for RQE:CheckCoordHotspotsInSteps() function call to be run for specific quest that player right-clicks on [author-mode ONLY] (2026.02.17.0436)
+		- Added true/false flags if player is hovering over the RQEFrame (2026.02.19.0055)
 
 	RQEMacro.lua
-		- Removed some unneeded comments in the code (2025.02.01.2334)
-		- Changed debugMode from INFO to INFO+ when stating the CD is N/A for spell, within the RQE Macro Button, during combat (2025.02.03.0437)
-		- Added tooltip for Set CVAR (2025.02.15.0558)
+		- Removed some unneeded comments in the code (2026.02.01.2334)
+		- Changed debugMode from INFO to INFO+ when stating the CD is N/A for spell, within the RQE Macro Button, during combat (2026.02.03.0437)
+		- Added tooltip for Set CVAR (2026.02.15.0558)
 
 	WaypointManager.lua
-		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2025.03.07.0223)
+		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2026.03.07.0223)
 
 	WPUtil.lua
-		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2025.03.07.0223)
+		- Adding coding to prevent the addon from creating a waypoint if the RQEFrame [supertrack frame] is closed (2026.03.07.0223)
 
 
 12.0.0.2 (2026.01.29)
