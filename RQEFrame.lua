@@ -2345,6 +2345,20 @@ function RQE.InitializeSeparateFocusFrame()
 			return
 		end
 
+		-- Prevent re-entrant rebuilds
+		if RQE.IsUpdatingSeparateFocusFrame then
+			return
+		end
+		RQE.IsUpdatingSeparateFocusFrame = true
+
+		-- Prevent stale delayed callbacks from older rebuilds from modifying the frame later
+		RQE._SeparateFocusBuildToken = (RQE._SeparateFocusBuildToken or 0) + 1
+		local buildToken = RQE._SeparateFocusBuildToken
+
+		local function finishUpdate()
+			RQE.IsUpdatingSeparateFocusFrame = false
+		end
+
 		-- Decide which quest SeparateFocus should display
 		-- Only update for REAL quests (quest log or active world quest).
 		-- If the RQEFrame is showing a searched quest that's not in the log/WQ, do NOT update SeparateFocus.
@@ -2353,16 +2367,19 @@ function RQE.InitializeSeparateFocusFrame()
 		-- If we're in "searched quest mode" and it's not a real quest, bail out early (freeze SeparateFocus)
 		local searchedID = RQE.searchedQuestID
 		if searchedID and not C_QuestLog.IsOnQuest(searchedID) and not C_QuestLog.IsWorldQuest(searchedID) then
+			finishUpdate()
 			return
 		end
 
 		-- Otherwise, follow Blizzard supertrack, but only if it's valid
 		if not C_SuperTrack.IsSuperTrackingQuest() then
+			finishUpdate()
 			return
 		end
 
 		displayedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		if not displayedQuestID or displayedQuestID <= 0 then
+			finishUpdate()
 			return
 		end
 
@@ -2370,17 +2387,30 @@ function RQE.InitializeSeparateFocusFrame()
 		local isLogQuest = C_QuestLog.IsOnQuest(displayedQuestID)
 		local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
 		if not (isLogQuest or isActiveWorldQuest) then
+			finishUpdate()
 			return
 		end
 
-		if not displayedQuestID or displayedQuestID <= 0 then
-			return
-		end
+		-- if not displayedQuestID or displayedQuestID <= 0 then
+			-- finishUpdate()
+			-- return
+		-- end
 
 		-- Clear any existing children in the content frame
 		for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
-			child:Hide()
+			if child then
+				child:Hide()
+				if child.SetText then
+					child:SetText("")
+				end
+				if child ~= RQE.SeparateScrollFrame and child ~= RQE.SeparateContentFrame then
+					child:SetParent(nil)
+				end
+			end
 		end
+		-- for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
+			-- child:Hide()
+		-- end
 
 		RQE.CurrentlySuperQuestID = displayedQuestID
 		-- RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2396,33 +2426,58 @@ function RQE.InitializeSeparateFocusFrame()
 		local stepData = nil
 
 		-- Create or update StepText element
-		-- ✅ Ensure SeparateStepText exists before anything else
-		if not RQE.SeparateStepText then
-			RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.SeparateStepText:SetJustifyH("LEFT")
-			RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
-			RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
-			RQE.SeparateStepText:SetHeight(0)  -- Auto height
-			RQE.SeparateStepText:SetWordWrap(true)
-			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-		end
+		-- Do not pre-create SeparateStepText here.
+		-- It will be created inside the specific rendering branch below.
+		-- -- ✅ Ensure SeparateStepText exists before anything else
+		-- if not RQE.SeparateStepText then
+			-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			-- RQE.SeparateStepText:SetJustifyH("LEFT")
+			-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
+			-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+			-- RQE.SeparateStepText:SetHeight(0)  -- Auto height
+			-- RQE.SeparateStepText:SetWordWrap(true)
+			-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+		-- end
 
 		-- ✅ Quest handling logic
 		if not questData then
 			-- Quest not in DB at all
-			RQE.SeparateStepText:SetText("") -- Ensure text cleared before update
+			-- RQE.SeparateStepText:SetText("") -- Ensure text cleared before update
+			RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			RQE.SeparateStepText:SetJustifyH("LEFT")
+			RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
+			RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+			RQE.SeparateStepText:SetHeight(0)
+			RQE.SeparateStepText:SetWordWrap(true)
+			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+
 			local fallbackText = "No step description available"
+			RQE.SeparateStepText:SetText("")
 			RQE.RenderTextWithItems(RQE.SeparateStepText, fallbackText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
 			RQE.SeparateStepText:Show()
+			finishUpdate()
 			return
 		else
 			totalSteps = #questData
 			if totalSteps == 0 then
 				-- Quest in DB, but no steps — display "1/0"
+				RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				RQE.SeparateStepText:SetJustifyH("LEFT")
+				RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
+				RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+				RQE.SeparateStepText:SetHeight(0)
+				RQE.SeparateStepText:SetWordWrap(true)
+				RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+
 				local formattedText = string.format("1/0: Quest in DB w/o any available steps.")
 				RQE.SeparateStepText:SetText("")
 				RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
 				RQE.SeparateStepText:Show()
+				finishUpdate()
+				-- local formattedText = string.format("1/0: Quest in DB w/o any available steps.")
+				-- RQE.SeparateStepText:SetText("")
+				-- RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
+				-- RQE.SeparateStepText:Show()
 				return
 			end
 
@@ -2456,9 +2511,16 @@ function RQE.InitializeSeparateFocusFrame()
 		-- Remove any old SeparateStepText if it exists (since SimpleHTML can't reuse FontString)
 		if RQE.SeparateStepText then
 			RQE.SeparateStepText:Hide()
+			RQE.SeparateStepText:SetText("")
 			RQE.SeparateStepText:SetParent(nil)
 			RQE.SeparateStepText = nil
 		end
+
+		-- if RQE.SeparateStepText then
+			-- RQE.SeparateStepText:Hide()
+			-- RQE.SeparateStepText:SetParent(nil)
+			-- RQE.SeparateStepText = nil
+		-- end
 
 		local hasCoords = formattedText:match("{coords:")
 
@@ -2565,13 +2627,34 @@ function RQE.InitializeSeparateFocusFrame()
 
 			-- Adjust height after rendering
 			C_Timer.After(0.05, function()
+				-- Ignore stale delayed callbacks from older rebuilds
+				if buildToken ~= RQE._SeparateFocusBuildToken then
+					return
+				end
+				if not StepText then
+					return
+				end
+
 				local h = StepText:GetContentHeight() or 20
 				StepText:SetHeight(h + 6)
 			end)
 
+			-- C_Timer.After(0.05, function()
+				-- local h = StepText:GetContentHeight() or 20
+				-- StepText:SetHeight(h + 6)
+			-- end)
+
 			-- ✅ Handle following paragraphs (if \n exists)
 			if #paragraphs > 1 then
 				C_Timer.After(0.05, function()
+					-- Ignore stale delayed callbacks from older rebuilds
+					if buildToken ~= RQE._SeparateFocusBuildToken then
+						return
+					end
+					if not StepText then
+						return
+					end
+
 					local htmlHeight = StepText:GetContentHeight() or StepText:GetHeight() or 20
 					local extraPadding = math.max(20, htmlHeight * 0.3) -- at least 20px, scales a bit with height
 					local yOffset = -(htmlHeight + extraPadding)
@@ -2581,6 +2664,10 @@ function RQE.InitializeSeparateFocusFrame()
 					end
 
 					for i = 2, #paragraphs do
+						if buildToken ~= RQE._SeparateFocusBuildToken then
+							return
+						end
+
 						local line = paragraphs[i]
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print(string.format("RQE DEBUG: Rendering paragraph #%d below HTML: %s", i, line))
@@ -2633,7 +2720,10 @@ function RQE.InitializeSeparateFocusFrame()
 				end
 
 				local StepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-				RQE.SeparateStepText = StepText
+				-- RQE.SeparateStepText = StepText
+				if i == 1 then
+					RQE.SeparateStepText = StepText
+				end
 				StepText:SetJustifyH("LEFT")
 				StepText:SetTextColor(1, 1, 0.8)
 				StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
@@ -2653,12 +2743,17 @@ function RQE.InitializeSeparateFocusFrame()
 			end
 		end
 
-		RQE.SeparateStepText:Show()
+		-- RQE.SeparateStepText:Show()
+		if RQE.SeparateStepText then
+			RQE.SeparateStepText:Show()
+		end
 
 		RQE.InitializeSeparateFocusWaypoints()
 
 		-- Update content height dynamically
 		RQE.UpdateSeparateContentHeight()
+
+		finishUpdate()
 	end
 
 	-- Attach the mouse wheel scroll script to the scroll frame
