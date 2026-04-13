@@ -2755,15 +2755,17 @@ function RQE:ClearSeparateFocusFrame()
 	-- Reset the content area height so scrolling resets
 	RQE.SeparateContentFrame:SetHeight(1000)
 
-	-- Optional: show a placeholder message (retains your original intended behavior)
-	RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-	RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
-	RQE.SeparateStepText:SetJustifyH("LEFT")
-	RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
-	RQE.SeparateStepText:SetWordWrap(true)
-	RQE.SeparateStepText:SetText("No step description available for this step.")
-	RQE.SeparateStepText:Show()
+	-- -- Optional: show a placeholder message (retains your original intended behavior)
+	-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+	-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+	-- RQE.SeparateStepText:SetJustifyH("LEFT")
+	-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
+	-- RQE.SeparateStepText:SetWordWrap(true)
+	-- RQE.SeparateStepText:SetText("No step description available for this step.")
+	-- RQE.SeparateStepText:Show()
+
+	--RQE.SeparateScrollFrame:SetVerticalScroll(0)
 
 	RQE.ClearButtonPressed = false
 end
@@ -12254,31 +12256,33 @@ end
 
 -- Function to obtain the index of a given itemID and pass that onto a function used for purchasing that item
 function RQE:BuyItemByItemID(itemID, quantity)
-	local itemFound = false
+	C_Timer.After(1.2, function()
+		local itemFound = false
 
-	for index = 1, GetMerchantNumItems() do
-		local merchantItemID = GetMerchantItemID(index)
+		for index = 1, GetMerchantNumItems() do
+			local merchantItemID = GetMerchantItemID(index)
 
-		if merchantItemID == itemID then
-			itemFound = true
+			if merchantItemID == itemID then
+				itemFound = true
 
-			-- Print debug for confirmation
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("Found itemID", itemID, "at merchant index", index)
+				-- Print debug for confirmation
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Found itemID", itemID, "at merchant index", index)
+				end
+
+				-- Call your existing purchase logic
+				RQE:ConfirmAndBuyMerchantItem(index, quantity)
+
+				break -- Stop after first match
 			end
-
-			-- Call your existing purchase logic
-			RQE:ConfirmAndBuyMerchantItem(index, quantity)
-
-			break -- Stop after first match
 		end
-	end
 
-	if not itemFound then
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("ItemID", itemID, "not found at this merchant.")
+		if not itemFound then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("ItemID", itemID, "not found at this merchant.")
+			end
 		end
-	end
+	end)
 end
 
 
@@ -12517,7 +12521,7 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 							-- end
 						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
 							-- Keep original text-matching fallback, but add a guard against fractional/invalid values
-							--finalQuantity = required - fulfilled
+							finalQuantity = required - fulfilled
 
 							finalQuantity = tonumber(finalQuantity) or 0
 							finalQuantity = math.floor(finalQuantity + 0.5)
