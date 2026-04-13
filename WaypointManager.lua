@@ -186,6 +186,14 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 			end
 		end
 
+		-- Re-check after questID is resolved inside the delayed callback
+		if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("|cffffff00[RQE]|r Blocking delayed world quest waypoint for questID " .. tostring(questID) .. " because another quest is already supertracked.")
+			end
+			return
+		end
+
 		local waypointText = C_QuestLog.GetNextWaypointText(questID)
 
 		if RQE.searchedQuestID then
@@ -336,6 +344,14 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
 		end
+	end
+
+	-- Re-check after questID is resolved
+	if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffffff00[RQE]|r Blocking resolved direction-text world quest waypoint for questID " .. tostring(questID) .. " because another quest is already supertracked.")
+		end
+		return
 	end
 
 	-- local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
@@ -527,6 +543,34 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 end
 
 
+-- Prevent nearby world quests from replacing the waypoint for another already-supertracked quest
+function RQE:ShouldBlockWorldQuestWaypoint(candidateQuestID)
+	if not candidateQuestID or candidateQuestID <= 0 then
+		return false
+	end
+
+	-- Only block world quests
+	if not C_QuestLog.IsWorldQuest(candidateQuestID) then
+		return false
+	end
+
+	-- Use the addon's intended/displayed quest first, because Blizzard may auto-supertrack
+	-- a nearby world quest temporarily when the player flies over it.
+	local intendedQuestID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	if not intendedQuestID or intendedQuestID <= 0 then
+		return false
+	end
+
+	-- Allow only if the candidate is the same quest the addon is intentionally displaying/following
+	if intendedQuestID == candidateQuestID then
+		return false
+	end
+
+	-- Otherwise block the world quest waypoint
+	return true
+end
+
+
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	if not RQEFrame:IsShown() then return end
@@ -537,6 +581,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	else
 		RQE.NearestFlightMasterSet = false
 	end
+
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Frame is hidden and won't display waypoint information for NoDirectionText")
@@ -552,6 +597,14 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
 		end
+	end
+
+	-- Re-check after questID is resolved
+	if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffffff00[RQE]|r Blocking no-direction world quest waypoint for questID " .. tostring(questID) .. " because another quest is already supertracked.")
+		end
+		return
 	end
 
 	local questData = RQE.getQuestData(questID)
@@ -578,6 +631,14 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 
 			-- Use either extractedQuestID or current super-tracked quest ID
 			local questID = extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+
+			-- Re-check after questID is resolved inside the delayed callback
+			if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cffffff00[RQE]|r Blocking delayed no-direction world quest waypoint for questID " .. tostring(questID) .. " because another quest is already supertracked.")
+				end
+				return
+			end
 
 			if questID then
 				mapID = GetQuestUiMapID(questID)
@@ -746,6 +807,14 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
 		end
+	end
+
+	-- Re-check after questID is resolved
+	if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffffff00[RQE]|r Blocking event world quest waypoint for questID " .. tostring(questID) .. " because another quest is already supertracked.")
+		end
+		return
 	end
 
 	local questData = RQE.getQuestData(questID)
@@ -948,6 +1017,14 @@ function RQE:CreateQuestWaypointFromNextWaypoint(questID)
 			print("No valid questID found for waypoint creation.")
 			return
 		end
+	end
+
+	-- Re-check after questID is resolved inside the delayed callback
+	if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffffff00[RQE]|r Blocking CreateQuestWaypointFromNextWaypoint for world questID " .. tostring(questID) .. " because another quest is being followed.")
+		end
+		return
 	end
 
 	-- Retrieve the Next Waypoint text
