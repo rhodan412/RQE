@@ -2492,6 +2492,7 @@ function UpdateRQEQuestFrame()
 				RQE.QuestLogIndexButtonPressed = true
 				-- QuestLogIndexButton:SetScript("OnClick", function(self, button)	-- changed as was causing issues when Mythic/Scenario mode was enabled the button wouldn't click
 					RQE.OkaytoUpdateCreateSteps = true
+					RQE.AllFramesShouldUpdate = true
 
 					-- Make sure player is actually hovering over the button
 					if not self:IsMouseOver() then return end
@@ -3199,6 +3200,8 @@ function UpdateRQEWorldQuestFrame()
 
 			-- Modify the OnClick event
 			WQuestLogIndexButton:SetScript("OnClick", function(self, button)
+				RQE.OkaytoUpdateCreateSteps = true
+				RQE.AllFramesShouldUpdate = true
 				if IsShiftKeyDown() and button == "LeftButton" then
 					C_QuestLog.RemoveWorldQuestWatch(questID)
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -3407,6 +3410,8 @@ function UpdateRQEWorldQuestFrame()
 
 			-- Untrack World Quest
 			WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
+				RQE.OkaytoUpdateCreateSteps = true
+				RQE.AllFramesShouldUpdate = true
 				if IsShiftKeyDown() and button == "LeftButton" then
 					-- Untrack the quest
 					-- print("~~~ Remove Quest Watch: 3156 ~~~")
