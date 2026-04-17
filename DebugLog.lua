@@ -35,9 +35,11 @@ function RQE.AddToDebugLog(message)
 
 	-- Prevent duplicate messages
 	if not C_Scenario.IsInScenario() then
-		if logTable[#logTable] ~= logEntry then
-			table.insert(logTable, logEntry)
-			RQE.UpdateLogFrame()
+		if not IsInInstance() then
+			if logTable[#logTable] ~= logEntry then
+				table.insert(logTable, logEntry)
+				RQE.UpdateLogFrame()
+			end
 		end
 	end
 end
