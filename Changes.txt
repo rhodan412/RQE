@@ -1,4 +1,22 @@
-12.0.1.2 (2026.04.14)
+12.0.1.3
+
+	**HIGHLIGHTS**
+		- Resolved issue where addon was calling for values that are secret inside of instances and scenarios
+
+	DebugLog.lua
+		- Fixed scenario/instance issue (2026.04.17.1407)
+
+	QuestingModule.lua
+		- Fixed issue where RQE supertracked frame wasn't properly updating when the button is pressed to supertrack a quest (2026.04.17.1407)
+
+	RQE.toc
+		- Updated version# (2026.04.17.1407)
+
+	RQEDatabase.lua
+		- Added additional Midnight quests to the DB (2026.04.17.1407)
+
+
+12.0.1.2 (2026.04.13)
 
 	**HIGHLIGHTS**
 		- Fixed issue where AH was attempting to purchase an item, for an objective in the DB, that wasn't a whole number
