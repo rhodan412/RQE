@@ -1,7 +1,15 @@
-12.0.1.3
+12.0.5.0 (2026.04.30)
 
 	**HIGHLIGHTS**
 		- Resolved issue where addon was calling for values that are secret inside of instances and scenarios
+		- Updated libraries
+		- Resolved issue where coordinate block was not being displayed in the correct location when mousing over the "W" Button
+
+	Libraries
+		- Updated interface to work in 12.0.5 (2026.04.30.1500)
+
+	Buttons.lua
+		- Resolved issue where coordinate block was not being displayed in the correct location when mousing over the "W" Button (2026.04.30.1500)
 
 	DebugLog.lua
 		- Fixed scenario/instance issue (2026.04.17.1407)
@@ -10,10 +18,10 @@
 		- Fixed issue where RQE supertracked frame wasn't properly updating when the button is pressed to supertrack a quest (2026.04.17.1407)
 
 	RQE.toc
-		- Updated version# (2026.04.17.1407)
+		- Updated interface and version# (2026.04.30.1500)
 
 	RQEDatabase.lua
-		- Added additional Midnight quests to the DB (2026.04.17.1407)
+		- Added additional Midnight quests to the DB (2026.04.30.1500)
 
 
 12.0.1.2 (2026.04.13)
