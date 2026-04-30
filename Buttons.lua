@@ -95,7 +95,13 @@ RQE.UnknownButtonTooltip = function()
 				if x and y and finalMapID then
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", x, y, tostring(finalMapID))
 
-					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					-- GameTooltip:SetText(tooltipText)
+					-- GameTooltip:Show()
+
+					GameTooltip:SetOwner(RQE.UnknownQuestButton, "ANCHOR_NONE")
+					GameTooltip:ClearAllPoints()
+					GameTooltip:SetPoint("TOPRIGHT", RQE.UnknownQuestButton, "TOPRIGHT", 0, 33)
 					GameTooltip:SetText(tooltipText)
 					GameTooltip:Show()
 
@@ -108,7 +114,14 @@ RQE.UnknownButtonTooltip = function()
 					end
 				else
 					-- Fallback message if not found or failed conditions
-					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+
+					-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					-- GameTooltip:SetText("Coordinates unavailable for searched quest.")
+					-- GameTooltip:Show()
+
+					GameTooltip:SetOwner(RQE.UnknownQuestButton, "ANCHOR_NONE")
+					GameTooltip:ClearAllPoints()
+					GameTooltip:SetPoint("TOPRIGHT", RQE.UnknownQuestButton, "TOPRIGHT", 0, 33)
 					GameTooltip:SetText("Coordinates unavailable for searched quest.")
 					GameTooltip:Show()
 				end
@@ -175,7 +188,11 @@ RQE.UnknownButtonTooltip = function()
 			end
 		end
 		C_Timer.After(0.2, function()
-			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+
+			GameTooltip:SetOwner(RQE.UnknownQuestButton, "ANCHOR_NONE")
+			GameTooltip:ClearAllPoints()
+			GameTooltip:SetPoint("TOPRIGHT", RQE.UnknownQuestButton, "TOPRIGHT", 0, 33)
 
 			-- Resets the master waypoint
 			RQE.WPxPos = nil
@@ -219,10 +236,6 @@ RQE.UnknownButtonTooltip = function()
 						end
 
 						RQE.WCoordData = tooltipText
-						-- C_Timer.After(5, function()
-							-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 189 ~~")
-							-- RQE:StartPeriodicChecks()
-						-- end)
 					end
 				end
 				if mapID == 0 then mapID = nil end
@@ -234,10 +247,6 @@ RQE.UnknownButtonTooltip = function()
 				if RQE.db.profile.debugLevel == "INFO" then
 					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 					RQE.WCoordData = tooltipText
-					-- C_Timer.After(5, function()
-						-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 204 ~~")
-						-- RQE:StartPeriodicChecks()
-					-- end)
 				end
 				GameTooltip:SetText(tooltipText)
 				GameTooltip:Show()
@@ -248,8 +257,8 @@ RQE.UnknownButtonTooltip = function()
 				RQE.WPmapID = RQE.DatabaseSuperMapID
 
 			elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
-				-- Open the quest log details for the super tracked quest to fetch the coordinates
-				OpenQuestLogToQuestDetails(RQE.CurrentTrackedQuestID)
+				-- Open the quest log details for the super tracked quest to fetch the coordinates	-- COMMENTED OUT AS IT WAS CAUSING COORDINATE TOOLTIP FROM BEING MISALIGNED ON INFO DEBUG WITH HANDYNOTES WORLDMAPBUTTON ADDON ACTIVE
+				--OpenQuestLogToQuestDetails(RQE.CurrentTrackedQuestID)
 
 				-- Use RQE.GetQuestCoordinates to get the coordinates
 				local x, y, mapID = RQE.GetQuestCoordinates(RQE.CurrentTrackedQuestID)
@@ -272,13 +281,6 @@ RQE.UnknownButtonTooltip = function()
 						end
 
 						RQE.WCoordData = tooltipText
-						-- if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-							-- RQE.DebugPrintPlayerContinentPosition(RQE.CurrentTrackedQuestID)
-						-- end
-						-- C_Timer.After(5, function()
-							-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 228 ~~")
-							-- RQE:StartPeriodicChecks()
-						-- end)
 					end
 					GameTooltip:SetText(tooltipText)
 				else
@@ -287,27 +289,7 @@ RQE.UnknownButtonTooltip = function()
 					if waypointX and waypointY and waypointMapID then
 						local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", waypointX * 100, waypointY * 100, tostring(waypointMapID))
 						if RQE.db.profile.debugLevel == "INFO" then
-							-- DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
-							-- local directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
-
-							-- -- DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", waypointX * 100, waypointY * 100, tostring(waypointMapID)), 0, 1, 1)	-- Cyan color
-							-- -- DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 1)	-- Cyan color
-							-- -- DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", waypointX * 100, waypointY * 100, tostring(waypointMapID)), 0, 1, 1)	-- Cyan color
-							-- -- DEFAULT_CHAT_FRAME:AddMessage("				},", 0, 1, 1)	-- Cyan color
-
-							-- if directionText then
-								-- DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 1)	-- Cyan color
-								-- DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35, wayText = %q },", waypointX * 100, waypointY * 100, tostring(waypointMapID), directionText), 0, 1, 1)	-- Cyan color
-								-- DEFAULT_CHAT_FRAME:AddMessage("				},", 0, 1, 1)	-- Cyan color
-							-- else
-								-- DEFAULT_CHAT_FRAME:AddMessage(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },", waypointX * 100, waypointY * 100, tostring(waypointMapID)), 0, 1, 1)	-- Cyan color
-							-- end
-
 							RQE.WCoordData = tooltipText
-							-- C_Timer.After(5, function()
-								-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 242 ~~")
-								-- RQE:StartPeriodicChecks()
-							-- end)
 						end
 						GameTooltip:SetText(tooltipText)
 					else
@@ -325,10 +307,6 @@ RQE.UnknownButtonTooltip = function()
 				if RQE.db.profile.debugLevel == "INFO" then
 					DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 					RQE.WCoordData = tooltipText
-					-- C_Timer.After(5, function()
-						-- print("~~ RQE:StartPeriodicChecks() within RQE.UnknownButtonTooltip = function(): 263 ~~")
-						-- RQE:StartPeriodicChecks()
-					-- end)
 				end
 				GameTooltip:SetText(tooltipText)
 				GameTooltip:Show()
