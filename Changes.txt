@@ -1,3 +1,15 @@
+12.0.5.1
+
+	**HIGHLIGHTS**
+		- Added missing Kalimdor pet battle quests to the DB
+
+	RQE.toc
+		- Updated version# (2026.05.02.0047)
+
+	RQEDatabase.lua
+		- Added missing Kalimdor pet battle quests to the DB (2026.05.02.0047)
+
+
 12.0.5.0 (2026.04.30)
 
 	**HIGHLIGHTS**
