@@ -4200,6 +4200,15 @@ function RQE.handleZoneNewAreaChange()
 					RQE.DirectionChangedUpdateRQEFrame = true
 					UpdateFrame()
 				end)
+
+				C_Timer.After(0.10, function()
+					local questID = C_SuperTrack.GetSuperTrackedQuestID()
+					if questID then
+						RQE:QueuePeriodicChecks("ZONE_CHANGED_NEW_AREA", 0.05, questID)
+					else
+						RQE:StartPeriodicChecks()
+					end
+				end)
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("ZONE_CHANGED_NEW_AREA → no direction change → skipping UpdateFrame()")
