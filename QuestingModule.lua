@@ -2865,6 +2865,7 @@ function UpdateRQEQuestFrame()
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
+						if IsInRaid() then return end
 						local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 						if tooltipData and tooltipData.lines then
 							local player_name = UnitName("player")
@@ -2962,6 +2963,7 @@ function UpdateRQEQuestFrame()
 
 					-- Party Members' Quest Progress
 					if IsInGroup() then
+						if IsInRaid() then return end
 						GameTooltip:AddLine(" ")
 						local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 						if tooltipData and tooltipData.lines then
@@ -3491,6 +3493,7 @@ function UpdateRQEWorldQuestFrame()
 
 			-- Party Members' Quest Progress
 			if IsInGroup() then
+				if IsInRaid() then return end
 				GameTooltip:AddLine(" ")
 				local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 				if tooltipData and tooltipData.lines then
