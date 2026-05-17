@@ -34,6 +34,10 @@ RQE.QuestTypes = RQE.QuestTypes or {}
 RQE.ZoneQuests = RQE.ZoneQuests or {}
 RQE.QuestLines = RQE.QuestLines or {}
 
+-- Initialize snapshot for minimap name
+RQE.LastDirectionSnapshot = RQE.LastDirectionSnapshot or ""
+RQE.LastMinimapZoneSnapshot = RQE.LastMinimapZoneSnapshot or ""
+
 if not table.unpack then
 	table.unpack = unpack
 end
@@ -3112,13 +3116,30 @@ end
 function RQE:DidDirectionTextChange(questID)
 	if not questID then return false end
 
-	local newDir = C_QuestLog.GetNextWaypointText(questID)
-	local oldDir = RQE.LastDirectionSnapshot
+	local newDir = C_QuestLog.GetNextWaypointText(questID) or ""
+	local oldDir = RQE.LastDirectionSnapshot or ""
 
-	if newDir ~= oldDir then
+	local newMinimapZone = GetMinimapZoneText() or ""
+	newMinimapZone = newMinimapZone:lower()
+
+	local oldMinimapZone = RQE.LastMinimapZoneSnapshot or ""
+
+	local directionChanged = (newDir ~= oldDir)
+	local minimapZoneChanged = (newMinimapZone ~= oldMinimapZone)
+
+	if directionChanged or minimapZoneChanged then
 		RQE.LastDirectionSnapshot = newDir
+		RQE.LastMinimapZoneSnapshot = newMinimapZone
 		return true
 	end
+
+	-- local newDir = C_QuestLog.GetNextWaypointText(questID)
+	-- local oldDir = RQE.LastDirectionSnapshot
+
+	-- if newDir ~= oldDir then
+		-- RQE.LastDirectionSnapshot = newDir
+		-- return true
+	-- end
 
 	return false
 end
