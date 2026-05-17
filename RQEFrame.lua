@@ -1063,6 +1063,7 @@ local function CreateQuestTooltip(frame, questID)
 
 		-- Party Members' Quest Progress
 		if IsInGroup() then
+			if IsInRaid() then return end
 			local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
 			if tooltipData and tooltipData.lines then
 				local player_name = UnitName("player")
