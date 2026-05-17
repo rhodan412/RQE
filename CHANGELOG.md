@@ -2,12 +2,27 @@
 
 	**HIGHLIGHTS**
 		- Added missing Kalimdor pet battle quests to the DB
+		- Fixed issue where zone changes were not properly calling for an update to the current supertracked quest's step
+		- Performance fix while in raid group to no longer check quest status of other members
+
+	Core.lua
+		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
+
+	EventManager.lua
+		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
+
+	QuestingModule.lua
+		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
 
 	RQE.toc
 		- Updated version# (2026.05.02.0047)
 
 	RQEDatabase.lua
 		- Added missing Kalimdor pet battle quests to the DB (2026.05.02.0047)
+		- Updated Tanaris and Un'Goro Crater alliance/neutral quests in DB (2026.05.17.1622)
+
+	RQEFrame.lua
+		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
 
 
 12.0.5.0 (2026.04.30)
