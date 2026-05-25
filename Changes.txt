@@ -20,6 +20,7 @@
 	RQEDatabase.lua
 		- Added missing Kalimdor pet battle quests to the DB (2026.05.02.0047)
 		- Updated Tanaris and Un'Goro Crater alliance/neutral quests in DB (2026.05.17.1622)
+		- Updated Horde cataclysm profession quests in DB (2026.05.25.1424)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
