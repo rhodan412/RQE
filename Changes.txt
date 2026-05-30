@@ -4,6 +4,7 @@
 		- Added missing Kalimdor pet battle quests to the DB
 		- Fixed issue where zone changes were not properly calling for an update to the current supertracked quest's step
 		- Performance fix while in raid group to no longer check quest status of other members
+		- Added The War of Light and Shadow to quest DB
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
@@ -21,6 +22,7 @@
 		- Added missing Kalimdor pet battle quests to the DB (2026.05.02.0047)
 		- Updated Tanaris and Un'Goro Crater alliance/neutral quests in DB (2026.05.17.1622)
 		- Updated Horde cataclysm profession quests in DB (2026.05.25.1424)
+		- Added The War of Light and Shadow to quest DB (2026.05.29.2255)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
