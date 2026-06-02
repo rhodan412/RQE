@@ -5,6 +5,7 @@
 		- Fixed issue where zone changes were not properly calling for an update to the current supertracked quest's step
 		- Performance fix while in raid group to no longer check quest status of other members
 		- Added The War of Light and Shadow to quest DB
+		- Added Harandar side quests to DB
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
@@ -23,6 +24,8 @@
 		- Updated Tanaris and Un'Goro Crater alliance/neutral quests in DB (2026.05.17.1622)
 		- Updated Horde cataclysm profession quests in DB (2026.05.25.1424)
 		- Added The War of Light and Shadow to quest DB (2026.05.29.2255)
+		- Added Harandar side quests to DB (2026.06.02.0043)
+		- Added most of Zul'Aman and Voidstorm side quests to DB (2026.06.02.0043)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
