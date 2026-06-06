@@ -429,6 +429,61 @@ function RQE.handleGossipClosed()
 		-- end
 	-- end
 
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super tracked quest ID found, skipping aura checks.")
+		end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if CheckDBBuff or CheckDBDebuff exists anywhere in the supertracked quest's data
+	local function hasCheckDBBuffDebuff(data)
+		for _, step in ipairs(data) do
+			-- Check `check` field
+			if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
+				C_Timer.After(4.5, function()
+					-- print("CheckDBBuff/CheckDBDebuff is present within the 'check' or 'checks' of the DB entry")
+					RQE:StartPeriodicChecks()
+				end)
+			end
+
+			-- Check `checks` field
+			if step.checks then
+				for _, checkData in ipairs(step.checks) do
+					if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
+						C_Timer.After(4.5, function()
+							-- print("CheckDBBuff/CheckDBDebuff is present within the 'check' or 'checks' of the DB entry")
+							RQE:StartPeriodicChecks()
+						end)
+					end
+				end
+			end
+		end
+		-- print("CheckDBBuff/CheckDBDebuff is NOT present within the 'check' or 'checks' of the DB entry")
+	end
+
+	local isBuffOrDebuffCheck = hasCheckDBBuffDebuff(questData)
+
 	RQE.SelectGossipOption(nil, nil)
 end
 
