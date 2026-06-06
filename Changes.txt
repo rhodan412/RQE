@@ -6,6 +6,7 @@
 		- Performance fix while in raid group to no longer check quest status of other members
 		- Added The War of Light and Shadow to quest DB
 		- Added Harandar side quests to DB
+		- Updated alliance/neutral Cataclysm quests excluding Mount Hyjal, Vash'jir, Deepholm, Uldum and Twilight Highlands
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
@@ -26,6 +27,7 @@
 		- Added The War of Light and Shadow to quest DB (2026.05.29.2255)
 		- Added Harandar side quests to DB (2026.06.02.0043)
 		- Added most of Zul'Aman and Voidstorm side quests to DB (2026.06.02.0043)
+		- Updated Thousand Needles quests (alliance/neutral) within DB (2026.06.05.2137)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
