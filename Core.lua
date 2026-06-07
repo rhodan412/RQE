@@ -13095,6 +13095,49 @@ function RQE.SelectMultipleGossipOptions(npcName, ...)
 end
 
 
+-- Function that dumps gossip options into chat
+-- Run with "/run DevTools_Dump(RQE.API.GetGossipOptions())"
+function RQE.DumpGossipOptions()
+	local options = RQE.API.GetGossipOptions()
+
+	if not options or #options == 0 then
+		print("No gossip options available.")
+		return options
+	end
+
+	print("Gossip Options for NPC: " .. (UnitName("npc") or "Unknown"))
+
+	for i, option in ipairs(options) do
+		print(("Option %d"):format(i))
+		print("  gossipOptionID:", tostring(option.gossipOptionID))
+		print("  name:", tostring(option.name))
+		print("  icon:", tostring(option.icon))
+		print("  status:", tostring(option.status))
+		print("  spellID:", tostring(option.spellID))
+		print("  flags:", tostring(option.flags))
+		print("  overrideIconID:", tostring(option.overrideIconID))
+		print("  selectOptionWhenOnlyOption:", tostring(option.selectOptionWhenOnlyOption))
+		print("  orderIndex:", tostring(option.orderIndex))
+		print("  failureDescription:", tostring(option.failureDescription))
+
+		if option.rewards and #option.rewards > 0 then
+			for r, reward in ipairs(option.rewards) do
+				print(("    Reward %d -> id=%s quantity=%s rewardType=%s context=%s")
+					:format(
+						r,
+						tostring(reward.id),
+						tostring(reward.quantity),
+						tostring(reward.rewardType),
+						tostring(reward.context)
+					))
+			end
+		end
+	end
+
+	return options
+end
+
+
 -- Securely hook event handler to process gossip
 RQEGossipFrame:SetScript("OnEvent", function(self, event)
 	if event == "GOSSIP_SHOW" then
