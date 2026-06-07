@@ -23,6 +23,8 @@ function RQE.AddToDebugLog(message)
 
 	local timestamp = date("%Y-%m-%d %H:%M:%S")
 	local logEntry
+	local playerMapID = C_Map.GetBestMapForUnit("player") or 0
+	local isGarrisonMap = (playerMapID == 590 or playerMapID == 582)
 
 	if RQE.db.profile.debugTimeStampCheckbox then
 		-- If timestamps are enabled, format normally
@@ -34,12 +36,10 @@ function RQE.AddToDebugLog(message)
 	end
 
 	-- Prevent duplicate messages
-	if not C_Scenario.IsInScenario() then
-		if not IsInInstance() then
-			if logTable[#logTable] ~= logEntry then
-				table.insert(logTable, logEntry)
-				RQE.UpdateLogFrame()
-			end
+	if isGarrisonMap or (not C_Scenario.IsInScenario() and not IsInInstance()) then
+		if logTable[#logTable] ~= logEntry then
+			table.insert(logTable, logEntry)
+			RQE.UpdateLogFrame()
 		end
 	end
 end
