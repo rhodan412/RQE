@@ -10,6 +10,10 @@
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
+		- Added function to obtain gossip information [author-mode ONLY] (2026.06.06.2241)
+
+	DebugLog.lua
+		- Resolved issue where data wasn't properly printing to the log frame while inside garrison [author-mode ONLY] (2026.06.06.2241)
 
 	EventManager.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
@@ -30,6 +34,7 @@
 		- Added most of Zul'Aman and Voidstorm side quests to DB (2026.06.02.0043)
 		- Updated Thousand Needles quests (alliance/neutral) within DB (2026.06.05.2137)
 		- Updated Tanaan Jungle and early Shadowmoon Valley quests within DB (2026.06.06.0216)
+		- Added Shadowmoon Valley (WoD) main storyline leveling quests to DB (2026.06.06.2241)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
