@@ -1591,67 +1591,186 @@ function RQE.ClearBonusQuestElements()
 end
 
 
+-- Helper for Bonus Quests Frame
+function RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
+	local questInfo = RQE.getQuestData(questID)
+	if not questInfo then return end
+
+	RQE.AddonSetStepIndex = RQE.AddonSetStepIndex or 1
+	RQE.DisplayedQuestID = questID
+	RQE.ManualSuperTrack = "BQ"
+	RQE.ManualSuperTrackedQuestID = questID
+	RQE.searchedQuestID = nil
+
+	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+
+	if RQE.CreateStepsText then
+		RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+	end
+
+	if RQE.UnknownQuestButton then
+		RQE.UnknownQuestButton:Show()
+	end
+
+	if RQE.UnknownQuestButtonCalcNTrack then
+		RQE.UnknownQuestButtonCalcNTrack()
+	end
+
+	if RQE.QuestIDText then
+		RQE.QuestIDText:SetText("Quest ID: " .. questID)
+	end
+
+	if RQE.QuestNameText then
+		RQE.QuestNameText:SetText("Quest Name: " .. (questInfo.title or questTitle or "Unknown Quest"))
+	end
+
+	if RQE.QuestDescription then
+		RQE.QuestDescription:SetText((questInfo.descriptionQuestText and questInfo.descriptionQuestText[1]) or "")
+	end
+
+	if RQE.QuestObjectives then
+		RQE.QuestObjectives:SetText(RQE.colorizeObjectives(questID) or "")
+	end
+
+	if RQE.UpdateSeparateFocusFrame then
+		RQE:UpdateSeparateFocusFrame()
+	end
+
+	if RQE.StartPeriodicChecks then
+		RQE:StartPeriodicChecks()
+	end
+end
+
+
 -- Function that adds the Bonus Quests to the RQE.QuestsFrame below the last tracked normal quest
 function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 	-- Validate the questID
 	if not questID or type(questID) ~= "number" or questID <= 0 then
 		print("Error: Invalid questID for AddBonusQuestToFrame:", questID)
-		return lastElement -- Return the lastElement unchanged
+		return lastElement
+	end
+
+	-- Create the BQ supertrack button
+	local bonusQuestButton = CreateFrame("Button", nil, parentFrame)
+	bonusQuestButton:SetSize(32, 32)
+
+	local buttonText = bonusQuestButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+	buttonText:SetPoint("CENTER", bonusQuestButton, "CENTER", 0, 0)
+	buttonText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+	buttonText:SetTextColor(1, 0.82, 0)
+	buttonText:SetText("BQ")
+
+	local buttonTexture = bonusQuestButton:CreateTexture(nil, "BACKGROUND")
+	buttonTexture:SetAllPoints(bonusQuestButton)
+	if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+		buttonTexture:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+	else
+		buttonTexture:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
 	end
 
 	-- Create a FontString for the quest title
 	local bonusQuestLabel = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	bonusQuestLabel:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
-	bonusQuestLabel:SetTextColor(137/255, 95/255, 221/255) -- Medium Purple
+	bonusQuestLabel:SetTextColor(137/255, 95/255, 221/255)
 	bonusQuestLabel:SetText(questTitle)
 	RQE.bonusQuestLabel = bonusQuestLabel
 
-	-- Add the click event for the bonusQuestLabel
-	RQE.bonusQuestLabel:SetScript("OnMouseDown", function(self, button)
+	-- Position the label first, then attach the BQ button to it
+	if lastElement then
+		bonusQuestLabel:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -20)
+	else
+		bonusQuestLabel:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
+	end
+
+	bonusQuestButton:SetPoint("RIGHT", bonusQuestLabel, "LEFT", -5, 0)
+
+	-- Button click: supertrack this bonus quest
+	bonusQuestButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
+	bonusQuestButton:SetScript("OnMouseDown", function(self, button)
 		if button == "LeftButton" and not IsShiftKeyDown() then
-			OpenQuestLogToQuestDetails(questID)
+			RQE.ManualSuperTrack = "BQ"
+			RQE.ManualSuperTrackedQuestID = questID
+			RQE.searchedQuestID = nil
+
+			if RQEMacro and RQEMacro.ClearMacroContentByName then
+				RQEMacro:ClearMacroContentByName("RQE Macro")
+			end
+
+			RQE.ManuallyTrackedQuests = RQE.ManuallyTrackedQuests or {}
+			RQE.ManuallyTrackedQuests[questID] = true
+			RQE.DisplayedQuestID = questID
+
+			C_SuperTrack.SetSuperTrackedQuestID(questID)
+
+			if UpdateRQEQuestFrame then
+				UpdateRQEQuestFrame()
+			end
+
+			if RQE.SaveSuperTrackedQuestToCharacter then
+				RQE:SaveSuperTrackedQuestToCharacter()
+			end
+
+			C_Timer.After(0.15, function()
+				RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
+			end)
+
+			C_Timer.After(0.50, function()
+				if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+					RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
+				end
+			end)
+
+			C_Timer.After(1.00, function()
+				if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+					RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
+				end
+
+				if UpdateRQEQuestFrame then
+					UpdateRQEQuestFrame()
+				end
+			end)
+
 			return
+		end
+
+		if button == "RightButton" and ShowQuestDropdown then
+			ShowQuestDropdown(self, questID)
 		end
 	end)
 
-	-- Position the label relative to the previous element or at the top
-	if lastElement then
-		bonusQuestLabel:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", -20, -20) -- Further left for bonus quest names
-	else
-		bonusQuestLabel:SetPoint("TOPLEFT", parentFrame.header, "BOTTOMLEFT", 15, -20)
-	end
-
-	-- Add this label to the bonusQuestElements table for easy clearing later
+	table.insert(RQE.bonusQuestElements, bonusQuestButton)
 	table.insert(RQE.bonusQuestElements, bonusQuestLabel)
 
 	-- Fetch and set the objectives text from the quest log
 	local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
 	local objectivesText = objectivesTable and "" or "No objectives available."
+
 	if objectivesTable then
 		for _, objective in pairs(objectivesTable) do
 			objectivesText = objectivesText .. (objective.text or "Unknown Objective") .. "\n"
 		end
 	end
 
-	-- Apply colorization to objectivesText
 	objectivesText = RQE.colorizeObjectives(questID)
 
 	-- Create a FontString for the objectives
 	local bonusQuestObjectives = parentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	bonusQuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-	bonusQuestObjectives:SetTextColor(1, 1, 1) -- White text
+	bonusQuestObjectives:SetTextColor(1, 1, 1)
 	bonusQuestObjectives:SetWordWrap(true)
+	bonusQuestObjectives:SetJustifyH("LEFT")
+	bonusQuestObjectives:SetJustifyV("TOP")
 	bonusQuestObjectives:SetWidth(parentFrame:GetWidth() - 110)
-	bonusQuestObjectives:SetHeight(0) -- Auto height
+	bonusQuestObjectives:SetHeight(0)
 	bonusQuestObjectives:SetText(objectivesText)
 
-	-- Position the objectives relative to the bonus quest label
-	bonusQuestObjectives:SetPoint("TOPLEFT", bonusQuestLabel, "BOTTOMLEFT", 20, -5) -- Slight right indentation for objectives
+	bonusQuestObjectives:SetPoint("TOPLEFT", bonusQuestLabel, "BOTTOMLEFT", 0, -5)
 
-	-- Add this label to the bonusQuestElements table for easy clearing later
 	table.insert(RQE.bonusQuestElements, bonusQuestObjectives)
 
-	-- Add tooltip functionality for the bonus quest title
+	-- Tooltip
 	bonusQuestLabel:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT", -50, -40)
 		GameTooltip:SetMinimumWidth(350)
@@ -1661,29 +1780,23 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 
 		GameTooltip:AddLine(" ")
 
-		-- Add objectives
 		if objectivesText and objectivesText ~= "" then
 			GameTooltip:AddLine("Objectives:")
 			GameTooltip:AddLine(objectivesText, 1, 1, 1, true)
 			GameTooltip:AddLine(" ")
 		end
 
-		-- Add rewards (if any)
 		RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
-
-		-- Show the tooltip
+		GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)
 		GameTooltip:Show()
 	end)
 
-	-- Clear tooltip on leave
 	bonusQuestLabel:SetScript("OnLeave", function()
 		GameTooltip:Hide()
 	end)
 
-	-- Return the objectives label as the new "lastElement" for subsequent bonus quests
 	return bonusQuestObjectives
 end
 
