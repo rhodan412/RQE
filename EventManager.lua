@@ -6634,6 +6634,25 @@ function RQE.handleQuestDetail(...)
 		return
 	end
 
+	-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		-- local questData = RQE.getQuestData(questID)
+
+		-- if not questData then
+			-- -- Quest is NOT in the DB at all
+			-- DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
+		-- else
+			-- local totalSteps = #questData
+
+			-- if totalSteps == 0 then
+				-- -- Quest is in the DB but has no steps
+				-- DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+			-- else
+				-- -- Quest is in the DB and has steps
+				-- DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
+			-- end
+		-- end
+	-- end
+
 	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 		local questData = RQE.getQuestData(questID)
 
@@ -6642,13 +6661,31 @@ function RQE.handleQuestDetail(...)
 			DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
 		else
 			local totalSteps = #questData
+			local locationTypeText = ""
+
+			if type(questData.location) == "table" then
+				locationTypeText = " |cFF87CEEB[location]|r"
+				-- locationTypeText = " |cFF87CEEB[location]|r"
+			elseif type(questData.locations) == "table" then
+				locationTypeText = " |cFF00FF00[locations array]|r"
+				-- locationTypeText = " |cFF87CEEB[locations]|r"
+			else
+				locationTypeText = " |cFFFFA500[no location/locations]|r"
+				-- locationTypeText = " |cFFFFA500[no location/locations]|r"
+			end
 
 			if totalSteps == 0 then
 				-- Quest is in the DB but has no steps
-				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+				DEFAULT_CHAT_FRAME:AddMessage(
+					messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r" .. locationTypeText,
+					0.46, 0.82, 0.95
+				)
 			else
 				-- Quest is in the DB and has steps
-				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
+				DEFAULT_CHAT_FRAME:AddMessage(
+					messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps) .. locationTypeText,
+					0.46, 0.82, 0.95
+				)
 			end
 		end
 	end
