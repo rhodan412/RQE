@@ -18,6 +18,7 @@
 	EventManager.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
 		- Added update to stepIndex when GOSSIP_CLOSED event function fires allowing transition between old/new zones after speaking with Zidormi (2026.06.06.0216)
+		- When QUEST_DETAILS fires it will display if the given quest uses location or locations array in the existing DB entry [author-mode ONLY] (2026.06.10.2218)
 
 	QuestingModule.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
@@ -35,6 +36,8 @@
 		- Updated Thousand Needles quests (alliance/neutral) within DB (2026.06.05.2137)
 		- Updated Tanaan Jungle and early Shadowmoon Valley quests within DB (2026.06.06.0216)
 		- Added Shadowmoon Valley (WoD) main storyline leveling quests to DB (2026.06.06.2241)
+		- Added Talador main storyline alliance/neutral leveling quests to DB (2026.06.10.2218)
+		- Added many Spires of Arak main storyline alliance/neutral leveling quests to DB (2026.06.10.2218)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
