@@ -2385,9 +2385,20 @@ function RQE.InitializeSeparateFocusFrame()
 		end
 
 		-- Optional: ensure the supertracked quest is actually real/active
+		-- local isLogQuest = C_QuestLog.IsOnQuest(displayedQuestID)
+		-- local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
+		-- if not (isLogQuest or isActiveWorldQuest) then
+			-- finishUpdate()
+			-- return
+		-- end
+
+		-- Optional: ensure the supertracked quest is actually real/active
 		local isLogQuest = C_QuestLog.IsOnQuest(displayedQuestID)
 		local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
-		if not (isLogQuest or isActiveWorldQuest) then
+		local hasDBQuest = RQE.getQuestData(displayedQuestID) ~= nil
+		local hasObjectives = C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
+
+		if not (isLogQuest or isActiveWorldQuest or hasDBQuest or hasObjectives) then
 			finishUpdate()
 			return
 		end
