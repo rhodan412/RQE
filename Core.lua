@@ -2900,7 +2900,16 @@ function RQE:ShouldClearFrame()
 	local isWorldQuest = C_QuestLog.IsWorldQuest(extractedQuestID)
 	local isBeingSearched = RQE.searchedQuestID == extractedQuestID
 	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+
 	local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
+	local isBonusQuest = C_QuestLog.IsQuestTask(extractedQuestID) or C_QuestLog.IsThreatQuest(extractedQuestID)
+	local isSuperTrackedQuest = C_SuperTrack.GetSuperTrackedQuestID() == extractedQuestID
+	local isDatabaseQuest = RQE.getQuestData(extractedQuestID) ~= nil
+
+	if isBonusQuest and isSuperTrackedQuest and isDatabaseQuest then
+		return
+	end
+	-- local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
 
 	local watchedQuests = {}
 	for i = 1, C_QuestLog.GetNumQuestWatches() do
