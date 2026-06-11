@@ -7,10 +7,14 @@
 		- Added The War of Light and Shadow to quest DB
 		- Added Harandar side quests to DB
 		- Updated alliance/neutral Cataclysm quests excluding Mount Hyjal, Vash'jir, Deepholm, Uldum and Twilight Highlands
+		- Added support for manually supertracking DB-defined bonus/task quests directly from the RQEQuestFrame via the new "BQ" button
+		- DB-defined bonus/task quests now populate the RQEFrame with quest steps, waypoint controls, macros, and Separate Focus Frame information when manually supertracked
+		- Added visual highlighting for manually supertracked bonus/task quests within the RQEQuestFrame
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
 		- Added function to obtain gossip information [author-mode ONLY] (2026.06.06.2241)
+		- Updated frame clearing validation to prevent DB-defined bonus/task quests from being removed while supertracked (2026.06.11.1530)
 
 	DebugLog.lua
 		- Resolved issue where data wasn't properly printing to the log frame while inside garrison [author-mode ONLY] (2026.06.06.2241)
@@ -19,9 +23,15 @@
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
 		- Added update to stepIndex when GOSSIP_CLOSED event function fires allowing transition between old/new zones after speaking with Zidormi (2026.06.06.0216)
 		- When QUEST_DETAILS fires it will display if the given quest uses location or locations array in the existing DB entry [author-mode ONLY] (2026.06.10.2218)
+		- Updated SUPER_TRACKING_CHANGED event function handling to preserve RQEFrame data when switching to manually tracked DB-defined bonus/task quests (2026.06.11.1530)
 
 	QuestingModule.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
+		- Added helper function to populate the RQEFrame with DB-defined bonus/task quest information when manually supertracked (2026.06.11.1530)
+		- Added "BQ" supertrack buttons for bonus/task quests displayed within the RQEQuestFrame, allowing DB-defined bonus/task quests to be manually supertracked (2026.06.11.1530)
+		- Added support for manually supertracked bonus/task quests to automatically populate the RQEFrame, Separate Focus Frame, waypoint controls, and macro information from the quest database (2026.06.11.1530)
+		- Updated bonus quest UI layout and anchoring to align BQ buttons, quest titles, and objective text consistently with tracked quest entries (2026.06.11.1530)
+		- Added visual indication for manually supertracked bonus/task quests by highlighting the active BQ button within the RQEQuestFrame (2026.06.11.1530)
 
 	RQE.toc
 		- Updated version# (2026.05.02.0047)
@@ -41,7 +51,7 @@
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
-
+		- Updated supertracked quest validation to allow DB-defined bonus/task quests with objective data to populate the Separate Focus Frame (2026.06.11.1530)
 
 12.0.5.0 (2026.04.30)
 
