@@ -3436,9 +3436,17 @@ function RQE.handleSuperTracking()
 
 	-- Early return if manual super tracking wasn't performed
 	if RQE.ManualSuperTrack then
-		RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
+		if RQE.ManualSuperTrack ~= "BQ" then
+			RQE:ClearFrameData()
+		end
+
 		RQE.lastClickedObjectiveIndex = 0
 	end
+
+	-- if RQE.ManualSuperTrack then
+		-- RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
+		-- RQE.lastClickedObjectiveIndex = 0
+	-- end
 
 	-- Reset the manual super tracking flag now that we're handling it
 	RQE.ManualSuperTrack = nil
