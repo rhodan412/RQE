@@ -47,7 +47,7 @@
 		- Updated Tanaan Jungle and early Shadowmoon Valley quests within DB (2026.06.06.0216)
 		- Added Shadowmoon Valley (WoD) main storyline leveling quests to DB (2026.06.06.2241)
 		- Added Talador main storyline alliance/neutral leveling quests to DB (2026.06.10.2218)
-		- Added many Spires of Arak main storyline alliance/neutral leveling quests to DB (2026.06.10.2218)
+		- Added Spires of Arak main storyline alliance/neutral leveling quests to DB (2026.06.12.1833)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
