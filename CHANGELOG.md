@@ -54,7 +54,7 @@
 		- Added Talador main storyline alliance/neutral leveling quests to DB (2026.06.10.2218)
 		- Added Spires of Arak main storyline alliance/neutral leveling quests to DB (2026.06.12.1833)
 		- Added Gorgrond main storyline alliance/neutral leveling quests to DB (2026.06.15.0005)
-		- Added some quests in Nagrand main storyline alliance/neutral to DB (2026.06.15.0005)
+		- Added Nagrand main storyline alliance/neutral to DB (2026.06.15.1711)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
