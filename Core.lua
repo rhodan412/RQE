@@ -910,6 +910,7 @@ end
 function RQE:LogSeparateFocusClear(reason, oldQuestID, newQuestID, oldStep, newStep)
 	-- SAFETY: Ensure the history table exists
 	RQE.ClearSeparateFocusHistory = RQE.ClearSeparateFocusHistory or {}
+	RQE._lastSeparateClearReason = reason
 
 	table.insert(RQE.ClearSeparateFocusHistory, {
 		time = date("%H:%M:%S"),
@@ -2759,17 +2760,15 @@ function RQE:ClearSeparateFocusFrame()
 	-- Reset the content area height so scrolling resets
 	RQE.SeparateContentFrame:SetHeight(1000)
 
-	-- -- Optional: show a placeholder message (retains your original intended behavior)
-	-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-	-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
-	-- RQE.SeparateStepText:SetJustifyH("LEFT")
-	-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
-	-- RQE.SeparateStepText:SetWordWrap(true)
-	-- RQE.SeparateStepText:SetText("No step description available for this step.")
-	-- RQE.SeparateStepText:Show()
+	if RQE._lastSeparateClearReason == "StepIndex changed" then
+		RQE._lastSeparateClearReason = nil
 
-	--RQE.SeparateScrollFrame:SetVerticalScroll(0)
+		C_Timer.After(0.05, function()
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+		end)
+	end
 
 	RQE.ClearButtonPressed = false
 end
@@ -3128,25 +3127,32 @@ function RQE:DidDirectionTextChange(questID)
 	local newDir = C_QuestLog.GetNextWaypointText(questID) or ""
 	local oldDir = RQE.LastDirectionSnapshot or ""
 
-	local newMinimapZone = GetMinimapZoneText() or ""
-	newMinimapZone = newMinimapZone:lower()
+	local newMinimapZone = (GetMinimapZoneText() or ""):lower()
+	local newRealZone = (GetRealZoneText() or ""):lower()
+	local newZoneSnapshot = newMinimapZone .. "||" .. newRealZone
 
-	local oldMinimapZone = RQE.LastMinimapZoneSnapshot or ""
+	local oldZoneSnapshot = RQE.LastMinimapZoneSnapshot or ""
 
-	local directionChanged = (newDir ~= oldDir)
-	local minimapZoneChanged = (newMinimapZone ~= oldMinimapZone)
+	local directionChanged = newDir ~= oldDir
+	local zoneChanged = newZoneSnapshot ~= oldZoneSnapshot
 
-	if directionChanged or minimapZoneChanged then
+	if directionChanged or zoneChanged then
 		RQE.LastDirectionSnapshot = newDir
-		RQE.LastMinimapZoneSnapshot = newMinimapZone
+		RQE.LastMinimapZoneSnapshot = newZoneSnapshot
 		return true
 	end
 
-	-- local newDir = C_QuestLog.GetNextWaypointText(questID)
-	-- local oldDir = RQE.LastDirectionSnapshot
+	-- local newMinimapZone = GetMinimapZoneText() or ""
+	-- newMinimapZone = newMinimapZone:lower()
 
-	-- if newDir ~= oldDir then
+	-- local oldMinimapZone = RQE.LastMinimapZoneSnapshot or ""
+
+	-- local directionChanged = (newDir ~= oldDir)
+	-- local minimapZoneChanged = (newMinimapZone ~= oldMinimapZone)
+
+	-- if directionChanged or minimapZoneChanged then
 		-- RQE.LastDirectionSnapshot = newDir
+		-- RQE.LastMinimapZoneSnapshot = newZoneSnapshot
 		-- return true
 	-- end
 
@@ -9607,17 +9613,27 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 	-- Get the player's current map ID and subzone name
 	local currentMapID = C_Map.GetBestMapForUnit("player")
 	local currentSubZone = GetSubZoneText() or "" -- Subzone name
-	local currentZone = GetZoneText() or "" -- Zone name
+	local currentZone = GetZoneText() or "" 		-- Zone name
+	local currentRealZone = GetRealZoneText() or ""	-- Real Zone Text
 
 	-- Fall back to zone name if subzone is blank
 	if currentSubZone == "" then
 		currentSubZone = currentZone
 	end
 
+	local function NormalizeZoneName(zoneName)
+		return tostring(zoneName or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+	end
+
+	local currentSubZoneLower = NormalizeZoneName(currentSubZone)
+	local currentZoneLower = NormalizeZoneName(currentZone)
+	local currentRealZoneLower = NormalizeZoneName(currentRealZone)
+
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("Current MapID:", tostring(currentMapID))
 		print("Current SubZone:", currentSubZone)
 		print("Current Zone:", currentZone)
+		print("Current RealZone:", currentRealZone)
 	end
 
 	-- Determine if `check` contains strings (subzones) or numerals (map IDs)
@@ -9648,13 +9664,28 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 		end
 
 		for _, subZone in ipairs(check) do
-			if currentSubZone == subZone then
+			local expectedZoneLower = NormalizeZoneName(subZone)
+
+			if currentSubZoneLower == expectedZoneLower
+				or currentZoneLower == expectedZoneLower
+				or currentRealZoneLower == expectedZoneLower then
+
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Player is in the required subzone:", subZone)
+					print("Player is in the required zone:", subZone)
 				end
-				return true -- Subzone matches
+
+				return true
 			end
 		end
+
+		-- for _, subZone in ipairs(check) do
+			-- if currentSubZone == subZone then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Player is in the required subzone:", subZone)
+				-- end
+				-- return true -- Subzone matches
+			-- end
+		-- end
 
 		-- If no match in subzone checks
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -9663,11 +9694,6 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 		end
 		return false
 	end
-
-	-- if RQE.db.profile.debugLevel == "INFO+" then
-		-- print("Evaluating single check for Current MapID:", tostring(currentMapID))
-		-- print("Required MapID(s):", table.concat(check, ", "))
-	-- end
 
 	-- Handle single check + neededAmt directly
 	if #check > 0 then
@@ -9698,7 +9724,6 @@ function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("All zone conditions satisfied for stepIndex:", stepIndex)
 			end
-			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			return true -- Indicate successful advancement
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -13131,7 +13156,7 @@ function RQE.DumpGossipOptions()
 
 		if option.rewards and #option.rewards > 0 then
 			for r, reward in ipairs(option.rewards) do
-				print(("    Reward %d -> id=%s quantity=%s rewardType=%s context=%s")
+				print(("	Reward %d -> id=%s quantity=%s rewardType=%s context=%s")
 					:format(
 						r,
 						tostring(reward.id),
