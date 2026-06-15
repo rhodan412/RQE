@@ -10,11 +10,15 @@
 		- Added support for manually supertracking DB-defined bonus/task quests directly from the RQEQuestFrame via the new "BQ" button
 		- DB-defined bonus/task quests now populate the RQEFrame with quest steps, waypoint controls, macros, and Separate Focus Frame information when manually supertracked
 		- Added visual highlighting for manually supertracked bonus/task quests within the RQEQuestFrame
+		- Fixed issue where the Separate Focus Frame could clear itself and fail to refresh when progressing between quest steps
+		- Improved zone detection for cave and interior locations, allowing quest steps to update correctly in areas where the map or minimap zone name does not change
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
 		- Added function to obtain gossip information [author-mode ONLY] (2026.06.06.2241)
 		- Updated frame clearing validation to prevent DB-defined bonus/task quests from being removed while supertracked (2026.06.11.1530)
+		- Resolved issue where SeparateFocusFrame was being cleared between steps and not updating properly (2026.06.15.0005)
+		- Updated CheckDBZoneChange to now also read the real zone text depicted in GetRealZoneText() API. This is often used for things like caves while the mapID, zoneName or minimap zoneName don't change (2026.06.15.0005)
 
 	DebugLog.lua
 		- Resolved issue where data wasn't properly printing to the log frame while inside garrison [author-mode ONLY] (2026.06.06.2241)
@@ -24,6 +28,7 @@
 		- Added update to stepIndex when GOSSIP_CLOSED event function fires allowing transition between old/new zones after speaking with Zidormi (2026.06.06.0216)
 		- When QUEST_DETAILS fires it will display if the given quest uses location or locations array in the existing DB entry [author-mode ONLY] (2026.06.10.2218)
 		- Updated SUPER_TRACKING_CHANGED event function handling to preserve RQEFrame data when switching to manually tracked DB-defined bonus/task quests (2026.06.11.1530)
+		- Updated REAGENT_BAG_UPDATE, UNIT_INVENTORY_CHANGED, MINIMAP_UPDATE_ZOOM, ZONE_CHANGED event functions so that if CheckDBZoneChange is listed in the DB entry for a quest it will now also read real zone text which is an often 'hidden' value as it doesn't appear on worldmap or minimap name (2026.06.15.0005)
 
 	QuestingModule.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
@@ -48,7 +53,8 @@
 		- Added Shadowmoon Valley (WoD) main storyline leveling quests to DB (2026.06.06.2241)
 		- Added Talador main storyline alliance/neutral leveling quests to DB (2026.06.10.2218)
 		- Added Spires of Arak main storyline alliance/neutral leveling quests to DB (2026.06.12.1833)
-		- Added some quests in Gorgrond main storyline alliance/neutral to DB (2026.06.13.1413)
+		- Added Gorgrond main storyline alliance/neutral leveling quests to DB (2026.06.15.0005)
+		- Added some quests in Nagrand main storyline alliance/neutral to DB (2026.06.15.0005)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
@@ -1283,7 +1289,7 @@
 		- Added RQE.UpdateScenarioFrame() and RQE.updateScenarioUI() for scenario frame updates to the QUEST_WATCH_LIST_CHANGED event function (2025.08.29)
 		- Enabled QUEST_CURRENCY_LOOT_RECEIVED event function (2025.09.08)
 		- After GOSSIP_CLOSED fires will only clear the raid marker from target if it has the circle or "2" for the raid marker idx as this corresponds to the gossip choices fired from the RQE Macro button press (2025.09.08)
-		- After the firing of ZONE_CHANGE and ZONE_CHANGED_NEW_AREA an update to the scenario frame is fired (2025.09.08)
+		- After the firing of ZONE_CHANGED and ZONE_CHANGED_NEW_AREA an update to the scenario frame is fired (2025.09.08)
 		- Clears the raid marker on target if quest is no longer being tracked/watched when QUEST_CURRENCY_LOOT_RECEIVED or QUEST_LOOT_RECEIVED event functions fire (2025.09.08)
 		- Commented out the code to save event info when QUEST_CURRENCY_LOOT_RECEIVED or QUEST_LOOT_RECEIVED event functions fire (2025.09.08)
 		- Removed clearing of raid marker from target when QUEST_FINISHED event function fires as this was clearing the raid marker at an incorrect time (2025.09.08)
@@ -1964,7 +1970,7 @@
 		- Updated many quests in Burning Crusade (alliance) to include waypoints, macros and quest tips! (2025.01.02)
 		- Ensure that the waypoint associated with the quest step, if listed in DB guide file and having steps is clicked instead of the "W" Blizzard waypoint (2025.01.03)
 		- DB should now work with AND, OR, NOT and combo checks as well as multiple types of functional checks before advancing stepIndex (2025.01.06)
-		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGE can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
+		- Cleaned up ZONE_CHANGED event function as too much unnecessary calls were firing whenever this event fired. This was especially noticeable in places like SW City where ZONE_CHANGED can fire quite frequently causing momentarily annoying freeze of character (2025.01.07)
 		- CheckDBInventory successfully works for both 'check' and 'checks' (2025.01.07)
 		- Added RQE:CombineCheckResults functionality to examine the DB logic checks on how handling quests in terms of AND, OR and NOT instead of just AND between the various logics (2025.01.08)
 		- Updated tooltip display for RQE Magic Button and itemCount to be displayed with button (2025.01.18)
