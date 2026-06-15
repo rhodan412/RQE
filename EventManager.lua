@@ -746,6 +746,7 @@ function RQE.ReagentBagUpdate(...)
 
 	-- Get the current minimap zone text
 	local currentMinimapZone = GetMinimapZoneText() or ""
+	local currentRealZone = (GetRealZoneText() or ""):lower()
 
 	-- Get the currently super-tracked quest
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1017,6 +1018,7 @@ function RQE.handleUnitInventoryChange(...)
 
 	-- Get the current minimap zone text
 	local currentMinimapZone = GetMinimapZoneText() or ""
+	local currentRealZone = (GetRealZoneText() or ""):lower()
 
 	-- Check if the questID and minimap zone match the allowed pairs
 	local isAllowedQuest = false
@@ -2095,7 +2097,9 @@ function RQE.handleMiniMapZoom()
 
 	-- Normalize current minimap zone text
 	local currentMinimapZone = GetMinimapZoneText() or ""
+	local currentRealZone = GetRealZoneText() or ""
 	currentMinimapZone = currentMinimapZone:lower()
+	currentRealZone = currentRealZone:lower()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("[RQE] Current Minimap Zone:", currentMinimapZone)
 	end
@@ -2125,7 +2129,7 @@ function RQE.handleMiniMapZoom()
 				for _, zone in ipairs(requiredZones) do
 					local requiredZone = tostring(zone):lower()
 					if checkData.logic == "NOT" then
-						if currentMinimapZone == requiredZone then
+						if currentMinimapZone == requiredZone or currentRealZone == requiredZone then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("[RQE] Failed NOT zone check: current minimap zone matches forbidden zone:", requiredZone)
 							end
@@ -2133,7 +2137,7 @@ function RQE.handleMiniMapZoom()
 							break
 						end
 					else
-						if currentMinimapZone == requiredZone then
+						if currentMinimapZone == requiredZone or currentRealZone == requiredZone then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("[RQE] Passed zone check: current minimap zone matches required zone:", requiredZone)
 							end
@@ -4142,7 +4146,9 @@ function RQE.handleZoneChange(...)
 
 				-- Get the current minimap zone text
 				local currentMinimapZone = GetMinimapZoneText() or "" -- Minimap zone text
+				local currentRealZone = GetRealZoneText() or ""
 				currentMinimapZone = currentMinimapZone:lower() -- Normalize casing
+				currentRealZone = currentRealZone:lower()
 
 				-- Ensure `checkData.check` is a table for consistency
 				local requiredZones = type(checkData.check) == "table" and checkData.check or { checkData.check }
@@ -4152,7 +4158,7 @@ function RQE.handleZoneChange(...)
 
 					if checkData.logic == "NOT" then
 						-- Handle NOT logic: Trigger failure if in the forbidden minimap zone
-						if currentMinimapZone == requiredZone then
+						if currentMinimapZone == requiredZone or currentRealZone == requiredZone then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Failed zone check triggered. Current MinimapZone matches:", requiredZone)
 							end
@@ -4161,7 +4167,7 @@ function RQE.handleZoneChange(...)
 						end
 					else
 						-- Handle positive logic: Match required minimap zones
-						if currentMinimapZone == requiredZone then
+						if currentMinimapZone == requiredZone or currentRealZone == requiredZone then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Successful zone match for required MinimapZone:", requiredZone)
 							end
@@ -4181,8 +4187,11 @@ function RQE.handleZoneChange(...)
 
 	-- Avoid frequent firing by checking state
 	local currentMinimapZone = GetMinimapZoneText() or ""
-	if (lastCheckedZone ~= currentMinimapZone or lastCheckedStepIndex ~= stepIndex) then
-		lastCheckedZone = currentMinimapZone
+	local currentRealZone = GetRealZoneText() or ""
+	local currentZoneKey = currentMinimapZone .. "||" .. currentRealZone
+
+	if lastCheckedZone ~= currentZoneKey or lastCheckedStepIndex ~= stepIndex then
+		lastCheckedZone = currentZoneKey
 		lastCheckedStepIndex = stepIndex
 
 		-- Trigger the button click only if the failed zone matches and we are on the correct stepIndex
