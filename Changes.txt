@@ -1,4 +1,4 @@
-12.0.5.1
+12.0.5.1 (2026.06.15)
 
 	**HIGHLIGHTS**
 		- Added missing Kalimdor pet battle quests to the DB
@@ -12,6 +12,7 @@
 		- Added visual highlighting for manually supertracked bonus/task quests within the RQEQuestFrame
 		- Fixed issue where the Separate Focus Frame could clear itself and fail to refresh when progressing between quest steps
 		- Improved zone detection for cave and interior locations, allowing quest steps to update correctly in areas where the map or minimap zone name does not change
+		- Updated WoD campaign and side-leveling quests for alliance/neutral
 
 	Core.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
@@ -55,6 +56,7 @@
 		- Added Spires of Arak main storyline alliance/neutral leveling quests to DB (2026.06.12.1833)
 		- Added Gorgrond main storyline alliance/neutral leveling quests to DB (2026.06.15.0005)
 		- Added Nagrand main storyline alliance/neutral to DB (2026.06.15.1711)
+		- Updated some Maw Intro/Bastion campaign leveling quests to DB (2026.06.15.2250)
 
 	RQEFrame.lua
 		- Performance update to no longer check quest status of other party/raid members while in raid (2026.05.17.1622)
