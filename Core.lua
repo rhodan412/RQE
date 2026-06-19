@@ -912,6 +912,10 @@ function RQE:LogSeparateFocusClear(reason, oldQuestID, newQuestID, oldStep, newS
 	RQE.ClearSeparateFocusHistory = RQE.ClearSeparateFocusHistory or {}
 	RQE._lastSeparateClearReason = reason
 
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cff99ccff[RQE]|r SeparateFocus clear reason stored:", tostring(RQE._lastSeparateClearReason))
+	end
+
 	table.insert(RQE.ClearSeparateFocusHistory, {
 		time = date("%H:%M:%S"),
 		reason = reason,
@@ -2760,15 +2764,25 @@ function RQE:ClearSeparateFocusFrame()
 	-- Reset the content area height so scrolling resets
 	RQE.SeparateContentFrame:SetHeight(1000)
 
-	if RQE._lastSeparateClearReason == "StepIndex changed" then
+	if RQE._lastSeparateClearReason == "StepIndex changed" or RQE._lastSeparateClearReason == "Quest completed" or RQE._lastSeparateClearReason == "Quest flagged complete" or RQE._lastSeparateClearReason == "QuestID changed" then
 		RQE._lastSeparateClearReason = nil
 
-		C_Timer.After(0.05, function()
+		C_Timer.After(0.10, function()
 			if RQE.UpdateSeparateFocusFrame then
 				RQE:UpdateSeparateFocusFrame()
 			end
 		end)
 	end
+
+	-- if RQE._lastSeparateClearReason == "StepIndex changed" then
+		-- RQE._lastSeparateClearReason = nil
+
+		-- C_Timer.After(0.05, function()
+			-- if RQE.UpdateSeparateFocusFrame then
+				-- RQE:UpdateSeparateFocusFrame()
+			-- end
+		-- end)
+	-- end
 
 	RQE.ClearButtonPressed = false
 end
@@ -2793,6 +2807,201 @@ end
 		-- RQE.SeparateStepText:SetText("No step description available for this step.")
 	-- end
 -- end
+
+
+-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty
+function RQE:CheckAndRefreshSeparateFocusFrame()
+	local separateHasContent = false
+	local rqeFrameHasQuest = false
+
+	if RQE.DebugSeparateFocusFrameContents then
+		separateHasContent = RQE:DebugSeparateFocusFrameContents()
+	end
+
+	if separateHasContent then
+		return true
+	end
+
+	if RQE.DebugRQEFrameContents then
+		rqeFrameHasQuest = RQE:DebugRQEFrameContents()
+	end
+
+	if rqeFrameHasQuest then
+		if RQE.UpdateSeparateFocusFrame then
+			RQE:UpdateSeparateFocusFrame()
+			RQE.InitializeSeparateFocusWaypoints()
+		end
+
+		return true
+	end
+
+	return false
+end
+
+
+-- Debug helper to determine if the SeparateFocusFrame is actually empty
+function RQE:DebugSeparateFocusFrameContents()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(" ")
+		print("|cff99ccff===== SeparateFocusFrame Debug Report =====|r")
+	end
+
+	if not RQE.SeparateFocusFrame then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333SeparateFocusFrame does not exist.|r")
+		end
+		return false
+	end
+
+	if not RQE.SeparateContentFrame then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333SeparateContentFrame does not exist.|r")
+		end
+		return false
+	end
+
+	local visibleChildren = 0
+	local visibleFontStrings = 0
+	local visibleTextEntries = 0
+
+	-- Check primary step text
+	if RQE.SeparateStepText then
+		local text = ""
+
+		if RQE.SeparateStepText.GetText then
+			text = RQE.SeparateStepText:GetText() or ""
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("SeparateStepText Exists:", true)
+			print("SeparateStepText Visible:", RQE.SeparateStepText:IsShown())
+			print("SeparateStepText Length:", string.len(text))
+		end
+
+		if text ~= "" then
+			visibleTextEntries = visibleTextEntries + 1
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("SeparateStepText Exists:", false)
+		end
+	end
+
+	-- Check all children
+	for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
+		if child:IsShown() then
+			visibleChildren = visibleChildren + 1
+		end
+	end
+
+	-- Check all FontStrings
+	for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+		if region.GetObjectType and region:GetObjectType() == "FontString" then
+			if region:IsShown() then
+				visibleFontStrings = visibleFontStrings + 1
+			end
+
+			local text = region:GetText() or ""
+			if text ~= "" then
+				visibleTextEntries = visibleTextEntries + 1
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Visible Children:", visibleChildren)
+		print("Visible FontStrings:", visibleFontStrings)
+		print("Text Entries:", visibleTextEntries)
+	end
+
+	if visibleChildren == 0 and visibleFontStrings == 0 and visibleTextEntries == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333RESULT: SeparateFocusFrame appears EMPTY.|r")
+			print("|cff99ccff=====================================|r")
+			print(" ")
+		end
+		return false
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00RESULT: SeparateFocusFrame contains content.|r")
+			print("|cff99ccff=====================================|r")
+			print(" ")
+		end
+		return true
+	end
+end
+
+
+-- Debug helper to determine if the RQEFrame currently contains a quest
+function RQE:DebugRQEFrameContents()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(" ")
+		print("|cff99ccff===== RQEFrame Debug Report =====|r")
+	end
+
+	local currentQuestID = RQE.CurrentlySuperQuestID
+	local displayedQuestID = RQE.DisplayedQuestID
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("CurrentlySuperQuestID:", tostring(currentQuestID))
+		print("DisplayedQuestID:", tostring(displayedQuestID))
+	end
+
+	local questIDText = ""
+	local questNameText = ""
+
+	if RQE.QuestIDText and RQE.QuestIDText.GetText then
+		questIDText = RQE.QuestIDText:GetText() or ""
+	end
+
+	if RQE.QuestNameText and RQE.QuestNameText.GetText then
+		questNameText = RQE.QuestNameText:GetText() or ""
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestIDText:", questIDText ~= "" and questIDText or "<empty>")
+		print("QuestNameText:", questNameText ~= "" and questNameText or "<empty>")
+	end
+
+	local effectiveQuestID = displayedQuestID or currentQuestID
+
+	if effectiveQuestID then
+		local questData = RQE.getQuestData(effectiveQuestID)
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("QuestID Exists:", tostring(effectiveQuestID))
+			print("Quest Exists In DB:", tostring(questData ~= nil))
+
+			if questData and questData.title then
+				print("DB Quest Title:", questData.title)
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333No questID currently assigned to RQEFrame.|r")
+		end
+	end
+
+	local frameHasQuest =
+		(effectiveQuestID ~= nil)
+		and (questIDText ~= "" or questNameText ~= "")
+
+	if frameHasQuest then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00RESULT: RQEFrame contains quest information.|r")
+			print("|cff99ccff===============================|r")
+			print(" ")
+		end
+		return true
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333RESULT: RQEFrame appears empty.|r")
+			print("|cff99ccff===============================|r")
+			print(" ")
+		end
+		return false
+	end
+end
 
 
 -- Colorization of the RQEFrame
@@ -7414,6 +7623,11 @@ function RQE:QueuePeriodicChecks(reason, delay, questID)
 		return
 	end
 
+	-- Checks to make sure that the SeparateFocusFrame contains information when it should
+	C_Timer.After(1.1, function()
+		RQE:CheckAndRefreshSeparateFocusFrame()
+	end)
+
 	-- Prevent many timers for the same thing from stacking
 	if self._scheduledPeriodicCheck then
 		self._scheduledPeriodicReason = reason or self._scheduledPeriodicReason
@@ -7453,6 +7667,11 @@ function RQE:StartPeriodicChecks()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~~ Running RQE:StartPeriodicChecks() ~~~")
 	end
+
+	-- Checks to make sure that the SeparateFocusFrame contains information when it should
+	C_Timer.After(1.1, function()
+		RQE:CheckAndRefreshSeparateFocusFrame()
+	end)
 
 	local extractedQuestID
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
