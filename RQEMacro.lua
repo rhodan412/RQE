@@ -209,6 +209,7 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 		"/tar " .. npcName,
 		--"/run RQE:SetMarkerIfNeeded('target', 3)"
 		"/tm 3"		-- modified as 12.0 patch broke the function that checks raid icon presence and accuracy before re-marking
+		--"/tm ~3"	-- option initially created following 12.0.7 change, but reverted as a disappearing/reappearing raid marker might help locate the NPC
 	}
 
 	if RQE.db.profile.debugLevel == "INFO+" then
