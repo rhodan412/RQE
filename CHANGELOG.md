@@ -1,3 +1,20 @@
+12.0.7.0
+
+	**HIGHLIGHTS**
+		- Ready for Patch 12.0.7
+		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty
+
+	Core.lua
+		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty (2026.06.18.2249)
+
+	RQE.toc
+		- Updated version# (2026.06.18.2249)
+
+	RQEDatabase.lua
+		- Updated raid marker macro for 12.0.7 change that adding a "~" to the existing "/tm ##" before the number creates a check to see if a raid marker exists on the target, but will not have a check for quest turn in or /tm 6 (2026.06.18.2249)
+		- Updated Maw Intro, Bastion and most Maldraxxus leveling campaign quests in DB (2026.06.18.2249)
+
+
 12.0.5.1 (2026.06.15)
 
 	**HIGHLIGHTS**
@@ -40,7 +57,7 @@
 		- Added visual indication for manually supertracked bonus/task quests by highlighting the active BQ button within the RQEQuestFrame (2026.06.11.1530)
 
 	RQE.toc
-		- Updated version# (2026.05.02.0047)
+		- Updated version# (2026.06.15.2250)
 
 	RQEDatabase.lua
 		- Added missing Kalimdor pet battle quests to the DB (2026.05.02.0047)
