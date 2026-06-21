@@ -3912,8 +3912,8 @@ function RQE.handleZoneChange(...)
 		-- end)
 	end
 
-	if event == "ZONE_CHANGED" or "ZONE_CHANGED_INDOORS" then
-		-- print(tostring(event))
+	if event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
+		--print(tostring(event))
 
 		-- Clear hotspot choice so next read re-evaluates on the new map
 		if C_SuperTrack.IsSuperTrackingQuest() then
@@ -4586,6 +4586,13 @@ function RQE.handleUIInfoMessage(...)
 
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
+		C_Timer.After(2.6, function()
+			if RQE.db.profile.debugLevel == "INFO" then
+				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UI_INFO_MESSAGE event function")
+			end
+			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+		end)
+
 		if messageType == 310 then
 			C_Timer.After(1.5, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -4917,6 +4924,13 @@ function RQE.handleUnitQuestLogChange(...)
 	-----------------------------------------
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then return end
+
+	C_Timer.After(2.5, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UNIT_QUEST_LOG_CHANGED event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
 
 	if unitTarget == "player" and questID and not UnitOnTaxi("player") and RQE.db.profile.autoClickWaypointButton then
 		C_Timer.After(0.25, function()
@@ -5368,6 +5382,14 @@ function RQE.handleQuestStatusUpdate()
 					StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)  -- Adjust based on actual implementation
 				else
 					-- The super-tracked quest is not what we set; avoid changing focus
+					RQE:CheckAndRefreshSeparateFocusFrame()
+
+					C_Timer.After(1.7, function()
+						if RQE.db.profile.debugLevel == "INFO" then
+							-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #1 event function")
+						end
+						RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+					end)
 					return  -- Optionally, you could revert the super-tracked quest here
 				end
 
@@ -5390,6 +5412,18 @@ function RQE.handleQuestStatusUpdate()
 		-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires	-- FIRES FAIRLY OFTEN, BUT MAY NEED TO RE-ENABLE
 		-- UpdateRQEWorldQuestFrame()
 	-- end
+
+	-- Checks to make sure that the SeparateFocusFrame contains information when it should
+	C_Timer.After(1.35, function()
+		RQE:CheckAndRefreshSeparateFocusFrame()
+	end)
+
+	C_Timer.After(1.7, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #2 event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("handleQuestStatusUpdate: Called UpdateRQEQuestFrame (1686).", 1, 0.75, 0.79)		-- Pink
@@ -5490,6 +5524,13 @@ function RQE.handleQuestLogCriteriaUpdate(...)
 			end
 		end
 	end
+
+	C_Timer.After(2.1, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_CRITERIA_UPDATE event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestLogCriteriaUpdate then
 		DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_LOG_CRITERIA_UPDATE for questID: " .. tostring(questID) .. ", SpecificTreeID: " .. tostring(specificTreeID) .. ", Description: " .. description .. ", Fulfilled: " .. tostring(numFulfilled) .. ", Required: " .. tostring(numRequired), 0, 1, 0)  -- Bright Green
@@ -5643,6 +5684,13 @@ function RQE.handleQuestComplete()
 
 	RQE:QuestComplete(questID)
 
+	C_Timer.After(2.1, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_COMPLETE event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
+
 	-- Update RQEFrame and Refresh Quest Tracker
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
 	-- print("~~~ RQE:QuestType(): 4617 ~~~")
@@ -5752,6 +5800,13 @@ function RQE.handleQuestAutoComplete(...)
 	end
 
 	RQE:QuestComplete(questID)
+
+	C_Timer.After(2.1, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_AUTOCOMPLETE event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
 
 	-- Update RQEFrame and Refresh Quest Tracker
 	UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
@@ -6104,6 +6159,13 @@ function RQE.handleQuestWatchUpdate(...)
 		local superTrackedQuestName = C_QuestLog.GetTitleForQuestID(RQE.currentSuperTrackedQuestID) or "Unknown Quest"
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(RQE.currentSuperTrackedQuestID) .. " / " .. tostring(superTrackedQuestName), 0.56, 0.93, 0.56)	-- Light Green
 	end
+
+	C_Timer.After(2.1, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_WATCH_UPDATE event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
 
 	-- C_Timer.After(0.45, function()
 		-- if not InCombatLockdown() then
@@ -6767,6 +6829,13 @@ function RQE.handleQuestFinished()
 	else
 		return	-- returns if nothing is being supertracked
 	end
+
+	C_Timer.After(2.1, function()
+		if RQE.db.profile.debugLevel == "INFO" then
+			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_FINISHED event function")
+		end
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
 
 	-- Determine questID based on various fallbacks
 	local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
