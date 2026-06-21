@@ -2,17 +2,23 @@
 
 	**HIGHLIGHTS**
 		- Ready for Patch 12.0.7
-		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty
+		- Added some checks and fixes so that the RQEFrame and SeparateFocusFrame updates/populates properly rather than remaining empty
 
 	Core.lua
 		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty (2026.06.18.2249)
+		- Added some checks and fixes so that the RQEFrame updates properly when SeparateFocusFrame has data (2026.06.21.0326)
+
+	EventManager.lua
+		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
 
 	RQE.toc
-		- Updated version# (2026.06.18.2249)
+		- Updated interface & version# (2026.06.21.0326)
 
 	RQEDatabase.lua
 		- Updated raid marker macro for 12.0.7 change that adding a "~" to the existing "/tm ##" before the number creates a check to see if a raid marker exists on the target, but will not have a check for quest turn in or /tm 6 (2026.06.18.2249)
-		- Updated Maw Intro, Bastion and most Maldraxxus leveling campaign quests in DB (2026.06.18.2249)
+		- Updated Maw Intro, Bastion leveling campaign quests in DB (2026.06.18.2249)
+		- Updated Maldraxxus and Ardenweald leveling campaign quests in DB (2026.06.21.0326)
+		- Added most of Revendreth leveling campaign quests in DB (2026.06.21.0326)
 
 
 12.0.5.1 (2026.06.15)
