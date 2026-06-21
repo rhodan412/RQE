@@ -1,4 +1,4 @@
-## Interface: 120005, 120007
+## Interface: 120007, 120100, 120150, 120170
 ## Title: Rhodan's Quest Explorer
 ## Category-enUS: Quests
 ## Category-deDE: Quests
