@@ -2839,6 +2839,92 @@ function RQE:CheckAndRefreshSeparateFocusFrame()
 end
 
 
+-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info
+function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	local separateHasMeaningfulText = false
+	local rqeFrameHasQuest = false
+
+	if not RQE.SeparateContentFrame then
+		return false
+	end
+
+	local ignoredTexts = {
+		["1/0: Quest in DB w/o any available steps."] = true,
+		["No step description available"] = true,
+	}
+
+	for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+		if region.GetObjectType and region:GetObjectType() == "FontString" then
+			local text = region:GetText() or ""
+			text = text:gsub("^%s+", ""):gsub("%s+$", "")
+
+			if text ~= "" and not ignoredTexts[text] then
+				separateHasMeaningfulText = true
+
+				if RQE.db.profile.debugLevel == "INFO" then
+					print("|cff99ccff[RQE]|r SeparateFocusFrame meaningful text found:")
+					print("|cff00ff00" .. text .. "|r")
+				end
+
+				break
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cff99ccff[RQE]|r ignoredTexts text found:")
+					print("|cff00ff00" .. text .. "|r")
+				end
+			end
+
+			-- if text ~= "" and not ignoredTexts[text] then
+				-- separateHasMeaningfulText = true
+				-- break
+			-- end
+		end
+	end
+
+	if not separateHasMeaningfulText then
+		return false
+	end
+
+	if RQE.DebugRQEFrameContents then
+		rqeFrameHasQuest = RQE:DebugRQEFrameContents()
+	end
+
+	if rqeFrameHasQuest then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00[RQE]|r SeparateFocusFrame has text and RQEFrame already contains quest data.")
+		end
+
+		return true
+	end
+
+	-- if rqeFrameHasQuest then
+		-- return true
+	-- end
+
+	if RQE.db.profile.debugLevel == "INFO" then
+		print("|cFFFF3333[RQE]|r SeparateFocusFrame has text but RQEFrame is missing quest data.")
+		print("|cff99ccff[RQE]|r Forcing UpdateFrame()")
+	end
+
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cff99ccff[RQE]|r SuperTracked QuestID:", tostring(questID))
+	end
+
+	if questID then
+		RQE.UpdateTheFrameNoMatterWhat = true
+		UpdateFrame(questID)
+
+		C_Timer.After(0.2, function()
+			RQE.UpdateTheFrameNoMatterWhat = false
+		end)
+	end
+
+	return false
+end
+
+
 -- Debug helper to determine if the SeparateFocusFrame is actually empty
 function RQE:DebugSeparateFocusFrameContents()
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -3415,6 +3501,22 @@ function RQE:ShouldUpdateFrame(questID)
 
 	-- Completion snapshot
 	local ready = C_QuestLog.ReadyForTurnIn(questID) or C_QuestLog.IsComplete(questID)
+
+	-- FORCE UPDATE
+	if RQE.UpdateTheFrameNoMatterWhat then
+		old.lastQuestID = questID
+		old.lastQuestName = name
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		old.lastStepIndex = stepIndex
+		old.lastReadyForTurnIn = ready
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("FORCED FRAME UPDATE = true -- DBG stepIndex =", stepIndex)
+		end
+
+		return true
+	end
 
 	-- FIRST RUN
 	if old.lastQuestID == nil then
@@ -4371,6 +4473,11 @@ end
 function RQE:CheckCoordHotspotsInSteps(questID)
 	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
 	if C_AddOns.IsAddOnLoaded("Chattynator") then return end
+
+	-- Restrict audit tool to approved characters
+	if not RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+		return
+	end
 
 	questID = tonumber(questID)
 	if not questID then
@@ -7628,6 +7735,10 @@ function RQE:QueuePeriodicChecks(reason, delay, questID)
 		RQE:CheckAndRefreshSeparateFocusFrame()
 	end)
 
+	C_Timer.After(1.7, function()
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
+
 	-- Prevent many timers for the same thing from stacking
 	if self._scheduledPeriodicCheck then
 		self._scheduledPeriodicReason = reason or self._scheduledPeriodicReason
@@ -7671,6 +7782,10 @@ function RQE:StartPeriodicChecks()
 	-- Checks to make sure that the SeparateFocusFrame contains information when it should
 	C_Timer.After(1.1, function()
 		RQE:CheckAndRefreshSeparateFocusFrame()
+	end)
+
+	C_Timer.After(1.7, function()
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 	end)
 
 	local extractedQuestID
