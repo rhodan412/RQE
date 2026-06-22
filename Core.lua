@@ -2861,7 +2861,7 @@ function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 			if text ~= "" and not ignoredTexts[text] then
 				separateHasMeaningfulText = true
 
-				if RQE.db.profile.debugLevel == "INFO" then
+				if RQE.db.profile.debugLevel == "INFO+" then
 					print("|cff99ccff[RQE]|r SeparateFocusFrame meaningful text found:")
 					print("|cff00ff00" .. text .. "|r")
 				end
@@ -2901,7 +2901,7 @@ function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		-- return true
 	-- end
 
-	if RQE.db.profile.debugLevel == "INFO" then
+	if RQE.db.profile.debugLevel == "INFO+" then
 		print("|cFFFF3333[RQE]|r SeparateFocusFrame has text but RQEFrame is missing quest data.")
 		print("|cff99ccff[RQE]|r Forcing UpdateFrame()")
 	end
@@ -3640,9 +3640,9 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	AdjustRQEFrameWidths()
 
 	-- Debug print the overridden questID and the content of RQE.QuestIDText
-	RQE.infoLog("Overridden questID with current super-tracked questID:", questID)
+	RQE.debugLog("Overridden questID with current super-tracked questID:", questID)
 	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-		RQE.infoLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
+		RQE.debugLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
 	end
 
 	-- Validate questID before proceeding
@@ -3695,8 +3695,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	if questInfo then
-		RQE.infoLog("Line 1691: questInfo.description is ", questInfo.description)
-		RQE.infoLog("Line 1692: questInfo.objectives is ", questInfo.objectives)
+		RQE.debugLog("questInfo.description is ", questInfo.description)
+		RQE.debugLog("questInfo.objectives is ", questInfo.objectives)
 
 		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
 			RQE:ClearStepsTextInFrame()
