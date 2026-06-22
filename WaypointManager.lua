@@ -738,7 +738,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 					if mapID and x and y then
-						RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
+						RQE.debugLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 						RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
 						--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 					else
