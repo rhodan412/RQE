@@ -5794,6 +5794,27 @@ function RQE.BuildHTMLFromRichText(raw)
 		return string.format('<a href="spell:%s">%s</a>', spellID, shown)
 	end)
 
+	-- Coord Blocks: displays only [x, y], but clicks like normal coords
+	html = html:gsub("{coordblock:([^}]+)}", function(data)
+		local x, y, mapID, title =
+			data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+
+		if not x then
+			x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+		end
+
+		if not x or not y or not mapID then
+			return data
+		end
+
+		local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+		local href = title and
+			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
+			string.format("coords:%s,%s,%s", x, y, mapID)
+
+		return string.format('<a href="%s">|cff40e0d0%s|r</a>', href, label)
+	end)
+
 	-- Coords
 	html = html:gsub("{coords:([^}]+)}", function(data)
 		local x, y, mapID, title =
@@ -5823,7 +5844,8 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 	if not rawText or rawText == "" or not parentFrame then return end
 
 	-- Determine if HTML is needed
-	if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") then
+	if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") or rawText:match("{coordblock:") then
+	-- if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") then
 		local baseParent = customParent or parentFrame:GetParent() or UIParent
 		local html = RQE.BuildHTMLFromRichText(rawText)
 
@@ -5919,6 +5941,15 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 	local displayText = rawText
 	displayText = displayText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 	displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
+
+	-- Coord Blocks
+	displayText = displayText:gsub("{coordblock:([^}]+)}", function(data)
+		local x, y = data:match("(%d+%.?%d*),(%d+%.?%d*)")
+		if x and y then
+			return string.format("|cff40e0d0[%.2f, %.2f]|r", tonumber(x), tonumber(y))
+		end
+		return data
+	end)
 
 	parentFrame:SetText(displayText)
 
@@ -6059,144 +6090,70 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 				patternPos = endTag + 1
 			end
 
-			-- while true do
-				-- local startTag, endTag, tagType, tagID, tagName =
-					-- rawLine:find("{([%a]+):(%d+):([^}]+)}", patternPos)
-				-- if not startTag then break end
+			-- Coordblock clickable overlays
+			local coordPatternPos = 1
 
-				-- tagID = tonumber(tagID)
-				-- local beforeText = rawLine:sub(1, startTag - 1)
-				-- beforeText = beforeText
-					-- :gsub("{[%a]+:%d+:[^}]+}", function(full)
-						-- local _, _, _, nm = full:find("{[%a]+:%d+:([^}]+)}")
-						-- return "[" .. (nm or "?") .. "]"
-					-- end)
-					-- :gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+			while true do
+				local startTag, endTag, coordData = rawLine:find("{coordblock:([^}]+)}", coordPatternPos)
+				if not startTag then break end
 
-				-- measureFS:SetText(beforeText)
-				-- local cursorX = measureFS:GetStringWidth()
+				local x, y, mapID, title =
+					coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
 
-				-- -- ✨ If this is a spell tag, divert to the spell handler
-				-- if tagType == "spell" then
-					-- -- Measure tag with the SAME font used by the renderer
-					-- measureFS:SetText("[" .. tagName .. "]")
-					-- local tagWidth = measureFS:GetStringWidth()
-					-- local maxWidth = parentFrame:GetWidth() or 400
+				if not x then
+					x, y, mapID = coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
 
-					-- if (cursorX + tagWidth) > maxWidth then
-						-- -- split across the line wrap (same behavior as item)
-						-- local overflow = (cursorX + tagWidth) - maxWidth
-						-- local firstWidth = tagWidth - overflow
+				if x and y and mapID then
+					local preText = rawLine:sub(1, startTag - 1)
+					preText = preText
+						:gsub("{item:%d+:([^}]+)}", "[%1]")
+						:gsub("{spell:%d+:([^}]+)}", "[%1]")
+						:gsub("{coordblock:([^}]+)}", function(data)
+							local bx, by = data:match("(%d+%.?%d*),(%d+%.?%d*)")
+							if bx and by then
+								return string.format("[%.2f, %.2f]", tonumber(bx), tonumber(by))
+							end
+							return data
+						end)
+						:gsub("|c%x%x%x%x%x%x%x%x", "")
+						:gsub("|r", "")
 
-						-- local hover1 = RQE.HandleSpellTag(
-							-- parentFrame, tagID, tagName,
-							-- cursorX, yOffset, baseParent, lineHeight,
-							-- firstWidth  -- explicit width for part 1
-						-- )
-						-- if hover1 then table.insert(parentFrame._rqeSegments, hover1) end
+					measureFS:SetText(preText)
+					local coordX = measureFS:GetStringWidth()
 
-						-- local hover2 = RQE.HandleSpellTag(
-							-- parentFrame, tagID, tagName,
-							-- 0, yOffset + lineHeight, baseParent, lineHeight,
-							-- overflow	 -- explicit width for part 2 (next line)
-						-- )
-						-- if hover2 then table.insert(parentFrame._rqeSegments, hover2) end
+					local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+					measureFS:SetText(label)
+					local tagWidth = measureFS:GetStringWidth()
 
-					-- else
-						-- -- one-line spell hover
-						-- local yAdj = yOffset
-						-- local parentName = GetTopParentName(parentFrame) or ""
-						-- if parentName:find("RQE_SeparateContentFrame", 1, true) then
-							-- local extraAdjust = 0
-							-- if yOffset > lineHeight * 2 then
-								-- extraAdjust = (yOffset / lineHeight) * 0.08
-							-- end
-							-- yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))
-						-- end
+					local hover = CreateFrame("Frame", nil, baseParent)
+					hover:EnableMouse(true)
+					hover:SetFrameStrata("TOOLTIP")
+					hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
+					hover:SetAlpha(0.01)
+					hover:SetSize(tagWidth + 6, lineHeight)
+					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -yOffset)
 
-						-- local hover = RQE.HandleSpellTag(
-							-- parentFrame, tagID, tagName,
-							-- cursorX, yAdj, baseParent, lineHeight,
-							-- tagWidth + 6 -- explicit width when single-line
-						-- )
-						-- if hover then table.insert(parentFrame._rqeSegments, hover) end
-					-- end
-				-- else
-					-- -- ✨ Regular item handling
-					-- measureFS:SetText("[" .. tagName .. "]")  -- FIXED: use tagName, not itemName
-					-- local tagWidth = measureFS:GetStringWidth()
-					-- local maxWidth = parentFrame:GetWidth() or 400
+					hover:SetScript("OnEnter", function()
+						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
+						GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+						GameTooltip:Show()
+					end)
 
-					-- if (cursorX + tagWidth) > maxWidth then
-						-- local overflow = (cursorX + tagWidth) - maxWidth
-						-- local firstWidth = tagWidth - overflow
+					hover:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
 
-						-- local hover1 = CreateFrame("Frame", nil, baseParent)
-						-- -- local hover1 = CreateFrame("Button", nil, baseParent)
-						-- hover1:EnableMouse(true)
-						-- hover1:SetFrameStrata("TOOLTIP")
-						-- hover1:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-						-- hover1:SetAlpha(0.01)
-						-- hover1:SetSize(firstWidth, lineHeight)
-						-- hover1:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
-						-- hover1:SetScript("OnEnter", function()
-							-- GameTooltip:Hide()									-- ensure fresh draw
-							-- GameTooltip:SetOwner(hover1, "ANCHOR_CURSOR_RIGHT")
-							-- GameTooltip:SetItemByID(tagID)
-							-- local count = C_Item.GetItemCount(tagID) or 0
-							-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-							-- GameTooltip:Show()
-						-- end)
-						-- hover1:SetScript("OnLeave", function() GameTooltip:Hide() end)
-						-- table.insert(parentFrame._rqeSegments, hover1)
+					hover:SetScript("OnMouseDown", function()
+						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
+					end)
 
-						-- local hover2 = CreateFrame("Frame", nil, baseParent)
-						-- -- local hover2 = CreateFrame("Button", nil, baseParent)
-						-- hover2:EnableMouse(true)
-						-- hover2:SetFrameStrata("TOOLTIP")
-						-- hover2:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-						-- hover2:SetAlpha(0.01)
-						-- hover2:SetSize(overflow, lineHeight)
-						-- hover2:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, -(yOffset + lineHeight))
-						-- hover2:SetScript("OnEnter", hover1:GetScript("OnEnter"))
-						-- hover2:SetScript("OnLeave", hover1:GetScript("OnLeave"))
-						-- table.insert(parentFrame._rqeSegments, hover2)
+					table.insert(parentFrame._rqeSegments, hover)
+				end
 
-					-- else
-						-- local hover = CreateFrame("Frame", nil, baseParent)
-						-- -- local hover = CreateFrame("Button", nil, baseParent)
-						-- hover:EnableMouse(true)
-						-- hover:SetFrameStrata("TOOLTIP")
-						-- hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-						-- hover:SetAlpha(0.01)
-						-- hover:SetSize(tagWidth + 6, lineHeight)
-						-- local yAdj = yOffset
-
-						-- local parentName = GetTopParentName(parentFrame) or ""
-						-- if parentName:find("RQE_SeparateContentFrame", 1, true) then
-							-- local extraAdjust = 0
-							-- if yOffset > lineHeight * 2 then
-								-- extraAdjust = (yOffset / lineHeight) * 0.08
-							-- end
-							-- yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))
-						-- end
-
-						-- hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yAdj)
-						-- hover:SetScript("OnEnter", function()
-							-- GameTooltip:Hide()									-- ensure refresh
-							-- GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
-							-- GameTooltip:SetItemByID(tagID)
-							-- local count = C_Item.GetItemCount(tagID) or 0
-							-- GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-							-- GameTooltip:Show()
-						-- end)
-						-- hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-						-- table.insert(parentFrame._rqeSegments, hover)
-					-- end
-				-- end
-
-				-- patternPos = endTag + 1
-			-- end
+				coordPatternPos = endTag + 1
+			end
 		end
 
 		yOffset = yOffset + lineHeight
