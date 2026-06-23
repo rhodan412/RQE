@@ -6136,7 +6136,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 
 					hover:SetScript("OnEnter", function()
 						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
-						GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+						GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
 						GameTooltip:Show()
 					end)
 
