@@ -4474,10 +4474,10 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
 	if C_AddOns.IsAddOnLoaded("Chattynator") then return end
 
-	-- Restrict audit tool to approved characters
-	if not RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
-		return
-	end
+	-- -- Restrict audit tool to approved characters
+	-- if not RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+		-- return
+	-- end
 
 	questID = tonumber(questID)
 	if not questID then
@@ -4502,7 +4502,7 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 	end
 	table.sort(steps)
 
-	print(RQE.ColorGREEN .. ("[RQE] CoordHotspot audit — QID %d: %s"):format(questID, title) .. RQE.ColorRESET)
+	print(RQE.ColorPURPLE .. ("[RQE] CoordHotspot audit — QID %d: %s"):format(questID, title) .. RQE.ColorRESET)
 
 	if #steps == 0 then
 		print(RQE.ColorYELLOW .. "No step tables found on this quest entry." .. RQE.ColorRESET)
@@ -4522,23 +4522,29 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 			legacyCount = legacyCount + 1
 			local c = step.coordinates
 			local mapText = c.mapID and ("mapID=" .. tostring(c.mapID)) or (c.continentID and ("continentID=" .. tostring(c.continentID))) or "noMap"
-			print(RQE.ColorORANGE .. ("  Step %d uses LEGACY coordinates: { x=%.2f, y=%.2f, %s }"):format(stepIndex, tonumber(c.x) or 0, tonumber(c.y) or 0, mapText) .. RQE.ColorRESET)
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorORANGE .. ("  Step %d uses LEGACY coordinates: { x=%.2f, y=%.2f, %s }"):format(stepIndex, tonumber(c.x) or 0, tonumber(c.y) or 0, mapText) .. RQE.ColorRESET)
 
-			DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0.64, 0.41, 0.64)	-- Violet Blue
-			DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", c.x, c.y, tostring(c.mapID)), 0.64, 0.41, 0.64)	-- Violet Blue
-			DEFAULT_CHAT_FRAME:AddMessage("				},", 0.64, 0.41, 0.64)	-- Violet Blue
+				DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0.64, 0.41, 0.64)	-- Violet Blue
+				DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", c.x, c.y, tostring(c.mapID)), 0.64, 0.41, 0.64)	-- Violet Blue
+				DEFAULT_CHAT_FRAME:AddMessage("				},", 0.64, 0.41, 0.64)	-- Violet Blue
+			end
 
 		elseif hasHotspots and not hasCoords then
 			hotspotCount = hotspotCount + 1
-			print(RQE.ColorSKYBLUE .. ("  Step %d uses coordinateHotspots (%d points)"):format(stepIndex, #step.coordinateHotspots) .. RQE.ColorRESET)
-
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorSKYBLUE .. ("  Step %d uses coordinateHotspots (%d points)"):format(stepIndex, #step.coordinateHotspots) .. RQE.ColorRESET)
+			end
 		elseif hasCoords and hasHotspots then
 			bothCount = bothCount + 1
-			print(RQE.ColorYELLOW .. ("  Step %d has BOTH coordinates + coordinateHotspots (pick one)"):format(stepIndex) .. RQE.ColorRESET)
-
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorYELLOW .. ("  Step %d has BOTH coordinates + coordinateHotspots (pick one)"):format(stepIndex) .. RQE.ColorRESET)
+			end
 		else
 			noneCount = noneCount + 1
-			print(RQE.ColorYELLOW .. ("  Step %d has NO coordinates/coordinateHotspots"):format(stepIndex) .. RQE.ColorRESET)
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorYELLOW .. ("  Step %d has NO coordinates/coordinateHotspots"):format(stepIndex) .. RQE.ColorRESET)
+			end
 		end
 	end
 
@@ -4551,7 +4557,7 @@ function RQE:CheckCoordHotspotsInSteps(questID)
 		RQE:NoLegacyCoordsDetected(questID)
 	end
 
-	print(RQE.ColorGREEN .. ("Summary: legacy=%d, hotspots=%d, both=%d, none=%d"):format(legacyCount, hotspotCount, bothCount, noneCount) .. RQE.ColorRESET)
+	print(RQE.ColorPURPLE .. ("Summary: legacy=%d, hotspots=%d, both=%d, none=%d"):format(legacyCount, hotspotCount, bothCount, noneCount) .. RQE.ColorRESET)
 end
 
 
