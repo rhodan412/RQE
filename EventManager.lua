@@ -1204,6 +1204,15 @@ function RQE.handlePlayerRegenEnabled()
 			return
 		end
 
+		-- Checks to make sure that the SeparateFocusFrame contains information when it should
+		C_Timer.After(1.15, function()
+			RQE:CheckAndRefreshSeparateFocusFrame()		-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty when PLAYER_REGEN_ENABLED event fires
+		end)
+
+		C_Timer.After(1.75, function()
+			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()		-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info when PLAYER_REGEN_ENABLED event fires
+		end)
+
 		-- Determine the current stepIndex (same general approach you use elsewhere)
 		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
 		local stepData = questData[stepIndex]
