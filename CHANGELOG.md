@@ -3,14 +3,18 @@
 	**HIGHLIGHTS**
 		- Ready for Patch 12.0.7
 		- Added some checks and fixes so that the RQEFrame and SeparateFocusFrame updates/populates properly rather than remaining empty
+		- Resolved issue where Quest Watch wasn't updating when a quest would be tracked/untracked using the map
+		- Added additional functionality for truncated clickable coord blocks within the supertracked RQEFrame
 
 	Core.lua
 		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty (2026.06.18.2249)
 		- Added some checks and fixes so that the RQEFrame updates properly when SeparateFocusFrame has data (2026.06.21.0326)
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
+		- Added coordblock functionality that allows a more truncated display of clickable waypoints in the RQEFrame steps and SeparateFocusFrame (2026.06.23.0139)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
+		- Resolved issue where RQEQuestFrame wasn't updating when a quest would be tracked/untracked using the map (2026.06.23.0139)
 
 	RQE.toc
 		- Updated interface & version# (2026.06.21.0326)
