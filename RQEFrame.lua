@@ -2297,7 +2297,8 @@ function RQE.InitializeSeparateFocusFrame()
 	-- Create the new independent frame
 	if not RQE.SeparateFocusFrame then
 		RQE.SeparateFocusFrame = CreateFrame("Frame", "RQE_SeparateFocusFrame", RQE.content, "BackdropTemplate")
-		RQE.SeparateFocusFrame:SetSize(375, 100) -- Set the size of the frame
+		-- Set the size of the frame (width, height)
+		RQE.SeparateFocusFrame:SetSize(380, 125)
 		RQE.SeparateFocusFrame:SetPoint("TOPLEFT", RQE.QuestObjectives, "BOTTOMLEFT", -5, -10)  -- Align closer to the edge
 		RQE.SeparateFocusFrame:SetBackdrop({
 			bgFile = "Interface/Tooltips/UI-Tooltip-Background",
