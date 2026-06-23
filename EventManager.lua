@@ -6361,9 +6361,17 @@ function RQE.handleQuestWatchListChanged(...)
 	-- Checks to see if a quest was added or removed (true/false) in order to call this event
 	if added == true then
 		RQE.QuestAddedForWatchListChanged = true
+		-- print("Frame updating with questID " .. questID)
+		UpdateRQEQuestFrame()
 	else
 		RQE.QuestAddedForWatchListChanged = false
+		-- print("Frame updating with removal of questID " .. questID)
+		UpdateRQEQuestFrame()
 	end
+
+	RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
+	RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
+	RQE.UnitQuestLogChangedFired = false
 
 	-- print("~~~ RQE:QuestType(): 5192 ~~~")
 	-- RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
@@ -6536,11 +6544,6 @@ function RQE.handleQuestWatchListChanged(...)
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
 			end)
 		end)
-
-		-- print("~~~ SaveTrackedQuestsToCharacter: 5134 ~~~")
-		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
-		RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
-		RQE.UnitQuestLogChangedFired = false
 	end
 
 	C_Timer.After(0.5, function()
