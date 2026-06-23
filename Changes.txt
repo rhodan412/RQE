@@ -5,12 +5,14 @@
 		- Added some checks and fixes so that the RQEFrame and SeparateFocusFrame updates/populates properly rather than remaining empty
 		- Resolved issue where Quest Watch wasn't updating when a quest would be tracked/untracked using the map
 		- Added additional functionality for truncated clickable coord blocks within the supertracked RQEFrame
+		- Increased size of SeparateFocusFrame and the tooltip for truncated clickable coordinates now appears in yellow and is included in the tooltip
 
 	Core.lua
 		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty (2026.06.18.2249)
 		- Added some checks and fixes so that the RQEFrame updates properly when SeparateFocusFrame has data (2026.06.21.0326)
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
 		- Added coordblock functionality that allows a more truncated display of clickable waypoints in the RQEFrame steps and SeparateFocusFrame (2026.06.23.0139)
+		- Modified the tooltip for coordblock display to include the x, y coords and display it as yellow in color (2026.06.23.0215)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
@@ -24,6 +26,10 @@
 		- Updated Maw Intro, Bastion leveling campaign quests in DB (2026.06.18.2249)
 		- Updated Maldraxxus and Ardenweald leveling campaign quests in DB (2026.06.21.0326)
 		- Updated Revendreth leveling campaign quests in DB (2026.06.21.2305)
+		- Updated early end-game Maw/Torghast quests in DB for Shadowlands expansion (2026.06.23.0215)
+
+	RQEFrame.lua
+		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
 
 	WaypointManager.lua
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
