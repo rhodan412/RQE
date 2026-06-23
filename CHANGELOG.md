@@ -13,10 +13,12 @@
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
 		- Added coordblock functionality that allows a more truncated display of clickable waypoints in the RQEFrame steps and SeparateFocusFrame (2026.06.23.0139)
 		- Modified the tooltip for coordblock display to include the x, y coords and display it as yellow in color (2026.06.23.0215)
+		- Modified some debug prints to inform if DB entry for supertracked quest uses legacy single coordinates or coordinateHotspots (2026.06.23.0432)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
 		- Resolved issue where RQEQuestFrame wasn't updating when a quest would be tracked/untracked using the map (2026.06.23.0139)
+		- Added checks of RQEFrame and SeparateFocusFrame between 1-2 seconds after combat ends to ensure that these frames populate correctly (2026.06.23.0432)
 
 	RQE.toc
 		- Updated interface & version# (2026.06.21.0326)
@@ -27,6 +29,7 @@
 		- Updated Maldraxxus and Ardenweald leveling campaign quests in DB (2026.06.21.0326)
 		- Updated Revendreth leveling campaign quests in DB (2026.06.21.2305)
 		- Updated early end-game Maw/Torghast quests in DB for Shadowlands expansion (2026.06.23.0215)
+		- Updated some quests with Venthyr transport network in the DB (2026.06.23.0432)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
