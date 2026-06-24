@@ -47,6 +47,24 @@ function RQE:InitializeWaypointManager()
 end
 
 
+-- Validation checker for waypoints to prevent waypoints being created when DB entry contains none and Blizzard has none also
+function RQE:IsValidWaypointCoord(x, y, mapID)
+	x = tonumber(x)
+	y = tonumber(y)
+	mapID = tonumber(mapID)
+
+	if not x or not y or not mapID then return false end
+	if mapID <= 0 then return false end
+
+	-- Accept 0-1 or 0-100, but reject actual 0,0
+	if x == 0 and y == 0 then return false end
+	if x < 0 or y < 0 then return false end
+	if x > 100 or y > 100 then return false end
+
+	return true
+end
+
+
 -- Function: CreateWaypoint
 -- Creates a new waypoint.
 -- @param x: X-coordinate
@@ -74,6 +92,14 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	-- If x and y are nil, use stored values from RQE.x and RQE.y
 	x = x or RQE.x
 	y = y or RQE.y
+
+	-- Hard block bad waypoint data before normalization
+	if not RQE:IsValidWaypointCoord(x, y, mapID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffffff00[RQE]|r Blocked invalid waypoint:", tostring(x), tostring(y), tostring(mapID))
+		end
+		return
+	end
 
 	-- Normalize once: accept either 0–1 or 0–100
 	if x and x > 1 then x = x / 100 end
@@ -526,7 +552,6 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 			-- RQE._currentTomTomUID = nil
 		-- end
 		RQE.Waypoints:Replace(mapID, xPct / 100, yPct / 100, waypointTitle)
-		--TomTom:AddWaypoint(mapID, xPct / 100, yPct / 100, { title = waypointTitle })
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("TomTom not available or disabled.")
@@ -740,7 +765,6 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 					if mapID and x and y then
 						RQE.debugLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 						RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
-						--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 					else
 						RQE.debugLog("Could not create waypoint for unknown quest.")
 					end
@@ -858,7 +882,6 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 			if mapID and x and y then
 				RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 				RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
-				--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
 				RQE.debugLog("Could not create TomTom waypoint for:", questID)
 			end
@@ -969,7 +992,6 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 					print("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 				end
 				RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
-				--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointTitle })
 			else
 				print("Could not create waypoint for unknown quest.")
 			end
@@ -1066,7 +1088,6 @@ function RQE:CreateQuestWaypointFromNextWaypoint(questID)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointText)
-		--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
 		print("Waypoint added to TomTom for questID:", questID)
 	end
 
@@ -1171,7 +1192,6 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointText)
-		--TomTom:AddWaypoint(mapID, x / 100, y / 100, { title = waypointText })
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Waypoint added to TomTom for questID:", questID)
 		end
@@ -1304,13 +1324,6 @@ function RQE:OnCoordinateClicked()
 
 		-- Add waypoint using TomTom
 		local uid = RQE.Waypoints:Replace(mapID, x, y, title)
-		-- local uid = TomTom:AddWaypoint(mapID, x, y, {
-			-- title = title,
-			-- from = "RQE",
-			-- persistent = nil,
-			-- minimap = true,
-			-- world = true
-		-- })
 
 		if uid then
 			if RQE.db.profile.debugLevel == "INFO+" then
