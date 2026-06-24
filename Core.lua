@@ -14366,16 +14366,24 @@ function RQE.GetCurrentDBStepIndexForQuest(questID)
 
 	if maxStep == 0 then return 1 end
 
+	local objectives = C_QuestLog.GetQuestObjectives(questID)
+
 	for i = 1, maxStep do
 		local step = questData[i]
 		local objectiveIndex = tonumber(step and step.objectiveIndex)
+		local neededAmt = tonumber(step and step.neededAmt and step.neededAmt[1])
 
 		if objectiveIndex and objectiveIndex ~= 99 then
-			local objectives = C_QuestLog.GetQuestObjectives(questID)
 			local objective = objectives and objectives[objectiveIndex]
 
-			if objective and not objective.finished then
-				return i
+			if objective then
+				local fulfilled = tonumber(objective.numFulfilled) or 0
+
+				if neededAmt and fulfilled < neededAmt then
+					return i
+				elseif not neededAmt and not objective.finished then
+					return i
+				end
 			end
 		elseif step and step.funct == "CheckDBComplete" then
 			return i
@@ -14401,12 +14409,22 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 	end
 
 	if not questID then
-		questID = C_SuperTrack.GetSuperTrackedQuestID()
-		stepIndex = questID and RQE.GetCurrentDBStepIndexForQuest(questID) or 1
+		questID = RQE.CurrentDisplayedQuestID
+			or C_SuperTrack.GetSuperTrackedQuestID()
+
+		stepIndex = RQE.CurrentDisplayedStepIndex or 1
 	else
 		questID = tonumber(questID)
 		stepIndex = tonumber(stepIndex) or RQE.GetCurrentDBStepIndexForQuest(questID) or 1
 	end
+
+	-- if not questID then
+		-- questID = C_SuperTrack.GetSuperTrackedQuestID()
+		-- stepIndex = questID and RQE.GetCurrentDBStepIndexForQuest(questID) or 1
+	-- else
+		-- questID = tonumber(questID)
+		-- stepIndex = tonumber(stepIndex) or RQE.GetCurrentDBStepIndexForQuest(questID) or 1
+	-- end
 
 	if not questID or questID == 0 then
 		PrintNothing("Nothing to print: no questID passed and no supertracked quest found.")
