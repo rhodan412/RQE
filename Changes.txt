@@ -15,6 +15,7 @@
 		- Modified the tooltip for coordblock display to include the x, y coords and display it as yellow in color (2026.06.23.0215)
 		- Modified some debug prints to inform if DB entry for supertracked quest uses legacy single coordinates or coordinateHotspots (2026.06.23.0432)
 		- Added RQE.PrintCoordsForQuestStep() function to print locations array and coordinateHotspots for a given quest step if they use the legacy single coordinate system [author-mode ONLY] (2026.06.24.0117)
+		- Cleaned up old debug language and resolved issue where incorrect stepIndex was used when calling RQE.PrintCoordsForQuestStep() function [author-mode ONLY] (2026.06.24.1558)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
@@ -33,6 +34,7 @@
 		- Updated early end-game Maw/Torghast quests in DB for Shadowlands expansion (2026.06.23.0215)
 		- Updated some quests with Venthyr transport network in the DB (2026.06.23.0432)
 		- Added initial quest information for some Midsummer Festival quests to the DB (2026.06.24.0117)
+		- Switched legacy 'coordinates' to instead use coordinateHotspots (2026.06.24.1558)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
