@@ -14166,11 +14166,6 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 
 		print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
 
-		-- print("				coordinateHotspots = {")
-		-- print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
-		-- print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
-		-- print("				},") 
-
 		return
 	end
 
@@ -14190,12 +14185,12 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				dbMapID = tonumber(dbLoc.mapID)
 			end
 
-			if questID then
-				print(tostring(questID))
-			end
-
 			-- Then print the new generated "locations" array block
 			if contPos then
+				if questID then
+					print("Tracked QuestID: " .. tostring(questID))
+				end
+
 				local cx, cy = contPos.x, contPos.y
 				print("			locations = {")
 				if dbX and dbY and dbMapID then
@@ -14238,7 +14233,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				-- Print DB-based coordinate + player-based continent hotspot
 				if trackedQuestID then
 					if RQE.db.profile.debugLevel == "INFO+" then
-						print(tostring(trackedQuestID))
+						print("Tracked QuestID: " .. tostring(trackedQuestID))
 					end
 				end
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -14275,7 +14270,7 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			local hasDBCoords = (dbX and dbY and dbMapID)
 
 			if trackedQuestID then
-				print(tostring(trackedQuestID))
+				print("Tracked QuestID is: " .. tostring(trackedQuestID))
 			end
 
 			-- NEW: Print DB "location" as a locations array + current continent coords
@@ -14313,17 +14308,6 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				locX = locX or (hasDBCoords and dbX) or (x * 100)
 				locY = locY or (hasDBCoords and dbY) or (y * 100)
 				locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
-
-			--if hasSingleLocation and not hasLocationsArray and contPos then
-				-- local dbLoc = dbEntry.location
-				-- local locX = dbLoc and tonumber(dbLoc.x)
-				-- local locY = dbLoc and tonumber(dbLoc.y)
-				-- local locMapID = dbLoc and tonumber(dbLoc.mapID)
-
-				-- -- Fallback (should rarely be needed): use the same coords you already resolved
-				-- locX = locX or (hasDBCoords and dbX) or (x * 100)
-				-- locY = locY or (hasDBCoords and dbY) or (y * 100)
-				-- locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
 
 				local cx, cy = contPos.x, contPos.y
 
@@ -14368,6 +14352,40 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 end
 
 
+-- Helper function to obtain the correct stepIndex for a given quest
+function RQE.GetCurrentDBStepIndexForQuest(questID)
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if not questData then return 1 end
+
+	local maxStep = 0
+	for k, v in pairs(questData) do
+		if type(k) == "number" and type(v) == "table" and k > maxStep then
+			maxStep = k
+		end
+	end
+
+	if maxStep == 0 then return 1 end
+
+	for i = 1, maxStep do
+		local step = questData[i]
+		local objectiveIndex = tonumber(step and step.objectiveIndex)
+
+		if objectiveIndex and objectiveIndex ~= 99 then
+			local objectives = C_QuestLog.GetQuestObjectives(questID)
+			local objective = objectives and objectives[objectiveIndex]
+
+			if objective and not objective.finished then
+				return i
+			end
+		elseif step and step.funct == "CheckDBComplete" then
+			return i
+		end
+	end
+
+	return maxStep
+end
+
+
 -- Function that converts location/coordinates into locations/coordinateHotspots
 function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 	local maincolor = RQE.ColorPINK or "|cffff69b4"
@@ -14384,11 +14402,10 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 
 	if not questID then
 		questID = C_SuperTrack.GetSuperTrackedQuestID()
-		stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
-		--stepIndex = RQE.AddonSetStepIndex or 1
+		stepIndex = questID and RQE.GetCurrentDBStepIndexForQuest(questID) or 1
 	else
 		questID = tonumber(questID)
-		stepIndex = tonumber(stepIndex) or 1
+		stepIndex = tonumber(stepIndex) or RQE.GetCurrentDBStepIndexForQuest(questID) or 1
 	end
 
 	if not questID or questID == 0 then
@@ -14402,21 +14419,22 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 		return
 	end
 
-	local stepData = questData[stepIndex]
-
-	-- If using the supertracked quest and RQE's current step is stale/out of range, fall back to step 1 when that is the only available DB step.
-	if not stepData and questData[1] then
-		PrintNothing("stepIndex " .. tostring(stepIndex) .. " not present for questID " .. questID .. "; using stepIndex 1 instead.")
-		stepIndex = 1
-		stepData = questData[1]
+	local maxStep = 0
+	for k, v in pairs(questData) do
+		if type(k) == "number" and type(v) == "table" and k > maxStep then
+			maxStep = k
+		end
 	end
 
+	if maxStep > 0 and stepIndex > maxStep then
+		PrintNothing("stepIndex " .. tostring(stepIndex) .. " is past the final DB step for questID " .. questID .. "; using stepIndex " .. maxStep .. " instead.")
+		stepIndex = maxStep
+	end
+
+	local stepData = questData[stepIndex]
 	local hasStepData = type(stepData) == "table"
 
-	-- if not stepData then
-		-- PrintNothing("questID " .. questID .. " stepIndex " .. stepIndex .. " not present in DB")
-		-- return
-	-- end
+	PrintNothing("Debug: resolved questID " .. tostring(questID) .. ", stepIndex " .. tostring(stepIndex) .. ", hasStepData = " .. tostring(hasStepData))
 
 	local mapID = C_Map.GetBestMapForUnit("player")
 	if not mapID then
@@ -14445,6 +14463,7 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 
 	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
 	if not contPos then
+		-- PrintNothing("Debug: resolved questID " .. tostring(questID) .. ", stepIndex " .. tostring(stepIndex) .. ", hasStepData = " .. tostring(hasStepData))
 		PrintNothing("Unable to get player position on continentID: " .. tostring(continentID))
 		return
 	end
@@ -14454,7 +14473,6 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 
 	local function PrintHotspots(coord)
 		if stepData and stepData.coordinateHotspots then
-		--if stepData.coordinateHotspots then
 			PrintNothing("Nothing to print: coordinateHotspots already exist for questID " .. questID .. ", stepIndex " .. stepIndex .. ".")
 			return
 		end
@@ -14488,14 +14506,6 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 		PrintRQE("			},")
 		PrintRQE("")
 	end
-
-	-- if stepIndex == 1 then
-		-- PrintLocations()
-		-- PrintHotspots(stepData.coordinates)
-		-- return
-	-- end
-
-	-- PrintHotspots(stepData.coordinates)
 
 	if stepIndex == 1 then
 		PrintLocations()
