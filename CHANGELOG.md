@@ -14,11 +14,13 @@
 		- Added coordblock functionality that allows a more truncated display of clickable waypoints in the RQEFrame steps and SeparateFocusFrame (2026.06.23.0139)
 		- Modified the tooltip for coordblock display to include the x, y coords and display it as yellow in color (2026.06.23.0215)
 		- Modified some debug prints to inform if DB entry for supertracked quest uses legacy single coordinates or coordinateHotspots (2026.06.23.0432)
+		- Added RQE.PrintCoordsForQuestStep() function to print locations array and coordinateHotspots for a given quest step if they use the legacy single coordinate system [author-mode ONLY] (2026.06.24.0117)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
 		- Resolved issue where RQEQuestFrame wasn't updating when a quest would be tracked/untracked using the map (2026.06.23.0139)
 		- Added checks of RQEFrame and SeparateFocusFrame between 1-2 seconds after combat ends to ensure that these frames populate correctly (2026.06.23.0432)
+		- Added call to RQE.PrintCoordsForQuestStep() function when QUEST_DETAIL event function fires so that the location array can be printed out on interaction with quest giver [author-mode ONLY] (2026.06.24.0117)
 
 	RQE.toc
 		- Updated interface & version# (2026.06.21.0326)
@@ -30,12 +32,17 @@
 		- Updated Revendreth leveling campaign quests in DB (2026.06.21.2305)
 		- Updated early end-game Maw/Torghast quests in DB for Shadowlands expansion (2026.06.23.0215)
 		- Updated some quests with Venthyr transport network in the DB (2026.06.23.0432)
+		- Added initial quest information for some Midsummer Festival quests to the DB (2026.06.24.0117)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
 
 	WaypointManager.lua
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
+		- Resolved issue where coordinates would be created at 0, 0 when no waypoint was present in the DB or Blizzard waypoint (2026.06.24.0117)
+
+	WPUtil.lua
+		- Resolved issue where coordinates would be created at 0, 0 when no waypoint was present in the DB or Blizzard waypoint (2026.06.24.0117)
 
 
 12.0.5.1 (2026.06.15)
@@ -67,7 +74,7 @@
 	EventManager.lua
 		- Fixed issue where zone changes were not properly calling for an update to the current quest's stepIndex (2026.05.17.1622)
 		- Added update to stepIndex when GOSSIP_CLOSED event function fires allowing transition between old/new zones after speaking with Zidormi (2026.06.06.0216)
-		- When QUEST_DETAILS fires it will display if the given quest uses location or locations array in the existing DB entry [author-mode ONLY] (2026.06.10.2218)
+		- When QUEST_DETAIL fires it will display if the given quest uses location or locations array in the existing DB entry [author-mode ONLY] (2026.06.10.2218)
 		- Updated SUPER_TRACKING_CHANGED event function handling to preserve RQEFrame data when switching to manually tracked DB-defined bonus/task quests (2026.06.11.1530)
 		- Updated REAGENT_BAG_UPDATE, UNIT_INVENTORY_CHANGED, MINIMAP_UPDATE_ZOOM, ZONE_CHANGED event functions so that if CheckDBZoneChange is listed in the DB entry for a quest it will now also read real zone text which is an often 'hidden' value as it doesn't appear on worldmap or minimap name (2026.06.15.0005)
 
