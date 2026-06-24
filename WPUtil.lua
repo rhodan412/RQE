@@ -341,12 +341,25 @@ end
 function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
 	if not RQEFrame:IsShown() then return end
 
-	-- Normalize safety: require numbers in 0–1
-	if not (mapID and xNorm and yNorm) then return end
+	-- Normalize safety: require valid waypoint data
+	if not RQE:IsValidWaypointCoord(xNorm, yNorm, mapID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffffff00[RQE]|r Blocked invalid waypoint replacement:", tostring(xNorm), tostring(yNorm), tostring(mapID))
+		end
+		return
+	end
+
 	if xNorm > 1 or yNorm > 1 then
 		-- If percent slipped through, normalize
 		xNorm, yNorm = xNorm / 100, yNorm / 100
 	end
+
+	-- Normalize safety: require numbers in 0–1
+	-- if not (mapID and xNorm and yNorm) then return end
+	-- if xNorm > 1 or yNorm > 1 then
+		-- -- If percent slipped through, normalize
+		-- xNorm, yNorm = xNorm / 100, yNorm / 100
+	-- end
 
 	-- Remove previous TomTom waypoint (if any)
 	local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
