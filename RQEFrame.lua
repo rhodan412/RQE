@@ -2386,14 +2386,6 @@ function RQE.InitializeSeparateFocusFrame()
 		end
 
 		-- Optional: ensure the supertracked quest is actually real/active
-		-- local isLogQuest = C_QuestLog.IsOnQuest(displayedQuestID)
-		-- local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
-		-- if not (isLogQuest or isActiveWorldQuest) then
-			-- finishUpdate()
-			-- return
-		-- end
-
-		-- Optional: ensure the supertracked quest is actually real/active
 		local isLogQuest = C_QuestLog.IsOnQuest(displayedQuestID)
 		local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
 		local hasDBQuest = RQE.getQuestData(displayedQuestID) ~= nil
@@ -2403,11 +2395,6 @@ function RQE.InitializeSeparateFocusFrame()
 			finishUpdate()
 			return
 		end
-
-		-- if not displayedQuestID or displayedQuestID <= 0 then
-			-- finishUpdate()
-			-- return
-		-- end
 
 		-- Clear any existing children in the content frame
 		for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
@@ -2421,12 +2408,8 @@ function RQE.InitializeSeparateFocusFrame()
 				end
 			end
 		end
-		-- for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
-			-- child:Hide()
-		-- end
 
 		RQE.CurrentlySuperQuestID = displayedQuestID
-		-- RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		RQE:ClearSeparateFocusFrame()
 
 		-- ✅ Improved quest data handling (for DB-less quests)
@@ -2438,24 +2421,9 @@ function RQE.InitializeSeparateFocusFrame()
 		local totalSteps = 0
 		local stepData = nil
 
-		-- Create or update StepText element
-		-- Do not pre-create SeparateStepText here.
-		-- It will be created inside the specific rendering branch below.
-		-- -- ✅ Ensure SeparateStepText exists before anything else
-		-- if not RQE.SeparateStepText then
-			-- RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			-- RQE.SeparateStepText:SetJustifyH("LEFT")
-			-- RQE.SeparateStepText:SetTextColor(1, 1, 0.8) -- Text color in RGB
-			-- RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
-			-- RQE.SeparateStepText:SetHeight(0)  -- Auto height
-			-- RQE.SeparateStepText:SetWordWrap(true)
-			-- RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
-		-- end
-
 		-- ✅ Quest handling logic
 		if not questData then
 			-- Quest not in DB at all
-			-- RQE.SeparateStepText:SetText("") -- Ensure text cleared before update
 			RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			RQE.SeparateStepText:SetJustifyH("LEFT")
 			RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
@@ -2487,16 +2455,16 @@ function RQE.InitializeSeparateFocusFrame()
 				RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
 				RQE.SeparateStepText:Show()
 				finishUpdate()
-				-- local formattedText = string.format("1/0: Quest in DB w/o any available steps.")
-				-- RQE.SeparateStepText:SetText("")
-				-- RQE.RenderTextWithItems(RQE.SeparateStepText, formattedText, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 1})
-				-- RQE.SeparateStepText:Show()
 				return
 			end
 
 			-- Clamp step index safely
 			if stepIndex < 1 then stepIndex = 1 end
 			if stepIndex > totalSteps then stepIndex = totalSteps end
+
+			-- Store the exact quest/step currently being displayed by the RQE frame
+			RQE.CurrentDisplayedStepIndex = stepIndex
+			RQE.CurrentDisplayedQuestID = questID
 
 			stepData = questData[stepIndex]
 		end
@@ -2528,12 +2496,6 @@ function RQE.InitializeSeparateFocusFrame()
 			RQE.SeparateStepText:SetParent(nil)
 			RQE.SeparateStepText = nil
 		end
-
-		-- if RQE.SeparateStepText then
-			-- RQE.SeparateStepText:Hide()
-			-- RQE.SeparateStepText:SetParent(nil)
-			-- RQE.SeparateStepText = nil
-		-- end
 
 		local hasCoords = formattedText:match("{coords:")
 
@@ -2651,11 +2613,6 @@ function RQE.InitializeSeparateFocusFrame()
 				local h = StepText:GetContentHeight() or 20
 				StepText:SetHeight(h + 6)
 			end)
-
-			-- C_Timer.After(0.05, function()
-				-- local h = StepText:GetContentHeight() or 20
-				-- StepText:SetHeight(h + 6)
-			-- end)
 
 			-- ✅ Handle following paragraphs (if \n exists)
 			if #paragraphs > 1 then
