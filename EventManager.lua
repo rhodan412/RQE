@@ -6592,7 +6592,6 @@ function RQE.handleQuestTurnIn(...)
 	-- Print in coordinateHotspots format and should show use the coordinates that are reflected in the DB file for that last step
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.MapAndContinentFromQuestTurnIn = true
-		--RQE.DebugPrintPlayerContinentPosition(questID)
 		RQE.TurnInQuestID = questID
 		RQE.DebugPrintPlayerContinentPosition(RQE.TurnInQuestID)
 	end
@@ -6756,6 +6755,7 @@ function RQE.handleQuestDetail(...)
 
 			if type(questData.location) == "table" then
 				locationTypeText = " |cFF87CEEB[location]|r"
+				RQE.PrintCoordsForQuestStep(questID)
 				-- locationTypeText = " |cFF87CEEB[location]|r"
 			elseif type(questData.locations) == "table" then
 				locationTypeText = " |cFF00FF00[locations array]|r"
