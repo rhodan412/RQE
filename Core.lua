@@ -14024,7 +14024,6 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 			RQE._currentTomTomUID = nil
 		end
 		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
-		--TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title })
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(string.format(">> TomTom waypoint => %s (%.2f, %.2f, mapID %d)", title, xPct, yPct, mapID))
@@ -14238,9 +14237,13 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 			if hasDBCoords then
 				-- Print DB-based coordinate + player-based continent hotspot
 				if trackedQuestID then
-					print(tostring(trackedQuestID))
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(tostring(trackedQuestID))
+					end
 				end
-				print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
+				end
 			-- else
 				-- -- Don't spam with "No valid DB coordinates..." — just fallback gracefully
 				-- print("Using player position fallback (no DB coordinates for this quest step)")
@@ -14362,6 +14365,155 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 
 	RQE.MapAndContinentFromQuestAccepted = false
 	RQE.MapAndContinentFromQuestTurnIn = false
+end
+
+
+-- Function that converts location/coordinates into locations/coordinateHotspots
+function RQE.PrintCoordsForQuestStep(questID, stepIndex)
+	local maincolor = RQE.ColorPINK or "|cffff69b4"
+	local nullcolor = RQE.ColorCANARY or "|cffffff66"
+	local reset = RQE.ColorRESET or "|r"
+
+	local function PrintRQE(msg, color)
+		print((color or maincolor) .. msg .. reset)
+	end
+
+	local function PrintNothing(msg)
+		PrintRQE(msg, nullcolor)
+	end
+
+	if not questID then
+		questID = C_SuperTrack.GetSuperTrackedQuestID()
+		stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
+		--stepIndex = RQE.AddonSetStepIndex or 1
+	else
+		questID = tonumber(questID)
+		stepIndex = tonumber(stepIndex) or 1
+	end
+
+	if not questID or questID == 0 then
+		PrintNothing("Nothing to print: no questID passed and no supertracked quest found.")
+		return
+	end
+
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if not questData then
+		PrintNothing("questID " .. questID .. " not present in DB")
+		return
+	end
+
+	local stepData = questData[stepIndex]
+
+	-- If using the supertracked quest and RQE's current step is stale/out of range, fall back to step 1 when that is the only available DB step.
+	if not stepData and questData[1] then
+		PrintNothing("stepIndex " .. tostring(stepIndex) .. " not present for questID " .. questID .. "; using stepIndex 1 instead.")
+		stepIndex = 1
+		stepData = questData[1]
+	end
+
+	local hasStepData = type(stepData) == "table"
+
+	-- if not stepData then
+		-- PrintNothing("questID " .. questID .. " stepIndex " .. stepIndex .. " not present in DB")
+		-- return
+	-- end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		PrintNothing("Unable to determine current map.")
+		return
+	end
+
+	local continentID
+	local m = mapID
+	while m do
+		local info = C_Map.GetMapInfo(m)
+		if not info then break end
+
+		if info.mapType == Enum.UIMapType.Continent or info.mapType == 2 then
+			continentID = info.mapID
+			break
+		end
+
+		m = info.parentMapID
+	end
+
+	if not continentID then
+		PrintNothing("Unable to determine continent for mapID: " .. tostring(mapID))
+		return
+	end
+
+	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+	if not contPos then
+		PrintNothing("Unable to get player position on continentID: " .. tostring(continentID))
+		return
+	end
+
+	local contX = contPos.x * 100
+	local contY = contPos.y * 100
+
+	local function PrintHotspots(coord)
+		if stepData and stepData.coordinateHotspots then
+		--if stepData.coordinateHotspots then
+			PrintNothing("Nothing to print: coordinateHotspots already exist for questID " .. questID .. ", stepIndex " .. stepIndex .. ".")
+			return
+		end
+
+		if not coord or not coord.x or not coord.y or not coord.mapID then
+			PrintNothing("Nothing to print: questID " .. questID .. " stepIndex " .. stepIndex .. " has no valid coordinates.")
+			return
+		end
+
+		PrintRQE("				coordinateHotspots = {")
+		PrintRQE(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", coord.x, coord.y, coord.mapID))
+		PrintRQE(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", contX, contY, continentID))
+		PrintRQE("				},")
+	end
+
+	local function PrintLocations()
+		if questData.locations then
+			PrintNothing("Nothing to print: locations array already exists for questID " .. questID .. ".")
+			return
+		end
+
+		local loc = questData.location
+		if not loc or not loc.x or not loc.y or not loc.mapID then
+			PrintNothing("Nothing to print: questID " .. questID .. " has no valid location table.")
+			return
+		end
+
+		PrintRQE("			locations = {")
+		PrintRQE(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", loc.x, loc.y, loc.mapID))
+		PrintRQE(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", contX, contY, continentID))
+		PrintRQE("			},")
+		PrintRQE("")
+	end
+
+	-- if stepIndex == 1 then
+		-- PrintLocations()
+		-- PrintHotspots(stepData.coordinates)
+		-- return
+	-- end
+
+	-- PrintHotspots(stepData.coordinates)
+
+	if stepIndex == 1 then
+		PrintLocations()
+
+		if hasStepData then
+			PrintHotspots(stepData.coordinates)
+		else
+			PrintNothing("Nothing to print: questID " .. questID .. " has no step data, so coordinateHotspots cannot be generated.")
+		end
+
+		return
+	end
+
+	if hasStepData then
+		PrintHotspots(stepData.coordinates)
+	else
+		PrintNothing("Nothing to print: questID " .. questID .. " stepIndex " .. stepIndex .. " not present in DB.")
+	end
 end
 
 
