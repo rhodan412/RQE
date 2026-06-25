@@ -1442,11 +1442,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 						tonumber(mapID),
 						title and title:gsub("\"", "") or "Custom Waypoint"
 					)
-					print(string.format(
-						"|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
-						x, y, mapID,
-						(title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""
-					))
+					if RQE.db.profile.debugLevel == "INFO" then
+						print(string.format("|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s", x, y, mapID, (title and title ~= "") and (" - " .. title:gsub("\"", "")) or "" ))
+					end
 				end
 			end)
 
