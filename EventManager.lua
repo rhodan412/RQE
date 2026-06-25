@@ -120,9 +120,10 @@ local eventsToRegister = {
 	"UNIT_ENTERING_VEHICLE",
 	"UNIT_EXITING_VEHICLE",
 	"UNIT_INVENTORY_CHANGED",
-	--"UNIT_MODEL_CHANGED",
+	"UNIT_MODEL_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
 	"UPDATE_INSTANCE_INFO",
+	"UPDATE_OVERRIDE_ACTIONBAR",
 	"UPDATE_MOUSEOVER_UNIT",
 	-- "UPDATE_SHAPESHIFT_COOLDOWN",
 	-- "UPDATE_SHAPESHIFT_FORM",
@@ -255,6 +256,7 @@ local function HandleEvents(frame, event, ...)
 		UNIT_MODEL_CHANGED = RQE.handleUnitModelChange,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
+		UPDATE_OVERRIDE_ACTIONBAR = RQE.handleOverrideActionBar,
 		UPDATE_MOUSEOVER_UNIT = RQE.handleUpdateMouseoverUnit,
 		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
 		UPDATE_SHAPESHIFT_FORM = RQE.handleUpdateShapeShiftForm,
@@ -2502,6 +2504,79 @@ function RQE.handlePlayerStoppedMoving()
 	-- if RQE.db and RQE.db.profile.displayRQEcpuUsage then
 		-- RQE:CheckCPUUsage()
 	-- end
+end
+
+
+-- Function handling the UPDATE_OVERRIDE_ACTIONBAR event function
+function RQE.handleOverrideActionBar()
+	-- Get the currently super-tracked quest
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super tracked quest ID found, skipping aura checks.")
+		end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for quest ID:", questID)
+		end
+		return
+	end
+
+	-- Determine the current stepIndex
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check if CheckDBBuff or CheckDBDebuff exists anywhere in the supertracked quest's data
+	local function hasCheckDBBuffDebuff(data)
+		for _, step in ipairs(data) do
+			-- Check `check` field
+			if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
+				return true
+			end
+
+			-- Check `checks` field
+			if step.checks then
+				for _, checkData in ipairs(step.checks) do
+					if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
+						return true
+					end
+				end
+			end
+		end
+		return false
+	end
+
+	local isBuffOrDebuffCheck = hasCheckDBBuffDebuff(questData)
+
+	-- If the current step is tied to buff or debuff checks, re-run periodic checks
+	if isBuffOrDebuffCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UPDATE_OVERRIDE_ACTIONBAR related to current stepIndex:", stepIndex, "for questID:", questID)
+		end
+		C_Timer.After(0.2, function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~ Running RQE:StartPeriodicChecks() from UPDATE_OVERRIDE_ACTIONBAR ~~")
+			end
+			RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
+			if questID then
+				RQE:QueuePeriodicChecks("UPDATE_OVERRIDE_ACTIONBAR", 0.5, questID)
+			else
+				C_Timer.After(0.5, function()
+					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_MODEL_CHANGED fires
+				end)
+			end
+		end)
+	end
 end
 
 
@@ -4878,11 +4953,11 @@ function RQE.handleUnitModelChange(...)
 	-- If the current step is tied to buff or debuff checks, re-run periodic checks
 	if isBuffOrDebuffCheck then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("UNIT_AURA related to current stepIndex:", stepIndex, "for questID:", questID)
+			print("UNIT_MODEL_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
 		end
 		C_Timer.After(0.2, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("~~ Running RQE:StartPeriodicChecks() from UNIT_AURA ~~")
+				print("~~ Running RQE:StartPeriodicChecks() from UNIT_MODEL_CHANGED ~~")
 			end
 			RQE.ClickQuestLogIndexButton(C_SuperTrack.GetSuperTrackedQuestID())
 			if questID then
@@ -4892,15 +4967,7 @@ function RQE.handleUnitModelChange(...)
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_MODEL_CHANGED fires
 				end)
 			end
-
-			-- C_Timer.After(0.5, function()
-				-- RQE:StartPeriodicChecks()
-			-- end)
 		end)
-	else
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
-		end
 	end
 end
 
