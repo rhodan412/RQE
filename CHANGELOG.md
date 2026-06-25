@@ -22,6 +22,8 @@
 		- Resolved issue where RQEQuestFrame wasn't updating when a quest would be tracked/untracked using the map (2026.06.23.0139)
 		- Added checks of RQEFrame and SeparateFocusFrame between 1-2 seconds after combat ends to ensure that these frames populate correctly (2026.06.23.0432)
 		- Added call to RQE.PrintCoordsForQuestStep() function when QUEST_DETAIL event function fires so that the location array can be printed out on interaction with quest giver [author-mode ONLY] (2026.06.24.0117)
+		- Re-enabled the UNIT_MODEL_CHANGED and added UPDATE_OVERRIDE_ACTIONBAR event functions to call RQE:StartPeriodicChecks() if the player's current stepIndex contains a CheckDBBuff or CheckDBDebuff check (2026.06.25.0244)
+		- Minor fixes to debug print to reflect correct event function for the messages (2026.06.25.0244)
 
 	RQE.toc
 		- Updated interface & version# (2026.06.21.0326)
@@ -35,11 +37,12 @@
 		- Updated some quests with Venthyr transport network in the DB (2026.06.23.0432)
 		- Added initial quest information for some Midsummer Festival quests to the DB (2026.06.24.0117)
 		- Switched legacy 'coordinates' to instead use coordinateHotspots (2026.06.24.1558)
-		- Additional minor updates to Venthyr covenant campaign quests (2026.06.24.1816)
+		- Additional additional updates to Venthyr covenant campaign quests (2026.06.25.0244)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
 		- Added RQE.CurrentDisplayedStepIndex variable to save the stepIndex tied to the current step as shown in SeparateFocusFrame for purpose of the RQE.PrintCoordsForQuestStep() function (2026.06.24.1816)
+		- Minor clean-up of coding (2026.06.25.0244)
 
 	WaypointManager.lua
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
@@ -665,7 +668,7 @@
 		- Removed code that clears the waypoint data and separate focus frame during PLAYER_LOGIN and ADDON_LOADED (2025.11.16.2003)
 		- Removed coding to update tracker visibility in the ADDON_LOADED as this is handled through PLAYER_LOGIN (2025.11.16.2003)
 		- Removed coding that makes a check before clearing the RQEFrame within the UPDATE_INSTANCE_INFO as this was returning an error as a result of the change to how the clearing of the SeparateFocusFrame now occurs (2025.11.16.2003)
-		- Removed UNIT_MODEL_CHANGE from event function listener (2025.11.17.0033)
+		- Removed UNIT_MODEL_CHANGED from event function listener (2025.11.17.0033)
 		- Updated ITEM_COUNT_CHANGED, MERCHANT_UPDATE, UNIT_INVENTORY_CHANGED, MAIL_SUCCESS, BAG_UPDATE (for reagents), and BAG_NEW_ITEMS_UPDATED to only call RQE:StartPeriodicChecks() function if CheckDBInventory exists in the current step that the player is on [this was causing massive lag anytime something was looted!] (2025.11.17.0033)
 		- Removed duplicate call for RQE:StartPeriodicChecks() in the PLAYER_ENTERING_WORLD event function [causing massive lag when changing zones via portal/hearth] (2025.11.17.0033)
 		- Updated SUPER_TRACKING_CHANGED to reset RQE.FrameState for the lastQuestID, lastQuestName, lastObjectives, lastNumObjectives and lastStepIndex (2025.11.17.0033)
