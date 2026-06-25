@@ -5985,8 +5985,6 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 		fontPath, size, flags = "Fonts\\FRIZQT__.TTF", 12, ""
 	end
 
-	-- local fontPath, size, flags = parentFrame:GetFont()
-
 	local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 	measureFS:SetFont(font or fontPath, fontSize or size, flags)
 
@@ -6125,12 +6123,32 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 						:gsub("|c%x%x%x%x%x%x%x%x", "")
 						:gsub("|r", "")
 
-					measureFS:SetText(preText)
-					local coordX = measureFS:GetStringWidth()
-
 					local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
 					measureFS:SetText(label)
 					local tagWidth = measureFS:GetStringWidth()
+
+					local maxWidth = parentFrame:GetWidth() or 400
+					local coordX = 0
+					local coordY = yOffset
+
+					-- Approximate WoW word wrapping for the text before the coordblock
+					for word, space in preText:gmatch("([^%s]+)(%s*)") do
+						local chunk = word .. space
+						measureFS:SetText(chunk)
+						local chunkWidth = measureFS:GetStringWidth()
+
+						if coordX > 0 and (coordX + chunkWidth) > maxWidth then
+							coordX = 0
+							coordY = coordY + lineHeight
+						end
+
+						coordX = coordX + chunkWidth
+					end
+
+					if coordX > 0 and (coordX + tagWidth) > maxWidth then
+						coordX = 0
+						coordY = coordY + lineHeight
+					end
 
 					local hover = CreateFrame("Frame", nil, baseParent)
 					hover:EnableMouse(true)
@@ -6138,7 +6156,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 					hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
 					hover:SetAlpha(0.01)
 					hover:SetSize(tagWidth + 6, lineHeight)
-					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -yOffset)
+					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
 
 					hover:SetScript("OnEnter", function()
 						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
