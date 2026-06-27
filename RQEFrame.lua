@@ -93,11 +93,16 @@ function ShowQuestDropdownRQEFrame(self, questID)
 	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
 		local isPlayerInGroup = IsInGroup()
 		local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+		local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
-			rootDescription:CreateButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
+			if questLabel ~= "<Nothing Tracked>" then
+				rootDescription:CreateButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
+			end
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 		end
 
@@ -137,9 +142,16 @@ end
 -- Function to Show Right-Click Dropdown Menu
 function ShowDropdownRQEFrame(self)
 	MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
+
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
+			if questLabel ~= "<Nothing Tracked>" then
+				rootDescription:CreateButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
+			end
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 		end
 
