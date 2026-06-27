@@ -14436,14 +14436,6 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 		stepIndex = tonumber(stepIndex) or RQE.GetCurrentDBStepIndexForQuest(questID) or 1
 	end
 
-	-- if not questID then
-		-- questID = C_SuperTrack.GetSuperTrackedQuestID()
-		-- stepIndex = questID and RQE.GetCurrentDBStepIndexForQuest(questID) or 1
-	-- else
-		-- questID = tonumber(questID)
-		-- stepIndex = tonumber(stepIndex) or RQE.GetCurrentDBStepIndexForQuest(questID) or 1
-	-- end
-
 	if not questID or questID == 0 then
 		PrintNothing("Nothing to print: no questID passed and no supertracked quest found.")
 		return
@@ -14499,7 +14491,6 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 
 	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
 	if not contPos then
-		-- PrintNothing("Debug: resolved questID " .. tostring(questID) .. ", stepIndex " .. tostring(stepIndex) .. ", hasStepData = " .. tostring(hasStepData))
 		PrintNothing("Unable to get player position on continentID: " .. tostring(continentID))
 		return
 	end
@@ -14560,6 +14551,112 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 	else
 		PrintNothing("Nothing to print: questID " .. questID .. " stepIndex " .. stepIndex .. " not present in DB.")
 	end
+end
+
+
+-- Popup: ask for questID + stepIndex, then print locations/coordinateHotspots
+function RQE.ShowPrintCoordsPopup()
+	StaticPopupDialogs["RQE_PRINT_COORDS_FOR_QUEST_STEP"] = {
+		text = "Print coords for quest step",
+		button1 = "Print",
+		button2 = "Cancel",
+		hasEditBox = true,
+		hasWideEditBox = true,
+		editBoxWidth = 220,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3,
+
+		OnShow = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			if editBox then
+				local questID = RQE.CurrentDisplayedQuestID
+					or C_SuperTrack.GetSuperTrackedQuestID()
+					or ""
+
+				local stepIndex = RQE.CurrentDisplayedStepIndex
+					or RQE.AddonSetStepIndex
+					or ""
+
+				editBox:SetText(tostring(questID) .. " " .. tostring(stepIndex))
+				editBox:SetFocus()
+				editBox:HighlightText()
+			end
+		end,
+
+		OnAccept = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			local text = editBox and editBox:GetText() or ""
+
+			local questID, stepIndex = text:match("^%s*(%d+)%s+([%d]*)%s*$")
+			questID = tonumber(questID)
+			stepIndex = tonumber(stepIndex)
+
+			if not questID then
+				print("|cFFFF3333[RQE]|r Enter: questID stepIndex")
+				print("|cFFFF3333[RQE]|r Example: 84022 3")
+				return
+			end
+
+			RQE.PrintCoordsForQuestStep(questID, stepIndex)
+		end,
+	}
+
+	StaticPopup_Show("RQE_PRINT_COORDS_FOR_QUEST_STEP")
+end
+
+
+-- Popup: ask for stepIndex, then print locations/coordinateHotspots for the tracked questID
+function RQE.ShowPrintCoordsForDisplayedQuestPopup(passedQuestID)
+	local questID =
+		tonumber(passedQuestID)
+		or tonumber(RQE.searchedQuestID)
+		or tonumber(RQE.CurrentDisplayedQuestID)
+
+	if not questID or questID == 0 then
+		print("|cFFFF3333[RQE]|r No quest is currently displayed in RQEFrame.")
+		return
+	end
+
+	StaticPopupDialogs["RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST"] = {
+		text = "Print coords for questID " .. tostring(questID) .. "\nEnter stepIndex:",
+		button1 = "Print",
+		button2 = "Cancel",
+		hasEditBox = true,
+		editBoxWidth = 80,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3,
+
+		OnShow = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			if editBox then
+				local stepIndex = RQE.CurrentDisplayedStepIndex
+					or RQE.AddonSetStepIndex
+					or 1
+
+				editBox:SetText(tostring(stepIndex))
+				editBox:SetFocus()
+				editBox:HighlightText()
+			end
+		end,
+
+		OnAccept = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			local stepIndex = tonumber(editBox and editBox:GetText())
+
+			if not stepIndex then
+				print("|cFFFF3333[RQE]|r Enter a valid stepIndex.")
+				return
+			end
+
+			RQE.PrintCoordsForQuestStep(questID, stepIndex)
+		end,
+	}
+
+	StaticPopup_Show("RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST")
 end
 
 
