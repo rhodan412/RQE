@@ -17,6 +17,7 @@
 		- Added RQE.PrintCoordsForQuestStep() function to print locations array and coordinateHotspots for a given quest step if they use the legacy single coordinate system [author-mode ONLY] (2026.06.24.0117)
 		- Cleaned up old debug language and resolved issue where incorrect stepIndex was used when calling RQE.PrintCoordsForQuestStep() function [author-mode ONLY] (2026.06.24.1816)
 		- Resolved issue where coordblock wasn't clickable unless it was at the start of a new line (2026.06.25.1914)
+		- Added coding to create a pop-up for entering questID/stepIndex to read existing coord block and add the current player's continent coords [author-mode ONLY] (2026.06.27.0134)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
@@ -38,12 +39,14 @@
 		- Updated some quests with Venthyr transport network in the DB (2026.06.23.0432)
 		- Added initial quest information for some Midsummer Festival quests to the DB (2026.06.24.0117)
 		- Switched legacy 'coordinates' to instead use coordinateHotspots (2026.06.24.1558)
-		- Additional additional updates to Venthyr covenant campaign quests (2026.06.25.1914)
+		- Updated Venthyr covenant campaign quests in DB (2026.06.27.0134)
+		- Updated many early covenant camapaign quests in DB for Bastion and Maldraxxus (2026.06.27.0134)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
 		- Added RQE.CurrentDisplayedStepIndex variable to save the stepIndex tied to the current step as shown in SeparateFocusFrame for purpose of the RQE.PrintCoordsForQuestStep() function (2026.06.24.1816)
 		- Minor clean-up of coding (2026.06.25.0244)
+		- Added menu option for displaying coord information based on a questID/stepIndex that the player can enter [author-mode ONLY] (2026.06.27.0134)
 
 	WaypointManager.lua
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
