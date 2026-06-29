@@ -13357,6 +13357,9 @@ local function ProcessNextGossipOption()
 	end
 
 	-- Ensure we are interacting with the correct NPC
+	local isInInstance, instanceType = IsInInstance()
+	if isInInstance then return end
+
 	local currentNPCName = UnitName("npc")
 	if not currentNPCName or currentNPCName ~= selectedGossipOption.npcName then
 		return
@@ -14657,6 +14660,51 @@ function RQE.ShowPrintCoordsForDisplayedQuestPopup(passedQuestID)
 	}
 
 	StaticPopup_Show("RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST")
+end
+
+
+
+-- Debug to print TomTom waypoints and also player coordinates as they relate to the DB
+function RQE:Debug_PlayerCoordinates()
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	local maincolor = RQE.ColorPINK or "|cffff69b4"
+	local nullcolor = RQE.ColorCANARY or "|cffffff66"
+	local reset = RQE.ColorRESET or "|r"
+
+	local function PrintRQE(msg, color)
+		print((color or maincolor) .. msg .. reset)
+	end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		PrintRQE("[RQE Debug] Unable to determine player mapID.", nullcolor)
+		return
+	end
+
+	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if pos then
+		PrintRQE(string.format(
+			"[RQE Debug] Player map position: mapID = %d, x = %.2f, y = %.2f",
+			mapID,
+			pos.x * 100,
+			pos.y * 100
+		))
+	else
+		PrintRQE("[RQE Debug] Unable to get player position for mapID: " .. tostring(mapID), nullcolor)
+	end
+
+	if TomTom and TomTom.DebugListAllWaypoints then
+		TomTom:DebugListAllWaypoints()
+	else
+		PrintRQE("[RQE Debug] TomTom:DebugListAllWaypoints() unavailable.", nullcolor)
+	end
+
+	if RQE.DebugPrintPlayerContinentPosition then
+		RQE.DebugPrintPlayerContinentPosition()
+	else
+		PrintRQE("[RQE Debug] RQE.DebugPrintPlayerContinentPosition() unavailable.", nullcolor)
+	end
 end
 
 
