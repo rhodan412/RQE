@@ -1534,6 +1534,10 @@ function RQE.handleAreaPOI()
 	local isIndoors = IsIndoors()
 
 	if not isInRaid then
+		if not C_SuperTrack.IsSuperTrackingQuest() then
+			RQE:RestoreSuperTrackedQuestForCharacter()
+		end
+
 		if isResting and isIndoors then
 			UpdateFrame()
 			RQE:StartPeriodicChecks()
@@ -4025,6 +4029,8 @@ function RQE.handleZoneChange(...)
 			if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
 				RQE.WPUtil.ClearHotspotState(qid, sidx, false)
 			end
+		else
+			RQE:RestoreSuperTrackedQuestForCharacter()
 		end
 
 		-- Optional: auto-refresh stash so tooltips/arrow update without /reload
@@ -5981,7 +5987,11 @@ function RQE.handleQuestRemoved(...)
 		end
 	end
 
-	RQE:SaveTrackedQuestsToCharacter()
+	UpdateRQEWorldQuestFrame()
+
+	C_Timer.After(0.15, function()
+		RQE:SaveTrackedQuestsToCharacter()
+	end)
 
 	-- -- if not InCombatLockdown() then
 		-- -- RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
@@ -6439,10 +6449,12 @@ function RQE.handleQuestWatchListChanged(...)
 		RQE.QuestAddedForWatchListChanged = true
 		-- print("Frame updating with questID " .. questID)
 		UpdateRQEQuestFrame()
+		UpdateRQEWorldQuestFrame()
 	else
 		RQE.QuestAddedForWatchListChanged = false
 		-- print("Frame updating with removal of questID " .. questID)
 		UpdateRQEQuestFrame()
+		UpdateRQEWorldQuestFrame()
 	end
 
 	RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
