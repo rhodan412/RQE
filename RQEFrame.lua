@@ -103,7 +103,9 @@ function ShowQuestDropdownRQEFrame(self, questID)
 			if questLabel ~= "<Nothing Tracked>" then
 				rootDescription:CreateButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
 			end
+			rootDescription:CreateButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
 		end
 
 		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
@@ -152,7 +154,9 @@ function ShowDropdownRQEFrame(self)
 			if questLabel ~= "<Nothing Tracked>" then
 				rootDescription:CreateButton("Print coordinateHotspot for QuestID " .. questLabel .. " [stepIndex]", function() RQE.ShowPrintCoordsForDisplayedQuestPopup(questLabel) end)
 			end
+			rootDescription:CreateButton("Print gossipOptions", function() DevTools_Dump(RQE.API.GetGossipOptions()) end)
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton("Debug Player Coordinates/TomTom Hotspots", function() RQE:Debug_PlayerCoordinates() end)
 		end
 
 		rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
@@ -839,7 +843,7 @@ end)
 -- Add a click event to open the quest details for the current QuestID
 RQE.QuestIDText:SetScript("OnMouseDown", function(self, button)
 	if button == "LeftButton" and not IsShiftKeyDown() then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 		OpenQuestLogToQuestDetails(questID)
 		return
 	end
@@ -850,7 +854,7 @@ end)
 if RQE.QuestNameText then  -- Check if QuestNameText is initialized
 	RQE.QuestNameText:SetScript("OnMouseDown", function(self, button)
 		if button == "LeftButton" and not IsShiftKeyDown() then
-			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 			OpenQuestLogToQuestDetails(questID)
 			return
 		end
