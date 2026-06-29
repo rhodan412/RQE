@@ -6,6 +6,9 @@
 		- Resolved issue where Quest Watch wasn't updating when a quest would be tracked/untracked using the map
 		- Added additional functionality for truncated clickable coord blocks within the supertracked RQEFrame
 		- Increased size of SeparateFocusFrame and the tooltip for truncated clickable coordinates now appears in yellow and the x, y coordinates are included in the tooltip
+		- Fixed issue when supertracking wouldn't be restored when making transitions to maps from one indoor location to another
+		- Fixed issue where world quests weren't registering upon completion
+		- Fixed issue where quest/map details wouldn't open when clicking on the supertracked frame
 
 	Core.lua
 		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty (2026.06.18.2249)
@@ -18,6 +21,8 @@
 		- Cleaned up old debug language and resolved issue where incorrect stepIndex was used when calling RQE.PrintCoordsForQuestStep() function [author-mode ONLY] (2026.06.24.1816)
 		- Resolved issue where coordblock wasn't clickable unless it was at the start of a new line (2026.06.25.1914)
 		- Added coding to create a pop-up for entering questID/stepIndex to read existing coord block and add the current player's continent coords [author-mode ONLY] (2026.06.27.0134)
+		- Fixed issue where gossip information wouldn't display in instances because NPC information is secret in these circumstances [author-mode ONLY] (2026.06.28.2121)
+		- Added function to display coordinate information as it relates to the DB as well as zone waypoints through TomTom [author-mode ONLY] (2026.06.28.2121)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
@@ -26,6 +31,8 @@
 		- Added call to RQE.PrintCoordsForQuestStep() function when QUEST_DETAIL event function fires so that the location array can be printed out on interaction with quest giver [author-mode ONLY] (2026.06.24.0117)
 		- Re-enabled the UNIT_MODEL_CHANGED and added UPDATE_OVERRIDE_ACTIONBAR event functions to call RQE:StartPeriodicChecks() if the player's current stepIndex contains a CheckDBBuff or CheckDBDebuff check (2026.06.25.0244)
 		- Minor fixes to debug print to reflect correct event function for the messages (2026.06.25.0244)
+		- Fixed issue when supertracking wouldn't be restored when ZONE_CHANGED_INDOORS or AREA_POIS_UPDATED fire (2026.06.28.2121)
+		- Fixed issue where world quests weren't registering upon completion when QUEST_REMOVED or QUEST_WATCH_LIST_CHANGED fire (2026.06.28.2121)
 
 	RQE.toc
 		- Updated interface & version# (2026.06.21.0326)
@@ -41,12 +48,16 @@
 		- Switched legacy 'coordinates' to instead use coordinateHotspots (2026.06.24.1558)
 		- Updated Venthyr covenant campaign quests in DB (2026.06.27.0134)
 		- Updated many early covenant camapaign quests in DB for Bastion and Maldraxxus (2026.06.27.0134)
+		- Updated additional Maw/Ve'nari quests in DB (2026.06.28.2121)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
 		- Added RQE.CurrentDisplayedStepIndex variable to save the stepIndex tied to the current step as shown in SeparateFocusFrame for purpose of the RQE.PrintCoordsForQuestStep() function (2026.06.24.1816)
 		- Minor clean-up of coding (2026.06.25.0244)
 		- Added menu option for displaying coord information based on a questID/stepIndex that the player can enter [author-mode ONLY] (2026.06.27.0134)
+		- Added function to display gossip information with dropdown menu in RQEFrame [author-mode ONLY] (2026.06.28.2121)
+		- Added function call to display coordinate information as it relates to the DB as well as zone waypoints through TomTom [author-mode ONLY] (2026.06.28.2121)
+		- Fixed issue where quest/map detail wouldn't appear if supertracked frame was displaying quest detail even though you weren't tracking something (2026.06.28.2121)
 
 	WaypointManager.lua
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
