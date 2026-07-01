@@ -61,6 +61,24 @@ local function CreateBorder(button)
 end
 
 
+-- Refreshes the Previous/Next step tooltips if either button is currently being hovered.
+function RQE.Buttons.RefreshStepNavigationTooltips()
+	local function RefreshButton(button)
+		if not button then return end
+		if not button:IsMouseOver() then return end
+
+		local onEnter = button:GetScript("OnEnter")
+		if not onEnter then return end
+
+		GameTooltip:Hide()
+		onEnter(button)
+	end
+
+	RefreshButton(RQE.PrevStepButton)
+	RefreshButton(RQE.NextStepButton)
+end
+
+
 -- Add mouseover tooltip and trigger map opening/closing
 RQE.UnknownButtonTooltip = function()
 	RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
@@ -952,6 +970,15 @@ function RQE.Buttons.CreateQMButton(RQEFrame)
 end
 
 
+-- Returns the currently displayed stepIndex, preferring manual preview over automatic progress.
+function RQE:GetDisplayedStepIndex()
+	return RQE.ManualPreviewStepIndex
+		or RQE.AddonSetStepIndex
+		or RQE.CurrentStepIndex
+		or 1
+end
+
+
 -- Parent function to create CloseButton
 function RQE.Buttons.CreateCloseButton(RQEFrame)
 	local CloseButton = CreateFrame("Button", nil, RQEFrame, "UIPanelCloseButton")
@@ -1029,6 +1056,91 @@ function RQE.Buttons.CreateMinimizeButton(RQEFrame, originalWidth, originalHeigh
 
 	RQE.debugLog("CreateMinimizeButton: Function exited.")
 	return MinimizeButton
+end
+
+
+-- Creates the Previous Step button for manual step preview navigation.
+function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
+	local PrevStepButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+	PrevStepButton:SetSize(18, 18)
+	PrevStepButton:SetText("<")
+	RQE.PrevStepButton = PrevStepButton
+
+	PrevStepButton:SetFrameStrata("MEDIUM")
+	PrevStepButton:SetFrameLevel(3)
+	PrevStepButton:SetPoint("TOPRIGHT", RQE.NextStepButton, "TOPLEFT", -3, 0)
+
+	PrevStepButton:SetScript("OnEnter", function(self)
+		local curStep = RQE:GetDisplayedStepIndex()
+		local targetStep = curStep - 1
+
+		if targetStep >= 1 then
+			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			GameTooltip:SetText("Go back to step " .. targetStep)
+			GameTooltip:Show()
+		end
+	end)
+
+	PrevStepButton:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
+	PrevStepButton:SetScript("OnClick", function()
+		local curStep = RQE:GetDisplayedStepIndex()
+		local targetStep = curStep - 1
+
+		if targetStep >= 1 then
+			RQE:SetDisplayedStepFromStepsList(targetStep)
+		end
+	end)
+
+	CreateBorder(PrevStepButton)
+	return PrevStepButton
+end
+
+
+-- Creates the Next Step button for manual step preview navigation.
+function RQE.Buttons.CreateNextStepButton(RQEFrame)
+	local NextStepButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+	NextStepButton:SetSize(18, 18)
+	NextStepButton:SetText(">")
+	RQE.NextStepButton = NextStepButton
+
+	NextStepButton:SetFrameStrata("MEDIUM")
+	NextStepButton:SetFrameLevel(3)
+	NextStepButton:SetPoint("TOPRIGHT", RQE.MinimizeButton or RQE.MaximizeButton, "TOPLEFT", -3, 0)
+	--NextStepButton:SetPoint("TOPRIGHT", RQE.PrevStepButton, "TOPLEFT", -3, 0)
+
+	NextStepButton:SetScript("OnEnter", function(self)
+		local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+		local questData = questID and RQE.getQuestData(questID)
+		local curStep = RQE:GetDisplayedStepIndex()
+		local targetStep = curStep + 1
+
+		if questData and questData[targetStep] then
+			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			GameTooltip:SetText("Advance to step " .. targetStep)
+			GameTooltip:Show()
+		end
+	end)
+
+	NextStepButton:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+
+	NextStepButton:SetScript("OnClick", function()
+		local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+		local questData = questID and RQE.getQuestData(questID)
+		local curStep = RQE:GetDisplayedStepIndex()
+		local targetStep = curStep + 1
+
+		if questData and questData[targetStep] then
+			RQE:SetDisplayedStepFromStepsList(targetStep)
+		end
+	end)
+
+	CreateBorder(NextStepButton)
+	return NextStepButton
 end
 
 
