@@ -2198,25 +2198,49 @@ function RQE:AnchorObjectiveTracker()
 end
 
 
--- Hook the Objective Tracker's OnShow event to enforce the state based on visibility conditions
-ObjectiveTrackerFrame:HookScript("OnShow", function()
+local function EnforceObjectiveTrackerVisibility()
 	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
 		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-			ObjectiveTrackerFrame:Hide()
+			if ObjectiveTrackerFrame:IsShown() then
+				ObjectiveTrackerFrame:Hide()
+			end
 		end
 	end
-end)
+end
+
+-- If Blizzard tries to show the tracker while RQE should own the space, hide it again.
+ObjectiveTrackerFrame:HookScript("OnShow", EnforceObjectiveTrackerVisibility)
+
+-- Re-evaluate only when the relevant RQE frames change visibility.
+RQEFrame:HookScript("OnShow", EnforceObjectiveTrackerVisibility)
+RQEFrame:HookScript("OnHide", EnforceObjectiveTrackerVisibility)
 
 
--- Continuous checking with OnUpdate to enforce the visibility state of the Blizzard Objective Tracker
-local hideObjectiveTrackerFrame = CreateFrame("Frame")
-hideObjectiveTrackerFrame:SetScript("OnUpdate", function()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-			ObjectiveTrackerFrame:Hide()
-		end
-	end
-end)
+if RQE.RQEQuestFrame then
+	RQE.RQEQuestFrame:HookScript("OnShow", EnforceObjectiveTrackerVisibility)
+	RQE.RQEQuestFrame:HookScript("OnHide", EnforceObjectiveTrackerVisibility)
+end
+
+
+-- -- Hook the Objective Tracker's OnShow event to enforce the state based on visibility conditions
+-- ObjectiveTrackerFrame:HookScript("OnShow", function()
+	-- if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		-- if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			-- ObjectiveTrackerFrame:Hide()
+		-- end
+	-- end
+-- end)
+
+
+-- -- Continuous checking with OnUpdate to enforce the visibility state of the Blizzard Objective Tracker
+-- local hideObjectiveTrackerFrame = CreateFrame("Frame")
+-- hideObjectiveTrackerFrame:SetScript("OnUpdate", function()
+	-- if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		-- if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			-- ObjectiveTrackerFrame:Hide()
+		-- end
+	-- end
+-- end)
 
 
 -- Function to update the state of the minimap based on the current profile settings
@@ -4987,7 +5011,7 @@ end
 
 -- Stops the timer and hides the UI elements
 function RQE.Timer_Stop()
-	local timerFrame = RQE.ScenarioChildFrame.timerFrame
+	local timerFrame = RQE.TimerFrame or (RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.timerFrame)
 	if not timerFrame then
 		return  -- Ensure the frame exists
 	end
@@ -4995,6 +5019,7 @@ function RQE.Timer_Stop()
 	-- Stop the OnUpdate script and hide the frame
 	timerFrame:SetScript("OnUpdate", nil)
 	timerFrame:Hide()
+	RQE.TimerFrame = nil
 end
 
 
@@ -12173,13 +12198,22 @@ local function InitializeQuestObjectiveCompletion()
 		if info and not info.isHeader then
 			local questID = info.questID
 			local objectives = C_QuestLog.GetQuestObjectives(questID)
-			for i, objective in ipairs(objectives) do
-				local key = questID .. "-" .. i
-				questObjectiveCompletion[key] = objective.finished
+
+			-- for i, objective in ipairs(objectives) do
+				-- local key = questID .. "-" .. i
+				-- questObjectiveCompletion[key] = objective.finished
+			-- end
+
+			if objectives then
+				for i, objective in ipairs(objectives) do
+					local key = questID .. "-" .. i
+					questObjectiveCompletion[key] = objective.finished
+				end
 			end
 		end
 	end
 end
+
 
 local function CheckQuestObjectivesAndPlaySound()
 	if soundCooldown then return end -- Exit if we're in cooldown
@@ -12191,25 +12225,29 @@ local function CheckQuestObjectivesAndPlaySound()
 		if info and not info.isHeader then
 			local questID = info.questID
 			local objectives = C_QuestLog.GetQuestObjectives(questID)
-			local allObjectivesComplete = true
-			for i, objective in ipairs(objectives) do
-				local key = questID .. "-" .. i
-				if objective.finished then
-					if not questObjectiveCompletion[key] then
-						-- Objective just completed
-						questObjectiveCompletion[key] = true
-						playSoundForObjectives = true -- Play sound for individual objective completion
+
+			if objectives then
+				local allObjectivesComplete = true
+
+				for i, objective in ipairs(objectives) do
+					local key = questID .. "-" .. i
+					if objective.finished then
+						if not questObjectiveCompletion[key] then
+							-- Objective just completed
+							questObjectiveCompletion[key] = true
+							playSoundForObjectives = true -- Play sound for individual objective completion
+						end
+					else
+						allObjectivesComplete = false
+						questObjectiveCompletion[key] = false
 					end
-				else
-					allObjectivesComplete = false
-					questObjectiveCompletion[key] = false
 				end
-			end
-			if allObjectivesComplete then
-				local key = tostring(questID) .. "-complete"
-				if not questObjectiveCompletion[key] then
-					questObjectiveCompletion[key] = true
-					playSoundForCompletion = true -- Play sound for quest completion
+				if allObjectivesComplete then
+					local key = tostring(questID) .. "-complete"
+					if not questObjectiveCompletion[key] then
+						questObjectiveCompletion[key] = true
+						playSoundForCompletion = true -- Play sound for quest completion
+					end
 				end
 			end
 		end
