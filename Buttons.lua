@@ -1091,6 +1091,13 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 
 		if targetStep >= 1 then
 			RQE:SetDisplayedStepFromStepsList(targetStep)
+
+			C_Timer.After(0.2, function()
+				local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+				if questID then
+					RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+				end
+			end)
 		end
 	end)
 
@@ -1136,6 +1143,13 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 
 		if questData and questData[targetStep] then
 			RQE:SetDisplayedStepFromStepsList(targetStep)
+
+			C_Timer.After(0.2, function()
+				local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+				if questID then
+					RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+				end
+			end)
 		end
 	end)
 
