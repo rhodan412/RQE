@@ -3,7 +3,7 @@
 	**HIGHLIGHTS**
 		- Added manual step navigation controls (< and >) to the RQEFrame allowing any quest step to be previewed without affecting automatic quest progression.
 		- Added support for manually selecting quest steps by clicking the numbered step buttons within the RQEFrame, including automatic updating of quest details, macros and step-specific waypoints.
-		- Waypoints created from the RQEFrame now intelligently use the currently displayed quest step, allowing manual step previews to create the appropriate waypoint while preserving automatic waypoint behavior.
+		- Waypoints created from the RQEFrame now intelligently use the currently displayed quest step, automatically updating when manually navigating between quest steps while preserving automatic quest progression.
 		- Added automatic updating of manual navigation button tooltips as the displayed quest step changes.
 
 	Buttons.lua
@@ -11,6 +11,7 @@
 		- Added dynamic tooltip generation for manual step navigation buttons displaying the destination step that will be selected when clicked (2026.07.01.1527)
 		- Added RQE.Buttons.RefreshStepNavigationTooltips() helper function to automatically refresh navigation button tooltips while hovered as the displayed quest step changes (2026.07.01.1527)
 		- Updated manual step navigation button positioning so that the buttons now appear in the order <, >, -/+, X (2026.07.01.1527)
+		- Added automatic waypoint creation when manually navigating between quest steps using the Previous (<) and Next (>) buttons (2026.07.01.1715)
 
 	Core.lua
 		- Added manual step preview mode allowing quest steps to be viewed without affecting automatic quest progression (2026.07.01.1527)
@@ -24,6 +25,7 @@
 
 	RQEDatabase.lua
 		- Fixed issue with the gossip macro being improperly used and parts missing as a result (2026.07.01.1527)
+		- Added additional objective and descriptiontext to some quests in Bastion covenant (2026.07.01.1715)
 
 	RQEFrame.lua
 		- Added support for manually selecting quest steps by clicking the numbered step buttons displayed beside each quest step within the RQEFrame (2026.07.01.1527)
