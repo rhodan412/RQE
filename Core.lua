@@ -7754,6 +7754,48 @@ function RQE:HasCheckDBComplete(questData)
 end
 
 
+-- Displays the selected Steps List step in RQEFrame without advancing quest progress or forcing waypoint movement.
+function RQE:SetDisplayedStepFromStepsList(stepIndex)
+	local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	local questData = questID and RQE.getQuestData(questID)
+	if not questData or not questData[stepIndex] then return end
+
+	RQE.ManualStepPreview = true
+	RQE.ManualPreviewQuestID = questID
+	RQE.ManualPreviewStepIndex = stepIndex
+
+	RQE.AddonSetStepIndex = stepIndex
+	RQE.CurrentStepIndex = stepIndex
+	RQE.StoredStepIndex = stepIndex
+
+	if RQE.WaypointButtons and RQE.WaypointButtons[stepIndex] then
+		RQE.LastClickedButtonRef = RQE.WaypointButtons[stepIndex]
+	end
+
+	if UpdateFrame then UpdateFrame(questID, questData) end
+	if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+	if RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+		RQEMacro:CreateMacroForCurrentStep()
+	end
+
+	if RQE.Buttons.RefreshStepNavigationTooltips then
+		RQE.Buttons.RefreshStepNavigationTooltips()
+	end
+end
+
+
+-- Clears manual step preview mode and optionally resumes automatic quest progress evaluation.
+function RQE:ClearManualStepPreview(runChecks)
+	RQE.ManualStepPreview = false
+	RQE.ManualPreviewQuestID = nil
+	RQE.ManualPreviewStepIndex = nil
+
+	if runChecks ~= false then
+		RQE:StartPeriodicChecks()
+	end
+end
+
+
 -- Scheduler to help with CPU load when calling RQE:StartPeriodicChecks()
 function RQE:QueuePeriodicChecks(reason, delay, questID)
 	delay = delay or 0.20
@@ -7856,6 +7898,13 @@ function RQE:StartPeriodicChecks()
 			RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
 			print("No quest data for superTrackedQuestID:", superTrackedQuestID)
 		end
+		return
+	end
+
+	if RQE.ManualStepPreview
+		and RQE.ManualPreviewQuestID == superTrackedQuestID
+		and RQE.ManualPreviewStepIndex
+	then
 		return
 	end
 
@@ -9234,6 +9283,10 @@ function RQE:ClickWaypointButtonForIndex(index)
 		button.stepIndex = index
 	end
 
+	-- Allows manually clicking of a step within the supertracked quest
+	RQE:ClearManualStepPreview(false)
+	RQE._autoClickingWaypointButton = true
+
 	-- Update state references
 	self.LastClickedButtonRef = button
 	self.CurrentStepIndex = index
@@ -9244,8 +9297,23 @@ function RQE:ClickWaypointButtonForIndex(index)
 		print("Clicking button at index:", index)
 	end
 
+	-- -- Perform button click
+	-- button:Click()
+
 	-- Perform button click
-	button:Click()
+	local ok, err = pcall(function()
+		button:Click()
+	end)
+
+	RQE._autoClickingWaypointButton = false
+
+	if not ok then
+		error(err)
+	end
+
+	if RQE.Buttons.RefreshStepNavigationTooltips then
+		RQE.Buttons.RefreshStepNavigationTooltips()
+	end
 
 	-- Ensure the macro and UI are refreshed only once
 	C_Timer.After(1, function()
