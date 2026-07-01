@@ -771,6 +771,8 @@ RQE.Buttons.CreateQMButton(RQEFrame)
 RQE.Buttons.CreateCloseButton(RQEFrame)
 RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
 RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
+RQE.Buttons.CreateNextStepButton(RQEFrame)
+RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 
 
 -- Magic Button
@@ -782,6 +784,7 @@ local searchExecuteButton = CreateFrame("Button", nil, RQEFrame.SearchFrame, "UI
 searchExecuteButton:SetSize(18, 18)
 searchExecuteButton:SetPoint("LEFT", SearchEditBox, "RIGHT", 5, 0)
 searchExecuteButton:SetText(">")
+
 
 ---------------------------
 -- #6. Event Handlers
@@ -1567,6 +1570,9 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
 
+		WaypointButton.stepIndex = i
+		WaypointButton.bg = bg
+
 		-- Check if autoClickWaypointButton is enabled and LastClickedIdentifier is nil and set to 1 if so
 		if RQE.db.profile.autoClickWaypointButton then
 			if not RQE.LastClickedIdentifier then
@@ -1620,6 +1626,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- if RQE.WaypointButtonHover then
 				-- RQE:ClickWaypointButtonForIndex(i)
 			-- end
+
+			if not RQE._autoClickingWaypointButton then
+				RQE:SetDisplayedStepFromStepsList(i)
+			end
 
 			-- Code for RWButton functionality here
 			local extractedQuestID
