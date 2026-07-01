@@ -1279,59 +1279,6 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 			print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
 		end
 
-		-- if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
-			-- local savedQuestID = RQECharacterDB.superTrackedQuestID
-			-- local isWorldQuest = RQECharacterDB.isWorldQuest
-
-			-- -- Check if it's a world quest
-			-- if isWorldQuest then
-				-- -- Check if the world quest is still available
-				-- local isWorldQuestStillAvailable = C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
-
-				-- if isWorldQuestStillAvailable then
-					-- -- Restore the world quest as supertracked
-					-- -- print("~~~ SetSuperTrack: 870~~~")
-					-- C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Restored supertracked world quest for this character: " .. savedQuestID)
-					-- end
-				-- else
-					-- -- World quest is no longer available, clear supertracked quest
-					-- RQECharacterDB.superTrackedQuestID = nil
-					-- RQECharacterDB.isWorldQuest = nil
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Saved supertracked world quest is no longer valid.")
-					-- end
-				-- end
-			-- else
-				-- -- Check if the regular quest is still valid and in the quest log
-				-- if C_QuestLog.IsOnQuest(savedQuestID) then
-					-- -- print("~~~ SetSuperTrack: 886~~~")
-					-- C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Restored supertracked quest for this character: " .. savedQuestID)
-					-- end
-				-- else
-					-- -- If the quest is no longer valid, clear the supertracked quest
-					-- RQECharacterDB.superTrackedQuestID = nil
-					-- RQECharacterDB.isWorldQuest = nil
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Saved supertracked quest is no longer valid.")
-					-- end
-				-- end
-			-- end
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("No saved supertracked quest found for this character.")
-			-- end
-		-- end
-
-		-- C_Timer.After(0.1, function()
-			-- RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 1085 ~~")
-			-- UpdateFrame()
-		-- end)
-	-- end)
-
 		-- 1) Try restoring a real supertracked quest first
 		if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
 			local savedQuestID = RQECharacterDB.superTrackedQuestID
@@ -1409,6 +1356,10 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 				end
 			end)
 		end)
+	end)
+
+	C_Timer.After(0.35, function()
+		RQE.InitializeSeparateFocusWaypoints()
 	end)
 end
 
@@ -5948,6 +5899,16 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 	displayText = displayText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 	displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
 
+	displayText = displayText:gsub("{coords:([^}]+)}", function(data)
+		local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+
+		if x and y and mapID then
+			return string.format("|cff40e0d0[coords: %.2f, %.2f map %s]|r", tonumber(x), tonumber(y), mapID)
+		end
+
+		return data
+	end)
+
 	-- Coord Blocks
 	displayText = displayText:gsub("{coordblock:([^}]+)}", function(data)
 		local x, y = data:match("(%d+%.?%d*),(%d+%.?%d*)")
@@ -6092,6 +6053,97 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 
 				-- Advance search position
 				patternPos = endTag + 1
+			end
+
+			-- Coords clickable overlays
+			local coordsPatternPos = 1
+
+			while true do
+				local startTag, endTag, coordData = rawLine:find("{coords:([^}]+)}", coordsPatternPos)
+				if not startTag then break end
+
+				local x, y, mapID, title =
+					coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+
+				if not x then
+					x, y, mapID = coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+
+				if x and y and mapID then
+					local preText = rawLine:sub(1, startTag - 1)
+					preText = preText
+						:gsub("{item:%d+:([^}]+)}", "[%1]")
+						:gsub("{spell:%d+:([^}]+)}", "[%1]")
+						:gsub("{coords:([^}]+)}", function(data)
+							local cx, cy, cm = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+							if cx and cy and cm then
+								return string.format("[coords: %.2f, %.2f map %s]", tonumber(cx), tonumber(cy), cm)
+							end
+							return data
+						end)
+						:gsub("{coordblock:([^}]+)}", function(data)
+							local bx, by = data:match("(%d+%.?%d*),(%d+%.?%d*)")
+							if bx and by then
+								return string.format("[%.2f, %.2f]", tonumber(bx), tonumber(by))
+							end
+							return data
+						end)
+						:gsub("|c%x%x%x%x%x%x%x%x", "")
+						:gsub("|r", "")
+
+					local label = string.format("[coords: %.2f, %.2f map %s]", tonumber(x), tonumber(y), mapID)
+					measureFS:SetText(label)
+					local tagWidth = measureFS:GetStringWidth()
+
+					local maxWidth = parentFrame:GetWidth() or 400
+					local coordX = 0
+					local coordY = yOffset
+
+					for word, space in preText:gmatch("([^%s]+)(%s*)") do
+						local chunk = word .. space
+						measureFS:SetText(chunk)
+						local chunkWidth = measureFS:GetStringWidth()
+
+						if coordX > 0 and (coordX + chunkWidth) > maxWidth then
+							coordX = 0
+							coordY = coordY + lineHeight
+						end
+
+						coordX = coordX + chunkWidth
+					end
+
+					if coordX > 0 and (coordX + tagWidth) > maxWidth then
+						coordX = 0
+						coordY = coordY + lineHeight
+					end
+
+					local hover = CreateFrame("Frame", nil, baseParent)
+					hover:EnableMouse(true)
+					hover:SetFrameStrata("TOOLTIP")
+					hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
+					hover:SetAlpha(0.01)
+					hover:SetSize(tagWidth + 6, lineHeight)
+					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
+
+					hover:SetScript("OnEnter", function()
+						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
+						GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
+						GameTooltip:Show()
+					end)
+
+					hover:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+
+					hover:SetScript("OnMouseDown", function()
+						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
+					end)
+
+					table.insert(parentFrame._rqeSegments, hover)
+				end
+
+				coordsPatternPos = endTag + 1
 			end
 
 			-- Coordblock clickable overlays
