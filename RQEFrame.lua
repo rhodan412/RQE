@@ -1362,11 +1362,13 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		-- Create StepsText
 		local raw = StepsText[i] or "No description available."
-		local hasCoords = raw:match("{coords:")
+		local hasCoords = raw:match("{coords:") or raw:match("{coordblock:")
+		-- local hasCoords = raw:match("{coords:")
 		local hasHoverables = raw:match("{item:") or raw:match("{spell:")
 
 		local StepText
-		if hasCoords then
+		if false and hasCoords then
+		--if hasCoords then
 			-- 🧭 SimpleHTML for coordinate hyperlinks
 			StepText = CreateFrame("SimpleHTML", nil, content)
 			table.insert(RQE.StepsText, StepText)
@@ -1424,6 +1426,16 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				-- return string.format('<a href="%s">|cff8eccac[%s]|r</a>', href, label)	-- Vista Blue
 			end)
 
+			-- html = html:gsub("{item:(%d+):([^}]+)}", function(itemID, name)
+				-- return string.format('<a href="item:%s">|cffff66cc[%s]|r</a>', itemID, name)
+			-- end)
+
+			-- html = html:gsub("{spell:(%d+):([^}]+)}", function(spellID, name)
+				-- return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', spellID, name)
+			-- end)
+
+			html = html:gsub("\n+", "<br>")
+
 			-- Wrap text with HTML
 			local wrappedHTML = string.format('<html><body><p>%s</p></body></html>', html)
 			StepText:SetText(wrappedHTML)
@@ -1465,12 +1477,32 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			end)
 
 			StepText:SetScript("OnHyperlinkEnter", function(_, link)
-				if type(link) == "string" and link:match("^coords:") then
+				if not link then return end
+
+				local linkType, id = link:match("^([^:]+):(.+)$")
+
+				if linkType == "coords" then
 					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
 					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
 					GameTooltip:Show()
+				elseif linkType == "rqeitem" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+					GameTooltip:SetItemByID(tonumber(id))
+					GameTooltip:Show()
+				elseif linkType == "rqespell" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+					GameTooltip:SetSpellByID(tonumber(id))
+					GameTooltip:Show()
 				end
 			end)
+
+			-- StepText:SetScript("OnHyperlinkEnter", function(_, link)
+				-- if type(link) == "string" and link:match("^coords:") then
+					-- GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					-- GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+					-- GameTooltip:Show()
+				-- end
+			-- end)
 
 			StepText:SetScript("OnHyperlinkLeave", function()
 				GameTooltip:Hide()
