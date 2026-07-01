@@ -191,6 +191,15 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 		RQE.NearestFlightMasterSet = false
 	end
 
+	-- If the player manually selected a step, create the waypoint from that displayed step only.
+	if RQE.ManualStepPreview
+		and RQE.ManualPreviewQuestID == questID
+		and RQE.ManualPreviewStepIndex
+	then
+		RQE:CreateWaypointForStep(questID, RQE.ManualPreviewStepIndex)
+		return
+	end
+
 	-- Reset coordinates at the start
 	RQE.x = nil
 	RQE.y = nil
