@@ -2945,7 +2945,7 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 
 			RQE.AllFramesShouldUpdate = true
-			C_Timer.After(2.2, function()
+			C_Timer.After(0.05, function()
 				UpdateFrame()
 				--RQE:ClearSeparateFocusFrame()
 				RQE:UpdateSeparateFocusFrame()
@@ -2953,7 +2953,7 @@ function RQE.handlePlayerEnterWorld(...)
 					RQE.AllFramesShouldUpdate = false
 				end)
 
-				C_Timer.After(5, function()
+				C_Timer.After(0.05, function()
 					RQE:RestoreTrackedQuestsForCharacter()
 					RQE:RestoreSuperTrackedQuestForCharacter()
 				end)
