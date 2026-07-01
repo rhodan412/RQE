@@ -19,6 +19,15 @@
 		- Added RQE:ClearManualStepPreview() function to return control to automatic quest progression when appropriate (2026.07.01.1527)
 		- Updated RQE:StartPeriodicChecks() to suspend automatic step evaluation while a manually selected quest step is being previewed (2026.07.01.1527)
 		- Updated RQE:ClickWaypointButtonForIndex() to safely transition between manual and automatic quest progression modes while refreshing manual navigation tooltips (2026.07.01.1527)
+		- Added nil guards around C_QuestLog.GetQuestObjectives() calls in quest progress/completion sound handling to prevent errors when objective data is temporarily unavailable (2026.07.01.1940)
+		- Updated RQE.Timer_Stop() to stop the active timer frame tracked by RQE.TimerFrame while preserving the ScenarioChildFrame timer as a fallback (2026.07.01.1940)
+		- Replaced continuous ObjectiveTrackerFrame OnUpdate visibility enforcement with hook-based visibility checks to reduce unnecessary per-frame processing (2026.07.01.1940)
+
+	EventManager.lua
+		- Fixed issue in PLAYER_STARTED_MOVING handling where the IsFlying() result was not being used correctly, preventing the intended macro validation branch from running while moving on foot (2026.07.01.1940)
+		- Fixed scoping issue in SUPER_TRACKING_CHANGED handling so the fetched super-tracked questID remains available for later fallback logic when the RQEQuestFrame is hidden (2026.07.01.1940)
+		- Disabled leftover continuous Objective Tracker OnUpdate polling now that hook-based visibility enforcement is used instead (2026.07.01.1940)
+		- Cleaned up placeholder event unregistration logic so RQE.UnregisterUnusedEvents() no longer performs a misleading dummy unregister call (2026.07.01.1940)
 
 	RQE.toc
 		- Updated version# (2026.07.01.1527)
