@@ -1,8 +1,43 @@
+12.0.7.1
+
+	**HIGHLIGHTS**
+		- Added manual step navigation controls (< and >) to the RQEFrame allowing any quest step to be previewed without affecting automatic quest progression.
+		- Added support for manually selecting quest steps by clicking the numbered step buttons within the RQEFrame, including automatic updating of quest details, macros and step-specific waypoints.
+		- Waypoints created from the RQEFrame now intelligently use the currently displayed quest step, allowing manual step previews to create the appropriate waypoint while preserving automatic waypoint behavior.
+		- Added automatic updating of manual navigation button tooltips as the displayed quest step changes.
+
+	Buttons.lua
+		- Added Previous (<) and Next (>) manual step navigation buttons to the RQEFrame allowing navigation through quest steps independently of automatic quest progression (2026.07.01.1527)
+		- Added dynamic tooltip generation for manual step navigation buttons displaying the destination step that will be selected when clicked (2026.07.01.1527)
+		- Added RQE.Buttons.RefreshStepNavigationTooltips() helper function to automatically refresh navigation button tooltips while hovered as the displayed quest step changes (2026.07.01.1527)
+		- Updated manual step navigation button positioning so that the buttons now appear in the order <, >, -/+, X (2026.07.01.1527)
+
+	Core.lua
+		- Added manual step preview mode allowing quest steps to be viewed without affecting automatic quest progression (2026.07.01.1527)
+		- Added RQE:SetDisplayedStepFromStepsList() function to update the displayed quest step, macro and SeparateFocusFrame from manual step selections (2026.07.01.1527)
+		- Added RQE:ClearManualStepPreview() function to return control to automatic quest progression when appropriate (2026.07.01.1527)
+		- Updated RQE:StartPeriodicChecks() to suspend automatic step evaluation while a manually selected quest step is being previewed (2026.07.01.1527)
+		- Updated RQE:ClickWaypointButtonForIndex() to safely transition between manual and automatic quest progression modes while refreshing manual navigation tooltips (2026.07.01.1527)
+
+	RQE.toc
+		- Updated version# (2026.07.01.1527)
+
+	RQEDatabase.lua
+		- Fixed issue with the gossip macro being improperly used and parts missing as a result (2026.07.01.1527)
+
+	RQEFrame.lua
+		- Added support for manually selecting quest steps by clicking the numbered step buttons displayed beside each quest step within the RQEFrame (2026.07.01.1527)
+		- Added stepIndex tracking to waypoint buttons to improve synchronization between manual step selection and automatic quest progression (2026.07.01.1527)
+
+	WaypointManager.lua
+		- Updated waypoint creation logic so that manual quest step previews create waypoints using the currently displayed quest step while preserving existing automatic waypoint behavior (2026.07.01.1527)
+
+
 12.0.7.0 (2026.06.30)
 
 	**HIGHLIGHTS**
 		- Ready for Patch 12.0.7
-		- Added some checks and fixes so that the RQEFrame and SeparateFocusFrame updates/populates properly rather than remaining empty
+		- Added some checks and fixes so that the RQEFrame (supertracked) and SeparateFocusFrame (step-specific frame) updates/populates properly rather than remaining empty
 		- Resolved issue where Quest Watch wasn't updating when a quest would be tracked/untracked using the map
 		- Added additional functionality for truncated clickable coord blocks within the supertracked RQEFrame
 		- Increased size of SeparateFocusFrame and the tooltip for truncated clickable coordinates now appears in yellow and the x, y coordinates are included in the tooltip
@@ -40,7 +75,7 @@
 		- Reduced time that it takes to call RQE:RestoreSuperTrackedQuestForCharacter() function when PLAYER_ENTERING_WORLD fires (such as login/reload) in updating RQEFrame with most recent supertracked quest (2026.06.30.2030)
 
 	RQE.toc
-		- Updated interface & version# (2026.06.21.0326)
+		- Updated interface & version# (2026.06.30.2030)
 
 	RQEDatabase.lua
 		- Updated raid marker macro for 12.0.7 change that adding a "~" to the existing "/tm ##" before the number creates a check to see if a raid marker exists on the target, but will not have a check for quest turn in or /tm 6 (2026.06.18.2249)
