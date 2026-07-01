@@ -1,4 +1,4 @@
-12.0.7.0
+12.0.7.0 (2026.06.30)
 
 	**HIGHLIGHTS**
 		- Ready for Patch 12.0.7
@@ -9,6 +9,7 @@
 		- Fixed issue when supertracking wouldn't be restored when making transitions to maps from one indoor location to another
 		- Fixed issue where world quests weren't registering upon completion
 		- Fixed issue where quest/map details wouldn't open when clicking on the supertracked frame
+		- Fixed several issues affecting clickable coords, coordblocks, items and spells within the RQEFrame steps
 
 	Core.lua
 		- Added some checks and fixes so that the SeparateFocusFrame properly updates/populates rather than remaining empty (2026.06.18.2249)
@@ -23,6 +24,9 @@
 		- Added coding to create a pop-up for entering questID/stepIndex to read existing coord block and add the current player's continent coords [author-mode ONLY] (2026.06.27.0134)
 		- Fixed issue where gossip information wouldn't display in instances because NPC information is secret in these circumstances [author-mode ONLY] (2026.06.28.2121)
 		- Added function to display coordinate information as it relates to the DB as well as zone waypoints through TomTom [author-mode ONLY] (2026.06.28.2121)
+		- Removed old code from RQE:RestoreSuperTrackedQuestForCharacter() function (2026.06.30.2030)
+		- Fixed issue where the "*" button for the SeparateFocusWaypoints wasn't appearing on reload (2026.06.30.2030)
+		- Fixed issue in RQE.RenderTextWithItemsSteps() function where clickable coords weren't functional or correctly displayed in StepsText (2026.06.30.2030)
 
 	EventManager.lua
 		- Added calls for RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() function to update the RQEFrame (2026.06.21.0326)
@@ -33,6 +37,7 @@
 		- Minor fixes to debug print to reflect correct event function for the messages (2026.06.25.0244)
 		- Fixed issue when supertracking wouldn't be restored when ZONE_CHANGED_INDOORS or AREA_POIS_UPDATED fire (2026.06.28.2121)
 		- Fixed issue where world quests weren't registering upon completion when QUEST_REMOVED or QUEST_WATCH_LIST_CHANGED fire (2026.06.28.2121)
+		- Reduced time that it takes to call RQE:RestoreSuperTrackedQuestForCharacter() function when PLAYER_ENTERING_WORLD fires (such as login/reload) in updating RQEFrame with most recent supertracked quest (2026.06.30.2030)
 
 	RQE.toc
 		- Updated interface & version# (2026.06.21.0326)
@@ -49,6 +54,8 @@
 		- Updated Venthyr covenant campaign quests in DB (2026.06.27.0134)
 		- Updated many early covenant camapaign quests in DB for Bastion and Maldraxxus (2026.06.27.0134)
 		- Updated additional Maw/Ve'nari quests in DB (2026.06.28.2121)
+		- Cleaned up DB so that correct icon will show up for gossip quests (2026.06.30.2030)
+		- Updated additional quests in the Bastion covenant campaign (2026.06.30.2030)
 
 	RQEFrame.lua
 		- Updated the SeparateFocusFrame size from 375, 100 to 380, 125 to make it taller and slightly wider to easily allow three coordblocks to be displayed per line (2026.06.23.0215)
@@ -58,6 +65,10 @@
 		- Added function to display gossip information with dropdown menu in RQEFrame [author-mode ONLY] (2026.06.28.2121)
 		- Added function call to display coordinate information as it relates to the DB as well as zone waypoints through TomTom [author-mode ONLY] (2026.06.28.2121)
 		- Fixed issue where quest/map detail wouldn't appear if supertracked frame was displaying quest detail even though you weren't tracking something (2026.06.28.2121)
+		- Fixed issue where coordblock, line breaks, items and spells weren't being displayed in tooltip or clickable in StepsText (2026.06.30.2030)
+
+	RQEMacro.lua
+		- Added RQE.ForceCheckCurrentMacroContents() function to force check/update of macro contents [author-mode ONLY] (2026.06.30.2030)
 
 	WaypointManager.lua
 		- Updated old debug code to use debugLog instead of standard (2026.06.21.2305)
