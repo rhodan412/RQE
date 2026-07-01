@@ -281,7 +281,8 @@ end
 
 -- Example: Unregister events that are no longer needed
 function RQE.UnregisterUnusedEvents()
-	Frame:UnregisterEvent("EVENT_NAME")
+	--Frame:UnregisterEvent("EVENT_NAME")
+	return
 end
 
 
@@ -2409,7 +2410,7 @@ function RQE.handlePlayerStartedMoving()
 
 	local isFlying = IsFlying("player")
 	local isMounted = IsMounted()
-	local OnTaxi = UnitOnTaxi("player")
+	local onTaxi = UnitOnTaxi("player")
 	local isResting = IsResting()
 
 	-- if not OnTaxi and not isResting then	-- Heavy Lag
@@ -2423,7 +2424,7 @@ function RQE.handlePlayerStartedMoving()
 		-- end
 	-- end
 
-	if not IsFlying and not isMounted and not OnTaxi then
+	if not isFlying and not isMounted and not onTaxi then
 		C_Timer.After(0.3, function()
 			-- Get the macro index for 'RQE Macro'
 			local macroIndex = GetMacroIndexByName("RQE Macro")
@@ -3251,10 +3252,12 @@ function RQE.handleSuperTracking()
 
 	-- Set for situations where the RQEQuestFrame isn't being shown (mythicMode with Blizzard Tracker) and event fires
 	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
+		local superQuestID
+
 		if not C_SuperTrack.IsSuperTrackingQuest() then
 			RQE.Buttons.ClearButtonPressed()
 		else
-			local superQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+			superQuestID = C_SuperTrack.GetSuperTrackedQuestID()
 		end
 
 		local questID = superQuestID or newQID or RQE.DisplayedQuestID
@@ -7174,9 +7177,9 @@ function RQE:ToggleFramesAndTracker()
 end
 
 
--- Optionally, use OnUpdate for continuous checking
-local hideObjectiveTrackerFrame = CreateFrame("Frame")
-hideObjectiveTrackerFrame:SetScript("OnUpdate", HideObjectiveTracker)
+-- -- Optionally, use OnUpdate for continuous checking
+-- local hideObjectiveTrackerFrame = CreateFrame("Frame")
+-- hideObjectiveTrackerFrame:SetScript("OnUpdate", HideObjectiveTracker)
 
 
 -- OnUpdate function that checks if the map (quest details) are open and if so, it will resist closing the map when hovering over the "W" Button in RQEFrame
