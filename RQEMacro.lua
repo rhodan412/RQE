@@ -15,6 +15,21 @@ RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust t
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
 
 
+-- Function that forces a check on the RQE Macro
+function RQE.ForceCheckCurrentMacroContents()
+	RQE.isCheckingMacroContents = true
+	
+	local isMacroCorrect = RQE.CheckCurrentMacroContents()
+	RQE.CheckCurrentMacroContents()
+
+	C_Timer.After(0.2, function()
+		if RQE.isCheckingMacroContents then
+			RQE.isCheckingMacroContents = false
+		end
+	end)
+end
+
+
 -- Function to check if the current RQE Macro matches the expected contents based on the current super-tracked quest step
 function RQE.CheckCurrentMacroContents()
 	-- Prevent re-entry if the function is already in progress
