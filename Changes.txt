@@ -27,6 +27,7 @@
 		- Removed calls to compare if contents in SeparateFocusFrame vs RQEFrame to determine if update should be called from within RQE:QueuePeriodicChecks() as this is already handled by RQE:StartPeriodicChecks() (2026.07.01.2036)
 		- Fixed issue where RQE:StartPerdiodicChecks() kept thinking that frame was on manual mode and wouldn't advance even after pressing QuestLogIndexButton for supertracked quest (2026.07.02.0419)
 		- Updates made to RQE:ClickWaypointButtonForIndex(index) to facilitate the reseting of the Index# when button press made [changes may be unnecessary] (2026.07.02.0419)
+		- Disabled the RQE.ResumeAutomaticFromManualPreview early-return in RQE:StartPeriodicChecks() because it was blocking automatic progression after manual step preview and contributing to step/waypoint desync (2026.07.02.0454)
 
 	EventManager.lua
 		- Fixed issue in PLAYER_STARTED_MOVING handling where the IsFlying() result was not being used correctly, preventing the intended macro validation branch from running while moving on foot (2026.07.01.1940)
@@ -36,6 +37,7 @@
 		- Updated RQE.handleAddonLoaded(...) with safer function calls within (2026.07.01.2018)
 		- Moved call to Update RQEQuestFrame, within BAG_UPDATE as it was being called too earlier and utilized RQE:QueuePeriodicChecks() instead of RQE:StartPeriodicChecks() within that function call (2026.07.01.2036)
 		- When PLAYER_ENTERING_WORLD event function fires the flag that will reset the index# on firing is reset prior to RestoreSuperTrackedQuestForCharacter() or RQE:QueuePeriodicChecks("PLAYER_ENTERING_WORLD", 0.1, questID) being called (2026.07.02.0419)
+		- Updated UNIT_AURA buff/debuff matching to compare numeric spellIDs instead of aura names, preventing secret-string taint errors when evaluating CheckDBBuff and CheckDBDebuff conditions from quest step data (2026.07.02.0454)
 
 	QuestingModule.lua
 		- Moved calls for ObjectiveTrackerFrame OnUpdate visibility from Core to QuestingModule due to load errors (2026.07.01.2018)
@@ -48,6 +50,7 @@
 		- Fixed issue with the gossip macro being improperly used and parts missing as a result (2026.07.01.1527)
 		- Added additional objective and descriptiontext to some quests in Bastion covenant (2026.07.01.1715)
 		- Updates to some quests related to Dragonflight TW and Midsummer Fire Festival (2026.07.02.0419)
+		- Updated/Added some Maw quests to the DB (2026.07.02.0454)
 
 	RQEFrame.lua
 		- Added support for manually selecting quest steps by clicking the numbered step buttons displayed beside each quest step within the RQEFrame (2026.07.01.1527)
@@ -56,6 +59,10 @@
 	WaypointManager.lua
 		- Updated waypoint creation logic so that manual quest step previews create waypoints using the currently displayed quest step while preserving existing automatic waypoint behavior (2026.07.01.1527)
 		- Cleaned up some debug language (2026.07.01.2018)
+		- Updated RQE:CreateUnknownQuestWaypointNoDirectionText() to prioritize DB coordinates for the current displayed stepIndex, using Blizzard waypoint data only as fallback, so created waypoints now match the intended quest step guidance (2026.07.02.0454)
+
+	WPUtil.lua
+		- Disabled the RQE:StartPeriodicChecks() call when the W button click is processing hoveringOnRQEFrameAndButton, preventing manual step preview from being overwritten by automatic progression before the waypoint is generated and allowing the selected displayed stepIndex to produce the correct DB waypoint (2026.07.02.0454)
 
 
 12.0.7.0 (2026.06.30)
