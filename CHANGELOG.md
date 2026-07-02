@@ -22,12 +22,18 @@
 		- Added nil guards around C_QuestLog.GetQuestObjectives() calls in quest progress/completion sound handling to prevent errors when objective data is temporarily unavailable (2026.07.01.1940)
 		- Updated RQE.Timer_Stop() to stop the active timer frame tracked by RQE.TimerFrame while preserving the ScenarioChildFrame timer as a fallback (2026.07.01.1940)
 		- Replaced continuous ObjectiveTrackerFrame OnUpdate visibility enforcement with hook-based visibility checks to reduce unnecessary per-frame processing (2026.07.01.1940)
+		- Updated RQE:OnInitialize() and RQE:InitializeFrame() with safer function calls within (2026.07.01.2018)
+		- Removed coding that attempted to enforce objective tracker and moved it instead to QuestingModule due to load order errors (2026.07.01.2018)
 
 	EventManager.lua
 		- Fixed issue in PLAYER_STARTED_MOVING handling where the IsFlying() result was not being used correctly, preventing the intended macro validation branch from running while moving on foot (2026.07.01.1940)
 		- Fixed scoping issue in SUPER_TRACKING_CHANGED handling so the fetched super-tracked questID remains available for later fallback logic when the RQEQuestFrame is hidden (2026.07.01.1940)
 		- Disabled leftover continuous Objective Tracker OnUpdate polling now that hook-based visibility enforcement is used instead (2026.07.01.1940)
 		- Cleaned up placeholder event unregistration logic so RQE.UnregisterUnusedEvents() no longer performs a misleading dummy unregister call (2026.07.01.1940)
+		- Updated RQE.handleAddonLoaded(...) with safer function calls within (2026.07.01.2018)
+
+	QuestingModule.lua
+		- Moved calls for ObjectiveTrackerFrame OnUpdate visibility from Core to QuestingModule due to load errors (2026.07.01.2018)
 
 	RQE.toc
 		- Updated version# (2026.07.01.1527)
@@ -42,6 +48,7 @@
 
 	WaypointManager.lua
 		- Updated waypoint creation logic so that manual quest step previews create waypoints using the currently displayed quest step while preserving existing automatic waypoint behavior (2026.07.01.1527)
+		- Cleaned up some debug language (2026.07.01.2018)
 
 
 12.0.7.0 (2026.06.30)
