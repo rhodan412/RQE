@@ -7840,14 +7840,15 @@ function RQE:QueuePeriodicChecks(reason, delay, questID)
 		return
 	end
 
-	-- Checks to make sure that the SeparateFocusFrame contains information when it should
-	C_Timer.After(1.1, function()
-		RQE:CheckAndRefreshSeparateFocusFrame()
-	end)
+	-- SeparateFocusFrame validation is handled inside StartPeriodicChecks()
+	-- -- Checks to make sure that the SeparateFocusFrame contains information when it should
+	-- C_Timer.After(1.1, function()
+		-- RQE:CheckAndRefreshSeparateFocusFrame()
+	-- end)
 
-	C_Timer.After(1.7, function()
-		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
-	end)
+	-- C_Timer.After(1.7, function()
+		-- RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	-- end)
 
 	-- Prevent many timers for the same thing from stacking
 	if self._scheduledPeriodicCheck then
