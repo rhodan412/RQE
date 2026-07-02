@@ -7941,7 +7941,15 @@ function RQE:StartPeriodicChecks()
 		and RQE.ManualPreviewQuestID == superTrackedQuestID
 		and RQE.ManualPreviewStepIndex
 	then
-		return
+		if not RQE.ResumeAutomaticFromManualPreview then
+			return
+		end
+
+		-- Explicitly resume automatic progression
+		RQE.ManualStepPreview = false
+		RQE.ManualPreviewQuestID = nil
+		RQE.ManualPreviewStepIndex = nil
+		RQE.ResumeAutomaticFromManualPreview = false
 	end
 
 	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
@@ -7972,9 +7980,12 @@ function RQE:StartPeriodicChecks()
 				-- Make RQE display step 2/2 (final) without forcing our own waypoint.
 				stepIndex = finalStepIndex
 				RQE.AddonSetStepIndex = finalStepIndex
+				RQE.CurrentStepIndex = finalStepIndex
+				RQE.StoredStepIndex = finalStepIndex
 
 				-- Refresh frames so Separate Focus shows 2/2
-				if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+				if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+				--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
 				if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
 
 				-- Optionally, if you want your transition/portal waypoint to appear too:
@@ -8155,8 +8166,12 @@ function RQE:StartPeriodicChecks()
 
 			-- ✅ Update step index / UI without creating a waypoint
 			RQE.AddonSetStepIndex = stepIndex
+			RQE.CurrentStepIndex = stepIndex
+			RQE.StoredStepIndex = stepIndex
+
 			local playerMapID = C_Map.GetBestMapForUnit("player")
-			if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+			if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+			--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
 			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 			return  -- Skip waypoint creation only
@@ -9309,8 +9324,36 @@ end
 
 -- Function that handles button clicks based on changes to the stepText
 function RQE:ClickWaypointButtonForIndex(index)
-	local button = self.WaypointButtons[index]
+	local button = self.WaypointButtons and self.WaypointButtons[index]
+
 	if not button then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
+		local questData = questID and RQE.getQuestData(questID)
+
+		RQE:ClearManualStepPreview(false)
+
+		self.CurrentStepIndex = index
+		RQE.AddonSetStepIndex = index
+		RQE.StoredStepIndex = index
+
+		if questID and questData and UpdateFrame then
+			UpdateFrame(questID, questData)
+		end
+
+		if RQE.UpdateSeparateFocusFrame then
+			RQE:UpdateSeparateFocusFrame()
+		end
+
+		if RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+			RQEMacro:CreateMacroForCurrentStep()
+		end
+
+		C_Timer.After(0.2, function()
+			if questID then
+				RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+			end
+		end)
+
 		return
 	end
 
@@ -9327,6 +9370,7 @@ function RQE:ClickWaypointButtonForIndex(index)
 	self.LastClickedButtonRef = button
 	self.CurrentStepIndex = index
 	RQE.AddonSetStepIndex = index
+	RQE.StoredStepIndex = index
 
 	-- Debug log
 	if RQE.db.profile.debugLevel == "INFO+" then
