@@ -736,7 +736,7 @@ function RQE.ReagentBagUpdate(...)
 		end
 	end
 
-	UpdateRQEQuestFrame()
+	--UpdateRQEQuestFrame()
 
 	-- Return if the auto-click option is disabled
 	if not RQE.db.profile.autoClickWaypointButton then return end
@@ -828,6 +828,10 @@ function RQE.ReagentBagUpdate(...)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("BAG_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
 		end
+
+		UpdateRQEQuestFrame()
+		RQE:QueuePeriodicChecks("BAG_UPDATE", 1.65, questID)
+
 		C_Timer.After(1.65, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
@@ -835,7 +839,7 @@ function RQE.ReagentBagUpdate(...)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE:StartPeriodicChecks() fired from BAG_UPDATE event")
 			end
-			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
+			--RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
 		end)
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
