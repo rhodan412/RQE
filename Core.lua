@@ -7941,9 +7941,9 @@ function RQE:StartPeriodicChecks()
 		and RQE.ManualPreviewQuestID == superTrackedQuestID
 		and RQE.ManualPreviewStepIndex
 	then
-		if not RQE.ResumeAutomaticFromManualPreview then
-			return
-		end
+		-- if not RQE.ResumeAutomaticFromManualPreview then
+			-- return
+		-- end
 
 		-- Explicitly resume automatic progression
 		RQE.ManualStepPreview = false
