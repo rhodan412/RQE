@@ -1557,7 +1557,15 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 		return
 	end
 
-	RQE:RestoreFramePosition()
+	--RQE:RestoreFramePosition()
+
+	if RQE.RestoreFramePosition then
+		RQE:RestoreFramePosition()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RestoreFramePosition() is not available during ADDON_LOADED.")
+		end
+	end
 
 	-- Initialize Flags
 	RQE.AddonLoadedonPlayerEnteringWorldFirstTime = true
@@ -1636,8 +1644,23 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.TrackedAchievementIDs = RQE_TrackedAchievements
 
 	-- Add this line to update tracked achievements as soon as the addon is loaded
-	RQE.UpdateTrackedAchievements()
-	RQE.UpdateTrackedAchievementList()
+	-- RQE.UpdateTrackedAchievements()
+	-- RQE.UpdateTrackedAchievementList()
+	if RQE.UpdateTrackedAchievements then
+		RQE.UpdateTrackedAchievements()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UpdateTrackedAchievements() is not available during ADDON_LOADED.")
+		end
+	end
+
+	if RQE.UpdateTrackedAchievementList then
+		RQE.UpdateTrackedAchievementList()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UpdateTrackedAchievementList() is not available during ADDON_LOADED.")
+		end
+	end
 
 	-- Hide the default objective tracker and make other UI adjustments after a short delay
 	C_Timer.After(0.5, function()
