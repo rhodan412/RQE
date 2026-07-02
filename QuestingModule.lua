@@ -238,6 +238,52 @@ objectiveTrackerWatchdog:SetScript("OnUpdate", function()
 end)
 
 
+function RQE:EnforceObjectiveTrackerVisibility()
+	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			if ObjectiveTrackerFrame:IsShown() then
+				ObjectiveTrackerFrame:Hide()
+			end
+		end
+	end
+end
+
+
+function RQE:InitializeObjectiveTrackerHooks()
+	if self._objectiveTrackerHooksInitialized then
+		return
+	end
+
+	if not ObjectiveTrackerFrame or not RQEFrame then
+		return
+	end
+
+	ObjectiveTrackerFrame:HookScript("OnShow", function()
+		RQE:EnforceObjectiveTrackerVisibility()
+	end)
+
+	RQEFrame:HookScript("OnShow", function()
+		RQE:EnforceObjectiveTrackerVisibility()
+	end)
+
+	RQEFrame:HookScript("OnHide", function()
+		RQE:EnforceObjectiveTrackerVisibility()
+	end)
+
+	if RQE.RQEQuestFrame then
+		RQE.RQEQuestFrame:HookScript("OnShow", function()
+			RQE:EnforceObjectiveTrackerVisibility()
+		end)
+
+		RQE.RQEQuestFrame:HookScript("OnHide", function()
+			RQE:EnforceObjectiveTrackerVisibility()
+		end)
+	end
+
+	self._objectiveTrackerHooksInitialized = true
+end
+
+
 -- Create the ScenarioChildFrame, anchored to the content frame
 RQE.ScenarioChildFrame = CreateChildFrame("RQEScenarioChildFrame", content, 0, 0, content:GetWidth(), 110)
 
