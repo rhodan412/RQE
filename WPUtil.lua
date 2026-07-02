@@ -82,7 +82,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 		end
 
 		if RQE.hoveringOnRQEFrameAndButton then
-			RQE:StartPeriodicChecks()
+			--RQE:StartPeriodicChecks()		-- keeping this in place means that if player is manually tracking a step that differs from what is part of the "automatic" or true step the "W" button won't generate the waypoint for the manually set stepIndex
 			C_Timer.After(0.2, function()
 				RQE.hoveringOnRQEFrameAndButton = false
 			end)
