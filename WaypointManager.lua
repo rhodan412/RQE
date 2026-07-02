@@ -1018,7 +1018,7 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 				print("Could not create waypoint for unknown quest.")
 			end
 		else
-			print("Carbonite is not available.")
+			RQE.debugLog("Carbonite is not available.")
 		end
 	end)
 end
