@@ -24,6 +24,7 @@
 		- Replaced continuous ObjectiveTrackerFrame OnUpdate visibility enforcement with hook-based visibility checks to reduce unnecessary per-frame processing (2026.07.01.1940)
 		- Updated RQE:OnInitialize() and RQE:InitializeFrame() with safer function calls within (2026.07.01.2018)
 		- Removed coding that attempted to enforce objective tracker and moved it instead to QuestingModule due to load order errors (2026.07.01.2018)
+		- Removed calls to compare if contents in SeparateFocusFrame vs RQEFrame to determine if update should be called from within RQE:QueuePeriodicChecks() as this is already handled by RQE:StartPeriodicChecks() (2026.07.01.2036)
 
 	EventManager.lua
 		- Fixed issue in PLAYER_STARTED_MOVING handling where the IsFlying() result was not being used correctly, preventing the intended macro validation branch from running while moving on foot (2026.07.01.1940)
@@ -31,6 +32,7 @@
 		- Disabled leftover continuous Objective Tracker OnUpdate polling now that hook-based visibility enforcement is used instead (2026.07.01.1940)
 		- Cleaned up placeholder event unregistration logic so RQE.UnregisterUnusedEvents() no longer performs a misleading dummy unregister call (2026.07.01.1940)
 		- Updated RQE.handleAddonLoaded(...) with safer function calls within (2026.07.01.2018)
+		- Moved call to Update RQEQuestFrame, within BAG_UPDATE as it was being called too earlier and utilized RQE:QueuePeriodicChecks() instead of RQE:StartPeriodicChecks() within that function call (2026.07.01.2036)
 
 	QuestingModule.lua
 		- Moved calls for ObjectiveTrackerFrame OnUpdate visibility from Core to QuestingModule due to load errors (2026.07.01.2018)
