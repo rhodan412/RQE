@@ -2714,6 +2714,9 @@ function UpdateRQEQuestFrame()
 						if RQE.hoveringOnFrame then
 							RQE.DontUpdateFrame = false
 
+							-- Leaving manual step preview mode and returning control to automatic quest progression.
+							RQE:ClearManualStepPreview(false)
+
 							RQE.shouldCheckFinalStep = true
 							RQE.CheckAndSetFinalStep()
 							C_Timer.After(0.1, function()
@@ -2734,6 +2737,7 @@ function UpdateRQEQuestFrame()
 
 								RQE.ObtainSuperTrackQuestDetails()
 
+								RQE.ResumeAutomaticFromManualPreview = true
 								C_Timer.After(0.1, function()
 									RQE:StartPeriodicChecks()
 								end)
