@@ -514,10 +514,27 @@ function RQE:OnInitialize()
 	RQE.WaypointButtons = RQE.WaypointButtons or {}
 
 	-- Set UI Frame Position
-	self:UpdateFrameFromProfile()
+	-- Set UI Frame Position
+	if self.UpdateFrameFromProfile then
+		self:UpdateFrameFromProfile()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UpdateFrameFromProfile() is not available during OnInitialize().")
+		end
+	end
+
+	--self:UpdateFrameFromProfile()
 
 	-- Load character-specific data
-	self:GetCharacterInfo()
+	-- Load character-specific data
+	if self.GetCharacterInfo then
+		self:GetCharacterInfo()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("GetCharacterInfo() is not available during OnInitialize().")
+		end
+	end
+	--self:GetCharacterInfo()
 
 	-- Register UI Options
 	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
@@ -567,7 +584,15 @@ function RQE:OnInitialize()
 	end
 
 	-- Final UI Setup
-	self:UpdateFramePosition()
+	--self:UpdateFramePosition()
+	if self.UpdateFramePosition then
+		self:UpdateFramePosition()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UpdateFramePosition() is not available during OnInitialize().")
+		end
+	end
+
 	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
 	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 end
@@ -784,7 +809,16 @@ function RQE:InitializeFrame()
 	--self:Initialize()  -- Call Initialize() within InitializeFrame
 
 	-- Call the function to initialize the separate focus frame
-	RQE.InitializeSeparateFocusFrame()
+	-- RQE.InitializeSeparateFocusFrame()
+
+	-- Call the function to initialize the separate focus frame
+	if RQE.InitializeSeparateFocusFrame then
+		RQE.InitializeSeparateFocusFrame()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(functionName, "InitializeSeparateFocusFrame() is not available yet.")
+		end
+	end
 
 	-- Add logic to update frame with the current super tracked quest
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -2195,30 +2229,6 @@ function RQE:AnchorObjectiveTracker()
 	ObjectiveTrackerFrame:SetHeight(600)  -- Slightly taller for scenarios with many steps
 
 	ObjectiveTrackerFrame.isBeingMoved = true
-end
-
-
-local function EnforceObjectiveTrackerVisibility()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-			if ObjectiveTrackerFrame:IsShown() then
-				ObjectiveTrackerFrame:Hide()
-			end
-		end
-	end
-end
-
--- If Blizzard tries to show the tracker while RQE should own the space, hide it again.
-ObjectiveTrackerFrame:HookScript("OnShow", EnforceObjectiveTrackerVisibility)
-
--- Re-evaluate only when the relevant RQE frames change visibility.
-RQEFrame:HookScript("OnShow", EnforceObjectiveTrackerVisibility)
-RQEFrame:HookScript("OnHide", EnforceObjectiveTrackerVisibility)
-
-
-if RQE.RQEQuestFrame then
-	RQE.RQEQuestFrame:HookScript("OnShow", EnforceObjectiveTrackerVisibility)
-	RQE.RQEQuestFrame:HookScript("OnHide", EnforceObjectiveTrackerVisibility)
 end
 
 
