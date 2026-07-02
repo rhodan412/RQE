@@ -2973,6 +2973,8 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 
 			RQE.AllFramesShouldUpdate = true
+			RQE.ResumeAutomaticFromManualPreview = true
+
 			C_Timer.After(0.05, function()
 				UpdateFrame()
 				--RQE:ClearSeparateFocusFrame()
@@ -3151,6 +3153,7 @@ function RQE.handlePlayerEnterWorld(...)
 
 							RQE.StartPerioFromPlayerEnteringWorld = true
 
+							RQE.ResumeAutomaticFromManualPreview = true
 							RQE:QueuePeriodicChecks("PLAYER_ENTERING_WORLD", 0.1, questID)
 
 							-- C_Timer.After(0.10, function()
