@@ -4880,7 +4880,9 @@ function RQE.handleUnitAura(...)
 					if checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff" then
 						for _, checkValue in ipairs(checkData.check) do
 							if not InCombatLockdown() then
-								if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+								local checkValueNum = tonumber(checkValue)
+								if checkValueNum and checkValueNum == aura.spellId then
+								--if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
 									matchesAura = true
 									break
 								end
@@ -4891,7 +4893,9 @@ function RQE.handleUnitAura(...)
 				end
 			elseif stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff" then
 				for _, checkValue in ipairs(stepData.check) do
-					if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+					local checkValueNum = tonumber(checkValue)
+					if checkValueNum and checkValueNum == aura.spellId then
+					-- if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
 						matchesAura = true
 						break
 					end
