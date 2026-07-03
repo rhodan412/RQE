@@ -972,6 +972,7 @@ end
 
 -- Returns the currently displayed stepIndex, preferring manual preview over automatic progress.
 function RQE:GetDisplayedStepIndex()
+	if not RQE.db.profile.enableStepControls then return end
 	return RQE.ManualPreviewStepIndex
 		or RQE.AddonSetStepIndex
 		or RQE.CurrentStepIndex
@@ -1071,13 +1072,19 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 	PrevStepButton:SetPoint("TOPRIGHT", RQE.NextStepButton, "TOPLEFT", -3, 0)
 
 	PrevStepButton:SetScript("OnEnter", function(self)
-		local curStep = RQE:GetDisplayedStepIndex()
-		local targetStep = curStep - 1
+		if RQE.db.profile.enableStepControls then
+			local curStep = RQE:GetDisplayedStepIndex()
+			local targetStep = curStep - 1
 
-		if targetStep >= 1 then
-			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText("Go back to step " .. targetStep)
-			GameTooltip:Show()
+			if targetStep >= 1 then
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+				GameTooltip:SetText("Go back to step " .. targetStep)
+				GameTooltip:Show()
+			end
+		-- else
+			-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			-- GameTooltip:SetText("Enable stepIndex control from 'Frame' in addon settings")
+			-- GameTooltip:Show()
 		end
 	end)
 
@@ -1086,18 +1093,20 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 	end)
 
 	PrevStepButton:SetScript("OnClick", function()
-		local curStep = RQE:GetDisplayedStepIndex()
-		local targetStep = curStep - 1
+		if RQE.db.profile.enableStepControls then
+			local curStep = RQE:GetDisplayedStepIndex()
+			local targetStep = curStep - 1
 
-		if targetStep >= 1 then
-			RQE:SetDisplayedStepFromStepsList(targetStep)
+			if targetStep >= 1 then
+				RQE:SetDisplayedStepFromStepsList(targetStep)
 
-			C_Timer.After(0.2, function()
-				local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-				if questID then
-					RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-				end
-			end)
+				C_Timer.After(0.2, function()
+					local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+					if questID then
+						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+					end
+				end)
+			end
 		end
 	end)
 
@@ -1119,14 +1128,20 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 	--NextStepButton:SetPoint("TOPRIGHT", RQE.PrevStepButton, "TOPLEFT", -3, 0)
 
 	NextStepButton:SetScript("OnEnter", function(self)
-		local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-		local questData = questID and RQE.getQuestData(questID)
-		local curStep = RQE:GetDisplayedStepIndex()
-		local targetStep = curStep + 1
+		if RQE.db.profile.enableStepControls then
+			local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			local questData = questID and RQE.getQuestData(questID)
+			local curStep = RQE:GetDisplayedStepIndex()
+			local targetStep = curStep + 1
 
-		if questData and questData[targetStep] then
+			if questData and questData[targetStep] then
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+				GameTooltip:SetText("Advance to step " .. targetStep)
+				GameTooltip:Show()
+			end
+		else
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText("Advance to step " .. targetStep)
+			GameTooltip:SetText("Enable stepIndex control from 'Frame' in addon settings")
 			GameTooltip:Show()
 		end
 	end)
@@ -1136,20 +1151,22 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 	end)
 
 	NextStepButton:SetScript("OnClick", function()
-		local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-		local questData = questID and RQE.getQuestData(questID)
-		local curStep = RQE:GetDisplayedStepIndex()
-		local targetStep = curStep + 1
+		if RQE.db.profile.enableStepControls then
+			local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			local questData = questID and RQE.getQuestData(questID)
+			local curStep = RQE:GetDisplayedStepIndex()
+			local targetStep = curStep + 1
 
-		if questData and questData[targetStep] then
-			RQE:SetDisplayedStepFromStepsList(targetStep)
+			if questData and questData[targetStep] then
+				RQE:SetDisplayedStepFromStepsList(targetStep)
 
-			C_Timer.After(0.2, function()
-				local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-				if questID then
-					RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-				end
-			end)
+				C_Timer.After(0.2, function()
+					local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+					if questID then
+						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+					end
+				end)
+			end
 		end
 	end)
 
