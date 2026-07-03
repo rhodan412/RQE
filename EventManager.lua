@@ -2973,7 +2973,7 @@ function RQE.handlePlayerEnterWorld(...)
 			end
 
 			RQE.AllFramesShouldUpdate = true
-			RQE.ResumeAutomaticFromManualPreview = true
+			--RQE.ResumeAutomaticFromManualPreview = true
 
 			C_Timer.After(0.05, function()
 				UpdateFrame()
@@ -3153,7 +3153,7 @@ function RQE.handlePlayerEnterWorld(...)
 
 							RQE.StartPerioFromPlayerEnteringWorld = true
 
-							RQE.ResumeAutomaticFromManualPreview = true
+							--RQE.ResumeAutomaticFromManualPreview = true
 							RQE:QueuePeriodicChecks("PLAYER_ENTERING_WORLD", 0.1, questID)
 
 							-- C_Timer.After(0.10, function()
@@ -4881,8 +4881,8 @@ function RQE.handleUnitAura(...)
 						for _, checkValue in ipairs(checkData.check) do
 							if not InCombatLockdown() then
 								local checkValueNum = tonumber(checkValue)
-								if checkValueNum and checkValueNum == aura.spellId then
-								--if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+								--if checkValueNum and checkValueNum == aura.spellId then
+								if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
 									matchesAura = true
 									break
 								end
@@ -4894,8 +4894,8 @@ function RQE.handleUnitAura(...)
 			elseif stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff" then
 				for _, checkValue in ipairs(stepData.check) do
 					local checkValueNum = tonumber(checkValue)
-					if checkValueNum and checkValueNum == aura.spellId then
-					-- if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
+					--if checkValueNum and checkValueNum == aura.spellId then
+					if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
 						matchesAura = true
 						break
 					end
@@ -6840,27 +6840,22 @@ function RQE.handleQuestDetail(...)
 		return
 	end
 
-	-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-		-- local questData = RQE.getQuestData(questID)
-
-		-- if not questData then
-			-- -- Quest is NOT in the DB at all
-			-- DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
-		-- else
-			-- local totalSteps = #questData
-
-			-- if totalSteps == 0 then
-				-- -- Quest is in the DB but has no steps
-				-- DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
-			-- else
-				-- -- Quest is in the DB and has steps
-				-- DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
-			-- end
-		-- end
-	-- end
-
 	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 		local questData = RQE.getQuestData(questID)
+
+		local function HasNonEmptyTextArray(value)
+			if type(value) ~= "table" then
+				return false
+			end
+
+			for _, entry in ipairs(value) do
+				if type(entry) == "string" and entry:match("%S") then
+					return true
+				end
+			end
+
+			return false
+		end
 
 		if not questData then
 			-- Quest is NOT in the DB at all
@@ -6883,17 +6878,19 @@ function RQE.handleQuestDetail(...)
 
 			if totalSteps == 0 then
 				-- Quest is in the DB but has no steps
-				DEFAULT_CHAT_FRAME:AddMessage(
-					messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r" .. locationTypeText,
-					0.46, 0.82, 0.95
-				)
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r" .. locationTypeText, 0.46, 0.82, 0.95)
 			else
 				-- Quest is in the DB and has steps
-				DEFAULT_CHAT_FRAME:AddMessage(
-					messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps) .. locationTypeText,
-					0.46, 0.82, 0.95
-				)
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps) .. locationTypeText, 0.46, 0.82, 0.95)
 			end
+
+			local objectivesOK = HasNonEmptyTextArray(questData.objectivesQuestText)
+			local descriptionOK = HasNonEmptyTextArray(questData.descriptionQuestText)
+			local npcOK = HasNonEmptyTextArray(questData.npc)
+
+			DEFAULT_CHAT_FRAME:AddMessage("  objectivesQuestText: " .. (objectivesOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
+			DEFAULT_CHAT_FRAME:AddMessage("  descriptionQuestText: " .. (descriptionOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
+			DEFAULT_CHAT_FRAME:AddMessage("  npc: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 		end
 	end
 end
