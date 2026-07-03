@@ -2737,7 +2737,7 @@ function UpdateRQEQuestFrame()
 
 								RQE.ObtainSuperTrackQuestDetails()
 
-								RQE.ResumeAutomaticFromManualPreview = true
+								--RQE.ResumeAutomaticFromManualPreview = true
 								C_Timer.After(0.1, function()
 									RQE:StartPeriodicChecks()
 								end)
