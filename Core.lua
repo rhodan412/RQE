@@ -7824,6 +7824,7 @@ function RQE:ClearManualStepPreview(runChecks)
 	RQE.ManualStepPreview = false
 	RQE.ManualPreviewQuestID = nil
 	RQE.ManualPreviewStepIndex = nil
+	--RQE.ResumeAutomaticFromManualPreview = false
 
 	if runChecks ~= false then
 		RQE:StartPeriodicChecks()
@@ -7937,19 +7938,13 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
-	if RQE.ManualStepPreview
-		and RQE.ManualPreviewQuestID == superTrackedQuestID
-		and RQE.ManualPreviewStepIndex
-	then
-		-- if not RQE.ResumeAutomaticFromManualPreview then
-			-- return
-		-- end
-
+	if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
 		-- Explicitly resume automatic progression
-		RQE.ManualStepPreview = false
-		RQE.ManualPreviewQuestID = nil
-		RQE.ManualPreviewStepIndex = nil
-		RQE.ResumeAutomaticFromManualPreview = false
+		RQE:ClearManualStepPreview(false)
+		-- RQE.ManualStepPreview = false
+		-- RQE.ManualPreviewQuestID = nil
+		-- RQE.ManualPreviewStepIndex = nil
+		-- RQE.ResumeAutomaticFromManualPreview = false
 	end
 
 	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
