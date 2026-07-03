@@ -192,12 +192,14 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	end
 
 	-- If the player manually selected a step, create the waypoint from that displayed step only.
-	if RQE.ManualStepPreview
-		and RQE.ManualPreviewQuestID == questID
-		and RQE.ManualPreviewStepIndex
-	then
-		RQE:CreateWaypointForStep(questID, RQE.ManualPreviewStepIndex)
-		return
+	if RQE.db.profile.enableStepControls then
+		if RQE.ManualStepPreview
+			and RQE.ManualPreviewQuestID == questID
+			and RQE.ManualPreviewStepIndex
+		then
+			RQE:CreateWaypointForStep(questID, RQE.ManualPreviewStepIndex)
+			return
+		end
 	end
 
 	-- Reset coordinates at the start
@@ -680,90 +682,92 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 				if mapID == 0 then mapID = nil end
 			end
 
-			local activeStepIndex
-			if RQE.ManualStepPreview
-				and RQE.ManualPreviewQuestID == questID
-				and RQE.ManualPreviewStepIndex
-			then
-				activeStepIndex = RQE.ManualPreviewStepIndex
-			else
-				activeStepIndex = RQE.AddonSetStepIndex or 1
-			end
-
-			-- local sx, sy, smap = RQE:GetStepCoordinates(activeStepIndex)
-			-- if sx and sy and smap then
-				-- RQE.x = sx
-				-- RQE.y = sy
-				-- RQE.MapID = smap
-			-- elseif RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
-				-- RQE.x = RQE.DatabaseSuperX
-				-- RQE.y = RQE.DatabaseSuperY
-				-- RQE.MapID = RQE.DatabaseSuperMapID
-			-- elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
-				-- RQE.x = RQE.superX
-				-- RQE.y = RQE.superY
-				-- RQE.MapID = RQE.superMapID
-
-				-- local x, y, mapID = RQE.GetQuestCoordinates(questID)
-				-- if x and y and mapID then
-					-- RQE.x = x
-					-- RQE.y = y
-					-- RQE.MapID = mapID
-				-- else
-					-- -- Add a check here to ensure GetNextWaypoint only runs if waypoints are available
-					-- if questID then
-						-- local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
-						-- if waypointX and waypointY and waypointMapID then
-							-- RQE.x = waypointX
-							-- RQE.y = waypointY
-							-- RQE.MapID = waypointMapID
-						-- else
-							-- -- Handle cases where no waypoint is available
-							-- RQE.x = 0
-							-- RQE.y = 0
-							-- RQE.MapID = nil
-							-- RQE.debugLog("No waypoint data available for quest ID:", questID)
-						-- end
-					-- end
-				-- end
-			-- end
-
-			local sx, sy, smap = RQE:GetStepCoordinates(activeStepIndex)
-			if sx and sy and smap then
-				RQE.x = sx
-				RQE.y = sy
-				RQE.MapID = smap
-			elseif RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
-				RQE.x = RQE.DatabaseSuperX
-				RQE.y = RQE.DatabaseSuperY
-				RQE.MapID = RQE.DatabaseSuperMapID
-			elseif (not RQE.DatabaseSuperX or not RQE.DatabaseSuperY or not RQE.DatabaseSuperMapID)
-				and (not RQE.superX or not RQE.superY or not RQE.superMapID)
-			then
-				local qx, qy, qmapID = RQE.GetQuestCoordinates(questID)
-				if qx and qy and qmapID then
-					RQE.x = qx
-					RQE.y = qy
-					RQE.MapID = qmapID
+			if RQE.db.profile.enableStepControls then
+				local activeStepIndex
+				if RQE.ManualStepPreview
+					and RQE.ManualPreviewQuestID == questID
+					and RQE.ManualPreviewStepIndex
+				then
+					activeStepIndex = RQE.ManualPreviewStepIndex
 				else
-					if questID then
-						local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
-						if waypointX and waypointY and waypointMapID then
-							RQE.x = waypointX
-							RQE.y = waypointY
-							RQE.MapID = waypointMapID
-						else
-							RQE.x = 0
-							RQE.y = 0
-							RQE.MapID = nil
-							RQE.debugLog("No waypoint data available for quest ID:", questID)
+					activeStepIndex = RQE.AddonSetStepIndex or 1
+				end
+
+				local sx, sy, smap = RQE:GetStepCoordinates(activeStepIndex)
+				if sx and sy and smap then
+					RQE.x = sx
+					RQE.y = sy
+					RQE.MapID = smap
+				elseif RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
+					RQE.x = RQE.DatabaseSuperX
+					RQE.y = RQE.DatabaseSuperY
+					RQE.MapID = RQE.DatabaseSuperMapID
+				elseif (not RQE.DatabaseSuperX or not RQE.DatabaseSuperY or not RQE.DatabaseSuperMapID)
+					and (not RQE.superX or not RQE.superY or not RQE.superMapID)
+				then
+					local qx, qy, qmapID = RQE.GetQuestCoordinates(questID)
+					if qx and qy and qmapID then
+						RQE.x = qx
+						RQE.y = qy
+						RQE.MapID = qmapID
+					else
+						if questID then
+							local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+							if waypointX and waypointY and waypointMapID then
+								RQE.x = waypointX
+								RQE.y = waypointY
+								RQE.MapID = waypointMapID
+							else
+								RQE.x = 0
+								RQE.y = 0
+								RQE.MapID = nil
+								RQE.debugLog("No waypoint data available for quest ID:", questID)
+							end
+						end
+					end
+				else
+					RQE.x = RQE.superX
+					RQE.y = RQE.superY
+					RQE.MapID = RQE.superMapID
+				end
+			else
+				local sx, sy, smap = RQE:GetStepCoordinates(activeStepIndex)
+				if sx and sy and smap then
+					RQE.x = sx
+					RQE.y = sy
+					RQE.MapID = smap
+				elseif RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
+					RQE.x = RQE.DatabaseSuperX
+					RQE.y = RQE.DatabaseSuperY
+					RQE.MapID = RQE.DatabaseSuperMapID
+				elseif not RQE.DatabaseSuperX and RQE.DatabaseSuperY or not RQE.superX or not RQE.superY and RQE.superMapID then
+					RQE.x = RQE.superX
+					RQE.y = RQE.superY
+					RQE.MapID = RQE.superMapID
+
+					local x, y, mapID = RQE.GetQuestCoordinates(questID)
+					if x and y and mapID then
+						RQE.x = x
+						RQE.y = y
+						RQE.MapID = mapID
+					else
+						-- Add a check here to ensure GetNextWaypoint only runs if waypoints are available
+						if questID then
+							local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+							if waypointX and waypointY and waypointMapID then
+								RQE.x = waypointX
+								RQE.y = waypointY
+								RQE.MapID = waypointMapID
+							else
+								-- Handle cases where no waypoint is available
+								RQE.x = 0
+								RQE.y = 0
+								RQE.MapID = nil
+								RQE.debugLog("No waypoint data available for quest ID:", questID)
+							end
 						end
 					end
 				end
-			else
-				RQE.x = RQE.superX
-				RQE.y = RQE.superY
-				RQE.MapID = RQE.superMapID
 			end
 
 			RQE.infoLog("After timer: x =", RQE.x, "y =", RQE.y, "mapID =", RQE.MapID)
