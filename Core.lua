@@ -299,6 +299,7 @@ local defaults = {
 		enableNearestSuperTrackCampaignOnlyWhileLeveling = false,
 		enableQuestAbandonConfirm = false,
 		enableQuestFrame = true,
+		enableStepControls = false,		-- once no longer experimental switch to 'true'
 		enableTomTomCompatibility = true,
 		EncounterEnd = false,
 		framePosition = {
@@ -7791,6 +7792,8 @@ end
 
 -- Displays the selected Steps List step in RQEFrame without advancing quest progress or forcing waypoint movement.
 function RQE:SetDisplayedStepFromStepsList(stepIndex)
+	if not RQE.db.profile.enableStepControls then return end
+
 	local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
 	local questData = questID and RQE.getQuestData(questID)
 	if not questData or not questData[stepIndex] then return end
@@ -7821,6 +7824,8 @@ end
 
 -- Clears manual step preview mode and optionally resumes automatic quest progress evaluation.
 function RQE:ClearManualStepPreview(runChecks)
+	if not RQE.db.profile.enableStepControls then return end
+
 	RQE.ManualStepPreview = false
 	RQE.ManualPreviewQuestID = nil
 	RQE.ManualPreviewStepIndex = nil
@@ -7938,13 +7943,15 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
-	if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
-		-- Explicitly resume automatic progression
-		RQE:ClearManualStepPreview(false)
-		-- RQE.ManualStepPreview = false
-		-- RQE.ManualPreviewQuestID = nil
-		-- RQE.ManualPreviewStepIndex = nil
-		-- RQE.ResumeAutomaticFromManualPreview = false
+	if RQE.db.profile.enableStepControls then
+		if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
+			-- Explicitly resume automatic progression
+			RQE:ClearManualStepPreview(false)
+			-- RQE.ManualStepPreview = false
+			-- RQE.ManualPreviewQuestID = nil
+			-- RQE.ManualPreviewStepIndex = nil
+			-- RQE.ResumeAutomaticFromManualPreview = false
+		end
 	end
 
 	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
@@ -7975,8 +7982,10 @@ function RQE:StartPeriodicChecks()
 				-- Make RQE display step 2/2 (final) without forcing our own waypoint.
 				stepIndex = finalStepIndex
 				RQE.AddonSetStepIndex = finalStepIndex
-				RQE.CurrentStepIndex = finalStepIndex
-				RQE.StoredStepIndex = finalStepIndex
+				if RQE.db.profile.enableStepControls then
+					RQE.CurrentStepIndex = finalStepIndex
+					RQE.StoredStepIndex = finalStepIndex
+				end
 
 				-- Refresh frames so Separate Focus shows 2/2
 				if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
@@ -8161,8 +8170,10 @@ function RQE:StartPeriodicChecks()
 
 			-- ✅ Update step index / UI without creating a waypoint
 			RQE.AddonSetStepIndex = stepIndex
-			RQE.CurrentStepIndex = stepIndex
-			RQE.StoredStepIndex = stepIndex
+			if RQE.db.profile.enableStepControls then
+				RQE.CurrentStepIndex = stepIndex
+				RQE.StoredStepIndex = stepIndex
+			end
 
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
@@ -9319,111 +9330,138 @@ end
 
 -- Function that handles button clicks based on changes to the stepText
 function RQE:ClickWaypointButtonForIndex(index)
-	local button = self.WaypointButtons and self.WaypointButtons[index]
+	if RQE.db.profile.enableStepControls then
+		local button = self.WaypointButtons and self.WaypointButtons[index]
 
-	if not button then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
-		local questData = questID and RQE.getQuestData(questID)
+		if not button then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
+			local questData = questID and RQE.getQuestData(questID)
 
+			RQE:ClearManualStepPreview(false)
+
+			self.CurrentStepIndex = index
+			RQE.AddonSetStepIndex = index
+			RQE.StoredStepIndex = index
+
+			if questID and questData and UpdateFrame then
+				UpdateFrame(questID, questData)
+			end
+
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+
+			if RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+				RQEMacro:CreateMacroForCurrentStep()
+			end
+
+			C_Timer.After(0.2, function()
+				if questID then
+					RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+				end
+			end)
+
+			return
+		end
+
+		-- Ensure the button references the correct step
+		if button.stepIndex ~= index then
+			button.stepIndex = index
+		end
+
+		-- Allows manually clicking of a step within the supertracked quest
 		RQE:ClearManualStepPreview(false)
+		RQE._autoClickingWaypointButton = true
 
+		-- Update state references
+		self.LastClickedButtonRef = button
 		self.CurrentStepIndex = index
 		RQE.AddonSetStepIndex = index
 		RQE.StoredStepIndex = index
 
-		if questID and questData and UpdateFrame then
-			UpdateFrame(questID, questData)
+		-- Debug log
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Clicking button at index:", index)
 		end
 
-		if RQE.UpdateSeparateFocusFrame then
-			RQE:UpdateSeparateFocusFrame()
+		-- Perform button click
+		local ok, err = pcall(function()
+			button:Click()
+		end)
+
+		RQE._autoClickingWaypointButton = false
+
+		if not ok then
+			error(err)
 		end
 
-		if RQEMacro and RQEMacro.CreateMacroForCurrentStep then
-			RQEMacro:CreateMacroForCurrentStep()
+		if RQE.Buttons.RefreshStepNavigationTooltips then
+			RQE.Buttons.RefreshStepNavigationTooltips()
 		end
 
-		C_Timer.After(0.2, function()
-			if questID then
-				RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+		-- Ensure the macro and UI are refreshed only once
+		C_Timer.After(1, function()
+			-- Refresh UI (Waypoint and Focus Frames)
+			RQE:OnCoordinateClicked()
+			RQE.InitializeSeparateFocusFrame()
+
+			-- Debug log
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
 			end
 		end)
 
-		return
-	end
+		-- Apply faction logic after ensuring state is consistent
+		C_Timer.After(0.7, function()
+			RQE:HandleFactionLogicAfterAdvance()
+			C_Timer.After(1, function()
+				RQE:HandleClassFactionLogicAfterAdvance()
+			end)
+		end)
+	else
+		local button = self.WaypointButtons[index]
+		if not button then
+			return
+		end
 
-	-- Ensure the button references the correct step
-	if button.stepIndex ~= index then
-		button.stepIndex = index
-	end
+		-- Ensure the button references the correct step
+		if button.stepIndex ~= index then
+			button.stepIndex = index
+		end
 
-	-- Allows manually clicking of a step within the supertracked quest
-	RQE:ClearManualStepPreview(false)
-	RQE._autoClickingWaypointButton = true
-
-	-- Update state references
-	self.LastClickedButtonRef = button
-	self.CurrentStepIndex = index
-	RQE.AddonSetStepIndex = index
-	RQE.StoredStepIndex = index
-
-	-- Debug log
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Clicking button at index:", index)
-	end
-
-	-- -- Perform button click
-	-- button:Click()
-
-	-- Perform button click
-	local ok, err = pcall(function()
-		button:Click()
-	end)
-
-	RQE._autoClickingWaypointButton = false
-
-	if not ok then
-		error(err)
-	end
-
-	if RQE.Buttons.RefreshStepNavigationTooltips then
-		RQE.Buttons.RefreshStepNavigationTooltips()
-	end
-
-	-- Ensure the macro and UI are refreshed only once
-	C_Timer.After(1, function()
-		-- Refresh the macro
-		-- C_Timer.After(0.1, function()
-			-- RQE.isCheckingMacroContents = true
-			-- local isMacroCorrect = RQE.CheckCurrentMacroContents()
-
-			-- if isMacroCorrect then
-				-- return
-			-- end
-
-			-- RQEMacro:CreateMacroForCurrentStep()
-			-- C_Timer.After(0.2, function()
-				-- RQE.isCheckingMacroContents = false
-			-- end)
-		-- end)
-
-		-- Refresh UI (Waypoint and Focus Frames)
-		RQE:OnCoordinateClicked()
-		RQE.InitializeSeparateFocusFrame()
+		-- Update state references
+		self.LastClickedButtonRef = button
+		self.CurrentStepIndex = index
+		RQE.AddonSetStepIndex = index
 
 		-- Debug log
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+			print("Clicking button at index:", index)
 		end
-	end)
 
-	-- Apply faction logic after ensuring state is consistent
-	C_Timer.After(0.7, function()
-		RQE:HandleFactionLogicAfterAdvance()
+		-- Perform button click
+		button:Click()
+
+		-- Ensure the macro and UI are refreshed only once
 		C_Timer.After(1, function()
-			RQE:HandleClassFactionLogicAfterAdvance()
+			-- Refresh UI (Waypoint and Focus Frames)
+			RQE:OnCoordinateClicked()
+			RQE.InitializeSeparateFocusFrame()
+
+			-- Debug log
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+			end
 		end)
-	end)
+
+		-- Apply faction logic after ensuring state is consistent
+		C_Timer.After(0.7, function()
+			RQE:HandleFactionLogicAfterAdvance()
+			C_Timer.After(1, function()
+				RQE:HandleClassFactionLogicAfterAdvance()
+			end)
+		end)
+	end
 end
 
 
@@ -12243,18 +12281,27 @@ local questObjectiveCompletion = {}
 local soundCooldown = false
 
 local function InitializeQuestObjectiveCompletion()
-	for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
-		local info = C_QuestLog.GetInfo(questIndex)
-		if info and not info.isHeader then
-			local questID = info.questID
-			local objectives = C_QuestLog.GetQuestObjectives(questID)
+	if RQE.db.profile.enableStepControls then
+		for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = C_QuestLog.GetQuestObjectives(questID)
 
-			-- for i, objective in ipairs(objectives) do
-				-- local key = questID .. "-" .. i
-				-- questObjectiveCompletion[key] = objective.finished
-			-- end
-
-			if objectives then
+				if objectives then
+					for i, objective in ipairs(objectives) do
+						local key = questID .. "-" .. i
+						questObjectiveCompletion[key] = objective.finished
+					end
+				end
+			end
+		end
+	else
+		for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = C_QuestLog.GetQuestObjectives(questID)
 				for i, objective in ipairs(objectives) do
 					local key = questID .. "-" .. i
 					questObjectiveCompletion[key] = objective.finished
@@ -12266,19 +12313,91 @@ end
 
 
 local function CheckQuestObjectivesAndPlaySound()
-	if soundCooldown then return end -- Exit if we're in cooldown
-	local playSoundForCompletion = false
-	local playSoundForObjectives = false
+	if RQE.db.profile.enableStepControls then
+		if soundCooldown then return end -- Exit if we're in cooldown
+		local playSoundForCompletion = false
+		local playSoundForObjectives = false
 
-	for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
-		local info = C_QuestLog.GetInfo(questIndex)
-		if info and not info.isHeader then
-			local questID = info.questID
-			local objectives = C_QuestLog.GetQuestObjectives(questID)
+		for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = C_QuestLog.GetQuestObjectives(questID)
 
-			if objectives then
+				if objectives then
+					local allObjectivesComplete = true
+
+					for i, objective in ipairs(objectives) do
+						local key = questID .. "-" .. i
+						if objective.finished then
+							if not questObjectiveCompletion[key] then
+								-- Objective just completed
+								questObjectiveCompletion[key] = true
+								playSoundForObjectives = true -- Play sound for individual objective completion
+							end
+						else
+							allObjectivesComplete = false
+							questObjectiveCompletion[key] = false
+						end
+					end
+					if allObjectivesComplete then
+						local key = tostring(questID) .. "-complete"
+						if not questObjectiveCompletion[key] then
+							questObjectiveCompletion[key] = true
+							playSoundForCompletion = true -- Play sound for quest completion
+						end
+					end
+				end
+			end
+		end
+
+		--RQE.isCheckingMacroContents = true
+
+		if playSoundForCompletion then
+			PlaySound(6199) -- Sound for quest completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		elseif playSoundForObjectives then
+			PlaySound(6192) -- Sound for individual objective completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		end
+
+		-- Only run periodic checks if objectives actually changed
+		if RQE.db.profile.autoClickWaypointButton then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+			if questID then
+				C_Timer.After(0.65, function()
+
+					if RQE:DidObjectivesChange(questID) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Objective Sound Played → objective change → StartPeriodicChecks()")
+						end
+
+						C_Timer.After(0.35, function()
+							RQE:StartPeriodicChecks()
+						end)
+
+					elseif RQE.db.profile.debugLevel == "INFO+" then
+						print("Objective Sound Played → no objective change for supertracked quest → skipping StartPeriodicChecks()")
+					end
+				end)
+			end
+		end
+	else
+		if soundCooldown then return end -- Exit if we're in cooldown
+		local playSoundForCompletion = false
+		local playSoundForObjectives = false
+
+		for questIndex = 1, C_QuestLog.GetNumQuestLogEntries() do
+			local info = C_QuestLog.GetInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = C_QuestLog.GetQuestObjectives(questID)
 				local allObjectivesComplete = true
-
 				for i, objective in ipairs(objectives) do
 					local key = questID .. "-" .. i
 					if objective.finished then
@@ -12301,49 +12420,44 @@ local function CheckQuestObjectivesAndPlaySound()
 				end
 			end
 		end
-	end
 
-	--RQE.isCheckingMacroContents = true
+		--RQE.isCheckingMacroContents = true
 
-	if playSoundForCompletion then
-		PlaySound(6199) -- Sound for quest completion
-		soundCooldown = true
-		C_Timer.After(5, function() soundCooldown = false end)
-		--RQEMacro:CreateMacroForCurrentStep()
-	elseif playSoundForObjectives then
-		PlaySound(6192) -- Sound for individual objective completion
-		soundCooldown = true
-		C_Timer.After(5, function() soundCooldown = false end)
-		--RQEMacro:CreateMacroForCurrentStep()
-	end
+		if playSoundForCompletion then
+			PlaySound(6199) -- Sound for quest completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		elseif playSoundForObjectives then
+			PlaySound(6192) -- Sound for individual objective completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		end
 
-	-- Only run periodic checks if objectives actually changed
-	if RQE.db.profile.autoClickWaypointButton then
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		-- Only run periodic checks if objectives actually changed
+		if RQE.db.profile.autoClickWaypointButton then
+			local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
-		if questID then
-			C_Timer.After(0.65, function()
+			if questID then
+				C_Timer.After(0.65, function()
 
-				if RQE:DidObjectivesChange(questID) then
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Objective Sound Played → objective change → StartPeriodicChecks()")
+					if RQE:DidObjectivesChange(questID) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Objective Sound Played → objective change → StartPeriodicChecks()")
+						end
+
+						C_Timer.After(0.35, function()
+							RQE:StartPeriodicChecks()
+						end)
+
+					elseif RQE.db.profile.debugLevel == "INFO+" then
+						print("Objective Sound Played → no objective change for supertracked quest → skipping StartPeriodicChecks()")
 					end
-
-					C_Timer.After(0.35, function()
-						RQE:StartPeriodicChecks()
-					end)
-
-				elseif RQE.db.profile.debugLevel == "INFO+" then
-					print("Objective Sound Played → no objective change for supertracked quest → skipping StartPeriodicChecks()")
-				end
-			end)
+				end)
+			end
 		end
 	end
-
-	-- -- Failsafe to set the flag back to false if is true
-	-- if RQE.isCheckingMacroContents then
-		-- RQE.isCheckingMacroContents = false
-	-- end
 end
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
