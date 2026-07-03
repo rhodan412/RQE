@@ -14,7 +14,7 @@
 		- Added automatic waypoint creation when manually navigating between quest steps using the Previous (<) and Next (>) buttons (2026.07.01.1715)
 
 	Core.lua
-		- Added manual step preview mode allowing quest steps to be viewed without affecting automatic quest progression (2026.07.01.1527)
+		- Added manual step preview mode allowing quest steps to be viewed without affecting automatic quest progression (2026.07.02.1527)
 		- Added RQE:SetDisplayedStepFromStepsList() function to update the displayed quest step, macro and SeparateFocusFrame from manual step selections (2026.07.01.1527)
 		- Added RQE:ClearManualStepPreview() function to return control to automatic quest progression when appropriate (2026.07.01.1527)
 		- Updated RQE:StartPeriodicChecks() to suspend automatic step evaluation while a manually selected quest step is being previewed (2026.07.01.1527)
@@ -28,6 +28,7 @@
 		- Fixed issue where RQE:StartPerdiodicChecks() kept thinking that frame was on manual mode and wouldn't advance even after pressing QuestLogIndexButton for supertracked quest (2026.07.02.0419)
 		- Updates made to RQE:ClickWaypointButtonForIndex(index) to facilitate the reseting of the Index# when button press made [changes may be unnecessary] (2026.07.02.0419)
 		- Disabled the RQE.ResumeAutomaticFromManualPreview early-return in RQE:StartPeriodicChecks() because it was blocking automatic progression after manual step preview and contributing to step/waypoint desync (2026.07.02.0454)
+		- Updated RQE:StartPeriodicChecks() to only call RQE:ClearManualStepPreview(false) if flags fire and removed '-RQE.ResumeAutomaticFromManualPreview = false' from the RQE:ClearManualStepPreview(runChecks) function (2026.07.02.1957)
 
 	EventManager.lua
 		- Fixed issue in PLAYER_STARTED_MOVING handling where the IsFlying() result was not being used correctly, preventing the intended macro validation branch from running while moving on foot (2026.07.01.1940)
@@ -38,10 +39,14 @@
 		- Moved call to Update RQEQuestFrame, within BAG_UPDATE as it was being called too earlier and utilized RQE:QueuePeriodicChecks() instead of RQE:StartPeriodicChecks() within that function call (2026.07.01.2036)
 		- When PLAYER_ENTERING_WORLD event function fires the flag that will reset the index# on firing is reset prior to RestoreSuperTrackedQuestForCharacter() or RQE:QueuePeriodicChecks("PLAYER_ENTERING_WORLD", 0.1, questID) being called (2026.07.02.0419)
 		- Updated UNIT_AURA buff/debuff matching to compare numeric spellIDs instead of aura names, preventing secret-string taint errors when evaluating CheckDBBuff and CheckDBDebuff conditions from quest step data (2026.07.02.0454)
+		- Removed 'RQE.ResumeAutomaticFromManualPreview = true' from the PLAYER_ENTERING_WORLD event function (2026.07.02.1957)
+		- Reverted change to UNIT_AURA for comparison of IDs as it appears unnecessary (2026.07.02.1957)
+		- Modified QUEST_DETAIL event function to also inform if the DB entry is missing objectivesQuestText, descriptionQuestText or npc for a given quest prior to accepting (2026.07.02.1957)
 
 	QuestingModule.lua
 		- Moved calls for ObjectiveTrackerFrame OnUpdate visibility from Core to QuestingModule due to load errors (2026.07.01.2018)
 		- When QuestLogIndexButton is pressed flag is reset allowing automatic quest progress to be restored from manual step (2026.07.02.0419)
+		- Removed 'RQE.ResumeAutomaticFromManualPreview = true' from UpdateRQEQuestFrame() function in the click event of the QuestLogIndexButton (2026.07.02.1957)
 
 	RQE.toc
 		- Updated version# (2026.07.01.1527)
@@ -51,6 +56,7 @@
 		- Added additional objective and descriptiontext to some quests in Bastion covenant (2026.07.01.1715)
 		- Updates to some quests related to Dragonflight TW and Midsummer Fire Festival (2026.07.02.0419)
 		- Updated/Added some Maw quests to the DB (2026.07.02.0454)
+		- Updated some of the Bastion covenant quests in Ardenweald (2026.07.02.1957)
 
 	RQEFrame.lua
 		- Added support for manually selecting quest steps by clicking the numbered step buttons displayed beside each quest step within the RQEFrame (2026.07.01.1527)
