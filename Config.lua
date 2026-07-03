@@ -448,11 +448,24 @@ RQE.options = {
 					width = "full",
 					order = 2,
 				},
+				enableStepControls = {
+					type = "toggle",
+					name = "StepIndex Forward/Back Controls",
+					desc = "Enables the experimental logic for the Forward and Back step navigation buttons.\n\n|cFFFF3333Experimental: may behave differently while testing step navigation changes.|r",
+					get = function()
+						return RQE.db.profile.enableStepControls
+					end,
+					set = function(_, newValue)
+						RQE.db.profile.enableStepControls = newValue
+					end,
+					width = "full",
+					order = 3,
+				},
 				framePosition = {
 					type = "group",
 					name = "Main Frame Position",
 					inline = true,
-					order = 10,
+					order = 4,
 					args = {
 						anchorPoint = {
 							type = 'select',
@@ -564,7 +577,7 @@ RQE.options = {
 					type = "group",
 					name = "Quest Frame Position",
 					inline = true,
-					order = 11,  -- Set this order to wherever you want it to appear
+					order = 5,  -- Set this order to wherever you want it to appear
 					args = {
 						anchorPoint = {
 							type = 'select',
@@ -682,7 +695,7 @@ RQE.options = {
 					type = "group",
 					name = "Font Size and Color",
 					inline = true,
-					order = 12,
+					order = 1,
 					args = {
 						headerText = {
 							name = "Header Text",
@@ -2003,6 +2016,27 @@ function RQE:AddFrameSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(mythicScenarioModeCheckbox)
+
+	-- Forward/Back Controls Checkbox
+	local enableStepControlsCheckbox = AceGUI:Create("CheckBox")
+	enableStepControlsCheckbox:SetLabel("StepIndex Forward/Back Controls")
+	enableStepControlsCheckbox:SetValue(RQE.db.profile.enableStepControls)
+	enableStepControlsCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
+		RQE.db.profile.enableStepControls = value
+	end)
+
+	enableStepControlsCheckbox:SetFullWidth(true)
+
+	enableStepControlsCheckbox:SetCallback("OnEnter", function(widget, event)
+		GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
+		GameTooltip:SetText("Enables the logic for the Forward and Back step navigation buttons.\n\n|cFFFF3333Experimental: may behave differently while testing step navigation changes.|r", nil, nil, nil, nil, true)
+		GameTooltip:Show()
+	end)
+	enableStepControlsCheckbox:SetCallback("OnLeave", function(widget, event)
+		GameTooltip:Hide()
+	end)
+
+	scrollFrame:AddChild(enableStepControlsCheckbox)
 
 	-- Main Frame Position Group
 	local framePositionGroup = AceGUI:Create("InlineGroup")
