@@ -1627,8 +1627,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 				-- RQE:ClickWaypointButtonForIndex(i)
 			-- end
 
-			if not RQE._autoClickingWaypointButton then
-				RQE:SetDisplayedStepFromStepsList(i)
+			if RQE.db.profile.enableStepControls then
+				if not RQE._autoClickingWaypointButton then
+					RQE:SetDisplayedStepFromStepsList(i)
+				end
 			end
 
 			-- Code for RWButton functionality here
