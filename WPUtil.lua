@@ -82,7 +82,9 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 		end
 
 		if RQE.hoveringOnRQEFrameAndButton then
-			--RQE:StartPeriodicChecks()		-- keeping this in place means that if player is manually tracking a step that differs from what is part of the "automatic" or true step the "W" button won't generate the waypoint for the manually set stepIndex
+			if not RQE.db.profile.enableStepControls then
+				RQE:StartPeriodicChecks()		-- keeping this in place means that if player is manually tracking a step that differs from what is part of the "automatic" or true step the "W" button won't generate the waypoint for the manually set stepIndex
+			end
 			C_Timer.After(0.2, function()
 				RQE.hoveringOnRQEFrameAndButton = false
 			end)
@@ -149,6 +151,10 @@ function RQE:GetStepCoordinates(stepIndex)
 
 	local x, y, mapID
 	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if not C_SuperTrack.IsSuperTrackingQuest() or not questID then
+		return nil, nil, nil
+	end
 
 	-- NEW: prefer multi-hotspot selection if present on the step
 	local questData = RQE.getQuestData(questID)
