@@ -1,3 +1,30 @@
+12.0.7.3
+
+	**HIGHLIGHTS**
+		- Major bug fixes and improvements to efficiency of addon's processing
+		- Added experimental manual step navigation controls (< and >) to the RQEFrame, allowing any quest step to be previewed without affecting automatic quest progression. This feature must first be enabled from the Configuration → Frame settings.
+		- Added support for manually selecting quest steps by clicking the numbered step buttons within the RQEFrame, including automatic updating of quest details, macros and step-specific waypoints.
+		- Waypoints created from the RQEFrame now intelligently use the currently displayed quest step, automatically updating when manually navigating between quest steps while preserving automatic quest progression.
+		- Added automatic updating of manual navigation button tooltips as the displayed quest step changes.
+		- Updated Kyrian covenant campaign quests in DB
+
+	RQE.toc
+		- Updated version# (2026.07.04.0149)
+
+	RQEDatabase.lua
+		- Updated Kyrian covenant quests and half of the Night Fae covenant quests (2026.07.04.0149)
+
+	RQEFrame.lua
+		- Set variables to only change certain way if enableStepControls is toggled on (2026.07.04.0149)
+
+	RQEMacro.lua
+		- Updated macro tooltip (non-item/spells) to have smaller print so most of the macroBody is shown (2026.07.04.0149)
+
+	WPUtil.lua
+		- Enabled RQE:StartPeriodicChecks() to be called when RQE.UnknownQuestButtonCalcNTrack() fires if enableStepControls is toggled off (2026.07.04.0149)
+		- Fixed bug where sometimes RQE:GetStepCoordinates() would be called when a quest was not properly supertracked and would return an error (2026.07.04.0149)
+
+
 12.0.7.2-alpha (2026-07-02)
 
 	**HIGHLIGHTS**
