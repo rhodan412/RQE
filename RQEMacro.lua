@@ -334,6 +334,32 @@ RQE.Buttons.EventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 
+-- Helper to show long macro text in a tooltip without truncating lines.
+local function RQEShowWrappedMacroTooltip(owner, title, macroBody)
+	GameTooltip:SetOwner(owner, "ANCHOR_BOTTOMLEFT")
+	-- GameTooltip:SetWidth(420)
+	GameTooltip:SetMinimumWidth(420)
+
+	-- Clear existing tooltip contents before rebuilding it line-by-line.
+	GameTooltip:ClearLines()
+
+	if title and title ~= "" then
+		GameTooltip:AddLine(title, 1, 0.82, 0, true)
+		GameTooltip:AddLine(" ", 1, 1, 1, true)
+	end
+
+	for line in tostring(macroBody or ""):gmatch("([^\n]*)\n?") do
+		if line == "" then
+			GameTooltip:AddLine(" ", 1, 1, 1, true)
+		else
+			GameTooltip:AddLine(line, 1, 0.82, 0, true)
+		end
+	end
+
+	GameTooltip:Show()
+end
+
+
 -- Function to update the Magic Button Tooltip dynamically
 function RQEMacro:UpdateMagicButtonTooltip()
 	local MagicButton = RQE.MagicButton -- Reference to the magic button
@@ -425,35 +451,50 @@ function RQEMacro:UpdateMagicButtonTooltip()
 			if exceptionItemIDs[itemID] then
 				-- Show the macro body and icon for the exception
 				if itemID == 841 then
-					GameTooltip:SetText("Pull Timer!\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Pull Timer!", macroBody)
+					--GameTooltip:SetText("Pull Timer!\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 2554 then
-					GameTooltip:SetText("Turn in the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Turn in the quest", macroBody)
+					--GameTooltip:SetText("Turn in the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 4588 then
-					GameTooltip:SetText("Kill Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Kill Mob(s)", macroBody)
+					--GameTooltip:SetText("Kill Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 4787 then
-					GameTooltip:SetText("Collect/Loot Item from Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Collect/Loot Item from Mob(s)", macroBody)
+					--GameTooltip:SetText("Collect/Loot Item from Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5061 then
-					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Purchase Item(s)", macroBody)
+					--GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 30817 then
-					GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Purchase Item(s)", macroBody)
+					--GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5830 then
-					GameTooltip:SetText("Speak/Interact with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Speak/Interact with NPC", macroBody)
+					--GameTooltip:SetText("Speak/Interact with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 23784 then
-					GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker", macroBody)
+					--GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
 				elseif itemID == 28372 then
-					GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Look At/Near an NPC", macroBody)
+					--GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 28885 then
-					GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Use Emote", macroBody)
+					--GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 28912 then
-					GameTooltip:SetText("Learn ability\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Learn ability", macroBody)
+					--GameTooltip:SetText("Learn ability\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 45786 then
-					GameTooltip:SetText("Set CVAR\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Set CVAR", macroBody)
+					--GameTooltip:SetText("Set CVAR\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 118474 then
-					GameTooltip:SetText("Look/Follow/Escort/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Look/Follow/Escort/Track an NPC", macroBody)
+					--GameTooltip:SetText("Look/Follow/Escort/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 143680 then
-					GameTooltip:SetText("Weaken\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Weaken", macroBody)
+					--GameTooltip:SetText("Weaken\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 153541 then
-					GameTooltip:SetText("Pickup the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
+					RQEShowWrappedMacroTooltip(self, "Pickup the quest", macroBody)
+					--GameTooltip:SetText("Pickup the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				else
 					GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 					-- GameTooltip:AddLine("\n(Item Exception ID: " .. itemID .. ")", 1, 1, 0)
