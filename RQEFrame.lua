@@ -1570,8 +1570,10 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
 		bg:SetAllPoints()
 
-		WaypointButton.stepIndex = i
-		WaypointButton.bg = bg
+		if RQE.db.profile.enableStepControls then
+			WaypointButton.stepIndex = i
+			WaypointButton.bg = bg
+		end
 
 		-- Check if autoClickWaypointButton is enabled and LastClickedIdentifier is nil and set to 1 if so
 		if RQE.db.profile.autoClickWaypointButton then
