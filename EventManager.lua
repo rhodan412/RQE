@@ -1598,6 +1598,7 @@ function RQE.handleAddonLoaded(self, event, addonName, containsBindings)
 	RQE.OkayToUpdateSeparateFF = false
 	RQE.OkayToUpdateSeparateFFOnce = true
 	RQE.OkayWaypointButtonToMove = false
+	RQE.ManualStepOverrideQLIB = false
 	RQE.NavigationDestinationReached = false
 	RQE.NearestFlightMasterSet = false
 	RQE.PeriodicIsFiring = false
