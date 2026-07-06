@@ -7,12 +7,25 @@
 		- Waypoints created from the RQEFrame now intelligently use the currently displayed quest step, automatically updating when manually navigating between quest steps while preserving automatic quest progression.
 		- Added automatic updating of manual navigation button tooltips as the displayed quest step changes.
 		- Updated Kyrian covenant campaign quests in DB
+		- Improved handling of manual step preview reset so pressing the QuestLogIndexButton more reliably restores automatic step progression.
+		- Updated Ardenweald covenant campaign quests in DB
+
+	Core.lua
+		- Added handling for a new RQE.ManualStepOverrideQLIB flag within RQE:StartPeriodicChecks() so that pressing the QuestLogIndexButton explicitly clears manual step preview state and restores automatic quest progression without causing a duplicate RQE:StartPeriodicChecks() call through RQE:ClearManualStepPreview(false) (2026.07.05.2208)
+
+	EventManager.lua
+		- Added RQE.ManualStepOverrideQLIB flag to allow RQE:StartPeriodicChecks() to run anytime enableStepControls is toggled and the QuestLogIndexButton is clicked (2026.07.05.2208)
+
+	QuestingModule.lua
+		- Updated QuestLogIndexButton:SetScript("OnMouseDown") so that when leaving manual step preview it now sets RQE.ManualStepOverrideQLIB = true after calling RQE:ClearManualStepPreview(false), allowing RQE:StartPeriodicChecks() to treat the button press as an intentional return to automatic quest progression (2026.07.05.2208)
 
 	RQE.toc
 		- Updated version# (2026.07.04.0149)
 
 	RQEDatabase.lua
-		- Updated Kyrian covenant quests and half of the Night Fae covenant quests (2026.07.04.0149)
+		- Updated Kyrian (Bastion) covenant campaign quests in DB (2026.07.04.0149)
+		- Updated Night Fae (Ardenweald) covenant campaign quests in DB (2026.07.05.2208)
+		- Updated some Necrolord (Maldraxxus) covenant campaign quests in DB (2026.07.05.2208)
 
 	RQEFrame.lua
 		- Set variables to only change certain way if enableStepControls is toggled on (2026.07.04.0149)
