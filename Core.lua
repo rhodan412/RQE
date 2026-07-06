@@ -7943,16 +7943,27 @@ function RQE:StartPeriodicChecks()
 		return
 	end
 
+	-- Explicitly resume automatic progression
 	if RQE.db.profile.enableStepControls then
-		if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
-			-- Explicitly resume automatic progression
+		if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
 			RQE:ClearManualStepPreview(false)
-			-- RQE.ManualStepPreview = false
-			-- RQE.ManualPreviewQuestID = nil
-			-- RQE.ManualPreviewStepIndex = nil
-			-- RQE.ResumeAutomaticFromManualPreview = false
+			RQE.ManualStepOverrideQLIB = false
+			RQE.AddonSetStepIndex = 1
 		end
 	end
+
+	-- if RQE.db.profile.enableStepControls then
+		-- if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
+		-- --if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
+			-- -- Explicitly resume automatic progression
+			-- RQE:ClearManualStepPreview(false)
+			-- RQE.ManualPreviewQuestID = nil
+			-- RQE.ManualPreviewStepIndex = nil
+			-- RQE.ManualStepOverrideQLIB = false
+			-- RQE.AddonSetStepIndex = 1
+			-- -- RQE.ResumeAutomaticFromManualPreview = false
+		-- end
+	-- end
 
 	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
 	if RQE.db.profile.debugLevel == "INFO+" then
