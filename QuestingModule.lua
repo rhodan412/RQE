@@ -2717,6 +2717,7 @@ function UpdateRQEQuestFrame()
 							-- Leaving manual step preview mode and returning control to automatic quest progression.
 							if RQE.db.profile.enableStepControls then
 								RQE:ClearManualStepPreview(false)
+								RQE.ManualStepOverrideQLIB = true
 							end
 
 							RQE.shouldCheckFinalStep = true
