@@ -2741,9 +2741,12 @@ function UpdateRQEQuestFrame()
 								RQE.ObtainSuperTrackQuestDetails()
 
 								--RQE.ResumeAutomaticFromManualPreview = true
-								C_Timer.After(0.1, function()
-									RQE:StartPeriodicChecks()
-								end)
+								if RQE.db.profile.autoClickWaypointButton then
+									C_Timer.After(0.1, function()
+										RQE.AddonSetStepIndex = 1
+										RQE:StartPeriodicChecks()
+									end)
+								end
 
 								C_Timer.After(0.2, function()
 									RQE:SaveSuperTrackedQuestToCharacter()
