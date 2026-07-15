@@ -139,8 +139,49 @@ local eventsToRegister = {
 }
 
 
+--------------------------
+-- #4. Event Helpers
+--------------------------
+
+-- Returns true when the current DB step uses CheckDBObjectiveStatus
+local function CurrentStepUsesObjectiveStatus(questID)
+	if not questID then
+		return false
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return false
+	end
+
+	local stepIndex =
+		tonumber(RQE.AddonSetStepIndex)
+		or tonumber(RQE.StoredStepIndex)
+		or 1
+
+	local stepData = questData[stepIndex]
+	if not stepData then
+		return false
+	end
+
+	if stepData.funct == "CheckDBObjectiveStatus" then
+		return true
+	end
+
+	if stepData.checks then
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct == "CheckDBObjectiveStatus" then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
 ---------------------------
--- #4. Event Handling
+-- #5. Event Handling
 ---------------------------
 
 -- On Event Handler
@@ -5062,45 +5103,89 @@ function RQE.handleUnitQuestLogChange(...)
 			if RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then return end
 			if RQE.QuestRemoved then return end
 
-			-----------------------------------------
-			-- NEW: Only run StartPeriodicChecks if objectives changed
-			-----------------------------------------
+			-- -----------------------------------------
+			-- -- NEW: Only run StartPeriodicChecks if objectives changed
+			-- -----------------------------------------
+
 			if RQE:DidObjectivesChange(questID) then
 				RQE.StartPerioFromUnitQuestLogChanged = true
 
 				if questID then
-					if RQE.db.profile.debugLevel == "INFO+" then
+					if RQE.db.profile.debugLevel == "INFO" then
 						print("Running RQE:StartPeriodicChecks() due to changes detected")
 					end
+
 					RQE:QueuePeriodicChecks("UNIT_QUEST_LOG_CHANGED", 0.25, questID)
 					RQE.PeriodicIsFiring = true
 				else
 					C_Timer.After(0.25, function()
-						if RQE.db.profile.debugLevel == "INFO+" then
+						if RQE.db.profile.debugLevel == "INFO" then
 							print("Running RQE:StartPeriodicChecks() due to changes detected")
 						end
 
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
+						RQE:StartPeriodicChecks()
 						RQE.PeriodicIsFiring = true
 					end)
 				end
-
-				-- C_Timer.After(0.25, function()
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Running RQE:StartPeriodicChecks() due to changes detected")
-					-- end
-					-- RQE:StartPeriodicChecks()
-					-- RQE.PeriodicIsFiring = true
-				-- end)
 
 				C_Timer.After(3, function()
 					RQE.StartPerioFromUnitQuestLogChanged = false
 				end)
 			else
-				if RQE.db.profile.debugLevel == "INFO+" then
+				if RQE.db.profile.debugLevel == "INFO" then
 					print("UQLC: No objective progress change → NOT running StartPeriodicChecks()")
 				end
 			end
+
+			-- Delayed retry for objective-based steps, such as profession crafting objectives
+			if CurrentStepUsesObjectiveStatus(questID) then
+				C_Timer.After(0.75, function()
+					if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+						if RQE.db.profile.debugLevel == "INFO" then
+							print("Running delayed objective-status recheck for questID:", questID)
+						end
+
+						RQE:QueuePeriodicChecks("DELAYED_OBJECTIVE_STATUS_RECHECK",	0.05, questID)
+					end
+				end)
+			end
+
+			-- if RQE:DidObjectivesChange(questID) then
+				-- RQE.StartPerioFromUnitQuestLogChanged = true
+
+				-- if questID then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Running RQE:StartPeriodicChecks() due to changes detected")
+					-- end
+					-- RQE:QueuePeriodicChecks("UNIT_QUEST_LOG_CHANGED", 0.25, questID)
+					-- RQE.PeriodicIsFiring = true
+				-- else
+					-- C_Timer.After(0.25, function()
+						-- if RQE.db.profile.debugLevel == "INFO+" then
+							-- print("Running RQE:StartPeriodicChecks() due to changes detected")
+						-- end
+
+						-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
+						-- RQE.PeriodicIsFiring = true
+					-- end)
+				-- end
+
+				-- -- C_Timer.After(0.25, function()
+					-- -- if RQE.db.profile.debugLevel == "INFO+" then
+						-- -- print("Running RQE:StartPeriodicChecks() due to changes detected")
+					-- -- end
+					-- -- RQE:StartPeriodicChecks()
+					-- -- RQE.PeriodicIsFiring = true
+				-- -- end)
+
+				-- C_Timer.After(3, function()
+					-- RQE.StartPerioFromUnitQuestLogChanged = false
+				-- end)
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("UQLC: No objective progress change → NOT running StartPeriodicChecks()")
+				-- end
+			-- end
 
 			-----------------------------------------
 			-- Maintain existing waypoint button refresh logic
@@ -6495,9 +6580,11 @@ function RQE.handleQuestWatchListChanged(...)
 		UpdateRQEWorldQuestFrame()
 	end
 
-	RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
-	RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
-	RQE.UnitQuestLogChangedFired = false
+	C_Timer.After(0.15, function()
+		RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
+		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
+		RQE.UnitQuestLogChangedFired = false
+	end)
 
 	-- print("~~~ RQE:QuestType(): 5192 ~~~")
 	-- RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
@@ -7024,7 +7111,7 @@ end
 
 
 --------------------------
--- #5. Event Callbacks
+-- #6. Event Callbacks
 --------------------------
 
 -- Add a click event to SearchButton
@@ -7056,7 +7143,7 @@ end)
 
 
 --------------------------
--- #6. Frame Updates
+-- #7. Frame Updates
 --------------------------
 
 -- Function to Show the Objective Tracker
