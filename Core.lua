@@ -7948,7 +7948,7 @@ function RQE:StartPeriodicChecks()
 		if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
 			RQE:ClearManualStepPreview(false)
 			RQE.ManualStepOverrideQLIB = false
-			RQE.AddonSetStepIndex = 1
+			--RQE.AddonSetStepIndex = 1		-- this setting was resetting the stepIndex to 1 when enableStepControls was activated, but wouldn't properly advance a step below
 		end
 	end
 
@@ -8187,11 +8187,40 @@ function RQE:StartPeriodicChecks()
 			end
 
 			local playerMapID = C_Map.GetBestMapForUnit("player")
-			if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
-			--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
-			if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
+			if UpdateFrame then
+				UpdateFrame(superTrackedQuestID, questData)
+			end
+
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
-			return  -- Skip waypoint creation only
+
+			-- Refresh the macro before leaving this early-return branch
+			C_Timer.After(0.20, function()
+				RQE.isCheckingMacroContents = true
+
+				local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+				if not isMacroCorrect then
+					RQEMacro:CreateMacroForCurrentStep()
+				end
+
+				C_Timer.After(0.20, function()
+					RQE.isCheckingMacroContents = false
+				end)
+			end)
+
+			return
+
+			-- local playerMapID = C_Map.GetBestMapForUnit("player")
+			-- if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+			-- --if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+			-- if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+			-- RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
+			-- return  -- Skip waypoint creation only
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("WaypointText present; current step requires CheckDBZoneChange -> continuing periodic checks.")
