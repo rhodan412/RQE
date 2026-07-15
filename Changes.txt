@@ -9,15 +9,22 @@
 		- Updated Kyrian covenant campaign quests in DB
 		- Improved handling of manual step preview reset so pressing the QuestLogIndexButton more reliably restores automatic step progression.
 		- Updated Ardenweald covenant campaign quests in DB
+		- Resolved issue where weekly Jewelery quest "The Exhibition," in Valdrakken, was not updating to the correct step
 
 	Core.lua
 		- Added handling for a new RQE.ManualStepOverrideQLIB flag within RQE:StartPeriodicChecks() so that pressing the QuestLogIndexButton explicitly clears manual step preview state and restores automatic quest progression without causing a duplicate RQE:StartPeriodicChecks() call through RQE:ClearManualStepPreview(false) (2026.07.05.2208)
+		- Resolved issue where RQE:STartPeriodicChecks() was not resetting its stepIndex when the QuestLogIndexButton has been pressed (2026.07.15.1644)
+		- Removed an early return in the RQE:STartPeriodicChecks() function that was preventing macro check from running (2026.07.15.1644)
 
 	EventManager.lua
 		- Added RQE.ManualStepOverrideQLIB flag to allow RQE:StartPeriodicChecks() to run anytime enableStepControls is toggled and the QuestLogIndexButton is clicked (2026.07.05.2208)
+		- Added helper to check if objective status changes so that the step can properly advance (2026.07.15.1644)
+		- Modified UNIT_QUEST_LOG_CHANGED event function to not return prematurely before a check of correct step can be run (2026.07.15.1644)
+		- Modified QUEST_WATCH_LIST_CHANGED to save the currently tracked/supertracked quest when event function runs (2026.07.15.1644)
 
 	QuestingModule.lua
 		- Updated QuestLogIndexButton:SetScript("OnMouseDown") so that when leaving manual step preview it now sets RQE.ManualStepOverrideQLIB = true after calling RQE:ClearManualStepPreview(false), allowing RQE:StartPeriodicChecks() to treat the button press as an intentional return to automatic quest progression (2026.07.05.2208)
+		- Added a reset to stepIndex when QuestLogIndexButton is pressed (2026.07.15.1644)
 
 	RQE.toc
 		- Updated version# (2026.07.04.0149)
@@ -25,7 +32,8 @@
 	RQEDatabase.lua
 		- Updated Kyrian (Bastion) covenant campaign quests in DB (2026.07.04.0149)
 		- Updated Night Fae (Ardenweald) covenant campaign quests in DB (2026.07.05.2208)
-		- Updated some Necrolord (Maldraxxus) covenant campaign quests in DB (2026.07.05.2208)
+		- Updated Necrolord (Maldraxxus) covenant campaign quests in DB (2026.07.15.1644)
+		- Updated end-game Maw and some Korthia campaign quests in DB (2026.07.15.1644)
 
 	RQEFrame.lua
 		- Set variables to only change certain way if enableStepControls is toggled on (2026.07.04.0149)
