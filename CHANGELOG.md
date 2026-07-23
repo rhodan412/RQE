@@ -1,18 +1,17 @@
 12.0.7.3 (2026.07.23)
 
 	**HIGHLIGHTS**
-		- Major bug fixes and improvements to efficiency of addon's processing
-		- Added experimental manual step navigation controls (< and >) to the RQEFrame, allowing any quest step to be previewed without affecting automatic quest progression. This feature must first be enabled from the Configuration → Frame settings.
-		- Added support for manually selecting quest steps by clicking the numbered step buttons within the RQEFrame, including automatic updating of quest details, macros and step-specific waypoints.
-		- Waypoints created from the RQEFrame now intelligently use the currently displayed quest step, automatically updating when manually navigating between quest steps while preserving automatic quest progression.
-		- Added automatic updating of manual navigation button tooltips as the displayed quest step changes.
-		- Updated Kyrian covenant campaign quests in DB
-		- Improved handling of manual step preview reset so pressing the QuestLogIndexButton more reliably restores automatic step progression.
-		- Updated Ardenweald covenant campaign quests in DB
-		- Resolved issue where weekly Jewelery quest "The Exhibition," in Valdrakken, was not updating to the correct step
-		- Added clearer warband-wide completion information when searching for quests, including whether completion was recorded on the current character or elsewhere on the warband.
-		- Improved quest-step tracking for objectives where progress is split between completed objectives and temporary buff stacks or inventory items, such as gathering followers, delivering NPCs, collecting keys and opening cages.
+		- Major bug fixes and processing-efficiency improvements.
+		- Added experimental previous and next step controls to the main quest guide, allowing quest steps to be previewed without interrupting automatic progression. This feature can be enabled under Configuration → Frame settings.
+		- Added support for previewing quest steps by clicking their numbered step buttons, with automatic updates to quest details, macros and step-specific waypoints.
+		- Improved waypoint handling during manual step previews so waypoints follow the currently displayed step while preserving automatic quest progression.
+		- Added dynamically updated tooltips for the manual step navigation controls.
+		- Improved the transition from manual step previews back to automatic quest progression.
+		- Fixed an issue that prevented the weekly Jewelry quest "The Exhibition" in Valdrakken from advancing to the correct step.
+		- Added clearer warband-wide quest completion information, including whether a quest was completed by the current character or elsewhere on the warband.
+		- Improved quest tracking when progress is divided between completed objectives and temporary buff stacks or inventory items, such as gathering followers, delivering NPCs, collecting keys and opening cages.
 		- Improved responsiveness and accuracy when buff or debuff stacks change, reducing delayed, skipped or incorrectly displayed quest steps.
+		- Updated quest guidance for multiple Covenant campaigns, the Maw, Korthia and most Zereth Mortis quests.
 
 	Ace3 Libraries
 		- Updated LibDBIcon, LibSharedMedia (2026.07.31.1552)
@@ -40,7 +39,7 @@
 		- Added detailed information if a tracked quest had been completed by the warband or not (2026.07.31.1552)
 
 	RQE.toc
-		- Updated version# (2026.07.04.0149)
+		- Updated version# (2026.07.31.1552)
 
 	RQEDatabase.lua
 		- Updated Kyrian (Bastion) covenant campaign quests in DB (2026.07.04.0149)
