@@ -1025,6 +1025,13 @@ local function CreateQuestTooltip(frame, questID)
 				GameTooltip:AddLine(" ")
 			end
 			GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+			if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+				--GameTooltip:AddLine(" ")
+				GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
+			else
+				--GameTooltip:AddLine(" ")
+				GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
+			end
 		end
 		GameTooltip:AddLine(" ")
 	end
