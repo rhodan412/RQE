@@ -6257,6 +6257,11 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 					end)
 
 					hover:SetScript("OnMouseDown", function()
+						-- Clear TomTom waypoint when Waypoint Coordblock is clicked
+						if TomTom.waydb and TomTom.waydb.ResetProfile then
+							TomTom.waydb:ResetProfile()
+							RQE._currentTomTomUID = nil
+						end
 						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
 						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
 					end)
@@ -6412,6 +6417,7 @@ function RQE.SearchModule:CreateSearchBox()
 		-- Handling multiple found quest IDs
 		for _, foundQuestID in ipairs(foundQuestIDs) do
 			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
+			local isQuestCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
 
 			C_Timer.After(0.2, function()
 				local questLink = GetQuestLink(foundQuestID)
@@ -6425,8 +6431,18 @@ function RQE.SearchModule:CreateSearchBox()
 
 				if isQuestCompleted then
 					DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)	-- Green text
+					if isQuestCompletedOnAccount then
+						DEFAULT_CHAT_FRAME:AddMessage("Quest completed on warband", 1, 1, 0)	-- Yellow text
+					else
+						DEFAULT_CHAT_FRAME:AddMessage("Quest not completed on warband or is a repeatable quest", 1, 0, 0)	-- Red text
+					end
 				else
 					DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character or is a repeatable quest", 1, 0, 0)	-- Red text
+					if isQuestCompletedOnAccount then
+						DEFAULT_CHAT_FRAME:AddMessage("Quest completed on warband", 1, 1, 0)	-- Yellow text
+					else
+						DEFAULT_CHAT_FRAME:AddMessage("Quest not completed on warband or is a repeatable quest", 1, 0, 0)	-- Red text
+					end
 				end
 			end)
 		end
@@ -9757,104 +9773,727 @@ function RQE.CheckDBModel(questID, stepIndex, check, neededAmt)
 end
 
 
--- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
+-- Function will check if the player currently has any of the buffs specified
+-- in the quest's check or checks field.
 function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~ Running RQE:CheckDBBuff ~~")
 	end
 
-	-- Use provided `check` and `neededAmt` if available
+	-- Use provided `check` and `neededAmt` if available.
 	check = check or {}
 	neededAmt = neededAmt or {}
 
-	-- Evaluate `check` directly if provided
-	if #check > 0 and #neededAmt > 0 then
-		for i, buffName in ipairs(check) do
-			local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-			if not aura then
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("CheckDBBuff() - Buff not active:", buffName)
-				end
-				return false
-			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("CheckDBBuff() - Buff active:", buffName)
-				end
+	-- old:
+	-- -- Optional mode: combine active buff stacks with completed quest-objective progress.
+	-- -- Existing CheckDBBuff entries remain unchanged unless this DB field is true.
+	-- local objectiveProgress = 0
+	-- local totalQuestData = self.getQuestData(questID)
+	-- local totalStepData = totalQuestData and totalQuestData[stepIndex]
+	--
+	-- if totalStepData and totalStepData.combineBuffAndObjectiveProgress then
+	-- 	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	-- 	local objectiveIndex = tonumber(totalStepData.objectiveIndex) or 1
+	-- 	local objective = objectives and objectives[objectiveIndex]
+	--
+	-- 	if objective then
+	-- 		objectiveProgress = tonumber(objective.numFulfilled) or 0
+	-- 	end
+	-- end
+
+	-- Accepts either:
+	-- neededAmt = { "4" }             Buff stacks alone must reach 4.
+	-- neededAmt = { "4+objective" }   Buff stacks plus objective progress must reach 4.
+	local function ParseRequiredAmount(rawAmount)
+		if type(rawAmount) == "string" then
+			local combinedAmount = rawAmount:match(
+				"^%s*(%d+)%s*%+%s*objective%s*$"
+			)
+
+			if combinedAmount then
+				return tonumber(combinedAmount) or 1, true
 			end
 		end
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckDBBuff() - All buffs matched for provided `check`.")
+
+		return tonumber(rawAmount) or 1, false
+	end
+
+	-- old:
+	-- -- Returns the fulfilled amount for the objective assigned to this DB step.
+	-- local function GetCurrentObjectiveProgress()
+	-- 	local questData = self.getQuestData(questID)
+	-- 	local stepData = questData and questData[stepIndex]
+	--
+	-- 	if not stepData then
+	-- 		return 0
+	-- 	end
+	--
+	-- 	local objectiveIndex = tonumber(stepData.objectiveIndex) or 1
+	-- 	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	-- 	local objective = objectives and objectives[objectiveIndex]
+	--
+	-- 	if not objective then
+	-- 		return 0
+	-- 	end
+	--
+	-- 	return tonumber(objective.numFulfilled) or 0
+	-- end
+	--
+	-- -- Evaluates a buff against either its stack count or its combined
+	-- -- stack count plus objective progress.
+	-- local function EvaluateBuffAmount(buffName, rawNeededAmount)
+	-- 	local requiredAmount, includeObjectiveProgress =
+	-- 		ParseRequiredAmount(rawNeededAmount)
+	--
+	-- 	local aura = C_UnitAuras.GetAuraDataBySpellName(
+	-- 		"player",
+	-- 		buffName,
+	-- 		"HELPFUL"
+	-- 	)
+	--
+	-- 	local currentStacks = 0
+	--
+	-- 	if aura then
+	-- 		-- Non-stacking buffs may report 0 applications even though present.
+	-- 		currentStacks =
+	-- 			(aura.applications and aura.applications > 0)
+	-- 			and aura.applications
+	-- 			or 1
+	-- 	end
+	--
+	-- 	local objectiveProgress = 0
+	--
+	-- 	if includeObjectiveProgress then
+	-- 		objectiveProgress = GetCurrentObjectiveProgress()
+	-- 	end
+	--
+	-- 	local currentTotal = currentStacks + objectiveProgress
+	-- 	local passed = currentTotal >= requiredAmount
+	--
+	-- 	if RQE.db.profile.debugLevel == "INFO+" then
+	-- 		print(
+	-- 			"CheckDBBuff() - Buff evaluation:",
+	-- 			buffName,
+	-- 			"buff stacks:", currentStacks,
+	-- 			"objective progress:", objectiveProgress,
+	-- 			"combined total:", currentTotal,
+	-- 			"required:", requiredAmount,
+	-- 			"combined mode:", tostring(includeObjectiveProgress),
+	-- 			"passed:", tostring(passed)
+	-- 		)
+	-- 	end
+	--
+	-- 	return passed
+	-- end
+
+	-- Returns the objective progress and objective index assigned to this step.
+	local function GetCurrentObjectiveProgress()
+		local questData = self.getQuestData(questID)
+		local stepData = questData and questData[stepIndex]
+		local objectiveIndex =
+			stepData and (tonumber(stepData.objectiveIndex) or 1) or 1
+
+		if not stepData then
+			return 0, objectiveIndex
 		end
-		--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+
+		local objectives = C_QuestLog.GetQuestObjectives(questID)
+		local objective = objectives and objectives[objectiveIndex]
+
+		if not objective then
+			return 0, objectiveIndex
+		end
+
+		return tonumber(objective.numFulfilled) or 0, objectiveIndex
+	end
+
+	-- Stores the most recently observed objective progress for combined checks.
+	-- This prevents a newly delivered objective amount from being added to an
+	-- aura count that Blizzard has not removed yet.
+	RQE.CombinedBuffObjectiveStates =
+		RQE.CombinedBuffObjectiveStates or {}
+
+	-- Evaluates a buff against either its stack count or its combined
+	-- stack count plus objective progress.
+	local function EvaluateBuffAmount(buffName, rawNeededAmount)
+		local requiredAmount, includeObjectiveProgress =
+			ParseRequiredAmount(rawNeededAmount)
+
+		local aura = C_UnitAuras.GetAuraDataBySpellName(
+			"player",
+			buffName,
+			"HELPFUL"
+		)
+
+		local currentStacks = 0
+
+		if aura then
+			-- Non-stacking buffs may report 0 applications even though present.
+			currentStacks =
+				(aura.applications and aura.applications > 0)
+				and aura.applications
+				or 1
+		end
+
+		local objectiveProgress = 0
+		local objectiveIndex = 1
+
+		if includeObjectiveProgress then
+			objectiveProgress, objectiveIndex =
+				GetCurrentObjectiveProgress()
+
+			local stateKey =
+				tostring(questID)
+				.. ":"
+				.. tostring(objectiveIndex)
+				.. ":"
+				.. tostring(buffName)
+
+			local state = RQE.CombinedBuffObjectiveStates[stateKey]
+
+			if not state then
+				state = {
+					objectiveProgress = objectiveProgress,
+					settleUntil = nil,
+				}
+
+				RQE.CombinedBuffObjectiveStates[stateKey] = state
+			elseif state.objectiveProgress ~= objectiveProgress then
+				-- Objective progress changed. The aura count may still contain
+				-- the NPCs that were just delivered, so temporarily prevent the
+				-- combined check from advancing.
+				state.objectiveProgress = objectiveProgress
+				state.settleUntil = GetTime() + 0.75
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(
+						"CheckDBBuff() - Objective progress changed; "
+						.. "waiting for aura count to settle:",
+						buffName,
+						"objective:", objectiveProgress,
+						"buff stacks:", currentStacks
+					)
+				end
+
+				-- old:
+				-- -- Recheck after Blizzard has updated the aura stack.
+				-- RQE:QueuePeriodicChecks(
+				-- 	"COMBINED_BUFF_OBJECTIVE_SETTLE",
+				-- 	0.80,
+				-- 	questID
+				-- )
+				--
+				-- return false
+
+				-- This must be a dedicated timer rather than QueuePeriodicChecks.
+				-- QueuePeriodicChecks may already contain an earlier check that
+				-- fires before the aura stack has finished updating.
+				if state.settleTimer then
+					state.settleTimer:Cancel()
+					state.settleTimer = nil
+				end
+
+				state.settleTimer = C_Timer.NewTimer(0.80, function()
+					state.settleTimer = nil
+
+					-- Only re-evaluate if this is still the supertracked quest.
+					if C_SuperTrack.GetSuperTrackedQuestID() ~= questID then
+						return
+					end
+
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(
+							"CheckDBBuff() - Aura/objective settling complete; "
+							.. "running final corrective check:",
+							"questID:", questID,
+							"buff:", buffName
+						)
+					end
+
+					RQE:StartPeriodicChecks()
+				end)
+
+				return false
+			end
+
+			-- Continue suppressing combined advancement until the settling
+			-- period started above has finished.
+			if state.settleUntil then
+				if GetTime() < state.settleUntil then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(
+							"CheckDBBuff() - Combined check still settling:",
+							buffName,
+							"objective:", objectiveProgress,
+							"buff stacks:", currentStacks
+						)
+					end
+
+					return false
+				end
+
+				state.settleUntil = nil
+			end
+		end
+
+		local currentTotal = currentStacks + objectiveProgress
+		local passed = currentTotal >= requiredAmount
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(
+				"CheckDBBuff() - Buff evaluation:",
+				buffName,
+				"buff stacks:", currentStacks,
+				"objective progress:", objectiveProgress,
+				"combined total:", currentTotal,
+				"required:", requiredAmount,
+				"combined mode:", tostring(includeObjectiveProgress),
+				"passed:", tostring(passed)
+			)
+		end
+
+		return passed
+	end
+
+	-- Evaluate `check` directly if provided.
+	if #check > 0 and #neededAmt > 0 then
+		for i, buffName in ipairs(check) do
+			-- old:
+			-- local requiredStacks = tonumber(neededAmt[i]) or 1
+			--
+			-- local aura = C_UnitAuras.GetAuraDataBySpellName(
+			-- 	"player",
+			-- 	buffName,
+			-- 	"HELPFUL"
+			-- )
+			--
+			-- local currentStacks = 0
+			--
+			-- if aura then
+			-- 	currentStacks =
+			-- 		(aura.applications and aura.applications > 0)
+			-- 		and aura.applications
+			-- 		or 1
+			-- end
+			--
+			-- if currentStacks < requiredStacks then
+			-- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- 		print(
+			-- 			"CheckDBBuff() - Buff missing or insufficient stacks:",
+			-- 			buffName,
+			-- 			"current:", currentStacks,
+			-- 			"required:", requiredStacks
+			-- 		)
+			-- 	end
+			-- 	return false
+			-- else
+			-- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- 		print(
+			-- 			"CheckDBBuff() - Buff stack check passed:",
+			-- 			buffName,
+			-- 			"current:", currentStacks,
+			-- 			"required:", requiredStacks
+			-- 		)
+			-- 	end
+			-- end
+
+			if not EvaluateBuffAmount(buffName, neededAmt[i]) then
+				return false
+			end
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBBuff() - All provided buff checks passed.")
+		end
+
 		return true
 	end
 
-	-- Fallback to quest data if `check` and `neededAmt` are not directly provided
+	-- Fallback to quest data when `check` and `neededAmt`
+	-- were not passed directly.
 	local questData = self.getQuestData(questID)
+
 	if not questData then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckDBBuff() - No quest data found for questID:", questID)
+			print(
+				"CheckDBBuff() - No quest data found for questID:",
+				questID
+			)
 		end
+
 		return false
 	end
 
 	local stepData = questData[stepIndex]
+
 	if not stepData then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
+			print(
+				"CheckDBBuff() - No step data found for stepIndex:",
+				stepIndex
+			)
 		end
+
 		return false
 	end
 
-	-- Evaluate `checks` if present
+	-- Evaluate `checks` if present.
 	if stepData.checks then
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
+			print(
+				"CheckDBBuff() - Using EvaluateStepChecks for multiple checks."
+			)
 		end
+
 		local success = self:EvaluateStepChecks(questID, stepIndex)
+
 		if success then
-			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
+				print(
+					"CheckDBBuff() - Buff checks succeeded. Advancing quest step."
+				)
 			end
+
 			return true
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("CheckDBBuff() - Buff checks failed.")
 			end
+
 			return false
 		end
 	end
 
-	-- Evaluate single `check` from step data
+	-- Evaluate a single `check` from the step data.
 	check = stepData.check or {}
+	neededAmt = stepData.neededAmt or {}
+
 	if #check == 0 then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("CheckDBBuff() - No buffs to check.")
 		end
+
 		return false
 	end
 
-	for _, buffName in ipairs(check) do
-		local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-		if aura then
-			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+	for i, buffName in ipairs(check) do
+		-- old:
+		-- local requiredStacks = tonumber(neededAmt[i]) or 1
+		--
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName(
+		-- 	"player",
+		-- 	buffName,
+		-- 	"HELPFUL"
+		-- )
+		--
+		-- local currentStacks = 0
+		--
+		-- if aura then
+		-- 	currentStacks =
+		-- 		(aura.applications and aura.applications > 0)
+		-- 		and aura.applications
+		-- 		or 1
+		-- end
+		--
+		-- if currentStacks >= requiredStacks then
+		-- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- 		print(
+		-- 			"CheckDBBuff() - Buff stack check passed:",
+		-- 			buffName,
+		-- 			"current:", currentStacks,
+		-- 			"required:", requiredStacks,
+		-- 			". Advancing quest step."
+		-- 		)
+		-- 	end
+		-- 	return true
+		-- else
+		-- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- 		print(
+		-- 			"CheckDBBuff() - Buff missing or insufficient stacks:",
+		-- 			buffName,
+		-- 			"current:", currentStacks,
+		-- 			"required:", requiredStacks
+		-- 		)
+		-- 	end
+		-- end
+
+		if EvaluateBuffAmount(buffName, neededAmt[i]) then
 			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
+				print(
+					"CheckDBBuff() - Buff check passed:",
+					buffName,
+					". Advancing quest step."
+				)
 			end
+
 			return true
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("CheckDBBuff() - Buff not active:", buffName)
-			end
 		end
 	end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("CheckDBBuff() - No buffs matched.")
 	end
+
 	return false
 end
+
+
+-- -- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
+-- function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckDBBuff ~~")
+	-- end
+
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Optional mode: combine active buff stacks with completed quest-objective progress.
+	-- -- Existing CheckDBBuff entries remain unchanged unless this DB field is true.
+	-- local objectiveProgress = 0
+	-- local totalQuestData = self.getQuestData(questID)
+	-- local totalStepData = totalQuestData and totalQuestData[stepIndex]
+
+	-- if totalStepData and totalStepData.combineBuffAndObjectiveProgress then
+		-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+		-- local objectiveIndex = tonumber(totalStepData.objectiveIndex) or 1
+		-- local objective = objectives and objectives[objectiveIndex]
+
+		-- if objective then
+			-- objectiveProgress = tonumber(objective.numFulfilled) or 0
+		-- end
+	-- end
+
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, buffName in ipairs(check) do
+			-- local requiredStacks = tonumber(neededAmt[i]) or 1
+
+			-- -- old:
+			-- -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+			-- -- if not aura then
+			-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- -- 		print("CheckDBBuff() - Buff not active:", buffName)
+			-- -- 	end
+			-- -- 	return false
+			-- -- else
+			-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- -- 		print("CheckDBBuff() - Buff active:", buffName)
+			-- -- 	end
+			-- -- end
+
+			-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+			-- local currentStacks = 0
+
+			-- if aura then
+				-- currentStacks = (aura.applications and aura.applications > 0) and aura.applications or 1
+			-- end
+
+			-- if currentStacks < requiredStacks then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff missing or insufficient stacks:", buffName, "current:", currentStacks, "required:", requiredStacks)
+				-- end
+				-- return false
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff stack check passed:", buffName, "current:", currentStacks, "required:", requiredStacks)
+				-- end
+			-- end
+		-- end
+
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - All buffs matched for provided `check`.")
+		-- end
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not directly provided
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No quest data found for questID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Evaluate `checks` if present
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks failed.")
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Evaluate single `check` from step data
+	-- check = stepData.check or {}
+	-- neededAmt = stepData.neededAmt or {}
+
+	-- if #check == 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No buffs to check.")
+		-- end
+		-- return false
+	-- end
+
+	-- for i, buffName in ipairs(check) do
+		-- local requiredStacks = tonumber(neededAmt[i]) or 1
+
+		-- -- old:
+		-- -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+		-- -- if aura then
+		-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- -- 		print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
+		-- -- 	end
+		-- -- 	return true
+		-- -- else
+		-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- -- 		print("CheckDBBuff() - Buff not active:", buffName)
+		-- -- 	end
+		-- -- end
+
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+		-- local currentStacks = 0
+
+		-- if aura then
+			-- currentStacks = (aura.applications and aura.applications > 0) and aura.applications or 1
+		-- end
+
+		-- if currentStacks >= requiredStacks then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff stack check passed:", buffName, "current:", currentStacks, "required:", requiredStacks, ". Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff missing or insufficient stacks:", buffName, "current:", currentStacks, "required:", requiredStacks)
+			-- end
+		-- end
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("CheckDBBuff() - No buffs matched.")
+	-- end
+	-- return false
+-- end
+
+
+-- -- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
+-- function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckDBBuff ~~")
+	-- end
+
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, buffName in ipairs(check) do
+			-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+			-- if not aura then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff not active:", buffName)
+				-- end
+				-- return false
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff active:", buffName)
+				-- end
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - All buffs matched for provided `check`.")
+		-- end
+		-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not directly provided
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No quest data found for questID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Evaluate `checks` if present
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks failed.")
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Evaluate single `check` from step data
+	-- check = stepData.check or {}
+	-- if #check == 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No buffs to check.")
+		-- end
+		-- return false
+	-- end
+
+	-- for _, buffName in ipairs(check) do
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+		-- if aura then
+			-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff not active:", buffName)
+			-- end
+		-- end
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("CheckDBBuff() - No buffs matched.")
+	-- end
+	-- return false
+-- end
 
 
 -- Function will check if the player currently has any of the debuffs specified in the quest's check or checks field.
@@ -9957,58 +10596,229 @@ function RQE:CheckDBDebuff(questID, stepIndex, check, neededAmt)
 end
 
 
--- Main function to check inventory conditions (Array/Checks or Check compatible)
+-- Main function to check inventory conditions
+-- Supports ordinary inventory amounts and combined inventory/objective amounts.
 function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~~ Running CheckDBInventory ~~~")
 	end
 
-	-- Ensure `check` and `neededAmt` are valid
+	-- Ensure `check` and `neededAmt` are valid.
 	check = check or {}
 	neededAmt = neededAmt or {}
 
-	-- Debug print
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+	-- Accepts either:
+	-- neededAmt = { "2" }             Inventory alone must contain 2.
+	-- neededAmt = { "6+objective" }   Inventory plus objective progress must reach 6.
+	local function ParseRequiredAmount(rawAmount)
+		if type(rawAmount) == "string" then
+			local combinedAmount = rawAmount:match(
+				"^%s*(%d+)%s*%+%s*objective%s*$"
+			)
+
+			if combinedAmount then
+				return tonumber(combinedAmount) or 1, true
+			end
+		end
+
+		return tonumber(rawAmount) or 1, false
 	end
 
-	-- Evaluate `check` and `neededAmt` directly if provided
+	-- Returns progress for the objective assigned to the current DB step.
+	local function GetCurrentObjectiveProgress()
+		local questData = self.getQuestData(questID)
+		local stepData = questData and questData[stepIndex]
+
+		if not stepData then
+			return 0
+		end
+
+		local objectiveIndex = tonumber(stepData.objectiveIndex) or 1
+		local objectives = C_QuestLog.GetQuestObjectives(questID)
+		local objective = objectives and objectives[objectiveIndex]
+
+		if not objective then
+			return 0
+		end
+
+		return tonumber(objective.numFulfilled) or 0
+	end
+
+	-- Debug print.
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(
+			"Evaluating check:",
+			table.concat(check, ", "),
+			"with neededAmt:",
+			table.concat(neededAmt, ", ")
+		)
+	end
+
+	-- Evaluate `check` and `neededAmt` directly if provided.
 	if #check > 0 and #neededAmt > 0 then
 		for i, condition in ipairs(check) do
-			local amount = tonumber(neededAmt[i]) or 1
-			local itemCount = GetItemCount(condition, false) -- Replace with your inventory check logic
-			if itemCount < amount then
+			-- old:
+			-- local amount = tonumber(neededAmt[i]) or 1
+			-- local itemCount = GetItemCount(condition, false)
+			--
+			-- if itemCount < amount then
+			-- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- 		print(
+			-- 			"Inventory check failed for item:",
+			-- 			condition,
+			-- 			"needed:", amount,
+			-- 			"found:", itemCount
+			-- 		)
+			-- 	end
+			-- 	return false
+			-- end
+
+			local requiredAmount, includeObjectiveProgress =
+				ParseRequiredAmount(neededAmt[i])
+
+			local itemCount = GetItemCount(condition, false) or 0
+			local objectiveProgress = 0
+
+			if includeObjectiveProgress then
+				objectiveProgress = GetCurrentObjectiveProgress()
+			end
+
+			local currentTotal = itemCount + objectiveProgress
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(
+					"CheckDBInventory() - Inventory evaluation:",
+					"item:", condition,
+					"item count:", itemCount,
+					"objective progress:", objectiveProgress,
+					"combined total:", currentTotal,
+					"required:", requiredAmount,
+					"combined mode:",
+					tostring(includeObjectiveProgress)
+				)
+			end
+
+			if currentTotal < requiredAmount then
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("Inventory check failed for item:", condition, "needed:", amount, "found:", itemCount)
+					print(
+						"CheckDBInventory() - Inventory check failed:",
+						"item:", condition,
+						"item count:", itemCount,
+						"objective progress:", objectiveProgress,
+						"combined total:", currentTotal,
+						"required:", requiredAmount
+					)
 				end
+
 				return false
 			end
 		end
+
 		if RQE.db.profile.debugLevel == "INFO+" then
-			print("All inventory conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+			print(
+				"All inventory conditions met for check:",
+				table.concat(check, ", "),
+				"neededAmt:",
+				table.concat(neededAmt, ", ")
+			)
 		end
+
 		return true
 	end
 
-	-- Fallback to `EvaluateStepChecks` if `check` and `neededAmt` are not directly provided
+	-- Fallback to EvaluateStepChecks if `check` and `neededAmt`
+	-- were not directly provided.
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Falling back to EvaluateStepChecks for questID:", questID, "stepIndex:", stepIndex)
+		print(
+			"Falling back to EvaluateStepChecks for questID:",
+			questID,
+			"stepIndex:",
+			stepIndex
+		)
 	end
+
 	local success = self:EvaluateStepChecks(questID, stepIndex)
+
 	if success then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~ Success ~")
-			print("Inventory conditions met for questID:", questID, "stepIndex:", stepIndex)
+			print(
+				"Inventory conditions met for questID:",
+				questID,
+				"stepIndex:",
+				stepIndex
+			)
 		end
+
 		return true
 	else
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~ Failure ~")
-			print("Inventory conditions NOT met for questID:", questID, "stepIndex:", stepIndex)
+			print(
+				"Inventory conditions NOT met for questID:",
+				questID,
+				"stepIndex:",
+				stepIndex
+			)
 		end
+
 		return false
 	end
 end
+
+
+-- -- Main function to check inventory conditions (Array/Checks or Check compatible)
+-- function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~~ Running CheckDBInventory ~~~")
+	-- end
+
+	-- -- Ensure `check` and `neededAmt` are valid
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Debug print
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+	-- end
+
+	-- -- Evaluate `check` and `neededAmt` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, condition in ipairs(check) do
+			-- local amount = tonumber(neededAmt[i]) or 1
+			-- local itemCount = GetItemCount(condition, false) -- Replace with your inventory check logic
+			-- if itemCount < amount then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Inventory check failed for item:", condition, "needed:", amount, "found:", itemCount)
+				-- end
+				-- return false
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("All inventory conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+		-- end
+		-- return true
+	-- end
+
+	-- -- Fallback to `EvaluateStepChecks` if `check` and `neededAmt` are not directly provided
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Falling back to EvaluateStepChecks for questID:", questID, "stepIndex:", stepIndex)
+	-- end
+	-- local success = self:EvaluateStepChecks(questID, stepIndex)
+	-- if success then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("~ Success ~")
+			-- print("Inventory conditions met for questID:", questID, "stepIndex:", stepIndex)
+		-- end
+		-- return true
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("~ Failure ~")
+			-- print("Inventory conditions NOT met for questID:", questID, "stepIndex:", stepIndex)
+		-- end
+		-- return false
+	-- end
+-- end
 
 
 -- Function to evaluate complex conditions recursively
@@ -15023,7 +15833,6 @@ function RQE.ShowPrintCoordsForDisplayedQuestPopup(passedQuestID)
 
 	StaticPopup_Show("RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST")
 end
-
 
 
 -- Debug to print TomTom waypoints and also player coordinates as they relate to the DB
