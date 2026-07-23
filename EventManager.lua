@@ -122,6 +122,7 @@ local eventsToRegister = {
 	"UNIT_INVENTORY_CHANGED",
 	"UNIT_MODEL_CHANGED",
 	"UNIT_QUEST_LOG_CHANGED",
+	"UNIT_SPELLCAST_SUCCEEDED",
 	"UPDATE_INSTANCE_INFO",
 	"UPDATE_OVERRIDE_ACTIONBAR",
 	"UPDATE_MOUSEOVER_UNIT",
@@ -295,6 +296,7 @@ local function HandleEvents(frame, event, ...)
 		UNIT_EXITING_VEHICLE = RQE.handleZoneChange,
 		UNIT_INVENTORY_CHANGED = RQE.handleUnitInventoryChange,
 		UNIT_MODEL_CHANGED = RQE.handleUnitModelChange,
+		UNIT_SPELLCAST_SUCCEEDED = RQE.handleUnitSpellCastSucceeded,
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		UPDATE_OVERRIDE_ACTIONBAR = RQE.handleOverrideActionBar,
@@ -4912,6 +4914,105 @@ function RQE.handleUnitAura(...)
 		return
 	end
 
+	-- A stack decrease is normally reported through updatedAuraInstanceIDs,
+	-- while complete aura removal is reported through removedAuraInstanceIDs.
+	-- Check the entire quest instead of only the current step because a stale
+	-- combined total may have temporarily moved the addon to CheckDBComplete.
+	local function HasAuraUpdates(auraUpdates)
+		return type(auraUpdates) == "table"
+			and next(auraUpdates) ~= nil
+	end
+
+	local hasChangedOrRemovedAura =
+		type(updateInfo) == "table"
+		and (
+			updateInfo.isFullUpdate
+			or HasAuraUpdates(updateInfo.updatedAuraInstanceIDs)
+			or HasAuraUpdates(updateInfo.removedAuraInstanceIDs)
+		)
+
+	if hasChangedOrRemovedAura then
+		local function AmountUsesObjective(neededAmounts)
+			if type(neededAmounts) ~= "table" then
+				return false
+			end
+
+			for _, rawAmount in ipairs(neededAmounts) do
+				if type(rawAmount) == "string"
+					and rawAmount:match("%+%s*objective%s*$")
+				then
+					return true
+				end
+			end
+
+			return false
+		end
+
+		local function QuestUsesCombinedBuffObjective()
+			for _, questStep in ipairs(questData) do
+				-- Handle a step with a single `check`.
+				if questStep.funct == "CheckDBBuff"
+					and AmountUsesObjective(questStep.neededAmt)
+				then
+					return true
+				end
+
+				-- Handle a step with multiple `checks`.
+				if type(questStep.checks) == "table" then
+					for _, checkData in ipairs(questStep.checks) do
+						if checkData.funct == "CheckDBBuff"
+							and AmountUsesObjective(checkData.neededAmt)
+						then
+							return true
+						end
+					end
+				end
+			end
+
+			return false
+		end
+
+		if QuestUsesCombinedBuffObjective() then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(
+					"UNIT_AURA - Updated or removed aura detected "
+					.. "for a combined buff/objective quest. "
+					.. "Scheduling corrective check.",
+					"questID:", questID,
+					"current stepIndex:", stepIndex
+				)
+			end
+
+			-- Combine rapid aura updates into one final correction.
+			if RQE.CombinedAuraObjectiveRecheckTimer then
+				RQE.CombinedAuraObjectiveRecheckTimer:Cancel()
+				RQE.CombinedAuraObjectiveRecheckTimer = nil
+			end
+
+			RQE.CombinedAuraObjectiveRecheckTimer =
+				C_Timer.NewTimer(0.20, function()
+					RQE.CombinedAuraObjectiveRecheckTimer = nil
+
+					if C_SuperTrack.GetSuperTrackedQuestID() ~= questID then
+						return
+					end
+
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(
+							"UNIT_AURA - Running combined "
+							.. "buff/objective corrective check.",
+							"questID:", questID
+						)
+					end
+
+					RQE:StartPeriodicChecks()
+				end)
+
+			-- This corrective path already handles the aura update.
+			return
+		end
+	end
+
 	-- Check if any added auras match the current step's checks
 	if updateInfo and updateInfo.addedAuras then
 		for _, aura in ipairs(updateInfo.addedAuras) do
@@ -5057,6 +5158,90 @@ function RQE.handleUnitModelChange(...)
 end
 
 
+-- Handles UNIT_SPELLCAST_SUCCEEDED event
+function RQE.handleUnitSpellCastSucceeded(...)
+	local event = select(2, ...)
+	local unitTarget = select(3, ...)
+	local castGUID = select(4, ...)
+	local spellID = select(5, ...)
+	local castBarID = select(6, ...)
+
+	-- Print Event-specific Args
+	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		local args = {...}  -- Capture all arguments into a table
+		for i, arg in ipairs(args) do
+			if type(arg) == "table" then
+				print("Arg " .. i .. ": (table)")
+				for k, v in pairs(arg) do
+					print("  " .. tostring(k) .. ": " .. tostring(v))
+				end
+			else
+				print("Arg " .. i .. ": " .. tostring(arg))
+			end
+		end
+	end
+
+	-- Only process successful spells cast by the player.
+	if unitTarget ~= "player" then
+		return
+	end
+
+	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID <= 0 then
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return
+	end
+
+	local stepIndex =
+		tonumber(RQE.AddonSetStepIndex)
+		or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+		or tonumber(RQE.StoredStepIndex)
+		or 1
+
+	local stepData = questData[stepIndex]
+	if not stepData then
+		return
+	end
+
+	local usesAuraCheck =
+		stepData.funct == "CheckDBBuff"
+		or stepData.funct == "CheckDBDebuff"
+
+	if not usesAuraCheck and type(stepData.checks) == "table" then
+		for _, checkData in ipairs(stepData.checks) do
+			if checkData.funct == "CheckDBBuff"
+				or checkData.funct == "CheckDBDebuff"
+			then
+				usesAuraCheck = true
+				break
+			end
+		end
+	end
+
+	-- The current step does not depend on a player buff or debuff.
+	if not usesAuraCheck then
+		return
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(
+			"UNIT_SPELLCAST_SUCCEEDED - Queuing aura checks:",
+			"questID:", questID,
+			"stepIndex:", stepIndex,
+			"spellID:", spellID
+		)
+	end
+
+	-- Allow the aura stack data time to update after the successful cast.
+	-- QueuePeriodicChecks also combines duplicate spellcast events.
+	RQE:QueuePeriodicChecks("UNIT_SPELLCAST_SUCCEEDED", 0.4, questID)
+end
+
+
 -- Handles UNIT_QUEST_LOG_CHANGED event
 -- Fired whenever the quest log changes and also seems to fire with progress quests. (Frequently, but not as frequently as QUEST_LOG_UPDATE) 
 function RQE.handleUnitQuestLogChange(...)
@@ -5087,7 +5272,7 @@ function RQE.handleUnitQuestLogChange(...)
 	if not questID then return end
 
 	C_Timer.After(2.5, function()
-		if RQE.db.profile.debugLevel == "INFO" then
+		if RQE.db.profile.debugLevel == "INFO+" then
 			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UNIT_QUEST_LOG_CHANGED event function")
 		end
 		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
@@ -5111,7 +5296,7 @@ function RQE.handleUnitQuestLogChange(...)
 				RQE.StartPerioFromUnitQuestLogChanged = true
 
 				if questID then
-					if RQE.db.profile.debugLevel == "INFO" then
+					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Running RQE:StartPeriodicChecks() due to changes detected")
 					end
 
@@ -5119,7 +5304,7 @@ function RQE.handleUnitQuestLogChange(...)
 					RQE.PeriodicIsFiring = true
 				else
 					C_Timer.After(0.25, function()
-						if RQE.db.profile.debugLevel == "INFO" then
+						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Running RQE:StartPeriodicChecks() due to changes detected")
 						end
 
@@ -5132,7 +5317,7 @@ function RQE.handleUnitQuestLogChange(...)
 					RQE.StartPerioFromUnitQuestLogChanged = false
 				end)
 			else
-				if RQE.db.profile.debugLevel == "INFO" then
+				if RQE.db.profile.debugLevel == "INFO+" then
 					print("UQLC: No objective progress change → NOT running StartPeriodicChecks()")
 				end
 			end
@@ -5141,7 +5326,7 @@ function RQE.handleUnitQuestLogChange(...)
 			if CurrentStepUsesObjectiveStatus(questID) then
 				C_Timer.After(0.75, function()
 					if C_SuperTrack.GetSuperTrackedQuestID() == questID then
-						if RQE.db.profile.debugLevel == "INFO" then
+						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Running delayed objective-status recheck for questID:", questID)
 						end
 
@@ -5590,8 +5775,8 @@ function RQE.handleQuestStatusUpdate()
 					RQE:CheckAndRefreshSeparateFocusFrame()
 
 					C_Timer.After(1.7, function()
-						if RQE.db.profile.debugLevel == "INFO" then
-							-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #1 event function")
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #1 event function")
 						end
 						RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 					end)
@@ -5624,8 +5809,8 @@ function RQE.handleQuestStatusUpdate()
 	end)
 
 	C_Timer.After(1.7, function()
-		if RQE.db.profile.debugLevel == "INFO" then
-			-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #2 event function")
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #2 event function")
 		end
 		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 	end)
@@ -6975,10 +7160,14 @@ function RQE.handleQuestDetail(...)
 			local objectivesOK = HasNonEmptyTextArray(questData.objectivesQuestText)
 			local descriptionOK = HasNonEmptyTextArray(questData.descriptionQuestText)
 			local npcOK = HasNonEmptyTextArray(questData.npc)
+			local npcName = UnitName("target")
 
 			DEFAULT_CHAT_FRAME:AddMessage("  objectivesQuestText: " .. (objectivesOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 			DEFAULT_CHAT_FRAME:AddMessage("  descriptionQuestText: " .. (descriptionOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 			DEFAULT_CHAT_FRAME:AddMessage("  npc: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
+			if not npcOK then
+				print(string.format("			npc = { \"%s\" },", npcName))
+			end
 		end
 	end
 end
