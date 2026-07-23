@@ -1,4 +1,4 @@
-12.0.7.3
+12.0.7.3 (2026.07.23)
 
 	**HIGHLIGHTS**
 		- Major bug fixes and improvements to efficiency of addon's processing
@@ -10,21 +10,34 @@
 		- Improved handling of manual step preview reset so pressing the QuestLogIndexButton more reliably restores automatic step progression.
 		- Updated Ardenweald covenant campaign quests in DB
 		- Resolved issue where weekly Jewelery quest "The Exhibition," in Valdrakken, was not updating to the correct step
+		- Added clearer warband-wide completion information when searching for quests, including whether completion was recorded on the current character or elsewhere on the warband.
+		- Improved quest-step tracking for objectives where progress is split between completed objectives and temporary buff stacks or inventory items, such as gathering followers, delivering NPCs, collecting keys and opening cages.
+		- Improved responsiveness and accuracy when buff or debuff stacks change, reducing delayed, skipped or incorrectly displayed quest steps.
+
+	Ace3 Libraries
+		- Updated LibDBIcon, LibSharedMedia (2026.07.31.1552)
 
 	Core.lua
 		- Added handling for a new RQE.ManualStepOverrideQLIB flag within RQE:StartPeriodicChecks() so that pressing the QuestLogIndexButton explicitly clears manual step preview state and restores automatic quest progression without causing a duplicate RQE:StartPeriodicChecks() call through RQE:ClearManualStepPreview(false) (2026.07.05.2208)
 		- Resolved issue where RQE:STartPeriodicChecks() was not resetting its stepIndex when the QuestLogIndexButton has been pressed (2026.07.15.1644)
 		- Removed an early return in the RQE:STartPeriodicChecks() function that was preventing macro check from running (2026.07.15.1644)
+		- Added a TomTom waypoint reset if coordinateblock is pressed in the RQEFrame (2026.07.31.1552)
+		- Added detailed warband-wide completion status information for searched quests, making it clear whether a quest was completed by the current character or elsewhere on the warband (2026.07.31.1552)
+		- Enhanced RQE:CheckDBBuff() to evaluate active buff stack counts against neededAmt and added optional "N+objective" support for combining buff stacks with quest objective progress (2026.07.31.1552)
+		- Enhanced RQE:CheckDBInventory() with optional "N+objective" support, allowing item counts to be combined with quest objective progress for quests involving consumable items, such as collecting keys and opening cages (2026.07.31.1552)
 
 	EventManager.lua
 		- Added RQE.ManualStepOverrideQLIB flag to allow RQE:StartPeriodicChecks() to run anytime enableStepControls is toggled and the QuestLogIndexButton is clicked (2026.07.05.2208)
 		- Added helper to check if objective status changes so that the step can properly advance (2026.07.15.1644)
 		- Modified UNIT_QUEST_LOG_CHANGED event function to not return prematurely before a check of correct step can be run (2026.07.15.1644)
 		- Modified QUEST_WATCH_LIST_CHANGED to save the currently tracked/supertracked quest when event function runs (2026.07.15.1644)
+		- Added a UNIT_SPELLCAST_SUCCEEDED handler that queues a delayed step evaluation after a successful player spellcast when the current supertracked quest step uses CheckDBBuff or CheckDBDebuff, allowing aura stack changes to update before they are checked (2026.07.31.1552)
+		- Enhanced the UNIT_AURA handler to detect added, updated and removed player auras and re-evaluate buff stack requirements, including corrective checks for combined "N+objective" conditions so the RQEFrame returns to the appropriate quest step after aura counts change (2026.07.31.1552)
 
 	QuestingModule.lua
 		- Updated QuestLogIndexButton:SetScript("OnMouseDown") so that when leaving manual step preview it now sets RQE.ManualStepOverrideQLIB = true after calling RQE:ClearManualStepPreview(false), allowing RQE:StartPeriodicChecks() to treat the button press as an intentional return to automatic quest progression (2026.07.05.2208)
 		- Added a reset to stepIndex when QuestLogIndexButton is pressed (2026.07.15.1644)
+		- Added detailed information if a tracked quest had been completed by the warband or not (2026.07.31.1552)
 
 	RQE.toc
 		- Updated version# (2026.07.04.0149)
@@ -33,10 +46,11 @@
 		- Updated Kyrian (Bastion) covenant campaign quests in DB (2026.07.04.0149)
 		- Updated Night Fae (Ardenweald) covenant campaign quests in DB (2026.07.05.2208)
 		- Updated Necrolord (Maldraxxus) covenant campaign quests in DB (2026.07.15.1644)
-		- Updated end-game Maw and some Korthia campaign quests in DB (2026.07.15.1644)
+		- Updated end-game Maw, Korthia and most of Zereth Mortis campaign quests in DB (2026.07.31.1552)
 
 	RQEFrame.lua
 		- Set variables to only change certain way if enableStepControls is toggled on (2026.07.04.0149)
+		- Added detailed information if a supertracked quest had been completed by the warband or not (2026.07.31.1552)
 
 	RQEMacro.lua
 		- Updated macro tooltip (non-item/spells) to have smaller print so most of the macroBody is shown (2026.07.04.0149)
