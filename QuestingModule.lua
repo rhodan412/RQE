@@ -3014,8 +3014,22 @@ function UpdateRQEQuestFrame()
 						-- Check if the quest is completed
 						elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
 							GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
+							if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0) -- Green color for completed on warband & character
+							else
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
+							end
 						else
 							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+							if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
+							else
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
+							end
 						end
 						GameTooltip:AddLine(" ")
 					end
@@ -3100,9 +3114,11 @@ function UpdateRQEQuestFrame()
 					if directionText and directionText ~= "" then
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: " .. directionText, 0.81, 0.5, 1, true)
+						GameTooltip:AddLine(" ")
 					else
 						GameTooltip:AddLine(" ")
 						GameTooltip:AddLine("Next Step: [No additional information]", 0.81, 0.5, 1, true)
+						GameTooltip:AddLine(" ")
 					end
 
 					if questID then
@@ -3112,8 +3128,22 @@ function UpdateRQEQuestFrame()
 						-- Check if the quest is completed
 						elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
 							GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
+							if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0) -- Green color for completed on warband & character
+							else
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
+							end
 						else
 							GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
+							if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
+							else
+								--GameTooltip:AddLine(" ")
+								GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
+							end
 						end
 						GameTooltip:AddLine(" ")
 					end
