@@ -128,7 +128,7 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 	-- end
 
 	-- Default title: use supertracked quest
-	local questID  = (C_SuperTrack.IsSuperTrackingQuest() and C_SuperTrack.GetSuperTrackedQuestID())
+	local questID  = (RQE.API.IsSuperTrackingQuest() and RQE.API.GetSuperTrackedQuestID())
 	local questData = questID and RQE.getQuestData(questID)
 
 	if not title and questData then
@@ -216,7 +216,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	C_Timer.After(0.5, function()
 		if not questID then
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+				questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 				-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			else
 				return
@@ -376,7 +376,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
@@ -391,7 +391,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		return
 	end
 
-	-- local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	-- local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 	-- local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = questID > 0 and string.format('QID: %d, "%s"', questID, questName or "Unknown") or "Unknown Quest"
 	-- if RQE.db.profile.debugLevel == "INFO+" then
 		-- print("waypointTitle - 302: " .. tostring(waypointTitle))
@@ -489,7 +489,7 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 	end
 
 	-- 9) Build title lines for arrow (single-line) + multiline preview for debug
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 	local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
 
 	-- Bail out early if there is no actual direction text
@@ -586,13 +586,14 @@ function RQE:ShouldBlockWorldQuestWaypoint(candidateQuestID)
 	end
 
 	-- Only block world quests
-	if not C_QuestLog.IsWorldQuest(candidateQuestID) then
+	if not RQE.API.IsWorldQuest(candidateQuestID) then
+	--if not C_QuestLog.IsWorldQuest(candidateQuestID) then
 		return false
 	end
 
 	-- Use the addon's intended/displayed quest first, because Blizzard may auto-supertrack
 	-- a nearby world quest temporarily when the player flies over it.
-	local intendedQuestID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+	local intendedQuestID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	if not intendedQuestID or intendedQuestID <= 0 then
 		return false
 	end
@@ -628,7 +629,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
@@ -645,11 +646,11 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 
 	local questData = RQE.getQuestData(questID)
 	local x, y
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 	local waypointTitle
 
 	-- Determine coordinates and title based on quest presence in quest log and database
-	if questData and not C_QuestLog.IsOnQuest(questID) and questData.location then
+	if questData and not RQE.API.IsOnQuest(questID) and questData.location then
 		x = questData.location.x
 		y = questData.location.y
 		mapID = questData.location.mapID
@@ -666,7 +667,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			end
 
 			-- Use either extractedQuestID or current super-tracked quest ID
-			local questID = extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = extractedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 
 			-- Re-check after questID is resolved inside the delayed callback
 			if questID and RQE:ShouldBlockWorldQuestWaypoint(questID) then
@@ -698,7 +699,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 					RQE.x = sx
 					RQE.y = sy
 					RQE.MapID = smap
-				elseif RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
+				elseif RQE.DatabaseSuperX and questID and not RQE.API.IsOnQuest(questID) then
 					RQE.x = RQE.DatabaseSuperX
 					RQE.y = RQE.DatabaseSuperY
 					RQE.MapID = RQE.DatabaseSuperMapID
@@ -736,7 +737,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 					RQE.x = sx
 					RQE.y = sy
 					RQE.MapID = smap
-				elseif RQE.DatabaseSuperX and questID and not C_QuestLog.IsOnQuest(questID) then
+				elseif RQE.DatabaseSuperX and questID and not RQE.API.IsOnQuest(questID) then
 					RQE.x = RQE.DatabaseSuperX
 					RQE.y = RQE.DatabaseSuperY
 					RQE.MapID = RQE.DatabaseSuperMapID
@@ -784,7 +785,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			
 			-- Ensure questID is not nil before using it
 			if not questID then
-				questID = C_SuperTrack.GetSuperTrackedQuestID() or 0  -- Fallback to super-tracked quest or set to 0
+				questID = RQE.API.GetSuperTrackedQuestID() or 0		--C_SuperTrack.GetSuperTrackedQuestID() or 0  -- Fallback to super-tracked quest or set to 0
 			end
 
 			-- Set a default title if questID is still nil or 0
@@ -892,7 +893,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	if not questID then
 		-- Check if RQE.QuestIDText exists and has text
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			-- questID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		else
 			return -- Exit if questID and QuestIDText are both unavailable
@@ -909,11 +910,11 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 
 	local questData = RQE.getQuestData(questID)
 	local x, y
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 	local waypointTitle
 
 	-- Determine coordinates and title based on quest presence in quest log and database
-	if questData and questID and not C_QuestLog.IsOnQuest(questID) and questData.location then
+	if questData and questID and not RQE.API.IsOnQuest(questID) and questData.location then
 		x = questData.location.x
 		y = questData.location.y
 		mapID = questData.location.mapID
@@ -1012,7 +1013,7 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 		return
 	end
 
-	local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 	-- print("~~~ Waypoint Set: 549 ~~~")
 	local waypointTitle = RQE:GetWaypointTitle(questID, mapID, (x and x/100) or nil, (y and y/100) or nil)	--local waypointTitle = string.format('QID: %d, "%s"', questID, questName or "Unknown")
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -1100,7 +1101,7 @@ function RQE:CreateQuestWaypointFromNextWaypoint(questID)
 
 	-- Ensure a valid questID is available
 	if not questID then
-		questID = C_SuperTrack.GetSuperTrackedQuestID()
+		questID = RQE.API.GetSuperTrackedQuestID()	--questID = C_SuperTrack.GetSuperTrackedQuestID()
 		if not questID or questID == 0 then
 			print("No valid questID found for waypoint creation.")
 			return
@@ -1197,7 +1198,7 @@ function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
 	end
 
 	-- Retrieve the currently super-tracked quest ID
-	local questID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+	local questID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID	--C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 	if not questID or questID == 0 then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("No super-tracked quest found.")
@@ -1334,7 +1335,7 @@ function RQE:OnCoordinateClicked()
 	if not RQEFrame:IsShown() then return end
 
 	local stepIndex = RQE.AddonSetStepIndex or 1
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
 	if not questID then
 		RQE.debugLog("No super-tracked quest.")
@@ -1363,7 +1364,7 @@ function RQE:OnCoordinateClicked()
 	-- print("~~~ Waypoint Set: 1111 ~~~")
 
 	-- Always resolve the base title using our centralized logic
-	-- local questName = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+	-- local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 	-- local title = RQE:GetWaypointTitle(questID, mapID, x, y)	
 	local title = RQE:GetWaypointTitle(questID, mapID, x, y)
 	-- local title = string.format('QID: %d, "%s"', questID, questName or "Unknown")
@@ -1409,8 +1410,8 @@ function RQE:ForceWaypointForSupertracked(qid, mapID)
 	-- print("~~~ Waypoint Creation Function: 1137 ~~~")
 	if not RQEFrame:IsShown() then return end
 
-	if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
-	qid   = qid   or C_SuperTrack.GetSuperTrackedQuestID()
+	if not RQE.API.IsSuperTrackingQuest() then return end		--if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
+	qid   = qid   or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	mapID = mapID or C_Map.GetBestMapForUnit("player")
 	if not qid or not mapID then return end
 
@@ -1461,7 +1462,7 @@ function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 
 	-- Build a sane default up-front
 	local questData = questID and RQE.getQuestData(questID)
-	local qname = (questID and C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)) or (questData and questData.title) or "Waypoint"
+	local qname = (questID and RQE.API.GetTitleForQuestID and RQE.API.GetTitleForQuestID(questID)) or (questData and questData.title) or "Waypoint"
 	local defaultTitle = string.format('QID: %d, "%s"', questID or -1, qname)
 
 	if not questData then return defaultTitle end
@@ -1535,7 +1536,7 @@ function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 	end
 
 	-- 4) Default to quest title with QID
-	local questName = (C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)) or (questData and questData.title) or "Unknown"
+	local questName = (RQE.API.GetTitleForQuestID and RQE.API.GetTitleForQuestID(questID)) or (questData and questData.title) or "Unknown"
 	return defaultTitle or string.format('QID: %d, "%s"', questID, questName)
 end
 
