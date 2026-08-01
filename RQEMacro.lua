@@ -45,7 +45,7 @@ function RQE.CheckCurrentMacroContents()
 
 	-- Check if a quest is being super-tracked
 	RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
-	local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 
 	if not RQE.isSuperTracking or not isSuperTracking then
 		RQE.debugLog("No quest is currently being super-tracked.")
@@ -53,7 +53,7 @@ function RQE.CheckCurrentMacroContents()
 	end
 
 	-- Get the quest ID of the currently super-tracked quest
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then
 		RQE.debugLog("Super-tracked quest ID not found.")
 		return false
@@ -366,7 +366,7 @@ function RQEMacro:UpdateMagicButtonTooltip()
 	if not MagicButton then return end
 
 	-- >>> NEW: check if current macroArray step defines a spell tooltip
-	local questID = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	if questID and RQE and RQE.getQuestData then
 		local questData = RQE.getQuestData(questID)
 		local stepIndex = RQE.AddonSetStepIndex
