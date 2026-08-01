@@ -301,6 +301,10 @@ RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, 0, co
 --RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -40, content:GetWidth(), 120)
 RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 
+-- Bonus Objectives use their own section and retain the existing BQ row behavior.
+RQE.BonusQuestsFrame = CreateChildFrame("RQEBonusQuestsFrame", content, 0, 0, content:GetWidth(), 120)
+RQE.BonusQuestsFrame.questCount = RQE.BonusQuestsFrame.questCount or 0
+
 -- Task Quests are intentionally separate from Bonus Objectives and World Quests.
 RQE.TaskQuestsFrame = CreateChildFrame("RQETaskQuestsFrame", content, 0, 0, content:GetWidth(), 120)
 RQE.TaskQuestsFrame.questCount = RQE.TaskQuestsFrame.questCount or 0
@@ -407,6 +411,7 @@ end
 RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
 RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Normal Quests")
 RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+RQE.BonusQuestsFrame.header = CreateChildFrameHeader(RQE.BonusQuestsFrame, "Bonus Quests")
 RQE.TaskQuestsFrame.header = CreateChildFrameHeader(RQE.TaskQuestsFrame, "Task Quests")
 --RQE.BonusObjectivesFrame.header = CreateChildFrameHeader(RQE.BonusObjectivesFrame, "Bonus Objectives")
 RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
@@ -501,6 +506,8 @@ function UpdateFrameAnchors()
 	RQE.CampaignFrame:ClearAllPoints()
 	RQE.QuestsFrame:ClearAllPoints()
 	RQE.WorldQuestsFrame:ClearAllPoints()
+	RQE.BonusQuestsFrame:ClearAllPoints()
+	RQE.TaskQuestsFrame:ClearAllPoints()
 	RQE.AchievementsFrame:ClearAllPoints()
 	if RQE.recipeTrackingFrame then
 		RQE.recipeTrackingFrame:ClearAllPoints()
@@ -533,8 +540,40 @@ function UpdateFrameAnchors()
 		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 	end
 
-	-- Anchor AchievementsFrame based on visibility of other frames
+	-- Anchor Bonus Quests below World Quests, or the next visible section above it.
 	if RQE.WorldQuestsFrame:IsShown() then
+		RQE.BonusQuestsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.QuestsFrame:IsShown() then
+		RQE.BonusQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.CampaignFrame:IsShown() then
+		RQE.BonusQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+	elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+		RQE.BonusQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+	else
+		RQE.BonusQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+	end
+
+	-- Task Quests follow Bonus Quests, then fall back through the existing sections.
+	if RQE.BonusQuestsFrame:IsShown() then
+		RQE.TaskQuestsFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.WorldQuestsFrame:IsShown() then
+		RQE.TaskQuestsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.QuestsFrame:IsShown() then
+		RQE.TaskQuestsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.CampaignFrame:IsShown() then
+		RQE.TaskQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
+	elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+		RQE.TaskQuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+	else
+		RQE.TaskQuestsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+	end
+
+	-- Anchor AchievementsFrame based on visibility of other frames
+	if RQE.TaskQuestsFrame:IsShown() then
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.TaskQuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.BonusQuestsFrame:IsShown() then
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -5)
+	elseif RQE.WorldQuestsFrame:IsShown() then
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
 	elseif RQE.QuestsFrame:IsShown() then
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
@@ -3255,20 +3294,52 @@ function UpdateRQEQuestFrame()
 		end
 	end
 
-	-- Add Bonus Quests to the "Normal Quests" frame
-	RQE.ClearBonusQuestElements() -- Clear existing bonus quest elements
-	if type(bonusQuests) == "table" then
-		for _, bonusQuest in ipairs(bonusQuests) do
-			lastQuestElement = RQE.AddBonusQuestToFrame(RQE.QuestsFrame, lastQuestElement, bonusQuest.questID, bonusQuest.title)
-			RQE.OkayCheckBonusQuests = false
-		--lastQuestElement = RQE.AddBonusQuestToFrame(RQE.QuestsFrame, lastQuestElement, bonusQuest.title)
+	-- Normal and Campaign frames used fixed estimated heights. Resize them to
+	-- their final rendered rows so the next visible section does not inherit
+	-- unused vertical space.
+	local function ResizeQuestSectionToContent(sectionFrame, lastElement)
+		if not lastElement then
+			return
+		end
+
+		local frameTop = sectionFrame:GetTop()
+		local elementBottom = lastElement:GetBottom()
+		if frameTop and elementBottom then
+			sectionFrame:SetHeight(math.max(80, frameTop - elementBottom + 10))
 		end
 	end
 
+	ResizeQuestSectionToContent(RQE.CampaignFrame, lastCampaignElement)
+	ResizeQuestSectionToContent(RQE.QuestsFrame, lastQuestElement)
+
+	-- Add Bonus Quests to their dedicated frame. The existing BQ renderer is unchanged.
+	RQE.ClearBonusQuestElements() -- Clear existing bonus quest elements
+	local lastBonusQuestElement = nil
+	if type(bonusQuests) == "table" then
+		for _, bonusQuest in ipairs(bonusQuests) do
+			lastBonusQuestElement = RQE.AddBonusQuestToFrame(RQE.BonusQuestsFrame, lastBonusQuestElement, bonusQuest.questID, bonusQuest.title)
+			RQE.OkayCheckBonusQuests = false
+		end
+	end
+	RQE.BonusQuestsFrame.questCount = RQE.bonusQuestCount
+
+	-- Size the section to the final rendered objective instead of reserving a
+	-- fixed amount of unused space below short Bonus Quest rows.
+	local bonusFrameHeight = 80
+	if lastBonusQuestElement then
+		local frameTop = RQE.BonusQuestsFrame:GetTop()
+		local objectiveBottom = lastBonusQuestElement:GetBottom()
+		if frameTop and objectiveBottom then
+			bonusFrameHeight = math.max(80, frameTop - objectiveBottom + 10)
+		end
+	end
+	RQE.BonusQuestsFrame:SetHeight(bonusFrameHeight)
+
 	-- Check if any of the child frames should have their visibility removed as no quests being tracked
 	RQE.CampaignFrame:SetShown(RQE.campaignQuestCount > 0)
-	RQE.QuestsFrame:SetShown((RQE.regularQuestCount > 0) or (RQE.bonusQuestCount > 0))
+	RQE.QuestsFrame:SetShown(RQE.regularQuestCount > 0)
 	RQE.WorldQuestsFrame:SetShown(RQE.worldQuestCount > 0)
+	RQE.BonusQuestsFrame:SetShown(RQE.bonusQuestCount > 0)
 
 	-- After adding all quest items, update the total height of the content frame
 	content:SetHeight(totalHeight)
@@ -3281,6 +3352,7 @@ function UpdateRQEQuestFrame()
 	UpdateHeader(RQE.CampaignFrame, "Campaign/Meta", RQE.campaignQuestCount)
 	UpdateHeader(RQE.QuestsFrame, "Normal Quests", RQE.regularQuestCount)
 	UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.worldQuestCount)
+	UpdateHeader(RQE.BonusQuestsFrame, "Bonus Quests", RQE.bonusQuestCount)
 
 	-- Update scrollbar range and visibility
 	local scrollFrameHeight = RQE.QTScrollFrame:GetHeight()
@@ -3789,12 +3861,18 @@ function UpdateRQETaskQuestFrame()
 
 	if taskFrame.questCount == 0 then
 		taskFrame:Hide()
+		if RQE.AchievementsFrame and RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
+			RQE.AchievementsFrame:ClearAllPoints()
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
+		end
 		return
 	end
 
 	taskFrame:Show()
 	taskFrame:ClearAllPoints()
-	if RQE.WorldQuestsFrame:IsShown() then
+	if RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
+		taskFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
+	elseif RQE.WorldQuestsFrame:IsShown() then
 		taskFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.QuestsFrame:IsShown() then
 		taskFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
@@ -3867,7 +3945,17 @@ function UpdateRQETaskQuestFrame()
 		lastElement = objectives
 	end
 
-	taskFrame:SetHeight(math.max(80, 55 + taskFrame.questCount * 65))
+	-- Size the Task Quests section to its final rendered objective so the
+	-- Achievements section does not inherit unused vertical space.
+	local taskFrameHeight = 80
+	if lastElement then
+		local frameTop = taskFrame:GetTop()
+		local objectiveBottom = lastElement:GetBottom()
+		if frameTop and objectiveBottom then
+			taskFrameHeight = math.max(80, frameTop - objectiveBottom + 10)
+		end
+	end
+	taskFrame:SetHeight(taskFrameHeight)
 
 	-- Keep Achievements below the new section whenever it is visible.
 	if RQE.AchievementsFrame then
