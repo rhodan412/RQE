@@ -2128,12 +2128,11 @@ end
 
 -- Function to initialize the objective tracker state based on the checkbox and frames visibility
 function RQE:InitializeObjectiveTracker()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker or RQEFrame:IsShown() or RQE.RQEQuestFrame:IsShown() then
-		-- If the checkbox is not checked or RQE frames are visible, hide the Blizzard tracker
-		ObjectiveTrackerFrame:Hide()
-	else
-		-- Otherwise, show the Blizzard tracker
+	local isRQEQuestTrackerVisible = RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()
+	if RQE.db.profile.toggleBlizzObjectiveTracker or not isRQEQuestTrackerVisible then
 		ObjectiveTrackerFrame:Show()
+	else
+		ObjectiveTrackerFrame:Hide()
 	end
 end
 
@@ -2144,7 +2143,20 @@ function RQE:UpdateTrackerVisibility()
 	local mythicMode = self.db.profile.mythicScenarioMode
 	local configWantsQuestFrame = self.db.profile.enableQuestFrame
 
-	if not mythicMode then return end
+	if not mythicMode then
+		if self.RQEQuestFrame then
+			if configWantsQuestFrame then
+				self.RQEQuestFrame:Show()
+			else
+				self.RQEQuestFrame:Hide()
+			end
+		end
+
+		if self.EnforceObjectiveTrackerVisibility then
+			self:EnforceObjectiveTrackerVisibility()
+		end
+		return
+	end
 
 	if InCombatLockdown() and inScenario then
 		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
@@ -2219,11 +2231,6 @@ function RQE:UpdateTrackerVisibility()
 		self.RQEQuestFrame._originalShow = nil
 	end
 
-	if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
-		-- print(">> Hiding ObjectiveTrackerFrame")
-		ObjectiveTrackerFrame:Hide()
-	end
-
 	if self.RQEQuestFrame then
 		if configWantsQuestFrame then
 			-- print(">> Showing RQEQuestFrame (config enabled)")
@@ -2231,6 +2238,16 @@ function RQE:UpdateTrackerVisibility()
 		else
 			-- print(">> Hiding RQEQuestFrame (config disabled)")
 			self.RQEQuestFrame:Hide()
+		end
+	end
+
+	-- Outside a scenario, follow the normal Quest Tracker visibility rule.
+	-- The previous code always hid Blizzard's tracker in this branch.
+	if ObjectiveTrackerFrame then
+		if configWantsQuestFrame then
+			ObjectiveTrackerFrame:Hide()
+		else
+			ObjectiveTrackerFrame:Show()
 		end
 	end
 
