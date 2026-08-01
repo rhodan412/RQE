@@ -49,6 +49,9 @@ Receive guidance step-by-step as you navigate quests in the add-on's database of
 Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
 ![Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests).](https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c)
 
+QoL Update!
+![Toggle between or choose Blizzard's in-game objective tracker or RQE's tracker, but still benefit from quest help (v12.0.7.4!](https://github.com/user-attachments/assets/6cd710e2-54c2-4452-a5ae-904b244751b6)
+
 Queue for group world quests, including the world boss!
 ![WQ Queueing.](https://github.com/user-attachments/assets/8637cb2d-dce5-4038-b55b-dfb542446b8d)
 ![fishing](https://github.com/user-attachments/assets/ab7fe220-a1cc-4336-a412-777fd0d88f28)
