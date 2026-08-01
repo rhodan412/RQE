@@ -90,7 +90,7 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 			end)
 		end
 
-		local superQuest = C_SuperTrack.GetSuperTrackedQuestID()	-- Fetching the current QuestID
+		local superQuest = RQE.API.GetSuperTrackedQuestID()	--local superQuest = C_SuperTrack.GetSuperTrackedQuestID()
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
@@ -150,9 +150,10 @@ function RQE:GetStepCoordinates(stepIndex)
 	-- local stepIndex = RQE.AddonSetStepIndex or 1
 
 	local x, y, mapID
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
-	if not C_SuperTrack.IsSuperTrackingQuest() or not questID then
+	if not RQE.API.IsSuperTrackingQuest() or not questID then
+	--if not C_SuperTrack.IsSuperTrackingQuest() or not questID then
 		return nil, nil, nil
 	end
 
@@ -180,12 +181,12 @@ function RQE:GetStepCoordinates(stepIndex)
 			end
 		else
 			-- (everything below is exactly your existing fallback chain)
-			if RQE.WPxPos and C_QuestLog.IsOnQuest(questID) then
+			if RQE.WPxPos and RQE.API.IsOnQuest(questID) then
 				x = RQE.WPxPos; y = RQE.WPyPos; mapID = RQE.WPmapID
 				if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
 					print("Using coordinates from RQE.WPxyPos for questID:", questID)
 				end
-			elseif RQE.DatabaseSuperX and not C_QuestLog.IsOnQuest(questID) then
+			elseif RQE.DatabaseSuperX and not RQE.API.IsOnQuest(questID) then
 				x = RQE.DatabaseSuperX; y = RQE.DatabaseSuperY; mapID = RQE.DatabaseSuperMapID
 				if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
 					print("Using coordinates from DatabaseSuper for questID:", questID)
@@ -412,8 +413,8 @@ end
 function RQE:EnsureWaypointForSupertracked()
 	if not RQEFrame:IsShown() then return end
 
-	if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not RQE.API.IsSuperTrackingQuest() then return end	--if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then return end
 
 	local stepIndex = RQE.AddonSetStepIndex or 1
@@ -448,7 +449,8 @@ function RQE:EnsureWaypointForSupertracked()
 
 	-- Switch: replace the live waypoint
 	RQE._currentHotspotIdx = idx
-	local ttl = RQE:GetWaypointTitle(C_SuperTrack.GetSuperTrackedQuestID(), mapID, xNorm, yNorm)
+	local ttl = RQE:GetWaypointTitle(RQE.API.GetSuperTrackedQuestID(), mapID, xNorm, yNorm)
+	--local ttl = RQE:GetWaypointTitle(C_SuperTrack.GetSuperTrackedQuestID(), mapID, xNorm, yNorm)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("waypointTitle - 414: " .. tostring(ttl))
 	end
@@ -576,7 +578,7 @@ end
 -- Check if an objective is complete
 local function IsObjectiveComplete(questID, objectiveIndex)
 	if not questID or not objectiveIndex then return false end
-	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 	if not objectives or not objectives[objectiveIndex] then return false end
 	return objectives[objectiveIndex].finished
 end
@@ -1040,7 +1042,7 @@ end
 -- Slash command to easier access the dump
 SLASH_RQEDUMP1 = "/rqedump"
 SlashCmdList.RQEDUMP = function()
-	local qid = C_SuperTrack.GetSuperTrackedQuestID()
+	local qid = RQE.API.GetSuperTrackedQuestID()	--local qid = C_SuperTrack.GetSuperTrackedQuestID()
 	local sidx = RQE.AddonSetStepIndex or 1
 	if RQE.WPUtil and RQE.WPUtil.DebugDumpBands then
 		RQE.WPUtil.DebugDumpBands(qid, sidx)
@@ -1162,7 +1164,7 @@ function RQE:UpdateStepDistance()
 		return
 	end
 
-	local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then
 		RQEFrame.StepDistanceText:SetText("")
 		return
