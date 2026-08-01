@@ -156,7 +156,7 @@ RQE.UnknownButtonTooltip = function()
 						-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
 						if RQE.db.profile.debugLevel == "INFO" then
 							local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
-							local questID = C_SuperTrack.GetSuperTrackedQuestID()
+							local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 							local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
 
 							-- Ensure quest data exists and has the coordinate data
@@ -176,10 +176,10 @@ RQE.UnknownButtonTooltip = function()
 										--DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
 
 										if RQE.WCoordData == RQE.SeparateFocusCoordData then
-											RQE:KhadgarCoordsMatch(C_SuperTrack.GetSuperTrackedQuestID())
+											RQE:KhadgarCoordsMatch(RQE.API.GetSuperTrackedQuestID())	--C_SuperTrack.GetSuperTrackedQuestID())
 											--RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 										else
-											RQE:CoordsNOMatch(C_SuperTrack.GetSuperTrackedQuestID())
+											RQE:CoordsNOMatch(RQE.API.GetSuperTrackedQuestID())	--C_SuperTrack.GetSuperTrackedQuestID())
 											print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
 											-- RQE:PlayThrottledSound(135755)
 										end
@@ -217,7 +217,7 @@ RQE.UnknownButtonTooltip = function()
 			RQE.WPyPos = nil
 			RQE.WPmapID = nil
 
-			local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+			local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 
 			-- Add check to ensure RQE.QuestIDText exists and contains valid text
 			local extractedQuestID
@@ -576,7 +576,7 @@ RQE.SearchGroupButtonMouseDown = function()
 	RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
 		RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
-		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		if not questID then
 			print("No super-tracked quest to handle LFG.")
 			return
@@ -1101,7 +1101,7 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 				RQE:SetDisplayedStepFromStepsList(targetStep)
 
 				C_Timer.After(0.2, function()
-					local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 					if questID then
 						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 					end
@@ -1129,7 +1129,7 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 
 	NextStepButton:SetScript("OnEnter", function(self)
 		if RQE.db.profile.enableStepControls then
-			local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			local questData = questID and RQE.getQuestData(questID)
 			local curStep = RQE:GetDisplayedStepIndex()
 			local targetStep = curStep + 1
@@ -1152,7 +1152,7 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 
 	NextStepButton:SetScript("OnClick", function()
 		if RQE.db.profile.enableStepControls then
-			local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			local questData = questID and RQE.getQuestData(questID)
 			local curStep = RQE:GetDisplayedStepIndex()
 			local targetStep = curStep + 1
@@ -1161,7 +1161,7 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 				RQE:SetDisplayedStepFromStepsList(targetStep)
 
 				C_Timer.After(0.2, function()
-					local questID = RQE.DisplayedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
+					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 					if questID then
 						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 					end
