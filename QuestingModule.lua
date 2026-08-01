@@ -239,11 +239,18 @@ end)
 
 
 function RQE:EnforceObjectiveTrackerVisibility()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-			if ObjectiveTrackerFrame:IsShown() then
-				ObjectiveTrackerFrame:Hide()
-			end
+	if RQE.db.profile.toggleBlizzObjectiveTracker or RQE.db.profile.mythicScenarioMode then
+		return
+	end
+
+	local isRQEQuestTrackerVisible = RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()
+	if isRQEQuestTrackerVisible then
+		if ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+		end
+	else
+		if not ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Show()
 		end
 	end
 end
