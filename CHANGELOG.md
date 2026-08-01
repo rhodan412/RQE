@@ -1,4 +1,4 @@
-12.0.7.4
+12.0.7.4 (2026.08.01)
 
 	**HIGHLIGHTS**
 		- Improved cross-version compatibility by routing quest and super-tracking calls through RQE’s API layer instead of directly calling Blizzard APIs.
