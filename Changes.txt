@@ -5,6 +5,8 @@
 		- Added nearby task-quest detection and tracking support.
 		- Added frame to display task quests (such as localized quests to defeat rare mobs) and placed within the RQEQuestFrame.
 		- Improved Quest Tracker section spacing and layout when different quest types are active.
+		- Improved switching between the RQE Quest Tracker and Blizzard’s Objective Tracker.
+		- Blizzard’s Objective Tracker now automatically displays when the RQE Quest Tracker is hidden.
 
 	Buttons.lua
 		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
@@ -22,6 +24,7 @@
 		- Added RQE:PrintTaskQuestInfo() print quest info for a task quest (2026.08.01.1707)
 		- Added RQE:GetActiveTrackedTaskQuests() function to obtain active task quests in player's area (2026.08.01.1707)
 		- Added RQE:ToggleGraphicsOutlineMode() function to toggle between outline modes for the macro on certain quests in the DB (2026.08.01.1707)
+		- Updated RQE:InitializeObjectiveTracker() and RQE:UpdateTrackerVisibility() to synchronize the Blizzard Objective Tracker with RQEQuestFrame visibility, including outside Mythic/Scenario mode (2026.08.01.1741)
 
 	EventManager.lua
 		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
@@ -33,6 +36,8 @@
 		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function so that UpdateRQEQuestFrame() is called when player blob state changes (2026.08.01.1707)
 		- Updated QUEST_ACCEPTED to cache task quests when fired and update the TaskQuestFrame (2026.08.01.1714)
 		- Updated UNIT_QUEST_LOG_CHANGED to update the TaskQuestFrame when fired in player isn't in a quest blob (2026.08.01.1714)
+		- Updated ObjectiveTrackerFrame OnShow handling to defer Blizzard Objective Tracker visibility decisions to RQE:EnforceObjectiveTrackerVisibility(), based on RQEQuestFrame visibility rather than RQEFrame visibility (2026.08.01.1741)
+		- Updated RQE:ToggleFramesAndTracker() so the Blizzard Objective Tracker is shown whenever RQEQuestFrame is hidden and hidden when RQEQuestFrame is displayed (2026.08.01.1741)
 
 	QuestingModule.lua
 		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1707)
@@ -47,6 +52,7 @@
 		- Added RQE:ClearTaskQuestElements() function to clear the 'Task Quests' section when task quests are removed (2026.08.01.1714)
 		- Added UpdateRQETaskQuestFrame() to update the frame that includes task quests (2026.08.01.1707/1714)
 		- Fixed height positioning for child frames within the RQEQuestFrame (2026.08.01.1729)
+		- Updated RQE:EnforceObjectiveTrackerVisibility() to show the Blizzard Objective Tracker when RQEQuestFrame is hidden and hide it when RQEQuestFrame is displayed, while preserving manual Blizzard-tracker and Mythic/Scenario settings (2026.08.01.1741)
 
 	RQE.toc
 		- Updated version# (2026.08.01.1707)
