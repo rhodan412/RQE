@@ -9913,7 +9913,7 @@ function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
 	-- end
 
 	-- Accepts either:
-	-- neededAmt = { "4" }             Buff stacks alone must reach 4.
+	-- neededAmt = { "4" }			 Buff stacks alone must reach 4.
 	-- neededAmt = { "4+objective" }   Buff stacks plus objective progress must reach 4.
 	local function ParseRequiredAmount(rawAmount)
 		if type(rawAmount) == "string" then
@@ -10720,7 +10720,7 @@ function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
 	neededAmt = neededAmt or {}
 
 	-- Accepts either:
-	-- neededAmt = { "2" }             Inventory alone must contain 2.
+	-- neededAmt = { "2" }			 Inventory alone must contain 2.
 	-- neededAmt = { "6+objective" }   Inventory plus objective progress must reach 6.
 	local function ParseRequiredAmount(rawAmount)
 		if type(rawAmount) == "string" then
