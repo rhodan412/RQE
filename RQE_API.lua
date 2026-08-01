@@ -962,24 +962,27 @@ end
 if major >= 9 then
 	-- Use: local questID = RQE.API.GetSuperTrackedQuestID() instead of: C_SuperTrack.GetSuperTrackedQuestID()
 	RQE.API.GetSuperTrackedQuestID = function()
-		return C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		--print("Supertracked questID:", tostring(questID))
+		return questID
 	end
 
-	-- Use: local numEntries = RQE.API.GetNumQuestLogEntries() instead of: C_QuestLog.GetNumQuestLogEntries()
-	RQE.API.GetNumQuestLogEntries = function()
-		local numShownEntries, numQuests = C_QuestLog.GetNumQuestLogEntries()
-		return numShownEntries, numQuests
-	end
+	-- -- Use: local numEntries = RQE.API.GetNumQuestLogEntries() instead of: C_QuestLog.GetNumQuestLogEntries()
+	-- RQE.API.GetNumQuestLogEntries = function()
+		-- local numShownEntries, numQuests = C_QuestLog.GetNumQuestLogEntries()
+		-- return numShownEntries, numQuests
+	-- end
 
-	-- Use: local objectives = RQE.API.GetQuestObjectives(questID)		instead of: C_QuestLog.GetQuestObjectives(questID)
-	RQE.API.GetQuestObjectives = function(questID)
-		return C_QuestLog.GetQuestObjectives(questID)
-	end
+	-- -- Use: local objectives = RQE.API.GetQuestObjectives(questID)		instead of: C_QuestLog.GetQuestObjectives(questID)
+	-- RQE.API.GetQuestObjectives = function(questID)
+		-- return C_QuestLog.GetQuestObjectives(questID)
+	-- end
 
-	-- Use: local isTracking = RQE.API.IsSuperTrackingQuest()	instead of: C_SuperTrack.IsSuperTrackingQuest()
-	RQE.API.IsSuperTrackingQuest = function()
-		return C_SuperTrack.IsSuperTrackingQuest()
-	end
+	-- -- Use: local isTracking = RQE.API.IsSuperTrackingQuest()	instead of: C_SuperTrack.IsSuperTrackingQuest()
+	-- RQE.API.IsSuperTrackingQuest = function()
+		-- --print("Quest is supertracked:", C_SuperTrack.IsSuperTrackingQuest())
+		-- return C_SuperTrack.IsSuperTrackingQuest()
+	-- end
 
 elseif (major == 8 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Retail 8.2.5–8.3.x and Classic 1.13+ → C_QuestSession
@@ -988,12 +991,17 @@ elseif (major == 8 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_
 	end
 
 elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
-	-- Retail 8.0+ and Classic re-releases (1.13+) → C_QuestLog
-	RQE.API.GetQuestObjectives = function(questID)
-		local objectives = C_QuestLog.GetQuestObjectives(questID)
-		RQE.QuestObjectives = objectives
-		return objectives or {}
-	end
+	-- -- Retail 8.0+ and Classic re-releases (1.13+) → C_QuestLog
+	-- RQE.API.GetQuestObjectives = function(questID)
+		-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+		-- return objectives or {}
+	-- end
+
+	-- RQE.API.GetQuestObjectives = function(questID)
+		-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+		-- RQE.QuestObjectives = objectives	-- overrides the QuestObjectives FontString
+		-- return objectives or {}
+	-- end
 
 else
 
@@ -1003,22 +1011,67 @@ else
 		return GetSuperTrackedQuestID and GetSuperTrackedQuestID() or nil
 	end
 
-	-- Use: local numEntries = RQE.API.GetNumQuestLogEntries()	instead of: GetNumQuestLogEntries()
-	RQE.API.GetNumQuestLogEntries = function()
-		local numEntries, numQuests = GetNumQuestLogEntries()
-		return numEntries, numQuests
-	end
+	-- -- Use: local numEntries = RQE.API.GetNumQuestLogEntries()	instead of: GetNumQuestLogEntries()
+	-- RQE.API.GetNumQuestLogEntries = function()
+		-- local numEntries, numQuests = GetNumQuestLogEntries()
+		-- return numEntries, numQuests
+	-- end
 
-	-- Vanilla (1.0–1.12) → no objectives API
-	RQE.API.GetQuestObjectives = function(questID)
-		return {}
-	end
+	-- -- Vanilla (1.0–1.12) → no objectives API
+	-- RQE.API.GetQuestObjectives = function(questID)
+		-- return {}
+	-- end
 
-	-- Classic (1.13+) and Vanilla (1.0–1.12) → not available
-	RQE.API.IsSuperTrackingQuest = function()
-		return false
-	end
+	-- -- Classic (1.13+) and Vanilla (1.0–1.12) → not available
+	-- RQE.API.IsSuperTrackingQuest = function()
+		-- return false
+	-- end
 end
+
+
+-- Use: local isTracking = RQE.API.IsSuperTrackingQuest()
+-- instead of: C_SuperTrack.IsSuperTrackingQuest()
+RQE.API.IsSuperTrackingQuest = function()
+	if C_SuperTrack and type(C_SuperTrack.IsSuperTrackingQuest) == "function" then
+		-- Retail uses Blizzard's native supertracking check.
+		return C_SuperTrack.IsSuperTrackingQuest()
+	end
+
+	-- Older clients infer the status from the supertracked quest ID.
+	local questID = RQE.API.GetSuperTrackedQuestID
+		and RQE.API.GetSuperTrackedQuestID()
+
+	return (tonumber(questID) or 0) > 0
+end
+
+
+-- Use: local objectives = RQE.API.GetQuestObjectives(questID)
+-- instead of: C_QuestLog.GetQuestObjectives(questID)
+RQE.API.GetQuestObjectives = function(questID)
+	if C_QuestLog and type(C_QuestLog.GetQuestObjectives) == "function" then
+		return C_QuestLog.GetQuestObjectives(questID) or {}
+	end
+
+	return {}
+end
+
+
+-- local numShownEntries, numQuests = RQE.API.GetNumQuestLogEntries()
+RQE.API.GetNumQuestLogEntries = function()
+	if C_QuestLog and type(C_QuestLog.GetNumQuestLogEntries) == "function" then
+		local numShownEntries, numQuests = C_QuestLog.GetNumQuestLogEntries()
+		return tonumber(numShownEntries) or 0, tonumber(numQuests) or 0
+	end
+
+	if type(GetNumQuestLogEntries) == "function" then
+		local numEntries, numQuests = GetNumQuestLogEntries()
+		return tonumber(numEntries) or 0, tonumber(numQuests) or 0
+	end
+
+	-- Failsafe for clients without either API.
+	return 0, 0
+end
+
 
 
 -------------------------------------------------
@@ -1342,10 +1395,10 @@ elseif major >= 9 and minor >= 1 then
 
 elseif major >= 9 then
 	-- Retail 9.0+  → C_QuestLog.GetInfo(questLogIndex)
-	-- Use: local title = RQE.API.GetTitleForQuestID(questID)	instead of: C_QuestLog.GetTitleForQuestID(questID)
-	RQE.API.GetTitleForQuestID = function(questID)
-		return C_QuestLog.GetTitleForQuestID(questID)
-	end
+	-- -- Use: local title = RQE.API.GetTitleForQuestID(questID)	instead of: RQE.API.GetTitleForQuestID(questID)
+	-- RQE.API.GetTitleForQuestID = function(questID)
+		-- return RQE.API.GetTitleForQuestID(questID)
+	-- end
 
 	-- Use: local info = RQE.API.GetQuestLogInfo(questIndex) instead of: C_QuestLog.GetInfo(questIndex)
 	-- Returns a normalized table (QuestInfo):
@@ -1378,41 +1431,41 @@ elseif major >= 9 then
 	--		headerSortKey			-- number?	: Header sorting key (11.0.0+)
 	--		questClassification		-- Enum?	: Quest classification (11.0.2+)
 	--	}
-	RQE.API.GetQuestLogInfo = function(questIndex)
-		local info = C_QuestLog.GetInfo(questIndex)
-		if not info then return nil end
+	-- RQE.API.GetQuestLogInfo = function(questIndex)
+		-- local info = C_QuestLog.GetInfo(questIndex)
+		-- if not info then return nil end
 
-		-- Return as-is, already structured
-		return {
-			title			= info.title,
-			questLogIndex	= info.questLogIndex,
-			questID			= info.questID,
-			campaignID		= info.campaignID,
-			level			= info.level,
-			difficultyLevel	= info.difficultyLevel,
-			suggestedGroup	= info.suggestedGroup,
-			frequency		= info.frequency,
-			isHeader		= info.isHeader,
-			useMinimalHeader	= info.useMinimalHeader,	-- 10.0.2+
-			sortAsNormalQuest	= info.sortAsNormalQuest,	-- 11.0.2+
-			isCollapsed		= info.isCollapsed,
-			startEvent		= info.startEvent,
-			isTask			= info.isTask,
-			isBounty		= info.isBounty,
-			isStory			= info.isStory,
-			isScaling		= info.isScaling,
-			isOnMap			= info.isOnMap,
-			hasLocalPOI		= info.hasLocalPOI,
-			isHidden		= info.isHidden,
-			isAutoComplete	= info.isAutoComplete,
-			overridesSortOrder	= info.overridesSortOrder,
-			readyForTranslation = info.readyForTranslation,
-			isInternalOnly		= info.isInternalOnly,
-			isAbandonOnDisable	= info.isAbandonOnDisable,	-- 10.2.7+
-			headerSortKey	= info.headerSortKey,			-- 11.0.0+
-			questClassification	= info.questClassification,	-- 11.0.2+
-		}
-	end
+		-- -- Return as-is, already structured
+		-- return {
+			-- title			= info.title,
+			-- questLogIndex	= info.questLogIndex,
+			-- questID			= info.questID,
+			-- campaignID		= info.campaignID,
+			-- level			= info.level,
+			-- difficultyLevel	= info.difficultyLevel,
+			-- suggestedGroup	= info.suggestedGroup,
+			-- frequency		= info.frequency,
+			-- isHeader		= info.isHeader,
+			-- useMinimalHeader	= info.useMinimalHeader,	-- 10.0.2+
+			-- sortAsNormalQuest	= info.sortAsNormalQuest,	-- 11.0.2+
+			-- isCollapsed		= info.isCollapsed,
+			-- startEvent		= info.startEvent,
+			-- isTask			= info.isTask,
+			-- isBounty		= info.isBounty,
+			-- isStory			= info.isStory,
+			-- isScaling		= info.isScaling,
+			-- isOnMap			= info.isOnMap,
+			-- hasLocalPOI		= info.hasLocalPOI,
+			-- isHidden		= info.isHidden,
+			-- isAutoComplete	= info.isAutoComplete,
+			-- overridesSortOrder	= info.overridesSortOrder,
+			-- readyForTranslation = info.readyForTranslation,
+			-- isInternalOnly		= info.isInternalOnly,
+			-- isAbandonOnDisable	= info.isAbandonOnDisable,	-- 10.2.7+
+			-- headerSortKey	= info.headerSortKey,			-- 11.0.0+
+			-- questClassification	= info.questClassification,	-- 11.0.2+
+		-- }
+	-- end
 
 	-- Use: RQE.API.AbandonQuest()	instead of: C_QuestLog.AbandonQuest()
 	RQE.API.AbandonQuest = function()
@@ -1453,10 +1506,10 @@ elseif major >= 9 then
 		return C_QuestLog.ReadyForTurnIn(questID)
 	end
 
-	-- Use: local isWorldQuest = RQE.API.IsWorldQuest(questID)	instead of: C_QuestLog.IsWorldQuest(questID)
-	RQE.API.IsWorldQuest = function(questID)
-		return C_QuestLog.IsWorldQuest(questID)
-	end
+	-- -- Use: local isWorldQuest = RQE.API.IsWorldQuest(questID)	instead of: C_QuestLog.IsWorldQuest(questID)
+	-- RQE.API.IsWorldQuest = function(questID)
+		-- return C_QuestLog.IsWorldQuest(questID)
+	-- end
 
 	-- Use: local wasWatched = RQE.API.AddQuestWatch(questID) instead of: C_QuestLog.AddQuestWatch(questID)
 	RQE.API.AddQuestWatch = function(questID)
@@ -2043,15 +2096,15 @@ elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC a
 	end
 
 elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
-	-- BfA 8.x and all Classic re-releases (but not Vanilla)
-	RQE.API.GetTitleForQuestID = function(questID)
-		return C_QuestLog.GetQuestInfo(questID)
-	end
+	-- -- BfA 8.x and all Classic re-releases (but not Vanilla)
+	-- RQE.API.GetTitleForQuestID = function(questID)
+		-- return C_QuestLog.GetQuestInfo(questID)
+	-- end
 
-	-- Use: local isOnQuest = RQE.API.IsOnQuest(questID)	instead of: C_QuestLog.IsOnQuest(questID)
-	RQE.API.IsOnQuest = function(questID)
-		return C_QuestLog.IsOnQuest(questID)
-	end
+	-- -- Use: local isOnQuest = RQE.API.IsOnQuest(questID)	instead of: C_QuestLog.IsOnQuest(questID)
+	-- RQE.API.IsOnQuest = function(questID)
+		-- return C_QuestLog.IsOnQuest(questID)
+	-- end
 
 	-- Use: local max = RQE.API.GetMaxNumQuests() instead of: C_QuestLog.GetMaxNumQuests()
 	RQE.API.GetMaxNumQuests = function()
@@ -2314,30 +2367,30 @@ elseif (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) or major < 9 t
 	--		• In Shadowlands Patch 9.0.1 (2020-10-13), this was replaced by C_QuestLog.GetAllCompletedQuestIDs(), which directly returns a sequential array instead of a keyed dictionary.
 	--		• This wrapper normalizes the Classic/Wrath behavior (dictionary keyed by questID = true) into Retail-style behavior (sorted array of questIDs).
 	--		• A quest appears in this list only after being completed and turned in, not while it is still in the log.
-	RQE.API.GetQuestLogInfo = function(questLogIndex)
-		local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory, isHidden, isScaling = GetQuestLogTitle(questLogIndex)
+	-- RQE.API.GetQuestLogInfo = function(questLogIndex)
+		-- local title, level, suggestedGroup, isHeader, isCollapsed, isComplete, frequency, questID, startEvent, displayQuestID, isOnMap, hasLocalPOI, isTask, isBounty, isStory, isHidden, isScaling = GetQuestLogTitle(questLogIndex)
 
-		return {
-			title			= title,			-- string
-			questLogIndex	= questLogIndex,	-- number
-			questID			= questID,			-- number
-			level			= level,			-- number
-			suggestedGroup	= suggestedGroup,	-- number
-			frequency		= frequency,		-- number (1=normal, 2=daily, 3=weekly)
-			isHeader		= isHeader,			-- boolean
-			isCollapsed		= isCollapsed,		-- boolean
-			isComplete		= isComplete,		-- number (1=complete, -1=failed, nil otherwise)
-			startEvent		= startEvent,		-- boolean
-			displayQuestID	= displayQuestID,	-- boolean
-			isOnMap			= isOnMap,		-- boolean
-			hasLocalPOI		= hasLocalPOI,	-- boolean
-			isTask		= isTask,		-- boolean
-			isBounty	= isBounty,		-- boolean
-			isStory		= isStory,		-- boolean
-			isHidden	= isHidden,		-- boolean
-			isScaling	= isScaling,	-- boolean
-		}
-	end
+		-- return {
+			-- title			= title,			-- string
+			-- questLogIndex	= questLogIndex,	-- number
+			-- questID			= questID,			-- number
+			-- level			= level,			-- number
+			-- suggestedGroup	= suggestedGroup,	-- number
+			-- frequency		= frequency,		-- number (1=normal, 2=daily, 3=weekly)
+			-- isHeader		= isHeader,			-- boolean
+			-- isCollapsed		= isCollapsed,		-- boolean
+			-- isComplete		= isComplete,		-- number (1=complete, -1=failed, nil otherwise)
+			-- startEvent		= startEvent,		-- boolean
+			-- displayQuestID	= displayQuestID,	-- boolean
+			-- isOnMap			= isOnMap,		-- boolean
+			-- hasLocalPOI		= hasLocalPOI,	-- boolean
+			-- isTask		= isTask,		-- boolean
+			-- isBounty	= isBounty,		-- boolean
+			-- isStory		= isStory,		-- boolean
+			-- isHidden	= isHidden,		-- boolean
+			-- isScaling	= isScaling,	-- boolean
+		-- }
+	-- end
 
 elseif major >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Classic projects (1.13, 2.5, 3.4, 1.14, etc.) and TBC+ Retail
@@ -2471,18 +2524,18 @@ else
 		return GetNumQuestLeaderBoards and GetNumQuestLeaderBoards(questID) or 0
 	end
 
-	-- Not available in Vanilla
-	RQE.API.GetTitleForQuestID = function(questID)
-		return nil
-	end
+	-- -- Not available in Vanilla
+	-- RQE.API.GetTitleForQuestID = function(questID)
+		-- return nil
+	-- end
 
 	-- Not available in Classic or Vanilla
 	RQE.API.GetNextWaypointText = function(questID)
 		return nil
 	end
 
-	-- Fallback
-	RQE.API.GetQuestLogInfo = function(_) return nil end
+	-- -- Fallback
+	-- RQE.API.GetQuestLogInfo = function(_) return nil end
 
 	-- Original Vanilla (pre-2.0) → not available
 	RQE.API.IsQuestFlaggedCompleted = function(_)
@@ -2600,11 +2653,11 @@ else
 	-- Always return false (quests didn’t expose this API)
 	RQE.API.ReadyForTurnIn = function(questID) return false end
 
-	-- Vanilla (1.x): API did not exist - Always return false
-	RQE.API.IsOnQuest = function(questID) return false end
+	-- -- Vanilla (1.x): API did not exist - Always return false
+	-- RQE.API.IsOnQuest = function(questID) return false end
 
-	-- Classic projects & Vanilla (no world quest support)
-	RQE.API.IsWorldQuest = function(questID) return false end
+	-- -- Classic projects & Vanilla (no world quest support)
+	-- RQE.API.IsWorldQuest = function(questID) return false end
 
 	-- Vanilla 1.0 → before 1.3 had no AddQuestWatch
 	RQE.API.AddQuestWatch = function(questIndex) return false end
@@ -2911,6 +2964,144 @@ else
 
 		return RQE.UnitIsRelatedToActiveQuestInfo
 	end
+end
+
+
+-- Use: local title = RQE.API.GetTitleForQuestID(questID)
+-- instead of: C_QuestLog.GetTitleForQuestID(questID)
+RQE.API.GetTitleForQuestID = function(questID)
+	if not questID then
+		return nil
+	end
+
+	if C_QuestLog and type(C_QuestLog.GetTitleForQuestID) == "function" then
+		return C_QuestLog.GetTitleForQuestID(questID)
+	end
+
+	if C_QuestLog and type(C_QuestLog.GetQuestInfo) == "function" then
+		return C_QuestLog.GetQuestInfo(questID)
+	end
+
+	-- Legacy clients can retrieve the title through its quest-log index.
+	if type(GetQuestLogIndexByID) == "function"
+		and type(GetQuestLogTitle) == "function"
+	then
+		local questLogIndex = GetQuestLogIndexByID(questID)
+		if questLogIndex and questLogIndex > 0 then
+			local title = GetQuestLogTitle(questLogIndex)
+			return title
+		end
+	end
+
+	return nil
+end
+
+
+-- Use: local info = RQE.API.GetQuestLogInfo(questIndex) instead of: C_QuestLog.GetInfo(questIndex)
+-- Returns a normalized table (QuestInfo):
+--	{
+--		title				-- string	: The title of the quest
+--		questLogIndex		-- number	: The index in the quest log
+--		questID				-- number	: Unique quest ID
+--		campaignID			-- number?	: Campaign association (if any)
+--		level				-- number	: The level of the quest
+--		difficultyLevel		-- number	: Difficulty scaling level
+--		suggestedGroup		-- number	: Suggested group size, 0 if solo
+--		frequency			-- Enum?	: Quest frequency (daily, weekly, etc.)
+--		isHeader			-- boolean	: Whether this entry is a header
+--		useMinimalHeader	-- boolean	: Minimal header style (10.0.2+)
+--		sortAsNormalQuest	-- boolean	: Sort as normal quest (11.0.2+)
+--		isCollapsed			-- boolean	: Whether the header is collapsed
+--		startEvent			-- boolean	: Is started by event
+--		isTask				-- boolean	: Is a task-style quest
+--		isBounty			-- boolean	: Is a bounty quest
+--		isStory				-- boolean	: Is a story quest
+--		isScaling			-- boolean	: Quest scales with level
+--		isOnMap				-- boolean	: Appears on the map
+--		hasLocalPOI			-- boolean	: Has local points of interest
+--		isHidden			-- boolean	: Hidden from the quest log
+--		isAutoComplete		-- boolean	: Automatically completes
+--		overridesSortOrder	-- boolean	: Overrides sorting rules
+--		readyForTranslation	-- boolean?	: True if flagged for localization
+--		isInternalOnly		-- boolean	: For internal/testing only
+--		isAbandonOnDisable		-- boolean	: Abandon when disabled (10.2.7+)
+--		headerSortKey			-- number?	: Header sorting key (11.0.0+)
+--		questClassification		-- Enum?	: Quest classification (11.0.2+)
+--	}
+	
+-- Use: local info = RQE.API.GetQuestLogInfo(questLogIndex)
+-- instead of: C_QuestLog.GetInfo(questLogIndex)
+RQE.API.GetQuestLogInfo = function(questLogIndex)
+	if not questLogIndex then
+		return nil
+	end
+
+	if C_QuestLog and type(C_QuestLog.GetInfo) == "function" then
+		return C_QuestLog.GetInfo(questLogIndex)
+	end
+
+	if type(GetQuestLogTitle) == "function" then
+		local title, level, suggestedGroup, isHeader, isCollapsed,
+			isComplete, frequency, questID, startEvent, displayQuestID,
+			isOnMap, hasLocalPOI, isTask, isBounty, isStory,
+			isHidden, isScaling = GetQuestLogTitle(questLogIndex)
+
+		if title == nil then
+			return nil
+		end
+
+		return {
+			title = title,
+			questLogIndex = questLogIndex,
+			questID = questID,
+			level = level,
+			suggestedGroup = suggestedGroup,
+			frequency = frequency,
+			isHeader = isHeader,
+			isCollapsed = isCollapsed,
+			isComplete = isComplete,
+			startEvent = startEvent,
+			displayQuestID = displayQuestID,
+			isOnMap = isOnMap,
+			hasLocalPOI = hasLocalPOI,
+			isTask = isTask,
+			isBounty = isBounty,
+			isStory = isStory,
+			isHidden = isHidden,
+			isScaling = isScaling,
+		}
+	end
+
+	return nil
+end
+
+
+-- Use: local isOnQuest = RQE.API.IsOnQuest(questID)
+-- instead of: C_QuestLog.IsOnQuest(questID)
+RQE.API.IsOnQuest = function(questID)
+	if C_QuestLog and type(C_QuestLog.IsOnQuest) == "function" then
+		return C_QuestLog.IsOnQuest(questID) == true
+	end
+
+	-- Compatibility fallback for clients with the legacy log-index API.
+	if type(GetQuestLogIndexByID) == "function" then
+		local questLogIndex = GetQuestLogIndexByID(questID)
+		return (tonumber(questLogIndex) or 0) > 0
+	end
+
+	return false
+end
+
+
+-- Use: local isWorldQuest = RQE.API.IsWorldQuest(questID)
+-- instead of: C_QuestLog.IsWorldQuest(questID)
+RQE.API.IsWorldQuest = function(questID)
+	if C_QuestLog and type(C_QuestLog.IsWorldQuest) == "function" then
+		return C_QuestLog.IsWorldQuest(questID) == true
+	end
+
+	-- Classic versions without World Quests.
+	return false
 end
 
 
