@@ -3,84 +3,90 @@
 	**HIGHLIGHTS**
 		- Improved cross-version compatibility by routing quest and super-tracking calls through RQE’s API layer instead of directly calling Blizzard APIs.
 		- Added nearby task-quest detection and tracking support.
+		- Added a Task Quests section to the RQE Quest Tracker for nearby objectives, such as rare-enemy quests.
 
 	Buttons.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
 
 	Core.lua
-		- Updated C_QuestLog.GetInfo(questLogIndex) calls to use RQE.API.GetQuestLogInfo(questLogIndex) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1757)
-		- Added RQE.ActiveTaskQuests to the top of file to sure task quests info are properly loaded (2026.08.01.1757)
-		- Added RQE:PrintTaskQuestInfo() print quest info for a task quest (2026.08.01.1757)
-		- Added RQE:GetActiveTrackedTaskQuests() function to obtain active task quests in player's area (2026.08.01.1757)
-		- Added RQE:ToggleGraphicsOutlineMode() function to toggle between outline modes for the macro on certain quests in the DB (2026.08.01.1757)
+		- Updated C_QuestLog.GetInfo(questLogIndex) calls to use RQE.API.GetQuestLogInfo(questLogIndex) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1707)
+		- Added RQE.ActiveTaskQuests to the top of file to sure task quests info are properly loaded (2026.08.01.1707)
+		- Added RQE:PrintTaskQuestInfo() print quest info for a task quest (2026.08.01.1707)
+		- Added RQE:GetActiveTrackedTaskQuests() function to obtain active task quests in player's area (2026.08.01.1707)
+		- Added RQE:ToggleGraphicsOutlineMode() function to toggle between outline modes for the macro on certain quests in the DB (2026.08.01.1707)
 
 	EventManager.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Added RQE.ActiveTaskQuests to the top of file to sure task quests info are properly loaded (2026.08.01.1757)
-		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function so that RQE.ActiveTaskQuests[questID] is set to nil when not in blob or true when player is in blob (2026.08.01.1757)
-		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function so that UpdateRQEQuestFrame() is called when player blob state changes (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Added RQE.ActiveTaskQuests to the top of file to sure task quests info are properly loaded (2026.08.01.1707)
+		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function so that RQE.ActiveTaskQuests[questID] is set to nil when not in blob or true when player is in blob (2026.08.01.1707)
+		- Updated PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event function so that UpdateRQEQuestFrame() is called when player blob state changes (2026.08.01.1707)
+		- Updated QUEST_ACCEPTED to cache task quests when fired and update the TaskQuestFrame (2026.08.01.1714)
+		- Updated UNIT_QUEST_LOG_CHANGED to update the TaskQuestFrame when fired in player isn't in a quest blob (2026.08.01.1714)
 
 	QuestingModule.lua
-		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetInfo(questIndex) calls to use RQE.API.GetQuestLogInfo(questIndex) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1757)
+		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetNumQuestLogEntries() calls to use RQE.API.GetNumQuestLogEntries() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetInfo(questIndex) calls to use RQE.API.GetQuestLogInfo(questIndex) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1707)
+		- Added RQE.TaskQuestsFrame to be placed below the RQE.WorldQuestsFrame and have its own header (2026.08.01.1714)
+		- Added RQE:ClearTaskQuestElements() function to clear the 'Task Quests' section when task quests are removed (2026.08.01.1714)
+		- Added UpdateRQETaskQuestFrame() to update the frame that includes task quests (2026.08.01.1707/1714)
 
 	RQE.toc
-		- Updated version# (2026.08.01.1757)
+		- Updated version# (2026.08.01.1707)
 
 	RQE_API.lua
-		- Updated RQE.API.GetNumQuestLogEntries(), RQE.API.GetQuestObjectives(questID), RQE.API.IsSuperTrackingQuest(), RQE.API.GetQuestObjectives(questID), RQE.API.GetNumQuestLogEntries(), RQE.API.GetSuperTrackedQuestID(), RQE.API.GetTitleForQuestID(questID), RQE.API.GetQuestLogInfo(questLogIndex), RQE.API.IsWorldQuest(questID), RQE.API.IsOnQuest(questID) (2026.08.01.1757)
+		- Updated RQE.API.GetNumQuestLogEntries(), RQE.API.GetQuestObjectives(questID), RQE.API.IsSuperTrackingQuest(), RQE.API.GetQuestObjectives(questID), RQE.API.GetNumQuestLogEntries(), RQE.API.GetSuperTrackedQuestID(), RQE.API.GetTitleForQuestID(questID), RQE.API.GetQuestLogInfo(questLogIndex), RQE.API.IsWorldQuest(questID), RQE.API.IsOnQuest(questID) (2026.08.01.1707)
 
 	RQEDatabase.lua
-		- Updated many daily and weekly quests in the DB (2026.08.01.1757)
+		- Updated many daily and weekly quests in the DB (2026.08.01.1707)
 
 	RQE_Sandbox.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
 
 	RQEFrame.lua
-		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1757)
-		- Added RQE:ToggleAutoClickAndStepControls() option to right-click menu when over frame [author-ONLY mode] (2026.08.01.1757)
-		- Added RQE:ToggleStepControls() option to right-click menu when over frame [author-ONLY mode] (2026.08.01.1757)
-		- Added RQE:ToggleAutoClickWaypointButton() option to right-click menu when over frame [author-ONLY mode] (2026.08.01.1757)
+		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
+		- Added RQE:ToggleAutoClickAndStepControls() option to right-click menu when over frame [author-ONLY mode] (2026.08.01.1707)
+		- Added RQE:ToggleStepControls() option to right-click menu when over frame [author-ONLY mode] (2026.08.01.1707)
+		- Added RQE:ToggleAutoClickWaypointButton() option to right-click menu when over frame [author-ONLY mode] (2026.08.01.1707)
 
 	RQEMacro.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
 
 	RQEMinimap.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
 
 	WaypointManager.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.GetTitleForQuestID(questID) calls to use RQE.API.GetTitleForQuestID(questID)  in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsWorldQuest(questID) calls to use RQE.API.IsWorldQuest(questID) in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1707)
 
 	WPUtil.lua
-		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1757)
-		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1757)
+		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_SuperTrack.IsSuperTrackingQuest() calls to use RQE.API.IsSuperTrackingQuest() in the RQE_API instead (2026.08.01.1707)
+		- Updated C_QuestLog.IsOnQuest(questID) calls to use RQE.API.IsOnQuest(questID) in the RQE_API instead (2026.08.01.1707)
 
 
 12.0.7.3 (2026.07.23)
