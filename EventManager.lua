@@ -3755,18 +3755,15 @@ function RQE.handleQuestAccepted(...)
 		end
 	end
 
-	-- Task quests reliably announce themselves through QUEST_ACCEPTED.
+	-- Cache accepted IDs, then let GetActiveTrackedTaskQuests apply the task-only
+	-- predicate after Blizzard has finished updating its quest state.
 	-- This does not change any Bonus Quest behavior.
 	C_Timer.After(0.25, function()
-		if questID
-			and C_QuestLog.IsQuestTask(questID)
-			and not RQE.API.IsWorldQuest(questID)
-			and not C_QuestLog.IsThreatQuest(questID)
-		then
+		if questID then
 			RQE.ActiveTaskQuests[questID] = true
 
-			if UpdateRQEWorldQuestFrame then
-				UpdateRQEWorldQuestFrame()
+			if UpdateRQETaskQuestFrame then
+				UpdateRQETaskQuestFrame()
 			end
 		end
 	end)
@@ -5287,6 +5284,18 @@ function RQE.handleUnitQuestLogChange(...)
 	local unitTarget = select(3, ...)
 
 	RQE.UnitQuestLogChangedFired = true
+
+	-- Task quests can change state without firing PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED.
+	-- Coalesce the frequent log-change events into one Task Quests refresh.
+	if unitTarget == "player" and not RQE.TaskQuestRefreshScheduled then
+		RQE.TaskQuestRefreshScheduled = true
+		C_Timer.After(0.15, function()
+			RQE.TaskQuestRefreshScheduled = false
+			if UpdateRQETaskQuestFrame then
+				UpdateRQETaskQuestFrame()
+			end
+		end)
+	end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
