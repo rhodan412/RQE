@@ -301,6 +301,10 @@ RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, 0, co
 --RQE.WorldQuestsFrame = CreateChildFrame("RQEWorldQuestsFrame", content, 0, -40, content:GetWidth(), 120)
 RQE.WorldQuestsFrame.questCount = RQE.WorldQuestsFrame.questCount or 0
 
+-- Task Quests are intentionally separate from Bonus Objectives and World Quests.
+RQE.TaskQuestsFrame = CreateChildFrame("RQETaskQuestsFrame", content, 0, 0, content:GetWidth(), 120)
+RQE.TaskQuestsFrame.questCount = RQE.TaskQuestsFrame.questCount or 0
+
 -- Create the Bonus Objectives Child Frame, properly parented
 -- RQE.BonusObjectivesFrame = CreateChildFrame("RQEBonusObjectivesFrame", content, 0, 0, content:GetWidth(), 100)
 -- RQE.BonusObjectivesFrame.questCount = RQE.BonusObjectivesFrame.questCount or 0
@@ -403,6 +407,7 @@ end
 RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
 RQE.QuestsFrame.header = CreateChildFrameHeader(RQE.QuestsFrame, "Normal Quests")
 RQE.WorldQuestsFrame.header = CreateChildFrameHeader(RQE.WorldQuestsFrame, "World Quests")
+RQE.TaskQuestsFrame.header = CreateChildFrameHeader(RQE.TaskQuestsFrame, "Task Quests")
 --RQE.BonusObjectivesFrame.header = CreateChildFrameHeader(RQE.BonusObjectivesFrame, "Bonus Objectives")
 RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
 --RQE.recipeTrackingFrame.header = CreateChildFrameHeader(RQE.recipeTrackingFrame, "Profession")
@@ -3289,6 +3294,7 @@ function UpdateRQEQuestFrame()
 	-- Visibility Update Check for RQEQuestFrame
 	--RQE.UpdateScenarioFrame()
 	UpdateRQEWorldQuestFrame()
+	UpdateRQETaskQuestFrame()
 	--UpdateRQEBonusQuestFrame(questID)
 end
 
@@ -3755,6 +3761,118 @@ function UpdateRQEWorldQuestFrame()
 				end
 			end
 		end
+	end
+end
+
+
+-- Clears only rows created for the Task Quests section.
+function RQE:ClearTaskQuestElements()
+	for _, element in ipairs(RQE.TaskQuestElements or {}) do
+		if element then
+			element:Hide()
+			element:ClearAllPoints()
+			element:SetParent(nil)
+		end
+	end
+	RQE.TaskQuestElements = {}
+end
+
+-- Shows a dedicated Task Quests section without reusing Bonus Quest or World Quest UI.
+function UpdateRQETaskQuestFrame()
+	local taskFrame = RQE.TaskQuestsFrame
+	if not taskFrame then return end
+
+	local taskQuests = RQE:GetActiveTrackedTaskQuests()
+	RQE:ClearTaskQuestElements()
+	taskFrame.questCount = #taskQuests
+	taskFrame.header:SetText("Task Quests (" .. taskFrame.questCount .. ")")
+
+	if taskFrame.questCount == 0 then
+		taskFrame:Hide()
+		return
+	end
+
+	taskFrame:Show()
+	taskFrame:ClearAllPoints()
+	if RQE.WorldQuestsFrame:IsShown() then
+		taskFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -15)
+	elseif RQE.QuestsFrame:IsShown() then
+		taskFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
+	elseif RQE.CampaignFrame:IsShown() then
+		taskFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
+	elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
+		taskFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
+	else
+		taskFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+	end
+
+	local lastElement
+	for _, taskQuest in ipairs(taskQuests) do
+		local questID = taskQuest.questID
+		local button = CreateFrame("Button", nil, taskFrame)
+		button:SetSize(32, 32)
+
+		local background = button:CreateTexture(nil, "BACKGROUND")
+		background:SetAllPoints()
+		background:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+
+		local buttonText = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		buttonText:SetPoint("CENTER")
+		buttonText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		buttonText:SetTextColor(1, 0.82, 0)
+		buttonText:SetText("TQ")
+
+		local title = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		title:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE")
+		title:SetTextColor(137 / 255, 95 / 255, 221 / 255)
+		title:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
+		title:SetJustifyH("LEFT")
+		title:SetWordWrap(true)
+		title:SetText("|cFF00CCFF[TQ] " .. taskQuest.title .. "|r")
+
+		if lastElement then
+			title:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
+		else
+			title:SetPoint("TOPLEFT", taskFrame, "TOPLEFT", 40, -40)
+		end
+		button:SetPoint("RIGHT", title, "LEFT", -5, 0)
+
+		local objectives = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		objectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+		objectives:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
+		objectives:SetJustifyH("LEFT")
+		objectives:SetWordWrap(true)
+		objectives:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
+		objectives:SetText(RQE.colorizeObjectives(questID) or "")
+
+		button:RegisterForClicks("LeftButtonUp")
+		button:SetScript("OnClick", function()
+			RQE.ManualSuperTrack = "TQ"
+			RQE.ManualSuperTrackedQuestID = questID
+			RQE.DisplayedQuestID = questID
+			RQE.ManuallyTrackedQuests = RQE.ManuallyTrackedQuests or {}
+			RQE.ManuallyTrackedQuests[questID] = true
+			C_SuperTrack.SetSuperTrackedQuestID(questID)
+
+			local questData = RQE.getQuestData(questID)
+			if questData then
+				local stepsText, coordsText, mapIDs = PrintQuestStepsToChat(questID)
+				UpdateFrame(questID, questData, stepsText, coordsText, mapIDs)
+			end
+		end)
+
+		table.insert(RQE.TaskQuestElements, button)
+		table.insert(RQE.TaskQuestElements, title)
+		table.insert(RQE.TaskQuestElements, objectives)
+		lastElement = objectives
+	end
+
+	taskFrame:SetHeight(math.max(80, 55 + taskFrame.questCount * 65))
+
+	-- Keep Achievements below the new section whenever it is visible.
+	if RQE.AchievementsFrame then
+		RQE.AchievementsFrame:ClearAllPoints()
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", taskFrame, "BOTTOMLEFT", 0, -15)
 	end
 end
 
