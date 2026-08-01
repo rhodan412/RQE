@@ -476,7 +476,7 @@ CreateUniqueScenarioHeader(RQE.ScenarioChildFrame, "")
 
 local function UpdateHeader(frame, baseTitle, questCount)
 	local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
-	local numShownEntries, numQuestsInLog = C_QuestLog.GetNumQuestLogEntries()
+	local numShownEntries, numQuestsInLog = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
 	local titleText = baseTitle
 	if frame == RQE.QuestsFrame then
 		titleText = titleText .. " (" .. questCount .. "/" .. numQuestsInLog .. "/" .. maxQuests .. ")"
@@ -986,7 +986,7 @@ function RQE:AddEmptyWorldQuestsToWatch(mapID, allowedClassifications)
 					C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 
 					if RQE.db.profile.debugLevel == "INFO" then
-						print(string.format("Watching empty WQ: %d - '%s'", questID, C_QuestLog.GetTitleForQuestID(questID) or "Unknown"))
+						print(string.format("Watching empty WQ: %d - '%s'", questID, RQE.API.GetTitleForQuestID(questID) or "Unknown"))
 					end
 				end
 			end
@@ -1011,8 +1011,8 @@ function RQE:WatchQuestsInDBWithNoSteps()
 	end
 
 	-- Loop through all quest log entries
-	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-		local info = C_QuestLog.GetInfo(i)
+	for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+		local info = RQE.API.GetQuestLogInfo(i)
 		if info and not info.isHeader then
 			local questID = info.questID
 			local questData = RQE.getQuestData(questID)
@@ -1023,7 +1023,7 @@ function RQE:WatchQuestsInDBWithNoSteps()
 					-- Add to quest watch
 					C_QuestLog.AddQuestWatch(questID)
 					if RQE.db.profile.debugLevel == "INFO" then
-						local title = C_QuestLog.GetTitleForQuestID(questID) or "Unknown"
+						local title = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 						print(string.format("Watching quest with no steps: %d - '%s'", questID, title))
 					end
 				end
@@ -1089,7 +1089,7 @@ function RQE:PrintSortedWatchedQuests()
 	-- Print sorted quest list
 	print("Sorted Quest List by Proximity:")
 	for _, data in ipairs(questDistances) do
-		local questName = C_QuestLog.GetTitleForQuestID(data.questID) or "Unknown Quest"
+		local questName = RQE.API.GetTitleForQuestID(data.questID) or "Unknown Quest"
 		print(questName, "- QuestID:", data.questID, "- Distance:", math.sqrt(data.distanceSq))
 	end
 end
@@ -1110,7 +1110,8 @@ function RQE:SortWatchedQuestsByProximity()
 	for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 
-		if questID and not C_QuestLog.IsWorldQuest(questID) then
+		if questID and not RQE.API.IsWorldQuest(questID) then
+		--if questID and not C_QuestLog.IsWorldQuest(questID) then
 			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
 			local questMapID = GetQuestUiMapID(questID) -- Get the actual zone ID
 
@@ -1171,7 +1172,8 @@ function GatherAndSortWorldQuestsByProximity()
 	-- Gather World Quests
 	for i = 1, numTrackedWorldQuests do
 		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
-		if questID and C_QuestLog.IsWorldQuest(questID) then
+		if questID and RQE.API.IsWorldQuest(questID) then
+		--if questID and C_QuestLog.IsWorldQuest(questID) then
 			local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
 			table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge, type = "WQ" })
 		end
@@ -1274,7 +1276,7 @@ function RQE:VerifyWatchedQuests()
 
 	-- Compare against accepted list and add missing
 	for _, questID in ipairs(RQE.DelayedQuestWatchCheck) do
-		if C_QuestLog.IsOnQuest(questID) and not watched[questID] then
+		if RQE.API.IsOnQuest(questID) and not watched[questID] then
 			C_QuestLog.AddQuestWatch(questID)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				DEFAULT_CHAT_FRAME:AddMessage("Repair Watch: Added questID " .. questID, 0.46, 0.96, 0.46)
@@ -1710,7 +1712,7 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 
 	local buttonTexture = bonusQuestButton:CreateTexture(nil, "BACKGROUND")
 	buttonTexture:SetAllPoints(bonusQuestButton)
-	if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+	if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
 		buttonTexture:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 	else
 		buttonTexture:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
@@ -1763,13 +1765,13 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 			end)
 
 			C_Timer.After(0.50, function()
-				if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+				if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
 					RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 				end
 			end)
 
 			C_Timer.After(1.00, function()
-				if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+				if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
 					RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 				end
 
@@ -1790,7 +1792,7 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 	table.insert(RQE.bonusQuestElements, bonusQuestLabel)
 
 	-- Fetch and set the objectives text from the quest log
-	local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+	local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 	local objectivesText = objectivesTable and "" or "No objectives available."
 
 	if objectivesTable then
@@ -1978,7 +1980,7 @@ end
 
 -- Function to Colorize the Quest Tracker Module based on objective progress using the API
 local function colorizeObjectives(questID)
-	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
+	local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 	local colorizedText = ""
 	local t = {}
 
@@ -2041,7 +2043,7 @@ end
 
 -- Function to Colorize the Quest Tracker Module based on objective progress using the API (currently applies to tooltip within RQEFrame only)
 function RQE.colorizeObjectives(questID)
-	local objectivesData = C_QuestLog.GetQuestObjectives(questID)
+	local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 	local colorizedText = ""
 	local t = {}
 
@@ -2134,7 +2136,8 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 	local rewardSkillPoints = tonumber(rawSkillPoints) or 0
 
 	-- If it's a World Quest or Task Quest, handle differently
-	if C_QuestLog.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
+	if RQE.API.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
+	--if C_QuestLog.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
 		tooltip:AddLine("Rewards:", 1, 1, 1)
 
 		-- XP and money
@@ -2404,7 +2407,8 @@ function RQE:QuestType()
 	-- Loop through all tracked quests for regular and campaign quests
 	for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-		if questID and not C_QuestLog.IsWorldQuest(questID) then
+		if questID and not RQE.API.IsWorldQuest(questID) then
+		--if questID and not C_QuestLog.IsWorldQuest(questID) then
 			regularQuestUpdated = true
 		end
 	end
@@ -2474,7 +2478,8 @@ function UpdateRQEQuestFrame()
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID) then
 			RQE.campaignQuestCount = RQE.campaignQuestCount + 1
-		elseif C_QuestLog.IsWorldQuest(questID) then
+		elseif RQE.API.IsWorldQuest(questID) then
+		--elseif C_QuestLog.IsWorldQuest(questID) then
 			RQE.worldQuestCount = RQE.worldQuestCount + 1
 		-- elseif C_QuestLog.IsQuestTask(questID) then
 			-- RQE.worldQuestCount = RQE.worldQuestCount + 1
@@ -2596,15 +2601,16 @@ function UpdateRQEQuestFrame()
 		RQE.QuestDirectionText = directionText
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 		local isQuestComplete = C_QuestLog.IsComplete(questID)
-		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+		local isSuperTracked = RQE.API.GetSuperTrackedQuestID() == questID	--C_SuperTrack.GetSuperTrackedQuestID() == questID
 
-		if questIndex and not C_QuestLog.IsWorldQuest(questID) then
-			local info = C_QuestLog.GetInfo(questIndex)
+		if questIndex and not RQE.API.IsWorldQuest(questID) then
+		--if questIndex and not C_QuestLog.IsWorldQuest(questID) then
+			local info = RQE.API.GetQuestLogInfo(questIndex)
 
 			if info and not info.isHeader then
 				-- Determine the type of the quest (Campaign, World Quest, or Regular)
 				local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
-				local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 				local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
 
 				local parentFrame
@@ -2774,7 +2780,7 @@ function UpdateRQEQuestFrame()
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 
 						-- Get the currently super tracked quest ID
-						local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+						local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 
 						-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
 						RQE:PerformClearActions()
@@ -2829,7 +2835,7 @@ function UpdateRQEQuestFrame()
 				local _, questObjectivesText = GetQuestLogQuestText(questIndex)
 
 				-- Fetch Quest Objectives
-				local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+				local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 				local objectivesText = objectivesTable and "" or "No objectives available."
 
 				if objectivesTable then
@@ -3346,7 +3352,7 @@ function UpdateRQEWorldQuestFrame()
 	for i, questInfo in ipairs(sortedWorldQuests) do
 		local questID = questInfo.questID
 		local button = RQE.WorldQuestsFrame["WQButton" .. questID]
-		local isSuperTracked = C_SuperTrack.GetSuperTrackedQuestID() == questID
+		local isSuperTracked = RQE.API.GetSuperTrackedQuestID() == questID	--C_SuperTrack.GetSuperTrackedQuestID() == questID
 
 		-- Ensure questID is valid
 		if questID then
@@ -3373,7 +3379,7 @@ function UpdateRQEWorldQuestFrame()
 			WQnumber:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 			WQnumber:SetTextColor(1, 0.7, 0.2)
 
-			local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 			local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
 
 			if isWorldQuest then
@@ -3430,7 +3436,7 @@ function UpdateRQEWorldQuestFrame()
 
 					RQE.ObtainSuperTrackQuestDetails()
 
-					local currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
+					local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 					RQE:PerformClearActions()
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 					RQE.LastClickedIdentifier = nil
@@ -3471,7 +3477,7 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Fetch Quest Title with error handling
-			local questTitle = C_QuestLog.GetTitleForQuestID(questID)
+			local questTitle = RQE.API.GetTitleForQuestID(questID)
 			if not questTitle or questTitle == "" then
 				questTitle = "Unknown Quest"
 			end
@@ -3483,7 +3489,8 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLevelAndName:SetJustifyV("TOP")
 			WQuestLevelAndName:SetWidth(RQE.RQEQuestFrame:GetWidth() - 100)
 
-			if C_QuestLog.IsWorldQuest(questID) then
+			if RQE.API.IsWorldQuest(questID) then
+			--if C_QuestLog.IsWorldQuest(questID) then
 				WQuestLevelAndName:SetText("|cFFFFD700[WQ] " .. questTitle .. "|r") -- Gold color for World Quests
 			-- elseif C_QuestLog.IsQuestTask(questID) then
 				-- WQuestLevelAndName:SetText("|cFF00CCFF[BQ] " .. questTitle .. "|r") -- Cyan color for Bonus Quests
@@ -3506,7 +3513,7 @@ function UpdateRQEWorldQuestFrame()
 			WQuestLogIndexButton.QuestObjectives = WQuestObjectives
 
 			-- Fetch and set the objectives text from the quest log
-			local objectivesTable = C_QuestLog.GetQuestObjectives(questID)
+			local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 			local objectivesText = objectivesTable and "" or "No objectives available."
 			if objectivesTable then
 				for _, objective in pairs(objectivesTable) do
