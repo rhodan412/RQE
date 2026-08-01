@@ -3,7 +3,8 @@
 	**HIGHLIGHTS**
 		- Improved cross-version compatibility by routing quest and super-tracking calls through RQE’s API layer instead of directly calling Blizzard APIs.
 		- Added nearby task-quest detection and tracking support.
-		- Added a Task Quests section to the RQE Quest Tracker for nearby objectives, such as rare-enemy quests.
+		- Added frame to display task quests (such as localized quests to defeat rare mobs) and placed within the RQEQuestFrame.
+		- Improved Quest Tracker section spacing and layout when different quest types are active.
 
 	Buttons.lua
 		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
@@ -45,6 +46,7 @@
 		- Added RQE.TaskQuestsFrame to be placed below the RQE.WorldQuestsFrame and have its own header (2026.08.01.1714)
 		- Added RQE:ClearTaskQuestElements() function to clear the 'Task Quests' section when task quests are removed (2026.08.01.1714)
 		- Added UpdateRQETaskQuestFrame() to update the frame that includes task quests (2026.08.01.1707/1714)
+		- Fixed height positioning for child frames within the RQEQuestFrame (2026.08.01.1729)
 
 	RQE.toc
 		- Updated version# (2026.08.01.1707)
