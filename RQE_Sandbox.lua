@@ -236,7 +236,7 @@ local function InitializeSandbox()
 	-- #1i. Load Current Quest Data on Open
 	-------------------------------------------------------
 	SandboxFrame:SetScript("OnShow", function()
-		local questID = C_SuperTrack.GetSuperTrackedQuestID and C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 		questIDBox:SetText(questID or "")
 		editBox:SetText("")
 
