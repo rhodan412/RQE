@@ -182,7 +182,7 @@ function RQE.ToggleBothFramesfromLDB()
 		if RQE.db.profile.enableFrame then
 			RQE:RestoreSuperTrackedQuestForCharacter()
 		else
-			local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 
 			if not RQE.isSuperTracking or not isSuperTracking then
 				RQE.Buttons.ClearButtonPressed()
