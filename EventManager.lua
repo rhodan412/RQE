@@ -7382,10 +7382,10 @@ end)
 
 -- Hooking the Objective Tracker's OnShow and OnHide events
 ObjectiveTrackerFrame:HookScript("OnShow", function()
-	if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-		if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-			ObjectiveTrackerFrame:Hide()
-		end
+	-- The RQE Quest Tracker, not the main RQE window, determines whether the
+	-- Blizzard Objective Tracker should be hidden.
+	if RQE.EnforceObjectiveTrackerVisibility then
+		RQE:EnforceObjectiveTrackerVisibility()
 	end
 end)
 
@@ -7509,11 +7509,11 @@ function RQE:ToggleFramesAndTracker()
 		RQE.isRQEFrameManuallyClosed = true
 		RQE.isRQEQuestFrameManuallyClosed = true
 
-		-- Show Blizzard Tracker if the toggle is enabled
-		if RQE.db.profile.toggleBlizzObjectiveTracker then
+		-- Show Blizzard Tracker whenever the RQE Quest Tracker is hidden.
+		if RQE.db.profile.toggleBlizzObjectiveTracker or not RQE.RQEQuestFrame:IsShown() then
 			ObjectiveTrackerFrame:Show()
 		else
-			ObjectiveTrackerFrame:Hide() -- Ensure it stays hidden if the toggle is disabled
+			ObjectiveTrackerFrame:Hide()
 		end
 	else
 		-- Show RQE frames
@@ -7535,8 +7535,12 @@ function RQE:ToggleFramesAndTracker()
 		RQE.isRQEFrameManuallyClosed = false
 		RQE.isRQEQuestFrameManuallyClosed = false
 
-		-- Hide Blizzard Tracker if the toggle is disabled or if RQE frames are shown
-		ObjectiveTrackerFrame:Hide()
+		-- The RQE Quest Tracker alone controls the Blizzard tracker visibility.
+		if RQE.RQEQuestFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
+		else
+			ObjectiveTrackerFrame:Show()
+		end
 
 		-- Check if MagicButton should be visible based on macro body
 		RQE.Buttons.UpdateMagicButtonVisibility()
