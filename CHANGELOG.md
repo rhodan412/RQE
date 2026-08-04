@@ -1,3 +1,15 @@
+12.0.7.5
+
+	**HIGHLIGHTS**
+		- Added many Classic WoW quests in the DB [I have a working separate RQE version for Classic Season of Discovery, but without the DB built up, it is not much more than a Quest Tracker in beta-development]
+
+	RQE.toc
+		- Updated version# (2026.08.04.0231)
+
+	RQEDatabase.lua
+		- Added many Classic WoW quests in the DB (2026.08.04.0231)
+
+
 12.0.7.4 (2026.08.01)
 
 	**HIGHLIGHTS**
