@@ -3,11 +3,14 @@
 	**HIGHLIGHTS**
 		- Added many Classic WoW quests in the DB [I have a working separate RQE version for Classic Season of Discovery, but without the DB built up, it is not much more than a Quest Tracker in beta-development]
 
+	Core.lua
+		- Added RQE.GetCompletedDataForAddon(), RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog() and RQE:ExecuteRQEDatabaseContributionCleanup() functions in order to obtain only completed quests from companion quest gathering add-on [author-mode ONLY] (2026.08.08.2253)
+
 	RQE.toc
 		- Updated version# (2026.08.04.0231)
 
 	RQEDatabase.lua
-		- Added many Classic WoW quests in the DB (2026.08.04.0231)
+		- Added many Classic WoW quests in the DB (2026.08.08.2253)
 
 
 12.0.7.4 (2026.08.01)
