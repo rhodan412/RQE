@@ -1494,6 +1494,30 @@ function RQE.GetDataForAddon()
 end
 
 
+-- Obtain addon Contribution Data for completed quests
+function RQE.GetCompletedDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE.db.profile.debugTimeStampCheckbox = false
+		RQE:ClearDebugLog()
+		RQE_Contribution.GetCompletedContributionInfo()
+
+		--RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(5, function()
+			RQE.db.profile.debugTimeStampCheckbox = true
+		end)
+
+		C_Timer.After(2, function()
+			RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
 -- Obtain WQ Information for Expansion: Midnight
 function RQE.GetMidnightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
@@ -1798,6 +1822,46 @@ function RQE:ShowDeleteConfirmationDialog()
 
 	-- Show the confirmation popup
 	StaticPopup_Show("RQE_DELETE_CONFIRM")
+end
+
+
+-- Shows confirmation before removing contribution entries that already
+-- exist in RQEDatabase.Vanilla. Sandbox-only entries will be preserved.
+function RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
+	StaticPopupDialogs["RQE_CONTRIBUTION_DB_CLEANUP_CONFIRM"] = {
+		text = "Remove contribution data only for quests that already exist in RQEDatabase.Vanilla?\n\nSandbox-only entries will be preserved. This action is irreversible.",
+		button1 = "Remove Entries",
+		button2 = "Cancel",
+		OnAccept = function()
+			RQE:ExecuteRQEDatabaseContributionCleanup()
+		end,
+		OnCancel = function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE Contribution database cleanup canceled.")
+			end
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid conflicts with other popups
+	}
+
+	StaticPopup_Show("RQE_CONTRIBUTION_DB_CLEANUP_CONFIRM")
+end
+
+
+-- Removes only RQE Contribution saved-variable entries whose quest IDs
+-- already exist in RQEDatabase.Vanilla, then offers to reload the UI.
+function RQE:ExecuteRQEDatabaseContributionCleanup()
+	if RQE_Contribution and RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase then
+		RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase()
+
+		C_Timer.After(0.2, function()
+			RQE:ShowReloadConfirmationDialog()
+		end)
+	else
+		print("Error: Unable to clean RQE Contribution data. Function not found.")
+	end
 end
 
 
