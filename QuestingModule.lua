@@ -107,7 +107,8 @@ local function AttachHoverHandlers(frame)
 		-- Delay to recheck mouse position to ensure accurate detection
 		C_Timer.After(0.1, function()
 			-- Check if mouse is still over the frame or any of its children
-			if not MouseIsOver(frame) then
+			-- if not MouseIsOver(frame) then
+			if not frame:IsMouseOver() then
 				GameTooltip:Hide()
 				RQE.hoveringOnFrame = false
 			end
