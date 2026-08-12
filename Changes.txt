@@ -1,4 +1,4 @@
-12.0.7.5
+12.1.0.0 (2026.08.11)
 
 	**HIGHLIGHTS**
 		- Added many Classic WoW quests in the DB [I have a working separate RQE version for Classic Season of Discovery, but without the DB built up, it is not much more than a Quest Tracker in beta-development]
@@ -6,11 +6,14 @@
 	Core.lua
 		- Added RQE.GetCompletedDataForAddon(), RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog() and RQE:ExecuteRQEDatabaseContributionCleanup() functions in order to obtain only completed quests from companion quest gathering add-on [author-mode ONLY] (2026.08.08.2253)
 
+	QuestingModule.lua
+		- Fixed nil error related to MouseIsOver in the AttachHoverHandlers local function (2026.08.12.1816)
+
 	RQE.toc
-		- Updated version# (2026.08.04.0231)
+		- Updated interface/version# (2026.08.12.1816)
 
 	RQEDatabase.lua
-		- Added many Classic WoW quests in the DB (2026.08.08.2253)
+		- Added many Classic WoW quests in the DB (2026.08.12.1816)
 
 
 12.0.7.4 (2026.08.01)
