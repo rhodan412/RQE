@@ -1472,6 +1472,11 @@ end
 
 -- Obtain addon Contribution Data
 function RQE.GetDataForAddon()
+	if IsShiftKeyDown() then
+		RQE.GetCompletedDataForAddon()
+		return
+	end
+
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
@@ -1511,6 +1516,26 @@ function RQE.GetCompletedDataForAddon()
 
 		C_Timer.After(2, function()
 			RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
+-- Obtain addon Contribution Data
+function RQE.GetSandBoxDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE.db.profile.debugTimeStampCheckbox = false
+		RQE:ClearDebugLog()
+		RQE.GetAllSandboxInfo()
+
+		--RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(5, function()
+			RQE.db.profile.debugTimeStampCheckbox = true
 		end)
 	else
 		print("RQE Contribution addon is not presently loaded. Please request this from the author")
@@ -3224,34 +3249,6 @@ local function colorizeObjectives(questID)
 	end
 
 	return table.concat(t)
-
-	-- if objectivesData then  -- Check if the data is not nil
-		-- for _, objective in ipairs(objectivesData) do
-			-- local description = objective.text
-			-- if isReadyForTurnIn then
-				-- -- Entire quest is ready for turn-in, colorize all objectives in green
-				-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r |cfffffd9f (Complete)|r\n"	-- Green w/Canary 'Complete'
-				-- -- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r |cffffffff(Complete)|r\n"	-- Green w/White 'Complete'
-				-- -- colorizedText = colorizedText .. "|cffffff00" .. description .. " (Complete) |r\n"	-- Yellow
-				-- -- colorizedText = colorizedText .. "|cff0000ff" .. description .. " (Complete) |r\n"	-- Blue
-			-- else
-				-- if objective.finished then
-					-- -- Objective complete, colorize in green
-					-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r |cfffffd9f (Complete)|r\n"	-- Green w/Canary 'Complete'
-				-- elseif objective.numFulfilled > 0 then
-					-- -- Objective partially complete, colorize in yellow
-					-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-				-- else
-					-- -- Objective has not started or no progress, leave as white
-					-- colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
-				-- end
-			-- end
-		-- end
-	-- else
-		-- colorizedText = "Objective data unavailable."  -- Default text or handle as needed
-	-- end
-
-	-- return colorizedText
 end
 
 
@@ -6697,20 +6694,68 @@ function RQE.IsQuestSuperTracked()
 end
 
 
+-- Rounds a normalized map coordinate so percentage displays use two decimals.
+local function RQERoundMapFraction(value)
+	-- return math.floor((tonumber(value) or 0) * 10000 + 0.5) / 10000
+	local percentage = tonumber(string.format("%.2f", (tonumber(value) or 0) * 100)) or 0
+	return percentage / 100
+end
+
+-- Single Blizzard-map API source for RQE's current player position.
+-- This deliberately does not read position data from TomTom.
+function RQE:GetCurrentPlayerMapPosition()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then return nil end
+
+	local position = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not position then return nil end
+
+	local x, y = position:GetXY()
+	if not x or not y then return nil end
+
+	return mapID, x, y
+end
+
+-- Keep the visible header current while the frame is shown.  PLAYER_STARTED_MOVING
+-- does not reliably remain active during Retail flight, which previously allowed
+-- the header to display an older Blizzard-map sample.
+local coordinateDisplayTicker
+
+function RQE:StartCoordinateDisplayUpdates()
+	if coordinateDisplayTicker then return end
+
+	coordinateDisplayTicker = C_Timer.NewTicker(0.10, function()
+		if RQEFrame and RQEFrame:IsShown()
+			and RQE.db and RQE.db.profile and RQE.db.profile.showCoordinates then
+			RQE:UpdateCoordinates()
+		end
+	end)
+end
+
+function RQE:StopCoordinateDisplayUpdates()
+	if coordinateDisplayTicker then
+		coordinateDisplayTicker:Cancel()
+		coordinateDisplayTicker = nil
+	end
+end
+
 -- Function to update Coordinates display
 function RQE:UpdateCoordinates()
 	--if not IsPlayerMoving() then return end
-	local mapID = C_Map.GetBestMapForUnit("player")
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, x, y = self:GetCurrentPlayerMapPosition()
 
 	-- Check if the mapID is valid before proceeding
 	if mapID then
-		local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- local position = C_Map.GetPlayerMapPosition(mapID, "player")
 		if RQEFrame.CoordinatesText then  -- Check if CoordinatesText is initialized
-			if RQE.db.profile.showCoordinates and position then
-				local x, y = position:GetXY()
-				x = x * 100  -- converting to percentage
-				y = y * 100  -- converting to percentage
-				RQEFrame.CoordinatesText:SetText(string.format("Coordinates: %.2f, %.2f", x, y))
+			if RQE.db.profile.showCoordinates and x and y then
+				-- local x, y = position:GetXY()
+				-- x = x * 100  -- converting to percentage
+				-- y = y * 100  -- converting to percentage
+				-- x = RQERoundMapFraction(x) * 100
+				-- y = RQERoundMapFraction(y) * 100
+				RQEFrame.CoordinatesText:SetText(string.format("Coordinates: %.2f, %.2f", x * 100, y * 100))
 			else
 				RQEFrame.CoordinatesText:SetText("")
 			end
@@ -12805,7 +12850,8 @@ local lastGridMap, lastGridX, lastGridY
 
 -- OnUpdate function to be triggered while moving
 local function OnPlayerMoving(self, elapsed)
-	RQE:UpdateCoordinates()
+	-- RQE:UpdateCoordinates()
+	-- The visible coordinate header is refreshed independently while RQEFrame is shown.
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateStepDistance()
 	--RQE:MaybeUpdateWaypointOnSnap(elapsed)
@@ -15432,22 +15478,26 @@ end
 function RQE.PrintPlayerCoordinateHotspot()
 	if not RQEFrame:IsShown() then return end
 
-	local mapID = C_Map.GetBestMapForUnit("player")
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, rawX, rawY = RQE:GetCurrentPlayerMapPosition()
 	if not mapID then
 		print("Unable to determine current map.")
 		return
 	end
 
 	-- Get normalized x, y for the current map
-	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
-	if not pos then
+	-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	-- if not pos then
+	if not rawX or not rawY then
 		if RQE.db.profile.debugLevel == "INFO" then
 			print("Unable to get player position on mapID:", mapID)
 		end
 		return
 	end
 
-	local x, y = pos.x, pos.y
+	-- local x, y = pos.x, pos.y
+	local x = RQERoundMapFraction(rawX)
+	local y = RQERoundMapFraction(rawY)
 
 	-- Climb to continent
 	local continentID, continentName
@@ -15474,7 +15524,10 @@ function RQE.PrintPlayerCoordinateHotspot()
 
 	-- Gathers coordinateHotspot for current player position
 	if contPos then
-		local cx, cy = contPos.x, contPos.y
+		-- local cx, cy = contPos.x, contPos.y
+		local rawContX, rawContY = contPos:GetXY()
+		local cx = RQERoundMapFraction(rawContX)
+		local cy = RQERoundMapFraction(rawContY)
 		print("				coordinateHotspots = {")
 		print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
 		print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
@@ -15487,11 +15540,17 @@ function RQE.PrintPlayerCoordinateHotspot()
 end
 
 
+-- Old truncation helper retained for reference; RQERoundMapFraction above is active.
+-- local function RQETruncateDebugMapFraction(value)
+	-- return math.floor((tonumber(value) or 0) * 10000) / 10000
+-- end
+
 -- Fetches the player's position in relation to their current continent
 function RQE.DebugPrintPlayerContinentPosition(questID)
 	if not RQEFrame:IsShown() then return end
 
-	local mapID = C_Map.GetBestMapForUnit("player")
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, rawX, rawY = RQE:GetCurrentPlayerMapPosition()
 	if not mapID then
 		print("Unable to determine current map.")
 		return
@@ -15505,15 +15564,22 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 	end
 
 	-- Get normalized x, y for the current map
-	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
-	if not pos then
+	-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	-- if not pos then
+	if not rawX or not rawY then
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Unable to get player position on mapID:", mapID)
 		end
 		return
 	end
 
-	local x, y = pos.x, pos.y
+	-- local x, y = pos.x, pos.y
+	-- local x = RQETruncateDebugMapFraction(pos.x)
+	-- local y = RQETruncateDebugMapFraction(pos.y)
+	-- local x = RQERoundMapFraction(pos.x)
+	-- local y = RQERoundMapFraction(pos.y)
+	local x = RQERoundMapFraction(rawX)
+	local y = RQERoundMapFraction(rawY)
 
 	-- Climb to continent
 	local continentID, continentName
@@ -15575,7 +15641,14 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 					print("Tracked QuestID: " .. tostring(questID))
 				end
 
-				local cx, cy = contPos.x, contPos.y
+				-- local cx, cy = contPos.x, contPos.y
+				-- local cx = RQETruncateDebugMapFraction(contPos.x)
+				-- local cy = RQETruncateDebugMapFraction(contPos.y)
+				-- local cx = RQERoundMapFraction(contPos.x)
+				-- local cy = RQERoundMapFraction(contPos.y)
+				local rawContX, rawContY = contPos:GetXY()
+				local cx = RQERoundMapFraction(rawContX)
+				local cy = RQERoundMapFraction(rawContY)
 				print("			locations = {")
 				if dbX and dbY and dbMapID then
 					print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
@@ -15635,7 +15708,14 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				local hotspotMapID = hasDBCoords and dbMapID or mapID
 				
 				if contPos then
-					local cx, cy = contPos.x, contPos.y
+					-- local cx, cy = contPos.x, contPos.y
+					-- local cx = RQETruncateDebugMapFraction(contPos.x)
+					-- local cy = RQETruncateDebugMapFraction(contPos.y)
+					-- local cx = RQERoundMapFraction(contPos.x)
+					-- local cy = RQERoundMapFraction(contPos.y)
+					local rawContX, rawContY = contPos:GetXY()
+					local cx = RQERoundMapFraction(rawContX)
+					local cy = RQERoundMapFraction(rawContY)
 
 					print("				coordinateHotspots = {")
 					print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
@@ -15693,7 +15773,14 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				locY = locY or (hasDBCoords and dbY) or (y * 100)
 				locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
 
-				local cx, cy = contPos.x, contPos.y
+				-- local cx, cy = contPos.x, contPos.y
+				-- local cx = RQETruncateDebugMapFraction(contPos.x)
+				-- local cy = RQETruncateDebugMapFraction(contPos.y)
+				-- local cx = RQERoundMapFraction(contPos.x)
+				-- local cy = RQERoundMapFraction(contPos.y)
+				local rawContX, rawContY = contPos:GetXY()
+				local cx = RQERoundMapFraction(rawContX)
+				local cy = RQERoundMapFraction(rawContY)
 
 				local CYAN = "|cff00ffff"
 				local RESET = "|r"
@@ -15719,7 +15806,14 @@ function RQE.DebugPrintPlayerContinentPosition(questID)
 				local hotspotX = hasDBCoords and dbX or (x * 100)
 				local hotspotY = hasDBCoords and dbY or (y * 100)
 				local hotspotMapID = hasDBCoords and dbMapID or mapID
-				local cx, cy = contPos.x, contPos.y
+				-- local cx, cy = contPos.x, contPos.y
+				-- local cx = RQETruncateDebugMapFraction(contPos.x)
+				-- local cy = RQETruncateDebugMapFraction(contPos.y)
+				-- local cx = RQERoundMapFraction(contPos.x)
+				-- local cy = RQERoundMapFraction(contPos.y)
+				local rawContX, rawContY = contPos:GetXY()
+				local cx = RQERoundMapFraction(rawContX)
+				local cy = RQERoundMapFraction(rawContY)
 
 				print(CHENIN .. string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID) .. RESET)
 				print(CHENIN .. string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID) .. RESET)
@@ -15861,8 +15955,11 @@ function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 		return
 	end
 
-	local contX = contPos.x * 100
-	local contY = contPos.y * 100
+	-- local contX = contPos.x * 100
+	-- local contY = contPos.y * 100
+	local rawContX, rawContY = contPos:GetXY()
+	local contX = RQERoundMapFraction(rawContX) * 100
+	local contY = RQERoundMapFraction(rawContY) * 100
 
 	local function PrintHotspots(coord)
 		if stepData and stepData.coordinateHotspots then
@@ -16038,19 +16135,26 @@ function RQE:Debug_PlayerCoordinates()
 		print((color or maincolor) .. msg .. reset)
 	end
 
-	local mapID = C_Map.GetBestMapForUnit("player")
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, rawX, rawY = self:GetCurrentPlayerMapPosition()
 	if not mapID then
 		PrintRQE("[RQE Debug] Unable to determine player mapID.", nullcolor)
 		return
 	end
 
-	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
-	if pos then
+	-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if rawX and rawY then
 		PrintRQE(string.format(
 			"[RQE Debug] Player map position: mapID = %d, x = %.2f, y = %.2f",
 			mapID,
-			pos.x * 100,
-			pos.y * 100
+			-- pos.x * 100,
+			-- RQETruncateDebugMapFraction(pos.x) * 100,
+			-- RQERoundMapFraction(pos.x) * 100,
+			rawX * 100,
+			-- pos.y * 100
+			-- RQETruncateDebugMapFraction(pos.y) * 100
+			-- RQERoundMapFraction(pos.y) * 100
+			rawY * 100
 		))
 	else
 		PrintRQE("[RQE Debug] Unable to get player position for mapID: " .. tostring(mapID), nullcolor)
