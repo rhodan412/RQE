@@ -502,8 +502,8 @@ function RQE:ShowLDBDropdownMenu()
 
 		self.CustomMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				-- Check if the frame exists before calling MouseIsOver
-				if (self and MouseIsOver(self)) or (RQE.MoreOptionsMenu and MouseIsOver(RQE.MoreOptionsMenu)) then
+				-- Check whether the mouse remains over this menu or its submenu.
+				if (self and self:IsMouseOver()) or (RQE.MoreOptionsMenu and RQE.MoreOptionsMenu:IsMouseOver()) then
 					-- Do nothing, the mouse is still over the menu or its related submenus
 					return
 				end
@@ -551,7 +551,7 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
 		end)
 		self.MoreOptionsMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not MouseIsOver(self) and not MouseIsOver(parentMenu) then
+				if not self:IsMouseOver() and not parentMenu:IsMouseOver() then
 					self:Hide()
 					parentMenu:Hide()
 				end
