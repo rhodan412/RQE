@@ -1192,9 +1192,13 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
 
 	-- Nested functions
 	CQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
+	-- CQButton:SetScript("OnClick", function()
+	-- 	-- Code for showing completed quests functionality here
+	-- 	RQE.filterCompleteQuests()
+	-- end)
 	CQButton:SetScript("OnClick", function()
-		-- Code for showing completed quests functionality here
 		RQE.filterCompleteQuests()
+		RQE.QuestScrollFrameToTop()
 	end)
 
 	CreateTooltip(CQButton, "Show Completed Quests \n in Quest Log")  -- Tooltip
@@ -1217,9 +1221,13 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
 
 	-- Nested functions
 	HQButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+	-- HQButton:SetScript("OnClick", function()
+	-- 	-- Code for hiding completed quests functionality here
+	-- 	RQE:HideCompletedWatchedQuests()
+	-- end)
 	HQButton:SetScript("OnClick", function()
-		-- Code for hiding completed quests functionality here
 		RQE:HideCompletedWatchedQuests()
+		RQE.QuestScrollFrameToTop()
 	end)
 
 	CreateTooltip(HQButton, "Hide watched Completed Quests")  -- Tooltip
@@ -1242,9 +1250,13 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
 
 	-- Nested functions
 	ZQButton:SetPoint("TOPLEFT", RQE.HQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+	-- ZQButton:SetScript("OnClick", function()
+	-- 	-- Code for displaying quests in current zone
+	-- 	RQE.DisplayCurrentZoneQuests()
+	-- end)
 	ZQButton:SetScript("OnClick", function()
-		-- Code for displaying quests in current zone
 		RQE.DisplayCurrentZoneQuests()
+		RQE.QuestScrollFrameToTop()
 	end)
 
 	CreateTooltip(ZQButton, "Show zone quests")  -- Tooltip
@@ -1518,7 +1530,7 @@ function RQE:ShowQuestFilterMenu()
 		end)
 		self.QuestFilterDropDownMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not MouseIsOver(self) and not MouseIsOver(RQE.QTQuestFilterButton) then
+				if not self:IsMouseOver() and not RQE.QTQuestFilterButton:IsMouseOver() then
 					self:Hide()
 				end
 			end)
@@ -1638,7 +1650,7 @@ function RQE:CreateCampaignSubMenu()
 		-- Example for one of the submenus, apply similar logic to others
 		self.CampaignSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not MouseIsOver(self) and not MouseIsOver(self:GetParent()) then
+				if not self:IsMouseOver() and not self:GetParent():IsMouseOver() then
 					self:Hide()
 					self:GetParent():Hide() -- Hide the main menu if mouse leaves both
 				end
@@ -1669,7 +1681,7 @@ function RQE:CreateQuestTypeSubMenu()
 		end)
 		self.QuestTypeSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not MouseIsOver(self) then
+				if not self:IsMouseOver() then
 					self:Hide()
 				end
 			end)
@@ -1699,7 +1711,7 @@ function RQE:CreateZoneQuestSubMenu()
 		end)
 		self.ZoneQuestSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not MouseIsOver(self) then
+				if not self:IsMouseOver() then
 					self:Hide()
 				end
 			end)
@@ -1729,7 +1741,7 @@ function RQE:CreateQuestLineSubMenu()
 		end)
 		self.QuestLineSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not MouseIsOver(self) then
+				if not self:IsMouseOver() then
 					self:Hide()
 				end
 			end)
