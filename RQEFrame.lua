@@ -762,6 +762,24 @@ if CoordinatesText then
 end
 RQEFrame.CoordinatesText = CoordinatesText
 
+-- Coordinate updates must also run during Retail flight, which does not always
+-- keep PLAYER_STARTED_MOVING active.  The timer uses RQE's Blizzard-map helper.
+RQEFrame:HookScript("OnShow", function()
+	if RQE and RQE.StartCoordinateDisplayUpdates then
+		RQE:StartCoordinateDisplayUpdates()
+	end
+end)
+
+RQEFrame:HookScript("OnHide", function()
+	if RQE and RQE.StopCoordinateDisplayUpdates then
+		RQE:StopCoordinateDisplayUpdates()
+	end
+end)
+
+if RQEFrame:IsShown() and RQE and RQE.StartCoordinateDisplayUpdates then
+	RQE:StartCoordinateDisplayUpdates()
+end
+
 
 -- Create Font String for Step Distance (once)
 RQEFrame.StepDistanceText = RQEFrame.StepDistanceText or RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
