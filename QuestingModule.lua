@@ -68,7 +68,7 @@ RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
 
 -- Create the ScrollFrame
 local ScrollFrame = CreateFrame("ScrollFrame", nil, RQE.RQEQuestFrame)
-ScrollFrame:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -40)  -- Adjusted Y-position
+ScrollFrame:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -72)  -- Leave room for the tracker search controls.
 ScrollFrame:SetPoint("BOTTOMRIGHT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -30, 10)
 ScrollFrame:EnableMouseWheel(true)
 ScrollFrame:SetClipsChildren(true)  -- Enable clipping
@@ -82,6 +82,109 @@ content:SetSize(360, 600)  -- Set the content size here
 ScrollFrame:SetScrollChild(content)
 content:SetAllPoints()
 RQE.QTcontent = content
+
+
+-- Quest-log search controls remain fixed below the tracker header while the
+-- category frames continue to scroll in the content area beneath them.
+local questTrackerSearchRow = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
+questTrackerSearchRow:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -40)
+questTrackerSearchRow:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPRIGHT", -30, -40)
+questTrackerSearchRow:SetHeight(26)
+RQE.QuestTrackerSearchRow = questTrackerSearchRow
+
+local questTrackerRestoreButton = CreateFrame("Button", nil, questTrackerSearchRow, "UIPanelButtonTemplate")
+questTrackerRestoreButton:SetSize(72, 24)
+questTrackerRestoreButton:SetPoint("RIGHT", questTrackerSearchRow, "RIGHT", 0, 0)
+questTrackerRestoreButton:SetText("Restore")
+questTrackerRestoreButton:Disable()
+RQE.QuestTrackerRestoreButton = questTrackerRestoreButton
+
+local questTrackerSearchButton = CreateFrame("Button", nil, questTrackerSearchRow, "UIPanelButtonTemplate")
+questTrackerSearchButton:SetSize(68, 24)
+questTrackerSearchButton:SetPoint("RIGHT", questTrackerRestoreButton, "LEFT", -4, 0)
+questTrackerSearchButton:SetText("Search")
+RQE.QuestTrackerSearchButton = questTrackerSearchButton
+
+local questTrackerSearchInput = CreateFrame("EditBox", nil, questTrackerSearchRow, "InputBoxTemplate")
+questTrackerSearchInput:SetHeight(24)
+questTrackerSearchInput:SetPoint("LEFT", questTrackerSearchRow, "LEFT", 3, 0)
+questTrackerSearchInput:SetPoint("RIGHT", questTrackerSearchButton, "LEFT", -6, 0)
+questTrackerSearchInput:SetAutoFocus(false)
+questTrackerSearchInput:SetFontObject("GameFontHighlight")
+questTrackerSearchInput:SetTextInsets(6, 6, 0, 0)
+RQE.QuestTrackerSearchInput = questTrackerSearchInput
+
+local function ShowQuestTrackerSearchTooltip(self, text)
+	GameTooltip:SetOwner(self, "ANCHOR_TOP")
+	GameTooltip:SetText(text, 1, 1, 1, true)
+	GameTooltip:Show()
+end
+
+questTrackerSearchInput:SetScript("OnEnter", function(self)
+	ShowQuestTrackerSearchTooltip(self, "Type in questID, name, description, or objective")
+end)
+questTrackerSearchInput:SetScript("OnLeave", GameTooltip_Hide)
+
+-- Previous longer Search tooltip retained for reference:
+-- questTrackerSearchButton:SetScript("OnEnter", function(self)
+-- 	ShowQuestTrackerSearchTooltip(self,
+-- 		"Search the active quest log by quest ID, quest title, objectives, or description.\n\n" ..
+-- 		"Matches may also come from the same title, objectives, or description fields in RQEDatabase. " ..
+-- 		"Searching removes other player-log quests from the RQE Quest Tracker and keeps only the matching quests. World, bonus, and other non-log tracker entries are unchanged.")
+-- end)
+questTrackerSearchButton:SetScript("OnEnter", function(self)
+	ShowQuestTrackerSearchTooltip(self, "Search for and populate quest tracker with results")
+end)
+questTrackerSearchButton:SetScript("OnLeave", GameTooltip_Hide)
+
+-- Previous Restore tooltip retained for reference:
+-- questTrackerRestoreButton:SetScript("OnEnter", function(self)
+-- 	ShowQuestTrackerSearchTooltip(self, "Restore the player-log quests that were tracked before the latest quest-tracker search.")
+-- end)
+questTrackerRestoreButton:SetScript("OnEnter", function(self)
+	ShowQuestTrackerSearchTooltip(self, "Restore your watch list before Search")
+end)
+questTrackerRestoreButton:SetScript("OnLeave", GameTooltip_Hide)
+
+-- local function RunQuestTrackerSearch()
+-- 	if RQE.SearchQuestTracker then
+-- 		RQE:SearchQuestTracker(questTrackerSearchInput:GetText())
+-- 	end
+-- 	questTrackerSearchInput:ClearFocus()
+-- end
+local function RunQuestTrackerSearch()
+	if RQE.SearchQuestTracker then
+		RQE:SearchQuestTracker(questTrackerSearchInput:GetText())
+	end
+	RQE.QuestScrollFrameToTop()
+	questTrackerSearchInput:ClearFocus()
+end
+
+questTrackerSearchInput:SetScript("OnEnterPressed", RunQuestTrackerSearch)
+questTrackerSearchButton:SetScript("OnClick", RunQuestTrackerSearch)
+-- questTrackerRestoreButton:SetScript("OnClick", function()
+-- 	if RQE.RestoreQuestTrackerSearch then
+-- 		RQE:RestoreQuestTrackerSearch()
+-- 	end
+-- end)
+questTrackerRestoreButton:SetScript("OnClick", function()
+	if RQE.RestoreQuestTrackerSearch then
+		RQE:RestoreQuestTrackerSearch()
+	end
+	RQE.QuestScrollFrameToTop()
+end)
+
+-- The stock minimize button reduces the tracker to its header. Keep the search
+-- controls from extending below that compact frame and restore them on expand.
+RQE.RQEQuestFrame:HookScript("OnSizeChanged", function(_, _, height)
+	if RQE.QuestTrackerSearchRow then
+		if height <= 30 then
+			RQE.QuestTrackerSearchRow:Hide()
+		else
+			RQE.QuestTrackerSearchRow:Show()
+		end
+	end
+end)
 
 
 -- Make it draggable
@@ -180,7 +283,7 @@ RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. fram
 ---@class RQE.QMQTslider : Slider
 ---@field QMQTslider.scrollStep number
 local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
-QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -20)
+QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -72)  -- Align with the scrollable area below the search row.
 QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
 QMQTslider:SetMinMaxValues(0, content:GetHeight())
 QMQTslider:SetValueStep(1)
@@ -204,12 +307,21 @@ end)
 
 
 -- Function that Scrolls the RQEQuestFrame to the top as long as player doesn't have mouse in RQEQuestFrame window
+-- function RQE.QuestScrollFrameToTop()
+-- 	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
+-- 		if RQE.QTScrollFrame and QMQTslider then
+-- 			RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+-- 			QMQTslider:SetValue(0)  -- Also set the slider to the top position
+-- 		end
+-- 	end
+-- end
+
+-- Always scroll after tracker buttons repopulate the frame, including when the
+-- mouse is over the tracker (as it is while clicking those buttons).
 function RQE.QuestScrollFrameToTop()
-	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
-		if RQE.QTScrollFrame and QMQTslider then
-			RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
-			QMQTslider:SetValue(0)  -- Also set the slider to the top position
-		end
+	if RQE.QTScrollFrame and RQE.QMQTslider then
+		RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
+		RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
 	end
 end
 
@@ -1978,6 +2090,230 @@ function RQE:ClearRQEQuestFrame()
 end
 
 
+-- Quest Tracker search -------------------------------------------------------
+-- Search only regular player-log quests. World, bonus, task, and other
+-- externally managed tracker entries deliberately remain outside this filter.
+local function IsQuestTrackerSearchableLogQuest(questID, info)
+	questID = tonumber(questID)
+	if not questID or not info or info.isHeader then return false end
+	if RQE.API.IsWorldQuest and RQE.API.IsWorldQuest(questID) then return false end
+	if info.isTask then return false end
+	if C_QuestLog and C_QuestLog.IsQuestTask and C_QuestLog.IsQuestTask(questID) then return false end
+	return true
+end
+
+local function AddQuestTrackerSearchText(searchText, value)
+	if type(value) == "string" and value ~= "" then
+		searchText[#searchText + 1] = value
+	end
+end
+
+local function AddQuestTrackerSearchTextList(searchText, values)
+	if type(values) ~= "table" then return end
+	for _, value in ipairs(values) do
+		AddQuestTrackerSearchText(searchText, value)
+	end
+end
+
+local function FindQuestTrackerSearchMatches(searchTerm)
+	local matches = {}
+	local normalizedSearchTerm = string.lower(searchTerm)
+	local numEntries = select(1, RQE.API.GetNumQuestLogEntries()) or 0
+
+	for questLogIndex = 1, numEntries do
+		local info = RQE.API.GetQuestLogInfo(questLogIndex)
+		local questID = info and tonumber(info.questID)
+		if IsQuestTrackerSearchableLogQuest(questID, info) then
+			local searchableText = { tostring(questID) }
+			AddQuestTrackerSearchText(searchableText, info.title)
+
+			if type(GetQuestLogQuestText) == "function" then
+				local descriptionText, objectivesText = GetQuestLogQuestText(questLogIndex)
+				AddQuestTrackerSearchText(searchableText, descriptionText)
+				AddQuestTrackerSearchText(searchableText, objectivesText)
+			end
+
+			for _, objective in ipairs(RQE.API.GetQuestObjectives(questID) or {}) do
+				AddQuestTrackerSearchText(searchableText, objective and objective.text)
+			end
+
+			local dbQuestData = RQE.getQuestData and RQE.getQuestData(questID)
+			if type(dbQuestData) == "table" then
+				AddQuestTrackerSearchText(searchableText, dbQuestData.title)
+				AddQuestTrackerSearchTextList(searchableText, dbQuestData.objectivesQuestText)
+				AddQuestTrackerSearchTextList(searchableText, dbQuestData.descriptionQuestText)
+				AddQuestTrackerSearchText(searchableText, dbQuestData.npc)
+				AddQuestTrackerSearchTextList(searchableText, dbQuestData.npc)
+				for stepIndex, stepData in pairs(dbQuestData) do
+					if type(stepIndex) == "number" and type(stepData) == "table" then
+						AddQuestTrackerSearchText(searchableText, stepData.description)
+					end
+				end
+			end
+
+			for _, value in ipairs(searchableText) do
+				if string.find(string.lower(value), normalizedSearchTerm, 1, true) then
+					table.insert(matches, questID)
+					break
+				end
+			end
+		end
+	end
+
+	return matches
+end
+
+-- Some Retail installs can load without RQE_API's GetLogIndexForQuestID
+-- wrapper even though Blizzard's native Retail API is available. Prefer the
+-- native API, then use the wrapper only when it exists.
+local function GetRetailQuestTrackerLogIndex(questID)
+	if C_QuestLog and C_QuestLog.GetLogIndexForQuestID then
+		return C_QuestLog.GetLogIndexForQuestID(questID)
+	end
+	if RQE.API.GetLogIndexForQuestID then
+		return RQE.API.GetLogIndexForQuestID(questID)
+	end
+
+	-- Last-resort fallback for an incomplete API table: find the live-log row
+	-- from the information which is already available to RQE's tracker.
+	local numEntries = select(1, RQE.API.GetNumQuestLogEntries()) or 0
+	for questLogIndex = 1, numEntries do
+		local info = RQE.API.GetQuestLogInfo(questLogIndex)
+		if info and tonumber(info.questID) == tonumber(questID) then
+			return questLogIndex
+		end
+	end
+end
+
+local function CollectRetailQuestTrackerSearchWatches()
+	local watchedQuestIDs = {}
+	local numWatches = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
+	for watchIndex = 1, numWatches do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+		-- local questLogIndex = questID and RQE.API.GetLogIndexForQuestID(questID)
+		local questLogIndex = questID and GetRetailQuestTrackerLogIndex(questID)
+		local info = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
+		if IsQuestTrackerSearchableLogQuest(questID, info) then
+			table.insert(watchedQuestIDs, questID)
+		end
+	end
+	return watchedQuestIDs
+end
+
+-- The search must use Retail's live watch API. Some installs do not populate
+-- the corresponding RQE_API wrappers, so native calls are deliberately first.
+local function RemoveRetailQuestTrackerSearchWatch(questID)
+	-- if RQE.API.RemoveQuestWatch then
+	-- 	RQE.API.RemoveQuestWatch(questID)
+	if C_QuestLog and C_QuestLog.RemoveQuestWatch then
+		C_QuestLog.RemoveQuestWatch(questID)
+	elseif RQE.API.RemoveQuestWatch then
+		RQE.API.RemoveQuestWatch(questID)
+	end
+end
+
+local function AddRetailQuestTrackerSearchWatch(questID)
+	if C_QuestLog and C_QuestLog.AddQuestWatch then
+		return C_QuestLog.AddQuestWatch(questID)
+	elseif RQE.API.AddQuestWatch then
+		return RQE.API.AddQuestWatch(questID)
+	end
+end
+
+function RQE:UpdateQuestTrackerSearchRestoreButton()
+	if not self.QuestTrackerRestoreButton then return end
+	if self.QuestTrackerSearchRestoreState then
+		self.QuestTrackerRestoreButton:Enable()
+	else
+		self.QuestTrackerRestoreButton:Disable()
+	end
+end
+
+function RQE:RefreshQuestTrackerAfterSearch()
+	if UpdateRQEQuestFrame then
+		UpdateRQEQuestFrame()
+	end
+	if self.UpdateRQEQuestFrameVisibility then
+		self:UpdateRQEQuestFrameVisibility()
+	end
+	if self.SaveTrackedQuestsToCharacter then
+		self:SaveTrackedQuestsToCharacter()
+	end
+end
+
+function RQE:SearchQuestTracker(searchText)
+	if InCombatLockdown and InCombatLockdown() then
+		print("RQE Quest Tracker search is unavailable during combat.")
+		return
+	end
+
+	searchText = tostring(searchText or ""):match("^%s*(.-)%s*$")
+	if searchText == "" then
+		print("No data returned for Search.")
+		return
+	end
+
+	local matchingQuestIDs = FindQuestTrackerSearchMatches(searchText)
+	if #matchingQuestIDs == 0 then
+		print("No data returned for Search.")
+		return
+	end
+
+	if not self.QuestTrackerSearchRestoreState then
+		self.QuestTrackerSearchRestoreState = {
+			watchedQuestIDs = CollectRetailQuestTrackerSearchWatches(),
+		}
+	end
+
+	-- Collect first, then remove. Removing while traversing Blizzard's watch list
+	-- would shift the remaining watch indexes and skip quests.
+	for _, questID in ipairs(CollectRetailQuestTrackerSearchWatches()) do
+		RemoveRetailQuestTrackerSearchWatch(questID)
+	end
+
+	self.QuestTrackerSearchResults = {}
+	for _, questID in ipairs(matchingQuestIDs) do
+		self.QuestTrackerSearchResults[questID] = true
+		-- if RQE.API.AddQuestWatch then
+		-- 	RQE.API.AddQuestWatch(questID)
+		AddRetailQuestTrackerSearchWatch(questID)
+	end
+
+	self:UpdateQuestTrackerSearchRestoreButton()
+	self:RefreshQuestTrackerAfterSearch()
+end
+
+function RQE:RestoreQuestTrackerSearch()
+	if InCombatLockdown and InCombatLockdown() then
+		print("RQE Quest Tracker restore is unavailable during combat.")
+		return
+	end
+
+	local restoreState = self.QuestTrackerSearchRestoreState
+	if not restoreState then
+		print("No quest-tracker search is currently active.")
+		return
+	end
+
+	for _, questID in ipairs(CollectRetailQuestTrackerSearchWatches()) do
+		RemoveRetailQuestTrackerSearchWatch(questID)
+	end
+
+	for _, questID in ipairs(restoreState.watchedQuestIDs or {}) do
+		-- if RQE.API.IsOnQuest(questID) and RQE.API.AddQuestWatch then
+		-- 	RQE.API.AddQuestWatch(questID)
+		if GetRetailQuestTrackerLogIndex(questID) then
+			AddRetailQuestTrackerSearchWatch(questID)
+		end
+	end
+
+	self.QuestTrackerSearchResults = nil
+	self.QuestTrackerSearchRestoreState = nil
+	self:UpdateQuestTrackerSearchRestoreButton()
+	self:RefreshQuestTrackerAfterSearch()
+end
+
+
 -- Function used to clear the World Quest Frame
 function RQE:ClearRQEWorldQuestFrame()
 	-- Ensure that RQE.WorldQuestsFrame exists and is a table
@@ -2063,33 +2399,6 @@ local function colorizeObjectives(questID)
 	end
 
 	return table.concat(t)
-
-	-- if objectivesData then  -- Check if the data is not nil
-		-- for _, objective in ipairs(objectivesData) do
-			-- local description = objective.text
-			-- if isReadyForTurnIn then
-				-- -- Entire quest is ready for turn-in, colorize all objectives in green
-				-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"	-- Green
-				-- -- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"	-- Yellow
-				-- -- colorizedText = colorizedText .. "|cff0000ff" .. description .. "|r\n"	-- Blue
-			-- else
-				-- if objective.finished then
-					-- -- Objective complete, colorize in green
-					-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-				-- elseif objective.numFulfilled > 0 then
-					-- -- Objective partially complete, colorize in yellow
-					-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-				-- else
-					-- -- Objective has not started or no progress, leave as white
-					-- colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
-				-- end
-			-- end
-		-- end
-	-- else
-		-- colorizedText = "Objective data unavailable."  -- Default text or handle as needed
-	-- end
-
-	-- return colorizedText
 end
 
 
@@ -2126,33 +2435,6 @@ function RQE.colorizeObjectives(questID)
 	end
 
 	return table.concat(t)
-
-	-- if objectivesData then  -- Check if the data is not nil
-		-- for _, objective in ipairs(objectivesData) do
-			-- local description = objective.text
-			-- if isReadyForTurnIn then
-				-- -- Entire quest is ready for turn-in, colorize all objectives in green
-				-- colorizedText = colorizedText .. "|cff00ff00" .. description .. " (Complete) |r\n"	-- Green
-				-- -- colorizedText = colorizedText .. "|cffffff00" .. description .. " (Complete) |r\n"	-- Yellow
-				-- -- colorizedText = colorizedText .. "|cff0000ff" .. description .. " (Complete) |r\n"	-- Blue
-			-- else
-				-- if objective.finished then
-					-- -- Objective complete, colorize in green
-					-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r\n"
-				-- elseif objective.numFulfilled > 0 then
-					-- -- Objective partially complete, colorize in yellow
-					-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
-				-- else
-					-- -- Objective has not started or no progress, leave as white
-					-- colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
-				-- end
-			-- end
-		-- end
-	-- else
-		-- colorizedText = "Objective data unavailable."  -- Default text or handle as needed
-	-- end
-
-	-- return colorizedText
 end
 
 
