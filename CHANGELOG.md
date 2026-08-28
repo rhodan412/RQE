@@ -1,3 +1,38 @@
+12.1.0.1
+
+	**HIGHLIGHTS**
+		- Added many fonts for use in the displays of the addon frames
+		- Players can now search for a quest, in their logs, by questID, questName, objectiveText, descriptionText, or the description in the addon's quest DB
+
+	Buttons.lua
+		- Updated CQButton, HQButton, ZQButton to scroll frame to the top when one of the buttons in RQEQuestFrame are pressed (2026.08.27.2204)
+		- Fixed a number of mouseover errors (2026.08.27.2204)
+
+	Core.lua
+		- Fixed some colorize text issues (2026.08.27.2204)
+		- Added functionality to gather quest data from Sandbox [author-mode ONLY] (2026.08.27.2204)
+		- Resolved some issues with coordinates being displayed incorrectly when flying versus being on the ground (2026.08.27.2204)
+
+	QuestingModule.lua
+		- Added functionality to search for quests in Quest Log by questID, questName, objectiveText, descriptionText, or the description in the DB entry (2026.08.27.2204)
+		- Resolved issue where frame wasn't scrolling to the top when RQE.QuestScrollFrameToTop() function was being called (2026.08.27.2204)
+
+	RQE.toc
+		- Updated interface/version# (2026.08.27.2204)
+
+	RQE_Sandbox.lua
+		- Added functionality to search Sandbox quests by questID [author-mode ONLY] (2026.08.27.2204)
+
+	RQEDatabase.lua
+		- Added many Classic WoW quests in the DB (2026.08.27.2204)
+
+	RQEFrame.lua
+		- Resolved issue where coordinates weren't being properly shown above the RQEFrame (2026.08.27.2204)
+
+	RQEMinimap.lua
+		- Fixed a number of mouseover errors (2026.08.27.2204)
+
+
 12.1.0.0 (2026.08.11)
 
 	**HIGHLIGHTS**
