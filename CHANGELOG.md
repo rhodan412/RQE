@@ -7,15 +7,20 @@
 	Buttons.lua
 		- Updated CQButton, HQButton, ZQButton to scroll frame to the top when one of the buttons in RQEQuestFrame are pressed (2026.08.27.2204)
 		- Fixed a number of mouseover errors (2026.08.27.2204)
+		- Prevent RQEQuestFrame from scrolling to the top when player is mousing over frame (2026.08.30.0049)
 
 	Core.lua
 		- Fixed some colorize text issues (2026.08.27.2204)
 		- Added functionality to gather quest data from Sandbox [author-mode ONLY] (2026.08.27.2204)
 		- Resolved some issues with coordinates being displayed incorrectly when flying versus being on the ground (2026.08.27.2204)
 
+	DatabaseMain.lua
+		- Updated DB Controller to separate Vanilla retail zones from Season of Discovery and separate Burning Crusade retail zones with Burning Crusade anniversary (2026.08.30.0049)
+
 	QuestingModule.lua
 		- Added functionality to search for quests in Quest Log by questID, questName, objectiveText, descriptionText, or the description in the DB entry (2026.08.27.2204)
 		- Resolved issue where frame wasn't scrolling to the top when RQE.QuestScrollFrameToTop() function was being called (2026.08.27.2204)
+		- Prevent RQEQuestFrame from scrolling to the top when player is mousing over frame (2026.08.30.0049)
 
 	RQE.toc
 		- Updated interface/version# (2026.08.27.2204)
@@ -25,6 +30,7 @@
 
 	RQEDatabase.lua
 		- Added many Classic WoW quests in the DB (2026.08.27.2204)
+		- Added many Burning Crusade Anniversary WoW quests in the DB (2026.08.30.0049)
 
 	RQEFrame.lua
 		- Resolved issue where coordinates weren't being properly shown above the RQEFrame (2026.08.27.2204)
