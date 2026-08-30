@@ -1198,7 +1198,8 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
 	-- end)
 	CQButton:SetScript("OnClick", function()
 		RQE.filterCompleteQuests()
-		RQE.QuestScrollFrameToTop()
+		-- RQE.QuestScrollFrameToTop()
+		RQE.QuestScrollFrameToTop(true)
 	end)
 
 	CreateTooltip(CQButton, "Show Completed Quests \n in Quest Log")  -- Tooltip
@@ -1227,7 +1228,8 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
 	-- end)
 	HQButton:SetScript("OnClick", function()
 		RQE:HideCompletedWatchedQuests()
-		RQE.QuestScrollFrameToTop()
+		-- RQE.QuestScrollFrameToTop()
+		RQE.QuestScrollFrameToTop(true)
 	end)
 
 	CreateTooltip(HQButton, "Hide watched Completed Quests")  -- Tooltip
@@ -1256,7 +1258,8 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
 	-- end)
 	ZQButton:SetScript("OnClick", function()
 		RQE.DisplayCurrentZoneQuests()
-		RQE.QuestScrollFrameToTop()
+		-- RQE.QuestScrollFrameToTop()
+		RQE.QuestScrollFrameToTop(true)
 	end)
 
 	CreateTooltip(ZQButton, "Show zone quests")  -- Tooltip
