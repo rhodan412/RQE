@@ -156,7 +156,8 @@ local function RunQuestTrackerSearch()
 	if RQE.SearchQuestTracker then
 		RQE:SearchQuestTracker(questTrackerSearchInput:GetText())
 	end
-	RQE.QuestScrollFrameToTop()
+	-- RQE.QuestScrollFrameToTop()
+	RQE.QuestScrollFrameToTop(true)
 	questTrackerSearchInput:ClearFocus()
 end
 
@@ -171,7 +172,8 @@ questTrackerRestoreButton:SetScript("OnClick", function()
 	if RQE.RestoreQuestTrackerSearch then
 		RQE:RestoreQuestTrackerSearch()
 	end
-	RQE.QuestScrollFrameToTop()
+	-- RQE.QuestScrollFrameToTop()
+	RQE.QuestScrollFrameToTop(true)
 end)
 
 -- The stock minimize button reduces the tracker to its header. Keep the search
@@ -318,7 +320,26 @@ end)
 
 -- Always scroll after tracker buttons repopulate the frame, including when the
 -- mouse is over the tracker (as it is while clicking those buttons).
-function RQE.QuestScrollFrameToTop()
+-- function RQE.QuestScrollFrameToTop()
+-- 	if RQE.QTScrollFrame and RQE.QMQTslider then
+-- 		RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
+-- 		RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
+-- 	end
+-- end
+
+-- Automatic updates preserve the player's position while the mouse is over the
+-- tracker, its scroll region, or its content. Explicit button actions pass
+-- forceScroll = true to intentionally return the newly populated list to top.
+function RQE.QuestScrollFrameToTop(forceScroll)
+	if not forceScroll then
+		local mouseOverTracker = RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver()
+		local mouseOverScrollFrame = RQE.QTScrollFrame and RQE.QTScrollFrame:IsMouseOver()
+		local mouseOverContent = RQE.QTcontent and RQE.QTcontent:IsMouseOver()
+		if mouseOverTracker or mouseOverScrollFrame or mouseOverContent then
+			return
+		end
+	end
+
 	if RQE.QTScrollFrame and RQE.QMQTslider then
 		RQE.QMQTslider:SetValue(0)  -- Also set the slider to the top position
 		RQE.QTScrollFrame:SetVerticalScroll(0)  -- Set the scroll position to the top
