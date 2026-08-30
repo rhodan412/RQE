@@ -31,6 +31,7 @@
 	RQEDatabase.lua
 		- Added many Classic WoW quests in the DB (2026.08.27.2204)
 		- Added many Burning Crusade Anniversary WoW quests in the DB (2026.08.30.0049)
+		- Added more Classic WoW Quests to the DB (2026.08.30.1617)
 
 	RQEFrame.lua
 		- Resolved issue where coordinates weren't being properly shown above the RQEFrame (2026.08.27.2204)
