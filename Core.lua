@@ -4200,8 +4200,34 @@ end
 
 -- /run RQE:ShowCustomQuestTooltip(66635)
 -- Function that displays a tooltip when mousing over quests in the chat log after doing a 'print questline'
+RQE.QuestLinePrintCache = RQE.QuestLinePrintCache or {}
+
 function RQE:ShowCustomQuestTooltip(questID)
-	local questTitle = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+	local questData = RQE.getQuestData(questID)
+	local printedQuestData = RQE.QuestLinePrintCache[questID]
+	local questLineInfo = printedQuestData and printedQuestData.questLineInfo
+		or RQE.API.GetQuestLineInfo(questID, nil, false)
+	if (not questLineInfo or not questLineInfo.questName)
+		and printedQuestData and printedQuestData.uiMapID
+	then
+		questLineInfo = RQE.API.GetQuestLineInfo(questID, printedQuestData.uiMapID, false)
+	end
+	if not questLineInfo or not questLineInfo.questName then
+		for _, cachedQuestLine in pairs(RQE.QuestLines or {}) do
+			if cachedQuestLine.uiMapID then
+				local mappedQuestLineInfo = RQE.API.GetQuestLineInfo(questID, cachedQuestLine.uiMapID, false)
+				if mappedQuestLineInfo and mappedQuestLineInfo.questName then
+					questLineInfo = mappedQuestLineInfo
+					break
+				end
+			end
+		end
+	end
+	local questTitle = (printedQuestData and printedQuestData.title)
+		or RQE.API.GetTitleForQuestID(questID)
+		or (questData and questData.title)
+		or (questLineInfo and questLineInfo.questName)
+		or "Quest name unavailable"
 	local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 	local isOnQuest = RQE.API.IsOnQuest(questID)
 	local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
@@ -4217,7 +4243,6 @@ function RQE:ShowCustomQuestTooltip(questID)
 	end
 
 	-- Fetch description and objective text if possible
-	local questData = RQE.getQuestData(questID)
 	local descriptionText = ""
 	local objectivesText = ""
 	local objectivesQuestText = ""
@@ -4252,9 +4277,9 @@ function RQE:ShowCustomQuestTooltip(questID)
 	local objText = GetQuestObjectiveInfo(questID, 1, false)
 	local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
 
-	C_Timer.After(0.1, function()
-		if not GameTooltip:IsShown() then
-			GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
+	GameTooltip:Hide()
+	GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
+	GameTooltip:ClearLines()
 
 			-- 🟨 Quest title (always gold)
 			GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
@@ -4300,8 +4325,6 @@ function RQE:ShowCustomQuestTooltip(questID)
 			GameTooltip:AddLine(" ", 1, 1, 1, false)
 			GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
 			GameTooltip:Show()
-		end
-	end)
 end
 
 
@@ -12519,29 +12542,53 @@ end
 
 -- Function to Request and Cache all quest lines in player's quest log
 function RQE.RequestAndCacheQuestLines()
-	RQE.QuestLines = RQE.QuestLines or {}
+	local refreshedQuestLines = {}
 
 	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
 	for i = 1, numEntries do
 		local questInfo = RQE.API.GetQuestLogInfo(i)
 		if questInfo and not questInfo.isHeader then
 			-- Directly use the map ID associated with the quest for more accurate quest line retrieval
-			local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID)
-			if zoneID then
-				-- Fetch quest line information using the quest ID and its zoneID
-				local questLineInfo = C_QuestLine.GetQuestLineInfo(questInfo.questID, zoneID)
-				if questLineInfo and questLineInfo.questLineID then
-					if not RQE.QuestLines[questLineInfo.questLineID] then
-						RQE.QuestLines[questLineInfo.questLineID] = {
-							name = questLineInfo.questLineName,
-							quests = {}
-						}
+			local zoneID = RQE.API.GetQuestZoneID(questInfo.questID)
+			if not zoneID and type(GetQuestUiMapID) == "function" then
+				zoneID = GetQuestUiMapID(questInfo.questID)
+			end
+
+			-- The map argument is optional on Retail 12.1. Try the unscoped lookup
+			-- first so a quest from another map is not incorrectly rejected.
+			local questLineInfo = RQE.API.GetQuestLineInfo(questInfo.questID, nil, false)
+			if not questLineInfo and zoneID then
+				questLineInfo = RQE.API.GetQuestLineInfo(questInfo.questID, zoneID, false)
+			end
+
+			if questLineInfo and questLineInfo.questLineID then
+				local questLineID = questLineInfo.questLineID
+				if not refreshedQuestLines[questLineID] then
+					local cachedMapID = tonumber(questLineInfo.startMapID)
+					if not cachedMapID or cachedMapID <= 0 then
+						cachedMapID = tonumber(zoneID)
 					end
-					table.insert(RQE.QuestLines[questLineInfo.questLineID].quests, questInfo.questID)
+					refreshedQuestLines[questLineID] = {
+						name = questLineInfo.questLineName,
+						uiMapID = cachedMapID,
+						quests = {},
+						questSet = {},
+					}
+				end
+
+				local cachedLine = refreshedQuestLines[questLineID]
+				if not cachedLine.questSet[questInfo.questID] then
+					cachedLine.questSet[questInfo.questID] = true
+					cachedLine.quests[#cachedLine.quests + 1] = questInfo.questID
 				end
 			end
 		end
 	end
+
+	for _, questLineData in pairs(refreshedQuestLines) do
+		questLineData.questSet = nil
+	end
+	RQE.QuestLines = refreshedQuestLines
 end
 
 
@@ -12619,80 +12666,241 @@ function RQE.filterByQuestLine(questLineID)
 end
 
 
--- Function to print quest IDs of a questline along with quest links
-function RQE.PrintQuestlineDetails(questLineID)
-	if RQE.PrintQuestDetailsSuccess then return end
-	if RQE.RePrintQuestDetailAttempts > 1 then return end
-
-	if not RQE.PrintQuestDetails then
-		RQE.PrintQuestDetails = 1 -- Initialize state if not set
+-- Function to print quest IDs of a questline along with clickable quest names.
+-- Blizzard returns the raw questline membership immediately, but generic quest
+-- titles may need to be loaded asynchronously before GetTitleForQuestID can
+-- return them.
+function RQE.PrintQuestlineDetails(questLineID, sourceQuestID, sourceQuestLineInfo)
+	questLineID = tonumber(questLineID)
+	if not questLineID or questLineID <= 0 then
+		print("|cffff0000[RQE]|r PrintQuestlineDetails requires a numeric questline ID.")
+		return
 	end
 
-	C_Timer.After(0.4, function()
-		local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
-		local questDetails = {}
-		local questsToLoad = #questIDs -- Number of quests to load data for
+	local rawQuestIDs = RQE.API.GetQuestLineQuests(questLineID)
+	if type(rawQuestIDs) ~= "table" or #rawQuestIDs == 0 then
+		print("|cffff0000[RQE]|r No quests were returned for questline ID " .. questLineID .. ".")
+		return
+	end
 
-		local questLineName = "Unknown Questline"
-		if #questIDs > 0 then
-			local lineInfo = C_QuestLine.GetQuestLineInfo(questIDs[1])
-			if lineInfo and lineInfo.questLineName then
-				questLineName = lineInfo.questLineName
+	local function isNonEmptyString(value)
+		return type(value) == "string" and value ~= ""
+	end
+
+	local function normalizeMapID(uiMapID)
+		uiMapID = tonumber(uiMapID)
+		return uiMapID and uiMapID > 0 and uiMapID or nil
+	end
+
+	sourceQuestID = tonumber(sourceQuestID)
+	if type(sourceQuestLineInfo) ~= "table"
+		or tonumber(sourceQuestLineInfo.questLineID) ~= questLineID
+	then
+		sourceQuestLineInfo = sourceQuestID
+			and RQE.API.GetQuestLineInfo(sourceQuestID, nil, false) or nil
+	end
+
+	local cachedQuestLine = RQE.QuestLines and RQE.QuestLines[questLineID]
+	local questLineName = sourceQuestLineInfo and sourceQuestLineInfo.questLineName
+		or cachedQuestLine and cachedQuestLine.name
+	local questLineMapID = normalizeMapID(sourceQuestLineInfo and sourceQuestLineInfo.startMapID)
+		or normalizeMapID(cachedQuestLine and cachedQuestLine.uiMapID)
+
+	local entries = {}
+	local entriesByQuestID = {}
+	local seenQuestIDs = {}
+	for _, rawQuestID in ipairs(rawQuestIDs) do
+		local questID = tonumber(rawQuestID)
+		if questID and questID > 0 and not seenQuestIDs[questID] then
+			seenQuestIDs[questID] = true
+			local entry = { questID = questID }
+			entries[#entries + 1] = entry
+			entriesByQuestID[questID] = entry
+		end
+	end
+
+	if #entries == 0 then
+		print("|cffff0000[RQE]|r No valid quest IDs were returned for questline ID " .. questLineID .. ".")
+		return
+	end
+
+	local questDataByID = {}
+	local function getQuestDataForQuest(questID)
+		if questDataByID[questID] == nil then
+			questDataByID[questID] = RQE.getQuestData(questID) or false
+		end
+		return questDataByID[questID] or nil
+	end
+
+	local function getQuestLineInfoForQuest(questID)
+		local questInfo = RQE.API.GetQuestLineInfo(questID, nil, false)
+		if questLineMapID and (not questInfo
+			or tonumber(questInfo.questLineID) ~= questLineID)
+		then
+			local mappedQuestInfo = RQE.API.GetQuestLineInfo(questID, questLineMapID, false)
+			questInfo = mappedQuestInfo or questInfo
+		end
+		return questInfo
+	end
+
+	local function getQuestTitle(entry)
+		local questTitle = RQE.API.GetTitleForQuestID(entry.questID)
+		if isNonEmptyString(questTitle) then
+			return questTitle
+		end
+
+		local questData = getQuestDataForQuest(entry.questID)
+		if questData and isNonEmptyString(questData.title) then
+			return questData.title
+		end
+
+		if entry.questLineInfo and isNonEmptyString(entry.questLineInfo.questName) then
+			return entry.questLineInfo.questName
+		end
+
+		return nil
+	end
+
+	local function resolveEntry(entry)
+		entry.questLineInfo = getQuestLineInfoForQuest(entry.questID)
+
+		-- Reject a positively identified wrong-line row. Do not reject merely
+		-- because isHidden is true: future quests in the requested storyline can
+		-- be hidden from the map while still being valid members of the full line.
+		-- A nil QuestLineInfo is validated by QUEST_DATA_LOAD_RESULT below.
+		if entry.questLineInfo then
+			local returnedLineID = tonumber(entry.questLineInfo.questLineID)
+			if returnedLineID and returnedLineID ~= questLineID then
+				entry.invalid = true
+				entry.keep = false
+				return false
+			end
+
+			if not isNonEmptyString(questLineName)
+				and returnedLineID == questLineID
+				and isNonEmptyString(entry.questLineInfo.questLineName)
+			then
+				questLineName = entry.questLineInfo.questLineName
+			end
+
+			questLineMapID = questLineMapID
+				or normalizeMapID(entry.questLineInfo.startMapID)
+		end
+
+		entry.title = getQuestTitle(entry)
+		entry.keep = isNonEmptyString(entry.title) and true or nil
+		return entry.keep
+	end
+
+	local pendingQuestIDs = {}
+	local pendingCount = 0
+	for _, entry in ipairs(entries) do
+		resolveEntry(entry)
+		if not entry.invalid and not entry.keep then
+			pendingQuestIDs[entry.questID] = true
+			pendingCount = pendingCount + 1
+		end
+	end
+
+	local eventFrame
+	local finished = false
+	local function finishPrinting()
+		if finished then return end
+		finished = true
+		if eventFrame then
+			eventFrame:UnregisterEvent("QUEST_DATA_LOAD_RESULT")
+			eventFrame:SetScript("OnEvent", nil)
+		end
+
+		if not isNonEmptyString(questLineName) then
+			questLineName = "Unknown Questline"
+		end
+
+		local validEntries = {}
+		for _, entry in ipairs(entries) do
+			if entry.keep and isNonEmptyString(entry.title) then
+				validEntries[#validEntries + 1] = entry
 			end
 		end
 
-		if questsToLoad > 0 then
-			if RQE.PrintQuestDetails == 1 then
-				RQE.debugLog("|cFFFFA500Questline ID " .. questLineID .. " data is being retrieved...|r")
-
-				-- Delay second run
-				C_Timer.After(0.8, function()
-					if RQE.PrintQuestDetails == 1 then
-						RQE.PrintQuestDetails = 2
-						RQE.PrintQuestLineFailed = true
-					end
-				end)
-			end
-
-			if not RQE.PrintQuestLineFailed then
-				print("|cFFFFA500Quests in Questline ID " .. questLineID .. ": " .. questLineName .. "|r")
-			end
-
-			for i, questID in ipairs(questIDs) do
-				local questTitle = RQE.API.GetTitleForQuestID(questID) or "Loading..."
-				if questTitle == "Loading..." then
-					RQE.PrintQuestLineFailed = true
-				end
-
-				C_Timer.After(0.7, function()
-					local questLink = GetQuestLink(questID)
-					if questLink then
-						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
-					else
-						local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", questID, questTitle)
-						questDetails[i] = string.format("|cFFADD8E6%d. Quest# %d - %s|r", i, questID, clickableQuestTitle)
-					end
-
-					-- Retry if still loading on first pass
-					if RQE.PrintQuestLineFailed then
-						RQE.RePrintQuestDetailAttempts = RQE.RePrintQuestDetailAttempts + 1
-						if RQE.RePrintQuestDetailAttempts == 1 then
-							RQE.PrintQuestlineDetails(questLineID)
-							return
-						end
-					end
-
-					-- Print when all data loaded
-					questsToLoad = questsToLoad - 1
-					if questsToLoad <= 0 then
-						for j = 1, #questDetails do
-							print(questDetails[j])
-						end
-						RQE.PrintQuestDetailsSuccess = true
-					end
-				end)
-			end
+		if #validEntries == 0 then
+			print("|cffff0000[RQE]|r No loadable quests were returned for questline ID " .. questLineID .. ".")
+			return
 		end
+
+		print("|cFFFFA500Quests in Questline ID " .. questLineID .. ": " .. questLineName .. "|r")
+		for index, entry in ipairs(validEntries) do
+			RQE.QuestLinePrintCache[entry.questID] = {
+				title = entry.title,
+				questLineID = questLineID,
+				questLineName = questLineName,
+				uiMapID = questLineMapID,
+				questLineInfo = entry.questLineInfo,
+			}
+
+			local questLink = GetQuestLink(entry.questID)
+			if not isNonEmptyString(questLink) then
+				questLink = format("|Hquesttip:%d|h[%s]|h", entry.questID, entry.title)
+			end
+
+			print(string.format(
+				"|cFFADD8E6%d. Quest# %d - %s|r",
+				index,
+				entry.questID,
+				questLink
+			))
+		end
+	end
+
+	if pendingCount == 0 then
+		finishPrinting()
+		return
+	end
+
+	eventFrame = CreateFrame("Frame")
+	eventFrame:RegisterEvent("QUEST_DATA_LOAD_RESULT")
+	eventFrame:SetScript("OnEvent", function(_, _, loadedQuestID, success)
+		loadedQuestID = tonumber(loadedQuestID)
+		if not loadedQuestID or not pendingQuestIDs[loadedQuestID] then return end
+
+		pendingQuestIDs[loadedQuestID] = nil
+		pendingCount = pendingCount - 1
+		local entry = entriesByQuestID[loadedQuestID]
+		if success and entry then
+			resolveEntry(entry)
+		elseif entry then
+			entry.invalid = true
+			entry.keep = false
+		end
+
+		if pendingCount <= 0 then
+			finishPrinting()
+		end
+	end)
+
+	-- Populate the complete pending set before making requests because
+	-- QUEST_DATA_LOAD_RESULT is synchronous and can fire during this loop.
+	local requestQuestIDs = {}
+	for questID in pairs(pendingQuestIDs) do
+		requestQuestIDs[#requestQuestIDs + 1] = questID
+	end
+	for _, questID in ipairs(requestQuestIDs) do
+		RQE.API.RequestLoadQuestByID(questID)
+	end
+
+	-- A single short safety deadline prevents a missing event from hanging the
+	-- output. Normally the event-driven path completes well before this runs.
+	C_Timer.After(1.0, function()
+		if finished then return end
+		for questID in pairs(pendingQuestIDs) do
+			local entry = entriesByQuestID[questID]
+			if entry then
+				resolveEntry(entry)
+			end
+			pendingQuestIDs[questID] = nil
+		end
+		pendingCount = 0
+		finishPrinting()
 	end)
 end
 
