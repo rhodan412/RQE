@@ -1494,14 +1494,13 @@ function ShowQuestDropdown(self, questID)
 		rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
 		rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
-		local uiMapID = C_Map.GetBestMapForUnit("player")
-		local questLineInfo = C_QuestLine.GetQuestLineInfo(questID, uiMapID)
+		-- uiMapID is optional.  Supplying the player's current map makes this
+		-- lookup fail when a tracked quest belongs to a questline on another map.
+		local questLineInfo = RQE.API.GetQuestLineInfo(questID)
 		if questLineInfo and questLineInfo.questLineID then
-			RQE.PrintQuestDetails = 1
-			RQE.RePrintQuestDetailAttempts = 0
-			RQE.PrintQuestDetailsSuccess = false
-			RQE.PrintQuestLineFailed = false
-			rootDescription:CreateButton("Print Questline", function() RQE.PrintQuestlineDetails(questLineInfo.questLineID) end)
+			rootDescription:CreateButton("Print Questline", function()
+				RQE.PrintQuestlineDetails(questLineInfo.questLineID, questID, questLineInfo)
+			end)
 		end
 
 		-- Only show RQE buttons if the RQE_Contribution addon is loaded
