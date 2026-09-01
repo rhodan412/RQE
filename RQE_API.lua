@@ -1078,100 +1078,75 @@ end
 -- #🗂️ Quest Line / Task / World Quests APIs
 -------------------------------------------------
 
-if major > 11 then
-	-- Use: local info = RQE.API.GetQuestLineInfo(questLineID, uiMapID)	instead of: C_QuestLine.GetQuestLineInfo(...)
-	RQE.API.GetQuestLineInfo = function(questLineID, uiMapID)
-		return C_QuestLine.GetQuestLineInfo(questLineID, uiMapID)
+-- These APIs were introduced at different times, but they coexist on Retail.
+-- Define every wrapper independently so a newer client does not lose the
+-- wrappers that were added by an earlier patch.
+
+-- Retail 12.1: C_QuestLine.GetQuestLineInfo takes a questID (not a
+-- questLineID), an optional map ID, and displayableOnly.
+RQE.API.GetQuestLineInfo = function(questID, uiMapID, displayableOnly)
+	if not C_QuestLine or type(C_QuestLine.GetQuestLineInfo) ~= "function" then
+		return nil
 	end
 
-	-- Use: local ignore = RQE.API.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID)	instead of: C_QuestLine.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID)
-	RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineID)
-		return C_QuestLine.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID)
+	if major >= 11 then
+		return C_QuestLine.GetQuestLineInfo(questID, uiMapID, displayableOnly == true)
 	end
 
-elseif (major > 10) or (major == 10 and minor >= 1 and patch >= 5) then
-	-- Returns: number[] (list of questIDs)
-	-- Use: local questIDs = RQE.API.GetForceVisibleQuests(uiMapID)	instead of: C_QuestLine.GetForceVisibleQuests(uiMapID)
-	RQE.API.GetForceVisibleQuests = function(uiMapID)
-		return C_QuestLine.GetForceVisibleQuests(uiMapID)
-	end
+	return C_QuestLine.GetQuestLineInfo(questID, uiMapID)
+end
 
-elseif major >= 9 then
-	-- Use: local isComplete = RQE.API.IsQuestLineComplete(questLineID)	instead of: C_QuestLine.IsComplete(questLineID)
-	RQE.API.IsQuestLineComplete = function(questLineID)
-		return C_QuestLine.IsComplete(questLineID)
+RQE.API.GetAvailableQuestLines = function(uiMapID)
+	if C_QuestLine and type(C_QuestLine.GetAvailableQuestLines) == "function" then
+		return C_QuestLine.GetAvailableQuestLines(uiMapID) or {}
 	end
+	return {}
+end
 
-elseif major > 8 or (major == 8 and minor >= 1) then
-	-- Use: RQE.API.RequestQuestLinesForMap(uiMapID)	instead of: C_QuestLine.RequestQuestLinesForMap(uiMapID)
-	RQE.API.RequestQuestLinesForMap = function(uiMapID)
+RQE.API.GetForceVisibleQuests = function(uiMapID)
+	if C_QuestLine and type(C_QuestLine.GetForceVisibleQuests) == "function" then
+		return C_QuestLine.GetForceVisibleQuests(uiMapID) or {}
+	end
+	return {}
+end
+
+RQE.API.GetQuestLineQuests = function(questLineID)
+	if C_QuestLine and type(C_QuestLine.GetQuestLineQuests) == "function" then
+		return C_QuestLine.GetQuestLineQuests(questLineID) or {}
+	end
+	return {}
+end
+
+
+RQE.API.IsQuestLineComplete = function(questLineID)
+	if C_QuestLine and type(C_QuestLine.IsComplete) == "function" then
+		return C_QuestLine.IsComplete(questLineID) == true
+	end
+	return false
+end
+
+
+RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineID)
+	if C_QuestLine and type(C_QuestLine.QuestLineIgnoresAccountCompletedFiltering) == "function" then
+		return C_QuestLine.QuestLineIgnoresAccountCompletedFiltering(uiMapID, questLineID) == true
+	end
+	return false
+end
+
+
+RQE.API.RequestQuestLinesForMap = function(uiMapID)
+	if C_QuestLine and type(C_QuestLine.RequestQuestLinesForMap) == "function" then
 		return C_QuestLine.RequestQuestLinesForMap(uiMapID)
 	end
+	return nil
+end
 
-elseif major >= 8 then
-	-- Battle for Azeroth 8.0 → Dragonflight 10.x
-	-- Original form, no `displayableOnly` argument.
-	RQE.API.GetQuestLineInfo = function(questLineID, uiMapID)
-		return C_QuestLine.GetQuestLineInfo(questLineID, uiMapID)
-	end
 
-	-- Use: local questLines = RQE.API.GetAvailableQuestLines(uiMapID)	instead of: C_QuestLine.GetAvailableQuestLines(uiMapID)
-	RQE.API.GetAvailableQuestLines = function(uiMapID)
-		return C_QuestLine.GetAvailableQuestLines(uiMapID)
-	end
-
-	-- Use: local questIDs = RQE.API.GetQuestLineQuests(questLineID)	instead of: C_QuestLine.GetQuestLineQuests(questLineID)
-	RQE.API.GetQuestLineQuests = function(questLineID)
-		return C_QuestLine.GetQuestLineQuests(questLineID)
-	end
-
-elseif major > 6 or (major == 6 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
-	-- Use: local progress = RQE.API.GetQuestProgressBarInfo(questID)	instead of: C_TaskQuest.GetQuestProgressBarInfo(questID)
-	RQE.API.GetQuestProgressBarInfo = function(questID)
+RQE.API.GetQuestProgressBarInfo = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestProgressBarInfo) == "function" then
 		return C_TaskQuest.GetQuestProgressBarInfo(questID)
 	end
-
-else
-	-- Classic (1.13+ re-releases) and Vanilla (1.0–1.12)
-	-- Quest lines did not exist.
-	RQE.API.GetQuestLineInfo = function(questLineID, uiMapID)
-		return nil
-	end
-
-	-- Vanilla & early expansions (<6.2) — no Task Quest system
-	RQE.API.GetQuestProgressBarInfo = function(questID)
-		return nil
-	end
-
-	-- Not available in Classic or Vanilla
-	RQE.API.GetAvailableQuestLines = function(uiMapID)
-		return {}
-	end
-
-	-- Not available in Classic or Retail before 10.1.5
-	RQE.API.GetForceVisibleQuests = function(uiMapID)
-		return {}
-	end
-
-	-- Not available in Classic or Vanilla
-	RQE.API.GetQuestLineQuests = function(questLineID)
-		return {}
-	end
-
-	-- Not available in Classic or Vanilla
-	RQE.API.IsQuestLineComplete = function(questLineID)
-		return false
-	end
-
-	-- Not available pre-11 or in Classic/Vanilla
-	RQE.API.QuestLineIgnoresAccountCompletedFiltering = function(uiMapID, questLineID)
-		return false
-	end
-
-	-- Not available pre-8.1, in Classic, or Vanilla
-	RQE.API.RequestQuestLinesForMap = function(uiMapID)
-		return nil
-	end
+	return nil
 end
 
 
@@ -2975,7 +2950,8 @@ RQE.API.GetTitleForQuestID = function(questID)
 	end
 
 	if C_QuestLog and type(C_QuestLog.GetTitleForQuestID) == "function" then
-		return C_QuestLog.GetTitleForQuestID(questID)
+		local title = C_QuestLog.GetTitleForQuestID(questID)
+		return type(title) == "string" and title ~= "" and title or nil
 	end
 
 	if C_QuestLog and type(C_QuestLog.GetQuestInfo) == "function" then
@@ -2993,6 +2969,16 @@ RQE.API.GetTitleForQuestID = function(questID)
 		end
 	end
 
+	return nil
+end
+
+
+-- Requests uncached quest data. On Retail this completes through
+-- QUEST_DATA_LOAD_RESULT(questID, success).
+RQE.API.RequestLoadQuestByID = function(questID)
+	if C_QuestLog and type(C_QuestLog.RequestLoadQuestByID) == "function" then
+		return C_QuestLog.RequestLoadQuestByID(questID)
+	end
 	return nil
 end
 
@@ -3165,206 +3151,123 @@ end
 -- #🗂️ Quest Task APIs
 -------------------------------------------------
 
-if (major > 11) or (major == 11 and minor >= 0 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and toc >= 11505) then
-	-- Retail 11.0.5+ and Classic 1.15.5+ (new GetQuestsOnMap API)
-	-- Use: local taskPOIs = RQE.API.GetQuestsOnMap(uiMapID) instead of: C_TaskQuest.GetQuestsOnMap(uiMapID)
-	RQE.API.GetQuestsOnMap_Task = function(uiMapID)
-		return C_TaskQuest.GetQuestsOnMap(uiMapID)
-	end
+-- Task-quest APIs are cumulative as well. Retail 12.1 consolidated the two
+-- widget queries into GetQuestUIWidgetSetByType, so prefer that API and retain
+-- guarded fallbacks for older clients.
 
-elseif (major > 10) or (major == 10 and (minor > 2 or (minor == 2 and patch >= 6))) then
-	-- Retail 10.2.6+
-	-- Use: local widgetSet = RQE.API.GetQuestIconUIWidgetSet(questID) instead of: C_TaskQuest.GetQuestIconUIWidgetSet(questID)
-	RQE.API.GetQuestIconUIWidgetSet = function(questID)
+RQE.API.GetQuestsOnMap_Task = function(uiMapID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestsOnMap) == "function" then
+		return C_TaskQuest.GetQuestsOnMap(uiMapID) or {}
+	end
+	if C_TaskQuest and type(C_TaskQuest.GetQuestsForPlayerByMapID) == "function" then
+		return C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) or {}
+	end
+	return {}
+end
+
+
+RQE.API.GetQuestIconUIWidgetSet = function(questID)
+	local widgetTypes = Enum and Enum.MapIconUIWidgetSetType
+	if C_TaskQuest and type(C_TaskQuest.GetQuestUIWidgetSetByType) == "function"
+		and widgetTypes and widgetTypes.BehindIcon ~= nil
+	then
+		return C_TaskQuest.GetQuestUIWidgetSetByType(questID, widgetTypes.BehindIcon)
+	end
+	if C_TaskQuest and type(C_TaskQuest.GetQuestIconUIWidgetSet) == "function" then
 		return C_TaskQuest.GetQuestIconUIWidgetSet(questID)
 	end
+	return nil
+end
 
-elseif major >= 9 then
-	-- Use: local widgetSet = RQE.API.GetQuestTooltipUIWidgetSet(questID) instead of: C_TaskQuest.GetQuestTooltipUIWidgetSet(questID)
-	RQE.API.GetQuestTooltipUIWidgetSet = function(questID)
-		-- Retail 10.2.6+: uses C_TaskQuest.GetQuestTooltipUIWidgetSet
-		if major > 10 or (major == 10 and minor >= 2 and patch >= 6) then
-			return C_TaskQuest.GetQuestTooltipUIWidgetSet(questID)
-		else
-			-- Classic re-releases & Retail 9.x–10.2.5: uses GetUIWidgetSetIDFromQuestID
-			return C_TaskQuest.GetUIWidgetSetIDFromQuestID(questID)
-		end
+
+RQE.API.GetQuestTooltipUIWidgetSet = function(questID)
+	local widgetTypes = Enum and Enum.MapIconUIWidgetSetType
+	if C_TaskQuest and type(C_TaskQuest.GetQuestUIWidgetSetByType) == "function"
+		and widgetTypes and widgetTypes.Tooltip ~= nil
+	then
+		return C_TaskQuest.GetQuestUIWidgetSetByType(questID, widgetTypes.Tooltip)
 	end
-
-elseif major > 8 or (major == 8 and minor >= 3) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
-		-- Retail 8.3+ and Classic re-releases
-	-- Use: local quests = RQE.API.GetThreatQuests() instead of: C_TaskQuest.GetThreatQuests()
-	RQE.API.GetThreatQuests = function()
-		return C_TaskQuest.GetThreatQuests()
+	if C_TaskQuest and type(C_TaskQuest.GetQuestTooltipUIWidgetSet) == "function" then
+		return C_TaskQuest.GetQuestTooltipUIWidgetSet(questID)
 	end
+	if C_TaskQuest and type(C_TaskQuest.GetUIWidgetSetIDFromQuestID) == "function" then
+		return C_TaskQuest.GetUIWidgetSetIDFromQuestID(questID)
+	end
+	return nil
+end
 
 
-elseif (major > 8) or (major == 8 and minor >= 1 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and toc >= 11400) then
-	-- Retail 8.1.5+ and Classic 1.14+
-	-- Use: local secondsLeft = RQE.API.GetQuestTimeLeftSeconds(questID) instead of: C_TaskQuest.GetQuestTimeLeftSeconds(questID)
-	RQE.API.GetQuestTimeLeftSeconds = function(questID)
+RQE.API.GetThreatQuests = function()
+	if C_TaskQuest and type(C_TaskQuest.GetThreatQuests) == "function" then
+		return C_TaskQuest.GetThreatQuests() or {}
+	end
+	return {}
+end
+
+
+RQE.API.GetQuestTimeLeftSeconds = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestTimeLeftSeconds) == "function" then
 		return C_TaskQuest.GetQuestTimeLeftSeconds(questID)
 	end
+	return nil
+end
 
-elseif (major >= 8) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and toc >= 11400) then
-	-- Retail 8.0+ and Classic 1.14+
-	-- Use: local shows = RQE.API.DoesMapShowTaskQuestObjectives(uiMapID) instead of: C_TaskQuest.DoesMapShowTaskQuestObjectives(uiMapID)
-	RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID)
-		return C_TaskQuest.DoesMapShowTaskQuestObjectives(uiMapID)
-	end
 
-elseif (major >= 7) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and toc >= 11400) then
-	-- Retail 7.0+ and Classic 1.14+
-	-- Use: local minutesLeft = RQE.API.GetQuestTimeLeftMinutes(questID) instead of: C_TaskQuest.GetQuestTimeLeftMinutes(questID)
-	RQE.API.GetQuestTimeLeftMinutes = function(questID)
+RQE.API.GetQuestTimeLeftMinutes = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestTimeLeftMinutes) == "function" then
 		return C_TaskQuest.GetQuestTimeLeftMinutes(questID)
 	end
+	return nil
+end
 
-	-- Use: local active = RQE.API.IsTaskQuestActive(questID) instead of: C_TaskQuest.IsActive(questID)
-	RQE.API.IsTaskQuestActive = function(questID)
-		return C_TaskQuest.IsActive(questID)
+
+RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID)
+	if C_TaskQuest and type(C_TaskQuest.DoesMapShowTaskQuestObjectives) == "function" then
+		return C_TaskQuest.DoesMapShowTaskQuestObjectives(uiMapID) == true
 	end
+	return false
+end
 
-	-- Use: local title, factionID, capped, displayAsObjective = RQE.API.GetQuestInfoByQuestID(questID) 
-	-- instead of: C_TaskQuest.GetQuestInfoByQuestID(questID)
-	--
-	-- Retrieves metadata for a task/world quest by its questID.
-	--
-	--	Arguments:
-	--		questID -- number : The unique identifier for the quest.
-	--
-	--	Returns:
-	--		title		-- string  : The quest title.
-	--		factionID	-- number  : The faction ID associated with the quest.
-	--		capped		-- boolean : True if the quest is capped (e.g., reputation cap reached).
-	--		displayAsObjective	-- boolean : True if the quest should display as an active objective (only available in 8.3+).
-	--
-	--	Notes:
-	--		• Retail 8.3+ returns all 4 values, including `displayAsObjective`.
-	--		• In Classic and Retail <8.3, the API only returns the first 3 values 
-	--			(`title, factionID, capped`) — this wrapper strips the 4th return automatically.
-	--		• Useful for identifying whether a world quest is capped or should display as an objective.
-	RQE.API.GetQuestInfoByQuestID = function(questID)
-		local title, factionID, capped, displayAsObjective = C_TaskQuest.GetQuestInfoByQuestID(questID)
 
-		-- displayAsObjective only exists starting in 8.3
-		if (major < 8) or (major == 8 and minor < 3) then
-			-- Strip 4th return so Classic & <8.3 behave correctly
-			return title, factionID, capped
-		end
-
-		-- Retail 8.3+ returns all 4 values
-		return title, factionID, capped, displayAsObjective
+RQE.API.IsTaskQuestActive = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.IsActive) == "function" then
+		return C_TaskQuest.IsActive(questID) == true
 	end
+	return false
+end
 
-	-- Use: local x, y = RQE.API.GetQuestLocation(questID, uiMapID) instead of: C_TaskQuest.GetQuestLocation(questID, uiMapID)
-	-- Returns the normalized location coordinates of a task or world quest.
-	--
-	--	Arguments:
-	--		questID	-- number : The quest identifier (Retail 8.0+ and Classic 1.13+).
-	--		uiMapID	-- number : The map identifier for the current zone.
-	--
-	--	Returns:
-	--		x -- number : Normalized horizontal coordinate (0.0 - 1.0)
-	--		y -- number : Normalized vertical coordinate (0.0 - 1.0)
-	--
-	--	Notes:
-	--		• Retail 8.0+ and Classic 1.13+ use the (questID, uiMapID) signature.
-	--		• In Legion (7.x), the API used (mapID, parentMapID) instead of (questID, uiMapID).
-	--		• Coordinates are normalized to the map area, not world-space values.
-	RQE.API.GetQuestLocation = function(questID, uiMapID)
-		-- In 7.x, function signature used mapID/parentMapID instead of questID/uiMapID
-		if major == 7 then
-			-- Older API form: (mapID, parentMapID)
-			-- Fallback if only questID is provided (to avoid runtime errors)
-			local mapID = questID or 0
-			local parentMapID = uiMapID or 0
-			return C_TaskQuest.GetQuestLocation(mapID, parentMapID)
-		else
-			-- Retail 8.0+ / Classic 1.13+ use proper (questID, uiMapID)
-			return C_TaskQuest.GetQuestLocation(questID, uiMapID)
-		end
+
+-- This is task/world-quest metadata only. Normal storyline titles must use
+-- C_QuestLog.GetTitleForQuestID after quest data has loaded.
+RQE.API.GetQuestInfoByQuestID = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestInfoByQuestID) == "function" then
+		return C_TaskQuest.GetQuestInfoByQuestID(questID)
 	end
+	return nil
+end
 
-	-- Retail 7.0+ and Classic re-releases 1.14+
-	-- Use: local uiMapID = RQE.API.GetQuestZoneID(questID)	instead of: C_TaskQuest.GetQuestZoneID(questID)
-	RQE.API.GetQuestZoneID = function(questID)
+
+RQE.API.GetQuestLocation = function(questID, uiMapID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestLocation) == "function" then
+		return C_TaskQuest.GetQuestLocation(questID, uiMapID)
+	end
+	return nil, nil
+end
+
+
+RQE.API.GetQuestZoneID = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
 		return C_TaskQuest.GetQuestZoneID(questID)
 	end
+	return nil
+end
 
-	-- Use: RQE.API.RequestPreloadRewardData(questID) instead of: C_TaskQuest.RequestPreloadRewardData(questID)
-	RQE.API.RequestPreloadRewardData = function(questID)
+
+RQE.API.RequestPreloadRewardData = function(questID)
+	if C_TaskQuest and type(C_TaskQuest.RequestPreloadRewardData) == "function" then
 		return C_TaskQuest.RequestPreloadRewardData(questID)
 	end
-
-elseif (major > 6) or (major == 6 and minor >= 0) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and toc >= 11400) then
-	-- Retail 6.0.2 → 11.0.0, and Classic 1.14.0+ / 2.5.1+ (older GetQuestsForPlayerByMapID API)
-	-- Use: local taskPOIs = RQE.API.GetQuestsOnMap(uiMapID) instead of: C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
-	RQE.API.GetQuestsOnMap_Task = function(uiMapID)
-		return C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID)
-	end
-
-else
-
-	-- No Task Quests available (pre-6.0 / Vanilla 1.x)
-	RQE.API.GetQuestsOnMap_Task = function(uiMapID)
-		return {}
-	end
-
-	-- Pre-8.1.5 Retail and Vanilla Classic (no support)
-	RQE.API.GetQuestTimeLeftSeconds = function(questID)
-		return 0
-	end
-
-	-- Pre-7.0 Retail and Vanilla Classic (no support)
-	RQE.API.GetQuestTimeLeftMinutes = function(questID)
-		return 0
-	end
-
-	-- Pre-7.0 Retail and Vanilla Classic (no support)
-	RQE.API.IsTaskQuestActive = function(questID)
-		return false
-	end
-
-	-- Pre-8.0 Retail and Vanilla Classic (not available)
-	RQE.API.DoesMapShowTaskQuestObjectives = function(uiMapID)
-		return false
-	end
-
-	-- Not available in Classic or earlier Retail
-	RQE.API.GetQuestIconUIWidgetSet = function(questID)
-		return nil
-	end
-
-	-- Not available in Vanilla (pre-7.0)
-	RQE.API.GetQuestInfoByQuestID = function(questID)
-		return nil
-	end
-
-	-- Not available in Vanilla (pre-7.0)
-	RQE.API.GetQuestLocation = function(questID, uiMapID)
-		return nil, nil
-	end
-
-	-- Not available in Vanilla (<9)
-	RQE.API.GetQuestTooltipUIWidgetSet = function(questID)
-		return nil
-	end
-
-	-- Not available in Vanilla (<7 or <1.14 Classic)
-	RQE.API.GetQuestZoneID = function(questID)
-		return nil
-	end
-
-	-- Not available in Vanilla (<8.3)
-	RQE.API.GetThreatQuests = function()
-		return {}
-	end
-
-	-- Not available in Vanilla
-	RQE.API.RequestPreloadRewardData = function(questID)
-		return nil
-	end
+	return nil
 end
 
 
