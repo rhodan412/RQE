@@ -13,6 +13,7 @@
 		- Fixed some colorize text issues (2026.08.27.2204)
 		- Added functionality to gather quest data from Sandbox [author-mode ONLY] (2026.08.27.2204)
 		- Resolved some issues with coordinates being displayed incorrectly when flying versus being on the ground (2026.08.27.2204)
+		- Fixed issue with printing of questline (2026.09.01.1544)
 
 	DatabaseMain.lua
 		- Updated DB Controller to separate Vanilla retail zones from Season of Discovery and separate Burning Crusade retail zones with Burning Crusade anniversary (2026.08.30.0049)
@@ -21,9 +22,13 @@
 		- Added functionality to search for quests in Quest Log by questID, questName, objectiveText, descriptionText, or the description in the DB entry (2026.08.27.2204)
 		- Resolved issue where frame wasn't scrolling to the top when RQE.QuestScrollFrameToTop() function was being called (2026.08.27.2204)
 		- Prevent RQEQuestFrame from scrolling to the top when player is mousing over frame (2026.08.30.0049)
+		- Fixed issue where option to 'Print Questline' in quest's right-click menu was missing (2026.09.01.1544)
 
 	RQE.toc
 		- Updated interface/version# (2026.08.27.2204)
+
+	RQE_API.lua
+		- Fixed issue where questID was being printed in place of questName when printing questline (2026.09.01.1544)
 
 	RQE_Sandbox.lua
 		- Added functionality to search Sandbox quests by questID [author-mode ONLY] (2026.08.27.2204)
@@ -35,6 +40,7 @@
 
 	RQEFrame.lua
 		- Resolved issue where coordinates weren't being properly shown above the RQEFrame (2026.08.27.2204)
+		- Fixed issue where option to 'Print Questline' in quest's right-click menu was missing (2026.09.01.1544)
 
 	RQEMinimap.lua
 		- Fixed a number of mouseover errors (2026.08.27.2204)
