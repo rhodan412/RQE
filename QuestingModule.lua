@@ -274,7 +274,7 @@ header:SetPoint("TOPRIGHT", 0, 0)
 -- Create header text
 local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 headerText:SetPoint("CENTER", header, "CENTER")
-headerText:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+headerText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
 headerText:SetTextColor(239/255, 191/255, 90/255)
 headerText:SetText("RQE Quest Tracker")
 headerText:SetWordWrap(true)
@@ -870,6 +870,9 @@ RQE.Buttons.CreateQuestFilterButton(RQE.RQEQuestFrame, RQE.QToriginalWidth, RQE.
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
 RQE.Buttons.CQButton(RQE.RQEQuestFrame)
+
+-- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
+RQE.Buttons.SCButton(RQE.RQEQuestFrame)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
 RQE.Buttons.HQButton(RQE.RQEQuestFrame)
