@@ -14,6 +14,8 @@ RQE = RQE or {}  -- Initialize the RQE table if it's not already initialized
 RQE.Frame = RQE.Frame or {}
 RQE.hoverTimers = {}
 
+local isRetail = RQE.IsRetail == true
+
 ---@class RQEMinimapButton : Frame
 ---@field hoverTimer any
 local RQEMinimapButton = {}
@@ -42,14 +44,32 @@ end
 
 -- Open AddOn Settings function
 function RQE:OpenSettings()
-	-- Force the interface options to open on the AddOns tab
-	if SettingsPanel then
-		-- Use the new API to open the correct settings panel
-		SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+	if isRetail then
+		if SettingsPanel then
+			SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+		else
+			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+		end
 	else
-		-- Fallback for older versions, force open Interface Options to the AddOns tab
-		InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-		InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer") -- Sometimes needs to be called twice due to Blizzard quirk
+		if self.optionsFrame then
+			local categoryName = self.optionsFrame.name
+			local category = Settings and Settings.GetCategory and Settings.GetCategory(categoryName)
+
+			if category and category.GetID then
+				local categoryID = category:GetID()
+				if C_SettingsUtil and C_SettingsUtil.OpenSettingsPanel then
+					C_SettingsUtil.OpenSettingsPanel(categoryID)
+				elseif Settings and Settings.OpenToCategory then
+					Settings.OpenToCategory(categoryID)
+				end
+				return
+			elseif InterfaceOptionsFrame_OpenToCategory then
+				InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
+				InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
+				return
+			end
+		end
 	end
 end
 
@@ -502,8 +522,16 @@ function RQE:ShowLDBDropdownMenu()
 
 		self.CustomMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				-- Check whether the mouse remains over this menu or its submenu.
-				if (self and self:IsMouseOver()) or (RQE.MoreOptionsMenu and RQE.MoreOptionsMenu:IsMouseOver()) then
+				local isMouseOverMenu
+				local isMouseOverMoreOptions
+				if isRetail then
+					isMouseOverMenu = self and self:IsMouseOver()
+					isMouseOverMoreOptions = RQE.MoreOptionsMenu and RQE.MoreOptionsMenu:IsMouseOver()
+				else
+					isMouseOverMenu = self and MouseIsOver(self)
+					isMouseOverMoreOptions = RQE.MoreOptionsMenu and MouseIsOver(RQE.MoreOptionsMenu)
+				end
+				if isMouseOverMenu or isMouseOverMoreOptions then
 					-- Do nothing, the mouse is still over the menu or its related submenus
 					return
 				end
@@ -551,7 +579,16 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
 		end)
 		self.MoreOptionsMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not self:IsMouseOver() and not parentMenu:IsMouseOver() then
+				local isMouseOverMenu
+				local isMouseOverParent
+				if isRetail then
+					isMouseOverMenu = self:IsMouseOver()
+					isMouseOverParent = parentMenu:IsMouseOver()
+				else
+					isMouseOverMenu = MouseIsOver(self)
+					isMouseOverParent = MouseIsOver(parentMenu)
+				end
+				if not isMouseOverMenu and not isMouseOverParent then
 					self:Hide()
 					parentMenu:Hide()
 				end
