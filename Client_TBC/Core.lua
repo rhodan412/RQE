@@ -1,0 +1,18243 @@
+--[[ 
+
+Core.lua
+Core file linking all other modules
+
+]]
+
+
+--------------------------------------------------
+-- #1. Global Declarations
+--------------------------------------------------
+
+RQEDB = RQEDB or {}
+RQEDB.profile = RQEDB.profile or {}
+RQEDB.char = RQEDB.char or {}
+RQEDB.profileKeys = RQEDB.profileKeys or {}
+
+RQE = RQE or {}
+
+-- Table to store current SeparateFocusFrame to determine if it should be updated (cleared) or not
+RQE.ClearSeparateFocusHistory = RQE.ClearSeparateFocusHistory or {}
+
+RQE.db = RQE.db or {}
+RQE.db.profile = RQE.db.profile or {}
+
+RQE.Buttons = RQE.Buttons or {}
+RQE.Frame = RQE.Frame or {}
+RQEMacro = RQEMacro or {}
+RQE.DelayedQuestWatchCheck = RQE.DelayedQuestWatchCheck or {}
+RQE.ClassicVirtualQuestWatches = RQE.ClassicVirtualQuestWatches or {}
+-- A subset of ClassicVirtualQuestWatches created by an explicit Blizzard
+-- Quest Log watch action. ZQ retains this source across map changes while
+-- excluding unrelated auto/progress virtual watches from out-of-zone display.
+RQE.ClassicManualVirtualQuestWatches = RQE.ClassicManualVirtualQuestWatches or {}
+
+-- Table to hold campaigns, quest types and quest lines
+RQE.Campaigns = RQE.Campaigns or {}
+RQE.QuestTypes = RQE.QuestTypes or {}
+RQE.ZoneQuests = RQE.ZoneQuests or {}
+RQE.QuestLines = RQE.QuestLines or {}
+RQE.ActiveTaskQuests = RQE.ActiveTaskQuests or {}
+
+-- Initialize snapshot for minimap name
+RQE.LastDirectionSnapshot = RQE.LastDirectionSnapshot or ""
+RQE.LastMinimapZoneSnapshot = RQE.LastMinimapZoneSnapshot or ""
+
+---------------------------------------------------
+-- #2. Imports
+---------------------------------------------------
+
+--- @class AceAddon
+local AceAddon = {}
+
+--- @param name string
+--- @param ... any
+--- @return AceAddon
+function AceAddon:NewAddon(name, ...)
+	return {}  -- Returning an empty table as a dummy AceAddon instance
+end
+
+-- Initialize RQE addon with AceAddon
+---@class RQE : AceAddon  -- This line declares that RQE is a subclass of AceAddon
+RQE = LibStub("AceAddon-3.0"):NewAddon("RQE", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
+
+-- AceConfig and AceConfigDialog references
+local AC = LibStub("AceConfig-3.0")
+local ACD = LibStub("AceConfigDialog-3.0")
+local LSM = LibStub("LibSharedMedia-3.0")
+
+local AceAddon = LibStub("AceAddon-3.0")
+local AceGUI = LibStub("AceGUI-3.0")
+
+
+---------------------------------------------------
+-- #3. Debugging Functions
+---------------------------------------------------
+
+--- Safe Print Function
+--- Converts the arguments to a string and prints them.
+--- @param ... any The arguments to print
+function RQE:SafePrint(...)
+	local args = {...}
+	local output = {}
+	for i, v in ipairs(args) do
+		if type(v) == "table" then
+			output[i] = "Table: Cannot display"
+		elseif type(v) == "boolean" then
+			output[i] = v and "True" or "False"
+		else
+			output[i] = tostring(v)
+		end
+	end
+	DEFAULT_CHAT_FRAME:AddMessage(table.concat(output, " "))
+end
+
+
+-- Custom Debug Function
+function RQE:CustomDebugLog(index, color, message, ...)
+	local output = "|c" .. color .. "[Line " .. tostring(index) .. "] " .. message
+	local args = {...}
+	for i = 1, select("#", ...) do
+		if i == 1 then
+			output = output .. " " .. tostring(args[i])
+		else
+			output = output .. ", " .. tostring(args[i])
+		end
+	end
+	output = output .. "|r"
+
+	-- Add to logTable
+	RQE.AddToDebugLog(output)
+end
+
+
+-- Custom Info Message Function (exact format: " RQE Info (Core.lua @ Line 3640): ...")
+function RQE:CustomLogMsg(line, color, filePath, message, ...)
+	-- reduce "Interface/AddOns/RQE/Core.lua" to just "Core.lua"
+	local shortFile = tostring(filePath):match("([^/\\]+)$") or tostring(filePath)
+
+	local output = "|c" .. color .. " RQE Info (" .. shortFile .. " @ Line " .. tostring(line) .. "): " .. tostring(message)
+
+	-- append any extra args separated by spaces
+	local args = { ... }
+	for i = 1, #args do
+		output = output .. " " .. tostring(args[i])
+	end
+
+	output = output .. "|r"
+
+	-- Add to logTable
+	RQE.AddToDebugLog(output)
+
+	-- Update the log frame if it’s visible
+	if RQE.DebugLogFrameRef and RQE.DebugLogFrameRef:IsShown() then
+		RQE.UpdateLogFrame()
+	end
+end
+
+
+-- Function to log general info messages (now includes file + line)
+function RQE.infoLog(message, ...)
+	if RQE.db and RQE.db.profile.debugMode then
+		local debugLevel = RQE.db.profile.debugLevel
+		if debugLevel == "INFO" or debugLevel == "INFO+" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
+			-- grab the caller's file and line
+			local stack = debugstack(2, 1, 0)
+			-- capture "anything up to colon" as filePath, then the line number
+			local _, _, filePath, line = string.find(stack, "([^:]-):(%d+):")
+			RQE:CustomLogMsg(line, "cf9999FF", filePath or "Unknown.lua", message, ...)
+		end
+	end
+end
+
+
+-- Function to log general debug messages
+function RQE.debugLog(message, ...)
+	if RQE.db and RQE.db.profile.debugMode then
+		local debugLevel = RQE.db.profile.debugLevel
+		if debugLevel == "DEBUG" then
+			local stack = debugstack(2, 1, 0)
+			local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
+			fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
+			RQE:CustomDebugLog(line, "cfC4C45C", fileName .. " Debug: " .. message, ...)
+		end
+	end
+end
+
+
+-- Function to log warning messages
+function RQE.warningLog(message, ...)
+	if RQE.db and RQE.db.profile.debugMode then
+		local debugLevel = RQE.db.profile.debugLevel
+		if debugLevel == "DEBUG" or debugLevel == "WARNING" then
+			local stack = debugstack(2, 1, 0)
+			local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
+			fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
+			RQE:CustomDebugLog(line, "ffFF7F00", fileName .. " Warning: " .. message, ...)
+		end
+	end
+end
+
+
+-- Function to log critical messages
+function RQE.criticalLog(message, ...)
+	if RQE.db and RQE.db.profile.debugMode then
+		local debugLevel = RQE.db.profile.debugLevel
+		if debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
+			local stack = debugstack(2, 1, 0)
+			local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
+			fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
+			RQE:CustomDebugLog(line, "ffD63333", fileName .. " Critical: " .. message, ...)
+		end
+	end
+end
+
+
+--- Prints a message with contextual info (file, provided function name, line number).
+--- Works safely even inside C_Timer, hooks, or callbacks.
+--- @param funcName string The function name (e.g., "RQE.handleQuestStatusUpdate")
+--- @param message string The message to print
+--- @param ... any Additional values to append
+function RQE.smartPrint(funcName, message, ...)
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	if RQE.db and RQE.db.profile.debugMode then
+		local debugLevel = RQE.db.profile.debugLevel
+		if debugLevel == "INFO+" then
+		-- if debugLevel == "INFO" or debugLevel == "INFO+" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
+			local stack = debugstack(2, 1, 0)
+			local _, _, filePath, line = string.find(stack, "([^:]-):(%d+):")
+
+			local shortFile = (filePath and filePath:match("([^/\\]+)$")) or "Unknown.lua"
+			shortFile = shortFile:gsub("%]", "") -- clean any trailing bracket
+			line = line or "???"
+
+			-- build message
+			local output = string.format("~~ %s ~~\nFile: %s\nFunction: %s\nLine: %s",
+				tostring(message),
+				shortFile,
+				funcName or "Unknown",
+				tostring(line)
+			)
+
+			-- append extra args if given
+			local args = { ... }
+			if #args > 0 then
+				output = output .. "\nArgs: " .. table.concat(args, ", ")
+			end
+
+			-- print to chat
+			DEFAULT_CHAT_FRAME:AddMessage(output, 1, 1, 1)
+
+			-- log to debug frame
+			if RQE.AddToDebugLog then
+				RQE.AddToDebugLog("|cffffffff" .. output .. "|r")
+			end
+
+			-- update visible log frame
+			if RQE.DebugLogFrameRef and RQE.DebugLogFrameRef:IsShown() then
+				RQE.UpdateLogFrame()
+			end
+		end
+	end
+end
+
+
+-- Verify initialization of DB Profile
+if RQE.db and RQE.db.profile and RQE.db.profile.textSettings then
+	RQE.warningLog("RQE.db.profile.textSettings is initialized.")
+else
+	RQE.warningLog("RQE.db.profile.textSettings is NOT initialized.")
+end
+
+
+---------------------------------------------------
+-- #4. Default Settings
+---------------------------------------------------
+
+-- Global color helpers
+RQE.ColorGREEN = "|cff00ff00"
+RQE.ColorYELLOW = "|cffffff00"
+RQE.ColorWHITE  = "|cffffffff"
+RQE.ColorORANGE = "|cffff7f00"
+RQE.ColorPINK = "|cffff69b4"   -- Hot pink
+RQE.ColorCYAN = "|cff00ffff"
+RQE.ColorPURPLE = "|cffb266ff"   -- Soft purple
+RQE.ColorVIOLET = "|cff8a2be2"   -- Deeper purple
+RQE.ColorCANARY = "|cffffff66"   -- Soft neon yellow
+RQE.ColorLIME = "|cff99ff00"
+RQE.ColorTEAL = "|cff00ffcc"
+RQE.ColorGOLD = "|cffffd700"
+RQE.ColorSILVER = "|cffc0c0c0"
+RQE.ColorSKYBLUE = "|cff66ccff"
+RQE.ColorCRIMSON = "|cffdc143c"
+RQE.ColorMAGENTA = "|cffff00ff"
+RQE.ColorRESET = "|r"
+
+local defaults = {
+	profile = {
+		autoClickWaypointButton = true,
+		autoQuestProgress = true,
+		autoQuestWatch = true,
+		autoTrackZoneQuests = false,
+		BossKill = false,
+		ClientSceneClosed = false,
+		ClientSceneOpened = false,
+		debugLevel = "NONE",
+		debugLoggingCheckbox = false,
+		debugMode = true,
+		debugTimeStampCheckbox = true,
+		displayRQEcpuUsage = false,
+		displayRQEmemUsage = false,
+		enableAutoSuperTrackSwap = false,
+		enableCarboniteCompatibility = true,
+		enableFrame = true,
+		enableGossipModeAutomation = false,
+		enableMouseOverMarking = true,
+		enableTravelSuggestions = false,
+		enableNearestSuperTrack = true,
+		enableNearestSuperTrackCampaign = false,
+		enableNearestSuperTrackCampaignOnlyWhileLeveling = false,
+		enableQuestAbandonConfirm = false,
+		enableQuestFrame = true,
+		enableStepControls = false,		-- once no longer experimental switch to 'true'
+		enableTomTomCompatibility = true,
+		EncounterEnd = false,
+		framePosition = {
+			xPos = -40,
+			yPos = -285,
+			anchorPoint = "TOPRIGHT",
+			frameWidth = 420,
+			frameHeight = 300,
+		},
+		globalSetting = true,
+		hideRQEFrameWhenEmpty = false,
+		hideRQEQuestFrameWhenEmpty = false,
+		JailorsTowerLevelUpdate = false,
+		keyBindSetting = nil,
+		isFrameMaximized = true,  -- Setting for maximized/minimized state
+		isQuestFrameMaximized = true,  -- Setting for maximized/minimized state
+		LFGActiveEntryUpdate = false,
+		MainFrameOpacity = 0.55,
+		minimapButtonAngle = 125,
+		mythicScenarioMode = true,
+		PlayerEnteringWorld = false,
+		PlayerStartedMoving = false,
+		PlayerStoppedMoving = false,
+		QuestAccepted = false,
+		QuestAutocomplete = false,
+		QuestComplete = false,
+		QuestCurrencyLootReceived = false,
+		QuestFinished = false,
+		QuestFramePosition = {
+			xPos = -40,
+			yPos = 150,
+			anchorPoint = "BOTTOMRIGHT",
+			frameWidth = 325,
+			frameHeight = 450
+		},
+		QuestFrameOpacity = 0.55,
+		QuestlineUpdate = false,
+		QuestListWatchListChanged = false,
+		QuestLogCriteriaUpdate = false,
+		QuestLootReceived = false,
+		QuestRemoved = false,
+		QuestStatusUpdate = false,
+		QuestTurnedIn = false,
+		QuestWatchUpdate = false,
+		removeWQatLogin = false,
+		ScenarioCompleted = false,
+		ScenarioCriteriaUpdate = false,
+		ScenarioUpdate = false,
+		showAddonLoaded = false,
+		showArgPayloadInfo = false,
+		showCoordinates = true,
+		showEventAchievementEarned = false,
+		showEventContentTrackingUpdate = false,
+		showEventCriteriaEarned = false,
+		showEventDebugInfoCheckbox = false,
+		showEventSuperTrackingChanged = false,
+		showItemCountChanged = false,
+		showMapID = true,
+		showMinimapIcon = false,
+		showPlayerLogin = false,
+		showPlayerRegenEnabled = false,
+		showPlayerMountDisplayChanged = false,
+		showTrackedAchievementUpdate = false,
+		StartTimer = false,
+		textSettings = {
+			headerText = {
+				font = "Fonts\\SKURRI.TTF",
+				size = 18,
+				color = {237/255, 191/255, 89/255}
+			},
+			QuestIDText = {
+				font = "Fonts\\FRIZQT__.TTF",
+				size = 15,
+				color = {255/255, 255/255, 0/255}  -- RGB for Yellow
+			},
+			QuestNameText = {
+				font = "Fonts\\FRIZQT__.TTF",
+				size = 15,
+				color = {255/255, 255/255, 0/255}  -- RGB for Yellow
+			},
+			DirectionTextFrame = {
+				font = "Fonts\\FRIZQT__.TTF",
+				size = 13,
+				color = {255/255, 255/255, 217/255}  -- RGB for Canary
+			},
+			QuestDescription = {
+				font = "Fonts\\FRIZQT__.TTF",
+				size = 14,
+				-- color = {0/255, 255/255, 153/255}  -- Previous default: Cyan
+				color = {102/255, 204/255, 255/255}  -- Default: Sky Blue (#66CCFF)
+			},
+			QuestObjectives = {
+				font = "Fonts\\FRIZQT__.TTF",
+				size = 13,
+				color = {0/255, 255/255, 153/255}  -- RGB for Cyan
+			},
+		},
+		toggleBlizzObjectiveTracker = true,
+		UpdateInstanceInfo = false,
+		WorldStateTimerStart = false,
+		WorldStateTimerStop = false,
+		ZoneChange = false,
+	},
+	-- char = {
+		-- characterSetting = true,  -- Character-specific settings go here
+	-- },
+}
+
+
+---------------------------------------------------
+-- #5. Initialization
+---------------------------------------------------
+
+-- Initialize original dimensions
+RQE.originalWidth = RQE.originalWidth or 0
+RQE.originalHeight = RQE.originalHeight or 0
+RQE.QToriginalWidth = RQE.QToriginalWidth or 0
+RQE.QToriginalHeight = RQE.QToriginalHeight or 0
+
+
+RQE.LastMapChangeTime = 0
+
+-- Initializes Local Variables
+local isMacroCreationInProgress = false		-- Declare a variable to track if macro creation is currently in progress
+local isPeriodicCheckInProgress = false		-- Declare a variable to track if periodic checks are currently in progress
+RQE.lastWholeX, RQE.lastWholeY = nil, nil
+RQE.lastMapID = nil
+RQE._lastSeparateQuestID = nil
+RQE._lastSeparateStepIndex = nil
+RQE.StoredStepIndex = nil
+RQE.AddonSetStepIndex = nil
+
+RQE._scheduledPeriodicCheck = RQE._scheduledPeriodicCheck or nil
+RQE._scheduledPeriodicReason = RQE._scheduledPeriodicReason or nil
+RQE._lastPeriodicQuestID = RQE._lastPeriodicQuestID or nil
+RQE._lastPeriodicRunTime = RQE._lastPeriodicRunTime or 0
+
+RQE.FrameState = {
+	lastQuestID = nil,
+	lastObjectives = nil,   -- table of { text, fulfilled, required, finished, type }
+	lastNumObjectives = 0,
+	lastQuestName = nil,
+	lastStepIndex = nil	 -- optional but consistent with SeparateFocusFrame
+}
+
+-- Initialize Waypoint System
+RQE.waypoints = {}
+
+
+RQE.SetInitialFromAccept = false
+RQE.SetInitialFromSuperTrack = false
+
+-- Initialize the savedAutomaticWorldQuestWatches table within addon's initialization logic
+if not RQE.savedAutomaticWorldQuestWatches then
+	RQE.savedAutomaticWorldQuestWatches = {}
+end
+
+
+RQE.dragonMounts = {
+	"Cliffside Wylderdrake",
+	"Flourishing Whimsydrake",
+	"Grotto Netherwing Drake",
+	"Highland Drake",
+	"Renewed Proto-Drake",
+	"Windborne Velocidrake",
+	"Winding Slitherdrake"
+}
+
+
+-- Addon Initialization
+function RQE:OnInitialize()
+	-- Start the timer
+	RQE.startTime = debugprofilestop()
+
+	RQEDB = RQEDB or {}	-- Ensure the saved var exists
+
+	-- Ensure SavedVariables `profileKeys` exists before AceDB initializes
+	if not RQEDB.profileKeys then
+		RQEDB.profileKeys = {}
+	end
+
+	-- Create AceDB-3.0 database **without forcing a default profile yet**
+	self.db = LibStub("AceDB-3.0"):New("RQEDB", defaults)
+
+	-- Ensure AceDB does not overwrite stored profileKeys
+	self.db.profileKeys = RQEDB.profileKeys
+
+	-- Debugging: Print all stored profile keys before restoring profile
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking stored profileKeys before restoration...")
+	end
+	for key, value in pairs(self.db.profileKeys) do
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Found profile key: " .. key .. " -> " .. value)
+		end
+	end
+
+	-- Restore the correct profile from SavedVariables
+	self:RestoreSavedProfile()
+
+	-- Debugging: Confirm the correct profile was restored
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Profile after OnInitialize():", self.db:GetCurrentProfile())
+	end
+
+	-- Register profile callbacks
+	self.db.RegisterCallback(self, "OnProfileChanged", "RefreshConfig")
+	self.db.RegisterCallback(self, "OnProfileCopied", "RefreshConfig")
+	self.db.RegisterCallback(self, "OnProfileReset", "RefreshConfig")
+
+	-- Initialize UI components
+	RQE.StepsText = RQE.StepsText or {}
+	RQE.CoordsText = RQE.CoordsText or {}
+	RQE.WaypointButtons = RQE.WaypointButtons or {}
+
+	-- Set UI Frame Position
+	-- Set UI Frame Position
+	if self.UpdateFrameFromProfile then
+		self:UpdateFrameFromProfile()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UpdateFrameFromProfile() is not available during OnInitialize().")
+		end
+	end
+
+	--self:UpdateFrameFromProfile()
+
+	-- Load character-specific data
+	-- Load character-specific data
+	if self.GetCharacterInfo then
+		self:GetCharacterInfo()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("GetCharacterInfo() is not available during OnInitialize().")
+		end
+	end
+	--self:GetCharacterInfo()
+
+	-- Register UI Options
+	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
+	self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
+
+	-- Register UI Pages
+	AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
+	self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+
+	AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
+	self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+
+	AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
+	self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
+
+	-- Register Profiles Section
+	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+	AC:RegisterOptionsTable("RQE_Profiles", profiles)
+	ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
+
+	-- Register chat commands
+	self:RegisterChatCommand("rqe", "SlashCommand")
+
+	-- Do not replace Blizzard's global print function.  Apart from affecting
+	-- every addon, that turns a Blizzard-owned global into addon-tainted state
+	-- and can leak into protected UI execution.  RQE's explicit logging helpers
+	-- remain available wherever debug-log output is needed.
+
+	-- Final UI Setup
+	--self:UpdateFramePosition()
+	if self.UpdateFramePosition then
+		self:UpdateFramePosition()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UpdateFramePosition() is not available during OnInitialize().")
+		end
+	end
+
+	RQE.FilterDropDownMenu = CreateFrame("Frame", "RQEDropDownMenuFrame", UIParent, "UIDropDownMenuTemplate")
+	UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
+end
+
+
+-- AceAddon calls this after the addon is fully loaded
+function RQE:OnEnable()
+	-- Restore profile only if not already set
+	if not self.db:GetCurrentProfile() or self.db:GetCurrentProfile() == "Default" then
+		self:RestoreSavedProfile()
+	end
+
+	-- Ensure defaults are in place
+	self:EnsureDefaults()
+
+	-- Debugging Output
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Currently loaded profile:", self.db:GetCurrentProfile())
+	end
+
+	-- Apply UI settings after profile is set
+	self:ApplyUISettings()
+end
+
+
+-- Helper function for default frame positions
+function RQE:EnsureDefaults()
+	self.db.profile.framePosition = self.db.profile.framePosition or CopyTable(defaults.profile.framePosition)
+	self.db.profile.QuestFramePosition = self.db.profile.QuestFramePosition or CopyTable(defaults.profile.QuestFramePosition)
+	self.db.profile.textSettings = self.db.profile.textSettings or CopyTable(defaults.profile.textSettings)
+	self.db.char = self.db.char or CopyTable(defaults.char or {})
+end
+
+
+-- Function to restore the correct profile from SavedVariables
+function RQE:RestoreSavedProfile()
+	local characterName = UnitName("player")
+	local characterRealm = GetRealmName()
+	local profileKey = characterName .. " - " .. characterRealm
+
+	-- Ensure the profileKeys table exists
+	self.db.profileKeys = self.db.profileKeys or {}
+
+	-- Debugging: Check if profileKey exists
+	if not self.db.profileKeys[profileKey] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No saved profile for " .. profileKey .. ". Assigning Default profile.")
+		end
+		self.db.profileKeys[profileKey] = "Default"
+	end
+
+	local savedProfile = self.db.profileKeys[profileKey]
+
+	-- Debugging: Print loaded profile information
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Saved Profile for " .. profileKey .. ": " .. savedProfile)
+	end
+
+	-- Ensure profile exists before setting it
+	if self.db.profiles and self.db.profiles[savedProfile] then
+		self.db:SetProfile(savedProfile)
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Successfully restored profile: " .. savedProfile)
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Profile " .. savedProfile .. " not found in AceDB. Falling back to Default.")
+		end
+		self.db:SetProfile("Default")
+	end
+
+	-- Final Debug Output
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Final profile loaded:", self.db:GetCurrentProfile())
+	end
+end
+
+
+-- Function to apply UI settings after restoring profile
+function RQE:ApplyUISettings()
+	-- Ensure that MAP ID value is set to default values
+	local showMapID = RQE.db.profile.showMapID
+	if showMapID and RQEFrame and RQEFrame.MapIDText then
+		-- Code to display MapID
+		RQEFrame.MapIDText:Show()
+	else
+		-- Code to hide MapID
+		RQEFrame.MapIDText:Hide()
+	end
+
+	-- Ensure that frame opacity is set to default values
+	local MainOpacity = RQE.db.profile.MainFrameOpacity
+	local QuestOpacity = RQE.db.profile.QuestFrameOpacity
+	RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
+	RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
+end
+
+
+-- Function to print quest info when run with a questID
+function RQE:GetQuestInfo(questID)
+	if not questID then
+		print("Error: No questID provided.")
+		return
+	end
+
+	-- Get the quest log index for the given quest ID
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+
+	if not questLogIndex then
+		print("Error: Could not find quest log index for Quest ID:", questID)
+		return
+	end
+
+	-- Retrieve quest information
+	local info = RQE.API.GetQuestLogInfo(questLogIndex)
+
+	if not info then
+		print("Error: No quest info found for Quest ID:", questID)
+		return
+	end
+
+	-- Print the retrieved quest information
+	print("===== Quest Info for Quest ID:", questID, "=====")
+	for key, value in pairs(info) do
+		print(key .. ":", tostring(value))
+	end
+	print("===================================")
+end
+
+
+-- This function will enable/disable the step controls and auto click waypoint button
+function RQE:ToggleAutoClickAndStepControls()
+	RQE:ToggleStepControls()
+	RQE:ToggleAutoClickWaypointButton()
+end
+
+
+-- This function will enable/disable the step controls
+function RQE:ToggleStepControls()
+	if RQE.db.profile.enableStepControls then
+		RQE.db.profile.enableStepControls = false
+	else
+		RQE.db.profile.enableStepControls = true
+	end
+end
+
+
+-- This function will enable/disable the auto click waypoint button
+function RQE:ToggleAutoClickWaypointButton()
+	if RQE.db.profile.autoClickWaypointButton then
+		RQE.db.profile.autoClickWaypointButton = false
+	else
+		RQE.db.profile.autoClickWaypointButton = true
+	end
+end
+
+
+-- Function that prints the quest data as it relates to a certain quest such as type, numRequired, finished (true/false), text, objectiveType and numFulfilled
+function RQE:PrintQuestData(questID)
+	-- Ensure the quest data is available
+	if not HaveQuestData(questID) then
+		print("Quest data is not available for QuestID:", questID)
+		return
+	end
+
+	-- Get the quest data from the API
+	local questData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+
+	-- Print formatted output
+	print("Quest Data for QuestID:", questID)
+	if type(questData) == "table" then
+		for key, value in pairs(questData) do
+			if type(value) == "table" then
+				print("  " .. key .. " = {")
+				for subKey, subValue in pairs(value) do
+					print("	" .. subKey .. " = " .. tostring(subValue))
+				end
+				print("  },")
+			else
+				print("  " .. key .. " = " .. tostring(value))
+			end
+		end
+	else
+		print("  Data is not a table or is empty.")
+	end
+end
+
+
+-- Function to initialize dropdown quest filter for Quest Tracker
+function RQE.InitializeFilterDropdown(self, level)
+	local info = UIDropDownMenu_CreateInfo()
+	info.isNotRadio = true
+	info.notCheckable = true
+
+	if level == 1 then
+		-- Auto Tracking for Zone Quests
+		info.text = "Auto-Track Zone Quests"
+		info.keepShownOnClick = true  -- Keeps the dropdown open after clicking
+		info.isNotRadio = true
+		info.func = function()
+			-- RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+			RQE:SetAutoTrackZoneQuestsEnabled(not RQE.db.profile.autoTrackZoneQuests)
+		end
+		info.checked = RQE.db.profile.autoTrackZoneQuests
+		UIDropDownMenu_AddButton(info, level)
+
+		-- First-level menu items
+		info.text = "Completed Quests"
+		info.func = RQE.filterAllTrackedQuests
+		UIDropDownMenu_AddButton(info, level)
+
+		info.text = "Daily / Weekly Quests"
+		info.func = RQE.filterDailyWeeklyQuests
+		UIDropDownMenu_AddButton(info, level)
+
+		info.text = "Zone Quests"
+		info.func = RQE.filterZoneQuests
+		UIDropDownMenu_AddButton(info, level)
+
+		-- ... other first-level items ...
+
+		info.text = "Select Campaign..."
+		info.hasArrow = true  -- Important for creating a submenu
+		info.value = "campaign_submenu"  -- Used to identify this item in the next level
+		UIDropDownMenu_AddButton(info, level)
+
+	elseif level == 2 and _G.UIDROPDOWNMENU_MENU_VALUE == "campaign_submenu" then
+		local campaigns = RQE.GetCampaignsFromQuestLog()
+		for campaignID, campaignName in pairs(campaigns) do
+			info.text = campaignName
+			info.func = function() RQE.filterSpecificCampaign(campaignID) end
+			UIDropDownMenu_AddButton(info, level)
+		end
+	end
+end
+
+
+-- InitializeFrame function
+function RQE:InitializeFrame()
+	local functionName = "RQE:InitializeFrame()"
+
+	--self:Initialize()  -- Call Initialize() within InitializeFrame
+
+	-- Call the function to initialize the separate focus frame
+	-- RQE.InitializeSeparateFocusFrame()
+
+	-- Call the function to initialize the separate focus frame
+	if RQE.InitializeSeparateFocusFrame then
+		RQE.InitializeSeparateFocusFrame()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(functionName, "InitializeSeparateFocusFrame() is not available yet.")
+		end
+	end
+
+	-- Add logic to update frame with the current super tracked quest
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if questID then
+		--[[
+		-- Previous Classic-specific recovery attempt.  This ran a second,
+		-- competing render path during initialization and did not address the
+		-- later stale-button / clear-check path.
+		if RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient() and RQE.DisplayClassicQuestLogDetails then
+			if RQE:DisplayClassicQuestLogDetails(questID) then
+				return
+			end
+		end
+		]]
+
+		local questInfo = RQE.getQuestData(questID)
+		if questInfo then
+			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 681 ~~")
+			UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+		end
+	end
+end
+
+
+-- Function Check to Initialize RQEFrame sections not yet initialized
+function RQE:ConfigurationChanged()
+	if RQE.headerText then
+		local headerSettings = RQE.db.profile.textSettings.headerText
+
+		RQE.headerText:SetFont(headerSettings.font, headerSettings.size)
+		RQE.headerText:SetTextColor(unpack(headerSettings.color))
+	end
+
+	if RQE.QuestIDText then
+		local QuestIDTextSettings = RQE.db.profile.textSettings.QuestIDText
+
+		RQE.QuestIDText:SetFont(QuestIDTextSettings.font, QuestIDTextSettings.size)
+		RQE.QuestIDText:SetTextColor(unpack(QuestIDTextSettings.color))
+	end
+
+	if RQE.QuestNameText then
+		local QuestNameTextSettings = RQE.db.profile.textSettings.QuestNameText
+
+		RQE.QuestNameText:SetFont(QuestNameTextSettings.font, QuestNameTextSettings.size)
+		RQE.QuestNameText:SetTextColor(unpack(QuestNameTextSettings.color))
+	end
+
+	if RQE.DirectionTextFrame then
+		local DirectionTextFrameSettings = RQE.db.profile.textSettings.DirectionTextFrame
+
+		RQE.DirectionTextFrame:SetFont(DirectionTextFrameSettings.font, DirectionTextFrameSettings.size)
+		RQE.DirectionTextFrame:SetTextColor(unpack(DirectionTextFrameSettings.color))
+	end
+
+	if RQE.QuestDescription then
+		local QuestDescriptionSettings = RQE.db.profile.textSettings.QuestDescription
+
+		RQE.QuestDescription:SetFont(QuestDescriptionSettings.font, QuestDescriptionSettings.size)
+		RQE.QuestDescription:SetTextColor(unpack(QuestDescriptionSettings.color))
+	end
+
+	if RQE.QuestObjectives then
+		local QuestObjectivesSettings = RQE.db.profile.textSettings.QuestObjectives
+
+		RQE.QuestObjectives:SetFont(QuestObjectivesSettings.font, QuestObjectivesSettings.size)
+		RQE.QuestObjectives:SetTextColor(unpack(QuestObjectivesSettings.color))
+	end
+
+	-- Notify AceConfig to update UI
+	LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE")
+end
+
+
+---------------------------------------------------
+-- #6. Saving/Restoring SuperTrack Data
+---------------------------------------------------
+
+-- Makes Carbonite Quests track the quest selected through RQE's QuestLogIndexButton.
+-- Carbonite owns its own route/arrow generation; RQE must not create a separate
+-- Nx waypoint when this integration is enabled.
+function RQE:SyncCarboniteQuestTracking(questID, showStatus)
+	if showStatus == nil then
+		showStatus = true
+	end
+
+	local function PrintStatus(message)
+		if showStatus and DEFAULT_CHAT_FRAME then
+			DEFAULT_CHAT_FRAME:AddMessage("|cff00ffff[RQE Carbonite]|r " .. message)
+		end
+	end
+
+	if not questID or not self.db or not self.db.profile or not self.db.profile.enableCarboniteCompatibility then
+		PrintStatus("Compatibility is disabled or no valid quest ID was supplied.")
+		return
+	end
+
+	-- if not C_AddOns.IsAddOnLoaded("Carbonite.Quests") then
+		-- return
+	-- end
+	-- Do not gate this on an addon-folder name. Carbonite.Quests can be
+	-- loaded under a different internal name; its published API is the
+	-- reliable availability check.
+
+	local carbonite = _G.Carbonite
+	local watchSurface = carbonite and carbonite.Quests and carbonite.Quests.WatchSurface
+	if watchSurface and type(watchSurface.Track) == "function" then
+		watchSurface:Track(questID)
+		PrintStatus("Requested Carbonite tracking for quest ID " .. questID .. ".")
+		return true
+	end
+
+	-- Older Carbonite Quests builds do not expose WatchSurface, but their
+	-- own tracker button uses this legacy quest-module function.
+	local nxQuest = _G.Nx and _G.Nx.Quest
+	if nxQuest and type(nxQuest.SetActiveCarboniteQuest) == "function" then
+		local questLogIndex
+		if self.API and type(self.API.GetLogIndexForQuestID) == "function" then
+			questLogIndex = self.API.GetLogIndexForQuestID(questID)
+		elseif C_QuestLog and type(C_QuestLog.GetLogIndexForQuestID) == "function" then
+			questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		end
+
+		nxQuest:SetActiveCarboniteQuest(questID, questLogIndex or 0)
+		PrintStatus("Activated Carbonite's legacy tracker for quest ID " .. questID .. ".")
+		return true
+	end
+
+	PrintStatus("Neither Carbonite's WatchSurface nor legacy quest tracker API is available.")
+	return false
+end
+
+
+-- Function to open the quest log and show specific quest details
+--- @param questID number The quest ID.
+function OpenQuestLogToQuestDetails(questID)
+	if InCombatLockdown() then return end
+
+	if RQE.searchedQuestID ~= nil then
+		return
+	end
+
+	-- Validate questID before touching the C API
+	if type(questID) ~= "number" then
+		if RQE and RQE.db and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") then
+			print("OpenQuestLogToQuestDetails: invalid questID:", tostring(questID))
+			if debugstack then
+				print(debugstack(2, 4, 4))  -- optional: short stack trace
+			end
+		end
+		return
+	end
+
+	-- If this is a completed, auto-completable quest, show the turn-in dialog instead
+	if RQE:ShowAutoCompleteDialog(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE:ShowAutoCompleteDialog fired for questID %d"):format(questID))
+		end
+		return
+	end
+
+	---@type number|nil
+	-- you can optionally pass `true` as the second argument if you want to ignore waypoints:
+	-- local mapID = GetQuestUiMapID(questID, true) or C_TaskQuest.GetQuestZoneID(questID)
+	local mapID = GetQuestUiMapID(questID) or C_TaskQuest.GetQuestZoneID(questID)
+	if mapID == 0 then mapID = nil end
+	if RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog then
+		-- Clicking an RQE quest entry while the Classic/TBC Quest Log is open toggles it closed.
+		if QuestLogFrame and QuestLogFrame:IsShown() then
+			QuestLogFrame:Hide()
+			return
+		end
+
+		local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+		if questLogIndex and SelectQuestLogEntry then
+			SelectQuestLogEntry(questLogIndex)
+		elseif questLogIndex and QuestLog_SetSelection then
+			QuestLog_SetSelection(questLogIndex)
+		end
+		-- if QuestLogFrame then
+			-- QuestLogFrame:Show()
+		-- elseif ToggleQuestLog then
+			-- ToggleQuestLog()
+		-- end
+		if QuestLogFrame then
+			QuestLogFrame:Show()
+		elseif ToggleQuestLog then
+			ToggleQuestLog()
+		end
+		return
+	end
+
+	-- OpenQuestLog(mapID)
+	-- QuestMapFrame_ShowQuestDetails(questID)
+	OpenQuestLog(mapID)
+	QuestMapFrame_ShowQuestDetails(questID)
+end
+
+
+-- Helper function to see whether Blizzard's native Classic watch list contains
+-- a quest. Keep this separate from RQE's virtual-watch check so an RQE UI
+-- untrack can remove each representation only when it exists.
+function RQE:IsQuestNativelyWatched(questID)
+	questID = tonumber(questID)
+	if not questID then return false end
+
+	local numWatches = RQE.API.GetNumQuestWatches and RQE.API.GetNumQuestWatches() or 0
+	for watchIndex = 1, numWatches do
+		if RQE.API.GetQuestIDForQuestWatchIndex(watchIndex) == questID then
+			return true
+		end
+	end
+	return false
+end
+
+
+-- Helper function to see if a given quest is being watched
+function RQE:IsQuestWatched(questID)
+	if not questID then return false end
+	questID = tonumber(questID)
+	if self.ClassicVirtualQuestWatches and self.ClassicVirtualQuestWatches[questID] then
+		return true
+	end
+	-- Retail exposes a watch type. Classic's legacy watch list is authoritative
+	-- only through its watch-index scan; do not let a Classic compatibility
+	-- return value suppress RQE's virtual progress watches.
+	if not (RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog) then
+		local watchType = C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(questID)
+		if watchType then return true end
+	end
+
+	local n = RQE.API.GetNumQuestWatches and RQE.API.GetNumQuestWatches() or 0
+	for i = 1, n do
+		if RQE.API.GetQuestIDForQuestWatchIndex(i) == questID then
+			return true
+		end
+	end
+	return false
+end
+
+
+-- Legacy Classic clients' native watch list rejects quests that have no Blizzard
+-- objective rows (for example, delivery and turn-in-only quests). Keep those
+-- quests in RQE's own watch list so they can still appear in RQE Quest Tracker.
+function RQE:IsClassicQuestWithoutBlizzardObjectives(questID)
+	if not (RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog) then return false end
+
+	questID = tonumber(questID)
+	if not questID or not RQE.API.GetLogIndexForQuestID(questID) then return false end
+
+	return (RQE.API.GetNumQuestObjectives(questID) or 0) == 0
+end
+
+
+-- Keep every virtual-watch mutation on one refresh/persistence path. Events can
+-- arrive in bursts, so coalesce them and rebuild after Classic has updated its
+-- quest-log indexes.
+function RQE:QueueClassicVirtualQuestTrackerRefresh()
+	if self.ClassicVirtualQuestTrackerRefreshQueued then return end
+	self.ClassicVirtualQuestTrackerRefreshQueued = true
+
+	C_Timer.After(0.2, function()
+		RQE.ClassicVirtualQuestTrackerRefreshQueued = false
+		if UpdateRQEQuestFrame then
+			UpdateRQEQuestFrame()
+		end
+		RQE:UpdateRQEQuestFrameVisibility()
+		if RQE.SaveTrackedQuestsToCharacter then
+			RQE:SaveTrackedQuestsToCharacter()
+		end
+	end)
+end
+
+
+function RQE:AddClassicVirtualQuestWatch(questID, isTemporaryProgressWatch)
+	questID = tonumber(questID)
+	-- if not questID or not RQE.API.IsOnQuest(questID) then return false end
+	-- Quest-watch events identify the quest before every Classic quest-log
+	-- wrapper has necessarily refreshed. Add it now; authoritative removal or
+	-- turn-in events clean it after the quest actually leaves the player's log.
+	if not questID then return false end
+
+	self.ClassicVirtualQuestWatches = self.ClassicVirtualQuestWatches or {}
+	local wasNew = self.ClassicVirtualQuestWatches[questID] == nil
+	local wasTemporary = self.AutoQuestProgressVirtualWatches
+		and self.AutoQuestProgressVirtualWatches[questID] == true
+	self.ClassicVirtualQuestWatches[questID] = true
+
+	-- Manual watches and Auto Quest Watch are persistent. If either claims a
+	-- temporary progress watch, cancel its expiry and promote the same entry.
+	if not isTemporaryProgressWatch then
+		if self.AutoQuestProgressVirtualWatches then
+			self.AutoQuestProgressVirtualWatches[questID] = nil
+		end
+		if self.AutoQuestProgressWatchTokens then
+			self.AutoQuestProgressWatchTokens[questID] = nil
+		end
+	end
+
+	-- A fresh manual/progress watch explicitly makes the quest visible again,
+	-- even if SC/ZQ previously stored it in the RQE-only hidden list.
+	if self.HiddenQuestLogQuests then
+		self.HiddenQuestLogQuests[questID] = nil
+	end
+	self:QueueClassicVirtualQuestTrackerRefresh()
+	return wasNew or (wasTemporary and not isTemporaryProgressWatch)
+end
+
+
+-- A native Quest Log watch is an explicit player selection. Mirror it in a
+-- separate RQE source so it remains visible alongside ZQ-generated quests
+-- without allowing unrelated automatic virtual watches to bypass ZQ.
+function RQE:AddClassicManualVirtualQuestWatch(questID)
+	questID = tonumber(questID)
+	if not questID then return false end
+
+	self.ClassicManualVirtualQuestWatches = self.ClassicManualVirtualQuestWatches or {}
+	local wasNewManualWatch = self.ClassicManualVirtualQuestWatches[questID] ~= true
+	self.ClassicManualVirtualQuestWatches[questID] = true
+
+	self:AddClassicVirtualQuestWatch(questID)
+	return wasNewManualWatch
+end
+
+
+function RQE:RemoveClassicVirtualQuestWatch(questID)
+	questID = tonumber(questID)
+	local removed = false
+	if self.ClassicVirtualQuestWatches and questID then
+		removed = self.ClassicVirtualQuestWatches[questID] ~= nil
+		self.ClassicVirtualQuestWatches[questID] = nil
+	end
+	if self.ClassicManualVirtualQuestWatches and questID then
+		self.ClassicManualVirtualQuestWatches[questID] = nil
+	end
+	if self.AutoQuestProgressVirtualWatches and questID then
+		self.AutoQuestProgressVirtualWatches[questID] = nil
+	end
+	if self.AutoQuestProgressWatchTokens and questID then
+		self.AutoQuestProgressWatchTokens[questID] = nil
+	end
+	if removed then
+		self:QueueClassicVirtualQuestTrackerRefresh()
+	end
+	return removed
+end
+
+
+-- Add currently native watched quests to the explicit-manual source. This
+-- covers watches that predate this version and preserves checked Blizzard
+-- quests when ZQ is entered or rebuilt after a zone transition.
+function RQE:SyncClassicManualVirtualWatchesFromNativeWatches()
+	self.ClassicManualVirtualQuestWatches = self.ClassicManualVirtualQuestWatches or {}
+	self.ClassicVirtualQuestWatches = self.ClassicVirtualQuestWatches or {}
+
+	local numWatches = RQE.API.GetNumQuestWatches and RQE.API.GetNumQuestWatches() or 0
+	for watchIndex = 1, numWatches do
+		local questID = RQE.API.GetQuestIDForQuestWatchIndex(watchIndex)
+		if questID and RQE.API.IsOnQuest(questID) then
+			self.ClassicManualVirtualQuestWatches[questID] = true
+			self.ClassicVirtualQuestWatches[questID] = true
+			if self.HiddenQuestLogQuests then
+				self.HiddenQuestLogQuests[questID] = nil
+			end
+		end
+	end
+end
+
+
+-- Remove a quest from both RQE's virtual tracker and Blizzard's native watch
+-- list. In SC/ZQ mode, retain a same-zone hide so a user-initiated untrack is
+-- not immediately undone by an ordinary same-zone refresh. A real map
+-- transition clears that zone-specific hide and allows normal ZQ membership to
+-- add the quest back virtually.
+function RQE:UntrackQuestEverywhere(questID)
+	questID = tonumber(questID)
+	if not questID then return false end
+
+	if RQE.ShowAllQuestLogQuests or RQE.ZoneQuestFilterMapID then
+		RQE.HiddenQuestLogQuests = RQE.HiddenQuestLogQuests or {}
+		RQE.HiddenQuestLogQuests[questID] = true
+	end
+
+	local wasNativeWatch = self:IsQuestNativelyWatched(questID)
+	local wasVirtualWatch = self.ClassicVirtualQuestWatches
+		and self.ClassicVirtualQuestWatches[questID] == true
+
+	if wasNativeWatch and RQE.API.RemoveQuestWatch then
+		RQE.API.RemoveQuestWatch(questID)
+	end
+	self:RemoveClassicVirtualQuestWatch(questID)
+
+	return wasNativeWatch or wasVirtualWatch
+end
+
+
+function RQE:AddQuestWatchOrVirtual(questID)
+	questID = tonumber(questID)
+	if not questID or self:IsQuestWatched(questID) then return false end
+
+	if self:IsClassicQuestWithoutBlizzardObjectives(questID) then
+		return self:AddClassicVirtualQuestWatch(questID)
+	end
+
+	return RQE.API.AddQuestWatch(questID) == true
+end
+
+
+-- Auto Quest Watch and Auto Quest Progress are RQE-only settings. Keep their
+-- Blizzard CVars disabled so accepting or progressing a quest never adds it to
+-- Blizzard's native quest tracker.
+function RQE:DisableBlizzardAutoQuestTracking()
+	if type(SetCVar) == "function" then
+		SetCVar("autoQuestWatch", "0")
+		SetCVar("autoQuestProgress", "0")
+	end
+end
+
+
+function RQE:IsAutoQuestWatchEnabled()
+	return self.db and self.db.profile and self.db.profile.autoQuestWatch == true
+end
+
+
+function RQE:IsAutoQuestProgressEnabled()
+	return self.db and self.db.profile and self.db.profile.autoQuestProgress == true
+end
+
+
+function RQE:GetQuestObjectiveProgressSignature(questID)
+	local objectives = RQE.API.GetQuestObjectives(questID) or {}
+	local values = {}
+	for objectiveIndex, objective in ipairs(objectives) do
+		values[#values + 1] = table.concat({
+			tostring(objectiveIndex),
+			tostring(objective.numFulfilled or 0),
+			tostring(objective.numRequired or ""),
+			tostring(objective.finished == true),
+			tostring(objective.text or ""),
+		}, ":")
+	end
+	return table.concat(values, "|")
+end
+
+
+function RQE:RememberAutoQuestWatchProgress(questID)
+	questID = tonumber(questID)
+	if not questID then return end
+	self.AutoQuestWatchObjectiveSnapshots = self.AutoQuestWatchObjectiveSnapshots or {}
+	self.AutoQuestWatchObjectiveSnapshots[questID] = self:GetQuestObjectiveProgressSignature(questID)
+end
+
+
+function RQE:AutoWatchQuest(questID)
+	questID = tonumber(questID)
+	if not questID or not self:IsAutoQuestWatchEnabled() then return false end
+	-- if not RQE.API.GetLogIndexForQuestID(questID) or self:IsQuestWatched(questID) then return false end
+	-- A Blizzard watch must not suppress the separate RQE virtual watch.
+	-- if self.ClassicVirtualQuestWatches
+	-- 	and self.ClassicVirtualQuestWatches[questID]
+	-- 	and not (self.AutoQuestProgressVirtualWatches and self.AutoQuestProgressVirtualWatches[questID])
+	-- then
+	-- 	return false
+	-- end
+
+	-- RQE-only auto watches are deliberately never added to Blizzard's native
+	-- watch list, so they do not affect the Blizzard quest tracker or its limit.
+	-- Calling the helper for an existing watch is intentional: it clears stale
+	-- SC/ZQ hidden state and promotes a temporary progress watch to persistent.
+	return self:AddClassicVirtualQuestWatch(questID)
+end
+
+
+function RQE:AutoWatchQuestProgress(questID)
+	questID = tonumber(questID)
+	if not questID or not self:IsAutoQuestProgressEnabled() then return false end
+	-- if not RQE.API.GetLogIndexForQuestID(questID) or self:IsQuestWatched(questID) then return false end
+	-- A Blizzard watch must not suppress the separate RQE virtual watch.
+	if self.ClassicVirtualQuestWatches
+		and self.ClassicVirtualQuestWatches[questID]
+		and not (self.AutoQuestProgressVirtualWatches and self.AutoQuestProgressVirtualWatches[questID])
+	then
+		-- Keep an existing persistent watch persistent, but still make it visible
+		-- again if an older SC/ZQ hidden entry survived in SavedVariables.
+		self:AddClassicVirtualQuestWatch(questID)
+		return false
+	end
+	self:AddClassicVirtualQuestWatch(questID, true)
+
+	-- Match Blizzard's Auto Quest Progress lifetime without storing this
+	-- temporary RQE-only watch in SavedVariables.
+	self.AutoQuestProgressVirtualWatches = self.AutoQuestProgressVirtualWatches or {}
+	self.AutoQuestProgressWatchTokens = self.AutoQuestProgressWatchTokens or {}
+	local token = (self.AutoQuestProgressWatchTokens[questID] or 0) + 1
+	self.AutoQuestProgressVirtualWatches[questID] = true
+	self.AutoQuestProgressWatchTokens[questID] = token
+
+	C_Timer.After(300, function()
+		if RQE.AutoQuestProgressWatchTokens and RQE.AutoQuestProgressWatchTokens[questID] == token then
+			RQE:RemoveClassicVirtualQuestWatch(questID)
+			if UpdateRQEQuestFrame then
+				UpdateRQEQuestFrame()
+			end
+			RQE:UpdateRQEQuestFrameVisibility()
+		end
+	end)
+
+	return true
+end
+
+
+-- QUEST_WATCH_UPDATE identifies the exact quest whose objective just changed.
+-- Use that event as an authoritative progress signal instead of waiting for a
+-- later quest-log refresh to infer the change from a snapshot.
+function RQE:QueueVirtualAutoWatchFromProgressEvent(questID)
+	questID = tonumber(questID)
+	if not questID then return end
+
+	self.VirtualAutoWatchProgressEventTokens = self.VirtualAutoWatchProgressEventTokens or {}
+	local token = (self.VirtualAutoWatchProgressEventTokens[questID] or 0) + 1
+	self.VirtualAutoWatchProgressEventTokens[questID] = token
+
+	C_Timer.After(0.15, function()
+		if not RQE.VirtualAutoWatchProgressEventTokens
+			or RQE.VirtualAutoWatchProgressEventTokens[questID] ~= token then
+			return
+		end
+		RQE.VirtualAutoWatchProgressEventTokens[questID] = nil
+
+		local addedVirtualWatch = false
+		if RQE:IsAutoQuestWatchEnabled() then
+			addedVirtualWatch = RQE:AutoWatchQuest(questID)
+		elseif RQE:IsAutoQuestProgressEnabled() then
+			addedVirtualWatch = RQE:AutoWatchQuestProgress(questID)
+		end
+
+		if addedVirtualWatch then
+			if UpdateRQEQuestFrame then
+				UpdateRQEQuestFrame()
+			end
+			RQE:UpdateRQEQuestFrameVisibility()
+		end
+	end)
+end
+
+
+function RQE:AutoWatchQuestsWithChangedObjectives()
+	local autoWatchEnabled = self:IsAutoQuestWatchEnabled()
+	local autoProgressEnabled = self:IsAutoQuestProgressEnabled()
+	if not autoWatchEnabled and not autoProgressEnabled then return false end
+	self.AutoQuestWatchObjectiveSnapshots = self.AutoQuestWatchObjectiveSnapshots or {}
+	local addedVirtualWatch = false
+
+	local entryCount = RQE.API.GetNumQuestLogEntries()
+	for questLogIndex = 1, entryCount do
+		local info = RQE.API.GetQuestLogInfo(questLogIndex)
+		local questID = info and tonumber(info.questID)
+		if questID and not info.isHeader then
+			local currentSignature = self:GetQuestObjectiveProgressSignature(questID)
+			local previousSignature = self.AutoQuestWatchObjectiveSnapshots[questID]
+
+			-- The first sighting establishes a baseline. A later objective change
+			-- adds an RQE-only watch, either permanently for Auto Quest Watch or
+			-- temporarily for Auto Quest Progress.
+			if previousSignature ~= nil and previousSignature ~= currentSignature then
+				if autoWatchEnabled then
+					addedVirtualWatch = self:AutoWatchQuest(questID) or addedVirtualWatch
+				elseif autoProgressEnabled then
+					addedVirtualWatch = self:AutoWatchQuestProgress(questID) or addedVirtualWatch
+				end
+			end
+			self.AutoQuestWatchObjectiveSnapshots[questID] = currentSignature
+		end
+	end
+
+	return addedVirtualWatch
+end
+
+
+-- Classic can dispatch QUEST_LOG_UPDATE before objective counts are current.
+-- Compare after that refresh so every increase, including 4/10 -> 5/10, is
+-- observed and added only to RQE's virtual tracker.
+function RQE:QueueAutoWatchObjectiveCheck()
+	if self.AutoQuestWatchObjectiveCheckQueued then return end
+	self.AutoQuestWatchObjectiveCheckQueued = true
+
+	C_Timer.After(0.15, function()
+		RQE.AutoQuestWatchObjectiveCheckQueued = false
+		if RQE:AutoWatchQuestsWithChangedObjectives() then
+			if UpdateRQEQuestFrame then
+				UpdateRQEQuestFrame()
+			end
+			RQE:UpdateRQEQuestFrameVisibility()
+		end
+	end)
+end
+
+
+-- Helper function to determine if the SeparateFocusFrame should be cleared for an update
+function RQE:LogSeparateFocusClear(reason, oldQuestID, newQuestID, oldStep, newStep)
+	-- SAFETY: Ensure the history table exists
+	RQE.ClearSeparateFocusHistory = RQE.ClearSeparateFocusHistory or {}
+	RQE._lastSeparateClearReason = reason
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cff99ccff[RQE]|r SeparateFocus clear reason stored:", tostring(RQE._lastSeparateClearReason))
+	end
+
+	table.insert(RQE.ClearSeparateFocusHistory, {
+		time = date("%H:%M:%S"),
+		reason = reason,
+		oldQuestID = oldQuestID,
+		newQuestID = newQuestID,
+		oldStepIndex = oldStep,
+		newStepIndex = newStep
+	})
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("|cff99ccff[RQE]|r ClearSeparateFocusFrame fired: %s (oldQuest=%s → newQuest=%s, oldStep=%s → newStep=%s)",
+			reason,
+			tostring(oldQuestID), tostring(newQuestID),
+			tostring(oldStep), tostring(newStep)
+		))
+	end
+end
+
+
+-- Guard function to decide whether it should clear the SeparateFocusFrame
+function RQE:ShouldClearSeparateFocusFrame()
+	 -- Always refresh the real supertracked quest
+	RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Always define these FIRST
+	local newQuest = RQE.CurrentlySuperQuestID
+	local newStep  = RQE.AddonSetStepIndex or 1
+	local oldQuest = RQE._lastSeparateQuestID
+	local oldStep  = RQE._lastSeparateStepIndex
+
+	-- FORCED BY CLEAR-BUTTON PRESS
+	if RQE.ClearButtonPressed then
+		RQE:LogSeparateFocusClear("Forced by ClearButtonPressed", oldQuest, newQuest, oldStep, newStep)
+		-- print("RQE.ClearButtonPressed recorded as pressed")
+		return true
+	end
+
+	-- If in combat, never consume state
+	if InCombatLockdown() then
+		-- Defer the clear and do NOT check actual step changes
+		return true
+	end
+
+	-- If no quest or no DB entry, always clear
+	if not newQuest or not RQE.getQuestData(newQuest) then
+		RQE:LogSeparateFocusClear("Quest missing or not in DB", oldQuest, newQuest, oldStep, newStep)
+		return true
+	end
+
+	-- Quest changed
+	if newQuest ~= oldQuest then
+		RQE:LogSeparateFocusClear("Supertracked quest changed", oldQuest, newQuest, oldStep, newStep)
+		return true
+	end
+
+	-- Step changed
+	if newStep ~= oldStep then
+		RQE:LogSeparateFocusClear("StepIndex changed", oldQuest, newQuest, oldStep, newStep)
+		return true
+	end
+
+	-- No change → do NOT clear/update
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cff888888[RQE] SeparateFocusFrame skip — no quest or step change.|r")
+	end
+
+	return false
+end
+
+
+-- Function to auto-watch only auto-completable quests
+function RQE:WatchAutoCompletableUnwatchedQuests(verbose)
+	-- if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	if RQE.API and not RQE.API.CanManageBlizzardObjectiveTracker() then
+		return
+	end
+
+	local added = 0
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local info = RQE.API.GetQuestLogInfo(i)
+		if info and not info.isHeader then
+			local qid = info.questID
+			if qid and self:IsQuestAutoComplete(qid) and not self:IsQuestWatched(qid) then
+				local ok = C_QuestLog.AddQuestWatch(qid)
+				if ok then added = added + 1 end
+				if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO+" then
+					print(("RQE: watching auto-completable quest %d (%s)"):format(qid, info.title or ""))
+				end
+			end
+		end
+	end
+	if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO+" then
+		print(("RQE: added %d auto-completable quest(s) to watch on login."):format(added))
+	end
+end
+
+
+-- Returns true if the given quest is complete and can be auto-turned-in anywhere
+function RQE:IsQuestAutoComplete(questID)
+	-- if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	if RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient() then
+		return false
+	end
+
+	if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+		print(("IsQuestAutoComplete check start: questID=%s"):format(tostring(questID)))
+	end
+
+	if not questID then
+		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			print("IsQuestAutoComplete: no questID")
+		end
+		return false
+	end
+
+	if C_QuestLog.IsFailed and C_QuestLog.IsFailed(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("IsQuestAutoComplete: quest %d is failed"):format(questID))
+		end
+		return false
+	end
+
+	local isComplete = C_QuestLog.IsComplete(questID)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(("IsQuestAutoComplete: C_QuestLog.IsComplete=%s"):format(tostring(isComplete)))
+	end
+	if not isComplete then return false end
+
+	local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(("IsQuestAutoComplete: logIndex=%s"):format(tostring(logIndex)))
+	end
+	if not logIndex then return false end
+
+	local info = RQE.API.GetQuestLogInfo(logIndex)
+	local isAuto = info and info.isAutoComplete == true
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("IsQuestAutoComplete: info=", info and info.questID, info and tostring(info.isAutoComplete))
+		print(("IsQuestAutoComplete: isAutoComplete=%s"):format(tostring(isAuto)))
+	end
+	return isAuto
+end
+
+
+-- Attempts to show the native Blizzard auto-complete dialog; returns true if shown
+function RQE:ShowAutoCompleteDialog(questID)
+	if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+		print(("ShowAutoCompleteDialog: questID=%s"):format(tostring(questID)))
+	end
+
+	if not questID then return false end
+
+	-- Optional: avoid double opening if the Complete/Reward UI is already up
+	if QuestFrame and QuestFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ShowAutoCompleteDialog: QuestFrame already shown; skipping")
+		end
+		return false
+	end
+
+	if RQE:IsQuestAutoComplete(questID) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("ShowAutoCompleteDialog: calling ShowQuestComplete(%d)"):format(questID))
+		end
+		ShowQuestComplete(questID)
+		return true
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("ShowAutoCompleteDialog: not auto-completable")
+	end
+	return false
+end
+
+
+-- Saves x, y, mapID ionformation to the RQE.DatabaseSuperX, RQE.DatabaseSuperY, RQE.DatabaseSuperMapID addon variables when fired
+function RQE.SaveCoordData()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
+		if questID then
+			-- Logic for updating location data
+			local questData = RQE.getQuestData(questID)
+			-- if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
+				-- -- Update the location data for the examined quest
+				-- RQE.DatabaseSuperX = questData.location.x / 100
+				-- RQE.DatabaseSuperY = questData.location.y / 100
+				-- RQE.DatabaseSuperMapID = questData.location.mapID
+			local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
+			local finalMapID
+
+			if mapID then
+				finalMapID = mapID
+			elseif continentID then
+				local playerMapID = C_Map.GetBestMapForUnit("player")
+				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				if parent == continentID then
+					finalMapID = continentID
+				end
+			end
+
+			if x and y and finalMapID then
+				RQE.DatabaseSuperX = x / 100
+				RQE.DatabaseSuperY = y / 100
+				RQE.DatabaseSuperMapID = finalMapID
+			else
+				-- Debug message or fallback to prevent further errors
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("SaveCoordData: Invalid location data for questID:", questID)
+				end
+			end
+		end
+	end
+end
+
+
+-- Function that saves data of the Super Tracked Quest
+function RQE.SaveSuperTrackData()
+	-- Extracts Details of Quest if possible
+	RQE.ExtractAndSaveQuestCoordinates()
+
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if questID then
+		local playerMapID = C_Map.GetBestMapForUnit("player")
+		local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
+		local questTitle = RQE.API.GetTitleForQuestID(questID)
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		local posX, posY
+
+		if isWorldQuest then
+			posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+		else
+			if not posX or not posX and mapID then
+				local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+				local mapID = GetQuestUiMapID(questID)
+				if mapID == 0 then mapID = nil end
+			else
+				posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			end
+		end
+
+		RQE.superMapID = mapID
+		RQE.superQuestID = questID
+		RQE.superQuestTitle = questTitle
+
+		if posX == nil then
+			RQE.superX = RQE.x
+		else
+			RQE.superX = posX
+		end
+
+		if posY == nil then
+			RQE.superY = RQE.y
+		else
+			RQE.superY = posY
+		end
+
+		C_Timer.After(1, function()
+			if RQE.superX == nil or RQE.superY == nil then
+				RQE.SaveSuperTrackData()
+				return
+			end
+		end)
+
+		-- Optional: Return the values for immediate use
+		return posX, posY, mapID, questID, questTitle
+	end
+end
+
+
+-- Function to save the current supertracked quest to the character-specific table
+function RQE:SaveSuperTrackedQuestToCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
+	end
+
+	-- PLAYER_LOGIN can trigger quest events before the saved RQE selection has
+	-- been restored. Do not let those transient events erase it.
+	if RQE.PendingTrackerStateRestore then
+		return
+	end
+
+	-- Prefer Blizzard's current supertrack, but retain RQE's selected quest when
+	-- SC/ZQ is displaying an RQE-only list.
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	if not superTrackedQuestID or superTrackedQuestID <= 0 then
+		local rqeFocusedQuestID = RQE.ManualSuperTrackedQuestID or RQE.DisplayedQuestID
+		if rqeFocusedQuestID and RQE.API.IsOnQuest(rqeFocusedQuestID) then
+			superTrackedQuestID = rqeFocusedQuestID
+		end
+	end
+
+	-- -- Ensure we have a valid quest ID before saving
+	-- if superTrackedQuestID and superTrackedQuestID > 0 then
+		-- -- Check if it is a world quest
+		-- local isWorldQuest = C_QuestLog.IsWorldQuest(superTrackedQuestID)
+
+		-- -- Save it to the character-specific table with world quest flag
+		-- RQECharacterDB.superTrackedQuestID = superTrackedQuestID
+		-- RQECharacterDB.isWorldQuest = isWorldQuest
+
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Saved supertracked quest for this character: " .. superTrackedQuestID)
+		-- end
+	-- else
+		-- RQECharacterDB.superTrackedQuestID = nil
+		-- RQECharacterDB.isWorldQuest = nil
+	-- end
+
+	-- Case 1: Real supertracked quest (quest log / world quest)
+	if superTrackedQuestID and superTrackedQuestID > 0 then
+		local isWorldQuest = RQE.API.IsWorldQuest(superTrackedQuestID)	--C_QuestLog.IsWorldQuest(superTrackedQuestID)
+
+		RQECharacterDB.superTrackedQuestID = superTrackedQuestID
+		RQECharacterDB.isWorldQuest = isWorldQuest
+
+		-- Clear searched persistence so you don’t “fight” between modes
+		RQECharacterDB.searchedQuestID = nil
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Saved supertracked quest for this character: " .. superTrackedQuestID)
+		end
+		return
+	end
+
+	-- Case 2: No supertracked quest, but we have a searched quest being displayed
+	if RQE.searchedQuestID and RQE.searchedQuestID > 0 then
+		RQECharacterDB.superTrackedQuestID = nil
+		RQECharacterDB.isWorldQuest = nil
+		RQECharacterDB.searchedQuestID = RQE.searchedQuestID
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Saved searched quest for this character: " .. RQE.searchedQuestID)
+		end
+		return
+	end
+
+	-- Case 3: Nothing to save
+	RQECharacterDB.superTrackedQuestID = nil
+	RQECharacterDB.isWorldQuest = nil
+	RQECharacterDB.searchedQuestID = nil
+end
+
+
+-- Function to save the currently watched/tracked quests to the character-specific table
+function RQE:SaveTrackedQuestsToCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:SaveTrackedQuestsToCharacter() ~~~")
+	end
+
+	-- PLAYER_LOGIN can trigger quest events before the saved SC/ZQ mode has
+	-- been restored. Saving at that point would incorrectly replace it with the
+	-- default Blizzard watched-quest state.
+	if RQE.PendingTrackerStateRestore then
+		return
+	end
+
+	-- Initialize the trackedQuests table for this character.
+	RQECharacterDB.trackedQuests = {}
+	RQECharacterDB.rqeTrackerMode = RQE.ShowAllQuestLogQuests and "all"
+		or (RQE.ZoneQuestFilterMapID and "zone")
+		or "watched"
+	RQECharacterDB.rqeZoneQuestFilterMapID = RQE.ZoneQuestFilterMapID
+	RQECharacterDB.rqeHiddenQuestLogQuests = {}
+
+	for questID in pairs(RQE.HiddenQuestLogQuests or {}) do
+		table.insert(RQECharacterDB.rqeHiddenQuestLogQuests, questID)
+	end
+
+	if RQECharacterDB.rqeTrackerMode ~= "watched" then
+		-- SC/ZQ do not use Blizzard watches. Rebuild and save the RQEQuestFrame
+		-- source instead.
+		self:SortWatchedQuestsByProximity()
+		for _, questData in ipairs(RQE.SortedWatchedQuests or {}) do
+			table.insert(RQECharacterDB.trackedQuests, questData.questID)
+		end
+	else
+		-- Normal mode keeps the legacy Blizzard-watch persistence.
+		for i = 1, RQE.API.GetNumQuestWatches() do
+			local questID = RQE.API.GetQuestIDForQuestWatchIndex(i)
+			if questID then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("QuestID: " .. questID .. " saved to RQECharacterDB.trackedQuests")
+				end
+				table.insert(RQECharacterDB.trackedQuests, questID)
+			end
+		end
+	end
+
+	RQECharacterDB.classicVirtualQuestWatches = {}
+	for questID in pairs(self.ClassicVirtualQuestWatches or {}) do
+		-- Auto Quest Progress watches expire after five minutes and should not
+		-- be restored after a reload or a new login.
+		if not (self.AutoQuestProgressVirtualWatches and self.AutoQuestProgressVirtualWatches[questID]) then
+			table.insert(RQECharacterDB.classicVirtualQuestWatches, questID)
+		end
+	end
+
+	-- Persist the explicit Quest Log subset separately. Generic virtual watches
+	-- still serve normal/SC mode, while ZQ retains only this manually selected
+	-- source in addition to its current-zone membership list.
+	RQECharacterDB.classicManualVirtualQuestWatches = {}
+	for questID in pairs(self.ClassicManualVirtualQuestWatches or {}) do
+		if self.ClassicVirtualQuestWatches
+			and self.ClassicVirtualQuestWatches[questID]
+			and RQE.API.IsOnQuest(questID)
+		then
+			table.insert(RQECharacterDB.classicManualVirtualQuestWatches, questID)
+		end
+	end
+
+	-- Debug output for tracked quests
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if #RQECharacterDB.trackedQuests > 0 then
+			print("Saved tracked quests for this character:", table.concat(RQECharacterDB.trackedQuests, ", "))
+		else
+			print("No tracked quests found to save for this character.")
+		end
+		if #RQECharacterDB.classicVirtualQuestWatches > 0 then
+			print("Saved RQE virtual watches for this character:", table.concat(RQECharacterDB.classicVirtualQuestWatches, ", "))
+		else
+			print("No persistent RQE virtual watches found to save for this character.")
+		end
+	end
+end
+
+
+-- Function to restore the saved supertracked quest for the current character
+function RQE:RestoreSuperTrackedQuestForCharacter()
+	local functionName = "RQE:RestoreSuperTrackedQuestForCharacter()"
+
+	C_Timer.After(0.2, function()
+		local restoredSomething = false
+		local restoredQuestID = nil
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~~ Running RQE:RestoreSuperTrackedQuestForCharacter() ~~~")
+		end
+
+		-- 1) Try restoring a real supertracked quest first
+		if RQECharacterDB and RQECharacterDB.superTrackedQuestID then
+			local savedQuestID = RQECharacterDB.superTrackedQuestID
+			local isWorldQuest = RQECharacterDB.isWorldQuest
+
+			if isWorldQuest then
+				local isWorldQuestStillAvailable =
+					RQE.API.IsWorldQuest(savedQuestID) and RQE.API.GetQuestObjectives(savedQuestID) ~= nil
+					--C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
+
+				if isWorldQuestStillAvailable then
+					-- C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+					RQE.API.SetSuperTrackedQuestID(savedQuestID)
+					restoredQuestID = savedQuestID
+					restoredSomething = true
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Restored supertracked world quest for this character: " .. savedQuestID)
+					end
+				else
+					RQECharacterDB.superTrackedQuestID = nil
+					RQECharacterDB.isWorldQuest = nil
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Saved supertracked world quest is no longer valid.")
+					end
+				end
+			else
+				if RQE.API.IsOnQuest(savedQuestID) then
+					-- C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+					RQE.API.SetSuperTrackedQuestID(savedQuestID)
+					RQE.ManualSuperTrack = true
+					RQE.ManualSuperTrackedQuestID = savedQuestID
+					RQE.DisplayedQuestID = savedQuestID
+					restoredQuestID = savedQuestID
+					restoredSomething = true
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Restored supertracked quest for this character: " .. savedQuestID)
+					end
+				else
+					RQECharacterDB.superTrackedQuestID = nil
+					RQECharacterDB.isWorldQuest = nil
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Saved supertracked quest is no longer valid.")
+					end
+				end
+			end
+		end
+
+		-- 2) If no valid supertracked quest was restored, restore searched quest display
+		if not restoredSomething and RQECharacterDB and RQECharacterDB.searchedQuestID then
+			local searchedQuestID = RQECharacterDB.searchedQuestID
+
+			-- Optional sanity: only restore if it exists in your DB or has a title
+			local hasTitle = RQE.API.GetTitleForQuestID(searchedQuestID)
+			local hasDB = RQE.getQuestData and RQE.getQuestData(searchedQuestID)
+
+			if hasTitle or hasDB then
+				RQE.searchedQuestID = searchedQuestID
+				restoredSomething = true
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Restored searched quest display for this character: " .. searchedQuestID)
+				end
+			else
+				RQECharacterDB.searchedQuestID = nil
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Saved searched quest is no longer valid (no title/DB entry).")
+				end
+			end
+		end
+
+		if not restoredSomething and RQE.db.profile.debugLevel == "INFO+" then
+			print("No saved supertracked or searched quest found for this character.")
+		end
+
+		-- Both tracker mode and focus have now been restored, so normal event
+		-- saves may resume without overwriting the saved startup state.
+		RQE.PendingTrackerStateRestore = false
+
+		C_Timer.After(0.1, function()
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): restore ~~")
+			-- UpdateFrame()
+			-- Use the restored ID explicitly. The normal selection path sets this
+			-- flag; setting it here prevents ShouldUpdateFrame from treating the
+			-- login refresh as an unchanged, ignorable update.
+			if restoredQuestID then
+				RQE.QuestLogIndexButtonPressed = true
+				--[[
+				-- On Classic, the saved supertrack is restored after InitializeFrame
+				-- has already run.  Populate the main helper directly here instead
+				-- of depending on the generic updater's cached state.
+				if RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient() and RQE.DisplayClassicQuestLogDetails then
+					RQE:DisplayClassicQuestLogDetails(restoredQuestID)
+				else
+					UpdateFrame(restoredQuestID)
+				end
+				]]
+				UpdateFrame(restoredQuestID)
+
+				-- RQEQuestFrame has already been restored by this point. Re-clicking
+				-- its entry restores the same RQE focus/waypoint flow as a player
+				-- selecting the quest manually.
+				if RQE.ClickQuestLogIndexButton then
+					C_Timer.After(0.1, function()
+						RQE.ClickQuestLogIndexButton(restoredQuestID)
+					end)
+				end
+			else
+				UpdateFrame()
+			end
+
+			-- IMPORTANT: run macro generation AFTER UpdateFrame settles
+			C_Timer.After(0.2, function()
+				if RQE.searchedQuestID then
+					RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
+				end
+			end)
+		end)
+	end)
+
+	C_Timer.After(0.35, function()
+		RQE.InitializeSeparateFocusWaypoints()
+	end)
+end
+
+
+-- Function to restore the watched/tracked quests for the current character
+function RQE:RestoreTrackedQuestsForCharacter()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:RestoreTrackedQuestsForCharacter() ~~~")
+	end
+
+	-- if not RQECharacterDB or (not RQECharacterDB.trackedQuests and not RQECharacterDB.classicVirtualQuestWatches) then
+	if not RQECharacterDB or (
+		not RQECharacterDB.trackedQuests
+		and not RQECharacterDB.classicVirtualQuestWatches
+		and not RQECharacterDB.classicManualVirtualQuestWatches
+	) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No tracked quests saved for this character.")
+		end
+		return
+	end
+
+	local restoredMode = RQECharacterDB.rqeTrackerMode
+
+	local function restoreClassicVirtualWatches()
+		for _, questID in ipairs(RQECharacterDB.classicVirtualQuestWatches or {}) do
+			if RQE.API.IsOnQuest(questID) then
+				RQE:AddClassicVirtualQuestWatch(questID)
+			end
+		end
+	end
+
+	local function restoreClassicManualVirtualWatches()
+		for _, questID in ipairs(RQECharacterDB.classicManualVirtualQuestWatches or {}) do
+			if RQE.API.IsOnQuest(questID) then
+				RQE:AddClassicManualVirtualQuestWatch(questID)
+			end
+		end
+
+		-- Older SavedVariables had one untyped virtual-watch list. Do not promote
+		-- all legacy entries here: many were automatic/progress watches and must
+		-- not become cross-zone manual watches. Current Blizzard-native watches
+		-- are synchronized into the manual source when ZQ is restored/displayed.
+		--[[
+		if RQECharacterDB.classicManualVirtualQuestWatches == nil then
+			for _, questID in ipairs(RQECharacterDB.classicVirtualQuestWatches or {}) do
+				if RQE.API.IsOnQuest(questID) then
+					RQE:AddClassicManualVirtualQuestWatch(questID)
+				end
+			end
+		end
+		]]
+	end
+
+	-- Restore RQE virtual watches in every display mode. Previously the early
+	-- SC/ZQ return skipped this list entirely. This old position was too early
+	-- for normal mode because virtual membership then suppressed native restore.
+	-- for _, questID in ipairs(RQECharacterDB.classicVirtualQuestWatches or {}) do
+	-- 	if RQE.API.IsOnQuest(questID) then
+	-- 		RQE:AddClassicVirtualQuestWatch(questID)
+	-- 	end
+	-- end
+
+	if restoredMode == "all" or restoredMode == "zone" then
+		RQE.ShowAllQuestLogQuests = restoredMode == "all"
+		RQE.ZoneQuestFilterMapID = restoredMode == "zone" and RQECharacterDB.rqeZoneQuestFilterMapID or nil
+		RQE.HiddenQuestLogQuests = {}
+		for _, questID in ipairs(RQECharacterDB.rqeHiddenQuestLogQuests or {}) do
+			if RQE.API.IsOnQuest(questID) then
+				RQE.HiddenQuestLogQuests[questID] = true
+			end
+		end
+
+		-- Restore after hidden state so an actively saved virtual watch wins over
+		-- a stale hidden entry left by an older version of the tracker logic.
+		restoreClassicVirtualWatches()
+		restoreClassicManualVirtualWatches()
+
+		if restoredMode == "zone" then
+			if RQE.SyncClassicManualVirtualWatchesFromNativeWatches then
+				RQE:SyncClassicManualVirtualWatchesFromNativeWatches()
+			end
+			RQE.ScanAndCacheZoneQuests()
+		end
+		UpdateRQEQuestFrame()
+		-- RQE.PendingTrackerStateRestore = false
+		-- Keep the guard until RestoreSuperTrackedQuestForCharacter has restored
+		-- the saved Classic RQE focus as well.
+		return
+	end
+
+	-- Iterate through saved tracked quests and re-enable legacy Blizzard watches.
+	for _, questID in ipairs(RQECharacterDB.trackedQuests or {}) do
+		if RQE.API.IsOnQuest(questID) then
+			-- Enable tracking for the quest if it's still in the quest log
+			-- C_QuestLog.AddQuestWatch(questID)
+			-- RQE:AddQuestWatchOrVirtual(questID)
+			-- In normal watched mode, trackedQuests contains Blizzard-native watches.
+			-- Restore those directly before adding the independent virtual mirror.
+			RQE.API.AddQuestWatch(questID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Restored tracking for quest:", questID)
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Tracked quest is no longer valid:", questID)
+			end
+		end
+	end
+
+	restoreClassicVirtualWatches()
+	restoreClassicManualVirtualWatches()
+
+	-- Virtual watches were formerly restored above before the SC/ZQ branch.
+	-- for _, questID in ipairs(RQECharacterDB.classicVirtualQuestWatches or {}) do
+	-- 	if RQE.API.IsOnQuest(questID) then
+	-- 		RQE:AddClassicVirtualQuestWatch(questID)
+	-- 	end
+	-- end
+
+	C_Timer.After(0.2, function()
+		if UpdateRQEQuestFrame then
+			UpdateRQEQuestFrame()
+		end
+		RQE:UpdateRQEQuestFrameVisibility()
+	end)
+end
+
+
+-- function RQE:UpdateWaypointForStep(questID, stepIndex)
+	-- local questData = RQE.getQuestData(questID)
+	-- if questData and questData[stepIndex] then
+		-- local stepData = questData[stepIndex]
+		-- if stepData and stepData.coordinates then
+			-- -- Logic to set the new waypoint
+			-- RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(stepIndex)
+		-- end
+	-- end
+-- end
+
+
+-- Obtain addon Contribution Data
+function RQE.GetDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE.db.profile.debugTimeStampCheckbox = false
+		RQE:ClearDebugLog()
+		RQE_Contribution.GetAllContributionInfo()
+
+		--RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(5, function()
+			RQE.db.profile.debugTimeStampCheckbox = true
+		end)
+
+		C_Timer.After(2, function()
+			RQE:ShowDeleteConfirmationDialog()
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
+-- Obtain addon Contribution Data for completed quests
+function RQE.GetCompletedDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE.db.profile.debugTimeStampCheckbox = false
+		RQE:ClearDebugLog()
+		RQE_Contribution.GetCompletedContributionInfo()
+
+		--RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(5, function()
+			RQE.db.profile.debugTimeStampCheckbox = true
+		end)
+
+		C_Timer.After(2, function()
+			RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
+-- Obtain addon Contribution Data
+function RQE.GetSandBoxDataForAddon()
+	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		RQE.db.profile.debugLoggingCheckbox = true
+		RQE.db.profile.debugTimeStampCheckbox = false
+		RQE:ClearDebugLog()
+		RQE.GetAllSandboxInfo()
+
+		--RQE.db.profile.debugLoggingCheckbox = false
+		RQE.DebugLogFrame()
+
+		C_Timer.After(5, function()
+			RQE.db.profile.debugTimeStampCheckbox = true
+		end)
+	else
+		print("RQE Contribution addon is not presently loaded. Please request this from the author")
+	end
+end
+
+
+-- Obtain WQ Information for Expansion: Midnight
+function RQE.GetMidnightWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(12)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(12)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(12)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: The War Within
+function RQE.GetTheWarWithinWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(11)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(11)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(11)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: Dragonflight
+function RQE.GetDragonflightWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(10)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(10)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(10)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: Shadowlands
+function RQE.GetShadowlandsWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(9)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(9)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(9)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: Battle for Azeroth
+function RQE.GetBFAWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(8)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(8)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(8)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: Legion
+function RQE.GetLegionWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(7)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(7)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(7)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: Misc
+function RQE.GetWoDWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(6)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(6)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(6)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain WQ Information for Expansion: Misc
+function RQE.MiscWQ()
+	RQE.db.profile.debugLoggingCheckbox = true
+	RQE.db.profile.debugTimeStampCheckbox = false
+	RQE:ClearDebugLog()
+	local clicked = GetMouseButtonClicked()
+
+	if IsControlKeyDown() and clicked == "LeftButton" then
+		RQE_Contribution.PrintIncorrectMapIDs(5)
+	elseif clicked == "LeftButton" then
+		RQE_Contribution.GetMissingWQ(5)
+	elseif clicked == "RightButton" then
+		RQE_Contribution.GetAllWQ(5)
+	else
+		print("Unknown click type:", tostring(clicked))
+	end
+
+	--RQE.db.profile.debugLoggingCheckbox = false
+	RQE.DebugLogFrame()
+	C_Timer.After(5, function()
+		RQE.db.profile.debugTimeStampCheckbox = true
+	end)
+end
+
+
+-- Obtain Quest Objectives and Quest Description Text for quests in player log where an empty set exists for either in the DB (that will contain data and isn't a hidden/emissary quest)
+function RQE.GetMissingQuestData()
+	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			RQE.db.profile.debugLoggingCheckbox = true
+			RQE.db.profile.debugTimeStampCheckbox = false
+			RQE:ClearDebugLog()
+
+			RQE_Contribution:CheckMissingQuestTextData()
+
+			-- Then also check the last accepted quest for missing NPC info
+			local questID = RQE.LastAcceptedQuest
+			if questID then
+				local questData = RQE.getQuestData(questID)
+
+				if questData then
+					local objectives = questData.objectivesQuestText
+					local description = questData.descriptionQuestText
+					local npc = questData.npc
+
+					local hasObjectives = objectives and type(objectives) == "table" and objectives[1] and objectives[1] ~= ""
+					local hasDescription = description and type(description) == "table" and description[1] and description[1] ~= ""
+					local missingNPC = not npc or type(npc) ~= "table" or npc[1] == nil or npc[1] == ""
+
+					if hasObjectives and hasDescription and missingNPC then
+						RQE_Contribution:CheckMissingNPCOnQuestAccept(questID)
+					end
+				end
+			end
+
+			RQE.db.profile.debugTimeStampCheckbox = true
+			--RQE.db.profile.debugLoggingCheckbox = false
+		end
+	end
+end
+
+
+-- Function to obtain the quest details and print them on screen
+function RQE.ObtainSuperTrackQuestDetails()
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest() or RQE.isSuperTracking
+	--local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest() or RQE.isSuperTracking
+	if not isSuperTracking then return end
+
+	C_Timer.After(0.15, function()
+		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+			if RQEFrame and RQEFrame:IsShown() and RQE.QuestIDText and RQE.QuestIDText:GetText() then
+				-- RQE.TheSuperQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+				RQE.TheSuperQuestID = tonumber(RQE.DisplayedQuestID) or RQE.API.GetSuperTrackedQuestID()
+			else
+				RQE.TheSuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			end
+
+			local questName = "Unknown Quest"
+			if RQE.TheSuperQuestID and type(RQE.TheSuperQuestID) == "number" then
+				questName = RQE.API.GetTitleForQuestID(RQE.TheSuperQuestID) or "Unknown Quest"
+			end
+			local messagePrefix = "QuestID (supertracked): " .. tostring(RQE.TheSuperQuestID) .. " - " .. questName
+
+			local questData = RQE.getQuestData(RQE.TheSuperQuestID)
+
+			if not questData then
+				DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
+			else
+				local totalSteps = #questData
+				if totalSteps == 0 then
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+				else
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", totalSteps), 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function to Show Confirmation Dialog for Deleting Data
+function RQE:ShowDeleteConfirmationDialog()
+	-- Define the dialog structure
+	StaticPopupDialogs["RQE_DELETE_CONFIRM"] = {
+		text = "Are you sure you want to delete all contribution data? This action is irreversible.",
+		button1 = "Delete Data",
+		button2 = "Cancel",
+		OnAccept = function()
+			RQE:ExecuteDataDeletion()
+		end,
+		OnCancel = function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Data deletion canceled.")
+			end
+			RQE.DataDeletedfromDBFile = false
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid conflicts with other popups
+	}
+
+	-- Show the confirmation popup
+	StaticPopup_Show("RQE_DELETE_CONFIRM")
+end
+
+
+-- Shows confirmation before removing contribution entries that already
+-- exist in RQEDatabase.Vanilla. Sandbox-only entries will be preserved.
+function RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
+	StaticPopupDialogs["RQE_CONTRIBUTION_DB_CLEANUP_CONFIRM"] = {
+		text = "Remove contribution data only for quests that already exist in RQEDatabase.Vanilla?\n\nSandbox-only entries will be preserved. This action is irreversible.",
+		button1 = "Remove Entries",
+		button2 = "Cancel",
+		OnAccept = function()
+			RQE:ExecuteRQEDatabaseContributionCleanup()
+		end,
+		OnCancel = function()
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE Contribution database cleanup canceled.")
+			end
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid conflicts with other popups
+	}
+
+	StaticPopup_Show("RQE_CONTRIBUTION_DB_CLEANUP_CONFIRM")
+end
+
+
+-- Removes only RQE Contribution saved-variable entries whose quest IDs
+-- already exist in RQEDatabase.Vanilla, then offers to reload the UI.
+function RQE:ExecuteRQEDatabaseContributionCleanup()
+	if RQE_Contribution and RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase then
+		RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase()
+
+		C_Timer.After(0.2, function()
+			RQE:ShowReloadConfirmationDialog()
+		end)
+	else
+		print("Error: Unable to clean RQE Contribution data. Function not found.")
+	end
+end
+
+
+-- Function to Show Confirmation Dialog for Reloading the UI
+function RQE:ShowReloadConfirmationDialog()
+	-- Define the dialog structure
+	StaticPopupDialogs["RQE_RELOAD_CONFIRM"] = {
+		text = "Are you sure you want to reload the UI?",
+		button1 = "Reload",
+		button2 = "Cancel",
+		OnAccept = function()
+			ReloadUI()
+		end,
+		OnCancel = function()
+			print("Not Reloading the UI")
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid conflicts with other popups
+	}
+
+	-- Show the confirmation popup
+	StaticPopup_Show("RQE_RELOAD_CONFIRM")
+end
+
+
+-- Function to Run the Data Deletion
+function RQE:ExecuteDataDeletion()
+	if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
+		RQE_Contribution.DeleteAllContributionInfo()
+		print("All contribution data has been deleted.")
+		C_Timer.After(0.2, function()
+			RQE:ShowReloadConfirmationDialog()
+		end)
+	else
+		print("Error: Unable to delete contribution data. Function not found.")
+	end
+end
+
+
+function RQE.ExtractAndSaveQuestCoordinates()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if not questID then
+		RQE.debugLog("No QuestID found. Cannot proceed.")
+		return
+	end
+
+	local isMapOpen = WorldMapFrame:IsShown()
+	local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+	local mapID, posX, posY, completed, objective
+
+	if isWorldQuest then
+		-- It's a world quest, use the TaskQuest APIs
+		mapID = C_TaskQuest.GetQuestZoneID(questID)
+
+		-- Ensure mapID is valid before calling GetQuestLocation
+		if mapID then
+			posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+		else
+			RQE.debugLog("Invalid mapID for World QuestID:", questID)
+			return
+		end
+	else
+		-- Not a world quest, use the existing logic
+		mapID = GetQuestUiMapID(questID)
+	end
+
+	if not mapID then
+		return
+	end
+
+	-- If POI info is not available, try using GetNextWaypointForMap
+	if not posX or not posY then
+		if not isMapOpen and RQE.superTrackingChanged and not InCombatLockdown() then
+			-- Call the function to open the quest log with the details of the super tracked quest
+			OpenQuestLogToQuestDetails(questID)
+		else
+			-- Either map is open, or we are in combat, or another secure operation is in progress [fix for Frame:SetPassThroughButtons() error]
+			RQE.debugLog("Cannot open quest details due to combat lockdown or other restrictions.")
+			return
+		end
+
+		--completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
+
+		if not posX or not posY then
+			local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+
+			if nextMapID == nil or nextPosX == nil or nextPosY == nil then
+				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
+			else
+				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
+			end
+
+			-- Update the posX and posY variables with the new information
+			posX = nextPosX
+			posY = nextPosY
+		end
+
+		if not isMapOpen then
+			WorldMapFrame:Hide()
+			RQE.DontCloseMap = false
+		end
+	end
+
+	-- Reset the superTrackingChanged flag
+	RQE.superTrackingChanged = false
+
+	-- Save these to the RQE table
+	RQE.x = posX
+	RQE.y = posY
+	RQE.mapID = mapID
+end
+
+
+-- Function controls the restoration of the quest that is super tracked to the RQEFrame
+function RQE:HandleSuperTrackedQuestUpdate()
+	local functionName = "RQE:HandleSuperTrackedQuestUpdate()"
+
+	-- Save the current super tracked quest ID
+	local savedSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	local isWorldQuest = RQE.API.IsWorldQuest(savedSuperTrackedQuestID)	--C_QuestLog.IsWorldQuest(savedSuperTrackedQuestID)
+
+	-- Check if the quest was manually tracked
+	local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[savedSuperTrackedQuestID]
+
+	-- Check if the quest is completed
+	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(savedSuperTrackedQuestID)
+
+	-- Determine if the quest is being tracked due to a search and is not completed
+	local trackedViaSearchAndNotCompleted = RQE.searchedQuestID == savedSuperTrackedQuestID and not isQuestCompleted
+
+	if isWorldQuest then
+		if not (manuallyTracked or trackedViaSearchAndNotCompleted) then
+			-- Clear the RQEFrame for this world quest if it's neither manually tracked nor searched and incomplete
+			RQE:ClearFrameData()
+			return
+		end
+	end
+
+	--[[
+	-- Classic Era's main helper must be populated from the quest log.  Do this
+	-- before the legacy Retail recovery path below, which clears supertracking
+	-- and leaves UpdateFrame with no active quest to render.
+	if RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient() and savedSuperTrackedQuestID and RQE.DisplayClassicQuestLogDetails then
+		RQE:DisplayClassicQuestLogDetails(savedSuperTrackedQuestID)
+		return
+	end
+	]]
+
+	-- Clear the current super tracked content for non-world quests or allowed world quests
+	RQE:RemoveSuperTrackingFromQuest()
+
+	-- Restore the super-tracked quest after a delay for non-world quests
+	C_Timer.After(0.2, function()
+		if savedSuperTrackedQuestID then
+			-- Fetch quest info from RQEDatabase if available
+			local questInfo = RQE.getQuestData(savedSuperTrackedQuestID)
+			if questInfo then
+				local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(savedSuperTrackedQuestID)
+				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 1544 ~~")
+				UpdateFrame(savedSuperTrackedQuestID, questInfo, StepsText, CoordsText, MapIDs)
+				AdjustRQEFrameWidths()
+			end
+		end
+	end)
+end
+
+
+-- Function to Reset LFG roles after leaving raid group created through the SearchGroup Button in RQEFrame
+function ResetLFGRoles()
+	-- Set default roles DAMAGE only: (leader, tank, healer, damage)
+	SetLFGRoles(false, false, false, true)
+end
+
+
+-- SlashCommand function
+function RQE:SlashCommand(input)
+	if input == "config" then
+		-- Open the config panel
+		if SettingsPanel then
+			-- Use the new API to open the correct settings panel
+			SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+		else
+			-- Fallback for older versions, force open Interface Options to the AddOns tab
+			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer") -- Sometimes needs to be called twice due to Blizzard quirk
+		end
+	elseif input == "frame" or input == "toggle" then
+		if InCombatLockdown() then
+			RQE.ToggleRQEFrameFromSlashAfterCombat = true
+			return
+		end
+
+		-- Toggle the frame visibility
+		if RQEFrame:IsShown() then
+			RQEFrame:Hide()
+			if RQE.MagicButton then
+				RQE.MagicButton:Hide()
+			end
+		else
+			-- print("~~ RQEFrame:Show: 1415 ~~")
+			RQEFrame:Show()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
+		end
+
+		-- Refresh the config panel if it's open
+		local openFrame
+		if SettingsPanel then
+			openFrame = _G.SettingsPanel:GetCurrentCategory()
+		else
+			openFrame = _G.InterfaceOptionsFramePanelContainer.displayedPanel
+		end
+
+		if openFrame and openFrame.name == "Rhodan's Quest Explorer" then
+			if SettingsPanel then
+				SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
+			else
+				InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+				InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
+			end
+		end
+	else
+		print("Available commands for /rqe:")
+		print("config - Opens the configuration panel")
+		print("frame, toggle - Toggles the RQE frame")
+	end
+
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
+end
+
+
+-- SlashCommand to Reset LFG Role
+SLASH_RESETROLE1 = "/rqeresetrole"
+SlashCmdList["RESETROLE"] = function()
+	local dialog = LFGListApplicationDialog
+	if dialog then
+		LFGListApplicationDialog_UpdateRoles(dialog)
+		LFGListApplicationDialog_UpdateValidState(dialog)
+		LFGListApplicationDialog_Show(dialog)
+	end
+end
+
+
+-- Register the slash command
+RQE:RegisterChatCommand("rqe", "SlashCommand")
+
+
+-- This function will clear the WQ Tracking for a specific quest
+function RQE:ClearSpecificWQTracking(questID)
+	if RQE.API.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
+	--if C_QuestLog.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
+		C_QuestLog.RemoveWorldQuestWatch(questID)
+	end
+end
+
+
+---------------------------------------------------
+-- #7. Profile Core Creation
+---------------------------------------------------
+
+-- Initialize variable to keep track of whether the profile has been set
+RQE.profileHasBeenSet = false
+
+-- Initialize saved variables
+RQECharacterDB = RQECharacterDB or {}
+RQE.Version = C_AddOns.GetAddOnMetadata("RQE", "Version")
+RQE.debugLog("Initialized saved variables.")
+
+
+--- Initializes the addon database with given options.
+--- @param options table - Configuration options to set up the addon.
+function RQE:SetupDB(options)
+	RQE.options = options
+	RQE:SetProfileOnce()
+end
+
+
+--- Sets the user profile for the addon, but only once to avoid overwriting.
+--- If no profile is specified, defaults to the current player's name and realm.
+--- @param chosenProfile string|nil - The manually chosen profile or nil.
+function RQE:SetProfileOnce(chosenProfile)
+	if not RQE.profileHasBeenSet then
+		local profileToSet = chosenProfile or (UnitName("player") .. " - " .. GetRealmName())
+		if type(profileToSet) == "string" then
+			RQE.infoLog("Profile set to", profileToSet)
+		end
+		RQE.profileHasBeenSet = true
+	end
+end
+
+
+-- Function to gather character info if addon is set to default to player name instead of account wide
+function RQE:GetCharacterInfo()
+	local characterName = UnitName("player")
+	local characterRealm = GetRealmName()
+	local characterKey = characterName .. " - " .. characterRealm
+
+	-- -- Check if character-specific data exists in the database
+	-- if not self.db.char.characters then
+		-- self.db.char.characters = {}
+	-- end
+
+	-- -- Initialize or load character-specific settings
+	-- if not self.db.char.characters[characterKey] then
+		-- self.db.char.characters[characterKey] = {
+		-- -- Initialize character-specific settings here
+		-- }
+	-- end
+end
+
+
+-- Profile Refresh Function
+function RQE:RefreshConfig()
+	-- Reload any saved variables or reset frames, etc.
+	self:UpdateFrameFromProfile()
+
+	-- Refreshes/Reads the Configuration settings for the customized text (in the current/new profile) and calls them when the profile is changed to that from an earlier profile
+	RQE:ConfigurationChanged()
+end
+
+
+---------------------------------------------------
+-- #8. Toggle Frames
+---------------------------------------------------
+
+-- Function to show RQE frames by default on login
+function RQE:ShowRQEFramesOnLogin()
+	-- Show the frames only if they are not already shown
+	if not RQEFrame:IsShown() then
+		-- print("~~ RQEFrame:Show: 1546 ~~")
+		RQEFrame:Show()
+	end
+	if not RQE.RQEQuestFrame:IsShown() then
+		RQE.RQEQuestFrame:Show()
+	end
+end
+
+
+-- Function to initialize the objective tracker state based on the checkbox and frames visibility
+function RQE:InitializeObjectiveTracker()
+	if RQE.API and not RQE.API.CanManageBlizzardObjectiveTracker() then
+		return
+	end
+
+	local isRQEQuestTrackerVisible = RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()
+	if RQE.db.profile.toggleBlizzObjectiveTracker or not isRQEQuestTrackerVisible then
+		ObjectiveTrackerFrame:Show()
+	else
+		ObjectiveTrackerFrame:Hide()
+	end
+end
+
+
+-- Helper function to toggle display of the RQEQuestFrame in the mythicScenarioMode
+function RQE:UpdateTrackerVisibility()
+	local inScenario = C_Scenario.IsInScenario()
+	local mythicMode = self.db.profile.mythicScenarioMode
+	local configWantsQuestFrame = self.db.profile.enableQuestFrame
+	local canManageObjectiveTracker = RQE.API and RQE.API.CanManageBlizzardObjectiveTracker()
+
+	if not mythicMode then
+		if self.RQEQuestFrame then
+			if configWantsQuestFrame then
+				self.RQEQuestFrame:Show()
+			else
+				self.RQEQuestFrame:Hide()
+			end
+		end
+
+		if self.EnforceObjectiveTrackerVisibility then
+			self:EnforceObjectiveTrackerVisibility()
+		end
+		return
+	end
+
+	if InCombatLockdown() and inScenario then
+		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
+		return
+	end
+
+	-- print(">> UpdateTrackerVisibility: inScenario =", inScenario, "| mythicMode =", mythicMode, "| configWantsQuestFrame =", configWantsQuestFrame)
+
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
+	-- end
+
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_ScenarioObjectiveTracker")
+	-- end
+
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_BonusObjectiveTracker")
+	-- end
+
+	-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
+		-- C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
+	-- end
+
+	if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
+		if mythicMode and inScenario then
+			if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
+				self.RQEQuestFrame:Hide()
+			else
+				print("Mythic/Scenario mode may not work correctly with current Carbonite Quests settings!\n\nGo to Carbonite addon settings > Quest Module > Watch Options\nCHECK: \"Hide Quest Watch Window\"\nUN-CHECK: \"Hide Blizzards Quest Track Window\"\nThen reload your UI via \"/reload\"")
+				return
+			end
+		end
+	end
+
+	if mythicMode and inScenario then
+		-- print(">> Scenario + MythicMode active – forcing hide RQEQuestFrame")
+		RQE.forceHideRQEQuestFrame = true
+
+		if self.RQEQuestFrame then
+			-- Patch Show() so Blizzard layout code can't force show
+			if not self.RQEQuestFrame._originalShow then
+				self.RQEQuestFrame._originalShow = self.RQEQuestFrame.Show
+			end
+			self.RQEQuestFrame.Show = function() end
+
+			if self.RQEQuestFrame:IsShown() then
+				-- print(">> Hiding RQEQuestFrame")
+				self.RQEQuestFrame:Hide()
+			end
+		end
+
+		if canManageObjectiveTracker and ObjectiveTrackerFrame then
+			-- print(">> Showing ObjectiveTrackerFrame")
+			ObjectiveTrackerFrame.ignoreFramePositionManager = true
+			ObjectiveTrackerFrame:SetParent(UIParent)
+			ObjectiveTrackerFrame:ClearAllPoints()
+			ObjectiveTrackerFrame:SetPoint("TOPRIGHT", RQEFrame, "BOTTOMRIGHT", 0, -10)	-- TO DO: change the 0, -10 to be variables to be changed in the configuration for player customization
+			ObjectiveTrackerFrame:Show()
+		end
+
+		return -- Exit early to avoid post-scenario logic
+	end
+
+	-- === Post-scenario OR MythicMode disabled ===
+	-- print(">> Scenario ended or MythicMode off – restoring visibility from config")
+	RQE.forceHideRQEQuestFrame = false
+
+	-- Restore original Show method if it was patched
+	if self.RQEQuestFrame and self.RQEQuestFrame._originalShow then
+		self.RQEQuestFrame.Show = self.RQEQuestFrame._originalShow
+		self.RQEQuestFrame._originalShow = nil
+	end
+
+	if self.RQEQuestFrame then
+		if configWantsQuestFrame then
+			-- print(">> Showing RQEQuestFrame (config enabled)")
+			self.RQEQuestFrame:Show()
+		else
+			-- print(">> Hiding RQEQuestFrame (config disabled)")
+			self.RQEQuestFrame:Hide()
+		end
+	end
+
+	-- Outside a scenario, follow the normal Quest Tracker visibility rule.
+	-- The previous code always hid Blizzard's tracker in this branch.
+	if canManageObjectiveTracker and ObjectiveTrackerFrame then
+		if configWantsQuestFrame then
+			ObjectiveTrackerFrame:Hide()
+		else
+			ObjectiveTrackerFrame:Show()
+		end
+	end
+
+	RQE.updateScenarioUI()
+end
+
+
+-- Anchor the Objective Tracker to the RQEFrame
+function RQE:AnchorObjectiveTracker()
+	if RQE.API and not RQE.API.CanManageBlizzardObjectiveTracker() then
+		return
+	end
+
+	if not ObjectiveTrackerFrame or not RQEFrame then return end
+
+	-- Tell Blizzard: STOP repositioning it
+	ObjectiveTrackerFrame.ignoreFramePositionManager = true
+
+	if ObjectiveTrackerFrame:IsUserPlaced() ~= true then
+		ObjectiveTrackerFrame:SetMovable(true)
+		ObjectiveTrackerFrame:SetUserPlaced(true)
+	end
+
+	-- Clear existing anchors
+	ObjectiveTrackerFrame:ClearAllPoints()
+
+	-- Anchor it under RQEFrame
+	ObjectiveTrackerFrame:SetPoint("TOPRIGHT", RQEFrame, "BOTTOMRIGHT", 0, -10)
+
+	-- Resize ObjectiveTrackerFrame to fit (optional)
+	ObjectiveTrackerFrame:SetWidth(300)
+	ObjectiveTrackerFrame:SetHeight(600)  -- Slightly taller for scenarios with many steps
+
+	ObjectiveTrackerFrame.isBeingMoved = true
+end
+
+
+-- -- Hook the Objective Tracker's OnShow event to enforce the state based on visibility conditions
+-- ObjectiveTrackerFrame:HookScript("OnShow", function()
+	-- if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		-- if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			-- ObjectiveTrackerFrame:Hide()
+		-- end
+	-- end
+-- end)
+
+
+-- -- Continuous checking with OnUpdate to enforce the visibility state of the Blizzard Objective Tracker
+-- local hideObjectiveTrackerFrame = CreateFrame("Frame")
+-- hideObjectiveTrackerFrame:SetScript("OnUpdate", function()
+	-- if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
+		-- if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
+			-- ObjectiveTrackerFrame:Hide()
+		-- end
+	-- end
+-- end)
+
+
+-- Function to update the state of the minimap based on the current profile settings
+function RQE:ToggleMinimapIcon()
+	local newValue = self.db.profile.showMinimapIcon
+	RQE.debugLog("Toggling Minimap Icon. New Value: ", tostring(newValue))  -- Debugging line
+
+	self.db.profile.showMinimapIcon = newValue  -- Update the profile value
+
+	if newValue == true then
+		RQE.MinimapButton:Show()
+	else
+		RQE.MinimapButton:Hide()
+	end
+	LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE")
+end
+
+
+-- Function to update the state of the MapID checkbox based on the current profile settings
+function RQE:ToggleMapIDCheckbox()
+	local newValue = not RQE.db.profile.showMapID
+	RQE.db.profile.showMapID = newValue
+
+	-- Logic here to update checkbox UI element
+	if RQE.MapIDCheckbox then
+		RQE.MapIDCheckbox:SetChecked(newValue)
+	end
+end
+
+
+-- Function to Show/Hide RQEFrame when frames are empty
+function RQE:UpdateRQEFrameVisibility()
+	if InCombatLockdown() then
+		return
+	end
+
+	local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
+	local isSuperTracking = superTrackedQuestID and superTrackedQuestID > 0
+	--local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
+
+	if (self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking)) or self.isRQEFrameManuallyClosed then
+		if not RQE.db.profile.enableFrame then
+			RQEFrame:Hide()
+			if RQE.MagicButton then
+				RQE.MagicButton:Hide()
+			end
+		end
+	else
+		if RQE.db.profile.enableFrame then
+			-- print("~~ RQEFrame:Show: 1757 ~~")
+			RQEFrame:Show()
+			if RQE.MagicButton then
+				RQE.MagicButton:Show()
+			end
+		end
+	end
+
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
+end
+
+
+-- Returns the difficulty-colored level prefix used in RQE's quest displays.
+-- The trailing space keeps the caller's following text separate from the bracket.
+function RQE:GetQuestLevelPrefix(questID)
+	questID = tonumber(questID)
+	if not questID then
+		return ""
+	end
+
+	local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+	local questInfo = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
+	local questLevel = questInfo and tonumber(questInfo.level)
+	if not questLevel or questLevel <= 0 then
+		return ""
+	end
+
+	local levelDifference = questLevel - (UnitLevel("player") or 0)
+	local levelColor
+	if levelDifference <= -9 then
+		levelColor = "|cFF808080" -- Gray: 9+ levels below the player
+	elseif levelDifference <= -3 then
+		levelColor = "|cFF40C040" -- Green: 3-8 levels below the player
+	elseif levelDifference <= 2 then
+		levelColor = "|cFFFFFF00" -- Yellow: within 2 levels of the player
+	elseif levelDifference <= 4 then
+		levelColor = "|cFFFF8040" -- Orange: 3-4 levels above the player
+	else
+		levelColor = "|cFFFF2020" -- Red: 5+ levels above the player
+	end
+
+	local questTag
+	if type(GetQuestTagInfo) == "function" then
+		local _, tagName = GetQuestTagInfo(questID)
+		questTag = tagName
+	end
+
+	local levelSuffix = ""
+	if questTag == "Dungeon" then
+		levelSuffix = "D"
+	elseif questTag == "Elite" then
+		levelSuffix = "E"
+	elseif questTag == "PvP" or questTag == "PVP" then
+		levelSuffix = " PvP"
+	end
+
+	return levelColor .. string.format("[%d%s]", questLevel, levelSuffix) .. "|r "
+end
+
+
+-- Returns a tooltip title with both the level/tag and quest name colored by
+-- the quest's difficulty. Normal tooltip titles are retained when no level is
+-- available (for example, an unloaded searched quest).
+function RQE:GetQuestTooltipTitle(questID, questTitle)
+	questTitle = questTitle or "Unknown Quest"
+	local levelPrefix = RQE:GetQuestLevelPrefix(questID)
+	if levelPrefix == "" then
+		return questTitle
+	end
+
+	local coloredPrefix = levelPrefix:gsub("|r $", "")
+	return coloredPrefix .. " " .. questTitle .. "|r"
+end
+
+
+-- Prints the UI map ID and map name associated with a quest in Classic Era.
+-- Usage: /run RQE:GetZoneForGivenQuest(80138)
+function RQE:GetZoneForGivenQuest(questID)
+	questID = tonumber(questID)
+	if not questID then
+		print("RQE: Please provide a valid quest ID.")
+		return
+	end
+
+	local mapID = GetQuestUiMapID and GetQuestUiMapID(questID)
+	if (not mapID or mapID == 0) and C_TaskQuest and C_TaskQuest.GetQuestZoneID then
+		mapID = C_TaskQuest.GetQuestZoneID(questID)
+	end
+
+	if not mapID or mapID == 0 then
+		print("RQE: No zone map ID is available for quest " .. questID .. ".")
+		return
+	end
+
+	local mapInfo = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+	print("RQE: Quest " .. questID .. " belongs to MapID " .. mapID .. (mapInfo and " - " .. mapInfo.name or ""))
+end
+
+
+-- Updates the quest-level prefix for each quest currently rendered in RQE's tracker.
+-- The FontString's normal color remains Medium Purple, so only the bracketed prefix
+-- is affected by the inline color code.
+function RQE:UpdateTrackedQuestLevelColors()
+	local playerLevel = UnitLevel("player") or 0
+
+	for _, questButton in pairs(self.QuestLogIndexButtons or {}) do
+		local questLevelAndName = questButton.QuestLevelAndName
+		local questID = questButton.questID
+		local questLevel = questButton.rqeQuestLevel
+		local questTitle = questButton.rqeQuestTitle
+
+		if questLevelAndName and questID and questLevel and questTitle then
+			local levelDifference = questLevel - playerLevel
+			local levelColor
+
+			if levelDifference <= -9 then
+				levelColor = "|cFF808080" -- Gray: 9+ levels below the player
+			elseif levelDifference <= -3 then
+				levelColor = "|cFF40C040" -- Green: 3-8 levels below the player
+			elseif levelDifference <= 2 then
+				levelColor = "|cFFFFFF00" -- Yellow: within 2 levels of the player
+			elseif levelDifference <= 4 then
+				levelColor = "|cFFFF8040" -- Orange: 3-4 levels above the player
+			else
+				levelColor = "|cFFFF2020" -- Red: 5+ levels above the player
+			end
+
+			-- GetQuestTagInfo's isElite field describes World Quest metadata and
+			-- can classify normal Classic quests incorrectly.  The tag returned by
+			-- GetQuestLogTitle is the same tag displayed in the Classic quest log.
+			local questTag = questButton.rqeQuestTag
+			local levelSuffix = ""
+			-- if questTag == DUNGEON or questTag == "Dungeon" then
+			if questTag == "Dungeon" then
+				levelSuffix = levelSuffix .. "D"
+			end
+			-- if questTag == ELITE or questTag == "Elite" then
+			if questTag == "Elite" then
+				levelSuffix = levelSuffix .. "E"
+			end
+			if questTag == "PvP" or questTag == "PVP" then
+				levelSuffix = levelSuffix .. " PvP"
+			end
+
+			questLevelAndName:SetText(levelColor .. string.format("[%s%s]", questLevel, levelSuffix) .. "|r " .. questTitle)
+		end
+	end
+end
+
+
+-- Function to Show/Hide RQEQuestFrame when frames are empty
+function RQE:UpdateRQEQuestFrameVisibility()
+	if InCombatLockdown() then
+		return
+	end
+
+	-- Reset counts to 0
+	self.campaignQuestCount = 0
+	self.regularQuestCount = 0
+	self.worldQuestCount = 0
+
+	-- Pull data of number of tracked achievements
+	RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
+	self.worldQuestCount = RQE.API.GetNumWorldQuestWatches()
+
+	-- Iterate through tracked quests to count them
+	local nativeWatchedQuestIDs = {}
+	for i = 1, RQE.API.GetNumQuestWatches() do
+		local questID = RQE.API.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			nativeWatchedQuestIDs[questID] = true
+			if C_CampaignInfo.IsCampaignQuest(questID) then
+				self.campaignQuestCount = self.campaignQuestCount + 1
+			elseif RQE.API.IsWorldQuest(questID) then
+			--elseif C_QuestLog.IsWorldQuest(questID) then
+				self.worldQuestCount = self.worldQuestCount + 1
+			-- elseif C_QuestLog.IsQuestTask(questID) then
+				-- self.worldQuestCount = self.worldQuestCount + 1
+			else
+				self.regularQuestCount = self.regularQuestCount + 1
+			end
+		end
+	end
+
+	-- Count Classic virtual watches as regular tracked quests too. This keeps
+	-- the Quest Tracker visible when its only tracked entry is a zero-objective
+	-- delivery/turn-in quest managed by the Show Completed feature.
+	for virtualQuestID in pairs(self.ClassicVirtualQuestWatches or {}) do
+		if not nativeWatchedQuestIDs[virtualQuestID] and RQE.API.IsOnQuest(virtualQuestID) then
+			self.regularQuestCount = self.regularQuestCount + 1
+		end
+	end
+
+	-- Check conditions for showing/hiding the frame, including manual closure
+	if (self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario)) or self.isRQEQuestFrameManuallyClosed then
+		RQE.RQEQuestFrame:Hide()
+	else
+		RQE.RQEQuestFrame:Show()
+	end
+end
+
+
+---------------------------------------------------
+-- #9. Update Frames
+---------------------------------------------------
+
+-- Function to update MapID display
+function RQE:UpdateMapIDDisplay()
+	local newMapID = C_Map.GetBestMapForUnit("player")
+	local oldMapID = RQE.lastMapID
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	--UpdateWorldQuestTrackingForMap(mapID)
+
+	-- Debug: always show BEFORE/AFTER even if one is nil
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("|cff33ff99[RQE] MapID check|r old=%s  new=%s",
+			tostring(oldMapID), tostring(newMapID)))
+	end
+
+	-- Skip if mapID didn’t change
+	if not newMapID or newMapID == oldMapID then
+		return
+	end
+
+	-- Debug: Only fires when map actually changed
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("|cff00ff00[RQE] Map changed!|r %s → %s",
+			tostring(oldMapID), tostring(newMapID)))
+	end
+
+	-- Update cache
+	RQE.lastMapID = mapID
+
+	if RQE.db.profile.showMapID and mapID then
+		RQEFrame.MapIDText:SetText("MapID: " .. mapID)
+	else
+		RQEFrame.MapIDText:SetText("")
+	end
+
+	-- Run check to update stepIndex of the supertracked quest but only if the player isn't on a taxi, then the StartPeriodicChecks will run after they land
+	if UnitOnTaxi("player") then return end
+	RQE:StartPeriodicChecks()	-- Fires on map change RQE:UpdateMapIDDisplay() but might need to adjust so it only fires if CheckDBZoneChange is part of the current step (or any step in the current supertracked quest)
+end
+
+
+-- Function to update the frame based on the current profile settings
+function RQE:UpdateFramePosition()
+	-- Ensure framePosition exists to avoid nil errors
+	if not self.db.profile.framePosition then
+		self.db.profile.framePosition = {
+			xPos = -40,
+			yPos = -285,
+			anchorPoint = "TOPRIGHT",
+			frameWidth = 420,
+			frameHeight = 300
+		}
+	end
+
+	-- When reading from DB
+	local anchorPoint = self.db.profile.framePosition.anchorPoint or "TOPRIGHT"
+	RQE.debugLog("anchorPoint in RQE:UpdateFramePosition is ", anchorPoint)  -- Debug statement
+
+	-- Validation
+	local validAnchorPoints = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
+	if not tContains(validAnchorPoints, anchorPoint) then
+		anchorPoint = "TOPRIGHT"  -- Set to default
+	end
+
+	local xPos = self.db.profile.framePosition.xPos or -40
+	local yPos = self.db.profile.framePosition.yPos or -285
+
+	RQE.infoLog("About to SetPoint xPos: " .. xPos .. " yPos: " .. yPos .. " anchorPoint: " .. anchorPoint .. " IsShown: " .. tostring(RQEFrame:IsShown()))
+
+	-- Error handling
+	local success, err = pcall(function()
+		RQEFrame:ClearAllPoints()
+		RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+	end)
+
+	if not success then
+		RQE.debugLog("Error setting frame position: ", err)
+	end
+end
+
+
+-- Function to update the RQEQuestFrame based on the current profile settings
+function RQE:UpdateQuestFramePosition()
+	-- When reading from DB, replace with the appropriate keys for RQEQuestFrame
+	local anchorPoint = self.db.profile.QuestFramePosition.anchorPoint or "CENTER"
+
+	-- Validation
+	local validAnchorPoints = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
+	if not tContains(validAnchorPoints, anchorPoint) then
+		anchorPoint = "BOTTOMRIGHT"  -- Set to default
+	end
+
+	local xPos = self.db.profile.QuestFramePosition.xPos or -40
+	local yPos = self.db.profile.QuestFramePosition.yPos or 150
+
+	-- Error handling
+	local success, err = pcall(function()
+		RQE.RQEQuestFrame:ClearAllPoints()
+		RQE.RQEQuestFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
+	end)
+
+	if not success then
+		RQE.debugLog("Error setting quest frame position: ", err)
+	end
+end
+
+
+-- Function to update the RQEFrame size based on the current profile settings
+function RQE:UpdateFrameSize()
+	-- When reading from DB
+	local frameWidth = self.db.profile.framePosition.frameWidth or 420
+	local frameHeight = self.db.profile.framePosition.frameHeight or 300
+
+	-- Error handling for main frame
+	local success, err = pcall(function()
+		RQEFrame:SetSize(frameWidth, frameHeight)
+	end)
+
+	if not success then
+		RQE.debugLog("Error setting main frame size: ", err)
+	end
+end
+
+
+-- Function to update the RQEQuestFrame size based on the current profile settings
+function RQE:UpdateQuestFrameSize()
+	-- Update the quest frame size similarly, using its respective profile settings
+	local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 325
+	local questFrameHeight = self.db.profile.QuestFramePosition.frameHeight or 450
+
+	-- Error handling for quest frame
+	local success, err = pcall(function()
+		RQE.RQEQuestFrame:SetSize(questFrameWidth, questFrameHeight)
+	end)
+
+	if not success then
+		RQE.debugLog("Error setting quest frame size: ", err)
+	end
+end
+
+
+-- ClearFrameData function
+function RQE:ClearFrameData()
+	-- Clear the Quest ID and Quest Name
+	if RQE.QuestIDText then
+		RQE.QuestIDText:SetText("")
+	end
+	RQE.DisplayedQuestID = nil
+
+	-- if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("")
+	-- end
+
+	if RQE.QuestNameText then
+		RQE.QuestNameText:SetText("")
+	end
+
+	if RQE.QuestNameText then
+		RQE.debugLog("QuestNameText current text:", RQE.QuestNameText:GetText())
+	end
+
+	-- Clear StepsText elements
+	if RQE.StepsTexts then
+	  for _, text in pairs(RQE.StepsTexts) do
+		text:SetText("")  -- Clear the text of each element
+	  end
+	end
+
+	-- Clear CoordsText elements
+	if RQE.CoordsTexts then
+		for _, text in pairs(RQE.CoordsTexts) do
+			text:SetText("")
+		end
+	end
+
+	-- Clear QuestDirection Text
+	if RQE.DirectionTextFrame then
+		RQE.DirectionTextFrame:SetText("")
+	end
+
+	-- Clear QuestDescription Text
+	if RQE.QuestDescription then
+		RQE.QuestDescription:SetText("")
+	end
+
+	-- Clear QuestObjectives Text
+	if RQE.QuestObjectives then
+		RQE.QuestObjectives:SetText("")
+	end
+
+	-- Clear Unknown Quests Button
+	if RQE.UnknownQuestButton then
+		RQE.UnknownQuestButton:Hide()
+	end
+
+	-- Clear SearchGroup Button
+	if RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
+		RQE.SearchGroupButton:Hide()
+	end
+
+	RQE:ClearStepsTextInFrame()
+
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
+end
+
+
+-- Populate the RQE Helper from the Blizzard quest log when no RQE database
+-- entry exists. Classic Era and TBC Anniversary do not provide the Retail
+-- supertracking UI APIs.
+function RQE:DisplayClassicQuestLogDetails(questID)
+	-- if tonumber((GetBuildInfo()):match("^(%d+)")) ~= 1 then
+	if not (RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient()) then
+		return false
+	end
+
+	-- RQEFrame can be restricted after an in-combat click. Queue this UI update
+	-- until PLAYER_REGEN_ENABLED instead of attempting to show the frame.
+	if InCombatLockdown() then
+		self.PendingClassicQuestLogDetails = tonumber(questID)
+		return false
+	end
+
+	questID = tonumber(questID)
+	local questLogIndex = questID and RQE.API.GetLogIndexForQuestID(questID)
+	if not questLogIndex then
+		return false
+	end
+
+	local questInfo = RQE.API.GetQuestLogInfo(questLogIndex) or {}
+	local descriptionText, questLogObjectives = RQE.API.GetQuestLogText(questLogIndex)
+	local dbQuestData = RQE.getQuestData(questID)
+	local objectiveLines = {}
+	for _, objective in ipairs(RQE.API.GetQuestObjectives(questID) or {}) do
+		if objective.text and objective.text ~= "" then
+			table.insert(objectiveLines, objective.text)
+		end
+	end
+
+	-- RQE.DisplayedQuestID = questID
+	-- RQE.ManualSuperTrack = true
+	-- RQE.ManualSuperTrackedQuestID = questID
+
+	local previousQuestID = tonumber(RQE.DisplayedQuestID)
+	RQE.DisplayedQuestID = questID
+	--[[
+	-- Previous event-suppression attempt.  Keep the normal supertrack setter
+	-- active; the actual fix prevents the later UI clear from discarding this
+	-- render.
+	if tonumber(RQE.API.GetSuperTrackedQuestID()) ~= questID then
+		RQE.API.SetSuperTrackedQuestID(questID)
+	end
+	]]
+	RQE.API.SetSuperTrackedQuestID(questID)
+
+	-- A newly selected quest begins at its first database step.
+	if previousQuestID ~= questID then
+		RQE.AddonSetStepIndex = 1
+		RQE.CurrentStepIndex = 1
+		RQE.StoredStepIndex = 1
+	end
+
+	if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("Quest ID: " .. questID)
+		-- RQE.QuestIDText:SetText(RQE:GetQuestLevelPrefix(questID) .. "Quest ID: " .. questID)
+		RQE.QuestIDText:SetText("Quest ID: " .. questID)
+	end
+	if RQE.QuestNameText then
+		RQE.QuestNameText:SetText("Quest Name: " .. ((dbQuestData and dbQuestData.title) or questInfo.title or RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"))
+	end
+	if RQE.QuestDescription then
+		RQE.QuestDescription:SetText((dbQuestData and dbQuestData.descriptionQuestText and dbQuestData.descriptionQuestText[1]) or descriptionText or "No description available.")
+	end
+	if RQE.QuestObjectives then
+		local objectivesText = (dbQuestData and dbQuestData.objectivesQuestText and table.concat(dbQuestData.objectivesQuestText, "\n")) or (#objectiveLines > 0 and table.concat(objectiveLines, "\n")) or questLogObjectives or "No objectives available."
+		-- RQE.QuestObjectives:SetText(objectivesText)
+		-- Keep Classic objective progress colors in sync with RQE Quest Tracker:
+		-- white before progress, yellow while partial, and green when complete.
+		local colorizedObjectives = RQE.GetColorizedQuestObjectives and RQE:GetColorizedQuestObjectives(questID)
+		RQE.QuestObjectives:SetText((colorizedObjectives and colorizedObjectives ~= "") and colorizedObjectives or objectivesText)
+	end
+	-- if dbQuestData and RQE.CreateStepsText then
+	-- 	local stepsText, coordsText, mapIDs = PrintQuestStepsToChat(questID)
+	-- 	RQE:ClearStepsTextInFrame()
+	-- 	RQE:CreateStepsText(stepsText, coordsText, mapIDs)
+	-- end
+
+	--[[
+	-- Previous implementation.  CreateStepsText appended fresh controls to
+	-- WaypointButtons without clearing prior controls.  This delayed callback
+	-- could therefore click an invisible button from an earlier render, whose
+	-- callback then repainted or cleared the main helper with stale data.
+	if dbQuestData and RQE.CreateStepsText then
+		local stepsText, coordsText, mapIDs = PrintQuestStepsToChat(questID)
+		RQE:ClearStepsTextInFrame()
+		RQE:CreateStepsText(stepsText, coordsText, mapIDs)
+
+		-- Allow the step buttons to finish building, then run the normal
+		-- selected-step pipeline for waypoint, macro, and focus information.
+		C_Timer.After(0, function()
+			if RQE.DisplayedQuestID ~= questID then
+				return
+			end
+
+			local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
+
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+
+			if RQE.ClickWaypointButtonForIndex then
+				RQE:ClickWaypointButtonForIndex(stepIndex)
+			elseif RQE.OnCoordinateClicked then
+				RQE:OnCoordinateClicked()
+			end
+
+			if RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+				RQEMacro:CreateMacroForCurrentStep()
+			end
+		end)
+	end
+	]]
+	if dbQuestData and RQE.CreateStepsText then
+		local stepsText, coordsText, mapIDs = PrintQuestStepsToChat(questID)
+		local totalSteps = #dbQuestData
+		RQE:ClearStepsTextInFrame()
+		RQE:CreateStepsText(stepsText, coordsText, mapIDs)
+
+		-- Update SeparateFocus for both normal and no-step DB entries.  Only
+		-- invoke the selected-step pipeline when this render actually created a
+		-- matching, current waypoint button.
+		C_Timer.After(0, function()
+			if RQE.DisplayedQuestID ~= questID then
+				return
+			end
+
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+
+			if totalSteps <= 0 then
+				return
+			end
+
+			local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
+			if stepIndex < 1 or stepIndex > totalSteps then
+				stepIndex = 1
+			end
+
+			local waypointButton = RQE.WaypointButtons and RQE.WaypointButtons[stepIndex]
+			if waypointButton and RQE.ClickWaypointButtonForIndex then
+				RQE:ClickWaypointButtonForIndex(stepIndex)
+			elseif waypointButton and RQE.OnCoordinateClicked then
+				RQE:OnCoordinateClicked()
+			end
+
+			if waypointButton and RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+				RQEMacro:CreateMacroForCurrentStep()
+			end
+		end)
+	end
+	if RQE.DirectionTextFrame then
+		RQE.DirectionTextFrame:SetText("No direction available.")
+	end
+	if RQE.UnknownQuestButton then
+		RQE.UnknownQuestButton:Show()
+	end
+	if RQEFrame then
+		RQEFrame:Show()
+	end
+
+	return true
+end
+
+
+-- Clear Waypoint Buttons
+function RQE:ClearWaypointButtonData()
+	if RQE.WaypointButtons then
+		for _, button in pairs(RQE.WaypointButtons) do
+			button:Hide()
+		end
+	end
+end
+
+
+-- This function checks to see if the quest that was accepted has data in the DB that needs to be unblocked
+function RQE.QuestStepsBlocked(questID)
+	-- Ensure the questID is valid
+	if not questID then
+		return
+	end
+
+	local stepIndex = RQE.AddonSetStepIndex or 1
+	local questData = RQE.getQuestData(questID)
+
+	-- Check if questData is available
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("~~ This is a new quest for the DB ~~")
+		end
+		return
+	end
+
+	-- Get the total number of steps, if any
+	local totalSteps = #questData
+	if stepIndex == 1 and totalSteps == 0 then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("~~ Quest " .. questID .. " is in the DB but has no steps to display. ~~")
+			PlaySound(1283)
+		end
+	end
+end
+
+
+-- Function that track quests that are in the DB but have no steps
+function RQE.TrackDBQuestsWithoutSteps()
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			-- print("~~~ Remove Quest Watch: 1889 ~~~")
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	C_Timer.After(0.5, function()
+		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(i)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+				local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+				local questData = RQE.getQuestData(questID)
+
+				if questData and #questData == 0 then
+					C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function that track quests that are in the DB and have steps
+function RQE.TrackDBQuestsWithSteps()
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			-- print("~~~ Remove Quest Watch: 1918 ~~~")
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	C_Timer.After(0.5, function()
+		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(i)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+				local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+				local questData = RQE.getQuestData(questID)
+
+				if questData and #questData > 0 then
+					C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", #questData), 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function that track quests that are NOT in the DB at all
+function RQE.TrackQuestsNotInDB()
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			-- print("~~~ Remove Quest Watch: 1947 ~~~")
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	C_Timer.After(0.5, function()
+		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(i)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+				local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
+				local questData = RQE.getQuestData(questID)
+
+				if not questData then
+					C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+					DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function to clear the contents of the SeparateFocusFrame
+function RQE:ClearSeparateFocusFrame()
+	-- Do NOT run if nothing changed EXCEPT when forced
+	if not RQE.AllFramesShouldUpdate then
+		if not RQE:ShouldClearSeparateFocusFrame() then
+			return
+		end
+	end
+
+	-- Update internal tracking for next comparison
+	RQE._lastSeparateQuestID = RQE.CurrentlySuperQuestID
+	RQE._lastSeparateStepIndex = RQE.AddonSetStepIndex or 1
+
+	if InCombatLockdown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333[RQE]|r SeparateFocusFrame will clear after combat ends")
+		end
+		RQE.ClearSeparateFocusFrameAfterCombat = true
+		return
+	end
+
+	-- If the frame doesn't exist, nothing to clear
+	if not RQE.SeparateFocusFrame or not RQE.SeparateContentFrame then
+		return
+	end
+
+	if RQE.ClearSeparateFocusFrameAfterCombat then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00[RQE]|r Running RQE:ClearSeparateFocusFrame()")
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00[RQE]|r Running the RQE:ClearSeparateFocusFrame() as change occurred but not following combat")
+		end
+	end
+
+	-- Hide and remove the main SimpleHTML/FontString (first paragraph)
+	if RQE.SeparateStepText then
+		RQE.SeparateStepText:Hide()
+		RQE.SeparateStepText:SetParent(nil)
+		RQE.SeparateStepText = nil
+	end
+
+	-- Hide and remove ALL dynamically created children (including red warning FontStrings)
+	for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
+		if child and child.Hide then
+			child:Hide()
+		end
+	end
+
+	-- Clear any stray FontStrings that might be regions rather than children
+	for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+		if region.GetObjectType and region:GetObjectType() == "FontString" then
+			region:Hide()
+			region:SetText("")
+		end
+	end
+
+	-- Reset the content area height so scrolling resets
+	RQE.SeparateContentFrame:SetHeight(1000)
+
+	if RQE._lastSeparateClearReason == "StepIndex changed" or RQE._lastSeparateClearReason == "Quest completed" or RQE._lastSeparateClearReason == "Quest flagged complete" or RQE._lastSeparateClearReason == "QuestID changed" then
+		RQE._lastSeparateClearReason = nil
+
+		C_Timer.After(0.10, function()
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+		end)
+	end
+
+	-- if RQE._lastSeparateClearReason == "StepIndex changed" then
+		-- RQE._lastSeparateClearReason = nil
+
+		-- C_Timer.After(0.05, function()
+			-- if RQE.UpdateSeparateFocusFrame then
+				-- RQE:UpdateSeparateFocusFrame()
+			-- end
+		-- end)
+	-- end
+
+	RQE.ClearButtonPressed = false
+end
+
+
+-- -- Function to clear the contents of the SeparateFocusFrame
+-- function RQE:ClearSeparateFocusFrame()
+	-- -- Check if the SeparateFocusFrame exists
+	-- if not RQE.SeparateFocusFrame then
+		-- return
+	-- end
+
+	-- -- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
+	-- RQE.InitializeSeparateFocusFrame()
+
+	-- -- Ensure SeparateStepText exists
+	-- if not RQE.SeparateStepText then
+		-- RQE.InitializeSeparateFocusFrame()
+	-- end
+
+	-- if RQE.SeparateStepText then
+		-- RQE.SeparateStepText:SetText("No step description available for this step.")
+	-- end
+-- end
+
+
+-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty
+function RQE:CheckAndRefreshSeparateFocusFrame()
+	local separateHasContent = false
+	local rqeFrameHasQuest = false
+
+	if RQE.DebugSeparateFocusFrameContents then
+		separateHasContent = RQE:DebugSeparateFocusFrameContents()
+	end
+
+	if separateHasContent then
+		return true
+	end
+
+	if RQE.DebugRQEFrameContents then
+		rqeFrameHasQuest = RQE:DebugRQEFrameContents()
+	end
+
+	if rqeFrameHasQuest then
+		if RQE.UpdateSeparateFocusFrame then
+			RQE:UpdateSeparateFocusFrame()
+			RQE.InitializeSeparateFocusWaypoints()
+		end
+
+		return true
+	end
+
+	return false
+end
+
+
+-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info
+function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	local separateHasMeaningfulText = false
+	local rqeFrameHasQuest = false
+
+	if not RQE.SeparateContentFrame then
+		return false
+	end
+
+	local ignoredTexts = {
+		["1/0: Quest in DB w/o any available steps."] = true,
+		["No step description available"] = true,
+	}
+	--[[
+	-- Previous recovery attempt.  No-step messages are intentionally excluded
+	-- from this watchdog; the normal Classic render path handles them directly.
+	local ignoredTexts = {}
+	]]
+
+	for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+		if region.GetObjectType and region:GetObjectType() == "FontString" then
+			local text = region:GetText() or ""
+			text = text:gsub("^%s+", ""):gsub("%s+$", "")
+
+			if text ~= "" and not ignoredTexts[text] then
+				separateHasMeaningfulText = true
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cff99ccff[RQE]|r SeparateFocusFrame meaningful text found:")
+					print("|cff00ff00" .. text .. "|r")
+				end
+
+				break
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("|cff99ccff[RQE]|r ignoredTexts text found:")
+					print("|cff00ff00" .. text .. "|r")
+				end
+			end
+
+			-- if text ~= "" and not ignoredTexts[text] then
+				-- separateHasMeaningfulText = true
+				-- break
+			-- end
+		end
+	end
+
+	if not separateHasMeaningfulText then
+		return false
+	end
+
+	if RQE.DebugRQEFrameContents then
+		rqeFrameHasQuest = RQE:DebugRQEFrameContents()
+	end
+
+	if rqeFrameHasQuest then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00[RQE]|r SeparateFocusFrame has text and RQEFrame already contains quest data.")
+		end
+
+		return true
+	end
+
+	-- if rqeFrameHasQuest then
+		-- return true
+	-- end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cFFFF3333[RQE]|r SeparateFocusFrame has text but RQEFrame is missing quest data.")
+		print("|cff99ccff[RQE]|r Forcing UpdateFrame()")
+	end
+
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("|cff99ccff[RQE]|r SuperTracked QuestID:", tostring(questID))
+	end
+
+	if questID then
+		RQE.UpdateTheFrameNoMatterWhat = true
+		--[[
+		-- Previous Classic-specific recovery attempt.  The main clear guard now
+		-- recognizes active Classic supertracks, so keep one common updater.
+		if RQE.API and RQE.API.IsLegacyClient and RQE.API.IsLegacyClient() and RQE.DisplayClassicQuestLogDetails then
+			RQE:DisplayClassicQuestLogDetails(questID)
+		else
+			UpdateFrame(questID)
+		end
+		]]
+		UpdateFrame(questID)
+
+		C_Timer.After(0.2, function()
+			RQE.UpdateTheFrameNoMatterWhat = false
+		end)
+	end
+
+	return false
+end
+
+
+-- Debug helper to determine if the SeparateFocusFrame is actually empty
+function RQE:DebugSeparateFocusFrameContents()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(" ")
+		print("|cff99ccff===== SeparateFocusFrame Debug Report =====|r")
+	end
+
+	if not RQE.SeparateFocusFrame then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333SeparateFocusFrame does not exist.|r")
+		end
+		return false
+	end
+
+	if not RQE.SeparateContentFrame then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333SeparateContentFrame does not exist.|r")
+		end
+		return false
+	end
+
+	local visibleChildren = 0
+	local visibleFontStrings = 0
+	local visibleTextEntries = 0
+
+	-- Check primary step text
+	if RQE.SeparateStepText then
+		local text = ""
+
+		if RQE.SeparateStepText.GetText then
+			text = RQE.SeparateStepText:GetText() or ""
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("SeparateStepText Exists:", true)
+			print("SeparateStepText Visible:", RQE.SeparateStepText:IsShown())
+			print("SeparateStepText Length:", string.len(text))
+		end
+
+		if text ~= "" then
+			visibleTextEntries = visibleTextEntries + 1
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("SeparateStepText Exists:", false)
+		end
+	end
+
+	-- Check all children
+	for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
+		if child:IsShown() then
+			visibleChildren = visibleChildren + 1
+		end
+	end
+
+	-- Check all FontStrings
+	for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+		if region.GetObjectType and region:GetObjectType() == "FontString" then
+			if region:IsShown() then
+				visibleFontStrings = visibleFontStrings + 1
+			end
+
+			local text = region:GetText() or ""
+			if text ~= "" then
+				visibleTextEntries = visibleTextEntries + 1
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Visible Children:", visibleChildren)
+		print("Visible FontStrings:", visibleFontStrings)
+		print("Text Entries:", visibleTextEntries)
+	end
+
+	if visibleChildren == 0 and visibleFontStrings == 0 and visibleTextEntries == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333RESULT: SeparateFocusFrame appears EMPTY.|r")
+			print("|cff99ccff=====================================|r")
+			print(" ")
+		end
+		return false
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00RESULT: SeparateFocusFrame contains content.|r")
+			print("|cff99ccff=====================================|r")
+			print(" ")
+		end
+		return true
+	end
+end
+
+
+-- Debug helper to determine if the RQEFrame currently contains a quest
+function RQE:DebugRQEFrameContents()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(" ")
+		print("|cff99ccff===== RQEFrame Debug Report =====|r")
+	end
+
+	local currentQuestID = RQE.CurrentlySuperQuestID
+	local displayedQuestID = RQE.DisplayedQuestID
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("CurrentlySuperQuestID:", tostring(currentQuestID))
+		print("DisplayedQuestID:", tostring(displayedQuestID))
+	end
+
+	local questIDText = ""
+	local questNameText = ""
+
+	if RQE.QuestIDText and RQE.QuestIDText.GetText then
+		questIDText = RQE.QuestIDText:GetText() or ""
+	end
+
+	if RQE.QuestNameText and RQE.QuestNameText.GetText then
+		questNameText = RQE.QuestNameText:GetText() or ""
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestIDText:", questIDText ~= "" and questIDText or "<empty>")
+		print("QuestNameText:", questNameText ~= "" and questNameText or "<empty>")
+	end
+
+	local effectiveQuestID = displayedQuestID or currentQuestID
+
+	if effectiveQuestID then
+		local questData = RQE.getQuestData(effectiveQuestID)
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("QuestID Exists:", tostring(effectiveQuestID))
+			print("Quest Exists In DB:", tostring(questData ~= nil))
+
+			if questData and questData.title then
+				print("DB Quest Title:", questData.title)
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333No questID currently assigned to RQEFrame.|r")
+		end
+	end
+
+	local frameHasQuest =
+		(effectiveQuestID ~= nil)
+		and (questIDText ~= "" or questNameText ~= "")
+
+	if frameHasQuest then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cff00ff00RESULT: RQEFrame contains quest information.|r")
+			print("|cff99ccff===============================|r")
+			print(" ")
+		end
+		return true
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("|cFFFF3333RESULT: RQEFrame appears empty.|r")
+			print("|cff99ccff===============================|r")
+			print(" ")
+		end
+		return false
+	end
+end
+
+
+-- Colorization of the RQEFrame
+local function colorizeObjectives(questID)
+	local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	local colorizedText = ""
+	local t = {}
+
+	-- The Classic quest-log index supplies fallback objective text for delivery
+	-- and talk-to-NPC quests that have no leaderboard objective.
+	local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+	local questLogInfo = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
+	local isClassicQuestComplete = questLogInfo and (questLogInfo.isComplete == true or questLogInfo.isComplete == 1)
+	local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID) or isClassicQuestComplete
+	local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
+
+	-- Classic delivery/talk quests can have no leaderboard objective before the
+	-- player talks to the destination NPC. Their text is an immediate turn-in
+	-- instruction and must be gold, not the RQE Helper FontString's cyan fallback.
+	if objectivesData and #objectivesData == 0 then
+		local objectiveText
+		local questData = RQE.getQuestData and RQE.getQuestData(questID)
+		if questData and type(questData.objectivesQuestText) == "table" then
+			objectiveText = table.concat(questData.objectivesQuestText, "\n")
+		end
+
+		if (not objectiveText or objectiveText == "") and questLogIndex then
+			objectiveText = RQE.API.GetQuestLogObjectivesText(questLogIndex)
+		end
+
+		if objectiveText and objectiveText ~= "" then
+			return RQE.ColorGOLD .. objectiveText .. RQE.ColorRESET .. "\n"
+		end
+	end
+
+	if objectivesData then
+		-- A complete quest with exactly one objective is unambiguous. This is
+		-- needed for Classic objectives that do not restore their finished flag
+		-- after a UI reload.
+		local isSingleObjectiveQuestComplete = #objectivesData == 1 and isReadyForTurnIn
+		for _, objective in ipairs(objectivesData) do
+			local desc = objective.text
+			-- Classic's quest-wide completion flag can be true while a leaderboard
+			-- objective is still partial, so it must not color every objective green.
+			-- if isReadyForTurnIn or isEscortObjectiveComplete then
+				-- t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+			-- else
+				-- if objective.finished then
+					-- t[#t+1] = RQE.ColorGREEN  .. desc .. RQE.ColorRESET .. "\n"
+				-- elseif (objective.numFulfilled or 0) > 0 then
+					-- t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+				-- else
+					-- t[#t+1] = RQE.ColorWHITE  .. desc .. RQE.ColorRESET .. "\n"
+				-- end
+			-- end
+			if isSingleObjectiveQuestComplete
+				or (RQE.IsUIInfoMessageObjectiveComplete and RQE:IsUIInfoMessageObjectiveComplete(questID, desc))
+				or objective.finished == true or objective.finished == 1 then
+				t[#t+1] = RQE.ColorGREEN .. desc .. RQE.ColorRESET .. "\n"
+			elseif (objective.numFulfilled or 0) > 0 then
+				t[#t+1] = RQE.ColorYELLOW .. desc .. RQE.ColorRESET .. "\n"
+			else
+				t[#t+1] = RQE.ColorWHITE .. desc .. RQE.ColorRESET .. "\n"
+			end
+		end
+		if isAuto then
+			t[#t+1] = RQE.ColorORANGE .. "Click QuestID/QuestName to Complete Quest" .. RQE.ColorRESET .. "\n"
+		end
+	else
+		t[#t+1] = "Objective data unavailable."
+	end
+
+	return table.concat(t)
+
+	-- if objectivesData then  -- Check if the data is not nil
+		-- for _, objective in ipairs(objectivesData) do
+			-- local description = objective.text
+			-- if isReadyForTurnIn then
+				-- -- Entire quest is ready for turn-in, colorize all objectives in green
+				-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r |cfffffd9f (Complete)|r\n"	-- Green w/Canary 'Complete'
+				-- -- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r |cffffffff(Complete)|r\n"	-- Green w/White 'Complete'
+				-- -- colorizedText = colorizedText .. "|cffffff00" .. description .. " (Complete) |r\n"	-- Yellow
+				-- -- colorizedText = colorizedText .. "|cff0000ff" .. description .. " (Complete) |r\n"	-- Blue
+			-- else
+				-- if objective.finished then
+					-- -- Objective complete, colorize in green
+					-- colorizedText = colorizedText .. "|cff00ff00" .. description .. "|r |cfffffd9f (Complete)|r\n"	-- Green w/Canary 'Complete'
+				-- elseif objective.numFulfilled > 0 then
+					-- -- Objective partially complete, colorize in yellow
+					-- colorizedText = colorizedText .. "|cffffff00" .. description .. "|r\n"
+				-- else
+					-- -- Objective has not started or no progress, leave as white
+					-- colorizedText = colorizedText .. "|cffffffff" .. description .. "|r\n"
+				-- end
+			-- end
+		-- end
+	-- else
+		-- colorizedText = "Objective data unavailable."  -- Default text or handle as needed
+	-- end
+
+	-- return colorizedText
+end
+
+
+-- Expose the RQEFrame objective colorizer to the Classic quest-log display
+-- path, which is declared earlier in this file.
+function RQE:GetColorizedQuestObjectives(questID)
+	return colorizeObjectives(questID)
+end
+
+
+-- Simulates pressing the "Clear Window" Button
+function RQE:PerformClearActions()
+	RQE:ClearFrameData()
+	RQE.searchedQuestID = nil
+	RQE.ManualSuperTrack = nil
+	RQE:RemoveSuperTrackingFromQuest()
+	RQE:UpdateRQEFrameVisibility()
+
+	-- Reset manually tracked quests
+	if RQE.ManuallyTrackedQuests then
+		for questID in pairs(RQE.ManuallyTrackedQuests) do
+			RQE.ManuallyTrackedQuests[questID] = nil
+		end
+	end
+end
+
+
+-- Function check if RQEFrame frame should be cleared
+function RQE:ShouldClearFrame()
+	-- Attempt to directly extract questID from RQE.QuestIDText if available
+	local extractedQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+
+	-- Early exit if there's still no valid questID
+	if not extractedQuestID or extractedQuestID == 0 then
+		RQE.AllFramesShouldUpdate = true
+		RQE:ClearSeparateFocusFrame()	-- Clears progress focus frame if nothing is being tracked
+		RQEMacro:ClearMacroContentByName("RQE Macro")	-- Clears macro if nothing is being supertracked
+		RQE.AllFramesShouldUpdate = false
+		return
+	end
+
+	-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
+	local isQuestInLog = RQE.API.IsOnQuest(extractedQuestID)
+	local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)	--C_QuestLog.IsWorldQuest(extractedQuestID)
+	local isBeingSearched = RQE.searchedQuestID == extractedQuestID
+	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+
+	local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
+	local isBonusQuest = C_QuestLog.IsQuestTask(extractedQuestID) or C_QuestLog.IsThreatQuest(extractedQuestID)
+	--[[
+	local isSuperTrackedQuest = RQE.API.GetSuperTrackedQuestID() == extractedQuestID
+	--local isSuperTrackedQuest = C_SuperTrack.GetSuperTrackedQuestID() == extractedQuestID
+	]]
+	local isSuperTrackedQuest = tonumber(RQE.API.GetSuperTrackedQuestID()) == tonumber(extractedQuestID)
+	local isDatabaseQuest = RQE.getQuestData(extractedQuestID) ~= nil
+	-- local isClassicActiveSuperTrackedQuest =
+	-- 	tonumber((GetBuildInfo()):match("^(%d+)")) == 1
+	local isClassicActiveSuperTrackedQuest =
+		RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog
+		and isSuperTrackedQuest
+		and isQuestInLog
+
+	if isBonusQuest and isSuperTrackedQuest and isDatabaseQuest then
+		return
+	end
+	-- On legacy Classic clients, a supertracked quest can temporarily be absent from the
+	-- native watch list during reload or tracker reconstruction. It is still the
+	-- active quest and must not have its main helper data cleared while its
+	-- SeparateFocusFrame remains visible.
+	if isClassicActiveSuperTrackedQuest then
+		return
+	end
+	-- local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
+
+	local watchedQuests = {}
+	for i = 1, C_QuestLog.GetNumQuestWatches() do
+		local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if watchedQuestID then
+			watchedQuests[watchedQuestID] = true
+		end
+	end
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if watchedWorldQuestID then
+			watchedQuests[watchedWorldQuestID] = true
+		end
+	end
+
+	-- The Show Completed feature can keep Classic delivery/turn-in quests in
+	-- RQE's virtual watch list when Blizzard exposes no objective rows for them.
+	-- Treat those entries as watched here so this clear check does not erase the
+	-- RQEFrame, its DB steps, or its macro immediately after they are displayed.
+	for virtualQuestID in pairs(RQE.ClassicVirtualQuestWatches or {}) do
+		watchedQuests[virtualQuestID] = true
+	end
+
+	-- Clears from RQEFrame searched world quests that have been completed
+	if isBeingSearched and isQuestCompleted and isWorldQuest then
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
+		return -- Exit the function early
+	end
+
+	if (isQuestCompleted and not isBeingSearched and not isQuestInLog) or (not isQuestInLog and not manuallyTracked and not isBeingSearched) then
+		-- Clear the RQEFrame if the quest is not in the log or does not match the searched quest ID
+		RQE:ClearFrameData()
+		RQE:ClearWaypointButtonData()
+		RQEMacro:ClearMacroContentByName("RQE Macro")
+		return
+	end
+
+	if isWorldQuest then
+		if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+			return
+		end
+	else
+		-- For non-world quests, clear if not in quest log or not being actively searched
+		if not (isBeingSearched or manuallyTracked or watchedQuests[extractedQuestID]) then
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+			return
+		end
+	end
+
+	-- Call the delayed clear check
+	RQE:DelayedClearCheck()
+end
+
+
+-- Function to initiate a delayed re-check and clear operation
+function RQE:DelayedClearCheck()
+	C_Timer.After(3, function()
+		-- Attempt to directly extract questID from RQE.QuestIDText if available
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = RQE.DisplayedQuestID
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Early exit if there's still no valid questID
+		if not extractedQuestID or extractedQuestID == 0 then
+			RQE:ClearSeparateFocusFrame()
+			return
+		end
+
+		-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
+		local isQuestInLog = RQE.API.IsOnQuest(extractedQuestID)
+		local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)	--C_QuestLog.IsWorldQuest(extractedQuestID)
+		local isBeingSearched = RQE.searchedQuestID == extractedQuestID
+		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+		local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
+
+		local watchedQuests = {}
+		for i = 1, C_QuestLog.GetNumQuestWatches() do
+			local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			if watchedQuestID then
+				watchedQuests[watchedQuestID] = true
+			end
+		end
+		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			if watchedWorldQuestID then
+				watchedQuests[watchedWorldQuestID] = true
+			end
+		end
+
+		-- Match ShouldClearFrame(): Classic virtual watches are RQE-managed
+		-- tracked quests even though Blizzard's native watch list omits them.
+		for virtualQuestID in pairs(RQE.ClassicVirtualQuestWatches or {}) do
+			watchedQuests[virtualQuestID] = true
+		end
+
+		-- Clears from RQEFrame searched world quests that have been completed
+		if isBeingSearched and isQuestCompleted and isWorldQuest then
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+			RQEMacro:ClearMacroContentByName("RQE Macro")
+
+			-- Untrack the quest by setting a non-existent quest ID
+			RQE:RemoveSuperTrackingFromQuest()
+			return
+		end
+
+		if isWorldQuest then
+			if not (manuallyTracked or (isBeingSearched and not isQuestCompleted) or watchedQuests[extractedQuestID]) then
+				RQE:ClearFrameData()
+				RQE:ClearWaypointButtonData()
+				RQEMacro:ClearMacroContentByName("RQE Macro")
+
+				-- Untrack the quest by setting a non-existent quest ID
+				RQE:RemoveSuperTrackingFromQuest()
+				return
+			end
+		end
+	end)
+end
+
+
+-- Function to check if the quest in RQEFrame is either the searched quest or a tracked/watched quest, and clear if not
+function RQE:CheckAndClearUntrackedQuest()
+	-- Get the questID currently displayed in the RQEFrame
+	local displayedQuestID = RQE.searchedQuestID
+
+	-- If there is no questID in RQE.searchedQuestID, skip the check
+	if not displayedQuestID then return end
+
+	-- Flag to determine if the quest is relevant (either searched or tracked)
+	local isQuestRelevant = false
+
+	-- Check if the quest is the searched quest
+	if RQE.searchedQuestID == displayedQuestID then
+		isQuestRelevant = true
+	else
+		-- Loop through the regular quests tracked in RQEQuestFrame
+		for i = 1, C_QuestLog.GetNumQuestWatches() do
+			local trackedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			if trackedQuestID == displayedQuestID then
+				isQuestRelevant = true
+				break
+			end
+		end
+
+		-- Loop through the world quests tracked in RQEQuestFrame if not already found
+		if not isQuestRelevant then
+			for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+				local worldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+				if worldQuestID == displayedQuestID then
+					isQuestRelevant = true
+					break
+				end
+			end
+		end
+	end
+
+	-- If the quest is not relevant, simulate the ClearButton click
+	if not isQuestRelevant then
+		if RQE.ClearButton and RQE.ClearButton:GetScript("OnClick") then
+			RQE.ClearButton:GetScript("OnClick")(RQE.ClearButton)
+		end
+	end
+end
+
+
+-- Checks objective progress
+function RQE:DidObjectivesChange(questID)
+	local newObj = RQE:GetQuestObjectiveSnapshot(questID)
+	local oldObj = RQE.LastObjectiveSnapshot
+
+	if not oldObj then
+		RQE.LastObjectiveSnapshot = newObj
+		return true
+	end
+
+	-- if RQE:CompareObjectiveTables(oldObj, newObj) then
+		-- RQE.LastObjectiveSnapshot = newObj
+		-- return true
+	-- end
+
+	-- return false
+
+	-- Detect real changes
+	local changed = RQE:CompareObjectiveTables(oldObj, newObj)
+
+	-- Always update the cached snapshot
+	if changed then
+		RQE.LastObjectiveSnapshot = newObj
+	end
+
+	return changed
+end
+
+
+-- Saves current objective progress to table
+function RQE:GetQuestObjectiveSnapshot(questID)
+	local objs = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	if not objs then return nil end
+
+	local snapshot = {}
+
+	for i, o in ipairs(objs) do
+		snapshot[i] = {
+			text = o.text,
+			fulfilled = o.numFulfilled,
+			required = o.numRequired,
+			finished = o.finished,
+			type = o.type
+		}
+	end
+
+	return snapshot
+end
+
+
+-- Check for changes to the DirectionText and if so it should run the UpdateFrame() 
+function RQE:DidDirectionTextChange(questID)
+	if not questID then return false end
+
+	local newDir = C_QuestLog.GetNextWaypointText(questID) or ""
+	local oldDir = RQE.LastDirectionSnapshot or ""
+
+	local newMinimapZone = (GetMinimapZoneText() or ""):lower()
+	local newRealZone = (GetRealZoneText() or ""):lower()
+	local newZoneSnapshot = newMinimapZone .. "||" .. newRealZone
+
+	local oldZoneSnapshot = RQE.LastMinimapZoneSnapshot or ""
+
+	local directionChanged = newDir ~= oldDir
+	local zoneChanged = newZoneSnapshot ~= oldZoneSnapshot
+
+	if directionChanged or zoneChanged then
+		RQE.LastDirectionSnapshot = newDir
+		RQE.LastMinimapZoneSnapshot = newZoneSnapshot
+		return true
+	end
+
+	-- local newMinimapZone = GetMinimapZoneText() or ""
+	-- newMinimapZone = newMinimapZone:lower()
+
+	-- local oldMinimapZone = RQE.LastMinimapZoneSnapshot or ""
+
+	-- local directionChanged = (newDir ~= oldDir)
+	-- local minimapZoneChanged = (newMinimapZone ~= oldMinimapZone)
+
+	-- if directionChanged or minimapZoneChanged then
+		-- RQE.LastDirectionSnapshot = newDir
+		-- RQE.LastMinimapZoneSnapshot = newZoneSnapshot
+		-- return true
+	-- end
+
+	return false
+end
+
+
+-- Compares progress of previous objectives completed/required of supertracked quest with the current objective status
+function RQE:CompareObjectiveTables(old, new)
+	old = old or {}
+	new = new or {}
+
+	if not old or not new then
+		return true -- missing info → must update
+	end
+
+	if #old ~= #new then
+		return true -- objective count changed
+	end
+
+	for i = 1, #old do
+		local a = old[i]
+		local b = new[i]
+
+		if not a or not b then
+			if a ~= b then return true end
+		else
+			if a.text ~= b.text then return true end
+			if a.finished ~= b.finished then return true end
+			if a.numFulfilled ~= b.numFulfilled then return true end
+			if a.numRequired ~= b.numRequired then return true end
+		end
+	end
+
+	return false
+end
+
+
+-- Determines if there was a change to the previous table of the RQE.FrameState:
+-- if new quest is supertracked, if stepIndex changed, or objectives, but will return true if first run
+function RQE:ShouldUpdateFrame(questID)
+	if not questID then return false end
+
+	local old = self.FrameState
+
+	-- ALWAYS use isolated value
+	local stepIndex = tonumber(self.StoredStepIndex) or old.lastStepIndex or 1
+
+	local name = RQE.API.GetTitleForQuestID(questID)
+	local objectives = self:GetQuestObjectiveSnapshot(questID)
+
+	-- Completion snapshot
+	local ready = C_QuestLog.ReadyForTurnIn(questID) or C_QuestLog.IsComplete(questID)
+
+	-- FORCE UPDATE
+	if RQE.UpdateTheFrameNoMatterWhat then
+		old.lastQuestID = questID
+		old.lastQuestName = name
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		old.lastStepIndex = stepIndex
+		old.lastReadyForTurnIn = ready
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("FORCED FRAME UPDATE = true -- DBG stepIndex =", stepIndex)
+		end
+
+		return true
+	end
+
+	-- FIRST RUN
+	if old.lastQuestID == nil then
+		old.lastQuestID = questID
+		old.lastQuestName = name
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		old.lastStepIndex = stepIndex
+		old.lastReadyForTurnIn = ready
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("FIRST RUN = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	-- QUEST SWITCHED
+	if questID ~= old.lastQuestID then
+		old.lastQuestID = questID
+		old.lastQuestName = name
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		old.lastStepIndex = stepIndex
+		old.lastReadyForTurnIn = ready
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("QUEST SWITCHED = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	-- NEW: READY STATE CHANGED
+	if ready ~= old.lastReadyForTurnIn then
+		old.lastReadyForTurnIn = ready
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("READY STATE CHANGED =", tostring(ready))
+		end
+		return true
+	end
+
+	-- STEP CHANGED
+	if stepIndex ~= old.lastStepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("STEP CHANGED triggered -- NEW =", stepIndex, " OLD =", old.lastStepIndex)
+		end
+		old.lastStepIndex = stepIndex
+		old.lastObjectives = objectives
+		return true
+	end
+
+	-- OBJECTIVES CHANGED
+	if self:CompareObjectiveTables(old.lastObjectives, objectives) then
+		old.lastObjectives = objectives
+		old.lastNumObjectives = objectives and #objectives or 0
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("OBJECTIVES CHANGED = true -- DBG stepIndex =", stepIndex)
+		end
+		return true
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("NOTHING CHANGED. Setting false -- DBG stepIndex =", stepIndex)
+	end
+	return false
+end
+
+
+-- Helper function to normalize quest IDs safely
+function RQE:NormalizeQuestID(v)
+	if type(v) == "number" then
+		return v
+	end
+	if type(v) == "string" then
+		return tonumber(v:match("%d+"))
+	end
+	return nil
+end
+
+
+-- Updates only existing RQEFrame text while in combat. Do not add waypoint,
+-- macro, secure-button, visibility, or layout work to this helper.
+function RQE:UpdateRQEFrameCombatSafe(questID)
+	questID = RQE:NormalizeQuestID(questID)
+	if not questID then return end
+
+	RQE.DisplayedQuestID = questID
+
+	if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("Quest ID: " .. questID)
+		-- RQE.QuestIDText:SetText(RQE:GetQuestLevelPrefix(questID) .. "Quest ID: " .. questID)
+		RQE.QuestIDText:SetText("Quest ID: " .. questID)
+	end
+
+	local questData = RQE.getQuestData(questID)
+	local questName = questData and questData.title or RQE.API.GetTitleForQuestID(questID)
+	if RQE.QuestNameText then
+		RQE.QuestNameText:SetText("Quest Name: " .. (questName or "N/A"))
+	end
+
+	if RQE.QuestDescription then
+		local descriptionText = "No description available."
+		local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+		if questLogIndex then
+			local questDescription = RQE.API.GetQuestLogDescription(questLogIndex)
+			descriptionText = (questDescription and questDescription ~= "") and questDescription or descriptionText
+		end
+		RQE.QuestDescription:SetText(descriptionText)
+	end
+
+	if RQE.QuestObjectives then
+		RQE.QuestObjectives:SetText(colorizeObjectives(questID))
+	end
+
+	-- Existing step text belongs to the previously displayed quest. Clearing
+	-- FontStrings is safe; recreating step buttons waits until after combat.
+	if RQE.ClearStepsTextInFrame then
+		RQE:ClearStepsTextInFrame()
+	end
+	if RQE.DirectionTextFrame then
+		RQE.DirectionTextFrame:SetText("Quest steps will update after combat.")
+	end
+end
+
+
+-- UpdateFrame function
+function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
+	if RQE.DontUpdateFrame then return end
+
+	-- Check if the player is supertracking anything and if not it will run the function to check if the frame should be cleared
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking and not RQE.searchedQuestID then
+		RQE:ShouldClearFrame()
+		return
+	end
+
+	-- Checks flag to see if the Blacklist underway is presently in process
+	if RQE.BlacklistUnderway then return end
+
+	RQE:CheckSuperTrackedQuestAndStep()
+
+	-- Priority: explicit param > search override > current super-tracked
+	local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	-- questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
+
+	-- Only continue if something actually changed
+	if not RQE.AllFramesShouldUpdate then
+		if not RQE.DirectionChangedUpdateRQEFrame then
+			if not RQE.QuestLogIndexButtonPressed then
+				if not RQE:ShouldUpdateFrame(questID) then
+					RQE.QuestLogIndexButtonPressed = false
+					RQE.DirectionChangedUpdateRQEFrame = false
+					return
+				end
+			end
+		end
+	end
+
+	-- Fetch questInfo from RQEDatabase using the determined questID
+	questInfo = RQE.getQuestData(questID) or questInfo
+
+	local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+
+	AdjustRQEFrameWidths()
+
+	-- Debug print the overridden questID and the content of RQE.QuestIDText
+	RQE.debugLog("Overridden questID with current super-tracked questID:", questID)
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		RQE.debugLog("RQE.QuestIDText content:", RQE.QuestIDText:GetText())
+	end
+
+	-- Validate questID before proceeding
+	if not questID or type(questID) ~= "number" then
+		RQE.QuestLogIndexButtonPressed = false
+		return
+	end
+
+	-- Check if the currently super-tracked quest is different from the extractedQuestID and if manual tracking is enabled
+	if RQE.ManualSuperTrack ~= true and currentSuperTrackedQuestID ~= extractedQuestID and extractedQuestID then
+		-- Re-super-track the extractedQuestID
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
+		end
+		-- print("~~~ SetSuperTrack: 2223~~~")
+		-- C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
+		RQE.API.SetSuperTrackedQuestID(extractedQuestID)
+		RQE:SaveSuperTrackedQuestToCharacter()
+	end
+
+	if not StepsText or not CoordsText or not MapIDs then
+		return
+	end
+
+	if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+		RQE.DisplayedQuestID = RQE:NormalizeQuestID(questID)
+		-- RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
+		-- RQE.QuestIDText:SetText(RQE:GetQuestLevelPrefix(RQE.DisplayedQuestID) .. "Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
+		RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
+	end
+
+	-- if RQE.QuestIDText then
+		-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+	-- end
+
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	local questName
+
+	-- Using the centralized data access function to fetch quest data
+	local questData = RQE.getQuestData(questID)
+
+	if questData and questData.title then
+		questName = questData.title  -- Use title from questData if available
+	else
+		questName = RQE.API.GetTitleForQuestID(questID)  -- Fallback to game's API call if no title is found in the databases
+	end
+
+	questName = questName or "N/A"  -- Default to "N/A" if no title found
+
+	if RQE.QuestNameText then
+		RQE.QuestNameText:SetText("Quest Name: " .. questName)
+	end
+
+	if questInfo then
+		RQE.debugLog("questInfo.description is ", questInfo.description)
+		RQE.debugLog("questInfo.objectives is ", questInfo.objectives)
+
+		if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+			RQE:ClearStepsTextInFrame()
+			RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+		end
+	end
+
+	-- For QuestDescription
+	if RQE.QuestDescription then  -- Check if QuestDescription is initialized
+		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		if questLogIndex then
+			local questDescription = RQE.API.GetQuestLogDescription(questLogIndex)
+			local QuestDescription = questDescription
+			local descriptionText = questDescription and questDescription ~= "" and questDescription or "No description available."
+
+			if RQE.QuestDescription then  -- Check if QuestDescription is initialized
+				RQE.QuestDescription:SetText(descriptionText)
+			end
+		end
+	end
+
+	-- For QuestObjectives
+	local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	local objectivesText = objectivesTable and "" or "No objectives available."
+	if objectivesTable then
+		for _, objective in pairs(objectivesTable) do
+			objectivesText = objectivesText .. objective.text .. "\n"
+		end
+	end
+
+	-- Apply colorization to objectivesText
+	local objectivesText = colorizeObjectives(questID)
+	--objectivesText = colorizeObjectives(questID)
+
+	if RQE.QuestObjectives then  -- Check if QuestObjectives is initialized
+		RQE.QuestObjectives:SetText(objectivesText)
+	else
+		RQE.debugLog("RQE.QuestObjectives is not initialized.")
+	end
+
+	-- Fetch the next waypoint text for the quest
+	if RQE.searchedQuestID then
+		RQEFrame.DirectionText = DirectionText  -- Save to addon table
+
+		if RQE.DirectionTextFrame then
+			local dbEntry = RQE.getQuestData(RQE.searchedQuestID)
+			local zoneName, continentName = "Unknown", "Unknown"
+
+			if dbEntry then
+				local _, _, mapID, continentID = RQE.GetPrimaryLocation(dbEntry)
+				local finalMapID
+
+				if mapID then
+					finalMapID = mapID
+				elseif continentID then
+					-- Only fall back to continentID if player is on that continent
+					local playerMapID = C_Map.GetBestMapForUnit("player")
+					local pInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+					local parent = pInfo and pInfo.parentMapID
+					if parent == continentID then
+						finalMapID = continentID
+					end
+				end
+
+				if finalMapID then
+					local mapInfo = C_Map.GetMapInfo(finalMapID)
+					if mapInfo then
+						zoneName = mapInfo.name or "Unknown"
+						local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
+						if parentMapInfo then
+							continentName = parentMapInfo.name or "Unknown"
+						end
+					end
+					RQE.DirectionTextFrame:SetText("Travel to " .. zoneName .. ", " .. continentName)
+				else
+					RQE.DirectionTextFrame:SetText("No direction available.")
+				end
+			else
+				RQE.DirectionTextFrame:SetText("No direction available.")
+			end
+		end
+
+		--RQE.DontUpdateFrame = true
+	else
+		local DirectionText = C_QuestLog.GetNextWaypointText(questID)
+		RQEFrame.DirectionText = DirectionText  -- Save to addon table
+		RQE.UnknownQuestButtonCalcNTrack()
+
+		if RQE.DirectionTextFrame then
+			RQE.DirectionTextFrame:SetText(DirectionText or "No direction available.")
+		end
+	end
+
+	-- Always show the UnknownQuestButton
+	RQE.UnknownQuestButton:Show()
+
+	-- Runs a check to see if the super tracked quest allows for forming quest group (such as World Boss WQ)
+	if questID and C_LFGList.CanCreateQuestGroup(questID) then
+		-- If a quest group can be created for this quest, show the button
+		RQE.SearchGroupButton:Show()
+	else
+		-- Otherwise, hide the button
+		RQE.SearchGroupButton:Hide()
+	end
+
+	-- Adjust description and objectives based on whether RQE.searchedQuestID matches questID
+	if RQE.searchedQuestID and RQE.searchedQuestID == questID then
+		-- Check if the quest is in the player's quest log
+		local isQuestInLog = RQE.API.IsOnQuest(questID)
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+
+		-- When the RQEFrame is updated for a searched quest that is not in the player's quest log
+		if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
+			if RQE.QuestDescription then
+				RQE.QuestDescription:SetText("")  -- Leave blank
+			end
+
+			if RQE.QuestObjectives and not isQuestCompleted then
+				local pickupText = "Quest not located in player's Log, please pick up quest"
+
+				local dbEntry = RQE.getQuestData(questID)
+				local npcName
+
+				-- 1) NPC name (must be non-empty after trimming)
+				if dbEntry and type(dbEntry.npc) == "table" then
+					local n = dbEntry.npc[1]
+					if type(n) == "string" then
+						n = n:match("^%s*(.-)%s*$") -- trim
+						if n ~= "" then
+							npcName = n
+							pickupText = pickupText .. " from " .. npcName
+						end
+					end
+				end
+
+				-- 2) If NPC exists, also try to append zone name from location(s)
+				if npcName and dbEntry then
+					local primaryMapID
+
+					-- Support: location = { ... mapID = X }
+					if type(dbEntry.location) == "table" and tonumber(dbEntry.location.mapID) then
+						primaryMapID = tonumber(dbEntry.location.mapID)
+
+					-- Support: locations = { { ... mapID = X }, ... }
+					elseif type(dbEntry.locations) == "table" and type(dbEntry.locations[1]) == "table" and tonumber(dbEntry.locations[1].mapID) then
+						primaryMapID = tonumber(dbEntry.locations[1].mapID)
+					end
+
+					-- Resolve mapID -> zone name
+					if primaryMapID then
+						local mapInfo = C_Map.GetMapInfo(primaryMapID)
+						local zoneName = mapInfo and mapInfo.name
+
+						if type(zoneName) == "string" then
+							zoneName = zoneName:match("^%s*(.-)%s*$") -- trim
+							if zoneName ~= "" then
+								pickupText = pickupText .. " in " .. zoneName
+							end
+						end
+					end
+				end
+
+				-- local dbEntry = RQE.getQuestData(questID)
+				-- if dbEntry and type(dbEntry.npc) == "table" then
+					-- local npcName = dbEntry.npc[1]
+					-- if type(npcName) == "string" then
+						-- npcName = npcName:match("^%s*(.-)%s*$") -- trim whitespace
+						-- if npcName ~= "" then
+							-- pickupText = pickupText .. " from " .. npcName
+						-- end
+					-- end
+				-- end
+
+				RQE.QuestObjectives:SetText(pickupText)
+				-- RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")
+				RQE.QuestObjectives:SetTextColor(1, 1, 1) -- White color for completed criteria
+			end
+			if RQE.QuestObjectives and isQuestCompleted then
+				RQE.QuestObjectives:SetText("Quest has been marked as completed for player")
+				RQE.QuestObjectives:SetTextColor(0, 1, 0) -- Green color for completed criteria
+			end
+		end
+	end
+
+	-- Check to see if the RQEFrame should be cleared
+	RQE:ShouldClearFrame()
+
+	-- Visibility Update Check for RQEMagic Button
+	C_Timer.After(1, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
+
+	RQE.QuestLogIndexButtonPressed = false
+end
+
+
+-- Function that will click the "W" button in the RQEFrame
+function RQE.ClickWButton()
+	if InCombatLockdown() then
+		RQE.CheckNClickWButtonAfterCombat = true
+		return
+	end
+
+	RQE.UnknownQuestButton:Click()
+end
+
+
+-- Function that clicks the SeparateWaypointButton
+function RQE.CheckAndClickSeparateWaypointButtonButton()
+	if InCombatLockdown() then
+		RQE.CheckNClickWButtonAfterCombat = true
+		return
+	end
+
+	if RQE.SeparateWaypointButton then
+		-- Click the button if it exists
+		RQE.SeparateWaypointButton:Click()
+	-- else
+		-- -- Debugging: Provide feedback if the button doesn't exist
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("|cffff0000Error: SeparateWaypointButton is not initialized or available.|r")
+		-- end
+	end
+end
+
+
+-- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
+function RQE.CheckAndClickWButton()
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+	if not isSuperTracking then return end
+	
+	if InCombatLockdown() then
+		RQE.CheckNClickWButtonAfterCombat = true
+		return
+	end
+
+	-- Adds a check if player is in party or raid instance; if so, will not allow the function to continue further
+	local isInInstance, instanceType = IsInInstance()
+	if isInInstance and (instanceType == "party" or instanceType == "raid") then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is in a party or raid instance. Exiting function.")
+		end
+		return
+	end
+
+	-- Get the current quest ID displayed in the RQEFrame
+	local questID = RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Check if the quest ID exists
+	if not questID or questID == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No valid quest ID found.")
+		end
+		return
+	end
+
+	-- Check if the quest exists in the database
+	local questData = nil
+
+	-- Search the database for the quest ID
+	for expansion, quests in pairs(RQEDatabase) do
+		if quests[questID] then
+			questData = quests[questID]
+			break
+		end
+	end
+
+	-- If the quest is not in the database or it has no steps, click the "W" button
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest not found in the database. Clicking the 'W' button.")
+		end
+		RQE.ClickWButton()
+		return
+	else
+		local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		if not waypointText then
+			RQE.CheckAndClickSeparateWaypointButtonButton()
+			return
+		end
+		return
+	end
+
+	-- If quest exists but has no steps defined, click the "W" button
+	local hasSteps = false
+	C_Timer.After(1, function()
+		if InCombatLockdown() then
+			RQE.CheckNClickWButtonAfterCombat = true
+			return
+		end
+
+		for _, step in pairs(questData) do
+			if type(step) == "table" and step.description then
+				hasSteps = true
+				if not RQE.AddonSetStepIndex == 1 then
+					return
+				end
+
+				if RQE.CheckClickWButtonPossible and RQE.AddonSetStepIndex == 1 then
+					if not RQE.GreaterThanOneProgress then
+						RQE:ClickWaypointButtonForIndex(1)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+						RQE.CheckClickWButtonPossible = false
+						RQE.GreaterThanOneProgress = false
+					end
+				end
+				break
+			end
+		end
+
+		if not hasSteps then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest found but no steps are defined. Clicking the 'W' button.")
+			end
+			RQE.ClickWButton()
+		else
+			local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			if not waypointText then
+				RQE.CheckAndClickSeparateWaypointButtonButton()
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest has steps, no need to click the 'W' button.")
+				end
+			end
+		end
+	end)
+end
+
+
+-- Function to check for waypoint text and create a waypoint if available
+function RQE:CheckAndCreateSuperTrackedQuestWaypoint()
+	-- Ensure the frame is shown before proceeding
+	if not RQEFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Frame is hidden, skipping waypoint check")
+		end
+		return
+	end
+
+	-- Retrieve the currently super-tracked quest ID
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No super-tracked quest found.")
+		end
+		return
+	end
+
+	-- Retrieve the Next Waypoint text
+	local questData = RQE.getQuestData(questID)
+	local waypointText = C_QuestLog.GetNextWaypointText(questID)
+	if waypointText and waypointText ~= "" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Waypoint text found:", waypointText, "- Creating a waypoint.")
+		end
+		-- Call the function to create the waypoint
+		if not questData then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest not found in the database. Clicking the 'W' button.")
+			end
+			RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
+			return
+		else
+			RQE.CheckAndClickSeparateWaypointButtonButton()
+			return
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No Next Waypoint text available for questID:", questID)
+		end
+	end
+end
+
+
+-- Create the tooltip when mousing over certain assets
+function RQE:CreateQuestTooltip(self, questID, questTitle)
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT", -30, 0)  -- Anchor the tooltip to the cursor
+	GameTooltip:ClearLines()
+
+	-- Add the quest title
+	GameTooltip:AddLine(questTitle)
+	GameTooltip:AddLine(" ")  -- Blank line
+
+	-- Add description
+	local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	if questLogIndex then
+		local questDescription = RQE.API.GetQuestLogDescription(questLogIndex)
+		local descriptionText = questDescription and questDescription ~= "" and questDescription or "No description available."
+		GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
+		GameTooltip:AddLine(" ")
+	end
+
+	-- Add objectives
+	local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	local objectivesText = objectivesTable and "" or "No objectives available."
+	if objectivesTable then
+		for _, objective in pairs(objectivesTable) do
+			objectivesText = objectivesText .. objective.text .. "\n"
+		end
+	end
+
+	if objectivesText and objectivesText ~= "" then
+		GameTooltip:AddLine("Objectives:")
+		GameTooltip:AddLine(objectivesText, 1, 1, 1, true)
+		GameTooltip:AddLine(" ")
+	end
+
+	-- Add Rewards
+	RQE:QuestRewardsTooltip(GameTooltip, questID)
+
+	-- Add the quest ID
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
+
+	GameTooltip:Show()
+end
+
+
+-- /run RQE:ShowCustomQuestTooltip(66635)
+-- Function that displays a tooltip when mousing over quests in the chat log after doing a 'print questline'
+function RQE:ShowCustomQuestTooltip(questID)
+	local questTitle = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+	local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	local isOnQuest = RQE.API.IsOnQuest(questID)
+	local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
+
+	-- Define status color and text
+	local statusText, statusR, statusG, statusB
+	if isOnQuest then
+		statusText, statusR, statusG, statusB = "You are on this quest", 0, 1, 0
+	elseif isComplete then
+		statusText, statusR, statusG, statusB = "You have completed this quest", 0.95, 0.95, 0.7  -- Faded Yellow Color		--1, 0.65, 0
+	else
+		statusText, statusR, statusG, statusB = "You are not on this quest", 1, 0, 0
+	end
+
+	-- Fetch description and objective text if possible
+	local questData = RQE.getQuestData(questID)
+	local descriptionText = ""
+	local objectivesText = ""
+	local objectivesQuestText = ""
+
+	if questData then
+		if questData.descriptionQuestText and type(questData.descriptionQuestText) == "table" and questData.descriptionQuestText[1] ~= "" then
+			descriptionText = questData.descriptionQuestText[1]
+		end
+
+		if questData.objectivesText and type(questData.objectivesText) == "table" and questData.objectivesText[1] ~= "" then
+			objectivesText = questData.objectivesText[1]
+		end
+
+		if questData.objectivesQuestText and type(questData.objectivesQuestText) == "table" and questData.objectivesQuestText[1] ~= "" then
+			objectivesQuestText = questData.objectivesQuestText[1]
+		end
+	end
+
+	-- Fallback if not found in DB
+	if (descriptionText == "" or objectivesText == "") and logIndex then
+		local questDesc, questObjectives = RQE.API.GetQuestLogText(logIndex)
+		descriptionText = descriptionText ~= "" and descriptionText or (questDesc or "")
+		objectivesText = objectivesText ~= "" and objectivesText or (questObjectives or "")
+	end
+
+	-- if logIndex then
+		-- local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
+		-- descriptionText = questDesc or ""
+		-- objectivesText = questObjectives or ""
+	-- end
+
+	local objText = GetQuestObjectiveInfo(questID, 1, false)
+	local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
+
+	C_Timer.After(0.1, function()
+		if not GameTooltip:IsShown() then
+			GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
+
+			-- 🟨 Quest title (always gold)
+			GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
+
+			-- 🔴🟢🟠 Status message
+			GameTooltip:AddLine(statusText, statusR, statusG, statusB, true)
+
+			-- 📜 Description
+			if descriptionText ~= "" then
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine(descriptionText, 1.0, 0.75, 0.79, true)
+			else
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
+			end
+
+			-- 📘 Objectives Comment (if present)
+			if objectivesQuestText ~= "" then
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("Objective:", 1, 0.82, 0, true)
+				GameTooltip:AddLine(objectivesQuestText, 0.9, 0.95, 1, true)
+			end
+
+			-- ✅ Requirements
+			if objectivesText ~= "" or showFallbackObjective then
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+				if objectivesText ~= "" then
+					GameTooltip:AddLine("- " .. objectivesText, 1, 1, 1, true)
+				elseif showFallbackObjective then
+					GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
+				end
+			else
+				GameTooltip:AddLine(" ", 1, 1, 1, false)
+				GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+				GameTooltip:AddLine("Objective requirements unavailable", 0.8, 0.8, 0.8, true)
+			end
+
+			-- Add Rewards
+			GameTooltip:AddLine(" ")
+			RQE:QuestRewardsTooltip(GameTooltip, questID)
+
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
+			GameTooltip:Show()
+		end
+	end)
+end
+
+
+-- Function to find the closest quest currently being tracked
+function RQE:GetClosestTrackedQuest()
+	local closestQuestID, closestDistance = nil, math.huge
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~ No valid playerMapID found. Exiting GetClosestTrackedQuest. ~~")
+		end
+		return
+	end
+
+	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+	if not playerPos then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~~ No valid player position found for mapID:", playerMapID)
+		end
+		return
+	end
+
+	local px, py = playerPos:GetXY()
+
+	-- Use internal DB if distance via Blizzard fails
+	local function fallbackDistanceFromDB(questID)
+		local questData = RQE.getQuestData(questID)
+		if questData then
+			-- Loop for coord data using either coordinateHotspots or the legacy coordinates method
+			for i = 1, 10 do
+				local step = questData[i]
+				if step then
+					-- Prefer hotspots
+					if step.coordinateHotspots then
+						local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+						if smap and sx and sy then
+							mapID, x, y = smap, sx, sy	-- sx/sy are normalized
+							break
+						end
+					-- Legacy single
+					elseif step.coordinates
+						and step.coordinates.x and step.coordinates.y and step.coordinates.mapID
+					then
+						mapID = step.coordinates.mapID
+						x = step.coordinates.x / 100
+						y = step.coordinates.y / 100
+						break
+					end
+				end
+			end
+			-- for i = 1, 10 do
+				-- local step = questData[i]
+				-- if step and step.coordinates then
+					-- return RQE:GetDistance(playerMapID, px, py, step.coordinates.mapID, step.coordinates.x / 100, step.coordinates.y / 100)
+				-- end
+			-- end
+		end
+		return math.huge
+	end
+
+	-- Iterate all watched quests
+	for i = 1, RQE.API.GetNumQuestWatches() do
+		local questID = RQE.API.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			local distance, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			local finalDist = math.huge
+
+			if distance and onContinent then
+				finalDist = math.sqrt(distance)
+			else
+				finalDist = fallbackDistanceFromDB(questID)
+			end
+
+			if finalDist < closestDistance then
+				closestDistance = finalDist
+				closestQuestID = questID
+			end
+		end
+	end
+
+	-- Include the RQE-managed watches added by the Show Completed support.
+	-- Blizzard cannot provide them through GetNumQuestWatches() when they have
+	-- no objective rows, but they are still valid candidates for auto tracking.
+	for virtualQuestID in pairs(RQE.ClassicVirtualQuestWatches or {}) do
+		if RQE.API.IsOnQuest(virtualQuestID) then
+			local finalDist = fallbackDistanceFromDB(virtualQuestID)
+			if finalDist < closestDistance then
+				closestDistance = finalDist
+				closestQuestID = virtualQuestID
+			end
+		-- Do not mutate watch membership from a read/selection function. Classic
+		-- quest-log indexes can be briefly unavailable while events are settling.
+		-- else
+		-- 	RQE.ClassicVirtualQuestWatches[virtualQuestID] = nil
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Determined closest tracked quest:", closestQuestID, "- Distance:", closestDistance)
+	end
+
+	return closestQuestID
+end
+
+
+-- Function to Auto Supertrack the Nearest Watched Quest. `onComplete` is used
+-- by PLAYER_STOPPED_MOVING to defer its one tracker redraw until after the
+-- supertrack and waypoint have settled.
+function RQE:AutoSuperTrackClosestQuest(onComplete)
+	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") then return end
+
+	local functionName = "RQE:AutoSuperTrackClosestQuest()"
+
+	-- -- Debounce: prevent multiple zone-change triggers within 2 seconds
+	-- local now = GetTime()
+	-- if RQE.LastZoneChangeTime and (now - RQE.LastZoneChangeTime) < 2 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Debounce: Skipping AutoSuperTrackClosestQuest (zone change spam)")
+		-- end
+		-- return
+	-- end
+	-- RQE.LastZoneChangeTime = now
+
+	-- -- Continue with delayed AutoSuperTrackClosestQuest
+	-- C_Timer.After(1.0, function()
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("From ZONE_CHANGED_NEW_AREA event — tracking nearest quest.")
+		-- end
+		-- RQE:AutoSuperTrackClosestQuest()
+	-- end)
+
+	-- local closestQuestID = RQE:GetClosestTrackedQuest()
+	-- Use the RQE tracker rather than Blizzard's watch list. This includes RQE
+	-- Zone Quest and Show Completed entries that do not have a Blizzard tracker
+	-- checkmark, and makes the auto-selected quest match the first quest shown
+	-- in RQEQuestFrame.
+	if RQE.SortWatchedQuestsByProximity then
+		RQE:SortWatchedQuestsByProximity()
+	end
+
+	local closestQuestID
+	for _, trackedQuest in ipairs(RQE.SortedWatchedQuests or {}) do
+		if trackedQuest.sortGroup == 1
+			and trackedQuest.questID
+			and trackedQuest.distanceMapID
+			and trackedQuest.distanceX
+			and trackedQuest.distanceY
+		then
+			closestQuestID = trackedQuest.questID
+			break
+		end
+	end
+	local supertrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	if closestQuestID and closestQuestID ~= 0 then
+		if closestQuestID ~= supertrackedQuestID then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Supertracked questID is: " ..  supertrackedQuestID)
+				print("This doesn't match with the closest questID: " .. closestQuestID)
+			end
+			-- RQE.Buttons.ClearButtonPressed()
+			-- C_SuperTrack.SetSuperTrackedQuestID(0)
+			-- RQE.API.SetSuperTrackedQuestID(0)
+			--
+			-- Do not clear or rebuild Blizzard's watch list here. Classic Era does
+			-- not provide Enum.QuestWatchType for regular quest watches, and this
+			-- feature must retain RQE-only watched quests. Replace only the active
+			-- supertrack, then use the normal RQE quest-button flow for its details.
+			C_Timer.After(0.15, function()
+				if InCombatLockdown() or not RQE.db.profile.enableAutoSuperTrackSwap then return end
+				RQE.API.SetSuperTrackedQuestID(closestQuestID)
+				-- RQE.ClickQuestLogIndexButton(closestQuestID)
+				-- A simulated QuestLogIndexButton click does not enter its full
+				-- mouseover-gated handler. Set the new quest's state explicitly so
+				-- its prior quest's step and waypoint cannot be reused.
+				local stepIndex = RQE.GetCurrentDBStepIndexForQuest
+					and RQE.GetCurrentDBStepIndexForQuest(closestQuestID) or 1
+				RQE.ManualSuperTrack = true
+				RQE.ManualSuperTrackedQuestID = closestQuestID
+				RQE.DisplayedQuestID = closestQuestID
+				RQE.CurrentDisplayedQuestID = closestQuestID
+				RQE.AddonSetStepIndex = stepIndex
+				RQE.CurrentStepIndex = stepIndex
+				RQE.StoredStepIndex = stepIndex
+				RQE.LastClickedIdentifier = stepIndex
+				RQE.AllFramesShouldUpdate = true
+				RQE.QuestLogIndexButtonPressed = true
+				if UpdateFrame then
+					UpdateFrame(closestQuestID)
+				end
+				RQE:SaveSuperTrackedQuestToCharacter()
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Supertracking closest quest:", closestQuestID)
+				end
+
+				C_Timer.After(0.3, function()
+					if RQE.API.GetSuperTrackedQuestID() ~= closestQuestID then return end
+					-- Replace the previous quest's active waypoint with the selected
+					-- quest's current DB step waypoint.
+					if RQE.OnCoordinateClicked then
+						RQE:OnCoordinateClicked()
+					end
+					if RQE.UpdateStepDistance then
+						RQE:UpdateStepDistance()
+					end
+					if RQE.UpdateSeparateFocusFrame then
+						RQE:UpdateSeparateFocusFrame()
+					end
+					if RQE.StartPeriodicChecks then
+						RQE:StartPeriodicChecks()
+					end
+					RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3219 ~~")
+					UpdateFrame(closestQuestID)
+					-- UpdateRQEQuestFrame()
+					-- PLAYER_STOPPED_MOVING supplies a completion callback so it can
+					-- render only once, after this quest and waypoint update completes.
+					if onComplete then
+						onComplete()
+					else
+						UpdateRQEQuestFrame()
+					end
+				end)
+
+				C_Timer.After(0.4, function()
+					RQE.CheckAndClickWButton()
+				end)
+			end)
+		end
+	elseif onComplete then
+		-- The displayed top quest was already supertracked, so no delayed quest
+		-- state work is required before the caller renders the tracker once.
+		onComplete()
+	end
+end
+
+
+-- Helper function to RQE:AutoSuperTrackClosestQuest() to force the nearest quest to be supertracked
+function RQE:ForceSuperTrackQuestProperly(questID)
+	if not questID or questID == 0 then return end
+
+	-- Step 1: Save all currently watched quests BEFORE nuking them
+	RQE.SavedQuestWatches = {}
+	local numWatches = C_QuestLog.GetNumQuestWatches()
+	for i = 1, numWatches do
+		local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if watchedQuestID then
+			table.insert(RQE.SavedQuestWatches, watchedQuestID)
+		end
+	end
+
+	-- Step 2: Remove all watched quests
+	for _, qid in ipairs(RQE.SavedQuestWatches) do
+		C_QuestLog.RemoveQuestWatch(qid)
+	end
+
+	-- Step 3: Add the target quest back
+	C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
+
+	-- Step 4: Force supertrack
+	-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+	RQE.API.SetSuperTrackedQuestID(questID)
+	SetCVar("superTrackedQuestID", questID)
+
+	-- Step 5: After a slight delay, re-add previously watched quests (except the one we supertracked)
+	C_Timer.After(0.1, function()
+		for _, qid in ipairs(RQE.SavedQuestWatches) do
+			if qid ~= questID then
+				C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
+			end
+		end
+
+		-- Debug
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Restored previous watched quests (excluding supertracked):", questID)
+		end
+	end)
+
+	-- Step 6: Additional delay to re-force supertracking after Blizzard refreshes
+	C_Timer.After(0.1, function()
+		-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+		RQE.API.SetSuperTrackedQuestID(questID)
+		SetCVar("superTrackedQuestID", questID)
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Final forced SuperTracking quest ID after rewatch:", questID)
+		end
+	end)
+end
+
+
+-- Function to supertrack the first watched quest matching the player's current map ID
+function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		return
+	end
+
+	local functionName = "RQE:SuperTrackFirstWatchedQuestInCurrentZone()"
+
+	-- Helper function to get watched quest IDs
+	local function GetWatchedQuestIDs()
+		local watchedQuestIDs = {}
+
+		-- Get world quest watches
+		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			if questID then
+				table.insert(watchedQuestIDs, questID)
+			end
+		end
+
+		-- Get regular quest watches
+		for i = 1, C_QuestLog.GetNumQuestWatches() do
+			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			if questID then
+				table.insert(watchedQuestIDs, questID)
+			end
+		end
+
+		return watchedQuestIDs
+	end
+
+	-- Get the list of watched quest IDs
+	local watchedQuestIDs = GetWatchedQuestIDs()
+	if #watchedQuestIDs == 0 then
+		return
+	end
+
+	-- Iterate through the watched quests
+	for _, questID in ipairs(watchedQuestIDs) do
+		-- Get the map ID associated with the quest
+		local questMapID = GetQuestUiMapID(questID)
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		if questMapID then
+			-- Check if the quest's map ID matches the player's current map ID
+			if questMapID == playerMapID then
+				-- Supertrack this quest
+				if not isWorldQuest then
+					-- print("~~~ SetSuperTrack: 2843~~~")
+					-- C_SuperTrack.SetSuperTrackedQuestID(questID)
+					RQE.API.SetSuperTrackedQuestID(questID)
+					RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3334 ~~")
+					UpdateFrame()
+					return
+				end
+			end
+		end
+	end
+
+	-- If no quest is supertracked
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("No watched quests match the player's current map ID.")
+	end
+end
+
+
+-- Checks whether steps use legacy `coordinates` instead of `coordinateHotspots`
+function RQE:CheckCoordHotspotsInSteps(questID)
+	if RQE.API and RQE.API.GameVersion and RQE.API.GameVersion.isClassicEra then
+		return
+	end
+
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	if C_AddOns.IsAddOnLoaded("Chattynator") then return end
+
+	-- -- Restrict audit tool to approved characters
+	-- if not RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+		-- return
+	-- end
+
+	questID = tonumber(questID)
+	if not questID then
+		print((RQE.ColorCRIMSON or "|cffff0000") .. "RQE:CheckCoordHotspotsInSteps - questID is not a number." .. (RQE.ColorRESET or "|r"))
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData or type(questData) ~= "table" then
+		print((RQE.ColorCRIMSON or "|cffff0000") .. "RQE: No DB entry found for questID: " .. questID .. (RQE.ColorRESET or "|r"))
+		return
+	end
+
+	local title = questData.title or (RQE.API.GetTitleForQuestID and RQE.API.GetTitleForQuestID(questID)) or "Unknown"
+
+	-- Collect numeric step indices
+	local steps = {}
+	for k, v in pairs(questData) do
+		if type(k) == "number" and type(v) == "table" then
+			steps[#steps + 1] = k
+		end
+	end
+	table.sort(steps)
+
+	print(RQE.ColorPURPLE .. ("[RQE] CoordHotspot audit — QID %d: %s"):format(questID, title) .. RQE.ColorRESET)
+
+	if #steps == 0 then
+		print(RQE.ColorYELLOW .. "No step tables found on this quest entry." .. RQE.ColorRESET)
+		RQE:NoDBEntryForQuest(questID)
+		return
+	end
+
+	local legacyCount, hotspotCount, bothCount, noneCount = 0, 0, 0, 0
+
+	for _, stepIndex in ipairs(steps) do
+		local step = questData[stepIndex]
+
+		local hasCoords   = type(step.coordinates) == "table" and step.coordinates.x and step.coordinates.y
+		local hasHotspots = type(step.coordinateHotspots) == "table" and step.coordinateHotspots[1] ~= nil
+
+		if hasCoords and not hasHotspots then
+			legacyCount = legacyCount + 1
+			local c = step.coordinates
+			local mapText = c.mapID and ("mapID=" .. tostring(c.mapID)) or (c.continentID and ("continentID=" .. tostring(c.continentID))) or "noMap"
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorORANGE .. ("  Step %d uses LEGACY coordinates: { x=%.2f, y=%.2f, %s }"):format(stepIndex, tonumber(c.x) or 0, tonumber(c.y) or 0, mapText) .. RQE.ColorRESET)
+
+				DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0.64, 0.41, 0.64)	-- Violet Blue
+				DEFAULT_CHAT_FRAME:AddMessage(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", c.x, c.y, tostring(c.mapID)), 0.64, 0.41, 0.64)	-- Violet Blue
+				DEFAULT_CHAT_FRAME:AddMessage("				},", 0.64, 0.41, 0.64)	-- Violet Blue
+			end
+
+		elseif hasHotspots and not hasCoords then
+			hotspotCount = hotspotCount + 1
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorSKYBLUE .. ("  Step %d uses coordinateHotspots (%d points)"):format(stepIndex, #step.coordinateHotspots) .. RQE.ColorRESET)
+			end
+		elseif hasCoords and hasHotspots then
+			bothCount = bothCount + 1
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorYELLOW .. ("  Step %d has BOTH coordinates + coordinateHotspots (pick one)"):format(stepIndex) .. RQE.ColorRESET)
+			end
+		else
+			noneCount = noneCount + 1
+			if RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
+				print(RQE.ColorYELLOW .. ("  Step %d has NO coordinates/coordinateHotspots"):format(stepIndex) .. RQE.ColorRESET)
+			end
+		end
+	end
+
+	-- Calls function that displays a visual and audio alert depending on whether legacy coords were found
+	if legacyCount > 0 then
+		--PlaySound(1285)  -- legacy coords found
+		RQE:LegacyCoordsDetected(questID)
+	else
+		--PlaySound(737)  -- no legacy coords found
+		RQE:NoLegacyCoordsDetected(questID)
+	end
+
+	print(RQE.ColorPURPLE .. ("Summary: legacy=%d, hotspots=%d, both=%d, none=%d"):format(legacyCount, hotspotCount, bothCount, noneCount) .. RQE.ColorRESET)
+end
+
+
+-- Function that tracks the closest quest on certain events in the Event Manager
+function RQE.TrackClosestQuest()
+	if not RQEFrame:IsShown() then return end
+
+	local functionName = "RQE.TrackClosestQuest()"
+
+	-- Ensure supertracking is enabled in the profile
+	if RQE.db.profile.enableNearestSuperTrack or RQE.db.profile.enableNearestSuperTrackCampaign or RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly then
+		-- Get the closest tracked quest ID
+		local closestQuestID = RQE:GetClosestTrackedQuest()
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Within TrackClosestQuest: The closest quest to your current location is " .. tostring(closestQuestID))
+		end
+
+		-- If a closest quest was found, set it as the supertracked quest
+		if closestQuestID then
+			-- print("~~~ SetSuperTrack: 2874~~~")
+			-- C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+			RQE.API.SetSuperTrackedQuestID(closestQuestID)
+			RQE:SaveSuperTrackedQuestToCharacter()
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("TrackClosestQuest Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID))
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("TrackClosestQuest: No closest quest found to super-track.")
+			end
+		end
+
+		-- Optionally trigger an update to the frame
+		C_Timer.After(1.5, function()
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3379 ~~")
+			UpdateFrame()
+		end)
+
+		-- Optionally scroll the frames to the top
+		if RQEFrame and not RQEFrame:IsMouseOver() then
+			RQE.ScrollFrameToTop()
+		end
+		RQE.FocusScrollFrameToTop()
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("enableNearestSuperTrack is currently disabled in Config")
+		end
+	end
+end
+
+
+
+function UpdateWorldQuestTrackingForMap(uiMapID)
+	if not uiMapID then
+		print("Invalid map ID provided to UpdateWorldQuestTrackingForMap")
+		return
+	end
+
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(uiMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+	local trackedQuests = {}
+	local maxTracked = 1
+	local currentTrackedCount = 0
+
+	-- Retrieve the currently tracked quests to avoid duplicates
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local watchedQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if watchedQuestID then
+			trackedQuests[watchedQuestID] = true
+			currentTrackedCount = currentTrackedCount + 1
+		end
+	end
+
+	if taskPOIs and currentTrackedCount < maxTracked then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Found " .. #taskPOIs .. " taskPOIs for map ID: " .. uiMapID)
+		end
+		for _, taskPOI in ipairs(taskPOIs) do
+			local questID = taskPOI.questID
+
+			-- Only proceed if the quest is a world quest (classification 10)
+			if questID and RQE:IsWorldQuest(questID) then
+				-- Fetch additional info to check if the quest is in the area
+				local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
+
+				if isInArea then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Checking World QuestID: " .. questID .. " (in area)")
+					end
+
+					-- Check if the quest is already tracked
+					if not trackedQuests[questID] then
+						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						trackedQuests[questID] = true
+						currentTrackedCount = currentTrackedCount + 1
+
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Automatic World QuestID: " .. questID .. " added to watch list.")
+						end
+
+						if currentTrackedCount >= maxTracked then
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Reached the maximum number of tracked World Quests: " .. maxTracked)
+							end
+							break
+						end
+					else
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("World QuestID: " .. questID .. " is already being tracked.")
+						end
+					end
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("World QuestID: " .. questID .. " (not in area)")
+					end
+					C_QuestLog.RemoveWorldQuestWatch(questID)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Skipping non-World QuestID: " .. questID)
+				end
+			end
+		end
+	end
+end
+
+
+-- Function to remove world quests from tracking if the player leaves the subzone
+function RQE:RemoveWorldQuestsIfOutOfSubzone()
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Check if playerMapID is valid
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player's map ID.")
+		end
+		return
+	end
+
+	-- Get the player's current position on the map (subzone level)
+	local playerPosition = C_Map.GetPlayerMapPosition(playerMapID, "player")
+
+	if not playerPosition then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player position on the map.")
+		end
+		return
+	end
+
+	local playerX, playerY = playerPosition:GetXY()
+
+	-- Fetch quests in the player's current map area
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+	local questsInAreaLookup = {}
+
+	-- Check currently tracked world quests
+	for i = 1, RQE.API.GetNumWorldQuestWatches() do
+		local questID = RQE.API.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			local isAutomatic = watchType == Enum.QuestWatchType.Automatic
+			local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
+
+			-- Store all the quest IDs currently in the player's area (map and subzone)
+			--if watchType == Enum.QuestWatchType.Automatic then
+			if isAutomatic then
+				if not isInArea then
+					C_QuestLog.RemoveWorldQuestWatch(questID)
+				end
+			end
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Checking World QuestID: " .. questID .. " (WatchType: " .. (isAutomatic and "Automatic" or "Manual") .. ")")
+			end
+
+			-- Check if the quest is automatically tracked and is not in the player's current subzone
+			if isAutomatic then
+				if not questsInAreaLookup[questID] then
+					-- Get quest's coordinates
+					local questPosition = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+
+					-- Check if player is within the subzone radius of the quest
+					local questInSubzone = false
+
+					if questPosition then
+						for _, objective in pairs(questPosition) do
+							if objective.x and objective.y then
+								local distanceSq = (playerX - objective.x) ^ 2 + (playerY - objective.y) ^ 2
+								-- Check if within a threshold (adjust the threshold value if needed)
+								if distanceSq < 0.0025 then  -- Threshold for being "in the same subzone"
+									questInSubzone = true
+									break
+								end
+							end
+						end
+					end
+
+					if not questInSubzone then
+						-- Remove quest from tracking if not in the same subzone
+						C_QuestLog.RemoveWorldQuestWatch(questID)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Removed World Quest: " .. questID .. " from tracking because it's out of the current subzone.")
+						end
+					else
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("World QuestID: " .. questID .. " is still in the current subzone.")
+						end
+					end
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("World QuestID: " .. questID .. " is still in the current area.")
+					end
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("World QuestID: " .. questID .. " is manually tracked, skipping removal.")
+				end
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No world quest found at watch index: " .. i)
+			end
+		end
+	end
+end
+
+
+-- Remove Tracking of all World Quests (called on PLAYER_LOGIN from EventManager if selected in the configuration)
+function RemoveAllTrackedWorldQuests()
+	-- Get the number of currently tracked World Quests
+	local numWorldQuestWatches = C_QuestLog.GetNumWorldQuestWatches()
+
+	-- Loop backwards through the list of tracked World Quests
+	-- Backwards iteration is necessary because removing a quest changes the indices
+	for i = numWorldQuestWatches, 1, -1 do
+		-- Get the quest ID of the ith tracked World Quest
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			-- Remove the World Quest from being tracked
+			C_QuestLog.RemoveWorldQuestWatch(questID)
+		end
+	end
+end
+
+
+-- Function that removes a quest from being super tracked but not actually removing the watch
+function RQE:RemoveSuperTrackingFromQuest()
+	-- Step 1: Get the currently super-tracked quest ID
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Debugging: Print the currently super-tracked quest ID
+	RQE.infoLog("Currently Super Tracked Quest ID:", superTrackedQuestID or "None")
+
+	-- Step 2: Remove the super-tracking by setting it to 0
+	if superTrackedQuestID and superTrackedQuestID ~= 0 then
+		-- C_SuperTrack.SetSuperTrackedQuestID(0)
+		RQE.API.SetSuperTrackedQuestID(0)
+		-- RQE:SaveSuperTrackedQuestToCharacter()
+		RQE.infoLog("Removed super-tracking from quest ID:", superTrackedQuestID)
+	else
+		RQE.infoLog("No quest is currently super-tracked.")
+	end
+
+	-- Step 3: Update the RQEQuestFrame to reflect the change
+	UpdateRQEQuestFrame()
+	UpdateRQEWorldQuestFrame()
+	RQE.infoLog("RQEQuestFrame updated to reflect super-tracking changes.")
+end
+
+
+-- Function that checks to see if a player is currently tracking a quest
+function RQE.isPlayerSuperTrackingQuest()
+	if RQE.currentSuperTrackedQuestID == RQE.previousSuperTrackedQuestID then return end
+
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		local extractedQuestID = RQE.DisplayedQuestID
+		-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Extracted questID is: " .. tostring(extractedQuestID))
+		end
+		RQE.isSuperTracking = true
+		RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID	-- Added failsafe in case questID isn't yet registered in the RQEFrame, but something is being super tracked and should be considered
+		--RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.isSuperTracking is " .. tostring(RQE.isSuperTracking) .. ". Currently SuperTracked questID: " .. tostring(RQE.CurrentlySuperQuestID) .. " saved to RQE.CurrentlySuperQuestID addon variable")
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.isSuperTracking is " .. tostring(RQE.isSuperTracking) .. ". There are no quests being supertracked/displayed in the RQEFrame")
+		end
+		RQE.isSuperTracking = false
+	end
+end
+
+
+---------------------------------------------------
+-- #10. Scenario Functions
+---------------------------------------------------
+
+-- Function to fetch/print Scenario Criteria Step by Step updated for Patch 11.0
+function RQE.PrintAllScenarioBits()
+	-- Check if the player is currently in a scenario
+	if not C_Scenario.IsInScenario() then
+		print("Not currently in a scenario.")
+		return
+	end
+
+	-- Fetch general scenario information
+	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+	if scenarioInfo then
+		print("Scenario Name: " .. scenarioInfo.name)
+		print("Current Stage: " .. scenarioInfo.currentStage .. " of " .. scenarioInfo.numStages)
+		print("Scenario Type: " .. scenarioInfo.type)
+		print("Scenario Flags: " .. scenarioInfo.flags)
+	else
+		print("No active scenario information available.")
+		return
+	end
+
+	-- Iterate through each step in the current scenario
+	local stepID = scenarioInfo.currentStage
+	local numCriteria = select(3, C_Scenario.GetStepInfo())
+	--local numCriteria = C_Scenario.GetNumCriteria() or 0
+
+	for criteriaIndex = 1, numCriteria do
+		-- Fetch criteria information using GetCriteriaInfo
+		local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+		if criteriaInfo then
+			print("Criteria " .. criteriaIndex .. ":")
+			print("  Description: " .. (criteriaInfo.description or ""))
+			print("  Type: " .. tostring(criteriaInfo.criteriaType))
+			print("  Completed: " .. tostring(criteriaInfo.completed))
+			print("  Quantity: " .. tostring(criteriaInfo.quantity) .. " / " .. tostring(criteriaInfo.totalQuantity))
+			print("  Flags: " .. tostring(criteriaInfo.flags))
+			print("  Asset ID: " .. tostring(criteriaInfo.assetID))
+			print("  Criteria ID: " .. tostring(criteriaInfo.criteriaID))
+			print("  Duration: " .. tostring(criteriaInfo.duration))
+			print("  Elapsed: " .. tostring(criteriaInfo.elapsed))
+			print("  Failed: " .. tostring(criteriaInfo.failed))
+			print("  Is Weighted Progress: " .. tostring(criteriaInfo.isWeightedProgress))
+			print("  Is Formatted: " .. tostring(criteriaInfo.isFormatted))
+			print("  Quality String: " .. tostring(criteriaInfo.quantityString))
+		end
+
+		-- Fetch criteria information using GetCriteriaInfoByStep
+		local criteriaInfoByStep = C_ScenarioInfo.GetCriteriaInfoByStep(stepID, criteriaIndex)
+		if criteriaInfoByStep then
+			print("Criteria By Step " .. criteriaIndex .. ":")
+			print("  Description: " .. (criteriaInfoByStep.description or ""))
+			print("  Type: " .. tostring(criteriaInfoByStep.criteriaType))
+			print("  Completed: " .. tostring(criteriaInfoByStep.completed))
+			print("  Quantity: " .. tostring(criteriaInfoByStep.quantity) .. " / " .. tostring(criteriaInfoByStep.totalQuantity))
+			print("  Flags: " .. tostring(criteriaInfoByStep.flags))
+			print("  Asset ID: " .. tostring(criteriaInfoByStep.assetID))
+			print("  Criteria ID: " .. tostring(criteriaInfoByStep.criteriaID))
+			print("  Duration: " .. tostring(criteriaInfoByStep.duration))
+			print("  Elapsed: " .. tostring(criteriaInfoByStep.elapsed))
+			print("  Failed: " .. tostring(criteriaInfoByStep.failed))
+			print("  Is Weighted Progress: " .. tostring(criteriaInfoByStep.isWeightedProgress))
+			print("  Is Formatted: " .. tostring(criteriaInfoByStep.isFormatted))
+			print("  Quality String: " .. tostring(criteriaInfo.quantityString))
+		end
+	end
+end
+
+
+-- -- Function to print all widget IDs for a given setID
+-- function RQE.PrintAllWidgetIDs(setID)
+	-- -- Check if setID is provided
+	-- if not setID then
+		-- print("No setID provided. Please provide a valid setID.")
+		-- return
+	-- end
+
+	-- -- Fetch all widget IDs for the given setID
+	-- local widgetIDs = C_UIWidgetManager.GetAllWidgetsBySetID(setID)
+
+	-- -- Check if widgetIDs are valid
+	-- if not widgetIDs or #widgetIDs == 0 then
+		-- print("No widgets found for setID:", setID)
+		-- return
+	-- end
+
+	-- -- Print the widget IDs
+	-- print("Widget IDs for setID:", setID)
+	-- for _, widgetID in ipairs(widgetIDs) do
+		-- print("Widget ID:", widgetID)
+	-- end
+-- end
+
+
+-- -- Extracts scenario header widget timer info and prints on screen
+-- function RQE.PrintScenarioHeaderInfo(widgetID)
+	-- -- Check if widgetID is provided
+	-- if not widgetID then
+		-- print("No widgetID provided. Please provide a valid widgetID.")
+		-- return
+	-- end
+
+	-- -- Fetch the widget information using the API
+	-- local widgetInfo = C_UIWidgetManager.GetScenarioHeaderTimerWidgetVisualizationInfo(widgetID)
+
+	-- -- Check if the widgetInfo is valid
+	-- if not widgetInfo then
+		-- print("No widget information found for widgetID:", widgetID)
+		-- return
+	-- end
+
+	-- -- Print all fields returned by the API
+	-- print("Scenario Header Timer Widget Info for widgetID:", widgetID)
+	-- print("---------------------------------------------------")
+	-- print("shownState:", widgetInfo.shownState)
+	-- print("timerMin:", widgetInfo.timerMin)
+	-- print("timerMax:", widgetInfo.timerMax)
+	-- print("timerValue:", widgetInfo.timerValue)
+	-- print("headerText:", widgetInfo.headerText or "N/A")
+	-- print("timerTooltip:", widgetInfo.timerTooltip or "N/A")
+	-- print("widgetSizeSetting:", widgetInfo.widgetSizeSetting)
+	-- print("textureKit:", widgetInfo.textureKit or "N/A")
+	-- print("frameTextureKit:", widgetInfo.frameTextureKit or "N/A")
+	-- print("hasTimer:", widgetInfo.hasTimer)
+	-- print("orderIndex:", widgetInfo.orderIndex)
+	-- print("widgetTag:", widgetInfo.widgetTag or "N/A")
+	-- print("inAnimType:", widgetInfo.inAnimType)
+	-- print("outAnimType:", widgetInfo.outAnimType)
+	-- print("widgetScale:", widgetInfo.widgetScale)
+	-- print("layoutDirection:", widgetInfo.layoutDirection)
+	-- print("modelSceneLayer:", widgetInfo.modelSceneLayer)
+	-- print("scriptedAnimationEffectID:", widgetInfo.scriptedAnimationEffectID)
+	-- print("---------------------------------------------------")
+-- end
+
+
+-- Updates the timer display
+--- @param self TimerFrame The timer frame
+--- @param elapsed number The time elapsed since the last update
+function RQE.Timer_OnUpdate(self, elapsed)
+	if not self then
+		return  -- Exit the function if self is nil
+	end
+
+	-- Initialize timeSinceLastUpdate if it's nil
+	if not self.timeSinceLastUpdate then
+		self.timeSinceLastUpdate = 0
+	end
+
+	self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
+
+	if self.timeSinceLastUpdate >= 1 then
+		local timeLeft = self.endTime - GetTime()  -- Calculate the remaining time
+		if timeLeft > 0 then
+			-- Scenario Timer display
+			RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
+		else
+			RQE.Timer_Stop()  -- Stop the timer if the time has elapsed
+		end
+		self.timeSinceLastUpdate = 0
+	end
+end
+
+
+-- Start the timer and shows the UI elements
+--- @class TimerFrame : Frame
+--- @field timeSinceLastUpdate number
+--- @field endTime number
+--- @param timerFrame TimerFrame
+function RQE.Timer_Start(timerFrame, duration)
+	if not timerFrame then
+		return
+	end
+
+	timerFrame.endTime = GetTime() + duration
+	timerFrame:SetScript("OnUpdate", RQE.Timer_OnUpdate)
+	RQE.TimerFrame = timerFrame
+	timerFrame:Show()
+end
+
+
+-- Stops the timer and hides the UI elements
+function RQE.Timer_Stop()
+	local timerFrame = RQE.TimerFrame or (RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.timerFrame)
+	if not timerFrame then
+		return  -- Ensure the frame exists
+	end
+
+	-- Stop the OnUpdate script and hide the frame
+	timerFrame:SetScript("OnUpdate", nil)
+	timerFrame:Hide()
+	RQE.TimerFrame = nil
+end
+
+
+--Checks active timers and starts/stops the timer as necessary
+function RQE.Timer_CheckTimers()
+	-- Retrieve the timer information (example: for the first criteria)
+	local duration, elapsed = select(10, C_ScenarioInfo.GetCriteriaInfo(1))
+	RQE.infoLog("[CheckTimers] Duration is " .. tostring(duration))
+	RQE.infoLog("[CheckTimers] Elapsed is " .. tostring(elapsed))
+
+	-- Check if duration and elapsed are valid before proceeding
+	if duration and elapsed then
+		local timeLeft = duration - elapsed
+		RQE.infoLog("Duration is " .. tostring(duration))
+		RQE.infoLog("Elapsed is " .. tostring(elapsed))
+
+		if timeLeft > 0 then
+			RQE.Timer_Start(timeLeft)
+		else
+			RQE.Timer_Stop()
+		end
+	else
+		RQE.Timer_Stop()
+		if not duration then
+			RQE.infoLog("Duration is nil")
+		end
+		if not elapsed then
+			RQE.infoLog("Elapsed is nil")
+		end
+	end
+end
+
+
+-- Function to map Torghast type enum to a readable string
+function RQE.ConvertTorghastTypeToString(eventType)
+	local typeMapping = {
+		[0] = "Twisting Corridors",
+		[1] = "Skoldus Halls",
+		[2] = "Fracture Chambers",
+		[3] = "Soulforges",
+		[4] = "Coldheart",
+		[5] = "Mortregar",
+		[6] = "Upper Reaches",
+		[7] = "Arkoban Hall",
+		[8] = "Torment Chamber: Jaina",
+		[9] = "Torment Chamber: Thrall",
+		[10] = "Torment Chamber: Anduin",
+		[11] = "Adamant Vaults",
+		[12] = "Forgotten Catacombs",
+		[13] = "Ossuary",
+		[14] = "Boss Rush",
+	}
+	return typeMapping[eventType] or "Unknown Type"
+end
+
+
+-- Function to update Torghast details in the RQE table
+function RQE.UpdateTorghastDetails(eventLevel, eventType)
+	local level = GetJailersTowerLevel()
+	local layerNum, floorID
+
+	-- Calculate the Torghast layer number and floor ID based on the level
+	if level then
+		layerNum = math.ceil(level / 6)
+		floorID = level % 6
+		floorID = floorID == 0 and 6 or floorID  -- Adjust for floors that are multiples of 6
+	else
+		return
+	end
+
+	-- Assuming the JAILERS_TOWER_LEVEL_UPDATE event provides 'level' and 'type' as parameters
+	-- Update only if eventType is provided, indicating the function was called via event
+	if eventType then
+		RQE.TorghastType = eventType
+		RQE.TorghastLayerNum = layerNum
+		RQE.TorghastFloorID = floorID
+
+		local typeString = RQE.ConvertTorghastTypeToString(eventType) -- Ensure this function exists
+		RQE.infoLog(string.format("You are in Torghast: %s, Layer: %d, Floor: %d",
+			typeString or "Unknown Type", layerNum, floorID))
+	end
+end
+
+
+---------------------------------------------------
+-- #11. Maximize/Minimize/Opacity Change to Frames
+---------------------------------------------------
+
+-- Function for Button in Configuration that will reset the anchorPoint, xPos and yPos to what is listed in the DB file
+function RQE:ResetFramePositionToDBorDefault()
+	local anchorPoint = "TOPRIGHT"  -- Always set to TOPRIGHT
+	local xPos = -40  -- Preset xPos
+	local yPos = -285  -- Preset yPos
+
+	-- Update the database
+	RQE.db.profile.framePosition.anchorPoint = anchorPoint
+	RQE.db.profile.framePosition.xPos = xPos
+	RQE.db.profile.framePosition.yPos = yPos
+
+	-- Update the frame position
+	RQE:UpdateFramePosition()
+end
+
+
+-- Function for Button in Configuration that will reset the size of the RQEFrame and RQEQuestFrame to default values
+function RQE:ResetFrameSizeToDBorDefault()
+	local RQEWidth = 420
+	local RQEHeight = 300
+	local RQEQuestWidth = 325
+	local RQEQuestHeight = 450
+
+	-- Update the database
+	RQE.db.profile.framePosition.frameWidth = RQEWidth
+	RQE.db.profile.framePosition.frameHeight = RQEHeight
+	RQE.db.profile.QuestFramePosition.frameWidth = RQEQuestWidth
+	RQE.db.profile.QuestFramePosition.frameHeight = RQEQuestHeight
+
+	-- Update the frame position
+	SaveRQEFrameSize()
+	SaveQuestFrameSize()
+
+	-- Directly update the frame sizes
+	if RQEFrame then
+		RQEFrame:SetSize(RQEWidth, RQEHeight)
+	end
+	if RQE.RQEQuestFrame then
+		RQE.RQEQuestFrame:SetSize(RQEQuestWidth, RQEQuestHeight)
+	end
+end
+
+
+-- Function that resets both the frame size and position to default
+function RQE:ResetFrameAndSizeToDefault()
+	RQE:ResetFrameSizeToDBorDefault()
+	RQE:ResetFramePositionToDBorDefault()
+	RQE:ResetQuestFramePositionToDBorDefault()
+end
+
+
+-- When the frame is maximized
+function RQE:MaximizeFrame()
+	local defaultWidth = RQE.db.profile.frameWidth or 420  -- Replace 400 with the default from Core.lua
+	local defaultHeight = RQE.db.profile.frameHeight or 300  -- Replace 300 with the default from Core.lua
+
+	local width = RQE.db.profile.framePosition.originalWidth or defaultWidth
+	local height = RQE.db.profile.framePosition.originalHeight or defaultHeight
+
+	RQEFrame:SetSize(width, height)
+	RQE.db.profile.isFrameMaximized = true
+end
+
+
+-- When the frame is minimized
+function RQE:MinimizeFrame()
+	RQEFrame:SetSize(420, 30)
+	RQE.db.profile.isFrameMaximized = false
+end
+
+
+-- Function to Update the Opacity of Main Frame and Quest Tracker
+function RQE:UpdateFrameOpacity()
+	if RQEFrame then
+		RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
+	end
+	if RQE.RQEQuestFrame then
+		RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
+	end
+end
+
+
+-- Function for Button in Configuration that will reset the anchorPoint, xPos and yPos to what is listed in the DB file
+function RQE:ResetQuestFramePositionToDBorDefault()
+	local anchorPoint = "BOTTOMRIGHT"  -- Default anchor point for RQEQuestFrame
+	local xPos = -40  -- Preset xPos
+	local yPos = 150  -- Preset yPos
+
+	-- Update the database
+	RQE.db.profile.QuestFramePosition.anchorPoint = anchorPoint
+	RQE.db.profile.QuestFramePosition.xPos = xPos
+	RQE.db.profile.QuestFramePosition.yPos = yPos
+
+	-- Update the frame position
+	RQE:UpdateQuestFramePosition()
+end
+
+
+-- When the frame is maximized
+function RQE:MaximizeQuestFrame()
+	local defaultWidth = RQE.db.profile.QuestFrameWidth or 325  -- Replace 300 with the default width
+	local defaultHeight = RQE.db.profile.QuestFrameHeight or 450  -- Replace 450 with the default height
+
+	local width = RQE.db.profile.QuestFramePosition.originalWidth or defaultWidth
+	local height = RQE.db.profile.QuestFramePosition.originalHeight or defaultHeight
+
+	RQE.RQEQuestFrame:SetSize(width, height)
+	RQE.db.profile.isQuestFrameMaximized = true
+end
+
+
+-- When the frame is minimized
+function RQE:MinimizeQuestFrame()
+	RQE.RQEQuestFrame:SetSize(325, 30)
+	RQE.db.profile.isQuestFrameMaximized = false
+end
+
+
+---------------------------------------------------
+-- #12. Event Handling
+---------------------------------------------------
+
+-- Table to store active events
+RQE.activeEvents = {}
+
+
+-- Check for TomTom load
+local function TomTom_Loaded(self, event, addon)
+	if addon == "TomTom" then
+		self:UnregisterEvent("ADDON_LOADED")
+	end
+end
+
+
+-- Function to populate the activeEvents table with today's events
+function RQE:UpdateActiveEvents()
+	-- Clear the table each time this function runs
+	RQE.activeEvents = {}
+
+	-- Get today's date
+	local today = C_DateAndTime.GetCurrentCalendarTime()
+
+	-- Loop through events for today and store them in the table
+	for i = 1, C_Calendar.GetNumDayEvents(0, today.monthDay) do
+		local eventInfo = C_Calendar.GetDayEvent(0, today.monthDay, i)
+		if eventInfo then
+			RQE.activeEvents[eventInfo.eventID] = eventInfo.title
+		end
+	end
+end
+
+
+-- Function to check if a specific eventID is active
+-- /run RQE:IsEventActive(324)	-- Check to see if Hallow's End event (eventID 324) is active
+function RQE:IsEventActive(eventID)
+		-- Update active events to ensure we have the latest information
+		RQE:UpdateActiveEvents()
+
+	-- Check if the specified eventID is in the table
+	if RQE.activeEvents[eventID] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Event ID", eventID, "is currently active:", RQE.activeEvents[eventID])
+		end
+		return true
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Event ID", eventID, "is not active.")
+		end
+		return false
+	end
+end
+
+
+function RQE:PopulateNextQuestInEventSeries(eventID)
+	local functionName = "RQE:PopulateNextQuestInEventSeries(eventID)"
+
+	-- Check if the eventID matches Hallow's End (324)
+	if eventID ~= 324 then
+		return -- Exit if it's not the right event
+	end
+
+	-- Retrieve the list of questIDs for the event
+	local questList = RQE.eventQuests[eventID]
+	if not questList then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quests defined for event ID:", eventID)
+		end
+		return
+	end
+
+	-- Iterate through the quest list to find the first incomplete quest
+	for _, questID in ipairs(questList) do
+		local isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+
+		if not isCompleted then
+			-- Fetch quest information from RQEDatabase, if available
+			local questInfo = RQE.getQuestData(questID) or {}
+
+			-- If questInfo is empty, set up minimal info
+			questInfo.title = questInfo.title or RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+			questInfo.description = questInfo.description or "No description available."
+			questInfo.objectives = questInfo.objectives or "No objectives available."
+
+			-- Display the quest in RQEFrame by calling UpdateFrame
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 4111 ~~")
+			UpdateFrame(questID, questInfo)
+
+			-- Manual fallback to populate RQEFrame if UpdateFrame does not display it
+			if RQE.QuestIDText then
+				-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+			RQE.DisplayedQuestID = RQE:NormalizeQuestID(questID)
+			-- RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
+			-- RQE.QuestIDText:SetText(RQE:GetQuestLevelPrefix(RQE.DisplayedQuestID) .. "Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
+			RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
+			end
+			-- if RQE.QuestIDText then
+				-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
+			-- end
+
+			if RQE.QuestNameText then
+				RQE.QuestNameText:SetText("Quest Name: " .. questInfo.title)
+			end
+			if RQE.QuestDescription then
+				RQE.QuestDescription:SetText(questInfo.description)
+			end
+			if RQE.QuestObjectives then
+				RQE.QuestObjectives:SetText(questInfo.objectives)
+			end
+
+			-- Get additional step information and display it
+			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
+			if RQE.CreateStepsText then
+				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+			end
+
+			-- Display the "W" button with coordinates from location if steps are not available
+			if RQE.UnknownQuestButton then
+				if questInfo.location then
+					local x, y, mapID = questInfo.location.x, questInfo.location.y, questInfo.location.mapID
+
+					-- Set up the "W" button to create a waypoint when clicked
+					RQE.UnknownQuestButton:SetScript("OnClick", function()
+						RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Waypoint set for", questInfo.title, "at", x, ",", y)
+						end
+					end)
+
+					-- Set the tooltip for the "W" button to show the coordinates
+					RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+						GameTooltip:SetText("Coordinates: " .. x .. ", " .. y)
+						GameTooltip:Show()
+					end)
+
+					-- Hide the tooltip when the mouse leaves the button
+					RQE.UnknownQuestButton:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+				else
+					-- Default behavior if location is unavailable
+					RQE.UnknownQuestButton:SetScript("OnClick", function()
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("No location data available.")
+						end
+					end)
+					RQE.UnknownQuestButton:SetScript("OnEnter", function(self)
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+						GameTooltip:SetText("Coordinates: Not Available")
+						GameTooltip:Show()
+					end)
+					RQE.UnknownQuestButton:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+				end
+				RQE.UnknownQuestButton:Show()
+			end
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Next quest to complete for event:", questID, "-", questInfo.title)
+			end
+			return
+		end
+	end
+
+	-- All quests completed
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("All event quests for event ID", eventID, "have been completed.")
+	end
+end
+
+
+-- Register the QUEST_TURNED_IN event
+local frame = CreateFrame("Frame")
+frame:RegisterEvent("QUEST_TURNED_IN")
+
+frame:SetScript("OnEvent", function(self, event, questID)
+	if event == "QUEST_TURNED_IN" then
+		-- Check and populate the next quest if event 324 is active
+		local currentEventID = GetCurrentEventID()
+		if currentEventID then
+			RQE:PopulateNextQuestInEventSeries(currentEventID)
+		end
+		-- if currentEventID == 324 then
+			-- RQE:PopulateNextQuestInEventSeries(324)
+		-- end
+	end
+end)
+
+
+-- Define a table for holiday event quest IDs
+RQE.eventQuests = {
+	--[324] = {12397, 13437} -- Hallow's End Holiday event
+}
+
+
+-- Targeting function defined
+function RQE:TargetNearestQuestMob(questID)
+	local mobList = RQE.QuestMobTargetData[questID]
+	if not mobList then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No mob list defined for quest:", questID)
+		end
+		return
+	end
+
+	for i = 1, 40 do  -- Scan nameplates (you could use a different method if not using nameplates)
+		local unitID = "nameplate" .. i
+		if UnitExists(unitID) then
+			local unitName = UnitName(unitID)
+			local isDead = UnitIsDead(unitID)
+
+			for _, mob in ipairs(mobList) do
+				if unitName == mob.name then
+					if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
+						--TargetUnit(unitID)
+
+						if mob.marker then
+							SetRaidTarget(unitID, mob.marker)
+						end
+
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Targeted:", unitName)
+						end
+						return
+					end
+				end
+			end
+		end
+	end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("No matching mob found nearby for quest:", questID)
+	end
+end
+
+
+-- Helper: true if the quest is relevant (supertracked, searched, watched, or in RQE's tracked sets)
+function RQE:IsQuestRelevant(questID)
+	if not questID then return false end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestID for RQE:IsQuestRelevant is " .. tostring(questID))
+	end
+
+	-- Super-tracked
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest() or RQE.isSuperTracking		--local isSuperTracking = (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) or RQE.isSuperTracking
+	if isSuperTracking then
+		local st = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Supertracked is " .. tostring(st))
+		end
+		if st and st == questID then
+			return true
+		end
+	end
+
+	-- In quest log & watched (covers world quests too if watched)
+	local logIndex = C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID)
+	if logIndex then
+		if (C_QuestLog.IsQuestWatched and C_QuestLog.IsQuestWatched(questID)) or (C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(questID)) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest of tracked quest is " .. tostring(questID))
+			end
+			return true
+		end
+	end
+
+	-- RQE search / tracking tables
+	if RQE.searchedQuestID and RQE.searchedQuestID == questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.searchedQuestID:")
+			if questID then
+				print("Searched QuestID is: " .. tostring(questID))
+			end
+		end
+		return true
+	end
+
+	if RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[questID] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ManuallyTrackedQuests QuestID is: " .. tostring(questID))
+		end
+		return true
+	end
+
+	if RQE.TrackedQuests and RQE.TrackedQuests[questID] then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.TrackedQuests:")
+			if questID then
+				print("TrackedQuests QuestID is: " .. tostring(questID))
+			end
+		end
+		return true
+	end
+
+	return false
+end
+
+
+-- Helper function to return the texture icon for the marker
+local function GetRaidMarkerIcon(marker)
+	if not marker then return "" end
+	return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. marker .. ":0|t"
+end
+
+
+-- Local helper: is a specific quest objective complete?
+local function _IsObjectiveComplete(questID, objectiveIndex)
+	if not questID or not objectiveIndex then return false end
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	if not objectives or not objectives[objectiveIndex] then return false end
+	return objectives[objectiveIndex].finished
+end
+
+
+-- Core marking logic for a given unitID (e.g., "mouseover", "target")
+local function TryMarkUnit(unitID, mobList)
+	if not UnitExists(unitID) then return end
+
+	local unitName = UnitName(unitID)
+	local isDead = UnitIsDead(unitID)
+	local currentMarker = GetRaidTargetIndex(unitID)
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+	for _, mob in ipairs(mobList) do
+		if unitName == mob.name then
+			-- If mob.obj is present, skip if that quest objective is already complete
+			if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Skipping marker for " .. unitName .. " (objective " .. tostring(mob.obj) .. " complete).")
+				end
+			else
+				if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
+					-- Only change the marker if it's different from what it should be
+					if currentMarker ~= mob.marker then
+						SetRaidTarget(unitID, mob.marker)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Re-marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
+						end
+					else
+						-- Marker is already correct → skip re-marking
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Marker on " .. unitID .. " (" .. unitName .. ") is already correct.")
+						end
+					end
+					return
+				end
+			end
+		end
+	end
+end
+
+
+-- Cached mob list to avoid rebuilding every mouseover
+local _cachedQuestID, _cachedStepIndex, _cachedMobList = nil, nil, nil
+
+local function GetMobListForCurrentStep(questID, stepIndex, questData)
+	-- Rebuild only if questID or stepIndex changed
+	if questID ~= _cachedQuestID or stepIndex ~= _cachedStepIndex then
+		_cachedQuestID, _cachedStepIndex = questID, stepIndex
+		_cachedMobList = {}
+
+		if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
+			for _, mob in ipairs(questData[stepIndex].npcTargets) do
+				if mob.name then
+					-- If mob.obj is present, skip if complete
+					if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Skipping mob " .. mob.name .. " (objective " .. tostring(mob.obj) .. " complete).")
+						end
+					else
+						table.insert(_cachedMobList, mob)
+					end
+				end
+			end
+		end
+	end
+
+	return _cachedMobList or {}
+end
+
+
+-- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB	-- THIS WAS KILLED BY BLIZZARD IN PATCH 12.0
+function RQE:MarkQuestMobOnMouseover()
+	if not RQE.db.profile.enableMouseOverMarking then return end
+
+	-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.API.GetSuperTrackedQuestID()
+	local usingSearch = false
+
+	if (not questID or questID == 0) and RQE.searchedQuestID then
+		questID = RQE.searchedQuestID
+		usingSearch = true
+	end
+	if not questID or questID == 0 then return end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then return end
+
+	local mobList = {}
+
+	-- If using searchedQuestID (not in log), pull ALL npcTargets + npc (turn-in)
+	if usingSearch then
+		for _, stepData in pairs(questData) do
+			if type(stepData) == "table" and stepData.npcTargets then
+				for _, mob in ipairs(stepData.npcTargets) do
+					if mob.name then
+						table.insert(mobList, mob)
+					end
+				end
+			end
+		end
+
+		-- Add DB.npc turn-in marker as marker 3
+		if questData.npc and type(questData.npc) == "table" then
+			for _, npcName in ipairs(questData.npc) do
+				if npcName ~= "" then
+					table.insert(mobList, {
+						name = npcName,
+						marker = 3,
+						mustBeAlive = true
+					})
+				end
+			end
+		end
+
+	else
+		-- Quest is active and supertracked → Only use current step's npcTargets
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		if stepIndex and questData[stepIndex] and questData[stepIndex].npcTargets then
+			for _, mob in ipairs(questData[stepIndex].npcTargets) do
+				if mob.name then
+					-- If mob.obj is present, skip if that objective is already complete
+					if mob.obj and _IsObjectiveComplete(questID, mob.obj) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Skipping mob " .. mob.name .. " (objective " .. tostring(mob.obj) .. " complete).")
+						end
+					else
+						-- Extra safeguard: make sure this mob really belongs to npcTargets of this step
+						for _, validMob in ipairs(questData[stepIndex].npcTargets) do
+							if validMob.name == mob.name then
+								table.insert(mobList, mob)
+								if RQE.db.profile.debugLevel == "INFO+" then
+									print("Inserted mob " .. mob.name .. " for stepIndex " .. stepIndex)
+								end
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- Run the marker logic
+	TryMarkUnit("mouseover", mobList)
+	TryMarkUnit("target", mobList)
+end
+
+
+-- Safely set a raid marker only if needed.
+-- unitID: "target" (default), "mouseover", "nameplateX", etc.
+-- desired: 1-8 (⭐=1, ◯=2, ◆=3, △=4, ☾=5, ◼=6, ✖=7, ☠=8)
+function RQE:SetMarkerIfNeeded(unitID, desired)
+	unitID = unitID or "target"
+	local idx = tonumber(desired)
+	if not idx or idx < 1 or idx > 8 then return false end
+	if not UnitExists(unitID) then return false end
+
+	local current = GetRaidTargetIndex(unitID)
+	if current == idx then
+		-- Already correct; do nothing.
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(("Marker already correct (%d) on %s."):format(idx, unitID))
+		end
+		return false
+	end
+
+	SetRaidTarget(unitID, idx)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		local name = UnitName(unitID) or unitID
+		print(("Applied marker %d to %s."):format(idx, name))
+	end
+	return true
+end
+
+
+---------------------------------------------------
+-- #13. UI Components
+---------------------------------------------------
+
+-- Initialize RQEFrame
+RQEFrame = RQEFrame or CreateFrame("Frame", "RQEFrame", UIParent)
+
+
+-- Initialize other UI components like MinimizeButton, MaximizeButton, etc.
+RQE.MinimizeButton = RQE.MinimizeButton or {}
+RQE.MaximizeButton = RQE.MaximizeButton or {}
+
+
+-- Initialize SearchEditBox (Make it global to access it from other files)
+SearchEditBox = CreateFrame("EditBox", "RQESearchEditBox", RQEFrame, "InputBoxTemplate")
+
+
+-- Initialize position, size, etc. for SearchEditBox
+SearchEditBox:SetAutoFocus(false)
+SearchEditBox:SetWidth(100)
+SearchEditBox:SetHeight(20)
+SearchEditBox:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -10) -- Adjust the position as needed
+SearchEditBox:SetFontObject("GameFontNormal")
+SearchEditBox:SetText("Edit...")  -- Default text
+
+
+-- Parse one {item:id:name} or [item:id:name] tag (returns itemID and display name)
+function RQE.ParseItemTag(text)
+	if not text or text == "" then return nil end
+	local id, name = text:match("{item:(%d+):([^}]+)}")
+	if id then return tonumber(id), name end
+	id, name = text:match("%[item:(%d+):([^%]]+)%]")
+	if id then return tonumber(id), name end
+	return nil
+end
+
+
+-- Render text by replacing tags with colored [Name]
+function RQE.RenderTextWithItemTags(text)
+	if not text then return text end
+	text = text:gsub("{item:(%d+):([^}]+)}", "|cffffffff[%2]|r")
+	text = text:gsub("%[item:(%d+):([^%]]+)%]", "|cffffffff[%2]|r")
+	return text
+end
+
+
+-- Converts rich text into properly spaced SimpleHTML content
+function RQE.BuildHTMLFromRichText(raw)
+	if not raw or raw == "" then
+		return '<html><body><p>No description available.</p></body></html>'
+	end
+
+	local html = raw
+
+	-- Items
+	html = html:gsub("{item:(%d+):([^}]+)}", function(itemID, name)
+		local shown = string.format("|cffff66cc[%s]|r", name)
+		return string.format('<a href="item:%s">%s</a>', itemID, shown)
+	end)
+
+	-- Spells
+	html = html:gsub("{spell:(%d+):([^}]+)}", function(spellID, name)
+		local shown = string.format("|cff66ccff[%s]|r", name)
+		return string.format('<a href="spell:%s">%s</a>', spellID, shown)
+	end)
+
+	-- Coord Blocks: displays only [x, y], but clicks like normal coords
+	html = html:gsub("{coordblock:([^}]+)}", function(data)
+		local x, y, mapID, title =
+			data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+
+		if not x then
+			x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+		end
+
+		if not x or not y or not mapID then
+			return data
+		end
+
+		local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+		local href = title and
+			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
+			string.format("coords:%s,%s,%s", x, y, mapID)
+
+		return string.format('<a href="%s">|cff40e0d0%s|r</a>', href, label)
+	end)
+
+	-- Coords
+	html = html:gsub("{coords:([^}]+)}", function(data)
+		local x, y, mapID, title =
+			data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+		if not x then
+			x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+		end
+		if not (x and y and mapID) then return data end
+
+		local label = string.format("coords: %.2f, %.2f map %s", x, y, mapID)
+		local href = title and
+			string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
+			string.format("coords:%s,%s,%s", x, y, mapID)
+		return string.format('<a href="%s">|cff40e0d0[%s]|r</a>', href, label)
+	end)
+
+	-- Fixes possibly "scrunching":
+	html = html:gsub("\n+", "<br><br><font color='#000000'>.</font><br><br>")
+
+	-- Wrap the body content
+	return string.format('<html><body><p>%s</p></body></html>', html)
+end
+
+
+-- ✅ Renders the HTML with proper spacing and working coords/items/spells used in the Separate Focus Frame and dealing with coords using SimpleHTML
+function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor, customParent)
+	if not rawText or rawText == "" or not parentFrame then return end
+
+	-- Determine if HTML is needed
+	if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") or rawText:match("{coordblock:") then
+	-- if rawText:match("{item:") or rawText:match("{spell:") or rawText:match("{coords:") then
+		local baseParent = customParent or parentFrame:GetParent() or UIParent
+		local html = RQE.BuildHTMLFromRichText(rawText)
+
+		if parentFrame:GetObjectType() ~= "SimpleHTML" then
+			parentFrame:Hide()
+			local Simple = CreateFrame("SimpleHTML", nil, baseParent)
+			Simple:SetFontObject("p", GameFontNormal)
+			Simple:SetJustifyH("p", "LEFT")
+			Simple:SetHyperlinksEnabled(true)
+			Simple:SetWidth(baseParent:GetWidth() - 60)
+			Simple:SetTextColor("p", unpack(textColor or {1, 1, 0.8}))
+			Simple:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 0, 0)
+			Simple:SetText(html)
+			Simple.htmlText = html
+
+			-- Tooltip & click handling
+			Simple:SetScript("OnHyperlinkEnter", function(_, link)
+				local linkType, id = link:match("^(%a+):(.+)$")
+				if linkType == "item" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+					GameTooltip:SetItemByID(tonumber(id))
+					local count = C_Item.GetItemCount(id) or 0
+					GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+					GameTooltip:Show()
+				elseif linkType == "spell" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+					GameTooltip:SetSpellByID(tonumber(id))
+					GameTooltip:Show()
+				elseif linkType == "coords" then
+					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
+					GameTooltip:Show()
+				end
+			end)
+
+			Simple:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
+
+			Simple:SetScript("OnHyperlinkClick", function(_, link)
+				if not link:match("^coords:") then return end
+				local x, y, mapID, title =
+					link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
+				if not x then
+					x, y, mapID = link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if x and y and mapID then
+					RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+					RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID),
+						title and title:gsub("\"", "") or "Custom Waypoint")
+					print(string.format(
+						"|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
+						x, y, mapID,
+						(title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""
+					))
+				end
+			end)
+
+			-- Auto height fix
+			C_Timer.After(0.05, function()
+				local h = Simple:GetContentHeight() or 20
+				Simple:SetHeight(h + 6)
+			end)
+
+			if parentFrame == RQE.SeparateStepText then
+				RQE.SeparateStepText = Simple
+			end
+			return
+		else
+			parentFrame:SetText(html)
+			parentFrame.htmlText = html
+			return
+		end
+	end
+
+	-- 🧾 Fallback to plain text for normal lines
+	parentFrame:SetText(rawText)
+end
+
+
+-- Render rich text with multiple {item:id:name} tags and attach separate hover frames used in the individual steps
+function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, textColor, customParent)
+	if not rawText or rawText == "" or not parentFrame then return end
+
+	-- Clean up any old hover frames
+	if parentFrame._rqeSegments then
+		for _, seg in ipairs(parentFrame._rqeSegments) do
+			if seg.Hide then seg:Hide() end
+			if seg.SetParent then seg:SetParent(nil) end
+		end
+	end
+	parentFrame._rqeSegments = {}
+
+	-- Replace {item:id:name} with [name] visually
+	local displayText = rawText
+	displayText = displayText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
+	displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
+
+	displayText = displayText:gsub("{coords:([^}]+)}", function(data)
+		local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+
+		if x and y and mapID then
+			return string.format("|cff40e0d0[coords: %.2f, %.2f map %s]|r", tonumber(x), tonumber(y), mapID)
+		end
+
+		return data
+	end)
+
+	-- Coord Blocks
+	displayText = displayText:gsub("{coordblock:([^}]+)}", function(data)
+		local x, y = data:match("(%d+%.?%d*),(%d+%.?%d*)")
+		if x and y then
+			return string.format("|cff40e0d0[%.2f, %.2f]|r", tonumber(x), tonumber(y))
+		end
+		return data
+	end)
+
+	parentFrame:SetText(displayText)
+
+	-- Font metrics
+	local fontPath, size, flags
+
+	-- Handle both FontStrings and SimpleHTML frames
+	if parentFrame.GetFont then
+		local ok, f1, f2, f3
+
+		-- Try SimpleHTML paragraph font first
+		ok, f1, f2, f3 = pcall(function() return parentFrame:GetFont("p") end)
+		if ok and f1 then
+			fontPath, size, flags = f1, f2, f3
+		else
+			-- Fall back to normal FontString behavior
+			ok, f1, f2, f3 = pcall(function() return parentFrame:GetFont() end)
+			if ok and f1 then
+				fontPath, size, flags = f1, f2, f3
+			else
+				-- Ultimate fallback
+				fontPath, size, flags = "Fonts\\FRIZQT__.TTF", 12, ""
+			end
+		end
+	else
+		-- Fallback for frames without GetFont at all
+		fontPath, size, flags = "Fonts\\FRIZQT__.TTF", 12, ""
+	end
+
+	local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	measureFS:SetFont(font or fontPath, fontSize or size, flags)
+
+	local baseParent = customParent or parentFrame:GetParent() or UIParent
+	local lineHeight = 14
+	if parentFrame.GetLineHeight then
+		local ok, lh = pcall(function() return parentFrame:GetLineHeight() end)
+		if ok and lh then lineHeight = lh end
+	elseif type(size) == "number" then
+		lineHeight = size + 2
+	end
+	-- local lineHeight = parentFrame:GetLineHeight()
+	local yOffset, rawPos = 0, 1
+
+	-- Helper: resolve the true owning frame name, even if deeply nested
+	local function GetTopParentName(frame)
+		local limit = 5 -- safety to avoid infinite loops
+		local cur = frame
+		while cur and limit > 0 do
+			if cur.GetName and cur:GetName() then
+				return cur:GetName()
+			end
+			cur = cur:GetParent()
+			limit = limit - 1
+		end
+		return nil
+	end
+
+	for line in displayText:gmatch("([^\n]*)\n?") do
+		if line and line ~= "" then
+			local nl = rawText:find("\n", rawPos, true) or (#rawText + 1)
+			local rawLine = rawText:sub(rawPos, nl - 1)
+			local patternPos = 1
+
+			local cursorX = 0
+			while true do
+				local startTag, endTag, tagType, tagID, tagName =
+					rawLine:find("{([%a]+):(%d+):([^}]+)}", patternPos)
+				if not startTag then break end
+
+				tagID = tonumber(tagID)
+
+				-- Text before this tag (between previous tag and this one)
+				local preText = rawLine:sub(patternPos, startTag - 1)
+				if preText ~= "" then
+					measureFS:SetText(preText)
+					cursorX = cursorX + measureFS:GetStringWidth()
+				end
+
+				-- Handle tag type
+				local tagWidth
+				measureFS:SetText("[" .. tagName .. "]")
+				tagWidth = measureFS:GetStringWidth()
+
+				local maxWidth = parentFrame:GetWidth() or 400
+
+				if (cursorX + tagWidth) > maxWidth then
+					-- wraps to next line
+					cursorX = 0
+					yOffset = yOffset + lineHeight
+				end
+
+				local yAdj = yOffset
+				local parentName = GetTopParentName(parentFrame) or ""
+				if parentName:find("RQE_SeparateContentFrame", 1, true) then
+					local extraAdjust = 0
+					if yOffset > lineHeight * 2 then
+						extraAdjust = (yOffset / lineHeight) * 0.08
+					end
+					yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))
+				end
+
+				local hover = CreateFrame("Frame", nil, baseParent)
+				hover:EnableMouse(true)
+				hover:SetFrameStrata("TOOLTIP")
+				hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+				hover:SetAlpha(0.01)
+				hover:SetSize(tagWidth + 6, lineHeight)
+				hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yAdj)
+
+				if tagType == "item" then
+					hover:SetScript("OnEnter", function()
+						GameTooltip:Hide()
+						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
+						GameTooltip:SetItemByID(tagID)
+						local count = C_Item.GetItemCount(tagID) or 0
+						GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+						GameTooltip:Show()
+					end)
+					hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+				elseif tagType == "spell" then	-- replaced call for RQE.HandleSpellTag() but may be an issue because "SetSpellByID(tagID)" isn't valid Blizzard API
+					hover:SetScript("OnEnter", function()
+						GameTooltip:Hide()
+						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
+						GameTooltip:SetSpellByID(tagID)
+						GameTooltip:Show()
+					end)
+					hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+				end
+
+				table.insert(parentFrame._rqeSegments, hover)
+
+				-- Advance cursor after tag
+				cursorX = cursorX + tagWidth
+
+				-- Advance search position
+				patternPos = endTag + 1
+			end
+
+			-- Coords clickable overlays
+			local coordsPatternPos = 1
+
+			while true do
+				local startTag, endTag, coordData = rawLine:find("{coords:([^}]+)}", coordsPatternPos)
+				if not startTag then break end
+
+				local x, y, mapID, title =
+					coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+
+				if not x then
+					x, y, mapID = coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+
+				if x and y and mapID then
+					local preText = rawLine:sub(1, startTag - 1)
+					preText = preText
+						:gsub("{item:%d+:([^}]+)}", "[%1]")
+						:gsub("{spell:%d+:([^}]+)}", "[%1]")
+						:gsub("{coords:([^}]+)}", function(data)
+							local cx, cy, cm = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+							if cx and cy and cm then
+								return string.format("[coords: %.2f, %.2f map %s]", tonumber(cx), tonumber(cy), cm)
+							end
+							return data
+						end)
+						:gsub("{coordblock:([^}]+)}", function(data)
+							local bx, by = data:match("(%d+%.?%d*),(%d+%.?%d*)")
+							if bx and by then
+								return string.format("[%.2f, %.2f]", tonumber(bx), tonumber(by))
+							end
+							return data
+						end)
+						:gsub("|c%x%x%x%x%x%x%x%x", "")
+						:gsub("|r", "")
+
+					local label = string.format("[coords: %.2f, %.2f map %s]", tonumber(x), tonumber(y), mapID)
+					measureFS:SetText(label)
+					local tagWidth = measureFS:GetStringWidth()
+
+					local maxWidth = parentFrame:GetWidth() or 400
+					local coordX = 0
+					local coordY = yOffset
+
+					for word, space in preText:gmatch("([^%s]+)(%s*)") do
+						local chunk = word .. space
+						measureFS:SetText(chunk)
+						local chunkWidth = measureFS:GetStringWidth()
+
+						if coordX > 0 and (coordX + chunkWidth) > maxWidth then
+							coordX = 0
+							coordY = coordY + lineHeight
+						end
+
+						coordX = coordX + chunkWidth
+					end
+
+					if coordX > 0 and (coordX + tagWidth) > maxWidth then
+						coordX = 0
+						coordY = coordY + lineHeight
+					end
+
+					local hover = CreateFrame("Frame", nil, baseParent)
+					hover:EnableMouse(true)
+					hover:SetFrameStrata("TOOLTIP")
+					hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
+					hover:SetAlpha(0.01)
+					hover:SetSize(tagWidth + 6, lineHeight)
+					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
+
+					hover:SetScript("OnEnter", function()
+						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
+						GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
+						GameTooltip:Show()
+					end)
+
+					hover:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+
+					hover:SetScript("OnMouseDown", function()
+						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
+					end)
+
+					table.insert(parentFrame._rqeSegments, hover)
+				end
+
+				coordsPatternPos = endTag + 1
+			end
+
+			-- Coordblock clickable overlays
+			local coordPatternPos = 1
+
+			while true do
+				local startTag, endTag, coordData = rawLine:find("{coordblock:([^}]+)}", coordPatternPos)
+				if not startTag then break end
+
+				local x, y, mapID, title =
+					coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+
+				if not x then
+					x, y, mapID = coordData:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+
+				if x and y and mapID then
+					local preText = rawLine:sub(1, startTag - 1)
+					preText = preText
+						:gsub("{item:%d+:([^}]+)}", "[%1]")
+						:gsub("{spell:%d+:([^}]+)}", "[%1]")
+						:gsub("{coordblock:([^}]+)}", function(data)
+							local bx, by = data:match("(%d+%.?%d*),(%d+%.?%d*)")
+							if bx and by then
+								return string.format("[%.2f, %.2f]", tonumber(bx), tonumber(by))
+							end
+							return data
+						end)
+						:gsub("|c%x%x%x%x%x%x%x%x", "")
+						:gsub("|r", "")
+
+					local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+					measureFS:SetText(label)
+					local tagWidth = measureFS:GetStringWidth()
+
+					local maxWidth = parentFrame:GetWidth() or 400
+					local coordX = 0
+					local coordY = yOffset
+
+					-- Approximate WoW word wrapping for the text before the coordblock
+					for word, space in preText:gmatch("([^%s]+)(%s*)") do
+						local chunk = word .. space
+						measureFS:SetText(chunk)
+						local chunkWidth = measureFS:GetStringWidth()
+
+						if coordX > 0 and (coordX + chunkWidth) > maxWidth then
+							coordX = 0
+							coordY = coordY + lineHeight
+						end
+
+						coordX = coordX + chunkWidth
+					end
+
+					if coordX > 0 and (coordX + tagWidth) > maxWidth then
+						coordX = 0
+						coordY = coordY + lineHeight
+					end
+
+					local hover = CreateFrame("Frame", nil, baseParent)
+					hover:EnableMouse(true)
+					hover:SetFrameStrata("TOOLTIP")
+					hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
+					hover:SetAlpha(0.01)
+					hover:SetSize(tagWidth + 6, lineHeight)
+					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
+
+					hover:SetScript("OnEnter", function()
+						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
+						GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
+						GameTooltip:Show()
+					end)
+
+					hover:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+
+					hover:SetScript("OnMouseDown", function()
+						-- Clear TomTom waypoint when Waypoint Coordblock is clicked
+						if TomTom.waydb and TomTom.waydb.ResetProfile then
+							TomTom.waydb:ResetProfile()
+							RQE._currentTomTomUID = nil
+						end
+						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
+					end)
+
+					table.insert(parentFrame._rqeSegments, hover)
+				end
+
+				coordPatternPos = endTag + 1
+			end
+		end
+
+		yOffset = yOffset + lineHeight
+		local nextLine = rawText:find("\n", rawPos, true)
+		rawPos = nextLine and (nextLine + 1) or (#rawText + 1)
+	end
+
+	measureFS:Hide()
+end
+
+
+-- Render tooltips {spell:id:name} tags with a provided width
+-- width: exact pixel width of the hover (already measured by the caller)
+function RQE.HandleSpellTag(parentFrame, spellID, spellName, cursorX, yOffset, baseParent, lineHeight, width)
+	local hover = CreateFrame("Button", "RQE_SpellHover_" .. spellID .. "_" .. math.random(10000,99999), baseParent)
+	hover:EnableMouse(true)
+	hover:EnableMouseWheel(false)
+	if hover.SetPropagateMouseClicks then hover:SetPropagateMouseClicks(false) end
+	if hover.SetPropagateMouseMotion then hover:SetPropagateMouseMotion(false) end
+
+	hover:SetFrameStrata("TOOLTIP")
+	hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+	hover:SetAlpha(0.01)
+
+	hover:SetSize(width or 120, lineHeight)
+	hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yOffset)
+
+	hover:SetScript("OnEnter", function(self)
+		-- Force a fresh spell tooltip context
+		GameTooltip:Hide()
+		GameTooltip:ClearLines()
+		GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
+
+		-- Using hyperlink eliminates weird “same-line, second-spell” cache issues
+		GameTooltip:SetHyperlink(("spell:%d"):format(spellID))
+		GameTooltip:Show()
+	end)
+
+	hover:SetScript("OnLeave", function(self)
+		if GameTooltip:IsOwned(self) then
+			GameTooltip:Hide()
+		end
+	end)
+
+	return hover
+end
+
+
+-- Utility function for showing item tooltips on hover (for quest descriptions, etc.)
+function RQE:CreateItemTooltip(frame, itemID)
+	frame:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_CURSOR")  -- follow the mouse
+		GameTooltip:SetItemByID(itemID)
+
+		-- Append the player's current quantity in bags
+		local itemName = GetItemInfo(itemID)
+		if itemName then
+			local count = GetItemCount(itemID, false, false) or 0
+			GameTooltip:AddLine(" ")
+			GameTooltip:AddLine("|cFF00FF00You have:|r " .. count, 1, 1, 1)
+		end
+
+		GameTooltip:Show()
+	end)
+
+	frame:SetScript("OnLeave", function(self)
+		GameTooltip:Hide()
+	end)
+end
+
+
+---------------------------------------------------
+-- #14. Search Module
+---------------------------------------------------
+
+RQE.SearchModule = {}
+
+-- Function to create the Search Box with an Examine button
+function RQE.SearchModule:CreateSearchBox()
+	local functionName = "RQE.SearchModule:CreateSearchBox()"
+
+	local editBox = AceGUI:Create("EditBox")
+	editBox:SetLabel("Enter Quest ID, Title, Description or Objective:")
+	editBox:SetWidth(350)
+	editBox:SetCallback("OnEnterPressed", function(widget, event, text)
+		local questID = tonumber(text)
+		local foundQuestIDs = {} -- Initialize the table here to store all found quest IDs
+		local inputTextLower = string.lower(text) -- Convert input text to lowercase for case-insensitive comparison
+
+		-- Search logic modified to accumulate all matching quest IDs
+		if questID then
+			-- Direct use of numeric ID
+			table.insert(foundQuestIDs, questID)
+		else
+			-- Search across all databases for matches in title, description, or objectives
+			for dbName, db in pairs(RQEDatabase) do
+				for id, questData in pairs(db) do
+					local matchFound = false
+
+					-- Title match
+					if questData.title and string.find(string.lower(questData.title), inputTextLower) then
+						matchFound = true
+					end
+
+					-- Description match
+					if not matchFound and questData.descriptionQuestText and type(questData.descriptionQuestText) == "table" then
+						for _, desc in ipairs(questData.descriptionQuestText) do
+							if string.find(string.lower(desc), inputTextLower) then
+								matchFound = true
+								break
+							end
+						end
+					end
+
+					-- Objectives match
+					if not matchFound and questData.objectivesQuestText and type(questData.objectivesQuestText) == "table" then
+						for _, obj in ipairs(questData.objectivesQuestText) do
+							if string.find(string.lower(obj), inputTextLower) then
+								matchFound = true
+								break
+							end
+						end
+					end
+
+					-- Step description match (checks numbered keys)
+					if not matchFound then
+						for k, v in pairs(questData) do
+							if type(k) == "number" and type(v) == "table" and v.description then
+								if string.find(string.lower(v.description), inputTextLower) then
+									matchFound = true
+									break
+								end
+							end
+						end
+					end
+
+					if matchFound then
+						table.insert(foundQuestIDs, id)
+					end
+				end
+			end
+		end
+
+		-- Handling multiple found quest IDs
+		for _, foundQuestID in ipairs(foundQuestIDs) do
+			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
+			local isQuestCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
+
+			C_Timer.After(0.2, function()
+				local questLink = GetQuestLink(foundQuestID)
+				if questLink then
+					print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+				else
+					local questName = RQE.API.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+					local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", foundQuestID, questName)
+					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6" .. clickableQuestTitle .. "|r")
+				end
+
+				if isQuestCompleted then
+					DEFAULT_CHAT_FRAME:AddMessage("Quest completed by character", 0, 1, 0)	-- Green text
+					if isQuestCompletedOnAccount then
+						DEFAULT_CHAT_FRAME:AddMessage("Quest completed on warband", 1, 1, 0)	-- Yellow text
+					else
+						DEFAULT_CHAT_FRAME:AddMessage("Quest not completed on warband or is a repeatable quest", 1, 0, 0)	-- Red text
+					end
+				else
+					DEFAULT_CHAT_FRAME:AddMessage("Quest not completed by character or is a repeatable quest", 1, 0, 0)	-- Red text
+					if isQuestCompletedOnAccount then
+						DEFAULT_CHAT_FRAME:AddMessage("Quest completed on warband", 1, 1, 0)	-- Yellow text
+					else
+						DEFAULT_CHAT_FRAME:AddMessage("Quest not completed on warband or is a repeatable quest", 1, 0, 0)	-- Red text
+					end
+				end
+			end)
+		end
+
+		-- Additional handling for no matches or multiple matches as needed
+		if #foundQuestIDs == 0 then
+			print("No matching quests found.")
+		elseif #foundQuestIDs > 1 then
+			print("Multiple matches found. Listing all.")
+		end
+	end)
+
+	local examineButton = AceGUI:Create("Button")
+	examineButton:SetText("Track")
+	examineButton:SetWidth(100)
+
+	examineButton:SetCallback("OnClick", function()
+		local inputText = editBox:GetText()
+		local questID = tonumber(inputText)
+		local foundQuestID = nil
+		local inputTextLower = string.lower(inputText) -- Convert input text to lowercase for case-insensitive comparison
+
+		-- Simulates pressing the "Clear Window" Button before proceeding with rest of function
+		RQE:PerformClearActions()
+		RQE:ClearWaypointButtonData()
+		RQE.DontUpdateFrame = false -- Flag to enable the UpdateFrame to run once in order to populate field (only applicable if player had the RQEFrame populated with a different questID before doing another search)
+
+		if not questID then
+			for id, questData in pairs(RQEDatabase) do
+				if questData.title and string.find(string.lower(questData.title), inputTextLower) then
+					foundQuestID = id
+					break
+				end
+			end
+		else
+			foundQuestID = questID
+		end
+
+		if foundQuestID then
+			-- Logic for updating location data
+			local questData = RQE.getQuestData(foundQuestID)
+			-- if questData and questData.location then
+				-- -- Update the location data for the examined quest
+				-- RQE.DatabaseSuperX = questData.location.x / 100
+				-- RQE.DatabaseSuperY = questData.location.y / 100
+				-- RQE.DatabaseSuperMapID = questData.location.mapID
+			local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
+			local finalMapID
+
+			if mapID then
+				finalMapID = mapID
+			elseif continentID then
+				local playerMapID = C_Map.GetBestMapForUnit("player")
+				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				if parent == continentID then
+					finalMapID = continentID
+				end
+			end
+
+			if x and y and finalMapID then
+				RQE.DatabaseSuperX = x / 100
+				RQE.DatabaseSuperY = y / 100
+				RQE.DatabaseSuperMapID = finalMapID
+			end
+
+			-- Local Variables for World Quest/Quest in Log
+			local isWorldQuest = RQE.API.IsWorldQuest(foundQuestID)		--C_QuestLog.IsWorldQuest(foundQuestID)
+			local isQuestInLog = RQE.API.IsOnQuest(foundQuestID)
+			local watchType = C_QuestLog.GetQuestWatchType(foundQuestID)
+
+			-- Found a quest, now set it as the searchedQuestID
+			RQE.searchedQuestID = foundQuestID
+			if not isQuestInLog and not isWorldQuest then
+				-- A searched quest has a virtual step 0 for finding its quest giver.
+				-- This is cleared by QUEST_ACCEPTED when it becomes a real log quest.
+				RQE.ManualStepPreview = true
+				RQE.ManualPreviewQuestID = foundQuestID
+				RQE.ManualPreviewStepIndex = 0
+				RQE.AddonSetStepIndex = 0
+				RQE.CurrentStepIndex = 0
+				RQE.StoredStepIndex = 0
+			end
+			-- RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
+			-- The Search Frame Track button must create the virtual pickup macro
+			-- without relying on the quest-log-gated helper above.
+			if not isQuestInLog and not isWorldQuest then
+				RQE:SetSearchedQuestPickupMacro(foundQuestID)
+			end
+
+			-- Super Track the Searched Quest if in the Quest Log
+			if isQuestInLog then
+				-- print("~~~ SetSuperTrack: 3854~~~")
+				-- C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
+				RQE.API.SetSuperTrackedQuestID(foundQuestID)
+				RQE:SaveSuperTrackedQuestToCharacter()
+			end
+
+			-- Add the quest to the tracker
+			if isWorldQuest then
+				C_QuestLog.AddWorldQuestWatch(foundQuestID)
+			else
+				C_QuestLog.AddQuestWatch(foundQuestID)
+			end
+
+			-- Print quest link or name
+			C_Timer.After(0.2, function()
+				local questLink = GetQuestLink(foundQuestID)
+				if questLink then
+					print("Quest ID: " .. foundQuestID .. " - " .. questLink)
+				else
+					local questName = RQE.API.GetTitleForQuestID(foundQuestID) or "Unknown Quest"
+					-- ⬇Custom tooltip is created
+					local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", foundQuestID, RQE.API.GetTitleForQuestID(foundQuestID) or "Unknown Quest")
+					print("|cFFFFFFFFQuest ID: " .. foundQuestID .. " - |r|cFFADD8E6" .. clickableQuestTitle .. "|r")
+				end
+			end)
+
+			-- Call UpdateFrame to populate RQEFrame with quest details, if the quest exists in RQEDatabase
+			-- This is the new line added to trigger the update based on the foundQuestID
+			if questData then
+				local questInfo = RQE.getQuestData(foundQuestID)
+				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 4927 ~~")
+				UpdateFrame(foundQuestID, questInfo, {}, {}, {}) -- Assuming UpdateFrame handles empty tables gracefully
+			end
+
+			-- UpdateFrame and its deferred event work may set another macro after
+			-- Track is pressed. Reapply virtual step 0 last so the pickup macro is
+			-- what the player sees immediately after using the Search Frame.
+			if not isQuestInLog and not isWorldQuest then
+				C_Timer.After(0.15, function()
+					if RQE:CanNavigateSearchedQuestSteps(foundQuestID)
+						and tonumber(RQE.ManualPreviewStepIndex) == 0
+					then
+						RQE:SetSearchedQuestPickupMacro(foundQuestID)
+					end
+				end)
+			end
+		else
+			print("Invalid Quest ID or Title for Examination")
+		end
+		RQE:SaveSuperTrackedQuestToCharacter()
+	end)
+
+	return editBox, examineButton
+end
+
+
+---------------------------------------------------
+-- #15. Utility Functions
+---------------------------------------------------
+
+-- InitializeAddon function
+function RQE:InitializeAddon()
+	-- RQE manages its two automatic watch options internally. Disable Blizzard's
+	-- equivalents every login so they cannot add quests to Blizzard's tracker.
+	RQE:DisableBlizzardAutoQuestTracking()
+
+	-- Initializes the Tracked Achievements
+	RQE.UpdateTrackedAchievements()
+	RQE.UpdateTrackedAchievementList()
+end
+
+
+-- Utility function to check if a quest is super-tracked
+function RQE.IsQuestSuperTracked()
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	return superTrackedQuestID ~= nil
+end
+
+
+-- Rounds a normalized map coordinate so percentage displays use two decimals.
+local function RQERoundMapFraction(value)
+	-- return math.floor((tonumber(value) or 0) * 10000 + 0.5) / 10000
+	local percentage = tonumber(string.format("%.2f", (tonumber(value) or 0) * 100)) or 0
+	return percentage / 100
+end
+
+-- Single Blizzard-map API source for RQE's current player position.
+-- This deliberately does not read position data from TomTom.
+function RQE:GetCurrentPlayerMapPosition()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then return nil end
+
+	local position = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not position then return nil end
+
+	local x, y = position:GetXY()
+	if not x or not y then return nil end
+
+	return mapID, x, y
+end
+
+-- Keep the visible header current while the frame is shown.  This mirrors the
+-- Retail update path while continuing to use Classic's Blizzard map API.
+local coordinateDisplayTicker
+
+function RQE:StartCoordinateDisplayUpdates()
+	if coordinateDisplayTicker then return end
+
+	coordinateDisplayTicker = C_Timer.NewTicker(0.10, function()
+		if RQEFrame and RQEFrame:IsShown()
+			and RQE.db and RQE.db.profile and RQE.db.profile.showCoordinates then
+			RQE:UpdateCoordinates()
+		end
+	end)
+end
+
+function RQE:StopCoordinateDisplayUpdates()
+	if coordinateDisplayTicker then
+		coordinateDisplayTicker:Cancel()
+		coordinateDisplayTicker = nil
+	end
+end
+
+-- Function to update Coordinates display
+function RQE:UpdateCoordinates()
+	--if not IsPlayerMoving() then return end
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, x, y = self:GetCurrentPlayerMapPosition()
+
+	-- Check if the mapID is valid before proceeding
+	if mapID then
+		-- local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		if RQEFrame.CoordinatesText then  -- Check if CoordinatesText is initialized
+			if RQE.db.profile.showCoordinates and x and y then
+				-- local x, y = position:GetXY()
+				-- x = x * 100  -- converting to percentage
+				-- y = y * 100  -- converting to percentage
+				-- x = RQERoundMapFraction(x) * 100
+				-- y = RQERoundMapFraction(y) * 100
+				RQEFrame.CoordinatesText:SetText(string.format("Coordinates: %.2f, %.2f", x * 100, y * 100))
+			else
+				RQEFrame.CoordinatesText:SetText("")
+			end
+		else
+			RQE.debugLog("RQEFrame.CoordinatesText is not initialized.")
+		end
+	else
+		-- If mapID is invalid, don't try to update coordinates and clear any existing coordinate text
+		if RQEFrame.CoordinatesText then
+			RQEFrame.CoordinatesText:SetText("")
+		end
+	end
+end
+
+
+-- Function to toggle the visibility of the RQE frame
+function RQE:ToggleRQEFrame()
+	if InCombatLockdown() then
+		RQE.ToggleRQEFrameAfterCombat = true
+		return
+	end
+
+	if self.db == nil then
+		RQE.debugLog("self.db is nil in ToggleRQEFrame")
+		return
+	end
+	if self.db.profile == nil then
+		RQE.debugLog("self.db.profile is nil in ToggleRQEFrame")
+		return
+	end
+	if RQEFrame:IsShown() then
+		RQEFrame:Hide()
+		if RQE.MagicButton then
+			RQE.MagicButton:Hide()
+		end
+		self.db.profile.enableFrame = false
+	else
+		-- print("~~ RQEFrame:Show: 4336 ~~")
+		RQEFrame:Show()
+		if RQE.MagicButton then
+			RQE.MagicButton:Show()
+		end
+		self.db.profile.enableFrame = true
+	end
+	LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE")
+
+	-- Check if MagicButton should be visible based on macro body
+	RQE.Buttons.UpdateMagicButtonVisibility()
+end
+
+
+-- Function to toggle the visibility of the RQEQuestFrame
+function RQE:ToggleRQEQuestFrame()
+	-- print(">> ToggleRQEQuestFrame called – forceHide =", RQE.forceHideRQEQuestFrame)
+
+	if RQE.forceHideRQEQuestFrame then
+		-- print(">> Force-hide is active – hiding RQEQuestFrame")
+		self.RQEQuestFrame:Hide()
+		return
+	end
+
+	if self.db.profile.enableQuestFrame then
+		-- print(">> Config enabled – showing RQEQuestFrame")
+		RQE.RQEQuestFrame:Show()
+	else
+		-- print(">> Config disabled – hiding RQEQuestFrame")
+		RQE.RQEQuestFrame:Hide()
+	end
+end
+
+
+-- Utility helper function that checks if the current step the player is on contains "CheckDBZoneChange" via either check or checks
+function RQE:StepUsesZoneChange(step)
+	if not step then return false end
+
+	-- direct funct
+	if step.funct == "CheckDBZoneChange" then
+		return true
+	end
+
+	-- checks[] multi-block
+	if step.checks then
+		for _, chk in ipairs(step.checks) do
+			if chk.funct == "CheckDBZoneChange" then
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+---Abandons a quest with the given questID. Optionally shows a confirmation dialog if items will be lost.
+---@param questID number The ID of the quest to abandon.
+function RQE:AbandonQuest(questID)
+	if not questID then return end  -- Ensure questID is valid
+	-- Classic Era, TBC Anniversary, and other pre-retail clients use the
+	-- selected quest-log entry plus SetAbandonQuest()/AbandonQuest().
+	if RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLogSelection then
+		local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+		if not questLogIndex then return end
+		if SelectQuestLogEntry then
+			SelectQuestLogEntry(questLogIndex)
+		elseif QuestLog_SetSelection then
+			QuestLog_SetSelection(questLogIndex)
+		end
+		if SetAbandonQuest then
+			SetAbandonQuest()
+			StaticPopup_Show("ABANDON_QUEST", (RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"))
+		end
+		return
+	end
+
+	local oldSelectedQuest = C_QuestLog.GetSelectedQuest()
+	C_QuestLog.SetSelectedQuest(questID)
+	local questLink = GetQuestLink(oldSelectedQuest)  -- Generate the quest link
+
+	if questLink then
+		if RQE.db.profile.debugLevel == "INFO+"  or RQE.db.profile.debugLevel == "INFO+" then
+			print("Abandoning QuestID:", questID .. " - " .. questLink)
+		end
+	end
+
+	C_QuestLog.SetAbandonQuest()
+
+	-- Check the addon settings to decide whether to show the confirmation dialogues
+	if not RQE.db.profile.enableQuestAbandonConfirm then
+		-- Quest name for the confirmation dialog
+		local title = QuestUtils_GetQuestName(C_QuestLog.GetAbandonQuest()) or "Unknown Quest"
+
+		-- Determine if there are items to be lost upon abandoning the quest
+		local items = C_QuestLog.GetAbandonQuestItems()
+		if items and #items > 0 then
+			-- If there are items, concatenate their names
+			local itemNames = BuildItemNames(items)
+			StaticPopup_Hide("ABANDON_QUEST")
+			StaticPopup_Show("ABANDON_QUEST_WITH_ITEMS", title, itemNames)
+		else
+			-- No items to be lost, show a simple confirmation
+			StaticPopup_Hide("ABANDON_QUEST_WITH_ITEMS")
+			StaticPopup_Show("ABANDON_QUEST", title)
+		end
+	else
+		-- If the setting is disabled, abandon the quest directly without confirmation
+		C_QuestLog.AbandonQuest()
+	end
+
+	-- Restore the previously selected quest
+	C_QuestLog.SetSelectedQuest(oldSelectedQuest)
+
+	C_Timer.After(1.5, function()
+		RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
+	end)
+end
+
+
+
+-- Utility function to convert table of itemLinks to string for debug purposes
+function BuildItemNames(itemLinks)
+	if not itemLinks or #itemLinks == 0 then return nil end
+	local itemNames = {}
+	for _, itemLink in ipairs(itemLinks) do
+		local itemName = GetItemInfo(itemLink)
+		table.insert(itemNames, itemName)
+	end
+	return table.concat(itemNames, ", ")
+end
+
+
+-- Utility function to convert table to string for debug purposes
+function RQE:TableToString(tbl)
+	if type(tbl) ~= "table" then
+		return tostring(tbl)
+	end
+
+	local result = "{"
+	for k, v in pairs(tbl) do
+		result = result .. tostring(k) .. "=" .. RQE:TableToString(v) .. ", "
+	end
+	return result .. "}"
+end
+
+
+-- Utility function to check if a value exists in a table.  Keep this on RQE
+-- rather than modifying Lua's shared table library, which Blizzard code also
+-- uses in protected execution paths.
+function RQE.TableIncludes(tbl, value)
+	for _, v in pairs(tbl) do
+		if v == value then
+			return true
+		end
+	end
+	return false
+end
+
+
+-- Utility function to convert a table of elements
+function countTableElements(tbl)
+	local count = 0
+	for _ in pairs(tbl) do
+		count = count + 1
+	end
+	return count
+end
+
+
+---------------------------------------------------
+-- #16. Quest Info Functions
+---------------------------------------------------
+-- [Functions related to quest information handling and processing.]
+
+-- Table to store the last known progress of quests
+local lastKnownProgress = {}
+local isFirstRun = true
+
+
+-- Enhanced function to check the correct classification of the quest
+local function GetCorrectQuestType(questID)
+	local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+
+	-- World quests should have classification 10
+	if classification == Enum.QuestClassification.WorldQuest then
+		return "WorldQuest"
+	-- elseif classification == Enum.QuestClassification.BonusObjective then
+		-- return "BonusObjective"
+	else
+		return "Other"
+	end
+end
+
+
+function AutoWatchQuestsWithProgress()
+	if isFirstRun then
+		-- On first run, just populate lastKnownProgress without tracking
+		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local questInfo = RQE.API.GetQuestLogInfo(i)
+			if questInfo and not questInfo.isHeader then
+				local questID = questInfo.questID
+				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+				local currentProgress = CalculateCurrentProgress(objectives)
+				lastKnownProgress[questID] = currentProgress
+			end
+		end
+		isFirstRun = false
+	else
+		-- On subsequent runs, track quests with new progress
+		TrackQuestsWithNewProgress()
+	end
+end
+
+
+function CalculateCurrentProgress(objectives)
+	local currentProgress = 0
+	for _, objective in ipairs(objectives or {}) do
+		if objective and objective.finished then
+			currentProgress = currentProgress + 1
+		end
+	end
+	return currentProgress
+end
+
+
+function TrackQuestsWithNewProgress()
+	for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local questID = questInfo.questID
+			local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+			local currentProgress = CalculateCurrentProgress(objectives)
+
+			if currentProgress > (lastKnownProgress[questID] or 0) then
+				-- Retain this legacy helper's behavior without adding a Blizzard
+				-- watch. Auto Quest Progress is now managed by RQE itself.
+				RQE:AutoWatchQuestProgress(questID)
+			end
+
+			lastKnownProgress[questID] = currentProgress
+		end
+	end
+end
+
+
+function HasQuestProgress(questID)
+	-- Use the WoW API to get quest objectives
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	if not objectives then return false end
+
+	for i, objective in ipairs(objectives) do
+		if objective and not objective.finished then
+			-- If any objective is not finished, consider it as progress
+			return true
+		end
+	end
+
+	return false -- Return false if all objectives are finished or no objectives are found
+end
+
+
+-- Function to retrieve quest data from API
+function RQE:LoadQuestData(questID)
+	local questData = RQE.getQuestData(questID)
+
+	if questData then
+		RQE.debugLog("Quest data for ID " .. questID .. " is already loaded.")
+		return questData
+	else
+		RQE.debugLog("Loading quest data for ID " .. questID)
+
+		-- Fetch quest data from source or API
+		questData = RQE:FetchQuestDataFromSource(questID) or RQE:BuildQuestData(questID)
+
+		if questData then
+			-- Store the loaded data in the correct database
+			RQE.getQuestData[questID] = questData  -- This line is syntactically incorrect, needs fixing
+			RQE.debugLog("Quest data loaded for ID " .. questID)
+			return questData
+		else
+			RQE.debugLog("Failed to load quest data for ID " .. questID)
+			return nil
+		end
+	end
+end
+
+
+-- Function to build quest data from WoW API
+function RQE:BuildQuestData(questID)
+	local questData = {}
+
+	-- Fetch basic quest details from WoW API
+	questData.name = RQE.API.GetTitleForQuestID(questID)
+	questData.questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	questData.directionText = C_QuestLog.GetNextWaypointText(questID)
+
+	-- Fetch quest objectives
+	local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	questData.objectives = objectivesTable
+
+	-- Fetch quest description
+	if questData.questLogIndex then
+		questData.description = RQE.API.GetQuestLogDescription(questData.questLogIndex)
+	end
+
+	return questData
+end
+
+
+-- Function to print quest steps to chat
+function PrintQuestStepsToChat(questID)
+	if not questID or type(questID) ~= "number" then
+		-- Handle the case where questID is invalid
+		RQE.debugLog("Invalid or missing questID provided.")
+		return nil, nil, nil
+	end
+
+	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
+	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
+
+	for i, step in ipairs(questInfo) do
+		local desc = step and step.description or ""
+		StepsText[i] = desc
+
+		-- choose display coords from hotspots (preferred) or legacy single
+		local cText, mID
+		if step and step.coordinateHotspots then
+			local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+			if smap and sx and sy then
+				cText = string.format("%.1f, %.1f", sx * 100, sy * 100)
+				mID = smap
+			end
+		elseif step and step.coordinates and step.coordinates.x and step.coordinates.y and step.coordinates.mapID then
+			cText = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+			mID = step.coordinates.mapID
+		end
+
+		CoordsText[i] = cText or "--"
+		MapIDs[i] = mID
+		questHeader[i] = desc:match("^(.-)\n") or desc
+
+	-- for i, step in ipairs(questInfo) do
+		-- StepsText[i] = step.description
+		-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
+		-- MapIDs[i] = step.coordinates.mapID
+		-- questHeader[i] = step.description:match("^(.-)\n") or step.description
+
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- -- Debug messages
+			-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. i .. ": " .. StepsText[i], 0, 1, 0) -- Green color
+			-- DEFAULT_CHAT_FRAME:AddMessage("Coordinates " .. i .. ": " .. CoordsText[i], 0, 1, 0) -- Green color
+			-- DEFAULT_CHAT_FRAME:AddMessage("MapID " .. i .. ": " .. tostring(MapIDs[i]), 0, 1, 0) -- Green color
+			-- DEFAULT_CHAT_FRAME:AddMessage("Header " .. i .. ": " .. questHeader[i], 0, 1, 0) -- Green color
+		-- end
+	end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- DEFAULT_CHAT_FRAME:AddMessage("Quest Steps Printed for QuestID: " .. tostring(questID), 0, 1, 0) -- Green color
+	-- end
+	return StepsText, CoordsText, MapIDs, questHeader
+end
+
+
+-- Retrieve all of the non-campaign/regular quests in the player's current zone
+function RQE:GetAllQuestsInCurrentZone()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Debug: Could not determine the player's current map ID.")
+		end
+		return
+	end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug: Player Map ID:", playerMapID)
+	end
+
+	-- Get task POIs in the current zone
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		print("Debug: No tasks or bonus quests found in the current map.")
+		return
+	end
+	print("Debug: Found task POIs:", #taskPOIs)
+
+	-- Iterate through task POIs
+	for _, poi in ipairs(taskPOIs) do
+		local questID = poi.questID -- Extract quest ID
+		if questID then
+			-- Fetch quest title
+			local questTitle = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+			print("Task Quest Found - ID:", questID, "Title:", questTitle)
+		else
+			print("Debug: Task POI does not have a valid questID.")
+		end
+	end
+end
+
+
+-- Prints the useful live state for a task quest.
+function RQE:PrintTaskQuestInfo(questID)
+	if type(questID) ~= "number" then
+		print("|cffff0000[RQE]|r PrintTaskQuestInfo requires a numeric quest ID.")
+		return
+	end
+
+	local title, factionID, capped, displayAsObjective =
+		C_TaskQuest.GetQuestInfoByQuestID(questID)
+
+	print(string.format(
+		"|cff00ffff[RQE]|r quest=%d title=%s task=%s onQuest=%s world=%s threat=%s classification=%s faction=%s capped=%s displayAsObjective=%s",
+		questID,
+		tostring(title),
+		tostring(C_QuestLog.IsQuestTask(questID)),
+		tostring(C_QuestLog.IsOnQuest(questID)),
+		tostring(C_QuestLog.IsWorldQuest(questID)),
+		tostring(C_QuestLog.IsThreatQuest(questID)),
+		tostring(C_QuestInfoSystem.GetQuestClassification(questID)),
+		tostring(factionID),
+		tostring(capped),
+		tostring(displayAsObjective)
+	))
+end
+
+
+-- Retrieve all of the bonus quests in the player's current zone to be updated to the RQEQuestFrame and placed under the RQE.QuestsFrame child
+function RQE:GetBonusQuestsInCurrentZone()
+	local bonusQuests = {} -- Ensure we always return a valid table
+	RQE.bonusQuestCount = 0
+
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Debug: Could not determine the player's current map ID.")
+		end
+		return bonusQuests -- Return an empty table
+	end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug: Player Map ID:", playerMapID)
+	end
+
+	-- Get task POIs in the current zone
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Debug: No tasks or bonus quests found in the current map.")
+		end
+		return bonusQuests -- Return an empty table
+	end
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug: Found task POIs:", #taskPOIs)
+	end
+
+	-- Iterate through task POIs and filter by classification
+	for _, poi in ipairs(taskPOIs) do
+		local questID = poi.questID -- Extract quest ID
+		if questID then
+			local classification = C_QuestInfoSystem.GetQuestClassification(questID) or -1 -- Get classification
+			if classification == 8 or classification == 9 then -- Check for BonusObjective or Threat
+				local questTitle = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Bonus/Threat Quest Found - ID:", questID, "Title:", questTitle, "Classification:", classification)
+				end
+				table.insert(bonusQuests, { questID = questID, title = questTitle })
+				RQE.bonusQuestCount = RQE.bonusQuestCount + 1
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Debug: Task POI does not have a valid questID.")
+			end
+		end
+	end
+
+	return bonusQuests
+end
+
+
+-- Retrieve all of the task quests in the player's current zone that are available to them
+function RQE:GetActiveTrackedTaskQuests()
+	local taskQuests = {}
+
+	for questID in pairs(RQE.ActiveTaskQuests) do
+		if C_QuestLog.IsQuestTask(questID)
+			and RQE.API.IsOnQuest(questID)
+			and not RQE.API.IsWorldQuest(questID)
+			and not C_QuestLog.IsThreatQuest(questID)
+		then
+			local title = C_TaskQuest.GetQuestInfoByQuestID(questID)
+				or C_QuestLog.GetTitleForQuestID(questID)
+				or "Unknown Task Quest"
+
+			local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+
+			table.insert(taskQuests, {
+				questID = questID,
+				title = title,
+				distanceSq = distanceSq or math.huge,
+				type = "TQ",
+			})
+		end
+	end
+
+	return taskQuests
+end
+
+
+-- Inspect/Print the TaskPOIs on Player's Current Map
+function RQE:InspectTaskPOIs()
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		print("No Map ID Found")
+		return
+	end
+
+	local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+	if not taskPOIs or #taskPOIs == 0 then
+		print("No Task POIs Found")
+		return
+	end
+
+	for index, poi in ipairs(taskPOIs) do
+		print("Task POI [" .. index .. "]:")
+		for key, value in pairs(poi) do
+			print(" - " .. tostring(key) .. ":", tostring(value))
+		end
+	end
+end
+
+
+-- Function to check if the quest should be flagged as complete
+function RQE:QuestComplete(questID)
+	local questData = RQE.getQuestData(questID)
+	if questData then
+		questData.description = "Quest Complete - Follow the waypoint for quest turn-in"
+		RQE:ConfigurationChanged()
+	end
+end
+
+
+-- Function to generate frame on menu choice that will display the wowhead link for a given quest
+function RQE:ShowWowheadLink(questID)
+	local wowheadURL = "https://www.wowhead.com/quest=" .. questID
+
+	-- Create and configure the frame
+	local linkFrame = CreateFrame("Frame", "WowheadLinkFrame", UIParent, "BackdropTemplate")
+	linkFrame:SetSize(350, 120)  -- Increased height
+	linkFrame:SetPoint("CENTER")
+	linkFrame:SetFrameStrata("HIGH")
+	RQE.linkFrame = linkFrame
+
+	-- Create and configure the EditBox
+	local wowHeadeditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
+	wowHeadeditBox:SetSize(325, 20)
+	wowHeadeditBox:SetPoint("TOP", 0, -20)  -- Adjusted position
+	wowHeadeditBox:SetAutoFocus(false)
+	wowHeadeditBox:SetText(wowheadURL)
+	wowHeadeditBox:SetCursorPosition(0)
+	wowHeadeditBox:HighlightText()
+	wowHeadeditBox:SetHyperlinksEnabled(false)
+	RQE.wowHeadeditBox = wowHeadeditBox
+
+	-- Function to copy text to clipboard
+	local function CopyTextToClipboard()
+		if wowHeadeditBox:IsVisible() then
+			wowHeadeditBox:SetFocus()
+			wowHeadeditBox:HighlightText()
+			-- Copy the text
+			if not InCombatLockdown() then
+				C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+			else
+				print("Cannot copy while in combat.")
+			end
+		end
+	end
+
+	-- Function to highlight text for copying
+	local function HighlightTextForCopy()
+		wowHeadeditBox:SetFocus()
+		wowHeadeditBox:HighlightText()
+		-- Inform the user to press Ctrl+C to copy
+		print("Press Ctrl+C to copy the link.")
+	end
+
+	-- Configure the Copy button
+	local copyButton = CreateFrame("Button", nil, linkFrame, "UIPanelButtonTemplate")
+	copyButton:SetSize(100, 20)
+	copyButton:ClearAllPoints()
+	copyButton:SetPoint("TOP", wowHeadeditBox, "BOTTOM", 0, -10)  -- Adjust the Y-offset as needed
+	copyButton:SetText("Highlight Text")
+	copyButton:SetScript("OnClick", HighlightTextForCopy)
+
+	-- Create and configure the Close button
+	local wowHeadcloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
+	wowHeadeditBox:ClearAllPoints()
+	wowHeadeditBox:SetPoint("TOP", 0, -30)
+	wowHeadcloseButton:SetScript("OnClick", function() linkFrame:Hide() end)
+	RQE.wowHeadcloseButton = wowHeadcloseButton
+
+	-- Make the frame movable
+	linkFrame:SetMovable(true)
+	linkFrame:EnableMouse(true)
+	linkFrame:RegisterForDrag("LeftButton")
+	linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
+	linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
+
+	-- Configure the EditBox font
+	wowHeadeditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+
+	-- Resize and reposition the close button
+	wowHeadcloseButton:SetSize(20, 20)
+	wowHeadcloseButton:ClearAllPoints()
+	wowHeadcloseButton:SetPoint("TOPRIGHT", linkFrame, "TOPRIGHT", -5, -5)
+
+	-- Apply the font to the copy button text
+	copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+
+	local borderBackdrop = {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
+		tile = true,
+		tileSize = 32,
+		edgeSize = 12, -- this controls the thickness of the border
+		insets = { left = 11, right = 11, top = 12, bottom = 11 },
+	}
+	linkFrame:SetBackdrop(borderBackdrop)
+
+	-- Show the frame
+	linkFrame:Show()
+end
+
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("CHAT_MSG_ADDON")
+f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
+	if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == UnitName("player") then
+		-- Attempt to use the hidden chat frame method to copy text
+		local editBox = ChatFrame1EditBox or ChatEdit_ChooseBoxForSend() -- Fallback to an existing chat edit box
+		editBox:Show()
+		editBox:SetText(RQE.wowHeadeditBox:GetText())
+		editBox:HighlightText()
+		editBox:SetFocus()
+		editBox:CopyChatFrame(editBox)
+		editBox:Hide()
+	end
+end)
+
+
+-- Function to generate frame on menu choice that will display the wowhead link for a given quest
+function RQE:ShowWowWikiLink(questID)
+	local questTitle = RQE.API.GetTitleForQuestID(questID)
+	if not questTitle then
+		print("Quest title not available for Quest ID: " .. questID)
+		return
+	end
+	-- Replace spaces with '+' for URL encoding
+	local searchTitle = questTitle:gsub(" ", "+")
+	local wowWikiURL = "https://warcraft.wiki.gg/index.php?search=" .. searchTitle .. "&title=Special%3ASearch&profile=default&fulltext=1"
+
+	-- Create and configure the frame
+	local linkFrame = CreateFrame("Frame", "WowWikiLinkFrame", UIParent, "BackdropTemplate")
+	linkFrame:SetSize(350, 120)  -- Increased height
+	linkFrame:SetPoint("CENTER")
+	linkFrame:SetFrameStrata("HIGH")
+	RQE.wowWikiLinkFrame = linkFrame
+
+	-- Create and configure the EditBox
+	local wowWikieditBox = CreateFrame("EditBox", nil, linkFrame, "InputBoxTemplate")
+	wowWikieditBox:SetSize(325, 20)
+	wowWikieditBox:SetPoint("TOP", 0, -30)  -- Adjusted position
+	wowWikieditBox:SetAutoFocus(false)
+	wowWikieditBox:SetText(wowWikiURL)
+	wowWikieditBox:SetCursorPosition(0)
+	wowWikieditBox:HighlightText()
+	wowWikieditBox:SetHyperlinksEnabled(false)
+	RQE.wowWikieditBox = wowWikieditBox
+
+	-- Function to copy text to clipboard
+	local function CopyTextToClipboard()
+		if wowWikieditBox:IsVisible() then
+			wowWikieditBox:SetFocus()
+			wowWikieditBox:HighlightText()
+			-- Copy the text
+			if not InCombatLockdown() then
+				C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+			else
+				print("Cannot copy while in combat.")
+			end
+		end
+	end
+
+	-- Function to highlight text for copying
+	local function HighlightTextForCopy()
+		wowWikieditBox:SetFocus()
+		wowWikieditBox:HighlightText()
+		-- Inform the user to press Ctrl+C to copy
+		print("Press Ctrl+C to copy the link.")
+	end
+
+	-- Configure the Copy button
+	local copyButton = CreateFrame("Button", nil, linkFrame, "UIPanelButtonTemplate")
+	copyButton:SetSize(100, 20)
+	copyButton:ClearAllPoints()
+	copyButton:SetPoint("TOP", wowWikieditBox, "BOTTOM", 0, -15)  -- Adjust the Y-offset as needed
+	copyButton:SetText("Highlight Text")
+	copyButton:SetScript("OnClick", HighlightTextForCopy)
+
+	-- Create and configure the Close button
+	local wowWikicloseButton = CreateFrame("Button", nil, linkFrame, "UIPanelCloseButton")
+	wowWikicloseButton:ClearAllPoints()
+	wowWikicloseButton:SetPoint("TOP", 0, -30)
+	wowWikicloseButton:SetScript("OnClick", function() linkFrame:Hide() end)
+	RQE.wowWikicloseButton = wowWikicloseButton
+
+	-- Make the frame movable
+	linkFrame:SetMovable(true)
+	linkFrame:EnableMouse(true)
+	linkFrame:RegisterForDrag("LeftButton")
+	linkFrame:SetScript("OnDragStart", linkFrame.StartMoving)
+	linkFrame:SetScript("OnDragStop", linkFrame.StopMovingOrSizing)
+
+	-- Configure the EditBox font
+	wowWikieditBox:SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+
+	-- Resize and reposition the close button
+	wowWikicloseButton:SetSize(20, 20)
+	wowWikicloseButton:ClearAllPoints()
+	wowWikicloseButton:SetPoint("TOPRIGHT", linkFrame, "TOPRIGHT", -5, -5)
+
+	-- Apply the font to the copy button text
+	copyButton:GetFontString():SetFont("Fonts\\SKURRI.TTF", 18, "OUTLINE")
+
+	local borderBackdrop = {
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- path to the background texture
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", -- path to the border texture
+		tile = true,
+		tileSize = 32,
+		edgeSize = 12, -- this controls the thickness of the border
+		insets = { left = 11, right = 11, top = 12, bottom = 11 },
+	}
+	linkFrame:SetBackdrop(borderBackdrop)
+
+	-- Show the frame
+	linkFrame:Show()
+end
+
+
+-- Variables to track the last known states
+RQE.lastKnownQuestID = nil
+RQE.lastKnownZoneID = nil
+RQE.lastKnownBuffStates = {}
+RQE.lastKnownInventory = {}
+
+function RQE.hasStateChanged()
+	local currentQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	local currentZoneID = C_Map.GetBestMapForUnit("player")
+	local currentBuffs = RQE.getCurrentBuffs()
+	local currentInventory = RQE.getCurrentInventory()
+
+	-- Check if there's been a change in quest ID, zone ID, buffs, or inventory
+	if currentQuestID ~= RQE.lastKnownQuestID or
+		currentZoneID ~= RQE.lastKnownZoneID or
+		not RQE.compareTables(currentBuffs, RQE.lastKnownBuffStates) or
+		not RQE.compareTables(currentInventory, RQE.lastKnownInventory) then
+
+		-- Update last known states
+		RQE.lastKnownQuestID = currentQuestID
+		RQE.lastKnownZoneID = currentZoneID
+		RQE.lastKnownBuffStates = currentBuffs
+		RQE.lastKnownInventory = currentInventory
+
+		return true
+	end
+
+	return false
+end
+
+
+-- Function to check if a quest is a World Quest by its classification
+function RQE:IsWorldQuest(questID)
+	local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+	return classification == 10  -- 10 corresponds to World Quest
+end
+
+
+-- Function will compare the current objectives with the last known objectives stored
+function RQE.hasQuestProgressChanged()
+	local currentObjectives = RQE.getAllWatchedQuestsObjectives()
+	if not RQE.lastKnownObjectives then
+		RQE.lastKnownObjectives = currentObjectives
+		return true
+	end
+
+	-- Compare current objectives with last known objectives for all quests
+	for questID, objectives in pairs(currentObjectives) do
+		local lastObjectives = RQE.lastKnownObjectives[questID]
+		if not lastObjectives or #objectives ~= #lastObjectives then
+			RQE.lastKnownObjectives = currentObjectives
+			return true
+		end
+
+		for index, objective in ipairs(objectives) do
+			local lastObjective = lastObjectives[index]
+			if not lastObjective or objective.description ~= lastObjective.description or objective.completed ~= lastObjective.completed then
+				RQE.lastKnownObjectives = currentObjectives
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
+
+function RQE.getAllWatchedQuestsObjectives()
+	local objectives = {}
+	local watchedQuests = C_QuestLog.GetNumQuestWatches()
+	for i = 1, watchedQuests do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if questID then
+			objectives[questID] = RQE.getCurrentQuestObjectives(questID)
+		end
+	end
+	return objectives
+end
+
+
+-- Function to place Current Objectives in table
+function RQE.getCurrentQuestObjectives(questID)
+	local objectives = {}
+	local numObjectives = C_QuestLog.GetNumQuestObjectives(questID)
+	for i = 1, numObjectives do
+		local description, _, completed, fulfilled, required = GetQuestObjectiveInfo(questID, i, false)
+		table.insert(objectives, {
+			description = description,
+			completed = completed,
+			fulfilled = fulfilled,
+			required = required
+		})
+	end
+	return objectives
+end
+
+
+-- Function to place Current Buffs in table
+function RQE.getCurrentBuffs()
+	local buffs = {}
+	for i = 1, 40 do  -- Typically there are not more than 40 buffs
+		local name = C_UnitAuras.GetBuffDataByIndex("player", i)
+		--local name = UnitBuff("player", i)
+		if not name then break end
+		table.insert(buffs, name)
+	end
+	return buffs
+end
+
+
+-- Function to place Current Inventory in table
+function RQE.getCurrentInventory()
+	local inventory = {}
+	for bag = 1, 5 do  -- Main bags + Reagent Bag (doesn't count items in Bank or Reagent Bank)
+		for slot = 1, C_Container.GetContainerNumSlots(bag) do
+			local itemID = C_Container.GetContainerItemID(bag, slot)
+			if itemID then
+				local _, itemCount = C_Container.GetContainerItemInfo(bag, slot)
+				if not inventory[itemID] then
+					inventory[itemID] = 0
+				end
+				inventory[itemID] = inventory[itemID] + (itemCount or 0)  -- Ensure itemCount is not nil before addition
+			end
+		end
+	end
+	return inventory
+end
+
+
+-- Compare Function Tables for Buffs and Inventory
+function RQE.compareTables(t1, t2)
+	if #t1 ~= #t2 then return false end
+	for key, value in pairs(t1) do
+		if t2[key] ~= value then return false end
+	end
+	return true
+end
+
+
+-- Function to determine the current step based on quest objectives
+function RQE:DetermineCurrentStepIndex(questID)
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		RQE.infoLog("No quest data available for quest ID:", questID)
+		return 1  -- Default to the first step if no data is available
+	end
+
+	for index, step in ipairs(questData) do
+		if not C_QuestLog.ReadyForTurnIn(questID) then
+			if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
+				return index  -- Return the index of the first incomplete objective
+			end
+		end
+	end
+
+	return #questData  -- Return the last step if all objectives are complete or ready for turn-in
+end
+
+
+-- Function to find and set the final step for the super-tracked quest
+function RQE:FindAndSetFinalStep()
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	if not superTrackedQuestID then
+		RQE.debugLog("No super-tracked quest ID found.")
+		return
+	end
+
+	local questData = self.getQuestData(superTrackedQuestID)
+
+	if not questData then
+		return
+	end
+
+	for index, stepData in ipairs(questData) do
+		if stepData.objectiveIndex == 99 then
+			self.FinalStep = index
+			RQE.infoLog("Final step for quest ID", superTrackedQuestID, "is step index:", self.FinalStep)
+			return
+		end
+	end
+
+	RQE.infoLog("No final step found for quest ID:", superTrackedQuestID)
+	self.FinalStep = nil
+end
+
+
+-- Set initial waypoint button to 1
+function RQE.SetInitialWaypointToOne()
+	if not RQE.db.profile.autoClickWaypointButton then
+		return
+	end
+
+	if not RQE.SetInitialFromAccept or not RQE.RQEQuestFrame:IsMouseOver() then
+		return
+	end
+
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+
+	if isSuperTracking then
+		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local stepIndex = RQE.AddonSetStepIndex or 1
+
+		-- Tier Four Importance: RQE.SETINITIALWAYPOINTTOONE Function
+		C_Timer.After(0.35, function()
+			RQE.isCheckingMacroContents = true
+			local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+			if isMacroCorrect then
+				return
+			end
+
+			RQEMacro:CreateMacroForCurrentStep()
+			C_Timer.After(0.2, function()
+				RQE.isCheckingMacroContents = false
+			end)
+		end)
+		--RQE.SetMacroForFinalStep(questID, stepIndex)
+	end
+
+	RQE.SetInitialFromAccept = false
+
+	C_Timer.After(1, function()
+		if InCombatLockdown() then
+			RQE.CheckNClickWButtonAfterCombat = true
+			return
+		end
+
+		if RQE.LastClickedIdentifier == 1 then
+			RQE.WaypointButtons[1]:Click()
+		else
+			if RQE.WaypointButtons[RQE.LastClickedIdentifier] then
+				RQE.WaypointButtons[RQE.LastClickedIdentifier]:Click()
+			else
+				RQE.infoLog("Waypoint button with identifier " .. tostring(RQE.LastClickedIdentifier) .. " does not exist.")
+			end
+		end
+	end)
+end
+
+
+-- Function to check and set the final step
+function RQE.CheckAndSetFinalStep()
+	C_Timer.After(1, function()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+		if not superTrackedQuestID then
+			RQE.debugLog("No super tracked quest ID found, skipping check.")
+			RQE.shouldCheckFinalStep = false
+			return
+		end
+
+		local questData = RQE.getQuestData(superTrackedQuestID)
+		if not questData then
+			RQE.shouldCheckFinalStep = false
+			return
+		end
+
+		local objectives = RQE.API.GetQuestObjectives(superTrackedQuestID)	--C_QuestLog.GetQuestObjectives(superTrackedQuestID)
+		if not objectives or #objectives == 0 then
+			RQE.debugLog("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
+			RQE.shouldCheckFinalStep = false
+			return
+		end
+
+		-- Check if all objectives are finished
+		local allObjectivesCompleted = true
+		for _, objective in ipairs(objectives) do
+			if not objective.finished then
+				allObjectivesCompleted = false
+				break
+			end
+		end
+
+		-- Calculate highestCompletedObjectiveIndex based on objectives completion
+		local highestCompletedObjectiveIndex = allObjectivesCompleted and 99 or RQE.AddonSetStepIndex or 1 --(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex) or 1
+		RQE.highestCompletedObjectiveIndex = highestCompletedObjectiveIndex
+
+		for _, stepData in ipairs(questData) do
+			if stepData.objectiveIndex and (stepData.objectiveIndex ~= 99) then
+				local objective = objectives[stepData.objectiveIndex]
+				if objective and objective.finished and stepData.objectiveIndex > highestCompletedObjectiveIndex then
+					highestCompletedObjectiveIndex = stepData.objectiveIndex
+				end
+			end
+		end
+
+		RQE.infoLog("QuestID:", tostring(superTrackedQuestID), ", All Objectives Completed:", tostring(allObjectivesCompleted),", Highest Completed Objective Index:", tostring(highestCompletedObjectiveIndex))
+
+		local finalStepIndex = nil
+		for index, step in ipairs(questData) do
+			if step.objectiveIndex == 99 then
+				finalStepIndex = index
+				break
+			end
+		end
+
+		if not finalStepIndex then
+			RQE.debugLog("No final step (objectiveIndex 99) found for quest ID:", superTrackedQuestID)
+			RQE.shouldCheckFinalStep = false
+			return
+		end
+
+		C_Timer.After(1.5, function()
+			if highestCompletedObjectiveIndex == 99 then
+				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+				RQE.infoLog("Final Index is: " .. finalStepIndex)
+				-- Tier Four Importance: RQE.CHECKANDSETFINALSTEP Function
+				RQE.CreateMacroForCheckAndSetFinalStep = true
+
+				C_Timer.After(0.1, function()
+					RQE.isCheckingMacroContents = true
+					local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+					if isMacroCorrect then
+						return
+					end
+
+					RQEMacro:CreateMacroForCurrentStep()
+					C_Timer.After(0.2, function()
+						RQE.isCheckingMacroContents = false
+					end)
+				end)
+
+				-- RQE.isCheckingMacroContents = true
+				-- RQEMacro:CreateMacroForCurrentStep()
+				-- C_Timer.After(3, function()
+					-- RQE.CreateMacroForCheckAndSetFinalStep = false
+					-- RQE.isCheckingMacroContents = false
+				-- end)
+
+				-- RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
+			else
+				RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
+				RQE.infoLog("Final Index is: " .. finalStepIndex)
+			end
+		end)
+	end)
+
+	RQE.shouldCheckFinalStep = false
+end
+
+
+-- Function that creates a macro based on the current stepIndex of the current super tracked quest
+function RQE.SetMacroForFinalStep(questID, finalStepIndex)
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return
+	end
+
+	local stepData = questData[finalStepIndex]
+	if stepData and stepData.macro then
+		local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+		RQE.infoLog("Setting macro commands for final step:", macroCommands)
+		RQEMacro:SetQuestStepMacro(questID, finalStepIndex, macroCommands, false)
+	else
+		RQE.debugLog("No macro data found for the final step.")
+	end
+end
+
+
+-- Combine individual check results using `mod`
+function RQE:CombineCheckResults(results, stepData)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running CombineCheckResults ~~~")
+	end
+
+	local overallResult = nil
+
+	for i, checkData in ipairs(stepData.checks or {}) do
+		local mod = checkData.mod or "" -- Modifier relationship
+		local currentResult = results[i] ~= nil and results[i] or false -- Ensure `nil` is treated as `false`
+
+		-- Combine based on mod
+		if mod == "OR" then
+			overallResult = overallResult or currentResult
+		elseif mod == "AND" then
+			overallResult = overallResult and currentResult
+		elseif mod == "NOT" then
+			overallResult = not currentResult
+		else
+			-- No modifier, use the first result as the starting point
+			overallResult = currentResult
+		end
+
+		-- Ensure `overallResult` is always a boolean before printing
+		overallResult = overallResult ~= nil and overallResult or false
+		currentResult = currentResult ~= nil and currentResult or false
+
+		-- Print debug information safely
+		if RQE.db.profile.debugLevel == "INFO+" then
+			if mod == "" then
+				print("**** Check index:", i, "Mod: N/A ", "Current Result:", tostring(currentResult), "Overall Result:", tostring(overallResult))
+			else
+				print("**** Check index:", i, "Mod:", mod, "Current Result:", tostring(currentResult), "Overall Result:", tostring(overallResult))
+			end
+		end
+
+		-- Short-circuit on AND failure
+		if mod == "AND" and not overallResult then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Short-circuited on AND failure at check index:", i)
+			end
+			return false
+		end
+	end
+
+	return overallResult
+end
+
+
+-- Function that creates a macro based on the current stepIndex of the current super tracked quest
+function RQEMacro:CreateMacroForCurrentStep()
+	-- Retrieve the questID that is currently being supertracked
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	local isInInstance, instanceType = IsInInstance()
+	if not questID then
+		return
+	end
+
+	if not RQE.NewZoneChange then
+		-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
+		if RQE.QuestTrackerHiddenSuperTrackedPressed then
+		-- if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
+			if isInInstance and (instanceType == "raid") then
+			-- if isInInstance and (instanceType == "party" or instanceType == "raid") then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("isInInstance is: " .. tostring(isInInstance) .. ". instanceType is: " .. instanceType)
+				end
+				return
+			end
+		end
+	end
+
+	-- -- Clears the RQEMacro before creating a fresh one	-- keeping this in place resulted in the macro being cleared too frequently and sometimes being left empty at those inappropriate times
+	-- RQEMacro:ClearMacroContentByName("RQE Macro")
+
+	-- Retrieve the quest data from the database
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return
+	end
+
+	-- Fetch the current step index that the player is on
+	local stepIndex = RQE.AddonSetStepIndex
+	if not stepIndex then
+		return
+	end
+
+	-- Fetch the macro data for the current step
+	local stepData = questData[stepIndex]
+	if not stepData or (not stepData.macro and not stepData.macroArray) then
+		return
+	end
+
+	-- ✅ Determine if we're using the new macroArray or legacy macro
+	local macroContent
+	if stepData.macroArray then
+		-- New array-style macro (contains spellIDTooltip, iconFileID)
+		macroContent = stepData.macroArray
+	elseif type(stepData.macro) == "table" then
+		-- Legacy multi-line macro
+		local allStrings = true
+		for _, v in ipairs(stepData.macro) do
+			if type(v) ~= "string" then
+				allStrings = false
+				break
+			end
+		end
+		if allStrings then
+			macroContent = table.concat(stepData.macro, "\n")
+		else
+			macroContent = stepData.macro
+		end
+	else
+		-- Simple string macro
+		macroContent = stepData.macro
+	end
+
+	-- Combine the macro data into a single string
+	-- local macroContent = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+
+	-- Print the macro content for debugging
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Creating or updating 'RQE Macro' with content:", macroContent)
+	end
+
+	-- Set or update the macro using the provided content
+	RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, false)
+	-- RQEMacro:SetMacro("RQE Macro", "INV_MISC_QUESTIONMARK", macroContent, false)
+	RQE.Buttons.UpdateMagicButtonVisibility()
+end
+
+
+-- Helper function to check if the final step contains `funct = "CheckDBComplete"`
+function RQE:HasCheckDBComplete(questData)
+	local finalStepIndex = #questData
+	local finalStep = questData[finalStepIndex]
+	if finalStep and finalStep.funct and finalStep.funct == "CheckDBComplete" then
+		return true, finalStepIndex
+	end
+	return false, finalStepIndex
+end
+
+
+-- Retail exposes ReadyForTurnIn reliably. Classic Era can instead set only
+-- IsComplete (or the quest-log isComplete flag) when objectives are finished.
+function RQE:IsQuestReadyForTurnIn(questID)
+	questID = tonumber(questID)
+	if not questID then return false end
+
+	if RQE.API.ReadyForTurnIn and RQE.API.ReadyForTurnIn(questID) then
+		return true
+	end
+	if C_QuestLog and C_QuestLog.IsComplete and C_QuestLog.IsComplete(questID) then
+		return true
+	end
+
+	local questLogIndex = RQE.API.GetLogIndexForQuestID(questID)
+	local questInfo = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
+	return questInfo and (questInfo.isComplete == true or questInfo.isComplete == 1) or false
+end
+
+
+-- Displays the selected Steps List step in RQEFrame without advancing quest progress or forcing waypoint movement.
+-- Searched quests which are not yet in the quest log expose a virtual step 0:
+-- the quest giver/pickup state. Normal quest-log step controls still require
+-- the profile option.
+function RQE:CanNavigateSearchedQuestSteps(questID)
+	questID = tonumber(questID)
+	return questID
+		and tonumber(RQE.searchedQuestID) == questID
+		and not RQE.API.IsOnQuest(questID)
+		and not RQE.API.IsWorldQuest(questID)
+		and type(RQE.getQuestData(questID)) == "table"
+end
+
+
+function RQE:CanUseStepControlsForQuest(questID)
+	return RQE.db.profile.enableStepControls or RQE:CanNavigateSearchedQuestSteps(questID)
+end
+
+
+function RQE:SetDisplayedStepFromStepsList(stepIndex)
+	local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+	if not RQE:CanUseStepControlsForQuest(questID) then return end
+
+	local questData = questID and RQE.getQuestData(questID)
+	local isSearchedStepZero = stepIndex == 0 and RQE:CanNavigateSearchedQuestSteps(questID)
+	if not questData or (not isSearchedStepZero and not questData[stepIndex]) then return end
+
+	RQE.ManualStepPreview = true
+	RQE.ManualPreviewQuestID = questID
+	RQE.ManualPreviewStepIndex = stepIndex
+
+	RQE.AddonSetStepIndex = stepIndex
+	RQE.CurrentStepIndex = stepIndex
+	RQE.StoredStepIndex = stepIndex
+
+	if stepIndex > 0 and RQE.WaypointButtons and RQE.WaypointButtons[stepIndex] then
+		RQE.LastClickedButtonRef = RQE.WaypointButtons[stepIndex]
+	end
+
+	if UpdateFrame then UpdateFrame(questID, questData) end
+	if isSearchedStepZero then
+		-- RQE:GenerateNpcMacroIfNeeded(questID)
+		-- Step 0 must overwrite any currently displayed DB-step macro even when
+		-- a Classic API reports a transient quest-log entry.
+		RQE:SetSearchedQuestPickupMacro(questID)
+	elseif RQE:CanNavigateSearchedQuestSteps(questID) and RQEMacro and RQEMacro.SetQuestStepMacro then
+		local stepMacro = questData[stepIndex].macroArray or questData[stepIndex].macro
+		RQEMacro:SetQuestStepMacro(questID, stepIndex, stepMacro, false)
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	elseif RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+		RQEMacro:CreateMacroForCurrentStep()
+	end
+	if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
+	if RQE.Buttons.RefreshStepNavigationTooltips then
+		RQE.Buttons.RefreshStepNavigationTooltips()
+	end
+end
+
+
+-- Clears manual step preview mode and optionally resumes automatic quest progress evaluation.
+function RQE:ClearManualStepPreview(runChecks)
+	if not RQE.db.profile.enableStepControls then return end
+
+	RQE.ManualStepPreview = false
+	RQE.ManualPreviewQuestID = nil
+	RQE.ManualPreviewStepIndex = nil
+	--RQE.ResumeAutomaticFromManualPreview = false
+
+	if runChecks ~= false then
+		RQE:StartPeriodicChecks()
+	end
+end
+
+
+-- Scheduler to help with CPU load when calling RQE:StartPeriodicChecks()
+function RQE:QueuePeriodicChecks(reason, delay, questID)
+	delay = delay or 0.20
+	questID = questID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	if not questID or questID <= 0 then
+		return
+	end
+
+	-- SeparateFocusFrame validation is handled inside StartPeriodicChecks()
+	-- -- Checks to make sure that the SeparateFocusFrame contains information when it should
+	-- C_Timer.After(1.1, function()
+		-- RQE:CheckAndRefreshSeparateFocusFrame()
+	-- end)
+
+	-- C_Timer.After(1.7, function()
+		-- RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	-- end)
+
+	-- Prevent many timers for the same thing from stacking
+	if self._scheduledPeriodicCheck then
+		self._scheduledPeriodicReason = reason or self._scheduledPeriodicReason
+		self._lastPeriodicQuestID = questID
+		return
+	end
+
+	self._scheduledPeriodicReason = reason
+	self._lastPeriodicQuestID = questID
+
+	self._scheduledPeriodicCheck = C_Timer.NewTimer(delay, function()
+		self._scheduledPeriodicCheck = nil
+
+		if InCombatLockdown() then
+			self.RunPeriodicChecksAfterCombat = true
+			return
+		end
+
+		local activeQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		if not activeQuestID or activeQuestID <= 0 then
+			return
+		end
+
+		-- Optional cooldown so back-to-back events in the same burst don't all run
+		local now = GetTime()
+		if (now - (self._lastPeriodicRunTime or 0)) < 0.40 then
+			return
+		end
+		self._lastPeriodicRunTime = now
+
+		if self.db.profile.debugLevel == "INFO+" then
+			print("QueuePeriodicChecks → running StartPeriodicChecks() from:", tostring(self._scheduledPeriodicReason))
+		end
+
+		self:StartPeriodicChecks()
+	end)
+end
+
+
+-- Periodic check setup comparing with entry in RQEDatabase
+function RQE:StartPeriodicChecks()
+	if InCombatLockdown() then
+		self.RunPeriodicChecksAfterCombat = true
+		return
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running RQE:StartPeriodicChecks() ~~~")
+	end
+
+	-- Checks to make sure that the SeparateFocusFrame contains information when it should
+	C_Timer.After(1.1, function()
+		RQE:CheckAndRefreshSeparateFocusFrame()
+	end)
+
+	C_Timer.After(1.7, function()
+		RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
+	end)
+
+	local extractedQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
+	--local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Current superTrackedQuestID:", superTrackedQuestID)
+	end
+
+	if not superTrackedQuestID then return end
+
+	RQE.CheckAndClickSeparateWaypointButtonButton()	-- If this button exists and is valid it will click the button automatically at start, but might need to check that a waypoint doesn't already exist before running this call
+
+	-- Define the function map for parent functions
+	local functionMap = {
+		CheckDBBuff = "CheckDBBuff",
+		CheckDBDebuff = "CheckDBDebuff",
+		--CheckDBModel = "CheckDBModel",	-- NYI, but meant to reduce firings from CheckDBBuff and CheckDBDebuff
+		CheckDBInventory = "CheckDBInventory",
+		CheckDBZoneChange = "CheckDBZoneChange",
+		CheckDBObjectiveStatus = "CheckDBObjectiveStatus",
+		CheckScenarioStage = "CheckScenarioStage",
+		CheckScenarioCriteria = "CheckScenarioCriteria",
+		CheckDBConditionalsOnly = "CheckDBConditionalsOnly",
+		CheckDBComplete = "CheckDBComplete",
+	}
+
+	local questData = self.getQuestData(superTrackedQuestID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			RQE:CheckAndCreateSuperTrackedQuestWaypoint()	-- Set the initial waypoint if there is direction text that leads the player to a different zone
+			print("No quest data for superTrackedQuestID:", superTrackedQuestID)
+		end
+		return
+	end
+
+	-- Explicitly resume automatic progression
+	if RQE.db.profile.enableStepControls then
+		if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
+			RQE:ClearManualStepPreview(false)
+			RQE.ManualStepOverrideQLIB = false
+			--RQE.AddonSetStepIndex = 1		-- this setting was resetting the stepIndex to 1 when enableStepControls was activated, but wouldn't properly advance a step below
+		end
+	end
+
+	-- if RQE.db.profile.enableStepControls then
+		-- if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
+		-- --if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
+			-- -- Explicitly resume automatic progression
+			-- RQE:ClearManualStepPreview(false)
+			-- RQE.ManualPreviewQuestID = nil
+			-- RQE.ManualPreviewStepIndex = nil
+			-- RQE.ManualStepOverrideQLIB = false
+			-- RQE.AddonSetStepIndex = 1
+			-- -- RQE.ResumeAutomaticFromManualPreview = false
+		-- end
+	-- end
+
+	local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("stepIndex being evaluated:", stepIndex)
+	end
+
+	-- Handle turn-in readiness
+	-- if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
+	if self:IsQuestReadyForTurnIn(superTrackedQuestID) then
+		local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
+		if hasCheckDBComplete then
+			-- local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+			local waypointText = C_QuestLog.GetNextWaypointText
+				and C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+				or nil
+			if not waypointText then
+				-- No Blizzard waypoint text: advance to final step and stop here.
+				self:ClickWaypointButtonForIndex(finalStepIndex)
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+				end
+				RQE.OkayWaypointButtonToMove = true
+				return
+			else
+				-- Blizzard is already guiding the player.
+				-- Keep our logic running, but make the UI reflect the turn-in step.
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest ready for turn-in and waypointText present; syncing UI to final step (no auto-advance).")
+				end
+
+				-- Make RQE display step 2/2 (final) without forcing our own waypoint.
+				stepIndex = finalStepIndex
+				RQE.AddonSetStepIndex = finalStepIndex
+				if RQE.db.profile.enableStepControls then
+					RQE.CurrentStepIndex = finalStepIndex
+					RQE.StoredStepIndex = finalStepIndex
+				end
+
+				-- Refresh frames so Separate Focus shows 2/2
+				if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+				--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+				if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
+				-- Optionally, if you want your transition/portal waypoint to appear too:
+				-- RQE:FindQuestZoneTransition(superTrackedQuestID)
+				-- (leave commented if you only want Blizzard's arrow)
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
+			end
+			-- keep going
+		end
+	end
+
+	-- Iterate over all steps to evaluate which one should be active
+	for i, stepData in ipairs(questData) do
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Evaluating stepIndex:", i)
+		end
+
+		-- Handle `check` for single-condition steps
+		if stepData.check and stepData.neededAmt and stepData.funct then
+			local parentFunctionName = functionMap[stepData.funct]
+			if self[parentFunctionName] then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Calling function:", parentFunctionName, "for stepIndex:", i)
+				end
+				local funcResult = self[parentFunctionName](self, superTrackedQuestID, i, stepData.check, stepData.neededAmt)
+				if funcResult then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(parentFunctionName, "succeeded for stepIndex:", i, ". Advancing to the next step.")
+					end
+					-- Only advance if result is true
+					RQE.OkayWaypointButtonToMove = true
+					stepIndex = i + 1
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(parentFunctionName, "did not succeed for stepIndex:", i, ". Stopping evaluation.")
+					end
+					break -- Stop advancing further
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Invalid or missing function for funct:", stepData.funct)
+				end
+				break
+			end
+		end
+
+		-- Handle `checks` for multi-condition steps
+		if stepData.checks then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("~~~ StepData contains checks. Evaluating each check. ~~~")
+			end
+
+			local results = {}
+			local conditionalTriggered = false
+
+			for j, checkData in ipairs(stepData.checks) do
+				-- ✅ NEW CONDITIONAL LOGIC
+				if checkData.cond and type(checkData.cond) == "string" then
+					-- Match something like RQE.FunctionName(any, number, "string")
+					--[[
+						cond = "RQE.CheckBuff('Blessing of Kings', 'Arcane Intellect')"
+						cond = "RQE.CheckScenarioStage(2)"
+						cond = "RQE.CheckQuestState(12345, 'COMPLETED')"
+					]]
+
+					local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+
+					if funcName and RQE[funcName] then
+						local args = {}
+
+						-- Parse both numbers and strings from inside parentheses
+						for param in string.gmatch(rawParams or "", "[^,%s]+") do
+							local num = tonumber(param)
+							if num then
+								table.insert(args, num)
+							else
+								-- Strip quotes from string params like "Blessing of Kings"
+								param = param:gsub("^['\"]", ""):gsub("['\"]$", "")
+								table.insert(args, param)
+							end
+						end
+
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print(string.format(
+								"Conditional detected: %s | Function: %s | Args: %s",
+								checkData.cond, funcName, table.concat(args, ", ")
+							))
+						end
+
+						-- Dynamically call the RQE.<function> with all parsed arguments
+						local ok, conditionResult = pcall(RQE[funcName], RQE, unpack(args))
+
+						if not ok then
+							print(string.format("Error running conditional '%s': %s", checkData.cond, conditionResult))
+						else
+							if RQE.db.profile.debugLevel == "INFO+" then
+								print("Conditional check result:", tostring(conditionResult))
+							end
+
+							if conditionResult then
+								conditionalTriggered = true
+								break
+							end
+						end
+					end
+				end
+
+				-- Continue with normal function-based check logic if conditional doesn't exist in any of the 'checks' for that stepIndex
+				local parentFunctionName = checkData.funct
+				if self[parentFunctionName] then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Calling parent function:", parentFunctionName, "for check index:", j)
+					end
+					local funcResult = self[parentFunctionName](self, superTrackedQuestID, i, checkData.check, checkData.neededAmt)
+					results[j] = funcResult
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Invalid or missing function for check index:", j, "funct:", checkData.funct)
+					end
+					results[j] = false
+				end
+			end
+
+			-- If conditional triggered, skip combining logic
+			if conditionalTriggered then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Conditional triggered; auto-passing stepIndex:", i)
+				end
+				RQE.OkayWaypointButtonToMove = true
+				stepIndex = i + 1
+				break
+			end
+
+			-- Combine results using mod logic
+			local allChecksPassed = self:CombineCheckResults(results, stepData)
+
+			if allChecksPassed then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("All checks succeeded for stepIndex:", i, ". Advancing to the next step.")
+				end
+				RQE.OkayWaypointButtonToMove = true
+				stepIndex = i + 1
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Not all checks passed for stepIndex:", i)
+				end
+				break
+			end
+		end
+	end
+
+	-- Early-return if waypoint text exists AND current step is not a zone-change step
+	local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+	if waypointText then
+		local cur = questData[stepIndex]
+		local isZoneChangeCheck = false
+
+		if cur then
+			if cur.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+			elseif cur.checks then
+				for _, checkData in ipairs(cur.checks) do
+					if checkData.funct == "CheckDBZoneChange" then
+						isZoneChangeCheck = true
+						break
+					end
+				end
+			end
+		end
+
+		if not isZoneChangeCheck then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("WaypointText present; suppressing waypoint creation but still updating step index.")
+			end
+
+			-- ✅ Update step index / UI without creating a waypoint
+			RQE.AddonSetStepIndex = stepIndex
+			if RQE.db.profile.enableStepControls then
+				RQE.CurrentStepIndex = stepIndex
+				RQE.StoredStepIndex = stepIndex
+			end
+
+			local playerMapID = C_Map.GetBestMapForUnit("player")
+
+			if UpdateFrame then
+				UpdateFrame(superTrackedQuestID, questData)
+			end
+
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+
+			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
+
+			-- Refresh the macro before leaving this early-return branch
+			C_Timer.After(0.20, function()
+				RQE.isCheckingMacroContents = true
+
+				local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+				if not isMacroCorrect then
+					RQEMacro:CreateMacroForCurrentStep()
+				end
+
+				C_Timer.After(0.20, function()
+					RQE.isCheckingMacroContents = false
+				end)
+			end)
+
+			return
+
+			-- local playerMapID = C_Map.GetBestMapForUnit("player")
+			-- if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+			-- --if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+			-- if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+			-- RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
+			-- return  -- Skip waypoint creation only
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("WaypointText present; current step requires CheckDBZoneChange -> continuing periodic checks.")
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("StartPeriodicChecks continuing (no waypoint text).")
+		end
+	end
+
+	-- If we advanced to a new stepIndex, click the appropriate waypoint button
+	if stepIndex <= #questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Setting stepIndex to:", stepIndex)
+		end
+		self:ClickWaypointButtonForIndex(stepIndex)
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No further steps to process.")
+		end
+	end
+
+	C_Timer.After(0.15, function()
+		RQE.isCheckingMacroContents = true
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(0.2, function()
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
+
+	-- ✅ Determine if current step includes a coordinate-distance conditional
+	RQE.isCheckingCoordinateDistanceConditional = false
+
+	local curStep = questData[stepIndex]
+	if curStep and curStep.checks then
+		for _, checkData in ipairs(curStep.checks) do
+			if checkData.cond and checkData.cond:find("RQE%.CheckCoordinateDistance") then
+				RQE.isCheckingCoordinateDistanceConditional = true
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Found coordinate-distance conditional in current step.")
+				end
+				break
+			end
+		end
+	end
+
+	-- Final cleanup
+	RQE.NewZoneChange = false
+	C_Timer.After(0.45, function()
+		RQE:UpdateSeparateFocusFrame()
+	end)
+	RQE:UpdateStepDistance()
+end
+
+
+-- Check if the player is currently in one or more possible mapIDs
+-- Usage: cond = "RQE.CheckMap(1, 10, 199)"
+function RQE.CheckMap(self, ...)
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local mapIDs = { ... } -- captures all args
+	if not playerMapID then return false end
+
+	for _, mapID in ipairs(mapIDs) do
+		if tonumber(mapID) == playerMapID then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("RQE.CheckMap(): Player is in mapID %d (matched)", playerMapID))
+			end
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("RQE.CheckMap(): PlayerMapID %d did not match any target IDs", playerMapID))
+	end
+
+	return false
+end
+
+
+-- Check if the player has completed the quest or not
+-- Usage: cond = "RQE.CheckQuestState(12345, 'COMPLETED')" or "RQE.CheckQuestState(12345, 'INCOMPLETE')"
+function RQE.CheckQuestState(self, questID, state)
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	local foundInfo
+
+	-- Find the quest entry by ID
+	for questLogIndex = 1, numEntries do
+		local info = RQE.API.GetQuestLogInfo(questLogIndex)
+		if info and info.questID == questID then
+			foundInfo = info
+			break
+		end
+	end
+
+	-- If the quest isn't in the log, it may already be turned in
+	if not foundInfo then
+		local isComplete = C_QuestLog.IsComplete(questID)
+		if isComplete and state == "COMPLETED" then
+			return true
+		elseif not isComplete and state == "INCOMPLETE" then
+			return true
+		else
+			return false
+		end
+	end
+
+	-- If the quest is in the log, use its info
+	local isComplete = foundInfo.isComplete or C_QuestLog.IsComplete(questID)
+
+	if state == "COMPLETED" then
+		return isComplete
+	elseif state == "INCOMPLETE" then
+		return not isComplete
+	else
+		-- Optional: handle other states like ACTIVE or NOTACTIVE
+		if state == "ACTIVE" then
+			return RQE.API.IsOnQuest(questID)
+		elseif state == "NOTACTIVE" then
+			return not RQE.API.IsOnQuest(questID)
+		end
+	end
+
+	return false
+end
+
+
+-- Checks if the player is within `maxYards` of (x, y) on `mapID`.
+-- Accepts x/y as either 0–100 (percent coords like 32.42) or 0–1 normalized.
+-- Usage in DB: cond = "RQE.CheckCoordinateDistance(32.42, 48.17, 1, 25)"
+-- OR: RQE.CheckCoordinateDistance(x, y,  mapID, distanceToTarget)
+function RQE.CheckCoordinateDistance(self, x, y, mapID, maxYards)
+	-- Basic arg validation
+	if not (x and y and mapID and maxYards) then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckCoordinateDistance(): missing args; expected (x, y, mapID, maxYards)")
+		end
+		return false
+	end
+
+	-- Auto-adjust threshold: add +10 yards buffer for accuracy compensation
+	local originalMaxYards = maxYards
+	maxYards = (tonumber(maxYards) or 0) + 10
+
+	-- Normalize 0–100 coords to 0–1 if needed
+	if x > 1 then x = x / 100 end
+	if y > 1 then y = y / 100 end
+
+	-- Prefer HereBeDragons for true yard distances
+	local HBD = LibStub and LibStub("HereBeDragons-2.0", true)
+	if HBD then
+		-- Get the player's current zone position (map + normalized coords)
+		local pMapID = C_Map.GetBestMapForUnit("player")
+		local pPos = pMapID and C_Map.GetPlayerMapPosition(pMapID, "player")
+		if not (pMapID and pPos) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE.CheckCoordinateDistance(): cannot get player position")
+			end
+			return false
+		end
+		local px, py = pPos:GetXY()
+
+		-- Compute yard distance between (player) and (x,y,mapID)
+		local distOrDx, dy = HBD:GetZoneDistance(pMapID, px, py, mapID, x, y)
+
+		-- Some versions of HBD return a single distance (yards),
+		-- others return dx, dy (yard components). Handle both gracefully.
+		local dist
+		if dy == nil then
+			-- Newer HBD: single return value (total distance in yards)
+			dist = distOrDx
+		else
+			-- Older HBD: two return values (dx, dy)
+			dist = math.sqrt((distOrDx or 0)^2 + (dy or 0)^2)
+		end
+
+		if not dist then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(("RQE.CheckCoordinateDistance(): no zone distance between %s and %s"):format(tostring(pMapID), tostring(mapID)))
+			end
+			return false
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format("RQE.CheckCoordinateDistance(): ~ dist=%.1f yards (threshold=%d)", dist, originalMaxYards))
+		end
+		return dist <= maxYards
+
+		-- local dx, dy = HBD:GetZoneDistance(pMapID, px, py, mapID, x, y)
+		-- if not (dx and dy) then
+			-- -- Different instances/continents or an unmapped transition — treat as not in range
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print(("RQE.CheckCoordinateDistance(): no zone distance between %s and %s"):format(tostring(pMapID), tostring(mapID)))
+			-- end
+			-- return false
+		-- end
+
+		-- local dist = math.sqrt(dx*dx + dy*dy)
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print(string.format("RQE.CheckCoordinateDistance(): dist=%.1f yards (threshold=%d)", dist, maxYards))
+		-- end
+		-- return dist <= maxYards
+	end
+
+	-- Fallback (no HBD): approximate using normalized distance on same map only
+	local pMapID = C_Map.GetBestMapForUnit("player")
+	if pMapID ~= mapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckCoordinateDistance(): HBD missing and player not on target map — returning false")
+		end
+		return false
+	end
+
+	local pPos = C_Map.GetPlayerMapPosition(pMapID, "player")
+	if not pPos then return false end
+	local px, py = pPos:GetXY()
+
+	-- Very rough heuristic: treat 0.01 normalized as ~ yard-scale chunk; tune if desired
+	local nx = (px - x)
+	local ny = (py - y)
+	local normDist = math.sqrt(nx*nx + ny*ny)
+
+	-- Heuristic scale factor (map-size dependent; only for emergency fallback)
+	local APPROX_YARDS_PER_NORM = 1000 -- conservative guess; avoids false positives
+	local approxYards = normDist * APPROX_YARDS_PER_NORM
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("RQE.CheckCoordinateDistance(): HBD missing; approxDist=%.1f yards (threshold=%d)", approxYards, maxYards))
+	end
+	return approxYards <= maxYards
+end
+
+
+-- Helper function to find the x, y and mapID that exists for the RQE.CheckCoordinateDistance() conditional in the DB file
+function RQE:CheckCoordinateDistanceConditional()
+	local extractedQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		extractedQuestID = RQE.DisplayedQuestID
+		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+	end
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
+	--local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
+	if not superTrackedQuestID then return end
+
+	local questData = self.getQuestData(superTrackedQuestID)
+	if not questData then return end
+
+	local stepIndex = RQE.AddonSetStepIndex or (self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex) or 1
+	local stepData = questData[stepIndex]
+	if not stepData or not stepData.checks then return end
+
+	for _, checkData in ipairs(stepData.checks) do
+		if checkData.cond and checkData.cond:find("RQE%.CheckCoordinateDistance") then
+			local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+			if funcName and RQE[funcName] then
+				local args = {}
+				for param in string.gmatch(rawParams or "", "[^,%s]+") do
+					local num = tonumber(param)
+					if num then
+						table.insert(args, num)
+					end
+				end
+
+				local ok, result = pcall(RQE[funcName], RQE, unpack(args))
+				if ok and result then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format("RQE: Within %.0f yards of target — advancing step %d.", args[4] or 0, stepIndex))
+					end
+					self:ClickWaypointButtonForIndex(stepIndex + 1)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+					RQE.isMonitoringCoordinateDistance = false
+					break
+				end
+			end
+		end
+	end
+end
+
+
+-- Check if the player knows one or more spells (OR logic)
+-- Usage examples:
+--   cond = "RQE.CheckKnownSpell(12345)"
+--   cond = "RQE.CheckKnownSpell(12345, 67890, 13579)"
+function RQE.CheckKnownSpell(self, ...)
+	local spellIDs = { ... }
+
+	-- Validate arguments
+	if not spellIDs or #spellIDs == 0 then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckKnownSpell(): No spellIDs provided.")
+		end
+		return false
+	end
+
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Iterate through all spellIDs provided
+	for _, spellID in ipairs(spellIDs) do
+		local numericID = tonumber(spellID)
+		if numericID then
+			local isKnown = IsSpellKnown(numericID)
+			if debugEnabled then
+				print(string.format("RQE.CheckKnownSpell(): Checking spellID %d -> %s", numericID, tostring(isKnown)))
+			end
+
+			-- ✅ If the player knows *any* of the spells, return true immediately
+			if isKnown then
+				if debugEnabled then
+					print(string.format("RQE.CheckKnownSpell(): Player knows spellID %d — conditional TRUE", numericID))
+				end
+				return true
+			end
+		else
+			if debugEnabled then
+				print(string.format("RQE.CheckKnownSpell(): Invalid spellID argument: %s", tostring(spellID)))
+			end
+		end
+	end
+
+	-- ❌ If none of the spells are known
+	if debugEnabled then
+		local idList = table.concat(spellIDs, ", ")
+		print(string.format("RQE.CheckKnownSpell(): None of the provided spellIDs are known (%s) — conditional FALSE", idList))
+	end
+
+	return false
+end
+
+-- -- Check if the player knows a given spellID
+-- -- Usage: cond = "RQE.CheckKnownSpell(23922)"
+-- function RQE.CheckKnownSpell(self, spellID)
+	-- -- Validate input
+	-- if not spellID or type(spellID) ~= "number" then
+		-- if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			-- print("RQE.CheckKnownSpell(): Invalid or missing spellID")
+		-- end
+		-- return false
+	-- end
+
+	-- -- Use the Blizzard API to check if the player knows the spell
+	-- local isKnown = IsSpellKnown(spellID)
+
+	-- if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+		-- if isKnown then
+			-- print(string.format("RQE.CheckKnownSpell(): Player knows spellID %d — conditional TRUE", spellID))
+		-- else
+			-- print(string.format("RQE.CheckKnownSpell(): Player does NOT know spellID %d — conditional FALSE", spellID))
+		-- end
+	-- end
+
+	-- return isKnown
+-- end
+
+
+-- Check if one or more objectives of the currently super-tracked quest are complete (OR logic)
+-- Usage examples:
+--   cond = "RQE.CheckObjectiveStatus(1)"
+--   cond = "RQE.CheckObjectiveStatus(1, 2, 3)"
+function RQE.CheckObjectiveStatus(self, ...)
+	local objectiveIndexes = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO")
+
+	-- Get the currently super-tracked questID
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		if debugEnabled then
+			print("RQE.CheckObjectiveStatus(): No super-tracked quest found.")
+		end
+		return false
+	end
+
+	-- Get the objectives for that quest
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	if not objectives or #objectives == 0 then
+		if debugEnabled then
+			print(string.format("RQE.CheckObjectiveStatus(): No objectives found for questID %d.", questID))
+		end
+		return false
+	end
+
+	if not objectiveIndexes or #objectiveIndexes == 0 then
+		if debugEnabled then
+			print("RQE.CheckObjectiveStatus(): No objective indexes provided.")
+		end
+		return false
+	end
+
+	-- Check if *any* of the provided objective indexes are complete
+	for _, objIndex in ipairs(objectiveIndexes) do
+		local idx = tonumber(objIndex)
+		local objInfo = objectives[idx]
+
+		if objInfo then
+			local isComplete = objInfo.finished or false
+			if debugEnabled then
+				print(string.format(
+					"RQE.CheckObjectiveStatus(): Objective #%d (%s) -> %s",
+					idx,
+					objInfo.text or "No description",
+					tostring(isComplete)
+				))
+			end
+
+			if isComplete then
+				if debugEnabled then
+					print(string.format(
+						"RQE.CheckObjectiveStatus(): Objective #%d is complete — conditional TRUE",
+						idx
+					))
+				end
+				return true
+			end
+		else
+			if debugEnabled then
+				print(string.format(
+					"RQE.CheckObjectiveStatus(): Invalid objective index %s for quest %d",
+					tostring(objIndex),
+					questID
+				))
+			end
+		end
+	end
+
+	-- ❌ None of the objectives were complete
+	if debugEnabled then
+		local list = table.concat(objectiveIndexes, ", ")
+		print(string.format(
+			"RQE.CheckObjectiveStatus(): None of the objectives (%s) are complete for questID %d — conditional FALSE",
+			list, questID
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckPlayerFaction(...)
+Checks if the player's faction matches any of the provided names.
+Supports multiple faction names (OR logic).
+Example usage in DB:
+	cond = "RQE.CheckPlayerFaction('Horde', 'Neutral')"
+--------------------------------------------------------------
+]]
+function RQE.CheckPlayerFaction(self, ...)
+	local allowedFactions = { ... }
+
+	-- Retrieve the player's faction
+	local playerFaction, localizedFaction = UnitFactionGroup("player")
+	if not playerFaction then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckPlayerFaction(): Unable to determine player faction.")
+		end
+		return false
+	end
+
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Normalize case for comparisons
+	local playerFactionNormalized = string.lower(playerFaction)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckPlayerFaction(): Player faction detected: %s", playerFaction))
+	end
+
+	-- If no args passed, it's an invalid conditional
+	if not allowedFactions or #allowedFactions == 0 then
+		if debugEnabled then
+			print("RQE.CheckPlayerFaction(): No factions provided for comparison.")
+		end
+		return false
+	end
+
+	-- Iterate over allowed faction names (OR logic)
+	for _, factionName in ipairs(allowedFactions) do
+		local normalized = string.lower(tostring(factionName))
+		if normalized == playerFactionNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckPlayerFaction(): Matched faction '%s' — conditional TRUE", factionName))
+			end
+			return true
+		elseif normalized == "neutral" then
+			-- Neutral is a special case — playerFactionGroup() returns nil for Pandaren before choosing
+			local isNeutral = (playerFaction == "Neutral" or playerFaction == "Pandaren")
+			if isNeutral then
+				if debugEnabled then
+					print("RQE.CheckPlayerFaction(): Player is Neutral — conditional TRUE")
+				end
+				return true
+			end
+		end
+	end
+
+	-- ❌ No matches
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckPlayerFaction(): Player faction '%s' did not match any of the allowed factions: %s — conditional FALSE",
+			playerFaction,
+			table.concat(allowedFactions, ", ")
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckPlayerRace(...)
+Checks if the player's race matches any provided names.
+Supports multiple race names (OR logic).
+Example:
+	cond = "RQE.CheckPlayerRace('Human', 'Orc', 'Dwarf')"
+--------------------------------------------------------------
+]]
+function RQE.CheckPlayerRace(self, ...)
+	local allowedRaces = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Retrieve player's race
+	local playerRace, localizedRace = UnitRace("player")
+	if not playerRace then
+		if debugEnabled then
+			print("RQE.CheckPlayerRace(): Unable to determine player race.")
+		end
+		return false
+	end
+
+	local playerRaceNormalized = string.lower(playerRace)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckPlayerRace(): Player race detected: %s", playerRace))
+	end
+
+	-- Handle missing args
+	if not allowedRaces or #allowedRaces == 0 then
+		if debugEnabled then
+			print("RQE.CheckPlayerRace(): No races provided for comparison.")
+		end
+		return false
+	end
+
+	-- Compare with OR logic
+	for _, raceName in ipairs(allowedRaces) do
+		local normalized = string.lower(tostring(raceName))
+		if normalized == playerRaceNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckPlayerRace(): Matched race '%s' — conditional TRUE", raceName))
+			end
+			return true
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckPlayerRace(): Player race '%s' did not match any allowed races: %s — conditional FALSE",
+			playerRace,
+			table.concat(allowedRaces, ", ")
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckPlayerClass(...)
+Checks if the player's class matches any provided names.
+Supports multiple class names (OR logic).
+Example:
+	cond = "RQE.CheckPlayerClass('Evoker', 'Warrior')"
+--------------------------------------------------------------
+]]
+function RQE.CheckPlayerClass(self, ...)
+	local allowedClasses = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	-- Retrieve player's class
+	local playerClass, localizedClass = UnitClass("player")
+	if not playerClass then
+		if debugEnabled then
+			print("RQE.CheckPlayerClass(): Unable to determine player class.")
+		end
+		return false
+	end
+
+	local playerClassNormalized = string.lower(playerClass)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckPlayerClass(): Player class detected: %s", playerClass))
+	end
+
+	-- Handle missing args
+	if not allowedClasses or #allowedClasses == 0 then
+		if debugEnabled then
+			print("RQE.CheckPlayerClass(): No classes provided for comparison.")
+		end
+		return false
+	end
+
+	-- Compare with OR logic
+	for _, className in ipairs(allowedClasses) do
+		local normalized = string.lower(tostring(className))
+		if normalized == playerClassNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckPlayerClass(): Matched class '%s' — conditional TRUE", className))
+			end
+			return true
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckPlayerClass(): Player class '%s' did not match any allowed classes: %s — conditional FALSE",
+			playerClass,
+			table.concat(allowedClasses, ", ")
+		))
+	end
+
+	return false
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckNotPlayerFaction(...)
+Checks if the player's faction does NOT match any provided names.
+Supports multiple faction names (OR logic for exclusion).
+Example:
+	cond = "RQE.CheckNotPlayerFaction('Alliance', 'Neutral')"
+--------------------------------------------------------------
+]]
+function RQE.CheckNotPlayerFaction(self, ...)
+	local blockedFactions = { ... }
+	local playerFaction, localizedFaction = UnitFactionGroup("player")
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	if not playerFaction then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerFaction(): Unable to determine player faction.")
+		end
+		return false
+	end
+
+	local playerFactionNormalized = string.lower(playerFaction)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckNotPlayerFaction(): Player faction detected: %s", playerFaction))
+	end
+
+	if not blockedFactions or #blockedFactions == 0 then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerFaction(): No factions provided for exclusion check.")
+		end
+		return false
+	end
+
+	for _, factionName in ipairs(blockedFactions) do
+		local normalized = string.lower(tostring(factionName))
+		if normalized == playerFactionNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckNotPlayerFaction(): Player IS faction '%s' — conditional FALSE", factionName))
+			end
+			return false
+		elseif normalized == "neutral" then
+			local isNeutral = (playerFaction == "Neutral" or playerFaction == "Pandaren")
+			if isNeutral then
+				if debugEnabled then
+					print("RQE.CheckNotPlayerFaction(): Player is Neutral — conditional FALSE")
+				end
+				return false
+			end
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckNotPlayerFaction(): Player faction '%s' did not match any blocked factions (%s) — conditional TRUE",
+			playerFaction,
+			table.concat(blockedFactions, ", ")
+		))
+	end
+
+	return true
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckNotPlayerRace(...)
+Checks if the player's race does NOT match any provided names.
+Example:
+	cond = "RQE.CheckNotPlayerRace('Human', 'Orc')"
+--------------------------------------------------------------
+]]
+function RQE.CheckNotPlayerRace(self, ...)
+	local blockedRaces = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	local playerRace, localizedRace = UnitRace("player")
+	if not playerRace then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerRace(): Unable to determine player race.")
+		end
+		return false
+	end
+
+	local playerRaceNormalized = string.lower(playerRace)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckNotPlayerRace(): Player race detected: %s", playerRace))
+	end
+
+	if not blockedRaces or #blockedRaces == 0 then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerRace(): No races provided for exclusion check.")
+		end
+		return false
+	end
+
+	for _, raceName in ipairs(blockedRaces) do
+		local normalized = string.lower(tostring(raceName))
+		if normalized == playerRaceNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckNotPlayerRace(): Player IS race '%s' — conditional FALSE", raceName))
+			end
+			return false
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckNotPlayerRace(): Player race '%s' did not match any blocked races (%s) — conditional TRUE",
+			playerRace,
+			table.concat(blockedRaces, ", ")
+		))
+	end
+
+	return true
+end
+
+
+--[[ 
+--------------------------------------------------------------
+RQE.CheckNotPlayerClass(...)
+Checks if the player's class does NOT match any provided names.
+Example:
+	cond = "RQE.CheckNotPlayerClass('Warrior', 'Evoker')"
+--------------------------------------------------------------
+]]
+function RQE.CheckNotPlayerClass(self, ...)
+	local blockedClasses = { ... }
+	local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
+
+	local playerClass, localizedClass = UnitClass("player")
+	if not playerClass then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerClass(): Unable to determine player class.")
+		end
+		return false
+	end
+
+	local playerClassNormalized = string.lower(playerClass)
+
+	if debugEnabled then
+		print(string.format("RQE.CheckNotPlayerClass(): Player class detected: %s", playerClass))
+	end
+
+	if not blockedClasses or #blockedClasses == 0 then
+		if debugEnabled then
+			print("RQE.CheckNotPlayerClass(): No classes provided for exclusion check.")
+		end
+		return false
+	end
+
+	for _, className in ipairs(blockedClasses) do
+		local normalized = string.lower(tostring(className))
+		if normalized == playerClassNormalized then
+			if debugEnabled then
+				print(string.format("RQE.CheckNotPlayerClass(): Player IS class '%s' — conditional FALSE", className))
+			end
+			return false
+		end
+	end
+
+	if debugEnabled then
+		print(string.format(
+			"RQE.CheckNotPlayerClass(): Player class '%s' did not match any blocked classes (%s) — conditional TRUE",
+			playerClass,
+			table.concat(blockedClasses, ", ")
+		))
+	end
+
+	return true
+end
+
+
+----------------------------------------------------------------------
+-- Check if a given scenario stage has been completed (or the player is further along)
+-- Usage: cond = "RQE.CheckScenarioStageCompleted(43090, 1)"
+----------------------------------------------------------------------
+function RQE.CheckScenarioStageCompleted(self, questID, scenarioStage)
+	-- Validate arguments
+	if not questID or not scenarioStage then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE.CheckScenarioStageCompleted(): Missing questID or scenarioStage")
+		end
+		return false
+	end
+
+	-- Ensure the player is in a scenario
+	if not C_Scenario.IsInScenario() then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE.CheckScenarioStageCompleted(): Player is not in a scenario (questID=%d)"):format(questID))
+		end
+		return false
+	end
+
+	-- Retrieve scenario info safely
+	local name, currentStage, numStages = C_Scenario.GetInfo()
+	currentStage = tonumber(currentStage) or 0
+	local targetStage = tonumber(scenarioStage) or 0
+
+	if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+		print(("RQE.CheckScenarioStageCompleted(): questID=%d currentStage=%d targetStage=%d totalStages=%s")
+			:format(questID, currentStage, targetStage, tostring(numStages)))
+	end
+
+	-- ✅ Pass if player is on or beyond the target stage
+	if currentStage >= targetStage then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE.CheckScenarioStageCompleted(): TRUE — current stage (%d) >= required stage (%d)")
+				:format(currentStage, targetStage))
+		end
+		return true
+	else
+		if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+			print(("RQE.CheckScenarioStageCompleted(): FALSE — current stage (%d) < required stage (%d)")
+				:format(currentStage, targetStage))
+		end
+		return false
+	end
+end
+
+
+----------------------------------------------------------------------
+-- Improved Zone/Subzone or mapID conditional check
+-- Usage:
+--   cond = "RQE.CheckDBZoneName('The Halls of Winter', 'Ulduar')"
+--   cond = "RQE.CheckDBZoneName(746)"
+----------------------------------------------------------------------
+function RQE.CheckDBZoneName(self, ...)
+	local args = { ... }
+	if #args == 0 then
+		if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+			print("RQE.CheckDBZoneName(): No arguments provided.")
+		end
+		return false
+	end
+
+	local currentMapID = C_Map.GetBestMapForUnit("player")
+	local zone = (GetZoneText() or ""):gsub("%s+$", "")
+	local subzone = (GetSubZoneText() or ""):gsub("%s+$", "")
+	if subzone == "" then subzone = zone end
+
+	-- Normalize (strip punctuation, parentheses, lowercase)
+	local function normalize(str)
+		return str:lower():gsub("[%s%p]+", "")
+	end
+
+	local zNorm = normalize(zone)
+	local sNorm = normalize(subzone)
+
+	if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+		print(("RQE.CheckDBZoneName(): Player at mapID=%s, zone='%s', subzone='%s'")
+			:format(tostring(currentMapID), zone, subzone))
+	end
+
+	for _, arg in ipairs(args) do
+		local target = tostring(arg):gsub("^%s*(.-)%s*$", "%1")
+		local numeric = tonumber(target)
+
+		-- Numeric mapID match
+		if numeric and currentMapID == numeric then
+			if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+				print(("RQE.CheckDBZoneName(): TRUE — matched mapID %s"):format(numeric))
+			end
+			return true
+		end
+
+		-- Normalize target for string match
+		local tNorm = normalize(target)
+
+		-- Exact or partial match (zone or subzone)
+		if zNorm:find(tNorm, 1, true) or sNorm:find(tNorm, 1, true) then
+			if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
+				print(("RQE.CheckDBZoneName(): TRUE — matched zone/subzone '%s'"):format(target))
+			end
+			return true
+		end
+	end
+
+	if RQE.db and RQE.db.profile.debugLevel == "INFO" then
+		print(("RQE.CheckDBZoneName(): FALSE — zone='%s' subzone='%s' mapID=%s did not match any targets.")
+			:format(zone, subzone, tostring(currentMapID)))
+	end
+
+	return false
+end
+
+
+-- This function will check to see if there is quest info being tracked in the RQEFrame
+function RQE.CheckQuestInfoExists()
+	local questID = RQE.QuestIDText and RQE.QuestIDText:GetText()
+
+	-- Check if a valid questID was found
+	if not questID then
+		--print("No valid questID found in RQEFrame.")
+		RQE.Buttons.ClearButtonPressed()
+	end
+end
+
+
+-- Function to check the current quest step and perform actions accordingly
+function RQE.CheckThatQuestStep()
+	-- Retrieve the questID from the RQEFrame
+	-- local questID = RQE.searchedQuestID or (RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))) or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	local questID = RQE.searchedQuestID or tonumber(RQE.DisplayedQuestID) or RQE.API.GetSuperTrackedQuestID()
+
+	-- Check if a valid questID was found
+	if not questID then
+		print("No valid questID found in RQEFrame.")
+		return
+	end
+
+	-- Get quest objectives
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	local questData = RQE.getQuestData(questID)
+
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest data not found for questID:", questID)
+		end
+		return
+	end
+
+	if not objectives then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No objectives found for questID:", questID)
+		end
+		return
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug [Core.lua: Line 3156]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
+	end
+
+	local currentStepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
+	local stepData = questData[currentStepIndex]
+
+	-- Determine the current step the player should be on
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Current stepIndex:", currentStepIndex)
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Debug [Core.lua: Line 3162]: " .. tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or "nil"))
+	end
+
+	-- Print initial debug information
+	if RQE.db.profile.debugLevel == "INFO+" then
+		if stepData then
+			print("neededAmt:", stepData.neededAmt and stepData.neededAmt[1] or "nil", "objectiveIndex:", stepData.objectiveIndex)
+		else
+			print("Invalid stepData for stepIndex:", currentStepIndex)
+			return
+		end
+	end
+
+	-- Print objective details
+	if RQE.db.profile.debugLevel == "INFO+" then
+		for i, o in ipairs(objectives) do
+			print(i .. ".", o.text, o.numFulfilled .. "/" .. o.numRequired, "Finished:", tostring(o.finished))
+		end
+	end
+
+	-- Check if the quest is ready for turn-in first
+	local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+	if isReadyTurnIn then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest is ready for turn-in. Clicking final step associated with objectiveIndex 99.")
+		end
+		RQE:ClickWaypointButtonForIndex(#questData) -- Clicks the last step which should be the turn-in step
+		return
+	end
+
+	-- Refined step advancement logic with additional debug prints
+	local correctStepIndex = 1
+	local foundStep = false
+
+	for i, step in ipairs(questData) do
+		local objectiveIndex = step.objectiveIndex or 1
+		local neededAmt = step.neededAmt and tonumber(step.neededAmt[1]) or 1
+		local objective = objectives[objectiveIndex]
+
+		if objective then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Analyzing Step:", i)
+				print("Objective Index:", objectiveIndex, "Needed Amount:", neededAmt, "Objective Fulfilled:", objective.numFulfilled, "Objective Finished:", tostring(objective.finished))
+			end
+
+			local fulfilled = tonumber(objective.numFulfilled) or 0
+
+			-- Multiple DB steps can represent milestones of one objective (for
+			-- example 1/20, 3/20, then turn-in). Keep advancing past every
+			-- threshold already reached; select the first threshold still ahead.
+			if objective.finished or fulfilled >= neededAmt then
+				RQE.OkayWaypointButtonToMove = true
+				correctStepIndex = i + 1
+			elseif fulfilled < neededAmt then
+				correctStepIndex = i
+				foundStep = true
+				break
+			end
+		else
+			print("Objective data missing or mismatched for questID:", questID, "at step:", i)
+			correctStepIndex = i
+			break
+		end
+	end
+
+	-- Ensure correctStepIndex does not exceed the number of steps
+	correctStepIndex = math.min(correctStepIndex, #questData)
+
+	-- Print information about the quest and objectives
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("QuestID:", tostring(questID), ", All Objectives Completed:", tostring(isReadyTurnIn), ", Highest Completed Objective Index:", tostring(objectives[#objectives].finished and 99 or correctStepIndex))
+	end
+
+	-- If the stepIndex does not match the expected, click the correct button
+	if correctStepIndex ~= currentStepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Mismatch detected. Expected stepIndex:", correctStepIndex, "but currently on:", currentStepIndex)
+			print("Clicking the correct step button.")
+		end
+		RQE:ClickWaypointButtonForIndex(correctStepIndex)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+	else
+		print("Current stepIndex matches expected stepIndex. No action needed.")
+	end
+
+	-- Print additional debug information
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Final stepIndex:", correctStepIndex)
+		print("RQE.LastClickedIdentifier:", tostring(RQE.LastClickedIdentifier))
+		print("RQE.LastClickedButtonRef.stepIndex:", tostring(RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex))
+		print("RQE.LastClickedButtonRef:", tostring(RQE.LastClickedButtonRef))
+	end
+
+	-- Check and build macro if needed
+	RQE.CheckAndBuildMacroIfNeeded()
+end
+
+
+-- Function advances the quest step by simulating a click on the corresponding WaypointButton
+function RQE:AdvanceQuestStep(questID, stepIndex)
+	if InCombatLockdown() then
+		self.RunPeriodicChecksAfterCombat = true
+		return
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Running AdvanceQuestStep for questID:", questID, "at stepIndex:", stepIndex)
+	end
+	local questData = self.getQuestData(questID)
+
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data available for questID:", questID)
+		end
+		return
+	end
+
+	local nextIndex
+
+	-- Check if the ObjectiveFlag is set and adjust nextIndex accordingly
+	if self.ObjectiveFlag then
+		nextIndex = stepIndex  -- Use the current stepIndex directly
+		self.ObjectiveFlag = nil  -- Clear the flag after using it
+	else
+		nextIndex = stepIndex + 1
+	end
+
+	local nextStep = questData[nextIndex]
+
+	if nextStep then
+		local buttonIndex = nextIndex
+		local button = self.WaypointButtons[buttonIndex]
+		if button then
+			button:Click()
+			self.LastClickedButtonRef = button
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Advanced to next quest step: " .. buttonIndex)
+			end
+
+			-- Update the current step index
+			self.CurrentStepIndex = buttonIndex
+			self.AddonSetStepIndex = buttonIndex  -- Ensures the global step index is updated correctly
+
+			-- Call a function to automatically click the waypoint button for the next step
+			self:AutoClickQuestLogIndexWaypointButton()
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No WaypointButton found for index:", buttonIndex)
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No more steps available for quest ID:", questID)
+		end
+	end
+
+	-- Apply faction logic after ensuring state is consistent
+	C_Timer.After(0.7, function()
+		RQE:HandleFactionLogicAfterAdvance()
+		C_Timer.After(1, function()
+			RQE:HandleClassFactionLogicAfterAdvance()
+		end)
+	end)
+end
+
+
+-- Function to check if steps are displayed in the RQEFrame for a given questID
+function RQE.AreStepsDisplayed(questID)
+	local questInfo = RQE.getQuestData(questID)
+	if not questInfo then return false end
+
+	for stepIndex, stepData in ipairs(questInfo) do
+		if stepData and stepData.description then
+			return true
+		end
+	end
+
+	return false
+end
+
+
+-- Function that handles button clicks based on changes to the stepText
+function RQE:ClickWaypointButtonForIndex(index)
+	if InCombatLockdown() then
+		self.RunPeriodicChecksAfterCombat = true
+		return
+	end
+
+	if RQE.db.profile.enableStepControls then
+		local button = self.WaypointButtons and self.WaypointButtons[index]
+
+		if not button then
+			local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
+			--local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
+			local questData = questID and RQE.getQuestData(questID)
+
+			RQE:ClearManualStepPreview(false)
+
+			self.CurrentStepIndex = index
+			RQE.AddonSetStepIndex = index
+			RQE.StoredStepIndex = index
+
+			if questID and questData and UpdateFrame then
+				UpdateFrame(questID, questData)
+			end
+
+			if RQE.UpdateSeparateFocusFrame then
+				RQE:UpdateSeparateFocusFrame()
+			end
+
+			if RQEMacro and RQEMacro.CreateMacroForCurrentStep then
+				RQEMacro:CreateMacroForCurrentStep()
+			end
+
+			C_Timer.After(0.2, function()
+				if questID then
+					RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+				end
+			end)
+
+			return
+		end
+
+		-- Ensure the button references the correct step
+		if button.stepIndex ~= index then
+			button.stepIndex = index
+		end
+
+		-- Allows manually clicking of a step within the supertracked quest
+		RQE:ClearManualStepPreview(false)
+		RQE._autoClickingWaypointButton = true
+
+		-- Update state references
+		self.LastClickedButtonRef = button
+		self.CurrentStepIndex = index
+		RQE.AddonSetStepIndex = index
+		RQE.StoredStepIndex = index
+
+		-- Debug log
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Clicking button at index:", index)
+		end
+
+		-- Perform button click
+		local ok, err = pcall(function()
+			button:Click()
+		end)
+
+		RQE._autoClickingWaypointButton = false
+
+		if not ok then
+			error(err)
+		end
+
+		if RQE.Buttons.RefreshStepNavigationTooltips then
+			RQE.Buttons.RefreshStepNavigationTooltips()
+		end
+
+		-- Ensure the macro and UI are refreshed only once
+		C_Timer.After(1, function()
+			-- Refresh UI (Waypoint and Focus Frames)
+			RQE:OnCoordinateClicked()
+			RQE.InitializeSeparateFocusFrame()
+
+			-- Debug log
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+			end
+		end)
+
+		-- Apply faction logic after ensuring state is consistent
+		C_Timer.After(0.7, function()
+			RQE:HandleFactionLogicAfterAdvance()
+			C_Timer.After(1, function()
+				RQE:HandleClassFactionLogicAfterAdvance()
+			end)
+		end)
+	else
+		local button = self.WaypointButtons[index]
+		if not button then
+			return
+		end
+
+		-- Ensure the button references the correct step
+		if button.stepIndex ~= index then
+			button.stepIndex = index
+		end
+
+		-- Update state references
+		self.LastClickedButtonRef = button
+		self.CurrentStepIndex = index
+		RQE.AddonSetStepIndex = index
+
+		-- Debug log
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Clicking button at index:", index)
+		end
+
+		-- Perform button click
+		button:Click()
+
+		-- Ensure the macro and UI are refreshed only once
+		C_Timer.After(1, function()
+			-- Refresh UI (Waypoint and Focus Frames)
+			RQE:OnCoordinateClicked()
+			RQE.InitializeSeparateFocusFrame()
+
+			-- Debug log
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Clicked waypoint button for AddonSetStepIndex:", RQE.AddonSetStepIndex)
+			end
+		end)
+
+		-- Apply faction logic after ensuring state is consistent
+		C_Timer.After(0.7, function()
+			RQE:HandleFactionLogicAfterAdvance()
+			C_Timer.After(1, function()
+				RQE:HandleClassFactionLogicAfterAdvance()
+			end)
+		end)
+	end
+end
+
+
+-- Function that handles the check to see if the player is Alliance or Horde when needed to be called
+function RQE:HandleFactionLogicAfterAdvance()
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:HandleFactionLogicAfterAdvance ~~")
+	end
+
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then return end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then return end
+
+	local stepIndex = RQE.AddonSetStepIndex
+	local stepData = questData[stepIndex]
+	if not stepData then return end
+
+	local description = stepData.description or ""
+	local englishFaction = UnitFactionGroup("player")
+
+	-- Check faction-based skipping
+	if description:find("^ALLIANCE:") and englishFaction ~= "Alliance" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not Alliance. Skipping stepIndex:", stepIndex)
+		end
+		RQE.AddonSetStepIndex = stepIndex + 1
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+	elseif description:find("^HORDE:") and englishFaction ~= "Horde" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not Horde. Skipping stepIndex:", stepIndex)
+		end
+		RQE.AddonSetStepIndex = stepIndex + 1
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+	end
+
+	-- After faction logic, check failedfunc
+	C_Timer.After(0.5, function()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		if superTrackedQuestID then
+			RQE:HandleFailedFunction(superTrackedQuestID, RQE.AddonSetStepIndex)
+		end
+	end)
+end
+
+
+-- Handles description prefixes like "PALADIN-A:", "PRIEST-N:", "WARLOCK-H:".
+-- Intended to be called AFTER RQE:HandleFactionLogicAfterAdvance().
+function RQE:HandleClassFactionLogicAfterAdvance()
+	-- Allow both INFO and INFO+ to show debug
+	local debug = (RQE.db.profile.debugLevel == "INFO+")
+
+	if debug then
+		print("~~ Running RQE:HandleClassFactionLogicAfterAdvance ~~")
+	end
+
+	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID then
+		if debug then print("ClassLogic: No supertracked quest, aborting.") end
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if debug then print("ClassLogic: No questData for questID", questID) end
+		return
+	end
+
+	-- Player info
+	local englishFaction = UnitFactionGroup("player") or "Neutral" -- "Alliance", "Horde", "Neutral"
+	local _, englishClass = UnitClass("player")					-- e.g. "PRIEST", "PALADIN"
+	if englishClass then
+		englishClass = englishClass:upper()
+	end
+
+	-- Current step index
+	local stepIndex = RQE.AddonSetStepIndex or 1
+
+	if debug then
+		print(string.format(
+			"ClassLogic: questID=%s, starting stepIndex=%s, playerClass=%s, playerFaction=%s",
+			tostring(questID), tostring(stepIndex), tostring(englishClass), tostring(englishFaction)
+		))
+	end
+
+	-- Helper: should this particular step be skipped due to CLASS-TAG prefix?
+	local function ShouldSkipClassStep(idx)
+		local stepData = questData[idx]
+		if not stepData then
+			if debug then
+				print("ClassLogic: questData[", idx, "] is nil, not skipping (end of steps?).")
+			end
+			return false
+		end
+
+		local description = stepData.description or ""
+
+		if debug then
+			-- Show the first chunk of the description so we can verify the header
+			print(string.format("ClassLogic: step %d description (raw): %q", idx, description))
+		end
+
+		-- Match "CLASS-TAG:" at the start, but allow leading whitespace:
+		--   e.g. "PALADIN-H: ...", "   PRIEST-N: ...", etc.
+		local classToken, factionTag = description:match("^%s*(%u+)%-(%u):")
+		--local classToken, factionTag = description:match("^%s*(%u+)%-(A|H|N):")
+		if not classToken or not factionTag then
+			if debug then
+				print("ClassLogic: no CLASS-TAG header found on step", idx, "- not skipping due to class.")
+			end
+			-- No class header present; this function does not decide to skip it.
+			return false
+		end
+
+		classToken = classToken:upper()
+
+		if debug then
+			print(string.format(
+				"[ClassTag] Step %d header: %s-%s: | Player class=%s, faction=%s",
+				idx, tostring(classToken), tostring(factionTag),
+				tostring(englishClass), tostring(englishFaction)
+			))
+		end
+
+		-- Check class match
+		local classMatches = (englishClass == classToken)
+
+		-- Check faction part of the tag
+		local factionMatches = true
+		if factionTag == "A" then
+			factionMatches = (englishFaction == "Alliance")
+		elseif factionTag == "H" then
+			factionMatches = (englishFaction == "Horde")
+		elseif factionTag == "N" then
+			-- "N" means any faction; no additional restriction
+			factionMatches = true
+		end
+
+		-- We STAY on this step only if class AND faction match.
+		-- Otherwise, we SKIP it.
+		if classMatches and factionMatches then
+			if debug then
+				print(" -> Class/faction header matches player. Staying on step", idx)
+			end
+			return false
+		else
+			if debug then
+				print(" -> Class/faction header does NOT match player. Skipping step", idx)
+			end
+			return true
+		end
+	end
+
+	-- Auto-advance until we find a step that:
+	--  - either has a matching CLASS-TAG header, OR
+	--  - has no CLASS-TAG header at all.
+	local skippedAny = false
+	while ShouldSkipClassStep(stepIndex) do
+		skippedAny = true
+		stepIndex = stepIndex + 1
+		RQE.AddonSetStepIndex = stepIndex
+
+		if debug then
+			print("ClassLogic: Advanced to stepIndex (class/faction logic):", stepIndex)
+		end
+
+		-- If we've gone past the last step, bail out
+		if not questData[stepIndex] then
+			if debug then
+				print("ClassLogic: No further steps in questData; stopping class/faction auto-advance.")
+			end
+			break
+		end
+	end
+
+	-- Only re-fire waypoint if we actually skipped at least one step.
+	if skippedAny then
+		if debug then
+			print("ClassLogic: skipped one or more steps; clicking waypoint for stepIndex", RQE.AddonSetStepIndex)
+		end
+		self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)
+	else
+		if debug then
+			print("ClassLogic: no class-based skipping performed on stepIndex", stepIndex)
+		end
+	end
+end
+
+
+-- Function to handle failedfunc logic for CheckDBZoneChange
+function RQE:HandleFailedFunction(questID, stepIndex)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:HandleFailedFunction ~~")
+	end
+
+	-- Get the quest data
+	local questData = self.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data found for questID:", questID)
+		end
+		return
+	end
+
+	-- Get the current step data
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data found for stepIndex:", stepIndex)
+		end
+		return
+	end
+
+	-- Check for failedfunc and failedcheck
+	if stepData.failedfunc and stepData.failedcheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Failed function detected for stepIndex:", stepIndex, "Failed Function:", stepData.failedfunc)
+		end
+
+		-- Call the failed function with the necessary parameters
+		local failFuncResult = RQE[stepData.failedfunc] and RQE[stepData.failedfunc](self, questID, stepIndex, stepData.failedcheck, stepData.failedIndex)
+
+		if failFuncResult then
+			-- If failed function triggers, move to the failedIndex
+			local failedIndex = stepData.failedIndex or 1 -- Default to step 1 if not provided
+			RQE.AddonFailedSetStepIndex = failedIndex
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Failure condition met. Reverting to failedIndex:", failedIndex)
+			end
+
+			self:ClickWaypointButtonForIndex(failedIndex)
+			return true -- Indicate failure handling occurred
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Failed function condition not met for stepIndex:", stepIndex)
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("No failed function executed for stepIndex:", stepIndex)
+	end
+
+	return false -- No failure conditions triggered
+end
+
+
+-- Function will check if the player currently has a change to their portrait
+function RQE.CheckDBModel(questID, stepIndex, check, neededAmt)
+	-- Placeholder for the function that will control checks for the UNIT_MODEL_CHANGED event (this will reduce number of unnecessary firings of main functions
+end
+
+
+-- Function will check if the player currently has any of the buffs specified
+-- in the quest's check or checks field.
+function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBBuff ~~")
+	end
+
+	-- Use provided `check` and `neededAmt` if available.
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- old:
+	-- -- Optional mode: combine active buff stacks with completed quest-objective progress.
+	-- -- Existing CheckDBBuff entries remain unchanged unless this DB field is true.
+	-- local objectiveProgress = 0
+	-- local totalQuestData = self.getQuestData(questID)
+	-- local totalStepData = totalQuestData and totalQuestData[stepIndex]
+	--
+	-- if totalStepData and totalStepData.combineBuffAndObjectiveProgress then
+	-- 	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	-- 	local objectiveIndex = tonumber(totalStepData.objectiveIndex) or 1
+	-- 	local objective = objectives and objectives[objectiveIndex]
+	--
+	-- 	if objective then
+	-- 		objectiveProgress = tonumber(objective.numFulfilled) or 0
+	-- 	end
+	-- end
+
+	-- Accepts either:
+	-- neededAmt = { "4" }			 Buff stacks alone must reach 4.
+	-- neededAmt = { "4+objective" }   Buff stacks plus objective progress must reach 4.
+	local function ParseRequiredAmount(rawAmount)
+		if type(rawAmount) == "string" then
+			local combinedAmount = rawAmount:match(
+				"^%s*(%d+)%s*%+%s*objective%s*$"
+			)
+
+			if combinedAmount then
+				return tonumber(combinedAmount) or 1, true
+			end
+		end
+
+		return tonumber(rawAmount) or 1, false
+	end
+
+	-- old:
+	-- -- Returns the fulfilled amount for the objective assigned to this DB step.
+	-- local function GetCurrentObjectiveProgress()
+	-- 	local questData = self.getQuestData(questID)
+	-- 	local stepData = questData and questData[stepIndex]
+	--
+	-- 	if not stepData then
+	-- 		return 0
+	-- 	end
+	--
+	-- 	local objectiveIndex = tonumber(stepData.objectiveIndex) or 1
+	-- 	local objectives = C_QuestLog.GetQuestObjectives(questID)
+	-- 	local objective = objectives and objectives[objectiveIndex]
+	--
+	-- 	if not objective then
+	-- 		return 0
+	-- 	end
+	--
+	-- 	return tonumber(objective.numFulfilled) or 0
+	-- end
+	--
+	-- -- Evaluates a buff against either its stack count or its combined
+	-- -- stack count plus objective progress.
+	-- local function EvaluateBuffAmount(buffName, rawNeededAmount)
+	-- 	local requiredAmount, includeObjectiveProgress =
+	-- 		ParseRequiredAmount(rawNeededAmount)
+	--
+	-- 	local aura = C_UnitAuras.GetAuraDataBySpellName(
+	-- 		"player",
+	-- 		buffName,
+	-- 		"HELPFUL"
+	-- 	)
+	--
+	-- 	local currentStacks = 0
+	--
+	-- 	if aura then
+	-- 		-- Non-stacking buffs may report 0 applications even though present.
+	-- 		currentStacks =
+	-- 			(aura.applications and aura.applications > 0)
+	-- 			and aura.applications
+	-- 			or 1
+	-- 	end
+	--
+	-- 	local objectiveProgress = 0
+	--
+	-- 	if includeObjectiveProgress then
+	-- 		objectiveProgress = GetCurrentObjectiveProgress()
+	-- 	end
+	--
+	-- 	local currentTotal = currentStacks + objectiveProgress
+	-- 	local passed = currentTotal >= requiredAmount
+	--
+	-- 	if RQE.db.profile.debugLevel == "INFO+" then
+	-- 		print(
+	-- 			"CheckDBBuff() - Buff evaluation:",
+	-- 			buffName,
+	-- 			"buff stacks:", currentStacks,
+	-- 			"objective progress:", objectiveProgress,
+	-- 			"combined total:", currentTotal,
+	-- 			"required:", requiredAmount,
+	-- 			"combined mode:", tostring(includeObjectiveProgress),
+	-- 			"passed:", tostring(passed)
+	-- 		)
+	-- 	end
+	--
+	-- 	return passed
+	-- end
+
+	-- Returns the objective progress and objective index assigned to this step.
+	local function GetCurrentObjectiveProgress()
+		local questData = self.getQuestData(questID)
+		local stepData = questData and questData[stepIndex]
+		local objectiveIndex =
+			stepData and (tonumber(stepData.objectiveIndex) or 1) or 1
+
+		if not stepData then
+			return 0, objectiveIndex
+		end
+
+		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objective = objectives and objectives[objectiveIndex]
+
+		if not objective then
+			return 0, objectiveIndex
+		end
+
+		return tonumber(objective.numFulfilled) or 0, objectiveIndex
+	end
+
+	-- Stores the most recently observed objective progress for combined checks.
+	-- This prevents a newly delivered objective amount from being added to an
+	-- aura count that Blizzard has not removed yet.
+	RQE.CombinedBuffObjectiveStates =
+		RQE.CombinedBuffObjectiveStates or {}
+
+	-- Evaluates a buff against either its stack count or its combined
+	-- stack count plus objective progress.
+	local function EvaluateBuffAmount(buffName, rawNeededAmount)
+		local requiredAmount, includeObjectiveProgress =
+			ParseRequiredAmount(rawNeededAmount)
+
+		local aura = C_UnitAuras.GetAuraDataBySpellName(
+			"player",
+			buffName,
+			"HELPFUL"
+		)
+
+		local currentStacks = 0
+
+		if aura then
+			-- Non-stacking buffs may report 0 applications even though present.
+			currentStacks =
+				(aura.applications and aura.applications > 0)
+				and aura.applications
+				or 1
+		end
+
+		local objectiveProgress = 0
+		local objectiveIndex = 1
+
+		if includeObjectiveProgress then
+			objectiveProgress, objectiveIndex =
+				GetCurrentObjectiveProgress()
+
+			local stateKey =
+				tostring(questID)
+				.. ":"
+				.. tostring(objectiveIndex)
+				.. ":"
+				.. tostring(buffName)
+
+			local state = RQE.CombinedBuffObjectiveStates[stateKey]
+
+			if not state then
+				state = {
+					objectiveProgress = objectiveProgress,
+					settleUntil = nil,
+				}
+
+				RQE.CombinedBuffObjectiveStates[stateKey] = state
+			elseif state.objectiveProgress ~= objectiveProgress then
+				-- Objective progress changed. The aura count may still contain
+				-- the NPCs that were just delivered, so temporarily prevent the
+				-- combined check from advancing.
+				state.objectiveProgress = objectiveProgress
+				state.settleUntil = GetTime() + 0.75
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(
+						"CheckDBBuff() - Objective progress changed; "
+						.. "waiting for aura count to settle:",
+						buffName,
+						"objective:", objectiveProgress,
+						"buff stacks:", currentStacks
+					)
+				end
+
+				-- old:
+				-- -- Recheck after Blizzard has updated the aura stack.
+				-- RQE:QueuePeriodicChecks(
+				-- 	"COMBINED_BUFF_OBJECTIVE_SETTLE",
+				-- 	0.80,
+				-- 	questID
+				-- )
+				--
+				-- return false
+
+				-- This must be a dedicated timer rather than QueuePeriodicChecks.
+				-- QueuePeriodicChecks may already contain an earlier check that
+				-- fires before the aura stack has finished updating.
+				if state.settleTimer then
+					state.settleTimer:Cancel()
+					state.settleTimer = nil
+				end
+
+				state.settleTimer = C_Timer.NewTimer(0.80, function()
+					state.settleTimer = nil
+
+					-- Only re-evaluate if this is still the supertracked quest.
+					if RQE.API.GetSuperTrackedQuestID() ~= questID then
+					--if C_SuperTrack.GetSuperTrackedQuestID() ~= questID then
+						return
+					end
+
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(
+							"CheckDBBuff() - Aura/objective settling complete; "
+							.. "running final corrective check:",
+							"questID:", questID,
+							"buff:", buffName
+						)
+					end
+
+					RQE:StartPeriodicChecks()
+				end)
+
+				return false
+			end
+
+			-- Continue suppressing combined advancement until the settling
+			-- period started above has finished.
+			if state.settleUntil then
+				if GetTime() < state.settleUntil then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(
+							"CheckDBBuff() - Combined check still settling:",
+							buffName,
+							"objective:", objectiveProgress,
+							"buff stacks:", currentStacks
+						)
+					end
+
+					return false
+				end
+
+				state.settleUntil = nil
+			end
+		end
+
+		local currentTotal = currentStacks + objectiveProgress
+		local passed = currentTotal >= requiredAmount
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(
+				"CheckDBBuff() - Buff evaluation:",
+				buffName,
+				"buff stacks:", currentStacks,
+				"objective progress:", objectiveProgress,
+				"combined total:", currentTotal,
+				"required:", requiredAmount,
+				"combined mode:", tostring(includeObjectiveProgress),
+				"passed:", tostring(passed)
+			)
+		end
+
+		return passed
+	end
+
+	-- Evaluate `check` directly if provided.
+	if #check > 0 and #neededAmt > 0 then
+		for i, buffName in ipairs(check) do
+			-- old:
+			-- local requiredStacks = tonumber(neededAmt[i]) or 1
+			--
+			-- local aura = C_UnitAuras.GetAuraDataBySpellName(
+			-- 	"player",
+			-- 	buffName,
+			-- 	"HELPFUL"
+			-- )
+			--
+			-- local currentStacks = 0
+			--
+			-- if aura then
+			-- 	currentStacks =
+			-- 		(aura.applications and aura.applications > 0)
+			-- 		and aura.applications
+			-- 		or 1
+			-- end
+			--
+			-- if currentStacks < requiredStacks then
+			-- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- 		print(
+			-- 			"CheckDBBuff() - Buff missing or insufficient stacks:",
+			-- 			buffName,
+			-- 			"current:", currentStacks,
+			-- 			"required:", requiredStacks
+			-- 		)
+			-- 	end
+			-- 	return false
+			-- else
+			-- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- 		print(
+			-- 			"CheckDBBuff() - Buff stack check passed:",
+			-- 			buffName,
+			-- 			"current:", currentStacks,
+			-- 			"required:", requiredStacks
+			-- 		)
+			-- 	end
+			-- end
+
+			if not EvaluateBuffAmount(buffName, neededAmt[i]) then
+				return false
+			end
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBBuff() - All provided buff checks passed.")
+		end
+
+		return true
+	end
+
+	-- Fallback to quest data when `check` and `neededAmt`
+	-- were not passed directly.
+	local questData = self.getQuestData(questID)
+
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(
+				"CheckDBBuff() - No quest data found for questID:",
+				questID
+			)
+		end
+
+		return false
+	end
+
+	local stepData = questData[stepIndex]
+
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(
+				"CheckDBBuff() - No step data found for stepIndex:",
+				stepIndex
+			)
+		end
+
+		return false
+	end
+
+	-- Evaluate `checks` if present.
+	if stepData.checks then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(
+				"CheckDBBuff() - Using EvaluateStepChecks for multiple checks."
+			)
+		end
+
+		local success = self:EvaluateStepChecks(questID, stepIndex)
+
+		if success then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(
+					"CheckDBBuff() - Buff checks succeeded. Advancing quest step."
+				)
+			end
+
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("CheckDBBuff() - Buff checks failed.")
+			end
+
+			return false
+		end
+	end
+
+	-- Evaluate a single `check` from the step data.
+	check = stepData.check or {}
+	neededAmt = stepData.neededAmt or {}
+
+	if #check == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBBuff() - No buffs to check.")
+		end
+
+		return false
+	end
+
+	for i, buffName in ipairs(check) do
+		-- old:
+		-- local requiredStacks = tonumber(neededAmt[i]) or 1
+		--
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName(
+		-- 	"player",
+		-- 	buffName,
+		-- 	"HELPFUL"
+		-- )
+		--
+		-- local currentStacks = 0
+		--
+		-- if aura then
+		-- 	currentStacks =
+		-- 		(aura.applications and aura.applications > 0)
+		-- 		and aura.applications
+		-- 		or 1
+		-- end
+		--
+		-- if currentStacks >= requiredStacks then
+		-- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- 		print(
+		-- 			"CheckDBBuff() - Buff stack check passed:",
+		-- 			buffName,
+		-- 			"current:", currentStacks,
+		-- 			"required:", requiredStacks,
+		-- 			". Advancing quest step."
+		-- 		)
+		-- 	end
+		-- 	return true
+		-- else
+		-- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- 		print(
+		-- 			"CheckDBBuff() - Buff missing or insufficient stacks:",
+		-- 			buffName,
+		-- 			"current:", currentStacks,
+		-- 			"required:", requiredStacks
+		-- 		)
+		-- 	end
+		-- end
+
+		if EvaluateBuffAmount(buffName, neededAmt[i]) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(
+					"CheckDBBuff() - Buff check passed:",
+					buffName,
+					". Advancing quest step."
+				)
+			end
+
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("CheckDBBuff() - No buffs matched.")
+	end
+
+	return false
+end
+
+
+-- -- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
+-- function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckDBBuff ~~")
+	-- end
+
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Optional mode: combine active buff stacks with completed quest-objective progress.
+	-- -- Existing CheckDBBuff entries remain unchanged unless this DB field is true.
+	-- local objectiveProgress = 0
+	-- local totalQuestData = self.getQuestData(questID)
+	-- local totalStepData = totalQuestData and totalQuestData[stepIndex]
+
+	-- if totalStepData and totalStepData.combineBuffAndObjectiveProgress then
+		-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+		-- local objectiveIndex = tonumber(totalStepData.objectiveIndex) or 1
+		-- local objective = objectives and objectives[objectiveIndex]
+
+		-- if objective then
+			-- objectiveProgress = tonumber(objective.numFulfilled) or 0
+		-- end
+	-- end
+
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, buffName in ipairs(check) do
+			-- local requiredStacks = tonumber(neededAmt[i]) or 1
+
+			-- -- old:
+			-- -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+			-- -- if not aura then
+			-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- -- 		print("CheckDBBuff() - Buff not active:", buffName)
+			-- -- 	end
+			-- -- 	return false
+			-- -- else
+			-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- -- 		print("CheckDBBuff() - Buff active:", buffName)
+			-- -- 	end
+			-- -- end
+
+			-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+			-- local currentStacks = 0
+
+			-- if aura then
+				-- currentStacks = (aura.applications and aura.applications > 0) and aura.applications or 1
+			-- end
+
+			-- if currentStacks < requiredStacks then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff missing or insufficient stacks:", buffName, "current:", currentStacks, "required:", requiredStacks)
+				-- end
+				-- return false
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff stack check passed:", buffName, "current:", currentStacks, "required:", requiredStacks)
+				-- end
+			-- end
+		-- end
+
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - All buffs matched for provided `check`.")
+		-- end
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not directly provided
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No quest data found for questID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Evaluate `checks` if present
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks failed.")
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Evaluate single `check` from step data
+	-- check = stepData.check or {}
+	-- neededAmt = stepData.neededAmt or {}
+
+	-- if #check == 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No buffs to check.")
+		-- end
+		-- return false
+	-- end
+
+	-- for i, buffName in ipairs(check) do
+		-- local requiredStacks = tonumber(neededAmt[i]) or 1
+
+		-- -- old:
+		-- -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+		-- -- if aura then
+		-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- -- 		print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
+		-- -- 	end
+		-- -- 	return true
+		-- -- else
+		-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
+		-- -- 		print("CheckDBBuff() - Buff not active:", buffName)
+		-- -- 	end
+		-- -- end
+
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+		-- local currentStacks = 0
+
+		-- if aura then
+			-- currentStacks = (aura.applications and aura.applications > 0) and aura.applications or 1
+		-- end
+
+		-- if currentStacks >= requiredStacks then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff stack check passed:", buffName, "current:", currentStacks, "required:", requiredStacks, ". Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff missing or insufficient stacks:", buffName, "current:", currentStacks, "required:", requiredStacks)
+			-- end
+		-- end
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("CheckDBBuff() - No buffs matched.")
+	-- end
+	-- return false
+-- end
+
+
+-- -- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
+-- function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckDBBuff ~~")
+	-- end
+
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, buffName in ipairs(check) do
+			-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+			-- if not aura then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff not active:", buffName)
+				-- end
+				-- return false
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckDBBuff() - Buff active:", buffName)
+				-- end
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - All buffs matched for provided `check`.")
+		-- end
+		-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not directly provided
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No quest data found for questID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Evaluate `checks` if present
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff checks failed.")
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Evaluate single `check` from step data
+	-- check = stepData.check or {}
+	-- if #check == 0 then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckDBBuff() - No buffs to check.")
+		-- end
+		-- return false
+	-- end
+
+	-- for _, buffName in ipairs(check) do
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
+		-- if aura then
+			-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
+			-- end
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckDBBuff() - Buff not active:", buffName)
+			-- end
+		-- end
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("CheckDBBuff() - No buffs matched.")
+	-- end
+	-- return false
+-- end
+
+
+-- Function will check if the player currently has any of the debuffs specified in the quest's check or checks field.
+function RQE:CheckDBDebuff(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBDebuff ~~")
+	end
+
+	-- Use provided `check` and `neededAmt` if available
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- Evaluate `check` directly if provided
+	if #check > 0 and #neededAmt > 0 then
+		for i, debuffName in ipairs(check) do
+			local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+			if not aura then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("CheckDBDebuff() - Debuff not active:", debuffName)
+				end
+				return false
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("CheckDBDebuff() - Debuff active:", debuffName)
+				end
+			end
+		end
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBDebuff() - All debuffs matched for provided `check`.")
+		end
+		--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+		return true
+	end
+
+	-- Fallback to quest data if `check` and `neededAmt` are not directly provided
+	local questData = self.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBDebuff() - No quest data found for questID:", questID)
+		end
+		return false
+	end
+
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBDebuff() - No step data found for stepIndex:", stepIndex)
+		end
+		return false
+	end
+
+	-- Evaluate `checks` if present
+	if stepData.checks then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBDebuff() - Using EvaluateStepChecks for multiple checks.")
+		end
+		local success = self:EvaluateStepChecks(questID, stepIndex)
+		if success then
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("CheckDBDebuff() - Debuff checks succeeded. Advancing quest step.")
+			end
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("CheckDBDebuff() - Debuff checks failed.")
+			end
+			return false
+		end
+	end
+
+	-- Evaluate single `check` from step data
+	check = stepData.check or {}
+	if #check == 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBDebuff() - No debuffs to check.")
+		end
+		return false
+	end
+
+	for _, debuffName in ipairs(check) do
+		local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+		if aura then
+			--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("CheckDBDebuff() - Debuff active:", debuffName, ". Advancing quest step.")
+			end
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("CheckDBDebuff() - Debuff not active:", debuffName)
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("CheckDBDebuff() - No debuffs matched.")
+	end
+	return false
+end
+
+
+-- Main function to check inventory conditions
+-- Supports ordinary inventory amounts and combined inventory/objective amounts.
+function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running CheckDBInventory ~~~")
+	end
+
+	-- Ensure `check` and `neededAmt` are valid.
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- Accepts either:
+	-- neededAmt = { "2" }			 Inventory alone must contain 2.
+	-- neededAmt = { "6+objective" }   Inventory plus objective progress must reach 6.
+	local function ParseRequiredAmount(rawAmount)
+		if type(rawAmount) == "string" then
+			local combinedAmount = rawAmount:match(
+				"^%s*(%d+)%s*%+%s*objective%s*$"
+			)
+
+			if combinedAmount then
+				return tonumber(combinedAmount) or 1, true
+			end
+		end
+
+		return tonumber(rawAmount) or 1, false
+	end
+
+	-- Returns progress for the objective assigned to the current DB step.
+	local function GetCurrentObjectiveProgress()
+		local questData = self.getQuestData(questID)
+		local stepData = questData and questData[stepIndex]
+
+		if not stepData then
+			return 0
+		end
+
+		local objectiveIndex = tonumber(stepData.objectiveIndex) or 1
+		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objective = objectives and objectives[objectiveIndex]
+
+		if not objective then
+			return 0
+		end
+
+		return tonumber(objective.numFulfilled) or 0
+	end
+
+	-- Debug print.
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(
+			"Evaluating check:",
+			table.concat(check, ", "),
+			"with neededAmt:",
+			table.concat(neededAmt, ", ")
+		)
+	end
+
+	-- Evaluate `check` and `neededAmt` directly if provided.
+	if #check > 0 and #neededAmt > 0 then
+		for i, condition in ipairs(check) do
+			-- old:
+			-- local amount = tonumber(neededAmt[i]) or 1
+			-- local itemCount = GetItemCount(condition, false)
+			--
+			-- if itemCount < amount then
+			-- 	if RQE.db.profile.debugLevel == "INFO+" then
+			-- 		print(
+			-- 			"Inventory check failed for item:",
+			-- 			condition,
+			-- 			"needed:", amount,
+			-- 			"found:", itemCount
+			-- 		)
+			-- 	end
+			-- 	return false
+			-- end
+
+			local requiredAmount, includeObjectiveProgress =
+				ParseRequiredAmount(neededAmt[i])
+
+			local itemCount = GetItemCount(condition, false) or 0
+			local objectiveProgress = 0
+
+			if includeObjectiveProgress then
+				objectiveProgress = GetCurrentObjectiveProgress()
+			end
+
+			local currentTotal = itemCount + objectiveProgress
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(
+					"CheckDBInventory() - Inventory evaluation:",
+					"item:", condition,
+					"item count:", itemCount,
+					"objective progress:", objectiveProgress,
+					"combined total:", currentTotal,
+					"required:", requiredAmount,
+					"combined mode:",
+					tostring(includeObjectiveProgress)
+				)
+			end
+
+			if currentTotal < requiredAmount then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(
+						"CheckDBInventory() - Inventory check failed:",
+						"item:", condition,
+						"item count:", itemCount,
+						"objective progress:", objectiveProgress,
+						"combined total:", currentTotal,
+						"required:", requiredAmount
+					)
+				end
+
+				return false
+			end
+		end
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(
+				"All inventory conditions met for check:",
+				table.concat(check, ", "),
+				"neededAmt:",
+				table.concat(neededAmt, ", ")
+			)
+		end
+
+		return true
+	end
+
+	-- Fallback to EvaluateStepChecks if `check` and `neededAmt`
+	-- were not directly provided.
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(
+			"Falling back to EvaluateStepChecks for questID:",
+			questID,
+			"stepIndex:",
+			stepIndex
+		)
+	end
+
+	local success = self:EvaluateStepChecks(questID, stepIndex)
+
+	if success then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~ Success ~")
+			print(
+				"Inventory conditions met for questID:",
+				questID,
+				"stepIndex:",
+				stepIndex
+			)
+		end
+
+		return true
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("~ Failure ~")
+			print(
+				"Inventory conditions NOT met for questID:",
+				questID,
+				"stepIndex:",
+				stepIndex
+			)
+		end
+
+		return false
+	end
+end
+
+
+-- -- Main function to check inventory conditions (Array/Checks or Check compatible)
+-- function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~~ Running CheckDBInventory ~~~")
+	-- end
+
+	-- -- Ensure `check` and `neededAmt` are valid
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Debug print
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+	-- end
+
+	-- -- Evaluate `check` and `neededAmt` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, condition in ipairs(check) do
+			-- local amount = tonumber(neededAmt[i]) or 1
+			-- local itemCount = GetItemCount(condition, false) -- Replace with your inventory check logic
+			-- if itemCount < amount then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Inventory check failed for item:", condition, "needed:", amount, "found:", itemCount)
+				-- end
+				-- return false
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("All inventory conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+		-- end
+		-- return true
+	-- end
+
+	-- -- Fallback to `EvaluateStepChecks` if `check` and `neededAmt` are not directly provided
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("Falling back to EvaluateStepChecks for questID:", questID, "stepIndex:", stepIndex)
+	-- end
+	-- local success = self:EvaluateStepChecks(questID, stepIndex)
+	-- if success then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("~ Success ~")
+			-- print("Inventory conditions met for questID:", questID, "stepIndex:", stepIndex)
+		-- end
+		-- return true
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("~ Failure ~")
+			-- print("Inventory conditions NOT met for questID:", questID, "stepIndex:", stepIndex)
+		-- end
+		-- return false
+	-- end
+-- end
+
+
+-- Function to evaluate complex conditions recursively
+function RQE:evaluateCondition(check, neededAmt)
+	if type(check) == "string" then
+		-- Simple case for a single item
+		local itemCount = C_Item.GetItemCount(check)
+		local requiredAmount = tonumber(neededAmt[1]) or 1
+		return itemCount >= requiredAmount
+	elseif type(check) == "table" then
+		-- Handle complex nested conditions
+		local operator = check[1]
+		if operator == ";" then
+			-- OR logic
+			local orItems = { select(2, unpack(check)) }
+			return self:evaluateOrCondition(orItems, neededAmt)
+		elseif operator == "&" then
+			-- AND logic
+			local andItems = { select(2, unpack(check)) }
+			return self:evaluateAndCondition(andItems, neededAmt)
+		elseif operator == "!" then
+			-- NOT logic
+			local notItem = check[2]
+			local requiredAmount = tonumber(neededAmt[1]) or 1
+			return self:evaluateNotCondition(notItem, requiredAmount)
+		else
+			-- Default to AND logic for flat tables (e.g., {"12345", "67890"})
+			return self:evaluateAndCondition(check, neededAmt)
+		end
+	end
+end
+
+
+-- Helper function to evaluate AND conditions for `check`
+function RQE:evaluateAndCondition(andItems, neededAmt)
+	for index, itemID in ipairs(andItems) do
+		local requiredAmount = tonumber(neededAmt[index]) or 1
+		local itemCount = C_Item.GetItemCount(itemID)
+		if itemCount < requiredAmount then
+			return false -- Fail if any condition in AND is not met
+		end
+	end
+	return true -- Pass if all AND conditions are met
+end
+
+
+-- Helper function to evaluate OR conditions for `check`
+function RQE:evaluateOrCondition(orItems, neededAmt)
+	for index, itemID in ipairs(orItems) do
+		local requiredAmount = tonumber(neededAmt[index]) or 1
+		local itemCount = C_Item.GetItemCount(itemID)
+		if itemCount >= requiredAmount then
+			return true -- Pass if any condition in OR is met
+		end
+	end
+	return false -- Fail if no OR conditions are met
+end
+
+
+-- Helper function to evaluate NOT conditions for `check`
+function RQE:evaluateNotCondition(itemID, requiredAmount)
+	local itemCount = C_Item.GetItemCount(itemID)
+	return itemCount < requiredAmount -- Return true if the player does NOT have the required amount
+end
+
+
+-- Evaluate if using 'check' or 'checks' and if it is 'checks' this function will evaluate, otherwise with 'check' it will hand off to another function
+function RQE:EvaluateStepChecks(questID, stepIndex)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~~ Running EvaluateStepChecks ~~~")
+	end
+
+	local questData = self.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE: No quest data for questID:", questID)
+		end
+		return false, nil
+	end
+
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE: No step data for stepIndex:", stepIndex)
+		end
+		return false, nil
+	end
+
+	-- Handle `checks` array for multiple checks
+	if stepData.checks then
+		for i, checkData in ipairs(stepData.checks) do
+			local logic = checkData.logic or "AND"
+			local check = checkData.check or {}
+			local neededAmt = checkData.neededAmt or {}
+			local functName = checkData.funct or ""
+
+			-- Resolve the function
+			local checkFunction = self[functName]
+			if not checkFunction then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Function not found for check index:", i, "logic:", logic, "functName:", functName)
+				end
+				return false, i
+			end
+
+			-- Evaluate the condition
+			local success
+			if logic == "AND" then
+				success = self:EvaluateAndCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
+			elseif logic == "OR" then
+				success = self:EvaluateOrCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
+			elseif logic == "NOT" then
+				success = self:EvaluateNotCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Unknown logic type for check index:", i, "logic:", logic)
+				end
+				return false, i
+			end
+
+			if not success then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Check failed at index:", i, "logic:", logic, "check:", check, "neededAmt:", neededAmt)
+				end
+				return false, i -- Return the index of the failed check
+			end
+		end
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE: All checks passed for stepIndex:", stepIndex)
+		end
+		return true, nil -- All conditions satisfied
+	end
+
+	-- Handle single `check` + `neededAmt` style
+	if stepData.check and stepData.neededAmt then
+		local success = self:evaluateCondition(stepData.check, stepData.neededAmt)
+		return success, nil
+	end
+
+	return false, nil -- No checks to evaluate
+end
+
+
+-- Evaluate AND conditions for `checks`
+function RQE:EvaluateAndCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
+	for i, condition in ipairs(check) do
+		local amount = tonumber(neededAmt[i]) or 1
+		if not checkFunction(self, condition, amount, questID, stepIndex, checkData) then
+			return false
+		end
+	end
+	return true
+end
+
+
+-- Evaluate OR conditions for `checks`
+function RQE:EvaluateOrCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
+	for i, condition in ipairs(check) do
+		local amount = tonumber(neededAmt[i]) or 1
+		if checkFunction(self, condition, amount, questID, stepIndex, checkData) then
+			return true
+		end
+	end
+	return false
+end
+
+
+-- Evaluate NOT conditions for `checks`
+function RQE:EvaluateNotCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
+	for i, condition in ipairs(check) do
+		local amount = tonumber(neededAmt[i]) or 1
+		if checkFunction(self, condition, amount, questID, stepIndex, checkData) then
+			return false -- Fail if the condition is true
+		end
+	end
+	return true
+end
+
+
+-- Function will check the player's current map ID against the expected map ID(s) stored in the check and failedcheck fields in the RQEDatabase (Array/Checks or Check compatible)
+function RQE:CheckDBZoneChange(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBZoneChange ~~")
+	end
+
+	-- Ensure `check` and `neededAmt` are valid
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- Get the player's current map ID and subzone name
+	local currentMapID = C_Map.GetBestMapForUnit("player")
+	local currentSubZone = GetSubZoneText() or "" -- Subzone name
+	local currentZone = GetZoneText() or "" 		-- Zone name
+	local currentRealZone = GetRealZoneText() or ""	-- Real Zone Text
+
+	-- Fall back to zone name if subzone is blank
+	if currentSubZone == "" then
+		currentSubZone = currentZone
+	end
+
+	local function NormalizeZoneName(zoneName)
+		return tostring(zoneName or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+	end
+
+	local currentSubZoneLower = NormalizeZoneName(currentSubZone)
+	local currentZoneLower = NormalizeZoneName(currentZone)
+	local currentRealZoneLower = NormalizeZoneName(currentRealZone)
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Current MapID:", tostring(currentMapID))
+		print("Current SubZone:", currentSubZone)
+		print("Current Zone:", currentZone)
+		print("Current RealZone:", currentRealZone)
+	end
+
+	-- Determine if `check` contains strings (subzones) or numerals (map IDs)
+	local isSubZoneCheck = type(check[1]) == "string" and not tonumber(check[1])
+
+	local questData = self.getQuestData(questID)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Valid quest data found for questID:", questID)
+	end
+
+	if not questData then
+		return false -- Exit early if no quest data is found
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Valid step data found for stepIndex:", stepIndex)
+	end
+
+	local stepData = questData[stepIndex]
+	if not stepData then
+		return false -- Exit early if no step data is found
+	end
+
+	-- Handle subzone checks (string-based)
+	if isSubZoneCheck then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Evaluating subzone check. Required SubZones:", table.concat(check, ", "))
+		end
+
+		for _, subZone in ipairs(check) do
+			local expectedZoneLower = NormalizeZoneName(subZone)
+
+			if currentSubZoneLower == expectedZoneLower
+				or currentZoneLower == expectedZoneLower
+				or currentRealZoneLower == expectedZoneLower then
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Player is in the required zone:", subZone)
+				end
+
+				return true
+			end
+		end
+
+		-- for _, subZone in ipairs(check) do
+			-- if currentSubZone == subZone then
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Player is in the required subzone:", subZone)
+				-- end
+				-- return true -- Subzone matches
+			-- end
+		-- end
+
+		-- If no match in subzone checks
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not in any of the required subzones. Current SubZone:", currentSubZone)
+			print("Required SubZones:", table.concat(check, ", "))
+		end
+		return false
+	end
+
+	-- Handle single check + neededAmt directly
+	if #check > 0 then
+		for _, mapID in ipairs(check) do
+			if tostring(currentMapID) == tostring(mapID) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Player is in a required zone (MapID: " .. tostring(currentMapID) .. "). Advancing to the next quest step.")
+				end
+				return true
+			end
+		end
+		-- If no match is found in the single check, return false
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not in any of the required zones from single check. Current MapID:", tostring(currentMapID))
+			print("Required MapID(s):", table.concat(check or {}, ", "))
+		end
+		return false
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Evaluating multiple checks for stepIndex:", stepIndex)
+	end
+
+	-- Handle multiple checks using EvaluateStepChecks
+	if stepData.checks then
+		local success = self:EvaluateStepChecks(questID, stepIndex)
+		if success then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("All zone conditions satisfied for stepIndex:", stepIndex)
+			end
+			return true -- Indicate successful advancement
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Zone conditions NOT satisfied for stepIndex:", stepIndex)
+			end
+			return false -- Indicate failure
+		end
+	end
+
+	-- Handle failed zones if `failedcheck` is defined
+	local failedMapIDs = stepData.failedcheck or {}
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Evaluating failed zones for Current MapID:", tostring(currentMapID))
+		print("Failed MapID(s):", table.concat(failedMapIDs, ", "))
+	end
+	if failedMapIDs and #failedMapIDs > 0 then
+		for _, mapID in ipairs(failedMapIDs) do
+			if tostring(currentMapID) == tostring(mapID) then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Player is in a failed zone (MapID: " .. tostring(currentMapID) .. "). Returning failure. Current stepIndex:", stepIndex)
+				end
+				return false
+			end
+		end
+	end
+
+	-- If no match is found
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Player is not in any of the correct or failed zones. Current stepIndex:", stepIndex)
+		print("Current MapID:", tostring(currentMapID),
+			  "Required MapID(s):", table.concat(stepData.check or {}, ", "),
+			  "Failed MapID(s):", table.concat(failedMapIDs or {}, ", "))
+	end
+
+	return false -- Default to false if no conditions are met
+end
+
+
+-- Function will check if the quest is ready for turn-in from what is passed by the RQEDatabase.
+function RQE:CheckDBComplete(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBComplete ~~")
+	end
+
+	-- Safeguard: if `check` is a table, extract first element as the questID override
+	if type(check) == "table" and tonumber(check[1]) then
+		questID = tonumber(check[1])
+	end
+
+	-- local isReady = C_QuestLog.ReadyForTurnIn(questID)
+	local isReady = self:IsQuestReadyForTurnIn(questID)
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
+	end
+
+	C_Timer.After(0.1, function()
+		RQE.isCheckingMacroContents = true
+		local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+		if isMacroCorrect then
+			return
+		end
+
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(3, function()
+			RQE.CreateMacroForCheckAndSetFinalStep = false
+			RQE.isCheckingMacroContents = false
+		end)
+	end)
+
+	return isReady
+end
+
+
+-- Function to check if the player's faction is Alliance and advance the quest step if true
+function RQE:CheckFactionGroupAlliance(questID, stepIndex, check, neededAmt)
+	local englishFaction = UnitFactionGroup("player")
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking if player's faction is Alliance: " .. tostring(englishFaction))
+	end
+
+	-- Validate faction
+	if englishFaction ~= "Alliance" then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not Alliance, not advancing quest step.")
+		end
+		return false
+	end
+
+	-- Use `check` and `neededAmt` for evaluation
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- Handle single `check`
+	if #check > 0 then
+		for _, condition in ipairs(check) do
+			if tostring(condition) == "Alliance" then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Alliance-specific check passed. Advancing quest step.")
+				end
+				self:ClickWaypointButtonForIndex(stepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+				return true
+			end
+		end
+	end
+
+	-- Handle multiple `checks`
+	local questData = self.getQuestData(questID)
+	local stepData = questData and questData[stepIndex]
+
+	if stepData and stepData.checks then
+		local success = self:EvaluateStepChecks(questID, stepIndex)
+		if success then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("All Alliance-specific checks passed. Advancing quest step.")
+			end
+			self:ClickWaypointButtonForIndex(stepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Alliance-specific checks failed or not met.")
+	end
+	return false
+end
+
+
+-- Function to check if the player's faction is Horde and advance the quest step if true
+function RQE:CheckFactionGroupHorde(questID, stepIndex, check, neededAmt)
+	local englishFaction = UnitFactionGroup("player")
+	local currentStepIndex = RQE.AddonSetStepIndex
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking if player's faction is Horde:", tostring(englishFaction))
+		print("Current stepIndex in function:", currentStepIndex, "Passed stepIndex:", stepIndex)
+	end
+
+	if englishFaction == "Horde" then
+		if currentStepIndex == stepIndex then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Horde-specific check passed. Advancing quest step.")
+			end
+			self:AdvanceQuestStep(questID, stepIndex)
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Player is Horde, but stepIndex does not match. No advancement.")
+			end
+			return false
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Player is not Horde, not advancing quest step.")
+		end
+		return false
+	end
+end
+
+
+-- Primary function to check the progress of objectives in a quest (Array/Checks or Check compatible)
+function RQE:CheckDBObjectiveStatus(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBObjectiveStatus ~~")
+	end
+
+	-- Ensure `check` and `neededAmt` are valid
+	check = check or {}
+	neededAmt = neededAmt or {}
+
+	-- Retrieve quest objectives and data
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+	local questData = RQE.getQuestData(questID)
+
+	-- Early return if no quest is super-tracked or if data is missing
+	if not RQE.IsQuestSuperTracked() or not questData or not objectives then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Missing quest data or objectives for questID:", questID)
+		end
+		return false
+	end
+
+	-- Ensure stepIndex is valid
+	local stepData = questData[stepIndex]
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Invalid stepIndex:", stepIndex, "for questID:", questID)
+		end
+		return false
+	end
+
+	-- Handle `check` and `neededAmt` explicitly
+	if #check > 0 and #neededAmt > 0 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
+		end
+		for i, condition in ipairs(check) do
+			local amount = tonumber(neededAmt[i]) or 1
+			local objectiveIndex = stepData.objectiveIndex or 1 -- Use the objectiveIndex from stepData
+			local objective = objectives[objectiveIndex]
+
+			-- The normalized objective table already contains the Classic type and
+			-- parsed progress. Do not call the unavailable Retail objective API.
+			-- local objectiveInfo = RQE.API.GetQuestObjectiveInfo(questID, objectiveIndex, false)
+			local objectiveType = objective and objective.type
+
+			-- Check if the objective is a progress bar
+			if objectiveType == "progressbar" then
+				local progress = GetQuestProgressBarPercent(questID) -- Get the progress percentage
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("Quest %d Objective %d is a progress bar: %d%% complete (Required: %d%%)", questID, objectiveIndex, progress, amount))
+				end
+
+				-- Treat 1% as 100% if that's all Blizzard gives us
+				if amount == 1 then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("needAmt is exactly 1, likely full — treating as 100%.")
+					end
+					amount = 100
+				elseif amount == 0.01 then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("needAmt is exactly 0.01, — treating as 1%.")
+					end
+					amount = 1
+				end
+
+				-- Return true if progress is equal to or greater than neededAmt (now representing percentage)
+				if progress >= amount then
+					return true
+				else
+					return false
+				end
+			else
+				-- Regular check for other objective types (fallback)
+				if not objective then
+					return false
+				end
+
+				-- Enhanced evaluation logic that ensures both fulfillment and status
+				if not objective then
+					return false
+				end
+
+				local fulfilled = tonumber(objective.numFulfilled) or 0
+				local required = amount or 1
+
+				-- Only enforce .finished if this step requires full completion
+				local objectiveRequired = tonumber(objective.numRequired) or required
+				local enforceFinished = (fulfilled >= objectiveRequired)
+				--local needsFinished = true -- Always require .finished for safety
+
+				-- Debug info before deciding
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("Evaluating Objective %d: %s - Fulfilled: %d/%d (Objective total: %d) - Finished: %s",
+						objectiveIndex,
+						objective.text or "N/A",
+						fulfilled,
+						required,
+						objectiveRequired,
+						tostring(objective.finished)
+					))
+				end
+
+				if fulfilled < required then
+					return false
+				end
+
+				if enforceFinished and not objective.finished then
+					return false
+				end
+
+				return true
+			end
+		end
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("All objective conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
+		end
+		return true
+	end
+
+	-- Dynamically determine the correct step to advance to
+	local correctStepIndex = 1
+	for i, step in ipairs(questData) do
+		local objectiveIndex = step.objectiveIndex or 1
+		local neededAmount = step.neededAmt and tonumber(step.neededAmt[1]) or 1
+		local objective = objectives[objectiveIndex]
+
+		if objective then
+			if objective.finished or objective.numFulfilled >= neededAmount then
+				RQE.OkayWaypointButtonToMove = true
+				correctStepIndex = i + 1
+			elseif objective.numFulfilled < neededAmount then
+				correctStepIndex = i
+				break
+			end
+		else
+			correctStepIndex = i -- Handle cases where objectives might be missing
+			break
+		end
+	end
+
+	-- Ensure correctStepIndex does not exceed the number of steps
+	correctStepIndex = math.min(correctStepIndex, #questData)
+
+	-- If the stepIndex doesn't match the expected step, click the correct button
+	if correctStepIndex ~= stepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Adjusted to correctStepIndex:", correctStepIndex, "from stepIndex:", stepIndex)
+		end
+		--self:ClickWaypointButtonForIndex(correctStepIndex)	-- FIRES from StartPeriodicChecks function, this is redundant!
+		return true
+	end
+
+	-- Handle `checks` if defined for the current step
+	if stepData.checks then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Step contains multiple checks. Evaluating each check.")
+		end
+		local success = self:EvaluateStepChecks(questID, stepIndex)
+		if success then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Objective checks met for stepIndex:", stepIndex)
+			end
+			self:AdvanceQuestStep(questID, stepIndex)
+			return true
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Objective checks NOT met for stepIndex:", stepIndex)
+			end
+			return false
+		end
+	end
+
+	-- Fallback if no conditions matched
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("No conditions met for questID:", questID, "stepIndex:", stepIndex)
+	end
+	return false
+end
+
+
+--[[ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+RQE:CheckDBConditionalsOnly()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Used for steps that only contain 'cond' logic within their checks.
+Example DB usage:
+	funct = "CheckDBConditionalsOnly",
+	checks = {
+		{ cond = "RQE.CheckKnownSpell(1251045)" },
+	}
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+]]
+function RQE:CheckDBConditionalsOnly(questID, stepIndex, check, neededAmt)
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("~~ Running RQE:CheckDBConditionalsOnly() ~~")
+	end
+
+	-- Validate basic inputs
+	if not questID or not stepIndex then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE:CheckDBConditionalsOnly(): Missing questID or stepIndex.")
+		end
+		return false
+	end
+
+	-- Retrieve quest and step data
+	local questData = self.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE:CheckDBConditionalsOnly(): No quest data for questID:", questID)
+		end
+		return false
+	end
+
+	local stepData = questData[stepIndex]
+	if not stepData or not stepData.checks then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("RQE:CheckDBConditionalsOnly(): No checks for stepIndex:", stepIndex)
+		end
+		return false
+	end
+
+	-- Loop through all checks for this step
+	for j, checkData in ipairs(stepData.checks) do
+		if checkData.cond and type(checkData.cond) == "string" then
+			local funcName, rawParams = checkData.cond:match("RQE%.([%w_]+)%((.-)%)")
+
+			if funcName and RQE[funcName] then
+				-- Extract arguments from parentheses (numbers and strings)
+				local args = {}
+				for param in string.gmatch(rawParams or "", "[^,%s]+") do
+					local num = tonumber(param)
+					if num then
+						table.insert(args, num)
+					else
+						param = param:gsub("^['\"]", ""):gsub("['\"]$", "")
+						table.insert(args, param)
+					end
+				end
+
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format(
+						"RQE:CheckDBConditionalsOnly(): Evaluating cond '%s' -> Function: %s | Args: %s",
+						checkData.cond,
+						funcName,
+						table.concat(args, ", ")
+					))
+				end
+
+				-- Run the conditional safely
+				local ok, result = pcall(RQE[funcName], RQE, unpack(args))
+				if not ok then
+					print(string.format("RQE: Error running conditional '%s': %s", checkData.cond, result))
+				else
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print(string.format("RQE: Conditional '%s' returned: %s", checkData.cond, tostring(result)))
+					end
+					if result then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("RQE: Conditional passed — advancing to next step.")
+						end
+						self:ClickWaypointButtonForIndex(stepIndex + 1)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+						return true
+					end
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("RQE: Unknown or missing conditional function for cond:", checkData.cond)
+				end
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE:CheckDBConditionalsOnly(): Skipping non-conditional entry for check index:", j)
+			end
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("RQE:CheckDBConditionalsOnly(): No conditionals passed — staying on current step.")
+	end
+
+	return false
+end
+
+
+-- Function to check the current scenario stage
+function RQE:CheckScenarioStage(questID, stepIndex)
+	-- Ensure the player is in a scenario
+	if not C_Scenario.IsInScenario() then
+		return false
+	end
+
+	-- Fetch general scenario information
+	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+	if not scenarioInfo then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No active scenario information available.")
+		end
+		return false
+	end
+
+	local currentStage = scenarioInfo.currentStage
+
+	-- Fetch quest data and step information
+	local questData = self.getQuestData(questID)
+	local stepData = questData and questData[stepIndex]
+
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quest data found in RQEDatabase for quest ID:", questID)
+		end
+		return false
+	end
+
+	if not stepData then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No step data found for quest ID:", questID)
+		end
+		return false
+	end
+
+	-- Compare current scenario stage with needed stage
+	local neededStage = tonumber(stepData.neededAmt[1]) or 1
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Current scenario stage:", currentStage, "Needed stage:", neededStage)
+	end
+
+	-- Check if the current stage meets or exceeds the needed stage
+	if currentStage >= neededStage then
+		-- Correctly identify the next step index based on scenario progression
+		local nextStepIndex = stepIndex
+
+		-- Only advance if we have reached or surpassed the needed stage for the next step
+		for i = stepIndex + 1, #questData do
+			local step = questData[i]
+			local stepNeededStage = tonumber(step.neededAmt[1]) or 1
+
+			-- Only advance if the current scenario stage is equal to the stepNeededStage
+			if currentStage == stepNeededStage then
+				nextStepIndex = i
+				break
+			elseif currentStage < stepNeededStage then
+				break
+			end
+		end
+
+		-- Advance to the next correct step only if it differs from the current step index
+		if nextStepIndex > stepIndex then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Scenario stage requirement met. Advancing to next step index:", nextStepIndex)
+			end
+			self:ClickWaypointButtonForIndex(nextStepIndex)	-- FIRES from StartPeriodicChecks function, this is possibly redundant!
+			return true
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Current scenario stage (" .. currentStage .. ") does not meet required stage (" .. neededStage .. ").")
+		end
+	end
+
+	return false
+end
+
+
+-- -- Function to check scenario criteria progress (Array/Checks or Check compatible)
+-- function RQE:CheckScenarioCriteria(questID, stepIndex, check, neededAmt)
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("~~ Running RQE:CheckScenarioCriteria ~~")
+	-- end
+
+	-- -- Ensure the player is in a scenario
+	-- if not C_Scenario.IsInScenario() then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - Player is not in a scenario.")
+		-- end
+		-- return false
+	-- end
+
+	-- -- Fetch general scenario information
+	-- local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+	-- if not scenarioInfo then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - No active scenario information available.")
+		-- end
+		-- return false
+	-- end
+
+	-- -- Use provided `check` and `neededAmt` if available
+	-- check = check or {}
+	-- neededAmt = neededAmt or {}
+
+	-- -- Evaluate `check` directly if provided
+	-- if #check > 0 and #neededAmt > 0 then
+		-- for i, criteriaIndex in ipairs(check) do
+			-- local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
+			-- if criteriaInfo then
+				-- if criteriaInfo.quantity < tonumber(neededAmt[i] or criteriaInfo.totalQuantity) then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("CheckScenarioCriteria() - Criteria " .. criteriaIndex .. " not yet met. Progress:", criteriaInfo.quantity, "/", neededAmt[i])
+					-- end
+					-- return false
+				-- end
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("CheckScenarioCriteria() - Invalid criteria index:", criteriaIndex)
+				-- end
+				-- return false
+			-- end
+		-- end
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - All criteria checks met.")
+		-- end
+		-- self:ClickWaypointButtonForIndex(stepIndex)
+		-- return true
+	-- end
+
+	-- -- Fallback to quest data if `check` and `neededAmt` are not provided
+	-- local questData = self.getQuestData(questID)
+	-- if not questData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - No quest data found for quest ID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- local stepData = questData[stepIndex]
+	-- if not stepData then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - No step data found for quest ID:", questID)
+		-- end
+		-- return false
+	-- end
+
+	-- -- Handle multiple `checks`
+	-- if stepData.checks then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("CheckScenarioCriteria() - Using EvaluateStepChecks for multiple checks.")
+		-- end
+		-- local success = self:EvaluateStepChecks(questID, stepIndex)
+		-- if success then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioCriteria() - Scenario criteria checks met for stepIndex:", stepIndex)
+			-- end
+			-- self:ClickWaypointButtonForIndex(stepIndex)
+			-- return true
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioCriteria() - Scenario criteria checks NOT met for stepIndex:", stepIndex)
+			-- end
+			-- return false
+		-- end
+	-- end
+
+	-- -- Check single scenario criteria
+	-- local numCriteria = select(3, C_Scenario.GetStepInfo())
+	-- for criteriaIndex = 1, numCriteria do
+		-- local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+		-- if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("CheckScenarioCriteria() - Scenario criteria met. Advancing to next step.")
+			-- end
+			-- self:ClickWaypointButtonForIndex(stepIndex)
+			-- return true
+		-- end
+	-- end
+
+	-- if RQE.db.profile.debugLevel == "INFO+" then
+		-- print("CheckScenarioCriteria() - Scenario criteria not yet met.")
+	-- end
+	-- return false
+-- end
+
+
+-- Function to check scenario criteria progress
+function RQE:CheckScenarioCriteria(questID, stepIndex)
+	-- Ensure the player is in a scenario
+	if not C_Scenario.IsInScenario() then
+		return false
+	end
+
+	-- Fetch general scenario information
+	local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+	if not scenarioInfo then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No active scenario information available.")
+		end
+		return false
+	end
+
+	-- Iterate through scenario criteria
+	local stepID = scenarioInfo.currentStage
+	local numCriteria = select(3, C_Scenario.GetStepInfo())
+
+	for criteriaIndex = 1, numCriteria do
+		local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+
+		if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Scenario criteria met. Advancing to next step.")
+			end
+			self:AdvanceQuestStep(questID, stepIndex)
+			return true
+		end
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Scenario criteria not yet met.")
+	end
+	return false
+end
+
+
+---------------------------------------------------
+-- #17. Filtering Functions
+---------------------------------------------------
+
+-- Contain filters for showing all quests in RQEQuestingFrame
+RQE.filterAllTrackedQuests = function()
+	-- SC displays every active quest in RQEQuestFrame without modifying
+	-- Blizzard's watched-quest list.
+	RQE.ShowAllQuestLogQuests = true
+	RQE.ZoneQuestFilterMapID = nil
+	RQE.HiddenQuestLogQuests = {}
+	RQE.ShowOnlyAllCompleteVirtualQuests = false
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+	RQE:SaveTrackedQuestsToCharacter()
+	RQE:SaveSuperTrackedQuestToCharacter()
+end
+
+
+-- Contain filters showing completed quests in RQEQuestingFrame
+-- RQE.filterAllCompleteQuests() = function()
+-- 	-- Add data here
+-- end
+RQE.filterAllCompleteQuests = function()
+	-- Build an RQE-only virtual source from every active quest-log entry. This
+	-- does not add or remove any Blizzard quest watches.
+	RQE.AllCompleteVirtualQuestWatches = {}
+	RQE.ShowAllQuestLogQuests = false
+	RQE.ZoneQuestFilterMapID = nil
+	RQE.HiddenQuestLogQuests = {}
+	RQE.ShowOnlyAllCompleteVirtualQuests = true
+
+	local numEntries = RQE.API.GetNumQuestLogEntries()
+	for questLogIndex = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(questLogIndex)
+		if questInfo and not questInfo.isHeader and questInfo.questID then
+			local objectives = RQE.API.GetQuestObjectives(questInfo.questID) or {}
+			local allObjectivesComplete = #objectives > 0
+			for _, objective in ipairs(objectives) do
+				if objective.finished ~= true and objective.finished ~= 1 then
+					allObjectivesComplete = false
+					break
+				end
+			end
+
+			if allObjectivesComplete then
+				RQE.AllCompleteVirtualQuestWatches[questInfo.questID] = true
+			end
+		end
+	end
+
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	SortQuestsByProximity()
+	RQE:SaveTrackedQuestsToCharacter()
+end
+
+
+-- Function for Hiding Completed Watched Quests
+--[[
+function RQE:HideCompletedWatchedQuests()
+	RQE.ShowOnlyAllCompleteVirtualQuests = false
+	-- Iterate through all quests currently being watched
+	for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		local isQuestComplete = C_QuestLog.IsComplete(qID)
+		if qID then
+			-- Check if the quest is completed
+			if isQuestComplete then
+				-- Remove the quest from the watch list if it is completed
+				-- print("~~~ Remove Quest Watch: 7314 ~~~")
+				C_QuestLog.RemoveQuestWatch(qID)
+			end
+		end
+	end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+end
+]]
+
+
+-- Remove only the currently displayed quests whose every listed objective is
+-- complete. The active display source determines how each target is removed:
+-- custom completed-only virtual list, all/zone virtual list, or normal watches.
+function RQE:HideCompletedWatchedQuests()
+	local function hasOnlyCompletedObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID) or {}
+		if #objectives == 0 then return false end
+
+		for _, objective in ipairs(objectives) do
+			if objective.finished ~= true and objective.finished ~= 1 then
+				return false
+			end
+		end
+		return true
+	end
+
+	-- Refresh the current virtual/native display source before choosing targets.
+	RQE:SortWatchedQuestsByProximity()
+	local completedQuestIDs = {}
+	for _, questData in ipairs(RQE.SortedWatchedQuests or {}) do
+		if hasOnlyCompletedObjectives(questData.questID) then
+			completedQuestIDs[questData.questID] = true
+		end
+	end
+
+	if RQE.ShowOnlyAllCompleteVirtualQuests then
+		-- SC's dedicated virtual source: remove only its matching entries.
+		RQE.AllCompleteVirtualQuestWatches = RQE.AllCompleteVirtualQuestWatches or {}
+		for questID in pairs(completedQuestIDs) do
+			RQE.AllCompleteVirtualQuestWatches[questID] = nil
+		end
+	elseif RQE.ShowAllQuestLogQuests or RQE.ZoneQuestFilterMapID then
+		-- SA/ZQ are RQE-only displays. Suppress only the matching entries without
+		-- touching Blizzard's native watch list or unrelated virtual watches.
+		RQE.HiddenQuestLogQuests = RQE.HiddenQuestLogQuests or {}
+		for questID in pairs(completedQuestIDs) do
+			RQE.HiddenQuestLogQuests[questID] = true
+		end
+	else
+		-- Normal tracker mode: remove only matching native or RQE virtual watches.
+		for questID in pairs(completedQuestIDs) do
+			RQE:UntrackQuestEverywhere(questID)
+		end
+	end
+
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	SortQuestsByProximity()
+	RQE:SaveTrackedQuestsToCharacter()
+end
+
+
+function RQE.ScanAndCacheQuestFrequencies()
+	RQE.DailyQuests = {}
+	RQE.WeeklyQuests = {}
+
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID)
+			local questTagID = tagInfo and tagInfo.tagID
+			local frequency = questInfo.frequency
+
+			-- Categorize as daily or weekly
+			if frequency == Enum.QuestFrequency.Daily then
+				RQE.DailyQuests[questInfo.questID] = questInfo.title
+			elseif frequency == Enum.QuestFrequency.Weekly then
+				RQE.WeeklyQuests[questInfo.questID] = questInfo.title
+			end
+		end
+	end
+end
+
+
+RQE.filterDailyWeeklyQuests = function()
+	RQE.ScanAndCacheQuestFrequencies()  -- Ensure daily and weekly quests are up-to-date
+
+	-- Loop through the current quest watches and remove all
+	local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+	for i = numQuestWatches, 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- print("~~~ Remove Quest Watch: 7359 ~~~")
+		C_QuestLog.RemoveQuestWatch(questID)
+	end
+
+	-- Add daily quests
+	for questID, _ in pairs(RQE.DailyQuests) do
+		C_QuestLog.AddQuestWatch(questID)
+	end
+
+	-- Add weekly quests
+	for questID, _ in pairs(RQE.WeeklyQuests) do
+		C_QuestLog.AddQuestWatch(questID)
+	end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+end
+
+
+-- Returns every explicit map ID in RQE's database for a quest: pickup
+-- locations, ordinary step coordinates, and all coordinate hotspots.
+function RQE:GetQuestDatabaseMapIDs(questID)
+	local mapIDs = {}
+	local questData = RQE.getQuestData(questID)
+	if type(questData) ~= "table" then return mapIDs end
+
+	local function addMapID(location)
+		local mapID = type(location) == "table" and tonumber(location.mapID)
+		if mapID and mapID ~= 0 then
+			mapIDs[mapID] = true
+		end
+	end
+
+	addMapID(questData.location)
+	addMapID(questData.coordinates)
+	for _, location in ipairs(questData.locations or {}) do
+		addMapID(location)
+	end
+
+	for _, stepData in pairs(questData) do
+		if type(stepData) == "table" then
+			addMapID(stepData.coordinates)
+			for _, hotspot in ipairs(stepData.coordinateHotspots or {}) do
+				addMapID(hotspot)
+			end
+		end
+	end
+
+	return mapIDs
+end
+
+
+-- Return the one map ID Blizzard associates with a quest. This is intentionally
+-- separate from database membership: DB/Sandbox explicit maps and Blizzard's
+-- zone are both valid ZQ associations for a database-backed quest.
+function RQE:GetQuestBlizzardZoneMapID(questID)
+	local uiMapID
+	if C_QuestLog and type(C_QuestLog.GetQuestAdditionalHighlights) == "function" then
+		uiMapID = C_QuestLog.GetQuestAdditionalHighlights(questID)
+	end
+	if not uiMapID or uiMapID == 0 then
+		if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
+			uiMapID = C_TaskQuest.GetQuestZoneID(questID)
+		end
+		if (not uiMapID or uiMapID == 0) and GetQuestUiMapID then
+			uiMapID = GetQuestUiMapID(questID)
+		end
+	end
+
+	uiMapID = tonumber(uiMapID)
+	return uiMapID and uiMapID ~= 0 and uiMapID or nil
+end
+
+
+function RQE.ScanAndCacheZoneQuests()
+	RQE.ZoneQuests = {}
+
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local mapIDs = RQE:GetQuestDatabaseMapIDs(questInfo.questID)
+
+			-- Old behavior treated Blizzard's zone as a fallback only. That caused a
+			-- DB/Sandbox quest with explicit pickup/step maps to lose Blizzard's own
+			-- zone association.
+		--[[
+			if not next(mapIDs) then
+				local uiMapID
+				if C_QuestLog and type(C_QuestLog.GetQuestAdditionalHighlights) == "function" then
+					uiMapID = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
+				end
+				if not uiMapID or uiMapID == 0 then
+					if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
+						uiMapID = C_TaskQuest.GetQuestZoneID(questInfo.questID)
+					end
+					if not uiMapID or uiMapID == 0 then
+						uiMapID = GetQuestUiMapID(questInfo.questID)
+					end
+				end
+				if uiMapID and uiMapID ~= 0 then
+					mapIDs[uiMapID] = true
+				end
+			end
+		]]
+
+			-- Non-DB quests therefore receive only this Blizzard map. DB/Sandbox
+			-- quests receive the union of it and every explicit pickup/step/hotspot
+			-- map already gathered above.
+			local blizzardMapID = RQE:GetQuestBlizzardZoneMapID(questInfo.questID)
+			if blizzardMapID then
+				mapIDs[blizzardMapID] = true
+			end
+
+			for mapID in pairs(mapIDs) do
+				RQE.ZoneQuests[mapID] = RQE.ZoneQuests[mapID] or {}
+				table.insert(RQE.ZoneQuests[mapID], questInfo.questID)
+			end
+		end
+	end
+
+	-- RQE.PendingTrackerStateRestore = false
+	-- Keep the guard until RestoreSuperTrackedQuestForCharacter has restored
+	-- the saved Classic RQE focus as well.
+end
+
+
+function RQE.UpdateTrackedQuestsToCurrentZone()
+	-- Determine the player's current zone/mapID
+	local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+	if not currentPlayerMapID then
+		return
+	end
+
+	-- Retrieve quests for the current zone using C_QuestLog.GetQuestsOnMap
+	local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
+	if not questsOnMap then
+		RQE.debugLog("No quests found for the current zone.")
+		return
+	end
+
+	-- Convert questsOnMap to a set for quicker lookups
+	local questIDSet = {}
+	for _, questInfo in ipairs(questsOnMap) do
+		questIDSet[questInfo.questID] = true
+	end
+
+	-- Iterate through all quests the player is currently watching
+	local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+	for i = numQuestWatches, 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- If a watched quest is not on the current map, untrack it
+		if questID and not questIDSet[questID] then
+			-- print("~~~ Remove Quest Watch: 7436 ~~~")
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+end
+
+
+-- Function that when run will print out the Map that is associated with quests in the player's questlog
+function RQE.ShowQuestsforMap()
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
+			if uiMapID ~= 0 then
+				print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. uiMapID)
+			else
+				local zoneID = GetQuestUiMapID(questInfo.questID) or C_TaskQuest.GetQuestZoneID(questInfo.questID)
+				print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. zoneID)
+			end
+		end
+	end
+end
+
+
+function RQE.BuildZoneQuestMenuList()
+	local zoneQuestMenuList = {}
+	RQE.ZoneQuests = RQE.ZoneQuests or {}  -- Ensure RQE.ZoneQuests is not nil
+
+	for zoneID, quests in pairs(RQE.ZoneQuests) do
+		local mapInfo = C_Map.GetMapInfo(zoneID)
+		if mapInfo then
+			local zoneName = mapInfo.name
+			table.insert(zoneQuestMenuList, {
+				zoneID = zoneID,  -- Store zoneID for sorting
+				text = zoneID .. ": " .. zoneName,
+				func = function() RQE.filterByZone(zoneID) end,
+			})
+		end
+	end
+
+	-- Sort the zoneQuestMenuList by zoneID
+	table.sort(zoneQuestMenuList, function(a, b)
+		return a.zoneID > b.zoneID
+	end)
+
+	-- Remove the zoneID key from the menu items after sorting
+	for _, menuItem in ipairs(zoneQuestMenuList) do
+		menuItem.zoneID = nil
+	end
+
+	if #zoneQuestMenuList == 0 then
+		table.insert(zoneQuestMenuList, {
+			text = "No zone quests",
+			func = function() print("No zone quests to filter.") end,
+			disabled = true
+		})
+	end
+
+	return zoneQuestMenuList
+end
+
+
+-- function RQE.filterByZone(zoneID)
+function RQE.filterByZone(zoneID, resetHiddenQuestLogQuests)
+	local previousZoneID = RQE.ZoneQuestFilterMapID
+	RQE.ShowOnlyAllCompleteVirtualQuests = false
+	if RQE.SyncClassicManualVirtualWatchesFromNativeWatches then
+		RQE:SyncClassicManualVirtualWatchesFromNativeWatches()
+	end
+	RQE.ScanAndCacheZoneQuests()
+	RQE.ZoneQuestFilterMapID = zoneID
+	RQE.ShowAllQuestLogQuests = false
+	-- RQE.HiddenQuestLogQuests = {}
+	-- Preserve an explicit untrack while the player remains in this same zone.
+	-- Changing zones clears that suppression, so leaving and later returning lets
+	-- the normal ZQ membership rules add the quest back virtually.
+	-- if previousZoneID ~= zoneID then
+	-- 	RQE.HiddenQuestLogQuests = {}
+	-- else
+	-- 	RQE.HiddenQuestLogQuests = RQE.HiddenQuestLogQuests or {}
+	-- end
+	-- An explicit ZQ button press is a request to repopulate the current zone,
+	-- so clear prior same-zone untracks. Automatic zone refreshes still retain
+	-- those untracks until the player changes zones.
+	if resetHiddenQuestLogQuests or previousZoneID ~= zoneID then
+		RQE.HiddenQuestLogQuests = {}
+	else
+		RQE.HiddenQuestLogQuests = RQE.HiddenQuestLogQuests or {}
+	end
+
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort the RQE-only zone list by proximity after populating RQEQuestFrame.
+	SortQuestsByProximity()
+	RQE:SaveTrackedQuestsToCharacter()
+	RQE:SaveSuperTrackedQuestToCharacter()
+end
+
+
+function RQE.CheckAndUpdateForCurrentZone(zoneID)
+	local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+	if not currentPlayerMapID then
+		return
+	end
+
+	-- Compare the chosen zone ID with the current player's map ID
+	if zoneID == currentPlayerMapID then
+		-- If they match, update the tracked quests to reflect the current zone
+		RQE.UpdateTrackedQuestsToCurrentZone()
+	end
+end
+
+
+-- Function to display quests for the current zone
+-- function RQE.DisplayCurrentZoneQuests()
+function RQE.DisplayCurrentZoneQuests(resetHiddenQuestLogQuests)
+	-- Step 1: Determine the player's current zone
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		return
+	end
+
+	-- filterByZone() synchronizes native checked quests into the explicit manual
+	-- source immediately before it builds the RQE-only zone-derived list.
+
+	-- Ensure we have the latest zone quests data
+	RQE.ScanAndCacheZoneQuests()
+
+	-- Display the RQE-only list for the current map, including an empty list
+	-- when none of the active quests have database locations in this zone.
+	-- RQE.filterByZone(mapID)
+	RQE.filterByZone(mapID, resetHiddenQuestLogQuests)
+end
+
+
+-- Route every Auto-Track Zone Quests control through one entry point. Enabling
+-- it immediately uses the same RQE-only ZQ source as the ZQ button, without
+-- adding any quests to Blizzard's limited native objective tracker.
+function RQE:SetAutoTrackZoneQuestsEnabled(enabled)
+	RQE.db.profile.autoTrackZoneQuests = enabled == true
+	if RQE.db.profile.autoTrackZoneQuests then
+		RQE.DisplayCurrentZoneQuests()
+	end
+end
+
+
+function RQE.filterByQuestType(questType)
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			-- Fetch the current quest's type
+			local currentQuestType = C_QuestLog.GetQuestType(questInfo.questID)
+
+			-- Determine if the current quest should be watched based on its type
+			local shouldWatch = false
+			if questType == "Misc" then
+				-- For "Misc", include quests of type 0 or 261 or 270 or 282
+				shouldWatch = (currentQuestType == 0 or currentQuestType == 261 or currentQuestType == 270 or currentQuestType == 282)
+			else
+				-- For other quest types, match the quest type directly
+				shouldWatch = (currentQuestType == questType)
+			end
+
+			-- Add or remove the quest from watch based on the shouldWatch flag
+			if shouldWatch then
+				C_QuestLog.AddQuestWatch(questInfo.questID)
+			else
+				-- print("~~~ Remove Quest Watch: 7600 ~~~")
+				C_QuestLog.RemoveQuestWatch(questInfo.questID)
+			end
+		end
+	end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+end
+
+
+function RQE.GetQuestCampaignInfo(questID)
+	local campaignID = C_CampaignInfo.GetCampaignID(questID)
+	if campaignID then
+		local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+		if campaignInfo then
+			return campaignInfo
+		end
+	end
+	return nil  -- This quest is not part of a campaign
+end
+
+
+function RQE.GetCampaignsFromQuestLog()
+	local campaigns = {}
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local campaignInfo = RQE.GetQuestCampaignInfo(questInfo.questID)
+			if campaignInfo and campaignInfo.campaignID then  -- Ensure campaignID is not nil
+				-- If this campaign is not yet in the table, add it
+				if not campaigns[campaignInfo.campaignID] then
+					campaigns[campaignInfo.campaignID] = campaignInfo.name
+				end
+			end
+		end
+	end
+	return campaigns
+end
+
+
+function RQE.ScanAndCacheCampaigns()
+	RQE.Campaigns = {}
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			if C_CampaignInfo.IsCampaignQuest(questInfo.questID) then
+				local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+				if campaignID then
+					local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+					if campaignInfo and not RQE.Campaigns[campaignID] then
+						RQE.Campaigns[campaignID] = campaignInfo.name
+					end
+				end
+			end
+		end
+	end
+end
+
+
+function RQE.BuildCampaignMenuList()
+	local campaignMenuList = {}
+
+	for campaignID, campaignName in pairs(RQE.Campaigns) do
+		table.insert(campaignMenuList, {
+			campaignID = campaignID,  -- Add campaignID key for sorting
+			text = campaignID .. ": " .. campaignName,
+			func = function() RQE.filterByCampaign(campaignID) end,
+		})
+	end
+
+	-- Sort the campaignMenuList by campaignID
+	table.sort(campaignMenuList, function(a, b)
+		return a.campaignID > b.campaignID
+	end)
+
+	-- Remove the campaignID key from the menu items after sorting
+	for _, menuItem in ipairs(campaignMenuList) do
+		menuItem.campaignID = nil
+	end
+
+	if #campaignMenuList == 0 then
+		-- If there are no campaigns, add a placeholder item
+		table.insert(campaignMenuList, {
+			text = "No active campaigns",
+			func = function() print("No active campaigns to filter.") end,
+			disabled = true
+		})
+	end
+	return campaignMenuList
+end
+
+
+function RQE.filterByCampaign(campaignID)
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local questCampaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+			if questCampaignID == campaignID then
+				C_QuestLog.AddQuestWatch(questInfo.questID)
+			else
+				-- print("~~~ Remove Quest Watch: 7711 ~~~")
+				C_QuestLog.RemoveQuestWatch(questInfo.questID)
+			end
+		end
+	end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+end
+
+
+-- Function to print out the questline information for a specific quest
+function RQE.PrintQuestLineInfo(questID, uiMapID)
+	-- Ensure that the questID and uiMapID are valid numbers
+	if not questID or not uiMapID then
+		print("Invalid questID or uiMapID provided.")
+		return
+	end
+
+	-- Ensure that the questID and uiMapID are numbers
+	if type(questID) ~= "number" or type(uiMapID) ~= "number" then
+		print("questID and uiMapID must be numbers.")
+		return
+	end
+
+	-- Retrieve the quest line information for the given questID and uiMapID
+	local status, questLineInfo = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
+
+	if status and questLineInfo then
+		-- Print the quest line information to chat
+		print("Quest Line Information for Quest ID " .. questID .. ":")
+		print("Quest Line ID:", questLineInfo.questLineID)
+		print("Quest Line Name:", questLineInfo.questLineName)
+		print("Map ID:", uiMapID)
+		print("Quest Name:", questLineInfo.questName)
+		print("X Position:", questLineInfo.x)
+		print("Y Position:", questLineInfo.y)
+		print("Is Hidden:", questLineInfo.isHidden and "Yes" or "No")
+		print("Is Legendary:", questLineInfo.isLegendary and "Yes" or "No")
+		print("Is Daily:", questLineInfo.isDaily and "Yes" or "No")
+		print("Is Campaign:", questLineInfo.isCampaign and "Yes" or "No")
+		print("Floor Location:", questLineInfo.floorLocation)
+		print("Starting MapID:", questLineInfo.startMapID)
+	else
+		-- No quest line info was found for the given questID and uiMapID, or an error occurred
+		print("No quest line information found for Quest ID " .. questID .. " and Map ID " .. uiMapID .. ", or an error occurred.")
+	end
+end
+
+
+-- Get the X, Y, and MapID of a particular quest
+function RQE.GetQuestUiMapID(questID)
+	local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+	local mapID = GetQuestUiMapID(questID)
+	local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+
+	print("Map is: " .. mapID)
+	print("X:", tostring(x), "Y:", tostring(y))
+end
+
+
+-- Function to Request and Cache all quest lines in player's quest log
+function RQE.RequestAndCacheQuestLines()
+	RQE.QuestLines = RQE.QuestLines or {}
+	-- Quest-line APIs are unavailable on Classic Era and TBC Anniversary.
+	-- Feature-test the namespace instead of assuming every non-1.x client has it.
+	if not (C_QuestLine and type(C_QuestLine.GetQuestLineInfo) == "function") then
+		RQE.QuestLines = {}
+		RQE.QuestLinesCached = true
+		return
+	end
+
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			-- Directly use the map ID associated with the quest for more accurate quest line retrieval
+			local zoneID = C_TaskQuest.GetQuestZoneID(questInfo.questID) or GetQuestUiMapID(questInfo.questID)
+			if zoneID then
+				-- Fetch quest line information using the quest ID and its zoneID
+				local questLineInfo = C_QuestLine.GetQuestLineInfo(questInfo.questID, zoneID)
+				if questLineInfo and questLineInfo.questLineID then
+					if not RQE.QuestLines[questLineInfo.questLineID] then
+						RQE.QuestLines[questLineInfo.questLineID] = {
+							name = questLineInfo.questLineName,
+							quests = {}
+						}
+					end
+					table.insert(RQE.QuestLines[questLineInfo.questLineID].quests, questInfo.questID)
+				end
+			end
+		end
+	end
+end
+
+
+-- Function to Build questline list for the menu based on cached questlines
+function RQE.BuildQuestLineMenuList()
+	local questLineMenuList = {}
+	for questLineID, questLineData in pairs(RQE.QuestLines) do
+		-- Include the questLineID before the quest line name
+		table.insert(questLineMenuList, {
+			text = questLineID .. ": " .. questLineData.name,
+			func = function() RQE.filterByQuestLine(questLineID) end,
+		})
+	end
+
+	-- Sort the questLineMenuList by questLineID in descending order
+	table.sort(questLineMenuList, function(a, b)
+		local aID = tonumber(a.text:match("^(%d+):"))
+		local bID = tonumber(b.text:match("^(%d+):"))
+		return aID > bID -- Sort from larger to smaller questLineID
+	end)
+
+	-- Check if the questLineMenuList is empty and add a placeholder item if it is
+	if #questLineMenuList == 0 then
+		table.insert(questLineMenuList, {
+			text = "No active quest lines to filter.",
+			func = function() print("No active quest lines to filter.") end,
+			disabled = true  -- Make it non-selectable
+		})
+	end
+
+	return questLineMenuList
+end
+
+
+-- Menu Filter for Questline-specific
+function RQE.filterByQuestLine(questLineID)
+	-- Get the quests for the selected questline
+	if not RQE.QuestLines[questLineID] then return end -- Early exit if no data for the quest line.
+
+	local questIDsForLine = RQE.QuestLines[questLineID].quests
+	local questIDSet = {}
+
+	for _, questID in ipairs(questIDsForLine) do
+		questIDSet[questID] = true
+	end
+
+	-- Get the total number of quests currently watched
+	local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+
+	-- Loop through the current quest watches and remove those not in the selected questline
+	for i = numQuestWatches, 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		if not questIDSet[questID] then
+			-- print("~~~ Remove Quest Watch: 7854 ~~~")
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	-- Add the quests from the selected questline to the watch list
+	for _, questID in ipairs(questIDsForLine) do
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		if isWorldQuest then
+			C_QuestLog.AddWorldQuestWatch(questID)
+		else
+			C_QuestLog.AddQuestWatch(questID)
+		end
+	end
+
+	-- Update FrameUI
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+
+	-- Sort Quest List by Proximity after populating RQEQuestFrame
+	SortQuestsByProximity()
+end
+
+
+-- Function to print quest IDs of a questline along with quest links
+function RQE.PrintQuestlineDetails(questLineID)
+	if RQE.PrintQuestDetailsSuccess then return end
+	if RQE.RePrintQuestDetailAttempts > 1 then return end
+
+	if not RQE.PrintQuestDetails then
+		RQE.PrintQuestDetails = 1 -- Initialize state if not set
+	end
+
+	C_Timer.After(0.4, function()
+		local questIDs = C_QuestLine.GetQuestLineQuests(questLineID)
+		local questDetails = {}
+		local questsToLoad = #questIDs -- Number of quests to load data for
+
+		local questLineName = "Unknown Questline"
+		if #questIDs > 0 then
+			local lineInfo = C_QuestLine.GetQuestLineInfo(questIDs[1])
+			if lineInfo and lineInfo.questLineName then
+				questLineName = lineInfo.questLineName
+			end
+		end
+
+		if questsToLoad > 0 then
+			if RQE.PrintQuestDetails == 1 then
+				RQE.debugLog("|cFFFFA500Questline ID " .. questLineID .. " data is being retrieved...|r")
+
+				-- Delay second run
+				C_Timer.After(0.8, function()
+					if RQE.PrintQuestDetails == 1 then
+						RQE.PrintQuestDetails = 2
+						RQE.PrintQuestLineFailed = true
+					end
+				end)
+			end
+
+			if not RQE.PrintQuestLineFailed then
+				print("|cFFFFA500Quests in Questline ID " .. questLineID .. ": " .. questLineName .. "|r")
+			end
+
+			for i, questID in ipairs(questIDs) do
+				local questTitle = RQE.API.GetTitleForQuestID(questID) or "Loading..."
+				if questTitle == "Loading..." then
+					RQE.PrintQuestLineFailed = true
+				end
+
+				C_Timer.After(0.7, function()
+					local questLink = GetQuestLink(questID)
+					if questLink then
+						questDetails[i] = "|cFFADD8E6" .. i .. ". Quest# " .. questID .. " - " .. questLink .. "|r"
+					else
+						local clickableQuestTitle = format("|Hquesttip:%d|h[%s]|h", questID, questTitle)
+						questDetails[i] = string.format("|cFFADD8E6%d. Quest# %d - %s|r", i, questID, clickableQuestTitle)
+					end
+
+					-- Retry if still loading on first pass
+					if RQE.PrintQuestLineFailed then
+						RQE.RePrintQuestDetailAttempts = RQE.RePrintQuestDetailAttempts + 1
+						if RQE.RePrintQuestDetailAttempts == 1 then
+							RQE.PrintQuestlineDetails(questLineID)
+							return
+						end
+					end
+
+					-- Print when all data loaded
+					questsToLoad = questsToLoad - 1
+					if questsToLoad <= 0 then
+						for j = 1, #questDetails do
+							print(questDetails[j])
+						end
+						RQE.PrintQuestDetailsSuccess = true
+					end
+				end)
+			end
+		end
+	end)
+end
+
+
+-- Custom handler for clickable quest titles
+hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+	local linkType, questID = strsplit(":", link)
+	if linkType == "questtip" then
+		questID = tonumber(questID)
+		if questID then
+			RQE:ShowCustomQuestTooltip(questID)
+		end
+	end
+end)
+
+
+-- Returns the available quests at a quest giver when GOSSIP_SHOW is called from EventManager
+function RQE.GetAvailableQuests()
+	-- Fetch the available quests using the Gossip API
+	local availableQuests = C_GossipInfo.GetAvailableQuests()
+
+	-- Check if there are available quests
+	if not availableQuests or #availableQuests == 0 then
+		return
+	end
+
+	-- Iterate through the available quests and print their questID and title
+	print("|cFFFFA500Available quests at the quest giver:|r")	-- Printed in orange
+	for _, questInfo in ipairs(availableQuests) do
+		print("|cffffff00Quest ID: " .. questInfo.questID .. " - |r|cFFADD8E6[" .. questInfo.title .. "]|r")	-- Printed in gold for the questID and light blue for the title
+	end
+end
+
+
+-- Scans Quest Log for the various Types that each quest is assigned to
+function RQE.ScanQuestTypes()
+	if type(RQE.QuestTypes) ~= "table" then
+		RQE.QuestTypes = {}  -- Initialize as an empty table if it's not already a table
+	end
+	wipe(RQE.QuestTypes)  -- Clear the table to prevent duplications
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+
+	for i = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(i)
+		if questInfo and not questInfo.isHeader then
+			local questType = C_QuestLog.GetQuestType(questInfo.questID)
+			-- Check if questType is a valid number
+			if questType and type(questType) == "number" then
+				-- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
+				if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
+					RQE.QuestTypes["Misc"] = "Misc"  -- Use "Misc" as both key and value for simplicity
+				else
+					local questTypeName = RQE.GetQuestTypeName(questType)
+					if questTypeName then
+						RQE.QuestTypes[questType] = questTypeName
+					end
+				end
+			end
+		end
+	end
+end
+
+
+function RQE.GetQuestTypeName(questType)
+	local questTypeNames = {
+		[1] = "Group",
+		[21] = "Class",
+		[41] = "PvP",
+		[62] = "Raid",
+		[81] = "Dungeon",
+		[82] = "World Event",
+		[83] = "Legendary",
+		[84] = "Escort",
+		[85] = "Heroic",
+		[88] = "Raid (10)",
+		[89] = "Raid (25)",
+		[98] = "Scenario",
+		[102] = "Account",
+		[104] = "Side Quest",
+		[107] = "Artifact",
+		[109] = "World Quest",
+		[119] = "Herbalism World Quest",
+		[128] = "Emissary World Quest",
+		[147] = "Warfront - Barrens",
+		[148] = "Pickpocketing",
+		[254] = "Island Quest",
+		[255] = "War Mode PvP",
+		[263] = "Public Quest",
+		[265] = "Hidden Quest",
+		[266] = "Combat Ally Quest",
+		[267] = "Professions",
+	}
+	-- Special handling for 0 and 261 and 270 or 282 to label them as "Misc"
+	if questType == 0 or questType == 261 or questType == 270 or questType == 282 then
+		return "Misc"
+	else
+		return questTypeNames[questType] or "Unknown Type"
+	end
+end
+
+
+-- Build Menu List for the QuestTypes in QuestLog
+function RQE.BuildQuestTypeMenuList()
+	local questTypeMenuList = {}
+	RQE.QuestTypes = RQE.QuestTypes or {}
+
+	-- Assign a high numeric value to "Misc" for sorting purposes
+	local miscSortValue = 9999
+
+	for questType, questTypeName in pairs(RQE.QuestTypes) do
+		local sortKey = (questTypeName == "Misc") and miscSortValue or tonumber(questType)
+		table.insert(questTypeMenuList, {
+			sortKey = sortKey,
+			text = (questTypeName == "Misc" and questTypeName) or (questType .. ": " .. questTypeName),
+			func = function() RQE.filterByQuestType(questType) end,
+		})
+	end
+
+	-- Sort the questTypeMenuList by questType, explicitly handling "Misc"
+	table.sort(questTypeMenuList, function(a, b)
+		return a.sortKey < b.sortKey
+	end)
+
+	-- Remove the temporary sortKey from the menu items
+	for _, menuItem in ipairs(questTypeMenuList) do
+		menuItem.sortKey = nil
+	end
+
+	if #questTypeMenuList == 0 then
+		table.insert(questTypeMenuList, {
+			text = "No quest types",
+			func = function() print("No quest types to filter.") end,
+			disabled = true
+		})
+	end
+
+	return questTypeMenuList
+end
+
+
+---------------------------------------------------
+-- #18. Additional Features
+---------------------------------------------------
+
+-- Ensure the table exists
+RQE.savedWorldQuestWatches = RQE.savedWorldQuestWatches or {}
+
+
+-- Player Movement that is associated for the creation of current coordinates location text
+local isMoving = false
+
+-- Movement-driven waypoint refresh (integer % cells)
+local updAccum = updAccum or 0
+local lastGridMap, lastGridX, lastGridY
+
+-- OnUpdate function to be triggered while moving
+local function OnPlayerMoving(self, elapsed)
+	-- RQE:UpdateCoordinates()
+	-- The visible coordinate header is refreshed independently while RQEFrame is shown.
+	RQE:UpdateMapIDDisplay()
+	RQE:UpdateStepDistance()
+	--RQE:MaybeUpdateWaypointOnSnap(elapsed)
+
+	-- Throttle: ~4x/sec while moving
+	updAccum = (updAccum or 0) + (elapsed or 0)
+	if updAccum < 0.25 then return end
+	updAccum = 0
+	-- Refresh the RQE tracker yard labels from their cached active-step
+	-- coordinates without rebuilding the tracker while the player moves.
+	if RQE.RefreshTrackedQuestDistances then
+		RQE:RefreshTrackedQuestDistances()
+	end
+	-- The displayed yard labels update every 0.25 seconds. Rebuilding the
+	-- entire tracker is more expensive, so only re-sort it periodically when a
+	-- different quest has become meaningfully nearer.
+	if RQE.MaybeRefreshTrackerOrderWhileMoving then
+		RQE:MaybeRefreshTrackerOrderWhileMoving()
+	end
+
+	-- Only care if something is super-tracked
+	if not RQE.API.IsSuperTrackingQuest() then
+	--if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then
+		return
+	end
+
+	-- Player pos in normalized space
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then return end
+	local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not pos then return end
+	local px, py = pos:GetXY()
+	if not (px and py) then return end
+
+	-- “Integer percent” grid (e.g. 42.72 -> 42)
+	local gx = math.floor(px * 100 + 0.0001)
+	local gy = math.floor(py * 100 + 0.0001)
+
+	-- Only re-evaluate when the grid cell OR map changed
+	if lastGridMap ~= mapID or lastGridX ~= gx or lastGridY ~= gy then
+		lastGridMap, lastGridX, lastGridY = mapID, gx, gy
+
+		-- This will only replace the live waypoint if the chosen hotspot changed.
+		if RQE.EnsureWaypointForSupertracked then
+			RQE:EnsureWaypointForSupertracked()
+		end
+
+		-- Only run if we’re actively monitoring coordinate distance
+		if RQE.isMonitoringCoordinateDistance then
+			if not RQE.isCheckingCoordinateDistanceConditional then return end
+
+			-- “Tenths of a percent” grid (e.g. 47.654 -> 476) - Reset handling to tenths so that it works in the case of checks for this DB checks conditional
+			local gx = math.floor(px * 1000 + 0.0001)
+			local gy = math.floor(py * 1000 + 0.0001)
+
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("RQE: Grid changed to %.2f,%.2f on map %d — checking coordinate distance.", gx / 10, gy / 10, mapID))
+			end
+			RQE:CheckCoordinateDistanceConditional()
+		end
+	end
+end
+
+
+-- Function to start the OnUpdate script
+function RQE:StartUpdatingCoordinates()
+	if not isMoving then
+		updAccum, lastGridMap, lastGridX, lastGridY = 0, nil, nil, nil
+		RQEFrame:SetScript("OnUpdate", OnPlayerMoving)
+		isMoving = true
+	end
+end
+
+
+-- Function to stop the OnUpdate script
+function RQE:StopUpdatingCoordinates()
+	RQE.isMonitoringCoordinateDistance = false
+	if isMoving then
+		RQEFrame:SetScript("OnUpdate", nil)
+		isMoving = false
+	end
+end
+
+
+-- Function to save the currently watched world quests
+function RQE:SaveWorldQuestWatches()
+	wipe(RQE.savedWorldQuestWatches)
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			if watchType == Enum.QuestWatchType.Manual then  -- Save only if the watch type is Manual
+				RQE.savedWorldQuestWatches[questID] = true
+				RQE.infoLog("Saved manually tracked World Quest ID:", questID)
+			end
+		end
+	end
+	-- Debug: Print the saved world quests
+	for questID, _ in pairs(RQE.savedWorldQuestWatches) do
+		RQE.infoLog("Saved World Quest ID:", questID)
+	end
+end
+
+
+-- Function to remove a manually tracked world quest
+function RQE:RemoveManuallyTrackedWorldQuest(questID)
+	if not questID then
+		RQE.debugLog("Invalid questID for RemoveManuallyTrackedWorldQuest")
+		return
+	end
+
+	-- Remove the world quest from tracking
+	C_QuestLog.RemoveWorldQuestWatch(questID)
+
+	-- Update the saved list
+	RQE.savedWorldQuestWatches[questID] = nil
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Manually removed World Quest ID: " .. questID .. " from saved list")
+	end
+
+	-- Refresh the UI
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		local extractedQuestID = RQE.DisplayedQuestID
+		-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		if questID == extractedQuestID then
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+		end
+	end
+	UpdateRQEWorldQuestFrame()
+end
+
+
+-- Function to save the currently watched world quests with Automatic watch type
+function RQE:SaveAutomaticWorldQuestWatches()
+	wipe(RQE.savedAutomaticWorldQuestWatches)
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			if watchType == Enum.QuestWatchType.Automatic then  -- Save only if the watch type is Automatic
+				RQE.savedAutomaticWorldQuestWatches[questID] = true
+				RQE.infoLog("Saved automatically tracked World Quest ID:", questID)
+			end
+		end
+	end
+	-- Debug: Print the saved world quests
+	for questID, _ in pairs(RQE.savedAutomaticWorldQuestWatches) do
+		RQE.infoLog("Saved World Quest ID:", questID)
+	end
+end
+
+
+-- Function to remove an automatically tracked world quest
+function RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
+	if not questID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Invalid questID for RemoveAutomaticallyTrackedWorldQuest")
+		end
+		return
+	end
+
+	-- Remove the world quest from tracking
+	C_QuestLog.RemoveWorldQuestWatch(questID)
+
+	-- Update the saved list
+	RQE.savedAutomaticWorldQuestWatches[questID] = nil
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Automatically removed World Quest ID: " .. questID .. " from saved list")
+	end
+
+	-- Optionally clear RQEFrame if necessary
+	C_Timer.After(1, function()
+		RQE.CheckAndClearRQEFrame()
+	end)
+end
+
+
+-- Function to restore saved watched world quests
+function RQE:RestoreSavedWorldQuestWatches()
+	local questsToRestore = {}
+	for questID, _ in pairs(RQE.savedWorldQuestWatches) do
+		questsToRestore[#questsToRestore + 1] = questID
+	end
+
+	local function restoreNext()
+		if #questsToRestore == 0 then
+			wipe(RQE.savedWorldQuestWatches)
+			return
+		end
+		local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
+		if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+		--if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Manually tracking World Quest ID " .. questID)
+			end
+		end
+		C_Timer.After(1, restoreNext) -- Call the next restoration after 1 second
+	end
+
+	-- Start the restoration process
+	restoreNext()
+end
+
+
+-- Function to restore saved automatically watched world quests
+function RQE:RestoreSavedAutomaticWorldQuestWatches()
+	local questsToRestore = {}
+	for questID, _ in pairs(RQE.savedAutomaticWorldQuestWatches) do
+		questsToRestore[#questsToRestore + 1] = questID
+	end
+
+	local function restoreNext()
+		if #questsToRestore == 0 then
+			wipe(RQE.savedAutomaticWorldQuestWatches)
+			return
+		end
+		local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
+		if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+		--if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+			C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Automatically tracking World Quest ID " .. questID)
+			end
+		end
+		C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
+	end
+
+	-- Start the restoration process
+	restoreNext()
+end
+
+
+-- Function to print the tracking type of all watched world quests
+function RQE.PrintTrackedWorldQuestTypes()
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			local trackingType = watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Quest ID " .. questID .. " is being tracked " .. trackingType)
+			end
+		end
+	end
+end
+
+
+-- Prints the quests that are on the current player map
+function RQE.GetMapQuests()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Check if playerMapID is valid
+	if not playerMapID then
+		print("Unable to get player's map ID.")
+		return
+	end
+
+	-- Fetch quests on the current map
+	local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+
+	-- Check if there are any quests on the map
+	if not quests or #quests == 0 then
+		print("No quests found on the current map.")
+		return
+	end
+
+	-- Print out the details of each quest on the map
+	for _, quest in ipairs(quests) do
+		print("Quest ID: " .. quest.questID)
+		print("Coordinates: (" .. quest.x .. ", " .. quest.y .. ")")
+		print("Type: " .. quest.type)
+		print("Is Map Indicator Quest: " .. tostring(quest.isMapIndicatorQuest))
+		print("-------")
+	end
+end
+
+
+-- Prints the quests that are on the current player map
+function RQE.GetWorldMapQuests()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Check if playerMapID is valid
+	if not playerMapID then
+		print("Unable to get player's map ID.")
+		return
+	end
+
+	-- Fetch quests on the current map
+	local quests = C_TaskQuest.GetQuestsOnMap(playerMapID)
+
+	-- Check if there are any quests on the map
+	if not quests or #quests == 0 then
+		print("No quests found on the current map.")
+		return
+	end
+
+	-- Print out the details of each quest on the map
+	for _, quest in ipairs(quests) do
+		print("Quest ID: " .. quest.questID)
+		print("Coordinates: (" .. quest.x .. ", " .. quest.y .. ")")
+		print("Type: " .. quest.type)
+		print("Is Map Indicator Quest: " .. tostring(quest.isMapIndicatorQuest))
+		print("-------")
+	end
+end
+
+
+-- Pulls map information for quests in the present zone and saves them
+function RQE.PullDataFromMapQuests()
+	-- Get the player's current map ID
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Check if playerMapID is valid
+	if not playerMapID then
+		RQE.debugLog("Unable to get player's map ID.")
+		return {}
+	end
+
+	-- Fetch quests on the current map
+	local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+
+	-- Check if there are any quests on the map
+	if not quests or #quests == 0 then
+		RQE.debugLog("No quests found on the current map.")
+		return {}
+	end
+
+	-- Create a table to store quest data
+	local questData = {}
+
+	-- Store the details of each quest on the map in the table
+	for _, quest in ipairs(quests) do
+		questData[quest.questID] = {
+			x = quest.x,
+			y = quest.y,
+			type = quest.type,
+			isMapIndicatorQuest = quest.isMapIndicatorQuest,
+			mapID = playerMapID
+		}
+	end
+
+	return questData
+end
+
+
+-- Function to get coordinates for a specific quest
+function RQE.GetQuestCoordinates(questID)
+	-- Get the quests on the current map
+	local questsOnMap = RQE.PullDataFromMapQuests()
+
+	-- Check if the questID is in the questsOnMap table
+	if questsOnMap[questID] then
+		return questsOnMap[questID].x, questsOnMap[questID].y, questsOnMap[questID].mapID
+	else
+		return nil, nil, nil
+	end
+end
+
+
+-- Removes Automatic WQ when leaving area of WQ location
+function RQE.UntrackAutomaticWorldQuests()
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player's map ID.")
+		end
+		return
+	end
+
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+	local questsInAreaLookup = {}
+
+	if questsInArea then
+		for _, taskPOI in ipairs(questsInArea) do
+			if taskPOI.questID then
+				questsInAreaLookup[taskPOI.questID] = true
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest found in area: " .. taskPOI.questID)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Invalid task POI with no questID.")
+				end
+			end
+		end
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("No quests found in the current area.")
+		end
+	end
+
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+
+			if watchType == Enum.QuestWatchType.Automatic then
+				if not questsInAreaLookup[questID] then
+					C_QuestLog.RemoveWorldQuestWatch(questID)
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Removed automatic world quest tracking: " .. questID)
+					end
+				end
+			end
+		end
+	end
+end
+
+
+function RQE.UntrackAutomaticWorldQuestsByMap()
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	if not playerMapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player's map ID.")
+		end
+		return
+	end
+
+	local mapQuests = C_QuestLog.GetQuestsOnMap(playerMapID)
+	local mapQuestsLookup = {}
+	for _, quest in ipairs(mapQuests) do
+		mapQuestsLookup[quest.questID] = true
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Map Quest ID: " .. quest.questID .. " at (" .. quest.x .. ", " .. quest.y .. ")")
+		end
+	end
+
+	local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+	local questsInAreaLookup = {}
+	for _, taskPOI in ipairs(questsInArea) do
+		questsInAreaLookup[taskPOI.questID] = true
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Quest ID in area: " .. taskPOI.questID)
+		end
+	end
+
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	local visibleQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		-- visibleQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		visibleQuestID = tonumber(RQE.DisplayedQuestID)
+	end
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Checking watched world quests:")
+	end
+	for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		if questID then
+			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
+			end
+
+			if watchType == Enum.QuestWatchType.Automatic then
+				if not questsInAreaLookup[questID] and not mapQuestsLookup[questID] then
+					C_QuestLog.RemoveWorldQuestWatch(questID)
+					RQE.infoLog("Removed WQ " .. questID .. " from watch list.")
+				end
+			end
+		end
+	end
+end
+
+
+-- Checks and Clears RQEFrame of any quest data that is not being tracked
+function RQE.CheckAndClearRQEFrame()
+	-- Attempt to directly extract questID from RQE.QuestIDText if available
+	local visibleQuestID
+	if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+		-- visibleQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		visibleQuestID = tonumber(RQE.DisplayedQuestID)
+	end
+
+	if RQE.searchedQuestID == visibleQuestID then
+		return
+	end
+
+	-- Get the currently super tracked quest ID
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	local isOnQuest = RQE.API.IsOnQuest(visibleQuestID)
+
+	-- Check if the visible quest is not a regular quest
+	if visibleQuestID and not isOnQuest then
+		local isWorldQuestTracked = false
+		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			if qID == visibleQuestID then
+				isWorldQuestTracked = true
+				break
+			end
+		end
+
+		-- Clear the frame data if the quest is neither a regular quest nor a tracked world quest
+		if not isWorldQuestTracked then
+			RQE:RemoveSuperTrackingFromQuest() -- Remove super-tracking if the quest is not being tracked
+			RQE:ClearFrameData()
+			RQE:ClearWaypointButtonData()
+		end
+	end
+end
+
+
+-- Create Event for the sound of Quest Progress/Completion
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("QUEST_LOG_UPDATE")
+eventFrame:RegisterEvent("PLAYER_LOGIN")
+
+local questObjectiveCompletion = {}
+local soundCooldown = false
+
+local function InitializeQuestObjectiveCompletion()
+	if RQE.db.profile.enableStepControls then
+		for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+
+				if objectives then
+					for i, objective in ipairs(objectives) do
+						local key = questID .. "-" .. i
+						questObjectiveCompletion[key] = objective.finished
+					end
+				end
+			end
+		end
+	else
+		for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+				for i, objective in ipairs(objectives) do
+					local key = questID .. "-" .. i
+					questObjectiveCompletion[key] = objective.finished
+				end
+			end
+		end
+	end
+end
+
+
+local function CheckQuestObjectivesAndPlaySound()
+	if RQE.db.profile.enableStepControls then
+		if soundCooldown then return end -- Exit if we're in cooldown
+		local playSoundForCompletion = false
+		local playSoundForObjectives = false
+
+		for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+
+				if objectives then
+					local allObjectivesComplete = true
+
+					for i, objective in ipairs(objectives) do
+						local key = questID .. "-" .. i
+						if objective.finished then
+							if not questObjectiveCompletion[key] then
+								-- Objective just completed
+								questObjectiveCompletion[key] = true
+								playSoundForObjectives = true -- Play sound for individual objective completion
+							end
+						else
+							allObjectivesComplete = false
+							questObjectiveCompletion[key] = false
+						end
+					end
+					if allObjectivesComplete then
+						local key = tostring(questID) .. "-complete"
+						if not questObjectiveCompletion[key] then
+							questObjectiveCompletion[key] = true
+							playSoundForCompletion = true -- Play sound for quest completion
+						end
+					end
+				end
+			end
+		end
+
+		--RQE.isCheckingMacroContents = true
+
+		if playSoundForCompletion then
+			PlaySound(6199) -- Sound for quest completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		elseif playSoundForObjectives then
+			PlaySound(6192) -- Sound for individual objective completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		end
+
+		-- Only run periodic checks if objectives actually changed
+		if RQE.db.profile.autoClickWaypointButton then
+			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+			if questID then
+				C_Timer.After(0.65, function()
+
+					if RQE:DidObjectivesChange(questID) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Objective Sound Played → objective change → StartPeriodicChecks()")
+						end
+
+						C_Timer.After(0.35, function()
+							RQE:StartPeriodicChecks()
+						end)
+
+					elseif RQE.db.profile.debugLevel == "INFO+" then
+						print("Objective Sound Played → no objective change for supertracked quest → skipping StartPeriodicChecks()")
+					end
+				end)
+			end
+		end
+	else
+		if soundCooldown then return end -- Exit if we're in cooldown
+		local playSoundForCompletion = false
+		local playSoundForObjectives = false
+
+		for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			local info = RQE.API.GetQuestLogInfo(questIndex)
+			if info and not info.isHeader then
+				local questID = info.questID
+				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+				local allObjectivesComplete = true
+				for i, objective in ipairs(objectives) do
+					local key = questID .. "-" .. i
+					if objective.finished then
+						if not questObjectiveCompletion[key] then
+							-- Objective just completed
+							questObjectiveCompletion[key] = true
+							playSoundForObjectives = true -- Play sound for individual objective completion
+						end
+					else
+						allObjectivesComplete = false
+						questObjectiveCompletion[key] = false
+					end
+				end
+				if allObjectivesComplete then
+					local key = tostring(questID) .. "-complete"
+					if not questObjectiveCompletion[key] then
+						questObjectiveCompletion[key] = true
+						playSoundForCompletion = true -- Play sound for quest completion
+					end
+				end
+			end
+		end
+
+		--RQE.isCheckingMacroContents = true
+
+		if playSoundForCompletion then
+			PlaySound(6199) -- Sound for quest completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		elseif playSoundForObjectives then
+			PlaySound(6192) -- Sound for individual objective completion
+			soundCooldown = true
+			C_Timer.After(5, function() soundCooldown = false end)
+			--RQEMacro:CreateMacroForCurrentStep()
+		end
+
+		-- Only run periodic checks if objectives actually changed
+		if RQE.db.profile.autoClickWaypointButton then
+			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+			if questID then
+				C_Timer.After(0.65, function()
+
+					if RQE:DidObjectivesChange(questID) then
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Objective Sound Played → objective change → StartPeriodicChecks()")
+						end
+
+						C_Timer.After(0.35, function()
+							RQE:StartPeriodicChecks()
+						end)
+
+					elseif RQE.db.profile.debugLevel == "INFO+" then
+						print("Objective Sound Played → no objective change for supertracked quest → skipping StartPeriodicChecks()")
+					end
+				end)
+			end
+		end
+	end
+end
+
+eventFrame:SetScript("OnEvent", function(self, event, ...)
+	if event == "PLAYER_LOGIN" then
+		InitializeQuestObjectiveCompletion()
+	elseif event == "QUEST_LOG_UPDATE" then
+		C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
+	end
+end)
+
+
+-- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
+function RQE:AutoClickQuestLogIndexWaypointButton()
+	if InCombatLockdown() then
+		self.RunPeriodicChecksAfterCombat = true
+		return
+	end
+
+	if RQE.db.profile.autoClickWaypointButton then
+		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if not questID then
+			RQE.debugLog("No super tracked quest.")
+			return
+		end
+
+		-- Use the new LastClickedButtonRef for the operation
+		if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.Click then
+			RQE.LastClickedButtonRef:Click()
+		else
+			RQE.debugLog("Error: No valid WaypointButton found to auto-click, or LastClickedButtonRef is not set correctly.")
+		end
+	end
+end
+
+
+-- Toggle Graphics Outline Mode between enabled (1) and disabled (0)
+function RQE:ToggleGraphicsOutlineMode()
+	local newSetting = GetCVar("graphicsOutlineMode") == "1" and "0" or "1"
+
+	SetCVar("graphicsOutlineMode", newSetting)
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("RQE: Graphics Outline Mode " .. (newSetting == "1" and "enabled." or "disabled."))
+	end
+end
+
+
+-- Function to toggle script profiling and prompt for reload
+function RQE:ToggleCPUProfiling()
+	local currentSetting = GetCVar("scriptProfile") == "1"
+	local newSetting = currentSetting and "0" or "1"
+	
+	-- Set the new profiling value
+	SetCVar("scriptProfile", newSetting)
+
+	-- Message for the dialog box
+	local message = (newSetting == "1") 
+		and "CPU Profiling has been ENABLED. A reload is required for changes to take effect."
+		or "CPU Profiling has been DISABLED. A reload is required for changes to take effect."
+
+	-- Show confirmation popup
+	StaticPopupDialogs["RQE_CPU_PROFILING_TOGGLE"] = {
+		text = message,
+		button1 = "Reload UI",
+		button2 = "Cancel",
+		OnAccept = function()
+			ReloadUI()
+		end,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3
+	}
+
+	-- Show the popup
+	StaticPopup_Show("RQE_CPU_PROFILING_TOGGLE")
+end
+
+
+-- Function to check the CPU usage of the addon
+function RQE:CheckCPUUsage()
+	if GetCVar("scriptProfile") == "1" then
+		if RQE.db and RQE.db.profile.displayRQEcpuUsage then
+			-- Ensure CPU tracking is updated
+			UpdateAddOnCPUUsage()
+
+			-- Fetch CPU usage
+			local cpuUsage = GetAddOnCPUUsage("RQE")
+
+			-- Ensure CPU usage is calculated as a percentage
+			local totalCPU = 0
+			for i = 1, C_AddOns.GetNumAddOns() do
+				totalCPU = totalCPU + GetAddOnCPUUsage(i)
+			end
+
+			-- Calculate percentage usage
+			local cpuUsagePercent = (totalCPU > 0) and ((cpuUsage / totalCPU) * 1000) or 0
+
+			-- Create the display string
+			if cpuUsagePercent > 0 then
+				RQE.cpuUsageText = string.format("CPU Usage: %.2f%%", cpuUsagePercent)
+			else
+				RQE.cpuUsageText = "CPU Usage: 0.00%"  -- Default display if 0%
+			end
+
+			-- Update the display text
+			if RQEFrame and RQEFrame.CPUUsageText then
+				RQEFrame.CPUUsageText:SetText(RQE.cpuUsageText)
+			end
+		else
+			-- Hide if disabled in settings
+			if RQEFrame and RQEFrame.CPUUsageText then
+				RQEFrame.CPUUsageText:SetText("")
+			end
+		end
+	end
+end
+
+
+-- Function to check the memory usage of addon
+function RQE:CheckMemoryUsage()
+	if RQE.db and RQE.db.profile.displayRQEmemUsage then
+		-- Update the memory usage information via the following Blizzard API
+		UpdateAddOnMemoryUsage()
+
+		-- Get the memory usage for the RQE addon
+		local memUsage = GetAddOnMemoryUsage("RQE")
+
+		-- Check if memUsage is greater than 1000 KB, then convert to MB
+		local memUsageText
+		RQE.memUsageText = memUsageText
+		if memUsage > 1000 then
+			RQE.memUsageText = string.format("RQE Memory usage: %.2f MB", memUsage / 1024)
+		else
+			RQE.memUsageText = string.format("RQE Memory usage: %.2f KB", memUsage)
+		end
+
+		-- Update the MemoryUsageText FontString with the new memory usage
+		if RQEFrame and RQEFrame.MemoryUsageText then
+			RQEFrame.MemoryUsageText:SetText(RQE.memUsageText)
+		end
+	else
+		-- User wants to hide memory usage or the setting is not available
+		if RQEFrame and RQEFrame.MemoryUsageText then
+			-- Hide or clear the text
+			RQEFrame.MemoryUsageText:SetText("")
+		end
+	end
+end
+
+
+function RQE:AdvanceNextStep(questID)
+	local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+	-- Check to advance to next step in quest
+	if RQE.db.profile.autoClickWaypointButton then
+		local extractedQuestID
+		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
+			extractedQuestID = RQE.DisplayedQuestID
+			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
+		end
+
+		-- Determine questID based on various fallbacks
+		questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
+
+		C_Timer.After(0.5, function()
+			RQE:ClickSuperTrackedQuestButton()
+			--RQE:CheckAndAdvanceStep(questID)
+		end)
+	end
+end
+
+
+-- Function to check macro contents and build a new macro if needed
+function RQE.CheckAndBuildMacroIfNeeded()
+	if not RQE.db.profile.autoClickWaypointButton then
+		return
+	end
+
+	local isMacroCorrect = RQE.CheckCurrentMacroContents()
+
+	if not isMacroCorrect then
+		--RQE:BuildQuestMacroBackup()
+		-- Tier Four Importance: RQE.CheckAndBuildMacroIfNeeded function
+		RQE.CreateMacroForCheckAndBuildMacroIfNeed = true
+		RQEMacro:CreateMacroForCurrentStep()
+		C_Timer.After(3, function()
+			RQE.CreateMacroForCheckAndBuildMacroIfNeed = false
+		end)
+	end
+
+	if RQE.shouldCheckFinalStep then
+		C_Timer.After(1, function()
+			RQE.CheckAndSetFinalStep()
+		end)
+	end
+end
+
+
+-- Handles building the macro from the super tracked quest
+function RQE:BuildQuestMacroBackup()
+	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+
+	if isSuperTracking then
+		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+
+		-- Allow time for the UI to update and for the super track to register
+		C_Timer.After(1, function()
+			-- Fetch the quest data here
+			local questData = RQE.getQuestData(questID)
+			if not questData then
+				return
+			end
+
+			-- Validate waypointButton before proceeding
+			local waypointButton = (type(RQE.LastClickedWaypointButton) == "table" and RQE.LastClickedWaypointButton) or { stepIndex = 1 }
+
+			-- Check if the last clicked waypoint button's macro should be set
+			if waypointButton and waypointButton.stepIndex then
+				local stepData = questData[waypointButton.stepIndex]
+				if stepData and stepData.macro then
+					-- Get macro commands from the step data
+					local macroCommands = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
+					RQE.infoLog("Setting macro commands for final step:", macroCommands)
+					RQEMacro:SetQuestStepMacro(questID, waypointButton.stepIndex, macroCommands, false)
+				end
+			end
+		end)
+	end
+end
+
+
+function RQE:ClickSuperTrackedQuestButton()
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	if not superTrackedQuestID or superTrackedQuestID == 0 then
+		RQE.debugLog("No super tracked quest.")
+		return
+	end
+
+	if not RQE.QuestLogIndexButtons then
+		RQE.debugLog("QuestLogIndexButtons table is not initialized.")
+		return
+	end
+
+	for _, button in pairs(RQE.QuestLogIndexButtons) do
+		if button.questID == superTrackedQuestID then
+			RQE.debugLog("Clicking button for super tracked quest ID:", superTrackedQuestID)
+			button:Click()
+			return
+		end
+	end
+
+	RQE.debugLog("Button for super tracked quest ID not found:", superTrackedQuestID)
+end
+
+
+function RQE:ClickSuperTrackedNonBlacklistQuestButton()
+	for _, button in pairs(RQE.QuestLogIndexButtons) do
+		if button.questID == RQE.NonBlacklistSuperID then
+			button:Click()
+			return
+		end
+	end
+end
+
+
+-- Function to update the recipe tracking frame with the tracked recipe info
+function RQE:UpdateRecipeTrackingFrame(recipeID)
+	local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeID)
+	if not recipeInfo then
+		print("Recipe info not found for recipeID:", recipeID)
+		return
+	end
+
+	-- Get recipe name and output item data
+	local recipeName = recipeInfo.name
+	local outputData = C_TradeSkillUI.GetRecipeOutputItemData(recipeID)
+
+	-- Get reagents
+	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false, recipeInfo.unlockedRecipeLevel)
+	local reagents = {}
+	local seenReagentNames = {}
+		
+	if schematic and schematic.reagentSlotSchematics then
+		for _, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
+			local isBasic = slotSchematic.reagentType == Enum.CraftingReagentType.Basic
+			local isSpark = slotSchematic.reagentType == Enum.CraftingReagentType.Modifying
+				and slotSchematic.slotInfo
+				and slotSchematic.slotInfo.name
+				and slotSchematic.slotInfo.name:lower():find("spark")
+
+			if isBasic or isSpark then
+				local addedName = false
+
+				for _, reagent in ipairs(slotSchematic.reagents) do
+					local itemID = reagent.itemID
+					local name = itemID and C_Item.GetItemInfo(itemID)
+
+					if not name then
+						name = slotSchematic.slotInfo and slotSchematic.slotInfo.name or "Unknown Reagent"
+					end
+
+					if name and not seenReagentNames[name] then
+						table.insert(reagents, {
+							name = name,
+							required = slotSchematic.quantityRequired,
+							playerCount = itemID and C_Item.GetItemCount(itemID) or 0
+						})
+						seenReagentNames[name] = true
+						addedName = true
+					end
+				end
+
+				if not addedName then
+					local fallbackName = slotSchematic.slotInfo and slotSchematic.slotInfo.name
+					if fallbackName and not seenReagentNames[fallbackName] then
+						table.insert(reagents, {
+							name = fallbackName,
+							required = slotSchematic.quantityRequired,
+							playerCount = 0
+						})
+						seenReagentNames[fallbackName] = true
+					end
+				end
+			end
+		end
+	end
+
+	-- Display the recipe info on the frame
+	if not RQE.recipeTrackingFrame.recipeText then
+		RQE.recipeTrackingFrame.recipeText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.recipeTrackingFrame.recipeText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame, "TOPLEFT", 10, -10)
+	end
+	RQE.recipeTrackingFrame.recipeText:SetText(recipeName)
+
+	-- Display the reagents info on the frame
+	if not RQE.recipeTrackingFrame.reagentsText then
+		RQE.recipeTrackingFrame.reagentsText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		RQE.recipeTrackingFrame.reagentsText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame.recipeText, "BOTTOMLEFT", 0, -10)
+	end
+	local reagentString = ""
+	for _, reagent in ipairs(reagents) do
+		reagentString = reagentString .. string.format("%s: %d/%d\n", reagent.name, reagent.playerCount, reagent.required)
+	end
+	RQE.recipeTrackingFrame.reagentsText:SetText(reagentString)
+
+	-- Show the frame
+	RQE.recipeTrackingFrame:Show()
+end
+
+
+-- -- Smart crafting function: crafts a specified number, or determines remaining amount via quest objectives if 'x' is passed
+-- function RQE:CraftRecipeSmart(spellID, quantity)
+	-- if not spellID then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Crafting failed: No spellID provided.")
+		-- end
+		-- return
+	-- end
+
+	-- local amountToCraft
+
+	-- if type(quantity) == "number" and quantity > 0 then
+		-- amountToCraft = quantity
+
+	-- elseif quantity == "x" or tostring(quantity or "x") == "x" then
+		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		-- if not questID or questID == 0 then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("No supertracked quest found for dynamic crafting.")
+			-- end
+			-- return
+		-- end
+
+		-- local text = select(1, GetQuestObjectiveInfo(questID, 1, false)) or ""
+		-- local fulfilled, required = string.match(text, "(%d+)%s*/%s*(%d+)")
+		-- fulfilled = tonumber(fulfilled)
+		-- required = tonumber(required)
+
+		-- if not fulfilled or not required then
+			-- if RQE.db.profile.debugLevel == "INFO" then
+				-- print("Could not parse crafting requirement from objective text:", text)
+			-- end
+			-- return
+		-- end
+
+		-- amountToCraft = required - fulfilled
+		-- if amountToCraft <= 0 then
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("Objective already fulfilled or no crafting needed.")
+			-- end
+			-- return
+		-- end
+
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("Crafting quantity resolved from quest: " .. amountToCraft)
+		-- end
+
+	-- else
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Invalid quantity value passed to CraftRecipeSmart.")
+		-- end
+		-- return
+	-- end
+
+	-- if amountToCraft and amountToCraft > 0 then
+		-- C_TradeSkillUI.CraftRecipe(spellID, amountToCraft)
+
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("Crafting " .. amountToCraft .. " item(s) for spellID: " .. spellID)
+		-- end
+	-- end
+-- end
+
+
+-- Craft Specific Item for Quest
+function RQE:CraftSpecificItem(recipeSpellID)
+	if RQE.db.profile.debugLevel ~= "INFO+" then return end
+
+	-- Retrieve recipe information to check if it can be crafted
+	local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeSpellID)
+	if not recipeInfo or not recipeInfo.learned or not recipeInfo.craftable then
+		print("Recipe is not learned, not craftable, or doesn't exist.")
+		return
+	end
+
+	if not (ProfessionsFrame and ProfessionsFrame:IsVisible()) then
+		print("Ready to craft:", recipeInfo.name, "x1. Please open the dedicated profession window to craft and press the macro again.")
+		return
+	end
+
+	-- Check if we've already printed the reagents for this recipe
+	if not RQE.alreadyPrintedSchematics then
+		-- Print the reagents required for the recipe
+		RQE:PrintRecipeSchematic(recipeSpellID, false) -- Assuming isRecraft is false; adjust as needed
+
+		-- Mark this recipe as having its reagents printed so we don't do it again
+		RQE.alreadyPrintedSchematics = true
+	end
+end
+
+
+-- Display an ItemLink for the required Reagents
+function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
+	local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
+	if not schematic then
+		print("Schematic not found for recipeSpellID:", recipeSpellID)
+		return
+	end
+
+	local reagentsString = "Reagent(s) Required: "
+	local firstReagent = true
+
+	-- Print basic recipe information
+	RQE.infoLog("Recipe ID:", schematic.recipeID)
+	RQE.infoLog("Name:", schematic.name)
+	RQE.infoLog("Quantity Min:", schematic.quantityMin, "Quantity Max:", schematic.quantityMax)
+	RQE.infoLog("Product Quality:", schematic.productQuality or "N/A")
+	RQE.infoLog("Output Item ID:", schematic.outputItemID or "N/A")
+
+	-- Check if there are reagent slot schematics to iterate over
+	if schematic.reagentSlotSchematics then
+		for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
+			if slotSchematic.reagents then
+				for _, reagent in ipairs(slotSchematic.reagents) do
+					local itemName = "Unknown"
+					if reagent.itemID then
+						itemName = GetItemInfo(reagent.itemID) or itemName
+					end
+					RQE.infoLog("  - Item:", itemName, "Item ID:", reagent.itemID or "N/A", "Quantity Required:", slotSchematic.quantityRequired)
+				end
+			end
+		end
+	else
+		RQE.infoLog("No reagent slot schematics available.")
+	end
+
+	-- Print the required items including item link to chat
+	if schematic.reagentSlotSchematics then
+		for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
+			if slotSchematic.reagents then
+				for _, reagent in ipairs(slotSchematic.reagents) do
+					local itemLink = select(2, GetItemInfo(reagent.itemID))
+					local quantityRequired = slotSchematic.quantityRequired
+					if itemLink and quantityRequired then
+						if not firstReagent then
+							reagentsString = reagentsString .. ", "
+						else
+							firstReagent = false
+						end
+						reagentsString = reagentsString .. itemLink .. " x" .. quantityRequired
+					end
+				end
+			end
+		end
+	else
+		reagentsString = reagentsString .. "None."
+	end
+
+	print(reagentsString)
+end
+
+
+-- Function to obtain the index of a given itemID and pass that onto a function used for purchasing that item
+function RQE:BuyItemByItemID(itemID, quantity)
+	C_Timer.After(1.2, function()
+		local itemFound = false
+
+		for index = 1, GetMerchantNumItems() do
+			local merchantItemID = GetMerchantItemID(index)
+
+			if merchantItemID == itemID then
+				itemFound = true
+
+				-- Print debug for confirmation
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Found itemID", itemID, "at merchant index", index)
+				end
+
+				-- Call your existing purchase logic
+				RQE:ConfirmAndBuyMerchantItem(index, quantity)
+
+				break -- Stop after first match
+			end
+		end
+
+		if not itemFound then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("ItemID", itemID, "not found at this merchant.")
+			end
+		end
+	end)
+end
+
+
+-- Function to confirm and buy an item from a merchant
+function RQE:ConfirmAndBuyMerchantItem(index, quantity)
+	-- local itemName = C_MerchantFrame.GetItemInfo(index)
+	-- C_MerchantFrame is not available in Classic Era.  The legacy API returns
+	-- the same name, texture, price, and stack data for a merchant slot.
+	local itemName, _, price = GetMerchantItemInfo(index)
+	local maxStack = GetMerchantItemMaxStack(index)
+	local itemLink = GetMerchantItemLink(index)
+	quantity = tonumber(quantity) or 1
+	maxStack = tonumber(maxStack) or 1
+
+	if not itemName then
+		RQE.debugLog("Error: Unable to retrieve item name for merchant index " .. tostring(index))
+		return
+	end
+
+	-- Get pricing information
+	-- local price = select(3, C_MerchantFrame.GetItemInfo(index)) or 0
+	price = price or 0
+	local totalCost = price * quantity
+	-- local priceString = (totalCost > 0) and C_CurrencyInfo.GetCoinTextureString(totalCost) or "free"
+	local priceString = (totalCost > 0) and GetCoinTextureString(totalCost) or "free"
+
+	local itemDisplay = itemLink or itemName
+
+	StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
+		text = string.format("Do you want to buy %d of %s for %s?", quantity, itemDisplay, priceString),
+		button1 = "Yes",
+		button2 = "No",
+		OnAccept = function()
+			if quantity > maxStack then
+				local fullStacks = math.floor(quantity / maxStack)
+				local remainder = quantity % maxStack
+				for i = 1, fullStacks do
+					BuyMerchantItem(index, maxStack)
+				end
+				if remainder > 0 then
+					BuyMerchantItem(index, remainder)
+				end
+			else
+				BuyMerchantItem(index, quantity)
+			end
+		end,
+		OnShow = function(self)
+			if itemLink and self.text then
+				-- Create a small clickable region just over the text, not the entire popup
+				local itemFrame = CreateFrame("Frame", nil, self)
+				itemFrame:SetPoint("TOPLEFT", self.text, "TOPLEFT", 0, 0)
+				itemFrame:SetPoint("BOTTOMRIGHT", self.text, "BOTTOMRIGHT", 0, 0)
+				itemFrame:SetFrameStrata("TOOLTIP")
+				itemFrame:SetFrameLevel(self:GetFrameLevel() + 10)
+				itemFrame:SetAlpha(0)
+
+				-- Do NOT intercept mouse clicks
+				itemFrame:EnableMouse(false)
+
+				itemFrame:SetScript("OnEnter", function()
+					GameTooltip:SetOwner(self, "ANCHOR_TOP")
+					GameTooltip:SetHyperlink(itemLink)
+					GameTooltip:Show()
+				end)
+				itemFrame:SetScript("OnLeave", function()
+					GameTooltip:Hide()
+				end)
+			end
+		end,
+		timeout = 3,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- Avoid UIParent taint
+	}
+	StaticPopup_Show("RQE_CONFIRM_PURCHASE")
+end
+
+
+-- -- Function to confirm and buy an item from a merchant
+-- function RQE:ConfirmAndBuyMerchantItem(index, quantity)
+	-- local itemName = C_MerchantFrame.GetItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
+	-- --local itemName, _, _, _, _, _, _, _, _, _, _, = C_MerchantFrame.GetItemInfo(index)
+	-- local maxStack = GetMerchantItemMaxStack(index)
+	-- local itemLink = GetMerchantItemLink(index)
+	-- quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
+	-- maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
+
+	-- if not itemName then
+		-- RQE.debugLog("Error: Unable to retrieve item name for merchant index " .. tostring(index))
+		-- return
+	-- end
+
+	-- if not itemLink then
+		-- RQE.debugLog("Warning: Unable to retrieve item link for merchant index " .. tostring(index) .. ", using item name instead.")
+	-- end
+
+	-- local itemDisplay = itemLink or itemName
+
+	-- StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
+		-- text = "Do you want to buy " .. quantity .. " of " .. itemDisplay .. "?",
+		-- button1 = "Yes",
+		-- button2 = "No",
+		-- OnShow = function(self)
+			-- local itemFrame = CreateFrame("Frame", nil, self)
+			-- itemFrame:SetAllPoints(self.text)
+			-- itemFrame:SetScript("OnEnter", function()
+				-- GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
+				-- GameTooltip:SetHyperlink(itemLink)
+				-- GameTooltip:Show()
+			-- end)
+			-- itemFrame:SetScript("OnLeave", function()
+				-- GameTooltip:Hide()
+			-- end)
+		-- end,
+		-- OnAccept = function()
+			-- if quantity > maxStack then
+				-- local fullStacks = math.floor(quantity / maxStack)
+				-- local remainder = quantity % maxStack
+				-- for i = 1, fullStacks do
+					-- BuyMerchantItem(index, maxStack)
+				-- end
+				-- if remainder > 0 then
+					-- BuyMerchantItem(index, remainder)
+				-- end
+			-- else
+				-- BuyMerchantItem(index, quantity)
+			-- end
+		-- end,
+		-- timeout = 0,
+		-- whileDead = true,
+		-- hideOnEscape = true,
+		-- preferredIndex = 3,  -- Avoid taint from UIParent
+	-- }
+	-- StaticPopup_Show("RQE_CONFIRM_PURCHASE")
+-- end
+
+
+-- -- Function that handles a series of functions related to purchasing an item from the AH	FIX MADE FOR 'X' RETURNING NIL (2025.09.30)
+-- function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
+	-- local finalQuantity
+
+	-- -- Case 1: If a valid number is passed, use it directly
+	-- if type(quantity) == "number" and quantity > 0 then
+		-- finalQuantity = quantity
+
+	-- -- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
+	-- else
+		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		-- if questID and questID > 0 then
+			-- -- local _, _, _, _fulfilled = GetQuestObjectiveInfo(questID, 1, false)
+			-- -- local _, _, _, _, _required = GetQuestObjectiveInfo(questID, 1, false)
+
+			-- -- local fulfilled = tonumber(_fulfilled or 0)
+			-- -- local required = tonumber(_required or 0)
+
+			-- local objectives = C_QuestLog.GetQuestObjectives(questID)
+			-- if objectives and objectives[1] then
+				-- local fulfilled = tonumber(objectives[1].numFulfilled or 0)
+				-- local required  = tonumber(objectives[1].numRequired or 0)
+
+				-- if fulfilled and required and required > fulfilled then
+					-- finalQuantity = required - fulfilled
+					-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Required: " .. required .. " & Fulfilled: " .. fulfilled)
+						-- print("Resolved Quantity: " .. finalQuantity)
+					-- end
+				-- else
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("Could not determine required purchase quantity from quest objectives.")
+					-- end
+					-- return
+				-- end
+			-- else
+				-- if RQE.db.profile.debugLevel == "INFO+" then
+					-- print("Quest has no objectives or objectives[1] missing.")
+				-- end
+				-- return
+			-- end
+		-- else
+			-- if RQE.db.profile.debugLevel == "INFO+" then
+				-- print("No supertracked quest found for dynamic quantity resolution.")
+			-- end
+			-- return
+		-- end
+	-- end
+
+	-- -- Final check
+	-- if not finalQuantity then
+		-- if RQE.db.profile.debugLevel == "INFO+" then
+			-- print("Invalid quantity. Aborting.")
+		-- end
+		-- return
+	-- end
+
+	-- -- Purchase logic
+	-- if C_AddOns.IsAddOnLoaded("CraftSim") then
+	-- --if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
+		-- RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+	-- else
+		-- RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+		-- RQE:ConfirmAndPurchaseCommodity(itemID, finalQuantity)
+	-- end
+-- end
+
+
+-- Function that handles a series of functions related to purchasing an item from the AH	-- FIX TO MAKE WORK WITH DIFFERENT OBJECTIVE NUMBERS (OTHER THAN JUST OBJECTIVE #1) (2025.09.30)
+function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
+	local finalQuantity
+
+	-- Case 1: If a valid number is passed, use it directly
+	if type(quantity) == "number" and quantity > 0 then
+		finalQuantity = quantity
+
+	-- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
+	else
+		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if questID and questID > 0 then
+			local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+			if objectives and #objectives > 0 then
+				for i, obj in ipairs(objectives) do
+					-- Some objectives expose itemID directly, others only in text
+					local fulfilled = tonumber(obj.numFulfilled or 0)
+					local required  = tonumber(obj.numRequired or 0)
+
+					-- If this looks like an item collection objective
+					if required and required > 0 then
+						-- Try to match itemID if Blizzard provides it
+						if obj.type == "item" and obj.itemID and obj.itemID == itemID then
+							finalQuantity = required - fulfilled
+
+							if (not finalQuantity or finalQuantity <= 0) then
+								finalQuantity = required
+								print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
+							end
+						-- elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
+							-- finalQuantity = required - fulfilled
+
+							-- if (not finalQuantity or finalQuantity <= 0) then
+								-- finalQuantity = required
+								-- print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
+							-- end
+						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
+							-- Keep original text-matching fallback, but add a guard against fractional/invalid values
+							finalQuantity = required - fulfilled
+
+							finalQuantity = tonumber(finalQuantity) or 0
+							finalQuantity = math.floor(finalQuantity + 0.5)
+
+							-- if finalQuantity <= 0 then
+								-- finalQuantity = required
+								-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+									-- print("|cFFFF3333[RQE]|r Sanitized quantity was invalid. Falling back to required amount = " .. finalQuantity)
+								-- end
+							-- end
+							if (not finalQuantity or finalQuantity <= 0) then
+								finalQuantity = required
+								if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+									print("|cFFFF3333[RQE]|r Sanitized quantity was invalid. Falling back to required amount = " .. finalQuantity)
+								end
+							end
+						end
+
+						if finalQuantity and finalQuantity > 0 then
+							if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
+								print("|cffffff00[RQE]|r Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
+								print("|cff00ff00[RQE]|r Resolved Quantity = " .. finalQuantity)
+							end
+							break -- stop once we find a match
+						end
+					end
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Quest has no objectives.")
+				end
+				return
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("No supertracked quest found for dynamic quantity resolution.")
+			end
+			return
+		end
+	end
+
+	-- Final check
+	if not finalQuantity or finalQuantity < 0 then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Invalid or negative quantity. Aborting.")
+		end
+		return
+	end
+
+	-- Final safety sanitization before purchase logic
+	finalQuantity = tonumber(finalQuantity) or 0
+	finalQuantity = math.floor(finalQuantity + 0.5)
+
+	-- Purchase logic
+	--[[
+	-- C_AddOns is not available on every Classic Era client.  The old branch also
+	-- searched twice and always attempted a commodity purchase, which fails for
+	-- normal item auctions such as a Bronze Tube.
+	if C_AddOns.IsAddOnLoaded("CraftSim") then
+		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+	else
+		RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
+		RQE:ConfirmAndPurchaseCommodity(itemID, finalQuantity)
+	end
+	]]
+	RQE:SearchPreparePurchaseClassicAH(itemID, finalQuantity)
+end
+
+
+-- Classic Era-compatible AH search and purchase preparation.  The purchase is
+-- still gated by the confirmation popup's user click, as required by WoW.
+function RQE:SearchPreparePurchaseClassicAH(itemID, quantity)
+	--[[
+	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+		print("|cFFFF3333[RQE]|r Auction House is not open.")
+		return
+	end
+	]]
+	-- Classic Era's legacy AH uses AuctionFrame and the QueryAuctionItems API;
+	-- Retail's modern AH uses AuctionHouseFrame and C_AuctionHouse.
+	if AuctionFrame and AuctionFrame:IsShown() then
+		RQE:SearchPreparePurchaseLegacyAH(itemID, quantity)
+		return
+	end
+	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+		print("|cFFFF3333[RQE]|r Auction House is not open.")
+		return
+	end
+
+	if not C_AuctionHouse or not C_AuctionHouse.MakeItemKey or not C_AuctionHouse.SendSearchQuery then
+		print("|cFFFF3333[RQE]|r The Auction House API is not available on this client.")
+		return
+	end
+
+	local itemName = (C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(itemID)) or GetItemInfo(itemID)
+	if not itemName then
+		print("|cFFFF3333[RQE]|r Item " .. itemID .. " is not cached yet. Please run the command again.")
+		return
+	end
+
+	local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+	local sorts = { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false }
+	local searchBar = AuctionHouseFrame.SearchBar
+	if searchBar and searchBar.SearchBox and searchBar.Search then
+		-- Use the Blizzard search-bar mixin when available so the item and its
+		-- results are also shown in the open Auction House window.
+		searchBar.SearchBox:SetText(itemName)
+		searchBar:Search()
+	else
+		-- Fallback for clients whose AH frame does not expose the search-bar mixin.
+		C_AuctionHouse.SendSearchQuery(itemKey, sorts, false)
+	end
+
+	-- Results arrive asynchronously.  Classic Era supports both commodity and
+	-- normal item auctions, so select the matching API after the search returns.
+	C_Timer.After(1, function()
+		local isCommodity = C_AuctionHouse.IsItemCommodity and C_AuctionHouse.IsItemCommodity(itemKey)
+		local result, totalCost
+
+		if isCommodity then
+			local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+			local remaining = quantity
+			totalCost = 0
+			for index = 1, numResults do
+				local commodityResult = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+				if commodityResult and remaining > 0 then
+					local amount = math.min(commodityResult.quantity, remaining)
+					totalCost = totalCost + (amount * commodityResult.unitPrice)
+					remaining = remaining - amount
+				end
+			end
+
+			if remaining > 0 then
+				print("|cFFFF3333[RQE]|r Not enough " .. itemName .. " available to buy " .. quantity .. ".")
+				return
+			end
+		else
+			local numResults = C_AuctionHouse.GetNumItemSearchResults(itemKey)
+			result = numResults > 0 and C_AuctionHouse.GetItemSearchResultInfo(itemKey, 1) or nil
+			totalCost = result and result.buyoutAmount
+			if not result or not totalCost then
+				print("|cFFFF3333[RQE]|r No buyout auction found for " .. itemName .. ".")
+				return
+			end
+			if quantity ~= 1 then
+				print("|cFFFF3333[RQE]|r " .. itemName .. " is a normal item auction; only one auction can be purchased at a time.")
+			end
+		end
+
+		StaticPopupDialogs["RQE_CONFIRM_AH_PURCHASE"] = {
+			text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, itemName, GetCoinTextureString(totalCost)),
+			button1 = "Yes",
+			button2 = "No",
+			OnAccept = function()
+				if isCommodity then
+					C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+					C_Timer.After(0.5, function()
+						C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
+					end)
+				else
+					C_AuctionHouse.StartItemPurchase(result.auctionID)
+					C_Timer.After(0.5, function()
+						C_AuctionHouse.ConfirmItemPurchase(result.auctionID)
+					end)
+				end
+			end,
+			timeout = 0,
+			whileDead = true,
+			hideOnEscape = true,
+			preferredIndex = 3,
+		}
+		StaticPopup_Show("RQE_CONFIRM_AH_PURCHASE")
+	end)
+end
+
+
+-- Search and buy from the legacy Classic Era Auction House.  This path cannot
+-- buy a partial stack because legacy auctions are purchased one listing at a time.
+function RQE:SearchPreparePurchaseLegacyAH(itemID, quantity)
+	local itemName = GetItemInfo(itemID)
+	if not itemName then
+		print("|cFFFF3333[RQE]|r Item " .. itemID .. " is not cached yet. Please run the command again.")
+		return
+	end
+
+	if BrowseName then
+		BrowseName:SetText(itemName)
+	end
+
+	local resultFrame = CreateFrame("Frame")
+	local completed = false
+	local function cleanup()
+		resultFrame:UnregisterEvent("AUCTION_ITEM_LIST_UPDATE")
+		completed = true
+	end
+
+	resultFrame:RegisterEvent("AUCTION_ITEM_LIST_UPDATE")
+	resultFrame:SetScript("OnEvent", function()
+		if completed then
+			return
+		end
+		cleanup()
+
+		local numResults = GetNumAuctionItems("list")
+		local lowestIndex, lowestBuyout, lowestCount
+		for index = 1, numResults do
+			local name, _, count, _, _, _, _, _, _, buyoutPrice = GetAuctionItemInfo("list", index)
+			if name == itemName and buyoutPrice and buyoutPrice > 0 and (not lowestBuyout or buyoutPrice < lowestBuyout) then
+				lowestIndex = index
+				lowestBuyout = buyoutPrice
+				lowestCount = count
+			end
+		end
+
+		if not lowestIndex then
+			print("|cFFFF3333[RQE]|r No buyout auction found for " .. itemName .. ".")
+			return
+		end
+
+		if quantity ~= lowestCount then
+			print("|cffffff00[RQE]|r Legacy AH auctions are sold by listing; this purchase will buy the lowest stack (" .. lowestCount .. ") rather than exactly " .. quantity .. ".")
+		end
+
+		StaticPopupDialogs["RQE_CONFIRM_LEGACY_AH_PURCHASE"] = {
+			text = string.format("Confirm your buyout of %d x [%s] for %s.", lowestCount, itemName, GetCoinTextureString(lowestBuyout)),
+			button1 = "Yes",
+			button2 = "No",
+			OnAccept = function()
+				PlaceAuctionBid("list", lowestIndex, lowestBuyout)
+			end,
+			timeout = 0,
+			whileDead = true,
+			hideOnEscape = true,
+			preferredIndex = 3,
+		}
+		StaticPopup_Show("RQE_CONFIRM_LEGACY_AH_PURCHASE")
+	end)
+
+	-- exactMatch makes the visible Browse tab and the returned list target the
+	-- requested item rather than every auction containing part of its name.
+	QueryAuctionItems(itemName, nil, nil, 0, false, nil, false, true)
+
+	C_Timer.After(5, function()
+		if not completed then
+			cleanup()
+			print("|cFFFF3333[RQE]|r Auction House search timed out. Please try again.")
+		end
+	end)
+end
+
+
+-- Function to search an item in the auction house and prepare for manual review
+function RQE:SearchAndPrepareAuctionItem(itemID, quantity)
+	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Auction House is not open.")
+		end
+		return
+	end
+
+	local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+	RQE.debugLog("Created ItemKey for itemID:", itemID, "Item Level:", itemKey.itemLevel, "Item Suffix:", itemKey.itemSuffix)
+
+	-- Array of itemKeys to search
+	local itemKeys = {itemKey}
+
+	-- Search for the item using ItemKeys
+	C_AuctionHouse.SearchForItemKeys(itemKeys, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false})
+	RQE.infoLog("Search query sent for ItemID:", itemID, "with quantity:", quantity)
+
+	-- Check and display search results after a short delay to allow data to load
+	C_Timer.After(1, function()
+		local numResults = C_AuctionHouse.GetNumItemSearchResults(itemKey)
+
+		if numResults > 0 then
+			for index = 1, numResults do
+				local resultInfo = C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
+				if resultInfo then
+					print("Result", index, ": Price =", resultInfo.buyoutPrice or "No buyout", "Quantity =", resultInfo.quantity)
+				end
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("May not be correct, but no results found for itemID:", itemID)
+			end
+		end
+	end)
+end
+
+
+-- Function that searches for and prints out the prices for an item
+function RQE:SearchAndDisplayCommodityResults(itemID, quantity)
+	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Auction House is not open.")
+		end
+		return
+	end
+
+	-- Creating the item key for the commodity
+	local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+	local searchQuery = {
+		itemKey = itemKey,
+		sorts = { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false }
+	}
+
+	-- Sending the search query
+	C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
+
+	C_Timer.After(1, function()
+		if C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
+			local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+			if numResults > 0 then
+				-- Iterate through results and display them
+				for index = 1, numResults do
+					local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+					if result then
+						print("Result " .. index .. ": Price per unit: " .. GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
+					end
+				end
+			else
+				print("No results found for itemID: ", itemID)
+			end
+		else
+			-- Not all results may be loaded immediately; consider requesting more results or retrying
+			C_AuctionHouse.RequestMoreCommoditySearchResults(itemID)
+		end
+	end)
+end
+
+
+-- Function to confirm and purchase a commodity from the auction house
+function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
+	if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Auction House is not open.")
+		end
+		return
+	end
+
+	local itemName = C_Item.GetItemNameByID(itemID)  -- Fetch the item name directly from the item ID
+	if not itemName then
+		print("Failed to retrieve item name for ID:".. itemID .. ". Please try search again.")
+		return
+	end
+
+	local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+	-- Sending the search query
+	C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
+
+	C_Timer.After(1, function()
+		local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+		if numResults > 0 then
+			local totalQuantityNeeded = quantity
+			local totalCost = 0
+			local index = 1
+			while totalQuantityNeeded > 0 and index <= numResults do
+				local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+				if result then
+					local quantityAvailable = result.quantity
+					local unitPrice = result.unitPrice
+					local quantityToBuy = min(quantityAvailable, totalQuantityNeeded)
+					totalCost = totalCost + (quantityToBuy * unitPrice)
+					totalQuantityNeeded = totalQuantityNeeded - quantityToBuy
+					print("|cFFFF3333[RQE]|r Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
+				end
+				index = index + 1
+			end
+			if totalQuantityNeeded > 0 then
+				print("Not enough quantity available to meet the requested purchase.")
+			else
+				local itemLink = C_AuctionHouse.GetReplicateItemLink(1) or select(2, GetItemInfo(itemID))
+				if not itemLink then
+					itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
+				end
+				print("|cFFFF3333[RQE]|r Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
+				-- Display the confirmation popup with the total cost
+				StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
+					text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
+					button1 = "Yes",
+					button2 = "No",
+					OnAccept = function()
+						C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+						C_Timer.After(1.5, function()  -- Allow for server response time
+							C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
+						end)
+					end,
+					timeout = 3,
+					whileDead = true,
+					hideOnEscape = true,
+					preferredIndex = 3,  -- Avoid taint from UIParent
+				OnShow = function(self)
+					if self.text then
+						self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+					end
+					local itemFrame = CreateFrame("Frame", nil, self)
+					itemFrame:SetAllPoints(self.text or self)  -- fallback to whole popup if self.text is nil
+					itemFrame:SetScript("OnEnter", function()
+						GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
+						GameTooltip:SetHyperlink(itemLink)
+						GameTooltip:Show()
+					end)
+					itemFrame:SetScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+				end,
+				}
+				StaticPopup_Show("RQE_CONFIRM_PURCHASE_COMMODITY")
+			end
+		end
+	end)
+end
+
+
+-- Function that checks to see if player has a DragonRiding Aura/Mount active
+function RQE.CheckForDragonMounts()
+	-- for _, dragonName in ipairs(RQE.dragonMounts) do
+		-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", dragonName)
+		-- if aura then
+			-- RQE.infoLog("Dragon riding with:", dragonName)
+			-- return true  -- Dragon mount aura found
+		-- end
+	-- end
+	-- RQE.infoLog("No dragon mount found.")
+	-- return false  -- No dragon mount aura found
+end
+
+
+-- Function that checks if the player has the Dragon Racing Aura up
+function RQE.HasDragonraceAura()
+	local aura = C_UnitAuras.GetAuraDataBySpellName("player", "Racing", "HELPFUL")  -- Assuming "Racing" is the correct aura name and it's a buff
+	if aura then
+		return true
+	else
+		return false
+	end
+end
+
+
+---------------------------------------------------
+-- #19. Finalization
+---------------------------------------------------
+
+-- Function to update DB profile frame position
+function RQE:UpdateFrameFromProfile()
+	local xPos = RQE.db.profile.framePosition.xPos or -40
+	local yPos = RQE.db.profile.framePosition.yPos or -285
+	RQEFrame:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", xPos, yPos)
+end
+
+
+---------------------------------------------------
+-- #20. Experimental Testing Ground
+---------------------------------------------------
+
+-- Table to hold the questID and stepIndex conditions (blacklist/exclude/exclusion)
+RQE.questConditions = {
+	[78640] = 3,  -- Example questID 78640 with stepIndex 3
+	[27779] = 1,
+}
+
+
+-- Function to get the closest quest that isn't blacklisted
+function RQE:GetClosestNonBlacklistedQuest()
+	local nextClosestQuestID = nil
+	local closestDistance = math.huge  -- Initialize with a large number
+
+	-- Get the current map of the player (for quest location purposes)
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+
+	-- Iterate through all quests in the player's quest log
+	for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+		local info = RQE.API.GetQuestLogInfo(i)
+
+		-- Only consider quests that are on the map, are being tracked, and are not blacklisted
+		if info and info.isOnMap and RQE.API.IsOnQuest(info.questID) and not RQE.questConditions[info.questID] then
+			-- Get the quest's objectives to find position/distance
+			local questPosition = RQE.API.GetQuestObjectives(info.questID)	--C_QuestLog.GetQuestObjectives(info.questID)
+
+			-- Ensure the quest position is valid
+			if questPosition then
+				local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+
+				-- Check if this quest is closer than the current closest one
+				if distance and distance < closestDistance then
+					closestDistance = distance
+					nextClosestQuestID = info.questID
+				end
+			end
+		end
+	end
+
+	return nextClosestQuestID
+end
+
+
+-- Function to check if the supertracked quest matches the array and stepIndex
+function RQE:CheckSuperTrackedQuestAndStep()
+	-- Get the currently super-tracked quest ID
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	RQE.BlackListedQuestID = superTrackedQuestID
+
+	-- Get the current step index from the addon
+	local currentStepIndex = RQE.AddonSetStepIndex or 1  -- Default to 1 if AddonSetStepIndex is nil
+
+	-- Check if the super-tracked quest is in the questConditions array and matches the stepIndex
+	if RQE.questConditions[superTrackedQuestID] and RQE.questConditions[superTrackedQuestID] == currentStepIndex then
+		-- If the condition matches, clear the RQEFrame and blacklist the quest
+		RQE.BlacklistUnderway = true
+
+		-- Temporarily remove the quest from the watch list
+		-- print("~~~ Remove Quest Watch: 9462 ~~~")
+		C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
+		RQE.Buttons.ClearButtonPressed()
+
+		-- Supertrack the next closest non-blacklisted quest
+		local nextClosestQuestID = RQE:GetClosestNonBlacklistedQuest()
+		RQE.ClosestSafeQuestID = nextClosestQuestID
+
+		if nextClosestQuestID then
+			-- Set the supertracked quest to the next closest non-blacklisted quest
+			-- print("~~~ SetSuperTrack: 9332~~~")
+			-- C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
+			RQE.API.SetSuperTrackedQuestID(nextClosestQuestID)
+			RQE:SaveSuperTrackedQuestToCharacter()
+
+			-- Ensure the blacklisted quest is not re-added prematurely
+			RQE.BlacklistUnderway = false
+
+			-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
+			C_Timer.After(2.5, function()
+				C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)	--C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
+			end)
+		end
+	end
+end
+
+
+-- Function to supertrack a random quest
+function RQE:SupertrackRandomQuest()
+	local functionName = "RQE:SupertrackRandomQuest()"
+
+	local numQuests = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	local randomIndex = math.random(1, numQuests)
+
+	-- Iterate through the player's quest log to find a valid random quest
+	for i = 1, numQuests do
+		local info = RQE.API.GetQuestLogInfo(i)
+		if info and info.questID then
+			-- Found a quest, supertrack it
+			-- print("~~~ SetSuperTrack: 9358~~~")
+			-- C_SuperTrack.SetSuperTrackedQuestID(info.questID)
+			RQE.API.SetSuperTrackedQuestID(info.questID)
+			RQE:SaveSuperTrackedQuestToCharacter()
+
+			-- Print debug message
+			print("Supertracking random questID: " .. tostring(info.questID))
+
+			-- Call UpdateFrame to refresh the UI
+			RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 10240 ~~")
+			UpdateFrame(info.questID)
+			return  -- Exit after setting one random quest
+		end
+	end
+
+	-- Fallback: No quests found
+	print("No quests found to supertrack.")
+end
+
+
+-- Function to log scenario information, including previously ignored values
+function RQE.LogScenarioInfo()
+	if not RQE.debugMode then return end  -- Only log if debugging is explicitly enabled
+	if C_Scenario.IsInScenario() then
+		local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit, scenarioID = C_Scenario.GetInfo()
+
+		RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
+		RQE.infoLog("Current Stage: " .. tostring(currentStage))
+		RQE.infoLog("Number of Stages: " .. tostring(numStages))
+		RQE.infoLog("Flags: " .. tostring(flags))
+		RQE.infoLog("HasBonusStep: " .. tostring(hasBonusStep))
+		RQE.infoLog("isBonusStepComplete: " .. tostring(isBonusStepComplete))
+		RQE.infoLog("Completed: " .. tostring(completed))
+		RQE.infoLog("XP Reward: " .. tostring(xp))
+		RQE.infoLog("Money Reward: " .. tostring(money))
+		RQE.infoLog("Scenario Type: " .. tostring(scenarioType))
+		RQE.infoLog("areaName: " .. tostring(areaName))
+		RQE.infoLog("Texture Kit: " .. tostring(textureKit))
+		RQE.infoLog("scenarioID: " .. tostring(scenarioID))
+	end
+end
+
+
+function RQE.ScenarioTimer_CheckTimers(...)
+	-- only supporting 1 active timer
+	for i = 1, select("#", ...) do
+		local timerID = select(i, ...);
+		local _, elapsedTime, type = GetWorldElapsedTime(timerID);
+		if ( type == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE) then
+			local mapID = C_ChallengeMode.GetActiveChallengeMapID();
+			if ( mapID ) then
+				local _, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID);
+				Scenario_ChallengeMode_ShowBlock(timerID, elapsedTime, timeLimit);
+				return;
+			end
+		elseif ( type == LE_WORLD_ELAPSED_TIMER_TYPE_PROVING_GROUND ) then
+			local diffID, currWave, maxWave, duration = C_Scenario.GetProvingGroundsInfo()
+			if (duration > 0) then
+				Scenario_ProvingGrounds_ShowBlock(timerID, elapsedTime, duration, diffID, currWave, maxWave);
+				return;
+			end
+		end
+	end
+	-- we had an update but didn't find a valid timer, kill the timer if it's running
+	ScenarioTimer_Stop();
+end
+
+
+-- Frame to handle the gossip event securely
+local RQEGossipFrame = CreateFrame("Frame", "RQEGossipFrame", UIParent)
+RQEGossipFrame:RegisterEvent("GOSSIP_SHOW")
+RQEGossipFrame:RegisterEvent("GOSSIP_CLOSED")
+
+
+-- Table to store multiple gossip selection criteria
+local selectedGossipOption = {
+	npcName = nil,
+	optionIndexes = {}, -- Store multiple option indexes
+	currentIndex = 1
+}
+
+-- Table to store multiple gossip selection criteria
+local selectedGossipMultiple = {
+	npcName = nil,
+	optionIndexes = {}, -- Store multiple option indexes
+	currentIndex = 1
+}
+
+-- Table to store **single** gossip selection criteria
+local selectedGossipSingle = {
+	npcName = nil,
+	optionIndex = nil
+}
+
+
+-- Function to process the next gossip selection in queue
+local function ProcessNextGossipOption()
+	local options = C_GossipInfo.GetOptions()
+
+	-- If no options are available, stop processing
+	if not options or #options == 0 then
+		return
+	end
+
+	-- Ensure we are interacting with the correct NPC
+	local isInInstance, instanceType = IsInInstance()
+	if isInInstance then return end
+
+	local currentNPCName = UnitName("npc")
+	if not currentNPCName or currentNPCName ~= selectedGossipOption.npcName then
+		return
+	end
+
+	-- If we have an option left to process
+	if selectedGossipOption.currentIndex <= #selectedGossipOption.optionIndexes then
+		local targetOption = selectedGossipOption.optionIndexes[selectedGossipOption.currentIndex]
+
+		for _, option in ipairs(options) do
+			if option.orderIndex == targetOption then
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipOption.npcName)
+				end
+
+				-- Select the option
+				C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+
+				-- Move to the next option
+				selectedGossipOption.currentIndex = selectedGossipOption.currentIndex + 1
+
+				-- Schedule next selection
+				C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
+				break
+			end
+		end
+	end
+end
+
+
+-- Function to set a single gossip option
+function RQE.SelectGossipOption(npcName, optionIndex)
+	-- Ensure gossip automation is enabled
+	if not RQE.db.profile.enableGossipModeAutomation then return end
+
+	-- Set the selected gossip option for future use
+	if npcName == "target" then
+		selectedGossipSingle.npcName = UnitName("target")
+	else
+		selectedGossipSingle.npcName = npcName
+	end
+	selectedGossipSingle.optionIndex = optionIndex
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Single gossip selection set for NPC:", npcName, "to select option:", optionIndex)
+	end
+end
+
+
+-- Function to set multiple gossip selections
+function RQE.SelectMultipleGossipOptions(npcName, ...)
+	-- Ensure gossip automation is enabled
+	if not RQE.db.profile.enableGossipModeAutomation then return end
+
+	-- If no npcName is provided, default to current target's name
+	if not npcName or npcName == "" then
+		local targetName = UnitName("target")
+		if targetName then
+			npcName = targetName
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("RQE.SelectMultipleGossipOptions(): Using current target '%s' as npcName.", npcName))
+			end
+		else
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("RQE.SelectMultipleGossipOptions(): No npcName provided and no target selected — aborting.")
+			end
+			return
+		end
+	end
+
+	-- Reset previous queue
+	selectedGossipOption.npcName = npcName
+	selectedGossipOption.optionIndexes = { ... }
+	selectedGossipOption.currentIndex = 1
+
+	-- Debug logging
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Gossip selection set for NPC:", npcName, "to select options:", table.concat(selectedGossipOption.optionIndexes, ", "))
+	end
+
+	-- If the NPC gossip window is already open, process immediately
+	if UnitName("npc") == npcName then
+		ProcessNextGossipOption()
+	end
+end
+
+
+-- Function that dumps gossip options into chat
+-- Run with "/run DevTools_Dump(RQE.API.GetGossipOptions())"
+function RQE.DumpGossipOptions()
+	local options = RQE.API.GetGossipOptions()
+
+	if not options or #options == 0 then
+		print("No gossip options available.")
+		return options
+	end
+
+	print("Gossip Options for NPC: " .. (UnitName("npc") or "Unknown"))
+
+	for i, option in ipairs(options) do
+		print(("Option %d"):format(i))
+		print("  gossipOptionID:", tostring(option.gossipOptionID))
+		print("  name:", tostring(option.name))
+		print("  icon:", tostring(option.icon))
+		print("  status:", tostring(option.status))
+		print("  spellID:", tostring(option.spellID))
+		print("  flags:", tostring(option.flags))
+		print("  overrideIconID:", tostring(option.overrideIconID))
+		print("  selectOptionWhenOnlyOption:", tostring(option.selectOptionWhenOnlyOption))
+		print("  orderIndex:", tostring(option.orderIndex))
+		print("  failureDescription:", tostring(option.failureDescription))
+
+		if option.rewards and #option.rewards > 0 then
+			for r, reward in ipairs(option.rewards) do
+				print(("	Reward %d -> id=%s quantity=%s rewardType=%s context=%s")
+					:format(
+						r,
+						tostring(reward.id),
+						tostring(reward.quantity),
+						tostring(reward.rewardType),
+						tostring(reward.context)
+					))
+			end
+		end
+	end
+
+	return options
+end
+
+
+-- Securely hook event handler to process gossip
+RQEGossipFrame:SetScript("OnEvent", function(self, event)
+	if event == "GOSSIP_SHOW" then
+		-- If selectedGossipOption has active selections, start processing
+		if selectedGossipOption.npcName then
+			ProcessNextGossipOption()
+		end
+	elseif event == "GOSSIP_CLOSED" then
+		-- Reset queue when gossip window closes
+		selectedGossipOption.npcName = nil
+		selectedGossipOption.optionIndexes = {}
+		selectedGossipOption.currentIndex = 1
+	end
+end)
+
+
+-- Securely hook the frame's event handler for single gossip
+RQEGossipFrame:HookScript("OnEvent", function(self, event)
+	if event == "GOSSIP_SHOW" then
+		-- Fetch available gossip options
+		local options = C_GossipInfo.GetOptions()
+
+		-- Check if options exist
+		if not options or #options == 0 then
+			return
+		end
+
+		-- Get the current NPC name
+		local currentNPCName = UnitName("npc")
+
+		-- Check if the selection criteria match the current NPC
+		if selectedGossipSingle.npcName and currentNPCName == selectedGossipSingle.npcName then
+			-- Iterate through options and select based on specified index
+			for i, option in ipairs(options) do
+				if option.orderIndex == selectedGossipSingle.optionIndex then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipSingle.npcName)
+					end
+					C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+					break
+				end
+			end
+		end
+	elseif event == "GOSSIP_CLOSED" then
+		-- Reset both queues when gossip window closes
+		selectedGossipMultiple.npcName = nil
+		selectedGossipMultiple.optionIndexes = {}
+		selectedGossipMultiple.currentIndex = 1
+
+		selectedGossipSingle.npcName = nil
+		selectedGossipSingle.optionIndex = nil
+	end
+end)
+
+
+-- Closes the gossip window to ensure that the options are clean slate
+function RQE.ResetGossipWindow()
+	if UnitExists("npc") then
+		C_GossipInfo.CloseGossip() -- Close the gossip window
+		-- C_Timer.After(0.2, function() -- Wait a moment before reopening
+			-- C_PlayerInteractionManager.InteractUnit("npc") -- Reopen the gossip window
+		-- end)
+	-- else
+		-- print("No NPC is currently targeted.")
+	end
+end
+
+
+-- Prints the closest flight master to the player's current location
+function RQE:GetClosestFlightMaster()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print(">> No valid mapID found.")
+		return nil
+	end
+
+	local position = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not position then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Unable to get player map position.")
+		end
+		return nil
+	end
+
+	local px, py = position:GetXY()
+	if not px or not py then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Invalid player position.")
+		end
+		return nil
+	end
+
+	local closestNode = nil
+	local shortestDistance = math.huge
+	local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+
+	local playerFaction = UnitFactionGroup("player")  -- "Alliance", "Horde", or "Neutral"
+
+	for _, node in ipairs(nodes or {}) do
+		if not node.isUndiscovered then
+			-- Filter by faction (allow Neutral or same-faction only)
+			if node.faction == 0 or
+				(node.faction == 1 and playerFaction == "Horde") or (node.faction == 2 and playerFaction == "Alliance") or (playerFaction == "Neutral") then	-- Allow all nodes if player is Neutral (e.g. fresh Pandaren)
+
+				local nx, ny = node.position.x, node.position.y
+				local dist = math.sqrt((px - nx)^2 + (py - ny)^2)
+				if dist < shortestDistance then
+					shortestDistance = dist
+					closestNode = node
+				end
+			end
+		end
+	end
+
+	if closestNode then
+		print(string.format(">> Closest flight master: %s (%.2f, %.2f, mapID %d)", closestNode.name, closestNode.position.x * 100, closestNode.position.y * 100, mapID))
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> No discovered flight master found on this map.")
+		end
+	end
+
+	return closestNode
+end
+
+
+-- Returns { mapID, x, y, xPct, yPct, label, source="waypoint" } or nil.
+-- Prints a test line and then calls CreateUnknownQuestWaypointNoDirectionText to place the waypoint.
+function RQE:FindQuestZoneTransition(questID)
+	if not questID then
+		return nil
+	end
+
+	local waypointText = C_QuestLog.GetNextWaypointText(questID)
+	if not waypointText then return end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		return nil
+	end
+
+	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
+	local label = C_QuestLog.GetNextWaypointText(questID) or "Quest waypoint"
+
+	-- Preferred: exact waypoint on the player's current map
+	local xNorm, yNorm = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+
+	-- Fallback 1: generic waypoint (may be vec or POI id)
+	if not (xNorm and yNorm) then
+		local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
+		if wpMapID then
+			if type(wpData) == "table" then
+				if wpData.x and wpData.y then
+					xNorm, yNorm = wpData.x, wpData.y
+					mapID = wpMapID
+				elseif wpData.position and wpData.position.x and wpData.position.y then
+					xNorm, yNorm = wpData.position.x, wpData.position.y
+					mapID = wpMapID
+				end
+			elseif type(wpData) == "number" then
+				local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+				if poiInfo and poiInfo.position then
+					xNorm, yNorm = poiInfo.position.x, poiInfo.position.y
+					mapID = wpMapID
+					label = poiInfo.name or label
+				end
+			end
+		end
+	end
+
+	-- Fallback 2: our DB (hotspots or legacy coords)
+	if not (xNorm and yNorm) then
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		local questData = RQE.getQuestData and RQE.getQuestData(questID)
+		local step = questData and questData[stepIndex]
+		if step then
+			if step.coordinateHotspots then
+				local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
+				if smap and sx and sy then
+					mapID, xNorm, yNorm = smap, sx, sy
+				end
+			elseif step.coordinates and step.coordinates.x and step.coordinates.y and step.coordinates.mapID then
+				mapID = step.coordinates.mapID
+				-- DB coords are 0–100, normalize back to 0–1
+				xNorm, yNorm = step.coordinates.x / 100, step.coordinates.y / 100
+			end
+		end
+	end
+
+	-- Still nothing? Bail safely.
+	if RQE.db.profile.enableTravelSuggestions then
+		if not (xNorm and yNorm) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(string.format("FindQuestZoneTransition: no waypoint for quest %d on map %d.", questID, mapID))
+			end
+			return nil
+		end
+	end
+
+	-- Bail safely if xNorm and yNorm values are nil when hovering over the "W" button
+	if not (xNorm and yNorm) then
+		-- if RQE.db.profile.debugLevel == "INFO" then
+			-- print("xNorm and yNorm values are nil - leaving function early")
+		-- end
+		return nil
+	end
+
+	-- Percent (for display) + rounded for print
+	local xPct = xNorm * 100
+	local yPct = yNorm * 100
+
+	if RQE.db.profile.enableTravelSuggestions then
+		if not RQE.DontPrintTransitionBits then
+			print(string.format(
+				">> Transition (waypoint): Quest %d \"%s\" — %s (%.2f, %.2f, mapID %d)",
+				questID, questName, label, xPct, yPct, mapID
+			))
+		end
+	end
+
+	-- Stash for the creator (fast path in CreateUnknownQuestWaypointWithDirectionText)
+	RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = xPct, yPct, mapID
+	RQE.x, RQE.y = xPct, yPct  -- legacy helpers you were using before
+
+	-- Create the actual waypoint (this function handles TomTom/Carbonite)
+	C_Timer.After(1.2, function()
+		if RQE.CreateUnknownQuestWaypointWithDirectionText then
+			RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+		end
+	end)
+
+	return { mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct, label = label, source = "waypoint" }
+end
+
+
+-- Obtains the closest flight master that is known to a map position
+function RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY)
+	if not mapID or not targetX or not targetY then
+		print(">> Invalid coordinates or mapID provided.")
+		return nil
+	end
+
+	local closestNode = nil
+	local shortestDistance = math.huge
+	local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+
+	for _, node in ipairs(nodes or {}) do
+		if not node.isUndiscovered then
+			local nx, ny = node.position.x, node.position.y
+			local dist = math.sqrt((targetX - nx)^2 + (targetY - ny)^2)
+			if dist < shortestDistance then
+				shortestDistance = dist
+				closestNode = node
+			end
+		end
+	end
+
+	if closestNode then
+		print(string.format(">> Closest flight master to (%.2f, %.2f) is %s (%.1f, %.1f, mapID %d)",
+			targetX * 100, targetY * 100,
+			closestNode.name,
+			closestNode.position.x * 100,
+			closestNode.position.y * 100,
+			mapID
+		))
+	else
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> No discovered flight master found on that map.")
+		end
+	end
+
+	return closestNode
+end
+
+
+-- Determines and prints the closest flight master to the questID that is passed to the function
+function RQE:GetClosestFlightMasterToQuest(questID)
+	if not questID then
+		print(">> No quest ID provided.")
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print(">> Quest not found in internal database:", questID)
+		end
+		return
+	end
+
+	local mapID, x, y
+
+	-- Try to use coordinates from the current step (first numeric step with coords)
+	for i = 1, 10 do
+		local step = questData[i]
+		if step then
+			-- Prefer hotspots
+			if step.coordinateHotspots then
+				local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, i, step)
+				if smap and sx and sy then
+					mapID, x, y = smap, sx, sy	-- sx/sy are normalized
+					break
+				end
+			-- Legacy single
+			elseif step.coordinates
+				and step.coordinates.x and step.coordinates.y and step.coordinates.mapID
+			then
+				mapID = step.coordinates.mapID
+				x = step.coordinates.x / 100
+				y = step.coordinates.y / 100
+				break
+			end
+		end
+	end
+
+	-- Fallback to quest.location if no step with coordinates was found
+	if not mapID then
+		-- if questData.location then
+			-- mapID = questData.location.mapID
+			-- x = questData.location.x / 100
+			-- y = questData.location.y / 100
+		local xLoc, yLoc, mapID, continentID = RQE.GetPrimaryLocation(questData)
+		local finalMapID
+
+		if mapID then
+			finalMapID = mapID
+		elseif continentID then
+			local playerMapID = C_Map.GetBestMapForUnit("player")
+			local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+			if parent == continentID then
+				finalMapID = continentID
+			end
+		end
+
+		if xLoc and yLoc and finalMapID then
+			mapID = finalMapID
+			x = xLoc / 100
+			y = yLoc / 100
+		else
+			print(">> No usable coordinates found for quest:", questID)
+			return
+		end
+	end
+
+	-- Call the coord-based function to get closest flight master
+	local closest = RQE:GetClosestFlightMasterToCoords(mapID, x, y)
+
+	if not closest then
+		print(string.format(">> No known flight master found near %.2f, %.2f on map %d", x * 100, y * 100, mapID))
+	end
+end
+
+
+-- Function that determines the fastest travel method to reach a given quest
+function RQE:RecommendFastestTravelMethod(questID)
+	if not RQE.db.profile.enableTravelSuggestions then return end
+
+	if not questID then
+		RQE.SuperTrackedQuestIDForSpeed = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	else
+		RQE.SuperTrackedQuestIDForSpeed = questID
+	end
+
+	RQE:AskSetWaypointToClosestFlightMaster()
+
+	local questData = RQE.getQuestData(RQE.SuperTrackedQuestIDForSpeed)
+	if not questData then
+		print(">> Quest not found in internal DB:", RQE.SuperTrackedQuestIDForSpeed)
+		return
+	end
+
+	-- Determine correct coordinates based on active step
+	local activeStepIndex = RQE.AddonSetStepIndex or 1
+	local activeStep = questData[activeStepIndex]
+
+	if not activeStep or not activeStep.coordinates then
+		print(">> No valid coordinates found for step", activeStepIndex, "of questID", RQE.SuperTrackedQuestIDForSpeed)
+		return
+	end
+
+	local stepCoords = activeStep.coordinates
+
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+	if not playerPos then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Unable to determine player position.")
+		end
+		return
+	end
+
+	local px, py = playerPos:GetXY()
+
+	-- Distances
+	print("QuestID: " .. RQE.SuperTrackedQuestIDForSpeed)
+	local directDistance = RQE:GetDistance(playerMapID, px, py, stepCoords.mapID, stepCoords.x / 100, stepCoords.y / 100)
+
+	-- Flight Masters
+	local startFM = RQE:GetClosestFlightMaster()
+	local endFM = RQE:GetClosestFlightMasterToCoords(stepCoords.mapID, stepCoords.x / 100, stepCoords.y / 100)
+
+	-- Calculate taxi route distance if both FMs are available
+	local taxiDistance, walkToFM_Distance, walkFromFM_Distance = math.huge, math.huge, math.huge
+	if startFM and endFM then
+		walkToFM_Distance = RQE:GetDistance(playerMapID, px, py, playerMapID, startFM.position.x, startFM.position.y)
+		taxiDistance = RQE:GetDistance(startFM.mapID or playerMapID, startFM.position.x, startFM.position.y, endFM.mapID or stepCoords.mapID, endFM.position.x, endFM.position.y)
+		walkFromFM_Distance = RQE:GetDistance(stepCoords.mapID, endFM.position.x, endFM.position.y, stepCoords.mapID, stepCoords.x / 100, stepCoords.y / 100)
+	end
+
+	-- Travel speeds (measured)
+	local walkSpeed = 11
+	local flySpeed = 50
+	local skyridingSpeed = 110
+	local taxiSpeed = 85
+
+	-- Time estimates
+	local walkTime = directDistance / walkSpeed
+	local flyTime = directDistance / flySpeed
+	local taxiTime = (walkToFM_Distance / walkSpeed) + (taxiDistance / taxiSpeed) + (walkFromFM_Distance / walkSpeed)
+
+	-- Print time breakdowns
+	if type(walkTime) ~= "number" or walkTime == math.huge or
+		type(flyTime) ~= "number" or flyTime == math.huge or
+		type(taxiTime) ~= "number" or taxiTime == math.huge then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Recommended: Unable to determine route reliably (map mismatch or unknown FMs).")
+		end
+		return
+	end
+
+	-- Print time breakdowns
+	print(string.format(">> Estimated times: Walk = %.1fs | Fly = %.1fs | Taxi = %.1fs", walkTime, flyTime, taxiTime))
+
+	-- Decision logic
+	if flyTime < walkTime and flyTime < taxiTime then
+		print(">> Recommended: Use flying mount (fastest travel method).")
+	elseif taxiTime < walkTime then
+		print(string.format(">> Recommended: Take taxi from %s to %s", startFM.name, endFM.name))
+	else
+		print(">> Recommended: Travel directly on foot or ground mount.")
+	end
+end
+
+
+-- Returns normalized Euclidean distance for same-map coords
+function RQE:GetDistance(mapID1, x1, y1, mapID2, x2, y2)
+	if not (x1 and y1 and x2 and y2) then return math.huge end
+
+	-- If different maps, we can't calculate — bail with huge value
+	if mapID1 ~= mapID2 then return math.huge end
+
+	-- Convert to actual game space units (normalize to 0–1 range assumed)
+	local dx = (x2 - x1)
+	local dy = (y2 - y1)
+	return math.sqrt(dx * dx + dy * dy) * 10000 -- scale to approx "yards"
+end
+
+
+-- Gather the estimated speed the player is currently traveling
+function RQE:EstimatePlayerSpeed(sampleTime)
+	sampleTime = sampleTime or 1  -- default to 1 second
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	local startPos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if not startPos then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(">> Unable to get player position.")
+		end
+		return
+	end
+
+	local x1, y1 = startPos:GetXY()
+
+	C_Timer.After(sampleTime, function()
+		local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
+		if not newPos then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print(">> Unable to get player position (after delay).")
+			end
+			return
+		end
+
+		local x2, y2 = newPos:GetXY()
+
+		-- Use the same GetDistance logic
+		local distance = RQE:GetDistance(mapID, x1, y1, mapID, x2, y2)
+		local speed = distance / sampleTime
+
+		print(string.format(">> Estimated player speed: %.2f yards/sec over %.1f sec", speed, sampleTime))
+	end)
+end
+
+
+-- Ask the player if they want a TomTom waypoint to the closest flight master, then set it on Yes.
+function RQE:AskSetWaypointToClosestFlightMaster()
+	if UnitOnTaxi("player") then return end  -- No popups while flying
+	local tomtomLoaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TomTom")
+	if not (tomtomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility) then
+		return
+	end
+
+	local node = RQE:GetClosestFlightMaster()  -- pure; safe to call
+	local nearestName = (node and node.name) or "nearest flight master"
+
+	StaticPopupDialogs["RQE_CONFIRM_WP_CLOSEST_FM"] = {
+		text = ("Set a TomTom waypoint to the closest flight master?\n\nNearest: %s"):format(nearestName),
+		button1 = "Yes",
+		button2 = "No",
+		OnAccept = function()
+			RQE:SetTomTomWaypointToClosestFlightMaster()
+			RQE.NearestFlightMasterSet = true
+		end,
+		timeout = 3,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3, -- avoid UIParent taint
+	}
+	StaticPopup_Show("RQE_CONFIRM_WP_CLOSEST_FM")
+end
+
+
+-- Create a TomTom (or Blizzard) waypoint to the closest discovered flight master on the current map.
+function RQE:SetTomTomWaypointToClosestFlightMaster()
+	local node = RQE:GetClosestFlightMaster()
+	if not node then
+		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			print(">> No suitable flight master to waypoint.")
+		end
+		return
+	end
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		print(">> No valid mapID found (cannot set waypoint).")
+		return
+	end
+
+	local xNorm, yNorm = node.position.x, node.position.y
+	if not xNorm or not yNorm then
+		print(">> Flight master node has no position (cannot set waypoint).")
+		return
+	end
+
+	local xPct, yPct = xNorm * 100, yNorm * 100
+	local title = string.format('Flight Master: %s', node.name or "Unknown")
+
+	C_Map.ClearUserWaypoint()
+
+	local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+	if isTomTomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility then
+		if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
+			TomTom.waydb:ResetProfile()
+			RQE._currentTomTomUID = nil
+		end
+		RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
+
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format(">> TomTom waypoint => %s (%.2f, %.2f, mapID %d)", title, xPct, yPct, mapID))
+		end
+	else
+		-- Blizzard fallback
+		local wp = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = title }
+		C_Map.SetUserWaypoint(wp)
+		if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then
+			C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+		end
+
+		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
+			print(string.format(">> Blizzard waypoint => %s (%.2f, %.2f, mapID %d) [TomTom not available/disabled]", title, xPct, yPct, mapID))
+		end
+	end
+
+	return { name = node.name, mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct }
+end
+
+
+
+-- Prints the coordinateHotspot of the current player position regardless of if the continentID exists or if the map doesn't have a continentID
+function RQE.PrintPlayerCoordinateHotspot()
+	if not RQEFrame:IsShown() then return end
+
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, rawX, rawY = RQE:GetCurrentPlayerMapPosition()
+	if not mapID then
+		print("Unable to determine current map.")
+		return
+	end
+
+	-- Get normalized x, y for the current map
+	-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	-- if not pos then
+	if not rawX or not rawY then
+		if RQE.db.profile.debugLevel == "INFO" then
+			print("Unable to get player position on mapID:", mapID)
+		end
+		return
+	end
+
+	-- local x, y = pos.x, pos.y
+	local x = RQERoundMapFraction(rawX)
+	local y = RQERoundMapFraction(rawY)
+
+	-- Climb to continent
+	local continentID, continentName
+	local m = mapID
+	while m do
+		local info = C_Map.GetMapInfo(m)
+		if not info then break end
+		if info.mapType == 2 then -- 2 = continent
+			continentID, continentName = info.mapID, info.name
+			break
+		end
+		m = info.parentMapID
+	end
+
+	-- Convert coords to continent-normalized space
+	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+	if not contPos then
+		if continentID ~= 905 and continentID ~= 1550 then	-- Argus (905) is not a true navigable parent map despite being listed as a continentID appears Shadowlands (1550) is the same
+			if RQE.db.profile.debugLevel == "INFO" then
+				print("Unable to get player position on continentID:", continentID)
+			end
+		end
+	end
+
+	-- Gathers coordinateHotspot for current player position
+	if contPos then
+		-- local cx, cy = contPos.x, contPos.y
+		local rawContX, rawContY = contPos:GetXY()
+		local cx = RQERoundMapFraction(rawContX)
+		local cy = RQERoundMapFraction(rawContY)
+		print("				coordinateHotspots = {")
+		print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
+		print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+		print("				},") 
+	else
+		print("				coordinateHotspots = {")
+		print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", x * 100, y * 100, mapID))
+		print("				},") 
+	end	
+end
+
+
+-- Old truncation helper retained for reference; RQERoundMapFraction above is active.
+-- local function RQETruncateDebugMapFraction(value)
+	-- return math.floor((tonumber(value) or 0) * 10000) / 10000
+-- end
+
+-- Fetches the player's position in relation to their current continent
+function RQE.DebugPrintPlayerContinentPosition(questID)
+	if not RQEFrame:IsShown() then return end
+
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, rawX, rawY = RQE:GetCurrentPlayerMapPosition()
+	if not mapID then
+		print("Unable to determine current map.")
+		return
+	end
+
+	if mapID == 407 or mapID == 408 or mapID == 619 then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Returning due to mapID being a continentID of " .. tostring(mapID))
+		end
+		return
+	end
+
+	-- Get normalized x, y for the current map
+	-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	-- if not pos then
+	if not rawX or not rawY then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("Unable to get player position on mapID:", mapID)
+		end
+		return
+	end
+
+	-- local x, y = pos.x, pos.y
+	-- local x = RQETruncateDebugMapFraction(pos.x)
+	-- local y = RQETruncateDebugMapFraction(pos.y)
+	-- local x = RQERoundMapFraction(pos.x)
+	-- local y = RQERoundMapFraction(pos.y)
+	local x = RQERoundMapFraction(rawX)
+	local y = RQERoundMapFraction(rawY)
+
+	-- Climb to continent
+	local continentID, continentName
+	local m = mapID
+	while m do
+		local info = C_Map.GetMapInfo(m)
+		if not info then break end
+		if info.mapType == 2 then -- 2 = continent
+			continentID, continentName = info.mapID, info.name
+			break
+		end
+		m = info.parentMapID
+	end
+
+	if not continentID then
+		print("Unable to determine continent for mapID:", mapID)
+		return
+	end
+
+	-- Convert coords to continent-normalized space
+	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+	if not contPos then
+		if continentID ~= 905 and continentID ~= 1550 then	-- Argus (905) is not a true navigable parent map despite being listed as a continentID appears Shadowlands (1550) is the same
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("Unable to get player position on continentID:", continentID)
+			end
+		end
+	end
+
+	if continentID == mapID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("ContinentID is " .. tostring(continentID) .. " and mapID is " .. tostring(mapID) .. ". Returning as these match")
+		end
+
+		print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
+
+		return
+	end
+
+	-- Print in locations array format (include DB "location" line above it)
+	if RQE.MapAndContinentFromQuestAccepted then
+		local dbEntry = questID and RQE.getQuestData(questID)
+		local hasLocationsArray = dbEntry and dbEntry.locations ~= nil
+		local hasSingleLocation = dbEntry and dbEntry.location ~= nil
+
+		if dbEntry and hasSingleLocation and not hasLocationsArray then
+			local dbLoc = dbEntry.location
+			local dbX, dbY, dbMapID = nil, nil, nil
+
+			if type(dbLoc) == "table" then
+				dbX = tonumber(dbLoc.x)
+				dbY = tonumber(dbLoc.y)
+				dbMapID = tonumber(dbLoc.mapID)
+			end
+
+			-- Then print the new generated "locations" array block
+			if contPos then
+				if questID then
+					print("Tracked QuestID: " .. tostring(questID))
+				end
+
+				-- local cx, cy = contPos.x, contPos.y
+				-- local cx = RQETruncateDebugMapFraction(contPos.x)
+				-- local cy = RQETruncateDebugMapFraction(contPos.y)
+				-- local cx = RQERoundMapFraction(contPos.x)
+				-- local cy = RQERoundMapFraction(contPos.y)
+				local rawContX, rawContY = contPos:GetXY()
+				local cx = RQERoundMapFraction(rawContX)
+				local cy = RQERoundMapFraction(rawContY)
+				print("			locations = {")
+				if dbX and dbY and dbMapID then
+					print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
+					print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
+				else
+					print(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", x * 100, y * 100, mapID))
+					print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
+				end
+				print("			},")
+				PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
+			end
+		end
+	end
+
+	-- Print in coordinateHotspots format
+	if not RQE.MapAndContinentFromQuestAccepted then
+		local trackedQuestID = questID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+		local dbEntry = RQE.getQuestData(trackedQuestID)
+		local stepIndex = RQE.AddonSetStepIndex or 1
+		local dbX, dbY, dbMapID
+
+		-- Try to pull coordinates for the current step
+		if dbEntry and dbEntry[stepIndex] and dbEntry[stepIndex].coordinates then
+			dbX = dbEntry[stepIndex].coordinates.x
+			dbY = dbEntry[stepIndex].coordinates.y
+			dbMapID = dbEntry[stepIndex].coordinates.mapID
+		elseif dbEntry and dbEntry.location then
+			dbX = dbEntry.location.x
+			dbY = dbEntry.location.y
+			dbMapID = dbEntry.location.mapID
+		end
+
+		if RQE.MapAndContinentFromQuestTurnIn then
+			local hasDBCoords = (dbX and dbY and dbMapID)
+			local hasHotspots = dbEntry and dbEntry[stepIndex] and dbEntry[stepIndex].coordinateHotspots ~= nil
+
+			if hasDBCoords then
+				-- Print DB-based coordinate + player-based continent hotspot
+				if trackedQuestID then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Tracked QuestID: " .. tostring(trackedQuestID))
+					end
+				end
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print(string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID))
+				end
+			-- else
+				-- -- Don't spam with "No valid DB coordinates..." — just fallback gracefully
+				-- print("Using player position fallback (no DB coordinates for this quest step)")
+			end
+
+			if not hasHotspots then
+				-- ✅ Use DB coords if available, otherwise fallback to player’s current map position
+				local hotspotX = hasDBCoords and dbX or (x * 100)
+				local hotspotY = hasDBCoords and dbY or (y * 100)
+				local hotspotMapID = hasDBCoords and dbMapID or mapID
+				
+				if contPos then
+					-- local cx, cy = contPos.x, contPos.y
+					-- local cx = RQETruncateDebugMapFraction(contPos.x)
+					-- local cy = RQETruncateDebugMapFraction(contPos.y)
+					-- local cx = RQERoundMapFraction(contPos.x)
+					-- local cy = RQERoundMapFraction(contPos.y)
+					local rawContX, rawContY = contPos:GetXY()
+					local cx = RQERoundMapFraction(rawContX)
+					local cy = RQERoundMapFraction(rawContY)
+
+					print("				coordinateHotspots = {")
+					print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
+					print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
+					print("				},")
+					PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
+				end
+			else
+				if RQE.db.profile.debugLevel == "INFO+" then
+					print("Turn in step for the quest " .. trackedQuestID .. " already uses a coordinateHotspots array")
+				end
+			end
+
+		else
+			-- Handling for the manually activation of the function
+			local hasDBCoords = (dbX and dbY and dbMapID)
+
+			if trackedQuestID then
+				print("Tracked QuestID is: " .. tostring(trackedQuestID))
+			end
+
+			-- NEW: Print DB "location" as a locations array + current continent coords
+			-- This is intended to replace:
+			-- location = { x = XX, y = YY, mapID = ZZZ },
+			-- with:
+			-- locations = { { ...map... }, { ...continent... }, }
+			local hasLocationsArray = dbEntry and dbEntry.locations ~= nil
+			local hasSingleLocation = dbEntry and dbEntry.location ~= nil
+
+			if contPos and (hasSingleLocation or hasLocationsArray) then
+				local locX, locY, locMapID
+
+				-- If DB uses locations array, keep the FIRST entry that has a mapID
+				if hasLocationsArray and type(dbEntry.locations) == "table" then
+					for _, loc in ipairs(dbEntry.locations) do
+						if type(loc) == "table" and loc.mapID then
+							locX = tonumber(loc.x)
+							locY = tonumber(loc.y)
+							locMapID = tonumber(loc.mapID)
+							break
+						end
+					end
+				end
+
+				-- Otherwise fall back to single location table
+				if (not locX or not locY or not locMapID) and hasSingleLocation and type(dbEntry.location) == "table" then
+					local dbLoc = dbEntry.location
+					locX = tonumber(dbLoc.x)
+					locY = tonumber(dbLoc.y)
+					locMapID = tonumber(dbLoc.mapID)
+				end
+
+				-- Final fallback (your existing behavior)
+				locX = locX or (hasDBCoords and dbX) or (x * 100)
+				locY = locY or (hasDBCoords and dbY) or (y * 100)
+				locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
+
+				-- local cx, cy = contPos.x, contPos.y
+				-- local cx = RQETruncateDebugMapFraction(contPos.x)
+				-- local cy = RQETruncateDebugMapFraction(contPos.y)
+				-- local cx = RQERoundMapFraction(contPos.x)
+				-- local cy = RQERoundMapFraction(contPos.y)
+				local rawContX, rawContY = contPos:GetXY()
+				local cx = RQERoundMapFraction(rawContX)
+				local cy = RQERoundMapFraction(rawContY)
+
+				local CYAN = "|cff00ffff"
+				local RESET = "|r"
+
+				print(CYAN .. "			locations = {" .. RESET)
+				print(CYAN .. string.format("				{ x = %.2f, y = %.2f, mapID = %d },", locX, locY, locMapID) .. RESET)
+				print(CYAN .. string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID) .. RESET)
+				print(CYAN .. "			}," .. RESET)
+			end
+
+			if hasDBCoords then
+				local GREEN = "|cff00ff00"
+				local RESET = "|r"
+
+				print(GREEN .. string.format("				coordinates = { x = %.2f, y = %.2f, mapID = %d },", dbX, dbY, dbMapID) .. RESET)
+			end
+
+			if contPos then
+				local CHENIN = "|cffd8be70"
+				local RESET = "|r"
+
+				print(CHENIN .. "				coordinateHotspots = {" .. RESET)
+				local hotspotX = hasDBCoords and dbX or (x * 100)
+				local hotspotY = hasDBCoords and dbY or (y * 100)
+				local hotspotMapID = hasDBCoords and dbMapID or mapID
+				-- local cx, cy = contPos.x, contPos.y
+				-- local cx = RQETruncateDebugMapFraction(contPos.x)
+				-- local cy = RQETruncateDebugMapFraction(contPos.y)
+				-- local cx = RQERoundMapFraction(contPos.x)
+				-- local cy = RQERoundMapFraction(contPos.y)
+				local rawContX, rawContY = contPos:GetXY()
+				local cx = RQERoundMapFraction(rawContX)
+				local cy = RQERoundMapFraction(rawContY)
+
+				print(CHENIN .. string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID) .. RESET)
+				print(CHENIN .. string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID) .. RESET)
+				print(CHENIN .. "				}," .. RESET)
+
+			else
+				print("No contPos")
+			end
+		end
+	end
+
+	RQE.MapAndContinentFromQuestAccepted = false
+	RQE.MapAndContinentFromQuestTurnIn = false
+end
+
+
+-- Helper function to obtain the correct stepIndex for a given quest
+function RQE.GetCurrentDBStepIndexForQuest(questID)
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if not questData then return 1 end
+
+	local maxStep = 0
+	for k, v in pairs(questData) do
+		if type(k) == "number" and type(v) == "table" and k > maxStep then
+			maxStep = k
+		end
+	end
+
+	if maxStep == 0 then return 1 end
+
+	local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+
+	for i = 1, maxStep do
+		local step = questData[i]
+		local objectiveIndex = tonumber(step and step.objectiveIndex)
+		local neededAmt = tonumber(step and step.neededAmt and step.neededAmt[1])
+
+		if objectiveIndex and objectiveIndex ~= 99 then
+			local objective = objectives and objectives[objectiveIndex]
+
+			if objective then
+				local fulfilled = tonumber(objective.numFulfilled) or 0
+
+				if neededAmt and fulfilled < neededAmt then
+					return i
+				elseif not neededAmt and not objective.finished then
+					return i
+				end
+			end
+		elseif step and step.funct == "CheckDBComplete" then
+			return i
+		end
+	end
+
+	return maxStep
+end
+
+
+-- Function that converts location/coordinates into locations/coordinateHotspots
+function RQE.PrintCoordsForQuestStep(questID, stepIndex)
+	local maincolor = RQE.ColorPINK or "|cffff69b4"
+	local nullcolor = RQE.ColorCANARY or "|cffffff66"
+	local reset = RQE.ColorRESET or "|r"
+
+	local function PrintRQE(msg, color)
+		print((color or maincolor) .. msg .. reset)
+	end
+
+	local function PrintNothing(msg)
+		PrintRQE(msg, nullcolor)
+	end
+
+	if not questID then
+		questID = RQE.CurrentDisplayedQuestID
+			or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+
+		stepIndex = RQE.CurrentDisplayedStepIndex or 1
+	else
+		questID = tonumber(questID)
+		stepIndex = tonumber(stepIndex) or RQE.GetCurrentDBStepIndexForQuest(questID) or 1
+	end
+
+	if not questID or questID == 0 then
+		PrintNothing("Nothing to print: no questID passed and no supertracked quest found.")
+		return
+	end
+
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if not questData then
+		PrintNothing("questID " .. questID .. " not present in DB")
+		return
+	end
+
+	local maxStep = 0
+	for k, v in pairs(questData) do
+		if type(k) == "number" and type(v) == "table" and k > maxStep then
+			maxStep = k
+		end
+	end
+
+	if maxStep > 0 and stepIndex > maxStep then
+		PrintNothing("stepIndex " .. tostring(stepIndex) .. " is past the final DB step for questID " .. questID .. "; using stepIndex " .. maxStep .. " instead.")
+		stepIndex = maxStep
+	end
+
+	local stepData = questData[stepIndex]
+	local hasStepData = type(stepData) == "table"
+
+	PrintNothing("Debug: resolved questID " .. tostring(questID) .. ", stepIndex " .. tostring(stepIndex) .. ", hasStepData = " .. tostring(hasStepData))
+
+	local mapID = C_Map.GetBestMapForUnit("player")
+	if not mapID then
+		PrintNothing("Unable to determine current map.")
+		return
+	end
+
+	local continentID
+	local m = mapID
+	while m do
+		local info = C_Map.GetMapInfo(m)
+		if not info then break end
+
+		if info.mapType == Enum.UIMapType.Continent or info.mapType == 2 then
+			continentID = info.mapID
+			break
+		end
+
+		m = info.parentMapID
+	end
+
+	if not continentID then
+		PrintNothing("Unable to determine continent for mapID: " .. tostring(mapID))
+		return
+	end
+
+	local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+	if not contPos then
+		PrintNothing("Unable to get player position on continentID: " .. tostring(continentID))
+		return
+	end
+
+	-- local contX = contPos.x * 100
+	-- local contY = contPos.y * 100
+	local rawContX, rawContY = contPos:GetXY()
+	local contX = RQERoundMapFraction(rawContX) * 100
+	local contY = RQERoundMapFraction(rawContY) * 100
+
+	local function PrintHotspots(coord)
+		if stepData and stepData.coordinateHotspots then
+			PrintNothing("Nothing to print: coordinateHotspots already exist for questID " .. questID .. ", stepIndex " .. stepIndex .. ".")
+			return
+		end
+
+		if not coord or not coord.x or not coord.y or not coord.mapID then
+			PrintNothing("Nothing to print: questID " .. questID .. " stepIndex " .. stepIndex .. " has no valid coordinates.")
+			return
+		end
+
+		PrintRQE("				coordinateHotspots = {")
+		PrintRQE(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", coord.x, coord.y, coord.mapID))
+		PrintRQE(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", contX, contY, continentID))
+		PrintRQE("				},")
+	end
+
+	local function PrintLocations()
+		if questData.locations then
+			PrintNothing("Nothing to print: locations array already exists for questID " .. questID .. ".")
+			return
+		end
+
+		local loc = questData.location
+		if not loc or not loc.x or not loc.y or not loc.mapID then
+			PrintNothing("Nothing to print: questID " .. questID .. " has no valid location table.")
+			return
+		end
+
+		PrintRQE("			locations = {")
+		PrintRQE(string.format("				{ x = %.2f, y = %.2f, mapID = %d },", loc.x, loc.y, loc.mapID))
+		PrintRQE(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", contX, contY, continentID))
+		PrintRQE("			},")
+		PrintRQE("")
+	end
+
+	if stepIndex == 1 then
+		PrintLocations()
+
+		if hasStepData then
+			PrintHotspots(stepData.coordinates)
+		else
+			PrintNothing("Nothing to print: questID " .. questID .. " has no step data, so coordinateHotspots cannot be generated.")
+		end
+
+		return
+	end
+
+	if hasStepData then
+		PrintHotspots(stepData.coordinates)
+	else
+		PrintNothing("Nothing to print: questID " .. questID .. " stepIndex " .. stepIndex .. " not present in DB.")
+	end
+end
+
+
+-- Popup: ask for questID + stepIndex, then print locations/coordinateHotspots
+function RQE.ShowPrintCoordsPopup()
+	StaticPopupDialogs["RQE_PRINT_COORDS_FOR_QUEST_STEP"] = {
+		text = "Print coords for quest step",
+		button1 = "Print",
+		button2 = "Cancel",
+		hasEditBox = true,
+		hasWideEditBox = true,
+		editBoxWidth = 220,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3,
+
+		OnShow = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			if editBox then
+				local questID = RQE.CurrentDisplayedQuestID
+					or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+					or ""
+
+				local stepIndex = RQE.CurrentDisplayedStepIndex
+					or RQE.AddonSetStepIndex
+					or ""
+
+				editBox:SetText(tostring(questID) .. " " .. tostring(stepIndex))
+				editBox:SetFocus()
+				editBox:HighlightText()
+			end
+		end,
+
+		OnAccept = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			local text = editBox and editBox:GetText() or ""
+
+			local questID, stepIndex = text:match("^%s*(%d+)%s+([%d]*)%s*$")
+			questID = tonumber(questID)
+			stepIndex = tonumber(stepIndex)
+
+			if not questID then
+				print("|cFFFF3333[RQE]|r Enter: questID stepIndex")
+				print("|cFFFF3333[RQE]|r Example: 84022 3")
+				return
+			end
+
+			RQE.PrintCoordsForQuestStep(questID, stepIndex)
+		end,
+	}
+
+	StaticPopup_Show("RQE_PRINT_COORDS_FOR_QUEST_STEP")
+end
+
+
+-- Popup: ask for stepIndex, then print locations/coordinateHotspots for the tracked questID
+function RQE.ShowPrintCoordsForDisplayedQuestPopup(passedQuestID)
+	local questID =
+		tonumber(passedQuestID)
+		or tonumber(RQE.searchedQuestID)
+		or tonumber(RQE.CurrentDisplayedQuestID)
+
+	if not questID or questID == 0 then
+		print("|cFFFF3333[RQE]|r No quest is currently displayed in RQEFrame.")
+		return
+	end
+
+	StaticPopupDialogs["RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST"] = {
+		text = "Print coords for questID " .. tostring(questID) .. "\nEnter stepIndex:",
+		button1 = "Print",
+		button2 = "Cancel",
+		hasEditBox = true,
+		editBoxWidth = 80,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = 3,
+
+		OnShow = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			if editBox then
+				local stepIndex = RQE.CurrentDisplayedStepIndex
+					or RQE.AddonSetStepIndex
+					or 1
+
+				editBox:SetText(tostring(stepIndex))
+				editBox:SetFocus()
+				editBox:HighlightText()
+			end
+		end,
+
+		OnAccept = function(self)
+			local editBox = self.editBox or self:GetEditBox()
+			local stepIndex = tonumber(editBox and editBox:GetText())
+
+			if not stepIndex then
+				print("|cFFFF3333[RQE]|r Enter a valid stepIndex.")
+				return
+			end
+
+			RQE.PrintCoordsForQuestStep(questID, stepIndex)
+		end,
+	}
+
+	StaticPopup_Show("RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST")
+end
+
+
+-- Debug to print TomTom waypoints and also player coordinates as they relate to the DB
+function RQE:Debug_PlayerCoordinates()
+	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+
+	local maincolor = RQE.ColorPINK or "|cffff69b4"
+	local nullcolor = RQE.ColorCANARY or "|cffffff66"
+	local reset = RQE.ColorRESET or "|r"
+
+	local function PrintRQE(msg, color)
+		print((color or maincolor) .. msg .. reset)
+	end
+
+	-- local mapID = C_Map.GetBestMapForUnit("player")
+	local mapID, rawX, rawY = self:GetCurrentPlayerMapPosition()
+	if not mapID then
+		PrintRQE("[RQE Debug] Unable to determine player mapID.", nullcolor)
+		return
+	end
+
+	-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+	if rawX and rawY then
+		PrintRQE(string.format(
+			"[RQE Debug] Player map position: mapID = %d, x = %.2f, y = %.2f",
+			mapID,
+			-- pos.x * 100,
+			-- RQETruncateDebugMapFraction(pos.x) * 100,
+			-- RQERoundMapFraction(pos.x) * 100,
+			rawX * 100,
+			-- pos.y * 100
+			-- RQETruncateDebugMapFraction(pos.y) * 100
+			-- RQERoundMapFraction(pos.y) * 100
+			rawY * 100
+		))
+	else
+		PrintRQE("[RQE Debug] Unable to get player position for mapID: " .. tostring(mapID), nullcolor)
+	end
+
+	if TomTom and TomTom.DebugListAllWaypoints then
+		TomTom:DebugListAllWaypoints()
+	else
+		PrintRQE("[RQE Debug] TomTom:DebugListAllWaypoints() unavailable.", nullcolor)
+	end
+
+	if RQE.DebugPrintPlayerContinentPosition then
+		RQE.DebugPrintPlayerContinentPosition()
+	else
+		PrintRQE("[RQE Debug] RQE.DebugPrintPlayerContinentPosition() unavailable.", nullcolor)
+	end
+end
+
+
+-- Utility to print detailed RQE.API.GetQuestLogInfo (C_QuestLog.GetInfo) data for a given questID
+function RQE.DebugQuestInfo(self, questID)
+	if not questID then
+		print("|cFFFF3333[RQE]|r You must pass a questID. Example: /run RQE:DebugQuestInfo(62)")
+		return
+	end
+
+	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+	local foundInfo
+
+	for questLogIndex = 1, numEntries do
+		local info = RQE.API.GetQuestLogInfo(questLogIndex)
+		if info and info.questID == questID then
+			foundInfo = info
+			break
+		end
+	end
+
+	if not foundInfo then
+		print(string.format("|cFFFF3333[RQE]|r QuestID %d not found in your quest log.", questID))
+		return
+	end
+
+	print("|cff33FF99[RQE:DebugQuestInfo]|r ---------------------------")
+	print(string.format("|cFFFFFF00Quest Title:|r %s", foundInfo.title or ""))
+	print(string.format("|cFFFFFF00Quest ID:|r %d", foundInfo.questID or 0))
+	print(string.format("|cFFFFFF00Quest Log Index:|r %d", foundInfo.questLogIndex or 0))
+	print(string.format("|cFFFFFF00Level:|r %d |cFFFFFF00Difficulty:|r %d",
+		foundInfo.level or 0, foundInfo.difficultyLevel or 0))
+	print(string.format("|cFFFFFF00Campaign ID:|r %s", tostring(foundInfo.campaignID)))
+	print(string.format("|cFFFFFF00Group Size:|r %d", foundInfo.suggestedGroup or 0))
+	print(string.format("|cFFFFFF00Frequency:|r %s", tostring(foundInfo.frequency)))
+	print(string.format("|cFFFFFF00Classification:|r %s", tostring(foundInfo.questClassification)))
+	print(string.format("|cFFFFFF00Header:|r %s |cFFFFFF00Collapsed:|r %s",
+		tostring(foundInfo.isHeader), tostring(foundInfo.isCollapsed)))
+	print(string.format("|cFFFFFF00Task:|r %s |cFFFFFF00Bounty:|r %s |cFFFFFF00Story:|r %s",
+		tostring(foundInfo.isTask), tostring(foundInfo.isBounty), tostring(foundInfo.isStory)))
+	print(string.format("|cFFFFFF00Scaling:|r %s |cFFFFFF00On Map:|r %s |cFFFFFF00Has POI:|r %s",
+		tostring(foundInfo.isScaling), tostring(foundInfo.isOnMap), tostring(foundInfo.hasLocalPOI)))
+	print(string.format("|cFFFFFF00Hidden:|r %s |cFFFFFF00AutoComplete:|r %s",
+		tostring(foundInfo.isHidden), tostring(foundInfo.isAutoComplete)))
+	print(string.format("|cFFFFFF00Abandon On Disable:|r %s", tostring(foundInfo.isAbandonOnDisable)))
+	print(string.format("|cFFFFFF00Internal Only:|r %s", tostring(foundInfo.isInternalOnly)))
+	print(string.format("|cFFFFFF00Ready For Translation:|r %s", tostring(foundInfo.readyForTranslation)))
+	print(string.format("|cFFFFFF00Header Sort Key:|r %s", tostring(foundInfo.headerSortKey)))
+	print(string.format("|cFFFFFF00Overrides Sort Order:|r %s", tostring(foundInfo.overridesSortOrder)))
+	print("|cff33FF99-------------------------------------------|r")
+end
+
+
+-- Prints the supertracked quest from Sandbox (or DB if not found)
+function RQE.PrintSupertrackedQuest()
+	local questID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+	if not questID or questID == 0 then
+		print("|cffff6666[RQE]|r No supertracked quest found.")
+		return
+	end
+
+	local questData
+
+	-- Prefer Sandbox data if active and available
+	if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries and RQE_Sandbox.entries[questID] then
+		questData = RQE_Sandbox.entries[questID]
+		print("|cff33ff99[RQE Sandbox]|r Printing Sandbox data for quest ID:", questID)
+	else
+		questData = RQE.getQuestData(questID)
+		print("|cffffff00[RQE]|r Printing Database data for quest ID:", questID)
+	end
+
+	if not questData then
+		print(string.format("|cffff6666[RQE]|r No quest data found for quest ID %d", questID))
+		return
+	end
+
+	-- Utility for consistent tab indentation
+	local function tprintTabs(text, level)
+		print(string.rep("\t", level) .. text)
+	end
+
+	-- Helper for safe string escaping
+	local function esc(str)
+		return tostring(str):gsub("\\", "\\\\"):gsub("\n", "\\n"):gsub("\"", "\\\"")
+	end
+
+	-- Begin quest table
+	tprintTabs(string.format("[%d] = {", questID), 2)
+
+	-- Title
+	if questData.title then
+		tprintTabs(string.format('title = "%s",', esc(questData.title)), 3)
+	end
+
+	-- Location
+	if questData.location then
+		tprintTabs(string.format("location = { x = %.2f, y = %.2f, mapID = %d },",
+			questData.location.x or 0, questData.location.y or 0, questData.location.mapID or 0), 3)
+	end
+
+	-- Objectives text
+	if questData.objectivesQuestText and questData.objectivesQuestText[1] then
+		tprintTabs(string.format('objectivesQuestText = { "%s" },', esc(questData.objectivesQuestText[1])), 3)
+	end
+
+	-- Description text
+	if questData.descriptionQuestText and questData.descriptionQuestText[1] then
+		tprintTabs(string.format('descriptionQuestText = { "%s" },', esc(questData.descriptionQuestText[1])), 3)
+	end
+
+	-- NPC line
+	if questData.npc and questData.npc[1] then
+		tprintTabs(string.format('npc = { "%s" },', esc(questData.npc[1])), 3)
+	end
+
+	-- Steps
+	for index, step in ipairs(questData) do
+		tprintTabs(string.format("[%d] = {", index), 3)
+
+		if step.description then
+			tprintTabs(string.format('description = "%s",', esc(step.description)), 4)
+		end
+
+		if step.coordinates then
+			tprintTabs(string.format("coordinates = { x = %.2f, y = %.2f, mapID = %d },",
+				step.coordinates.x or 0, step.coordinates.y or 0, step.coordinates.mapID or 0), 4)
+		end
+
+		if step.checks and #step.checks > 0 then
+			tprintTabs("checks = {", 4)
+			for _, chk in ipairs(step.checks) do
+				local checkTable = string.format(
+					'{ mod = "%s", logic = "%s", check = { "%s" }, neededAmt = { "%s" }, funct = "%s" },',
+					chk.mod or "", chk.logic or "", table.concat(chk.check or {}, '", "'),
+					table.concat(chk.neededAmt or {}, '", "'), chk.funct or ""
+				)
+				tprintTabs(checkTable, 5)
+			end
+			tprintTabs("},", 4)
+		end
+
+		if step.check then
+			tprintTabs(string.format('check = { "%s" },', table.concat(step.check, '", "')), 4)
+		end
+
+		if step.neededAmt then
+			tprintTabs(string.format('neededAmt = { "%s" },', table.concat(step.neededAmt, '", "')), 4)
+		end
+
+		if step.funct then
+			tprintTabs(string.format('funct = "%s",', esc(step.funct)), 4)
+		end
+
+		if step.npcTargets then
+			tprintTabs("npcTargets = {", 4)
+			for _, npc in ipairs(step.npcTargets) do
+				tprintTabs(string.format('{ name = "%s", marker = %d, mustBeAlive = %s },',
+					esc(npc.name or ""), npc.marker or 8, tostring(npc.mustBeAlive)), 5)
+			end
+			tprintTabs("},", 4)
+		end
+
+		if step.macro then
+			local macroText = table.concat(step.macro, "\\n")
+			tprintTabs(string.format('macro = { "%s" },', esc(macroText)), 4)
+		end
+
+		if step.objectiveIndex then
+			tprintTabs(string.format("objectiveIndex = %d,", step.objectiveIndex), 4)
+		end
+
+		tprintTabs("},", 3)
+	end
+
+	tprintTabs("},", 2)
+end
+
+
+-- Debug utility: Prints channeling info for the player
+function RQE.CheckChannelInfo()
+	local name, displayName, textureID, startTimeMs, endTimeMs, isTradeskill,
+		  notInterruptible, spellID, isEmpowered, numEmpowerStages = UnitChannelInfo("player")
+
+	if not name then
+		print("|cff00ff00[RQE]|r You are not currently channeling any spell.")
+		return
+	end
+
+	local duration = (endTimeMs - startTimeMs) / 1000
+	local timeRemaining = (endTimeMs / 1000) - GetTime()
+
+	print("|cff00ff00[RQE]|r Channel Info:")
+	print("------------------------------------------------")
+	print(string.format("Spell Name: %s", name or "nil"))
+	print(string.format("Display Name: %s", displayName or "nil"))
+	print(string.format("Spell ID: %s", spellID or "nil"))
+	print(string.format("Texture: %s", textureID or "nil"))
+	print(string.format("Start Time (ms): %s", startTimeMs or "nil"))
+	print(string.format("End Time (ms): %s", endTimeMs or "nil"))
+	print(string.format("Duration (s): %.2f", duration))
+	print(string.format("Time Remaining (s): %.2f", timeRemaining))
+	print(string.format("Is Tradeskill: %s", tostring(isTradeskill)))
+	print(string.format("Not Interruptible: %s", tostring(notInterruptible)))
+	print(string.format("Is Empowered: %s", tostring(isEmpowered)))
+	print(string.format("Empower Stages: %s", tostring(numEmpowerStages)))
+	print("------------------------------------------------")
+end
+
+
+-- Debug utility: Prints channeling info for the player
+function RQE.CheckCastingInfo()
+	local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitChannelInfo("player")
+
+	if not name then
+		print("|cff00ff00[RQE]|r You are not currently casting any spell.")
+		return
+	end
+
+	local duration = (endTimeMs - startTimeMs) / 1000
+	local timeRemaining = (endTimeMs / 1000) - GetTime()
+
+	print("|cff00ff00[RQE]|r Channel Info:")
+	print("------------------------------------------------")
+	print(string.format("Spell Name: %s", name or "nil"))
+	print(string.format("Text: %s", text or "nil"))
+	print(string.format("Spell ID: %s", spellID or "nil"))
+	print(string.format("Texture: %s", texture or "nil"))
+	print(string.format("Start Time (ms): %s", startTimeMs or "nil"))
+	print(string.format("End Time (ms): %s", endTimeMs or "nil"))
+	print(string.format("Duration (s): %.2f", duration))
+	print(string.format("Time Remaining (s): %.2f", timeRemaining))
+	print(string.format("Is Tradeskill: %s", tostring(isTradeskill)))
+	print(string.format("Not Interruptible: %s", tostring(notInterruptible)))
+	print("------------------------------------------------")
+end
+
+
+-- Function that prints out the distance to the current waypoint in yards
+function RQE:Debug_NavGetDistance()
+	if not C_Navigation or not C_Navigation.GetDistance then
+		print((self.ColorCRIMSON or "|cffff0000") .. "C_Navigation.GetDistance is not available on this client." .. (self.ColorRESET or "|r"))
+		return nil
+	end
+
+	local distance = C_Navigation.GetDistance()
+	if distance == nil then
+		print((self.ColorYELLOW or "|cffffff00") .. "[RQE] Nav Distance: nil (no tracked destination?)" .. (self.ColorRESET or "|r"))
+		return nil
+	end
+
+	print((self.ColorGREEN or "|cff00ff00") .. ("[RQE] Nav Distance: %.1f yards"):format(distance) .. (self.ColorRESET or "|r"))
+	return distance
+end
