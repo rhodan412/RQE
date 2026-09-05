@@ -29,6 +29,12 @@ RQE.API = RQE.API or {}
 local version, build, _, tocversion = GetBuildInfo()
 local major, minor, patch = string.match(version, "(%d+)%.(%d+)%.?(%d*)")
 major, minor, patch = tonumber(major), tonumber(minor), tonumber(patch) or 0
+local isLegacyClient = major == 1 or major == 2
+-- Use Blizzard's client-family identifier, not an expansion version number.
+local isRetail = WOW_PROJECT_ID ~= nil
+	and WOW_PROJECT_MAINLINE ~= nil
+	and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
+RQE.IsRetail = isRetail
 
 RQE.API.GameVersion = {
 	full = version,
@@ -37,7 +43,76 @@ RQE.API.GameVersion = {
 	minor = minor,
 	patch = patch,
 	toc = tocversion,
+	isClassicEra = major == 1,
+	isTBC = major == 2,
+	isRetail = isRetail,
+	clientProfile = major == 1 and "classic" or (major == 2 and "tbc" or "retail"),
+	usesLegacyQuestLog = isLegacyClient,
+	usesVirtualQuestTracking = isLegacyClient,
+	managesBlizzardObjectiveTracker = not isLegacyClient,
+	supportsRetailQuestTypes = not isLegacyClient,
+	usesLegacyQuestLogSelection = isLegacyClient,
+	questLogTextDescriptionIsSecond = major == 1,
+	supportsAchievements = major >= 3,
+	supportsWarband = major >= 11,
 }
+
+function RQE.API.IsLegacyClient()
+	return RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog == true
+end
+
+function RQE.API.CanManageBlizzardObjectiveTracker()
+	return RQE.API.GameVersion and RQE.API.GameVersion.managesBlizzardObjectiveTracker == true
+end
+
+-- Snapshot legacy namespaces before installing any compatibility wrappers.
+-- SoD and Anniversary can expose only part of a C_* namespace; the snapshots
+-- distinguish a native method from an RQE fallback without changing Retail.
+local function SnapshotAPI(api)
+	local snapshot = {}
+	if type(api) == "table" then
+		for key, value in pairs(api) do
+			snapshot[key] = value
+		end
+	end
+	return snapshot
+end
+
+local NativeQuestLog = isLegacyClient and SnapshotAPI(C_QuestLog) or {}
+local NativeMap = isLegacyClient and SnapshotAPI(C_Map) or {}
+local NativeSuperTrack = isLegacyClient and SnapshotAPI(C_SuperTrack) or {}
+local NativeScenario = isLegacyClient and SnapshotAPI(C_Scenario) or {}
+local NativeTaskQuest = isLegacyClient and SnapshotAPI(C_TaskQuest) or {}
+local NativeAddOns = isLegacyClient and SnapshotAPI(C_AddOns) or {}
+
+local function Has(api, method)
+	return type(api) == "table" and type(api[method]) == "function"
+end
+
+if isLegacyClient then
+	-- Classic Era reverses the description/objectives return values. TBC does
+	-- not, so normalize both clients here for all callers.
+	function RQE.API.GetQuestLogText(questLogIndex)
+		if type(GetQuestLogQuestText) ~= "function" or not questLogIndex then
+			return nil, nil
+		end
+
+		local firstText, secondText = GetQuestLogQuestText(questLogIndex)
+		if major == 1 then
+			return secondText, firstText
+		end
+		return firstText, secondText
+	end
+
+	function RQE.API.GetQuestLogDescription(questLogIndex)
+		return RQE.API.GetQuestLogText(questLogIndex)
+	end
+
+	function RQE.API.GetQuestLogObjectivesText(questLogIndex)
+		local _, objectives = RQE.API.GetQuestLogText(questLogIndex)
+		return objectives
+	end
+end
 
 
 -------------------------------------------------
@@ -752,6 +827,49 @@ else
 	end
 end
 
+-- SoD and TBC expose different subsets of C_Map. These wrappers use only
+-- methods that existed when the API module loaded and supply legacy no-ops.
+if isLegacyClient then
+	RQE.API.GetBestMapForUnit = function(unit)
+		return Has(NativeMap, "GetBestMapForUnit") and NativeMap.GetBestMapForUnit(unit) or nil
+	end
+
+	RQE.API.GetMapInfo = function(mapID)
+		if Has(NativeMap, "GetMapInfo") then return NativeMap.GetMapInfo(mapID) end
+		local name = type(GetMapInfo) == "function" and GetMapInfo(mapID) or nil
+		return name and { mapID = mapID, name = name } or nil
+	end
+
+	RQE.API.GetPlayerMapPosition = function(mapID, unit)
+		if Has(NativeMap, "GetPlayerMapPosition") then
+			return NativeMap.GetPlayerMapPosition(mapID, unit)
+		end
+		return nil
+	end
+
+	RQE.API.ClearUserWaypoint = function()
+		return Has(NativeMap, "ClearUserWaypoint") and NativeMap.ClearUserWaypoint() or nil
+	end
+
+	RQE.API.SetUserWaypoint = function(point)
+		return Has(NativeMap, "SetUserWaypoint") and NativeMap.SetUserWaypoint(point) or false
+	end
+
+	RQE.API.HasUserWaypoint = function()
+		return Has(NativeMap, "HasUserWaypoint") and NativeMap.HasUserWaypoint() or false
+	end
+
+	-- Existing legacy modules still call these map functions directly. Only
+	-- fill missing methods; never replace a Blizzard implementation.
+	C_Map = C_Map or {}
+	C_Map.GetBestMapForUnit = C_Map.GetBestMapForUnit or RQE.API.GetBestMapForUnit
+	C_Map.GetMapInfo = C_Map.GetMapInfo or RQE.API.GetMapInfo
+	C_Map.GetPlayerMapPosition = C_Map.GetPlayerMapPosition or RQE.API.GetPlayerMapPosition
+	C_Map.ClearUserWaypoint = C_Map.ClearUserWaypoint or RQE.API.ClearUserWaypoint
+	C_Map.SetUserWaypoint = C_Map.SetUserWaypoint or RQE.API.SetUserWaypoint
+	C_Map.HasUserWaypoint = C_Map.HasUserWaypoint or RQE.API.HasUserWaypoint
+end
+
 
 -------------------------------------------------
 -- #🛒 Merchant APIs
@@ -1070,6 +1188,87 @@ RQE.API.GetNumQuestLogEntries = function()
 
 	-- Failsafe for clients without either API.
 	return 0, 0
+end
+
+
+-- SoD and Anniversary do not have Retail's stable C_SuperTrack and quest
+-- objective contracts. Keep their complete compatibility behavior in the
+-- quest API section, after Retail's normal definitions.
+if isLegacyClient then
+	RQE.API.GetSuperTrackedQuestID = function()
+		local questID
+		if Has(NativeSuperTrack, "GetSuperTrackedQuestID") then
+			questID = NativeSuperTrack.GetSuperTrackedQuestID()
+		elseif C_QuestSession and type(C_QuestSession.GetSuperTrackedQuest) == "function" then
+			questID = C_QuestSession.GetSuperTrackedQuest()
+		elseif type(GetSuperTrackedQuestID) == "function" then
+			questID = GetSuperTrackedQuestID()
+		end
+
+		questID = tonumber(questID)
+		if questID and questID > 0 then
+			return questID
+		end
+		return tonumber(RQE.ManualSuperTrackedQuestID) or tonumber(RQE.DisplayedQuestID)
+	end
+
+	RQE.API.SetSuperTrackedQuestID = function(questID)
+		questID = tonumber(questID)
+		RQE.ManualSuperTrackedQuestID = questID
+		RQE.ManualSuperTrack = questID and questID > 0 or false
+		if Has(NativeSuperTrack, "SetSuperTrackedQuestID") then
+			return NativeSuperTrack.SetSuperTrackedQuestID(questID)
+		end
+		return questID and questID > 0 or false
+	end
+
+	RQE.API.IsSuperTrackingQuest = function()
+		return (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0
+	end
+
+	RQE.API.GetNumQuestLogEntries = function()
+		if Has(NativeQuestLog, "GetNumQuestLogEntries") then
+			return NativeQuestLog.GetNumQuestLogEntries()
+		end
+		if type(GetNumQuestLogEntries) == "function" then
+			local numEntries, numQuests = GetNumQuestLogEntries()
+			return numEntries or 0, numQuests or numEntries or 0
+		end
+		return 0, 0
+	end
+
+	RQE.API.GetQuestObjectives = function(questID)
+		if Has(NativeQuestLog, "GetQuestObjectives") then
+			return NativeQuestLog.GetQuestObjectives(questID) or {}
+		end
+		local questLogIndex = RQE.API.GetLogIndexForQuestID and RQE.API.GetLogIndexForQuestID(questID)
+		if not questLogIndex or type(GetNumQuestLeaderBoards) ~= "function" or type(GetQuestLogLeaderBoard) ~= "function" then
+			return {}
+		end
+
+		local objectives = {}
+		for objectiveIndex = 1, GetNumQuestLeaderBoards(questLogIndex) do
+			local text, objectiveType, finished = GetQuestLogLeaderBoard(objectiveIndex, questLogIndex)
+			local fulfilled, required = tostring(text or ""):match("(%d+)%s*/%s*(%d+)")
+			fulfilled = tonumber(fulfilled) or 0
+			objectives[#objectives + 1] = {
+				text = text or "",
+				type = objectiveType,
+				finished = finished == true or finished == 1,
+				numFulfilled = fulfilled,
+				numRequired = tonumber(required) or (finished and fulfilled or nil),
+			}
+		end
+		return objectives
+	end
+
+	RQE.API.GetNumQuestObjectives = function(questID)
+		if Has(NativeQuestLog, "GetNumQuestObjectives") then
+			return NativeQuestLog.GetNumQuestObjectives(questID)
+		end
+		local questLogIndex = RQE.API.GetLogIndexForQuestID and RQE.API.GetLogIndexForQuestID(questID)
+		return questLogIndex and type(GetNumQuestLeaderBoards) == "function" and GetNumQuestLeaderBoards(questLogIndex) or 0
+	end
 end
 
 
@@ -3090,6 +3289,221 @@ RQE.API.IsWorldQuest = function(questID)
 	return false
 end
 
+-- Legacy quest-log API. This is deliberately placed in the quest-log section:
+-- it replaces only the Retail quest-log calls that have different signatures
+-- or are absent on major 1/2 clients.
+if isLegacyClient then
+	RQE.API.GetLogIndexForQuestID = function(questID)
+		if type(questID) == "table" then questID = questID.questID or questID.id end
+		questID = tonumber(questID)
+		if not questID or questID <= 0 then return nil end
+
+		if Has(NativeQuestLog, "GetLogIndexForQuestID") then
+			local index = tonumber(NativeQuestLog.GetLogIndexForQuestID(questID))
+			if index and index > 0 then return index end
+		end
+		if type(GetQuestLogIndexByID) == "function" then
+			local index = tonumber(GetQuestLogIndexByID(questID))
+			if index and index > 0 then return index end
+		end
+
+		local entries = RQE.API.GetNumQuestLogEntries()
+		for index = 1, tonumber(entries) or 0 do
+			local info
+			if Has(NativeQuestLog, "GetInfo") then
+				info = NativeQuestLog.GetInfo(index)
+			elseif type(GetQuestLogTitle) == "function" then
+				local title, level, group, isHeader, isCollapsed, isComplete, frequency, logQuestID = GetQuestLogTitle(index)
+				if title then
+					info = { title = title, level = level, suggestedGroup = group, isHeader = isHeader,
+						isCollapsed = isCollapsed, isComplete = isComplete, frequency = frequency, questID = logQuestID }
+				end
+			end
+			if info and not info.isHeader and tonumber(info.questID) == questID then return index end
+		end
+		return nil
+	end
+
+	RQE.API.GetQuestLogInfo = function(index)
+		if Has(NativeQuestLog, "GetInfo") then return NativeQuestLog.GetInfo(index) end
+		if type(GetQuestLogTitle) ~= "function" then return nil end
+		local title, level, group, isHeader, isCollapsed, isComplete, frequency, questID = GetQuestLogTitle(index)
+		if not title then return nil end
+		return { title = title, questLogIndex = index, questID = questID, level = level,
+			suggestedGroup = group, isHeader = isHeader, isCollapsed = isCollapsed,
+			isComplete = isComplete, frequency = frequency }
+	end
+
+	RQE.API.GetTitleForQuestID = function(questID)
+		if Has(NativeQuestLog, "GetTitleForQuestID") then return NativeQuestLog.GetTitleForQuestID(questID) end
+		local index = RQE.API.GetLogIndexForQuestID(questID)
+		return index and type(GetQuestLogTitle) == "function" and GetQuestLogTitle(index) or nil
+	end
+
+	RQE.API.IsQuestFlaggedCompleted = function(questID)
+		if Has(NativeQuestLog, "IsQuestFlaggedCompleted") then
+			return NativeQuestLog.IsQuestFlaggedCompleted(questID) == true
+		end
+		return type(IsQuestFlaggedCompleted) == "function" and IsQuestFlaggedCompleted(questID) == true or false
+	end
+
+	RQE.API.IsOnQuest = function(questID)
+		return (tonumber(RQE.API.GetLogIndexForQuestID(questID)) or 0) > 0
+	end
+
+	RQE.API.IsWorldQuest = function(questID)
+		return Has(NativeQuestLog, "IsWorldQuest") and NativeQuestLog.IsWorldQuest(questID) == true or false
+	end
+
+	RQE.API.GetNextWaypoint = function(questID)
+		return Has(NativeQuestLog, "GetNextWaypoint") and NativeQuestLog.GetNextWaypoint(questID) or nil
+	end
+	RQE.API.GetNextWaypointForMap = function(questID, mapID)
+		return Has(NativeQuestLog, "GetNextWaypointForMap") and NativeQuestLog.GetNextWaypointForMap(questID, mapID) or nil
+	end
+	RQE.API.GetNextWaypointText = function(questID)
+		return Has(NativeQuestLog, "GetNextWaypointText") and NativeQuestLog.GetNextWaypointText(questID) or nil
+	end
+	RQE.API.GetQuestType = function(questID)
+		return Has(NativeQuestLog, "GetQuestType") and NativeQuestLog.GetQuestType(questID) or nil
+	end
+	RQE.API.IsQuestTask = function(questID)
+		return Has(NativeQuestLog, "IsQuestTask") and NativeQuestLog.IsQuestTask(questID) == true or false
+	end
+	RQE.API.IsMetaQuest = function(questID)
+		return Has(NativeQuestLog, "IsMetaQuest") and NativeQuestLog.IsMetaQuest(questID) == true or false
+	end
+	RQE.API.IsThreatQuest = function(questID)
+		return Has(NativeQuestLog, "IsThreatQuest") and NativeQuestLog.IsThreatQuest(questID) == true or false
+	end
+	RQE.API.GetQuestsOnMap = function(mapID)
+		return Has(NativeQuestLog, "GetQuestsOnMap") and NativeQuestLog.GetQuestsOnMap(mapID) or {}
+	end
+
+	RQE.API.GetNumQuestWatches = function()
+		return Has(NativeQuestLog, "GetNumQuestWatches") and NativeQuestLog.GetNumQuestWatches()
+			or (type(GetNumQuestWatches) == "function" and GetNumQuestWatches() or 0)
+	end
+	RQE.API.GetNumWorldQuestWatches = function() return 0 end
+	RQE.API.GetQuestWatchType = function(questID)
+		return Has(NativeQuestLog, "GetQuestWatchType") and NativeQuestLog.GetQuestWatchType(questID) or nil
+	end
+
+	RQE.API.GetQuestIDForQuestWatchIndex = function(index)
+		if Has(NativeQuestLog, "GetQuestIDForQuestWatchIndex") then
+			local questID = tonumber(NativeQuestLog.GetQuestIDForQuestWatchIndex(index))
+			if questID and questID > 0 then return questID end
+		end
+		if type(GetQuestIndexForWatch) == "function" and type(GetQuestLogTitle) == "function" then
+			local questLogIndex = tonumber(GetQuestIndexForWatch(index))
+			if questLogIndex and questLogIndex > 0 then
+				local _, _, _, isHeader, _, _, _, questID = GetQuestLogTitle(questLogIndex)
+				if not isHeader and tonumber(questID) then return tonumber(questID) end
+			end
+		end
+		if type(GetQuestWatchInfo) == "function" then
+			local questLogIndex, watchedQuestID, _, _, alternateIndex = GetQuestWatchInfo(index)
+			watchedQuestID = tonumber(watchedQuestID)
+			if watchedQuestID and RQE.API.IsOnQuest(watchedQuestID) then return watchedQuestID end
+			questLogIndex = tonumber(questLogIndex) or tonumber(alternateIndex)
+			if questLogIndex and type(GetQuestLogTitle) == "function" then
+				local _, _, _, isHeader, _, _, _, questID = GetQuestLogTitle(questLogIndex)
+				if not isHeader and tonumber(questID) then return tonumber(questID) end
+			end
+		end
+		return nil
+	end
+
+	RQE.API.GetQuestIDForWorldQuestWatchIndex = function() return nil end
+	RQE.API.GetDistanceSqToQuest = function(questID)
+		return Has(NativeQuestLog, "GetDistanceSqToQuest") and NativeQuestLog.GetDistanceSqToQuest(questID) or nil, false
+	end
+	RQE.API.AddQuestWatch = function(questID)
+		local index = RQE.API.GetLogIndexForQuestID(questID)
+		if index and type(AddQuestWatch) == "function" then AddQuestWatch(index); return true end
+		return false
+	end
+	RQE.API.RemoveQuestWatch = function(questID)
+		local index = RQE.API.GetLogIndexForQuestID(questID)
+		return index and type(RemoveQuestWatch) == "function" and RemoveQuestWatch(index) or false
+	end
+
+	-- These are normal-quest equivalents for the remaining C_QuestLog calls
+	-- made by the Classic/TBC UI.  World quests are deliberately unsupported
+	-- on the legacy profiles, so their watch operation is a harmless no-op.
+	RQE.API.IsQuestObjectiveComplete = function(questID, objectiveIndex)
+		local objective = RQE.API.GetQuestObjectives(questID)[tonumber(objectiveIndex)]
+		return objective and objective.finished == true or false
+	end
+	RQE.API.IsQuestWatched = function(questID)
+		local count = tonumber(RQE.API.GetNumQuestWatches()) or 0
+		for index = 1, count do
+			if tonumber(RQE.API.GetQuestIDForQuestWatchIndex(index)) == tonumber(questID) then
+				return true
+			end
+		end
+		return false
+	end
+	RQE.API.RemoveWorldQuestWatch = function() return false end
+	RQE.API.AddWorldQuestWatch = function() return false end
+	RQE.API.IsPushableQuest = function() return false end
+	RQE.API.GetSelectedQuest = function()
+		local index = type(GetQuestLogSelection) == "function" and GetQuestLogSelection()
+		local info = index and RQE.API.GetQuestLogInfo(index)
+		return info and info.questID or nil
+	end
+	RQE.API.SetSelectedQuest = function(questID)
+		local index = RQE.API.GetLogIndexForQuestID(questID)
+		if index and type(SelectQuestLogEntry) == "function" then
+			SelectQuestLogEntry(index)
+			return true
+		end
+		return false
+	end
+	RQE.API.SetAbandonQuest = function()
+		return type(SetAbandonQuest) == "function" and SetAbandonQuest() or false
+	end
+
+	-- Transitional aliases are required by the existing legacy module code. Do
+	-- not write to C_SuperTrack or C_AddOns: those namespaces are protected.
+	C_QuestLog = C_QuestLog or {}
+	C_QuestLog.GetNumQuestLogEntries = C_QuestLog.GetNumQuestLogEntries or RQE.API.GetNumQuestLogEntries
+	C_QuestLog.GetInfo = C_QuestLog.GetInfo or RQE.API.GetQuestLogInfo
+	C_QuestLog.GetQuestObjectives = C_QuestLog.GetQuestObjectives or RQE.API.GetQuestObjectives
+	C_QuestLog.GetNumQuestObjectives = C_QuestLog.GetNumQuestObjectives or RQE.API.GetNumQuestObjectives
+	C_QuestLog.GetLogIndexForQuestID = C_QuestLog.GetLogIndexForQuestID or RQE.API.GetLogIndexForQuestID
+	C_QuestLog.GetTitleForQuestID = C_QuestLog.GetTitleForQuestID or RQE.API.GetTitleForQuestID
+	C_QuestLog.IsQuestFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted or RQE.API.IsQuestFlaggedCompleted
+	C_QuestLog.GetNextWaypoint = C_QuestLog.GetNextWaypoint or RQE.API.GetNextWaypoint
+	C_QuestLog.GetNextWaypointForMap = C_QuestLog.GetNextWaypointForMap or RQE.API.GetNextWaypointForMap
+	C_QuestLog.GetNextWaypointText = C_QuestLog.GetNextWaypointText or RQE.API.GetNextWaypointText
+	C_QuestLog.GetQuestType = C_QuestLog.GetQuestType or RQE.API.GetQuestType
+	C_QuestLog.IsQuestTask = C_QuestLog.IsQuestTask or RQE.API.IsQuestTask
+	C_QuestLog.IsMetaQuest = C_QuestLog.IsMetaQuest or RQE.API.IsMetaQuest
+	C_QuestLog.IsThreatQuest = C_QuestLog.IsThreatQuest or RQE.API.IsThreatQuest
+	C_QuestLog.GetQuestsOnMap = C_QuestLog.GetQuestsOnMap or RQE.API.GetQuestsOnMap
+	C_QuestLog.GetNumQuestWatches = C_QuestLog.GetNumQuestWatches or RQE.API.GetNumQuestWatches
+	C_QuestLog.GetNumWorldQuestWatches = C_QuestLog.GetNumWorldQuestWatches or RQE.API.GetNumWorldQuestWatches
+	C_QuestLog.GetQuestWatchType = C_QuestLog.GetQuestWatchType or RQE.API.GetQuestWatchType
+	C_QuestLog.GetQuestIDForQuestWatchIndex = C_QuestLog.GetQuestIDForQuestWatchIndex or RQE.API.GetQuestIDForQuestWatchIndex
+	C_QuestLog.GetQuestIDForWorldQuestWatchIndex = C_QuestLog.GetQuestIDForWorldQuestWatchIndex or RQE.API.GetQuestIDForWorldQuestWatchIndex
+	C_QuestLog.GetDistanceSqToQuest = C_QuestLog.GetDistanceSqToQuest or RQE.API.GetDistanceSqToQuest
+	C_QuestLog.AddQuestWatch = C_QuestLog.AddQuestWatch or RQE.API.AddQuestWatch
+	C_QuestLog.RemoveQuestWatch = C_QuestLog.RemoveQuestWatch or RQE.API.RemoveQuestWatch
+	C_QuestLog.IsQuestObjectiveComplete = C_QuestLog.IsQuestObjectiveComplete or RQE.API.IsQuestObjectiveComplete
+	C_QuestLog.IsQuestWatched = C_QuestLog.IsQuestWatched or RQE.API.IsQuestWatched
+	C_QuestLog.RemoveWorldQuestWatch = C_QuestLog.RemoveWorldQuestWatch or RQE.API.RemoveWorldQuestWatch
+	C_QuestLog.AddWorldQuestWatch = C_QuestLog.AddWorldQuestWatch or RQE.API.AddWorldQuestWatch
+	C_QuestLog.IsPushableQuest = C_QuestLog.IsPushableQuest or RQE.API.IsPushableQuest
+	C_QuestLog.GetSelectedQuest = C_QuestLog.GetSelectedQuest or RQE.API.GetSelectedQuest
+	C_QuestLog.SetSelectedQuest = C_QuestLog.SetSelectedQuest or RQE.API.SetSelectedQuest
+	C_QuestLog.SetAbandonQuest = C_QuestLog.SetAbandonQuest or RQE.API.SetAbandonQuest
+	C_QuestLog.SortQuestWatches = C_QuestLog.SortQuestWatches or function() end
+	C_QuestLog.IsComplete = C_QuestLog.IsComplete or function() return false end
+	C_QuestLog.ReadyForTurnIn = C_QuestLog.ReadyForTurnIn or function() return false end
+	C_QuestLog.IsQuestFlaggedCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount or function() return false end
+end
+
 
 -------------------------------------------------
 -- #🤝 Quest Session APIs
@@ -3268,6 +3682,27 @@ RQE.API.RequestPreloadRewardData = function(questID)
 		return C_TaskQuest.RequestPreloadRewardData(questID)
 	end
 	return nil
+end
+
+-- Task/world quest APIs are Retail-only concepts. Supply the legacy methods
+-- used by the virtual tracker without exposing Retail quest categories.
+if isLegacyClient then
+	RQE.API.GetQuestsOnMap_Task = function(mapID)
+		if Has(NativeTaskQuest, "GetQuestsOnMap") then return NativeTaskQuest.GetQuestsOnMap(mapID) end
+		if Has(NativeTaskQuest, "GetQuestsForPlayerByMapID") then return NativeTaskQuest.GetQuestsForPlayerByMapID(mapID) end
+		return {}
+	end
+	RQE.API.GetQuestZoneID = function(questID)
+		return Has(NativeTaskQuest, "GetQuestZoneID") and NativeTaskQuest.GetQuestZoneID(questID) or nil
+	end
+
+	C_TaskQuest = C_TaskQuest or {}
+	C_TaskQuest.GetQuestsOnMap = C_TaskQuest.GetQuestsOnMap or RQE.API.GetQuestsOnMap_Task
+	C_TaskQuest.GetQuestZoneID = C_TaskQuest.GetQuestZoneID or RQE.API.GetQuestZoneID
+	C_CampaignInfo = C_CampaignInfo or {}
+	C_CampaignInfo.IsCampaignQuest = C_CampaignInfo.IsCampaignQuest or function() return false end
+	C_CampaignInfo.GetCampaignID = C_CampaignInfo.GetCampaignID or function() return nil end
+	C_CampaignInfo.GetCampaignInfo = C_CampaignInfo.GetCampaignInfo or function() return nil end
 end
 
 
@@ -3470,6 +3905,19 @@ else
 	RQE.API.GetJailersTowerTypeString = function(_)
 		return nil
 	end
+end
+
+if isLegacyClient then
+	RQE.API.IsInScenario = function()
+		return Has(NativeScenario, "IsInScenario") and NativeScenario.IsInScenario() == true or false
+	end
+	RQE.API.GetScenarioInfo = function()
+		return Has(NativeScenario, "GetInfo") and NativeScenario.GetInfo() or nil
+	end
+
+	C_Scenario = C_Scenario or {}
+	C_Scenario.IsInScenario = C_Scenario.IsInScenario or RQE.API.IsInScenario
+	C_Scenario.GetInfo = C_Scenario.GetInfo or RQE.API.GetScenarioInfo
 end
 
 
@@ -3707,5 +4155,18 @@ else
 	--   finished (boolean) - true if addon finished loading (ADDON_LOADED fired)
 	RQE.API.IsAddOnLoaded = function(name)
 		return IsAddOnLoaded(name)
+	end
+end
+
+-- Never add missing methods to C_AddOns on legacy clients: Blizzard uses that
+-- table in protected Game Menu flows. Keep the compatibility behavior in RQE.
+if isLegacyClient then
+	RQE.API.IsAddOnLoaded = function(name)
+		if Has(NativeAddOns, "IsAddOnLoaded") then return NativeAddOns.IsAddOnLoaded(name) end
+		return type(IsAddOnLoaded) == "function" and IsAddOnLoaded(name) or false
+	end
+	RQE.API.GetAddOnMetadata = function(name, field)
+		if Has(NativeAddOns, "GetAddOnMetadata") then return NativeAddOns.GetAddOnMetadata(name, field) end
+		return type(GetAddOnMetadata) == "function" and GetAddOnMetadata(name, field) or nil
 	end
 end
