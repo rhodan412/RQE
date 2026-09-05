@@ -1,4 +1,4 @@
-12.1.0.1
+12.1.0.1 (2026.09.04)
 
 	**HIGHLIGHTS**
 		- Added many fonts for use in the displays of the addon frames
