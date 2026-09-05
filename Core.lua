@@ -12043,6 +12043,34 @@ end
 -- #17. Filtering Functions
 ---------------------------------------------------
 
+-- Track every quest currently listed in the player's quest log.  Quest-watch
+-- entries are then passed through the normal RQE tracker update, which keeps
+-- Campaign/Meta, Normal Quests, and the other existing tracker sections.
+-- World quests are intentionally excluded because they are not quest-log entries.
+RQE.filterAllTrackedQuests = function()
+	-- Replace the current watch list so this view contains precisely the quests
+	-- from the player's quest log, not previously watched world quests.
+	for watchIndex = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+		if questID then
+			C_QuestLog.RemoveQuestWatch(questID)
+		end
+	end
+
+	local numEntries = RQE.API.GetNumQuestLogEntries()
+	for questLogIndex = 1, numEntries do
+		local questInfo = RQE.API.GetQuestLogInfo(questLogIndex)
+		if questInfo and not questInfo.isHeader and questInfo.questID then
+			C_QuestLog.AddQuestWatch(questInfo.questID)
+		end
+	end
+
+	RQE:ClearRQEQuestFrame()
+	UpdateRQEQuestFrame()
+	SortQuestsByProximity()
+end
+
+
 -- Contain filters for the RQEQuestingFrame
 RQE.filterCompleteQuests = function()
 	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
@@ -12146,31 +12174,151 @@ RQE.filterDailyWeeklyQuests = function()
 end
 
 
+-- Return the database map IDs that should make an active quest eligible for
+-- the zone tracker.  These are deliberately limited to its pickup location(s)
+-- and its current DB step; future steps must not cause a quest to appear early.
+function RQE:GetQuestDatabaseZoneMapIDs(questID)
+	local mapIDs = {}
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if type(questData) ~= "table" then
+		return mapIDs
+	end
+
+	local function addMapID(location)
+		local mapID = type(location) == "table" and tonumber(location.mapID)
+		if mapID and mapID ~= 0 then
+			mapIDs[mapID] = true
+		end
+	end
+
+	-- Support both the legacy singular pickup field and the current locations
+	-- array.  Some older entries also use a top-level coordinates table.
+	addMapID(questData.location)
+	addMapID(questData.coordinates)
+	for _, location in ipairs(questData.locations or {}) do
+		addMapID(location)
+	end
+
+	local currentStepIndex = 1
+	if type(RQE.GetCurrentDBStepIndexForQuest) == "function" then
+		currentStepIndex = tonumber(RQE.GetCurrentDBStepIndexForQuest(questID)) or 1
+	end
+
+	local currentStep = questData[currentStepIndex]
+	if type(currentStep) == "table" then
+		addMapID(currentStep.location)
+		addMapID(currentStep.coordinates)
+		for _, location in ipairs(currentStep.locations or {}) do
+			addMapID(location)
+		end
+		for _, hotspot in ipairs(currentStep.coordinateHotspots or {}) do
+			addMapID(hotspot)
+		end
+	end
+
+	return mapIDs
+end
+
+
+-- Preserve Retail's existing Blizzard-derived zone association.  It is kept
+-- separate from the DB lookup so each active quest can belong to both sources.
+function RQE:GetQuestBlizzardZoneMapID(questID)
+	local uiMapID
+	if C_QuestLog and type(C_QuestLog.GetQuestAdditionalHighlights) == "function" then
+		uiMapID = C_QuestLog.GetQuestAdditionalHighlights(questID)
+	end
+
+	if not uiMapID or uiMapID == 0 then
+		if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
+			uiMapID = C_TaskQuest.GetQuestZoneID(questID)
+		end
+		if (not uiMapID or uiMapID == 0) and type(GetQuestUiMapID) == "function" then
+			uiMapID = GetQuestUiMapID(questID)
+		end
+	end
+
+	uiMapID = tonumber(uiMapID)
+	return uiMapID and uiMapID ~= 0 and uiMapID or nil
+end
+
+
 function RQE.ScanAndCacheZoneQuests()
 	RQE.ZoneQuests = {}
+	RQE.ZoneQuestDatabaseMatches = {}
 
 	local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
 	for i = 1, numEntries do
 		local questInfo = RQE.API.GetQuestLogInfo(i)
-		if questInfo and not questInfo.isHeader then
-			-- Get the primary map ID associated with the quest
-			---@type number|nil
-			local uiMapID, _, _, _, _ = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
-			-- If the primary map ID is not available, fallback to the secondary options
-			if not uiMapID or uiMapID == 0 then
-				uiMapID = C_TaskQuest.GetQuestZoneID(questInfo.questID)
-				-- As a last resort, use the quest's UiMapID if available
-				if not uiMapID or uiMapID == 0 then
-					uiMapID = GetQuestUiMapID(questInfo.questID)
-				end
+		if questInfo and not questInfo.isHeader and questInfo.questID then
+			-- Keep the existing Blizzard association and add DB pickup/current-step
+			-- associations.  Track the latter separately so GetQuestsOnMap remains
+			-- a cleanup source rather than a source of additional zone quests.
+			local databaseMapIDs = RQE:GetQuestDatabaseZoneMapIDs(questInfo.questID)
+			local mapIDs = {}
+			for mapID in pairs(databaseMapIDs) do
+				mapIDs[mapID] = true
+				RQE.ZoneQuestDatabaseMatches[mapID] = RQE.ZoneQuestDatabaseMatches[mapID] or {}
+				table.insert(RQE.ZoneQuestDatabaseMatches[mapID], questInfo.questID)
 			end
-			-- If a valid map ID is found, add the quest to the corresponding zone's quest list
-			if uiMapID and uiMapID ~= 0 then
-				RQE.ZoneQuests[uiMapID] = RQE.ZoneQuests[uiMapID] or {}
-				table.insert(RQE.ZoneQuests[uiMapID], questInfo.questID)
+
+			local blizzardMapID = RQE:GetQuestBlizzardZoneMapID(questInfo.questID)
+			if blizzardMapID then
+				mapIDs[blizzardMapID] = true
+			end
+
+			for mapID in pairs(mapIDs) do
+				RQE.ZoneQuests[mapID] = RQE.ZoneQuests[mapID] or {}
+				table.insert(RQE.ZoneQuests[mapID], questInfo.questID)
 			end
 		end
 	end
+end
+
+
+-- A stable signature lets the frequent quest-log events refresh automatic ZQ
+-- only when a DB pickup/current-step membership has actually changed.
+function RQE:GetZoneQuestDatabaseMembershipSignature(mapID)
+	local questIDs, seenQuestIDs = {}, {}
+	for _, questID in ipairs(RQE.ZoneQuestDatabaseMatches[mapID] or {}) do
+		if not seenQuestIDs[questID] then
+			seenQuestIDs[questID] = true
+			questIDs[#questIDs + 1] = questID
+		end
+	end
+	table.sort(questIDs)
+	return tostring(mapID) .. ":" .. table.concat(questIDs, ",")
+end
+
+
+-- QUEST_LOG_UPDATE can fire several times for one change, including after a
+-- watch-list update.  Coalesce those events and only re-filter when the active
+-- DB step changes the set that belongs on the player's current map.
+function RQE:QueueAutoTrackZoneQuestRefresh()
+	if not (self.db and self.db.profile and self.db.profile.autoTrackZoneQuests) then
+		return
+	end
+	if self.AutoTrackZoneQuestRefreshQueued then
+		return
+	end
+
+	self.AutoTrackZoneQuestRefreshQueued = true
+	C_Timer.After(0.3, function()
+		self.AutoTrackZoneQuestRefreshQueued = false
+		if not (self.db and self.db.profile and self.db.profile.autoTrackZoneQuests) then
+			return
+		end
+
+		local mapID = C_Map.GetBestMapForUnit("player")
+		if not mapID then
+			return
+		end
+
+		self.ScanAndCacheZoneQuests()
+		local signature = self:GetZoneQuestDatabaseMembershipSignature(mapID)
+		if self.AutoTrackZoneQuestMembershipSignature ~= signature then
+			self.filterByZone(mapID)
+		end
+	end)
 end
 
 
@@ -12181,17 +12329,23 @@ function RQE.UpdateTrackedQuestsToCurrentZone()
 		return
 	end
 
-	-- Retrieve quests for the current zone using C_QuestLog.GetQuestsOnMap
+	-- Keep the original GetQuestsOnMap cleanup behavior, but retain explicit DB
+	-- pickup/current-step matches that Blizzard does not report for this map.
+	RQE.ScanAndCacheZoneQuests()
+	local questIDSet = {}
 	local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
-	if not questsOnMap then
+	if questsOnMap then
+		for _, questInfo in ipairs(questsOnMap) do
+			if questInfo and questInfo.questID then
+				questIDSet[questInfo.questID] = true
+			end
+		end
+	else
 		RQE.debugLog("No quests found for the current zone.")
-		return
 	end
 
-	-- Convert questsOnMap to a set for quicker lookups
-	local questIDSet = {}
-	for _, questInfo in ipairs(questsOnMap) do
-		questIDSet[questInfo.questID] = true
+	for _, questID in ipairs(RQE.ZoneQuestDatabaseMatches[currentPlayerMapID] or {}) do
+		questIDSet[questID] = true
 	end
 
 	-- Iterate through all quests the player is currently watching
@@ -12268,6 +12422,14 @@ end
 
 
 function RQE.filterByZone(zoneID)
+	zoneID = tonumber(zoneID)
+	if not zoneID then
+		return
+	end
+
+	-- Refresh before every filter pass so ZQ, the zone menu, and auto-tracking
+	-- all use the latest quest progress and current-step DB locations.
+	RQE.ScanAndCacheZoneQuests()
 	local questIDsForZone = RQE.ZoneQuests[zoneID] or {}
 
 	-- Create a set for quick lookup
@@ -12302,6 +12464,13 @@ function RQE.filterByZone(zoneID)
 	SortQuestsByProximity()
 
 	RQE.CheckAndUpdateForCurrentZone(zoneID)
+
+	local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+	if RQE.db and RQE.db.profile and RQE.db.profile.autoTrackZoneQuests
+		and currentPlayerMapID == zoneID
+	then
+		RQE.AutoTrackZoneQuestMembershipSignature = RQE:GetZoneQuestDatabaseMembershipSignature(zoneID)
+	end
 end
 
 
@@ -12330,15 +12499,14 @@ function RQE.DisplayCurrentZoneQuests()
 	-- Ensure we have the latest zone quests data
 	RQE.ScanAndCacheZoneQuests()
 
-	-- Step 2: Retrieve quests for the current zone
+	-- Step 2: Retrieve quests for the current zone.
 	local currentZoneQuests = RQE.ZoneQuests[mapID] or {}
-
 	if #currentZoneQuests == 0 then
 		return
 	end
 
-	-- Step 3: Display or update the quest frame with the current zone's quests
-	RQE.filterByZone(mapID)  -- Assuming filterByZone can handle filtering & displaying quests for a given zone
+	-- Step 3: Display or update the quest frame with the current zone's quests.
+	RQE.filterByZone(mapID)
 end
 
 
