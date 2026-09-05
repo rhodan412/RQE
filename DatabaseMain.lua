@@ -16,6 +16,8 @@ RQE.db = RQE.db or {}
 RQEDatabase = RQEDatabase or {}
 RQE.db.profile = RQE.db.profile or {}
 
+local isRetail = RQE.IsRetail == true
+
 -- Ensure sandbox globals exist
 if not RQE_SandboxDB then
 	RQE_SandboxDB = { entries = {} }
@@ -69,6 +71,11 @@ function RQE.getQuestData(questID)
 				end
 			end
 		end
+	end
+
+	if not isRetail and type(RQEDatabase) ~= "table" then
+		RQE.debugLog("|cFFFF3333[RQE]|r getQuestData(): RQEDatabase is invalid.")
+		return nil
 	end
 
 	-- Shared client-aware selector. Retail retains its own expansion/map-ID
