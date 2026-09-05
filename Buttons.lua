@@ -21,6 +21,9 @@ end
 RQE.Buttons = RQE.Buttons or {}
 RQE.Frame = RQE.Frame or {}
 
+-- RQE_API.lua is loaded before this file and identifies the compatibility family.
+local isRetail = RQE.IsRetail == true
+
 RQE.debugLog("RQE.content initialized: " .. tostring(RQE.content ~= nil))
 
 
@@ -87,8 +90,16 @@ RQE.UnknownButtonTooltip = function()
 		local searchedQuestID = RQE.searchedQuestID
 		if searchedQuestID then
 			local dbEntry = RQE.getQuestData(searchedQuestID)
-			local isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
-			local isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
+			local isComplete
+			local isInLog
+
+			if isRetail then
+				isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
+				isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
+			else
+				isComplete = RQE.API.IsQuestFlaggedCompleted(searchedQuestID)
+				isInLog = RQE.API.GetLogIndexForQuestID(searchedQuestID)
+			end
 
 			if not isInLog then
 				-- if dbEntry and not isComplete and not isInLog and type(dbEntry.location) == "table" then
@@ -103,8 +114,17 @@ RQE.UnknownButtonTooltip = function()
 					finalMapID = mapID
 				elseif continentID then
 					-- Only fallback if player is on that continent
-					local playerMapID = C_Map.GetBestMapForUnit("player")
-					local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					local playerMapID
+					local parent
+
+					if isRetail then
+						playerMapID = C_Map.GetBestMapForUnit("player")
+						parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					else
+						playerMapID = RQE.API.GetBestMapForUnit("player")
+						local mapInfo = playerMapID and RQE.API.GetMapInfo(playerMapID)
+						parent = mapInfo and mapInfo.parentMapID
+					end
 					if parent == continentID then
 						finalMapID = continentID
 					end
@@ -236,14 +256,24 @@ RQE.UnknownButtonTooltip = function()
 				local mapID = GetQuestUiMapID(RQE.CurrentTrackedQuestID)
 				RQE.WPmapID = mapID
 				local questData = RQE.getQuestData(RQE.CurrentTrackedQuestID)
-				local x, y = C_QuestLog.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
+				local x, y
+				if isRetail then
+					x, y = C_QuestLog.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
+				else
+					x, y = RQE.API.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
+				end
 				RQE.WPxPos = x
 				RQE.WPyPos = y
 				if RQE.WPxPos ~= nil then
 					local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", RQE.WPxPos * 100, RQE.WPyPos * 100, tostring(RQE.WPmapID))
 					if RQE.db.profile.debugLevel == "INFO" then
 						DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
-						local directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+						local directionText
+						if isRetail then
+							directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+						else
+							directionText = RQE.API.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+						end
 
 						if directionText then
 							DEFAULT_CHAT_FRAME:AddMessage("				coordinateHotspots = {", 0, 1, 1)	-- Cyan color
@@ -303,7 +333,12 @@ RQE.UnknownButtonTooltip = function()
 					GameTooltip:SetText(tooltipText)
 				else
 					-- Fallback to using RQE.GetNextWaypoint if coordinates are not available
-					local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(RQE.CurrentTrackedQuestID)
+					local waypointMapID, waypointX, waypointY
+					if isRetail then
+						waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(RQE.CurrentTrackedQuestID)
+					else
+						waypointMapID, waypointX, waypointY = RQE.API.GetNextWaypoint(RQE.CurrentTrackedQuestID)
+					end
 					if waypointX and waypointY and waypointMapID then
 						local tooltipText = string.format("Coordinates: (%.2f, %.2f) - MapID: %s", waypointX * 100, waypointY * 100, tostring(waypointMapID))
 						if RQE.db.profile.debugLevel == "INFO" then
@@ -347,7 +382,13 @@ end
 
 -- Function that handles the alert/sound when the coords match between DB and Blizz
 function RQE:KhadgarCoordsMatch(questID)
-	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	local isContributionLoaded
+	if isRetail then
+		isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+	else
+		isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
+	end
+	if not isContributionLoaded then return end
 
 	questID = tonumber(questID) or 0
 	if questID then
@@ -372,7 +413,13 @@ end
 
 -- Function that handles the alert/sound when the coords do not between DB and Blizz
 function RQE:CoordsNOMatch(questID)
-	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	local isContributionLoaded
+	if isRetail then
+		isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+	else
+		isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
+	end
+	if not isContributionLoaded then return end
 
 	questID = tonumber(questID) or 0
 	if questID then
@@ -397,7 +444,13 @@ end
 
 -- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
 function RQE:LegacyCoordsDetected(questID)
-	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	local isContributionLoaded
+	if isRetail then
+		isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+	else
+		isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
+	end
+	if not isContributionLoaded then return end
 
 	questID = tonumber(questID) or 0
 	local leavemessage = string.format("** Legacy Coordinates Detected! (QID: %d) **", questID)
@@ -415,8 +468,17 @@ end
 
 -- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
 function RQE:NoDBEntryForQuest(questID)
-	if C_AddOns.IsAddOnLoaded("Chattynator") then return end
-	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	local isChattynatorLoaded
+	local isContributionLoaded
+	if isRetail then
+		isChattynatorLoaded = C_AddOns.IsAddOnLoaded("Chattynator")
+		isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+	else
+		isChattynatorLoaded = RQE.API.IsAddOnLoaded("Chattynator")
+		isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
+	end
+	if isChattynatorLoaded then return end
+	if not isContributionLoaded then return end
 
 	questID = tonumber(questID) or 0
 	local leavemessage = string.format("** No DB Entries for Quest (QID: %d) **", questID)
@@ -434,7 +496,13 @@ end
 
 -- Function that handles the alert when the DB entry contains NO legacy "coordinates" in any stepIndex and only coordinateHotspots
 function RQE:NoLegacyCoordsDetected(questID)
-	if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+	local isContributionLoaded
+	if isRetail then
+		isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+	else
+		isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
+	end
+	if not isContributionLoaded then return end
 
 	questID = tonumber(questID) or 0
 	local leavemessage = string.format("** All steps use coordinateHotspots (QID: %d) **", questID)
@@ -727,6 +795,15 @@ function RQE:SetupOverrideMacroBinding()
 	local macroName = "RQE Macro"
 	local bindingKey = RQE.db.profile.keyBindSetting or RQE.db.profile.macroBindingKey
 
+	if not isRetail and InCombatLockdown() then
+		RQE.ReapplyMacroBindingAfterCombat = true
+		return
+	end
+
+	if not isRetail and not ownerFrame then
+		return
+	end
+
 	-- Check if bindingKey is valid
 	if not bindingKey or bindingKey == "" then
 		-- Provide feedback that no valid key binding is set
@@ -772,6 +849,10 @@ end
 -- Remember to clear the override binding when it's no longer needed or when UI is hidden
 local function ClearOverrideMacroBinding()
 	local ownerFrame = RQE.MagicButton -- The same frame binding is set to
+
+	if not isRetail and (InCombatLockdown() or not ownerFrame) then
+		return
+	end
 
 	-- This will clear all override bindings associated with the ownerFrame
 	ClearOverrideBindings(ownerFrame)
@@ -972,7 +1053,12 @@ end
 
 -- Returns the currently displayed stepIndex, preferring manual preview over automatic progress.
 function RQE:GetDisplayedStepIndex()
-	if not RQE.db.profile.enableStepControls then return end
+	if isRetail then
+		if not RQE.db.profile.enableStepControls then return end
+	else
+		local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+		if not RQE:CanUseStepControlsForQuest(questID) then return end
+	end
 	return RQE.ManualPreviewStepIndex
 		or RQE.AddonSetStepIndex
 		or RQE.CurrentStepIndex
@@ -1072,19 +1158,33 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 	PrevStepButton:SetPoint("TOPRIGHT", RQE.NextStepButton, "TOPLEFT", -3, 0)
 
 	PrevStepButton:SetScript("OnEnter", function(self)
-		if RQE.db.profile.enableStepControls then
-			local curStep = RQE:GetDisplayedStepIndex()
-			local targetStep = curStep - 1
+		if isRetail then
+			if RQE.db.profile.enableStepControls then
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep - 1
 
-			if targetStep >= 1 then
-				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText("Go back to step " .. targetStep)
-				GameTooltip:Show()
+				if targetStep >= 1 then
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Go back to step " .. targetStep)
+					GameTooltip:Show()
+				end
+			-- else
+				-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+				-- GameTooltip:SetText("Enable stepIndex control from 'Frame' in addon settings")
+				-- GameTooltip:Show()
 			end
-		-- else
-			-- GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			-- GameTooltip:SetText("Enable stepIndex control from 'Frame' in addon settings")
-			-- GameTooltip:Show()
+		else
+			local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+			if RQE:CanUseStepControlsForQuest(questID) then
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep - 1
+
+				if targetStep >= 0 and (targetStep >= 1 or RQE:CanNavigateSearchedQuestSteps(questID)) then
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Go back to step " .. targetStep)
+					GameTooltip:Show()
+				end
+			end
 		end
 	end)
 
@@ -1093,19 +1193,42 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 	end)
 
 	PrevStepButton:SetScript("OnClick", function()
-		if RQE.db.profile.enableStepControls then
-			local curStep = RQE:GetDisplayedStepIndex()
-			local targetStep = curStep - 1
+		if isRetail then
+			if RQE.db.profile.enableStepControls then
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep - 1
 
-			if targetStep >= 1 then
-				RQE:SetDisplayedStepFromStepsList(targetStep)
+				if targetStep >= 1 then
+					RQE:SetDisplayedStepFromStepsList(targetStep)
 
-				C_Timer.After(0.2, function()
-					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-					if questID then
-						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-					end
-				end)
+					C_Timer.After(0.2, function()
+						local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID() -- C_SuperTrack.GetSuperTrackedQuestID()
+						if questID then
+							RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+						end
+					end)
+				end
+			end
+		else
+			local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+			if RQE:CanUseStepControlsForQuest(questID) then
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep - 1
+
+				if targetStep >= 0 and (targetStep >= 1 or RQE:CanNavigateSearchedQuestSteps(questID)) then
+					RQE:SetDisplayedStepFromStepsList(targetStep)
+
+					C_Timer.After(0.2, function()
+						local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+						if questID then
+							if RQE:CanNavigateSearchedQuestSteps(questID) then
+								RQE:CreateSearchedQuestStepWaypoint(questID, targetStep)
+							else
+								RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+							end
+						end
+					end)
+				end
 			end
 		end
 	end)
@@ -1128,21 +1251,36 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 	--NextStepButton:SetPoint("TOPRIGHT", RQE.PrevStepButton, "TOPLEFT", -3, 0)
 
 	NextStepButton:SetScript("OnEnter", function(self)
-		if RQE.db.profile.enableStepControls then
-			local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-			local questData = questID and RQE.getQuestData(questID)
-			local curStep = RQE:GetDisplayedStepIndex()
-			local targetStep = curStep + 1
+		if isRetail then
+			if RQE.db.profile.enableStepControls then
+				local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID() -- C_SuperTrack.GetSuperTrackedQuestID()
+				local questData = questID and RQE.getQuestData(questID)
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep + 1
 
-			if questData and questData[targetStep] then
+				if questData and questData[targetStep] then
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Advance to step " .. targetStep)
+					GameTooltip:Show()
+				end
+			else
 				GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-				GameTooltip:SetText("Advance to step " .. targetStep)
+				GameTooltip:SetText("Enable stepIndex control from 'Frame' in addon settings")
 				GameTooltip:Show()
 			end
 		else
-			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-			GameTooltip:SetText("Enable stepIndex control from 'Frame' in addon settings")
-			GameTooltip:Show()
+			local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+			if RQE:CanUseStepControlsForQuest(questID) then
+				local questData = questID and RQE.getQuestData(questID)
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep + 1
+
+				if questData and questData[targetStep] then
+					GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+					GameTooltip:SetText("Advance to step " .. targetStep)
+					GameTooltip:Show()
+				end
+			end
 		end
 	end)
 
@@ -1151,21 +1289,45 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 	end)
 
 	NextStepButton:SetScript("OnClick", function()
-		if RQE.db.profile.enableStepControls then
-			local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-			local questData = questID and RQE.getQuestData(questID)
-			local curStep = RQE:GetDisplayedStepIndex()
-			local targetStep = curStep + 1
+		if isRetail then
+			if RQE.db.profile.enableStepControls then
+				local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID() -- C_SuperTrack.GetSuperTrackedQuestID()
+				local questData = questID and RQE.getQuestData(questID)
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep + 1
 
-			if questData and questData[targetStep] then
-				RQE:SetDisplayedStepFromStepsList(targetStep)
+				if questData and questData[targetStep] then
+					RQE:SetDisplayedStepFromStepsList(targetStep)
 
-				C_Timer.After(0.2, function()
-					local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-					if questID then
-						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
-					end
-				end)
+					C_Timer.After(0.2, function()
+						local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID() -- C_SuperTrack.GetSuperTrackedQuestID()
+						if questID then
+							RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+						end
+					end)
+				end
+			end
+		else
+			local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+			if RQE:CanUseStepControlsForQuest(questID) then
+				local questData = questID and RQE.getQuestData(questID)
+				local curStep = RQE:GetDisplayedStepIndex()
+				local targetStep = curStep + 1
+
+				if questData and questData[targetStep] then
+					RQE:SetDisplayedStepFromStepsList(targetStep)
+
+					C_Timer.After(0.2, function()
+						local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+						if questID then
+							if RQE:CanNavigateSearchedQuestSteps(questID) then
+								RQE:CreateSearchedQuestStepWaypoint(questID, targetStep)
+							else
+								RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
+							end
+						end
+					end)
+				end
 			end
 		end
 	end)
@@ -1179,11 +1341,11 @@ end
 -- #4. Button Initialization (RQEQuestFrame)
 ----------------------------------------------------
 
--- Parent function to Create CQButton
+-- Parent function to create the Show All button.
 function RQE.Buttons.CQButton(RQEQuestFrame)
 	local CQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
 	CQButton:SetSize(18, 18)
-	CQButton:SetText("SC")
+	CQButton:SetText("SA")
 	RQE.CQButton = CQButton  -- Store reference for later use
 
 	-- Set the frame strata and level
@@ -1192,20 +1354,47 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
 
 	-- Nested functions
 	CQButton:SetPoint("TOPLEFT", RQEQuestFrame, "TOPLEFT", 6, -6)  -- Anchoring
-	-- CQButton:SetScript("OnClick", function()
-	-- 	-- Code for showing completed quests functionality here
-	-- 	RQE.filterCompleteQuests()
-	-- end)
 	CQButton:SetScript("OnClick", function()
-		RQE.filterCompleteQuests()
-		-- RQE.QuestScrollFrameToTop()
+		RQE.filterAllTrackedQuests()
 		RQE.QuestScrollFrameToTop(true)
 	end)
 
-	CreateTooltip(CQButton, "Show Completed Quests \n in Quest Log")  -- Tooltip
+	CreateTooltip(CQButton, "Show All Quests \n in RQE Quest Tracker")  -- Tooltip
 	CreateBorder(CQButton)  -- Border
 
 	return CQButton
+end
+
+
+-- Parent function to create the Show Completed button.
+function RQE.Buttons.SCButton(RQEQuestFrame)
+	local SCButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
+	SCButton:SetSize(18, 18)
+	SCButton:SetText("SC")
+	RQE.SCButton = SCButton  -- Store reference for later use
+
+	-- Set the frame strata and level
+	SCButton:SetFrameStrata("MEDIUM")
+	SCButton:SetFrameLevel(3)
+
+	SCButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+	SCButton:SetScript("OnClick", function()
+		if isRetail then
+			RQE.filterCompleteQuests()
+		else
+			RQE.filterAllCompleteQuests()
+		end
+		RQE.QuestScrollFrameToTop(true)
+	end)
+
+	if isRetail then
+		CreateTooltip(SCButton, "Show Completed Quests \n in Quest Log")
+	else
+		CreateTooltip(SCButton, "Show All Completed Quests")
+	end
+	CreateBorder(SCButton)  -- Border
+
+	return SCButton
 end
 
 
@@ -1221,7 +1410,7 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
 	HQButton:SetFrameLevel(3)
 
 	-- Nested functions
-	HQButton:SetPoint("TOPLEFT", RQE.CQButton, "TOPRIGHT", 4, 0)  -- Anchoring
+	HQButton:SetPoint("TOPLEFT", RQE.SCButton, "TOPRIGHT", 4, 0)  -- Anchoring
 	-- HQButton:SetScript("OnClick", function()
 	-- 	-- Code for hiding completed quests functionality here
 	-- 	RQE:HideCompletedWatchedQuests()
@@ -1257,7 +1446,11 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
 	-- 	RQE.DisplayCurrentZoneQuests()
 	-- end)
 	ZQButton:SetScript("OnClick", function()
-		RQE.DisplayCurrentZoneQuests()
+		if isRetail then
+			RQE.DisplayCurrentZoneQuests()
+		else
+			RQE.DisplayCurrentZoneQuests(true)
+		end
 		-- RQE.QuestScrollFrameToTop()
 		RQE.QuestScrollFrameToTop(true)
 	end)
@@ -1533,7 +1726,16 @@ function RQE:ShowQuestFilterMenu()
 		end)
 		self.QuestFilterDropDownMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not self:IsMouseOver() and not RQE.QTQuestFilterButton:IsMouseOver() then
+				local isMouseOverMenu
+				local isMouseOverButton
+				if isRetail then
+					isMouseOverMenu = self:IsMouseOver()
+					isMouseOverButton = RQE.QTQuestFilterButton:IsMouseOver()
+				else
+					isMouseOverMenu = MouseIsOver(self)
+					isMouseOverButton = MouseIsOver(RQE.QTQuestFilterButton)
+				end
+				if not isMouseOverMenu and not isMouseOverButton then
 					self:Hide()
 				end
 			end)
@@ -1556,12 +1758,18 @@ function RQE:ShowQuestFilterMenu()
 		-- Add Buttons for Main Menu Items
 		self.QuestFilterDropDownMenu:AddButton("Auto-Track Zone Quests", function(button)
 			-- Toggle the autoTrackZoneQuests option
-			RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+			if isRetail then
+				RQE.db.profile.autoTrackZoneQuests = not RQE.db.profile.autoTrackZoneQuests
+			else
+				RQE:SetAutoTrackZoneQuestsEnabled(not RQE.db.profile.autoTrackZoneQuests)
+			end
 
 			-- Update the button text to reflect the new state
 			if RQE.db.profile.autoTrackZoneQuests then
 				button:SetText("|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests")
-				RQE.DisplayCurrentZoneQuests()
+				if isRetail then
+					RQE.DisplayCurrentZoneQuests()
+				end
 			else
 				button:SetText("Auto-Track Zone Quests")
 			end
@@ -1573,7 +1781,11 @@ function RQE:ShowQuestFilterMenu()
 		end
 
 		self.QuestFilterDropDownMenu:AddButton("Completed Quests", function()
-			RQE.filterCompleteQuests()
+			if isRetail then
+				RQE.filterCompleteQuests()
+			else
+				RQE.filterAllTrackedQuests()
+			end
 			if RQE.QTScrollFrame and RQE.QMQTslider then
 				RQE.QTScrollFrame:SetVerticalScroll(0)
 				RQE.QMQTslider:SetValue(0)
@@ -1653,7 +1865,16 @@ function RQE:CreateCampaignSubMenu()
 		-- Example for one of the submenus, apply similar logic to others
 		self.CampaignSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not self:IsMouseOver() and not self:GetParent():IsMouseOver() then
+				local isMouseOverSubMenu
+				local isMouseOverParent
+				if isRetail then
+					isMouseOverSubMenu = self:IsMouseOver()
+					isMouseOverParent = self:GetParent():IsMouseOver()
+				else
+					isMouseOverSubMenu = MouseIsOver(self)
+					isMouseOverParent = MouseIsOver(self:GetParent())
+				end
+				if not isMouseOverSubMenu and not isMouseOverParent then
 					self:Hide()
 					self:GetParent():Hide() -- Hide the main menu if mouse leaves both
 				end
@@ -1684,7 +1905,13 @@ function RQE:CreateQuestTypeSubMenu()
 		end)
 		self.QuestTypeSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not self:IsMouseOver() then
+				local isMouseOver
+				if isRetail then
+					isMouseOver = self:IsMouseOver()
+				else
+					isMouseOver = MouseIsOver(self)
+				end
+				if not isMouseOver then
 					self:Hide()
 				end
 			end)
@@ -1714,7 +1941,13 @@ function RQE:CreateZoneQuestSubMenu()
 		end)
 		self.ZoneQuestSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not self:IsMouseOver() then
+				local isMouseOver
+				if isRetail then
+					isMouseOver = self:IsMouseOver()
+				else
+					isMouseOver = MouseIsOver(self)
+				end
+				if not isMouseOver then
 					self:Hide()
 				end
 			end)
@@ -1744,7 +1977,13 @@ function RQE:CreateQuestLineSubMenu()
 		end)
 		self.QuestLineSubMenu:SetScript("OnLeave", function(self)
 			C_Timer.After(0.1, function()
-				if not self:IsMouseOver() then
+				local isMouseOver
+				if isRetail then
+					isMouseOver = self:IsMouseOver()
+				else
+					isMouseOver = MouseIsOver(self)
+				end
+				if not isMouseOver then
 					self:Hide()
 				end
 			end)
