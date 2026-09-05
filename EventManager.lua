@@ -1309,6 +1309,28 @@ function RQE.handlePlayerMapChanged(...)
 	local oldMapID = select(3, ...)
 	local newMapID = select(4, ...)
 
+	-- Auto-Track Zone Quests must use the exact same path as the ZQ button for
+	-- every player-map transition, including transitions that do not reach
+	-- ZONE_CHANGED_NEW_AREA.  Wait briefly for Blizzard's player map to settle
+	-- and suppress duplicate PLAYER_MAP_CHANGED notifications for the same map.
+	if RQE.db and RQE.db.profile and RQE.db.profile.autoTrackZoneQuests then
+		C_Timer.After(0.1, function()
+			if not (RQE.db and RQE.db.profile and RQE.db.profile.autoTrackZoneQuests) then
+				return
+			end
+
+			local currentMapID = C_Map.GetBestMapForUnit("player")
+			if not currentMapID or RQE.LastAutoTrackedZoneMapID == currentMapID then
+				return
+			end
+
+			RQE.LastAutoTrackedZoneMapID = currentMapID
+			RQE.DisplayCurrentZoneQuests()
+		end)
+	else
+		RQE.LastAutoTrackedZoneMapID = nil
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}
@@ -5731,6 +5753,12 @@ end
 -- Handles QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events
 -- Fires when the quest log updates, or whenever Quest POIs change (For example after accepting an quest)
 function RQE.handleQuestStatusUpdate()
+	-- Re-evaluate Auto-Track Zone Quests after quest progress settles.  The
+	-- helper coalesces this high-frequency event and ignores no-op memberships.
+	if RQE.QueueAutoTrackZoneQuestRefresh then
+		RQE:QueueAutoTrackZoneQuestRefresh()
+	end
+
 	-- -- Clear hotspot choice so next read re-evaluates on the new map
 	-- if C_SuperTrack.IsSuperTrackingQuest() then
 		-- local qid = C_SuperTrack.GetSuperTrackedQuestID()
