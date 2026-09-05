@@ -3,32 +3,46 @@
 	**HIGHLIGHTS**
 		- Added many fonts for use in the displays of the addon frames
 		- Players can now search for a quest, in their logs, by questID, questName, objectiveText, descriptionText, or the description in the addon's quest DB
+		- Addon re-write to allow handling of Retail, Classic and TBC Anniversary versions of game
 
 	Buttons.lua
 		- Updated CQButton, HQButton, ZQButton to scroll frame to the top when one of the buttons in RQEQuestFrame are pressed (2026.08.27.2204)
 		- Fixed a number of mouseover errors (2026.08.27.2204)
 		- Prevent RQEQuestFrame from scrolling to the top when player is mousing over frame (2026.08.30.0049)
+		- Added button to show all quests (2026.09.04.2227)
+		- Addon re-write to allow handling of Retail, Classic and TBC Anniversary versions of game (2026.09.04.2227)
 
 	Core.lua
 		- Fixed some colorize text issues (2026.08.27.2204)
 		- Added functionality to gather quest data from Sandbox [author-mode ONLY] (2026.08.27.2204)
 		- Resolved some issues with coordinates being displayed incorrectly when flying versus being on the ground (2026.08.27.2204)
 		- Fixed issue with printing of questline (2026.09.01.1544)
+		- Fixed sorting and display of zoneQuests (2026.09.04.2227)
 
 	DatabaseMain.lua
 		- Updated DB Controller to separate Vanilla retail zones from Season of Discovery and separate Burning Crusade retail zones with Burning Crusade anniversary (2026.08.30.0049)
+		- Addon re-write to allow handling of Retail, Classic and TBC Anniversary versions of game (2026.09.04.2227)
+
+	DebugLog.lua
+		- Addon re-write to allow handling of Retail, Classic and TBC Anniversary versions of game (2026.09.04.2227)
+
+	EventManager.lua
+		- Fixed issue where quest tracking wouldn't update when transitioning between zones if autoTrackZoneQuests was enabled (2026.09.04.2227)
 
 	QuestingModule.lua
 		- Added functionality to search for quests in Quest Log by questID, questName, objectiveText, descriptionText, or the description in the DB entry (2026.08.27.2204)
 		- Resolved issue where frame wasn't scrolling to the top when RQE.QuestScrollFrameToTop() function was being called (2026.08.27.2204)
 		- Prevent RQEQuestFrame from scrolling to the top when player is mousing over frame (2026.08.30.0049)
 		- Fixed issue where option to 'Print Questline' in quest's right-click menu was missing (2026.09.01.1544)
+		- Added button to show all quests (2026.09.04.2227)
 
-	RQE.toc
+	RQE.toc/RQE-Tbc.toc/RQE-Classic.toc
 		- Updated interface/version# (2026.08.27.2204)
+		- Created new TOC files for TBC Anniversary and Classic editions (2026.09.04.2227)
 
 	RQE_API.lua
 		- Fixed issue where questID was being printed in place of questName when printing questline (2026.09.01.1544)
+		- Updated addon's API file to work between Retail, TBC Anniversary and Classic editions of the game (2026.09.04.2227)
 
 	RQE_Sandbox.lua
 		- Added functionality to search Sandbox quests by questID [author-mode ONLY] (2026.08.27.2204)
@@ -36,7 +50,7 @@
 	RQEDatabase.lua
 		- Added many Classic WoW quests in the DB (2026.08.27.2204)
 		- Added many Burning Crusade Anniversary WoW quests in the DB (2026.08.30.0049)
-		- Added more Classic WoW Quests to the DB (2026.08.30.1617)
+		- Added more Classic WoW Quests to the DB (2026.09.04.2227)
 
 	RQEFrame.lua
 		- Resolved issue where coordinates weren't being properly shown above the RQEFrame (2026.08.27.2204)
@@ -44,6 +58,7 @@
 
 	RQEMinimap.lua
 		- Fixed a number of mouseover errors (2026.08.27.2204)
+		- Addon re-write to allow handling of Retail, Classic and TBC Anniversary versions of game (2026.09.04.2227)
 
 
 12.1.0.0 (2026.08.11)
