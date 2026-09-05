@@ -9,6 +9,7 @@ Handles the debug messages and creation of the debug log frame for copying/pasti
 RQE = RQE or {}
 RQE.Buttons = RQE.Buttons or {}
 
+local isRetail = RQE.IsRetail == true
 
 local headerHeight = 30
 local logTable = {}
@@ -23,7 +24,14 @@ function RQE.AddToDebugLog(message)
 
 	local timestamp = date("%Y-%m-%d %H:%M:%S")
 	local logEntry
-	local playerMapID = C_Map.GetBestMapForUnit("player") or 0
+	local playerMapID
+	if isRetail then
+		playerMapID = C_Map.GetBestMapForUnit("player") or 0
+	else
+		playerMapID = RQE.API and RQE.API.GetBestMapForUnit
+			and RQE.API.GetBestMapForUnit("player")
+			or 0
+	end
 	local isGarrisonMap = (playerMapID == 590 or playerMapID == 582)
 
 	if RQE.db.profile.debugTimeStampCheckbox then
@@ -36,7 +44,13 @@ function RQE.AddToDebugLog(message)
 	end
 
 	-- Prevent duplicate messages
-	if isGarrisonMap or (not C_Scenario.IsInScenario() and not IsInInstance()) then
+	local isInScenario
+	if isRetail then
+		isInScenario = C_Scenario.IsInScenario()
+	else
+		isInScenario = RQE.API and RQE.API.IsInScenario and RQE.API.IsInScenario() or false
+	end
+	if isGarrisonMap or (not isInScenario and not IsInInstance()) then
 		if logTable[#logTable] ~= logEntry then
 			table.insert(logTable, logEntry)
 			RQE.UpdateLogFrame()
@@ -196,7 +210,11 @@ closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
 closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down")
 closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight")
 closeButton:SetScript("OnClick", function()
-	RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
+	if isRetail then
+		RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
+	else
+		logFrame:Hide()
+	end
 end)
 
 
