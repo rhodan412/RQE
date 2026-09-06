@@ -1582,7 +1582,18 @@ function RQE.handlePlayerLogin()
 		end
 	end)
 
+	local loginDebugLogCaptureGeneration = RQE.GetDebugLogCaptureGeneration and RQE:GetDebugLogCaptureGeneration() or nil
 	C_Timer.After(6, function()
+		-- Do not let the delayed login sweep overwrite a quest-data capture that
+		-- started afterwards, or revive a Debug Log the player has since closed.
+		if RQE.IsDebugLogQuestCaptureActive and RQE:IsDebugLogQuestCaptureActive() then
+			return
+		end
+		if loginDebugLogCaptureGeneration and RQE.GetDebugLogCaptureGeneration
+			and RQE:GetDebugLogCaptureGeneration() ~= loginDebugLogCaptureGeneration then
+			return
+		end
+
 		RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 	end)
 
@@ -3790,8 +3801,20 @@ function RQE.handleQuestAccepted(...)
 		end
 	end)
 
+	-- Register the acceptance before its delayed collection.  This lets quests
+	-- accepted together share one Debug Log session, while Clear/OnHide still
+	-- invalidates their delayed callbacks.
+	local debugLogCaptureGeneration
+	if questID
+		and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+")
+		and C_AddOns.IsAddOnLoaded("RQE_Contribution")
+		and RQE.PrepareDebugLogQuestCapture then
+		debugLogCaptureGeneration = RQE:PrepareDebugLogQuestCapture(questID)
+	elseif RQE.GetDebugLogCaptureGeneration then
+		debugLogCaptureGeneration = RQE:GetDebugLogCaptureGeneration()
+	end
 	C_Timer.After(2.5, function()
-		RQE.GetMissingQuestData()	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
+		RQE.GetMissingQuestData(questID, debugLogCaptureGeneration)	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 	end)
 
 	if questID == RQE.searchedQuestID then
