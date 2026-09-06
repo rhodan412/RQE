@@ -1,3 +1,34 @@
+12.1.0.2
+
+	**HIGHLIGHTS**
+		- Fixed method for sorting quests in the tracker by proximity and displaying the distance to objective
+
+	Core.lua
+		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity (2026.09.06.1809)
+
+	DebugLog.lua
+		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+
+	EventManager.lua
+		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+
+	QuestingModule.lua
+		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity (2026.09.06.1809)
+
+	RQE.toc
+		- Updated interface/version# (2026.09.06.1809)
+
+	RQEDatabase.lua
+		- Added additional Midnight quests to DB for Season 2 (2026.09.06.1809)
+
+	RQEMacro.lua
+		- Retail, TBC Anniversary and Classic now use the main file instead of their own separate macro files for coding (2026.09.06.1809)
+
+	RQEMinimap.lua
+		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+
+
 12.1.0.1 (2026.09.04)
 
 	**HIGHLIGHTS**
