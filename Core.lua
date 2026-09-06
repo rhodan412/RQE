@@ -578,10 +578,9 @@ function RQE:OnInitialize()
 
 		local message = table.concat(output, " ")
 
-		-- Add to debug log
-		RQE.AddToDebugLog(message)
-
-		-- Call original print function
+		-- The Debug Log's DEFAULT_CHAT_FRAME hook mirrors this one print call.
+		-- Do not add it directly here as well: that would feed a contribution
+		-- block through the capture filter twice.
 		originalPrint(message)
 	end
 
@@ -1480,7 +1479,7 @@ function RQE.GetDataForAddon()
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
-		RQE:ClearDebugLog()
+		RQE:BeginDebugLogCapture()
 		RQE_Contribution.GetAllContributionInfo()
 
 		--RQE.db.profile.debugLoggingCheckbox = false
@@ -1504,7 +1503,7 @@ function RQE.GetCompletedDataForAddon()
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
-		RQE:ClearDebugLog()
+		RQE:BeginDebugLogCapture()
 		RQE_Contribution.GetCompletedContributionInfo()
 
 		--RQE.db.profile.debugLoggingCheckbox = false
@@ -1528,7 +1527,7 @@ function RQE.GetSandBoxDataForAddon()
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
-		RQE:ClearDebugLog()
+		RQE:BeginDebugLogCapture()
 		RQE.GetAllSandboxInfo()
 
 		--RQE.db.profile.debugLoggingCheckbox = false
@@ -1547,7 +1546,7 @@ end
 function RQE.GetMidnightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
@@ -1573,7 +1572,7 @@ end
 function RQE.GetTheWarWithinWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
@@ -1599,7 +1598,7 @@ end
 function RQE.GetDragonflightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
@@ -1625,7 +1624,7 @@ end
 function RQE.GetShadowlandsWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
@@ -1651,7 +1650,7 @@ end
 function RQE.GetBFAWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
@@ -1677,7 +1676,7 @@ end
 function RQE.GetLegionWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
@@ -1703,7 +1702,7 @@ end
 function RQE.GetWoDWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
@@ -1728,7 +1727,7 @@ end
 function RQE.MiscWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
@@ -1750,17 +1749,49 @@ end
 
 
 -- Obtain Quest Objectives and Quest Description Text for quests in player log where an empty set exists for either in the DB (that will contain data and isn't a hidden/emissary quest)
-function RQE.GetMissingQuestData()
+function RQE.GetMissingQuestData(acceptedQuestID, captureGeneration)
 	if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			local questID = tonumber(acceptedQuestID)
+			local isQuestAcceptCapture = questID ~= nil
+			if not questID then
+				questID = RQE.LastAcceptedQuest
+			end
+
+			-- QUEST_ACCEPTED passes the accepted ID so a full active-quest scan can
+			-- be reduced to that quest's contribution block.  Calls without an ID
+			-- retain the original all-quest/manual collection behaviour.
+			if isQuestAcceptCapture then
+				if not RQE:BeginDebugLogQuestCapture(questID, captureGeneration) then
+					return
+				end
+			else
+				RQE:BeginDebugLogCapture()
+			end
+
 			RQE.db.profile.debugLoggingCheckbox = true
 			RQE.db.profile.debugTimeStampCheckbox = false
-			RQE:ClearDebugLog()
 
-			RQE_Contribution:CheckMissingQuestTextData()
+			local textCaptureOK, textCaptureError = pcall(function()
+				RQE_Contribution:CheckMissingQuestTextData()
+			end)
 
-			-- Then also check the last accepted quest for missing NPC info
-			local questID = RQE.LastAcceptedQuest
+			if isQuestAcceptCapture then
+				RQE:EndDebugLogQuestCapture()
+			else
+				RQE:EndDebugLogCapture()
+			end
+
+			if not textCaptureOK then
+				RQE.db.profile.debugTimeStampCheckbox = true
+				geterrorhandler()(textCaptureError)
+				return
+			end
+
+			-- Then also check the accepted quest for missing NPC info.  This
+			-- contribution function has its own uncoloured two-line format, so use
+			-- its dedicated capture phase rather than treating all questID text as
+			-- a header.
 			if questID then
 				local questData = RQE.getQuestData(questID)
 
@@ -1773,8 +1804,17 @@ function RQE.GetMissingQuestData()
 					local hasDescription = description and type(description) == "table" and description[1] and description[1] ~= ""
 					local missingNPC = not npc or type(npc) ~= "table" or npc[1] == nil or npc[1] == ""
 
-					if hasObjectives and hasDescription and missingNPC then
-						RQE_Contribution:CheckMissingNPCOnQuestAccept(questID)
+					if hasObjectives and hasDescription and missingNPC and RQE:BeginDebugLogNPCCapture(questID) then
+						local npcCaptureOK, npcCaptureError = pcall(function()
+							RQE_Contribution:CheckMissingNPCOnQuestAccept(questID)
+						end)
+						RQE:EndDebugLogQuestCapture()
+
+						if not npcCaptureOK then
+							RQE.db.profile.debugTimeStampCheckbox = true
+							geterrorhandler()(npcCaptureError)
+							return
+						end
 					end
 				end
 			end
@@ -12174,9 +12214,10 @@ RQE.filterDailyWeeklyQuests = function()
 end
 
 
--- Return the database map IDs that should make an active quest eligible for
--- the zone tracker.  These are deliberately limited to its pickup location(s)
--- and its current DB step; future steps must not cause a quest to appear early.
+-- Return every explicit database map ID that should make an active quest
+-- eligible for the zone tracker.  Zone filtering must include every DB step:
+-- some quests, such as the Northrend Cup Circuit, have independent objectives
+-- that may be completed in any order rather than one strictly linear route.
 function RQE:GetQuestDatabaseZoneMapIDs(questID)
 	local mapIDs = {}
 	local questData = RQE.getQuestData and RQE.getQuestData(questID)
@@ -12199,20 +12240,16 @@ function RQE:GetQuestDatabaseZoneMapIDs(questID)
 		addMapID(location)
 	end
 
-	local currentStepIndex = 1
-	if type(RQE.GetCurrentDBStepIndexForQuest) == "function" then
-		currentStepIndex = tonumber(RQE.GetCurrentDBStepIndexForQuest(questID)) or 1
-	end
-
-	local currentStep = questData[currentStepIndex]
-	if type(currentStep) == "table" then
-		addMapID(currentStep.location)
-		addMapID(currentStep.coordinates)
-		for _, location in ipairs(currentStep.locations or {}) do
-			addMapID(location)
-		end
-		for _, hotspot in ipairs(currentStep.coordinateHotspots or {}) do
-			addMapID(hotspot)
+	for stepIndex, stepData in pairs(questData) do
+		if type(stepIndex) == "number" and type(stepData) == "table" then
+			addMapID(stepData.location)
+			addMapID(stepData.coordinates)
+			for _, location in ipairs(stepData.locations or {}) do
+				addMapID(location)
+			end
+			for _, hotspot in ipairs(stepData.coordinateHotspots or {}) do
+				addMapID(hotspot)
+			end
 		end
 	end
 
@@ -12499,13 +12536,8 @@ function RQE.DisplayCurrentZoneQuests()
 	-- Ensure we have the latest zone quests data
 	RQE.ScanAndCacheZoneQuests()
 
-	-- Step 2: Retrieve quests for the current zone.
-	local currentZoneQuests = RQE.ZoneQuests[mapID] or {}
-	if #currentZoneQuests == 0 then
-		return
-	end
-
-	-- Step 3: Display or update the quest frame with the current zone's quests.
+	-- Apply the filter even when this zone has no matching quests.  ZQ is a
+	-- replacement filter, so an empty zone must clear prior-zone watches.
 	RQE.filterByZone(mapID)
 end
 
@@ -13230,6 +13262,9 @@ local function OnPlayerMoving(self, elapsed)
 	-- The visible coordinate header is refreshed independently while RQEFrame is shown.
 	RQE:UpdateMapIDDisplay()
 	RQE:UpdateStepDistance()
+	if RQE.RefreshTrackedQuestDistances then
+		RQE:RefreshTrackedQuestDistances()
+	end
 	--RQE:MaybeUpdateWaypointOnSnap(elapsed)
 
 	-- Throttle: ~4x/sec while moving
