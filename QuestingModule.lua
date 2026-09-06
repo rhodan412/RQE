@@ -1283,52 +1283,317 @@ function RQE:PrintSortedWatchedQuests()
 end
 
 
--- Function that handles the sorting of tracked/watched quests based on proximity
--- Only sorts quests that are in the player's current zone. Others are placed at the end.
+-- Sort watched Retail quests within their tracker section. The distance key is
+-- deliberately produced by GetTrackerQuestStepDistance so the displayed yard
+-- value and the ordering can never come from different destinations.
 function RQE:SortWatchedQuestsByProximity()
-	--if C_Scenario.IsInScenario() then return end
-	RQE.SortedWatchedQuests = {}  -- Reset the table
-	local unsortedQuests = {}  -- Store quests that can't be sorted
+	RQE.SortedWatchedQuests = {}
 
 	local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
 	if numTrackedQuests == 0 then return end
 
-	local playerMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
-	
-	for i = 1, numTrackedQuests do
-		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-
+	for sourceOrder = 1, numTrackedQuests do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(sourceOrder)
 		if questID and not RQE.API.IsWorldQuest(questID) then
-		--if questID and not C_QuestLog.IsWorldQuest(questID) then
-			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
-			local questMapID = GetQuestUiMapID(questID) -- Get the actual zone ID
+			local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+			local questInfo = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
+			local questTitle = (questInfo and questInfo.title)
+				or (RQE.API.GetTitleForQuestID and RQE.API.GetTitleForQuestID(questID))
+				or "Unknown Quest"
+			local questLevel = tonumber(questInfo and questInfo.level) or -math.huge
+			local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+			local distanceYards, stepIndex = RQE:GetTrackerQuestStepDistance(questID)
 
-			-- Check if the quest is in the player's current zone
-			if distanceSq and onContinent and questMapID == playerMapID then
-				table.insert(RQE.SortedWatchedQuests, { questID = questID, distanceSq = distanceSq })
-			else
-				-- Assign an artificially large distance for out-of-zone or unknown-distance quests
-				table.insert(unsortedQuests, { questID = questID, distanceSq = 999999999 })
+			table.insert(RQE.SortedWatchedQuests, {
+				questID = questID,
+				distanceYards = distanceYards,
+				distanceSq = distanceYards and distanceYards * distanceYards or math.huge,
+				stepIndex = stepIndex,
+				sectionRank = isCampaignQuest and 1 or 2,
+				sectionName = isCampaignQuest and "Campaign/Meta" or "Normal Quests",
+				questLevel = questLevel,
+				questTitle = questTitle,
+				questTitleSort = string.lower(tostring(questTitle)),
+				sourceOrder = sourceOrder,
+			})
+		end
+	end
+
+	-- Within each header: measured distances ascend. N/A entries follow, with
+	-- higher-level quests first and same-level quests ordered alphabetically.
+	table.sort(RQE.SortedWatchedQuests, function(a, b)
+		if a.sectionRank ~= b.sectionRank then
+			return a.sectionRank < b.sectionRank
+		end
+
+		local aHasDistance = a.distanceYards ~= nil
+		local bHasDistance = b.distanceYards ~= nil
+		if aHasDistance ~= bHasDistance then
+			return aHasDistance
+		end
+
+		if aHasDistance and a.distanceYards ~= b.distanceYards then
+			return a.distanceYards < b.distanceYards
+		end
+
+		if not aHasDistance and a.questLevel ~= b.questLevel then
+			return a.questLevel > b.questLevel
+		end
+
+		if a.questTitleSort ~= b.questTitleSort then
+			return a.questTitleSort < b.questTitleSort
+		end
+		if a.questID ~= b.questID then
+			return a.questID < b.questID
+		end
+		return a.sourceOrder < b.sourceOrder
+	end)
+
+	-- Debug Print
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Sorted watched quests by section and proximity:")
+		for i, questData in ipairs(RQE.SortedWatchedQuests) do
+			local displayDistance = questData.distanceYards
+				and string.format("%.0f yds", questData.distanceYards)
+				or "N/A"
+			print(i .. ". QuestID:", questData.questID, "- Section:", questData.sectionName,
+				"- Level:", questData.questLevel, "- Distance:", displayDistance)
+		end
+	end
+end
+
+
+-- Returns the database step that corresponds to the quest's next unfinished
+-- objective. Completed quests intentionally use their turn-in (99) step.
+function RQE:GetNextIncompleteTrackerStepIndex(questID)
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if type(questData) ~= "table" then return nil end
+
+	if (C_QuestLog.IsComplete and C_QuestLog.IsComplete(questID))
+		or (C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID))
+	then
+		for stepIndex, stepData in ipairs(questData) do
+			if tonumber(stepData.objectiveIndex) == 99 then
+				return stepIndex
 			end
 		end
 	end
 
-	-- Sort table by proximity (smallest distance first)
-	table.sort(RQE.SortedWatchedQuests, function(a, b)
-		return a.distanceSq < b.distanceSq
-	end)
-	
-	-- Append unsorted quests at the end
-	for _, questData in ipairs(unsortedQuests) do
-		table.insert(RQE.SortedWatchedQuests, questData)
+	local objectives = RQE.API.GetQuestObjectives(questID) or {}
+	for stepIndex, stepData in ipairs(questData) do
+		local objectiveIndex = tonumber(stepData.objectiveIndex)
+		if objectiveIndex and objectiveIndex > 0 and objectiveIndex < 99 then
+			local objective = objectives[objectiveIndex]
+			if objective and objective.finished ~= true then
+				return stepIndex
+			end
+		end
 	end
 
-	-- Debug Print
-	if RQE.db.profile.debugLevel == "INFO+" then
-		print("Sorted watched quests by proximity:")
-		for i, questData in ipairs(RQE.SortedWatchedQuests) do
-			local displayDistance = (questData.distanceSq == 999999999) and "Out of Zone" or math.sqrt(questData.distanceSq)
-			print(i .. ". QuestID:", questData.questID, "- Distance:", displayDistance)
+	-- Navigation-only database steps do not have a Blizzard objective. Use the
+	-- first one with coordinates when there is no incomplete mapped objective.
+	for stepIndex, stepData in ipairs(questData) do
+		if stepData.coordinates or #(stepData.coordinateHotspots or {}) > 0 then
+			return stepIndex
+		end
+	end
+end
+
+
+-- Returns an exact yard distance to the coordinate selected for the next
+-- incomplete RQE step. If that step has no RQE coordinate, fall back to
+-- Blizzard's quest POI and then its next-waypoint destination.
+local function GetPlayerDistanceToMapPositionYards(mapID, x, y)
+	mapID, x, y = tonumber(mapID), tonumber(x), tonumber(y)
+	if not (mapID and x and y) then return nil end
+
+	-- RQE database coordinates may be stored as percentages, while Blizzard's
+	-- quest POI APIs return normalized coordinates.
+	if x > 1 or y > 1 then
+		x, y = x / 100, y / 100
+	end
+
+	local targetPosition = CreateVector2D and CreateVector2D(x, y)
+	local function GetWorldDistance(playerMapID, playerPosition)
+		if not (targetPosition and C_Map.GetWorldPosFromMapPos and playerMapID and playerPosition) then
+			return nil
+		end
+
+		local playerContinent, playerWorldPosition = C_Map.GetWorldPosFromMapPos(playerMapID, playerPosition)
+		local targetContinent, targetWorldPosition = C_Map.GetWorldPosFromMapPos(mapID, targetPosition)
+		if not (playerWorldPosition and targetWorldPosition and playerContinent == targetContinent) then
+			return nil
+		end
+
+		local playerWorldX, playerWorldY = playerWorldPosition:GetXY()
+		local targetWorldX, targetWorldY = targetWorldPosition:GetXY()
+		if not (playerWorldX and playerWorldY and targetWorldX and targetWorldY) then
+			return nil
+		end
+
+		local deltaX = targetWorldX - playerWorldX
+		local deltaY = targetWorldY - playerWorldY
+		return math.sqrt(deltaX * deltaX + deltaY * deltaY)
+	end
+
+	-- Ask for the player's position on the destination map first. This avoids
+	-- child/parent map mismatches and works for maps whose world origin is absent.
+	local playerOnTargetMap = C_Map.GetPlayerMapPosition(mapID, "player")
+	if playerOnTargetMap then
+		local distance = GetWorldDistance(mapID, playerOnTargetMap)
+		if distance then return distance end
+
+		-- Retail documents these dimensions in yards, so this is still an exact
+		-- same-map distance when GetWorldPosFromMapPos is unavailable.
+		if C_Map.GetMapWorldSize then
+			local mapWidth, mapHeight = C_Map.GetMapWorldSize(mapID)
+			local playerX, playerY = playerOnTargetMap:GetXY()
+			if mapWidth and mapHeight and mapWidth > 0 and mapHeight > 0 and playerX and playerY then
+				local deltaX = (x - playerX) * mapWidth
+				local deltaY = (y - playerY) * mapHeight
+				return math.sqrt(deltaX * deltaX + deltaY * deltaY)
+			end
+		end
+	end
+
+	-- Cross-map native world-space attempt, followed by the addon's existing HBD
+	-- translator for maps that require its parent/child map transforms.
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	local playerPosition = playerMapID and C_Map.GetPlayerMapPosition(playerMapID, "player")
+	local distance = GetWorldDistance(playerMapID, playerPosition)
+	if distance then return distance end
+
+	if RQE.WPUtil and RQE.WPUtil.PlayerDistanceTo then
+		local hbdDistance, unit = RQE.WPUtil.PlayerDistanceTo(mapID, x, y)
+		if hbdDistance and unit == "yards" then
+			return hbdDistance
+		end
+	end
+end
+
+
+-- The visible no-database W-button tooltip obtains its coordinates from
+-- RQE.PullDataFromMapQuests/C_QuestLog.GetQuestsOnMap. Cache that same snapshot
+-- briefly so refreshing a full tracker only scans Blizzard's POIs once.
+local function GetTrackerBlizzardPOICoordinates(questID)
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if not playerMapID then return nil end
+
+	local now = GetTime()
+	local cache = RQE.trackerBlizzardPOICache
+	if not cache or cache.mapID ~= playerMapID or now - cache.updatedAt >= 1 then
+		local quests = RQE.PullDataFromMapQuests and RQE.PullDataFromMapQuests() or {}
+		cache = {
+			mapID = playerMapID,
+			updatedAt = now,
+			quests = quests,
+		}
+		RQE.trackerBlizzardPOICache = cache
+	end
+
+	local questPOI = cache.quests and cache.quests[questID]
+	if questPOI and questPOI.x and questPOI.y then
+		return questPOI.x, questPOI.y, questPOI.mapID or playerMapID
+	end
+end
+
+
+function RQE:GetTrackerQuestStepDistance(questID)
+	local stepIndex = RQE:GetNextIncompleteTrackerStepIndex(questID)
+	if stepIndex and RQE.GetDBStepCoordinates then
+		local x, y, mapID = RQE:GetDBStepCoordinates(questID, stepIndex)
+		if x and y and mapID then
+			local distance = GetPlayerDistanceToMapPositionYards(mapID, x, y)
+			if distance then
+				return distance, stepIndex
+			end
+
+			-- A usable RQE step coordinate always takes precedence over Blizzard's
+			-- quest waypoint, even if its yard distance is temporarily unavailable.
+			return nil, stepIndex
+		end
+	end
+
+	-- Use the exact Blizzard quest-POI source shown by the W-button tooltip before
+	-- trying route/transition waypoints. This covers quests such as 29513 that
+	-- have a map objective POI but no RQE database entry or direction waypoint.
+	local poiX, poiY, poiMapID = GetTrackerBlizzardPOICoordinates(questID)
+	if poiX and poiY and poiMapID then
+		local distance = GetPlayerDistanceToMapPositionYards(poiMapID, poiX, poiY)
+		if distance then
+			return distance
+		end
+	end
+
+	-- Next ask Blizzard for a route waypoint on the quest's UI map, rather than
+	-- assuming the player's best map is the same.
+	local questMapID = GetQuestUiMapID and GetQuestUiMapID(questID)
+	if questMapID and C_QuestLog.GetNextWaypointForMap then
+		local x, y = C_QuestLog.GetNextWaypointForMap(questID, questMapID)
+		if x and y then
+			local distance = GetPlayerDistanceToMapPositionYards(questMapID, x, y)
+			if distance then
+				return distance
+			end
+		end
+	end
+
+	-- Generic route/transition waypoint fallback.
+	if C_QuestLog.GetNextWaypoint then
+		local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+		if mapID and x and y then
+			local distance = GetPlayerDistanceToMapPositionYards(mapID, x, y)
+			if distance then
+				return distance
+			end
+		end
+	end
+
+	-- Last resort: look for a waypoint on the player's current map.
+	local playerMapID = C_Map.GetBestMapForUnit("player")
+	if playerMapID and C_QuestLog.GetNextWaypointForMap then
+		local x, y = C_QuestLog.GetNextWaypointForMap(questID, playerMapID)
+		if x and y then
+			local distance = GetPlayerDistanceToMapPositionYards(playerMapID, x, y)
+			if distance then
+				return distance
+			end
+		end
+	end
+
+	-- Blizzard's quest-distance API uses the same active objective destination and
+	-- is a final fallback if a POI exists but no coordinate conversion is exposed.
+	if C_QuestLog.GetDistanceSqToQuest then
+		local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+		if distanceSq and onContinent then
+			return math.sqrt(distanceSq)
+		end
+	end
+
+	return nil, stepIndex
+end
+
+
+-- Update the visible tracker distance labels without rebuilding the quest frame.
+-- The 0.2-second throttle keeps this inexpensive for long lists.
+function RQE:RefreshTrackedQuestDistances(force)
+	if not (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then return end
+
+	local now = GetTime()
+	if not force and RQE.lastTrackedQuestDistanceRefresh
+		and now - RQE.lastTrackedQuestDistanceRefresh < 0.2
+	then
+		return
+	end
+	RQE.lastTrackedQuestDistanceRefresh = now
+
+	for _, questButton in pairs(RQE.QuestLogIndexButtons or {}) do
+		if questButton and questButton:IsShown() and questButton.questID and questButton.QuestDistanceInfo then
+			local distance, stepIndex = RQE:GetTrackerQuestStepDistance(questButton.questID)
+			questButton.rqeTrackerDistanceStepIndex = stepIndex
+			questButton.QuestDistanceInfo:SetText(
+				distance and string.format("Distance: %.0f yds", distance) or "Distance: N/A"
+			)
 		end
 	end
 end
@@ -3225,6 +3490,23 @@ function UpdateRQEQuestFrame()
 				QuestLevelAndName:SetText(levelText .. " " .. questTitle)
 				--QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
+				-- Display the current distance to this quest's next incomplete RQE step
+				-- between its title and objective text, matching the Classic trackers.
+				local distance, stepIndex = RQE:GetTrackerQuestStepDistance(questID)
+				local QuestDistanceInfo = RQE.QuestLogIndexButtons[i].QuestDistanceInfo or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				QuestDistanceInfo:ClearAllPoints()
+				QuestDistanceInfo:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -3)
+				QuestDistanceInfo:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+				QuestDistanceInfo:SetTextColor(0, 212/255, 212/255) -- Bright teal: #00D4D4
+				QuestDistanceInfo:SetJustifyH("LEFT")
+				QuestDistanceInfo:SetJustifyV("TOP")
+				QuestDistanceInfo:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
+				QuestDistanceInfo:SetHeight(0)
+				QuestDistanceInfo:SetText(distance and string.format("Distance: %.0f yds", distance) or "Distance: N/A")
+				QuestDistanceInfo:Show()
+				QuestLogIndexButton.QuestDistanceInfo = QuestDistanceInfo
+				QuestLogIndexButton.rqeTrackerDistanceStepIndex = stepIndex
+
 				-- Create or reuse the QuestObjectives label
 				local QuestObjectives = RQE.QuestLogIndexButtons[i].QuestObjectives or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				QuestObjectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
@@ -3261,7 +3543,8 @@ function UpdateRQEQuestFrame()
 					local questZoneText = GetQuestZone(questID)
 					local QuestTypeLabel = QuestLogIndexButton.QuestTypeLabel or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 					RQE.QuestTypeLabel = QuestTypeLabel
-					QuestTypeLabel:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)
+					QuestTypeLabel:ClearAllPoints()
+					QuestTypeLabel:SetPoint("TOPLEFT", QuestDistanceInfo, "BOTTOMLEFT", 0, -3)
 					QuestTypeLabel:SetWordWrap(true)
 					QuestTypeLabel:SetJustifyH("LEFT")
 					QuestTypeLabel:SetJustifyV("TOP")
@@ -3275,10 +3558,11 @@ function UpdateRQEQuestFrame()
 
 				-- Create or reuse the QuestObjectivesOrDescription label
 				local QuestObjectivesOrDescription = RQE.QuestLogIndexButtons[i].QuestObjectivesOrDescription or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				QuestObjectivesOrDescription:ClearAllPoints()
 				if RQE.db.profile.enableQuestTypeDisplay then
 					QuestObjectivesOrDescription:SetPoint("TOPLEFT", RQE.QuestTypeLabel, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
 				else
-					QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -5)  -- 10 units of vertical spacing
+					QuestObjectivesOrDescription:SetPoint("TOPLEFT", QuestDistanceInfo, "BOTTOMLEFT", 0, -3)
 				end
 				QuestObjectivesOrDescription:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				QuestObjectivesOrDescription:SetJustifyH("LEFT")
@@ -4651,6 +4935,12 @@ end
 
 -- Frequent checking to enforce the visibility of quests being tracked to be displayed in RQEQuestFrame
 C_Timer.NewTicker(1, function()
+	-- Retry Blizzard-backed labels even while stationary. Quest POI data may not
+	-- be populated during the first tracker build immediately after a reload.
+	if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() and RQE.RefreshTrackedQuestDistances then
+		RQE:RefreshTrackedQuestDistances()
+	end
+
 	if InCombatLockdown() then return end
 
 	local isMapOpen = WorldMapFrame:IsShown()
