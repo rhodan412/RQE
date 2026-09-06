@@ -36,10 +36,12 @@ end
 
 -- Toggle Debug Log window function
 function RQE:ToggleDebugLog()
-	if not RQE.DebugLogFrameRef then
-		-- Initialize the debug log frame here if it doesn't exist yet
+	local debugLogFrame = RQE.DebugLogFrameRef
+	if debugLogFrame and debugLogFrame:IsShown() then
+		debugLogFrame:Hide()
+	elseif RQE.DebugLogFrame then
+		RQE.DebugLogFrame()
 	end
-	RQE.DebugLogFrame()
 end
 
 -- Open AddOn Settings function
