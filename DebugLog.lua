@@ -13,6 +13,59 @@ local isRetail = RQE.IsRetail == true
 
 local headerHeight = 30
 local logTable = {}
+local logFrame
+
+-- A capture session begins when RQE gathers quest data and ends whenever the
+-- Debug Log is hidden.  This keeps a closed log from retaining or accepting
+-- data from an earlier quest-accept sequence.
+local captureMode
+local captureQuestIDs = {}
+local capturedTextQuestIDs = {}
+local capturedNPCQuestIDs = {}
+local capturePhase
+local currentQuestBlockAllowed
+local captureGeneration = 0
+
+
+local function ResetDebugLogCapture()
+	captureMode = nil
+	captureQuestIDs = {}
+	capturedTextQuestIDs = {}
+	capturedNPCQuestIDs = {}
+	capturePhase = nil
+	currentQuestBlockAllowed = nil
+end
+
+
+local function GetTextQuestIDFromLogMessage(message)
+	-- CheckMissingQuestTextData emits this exact, green header before its
+	-- objectives/description/NPC lines.  Do not treat generic RQE debug text
+	-- containing "questID:" as a contribution-data header.
+	return tonumber(tostring(message):match("^|cff00ff00questID:%s*(%d+)|r$"))
+end
+
+
+local function IsTextQuestPayload(message)
+	-- The contribution addon colourises these lines, but preserve the block if
+	-- its presentation colour changes.  The field names are the stable part of
+	-- the contribution output format.
+	local payload = tostring(message):gsub("^|c%x%x%x%x%x%x%x%x", "")
+	return payload:match("^%s*objectivesQuestText%s*=")
+		or payload:match("^%s*descriptionQuestText%s*=")
+		or payload:match("^%s*npc%s*=")
+end
+
+
+local function GetNPCQuestIDFromLogMessage(message)
+	-- CheckMissingNPCOnQuestAccept uses an uncoloured header, so it is handled
+	-- only during the explicitly selected NPC capture phase.
+	return tonumber(tostring(message):match("^questID:%s*(%d+)$"))
+end
+
+
+local function IsNPCQuestPayload(message)
+	return tostring(message):match("^%s*npc%s*=")
+end
 
 
 -- Function to add messages to the log
@@ -20,6 +73,44 @@ function RQE.AddToDebugLog(message)
 	-- Check if debug logging is enabled via the checkbox
 	if not RQE.db.profile.debugLoggingCheckbox then
 		return
+	end
+
+	local frameIsShown = logFrame and logFrame:IsShown()
+	-- Export actions deliberately write before displaying the frame.  Automatic
+	-- quest captures may do the same while their synchronous contribution call
+	-- is active.  Outside those cases, a hidden frame cannot retain new data.
+	if not frameIsShown and captureMode ~= "all" and not capturePhase then
+		return
+	end
+
+	if capturePhase == "text" then
+		local questID = GetTextQuestIDFromLogMessage(message)
+		if questID then
+			currentQuestBlockAllowed = captureQuestIDs[questID] and not capturedTextQuestIDs[questID]
+			if currentQuestBlockAllowed then
+				capturedTextQuestIDs[questID] = true
+			end
+		elseif not IsTextQuestPayload(message) then
+			return
+		end
+
+		if currentQuestBlockAllowed ~= true then
+			return
+		end
+	elseif capturePhase == "npc" then
+		local questID = GetNPCQuestIDFromLogMessage(message)
+		if questID then
+			currentQuestBlockAllowed = captureQuestIDs[questID] and not capturedNPCQuestIDs[questID]
+			if currentQuestBlockAllowed then
+				capturedNPCQuestIDs[questID] = true
+			end
+		elseif not IsNPCQuestPayload(message) then
+			return
+		end
+
+		if currentQuestBlockAllowed ~= true then
+			return
+		end
 	end
 
 	local timestamp = date("%Y-%m-%d %H:%M:%S")
@@ -100,7 +191,7 @@ end
 
 
 -- Create a frame for displaying the log
-local logFrame = CreateFrame("Frame", "LogFrame", UIParent, "BackdropTemplate")
+logFrame = CreateFrame("Frame", "LogFrame", UIParent, "BackdropTemplate")
 logFrame:SetSize(300, 400) -- width, height
 logFrame:SetPoint("CENTER") -- position
 logFrame:SetBackdrop({
@@ -116,7 +207,7 @@ logFrame:RegisterForDrag("LeftButton")
 logFrame:SetScript("OnDragStart", logFrame.StartMoving)
 logFrame:SetScript("OnDragStop", logFrame.StopMovingOrSizing)
 logFrame:SetFrameStrata("HIGH")
-RQE.DebugLogFrame = logFrame
+RQE.DebugLogFrameRef = logFrame
 
 
 local header = CreateFrame("Frame", "RQE.LogFrameHeader", logFrame, "BackdropTemplate")
@@ -203,18 +294,14 @@ end
 
 
 -- Create and display closeButton for DebugLog
-local closeButton = CreateFrame("Button", "RQEDebugLogCloseButton", RQE.DebugLogFrame, "UIPanelCloseButton")
+local closeButton = CreateFrame("Button", "RQEDebugLogCloseButton", logFrame, "UIPanelCloseButton")
 closeButton:SetSize(30, 30)
-closeButton:SetPoint("TOPRIGHT", RQE.DebugLogFrame, "TOPRIGHT", 0, 0)
+closeButton:SetPoint("TOPRIGHT", logFrame, "TOPRIGHT", 0, 0)
 closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
 closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down")
 closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight")
 closeButton:SetScript("OnClick", function()
-	if isRetail then
-		RQE:ToggleDebugLog() -- Hide the debug log frame when the close button is clicked
-	else
-		logFrame:Hide()
-	end
+	logFrame:Hide()
 end)
 
 
@@ -251,18 +338,16 @@ SlashCmdList["LOGTOGGLE"] = function()
 	if logFrame:IsShown() then
 		logFrame:Hide()
 	else
-		logFrame:Show()
-		RQE.UpdateLogFrame()
+		RQE.DebugLogFrame()
 	end
 end
 
 
--- Function to toggle the log frame visibility
+-- Show and refresh the Debug Log.  Visibility toggling is handled by
+-- RQE:ToggleDebugLog(), so producer calls cannot accidentally hide a session.
 function RQE.DebugLogFrame()
-	if logFrame:IsShown() then
-		logFrame:Hide()
-	else
-		RQE.UpdateLogFrame()
+	RQE.UpdateLogFrame()
+	if not logFrame:IsShown() then
 		logFrame:Show()
 	end
 end
@@ -283,10 +368,112 @@ editBox:SetScript("OnTextChanged", function(self)
 end)
 
 
--- Function to clear the debug log
-function RQE:ClearDebugLog()
+local function ClearDebugLogContents()
 	logTable = {}
+	RQE.UpdateLogFrame()
+	scrollFrame:SetVerticalScroll(0)
+	scrollBar:SetValue(0)
 end
+
+
+-- Function to clear the debug log and invalidate its current capture session.
+function RQE:ClearDebugLog()
+	captureGeneration = captureGeneration + 1
+	ResetDebugLogCapture()
+	ClearDebugLogContents()
+end
+
+
+-- Used by RQE's explicit data-export actions, which create output before the
+-- frame is shown.
+function RQE:BeginDebugLogCapture()
+	captureGeneration = captureGeneration + 1
+	ResetDebugLogCapture()
+	captureMode = "all"
+	ClearDebugLogContents()
+end
+
+
+function RQE:EndDebugLogCapture()
+	if captureMode == "all" then
+		captureMode = nil
+	end
+end
+
+
+-- Register a quest with the current automatic quest-data capture session.
+-- A hidden Debug Log starts a fresh session; an already-visible one keeps its
+-- existing quest IDs so simultaneous accepts are shown together.
+function RQE:GetDebugLogCaptureGeneration()
+	return captureGeneration
+end
+
+
+function RQE:IsDebugLogQuestCaptureActive()
+	return captureMode == "quest"
+end
+
+
+local function RegisterDebugLogQuestCapture(questID)
+	if captureMode ~= "quest" then
+		ResetDebugLogCapture()
+		captureMode = "quest"
+		ClearDebugLogContents()
+	end
+
+	captureQuestIDs[questID] = true
+end
+
+
+-- Register the accepted quest immediately.  Its delayed data collection can
+-- then share one capture session with other quests accepted in the same burst.
+function RQE:PrepareDebugLogQuestCapture(questID)
+	questID = tonumber(questID)
+	if not questID then
+		return nil
+	end
+
+	RegisterDebugLogQuestCapture(questID)
+	return captureGeneration
+end
+
+
+function RQE:BeginDebugLogQuestCapture(questID, generation)
+	questID = tonumber(questID)
+	if not questID or (generation and generation ~= captureGeneration) then
+		return false
+	end
+
+	RegisterDebugLogQuestCapture(questID)
+	capturePhase = "text"
+	currentQuestBlockAllowed = nil
+	return true
+end
+
+
+function RQE:BeginDebugLogNPCCapture(questID)
+	questID = tonumber(questID)
+	if captureMode ~= "quest" or not questID or not captureQuestIDs[questID] then
+		return false
+	end
+
+	capturePhase = "npc"
+	currentQuestBlockAllowed = nil
+	return true
+end
+
+
+function RQE:EndDebugLogQuestCapture()
+	capturePhase = nil
+	currentQuestBlockAllowed = nil
+end
+
+
+-- Every hide path (the close button, minimap toggle, slash command, or another
+-- addon) clears the RQE Debug Log and invalidates its capture session.
+logFrame:HookScript("OnHide", function()
+	RQE:ClearDebugLog()
+end)
 
 
 -- Register the slash command
