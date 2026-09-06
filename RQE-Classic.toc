@@ -1,8 +1,18 @@
 ## Interface: 11508, 11509
 ## Title: Rhodan's Quest Explorer - Classic
 ## Category-enUS: Quests
+## Category-deDE: Quests
+## Category-esES: Misiones
+## Category-esMX: Misiones
+## Category-frFR: Quêtes
+## Category-itIT: Missioni
+## Category-koKR: 퀘스트
+## Category-ptBR: Missões
+## Category-ruRU: Задания
+## Category-zhCN: 任务
+## Category-zhTW: 任務
 ## Author: Rhodan {Aurleis}
-## Version: 12.1.0.1
+## Version: 12.1.0.2
 ## Notes: A handy tool for step-by-step help while questing.|n|n|cFFCC99FFCompatibility notes:|n|nCarbonite Quests|n• Partial issues during turn-in via Blizzard tracker:|n- Uncheck "Hide Quest Watch Window" under Watch Options|n- Uncheck "Hide Blizzards Quest Track Window"|n|nWaypointUI users:|n• Disable "Auto-Replace Waypoint"|n|nWorld Quest Tracker|n• Known issues|r
 ## IconTexture: Interface\AddOns\RQE\Textures\rhodan.tga
 
@@ -50,7 +60,7 @@ Client_Classic/EventManager.lua
 
 # User Interface
 Client_Classic/Config.lua
-Client_Classic/RQEMacro.lua
+RQEMacro.lua
 
 # Utility Modules
 WPUtil.lua
