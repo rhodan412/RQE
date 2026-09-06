@@ -7,12 +7,21 @@ Handles the creation of the macro button as it relates to quests in the DB file
 
 
 RQEMacro = RQEMacro or {}
-RQEMacro.pendingMacroSets = {} -- Queue for macro set operations
+local isRetail = RQE.IsRetail == true
+
+RQEMacro.pendingMacroSets = RQEMacro.pendingMacroSets or {} -- Queue for macro set operations
 RQEMacro.pendingMacroOperations = RQEMacro.pendingMacroOperations or {}
 RQEMacro.pendingMacroClears = RQEMacro.pendingMacroClears or {}  -- Queue to hold macro names pending clearance
+RQEMacro.pendingMacroSequence = RQEMacro.pendingMacroSequence or 0
 
 RQEMacro.MAX_ACCOUNT_MACROS, RQEMacro.MAX_CHARACTER_MACROS = 120, 18 -- Adjust these values according to the game's current limits
 RQEMacro.QUEST_MACRO_PREFIX = "RQEQuest" -- Prefix for macro names to help identify them
+
+local function QueuePendingMacroOperation(self, queue, operation)
+	self.pendingMacroSequence = self.pendingMacroSequence + 1
+	operation.order = self.pendingMacroSequence
+	table.insert(queue, operation)
+end
 
 
 -- Function that forces a check on the RQE Macro
@@ -134,6 +143,11 @@ end
 
 -- Function for Updating the RQE Magic Button Icon to match with RQE macro
 RQE.Buttons.UpdateMagicButtonIcon = function()
+	if not isRetail and InCombatLockdown() then
+		RQE.RefreshMagicButtonAfterCombat = true
+		return
+	end
+
 	local macroIndex = GetMacroIndexByName("RQE Macro")
 	if macroIndex and macroIndex > 0 then
 		local _, iconID = GetMacroInfo(macroIndex)
@@ -179,27 +193,63 @@ function RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, perCharact
 		iconFileID = tostring(iconFileID)
 	end
 
-	-- 🧩 Local variable to store return value (so we can still trigger the tooltip refresh after)
-	local result
-
 	if InCombatLockdown() then
-		-- Queue for after combat
-		table.insert(self.pendingMacroSets, {
-			name = macroName,
-			iconFileID = iconFileID,
-			body = macroBody,
-			perCharacter = perCharacter
-		})
+		if isRetail then
+			-- Queue for after combat.
+			table.insert(self.pendingMacroSets, {
+				name = macroName,
+				iconFileID = iconFileID,
+				body = macroBody,
+				perCharacter = perCharacter
+			})
+		else
+			QueuePendingMacroOperation(self, self.pendingMacroSets, {
+				name = macroName,
+				iconFileID = iconFileID,
+				body = macroBody,
+				perCharacter = perCharacter
+			})
+			return
+		end
 	else
 		return self:SetMacro(macroName, iconFileID, macroBody, perCharacter)
 	end
 
-	-- >>> NEW: Refresh Magic Button tooltip after macro is set/queued
-	if RQEMacro and RQEMacro.UpdateMagicButtonTooltip then
+	-- Retail preserves its existing immediate refresh after queueing a macro.
+	if isRetail and RQEMacro and RQEMacro.UpdateMagicButtonTooltip then
 		RQEMacro:UpdateMagicButtonTooltip()
 	end
 
-	return result
+	return nil
+end
+
+
+-- Classic/TBC searched quests use virtual step 0 while the quest pickup is
+-- pending, so their pickup macro must remain distinct from Retail step 1.
+function RQE:SetSearchedQuestPickupMacro(questID)
+	local questData = RQE.getQuestData(questID)
+	if not questData or not questData.npc or #questData.npc == 0 or questData.npc[1] == "" then
+		return false
+	end
+
+	local npcName = questData.npc[1]
+	if not npcName or npcName == "" then return false end
+
+	local macroLines = {
+		"#showtooltip item:1165",
+		"/tar " .. npcName,
+		"/tm 3",
+	}
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print("Creating macro for searched NPC:", npcName)
+	end
+	RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
+
+	C_Timer.After(0.35, function()
+		RQE.Buttons.UpdateMagicButtonVisibility()
+	end)
+	return true
 end
 
 
@@ -208,6 +258,10 @@ function RQE:GenerateNpcMacroIfNeeded(questID)
 	-- Check if quest is in player log
 	if C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.GetLogIndexForQuestID(questID) then
 		return -- Player already has or completed the quest
+	end
+
+	if not isRetail then
+		return RQE:SetSearchedQuestPickupMacro(questID)
 	end
 
 	local questData = RQE.getQuestData(questID)
@@ -242,7 +296,11 @@ end
 function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
 	if InCombatLockdown() then
 		-- Queue the macro operation for after combat
-		table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
+		if isRetail then
+			table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
+		else
+			QueuePendingMacroOperation(self, self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
+		end
 		return
 	end
 
@@ -269,6 +327,13 @@ function RQEMacro:ActuallySetMacro(name, iconFileID, body, perCharacter)
 			return nil
 		end
 	else -- Macro exists, update it
+		if not isRetail then
+			local _, _, currentBody = GetMacroInfo(macroIndex)
+			if currentBody == body then
+				return macroIndex
+			end
+		end
+
 		EditMacro(macroIndex, name, iconFileID, body)
 	end
 	return macroIndex
@@ -279,7 +344,11 @@ end
 function RQEMacro:ClearMacroContentByName(macroName)
 	if InCombatLockdown() then
 		-- Queue the macro clear request for after combat
-		table.insert(self.pendingMacroClears, macroName)
+		if isRetail then
+			table.insert(self.pendingMacroClears, macroName)
+		else
+			QueuePendingMacroOperation(self, self.pendingMacroClears, {name = macroName})
+		end
 		return
 	end
 
@@ -305,12 +374,66 @@ function RQEMacro:ActuallyClearMacroContentByName(macroName)
 
 	local macroIndex = GetMacroIndexByName(macroName)
 	if macroIndex ~= 0 then
+		if not isRetail then
+			local _, _, currentBody = GetMacroInfo(macroIndex)
+			if not currentBody or currentBody:match("^%s*$") then
+				return
+			end
+		end
+
 		-- Macro found, clear its content
 		EditMacro(macroIndex, nil, nil, " ")
 	else
 		-- Macro not found, log this
 		RQE.debugLog("Macro not found: " .. macroName)
 	end
+end
+
+
+-- Replays Classic/TBC macro work queued during combat. Their EventManager
+-- calls this from PLAYER_REGEN_ENABLED; Retail keeps its existing queue flow.
+function RQEMacro:ProcessPendingMacroOperations()
+	if isRetail or InCombatLockdown() then
+		return false
+	end
+
+	local pending = {}
+	local function AppendOperations(kind, operations)
+		for _, operation in ipairs(operations) do
+			-- Older sessions may contain a bare macro name in the clear queue.
+			if type(operation) == "string" then
+				operation = { name = operation }
+			end
+			table.insert(pending, {
+				kind = kind,
+				operation = operation,
+				order = operation.order or 0,
+			})
+		end
+	end
+
+	AppendOperations("set", self.pendingMacroSets)
+	AppendOperations("set", self.pendingMacroOperations)
+	AppendOperations("clear", self.pendingMacroClears)
+
+	self.pendingMacroSets = {}
+	self.pendingMacroOperations = {}
+	self.pendingMacroClears = {}
+
+	table.sort(pending, function(left, right)
+		return left.order < right.order
+	end)
+
+	for _, entry in ipairs(pending) do
+		local operation = entry.operation
+		if entry.kind == "clear" then
+			self:ActuallyClearMacroContentByName(operation.name)
+		else
+			self:ActuallySetMacro(operation.name, operation.iconFileID, operation.body, operation.perCharacter)
+		end
+	end
+
+	return #pending > 0
 end
 
 
@@ -362,6 +485,11 @@ end
 
 -- Function to update the Magic Button Tooltip dynamically
 function RQEMacro:UpdateMagicButtonTooltip()
+	if not isRetail and InCombatLockdown() then
+		RQE.RefreshMagicButtonAfterCombat = true
+		return
+	end
+
 	local MagicButton = RQE.MagicButton -- Reference to the magic button
 	if not MagicButton then return end
 
@@ -393,23 +521,22 @@ function RQEMacro:UpdateMagicButtonTooltip()
 	end
 
 	-- List of exception itemIDs
-	local exceptionItemIDs = {
-		[841] = true,
-		[2554] = true,
-		[4588] = true,
-		[4787] = true,
-		[5061] = true,
-		[5830] = true,
-		[23784] = true,
-		[28372] = true,
-		[28885] = true,
-		[30817] = true,
-		[28912] = true,
-		[45786] = true,
-		[118474] = true,
-		[143680] = true,
-		[153541] = true,
-	}
+	local exceptionItemIDs
+	if isRetail then
+		exceptionItemIDs = {
+			[841] = true, [2554] = true, [4588] = true, [4787] = true,
+			[5061] = true, [5830] = true, [23784] = true, [28372] = true,
+			[28885] = true, [30817] = true, [28912] = true, [45786] = true,
+			[118474] = true, [143680] = true, [153541] = true,
+		}
+	else
+		exceptionItemIDs = {
+			[841] = true, [2554] = true, [4588] = true, [4787] = true,
+			[5061] = true, [5830] = true, [2058] = true, [11753] = true,
+			[206995] = true, [4382] = true, [21561] = true, [20337] = true,
+			[7270] = true, [3081] = true, [1165] = true,
+		}
+	end
 
 	-- Create or reuse the count text overlay
 	if not MagicButton.CountText then
@@ -452,52 +579,36 @@ function RQEMacro:UpdateMagicButtonTooltip()
 				-- Show the macro body and icon for the exception
 				if itemID == 841 then
 					RQEShowWrappedMacroTooltip(self, "Pull Timer!", macroBody)
-					--GameTooltip:SetText("Pull Timer!\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 2554 then
 					RQEShowWrappedMacroTooltip(self, "Turn in the quest", macroBody)
-					--GameTooltip:SetText("Turn in the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 4588 then
 					RQEShowWrappedMacroTooltip(self, "Kill Mob(s)", macroBody)
-					--GameTooltip:SetText("Kill Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 4787 then
 					RQEShowWrappedMacroTooltip(self, "Collect/Loot Item from Mob(s)", macroBody)
-					--GameTooltip:SetText("Collect/Loot Item from Mob(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5061 then
 					RQEShowWrappedMacroTooltip(self, "Purchase Item(s)", macroBody)
-					--GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 30817 then
+				elseif (isRetail and itemID == 30817) or (not isRetail and itemID == 4382) then
 					RQEShowWrappedMacroTooltip(self, "Purchase Item(s)", macroBody)
-					--GameTooltip:SetText("Purchase Item(s)\n\n" .. macroBody, nil, nil, nil, nil, true)
 				elseif itemID == 5830 then
 					RQEShowWrappedMacroTooltip(self, "Speak/Interact with NPC", macroBody)
-					--GameTooltip:SetText("Speak/Interact with NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 23784 then
+				elseif (isRetail and itemID == 23784) or (not isRetail and itemID == 2058) then
 					RQEShowWrappedMacroTooltip(self, "Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker", macroBody)
-					--GameTooltip:SetText("Press this macro to close RQE temporarily and turn in via Blizzard Objective Tracker\n\n", nil, nil, nil, nil, true)
-				elseif itemID == 28372 then
+				elseif (isRetail and itemID == 28372) or (not isRetail and itemID == 11753) then
 					RQEShowWrappedMacroTooltip(self, "Look At/Near an NPC", macroBody)
-					--GameTooltip:SetText("Look At/Near an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 28885 then
+				elseif (isRetail and itemID == 28885) or (not isRetail and itemID == 206995) then
 					RQEShowWrappedMacroTooltip(self, "Use Emote", macroBody)
-					--GameTooltip:SetText("Use Emote\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 28912 then
+				elseif (isRetail and itemID == 28912) or (not isRetail and itemID == 21561) then
 					RQEShowWrappedMacroTooltip(self, "Learn ability", macroBody)
-					--GameTooltip:SetText("Learn ability\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 45786 then
+				elseif (isRetail and itemID == 45786) or (not isRetail and itemID == 20337) then
 					RQEShowWrappedMacroTooltip(self, "Set CVAR", macroBody)
-					--GameTooltip:SetText("Set CVAR\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 118474 then
+				elseif (isRetail and itemID == 118474) or (not isRetail and itemID == 7270) then
 					RQEShowWrappedMacroTooltip(self, "Look/Follow/Escort/Track an NPC", macroBody)
-					--GameTooltip:SetText("Look/Follow/Escort/Track an NPC\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 143680 then
+				elseif (isRetail and itemID == 143680) or (not isRetail and itemID == 3081) then
 					RQEShowWrappedMacroTooltip(self, "Weaken", macroBody)
-					--GameTooltip:SetText("Weaken\n\n" .. macroBody, nil, nil, nil, nil, true)
-				elseif itemID == 153541 then
+				elseif (isRetail and itemID == 153541) or (not isRetail and itemID == 1165) then
 					RQEShowWrappedMacroTooltip(self, "Pickup the quest", macroBody)
-					--GameTooltip:SetText("Pickup the quest\n\n" .. macroBody, nil, nil, nil, nil, true)
 				else
 					GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
-					-- GameTooltip:AddLine("\n(Item Exception ID: " .. itemID .. ")", 1, 1, 0)
 				end
 				GameTooltip:Show()
 				return
