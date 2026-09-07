@@ -182,18 +182,10 @@ local function CurrentStepUsesObjectiveStatus(questID)
 	return false
 end
 
--- Retail refreshes quest-map pins as part of super-tracking changes. During
--- raid combat, an automatic change made from an event handler can taint that
--- refresh before Blizzard reaches the protected map-pin button setup.
--- Keep manual tracker clicks and all non-raid combat behavior unchanged.
-local function IsRaidCombat()
-	if not InCombatLockdown() then
-		return false
-	end
-
-	local _, instanceType = IsInInstance()
-	return IsInRaid() or instanceType == "raid"
-end
+-- Retail refreshes quest-map pins as part of super-tracking changes. An
+-- automatic change made from an event handler during any combat can taint that
+-- refresh before Blizzard reaches the protected map-pin button setup. Manual
+-- tracker clicks deliberately bypass this helper and remain available.
 
 local function IsWorldMapShown()
 	return WorldMapFrame and WorldMapFrame:IsShown()
@@ -244,8 +236,8 @@ function RQE:AutoSetSuperTrackedQuestID(questID)
 		return false
 	end
 
-	if IsRaidCombat() then
-		RQE.PendingRaidCombatSuperTrackQuestID = questID
+	if InCombatLockdown() then
+		RQE.PendingCombatSuperTrackQuestID = questID
 		return false
 	end
 
@@ -1244,16 +1236,14 @@ end
 function RQE.handlePlayerRegenEnabled()
 	local mythicMode = RQE.db.profile.mythicScenarioMode
 
-	-- Apply the latest automatic tracking request that was deferred only for
-	-- raid combat. Delay one frame so Blizzard has completed its combat UI
-	-- transition before it rebuilds quest-map pins.
-	if RQE.PendingRaidCombatSuperTrackQuestID then
-		local questID = RQE.PendingRaidCombatSuperTrackQuestID
-		RQE.PendingRaidCombatSuperTrackQuestID = nil
-		C_Timer.After(0, function()
-			if not InCombatLockdown() then
-				C_SuperTrack.SetSuperTrackedQuestID(questID)
-			end
+	-- Apply the latest automatic tracking request deferred by combat only after
+	-- Blizzard's combat UI transition has settled. The common helper also keeps
+	-- this deferred request out of an open World Map refresh.
+	if RQE.PendingCombatSuperTrackQuestID then
+		local questID = RQE.PendingCombatSuperTrackQuestID
+		RQE.PendingCombatSuperTrackQuestID = nil
+		C_Timer.After(0.5, function()
+			RQE:AutoSetSuperTrackedQuestID(questID)
 		end)
 	end
 
@@ -6897,22 +6887,26 @@ function RQE.handleQuestWatchUpdate(...)
 		DEFAULT_CHAT_FRAME:AddMessage("QWU 05 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)		-- Pink
 	end
 
-	-- Adds quest to watch list when progress made
+	-- Add a newly progressing quest to the watch list only when it is neither
+	-- already watched nor complete. Re-adding a watched World Quest retriggers
+	-- Retail's quest-map refresh, which can reach protected map-pin setup during
+	-- a world-boss encounter without changing the watch list at all.
 	local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 	local isTaskQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or false
+	local watchType = C_QuestLog.GetQuestWatchType(questID)
 
-	if isWorldQuest then
+	if not isQuestCompleted and not watchType and isWorldQuest then
 		C_QuestLog.AddWorldQuestWatch(questID)
-	elseif isTaskQuest then
+	elseif not isQuestCompleted and not watchType and isTaskQuest then
 		C_QuestLog.AddQuestWatch(questID)
-	else
+	elseif not isQuestCompleted and not watchType then
 		C_QuestLog.AddQuestWatch(questID)
 	end
 
 	-- Retrieve the current watched quest ID if needed
 	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
-	local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or false
 	local questLink = GetQuestLink(questID)
 	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
