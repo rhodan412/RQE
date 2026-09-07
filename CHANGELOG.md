@@ -2,19 +2,23 @@
 
 	**HIGHLIGHTS**
 		- Fixed method for sorting quests in the tracker by proximity and displaying the distance to objective
+		- Fixed Retail 12.1 secret-aura and world-map protected-action errors.
 
 	Core.lua
 		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
 		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity (2026.09.06.1809)
+		- Saves stepIndex to character's DB file for quests for more accurate distance calculations (2026.09.07.1228)
 
 	DebugLog.lua
 		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
 
 	EventManager.lua
 		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+		- Stopped reading the secret UNIT_AURA update payload; aura-dependent quest checks are now safely coalesced from local quest data (2026.09.07.1228)
 
 	QuestingModule.lua
 		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity (2026.09.06.1809)
+		- Removed map-frame mutation while resolving a quest-zone label, preventing protected map-pin setup from inheriting RQE taint (2026.09.07.1228)
 
 	RQE.toc
 		- Updated interface/version# (2026.09.06.1809)
