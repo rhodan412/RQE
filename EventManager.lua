@@ -182,6 +182,77 @@ local function CurrentStepUsesObjectiveStatus(questID)
 	return false
 end
 
+-- Retail refreshes quest-map pins as part of super-tracking changes. During
+-- raid combat, an automatic change made from an event handler can taint that
+-- refresh before Blizzard reaches the protected map-pin button setup.
+-- Keep manual tracker clicks and all non-raid combat behavior unchanged.
+local function IsRaidCombat()
+	if not InCombatLockdown() then
+		return false
+	end
+
+	local _, instanceType = IsInInstance()
+	return IsInRaid() or instanceType == "raid"
+end
+
+local function IsWorldMapShown()
+	return WorldMapFrame and WorldMapFrame:IsShown()
+end
+
+local FlushPendingMapSafeSuperTrack
+
+FlushPendingMapSafeSuperTrack = function()
+	local questID = RQE.PendingMapSafeSuperTrackQuestID
+	if not questID then
+		RQE.MapSafeSuperTrackRetryQueued = false
+		return
+	end
+
+	-- Area POI tooltips and quest pins are built under WorldMapFrame. Do not
+	-- start an automatic map refresh until the player has finished using it.
+	if IsWorldMapShown() then
+		C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
+		return
+	end
+
+	RQE.PendingMapSafeSuperTrackQuestID = nil
+	RQE.MapSafeSuperTrackRetryQueued = false
+
+	-- A hardware-driven manual selection made while the map was open wins over
+	-- an older automatic request.
+	if RQE.ManualSuperTrack
+		and RQE.ManualSuperTrackedQuestID
+		and RQE.ManualSuperTrackedQuestID ~= questID
+	then
+		return
+	end
+
+	RQE:AutoSetSuperTrackedQuestID(questID)
+end
+
+function RQE:AutoSetSuperTrackedQuestID(questID)
+	if not questID then
+		return false
+	end
+
+	if IsWorldMapShown() then
+		RQE.PendingMapSafeSuperTrackQuestID = questID
+		if not RQE.MapSafeSuperTrackRetryQueued then
+			RQE.MapSafeSuperTrackRetryQueued = true
+			C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
+		end
+		return false
+	end
+
+	if IsRaidCombat() then
+		RQE.PendingRaidCombatSuperTrackQuestID = questID
+		return false
+	end
+
+	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	return true
+end
+
 
 ---------------------------
 -- #5. Event Handling
@@ -1173,6 +1244,19 @@ end
 function RQE.handlePlayerRegenEnabled()
 	local mythicMode = RQE.db.profile.mythicScenarioMode
 
+	-- Apply the latest automatic tracking request that was deferred only for
+	-- raid combat. Delay one frame so Blizzard has completed its combat UI
+	-- transition before it rebuilds quest-map pins.
+	if RQE.PendingRaidCombatSuperTrackQuestID then
+		local questID = RQE.PendingRaidCombatSuperTrackQuestID
+		RQE.PendingRaidCombatSuperTrackQuestID = nil
+		C_Timer.After(0, function()
+			if not InCombatLockdown() then
+				C_SuperTrack.SetSuperTrackedQuestID(questID)
+			end
+		end)
+	end
+
 	-- Clears the SeparateFocusFrame after combat ends
 	if RQE.ClearSeparateFocusFrameAfterCombat then
 		RQE:ClearSeparateFocusFrame()
@@ -1646,11 +1730,10 @@ function RQE.handleAreaPOI()
 	local isIndoors = IsIndoors()
 
 	if not isInRaid then
-		if not RQE.API.IsSuperTrackingQuest() then
-		--if not C_SuperTrack.IsSuperTrackingQuest() then
-			RQE:RestoreSuperTrackedQuestForCharacter()
-		end
-
+		-- AREA_POIS_UPDATED is raised while Retail's map provider builds Area POI
+		-- tooltips and their UI widgets. Do not restore super-tracking here: that
+		-- writes to the same map state and can taint the widget layout. Saved
+		-- super-tracking is restored on login and PLAYER_ENTERING_WORLD instead.
 		if isResting and isIndoors then
 			UpdateFrame()
 			RQE:StartPeriodicChecks()
@@ -3129,7 +3212,7 @@ function RQE.handlePlayerEnterWorld(...)
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
 					-- print("~~~ SetSuperTrack: 2236~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 					--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the charcter's currently supertracked quest when PLAYER_ENTERING_WORLD event fires
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 						DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
@@ -3587,7 +3670,7 @@ function RQE.handleSuperTracking()
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
 						-- print("~~~ SetSuperTrack: 2562~~~")
-						C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+						RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 						-- print("~~~ SaveTrackedQuestsToCharacter: 2598 ~~~")
 						RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when SUPER_TRACKING_CHANGED event fires
 						--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when SUPER_TRACKING_CHANGED event fires
@@ -3846,7 +3929,7 @@ function RQE.handleQuestAccepted(...)
 		--RQE:ClearSeparateFocusFrame()
 		RQE:ShouldClearFrame()
 		C_Timer.After(1, function()
-			C_SuperTrack.SetSuperTrackedQuestID(questID)
+			RQE:AutoSetSuperTrackedQuestID(questID)
 			UpdateFrame(questID)
 		end)
 	else
@@ -3986,7 +4069,7 @@ function RQE.handleQuestAccepted(...)
 				local superTrackIDToApply = RQE.ManualSuperTrackedQuestID
 				if superTrackIDToApply and superTrackIDToApply ~= RQE.API.GetSuperTrackedQuestID() then	--C_SuperTrack.GetSuperTrackedQuestID() then
 					-- print("~~~ SetSuperTrack: 2808~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(superTrackIDToApply)
+					RQE:AutoSetSuperTrackedQuestID(superTrackIDToApply)
 					-- print("~~~ SaveTrackedQuestsToCharacter: 2869 ~~~")
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_ACCEPTED event fires
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_ACCEPTED event fires
@@ -5957,7 +6040,7 @@ function RQE.handleQuestStatusUpdate()
 			if questID then
 				if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
 					-- print("~~~ SetSuperTrack: 4140~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
+					RQE:AutoSetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
 					-- print("~~~ SaveTrackedQuestsToCharacter: 4203 ~~~")
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events fire
@@ -6652,6 +6735,13 @@ function RQE.handleQuestWatchUpdate(...)
 	local event = select(2, ...)
 	local questID = select(3, ...)
 
+	-- This handler can automatically change quest watches and super-tracking
+	-- after boss/world-quest progress. Defer that work until the World Map is
+	-- closed so it cannot run inside an Area POI tooltip refresh.
+	if WorldMapFrame and WorldMapFrame:IsShown() then
+		return
+	end
+
 	-- Store the questID for tracking
 	RQE.LastQuestWatchQuestID = questID
 
@@ -6755,7 +6845,7 @@ function RQE.handleQuestWatchUpdate(...)
 		end
 	elseif not isSuperTracking then
 		-- print("~~~ SetSuperTrack: 4783~~~")
-		C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
+		RQE:AutoSetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
 		-- print("~~~ SaveTrackedQuestsToCharacter: 4849 ~~~")
 		RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_UPDATE event fires
 		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_UPDATE event fires
@@ -7133,7 +7223,7 @@ function RQE.handleQuestWatchListChanged(...)
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
 					-- print("~~~ SetSuperTrack: 5034~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+					RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 						DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
@@ -7158,7 +7248,7 @@ function RQE.handleQuestWatchListChanged(...)
 			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 			if not isWorldQuest then
 				-- print("~~~ SetSuperTrack: 5059~~~")
-				C_SuperTrack.SetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
+				RQE:AutoSetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
 				RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 				UpdateFrame()
 			end
@@ -7424,7 +7514,7 @@ function RQE.handleQuestFinished()
 			local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 			if closestQuestID then
 				-- print("~~~ SetSuperTrack: 5269~~~")
-				C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+				RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 				-- print("~~~ SaveTrackedQuestsToCharacter: 5344 ~~~")
 				RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
 				RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
