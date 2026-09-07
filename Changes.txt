@@ -1,36 +1,42 @@
 12.1.0.2
 
 	**HIGHLIGHTS**
-		- Fixed method for sorting quests in the tracker by proximity and displaying the distance to objective
+		- Fixed method for sorting quests in the tracker by proximity and displaying the distance to objective.
 		- Fixed Retail 12.1 secret-aura and world-map protected-action errors.
 
 	Core.lua
-		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
-		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity (2026.09.06.1809)
-		- Saves stepIndex to character's DB file for quests for more accurate distance calculations (2026.09.07.1228)
+		- Resolved issue where debug log frame wasn't clearing data between closes. (2026.09.06.1809)
+		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity. (2026.09.06.1809)
+		- Saves stepIndex to character's DB file for quests for more accurate distance calculations. (2026.09.07.1228)
+		- Routed automatic nearest-quest, saved-quest, and blacklist fallback super-tracking through Retail's map- and raid-combat-safe tracking path. (2026.09.07.1228)
 
 	DebugLog.lua
-		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+		- Resolved issue where debug log frame wasn't clearing data between closes. (2026.09.06.1809)
 
 	EventManager.lua
-		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
-		- Stopped reading the secret UNIT_AURA update payload; aura-dependent quest checks are now safely coalesced from local quest data (2026.09.07.1228)
+		- Resolved issue where debug log frame wasn't clearing data between closes. (2026.09.06.1809)
+		- Stopped reading the secret UNIT_AURA update payload; aura-dependent quest checks are now safely coalesced from local quest data. (2026.09.07.1228)
+		- Routed automatic event-driven super-tracking through map- and raid-combat-safe paths, deferring raid-combat requests until PLAYER_REGEN_ENABLED and World Map requests until the map closes so Blizzard's QuestDataProvider refresh cannot taint its protected map-pin Button:SetPassThroughButtons() setup; manual tracking and non-raid combat behavior remain unchanged. (2026.09.07.1515)
+		- Skipped automatic QUEST_WATCH_UPDATE handling while WorldMapFrame is open, preventing boss/world-quest progress from mutating map pins or watch lists during an Area POI tooltip refresh. (2026.09.07.1515)
+		- Stopped restoring saved super-tracking from AREA_POIS_UPDATED, preventing Retail's Area POI widget tooltip layout from inheriting RQE taint when a map icon is selected. (2026.09.07.1515)
 
 	QuestingModule.lua
-		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity (2026.09.06.1809)
-		- Removed map-frame mutation while resolving a quest-zone label, preventing protected map-pin setup from inheriting RQE taint (2026.09.07.1228)
+		- Added coding to display distance to quest objective in yds and fixed sort method for quests based on proximity.(2026.09.06.1809)
+		- Removed map-frame mutation while resolving a quest-zone label, preventing protected map-pin setup from inheriting RQE taint. (2026.09.07.1228)
+		- Resized the World Quests section from its final rendered row before anchoring the Bonus Quests section, preventing excess spacing between them. (2026.09.07.1515)
+		- Preserved the measured World Quests section height during combat refreshes so the deferred row renderer cannot leave the Bonus Quests header below an estimated empty gap while world quests remain watched. (2026.09.07.1515)
 
 	RQE.toc
-		- Updated interface/version# (2026.09.06.1809)
+		- Updated interface/version#. (2026.09.06.1809)
 
 	RQEDatabase.lua
-		- Added additional Midnight quests to DB for Season 2 (2026.09.06.1809)
+		- Added additional Midnight quests to DB for Season 2. (2026.09.06.1809)
 
 	RQEMacro.lua
-		- Retail, TBC Anniversary and Classic now use the main file instead of their own separate macro files for coding (2026.09.06.1809)
+		- Retail, TBC Anniversary and Classic now use the main file instead of their own separate macro files for coding. (2026.09.06.1809)
 
 	RQEMinimap.lua
-		- Resolved issue where debug log frame wasn't clearing data between closes (2026.09.06.1809)
+		- Resolved issue where debug log frame wasn't clearing data between closes. (2026.09.06.1809)
 
 
 12.1.0.1 (2026.09.04)
