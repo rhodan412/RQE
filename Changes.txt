@@ -1,8 +1,9 @@
-12.1.0.2
+12.1.0.2 (2026.09.07)
 
 	**HIGHLIGHTS**
 		- Fixed method for sorting quests in the tracker by proximity and displaying the distance to objective.
 		- Fixed Retail 12.1 secret-aura and world-map protected-action errors.
+		- Item and spell tooltips now appear reliably across the full name, even when quest-step text wraps onto another line in Retail, Classic/Season of Discovery, and TBC Anniversary.
 
 	Core.lua
 		- Resolved issue where debug log frame wasn't clearing data between closes. (2026.09.06.1809)
@@ -10,6 +11,8 @@
 		- Saves stepIndex to character's DB file for quests for more accurate distance calculations. (2026.09.07.1228)
 		- Routed automatic nearest-quest, saved-quest, and blacklist fallback super-tracking through Retail's map- and combat-safe tracking path. (2026.09.07.1228)
 		- Removed the automatic quest-details map open/close fallback from super-tracking coordinate collection, using the non-UI waypoint query instead so boss updates cannot taint later Area POI widget tooltips. (2026.09.07.1617)
+		- Rebuilt item/spell hover regions so every wrapped word has its own mouseover target while leaving the existing coordinate/coordblock waypoint overlays unchanged. (2026.09.07.1854)
+		- Corrected SeparateFocusFrame wrap simulation to exclude trailing separators from line-fit decisions, preserve separators split around rich-text tags, and remeasure each complete rendered line so cumulative font kerning and rounding cannot shift later item/spell mouseover targets; StepsText behavior remains unchanged. (2026.09.07.1854)
 
 	DebugLog.lua
 		- Resolved issue where debug log frame wasn't clearing data between closes. (2026.09.06.1809)
@@ -30,6 +33,9 @@
 
 	RQE.toc
 		- Updated interface/version#. (2026.09.06.1809)
+
+	RQEFrame.lua
+		- Added item and spell handling to the SeparateFocusFrame's native hyperlinks when a step also contains coordinate text, preserving item/spell tooltips across wrapped HTML links without changing coordinate waypoint behavior. (2026.09.07.1854)
 
 	RQEDatabase.lua
 		- Added additional Midnight quests to DB for Season 2. (2026.09.06.1809)
