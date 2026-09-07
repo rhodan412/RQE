@@ -7397,101 +7397,207 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 	-- local lineHeight = parentFrame:GetLineHeight()
 	local yOffset, rawPos = 0, 1
 
-	-- Helper: resolve the true owning frame name, even if deeply nested
-	local function GetTopParentName(frame)
-		local limit = 5 -- safety to avoid infinite loops
-		local cur = frame
-		while cur and limit > 0 do
-			if cur.GetName and cur:GetName() then
-				return cur:GetName()
-			end
-			cur = cur:GetParent()
-			limit = limit - 1
-		end
-		return nil
+	-- FontStrings perform the final word wrapping, so an item/spell hover cannot
+	-- be represented by a single rectangle.  Lay out each visible word here and
+	-- create one hover region for every rendered line fragment of a rich tag.
+	-- Coordinate overlays deliberately continue to use their existing code below.
+	local function StripColorCodes(text)
+		return text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
 	end
+
+	local function FormatCoordsForLayout(data, isCoordBlock)
+		local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+		if not (x and y and mapID) then
+			return data
+		end
+
+		if isCoordBlock then
+			return string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+		end
+
+		return string.format("[coords: %.2f, %.2f map %s]", tonumber(x), tonumber(y), mapID)
+	end
+
+	local function CreateTagHover(tagType, tagID, x, y, width)
+		if width <= 0 then return end
+
+		local hover = CreateFrame("Frame", nil, baseParent)
+		local hoveredID = tagID
+		hover:EnableMouse(true)
+		hover:SetFrameStrata("TOOLTIP")
+		hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
+		hover:SetAlpha(0.01)
+		hover:SetSize(width, lineHeight)
+		hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", x, -y)
+
+		if tagType == "item" then
+			hover:SetScript("OnEnter", function(self)
+				GameTooltip:Hide()
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
+				GameTooltip:SetItemByID(hoveredID)
+				local count = C_Item.GetItemCount(hoveredID) or 0
+				GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+				GameTooltip:Show()
+			end)
+		else
+			hover:SetScript("OnEnter", function(self)
+				GameTooltip:Hide()
+				GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
+				GameTooltip:SetSpellByID(hoveredID)
+				GameTooltip:Show()
+			end)
+		end
+
+		hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+		table.insert(parentFrame._rqeSegments, hover)
+	end
+
+	local function CreateWrappedTagHovers(text)
+		local maxWidth = parentFrame:GetWidth()
+		if not maxWidth or maxWidth <= 0 then maxWidth = 400 end
+		local useSeparateFocusWrapping = RQE.SeparateContentFrame
+			and baseParent == RQE.SeparateContentFrame
+
+		local cursorX, cursorY = 0, 0
+		local focusLineText = ""
+
+		local function NewVisualLine()
+			cursorX = 0
+			cursorY = cursorY + lineHeight
+			focusLineText = ""
+		end
+
+		local function PlaceFragment(fragment, tagType, tagID)
+			if fragment == "" then return end
+			measureFS:SetText(fragment)
+			local width = measureFS:GetStringWidth()
+			if useSeparateFocusWrapping then
+				local visibleWord = fragment:gsub("%s+$", "")
+				local fitFragment = visibleWord ~= "" and visibleWord or fragment
+				measureFS:SetText(focusLineText .. fitFragment)
+				if cursorX > 0 and measureFS:GetStringWidth() > maxWidth then
+					NewVisualLine()
+				end
+
+				-- Re-measure the complete rendered line after every fragment.  Adding
+				-- isolated word widths loses font kerning/rounding and can drift just
+				-- far enough to put a late tag's first word on the wrong line.
+				measureFS:SetText(focusLineText)
+				cursorX = measureFS:GetStringWidth()
+				if tagType then
+					CreateTagHover(tagType, tagID, cursorX, cursorY, width)
+				end
+				focusLineText = focusLineText .. fragment
+				measureFS:SetText(focusLineText)
+				cursorX = measureFS:GetStringWidth()
+				return
+			end
+
+			local wrapWidth = width
+			if cursorX > 0 and cursorX + wrapWidth > maxWidth then
+				NewVisualLine()
+			end
+			if tagType then
+				CreateTagHover(tagType, tagID, cursorX, cursorY, width)
+			end
+			cursorX = cursorX + width
+		end
+
+		local function PlaceChunk(chunk, tagType, tagID)
+			if chunk == "" then return end
+			measureFS:SetText(chunk)
+			local chunkWrapWidth = measureFS:GetStringWidth()
+			if useSeparateFocusWrapping then
+				local visibleWord = chunk:gsub("%s+$", "")
+				if visibleWord ~= "" and visibleWord ~= chunk then
+					measureFS:SetText(visibleWord)
+					chunkWrapWidth = measureFS:GetStringWidth()
+				end
+			end
+			if chunkWrapWidth <= maxWidth then
+				PlaceFragment(chunk, tagType, tagID)
+				return
+			end
+
+			-- Only exceptionally long unbroken words reach this path.  Split them
+			-- into line fragments so every visible part of the tag remains hoverable.
+			local fragment = ""
+			for index = 1, #chunk do
+				local character = chunk:sub(index, index)
+				measureFS:SetText(fragment .. character)
+				if fragment ~= "" and cursorX + measureFS:GetStringWidth() > maxWidth then
+					PlaceFragment(fragment, tagType, tagID)
+					NewVisualLine()
+					fragment = character
+				else
+					fragment = fragment .. character
+				end
+			end
+			PlaceFragment(fragment, tagType, tagID)
+		end
+
+		local function AddVisibleText(visibleText, tagType, tagID)
+			visibleText = StripColorCodes(visibleText)
+			local start = 1
+			while start <= #visibleText do
+				local newline = visibleText:find("\n", start, true)
+				local visualLine = visibleText:sub(start, newline and newline - 1 or #visibleText)
+				if useSeparateFocusWrapping then
+					local leadingWhitespace = visualLine:match("^(%s+)")
+					if leadingWhitespace then
+						-- This is usually the separator following a parsed rich tag.
+						-- Advance it without wrapping on the separator itself; WoW
+						-- discards it if the following word moves to the next line.
+						measureFS:SetText(leadingWhitespace)
+						focusLineText = focusLineText .. leadingWhitespace
+						measureFS:SetText(focusLineText)
+						cursorX = measureFS:GetStringWidth()
+					end
+				end
+				for chunk in visualLine:gmatch("%S+%s*") do
+					PlaceChunk(chunk, tagType, tagID)
+				end
+				if not newline then break end
+				NewVisualLine()
+				start = newline + 1
+			end
+		end
+
+		local function AddPlainText(plainText)
+			plainText = plainText:gsub("{coords:([^}]+)}", function(data)
+				return FormatCoordsForLayout(data, false)
+			end)
+			plainText = plainText:gsub("{coordblock:([^}]+)}", function(data)
+				return FormatCoordsForLayout(data, true)
+			end)
+			AddVisibleText(plainText)
+		end
+
+		local rawPosition = 1
+		while rawPosition <= #text do
+			local tagStart, tagEnd, tagType, tagID, tagName =
+				text:find("{([%a]+):(%d+):([^}]+)}", rawPosition)
+			if not tagStart then
+				AddPlainText(text:sub(rawPosition))
+				break
+			end
+
+			AddPlainText(text:sub(rawPosition, tagStart - 1))
+			if tagType == "item" or tagType == "spell" then
+				AddVisibleText("[" .. tagName .. "]", tagType, tonumber(tagID))
+			else
+				AddPlainText(text:sub(tagStart, tagEnd))
+			end
+			rawPosition = tagEnd + 1
+		end
+	end
+
+	CreateWrappedTagHovers(rawText)
 
 	for line in displayText:gmatch("([^\n]*)\n?") do
 		if line and line ~= "" then
 			local nl = rawText:find("\n", rawPos, true) or (#rawText + 1)
 			local rawLine = rawText:sub(rawPos, nl - 1)
-			local patternPos = 1
-
-			local cursorX = 0
-			while true do
-				local startTag, endTag, tagType, tagID, tagName =
-					rawLine:find("{([%a]+):(%d+):([^}]+)}", patternPos)
-				if not startTag then break end
-
-				tagID = tonumber(tagID)
-
-				-- Text before this tag (between previous tag and this one)
-				local preText = rawLine:sub(patternPos, startTag - 1)
-				if preText ~= "" then
-					measureFS:SetText(preText)
-					cursorX = cursorX + measureFS:GetStringWidth()
-				end
-
-				-- Handle tag type
-				local tagWidth
-				measureFS:SetText("[" .. tagName .. "]")
-				tagWidth = measureFS:GetStringWidth()
-
-				local maxWidth = parentFrame:GetWidth() or 400
-
-				if (cursorX + tagWidth) > maxWidth then
-					-- wraps to next line
-					cursorX = 0
-					yOffset = yOffset + lineHeight
-				end
-
-				local yAdj = yOffset
-				local parentName = GetTopParentName(parentFrame) or ""
-				if parentName:find("RQE_SeparateContentFrame", 1, true) then
-					local extraAdjust = 0
-					if yOffset > lineHeight * 2 then
-						extraAdjust = (yOffset / lineHeight) * 0.08
-					end
-					yAdj = yAdj + (lineHeight * (0.15 + extraAdjust))
-				end
-
-				local hover = CreateFrame("Frame", nil, baseParent)
-				hover:EnableMouse(true)
-				hover:SetFrameStrata("TOOLTIP")
-				hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 5 + (#parentFrame._rqeSegments))
-				hover:SetAlpha(0.01)
-				hover:SetSize(tagWidth + 6, lineHeight)
-				hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", cursorX, -yAdj)
-
-				if tagType == "item" then
-					hover:SetScript("OnEnter", function()
-						GameTooltip:Hide()
-						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
-						GameTooltip:SetItemByID(tagID)
-						local count = C_Item.GetItemCount(tagID) or 0
-						GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
-						GameTooltip:Show()
-					end)
-					hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-				elseif tagType == "spell" then	-- replaced call for RQE.HandleSpellTag() but may be an issue because "SetSpellByID(tagID)" isn't valid Blizzard API
-					hover:SetScript("OnEnter", function()
-						GameTooltip:Hide()
-						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR_RIGHT")
-						GameTooltip:SetSpellByID(tagID)
-						GameTooltip:Show()
-					end)
-					hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
-				end
-
-				table.insert(parentFrame._rqeSegments, hover)
-
-				-- Advance cursor after tag
-				cursorX = cursorX + tagWidth
-
-				-- Advance search position
-				patternPos = endTag + 1
-			end
-
 			-- Coords clickable overlays
 			local coordsPatternPos = 1
 
