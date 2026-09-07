@@ -1244,6 +1244,9 @@ function RQE:SaveSuperTrackedQuestToCharacter()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~~ Running RQE:SaveSuperTrackedQuestToCharacter() ~~~")
 	end
+	if RQE.SyncLiveTrackedQuestStepIndex then
+		RQE:SyncLiveTrackedQuestStepIndex()
+	end
 
 	-- Get the currently supertracked quest ID
 	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
@@ -1305,19 +1308,34 @@ function RQE:SaveTrackedQuestsToCharacter()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("~~~ Running RQE:SaveTrackedQuestsToCharacter() ~~~")
 	end
+	if RQE.SyncLiveTrackedQuestStepIndex then
+		RQE:SyncLiveTrackedQuestStepIndex()
+	end
 
 	-- Initialize the trackedQuests table for this character
 	RQECharacterDB.trackedQuests = {}
+	RQECharacterDB.trackedQuestStepIndexes = RQECharacterDB.trackedQuestStepIndexes or {}
+	local currentlyTrackedQuestIDs = {}
 
 	-- Loop through the tracked quests
 	for i = 1, C_QuestLog.GetNumQuestWatches() do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 		if questID then
+			currentlyTrackedQuestIDs[questID] = true
 			-- Save the tracked quest ID
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("QuestID: " .. questID .. " saved to RQECharacterDB.trackedQuests")
 			end
 			table.insert(RQECharacterDB.trackedQuests, questID)
+		end
+	end
+
+	-- Step indexes are maintained independently from the legacy trackedQuests
+	-- array so existing restore code continues to receive plain quest IDs.
+	-- Remove entries that no longer belong to a watched quest.
+	for questID in pairs(RQECharacterDB.trackedQuestStepIndexes) do
+		if not currentlyTrackedQuestIDs[tonumber(questID) or questID] then
+			RQECharacterDB.trackedQuestStepIndexes[questID] = nil
 		end
 	end
 
@@ -1823,6 +1841,7 @@ function RQE.GetMissingQuestData(acceptedQuestID, captureGeneration)
 			--RQE.db.profile.debugLoggingCheckbox = false
 		end
 	end
+
 end
 
 
@@ -2182,6 +2201,7 @@ RQE.profileHasBeenSet = false
 
 -- Initialize saved variables
 RQECharacterDB = RQECharacterDB or {}
+RQECharacterDB.trackedQuestStepIndexes = RQECharacterDB.trackedQuestStepIndexes or {}
 RQE.Version = C_AddOns.GetAddOnMetadata("RQE", "Version")
 RQE.debugLog("Initialized saved variables.")
 
