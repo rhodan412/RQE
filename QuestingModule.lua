@@ -1363,17 +1363,293 @@ function RQE:SortWatchedQuestsByProximity()
 end
 
 
--- Returns the database step that corresponds to the quest's next unfinished
--- objective. Completed quests intentionally use their turn-in (99) step.
-function RQE:GetNextIncompleteTrackerStepIndex(questID)
-	local questData = RQE.getQuestData and RQE.getQuestData(questID)
-	if type(questData) ~= "table" then return nil end
+-- Keep tracker step indexes in character SavedVariables without changing the
+-- legacy trackedQuests array. WoW writes this table to disk on logout/reload;
+-- during play RQE and RQECharacterDB share this same in-memory table.
+RQECharacterDB = RQECharacterDB or {}
+RQECharacterDB.trackedQuestStepIndexes = RQECharacterDB.trackedQuestStepIndexes or {}
+RQE.trackerQuestStepCache = RQECharacterDB.trackedQuestStepIndexes
 
+
+local function IsValidTrackerDBStep(questData, stepIndex)
+	stepIndex = tonumber(stepIndex)
+	return stepIndex and stepIndex >= 1 and stepIndex % 1 == 0
+		and type(questData and questData[stepIndex]) == "table"
+end
+
+
+local function GetLiveTrackerQuestOwnerID()
+	local displayedQuestID = tonumber(RQE.DisplayedQuestID)
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID and tonumber(RQE.API.GetSuperTrackedQuestID())
+	if superTrackedQuestID == 0 then superTrackedQuestID = nil end
+
+	if displayedQuestID and superTrackedQuestID then
+		if displayedQuestID == superTrackedQuestID then
+			return displayedQuestID
+		end
+		return nil
+	end
+	return displayedQuestID or superTrackedQuestID
+end
+
+
+-- AddonSetStepIndex belongs to one quest only. Never copy it to another row in
+-- the tracker merely because that row is watched.
+local function GetLiveTrackerQuestStepIndex(questID, questData)
+	local ownerQuestID = GetLiveTrackerQuestOwnerID()
+
+	local stepIndex = tonumber(RQE.AddonSetStepIndex)
+	if ownerQuestID == tonumber(questID) and IsValidTrackerDBStep(questData, stepIndex) then
+		return stepIndex
+	end
+end
+
+
+local function GetLiveTrackerQuestStep()
+	local ownerQuestID = GetLiveTrackerQuestOwnerID()
+	if not ownerQuestID then return nil end
+	local questData = RQE.getQuestData and RQE.getQuestData(ownerQuestID)
+	local stepIndex = GetLiveTrackerQuestStepIndex(ownerQuestID, questData)
+	if stepIndex then return ownerQuestID, stepIndex end
+end
+
+
+local function ParseTrackerRequiredAmount(rawAmount)
+	if type(rawAmount) == "string" then
+		local combinedAmount = rawAmount:match("^%s*(%d+)%s*%+%s*objective%s*$")
+		if combinedAmount then
+			return tonumber(combinedAmount) or 1, true
+		end
+	end
+	return tonumber(rawAmount) or 1, false
+end
+
+
+local function GetTrackerObjectiveProgress(objectives, stepData)
+	local objectiveIndex = tonumber(stepData and stepData.objectiveIndex) or 1
+	local objective = objectives and objectives[objectiveIndex]
+	return objective and (tonumber(objective.numFulfilled) or 0) or 0, objectiveIndex, objective
+end
+
+
+local function GetTrackerItemCount(itemID)
+	if C_Item and C_Item.GetItemCount then
+		return tonumber(C_Item.GetItemCount(itemID)) or 0
+	end
+	if GetItemCount then
+		return tonumber(GetItemCount(itemID, false)) or 0
+	end
+	return 0
+end
+
+
+local function GetTrackerAuraStacks(auraName, filter)
+	if not (C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName) then return 0 end
+	local aura = C_UnitAuras.GetAuraDataBySpellName("player", auraName, filter)
+	if not aura then return 0 end
+	return aura.applications and aura.applications > 0 and aura.applications or 1
+end
+
+
+-- Conditionals are deliberately allowlisted. The normal progression engine can
+-- execute arbitrary RQE functions; doing that for every watched quest would be
+-- unsafe because some of those functions click buttons or change waypoints.
+local trackerConditionalAllowlist = {
+	CheckCoordinateDistance = true,
+	CheckKnownSpell = true,
+	CheckMap = true,
+	CheckQuestState = true,
+}
+
+
+local function EvaluateTrackerConditional(condition)
+	if type(condition) ~= "string" then return false end
+	local functionName, rawParameters = condition:match("RQE%.([%w_]+)%((.-)%)")
+	if not (functionName and trackerConditionalAllowlist[functionName] and type(RQE[functionName]) == "function") then
+		return false
+	end
+
+	local parameters = {}
+	for rawParameter in string.gmatch(rawParameters or "", "[^,]+") do
+		rawParameter = rawParameter:gsub("^%s+", ""):gsub("%s+$", "")
+		local numericParameter = tonumber(rawParameter)
+		if numericParameter then
+			table.insert(parameters, numericParameter)
+		else
+			table.insert(parameters, rawParameter:gsub("^['\"]", ""):gsub("['\"]$", ""))
+		end
+	end
+
+	local succeeded, result = pcall(RQE[functionName], RQE, unpack(parameters))
+	return succeeded and result == true
+end
+
+
+-- Read-only counterpart to the progression checks used by StartPeriodicChecks.
+-- It queries state but never clicks a waypoint button, changes a macro, mutates
+-- AddonSetStepIndex, or schedules another evaluation.
+local function EvaluateTrackerDBCheck(questID, stepIndex, stepData, checkData, objectives)
+	local functionName = checkData.funct
+	local check = checkData.check or {}
+	local neededAmount = checkData.neededAmt or {}
+
+	if functionName == "CheckDBInventory" then
+		local objectiveProgress = GetTrackerObjectiveProgress(objectives, stepData)
+		for index, itemID in ipairs(check) do
+			local required, includeObjective = ParseTrackerRequiredAmount(neededAmount[index])
+			local current = GetTrackerItemCount(itemID) + (includeObjective and objectiveProgress or 0)
+			if current < required then return false end
+		end
+		return #check > 0
+
+	elseif functionName == "CheckDBBuff" or functionName == "CheckDBDebuff" then
+		local objectiveProgress = GetTrackerObjectiveProgress(objectives, stepData)
+		local auraFilter = functionName == "CheckDBBuff" and "HELPFUL" or "HARMFUL"
+		for index, auraName in ipairs(check) do
+			local required, includeObjective = ParseTrackerRequiredAmount(neededAmount[index])
+			local current = GetTrackerAuraStacks(auraName, auraFilter) + (includeObjective and objectiveProgress or 0)
+			if current < required then return false end
+		end
+		return #check > 0
+
+	elseif functionName == "CheckDBZoneChange" then
+		local currentMapID = C_Map.GetBestMapForUnit("player")
+		local currentSubZone = tostring(GetSubZoneText and GetSubZoneText() or ""):lower()
+		local currentZone = tostring(GetZoneText and GetZoneText() or ""):lower()
+		local currentRealZone = tostring(GetRealZoneText and GetRealZoneText() or ""):lower()
+		for _, mapOrZone in ipairs(check) do
+			local requiredMapID = tonumber(mapOrZone)
+			if (requiredMapID and requiredMapID == currentMapID)
+				or (not requiredMapID and (
+					currentSubZone == tostring(mapOrZone):lower()
+					or currentZone == tostring(mapOrZone):lower()
+					or currentRealZone == tostring(mapOrZone):lower()
+				))
+			then
+				return true
+			end
+		end
+		return false
+
+	elseif functionName == "CheckDBObjectiveStatus" then
+		local _, objectiveIndex, objective = GetTrackerObjectiveProgress(objectives, stepData)
+		if not objective then return false end
+
+		local objectiveType
+		if GetQuestObjectiveInfo then
+			objectiveType = select(2, GetQuestObjectiveInfo(questID, objectiveIndex, false))
+		end
+
+		for index = 1, math.max(1, #neededAmount) do
+			local required = tonumber(neededAmount[index]) or 1
+			if objectiveType == "progressbar" and GetQuestProgressBarPercent then
+				if required == 1 then required = 100 elseif required == 0.01 then required = 1 end
+				if (tonumber(GetQuestProgressBarPercent(questID)) or 0) < required then return false end
+			else
+				local fulfilled = tonumber(objective.numFulfilled) or 0
+				if fulfilled < required then return false end
+				local totalRequired = tonumber(objective.numRequired)
+				if totalRequired and fulfilled >= totalRequired and objective.finished ~= true then return false end
+			end
+		end
+		return true
+
+	elseif functionName == "CheckDBComplete" then
+		local checkedQuestID = tonumber(check[1]) or questID
+		return C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+
+	elseif functionName == "CheckScenarioStage" then
+		if not (C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario()) then return false end
+		local scenarioInfo = C_ScenarioInfo and C_ScenarioInfo.GetScenarioInfo and C_ScenarioInfo.GetScenarioInfo()
+		return scenarioInfo and tonumber(scenarioInfo.currentStage)
+			and scenarioInfo.currentStage >= (tonumber(neededAmount[1]) or 1) or false
+
+	elseif functionName == "CheckScenarioCriteria" then
+		if not (C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario()) then return false end
+		local results = {}
+		for index, criteriaIndex in ipairs(check) do
+			local criteriaInfo = C_ScenarioInfo and C_ScenarioInfo.GetCriteriaInfo
+				and C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
+			results[index] = criteriaInfo
+				and (tonumber(criteriaInfo.quantity) or 0) >= (tonumber(neededAmount[index]) or tonumber(criteriaInfo.totalQuantity) or 1)
+				or false
+		end
+
+		local logic = checkData.logic or "AND"
+		if logic == "OR" then
+			for _, result in ipairs(results) do if result then return true end end
+			return false
+		elseif logic == "NOT" then
+			for _, result in ipairs(results) do if result then return false end end
+			return true
+		end
+		for _, result in ipairs(results) do if not result then return false end end
+		return #results > 0
+
+	elseif functionName == "CheckDBConditionalsOnly" then
+		return EvaluateTrackerConditional(checkData.cond)
+	end
+
+	-- Unknown functions fail closed at this step instead of being called.
+	return false
+end
+
+
+local function EvaluateTrackerDBStep(questID, stepIndex, stepData, objectives)
+	if stepData.checks then
+		local overallResult
+		for _, checkData in ipairs(stepData.checks) do
+			-- This mirrors the progression engine's conditional short-circuit.
+			if checkData.cond and EvaluateTrackerConditional(checkData.cond) then
+				return true
+			end
+
+			local currentResult = EvaluateTrackerDBCheck(questID, stepIndex, stepData, checkData, objectives) == true
+			local modifier = checkData.mod or ""
+			if modifier == "OR" then
+				overallResult = (overallResult or false) or currentResult
+			elseif modifier == "AND" then
+				overallResult = (overallResult or false) and currentResult
+			elseif modifier == "NOT" then
+				overallResult = not currentResult
+			else
+				overallResult = currentResult
+			end
+		end
+		return overallResult == true
+	end
+
+	if stepData.funct then
+		return EvaluateTrackerDBCheck(questID, stepIndex, stepData, stepData, objectives)
+	end
+
+	local objectiveIndex = tonumber(stepData.objectiveIndex)
+	if objectiveIndex == 99 then
+		return C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID) == true
+	elseif objectiveIndex and objectives[objectiveIndex] then
+		return objectives[objectiveIndex].finished == true
+	end
+
+	-- A navigation-only step with no completion check is the active step.
+	return false
+end
+
+
+local function ShouldSkipTrackerStepForFaction(stepData)
+	local description = tostring(stepData and stepData.description or "")
+	local requiredFaction = description:match("^%s*(ALLIANCE):") or description:match("^%s*(HORDE):")
+	if not requiredFaction then return false end
+	local playerFaction = UnitFactionGroup and UnitFactionGroup("player")
+	return playerFaction and requiredFaction ~= string.upper(playerFaction)
+end
+
+
+local function ResolveTrackerQuestStepIndex(questID, questData)
 	if (C_QuestLog.IsComplete and C_QuestLog.IsComplete(questID))
 		or (C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID))
 	then
 		for stepIndex, stepData in ipairs(questData) do
-			if tonumber(stepData.objectiveIndex) == 99 then
+			if tonumber(stepData.objectiveIndex) == 99 or stepData.funct == "CheckDBComplete" then
 				return stepIndex
 			end
 		end
@@ -1381,20 +1657,95 @@ function RQE:GetNextIncompleteTrackerStepIndex(questID)
 
 	local objectives = RQE.API.GetQuestObjectives(questID) or {}
 	for stepIndex, stepData in ipairs(questData) do
-		local objectiveIndex = tonumber(stepData.objectiveIndex)
-		if objectiveIndex and objectiveIndex > 0 and objectiveIndex < 99 then
-			local objective = objectives[objectiveIndex]
-			if objective and objective.finished ~= true then
-				return stepIndex
-			end
+		if not ShouldSkipTrackerStepForFaction(stepData)
+			and not EvaluateTrackerDBStep(questID, stepIndex, stepData, objectives)
+		then
+			return stepIndex
 		end
 	end
 
-	-- Navigation-only database steps do not have a Blizzard objective. Use the
-	-- first one with coordinates when there is no incomplete mapped objective.
-	for stepIndex, stepData in ipairs(questData) do
-		if stepData.coordinates or #(stepData.coordinateHotspots or {}) > 0 then
-			return stepIndex
+	return #questData > 0 and #questData or nil
+end
+
+
+function RQE:ClearTrackedQuestStepIndex(questID)
+	questID = tonumber(questID)
+	if questID and RQE.trackerQuestStepCache then
+		RQE.trackerQuestStepCache[questID] = nil
+	end
+end
+
+
+-- Write the single authoritative live step through to the cache entry owned by
+-- that same watched quest. This is a constant-time state copy apart from the
+-- small watch-list membership check; it does not evaluate DB checks.
+function RQE:SyncLiveTrackedQuestStepIndex()
+	local ownerQuestID, liveStepIndex = GetLiveTrackerQuestStep()
+	if not (ownerQuestID and liveStepIndex) then return end
+
+	local isWatched = false
+	for watchIndex = 1, C_QuestLog.GetNumQuestWatches() do
+		if C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex) == ownerQuestID then
+			isWatched = true
+			break
+		end
+	end
+	if not isWatched or RQE.API.IsWorldQuest(ownerQuestID) then return end
+
+	RQE.trackerQuestStepCache[ownerQuestID] = liveStepIndex
+	return ownerQuestID, liveStepIndex
+end
+
+
+-- Returns the step cached specifically for this quest. A full DB scan happens
+-- only for a missing/new entry or when forceResolve is requested by a real map
+-- transition. The active quest's authoritative live step is always accepted.
+function RQE:GetNextIncompleteTrackerStepIndex(questID, forceResolve)
+	questID = tonumber(questID)
+	if not questID then return nil end
+
+	local questData = RQE.getQuestData and RQE.getQuestData(questID)
+	if type(questData) ~= "table" then
+		self:ClearTrackedQuestStepIndex(questID)
+		return nil
+	end
+
+	local liveStepIndex = GetLiveTrackerQuestStepIndex(questID, questData)
+	if liveStepIndex then
+		RQE.trackerQuestStepCache[questID] = liveStepIndex
+		return liveStepIndex
+	end
+
+	local cachedStepIndex = RQE.trackerQuestStepCache[questID]
+	if not forceResolve and IsValidTrackerDBStep(questData, cachedStepIndex) then
+		return tonumber(cachedStepIndex)
+	end
+
+	local resolvedStepIndex = ResolveTrackerQuestStepIndex(questID, questData)
+	if IsValidTrackerDBStep(questData, resolvedStepIndex) then
+		RQE.trackerQuestStepCache[questID] = resolvedStepIndex
+		return resolvedStepIndex
+	end
+
+	self:ClearTrackedQuestStepIndex(questID)
+end
+
+
+-- Re-resolve all watched Retail non-world quests after an actual map change.
+-- This function is intentionally never called by the movement refresh path.
+function RQE:RefreshTrackedQuestStepIndexes()
+	local watchedQuestIDs = {}
+	for watchIndex = 1, C_QuestLog.GetNumQuestWatches() do
+		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+		if questID and not RQE.API.IsWorldQuest(questID) then
+			watchedQuestIDs[questID] = true
+			self:GetNextIncompleteTrackerStepIndex(questID, true)
+		end
+	end
+
+	for questID in pairs(RQE.trackerQuestStepCache) do
+		if not watchedQuestIDs[tonumber(questID) or questID] then
+			RQE.trackerQuestStepCache[questID] = nil
 		end
 	end
 end
@@ -1498,8 +1849,10 @@ local function GetTrackerBlizzardPOICoordinates(questID)
 end
 
 
-function RQE:GetTrackerQuestStepDistance(questID)
-	local stepIndex = RQE:GetNextIncompleteTrackerStepIndex(questID)
+function RQE:GetTrackerQuestStepDistance(questID, stepIndex, useProvidedStepIndex)
+	if not useProvidedStepIndex then
+		stepIndex = RQE:GetNextIncompleteTrackerStepIndex(questID)
+	end
 	if stepIndex and RQE.GetDBStepCoordinates then
 		local x, y, mapID = RQE:GetDBStepCoordinates(questID, stepIndex)
 		if x and y and mapID then
@@ -1586,10 +1939,28 @@ function RQE:RefreshTrackedQuestDistances(force)
 		return
 	end
 	RQE.lastTrackedQuestDistanceRefresh = now
+	local liveQuestID, liveStepIndex = GetLiveTrackerQuestStep()
+	if liveQuestID and liveStepIndex then
+		RQE.trackerQuestStepCache[liveQuestID] = liveStepIndex
+	end
 
 	for _, questButton in pairs(RQE.QuestLogIndexButtons or {}) do
 		if questButton and questButton:IsShown() and questButton.questID and questButton.QuestDistanceInfo then
-			local distance, stepIndex = RQE:GetTrackerQuestStepDistance(questButton.questID)
+			local questID = tonumber(questButton.questID)
+			local stepIndex = tonumber(questButton.rqeTrackerDistanceStepIndex)
+
+			-- Reading the already-resolved live step is O(1), and it is accepted
+			-- only for the quest that owns AddonSetStepIndex. Other rows retain
+			-- their own cached values (for example, step 1 is never changed to
+			-- quest 29509's step 9).
+			if liveQuestID == questID and liveStepIndex then
+				stepIndex = liveStepIndex
+			elseif not stepIndex then
+				local savedStepIndex = questID and RQE.trackerQuestStepCache[questID]
+				stepIndex = tonumber(savedStepIndex)
+			end
+
+			local distance = RQE:GetTrackerQuestStepDistance(questID, stepIndex, true)
 			questButton.rqeTrackerDistanceStepIndex = stepIndex
 			questButton.QuestDistanceInfo:SetText(
 				distance and string.format("Distance: %.0f yds", distance) or "Distance: N/A"
@@ -2982,9 +3353,9 @@ function GetQuestZone(questID)
 		if mapInfo and mapInfo.name then
 			return mapInfo.name
 		end
-	elseif ( mapID ~= 0 ) then
-		QuestMapFrame:GetParent():SetMapID(mapID)
 	end
+	-- Do not mutate QuestMapFrame/WorldMapFrame to resolve a display label.
+	-- Retail's map refresh can reach protected pin setup during combat.
 
 	local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questID)
 	if uiMapID then
@@ -3065,6 +3436,8 @@ function UpdateRQEQuestFrame()
 		-- return
 	-- end
 
+	RQE.LastTrackerStepCacheMapID = RQE.LastTrackerStepCacheMapID
+		or C_Map.GetBestMapForUnit("player")
 	RQE:SortWatchedQuestsByProximity()
 	RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
@@ -3492,7 +3865,7 @@ function UpdateRQEQuestFrame()
 
 				-- Display the current distance to this quest's next incomplete RQE step
 				-- between its title and objective text, matching the Classic trackers.
-				local distance, stepIndex = RQE:GetTrackerQuestStepDistance(questID)
+				local distance, stepIndex = questData.distanceYards, questData.stepIndex
 				local QuestDistanceInfo = RQE.QuestLogIndexButtons[i].QuestDistanceInfo or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				QuestDistanceInfo:ClearAllPoints()
 				QuestDistanceInfo:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -3)
