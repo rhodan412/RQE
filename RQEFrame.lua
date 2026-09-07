@@ -2717,7 +2717,26 @@ function RQE.InitializeSeparateFocusFrame()
 			end)
 
 			StepText:SetScript("OnHyperlinkEnter", function(_, link)
-				if type(link) == "string" and link:match("^coords:") then
+				if type(link) ~= "string" then return end
+
+				local linkType, id = link:match("^(%a+):(.+)$")
+				if linkType == "item" then
+					local itemID = tonumber(id)
+					if itemID then
+						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+						GameTooltip:SetItemByID(itemID)
+						local count = C_Item.GetItemCount(itemID) or 0
+						GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
+						GameTooltip:Show()
+					end
+				elseif linkType == "spell" then
+					local spellID = tonumber(id)
+					if spellID then
+						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
+						GameTooltip:SetSpellByID(spellID)
+						GameTooltip:Show()
+					end
+				elseif linkType == "coords" then
 					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
 					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
 					GameTooltip:Show()
