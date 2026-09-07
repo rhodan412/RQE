@@ -1370,7 +1370,7 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 					--C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
 
 				if isWorldQuestStillAvailable then
-					C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+					RQE:AutoSetSuperTrackedQuestID(savedQuestID)
 					restoredSomething = true
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Restored supertracked world quest for this character: " .. savedQuestID)
@@ -1384,7 +1384,7 @@ function RQE:RestoreSuperTrackedQuestForCharacter()
 				end
 			else
 				if RQE.API.IsOnQuest(savedQuestID) then
-					C_SuperTrack.SetSuperTrackedQuestID(savedQuestID)
+					RQE:AutoSetSuperTrackedQuestID(savedQuestID)
 					restoredSomething = true
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Restored supertracked quest for this character: " .. savedQuestID)
@@ -3817,7 +3817,7 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
 		end
 		-- print("~~~ SetSuperTrack: 2223~~~")
-		C_SuperTrack.SetSuperTrackedQuestID(extractedQuestID)
+		RQE:AutoSetSuperTrackedQuestID(extractedQuestID)
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end
 
@@ -4475,7 +4475,7 @@ end
 
 -- Function to Auto Supertrack the Nearest Watched Quest
 function RQE:AutoSuperTrackClosestQuest()
-	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") then return end
+	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
 
 	local functionName = "RQE:AutoSuperTrackClosestQuest()"
 
@@ -4507,7 +4507,7 @@ function RQE:AutoSuperTrackClosestQuest()
 				print("This doesn't match with the closest questID: " .. closestQuestID)
 			end
 			RQE.Buttons.ClearButtonPressed()
-			C_SuperTrack.SetSuperTrackedQuestID(0)
+			RQE:AutoSetSuperTrackedQuestID(0)
 
 			C_Timer.After(0.3, function()
 				RQE:ForceSuperTrackQuestProperly(closestQuestID)
@@ -4556,7 +4556,7 @@ function RQE:ForceSuperTrackQuestProperly(questID)
 	C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
 
 	-- Step 4: Force supertrack
-	C_SuperTrack.SetSuperTrackedQuestID(questID)
+	RQE:AutoSetSuperTrackedQuestID(questID)
 	SetCVar("superTrackedQuestID", questID)
 
 	-- Step 5: After a slight delay, re-add previously watched quests (except the one we supertracked)
@@ -4575,7 +4575,7 @@ function RQE:ForceSuperTrackQuestProperly(questID)
 
 	-- Step 6: Additional delay to re-force supertracking after Blizzard refreshes
 	C_Timer.After(0.1, function()
-		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		RQE:AutoSetSuperTrackedQuestID(questID)
 		SetCVar("superTrackedQuestID", questID)
 
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -4635,7 +4635,7 @@ function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 				-- Supertrack this quest
 				if not isWorldQuest then
 					-- print("~~~ SetSuperTrack: 2843~~~")
-					C_SuperTrack.SetSuperTrackedQuestID(questID)
+					RQE:AutoSetSuperTrackedQuestID(questID)
 					RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3334 ~~")
 					UpdateFrame()
 					return
@@ -4761,7 +4761,7 @@ function RQE.TrackClosestQuest()
 		-- If a closest quest was found, set it as the supertracked quest
 		if closestQuestID then
 			-- print("~~~ SetSuperTrack: 2874~~~")
-			C_SuperTrack.SetSuperTrackedQuestID(closestQuestID)
+			RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()
 
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -15042,6 +15042,11 @@ end
 
 -- Function to check if the supertracked quest matches the array and stepIndex
 function RQE:CheckSuperTrackedQuestAndStep()
+	-- This is automatic watch-list maintenance. Map pin and Area POI providers
+	-- may be refreshing while WorldMapFrame is open, so leave manual map use
+	-- entirely alone and retry on a later quest update instead.
+	if WorldMapFrame and WorldMapFrame:IsShown() then return end
+
 	-- Get the currently super-tracked quest ID
 	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	RQE.BlackListedQuestID = superTrackedQuestID
@@ -15066,7 +15071,7 @@ function RQE:CheckSuperTrackedQuestAndStep()
 		if nextClosestQuestID then
 			-- Set the supertracked quest to the next closest non-blacklisted quest
 			-- print("~~~ SetSuperTrack: 9332~~~")
-			C_SuperTrack.SetSuperTrackedQuestID(nextClosestQuestID)
+			RQE:AutoSetSuperTrackedQuestID(nextClosestQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()
 
 			-- Ensure the blacklisted quest is not re-added prematurely
