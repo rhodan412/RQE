@@ -1331,6 +1331,25 @@ function RQE.handlePlayerMapChanged(...)
 		RQE.LastAutoTrackedZoneMapID = nil
 	end
 
+	-- Tracker steps are intentionally re-evaluated on real map transitions,
+	-- never on the movement-distance ticker. Use the event's old map as a first
+	-- baseline when available so the character cache survives an ordinary reload.
+	C_Timer.After(0.15, function()
+		local currentMapID = C_Map.GetBestMapForUnit("player") or tonumber(newMapID)
+		local previousMapID = RQE.LastTrackerStepCacheMapID or tonumber(oldMapID)
+		RQE.LastTrackerStepCacheMapID = currentMapID or previousMapID
+
+		if currentMapID and previousMapID and currentMapID ~= previousMapID then
+			if RQE.RefreshTrackedQuestStepIndexes then
+				RQE:RefreshTrackedQuestStepIndexes()
+			end
+			RQE.trackerBlizzardPOICache = nil
+			if UpdateRQEQuestFrame then
+				UpdateRQEQuestFrame()
+			end
+		end
+	end)
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}
@@ -4871,15 +4890,101 @@ end
 
 -- Handles UNIT_AURA event
 -- Fires when a buff, debuff, status, or item bonus was gained by or faded from an entity (player, pet, NPC, or mob.)
-function RQE.handleUnitAura(...)
-	local event = select(2, ...)
-	local unitTarget = select(3, ...)
-	local updateInfo = select(4, ...)
+function RQE.handleUnitAura(_, _, unitTarget)
 
 	if unitTarget ~= "player" then  -- Only process changes for the player
 		return
 	end
 
+	-- Retail 12.1 marks UNIT_AURA's incremental payload as secret while it is
+	-- delivered through an addon-tainted execution path.  Reading any of its
+	-- fields, including in a debug branch, causes a secret-value error.  Decide
+	-- from the local quest data instead and queue a normal re-evaluation.
+	local questID = RQE.API.GetSuperTrackedQuestID()
+	if not questID then
+		return
+	end
+
+	local questData = RQE.getQuestData(questID)
+	if not questData then
+		return
+	end
+
+	local stepIndex = tonumber(RQE.AddonSetStepIndex)
+		or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+		or tonumber(RQE.StoredStepIndex)
+		or 1
+	local stepData = questData[stepIndex]
+	if not stepData then
+		return
+	end
+
+	local function StepUsesAuraCheck(step)
+		if step.funct == "CheckDBBuff" or step.funct == "CheckDBDebuff" then
+			return true
+		end
+
+		if type(step.checks) == "table" then
+			for _, checkData in ipairs(step.checks) do
+				if checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff" then
+					return true
+				end
+			end
+		end
+
+		return false
+	end
+
+	local function AmountUsesObjective(neededAmounts)
+		if type(neededAmounts) ~= "table" then
+			return false
+		end
+
+		for _, rawAmount in ipairs(neededAmounts) do
+			if type(rawAmount) == "string" and rawAmount:match("%+%s*objective%s*$") then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	-- A combined buff/objective quest can briefly be on a non-aura step while
+	-- Blizzard finishes removing a consumed stack.  Keep that recheck active
+	-- for the whole quest, without reading the secret update payload.
+	local function QuestUsesCombinedBuffObjective()
+		for _, questStep in ipairs(questData) do
+			if questStep.funct == "CheckDBBuff" and AmountUsesObjective(questStep.neededAmt) then
+				return true
+			end
+
+			if type(questStep.checks) == "table" then
+				for _, checkData in ipairs(questStep.checks) do
+					if checkData.funct == "CheckDBBuff" and AmountUsesObjective(checkData.neededAmt) then
+						return true
+					end
+				end
+			end
+		end
+
+		return false
+	end
+
+	if StepUsesAuraCheck(stepData) or QuestUsesCombinedBuffObjective() then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("UNIT_AURA - Queuing aura-dependent quest check:", "questID:", questID, "stepIndex:", stepIndex)
+		end
+
+		-- QueuePeriodicChecks coalesces high-frequency raid aura events and lets
+		-- Blizzard finish updating the authoritative aura data first.
+		RQE:QueuePeriodicChecks("UNIT_AURA", 0.20, questID)
+	end
+
+	return
+
+	--[[
+	-- Retired Retail UNIT_AURA payload handling. It intentionally remains here
+	-- as historical context, but 12.1 secret values make it unsafe to execute.
 	-- Print Event-specific Args
 	if RQE.db.profile.showArgPayloadInfo then
 		local args = {...}
@@ -5142,6 +5247,7 @@ function RQE.handleUnitAura(...)
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
 	end
+	--]]
 end
 
 
@@ -6387,6 +6493,10 @@ function RQE.handleQuestRemoved(...)
 	local questID = select(3, ...)
 	local wasReplayQuest = select(4, ...)
 
+	if RQE.ClearTrackedQuestStepIndex then
+		RQE:ClearTrackedQuestStepIndex(questID)
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}  -- Capture all arguments into a table
@@ -6859,6 +6969,16 @@ function RQE.handleQuestWatchListChanged(...)
 		return
 	end
 
+	-- A newly watched non-world quest receives its own resolved cache entry.
+	-- Removing a watch removes only that quest's entry.
+	if added == true then
+		if not RQE.API.IsWorldQuest(questID) and RQE.GetNextIncompleteTrackerStepIndex then
+			RQE:GetNextIncompleteTrackerStepIndex(questID, true)
+		end
+	elseif RQE.ClearTrackedQuestStepIndex then
+		RQE:ClearTrackedQuestStepIndex(questID)
+	end
+
 	-- Checks to see if a quest was added or removed (true/false) in order to call this event
 	if added == true then
 		RQE.QuestAddedForWatchListChanged = true
@@ -7081,6 +7201,10 @@ function RQE.handleQuestTurnIn(...)
 	local questID = select(3, ...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
+
+	if RQE.ClearTrackedQuestStepIndex then
+		RQE:ClearTrackedQuestStepIndex(questID)
+	end
 
 	if RQE.LastSuperTrackedQuestID == questID then
 		-- SetRaidTarget("target", 0)	-- possible complications in 12.0
@@ -7395,6 +7519,9 @@ end
 -- Handling PLAYER_LOGOUT event
 -- Sent when the player logs out or the UI is reloaded, just before SavedVariables are saved. The event fires after PLAYER_LEAVING_WORLD
 function RQE.handlePlayerLogout()
+	if RQE.SyncLiveTrackedQuestStepIndex then
+		RQE:SyncLiveTrackedQuestStepIndex()
+	end
 	RQE:SaveFramePosition()  -- Custom function that saves frame's position
 end
 
