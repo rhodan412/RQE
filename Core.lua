@@ -1995,7 +1995,6 @@ function RQE.ExtractAndSaveQuestCoordinates()
 		return
 	end
 
-	local isMapOpen = WorldMapFrame:IsShown()
 	local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 	local mapID, posX, posY, completed, objective
 
@@ -2019,37 +2018,22 @@ function RQE.ExtractAndSaveQuestCoordinates()
 		return
 	end
 
-	-- If POI info is not available, try using GetNextWaypointForMap
+	-- If POI info is not available, use the waypoint API without opening quest
+	-- details.  This function runs automatically from SUPER_TRACKING_CHANGED;
+	-- opening or hiding Blizzard's map here can taint a later Area POI tooltip
+	-- widget refresh after a world-boss update.
 	if not posX or not posY then
-		if not isMapOpen and RQE.superTrackingChanged and not InCombatLockdown() then
-			-- Call the function to open the quest log with the details of the super tracked quest
-			OpenQuestLogToQuestDetails(questID)
+		local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+
+		if nextMapID == nil or nextPosX == nil or nextPosY == nil then
+			RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
 		else
-			-- Either map is open, or we are in combat, or another secure operation is in progress [fix for Frame:SetPassThroughButtons() error]
-			RQE.debugLog("Cannot open quest details due to combat lockdown or other restrictions.")
-			return
+			RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
 		end
 
-		--completed, posX, posY, objective = QuestPOIGetIconInfo(questID)
-
-		if not posX or not posY then
-			local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
-
-			if nextMapID == nil or nextPosX == nil or nextPosY == nil then
-				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
-			else
-				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
-			end
-
-			-- Update the posX and posY variables with the new information
-			posX = nextPosX
-			posY = nextPosY
-		end
-
-		if not isMapOpen then
-			WorldMapFrame:Hide()
-			RQE.DontCloseMap = false
-		end
+		-- Update the posX and posY variables with the non-UI waypoint result.
+		posX = nextPosX
+		posY = nextPosY
 	end
 
 	-- Reset the superTrackingChanged flag
