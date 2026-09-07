@@ -3490,6 +3490,14 @@ function UpdateRQEQuestFrame()
 	local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
 	local achievementHeight = baseHeight + (RQE.AchievementsFrame.achieveCount * 40)
 
+	-- World Quest rows are deliberately not rebuilt during combat because that
+	-- renderer can create and reconfigure buttons.  Keep its last measured
+	-- height instead of replacing it with this coarse count-based estimate;
+	-- otherwise the Bonus Quests header is pushed well below the visible row.
+	if InCombatLockdown() then
+		worldQuestHeight = RQE.WorldQuestsFrame.lastMeasuredHeight or RQE.WorldQuestsFrame:GetHeight()
+	end
+
 	-- Update frame heights
 	RQE.CampaignFrame:SetHeight(campaignHeight)
 	RQE.QuestsFrame:SetHeight(regularHeight)
@@ -4791,19 +4799,34 @@ function UpdateRQEWorldQuestFrame()
 			-- Save the button in a table for future reference
 			RQE.WorldQuestsFrame["WQButton" .. i] = WQuestLogIndexButton
 
-			-- Adjust RQE.WorldQuestsFrame size based on the number of buttons
-			if lastWorldQuestElement and lastWorldQuestElement:IsShown() then
-				local bottomPosition = lastWorldQuestElement:GetBottom()
-				if bottomPosition then
-					local topPosition = RQE.WorldQuestsFrame:GetTop()
-					if topPosition then
-						local newHeight = bottomPosition - topPosition - padding
-						RQE.WorldQuestsFrame:SetHeight(math.abs(newHeight))
-					end
-				end
-			end
 		end
 	end
+
+	-- Size the section once every row has been laid out.  Resizing inside the
+	-- loop can measure a stale row position and leave the next section anchored
+	-- below the old estimated World Quests height.
+	local function ResizeWorldQuestSection()
+		if not lastWorldQuestElement or not lastWorldQuestElement:IsShown() then
+			return
+		end
+
+		local frameTop = RQE.WorldQuestsFrame:GetTop()
+		local rowBottom = lastWorldQuestElement:GetBottom()
+		if not frameTop or not rowBottom then
+			return
+		end
+
+		local measuredHeight = math.max(80, frameTop - rowBottom + padding)
+		RQE.WorldQuestsFrame.lastMeasuredHeight = measuredHeight
+		RQE.WorldQuestsFrame:SetHeight(measuredHeight)
+		UpdateFrameAnchors()
+	end
+
+	ResizeWorldQuestSection()
+	-- Font-string bounds can settle on the following frame after a quest title
+	-- or objective wraps.  Recheck then so the Bonus Quests header always
+	-- follows the real bottom of the World Quests row.
+	C_Timer.After(0, ResizeWorldQuestSection)
 end
 
 
