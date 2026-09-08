@@ -18168,10 +18168,17 @@ function RQE.PrintSupertrackedQuest()
 
 	local questData
 
-	-- Prefer Sandbox data if active and available
-	if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries and RQE_Sandbox.entries[questID] then
-		questData = RQE_Sandbox.entries[questID]
-		print("|cff33ff99[RQE Sandbox]|r Printing Sandbox data for quest ID:", questID)
+	-- Use the same Contribution/Legacy resolver as normal quest playback.
+	local sandboxEntry, sandboxMode
+	if RQE_Sandbox and RQE_Sandbox.GetRuntimeEntry then
+		sandboxEntry, sandboxMode = RQE_Sandbox.GetRuntimeEntry(questID)
+	elseif RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries then
+		sandboxEntry = RQE_Sandbox.entries[questID]
+		sandboxMode = "Contribution"
+	end
+	if sandboxEntry then
+		questData = sandboxEntry
+		print("|cff33ff99[RQE " .. tostring(sandboxMode or "Sandbox") .. " Sandbox]|r Printing Sandbox data for quest ID:", questID)
 	else
 		questData = RQE.getQuestData(questID)
 		print("|cffffff00[RQE]|r Printing Database data for quest ID:", questID)
