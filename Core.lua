@@ -6365,11 +6365,23 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 
 			AddPlainText(text:sub(rawPosition, tagStart - 1))
 			if tagType == "item" or tagType == "spell" then
-				AddVisibleText("[" .. tagName .. "]", tagType, tonumber(tagID))
+				-- FontString word wrapping keeps punctuation directly after a rich tag
+				-- with the tag's final word (for example, "Parchment]).").  Include
+				-- that non-space suffix in the SeparateFocus layout token so its hover
+				-- fragment follows the word onto the same rendered line.  The text is
+				-- already displayed by parentFrame, and StepsText is intentionally left
+				-- on its existing layout path.
+				local adjacentSuffix = ""
+				if useSeparateFocusWrapping then
+					adjacentSuffix = text:sub(tagEnd + 1):match("^([^%s{]+)") or ""
+				end
+
+				AddVisibleText("[" .. tagName .. "]" .. adjacentSuffix, tagType, tonumber(tagID))
+				rawPosition = tagEnd + 1 + #adjacentSuffix
 			else
 				AddPlainText(text:sub(tagStart, tagEnd))
+				rawPosition = tagEnd + 1
 			end
-			rawPosition = tagEnd + 1
 		end
 	end
 
@@ -6546,7 +6558,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 
 					hover:SetScript("OnMouseDown", function()
 						-- Clear TomTom waypoint when Waypoint Coordblock is clicked
-						if TomTom.waydb and TomTom.waydb.ResetProfile then
+						if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
 							TomTom.waydb:ResetProfile()
 							RQE._currentTomTomUID = nil
 						end
