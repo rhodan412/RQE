@@ -2625,7 +2625,9 @@ function RQE.InitializeSeparateFocusFrame()
 			RQE.SeparateStepText = nil
 		end
 
-		local hasCoords = formattedText:match("{coords:")
+		-- Coordblocks use the same native hyperlink path as full coordinate links,
+		-- but retain their compact [x, y] display.
+		local hasCoords = formattedText:match("{coords:") or formattedText:match("{coordblock:")
 
 		if hasCoords then
 			-- ✅ Always use SimpleHTML for the first paragraph; use FontStrings only for additional lines
@@ -2659,6 +2661,22 @@ function RQE.InitializeSeparateFocusFrame()
 
 			html = html:gsub("{spell:(%d+):([^}]+)}", function(id, name)
 				return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, name)
+			end)
+
+			html = html:gsub("{coordblock:([^}]+)}", function(data)
+				local x, y, mapID, title =
+					data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+				if not x then
+					x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+				end
+				if not (x and y and mapID) then return data end
+
+				local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+				local href = title and
+					string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
+					string.format("coords:%s,%s,%s", x, y, mapID)
+
+				return string.format('<a href="%s">|cff40e0d0%s|r</a>', href, label)
 			end)
 
 			html = html:gsub("{coords:([^}]+)}", function(data)
