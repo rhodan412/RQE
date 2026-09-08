@@ -78,8 +78,8 @@ function RQE.getQuestData(questID)
 		return nil
 	end
 
-	-- Shared client-aware selector. Retail retains its own expansion/map-ID
-	-- precedence and never consults Anniversary or SoD override sections.
+	-- Shared client-aware selector. Retail uses only its Retail-era expansion
+	-- sections, so generated data retains Retail map IDs and coordinates.
 	local version = GetBuildInfo()
 	local majorText, minorText, patchText = tostring(version):match("^(%d+)%.(%d+)%.?(%d*)")
 	local majorVersion = tonumber(majorText) or 0
@@ -119,21 +119,18 @@ function RQE.getQuestData(questID)
 		if majorVersion >= 4 then AddDatabaseSection("Cataclysm") end
 		if majorVersion >= 3 then AddDatabaseSection("Wrath") end
 		if majorVersion >= 2 then AddDatabaseSection("BurningCrusade") end
-		-- Retail can use every database section.  Keep its original Retail map-ID
-		-- sections first, then use the Anniversary/SoD sections only as fallbacks.
+		-- Vanilla is the final Retail-era fallback.  Do not include Anniversary or
+		-- Season of Discovery sections here: matching quest IDs can use different
+		-- map IDs and coordinates from their Retail equivalents.
 		AddDatabaseSection("Vanilla")
-		AddDatabaseSection("WrathAnniversary")
-		AddDatabaseSection("BurningCrusadeAnniversary")
-		AddDatabaseSection("VanillaSoD")
 
-		-- Include tables for every version as a fallback.  AddDatabaseSection keeps
-		-- the version-appropriate order above intact and prevents duplicates.
+		-- Include only Retail-era tables as fallbacks. AddDatabaseSection keeps the
+		-- version-appropriate order above intact and prevents duplicates.
 		for _, databaseName in ipairs({
 			"LastTitan", "Midnight", "WarWithin", "Dragonflight", "Shadowlands",
 			"BattleForAzeroth", "Legion", "WarlordsOfDraenor03",
 			"WarlordsOfDraenor02", "WarlordsOfDraenor", "MistsOfPandaria",
-			"Cataclysm", "Wrath", "WrathAnniversary", "BurningCrusade",
-			"BurningCrusadeAnniversary", "Vanilla", "VanillaSoD",
+			"Cataclysm", "Wrath", "BurningCrusade", "Vanilla",
 		}) do
 			AddDatabaseSection(databaseName)
 		end
