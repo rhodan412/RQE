@@ -45,31 +45,39 @@ function RQE.getQuestData(questID)
 		return nil
 	end
 
+
+	-- SANDBOX OVERRIDE CHECK. Legacy Runtime is intentionally selected only
+	-- while its explicit test toggle is on; otherwise contribution entries
+	-- retain their established priority over RQEDatabase.lua.
+	local sandboxEntry, sandboxMode
+	if RQE_Sandbox and RQE_Sandbox.GetRuntimeEntry then
+		sandboxEntry, sandboxMode = RQE_Sandbox.GetRuntimeEntry(questID)
+	elseif RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries then
+		-- Compatibility fallback for an older Sandbox file loaded beside this DB.
+		sandboxEntry = RQE_Sandbox.entries[questID]
+		sandboxMode = "Contribution"
+	end
 	if RQE.db.profile.debugLevel == "INFO+" then
-		print("QuestID: " .. questID .. ". Sandbox active:", RQE_Sandbox.active, "Entry found:", RQE_Sandbox.entries[questID] ~= nil)
+		local contributionActive = RQE_Sandbox and RQE_Sandbox.active or false
+		local legacyActive = RQE_Sandbox and RQE_Sandbox.legacyActive or false
+		print("QuestID: " .. questID .. ". Contribution active:", contributionActive, "Legacy active:", legacyActive, "Runtime source:", sandboxMode or "Database", "Entry found:", sandboxEntry ~= nil)
 	end
 
-	-- ✅ SANDBOX OVERRIDE CHECK
-	if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries then
-		local sandboxEntry = RQE_Sandbox.entries[questID]
 
-		if sandboxEntry then
-			-- Handle possible nested forms (some saves wrap it in another table layer)
-			if type(sandboxEntry) == "table" and sandboxEntry.entries then
-				sandboxEntry = sandboxEntry.entries
-			end
+	if sandboxEntry then
+		-- Handle possible nested forms (some saves wrap it in another table layer)
+		if type(sandboxEntry) == "table" and sandboxEntry.entries then
+			sandboxEntry = sandboxEntry.entries
+		end
 
-			-- Optional: verify that this is a valid quest-like table
-			if type(sandboxEntry) == "table" and (sandboxEntry.title or sandboxEntry[1]) then
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("|cff33ff99[RQE Sandbox]|r Using SANDBOX data for questID:", questID)
-				end
-				return sandboxEntry
-			else
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("|cffff6666[RQE Sandbox]|r Invalid Sandbox entry structure for questID:", questID)
-				end
+		-- Optional: verify that this is a valid quest-like table
+		if type(sandboxEntry) == "table" and (sandboxEntry.title or sandboxEntry[1]) then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("|cff33ff99[RQE " .. tostring(sandboxMode or "Sandbox") .. " Sandbox]|r Using SANDBOX data for questID:", questID)
 			end
+			return sandboxEntry
+		elseif RQE.db.profile.debugLevel == "INFO+" then
+			print("|cffff6666[RQE Sandbox]|r Invalid " .. tostring(sandboxMode or "Sandbox") .. " entry structure for questID:", questID)
 		end
 	end
 
