@@ -16,16 +16,42 @@ local function InitializeSandbox()
 	-------------------------------------------------------
 	RQE_SandboxDB = RQE_SandboxDB or {}
 	RQE_SandboxDB.entries = RQE_SandboxDB.entries or {}
+	-- Keep raw-Lua legacy tests separate so RQE_Contribution continues to
+	-- consume and export only the comment-aware contribution entries table.
+	RQE_SandboxDB.legacyEntries = RQE_SandboxDB.legacyEntries or {}
 	RQE_Sandbox = RQE_Sandbox or {}
 
-	RQE_Sandbox.active = RQE_Sandbox.active or false
+	-- Both stores are available after every login; a user can turn either one
+	-- off explicitly, and saving to a store turns that store back on.
+	RQE_Sandbox.active = true
 	RQE_Sandbox.entries = RQE_SandboxDB.entries
+	RQE_Sandbox.legacyEntries = RQE_SandboxDB.legacyEntries
+	RQE_Sandbox.legacyActive = true
+
+	-- Returns the exact Sandbox entry the addon should use at runtime. A
+	-- deliberately enabled Legacy test takes priority over the contribution
+	-- source entry for the same quest, making it possible to test one raw-Lua
+	-- step without altering the Contribution editor's source table.
+	function RQE_Sandbox.GetRuntimeEntry(questID)
+		if RQE_Sandbox.legacyActive and RQE_Sandbox.legacyEntries then
+			local legacyEntry = RQE_Sandbox.legacyEntries[questID]
+			if legacyEntry then return legacyEntry, "Legacy" end
+		end
+
+		if RQE_Sandbox.active and RQE_Sandbox.entries then
+			local contributionEntry = RQE_Sandbox.entries[questID]
+			if contributionEntry then return contributionEntry, "Contribution" end
+		end
+
+		return nil, nil
+	end
 
 	-------------------------------------------------------
 	-- #1b. GetDataSource override
 	-------------------------------------------------------
 	function RQE:GetDataSource(questID)
-		if RQE_Sandbox and RQE_Sandbox.active and RQE_Sandbox.entries[questID] then
+		local sandboxEntry = RQE_Sandbox and RQE_Sandbox.GetRuntimeEntry and RQE_Sandbox.GetRuntimeEntry(questID)
+		if sandboxEntry then
 			return "Sandbox"
 		else
 			return "Database"
@@ -37,7 +63,20 @@ local function InitializeSandbox()
 	-------------------------------------------------------
 	local function SaveSandbox()
 		RQE_SandboxDB.entries = RQE_Sandbox.entries
+		RQE_SandboxDB.legacyEntries = RQE_Sandbox.legacyEntries
 		print("|cff00ff00Sandbox data saved.|r")
+	end
+
+	-- A Contribution Sandbox save should immediately become the editor's
+	-- selected source, even when an older normal contribution has the same ID.
+	local function RefreshContributionStepEditor(questID)
+		if not RQE_Contribution or not RQE_Contribution.RefreshStepEditor then return end
+		RQE_Contribution.editorQuestID = questID
+		RQE_Contribution.editorDataSource = "sandbox"
+		RQE_Contribution:RefreshStepEditor(true)
+		if RQE_Contribution.fetchInfoButton then
+			RQE_Contribution.fetchInfoButton:Click()
+		end
 	end
 
 	local function TableToLuaString(tbl, indent)
@@ -85,6 +124,44 @@ local function InitializeSandbox()
 			count = count + (brace == "{" and 1 or -1)
 		end
 		return count
+	end
+
+	-- Older raw-Lua Sandbox snippets sometimes leave a numeric step header
+	-- active while commenting every field and its closing brace.  That shape is
+	-- valid in Legacy Runtime mode, but is not a complete Lua table once a
+	-- following commented step is promoted for Contribution editing.  Convert
+	-- only those fully commented bodies to a normal commented step first.
+	local function NormalizeLegacyMaskedStepHeaders(code)
+		local sourceLines = {}
+		code = code:gsub("\r\n", "\n")
+		for line in (code .. "\n"):gmatch("(.-)\n") do
+			table.insert(sourceLines, line)
+		end
+
+		for index, line in ipairs(sourceLines) do
+			local indent, stepHeader = line:match("^(%s*)(%[%s*%d+%s*%]%s*=%s*{.*)$")
+			if stepHeader then
+				local braceDepth = CountTableBraces(stepHeader)
+				local hasCommentedCloser = false
+				for followingIndex = index + 1, #sourceLines do
+					local followingLine = sourceLines[followingIndex]
+					if not followingLine:match("^%s*$") then
+						local _, commentedContent = followingLine:match("^(%s*)%-%-%s?(.*)$")
+						if not commentedContent then break end
+						braceDepth = braceDepth + CountTableBraces(commentedContent)
+						if braceDepth <= 0 then
+							hasCommentedCloser = true
+							break
+						end
+					end
+				end
+				if hasCommentedCloser then
+					sourceLines[index] = indent .. "-- " .. stepHeader
+				end
+			end
+		end
+
+		return table.concat(sourceLines, "\n")
 	end
 
 	local function PromoteCommentedSandboxSteps(code)
@@ -261,6 +338,8 @@ local function InitializeSandbox()
 	end
 
 	function RQE_Sandbox.GetAllSandboxInfo()
+		-- Do not include legacyEntries here. This is the contribution-only
+		-- export consumed by RQE.GetSandBoxDataForAddon() and RQE_Contribution.
 		local entries = RQE_SandboxDB and RQE_SandboxDB.entries
 		if type(entries) ~= "table" then
 			print("|cffff6666No Sandbox data is available.|r")
@@ -288,7 +367,7 @@ local function InitializeSandbox()
 	-- #1d. Editor Frame
 	-------------------------------------------------------
 	local SandboxFrame = CreateFrame("Frame", "RQE_SandboxEditor", UIParent, "BackdropTemplate")
-	SandboxFrame:SetSize(700, 500)
+	SandboxFrame:SetSize(700, 560)
 	SandboxFrame:SetPoint("CENTER")
 	SandboxFrame:SetBackdrop({
 		bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
@@ -305,13 +384,23 @@ local function InitializeSandbox()
 
 	SandboxFrame.Title = SandboxFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	SandboxFrame.Title:SetPoint("TOP", 0, -10)
-	SandboxFrame.Title:SetText("|cffFFD100RQE Contribution Sandbox|r")
+	SandboxFrame.Title:SetText("|cffFFD100RQE Sandbox|r")
+
+	local contributionTabBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
+	contributionTabBtn:SetSize(155, 25)
+	contributionTabBtn:SetPoint("TOPLEFT", 20, -38)
+	contributionTabBtn:SetText("Contribution")
+
+	local legacyTabBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
+	legacyTabBtn:SetSize(155, 25)
+	legacyTabBtn:SetPoint("LEFT", contributionTabBtn, "RIGHT", 10, 0)
+	legacyTabBtn:SetText("Legacy Runtime")
 
 	-------------------------------------------------------
 	-- #1e. Quest ID Input
 	-------------------------------------------------------
 	local questIDLabel = SandboxFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	questIDLabel:SetPoint("TOPLEFT", 20, -50)
+	questIDLabel:SetPoint("TOPLEFT", 20, -75)
 	questIDLabel:SetText("Quest ID")
 
 	local questIDBox = CreateFrame("EditBox", nil, SandboxFrame, "InputBoxTemplate")
@@ -327,12 +416,17 @@ local function InitializeSandbox()
 	searchBtn:SetPoint("LEFT", questIDBox, "RIGHT", 10, 0)
 	searchBtn:SetText("Search")
 
+	local modeHelp = SandboxFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	modeHelp:SetPoint("TOPLEFT", 20, -105)
+	modeHelp:SetWidth(650)
+	modeHelp:SetJustifyH("LEFT")
+
 	-------------------------------------------------------
 	-- #1f. Edit Box
 	-------------------------------------------------------
 	local scrollFrame = CreateFrame("ScrollFrame", nil, SandboxFrame, "UIPanelScrollFrameTemplate")
-	scrollFrame:SetSize(650, 350)
-	scrollFrame:SetPoint("TOP", 0, -90)
+	scrollFrame:SetSize(650, 330)
+	scrollFrame:SetPoint("TOP", 0, -145)
 
 	local editBox = CreateFrame("EditBox", nil, scrollFrame)
 	editBox:SetMultiLine(true)
@@ -353,42 +447,78 @@ local function InitializeSandbox()
 	-- #1g. Buttons
 	-------------------------------------------------------
 	local saveBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
-	saveBtn:SetSize(140, 25)
+	saveBtn:SetSize(130, 25)
 	saveBtn:SetPoint("BOTTOMLEFT", 20, 20)
-	saveBtn:SetText("Save to Sandbox")
+	saveBtn:SetText("Save Contribution")
 
 	local toggleBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
-	toggleBtn:SetSize(120, 25)
+	toggleBtn:SetSize(140, 25)
 	toggleBtn:SetPoint("LEFT", saveBtn, "RIGHT", 10, 0)
-	toggleBtn:SetText(RQE_Sandbox.active and "Sandbox ON" or "Sandbox OFF")
+	toggleBtn:SetText(RQE_Sandbox.active and "Contribution ON" or "Contribution OFF")
 
 	local clearBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
-	clearBtn:SetSize(120, 25)
+	clearBtn:SetSize(110, 25)
 	clearBtn:SetPoint("LEFT", toggleBtn, "RIGHT", 10, 0)
 	clearBtn:SetText("Clear Sandbox")
 
 	local clearAllBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
 	clearAllBtn:SetSize(120, 25)
 	clearAllBtn:SetPoint("LEFT", clearBtn, "RIGHT", 10, 0)
-	clearAllBtn:SetText("Clear All Sandbox")
+	clearAllBtn:SetText("Clear Both")
 
 	local closeBtn = CreateFrame("Button", nil, SandboxFrame, "UIPanelButtonTemplate")
 	closeBtn:SetSize(80, 25)
 	closeBtn:SetPoint("BOTTOMRIGHT", -20, 20)
 	closeBtn:SetText("Close")
 
+	local currentSandboxMode = "contribution"
+
+	local function IsContributionSandboxMode()
+		return currentSandboxMode == "contribution"
+	end
+
+	local function GetCurrentSandboxEntries()
+		return IsContributionSandboxMode() and RQE_Sandbox.entries or RQE_Sandbox.legacyEntries
+	end
+
+	local function GetCurrentSandboxModeName()
+		return IsContributionSandboxMode() and "Contribution Sandbox" or "Legacy Runtime Sandbox"
+	end
+
+	local function UpdateModeControls()
+		local contributionMode = IsContributionSandboxMode()
+		SandboxFrame.Title:SetText(contributionMode and "|cffFFD100RQE Contribution Sandbox|r" or "|cffFFD100RQE Legacy Runtime Sandbox|r")
+		local helpText = contributionMode
+			and "Contribution mode preserves commented steps for RQE Contribution and RQE.GetSandBoxDataForAddon()."
+			or "Legacy Runtime mode uses normal Lua comments: commented code is ignored, remaining active code runs directly, and these tests are never sent to RQE Contribution."
+		if contributionMode and RQE_Sandbox.legacyActive then
+			helpText = helpText .. " |cffff6666Legacy Runtime is still overriding live data; turn it off from the Legacy Runtime tab.|r"
+		end
+		modeHelp:SetText(helpText)
+		saveBtn:SetText(contributionMode and "Save Contribution" or "Save Legacy")
+		toggleBtn:SetText(contributionMode
+			and (RQE_Sandbox.active and "Contribution ON" or "Contribution OFF")
+			or (RQE_Sandbox.legacyActive and "Legacy ON" or "Legacy OFF"))
+		clearBtn:SetText(contributionMode and "Clear Contribution" or "Clear Legacy")
+		contributionTabBtn:SetEnabled(not contributionMode)
+		legacyTabBtn:SetEnabled(contributionMode)
+	end
+
 	local function LoadSandboxEntry(questID)
 		questIDBox:SetText(questID or "")
 		editBox:SetText("")
 
-		if questID and RQE_Sandbox.entries[questID] then
-			local entry = RQE_Sandbox.entries[questID]
+		local entries = GetCurrentSandboxEntries()
+		local modeName = GetCurrentSandboxModeName()
+
+		if questID and entries[questID] then
+			local entry = entries[questID]
 			if type(entry) == "table" then
 				local ok, text = pcall(TableToLuaString, entry, 1)
 				if ok and text then
 					editBox:SetText("[" .. questID .. "] = " .. text)
 				else
-					editBox:SetText("-- Failed to parse Sandbox entry for Quest ID " .. questID)
+					editBox:SetText("-- Failed to parse " .. modeName .. " entry for Quest ID " .. questID)
 				end
 			elseif type(entry) == "string" then
 				editBox:SetText(entry)
@@ -396,7 +526,7 @@ local function InitializeSandbox()
 				editBox:SetText("-- Unsupported data type for Quest ID " .. questID)
 			end
 		else
-			editBox:SetText("-- No Sandbox data for Quest ID " .. tostring(questID or "") .. ".")
+			editBox:SetText("-- No " .. modeName .. " data for Quest ID " .. tostring(questID or "") .. ".")
 		end
 	end
 
@@ -406,30 +536,46 @@ local function InitializeSandbox()
 	saveBtn:SetScript("OnClick", function()
 		local id = tonumber(questIDBox:GetText())
 		local code = editBox:GetText()
+		local contributionMode = IsContributionSandboxMode()
 		if not id then print("|cffff0000Invalid Quest ID.|r") return end
 		if not code or code:trim() == "" then print("|cffff0000No quest data provided.|r") return end
 
 		code = code:gsub("^%s*%[%d+%]%s*=%s*", "")
 		code = code:gsub(",%s*$", "")
-		code = PromoteCommentedSandboxSteps(code)
+		if contributionMode then
+			code = NormalizeLegacyMaskedStepHeaders(code)
+			code = PromoteCommentedSandboxSteps(code)
+		end
 
 		local func, err = loadstring("return " .. code)
-		if not func then print("|cffff0000Lua Error:|r " .. tostring(err)) return end
+		if not func then print("|cffff0000Lua Error in " .. GetCurrentSandboxModeName() .. ":|r " .. tostring(err)) return end
 		local ok, data = pcall(func)
 		if not ok or type(data) ~= "table" then
-			print("|cffff0000Error parsing quest data.|r") return
+			print("|cffff0000Error parsing " .. GetCurrentSandboxModeName() .. " data.|r") return
 		end
 
 		NormalizePipesInTable(data)
-		SetSandboxStepCommentState(data)
+		if contributionMode then
+			SetSandboxStepCommentState(data)
+		end
 
-		RQE_Sandbox.entries[id] = data
+		GetCurrentSandboxEntries()[id] = data
+		if contributionMode then
+			RQE_Sandbox.active = true
+		else
+			-- Saving a raw-Lua Legacy entry makes that test active immediately.
+			RQE_Sandbox.legacyActive = true
+		end
 		SaveSandbox()
+		UpdateModeControls()
+		if contributionMode then
+			RefreshContributionStepEditor(id)
+		end
 		RQE.AddonSetStepIndex = 1
 		UpdateFrame()
 		RQE.OkayToUpdateSeparateFF = true
 		RQE:StartPeriodicChecks()
-		print("|cff00ff00Saved Sandbox data for Quest ID:|r", id)
+		print("|cff00ff00Saved " .. GetCurrentSandboxModeName() .. " data for Quest ID:|r", id)
 		RQE.OkayToUpdateSeparateFF = false
 		RQE:CheckCoordHotspotsInSteps(id)
 	end)
@@ -444,40 +590,68 @@ local function InitializeSandbox()
 	end)
 
 	toggleBtn:SetScript("OnClick", function()
-		RQE_Sandbox.active = not RQE_Sandbox.active
-		toggleBtn:SetText(RQE_Sandbox.active and "Sandbox ON" or "Sandbox OFF")
+		if IsContributionSandboxMode() then
+			RQE_Sandbox.active = not RQE_Sandbox.active
+		else
+			RQE_Sandbox.legacyActive = not RQE_Sandbox.legacyActive
+		end
 		SaveSandbox()
+		UpdateModeControls()
+		RQE.AddonSetStepIndex = 1
+		UpdateFrame()
+		RQE.OkayToUpdateSeparateFF = true
+		RQE:StartPeriodicChecks()
+		RQE.OkayToUpdateSeparateFF = false
 	end)
 
 	clearBtn:SetScript("OnClick", function()
 		local id = tonumber(questIDBox:GetText())
-		if id and RQE_Sandbox.entries[id] then
-			RQE_Sandbox.entries[id] = nil
-			SaveSandbox()
-			RQE.AddonSetStepIndex = 1
-			UpdateFrame()
-			RQE.OkayToUpdateSeparateFF = true
-			RQE:StartPeriodicChecks()
-			editBox:SetText("")
-			print("|cffff6666Removed Sandbox data for quest ID:|r", id)
+		local entries = GetCurrentSandboxEntries()
+		local contributionMode = IsContributionSandboxMode()
+		local modeName = GetCurrentSandboxModeName()
+
+		if id and entries[id] then
+			entries[id] = nil
+			print("|cffff6666Removed " .. modeName .. " data for quest ID:|r", id)
 		else
-			wipe(RQE_Sandbox.entries)
-			RQE_SandboxDB.entries = {}
-			SaveSandbox()
-			editBox:SetText("")
-			print("|cffff6666All Sandbox data cleared.|r")
+			wipe(entries)
+			print("|cffff6666All " .. modeName .. " data cleared.|r")
 		end
+
+		SaveSandbox()
+		UpdateModeControls()
+		RQE.AddonSetStepIndex = 1
+		UpdateFrame()
+		RQE.OkayToUpdateSeparateFF = true
+		RQE:StartPeriodicChecks()
 		RQE.OkayToUpdateSeparateFF = false
+		editBox:SetText("")
 	end)
 
 	clearAllBtn:SetScript("OnClick", function()
 		wipe(RQE_Sandbox.entries)
-		RQE_SandboxDB.entries = {}
+		wipe(RQE_Sandbox.legacyEntries)
 		SaveSandbox()
-		editBox:SetText("")
-		print("|cffff6666All Sandbox data cleared.|r")
+		UpdateModeControls()
+		RQE.AddonSetStepIndex = 1
+		UpdateFrame()
+		RQE.OkayToUpdateSeparateFF = true
+		RQE:StartPeriodicChecks()
 		RQE.OkayToUpdateSeparateFF = false
+		editBox:SetText("")
+		print("|cffff6666All Contribution and Legacy Sandbox data cleared.|r")
 	end)
+
+	local function ShowSandboxMode(mode)
+		currentSandboxMode = mode
+		UpdateModeControls()
+		local questID = tonumber(questIDBox:GetText())
+		if not questID then questID = RQE.API.GetSuperTrackedQuestID() end
+		LoadSandboxEntry(questID)
+	end
+
+	contributionTabBtn:SetScript("OnClick", function() ShowSandboxMode("contribution") end)
+	legacyTabBtn:SetScript("OnClick", function() ShowSandboxMode("legacy") end)
 
 	closeBtn:SetScript("OnClick", function() SandboxFrame:Hide() end)
 
@@ -486,6 +660,7 @@ local function InitializeSandbox()
 	-------------------------------------------------------
 	SandboxFrame:SetScript("OnShow", function()
 		local questID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		UpdateModeControls()
 		LoadSandboxEntry(questID)
 	end)
 
@@ -542,18 +717,13 @@ local function TableToLuaString(tbl, indent)
 end
 
 
+-- #3. Initialize independently of RQE_Contribution
 -------------------------------------------------------
--- #3. Load only after RQE_Contribution
--------------------------------------------------------
-if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+-- Wait until the login event so DatabaseMain/Config have created RQE.db before
+-- the Sandbox's initialization message reaches the DebugLog print hook.
+local sandboxLoginInitializer = CreateFrame("Frame")
+sandboxLoginInitializer:RegisterEvent("PLAYER_LOGIN")
+sandboxLoginInitializer:SetScript("OnEvent", function(self)
+	self:UnregisterEvent("PLAYER_LOGIN")
 	InitializeSandbox()
-else
-	local f = CreateFrame("Frame")
-	f:RegisterEvent("ADDON_LOADED")
-	f:SetScript("OnEvent", function(_, _, addon)
-		if addon == "RQE_Contribution" then
-			InitializeSandbox()
-			f:UnregisterEvent("ADDON_LOADED")
-		end
-	end)
-end
+end)
