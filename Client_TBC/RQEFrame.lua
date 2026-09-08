@@ -104,8 +104,11 @@ function ShowQuestDropdownRQEFrame(self, questID)
 		local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
 		local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE_SandboxEditor then
 			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+		end
+
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
@@ -180,8 +183,11 @@ function ShowDropdownRQEFrame(self)
 		local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID() or RQE.CurrentDisplayedQuestID
 		local questLabel = questID and tostring(questID) or "<Nothing Tracked>"
 
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE_SandboxEditor then
 			rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+		end
+
+		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
