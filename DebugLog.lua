@@ -71,7 +71,7 @@ end
 -- Function to add messages to the log
 function RQE.AddToDebugLog(message)
 	-- Check if debug logging is enabled via the checkbox
-	if not RQE.db.profile.debugLoggingCheckbox then
+	if not RQE or not RQE.db or not RQE.db.profile or not RQE.db.profile.debugLoggingCheckbox then
 		return
 	end
 
