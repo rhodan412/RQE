@@ -1,3 +1,37 @@
+12.1.0.3
+
+	**HIGHLIGHTS**
+		- Item and spell tooltips in the Separate Focus Frame now remain hoverable when names wrap beside punctuation in Retail, Classic, and TBC.
+		- Compact coordinate blocks in the Separate Focus Frame can now be clicked to create waypoints in Retail, Classic, and TBC.
+
+	Core.lua
+		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
+		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
+
+	Client_Classic/Core.lua
+		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
+		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
+
+	Client_TBC/Core.lua
+		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
+		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
+
+	Client_Classic/RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+
+	Client_TBC/RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+
+	RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+
+	RQE.toc
+		- Updated version# (2026.09.07.2359)
+
+	RQEDatabase.lua
+		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
+
+
 12.1.0.2 (2026.09.07)
 
 	**HIGHLIGHTS**
