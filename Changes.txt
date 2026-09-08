@@ -3,6 +3,10 @@
 	**HIGHLIGHTS**
 		- Item and spell tooltips in the Separate Focus Frame now remain hoverable when names wrap beside punctuation in Retail, Classic, and TBC.
 		- Compact coordinate blocks in the Separate Focus Frame can now be clicked to create waypoints in Retail, Classic, and TBC.
+		- Retail quest data and generated contribution entries now use Retail coordinates instead of Anniversary or Season of Discovery equivalents for shared quest IDs.
+
+	DatabaseMain.lua
+		- Restricted Retail quest-data selection to Retail-era database sections, excluding Wrath Anniversary, Burning Crusade Anniversary, and Season of Discovery fallbacks whose shared quest IDs can use different map IDs and coordinates. (2026.09.08.0024)
 
 	Core.lua
 		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
