@@ -537,6 +537,14 @@ local function InitializeSandbox()
 		local id = tonumber(questIDBox:GetText())
 		local code = editBox:GetText()
 		local contributionMode = IsContributionSandboxMode()
+		-- Saving always activates the selected mode before validation/parsing,
+		-- matching an ON toggle without reversing an already-ON state.
+		if contributionMode then
+			RQE_Sandbox.active = true
+		else
+			RQE_Sandbox.legacyActive = true
+		end
+		UpdateModeControls()
 		if not id then print("|cffff0000Invalid Quest ID.|r") return end
 		if not code or code:trim() == "" then print("|cffff0000No quest data provided.|r") return end
 
@@ -560,12 +568,6 @@ local function InitializeSandbox()
 		end
 
 		GetCurrentSandboxEntries()[id] = data
-		if contributionMode then
-			RQE_Sandbox.active = true
-		else
-			-- Saving a raw-Lua Legacy entry makes that test active immediately.
-			RQE_Sandbox.legacyActive = true
-		end
 		SaveSandbox()
 		UpdateModeControls()
 		if contributionMode then
@@ -609,6 +611,12 @@ local function InitializeSandbox()
 		local entries = GetCurrentSandboxEntries()
 		local contributionMode = IsContributionSandboxMode()
 		local modeName = GetCurrentSandboxModeName()
+		-- Clearing a mode also disables its runtime override.
+		if contributionMode then
+			RQE_Sandbox.active = false
+		else
+			RQE_Sandbox.legacyActive = false
+		end
 
 		if id and entries[id] then
 			entries[id] = nil
@@ -629,6 +637,8 @@ local function InitializeSandbox()
 	end)
 
 	clearAllBtn:SetScript("OnClick", function()
+		RQE_Sandbox.active = false
+		RQE_Sandbox.legacyActive = false
 		wipe(RQE_Sandbox.entries)
 		wipe(RQE_Sandbox.legacyEntries)
 		SaveSandbox()
