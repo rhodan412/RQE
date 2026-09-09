@@ -5,9 +5,10 @@
 		- Compact coordinate blocks in the Separate Focus Frame can now be clicked to create waypoints in Retail, Classic, and TBC.
 		- Retail quest data and generated contribution entries now use Retail coordinates instead of Anniversary or Season of Discovery equivalents for shared quest IDs.
 		- Sandbox now offers a Legacy Runtime tab for testing raw Lua steps without exposing those temporary tests to RQE Contribution.
-		- Saved Contribution Sandbox entries now take priority in the Step Editor, and both Sandbox modes default to ON after login or a save.
+		- Saved Contribution Sandbox entries now take priority in the Step Editor; Save activates its mode, while Clear disables the applicable Sandbox override.
 
 	RQE_Sandbox.lua
+		- Sequenced Sandbox actions so Save activates its selected Contribution or Legacy mode before parsing, Clear disables the selected mode, and Clear Both disables both modes before removing their entries. (2026.09.09.0320)
 		- Added a separate Legacy Runtime tab and account-wide legacyEntries store alongside the existing contribution-aware entries store, so author tests can use raw Lua comment behavior without changing Step Editor source data. (2026.09.08.1416)
 		- Made Legacy Runtime parsing intentionally skip comment promotion and contribution comment metadata; pasted -- lines are ignored by Lua and the remaining active fields become the runnable test entry. (2026.09.08.1416)
 		- Kept RQE.GetSandBoxDataForAddon() and RQE_Sandbox.GetAllSandboxInfo() contribution-only by exporting RQE_SandboxDB.entries and excluding legacyEntries. (2026.09.08.1416)
@@ -64,6 +65,7 @@
 
 	RQEDatabase.lua
 		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
+		- Added additional quests to Classic Season of Discovery. (2026.09.09.0320)
 
 
 12.1.0.2 (2026.09.07)
