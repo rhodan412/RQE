@@ -6,6 +6,59 @@
 		- Retail quest data and generated contribution entries now use Retail coordinates instead of Anniversary or Season of Discovery equivalents for shared quest IDs.
 		- Sandbox now offers a Legacy Runtime tab for testing raw Lua steps without exposing those temporary tests to RQE Contribution.
 		- Saved Contribution Sandbox entries now take priority in the Step Editor; Save activates its mode, while Clear disables the applicable Sandbox override.
+		- Automatically offered quests no longer cause a Lua error when their database entry has no NPC name and the player has no target in Retail, Classic, or TBC.
+		- Quest steps now reevaluate whenever player control returns, allowing incomplete timed vehicle quests to direct players back to the NPC needed to resume them.
+
+	Client_Classic/Core.lua
+		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
+		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
+		- Mirrored the shared Sandbox resolver in Classic/Season of Discovery diagnostic output so printed quest data matches the active Contribution or Legacy Runtime test. (2026.09.08.1416)
+
+	Client_Classic/EventManager.lua
+		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for Classic/Season of Discovery so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
+		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for Classic/Season of Discovery so timed vehicle quest steps are reevaluated after control returns even when objective text has not changed. (2026.09.10.1153)
+
+	Client_Classic/QuestingModule.lua
+		- Kept Open Sandbox available from the Classic/Season of Discovery quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+
+	Client_Classic/RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+		- Kept Open Sandbox available from Classic/Season of Discovery frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+
+	Client_TBC/Core.lua
+		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
+		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
+		- Mirrored the shared Sandbox resolver in TBC Anniversary diagnostic output so printed quest data matches the active Contribution or Legacy Runtime test. (2026.09.08.1416)
+
+	Client_TBC/EventManager.lua
+		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for TBC Anniversary so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
+		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for TBC Anniversary so an incomplete bombing run can return Mission: Gateways Murketh and Shaadraz to its Wing Commander Brack reboarding step after control returns. (2026.09.10.1153)
+
+	Client_TBC/QuestingModule.lua
+		- Kept Open Sandbox available from the TBC Anniversary quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+
+	Client_TBC/RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+		- Kept Open Sandbox available from TBC Anniversary frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+
+	Core.lua
+		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
+		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
+		- Updated Print Supertracked Quest to report the same Contribution or Legacy Runtime Sandbox entry that gameplay resolves. (2026.09.08.1416)
+
+	DatabaseMain.lua
+		- Restricted Retail quest-data selection to Retail-era database sections, excluding Wrath Anniversary, Burning Crusade Anniversary, and Season of Discovery fallbacks whose shared quest IDs can use different map IDs and coordinates. (2026.09.08.0024)
+		- Routed quest lookup through the shared Contribution/Legacy Sandbox resolver, so an explicitly enabled Legacy Runtime test overrides the same quest safely while normal Contribution Sandbox priority and database fallback remain unchanged. (2026.09.08.1416)
+
+	DebugLog.lua
+		- Guarded early print-hook calls until RQE's profile database is available, preventing reload-time nil-profile errors from messages emitted during addon startup. (2026.09.08.1416)
+
+	EventManager.lua
+		- Guarded missing target names in QUEST_DETAIL database diagnostics and print the established empty NPC entry for automatically offered quests, preventing string.format from receiving nil while preserving targeted-NPC output. (2026.09.10.1153)
+		- Queued periodic quest checks whenever PLAYER_CONTROL_GAINED fires with waypoint automation enabled, rather than requiring a detected objective-text change, so incomplete vehicle quests such as Mission: Gateways Murketh and Shaadraz can return to their NPC reboarding step after a bombing run ends. (2026.09.10.1153)
+
+	QuestingModule.lua
+		- Kept Open Sandbox available from the Retail quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
 
 	RQE_Sandbox.lua
 		- Sequenced Sandbox actions so Save activates its selected Contribution or Legacy mode before parsing, Clear disables the selected mode, and Clear Both disables both modes before removing their entries. (2026.09.09.0320)
@@ -17,48 +70,9 @@
 		- Deferred standalone initialization until PLAYER_LOGIN so the Sandbox no longer reaches DebugLog before RQE's profile database exists, while remaining independent of RQE_Contribution. (2026.09.08.1416)
 		- Normalized legacy-style active step headers with fully commented bodies before Contribution comment promotion, allowing those pasted snippets to load as editable Contribution steps instead of producing an unmatched-table Lua error. (2026.09.08.1416)
 
-	DebugLog.lua
-		- Guarded early print-hook calls until RQE's profile database is available, preventing reload-time nil-profile errors from messages emitted during addon startup. (2026.09.08.1416)
-
-	DatabaseMain.lua
-		- Restricted Retail quest-data selection to Retail-era database sections, excluding Wrath Anniversary, Burning Crusade Anniversary, and Season of Discovery fallbacks whose shared quest IDs can use different map IDs and coordinates. (2026.09.08.0024)
-		- Routed quest lookup through the shared Contribution/Legacy Sandbox resolver, so an explicitly enabled Legacy Runtime test overrides the same quest safely while normal Contribution Sandbox priority and database fallback remain unchanged. (2026.09.08.1416)
-
-	Core.lua
-		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
-		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
-		- Updated Print Supertracked Quest to report the same Contribution or Legacy Runtime Sandbox entry that gameplay resolves. (2026.09.08.1416)
-
-	Client_Classic/Core.lua
-		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
-		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
-		- Mirrored the shared Sandbox resolver in Classic/Season of Discovery diagnostic output so printed quest data matches the active Contribution or Legacy Runtime test. (2026.09.08.1416)
-
-	Client_TBC/Core.lua
-		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
-		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
-		- Mirrored the shared Sandbox resolver in TBC Anniversary diagnostic output so printed quest data matches the active Contribution or Legacy Runtime test. (2026.09.08.1416)
-
-	Client_Classic/RQEFrame.lua
-		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
-		- Kept Open Sandbox available from Classic/Season of Discovery frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
-
-	Client_TBC/RQEFrame.lua
-		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
-		- Kept Open Sandbox available from TBC Anniversary frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
-
 	RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
 		- Kept Open Sandbox available from Retail frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
-
-	QuestingModule.lua
-		- Kept Open Sandbox available from the Retail quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
-
-	Client_Classic/QuestingModule.lua
-		- Kept Open Sandbox available from the Classic/Season of Discovery quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
-
-	Client_TBC/QuestingModule.lua
-		- Kept Open Sandbox available from the TBC Anniversary quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
 
 	RQE.toc
 		- Updated version# (2026.09.07.2359)
@@ -66,6 +80,7 @@
 	RQEDatabase.lua
 		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
 		- Added additional quests to Classic Season of Discovery. (2026.09.09.0320)
+		- Added quests to Burning Crusade and temporarily removed quests from DB for TBC Anniversary until Retail Outland is closer to completion (2026.09.10.1153)
 
 
 12.1.0.2 (2026.09.07)
