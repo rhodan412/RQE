@@ -2576,26 +2576,28 @@ function RQE.handlePlayerControlGained()
 		if questID then
 			C_Timer.After(0.25, function()
 
-				if RQE:DidObjectivesChange(questID) then
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("PLAYER_CONTROL_GAINED → objective change → StartPeriodicChecks()")
-					end
+				RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
 
-					RQE.StartPerioFromPlayerControlGained = true
+				-- if RQE:DidObjectivesChange(questID) then
+					-- if RQE.db.profile.debugLevel == "INFO+" then
+						-- print("PLAYER_CONTROL_GAINED → objective change → StartPeriodicChecks()")
+					-- end
 
-					RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
+					-- RQE.StartPerioFromPlayerControlGained = true
 
-					-- C_Timer.After(0.10, function()
-						-- RQE:StartPeriodicChecks()
+					-- RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
+
+					-- -- C_Timer.After(0.10, function()
+						-- -- RQE:StartPeriodicChecks()
+					-- -- end)
+
+					-- C_Timer.After(3, function()
+						-- RQE.StartPerioFromPlayerControlGained = false
 					-- end)
 
-					C_Timer.After(3, function()
-						RQE.StartPerioFromPlayerControlGained = false
-					end)
-
-				elseif RQE.db.profile.debugLevel == "INFO+" then
-					print("PLAYER_CONTROL_GAINED → no objective change → skipping StartPeriodicChecks()")
-				end
+				-- elseif RQE.db.profile.debugLevel == "INFO+" then
+					-- print("PLAYER_CONTROL_GAINED → no objective change → skipping StartPeriodicChecks()")
+				-- end
 			end)
 		end
 	end
@@ -7842,13 +7844,18 @@ function RQE.handleQuestDetail(...)
 			local objectivesOK = HasNonEmptyTextArray(questData.objectivesQuestText)
 			local descriptionOK = HasNonEmptyTextArray(questData.descriptionQuestText)
 			local npcOK = HasNonEmptyTextArray(questData.npc)
-			local npcName = UnitName("target")
 
 			DEFAULT_CHAT_FRAME:AddMessage("  objectivesQuestText: " .. (objectivesOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 			DEFAULT_CHAT_FRAME:AddMessage("  descriptionQuestText: " .. (descriptionOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 			DEFAULT_CHAT_FRAME:AddMessage("  npc: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 			if not npcOK then
-				print(string.format("			npc = { \"%s\" },", npcName))
+				local npcName = UnitName("target")
+				if type(npcName) == "string" and npcName:match("%S") then
+					print(string.format("			npc = { \"%s\" },", npcName))
+				else
+					-- Automatically offered quests may have no NPC or target associated with QUEST_DETAIL.
+					print("			npc = { \"\" },")
+				end
 			end
 		end
 	end
