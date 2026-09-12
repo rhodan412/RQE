@@ -8,15 +8,30 @@
 		- Saved Contribution Sandbox entries now take priority in the Step Editor; Save activates its mode, while Clear disables the applicable Sandbox override.
 		- Automatically offered quests no longer cause a Lua error when their database entry has no NPC name and the player has no target in Retail, Classic, or TBC.
 		- Quest steps now reevaluate whenever player control returns, allowing incomplete timed vehicle quests to direct players back to the NPC needed to resume them.
+		- Preserved RQE Contribution cleanup results now show a clickable quest link when available, the quest name otherwise, and the quest level across Retail, Classic, and TBC.
+		- The Sandbox now opens on the Legacy Runtime tab by default.
+		- RQE Contribution cleanup now completes without a quest-level Lua error and continues preserving unmatched entries across Retail, Classic/Season of Discovery, and TBC Anniversary.
+		- Removed RQE Contribution cleanup results now show a clickable quest link or quest-name fallback and quest level, matching preserved entries.
+		- Quest guidance can now use another quest's completion as a stable step requirement, including after that quest has been turned in.
+		- Cross-quest completion checks no longer produce a missing-function Lua error on Retail 12.
+		- Repeatable and scripted side-quest turn-ins can now advance dependent quest guidance reliably across reloads in Retail, Classic, and TBC.
+		- Completing a dependent side quest now advances its supertracked parent immediately instead of waiting for another quest update.
+		- Newly accepted Retail quests once again track automatically without producing a GetQuestLink Lua error.
 
 	Client_Classic/Core.lua
 		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
 		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
 		- Mirrored the shared Sandbox resolver in Classic/Season of Discovery diagnostic output so printed quest data matches the active Contribution or Legacy Runtime test. (2026.09.08.1416)
+		- Added CheckDBQuestCompleted support for cross-quest dependencies, accepting either ready-for-turn-in or already-flagged completion state so dependent steps remain advanced after the checked quest leaves the log. (2026.09.11.2310)
+		- Added native and legacy completion-API fallbacks to CheckDBQuestCompleted so a missing compatibility wrapper cannot stop Classic/Season of Discovery step evaluation. (2026.09.11.2318)
+		- Added per-character dependency-completion storage and generic database-reference discovery so repeatable or scripted side-quest turn-ins remain satisfied for the current parent quest attempt even when Blizzard exposes no persistent completion flag. (2026.09.11.2332)
+		- Queued parent-step reevaluation after recording a dependency turn-in so Classic/Season of Discovery guidance advances immediately when the completed side quest has a different quest ID. (2026.09.11.2345)
+		- Deferred throttled periodic checks for their remaining cooldown instead of discarding them, ensuring Classic/Season of Discovery dependency turn-ins cannot lose their requested parent-step update during a quest-event burst. (2026.09.11.2348)
 
 	Client_Classic/EventManager.lua
 		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for Classic/Season of Discovery so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
 		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for Classic/Season of Discovery so timed vehicle quest steps are reevaluated after control returns even when objective text has not changed. (2026.09.10.1153)
+		- Recorded QUEST_TURNED_IN dependency completions and cleared their per-parent state on parent acceptance, removal, or turn-in, providing lifecycle-safe repeatable side-quest progression in Classic/Season of Discovery. (2026.09.11.2332)
 
 	Client_Classic/QuestingModule.lua
 		- Kept Open Sandbox available from the Classic/Season of Discovery quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
@@ -29,10 +44,16 @@
 		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
 		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
 		- Mirrored the shared Sandbox resolver in TBC Anniversary diagnostic output so printed quest data matches the active Contribution or Legacy Runtime test. (2026.09.08.1416)
+		- Added CheckDBQuestCompleted support for cross-quest dependencies, accepting either ready-for-turn-in or already-flagged completion state so dependent steps remain advanced after the checked quest leaves the log. (2026.09.11.2310)
+		- Added native and legacy completion-API fallbacks to CheckDBQuestCompleted so a missing compatibility wrapper cannot stop TBC Anniversary step evaluation. (2026.09.11.2318)
+		- Added per-character dependency-completion storage and generic database-reference discovery so repeatable or scripted side-quest turn-ins remain satisfied for the current parent quest attempt even when Blizzard exposes no persistent completion flag. (2026.09.11.2332)
+		- Queued parent-step reevaluation after recording a dependency turn-in so TBC Anniversary guidance advances immediately when the completed side quest has a different quest ID. (2026.09.11.2345)
+		- Deferred throttled periodic checks for their remaining cooldown instead of discarding them, ensuring TBC Anniversary dependency turn-ins cannot lose their requested parent-step update during a quest-event burst. (2026.09.11.2348)
 
 	Client_TBC/EventManager.lua
 		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for TBC Anniversary so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
 		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for TBC Anniversary so an incomplete bombing run can return Mission: Gateways Murketh and Shaadraz to its Wing Commander Brack reboarding step after control returns. (2026.09.10.1153)
+		- Recorded QUEST_TURNED_IN dependency completions and cleared their per-parent state on parent acceptance, removal, or turn-in, providing lifecycle-safe repeatable side-quest progression in TBC Anniversary. (2026.09.11.2332)
 
 	Client_TBC/QuestingModule.lua
 		- Kept Open Sandbox available from the TBC Anniversary quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
@@ -45,6 +66,11 @@
 		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
 		- Guarded the optional TomTom reset in the coordblock fallback so a missing TomTom addon cannot stop waypoint creation. (2026.09.07.2359)
 		- Updated Print Supertracked Quest to report the same Contribution or Legacy Runtime Sandbox entry that gameplay resolves. (2026.09.08.1416)
+		- Added CheckDBQuestCompleted to periodic step evaluation for cross-quest dependencies, combining ready-for-turn-in state with Blizzard's completion flag so a turned-in dependency does not regress the tracked quest to an earlier step. (2026.09.11.2310)
+		- Guarded CheckDBQuestCompleted against an unavailable API wrapper and fall back to Blizzard's native completion functions, preventing Retail 12 Sandbox checks from raising a nil-call error. (2026.09.11.2318)
+		- Added a per-character CheckDBQuestCompleted event latch that discovers declared dependencies in active quest data and survives reloads until the parent quest lifecycle ends, covering repeatable or scripted side quests without queryable completion history. (2026.09.11.2332)
+		- Scheduled periodic parent-quest checks after a dependency latch is written, allowing quest 9472 and other cross-quest guides to advance immediately when their differently identified side quest turns in. (2026.09.11.2345)
+		- Changed periodic-check throttling to reschedule the latest request after its remaining cooldown rather than dropping it, guaranteeing event-burst dependency updates reach the supertracked parent. (2026.09.11.2348)
 
 	DatabaseMain.lua
 		- Restricted Retail quest-data selection to Retail-era database sections, excluding Wrath Anniversary, Burning Crusade Anniversary, and Season of Discovery fallbacks whose shared quest IDs can use different map IDs and coordinates. (2026.09.08.0024)
@@ -56,9 +82,21 @@
 	EventManager.lua
 		- Guarded missing target names in QUEST_DETAIL database diagnostics and print the established empty NPC entry for automatically offered quests, preventing string.format from receiving nil while preserving targeted-NPC output. (2026.09.10.1153)
 		- Queued periodic quest checks whenever PLAYER_CONTROL_GAINED fires with waypoint automation enabled, rather than requiring a detected objective-text change, so incomplete vehicle quests such as Mission: Gateways Murketh and Shaadraz can return to their NPC reboarding step after a bombing run ends. (2026.09.10.1153)
+		- Normalized Retail QUEST_ACCEPTED's quest-log-index and quest-ID payload, recorded declared dependency turn-ins before quest removal, and cleared their state when the parent is accepted again, removed, or turned in so each parent attempt receives isolated repeatable side-quest progress. (2026.09.11.2332)
+		- Corrected Retail 12.1 QUEST_ACCEPTED parsing to use its first payload as the quest ID, with optional second-payload compatibility, and guarded quest-link creation against a missing ID so automatic tracking continues without a GetQuestLink usage error. (2026.09.11.2347)
 
 	QuestingModule.lua
 		- Kept Open Sandbox available from the Retail quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+
+	RQE_API.lua
+		- Added cross-client quest-link and quest-level helpers that prefer Blizzard's quest-ID APIs, fall back to normalized quest-log metadata, and extract a cached level from a quest link when necessary, allowing dependent addons to report consistent quest metadata in Retail, Classic/Season of Discovery, and TBC Anniversary. (2026.09.10.1744)
+		- Hardened legacy quest-link lookup by validating the quest ID embedded in every returned hyperlink and retrying with the normalized quest-log index only on Classic/Season of Discovery and TBC Anniversary, preventing older index-style behavior from linking the wrong quest. (2026.09.10.1746)
+		- Added a cumulative capability-checked GetLogIndexForQuestID wrapper and guarded quest-link/quest-level metadata fallbacks against missing optional wrappers, preventing Retail cleanup from stopping on preserved quests while retaining the exhaustive legacy lookup used by Classic/Season of Discovery and TBC Anniversary. (2026.09.11.2134)
+		- Made IsQuestFlaggedCompleted a cumulative capability-checked wrapper outside the historical version-selection chain so Retail 12 always initializes the API used by cross-quest completion checks. (2026.09.11.2318)
+		- Routed the cumulative completion wrapper through Retail's live C_QuestLog API while retaining the captured native API on legacy clients, ensuring the initialized wrapper returns the actual Retail completion flag without risking legacy alias recursion. (2026.09.11.2322)
+
+	RQE_Contribution/Data.lua
+		- Reused a shared cleanup metadata formatter for removed and preserved entries and retained each removed contribution record long enough to provide its title fallback, so removed quests print a clickable quest link when available, otherwise their quest name, followed by the quest level or ?. (2026.09.11.2139)
 
 	RQE_Sandbox.lua
 		- Sequenced Sandbox actions so Save activates its selected Contribution or Legacy mode before parsing, Clear disables the selected mode, and Clear Both disables both modes before removing their entries. (2026.09.09.0320)
@@ -69,10 +107,7 @@
 		- Made a Contribution save select and refresh the matching Sandbox entry in the Step Editor immediately, preventing an older same-ID contribution from masking it. (2026.09.08.1416)
 		- Deferred standalone initialization until PLAYER_LOGIN so the Sandbox no longer reaches DebugLog before RQE's profile database exists, while remaining independent of RQE_Contribution. (2026.09.08.1416)
 		- Normalized legacy-style active step headers with fully commented bodies before Contribution comment promotion, allowing those pasted snippets to load as editable Contribution steps instead of producing an unmatched-table Lua error. (2026.09.08.1416)
-
-	RQEFrame.lua
-		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
-		- Kept Open Sandbox available from Retail frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Reset the selected Sandbox tab to Legacy Runtime whenever the editor opens, making right-click Open Sandbox and the slash command start in the raw-Lua testing view while preserving manual tab switching during the session. (2026.09.11.0858)
 
 	RQE.toc
 		- Updated version# (2026.09.07.2359)
@@ -81,6 +116,10 @@
 		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
 		- Added additional quests to Classic Season of Discovery. (2026.09.09.0320)
 		- Added quests to Burning Crusade and temporarily removed quests from DB for TBC Anniversary until Retail Outland is closer to completion (2026.09.10.1153)
+
+	RQEFrame.lua
+		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
+		- Kept Open Sandbox available from Retail frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
 
 
 12.1.0.2 (2026.09.07)
