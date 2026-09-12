@@ -3172,6 +3172,76 @@ RQE.API.GetTitleForQuestID = function(questID)
 end
 
 
+-- Use: local questLink = RQE.API.GetQuestLink(questID)
+-- GetQuestLink is shared by current Retail, Classic Era/Season of Discovery,
+-- and TBC Anniversary clients, but returns nil when the quest is unavailable.
+RQE.API.GetQuestLink = function(questID)
+	questID = tonumber(questID)
+	if not questID or questID <= 0 or type(GetQuestLink) ~= "function" then
+		return nil
+	end
+
+	local function GetMatchingQuestLink(linkArgument)
+		local questLink = GetQuestLink(linkArgument)
+		local linkedQuestID = type(questLink) == "string"
+			and tonumber(questLink:match("|Hquest:(%d+)"))
+		if linkedQuestID == questID then
+			return questLink
+		end
+		return nil
+	end
+
+	local questLink = GetMatchingQuestLink(questID)
+	if questLink or not isLegacyClient then
+		return questLink
+	end
+
+	-- Some legacy implementations have exposed the older quest-log-index
+	-- signature. Retry with the normalized index, but accept only a matching ID.
+	local getLogIndex = RQE.API.GetLogIndexForQuestID
+	local questLogIndex = type(getLogIndex) == "function" and getLogIndex(questID) or nil
+	return questLogIndex and GetMatchingQuestLink(questLogIndex) or nil
+end
+
+
+-- Returns the best available numeric quest level for a quest ID. Prefer the
+-- native ID-based API, then the normalized quest-log entry, then link payload.
+RQE.API.GetQuestLevelForQuestID = function(questID)
+	questID = tonumber(questID)
+	if not questID or questID <= 0 then
+		return nil
+	end
+
+	local questLevel
+	local getDifficultyLevel
+	if isLegacyClient and Has(NativeQuestLog, "GetQuestDifficultyLevel") then
+		getDifficultyLevel = NativeQuestLog.GetQuestDifficultyLevel
+	elseif C_QuestLog and type(C_QuestLog.GetQuestDifficultyLevel) == "function" then
+		getDifficultyLevel = C_QuestLog.GetQuestDifficultyLevel
+	end
+
+	if getDifficultyLevel then
+		questLevel = tonumber(getDifficultyLevel(questID))
+	end
+
+	if not questLevel or questLevel <= 0 then
+		local getLogIndex = RQE.API.GetLogIndexForQuestID
+		local getQuestLogInfo = RQE.API.GetQuestLogInfo
+		local questLogIndex = type(getLogIndex) == "function" and getLogIndex(questID) or nil
+		local questInfo = questLogIndex and type(getQuestLogInfo) == "function"
+			and getQuestLogInfo(questLogIndex) or nil
+		questLevel = questInfo and tonumber(questInfo.level) or nil
+	end
+
+	if not questLevel or questLevel <= 0 then
+		local questLink = RQE.API.GetQuestLink(questID)
+		questLevel = questLink and tonumber(questLink:match("|Hquest:%d+:(%-?%d+)")) or nil
+	end
+
+	return questLevel and questLevel > 0 and questLevel or nil
+end
+
+
 -- Requests uncached quest data. On Retail this completes through
 -- QUEST_DATA_LOAD_RESULT(questID, success).
 RQE.API.RequestLoadQuestByID = function(questID)
@@ -3261,6 +3331,33 @@ RQE.API.GetQuestLogInfo = function(questLogIndex)
 end
 
 
+-- Quest-log-index lookup is available on every supported client, but the
+-- earlier version ladder defines only one historical branch. Install a
+-- cumulative capability-based wrapper here; the legacy block below replaces
+-- it with its more exhaustive scan for SoD and TBC Anniversary.
+RQE.API.GetLogIndexForQuestID = function(questID)
+	if type(questID) == "table" then
+		questID = questID.questID or questID.id
+	end
+	questID = tonumber(questID)
+	if not questID or questID <= 0 then
+		return nil
+	end
+
+	if C_QuestLog and type(C_QuestLog.GetLogIndexForQuestID) == "function" then
+		local questLogIndex = tonumber(C_QuestLog.GetLogIndexForQuestID(questID))
+		return questLogIndex and questLogIndex > 0 and questLogIndex or nil
+	end
+
+	if type(GetQuestLogIndexByID) == "function" then
+		local questLogIndex = tonumber(GetQuestLogIndexByID(questID))
+		return questLogIndex and questLogIndex > 0 and questLogIndex or nil
+	end
+
+	return nil
+end
+
+
 -- Use: local isOnQuest = RQE.API.IsOnQuest(questID)
 -- instead of: C_QuestLog.IsOnQuest(questID)
 RQE.API.IsOnQuest = function(questID)
@@ -3287,6 +3384,18 @@ RQE.API.IsWorldQuest = function(questID)
 
 	-- Classic versions without World Quests.
 	return false
+end
+
+-- Cumulative quest-completion wrapper. Keep this outside the historical
+-- version-selection chain so newer Retail versions cannot bypass its setup.
+RQE.API.IsQuestFlaggedCompleted = function(questID)
+	if Has(NativeQuestLog, "IsQuestFlaggedCompleted") then
+		return NativeQuestLog.IsQuestFlaggedCompleted(questID) == true
+	end
+	if not isLegacyClient and C_QuestLog and type(C_QuestLog.IsQuestFlaggedCompleted) == "function" then
+		return C_QuestLog.IsQuestFlaggedCompleted(questID) == true
+	end
+	return type(IsQuestFlaggedCompleted) == "function" and IsQuestFlaggedCompleted(questID) == true or false
 end
 
 -- Legacy quest-log API. This is deliberately placed in the quest-log section:
