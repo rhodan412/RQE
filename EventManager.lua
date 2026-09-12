@@ -3865,7 +3865,16 @@ end
 -- Fires whenever the player accepts a quest
 function RQE.handleQuestAccepted(...)
 	local event = select(2, ...)
-	local questID = select(3, ...)
+	local firstQuestPayload = tonumber((select(3, ...)))
+	local secondQuestPayload = tonumber((select(4, ...)))
+
+	-- Retail 12.1 supplies questID as the first payload. Prefer an optional
+	-- second ID for compatibility with variants that also provide a log index.
+	local questID = secondQuestPayload or firstQuestPayload
+
+	if questID and RQE.ClearQuestDependencyCompletions then
+		RQE:ClearQuestDependencyCompletions(questID)
+	end
 
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
@@ -3955,7 +3964,7 @@ function RQE.handleQuestAccepted(...)
 	end
 
 	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-	local questLink = GetQuestLink(questID)
+	local questLink = questID and GetQuestLink(questID) or nil
 
 	RQE.QuestStepsBlocked(questID)	-- Function call that checks to see if quest is in the DB already, but nothing is printed unless debug mode is set to 'Info'
 	RQE.QuestAcceptedToSuperTrackOkay = true
@@ -6568,6 +6577,10 @@ function RQE.handleQuestRemoved(...)
 	local questID = select(3, ...)
 	local wasReplayQuest = select(4, ...)
 
+	if questID and RQE.ClearQuestDependencyCompletions then
+		RQE:ClearQuestDependencyCompletions(questID)
+	end
+
 	if RQE.ClearTrackedQuestStepIndex then
 		RQE:ClearTrackedQuestStepIndex(questID)
 	end
@@ -6909,7 +6922,7 @@ function RQE.handleQuestWatchUpdate(...)
 	-- Retrieve the current watched quest ID if needed
 	local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 	local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
-	local questLink = GetQuestLink(questID)
+	local questLink = questID and GetQuestLink(questID) or nil
 	local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
 	if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
@@ -7287,6 +7300,13 @@ function RQE.handleQuestTurnIn(...)
 	local questID = select(3, ...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
+
+	if questID and RQE.RecordQuestDependencyCompletion then
+		RQE:RecordQuestDependencyCompletion(questID)
+	end
+	if questID and RQE.ClearQuestDependencyCompletions then
+		RQE:ClearQuestDependencyCompletions(questID)
+	end
 
 	if RQE.ClearTrackedQuestStepIndex then
 		RQE:ClearTrackedQuestStepIndex(questID)
