@@ -4050,6 +4050,10 @@ function RQE.handleQuestAccepted(...)
 		questID = questInfo and tonumber(questInfo.questID) or nil
 	end
 
+	if questID and RQE.ClearQuestDependencyCompletions then
+		RQE:ClearQuestDependencyCompletions(questID)
+	end
+
 	-- Print Event-specific Args
 	if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
 		local args = {...}
@@ -6784,6 +6788,10 @@ function RQE.handleQuestRemoved(...)
 	local questID = select(3, ...)
 	local wasReplayQuest = select(4, ...)
 
+	if questID and RQE.ClearQuestDependencyCompletions then
+		RQE:ClearQuestDependencyCompletions(questID)
+	end
+
 	-- QUEST_REMOVED is authoritative. Clean RQE's independent watch state here
 	-- instead of letting a render/distance pass guess that the quest disappeared.
 	-- if questID then
@@ -7544,6 +7552,13 @@ function RQE.handleQuestTurnIn(...)
 	local questID = select(3, ...)
 	local xpReward = select(4, ...)
 	local moneyReward = select(5, ...)
+
+	if questID and RQE.RecordQuestDependencyCompletion then
+		RQE:RecordQuestDependencyCompletion(questID)
+	end
+	if questID and RQE.ClearQuestDependencyCompletions then
+		RQE:ClearQuestDependencyCompletions(questID)
+	end
 
 	-- QUEST_REMOVED normally follows a turn-in, but clear the virtual state here
 	-- as well so the completed quest cannot survive a delayed/missing event.
