@@ -9622,7 +9622,11 @@ function RQE:QueuePeriodicChecks(reason, delay, questID)
 
 		-- Optional cooldown so back-to-back events in the same burst don't all run
 		local now = GetTime()
-		if (now - (self._lastPeriodicRunTime or 0)) < 0.40 then
+		local elapsed = now - (self._lastPeriodicRunTime or 0)
+		if elapsed < 0.40 then
+			-- Preserve the latest requested reevaluation instead of losing it to
+			-- the throttle, which is important for dependency turn-in events.
+			self:QueuePeriodicChecks(self._scheduledPeriodicReason, 0.40 - elapsed, activeQuestID)
 			return
 		end
 		self._lastPeriodicRunTime = now
@@ -9684,6 +9688,7 @@ function RQE:StartPeriodicChecks()
 		CheckScenarioCriteria = "CheckScenarioCriteria",
 		CheckDBConditionalsOnly = "CheckDBConditionalsOnly",
 		CheckDBComplete = "CheckDBComplete",
+		CheckDBQuestCompleted = "CheckDBQuestCompleted",
 	}
 
 	local questData = self.getQuestData(superTrackedQuestID)
@@ -12947,6 +12952,159 @@ function RQE:CheckDBComplete(questID, stepIndex, check, neededAmt)
 	end)
 
 	return isReady
+end
+
+
+-- Return the per-character completion latch used for repeatable or scripted
+-- dependency quests whose completion is not retained by Blizzard's flag API.
+function RQE:GetQuestDependencyCompletionStore()
+	if not self.db or not self.db.char then return nil end
+	self.db.char.questDependencyCompletions = self.db.char.questDependencyCompletions or {}
+	return self.db.char.questDependencyCompletions
+end
+
+
+function RQE:ClearQuestDependencyCompletions(parentQuestID)
+	local store = self:GetQuestDependencyCompletionStore()
+	parentQuestID = tonumber(parentQuestID)
+	if store and parentQuestID then
+		store[parentQuestID] = nil
+	end
+end
+
+
+function RQE:QuestUsesCompletionDependency(parentQuestID, dependencyQuestID)
+	local questData = self.getQuestData and self.getQuestData(parentQuestID)
+	dependencyQuestID = tonumber(dependencyQuestID)
+	if not questData or not dependencyQuestID then return false end
+
+	local function Matches(checkData)
+		if not checkData or checkData.funct ~= "CheckDBQuestCompleted" then return false end
+		for _, checkedID in ipairs(checkData.check or {}) do
+			if tonumber(checkedID) == dependencyQuestID then return true end
+		end
+		return false
+	end
+
+	for _, stepData in pairs(questData) do
+		if type(stepData) == "table" then
+			if Matches(stepData) then return true end
+			for _, checkData in ipairs(stepData.checks or {}) do
+				if Matches(checkData) then return true end
+			end
+		end
+	end
+
+	return false
+end
+
+
+-- Remember a turned-in dependency for every active quest whose database entry
+-- references it. QUEST_TURNED_IN is authoritative when repeatable/scripted
+-- quests do not remain in the log or set IsQuestFlaggedCompleted.
+function RQE:RecordQuestDependencyCompletion(dependencyQuestID)
+	dependencyQuestID = tonumber(dependencyQuestID)
+	local store = self:GetQuestDependencyCompletionStore()
+	if not dependencyQuestID or not store then return end
+
+	local activeQuestIDs = {}
+	local recordedAny = false
+	local function AddQuestID(questID)
+		questID = tonumber(questID)
+		if questID and questID > 0 and questID ~= dependencyQuestID then
+			activeQuestIDs[questID] = true
+		end
+	end
+
+	AddQuestID(self.API and self.API.GetSuperTrackedQuestID and self.API.GetSuperTrackedQuestID())
+	AddQuestID(self.CurrentTrackedQuestID)
+	AddQuestID(self.DisplayedQuestID)
+	AddQuestID(self.CurrentDisplayedQuestID)
+
+	local numEntries = self.API and self.API.GetNumQuestLogEntries and self.API.GetNumQuestLogEntries() or 0
+	for questLogIndex = 1, tonumber(numEntries) or 0 do
+		local info = self.API.GetQuestLogInfo and self.API.GetQuestLogInfo(questLogIndex)
+		if info and not info.isHeader then
+			AddQuestID(info.questID)
+		end
+	end
+
+	for parentQuestID in pairs(activeQuestIDs) do
+		if self:QuestUsesCompletionDependency(parentQuestID, dependencyQuestID) then
+			store[parentQuestID] = store[parentQuestID] or {}
+			store[parentQuestID][dependencyQuestID] = true
+			recordedAny = true
+			if self.db.profile.debugLevel == "INFO+" then
+				print(string.format("Recorded quest dependency completion: parent=%d, dependency=%d.", parentQuestID, dependencyQuestID))
+			end
+		end
+	end
+
+	-- A dependency turn-in usually has a different questID than the supertracked
+	-- parent, so the normal QUEST_TURNED_IN path does not reevaluate that parent.
+	if recordedAny and self.QueuePeriodicChecks then
+		self:QueuePeriodicChecks("QUEST_TURNED_IN_DEPENDENCY", 0.60)
+	end
+
+	return recordedAny
+end
+
+
+-- Check whether a quest is ready for turn-in, has a persistent completion flag,
+-- or was observed turning in during the current parent-quest attempt.
+function RQE:CheckDBQuestCompleted(questID, stepIndex, check, neededAmt, ...)
+	local parentQuestID = tonumber(questID)
+	local checkedQuestID = tonumber(questID)
+
+	-- Direct step checks pass the tracked quest as questID and the dependency in
+	-- check[1]. EvaluateStepChecks passes the dependency directly as questID.
+	if type(check) == "table" and tonumber(check[1]) then
+		checkedQuestID = tonumber(check[1])
+	else
+		local groupedCheckData = select(1, ...)
+		if type(groupedCheckData) == "table" and tonumber(check) then
+			parentQuestID = tonumber(check)
+		end
+	end
+
+	if not checkedQuestID then
+		if RQE.db.profile.debugLevel == "INFO+" then
+			print("CheckDBQuestCompleted: No valid questID was provided.")
+		end
+		return false
+	end
+
+	local isReady = C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+	local completionFunction = RQE.API and RQE.API.IsQuestFlaggedCompleted
+	local isFlaggedCompleted
+	if type(completionFunction) == "function" then
+		isFlaggedCompleted = completionFunction(checkedQuestID) == true
+	elseif C_QuestLog and type(C_QuestLog.IsQuestFlaggedCompleted) == "function" then
+		isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(checkedQuestID) == true
+	elseif type(IsQuestFlaggedCompleted) == "function" then
+		isFlaggedCompleted = IsQuestFlaggedCompleted(checkedQuestID) == true
+	else
+		isFlaggedCompleted = false
+	end
+	local store = self:GetQuestDependencyCompletionStore()
+	local wasRecorded = store
+		and parentQuestID
+		and store[parentQuestID]
+		and store[parentQuestID][checkedQuestID] == true
+	local isCompleted = isReady or isFlaggedCompleted or wasRecorded
+
+	if RQE.db.profile.debugLevel == "INFO+" then
+		print(string.format(
+			"CheckDBQuestCompleted: Quest %d ready=%s, flaggedCompleted=%s, recorded=%s, result=%s.",
+			checkedQuestID,
+			tostring(isReady),
+			tostring(isFlaggedCompleted),
+			tostring(wasRecorded == true),
+			tostring(isCompleted)
+		))
+	end
+
+	return isCompleted
 end
 
 
