@@ -297,11 +297,14 @@ end
 local closeButton = CreateFrame("Button", "RQEDebugLogCloseButton", logFrame, "UIPanelCloseButton")
 closeButton:SetSize(30, 30)
 closeButton:SetPoint("TOPRIGHT", logFrame, "TOPRIGHT", 0, 0)
+closeButton:SetFrameLevel(header:GetFrameLevel() + 1)
+closeButton:EnableMouse(true)
+closeButton:RegisterForClicks("LeftButtonUp")
 closeButton:SetNormalTexture("Interface/Buttons/UI-Panel-MinimizeButton-Up")
 closeButton:SetPushedTexture("Interface/Buttons/UI-Panel-MinimizeButton-Down")
 closeButton:SetHighlightTexture("Interface/Buttons/UI-Panel-MinimizeButton-Highlight")
-closeButton:SetScript("OnClick", function()
-	logFrame:Hide()
+closeButton:SetScript("OnClick", function(self)
+	self:GetParent():Hide()
 end)
 
 
@@ -335,20 +338,46 @@ logFrame:Hide()
 -- Define the SLASH command to toggle the log
 SLASH_LOGTOGGLE1 = "/logtoggle"
 SlashCmdList["LOGTOGGLE"] = function()
-	if logFrame:IsShown() then
-		logFrame:Hide()
+	RQE.ToggleDebugLogFrame()
+end
+
+
+local function FormatPrintedDebugOutput(...)
+	local values = {}
+	for index = 1, select("#", ...) do
+		local value = select(index, ...)
+		local ok, text = pcall(tostring, value)
+		values[index] = ok and text or "<unprintable>"
+	end
+	return table.concat(values, " ")
+end
+
+
+-- Show and refresh the Debug Log. Visibility toggling is handled separately so
+-- producer calls cannot accidentally hide a session.
+function RQE.DebugLogFrame()
+	if isRetail then
+		RQE.UpdateLogFrame()
+		if not logFrame:IsShown() then
+			logFrame:Show()
+		end
 	else
-		RQE.DebugLogFrame()
+		-- Legacy EditBoxes may defer a text/scroll refresh while hidden.
+		if not logFrame:IsShown() then
+			logFrame:Show()
+		end
+		RQE.UpdateLogFrame()
 	end
 end
 
 
--- Show and refresh the Debug Log.  Visibility toggling is handled by
--- RQE:ToggleDebugLog(), so producer calls cannot accidentally hide a session.
-function RQE.DebugLogFrame()
-	RQE.UpdateLogFrame()
-	if not logFrame:IsShown() then
-		logFrame:Show()
+-- Toggle the Debug Log for explicit user actions. Keep DebugLogFrame() show-only
+-- so callers that merely refresh output cannot unexpectedly close the frame.
+function RQE.ToggleDebugLogFrame()
+	if logFrame:IsShown() then
+		logFrame:Hide()
+	else
+		RQE.DebugLogFrame()
 	end
 end
 
@@ -480,4 +509,34 @@ end)
 SLASH_CLEARDEBUG1 = "/rqeclearlog"
 SlashCmdList["CLEARDEBUG"] = function(msg)
 	RQE:ClearDebugLog()
+end
+
+
+-- Legacy clients do not consistently route print() through the Lua
+-- DEFAULT_CHAT_FRAME:AddMessage method overridden above. Capture a producer's
+-- synchronous print output directly while preserving its normal chat output.
+-- Retail continues using its existing chat-frame path unchanged.
+function RQE:CapturePrintedDebugOutput(producer, ...)
+	if type(producer) ~= "function" then
+		return nil
+	end
+
+	if isRetail then
+		return producer(...)
+	end
+
+	local originalPrint = _G.print
+	_G.print = function(...)
+		originalPrint(...)
+		RQE.AddToDebugLog(FormatPrintedDebugOutput(...))
+	end
+
+	local ok, result = pcall(producer, ...)
+	_G.print = originalPrint
+
+	if not ok then
+		error(result, 0)
+	end
+
+	return result
 end
