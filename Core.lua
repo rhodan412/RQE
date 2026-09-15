@@ -3882,7 +3882,8 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 	end
 
 	-- Fetch the next waypoint text for the quest
-	if RQE.searchedQuestID then
+	if RQE.searchedQuestID
+		and tonumber(RQE.searchedQuestID) ~= tonumber(RQE.API.GetSuperTrackedQuestID()) then
 		RQEFrame.DirectionText = DirectionText  -- Save to addon table
 
 		if RQE.DirectionTextFrame then
@@ -3925,7 +3926,15 @@ function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 
 		--RQE.DontUpdateFrame = true
 	else
-		local DirectionText = C_QuestLog.GetNextWaypointText(questID)
+		-- Install a usable same-map coordOrder point before other waypoint
+		-- creators run, but never synthesize directionText from coordinates.
+		local DirectionText = RQE.GetCoordOrderDirection
+			and RQE:GetCoordOrderDirection(questID)
+		if not DirectionText or DirectionText == "" then
+			DirectionText = C_QuestLog and C_QuestLog.GetNextWaypointText
+				and C_QuestLog.GetNextWaypointText(questID)
+		end
+		if DirectionText == "" then DirectionText = nil end
 		RQEFrame.DirectionText = DirectionText  -- Save to addon table
 		RQE.UnknownQuestButtonCalcNTrack()
 
@@ -6154,22 +6163,32 @@ end
 -- player map and step.  Automatic hotspot/Blizzard refreshes consult this
 -- before clearing TomTom or the user pin; a real context transition releases it.
 function RQE:IsCoordblockWaypointProtected(questID, stepIndex)
+	-- Ordered chains use the same automatic-waypoint exclusion gate. Their
+	-- own replacement bypasses it only while installing the next route point.
+	if self._settingCoordOrderWaypoint then return false end
 	local active = self.ActiveCoordblock
-	if not active then return self:IsManualFlightMasterWaypointProtected() end
-
-	local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
-	local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
-	local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
-	if active.questID ~= trackedQuestID
-		or (active.playerMapID and playerMapID and active.playerMapID ~= playerMapID)
-		or (active.stepIndex and currentStep and active.stepIndex ~= currentStep)
-		or (tonumber(questID) == active.questID and stepIndex
-			and active.stepIndex and active.stepIndex ~= tonumber(stepIndex)) then
-		self.ActiveCoordblock = nil
-		return false
+	if active then
+		local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+		local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+		local questData = trackedQuestID and self.getQuestData
+			and self.getQuestData(trackedQuestID)
+		local step = questData and currentStep and questData[currentStep]
+		local hasCoordblock = step and type(step.description) == "string"
+			and step.description:find("{coordblock:", 1, true)
+		if active.questID ~= trackedQuestID
+			or not hasCoordblock
+			or (active.playerMapID and playerMapID and active.playerMapID ~= playerMapID)
+			or (active.stepIndex and currentStep and active.stepIndex ~= currentStep)
+			or (tonumber(questID) == active.questID and stepIndex
+				and active.stepIndex and active.stepIndex ~= tonumber(stepIndex)) then
+			self.ActiveCoordblock = nil
+		else
+			return true
+		end
 	end
-
-	return true
+	if self:IsManualFlightMasterWaypointProtected() then return true end
+	return self.SyncCoordOrderWaypoint and self:SyncCoordOrderWaypoint() or false
 end
 
 -- A manually selected flight master also owns its waypoint until the player
@@ -6185,10 +6204,36 @@ function RQE:IsManualFlightMasterWaypointProtected()
 	local ownerStepChanged = trackedQuestID == self.ManualFlightMasterWaypointQuestID
 		and self.ManualFlightMasterWaypointStepIndex and currentStep
 		and self.ManualFlightMasterWaypointStepIndex ~= currentStep
-	if (playerMapID and playerMapID ~= ownerMapID) or ownerStepChanged then
+	-- A TomTom profile reset or another explicit waypoint can remove the
+	-- selected flight master while leaving its owner flag behind. Only a
+	-- still-live pin may block same-map quest routes and portal fallbacks.
+	local uid = self.ManualFlightMasterWaypointUID
+	local missingPin = uid and self._currentTomTomUID ~= uid
+	if uid and not missingPin and TomTom and TomTom.WaypointExists
+		and self.ManualFlightMasterWaypointX and self.ManualFlightMasterWaypointY then
+		missingPin = not TomTom:WaypointExists(ownerMapID,
+			self.ManualFlightMasterWaypointX, self.ManualFlightMasterWaypointY,
+			self.ManualFlightMasterWaypointTitle)
+	end
+	if self.ManualFlightMasterWaypointUsesBlizzard and C_Map
+		and C_Map.GetUserWaypoint then
+		local wp = C_Map.GetUserWaypoint()
+		local pos = wp and wp.position
+		local x, y
+		if pos then
+			if pos.GetXY then x, y = pos:GetXY()
+			else x, y = pos.x, pos.y end
+		end
+		missingPin = not (wp and wp.uiMapID == ownerMapID and x and y
+			and math.abs(x - self.ManualFlightMasterWaypointX) < 1e-4
+			and math.abs(y - self.ManualFlightMasterWaypointY) < 1e-4)
+	end
+	if (playerMapID and playerMapID ~= ownerMapID) or ownerStepChanged or missingPin then
 		self.ManualFlightMasterWaypointMapID = nil
 		self.ManualFlightMasterWaypointQuestID = nil
 		self.ManualFlightMasterWaypointStepIndex = nil
+		self.ManualFlightMasterWaypointUID = nil
+		self.ManualFlightMasterWaypointUsesBlizzard = nil
 		self.NearestFlightMasterSet = false
 		return false
 	end
@@ -6209,6 +6254,7 @@ function RQE:SetActiveCoordblock(data)
 	-- its live waypoint still exists.  This explicit click also replaces a
 	-- manually selected flight-master destination.
 	self._lastWP = nil
+	if self._coordOrderState then self._coordOrderState.currentIdx = nil end
 	self.ManualFlightMasterWaypointMapID = nil
 	self.ManualFlightMasterWaypointQuestID = nil
 	self.ManualFlightMasterWaypointStepIndex = nil
@@ -6219,6 +6265,9 @@ function RQE:SetActiveCoordblock(data)
 		stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex or self.StepIndexForCoordMatch),
 		playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player"),
 	}
+	-- The immediately following CreateWaypoint belongs to this explicit click;
+	-- later automatic calls must still respect the [Active] selection.
+	self._settingManualCoordblockWaypoint = true
 	return true
 end
 
@@ -15929,6 +15978,11 @@ function RQE:FindQuestZoneTransition(questID)
 	if not questID then
 		return nil
 	end
+	-- A current-map ordered point (or explicit manual destination) owns the
+	-- waypoint; do not even queue a delayed Blizzard portal replacement.
+	if self:IsCoordblockWaypointProtected(questID, self.AddonSetStepIndex) then
+		return nil
+	end
 
 	local waypointText = C_QuestLog.GetNextWaypointText(questID)
 	if not waypointText then return end
@@ -16350,6 +16404,9 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 	self.ManualFlightMasterWaypointQuestID = nil
 	self.ManualFlightMasterWaypointStepIndex = nil
 	self.NearestFlightMasterSet = false
+	-- This explicit menu destination must bypass an active automatic
+	-- coordOrder chain while its waypoint is being installed.
+	self._settingManualFlightMasterWaypoint = true
 
 	C_Map.ClearUserWaypoint()
 
@@ -16377,7 +16434,21 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 	self.ManualFlightMasterWaypointMapID = mapID
 	self.ManualFlightMasterWaypointQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
 	self.ManualFlightMasterWaypointStepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	local usingTomTom = isTomTomLoaded and self.db and self.db.profile
+		and self.db.profile.enableTomTomCompatibility
+		and self._currentTomTomUID
+	self.ManualFlightMasterWaypointUID = usingTomTom
+		and self._currentTomTomUID or nil
+	self.ManualFlightMasterWaypointUsesBlizzard = not usingTomTom
+	self.ManualFlightMasterWaypointX = xNorm
+	self.ManualFlightMasterWaypointY = yNorm
+	self.ManualFlightMasterWaypointTitle = title
 	self.NearestFlightMasterSet = true
+	self._settingManualFlightMasterWaypoint = false
+	-- If this manual waypoint later yields to the originating step, re-install
+	-- the chain's current point rather than trusting its stale coordinate cache.
+	if self._coordOrderState then self._coordOrderState.currentIdx = nil end
+	self._lastWP = nil
 
 	return { name = node.name, mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct }
 end
