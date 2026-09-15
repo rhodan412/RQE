@@ -75,7 +75,15 @@ end
 function RQE:CreateWaypoint(x, y, mapID, title)
 	-- print("~~~ Waypoint Creation Function: 58 ~~~")
 
+	local explicitCoordblockClick = self._settingManualCoordblockWaypoint
+	self._settingManualCoordblockWaypoint = nil
 	if not RQEFrame:IsShown() then return end
+	-- Only the clicked coordblock's own installation bypasses the ownership
+	-- gate; unrelated direct creators cannot replace [Active] or coordOrder.
+	if not explicitCoordblockClick and self:IsCoordblockWaypointProtected() then return end
+	-- Do not let the direct low-level creator bypass a live, manually chosen
+	-- flight master when travel-suggestion settings are disabled.
+	if self:IsManualFlightMasterWaypointProtected() then return end
 
 	if RQE.db.profile.debugLevel == "INFO+" then
 		if RQE.isForcedWaypoint then
@@ -139,25 +147,33 @@ function RQE:CreateWaypoint(x, y, mapID, title)
 		local step = questData[stepIndex]
 
 		if step then
-			-- DirectionText has highest priority (do NOT override with wayText)
-			if step.directionText then
-				title = questID .. " " .. questData.title .. " - " .. step.directionText
-			elseif step.coordinateHotspots then
-				-- Look for a matching hotspot with wayText
+			local matchedLocalHotspot = false
+			if step.coordinateHotspots then
+				-- The waypoint being installed is local, so its authored
+				-- hotspot label outranks an unrelated portal direction.
 				for _, hotspot in ipairs(step.coordinateHotspots) do
-					local hx = (hotspot.x > 1) and (hotspot.x / 100) or hotspot.x
-					local hy = (hotspot.y > 1) and (hotspot.y / 100) or hotspot.y
-					if hotspot.mapID == mapID
+					local hx = type(hotspot) == "table" and tonumber(hotspot.x)
+					local hy = type(hotspot) == "table" and tonumber(hotspot.y)
+					if hx and hy then
+						hx, hy = hx > 1 and hx / 100 or hx, hy > 1 and hy / 100 or hy
+					end
+					if hx and hy and tonumber(hotspot.mapID) == mapID
 						and math.abs(hx - xNorm) < 1e-4
 						and math.abs(hy - yNorm) < 1e-4 then
+						matchedLocalHotspot = true
 						if hotspot.wayText and hotspot.wayText ~= "" then
 							title = hotspot.wayText
 						else
-							-- fallback if wayText is missing or empty
-							title = step.description or questData.title or ("Quest " .. tostring(questID))
+							title = string.format("%s - Waypoint (%.2f, %.2f)",
+								questData.title or ("Quest " .. tostring(questID)),
+								hx * 100, hy * 100)
 						end
+						break
 					end
 				end
+			end
+			if not matchedLocalHotspot and step.directionText then
+				title = questID .. " " .. questData.title .. " - " .. step.directionText
 			end
 		end
 	end
@@ -235,10 +251,15 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 
 		local waypointText = C_QuestLog.GetNextWaypointText(questID)
 
-		if RQE.searchedQuestID then
-				RQE:CreateSearchedQuestWaypoint(questID, mapID)
+		if tonumber(RQE.searchedQuestID) == tonumber(questID)
+			and tonumber(questID) ~= tonumber(RQE.API.GetSuperTrackedQuestID()) then
+			RQE:CreateSearchedQuestWaypoint(questID, mapID)
 			return
 		end
+
+		-- A current-map DB hotspot outranks portal/next-waypoint text when
+		-- this numbered step has no owning coordOrder point.
+		if RQE:PreferSameMapHotspotWaypoint(questID) then return end
 
 		if waypointText then
 			RQE.DontPrintTransitionBits = true
@@ -415,6 +436,8 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 		return
 	end
 
+	if RQE:PreferSameMapHotspotWaypoint(questID) then return end
+
 	-- 4) Utility to accept either normalized (0..1) or percent (0..100)
 	local xPct, yPct
 	local function setFrom(posX, posY, mid)
@@ -447,9 +470,12 @@ function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 
 	-- 7) FALLBACK B: generic next waypoint (vec or areaPoiID)
 	if not (xPct and yPct) then
-		local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
+		local wpMapID, wpData, wpY = C_QuestLog.GetNextWaypoint(questID)
 		if wpMapID then
-			if type(wpData) == "table" then
+			if type(wpData) == "number" and type(wpY) == "number" then
+				-- Modern clients return mapID, x, y rather than a POI payload.
+				setFrom(wpData, wpY, wpMapID)
+			elseif type(wpData) == "table" then
 				if wpData.x and wpData.y then
 					setFrom(wpData.x, wpData.y, wpMapID)
 				elseif wpData.position and wpData.position.x and wpData.position.y then
@@ -647,6 +673,8 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 		end
 		return
 	end
+
+	if RQE:PreferSameMapHotspotWaypoint(questID) then return end
 
 	local questData = RQE.getQuestData(questID)
 	local x, y
@@ -944,6 +972,8 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 
 	RQE.infoLog("Attempting to set waypoint for:", questName, "at coordinates:", x, ",", y, "on mapID:", mapID)
 
+	-- An event callback can outlive the route state it started under.
+	if self:IsCoordblockWaypointProtected(questID, self.AddonSetStepIndex) then return end
 	-- Clear any existing waypoint
 	C_Map.ClearUserWaypoint()
 
@@ -953,6 +983,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 		TomTom.waydb:ResetProfile()
 		RQE._currentTomTomUID = nil
 		C_Timer.After(0.5, function()
+			if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 			if mapID and x and y then
 				RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 				RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointTitle)
@@ -968,6 +999,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 	local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
 	if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 		C_Timer.After(0.5, function()
+			if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 			if mapID and x and y then
 				RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
 				Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointTitle })
@@ -981,6 +1013,7 @@ function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
 
 	-- Fallback to default waypoint if neither TomTom nor Carbonite are used
 	if not isTomTomLoaded and not isCarboniteLoaded then
+		if self:IsCoordblockWaypointProtected(questID, self.AddonSetStepIndex) then return end
 		RQE.debugLog("Setting default waypoint with C_Map.SetUserWaypoint")
 		C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x / 100, y / 100))
 	end
@@ -1438,6 +1471,8 @@ function RQE:ForceWaypointForSupertracked(qid, mapID)
 		RQE._currentTomTomUID = nil
 	end
 
+	if RQE:PreferSameMapHotspotWaypoint(qid) then return end
+
 	-- 1) If Blizzard supplies direction text, use the direction-text flow
 	local dtxt = C_QuestLog.GetNextWaypointText(qid)
 	if dtxt and dtxt ~= "" then
@@ -1459,8 +1494,8 @@ function RQE:ForceWaypointForSupertracked(qid, mapID)
 	do
 		local bx, by = C_QuestLog.GetNextWaypointForMap(qid, mapID)
 		if bx and by then return RQE:CreateWaypoint(bx, by, mapID) end
-		local gx, gy, gMap = C_QuestLog.GetNextWaypoint(qid)
-		if gx and gy and gMap then return RQE:CreateWaypoint(gx, gy, gMap) end
+		local gMap, gx, gy = C_QuestLog.GetNextWaypoint(qid)
+		if gMap and gx and gy then return RQE:CreateWaypoint(gx, gy, gMap) end
 	end
 
 	-- 5) No DB and no Blizzard waypoint → nothing to do
@@ -1482,6 +1517,28 @@ function RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm)
 
 	local stepIndex = RQE.AddonSetStepIndex or 1
 	local step = questData[stepIndex]
+
+	-- A same-map DB hotspot must not inherit a portal directionText as its
+	-- arrow title. Match the point being installed before stale wayText caches.
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		and C_Map.GetBestMapForUnit("player")
+	if step and type(step.coordinateHotspots) == "table"
+		and playerMapID == mapID and xNorm and yNorm then
+		for _, hotspot in ipairs(step.coordinateHotspots) do
+			local hx = type(hotspot) == "table" and tonumber(hotspot.x)
+			local hy = type(hotspot) == "table" and tonumber(hotspot.y)
+			if hx and hy and tonumber(hotspot.mapID) == mapID then
+				hx, hy = hx > 1 and hx / 100 or hx, hy > 1 and hy / 100 or hy
+				if math.abs(hx - xNorm) < 1e-4
+					and math.abs(hy - yNorm) < 1e-4 then
+					return (hotspot.wayText and hotspot.wayText ~= ""
+						and hotspot.wayText)
+						or string.format("%s - Waypoint (%.2f, %.2f)",
+							qname, hx * 100, hy * 100)
+				end
+			end
+		end
+	end
 
 	-- 🔽 Check for last stored wayText from SelectBestHotspot
 	local st = RQE.WPUtil._hotspotState[questID] and RQE.WPUtil._hotspotState[questID][stepIndex]
