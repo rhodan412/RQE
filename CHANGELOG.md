@@ -17,6 +17,36 @@
 		- Repeatable and scripted side-quest turn-ins can now advance dependent quest guidance reliably across reloads in Retail, Classic, and TBC.
 		- Completing a dependent side quest now advances its supertracked parent immediately instead of waiting for another quest update.
 		- Newly accepted Retail quests once again track automatically without producing a GetQuestLink Lua error.
+		- Rerunning an RQE contribution or world-quest data action now closes an open Debug Log and opens a closed one across Retail, Classic/Season of Discovery, and TBC Anniversary; the frame's X button is clickable on legacy clients again.
+		- Contribution, completed-contribution, Sandbox, and world-quest exports now populate the Debug Log correctly on Classic/Season of Discovery and TBC Anniversary.
+		- A single contribution-export press now opens and populates the Debug Log on Classic/Season of Discovery and TBC Anniversary; Shift correctly selects completed quests, and the next press still closes and clears the log.
+		- Contribution cleanup results now provide clickable database-backed quest tooltips whenever Blizzard cannot supply a native quest link across Retail, Classic/Season of Discovery, and TBC Anniversary.
+		- Database-backed quest links printed in chat can now be clicked to open their custom tooltip on Classic/Season of Discovery and TBC Anniversary.
+		- Removed and preserved Contribution cleanup links now use the same cached questtip renderer as Retail's Print Questline on every supported client.
+		- Contribution cleanup pseudo-links now remain isolated from Print Questline while displaying the same full custom quest tooltip for removed and preserved records.
+		- Tracked quest items now appear as secure, reusable buttons beside the left edge of the RQE Quest Tracker with item counts, cooldowns, tooltips, and usability feedback across Retail, Classic/Season of Discovery, and TBC Anniversary.
+		- Quest-item buttons beside the tracker now use a secure item-ID click action intended to activate their quest items on Retail, Classic/Season of Discovery, and TBC Anniversary.
+		- Quest-item buttons beside the tracker now register mouse-down as well as mouse-up, so clicking them activates the item with either action-button click setting.
+		- Clicking a compact quest-step waypoint now marks that link [Active] in the Quest Helper and keeps it selected until the supertracked quest changes or the window is cleared, across Retail, Season of Discovery, and TBC Anniversary.
+		- Quest Helper step links now stay aligned in both step views, and an [Active] coordblock keeps its waypoint until the player changes quest, step, or map.
+		- Clicking an [Active] coordblock again restores its waypoint after TomTom removes a reached point; compact-link tooltips now appear outside the Quest Helper rather than covering nearby links.
+		- Set Waypoint to Closest Flight Master now replaces the selected quest waypoint and remains the destination through automatic quest-tracking refreshes until the player chooses another waypoint or changes maps.
+		- Compact waypoint tooltips now stay near the mouse with a clear offset above the link, rather than sitting on the Quest Helper edge or covering the other waypoint rows.
+		- A manually chosen flight-master waypoint now yields to a real stepIndex change in the quest that selected it, while unrelated automatic supertrack switches leave it in place.
+		- Manually clicking a quest-row button now switches from a flight-master waypoint back to that quest's guidance; automatic quest changes still preserve the manually chosen flight master.
+		- Compact coordblock tooltips now consistently open below and slightly left of the mouse, matching the preferred Quest Helper view while avoiding the hovered waypoint text.
+		- Compact waypoint tooltips now follow the mouse within a link and stay within a nearby left-offset limit instead of remaining at the pointer's entry position.
+		- Compact waypoint tooltips now sit just below and to the left of their hovered link in both Quest Helper step views, without covering the coordblock text.
+
+	Buttons.lua
+		- Added a pooled secure quest-item sidecar anchored to RQEQuestFrame, using Retail's native special-item data and an optional Questie source-item fallback on legacy clients; coalesced tracker, quest-log, bag, and login refreshes, deferred protected button changes until combat ends, and exposed item icons, counts, cooldowns, tooltips, range/usability coloring, and completion-aware visibility without consuming saved macro slots. (2026.09.14.2013)
+		- Retried the optional Questie database lookup until the legacy quest data module is actually available, preventing Classic/Season of Discovery or TBC Anniversary startup order from permanently suppressing quest-item buttons for the session. (2026.09.14.2024)
+		- Routed completion-aware quest-item visibility through RQE's normalized API before the native fallback so completed quests obey showItemWhenComplete consistently on every supported client. (2026.09.14.2026)
+		- Documented the shared quest-item section's native and optional Questie data lookup, secure action lifecycle, sidecar ordering, cooldown and tooltip refreshes, combat deferral, and event hooks so future Retail and legacy-client action work can follow the existing Buttons.lua commentary style. (2026.09.14.2234)
+		- Assigned wildcard secure item-click attributes using item:ID tokens, matching a /use item:ID action on both mouse buttons instead of relying only on a full item hyperlink; cleared those attributes when pooling buttons so subsequent tracked quests cannot inherit the prior item action. (2026.09.14.2234)
+		- Removed duplicate native Retail and legacy quest-log-index lookups from the quest-item section and used RQE.API.GetLogIndexForQuestID exclusively, allowing RQE_API.lua to select its per-client native or scanned index path for Retail, Classic/Season of Discovery, and TBC Anniversary. (2026.09.14.2235)
+		- Registered both AnyDown and AnyUp clicks on newly created and pooled secure quest-item buttons: ActionButtonUseKeyDown can make a mouse-up-only SecureActionButtonTemplate display its tooltip yet ignore its item action, so this lets the secure /use-equivalent run at the client's selected click phase. (2026.09.14.2242)
+		- Cleared temporary coordblock [Active] state when the C button clears the Quest Helper, so reopening the same quest shows its original coordinate links until another waypoint is selected. (2026.09.14.2324)
 
 	Client_Classic/Core.lua
 		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
@@ -27,18 +57,46 @@
 		- Added per-character dependency-completion storage and generic database-reference discovery so repeatable or scripted side-quest turn-ins remain satisfied for the current parent quest attempt even when Blizzard exposes no persistent completion flag. (2026.09.11.2332)
 		- Queued parent-step reevaluation after recording a dependency turn-in so Classic/Season of Discovery guidance advances immediately when the completed side quest has a different quest ID. (2026.09.11.2345)
 		- Deferred throttled periodic checks for their remaining cooldown instead of discarding them, ensuring Classic/Season of Discovery dependency turn-ins cannot lose their requested parent-step update during a quest-event burst. (2026.09.11.2348)
+		- Routed contribution, Sandbox, and expansion world-quest data actions through the explicit Debug Log toggle so rerunning an action closes an open log while preserving show-only behavior for passive refresh callers. (2026.09.14.0751)
+		- Started an explicit all-message Debug Log capture before Classic/Season of Discovery contribution, completed-contribution, Sandbox, and expansion world-quest exports, allowing their output to be recorded while the frame is initially hidden instead of being discarded after a clear. (2026.09.14.0802)
+		- Routed every explicit Classic/Season of Discovery export producer through the legacy print-capture bridge and restored GetDataForAddon's Shift dispatch to completed contributions, making one press both populate and open the log while retaining the next-press close-and-clear cycle. (2026.09.14.0848)
+		- Updated custom chat quest tooltips to use the cleanup-selected RQE database entry and title when Blizzard has not cached one and to replace any currently shown tooltip immediately, allowing database-backed cleanup links to open reliably on Classic/Season of Discovery. (2026.09.14.0910)
+		- Routed questtip hyperlinks through the legacy ChatFrame_OnHyperlinkShow callback, with SetItemRef retained as a capability fallback, so clicking database-backed cleanup links actually invokes the custom tooltip on Classic/Season of Discovery. (2026.09.14.1025)
+		- Unified Classic/Season of Discovery cleanup tooltips with Retail's QuestLinePrintCache contract, reading the cached title and exact permanent database record before client API fallbacks so removed and preserved questtip links render the full database-backed tooltip. (2026.09.14.1038)
+		- Isolated Contribution cleanup behind its own rqecontribquest link and cache payload, passing the saved title and quest record into ShowCustomQuestTooltip while leaving PrintQuestlineDetails and its cache behavior unchanged on Classic/Season of Discovery. (2026.09.14.1042)
+		- Added in-memory, supertracked-quest-scoped coordblock selection and refreshed visible step labels and the focus panel after a waypoint click, showing [Active] immediately without changing item, spell, or full-coordinate links in Season of Discovery. (2026.09.14.2324)
+		- Kept Season of Discovery [Active] selection tied to the current supertracked quest, step, and player map; refreshed only the existing coordblock-bearing text regions so the Separate Focus Frame no longer accumulates overlapping waypoint labels. (2026.09.15.0004)
+		- Cleared the previous-coordinate cache on every explicit compact-link click so clicking [Active] restores a waypoint that TomTom removed at its arrival radius, and moved only compact-link tooltips outside the Quest Helper. (2026.09.15.0004)
+		- Made the closest-flight-master menu choice release [Active] and own its waypoint until another explicit compact link or map transition, preventing automated quest refreshes from replacing the manually selected destination. (2026.09.15.0004)
+		- Repositioned Season of Discovery compact coordblock hover help relative to the cursor with a horizontal and upward gap, flipping to the pointer's left when screen space is tight; full-coordinate hover help remains at its original cursor anchor. (2026.09.15.0009)
+		- Stored the originating supertracked quest and step alongside the manual flight-master map so a true stepIndex change in that quest releases the flight-master destination without treating an unrelated automatic supertrack switch as a reason to erase it. (2026.09.15.0012)
+		- Reworked Season of Discovery compact-link tooltip positioning to open below and slightly left of the mouse, switching sides or above only when screen edges require it so entry direction no longer changes the preferred placement. (2026.09.15.0022)
+		- Repositioned the Season of Discovery compact coordblock tooltip only while its hover region remains active and capped the text-clearance shift to 160 UI pixels from the pointer; this keeps a moved cursor close to its tooltip without covering adjacent waypoint labels. (2026.09.15.0038)
+		- Replaced Season of Discovery compact-tooltip cursor/UI-scale positioning with a direct anchor eight pixels left and six pixels below the hovered coordblock region, with screen-edge side and vertical fallbacks; the tooltip now stays beside that link in StepsText and SeparateFocusFrame instead of drifting far down the screen. (2026.09.15.0050)
 
 	Client_Classic/EventManager.lua
 		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for Classic/Season of Discovery so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
 		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for Classic/Season of Discovery so timed vehicle quest steps are reevaluated after control returns even when objective text has not changed. (2026.09.10.1153)
 		- Recorded QUEST_TURNED_IN dependency completions and cleared their per-parent state on parent acceptance, removal, or turn-in, providing lifecycle-safe repeatable side-quest progression in Classic/Season of Discovery. (2026.09.11.2332)
+		- Preserved a manually selected flight-master or [Active] waypoint through the hidden-tracker supertrack refresh and unrelated turn-in cleanup instead of directly resetting TomTom or Blizzard's user pin. (2026.09.15.0004)
 
 	Client_Classic/QuestingModule.lua
 		- Kept Open Sandbox available from the Classic/Season of Discovery quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Released a selected compact coordblock when its physical QuestLogIndexButton is clicked, allowing the player's explicit quest choice to resume normal waypoint selection. (2026.09.15.0004)
+		- Also released a manually selected flight-master destination on a physical quest-row button press, letting that explicit Season of Discovery quest selection place its own waypoint without weakening automatic-refresh protection. (2026.09.15.0018)
 
 	Client_Classic/RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
 		- Kept Open Sandbox available from Classic/Season of Discovery frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Identified compact first-paragraph waypoint hyperlinks separately from full coordinate links and displayed [Active] for the selected coordblock after focus-panel rebuilds in Season of Discovery. (2026.09.14.2324)
+		- Cleared a prior [Active] coordblock whenever the focus panel observes a different or removed supertracked quest, including quests with no coordblock links, in Season of Discovery. (2026.09.14.2327)
+		- Removed stale StepsText and Separate Focus FontString regions before redraw and measured multiline coordblock descriptions within their own step row, preventing old labels from overlapping newer steps or focus links. (2026.09.15.0004)
+		- Recreated the first-paragraph compact waypoint on an [Active] re-click and anchored only coordblock tooltips outside the Quest Helper; full-coordinate, item, and spell tooltip positioning remains unchanged. (2026.09.15.0004)
+		- Followed up the frame-edge compact tooltip placement by using the shared cursor-offset helper for first-paragraph coordblocks, keeping nearby links readable while leaving full-coordinate, item, and spell tooltips unchanged. (2026.09.15.0009)
+		- Added hover-only pointer-follow updates for the first-paragraph SimpleHTML coordblock tooltip and removed that update when its hyperlink is left or another link type is entered, preventing the tooltip from remaining at an old mouse-entry position. (2026.09.15.0038)
+
+	Client_Classic/WaypointManager.lua
+		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
 
 	Client_TBC/Core.lua
 		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
@@ -49,18 +107,46 @@
 		- Added per-character dependency-completion storage and generic database-reference discovery so repeatable or scripted side-quest turn-ins remain satisfied for the current parent quest attempt even when Blizzard exposes no persistent completion flag. (2026.09.11.2332)
 		- Queued parent-step reevaluation after recording a dependency turn-in so TBC Anniversary guidance advances immediately when the completed side quest has a different quest ID. (2026.09.11.2345)
 		- Deferred throttled periodic checks for their remaining cooldown instead of discarding them, ensuring TBC Anniversary dependency turn-ins cannot lose their requested parent-step update during a quest-event burst. (2026.09.11.2348)
+		- Routed contribution, Sandbox, and expansion world-quest data actions through the explicit Debug Log toggle so rerunning an action closes an open log while preserving show-only behavior for passive refresh callers. (2026.09.14.0751)
+		- Started an explicit all-message Debug Log capture before TBC Anniversary contribution, completed-contribution, Sandbox, and expansion world-quest exports, allowing their output to be recorded while the frame is initially hidden instead of being discarded after a clear. (2026.09.14.0802)
+		- Routed every explicit TBC Anniversary export producer through the legacy print-capture bridge and restored GetDataForAddon's Shift dispatch to completed contributions, making one press both populate and open the log while retaining the next-press close-and-clear cycle. (2026.09.14.0848)
+		- Updated custom chat quest tooltips to use the cleanup-selected RQE database entry and title when Blizzard has not cached one and to replace any currently shown tooltip immediately, allowing database-backed cleanup links to open reliably on TBC Anniversary. (2026.09.14.0910)
+		- Routed questtip hyperlinks through the legacy ChatFrame_OnHyperlinkShow callback, with SetItemRef retained as a capability fallback, so clicking database-backed cleanup links actually invokes the custom tooltip on TBC Anniversary. (2026.09.14.1025)
+		- Unified TBC Anniversary cleanup tooltips with Retail's QuestLinePrintCache contract, reading the cached title and exact permanent database record before client API fallbacks so removed and preserved questtip links render the full database-backed tooltip. (2026.09.14.1038)
+		- Isolated Contribution cleanup behind its own rqecontribquest link and cache payload, passing the saved title and quest record into ShowCustomQuestTooltip while leaving PrintQuestlineDetails and its cache behavior unchanged on TBC Anniversary. (2026.09.14.1042)
+		- Added in-memory, supertracked-quest-scoped coordblock selection and refreshed visible step labels and the focus panel after a waypoint click, showing [Active] immediately without changing item, spell, or full-coordinate links in TBC Anniversary. (2026.09.14.2324)
+		- Kept TBC Anniversary [Active] selection tied to the current supertracked quest, step, and player map; refreshed only existing coordblock-bearing text regions so the Separate Focus Frame no longer accumulates overlapping waypoint labels. (2026.09.15.0004)
+		- Cleared the previous-coordinate cache on every explicit compact-link click so clicking [Active] restores a waypoint that TomTom removed at its arrival radius, and moved only compact-link tooltips outside the Quest Helper. (2026.09.15.0004)
+		- Made the closest-flight-master menu choice release [Active] and own its waypoint until another explicit compact link or map transition, preventing automated quest refreshes from replacing the manually selected destination. (2026.09.15.0004)
+		- Repositioned TBC Anniversary compact coordblock hover help relative to the cursor with a horizontal and upward gap, flipping to the pointer's left when screen space is tight; full-coordinate hover help remains at its original cursor anchor. (2026.09.15.0009)
+		- Stored the originating supertracked quest and step alongside the manual flight-master map so a true stepIndex change in that quest releases the flight-master destination without treating an unrelated automatic supertrack switch as a reason to erase it. (2026.09.15.0012)
+		- Reworked TBC Anniversary compact-link tooltip positioning to open below and slightly left of the mouse, switching sides or above only when screen edges require it so entry direction no longer changes the preferred placement. (2026.09.15.0022)
+		- Repositioned the TBC Anniversary compact coordblock tooltip only while its hover region remains active and capped the text-clearance shift to 160 UI pixels from the pointer; this keeps a moved cursor close to its tooltip without covering adjacent waypoint labels. (2026.09.15.0038)
+		- Replaced TBC Anniversary compact-tooltip cursor/UI-scale positioning with a direct anchor eight pixels left and six pixels below the hovered coordblock region, with screen-edge side and vertical fallbacks; the tooltip now stays beside that link in StepsText and SeparateFocusFrame instead of drifting far down the screen. (2026.09.15.0050)
 
 	Client_TBC/EventManager.lua
 		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for TBC Anniversary so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
 		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for TBC Anniversary so an incomplete bombing run can return Mission: Gateways Murketh and Shaadraz to its Wing Commander Brack reboarding step after control returns. (2026.09.10.1153)
 		- Recorded QUEST_TURNED_IN dependency completions and cleared their per-parent state on parent acceptance, removal, or turn-in, providing lifecycle-safe repeatable side-quest progression in TBC Anniversary. (2026.09.11.2332)
+		- Preserved a manually selected flight-master or [Active] waypoint through the hidden-tracker supertrack refresh and unrelated turn-in cleanup instead of directly resetting TomTom or Blizzard's user pin. (2026.09.15.0004)
 
 	Client_TBC/QuestingModule.lua
 		- Kept Open Sandbox available from the TBC Anniversary quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Released a selected compact coordblock when its physical QuestLogIndexButton is clicked, allowing the player's explicit quest choice to resume normal waypoint selection. (2026.09.15.0004)
+		- Also released a manually selected flight-master destination on a physical quest-row button press, letting that explicit TBC Anniversary quest selection place its own waypoint without weakening automatic-refresh protection. (2026.09.15.0018)
 
 	Client_TBC/RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
 		- Kept Open Sandbox available from TBC Anniversary frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Identified compact first-paragraph waypoint hyperlinks separately from full coordinate links and displayed [Active] for the selected coordblock after focus-panel rebuilds in TBC Anniversary. (2026.09.14.2324)
+		- Cleared a prior [Active] coordblock whenever the focus panel observes a different or removed supertracked quest, including quests with no coordblock links, in TBC Anniversary. (2026.09.14.2327)
+		- Removed stale StepsText and Separate Focus FontString regions before redraw and measured multiline coordblock descriptions within their own step row, preventing old labels from overlapping newer steps or focus links. (2026.09.15.0004)
+		- Recreated the first-paragraph compact waypoint on an [Active] re-click and anchored only coordblock tooltips outside the Quest Helper; full-coordinate, item, and spell tooltip positioning remains unchanged. (2026.09.15.0004)
+		- Followed up the frame-edge compact tooltip placement by using the shared cursor-offset helper for first-paragraph coordblocks, keeping nearby links readable while leaving full-coordinate, item, and spell tooltips unchanged. (2026.09.15.0009)
+		- Added hover-only pointer-follow updates for the first-paragraph SimpleHTML coordblock tooltip and removed that update when its hyperlink is left or another link type is entered, preventing the tooltip from remaining at an old mouse-entry position. (2026.09.15.0038)
+
+	Client_TBC/WaypointManager.lua
+		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
 
 	Core.lua
 		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
@@ -71,6 +157,19 @@
 		- Added a per-character CheckDBQuestCompleted event latch that discovers declared dependencies in active quest data and survives reloads until the parent quest lifecycle ends, covering repeatable or scripted side quests without queryable completion history. (2026.09.11.2332)
 		- Scheduled periodic parent-quest checks after a dependency latch is written, allowing quest 9472 and other cross-quest guides to advance immediately when their differently identified side quest turns in. (2026.09.11.2345)
 		- Changed periodic-check throttling to reschedule the latest request after its remaining cooldown rather than dropping it, guaranteeing event-burst dependency updates reach the supertracked parent. (2026.09.11.2348)
+		- Routed contribution, Sandbox, and expansion world-quest data actions through the explicit Debug Log toggle so rerunning an action closes an open log while preserving show-only behavior for passive refresh callers. (2026.09.14.0751)
+		- Allowed custom chat quest tooltips to consume the exact client-applicable RQE database entry selected by Contribution cleanup, ensuring the new fallback links render database details even when the normal runtime resolver uses a narrower source order. (2026.09.14.0913)
+		- Applied client-aware questtip click dispatch to the shared Core implementation actually packaged for Retail, Classic/Season of Discovery, and TBC Anniversary, retaining Retail's SetItemRef route while using ChatFrame_OnHyperlinkShow on legacy clients; also moved cleanup database records into the existing QuestLinePrintCache flow used by Retail Print Questline. (2026.09.14.1038)
+		- Added a separate rqecontribquest dispatch path to the shared Core handler and optional title/data overrides to the existing tooltip renderer, giving Contribution cleanup the same tooltip presentation without modifying PrintQuestlineDetails or sharing its cache. (2026.09.14.1042)
+		- Added in-memory, supertracked-quest-scoped coordblock selection and refreshed visible step labels and the focus panel after a waypoint click, showing [Active] immediately without changing item, spell, or full-coordinate links in Retail. (2026.09.14.2324)
+		- Kept Retail [Active] selection tied to the current supertracked quest, step, and player map; refreshed only existing coordblock-bearing text regions so the Separate Focus Frame no longer accumulates overlapping waypoint labels. (2026.09.15.0004)
+		- Cleared the previous-coordinate cache on every explicit compact-link click so clicking [Active] restores a waypoint that TomTom removed at its arrival radius, and moved only compact-link tooltips outside the Quest Helper. (2026.09.15.0004)
+		- Made the closest-flight-master menu choice release [Active] and own its waypoint until another explicit compact link or map transition, preventing automated quest refreshes from replacing the manually selected destination. (2026.09.15.0004)
+		- Repositioned Retail compact coordblock hover help relative to the cursor with a horizontal and upward gap, flipping to the pointer's left when screen space is tight; full-coordinate hover help remains at its original cursor anchor. (2026.09.15.0009)
+		- Stored the originating supertracked quest and step alongside the manual flight-master map so a true stepIndex change in that quest releases the flight-master destination without treating an unrelated automatic supertrack switch as a reason to erase it. (2026.09.15.0012)
+		- Reworked Retail compact-link tooltip positioning to open below and slightly left of the mouse, switching sides or above only when screen edges require it so entry direction no longer changes the preferred placement. (2026.09.15.0022)
+		- Repositioned the Retail compact coordblock tooltip only while its hover region remains active and capped the text-clearance shift to 160 UI pixels from the pointer; this keeps a moved cursor close to its tooltip without covering adjacent waypoint labels. (2026.09.15.0038)
+		- Replaced Retail compact-tooltip cursor/UI-scale positioning with a direct anchor eight pixels left and six pixels below the hovered coordblock region, with screen-edge side and vertical fallbacks; the tooltip now stays beside that link in StepsText and SeparateFocusFrame instead of drifting far down the screen. (2026.09.15.0050)
 
 	DatabaseMain.lua
 		- Restricted Retail quest-data selection to Retail-era database sections, excluding Wrath Anniversary, Burning Crusade Anniversary, and Season of Discovery fallbacks whose shared quest IDs can use different map IDs and coordinates. (2026.09.08.0024)
@@ -78,15 +177,21 @@
 
 	DebugLog.lua
 		- Guarded early print-hook calls until RQE's profile database is available, preventing reload-time nil-profile errors from messages emitted during addon startup. (2026.09.08.1416)
+		- Added a dedicated Debug Log visibility toggle used by explicit player actions, and raised the close button above the draggable header with an explicit legacy-compatible left-click registration so its X reliably closes the frame on every supported client. (2026.09.14.0751)
+		- Added a scoped legacy print-capture bridge that preserves normal chat output, writes synchronous export lines directly to the Debug Log, restores the original global print function after success or failure, and bypasses itself on Retail so the working Retail path remains unchanged. (2026.09.14.0848)
+		- Changed only the legacy Debug Log opening path to show its EditBox before refreshing its text and scroll state, preventing Classic/Season of Discovery and TBC Anniversary from deferring the populated display until a second button press while preserving Retail's existing update order. (2026.09.14.0849)
 
 	EventManager.lua
 		- Guarded missing target names in QUEST_DETAIL database diagnostics and print the established empty NPC entry for automatically offered quests, preventing string.format from receiving nil while preserving targeted-NPC output. (2026.09.10.1153)
 		- Queued periodic quest checks whenever PLAYER_CONTROL_GAINED fires with waypoint automation enabled, rather than requiring a detected objective-text change, so incomplete vehicle quests such as Mission: Gateways Murketh and Shaadraz can return to their NPC reboarding step after a bombing run ends. (2026.09.10.1153)
 		- Normalized Retail QUEST_ACCEPTED's quest-log-index and quest-ID payload, recorded declared dependency turn-ins before quest removal, and cleared their state when the parent is accepted again, removed, or turned in so each parent attempt receives isolated repeatable side-quest progress. (2026.09.11.2332)
 		- Corrected Retail 12.1 QUEST_ACCEPTED parsing to use its first payload as the quest ID, with optional second-payload compatibility, and guarded quest-link creation against a missing ID so automatic tracking continues without a GetQuestLink usage error. (2026.09.11.2347)
+		- Preserved a manually selected flight-master or [Active] waypoint through the hidden-tracker supertrack refresh and unrelated turn-in cleanup instead of directly resetting TomTom or Blizzard's user pin. (2026.09.15.0004)
 
 	QuestingModule.lua
 		- Kept Open Sandbox available from the Retail quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Released a selected compact coordblock when its physical QuestLogIndexButton is clicked, allowing the player's explicit quest choice to resume normal waypoint selection. (2026.09.15.0004)
+		- Also released a manually selected flight-master destination on a physical quest-row button press, letting that explicit Retail quest selection place its own waypoint without weakening automatic-refresh protection. (2026.09.15.0018)
 
 	RQE_API.lua
 		- Added cross-client quest-link and quest-level helpers that prefer Blizzard's quest-ID APIs, fall back to normalized quest-log metadata, and extract a cached level from a quest link when necessary, allowing dependent addons to report consistent quest metadata in Retail, Classic/Season of Discovery, and TBC Anniversary. (2026.09.10.1744)
@@ -94,9 +199,6 @@
 		- Added a cumulative capability-checked GetLogIndexForQuestID wrapper and guarded quest-link/quest-level metadata fallbacks against missing optional wrappers, preventing Retail cleanup from stopping on preserved quests while retaining the exhaustive legacy lookup used by Classic/Season of Discovery and TBC Anniversary. (2026.09.11.2134)
 		- Made IsQuestFlaggedCompleted a cumulative capability-checked wrapper outside the historical version-selection chain so Retail 12 always initializes the API used by cross-quest completion checks. (2026.09.11.2318)
 		- Routed the cumulative completion wrapper through Retail's live C_QuestLog API while retaining the captured native API on legacy clients, ensuring the initialized wrapper returns the actual Retail completion flag without risking legacy alias recursion. (2026.09.11.2322)
-
-	RQE_Contribution/Data.lua
-		- Reused a shared cleanup metadata formatter for removed and preserved entries and retained each removed contribution record long enough to provide its title fallback, so removed quests print a clickable quest link when available, otherwise their quest name, followed by the quest level or ?. (2026.09.11.2139)
 
 	RQE_Sandbox.lua
 		- Sequenced Sandbox actions so Save activates its selected Contribution or Legacy mode before parsing, Clear disables the selected mode, and Clear Both disables both modes before removing their entries. (2026.09.09.0320)
@@ -120,6 +222,18 @@
 	RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
 		- Kept Open Sandbox available from Retail frame menus when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
+		- Identified compact first-paragraph waypoint hyperlinks separately from full coordinate links and displayed [Active] for the selected coordblock after focus-panel rebuilds in Retail. (2026.09.14.2324)
+		- Cleared a prior [Active] coordblock whenever the focus panel observes a different or removed supertracked quest, including quests with no coordblock links, in Retail. (2026.09.14.2327)
+		- Removed stale StepsText and Separate Focus FontString regions before redraw and measured multiline coordblock descriptions within their own step row, preventing old labels from overlapping newer steps or focus links. (2026.09.15.0004)
+		- Recreated the first-paragraph compact waypoint on an [Active] re-click and anchored only coordblock tooltips outside the Quest Helper; full-coordinate, item, and spell tooltip positioning remains unchanged. (2026.09.15.0004)
+		- Followed up the frame-edge compact tooltip placement by using the shared cursor-offset helper for first-paragraph coordblocks, keeping nearby links readable while leaving full-coordinate, item, and spell tooltips unchanged. (2026.09.15.0009)
+		- Added hover-only pointer-follow updates for the first-paragraph SimpleHTML coordblock tooltip and removed that update when its hyperlink is left or another link type is entered, preventing the tooltip from remaining at an old mouse-entry position. (2026.09.15.0038)
+
+	WaypointManager.lua
+		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
+
+	WPUtil.lua
+		- Blocked centralized TomTom/Blizzard replacement and hotspot assurance while a manual coordblock or flight-master destination owns the waypoint, keeping periodic selection from stealing the player's selected arrow. (2026.09.15.0004)
 
 
 12.1.0.2 (2026.09.07)
