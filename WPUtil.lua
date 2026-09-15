@@ -64,7 +64,9 @@ RQE.UnknownQuestButtonCalcNTrack = function()
 	-- RQE.UnknownQuestButton:SetScript("OnMouseDown", function()
 	RQE.UnknownQuestButton:SetScript("OnClick", function()	-- Potential taint?
 		if not RQEFrame:IsShown() then return end
-		if RQE.searchedQuestID then 
+		if RQE.searchedQuestID
+			and tonumber(RQE.searchedQuestID)
+				~= tonumber(RQE.API.GetSuperTrackedQuestID()) then
 			local questID = RQE.searchedQuestID
 			if questID then
 				local dbEntry = RQE.getQuestData(questID)
@@ -344,12 +346,27 @@ function _dbgEligibleBands(questID, stepIndex, priorityBands, visitedSet, target
 end
 
 
+-- A cached coordinate is not proof that its Blizzard map pin still exists.
+-- The same check is shared by hotspots and ordered routes.
+local function BlizzardPinMatches(point)
+	if not (point and C_Map and C_Map.GetUserWaypoint) then return false end
+	local pin = C_Map.GetUserWaypoint()
+	local pos = pin and pin.position
+	if not (pin and pin.uiMapID == point.mapID and pos) then return false end
+	local x, y
+	if pos.GetXY then x, y = pos:GetXY()
+	else x, y = pos.x, pos.y end
+	return x and y and math.abs(x - point.x) < 1e-4
+		and math.abs(y - point.y) < 1e-4 or false
+end
+
 -- Centralized replace helper for TomTom/Blizzard pins
-function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
+function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title, options)
 	-- A manually clicked coordblock owns the current quest waypoint until
 	-- quest, map, or step context changes; automatic replacements must not
 	-- clear its TomTom arrow or Blizzard pin.
-	if RQE:IsCoordblockWaypointProtected() then return end
+	if not RQE._settingCoordOrderWaypoint and not RQE._settingManualFlightMasterWaypoint
+		and RQE:IsCoordblockWaypointProtected() then return end
 	if not RQEFrame:IsShown() then return end
 
 	-- Normalize safety: require valid waypoint data
@@ -391,6 +408,7 @@ function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
 	end
 
 	local uid
+	local usedBlizzardPin = false
 
 	-- Add TomTom waypoint
 	if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility and TomTom then
@@ -399,17 +417,35 @@ function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
 		end
 
 		if TomTom.AddWaypoint then
-			uid = TomTom:AddWaypoint(mapID, xNorm, yNorm, { title = title, from = "RQE", minimap = true, world = true })
+			local waypointOptions = { title = title, from = "RQE", minimap = true, world = true }
+			if options then
+				-- Ordered routes are advanced by RQE at their own visitedRadius;
+				-- TomTom must not clear the current point at its larger default radius.
+				waypointOptions.cleardistance = options.cleardistance
+				waypointOptions.arrivaldistance = options.arrivaldistance
+				waypointOptions.persistent = options.persistent
+			end
+			uid = TomTom:AddWaypoint(mapID, xNorm, yNorm, waypointOptions)
 			RQE._currentTomTomUID = uid
 		end
 	end
 
-	-- -- Optionally show a Blizzard user pin (comment this block out if you don’t want it)
-	-- if C_Map and UiMapPoint and C_Map.SetUserWaypoint then
-		-- local point = UiMapPoint.CreateFromCoordinates(mapID, xNorm, yNorm)
-		-- C_Map.SetUserWaypoint(point)
-	-- end
-	return uid
+	-- Ordered chains also need a map waypoint when TomTom is disabled. Do
+	-- not supertrack this user pin, which would hide the owning quest ID.
+	if options and RQE._settingCoordOrderWaypoint and not uid
+		and C_Map and C_Map.SetUserWaypoint then
+		local pin = UiMapPoint and UiMapPoint.CreateFromCoordinates
+			and UiMapPoint.CreateFromCoordinates(mapID, xNorm, yNorm)
+		if not pin and CreateVector2D then
+			pin = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = title }
+		end
+		if pin then
+			C_Map.SetUserWaypoint(pin)
+			usedBlizzardPin = not C_Map.GetUserWaypoint
+				or BlizzardPinMatches({ mapID = mapID, x = xNorm, y = yNorm })
+		end
+	end
+	return uid, usedBlizzardPin
 end
 
 
@@ -429,6 +465,19 @@ function RQE:EnsureWaypointForSupertracked()
 
 	-- Ask selector which hotspot is “best” *right now*
 	local mapID, xNorm, yNorm, idx = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		and C_Map.GetBestMapForUnit("player")
+	if playerMapID and mapID ~= playerMapID then
+		local localMap, localX, localY = RQE.WPUtil.GetSameMapHotspot
+			and RQE.WPUtil.GetSameMapHotspot(questID, stepIndex, playerMapID)
+		if localMap then
+			mapID, xNorm, yNorm, idx = localMap, localX, localY, 0
+		else
+			local direction = C_QuestLog and C_QuestLog.GetNextWaypointText
+				and C_QuestLog.GetNextWaypointText(questID)
+			if direction and direction ~= "" then return end
+		end
+	end
 	if not (mapID and xNorm and yNorm and idx) then
 		-- fallback to legacy single coords
 		if step.coordinates and step.coordinates.x and step.coordinates.y and step.coordinates.mapID then
@@ -439,13 +488,33 @@ function RQE:EnsureWaypointForSupertracked()
 			return
 		end
 	end
+	local localHotspotMap = RQE.WPUtil.GetSameMapHotspot
+		and RQE.WPUtil.GetSameMapHotspot(questID, stepIndex, playerMapID)
+	local sameMapHotspot = localHotspotMap and localHotspotMap == mapID
+		and mapID == playerMapID
 
 	-- Don’t touch the waypoint if we’re still targeting the same hotspot
 	if RQE._currentHotspotIdx == idx and RQE._lastWP and
 	   RQE._lastWP.mapID == mapID and
 	   math.abs(RQE._lastWP.x - xNorm) < 1e-4 and
 	   math.abs(RQE._lastWP.y - yNorm) < 1e-4 then
-		return
+		if not sameMapHotspot then
+			return true
+		elseif TomTom and TomTom.AddWaypoint then
+			if (TomTom.WaypointExists
+				and TomTom:WaypointExists(mapID, xNorm, yNorm, RQE._lastWP.title))
+				or (not TomTom.WaypointExists and self._currentTomTomUID) then
+				return true
+			end
+		elseif Nx and Nx.WaypointAdd then
+			return true
+		elseif BlizzardPinMatches({ mapID = mapID, x = xNorm, y = yNorm }) then
+			return true
+		end
+		-- The low-level creator also skips cached duplicate coordinates. Forget
+		-- this vanished point so it can actually reinstall the same hotspot.
+		RQE._lastWP = nil
+		if TomTom and TomTom.AddWaypoint then self._currentTomTomUID = nil end
 	end
 
 	-- -- Switch: replace the live waypoint
@@ -459,7 +528,30 @@ function RQE:EnsureWaypointForSupertracked()
 	if RQE.db.profile.debugLevel == "INFO+" then
 		print("waypointTitle - 414: " .. tostring(ttl))
 	end
-	RQE:CreateWaypoint(xNorm, yNorm, mapID, ttl)
+	local created = RQE:CreateWaypoint(xNorm, yNorm, mapID, ttl)
+	if created then
+		if TomTom and TomTom.AddWaypoint then self._currentTomTomUID = created end
+		return true
+	end
+	-- When neither direct TomTom nor Carbonite creator is available, a
+	-- current-map DB hotspot still needs a real waypoint. A normal Blizzard
+	-- pin keeps the quest itself supertracked for later routing decisions.
+	if sameMapHotspot and not (TomTom and TomTom.AddWaypoint)
+		and not (Nx and Nx.WaypointAdd)
+		and C_Map and C_Map.SetUserWaypoint then
+		local pin = UiMapPoint and UiMapPoint.CreateFromCoordinates
+			and UiMapPoint.CreateFromCoordinates(mapID, xNorm, yNorm)
+		if not pin and CreateVector2D then
+			pin = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = ttl }
+		end
+		if pin then
+			C_Map.SetUserWaypoint(pin)
+			self._lastWP = { mapID = mapID, x = xNorm, y = yNorm, title = ttl }
+			return not C_Map.GetUserWaypoint
+				or BlizzardPinMatches({ mapID = mapID, x = xNorm, y = yNorm })
+		end
+	end
+	return false
 end
 
 
@@ -1156,6 +1248,332 @@ function RQE.WPUtil.PlayerDistanceTo(mapID, xNorm, yNorm)
 end
 
 
+------------------------------------------------------
+-- #8. Optional Ordered Quest-Step Waypoint Chains
+------------------------------------------------------
+
+-- Only real mapID hotspots on the current numbered step may outrank
+-- directionText. continentID points are deliberately excluded here.
+function RQE.WPUtil.GetSameMapHotspot(questID, stepIndex, playerMapID)
+	local questData = RQE.getQuestData and RQE.getQuestData(tonumber(questID))
+	local step = questData and questData[tonumber(stepIndex)]
+	local hotspots = step and step.coordinateHotspots
+	if type(hotspots) ~= "table" or not playerMapID then return nil end
+	local bestMap, bestX, bestY, bestPoint, bestDistance
+	for _, point in ipairs(hotspots) do
+		if type(point) == "table" and tonumber(point.mapID) == tonumber(playerMapID) then
+			local x, y = tonumber(point.x), tonumber(point.y)
+			if x and y and x > 0 and y > 0 and x <= 100 and y <= 100 then
+				x, y = x > 1 and x / 100 or x, y > 1 and y / 100 or y
+				local distance = RQE.WPUtil.PlayerDistanceTo(playerMapID, x, y)
+				if not bestPoint or (distance and
+					(not bestDistance or distance < bestDistance)) then
+					bestMap, bestX, bestY, bestPoint, bestDistance =
+						playerMapID, x, y, point, distance
+				end
+			end
+		end
+	end
+	return bestMap, bestX, bestY, bestPoint
+end
+
+function RQE:PreferSameMapHotspotWaypoint(questID)
+	local tracked = self.API and self.API.GetSuperTrackedQuestID
+		and tonumber(self.API.GetSuperTrackedQuestID())
+	if not tracked or tonumber(questID) ~= tracked then return false end
+	local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		and C_Map.GetBestMapForUnit("player")
+	if not (stepIndex and playerMapID) then return false end
+	local mapID = RQE.WPUtil.GetSameMapHotspot(
+		questID, stepIndex, playerMapID)
+	if not mapID then return false end
+	return self:EnsureWaypointForSupertracked() == true
+end
+
+-- coordOrder belongs to ONE numbered quest step, not to the quest as a whole.
+-- entryNo is an explicit route-point number (never a stepIndex); when omitted,
+-- the Lua array index supplies that number. Invalid points are ignored so the
+-- existing coordinateHotspots/Blizzard routing can remain the fallback.
+local function NormalizeCoordOrder(route)
+	if type(route) ~= "table" then return nil end
+	local points = {}
+	for authorIndex, point in ipairs(route) do
+		if type(point) == "table" then
+			local x, y = tonumber(point.x), tonumber(point.y)
+			local mapID = tonumber(point.mapID)
+			local entryNo = tonumber(point.entryNo) or authorIndex
+			local radius = tonumber(point.visitedRadius) or 5
+			if x and y and x > 0 and y > 0 and x <= 100 and y <= 100
+				and mapID and mapID > 0 and entryNo >= 1 and entryNo % 1 == 0
+				and radius > 0 then
+				points[#points + 1] = {
+					x = x / 100, y = y / 100, mapID = mapID,
+					entryNo = entryNo, authorIndex = authorIndex,
+					visitedRadius = radius, wayText = point.wayText,
+				}
+			end
+		end
+	end
+	if #points == 0 then return nil end
+	table.sort(points, function(a, b)
+		if a.entryNo ~= b.entryNo then return a.entryNo < b.entryNo end
+		return a.authorIndex < b.authorIndex
+	end)
+	return points
+end
+
+-- State is intentionally session-only. The current route point is sticky until
+-- its own arrival radius is reached, or the player reaches a LATER route point
+-- first; in the latter case all earlier entries become visited and cannot be
+-- selected again. A map transition suspends points on other maps but keeps the
+-- completed prefix for this quest/step.
+function RQE:SyncCoordOrderWaypoint()
+	if self._settingCoordOrderWaypoint or self._settingManualFlightMasterWaypoint
+		or not (RQEFrame and RQEFrame:IsShown()) then return false end
+	if not (self.API and self.API.GetSuperTrackedQuestID) then return false end
+	local reselect = self._coordOrderReselect
+	if reselect and GetTime() > reselect.expiresAt then
+		self._coordOrderReselect = nil
+		reselect = nil
+	end
+	local questID = tonumber(self.API.GetSuperTrackedQuestID())
+	local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	if not (questID and questID > 0 and stepIndex and playerMapID) then
+		-- A physical quest-row reselect briefly removes supertracking before
+		-- reinstating the same quest. Keep its route prefix through that gap.
+		if not reselect then self._coordOrderState = nil end
+		return false
+	end
+
+	local questData = self.getQuestData and self.getQuestData(questID)
+	local step = questData and questData[stepIndex]
+	local route = step and step.coordOrder
+	if type(route) ~= "table" or route[1] == nil then
+		-- The row handler also previews step 1 before periodic checks restore
+		-- the actual step; this is not a genuine route-step transition.
+		if not (reselect and reselect.questID == questID) then
+			self._coordOrderState = nil
+		end
+		return false
+	end
+
+	local state = self._coordOrderState
+	if not state or state.questID ~= questID or state.stepIndex ~= stepIndex
+		or state.route ~= route then
+		local points = NormalizeCoordOrder(route)
+		if not points then
+			self._coordOrderState = nil
+			return false
+		end
+		state = {
+			questID = questID, stepIndex = stepIndex, route = route,
+			points = points, visitedUntil = 0, currentIdx = nil,
+			playerMapID = playerMapID,
+		}
+		self._coordOrderState = state
+	end
+
+	if state.playerMapID ~= playerMapID then
+		state.playerMapID = playerMapID
+		state.currentIdx = nil
+	end
+	if reselect and reselect.armed and not reselect.rebased
+		and GetTime() >= reselect.readyAt
+		and reselect.questID == questID then
+		-- A deliberate row press may start beside a later cave waypoint. Rebase
+		-- once to the closest same-map point, never on every poll.
+		-- An explicit row press can also restart or move back within a
+		-- completed chain; ordinary automatic checks never do this.
+		local closestIndex, closestDistance
+		for index = 1, #state.points do
+			local point = state.points[index]
+			if point.mapID == playerMapID then
+				local distance, unit = RQE.WPUtil.PlayerDistanceTo(point.mapID, point.x, point.y)
+				if (unit == "yards" or unit == "norm") and distance
+					and (not closestDistance or distance < closestDistance) then
+					closestIndex, closestDistance = index, distance
+				end
+			end
+		end
+		if closestIndex then
+			state.visitedUntil = closestIndex - 1
+			state.currentIdx = nil
+		elseif state.visitedUntil >= #state.points then
+			state.visitedUntil = 0
+			state.currentIdx = nil
+		end
+		-- Keep the row-selection token through deferred supertrack events.
+		-- They must not reset the displayed step after this one-shot rebase.
+		reselect.rebased = true
+	end
+	if state.visitedUntil >= #state.points then return false end
+
+	-- Explicit compact links and flight-master selections outrank the
+	-- automatic chain; their existing release rules restore route handling.
+	if self.ActiveCoordblock then
+		local active = self.ActiveCoordblock
+		local stillClickable = type(step.description) == "string"
+			and step.description:find("{coordblock:", 1, true)
+		if active.questID ~= questID or not stillClickable
+			or (active.stepIndex and active.stepIndex ~= stepIndex)
+			or (active.playerMapID and active.playerMapID ~= playerMapID) then
+			self.ActiveCoordblock = nil
+		else
+			return false
+		end
+	end
+	if self:IsManualFlightMasterWaypointProtected() then return false end
+
+	-- Visiting ANY later point advances past every earlier entry. Use only
+	-- real yard distances for a five-yard threshold: normalized map percentages
+	-- cannot safely represent a cave-scale arrival radius.
+	local reached = state.visitedUntil
+	for index = state.visitedUntil + 1, #state.points do
+		local point = state.points[index]
+		if point.mapID == playerMapID then
+			local distance, unit = RQE.WPUtil.PlayerDistanceTo(point.mapID, point.x, point.y)
+			if unit == "yards" and distance and distance <= point.visitedRadius then
+				reached = index
+			end
+		end
+	end
+	if reached > state.visitedUntil then
+		state.visitedUntil = reached
+		state.currentIdx = nil
+	end
+	if state.visitedUntil >= #state.points then
+		state.completedNow = true
+		return false
+	end
+
+	local targetIndex = state.currentIdx
+	if not targetIndex or targetIndex <= state.visitedUntil
+		or state.points[targetIndex].mapID ~= playerMapID then
+		targetIndex = nil
+		for index = state.visitedUntil + 1, #state.points do
+			if state.points[index].mapID == playerMapID then
+				targetIndex = index
+				break
+			end
+		end
+	end
+	if not targetIndex then return false end -- Other-map route: normal fallback.
+
+	local target = state.points[targetIndex]
+	local tomTomStillPresent = state.uid and state.uid == self._currentTomTomUID
+		and (not (TomTom and TomTom.WaypointExists)
+			or TomTom:WaypointExists(target.mapID, target.x, target.y, state.title))
+	local sameWaypoint = state.currentIdx == targetIndex
+		and (tomTomStillPresent
+			or (state.usesBlizzard and BlizzardPinMatches(target)))
+		and self._lastWP
+		and self._lastWP.mapID == target.mapID
+		and math.abs(self._lastWP.x - target.x) < 1e-4
+		and math.abs(self._lastWP.y - target.y) < 1e-4
+	if not sameWaypoint then
+		local title = (target.wayText and target.wayText ~= "" and target.wayText)
+			or string.format("%s - Waypoint %d/%d",
+				tostring(questData.title or ("Quest " .. questID)),
+				target.entryNo, state.points[#state.points].entryNo)
+		self._settingCoordOrderWaypoint = true
+		self._lastWP = nil
+		local uid, usesBlizzard = self.Waypoints:Replace(target.mapID, target.x,
+			target.y, title, {
+				cleardistance = 0, arrivaldistance = target.visitedRadius,
+				persistent = false,
+			})
+		self._currentTomTomUID = uid
+		self._lastWP = { mapID = target.mapID, x = target.x, y = target.y, title = title }
+		state.title = title
+		state.uid, state.usesBlizzard = uid, usesBlizzard
+		self._settingCoordOrderWaypoint = false
+		if not uid and not usesBlizzard then
+			state.currentIdx = nil
+			return false
+		end
+		state.currentIdx = targetIndex
+	end
+	return true
+end
+
+-- Probe the currently supertracked route without manufacturing directionText:
+-- only Blizzard's next-waypoint text may populate the Quest Helper instruction.
+function RQE:GetCoordOrderDirection(questID)
+	questID = tonumber(questID)
+	local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID
+		and tonumber(self.API.GetSuperTrackedQuestID())
+	if not questID or questID ~= trackedQuestID then return nil end
+	if not self:SyncCoordOrderWaypoint() then return nil end
+	return C_QuestLog and C_QuestLog.GetNextWaypointText
+		and C_QuestLog.GetNextWaypointText(questID) or nil
+end
+
+-- A lightweight movement poll advances an active chain without waiting for a
+-- quest-log event. No coordinate math or waypoint work occurs when the current
+-- supertracked step has no coordOrder.
+local coordOrderPoll = CreateFrame("Frame")
+coordOrderPoll.elapsed = 0
+local function RestoreOrdinaryQuestDirection(questID)
+	if RQE.DisplayedQuestID ~= questID or not RQE.DirectionTextFrame then return end
+	local text = C_QuestLog and C_QuestLog.GetNextWaypointText
+		and C_QuestLog.GetNextWaypointText(questID)
+	if text == "" then text = nil end
+	RQE.DirectionTextFrame:SetText(text or "No direction available.")
+	if RQEFrame then RQEFrame.DirectionText = text end
+end
+coordOrderPoll:SetScript("OnUpdate", function(self, elapsed)
+	self.elapsed = self.elapsed + elapsed
+	if self.elapsed < 0.35 then return end
+	self.elapsed = 0
+	-- A new supertracked quest, displayed step, or map is enough to probe for
+	-- coordOrder once. Ordinary steps then cost only this small context check.
+	local questID = RQE.API and RQE.API.GetSuperTrackedQuestID
+		and tonumber(RQE.API.GetSuperTrackedQuestID())
+	local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
+	local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local frameShown = RQEFrame and RQEFrame:IsShown() or false
+	local sandboxEntry = questID and RQE_Sandbox and RQE_Sandbox.GetRuntimeEntry
+		and RQE_Sandbox.GetRuntimeEntry(questID)
+	local contextChanged = self.questID ~= questID or self.stepIndex ~= stepIndex
+		or self.mapID ~= mapID or self.frameShown ~= frameShown
+		or self.sandboxEntry ~= sandboxEntry
+	self.questID, self.stepIndex, self.mapID = questID, stepIndex, mapID
+	self.frameShown, self.sandboxEntry = frameShown, sandboxEntry
+	if not frameShown then return end
+	if contextChanged and questID then RestoreOrdinaryQuestDirection(questID) end
+	local pendingReselect = RQE._coordOrderReselect
+		and RQE._coordOrderReselect.questID == questID
+	if not contextChanged and not RQE._coordOrderState
+		and not pendingReselect then return end
+	local state = RQE._coordOrderState
+	if state and state.visitedUntil >= #state.points
+		and not contextChanged and not pendingReselect then return end
+	local previousRouteWasActive = state and state.currentIdx
+		and state.visitedUntil < #state.points
+	local routeOwnsWaypoint = RQE:SyncCoordOrderWaypoint()
+	state = RQE._coordOrderState
+	if state and state.completedNow then
+		state.completedNow = nil
+		RQE._currentHotspotIdx = nil
+		RQE._lastWP = nil
+		RestoreOrdinaryQuestDirection(questID)
+		RQE:EnsureWaypointForSupertracked()
+	elseif contextChanged and previousRouteWasActive and not routeOwnsWaypoint
+		and not RQE.ActiveCoordblock and not RQE:IsManualFlightMasterWaypointProtected()
+		and questID and mapID and RQE.CreateUnknownQuestWaypoint then
+		-- The new quest/step/map has no usable point in this chain. Explicitly
+		-- resume the ordinary waypoint resolver instead of leaving the old
+		-- cave-route arrow in place until another quest-log event arrives.
+		RQE._currentHotspotIdx = nil
+		RQE._lastWP = nil
+		RestoreOrdinaryQuestDirection(questID)
+		RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	end
+end)
+
+
 -- Function to update distance to waypoint display
 function RQE:UpdateStepDistance()
 	if not RQE.StepDistanceOverride then
@@ -1202,6 +1620,26 @@ end
 function RQE:GetDBStepCoordinates(questID, stepIndex)
 	if not questID then return nil end
 	stepIndex = stepIndex or RQE.AddonSetStepIndex or 1
+	-- Tracker distance calculations may run before a normal waypoint refresh.
+	-- Probe the chain for the actually supertracked, current step so its
+	-- same-map point becomes the distance source immediately.
+	local trackedQuestID = RQE.API and RQE.API.GetSuperTrackedQuestID
+		and tonumber(RQE.API.GetSuperTrackedQuestID())
+	local currentStep = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
+	if tonumber(questID) == trackedQuestID and tonumber(stepIndex) == currentStep
+		and RQE.SyncCoordOrderWaypoint then
+		RQE:SyncCoordOrderWaypoint()
+	end
+
+	-- Keep the distance readout aligned with the owned chain waypoint instead
+	-- of reporting a coordinateHotspot behind a cave route.
+	local routeState = RQE._coordOrderState
+	if routeState and routeState.questID == tonumber(questID)
+		and routeState.stepIndex == tonumber(stepIndex)
+		and routeState.currentIdx and routeState.visitedUntil < #routeState.points then
+		local point = routeState.points[routeState.currentIdx]
+		if point then return point.x, point.y, point.mapID end
+	end
 
 	local questData = RQE.getQuestData and RQE.getQuestData(questID)
 	local step = questData and questData[stepIndex]
@@ -1211,6 +1649,18 @@ function RQE:GetDBStepCoordinates(questID, stepIndex)
 	if step.coordinateHotspots then
 		-- This returns mapID,x,y (normalized) in your system
 		local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
+		local playerMapID = C_Map and C_Map.GetBestMapForUnit
+			and C_Map.GetBestMapForUnit("player")
+		if playerMapID and smap ~= playerMapID then
+			local localMap, localX, localY = RQE.WPUtil.GetSameMapHotspot(
+				questID, stepIndex, playerMapID)
+			if localMap then smap, sx, sy = localMap, localX, localY end
+			if not localMap then
+				local direction = C_QuestLog and C_QuestLog.GetNextWaypointText
+					and C_QuestLog.GetNextWaypointText(questID)
+				if direction and direction ~= "" then return nil end
+			end
+		end
 		if smap and sx and sy then
 			return sx, sy, smap
 		end
