@@ -3449,17 +3449,41 @@ function RQE.handleSuperTracking()
 	local newQID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	RQE.LastSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	local oldQID = RQE.previousSuperTrackedQuestID
+	local reselect = RQE._coordOrderReselect
+	if reselect and reselect.sameQuest and tonumber(newQID)
+		and tonumber(newQID) > 0
+		and tonumber(newQID) ~= tonumber(reselect.questID) then
+		reselect.sameQuest = false
+	end
+	local reselectPending = reselect and reselect.sameQuest
+		and tonumber(reselect.questID) and tonumber(reselect.questID) > 0
+		and (not reselect.expiresAt or GetTime() < reselect.expiresAt)
+		and (tonumber(newQID) == tonumber(reselect.questID)
+			or ((not tonumber(newQID) or tonumber(newQID) == 0)
+				and not reselect.armed))
+	local preserveReselectedStep = reselectPending
+		and tonumber(newQID) == tonumber(reselect.questID)
 
-	if newQID and newQID ~= RQE.FrameState.lastQuestID then
+	-- The row action briefly untracks this same quest before selecting it again.
+	-- Do not run the full Clear-button path or queue checks against quest ID 0.
+	if reselectPending and (not tonumber(newQID) or tonumber(newQID) == 0) then
+		return
+	end
+
+	if tonumber(newQID) and tonumber(newQID) > 0
+		and tonumber(newQID) ~= tonumber(RQE.FrameState.lastQuestID) then
 		-- Reset FrameState, force full redraw
 		RQE.FrameState.lastQuestID = nil
 		RQE.FrameState.lastObjectives = nil
 		RQE.FrameState.lastNumObjectives = 0
 		RQE.FrameState.lastStepIndex = nil
 
-		-- Also reset StoredStepIndex (fresh quest → step 1)
-		RQE.StoredStepIndex = 1
-		RQE.AddonSetStepIndex = 1
+		-- A same-quest row reselect can clear FrameState before this event arrives.
+		-- Redraw it, but do not mistake the temporary clear for a new quest.
+		if not preserveReselectedStep then
+			RQE.StoredStepIndex = 1
+			RQE.AddonSetStepIndex = 1
+		end
 
 		RQE.StepDistanceOverride = true
 		RQE:UpdateStepDistance()
@@ -3470,7 +3494,7 @@ function RQE.handleSuperTracking()
 	if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
 		local superQuestID
 
-		if not RQE.API.IsSuperTrackingQuest() then
+		if not RQE.API.IsSuperTrackingQuest() and not reselectPending then
 		--if not C_SuperTrack.IsSuperTrackingQuest() then
 			RQE.Buttons.ClearButtonPressed()
 		else
@@ -3482,16 +3506,19 @@ function RQE.handleSuperTracking()
 		UpdateFrame()	-- Necessary for updating RQEFrame when in mythicMode
 		RQE:ClearStepsTextInFrame()
 
-		-- Reset step index and related state when super-tracking changes in mythicMode
-		RQE.LastClickedIdentifier = nil
-		RQE.CurrentStepIndex = 1
-		RQE.AddonSetStepIndex = 1
-		RQE.LastClickedButtonRef = nil
+		-- Preserve the selected step through the same quest's transient clear.
+		if not reselectPending then
+			RQE.LastClickedIdentifier = nil
+			RQE.CurrentStepIndex = 1
+			RQE.AddonSetStepIndex = 1
+			RQE.LastClickedButtonRef = nil
+		end
 		RQE.previousSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 
 		-- Check if TomTom is loaded and compatibility is enabled and if so to clear the waypoint
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
+			and not reselectPending
 			and not RQE:IsCoordblockWaypointProtected() then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
@@ -3577,9 +3604,9 @@ function RQE.handleSuperTracking()
 		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 	end
 
-	if RQE.currentSuperTrackedQuestID == nil then
+	if RQE.currentSuperTrackedQuestID == nil and not reselectPending then
 		RQE:ClearWaypointButtonData()
-	else
+	elseif RQE.currentSuperTrackedQuestID ~= nil then
 		RQE.SaveSuperTrackData()
 	end
 
@@ -3612,15 +3639,15 @@ function RQE.handleSuperTracking()
 
 	-- Check if the super-tracked quest ID has changed
 	if RQE.currentSuperTrackedQuestID ~= RQE.previousSuperTrackedQuestID then
-		RQE.CheckClickWButtonPossible = true
+		RQE.CheckClickWButtonPossible = not reselectPending
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 			print("Super-tracked quest changed from", tostring(RQE.previousSuperTrackedQuestID), "to", tostring(RQE.currentSuperTrackedQuestID))
 		end
 
-		RQE.SuperTrackChangeToDifferentQuestOccurred = true
+		RQE.SuperTrackChangeToDifferentQuestOccurred = not reselectPending
 
 		-- If autoClickWaypointButton is enabled, then clear the macro, create a new macro and click the appropriate waypoint button
-		if RQE.db.profile.autoClickWaypointButton then
+		if RQE.db.profile.autoClickWaypointButton and not preserveReselectedStep then
 
 			-- Ensure that the quest ID is valid and that the necessary data is available
 			C_Timer.After(0.2, function()
@@ -3637,11 +3664,13 @@ function RQE.handleSuperTracking()
 			end)
 		end
 
-		-- Reset relevant variables
-		RQE.LastClickedIdentifier = nil
-		RQE.CurrentStepIndex = 1
-		RQE.AddonSetStepIndex = 1
-		RQE.LastClickedButtonRef = nil
+		-- An explicitly reselected current quest keeps its actual DB step.
+		if not reselectPending then
+			RQE.LastClickedIdentifier = nil
+			RQE.CurrentStepIndex = 1
+			RQE.AddonSetStepIndex = 1
+			RQE.LastClickedButtonRef = nil
+		end
 
 		-- Store the current quest ID for future reference
 		RQE.previousSuperTrackedQuestID = RQE.currentSuperTrackedQuestID
