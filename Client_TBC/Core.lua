@@ -292,7 +292,7 @@ local defaults = {
 		enableAutoSuperTrackSwap = false,
 		enableCarboniteCompatibility = true,
 		enableFrame = true,
-		enableGossipModeAutomation = false,
+		enableGossipModeAutomation = true,
 		enableMouseOverMarking = true,
 		enableTravelSuggestions = false,
 		enableNearestSuperTrack = true,
@@ -2141,14 +2141,19 @@ end
 
 -- Obtain addon Contribution Data
 function RQE.GetDataForAddon()
+	if IsShiftKeyDown() then
+		RQE.GetCompletedDataForAddon()
+		return
+	end
+
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
-		RQE:ClearDebugLog()
-		RQE_Contribution.GetAllContributionInfo()
+		RQE:BeginDebugLogCapture()
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllContributionInfo)
 
 		--RQE.db.profile.debugLoggingCheckbox = false
-		RQE.DebugLogFrame()
+		RQE.ToggleDebugLogFrame()
 
 		C_Timer.After(5, function()
 			RQE.db.profile.debugTimeStampCheckbox = true
@@ -2168,11 +2173,11 @@ function RQE.GetCompletedDataForAddon()
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
-		RQE:ClearDebugLog()
-		RQE_Contribution.GetCompletedContributionInfo()
+		RQE:BeginDebugLogCapture()
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetCompletedContributionInfo)
 
 		--RQE.db.profile.debugLoggingCheckbox = false
-		RQE.DebugLogFrame()
+		RQE.ToggleDebugLogFrame()
 
 		C_Timer.After(5, function()
 			RQE.db.profile.debugTimeStampCheckbox = true
@@ -2192,11 +2197,11 @@ function RQE.GetSandBoxDataForAddon()
 	if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 		RQE.db.profile.debugLoggingCheckbox = true
 		RQE.db.profile.debugTimeStampCheckbox = false
-		RQE:ClearDebugLog()
-		RQE.GetAllSandboxInfo()
+		RQE:BeginDebugLogCapture()
+		RQE:CapturePrintedDebugOutput(RQE.GetAllSandboxInfo)
 
 		--RQE.db.profile.debugLoggingCheckbox = false
-		RQE.DebugLogFrame()
+		RQE.ToggleDebugLogFrame()
 
 		C_Timer.After(5, function()
 			RQE.db.profile.debugTimeStampCheckbox = true
@@ -2211,22 +2216,22 @@ end
 function RQE.GetMidnightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(12)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 12)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(12)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 12)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(12)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 12)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2237,22 +2242,22 @@ end
 function RQE.GetTheWarWithinWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(11)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 11)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(11)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 11)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(11)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 11)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2263,22 +2268,22 @@ end
 function RQE.GetDragonflightWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(10)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 10)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(10)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 10)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(10)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 10)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2289,22 +2294,22 @@ end
 function RQE.GetShadowlandsWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(9)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 9)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(9)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 9)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(9)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 9)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2315,22 +2320,22 @@ end
 function RQE.GetBFAWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(8)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 8)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(8)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 8)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(8)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 8)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2341,22 +2346,22 @@ end
 function RQE.GetLegionWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(7)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 7)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(7)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 7)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(7)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 7)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2367,21 +2372,21 @@ end
 function RQE.GetWoDWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(6)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 6)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(6)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 6)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(6)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 6)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -2392,21 +2397,21 @@ end
 function RQE.MiscWQ()
 	RQE.db.profile.debugLoggingCheckbox = true
 	RQE.db.profile.debugTimeStampCheckbox = false
-	RQE:ClearDebugLog()
+	RQE:BeginDebugLogCapture()
 	local clicked = GetMouseButtonClicked()
 
 	if IsControlKeyDown() and clicked == "LeftButton" then
-		RQE_Contribution.PrintIncorrectMapIDs(5)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.PrintIncorrectMapIDs, 5)
 	elseif clicked == "LeftButton" then
-		RQE_Contribution.GetMissingWQ(5)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetMissingWQ, 5)
 	elseif clicked == "RightButton" then
-		RQE_Contribution.GetAllWQ(5)
+		RQE:CapturePrintedDebugOutput(RQE_Contribution.GetAllWQ, 5)
 	else
 		print("Unknown click type:", tostring(clicked))
 	end
 
 	--RQE.db.profile.debugLoggingCheckbox = false
-	RQE.DebugLogFrame()
+	RQE.ToggleDebugLogFrame()
 	C_Timer.After(5, function()
 		RQE.db.profile.debugTimeStampCheckbox = true
 	end)
@@ -3353,6 +3358,7 @@ function RQE:UpdateMapIDDisplay()
 	if not newMapID or newMapID == oldMapID then
 		return
 	end
+	RQE:ReleaseActiveCoordblockWaypoint()
 
 	-- Debug: Only fires when map actually changed
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -5177,6 +5183,7 @@ end
 
 -- Function that clicks the SeparateWaypointButton
 function RQE.CheckAndClickSeparateWaypointButtonButton()
+	if RQE:IsCoordblockWaypointProtected() then return end
 	if InCombatLockdown() then
 		RQE.CheckNClickWButtonAfterCombat = true
 		return
@@ -5196,6 +5203,7 @@ end
 
 -- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
 function RQE.CheckAndClickWButton()
+	if RQE:IsCoordblockWaypointProtected() then return end
 	local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
 	if not isSuperTracking then return end
 	
@@ -5297,6 +5305,7 @@ end
 
 -- Function to check for waypoint text and create a waypoint if available
 function RQE:CheckAndCreateSuperTrackedQuestWaypoint()
+	if self:IsCoordblockWaypointProtected() then return end
 	-- Ensure the frame is shown before proceeding
 	if not RQEFrame:IsShown() then
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -5386,8 +5395,16 @@ end
 
 -- /run RQE:ShowCustomQuestTooltip(66635)
 -- Function that displays a tooltip when mousing over quests in the chat log after doing a 'print questline'
-function RQE:ShowCustomQuestTooltip(questID)
-	local questTitle = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
+RQE.QuestLinePrintCache = RQE.QuestLinePrintCache or {}
+
+function RQE:ShowCustomQuestTooltip(questID, questDataOverride, questTitleOverride)
+	local printedQuestData = RQE.QuestLinePrintCache[questID]
+	local questData = questDataOverride or RQE.getQuestData(questID)
+	local questTitle = questTitleOverride
+		or (printedQuestData and printedQuestData.title)
+		or RQE.API.GetTitleForQuestID(questID)
+		or (questData and type(questData.title) == "string" and questData.title ~= "" and questData.title)
+		or "Unknown Quest"
 	local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 	local isOnQuest = RQE.API.IsOnQuest(questID)
 	local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
@@ -5403,7 +5420,6 @@ function RQE:ShowCustomQuestTooltip(questID)
 	end
 
 	-- Fetch description and objective text if possible
-	local questData = RQE.getQuestData(questID)
 	local descriptionText = ""
 	local objectivesText = ""
 	local objectivesQuestText = ""
@@ -5438,56 +5454,54 @@ function RQE:ShowCustomQuestTooltip(questID)
 	local objText = GetQuestObjectiveInfo(questID, 1, false)
 	local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
 
-	C_Timer.After(0.1, function()
-		if not GameTooltip:IsShown() then
-			GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
+	GameTooltip:Hide()
+	GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
+	GameTooltip:ClearLines()
 
-			-- 🟨 Quest title (always gold)
-			GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
+	-- 🟨 Quest title (always gold)
+	GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
 
-			-- 🔴🟢🟠 Status message
-			GameTooltip:AddLine(statusText, statusR, statusG, statusB, true)
+	-- 🔴🟢🟠 Status message
+	GameTooltip:AddLine(statusText, statusR, statusG, statusB, true)
 
-			-- 📜 Description
-			if descriptionText ~= "" then
-				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine(descriptionText, 1.0, 0.75, 0.79, true)
-			else
-				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
-			end
+	-- 📜 Description
+	if descriptionText ~= "" then
+		GameTooltip:AddLine(" ", 1, 1, 1, false)
+		GameTooltip:AddLine(descriptionText, 1.0, 0.75, 0.79, true)
+	else
+		GameTooltip:AddLine(" ", 1, 1, 1, false)
+		GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
+	end
 
-			-- 📘 Objectives Comment (if present)
-			if objectivesQuestText ~= "" then
-				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine("Objective:", 1, 0.82, 0, true)
-				GameTooltip:AddLine(objectivesQuestText, 0.9, 0.95, 1, true)
-			end
+	-- 📘 Objectives Comment (if present)
+	if objectivesQuestText ~= "" then
+		GameTooltip:AddLine(" ", 1, 1, 1, false)
+		GameTooltip:AddLine("Objective:", 1, 0.82, 0, true)
+		GameTooltip:AddLine(objectivesQuestText, 0.9, 0.95, 1, true)
+	end
 
-			-- ✅ Requirements
-			if objectivesText ~= "" or showFallbackObjective then
-				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
-				if objectivesText ~= "" then
-					GameTooltip:AddLine("- " .. objectivesText, 1, 1, 1, true)
-				elseif showFallbackObjective then
-					GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
-				end
-			else
-				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
-				GameTooltip:AddLine("Objective requirements unavailable", 0.8, 0.8, 0.8, true)
-			end
-
-			-- Add Rewards
-			GameTooltip:AddLine(" ")
-			RQE:QuestRewardsTooltip(GameTooltip, questID)
-
-			GameTooltip:AddLine(" ", 1, 1, 1, false)
-			GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
-			GameTooltip:Show()
+	-- ✅ Requirements
+	if objectivesText ~= "" or showFallbackObjective then
+		GameTooltip:AddLine(" ", 1, 1, 1, false)
+		GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+		if objectivesText ~= "" then
+			GameTooltip:AddLine("- " .. objectivesText, 1, 1, 1, true)
+		elseif showFallbackObjective then
+			GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
 		end
-	end)
+	else
+		GameTooltip:AddLine(" ", 1, 1, 1, false)
+		GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+		GameTooltip:AddLine("Objective requirements unavailable", 0.8, 0.8, 0.8, true)
+	end
+
+	-- Add Rewards
+	GameTooltip:AddLine(" ")
+	RQE:QuestRewardsTooltip(GameTooltip, questID)
+
+	GameTooltip:AddLine(" ", 1, 1, 1, false)
+	GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
+	GameTooltip:Show()
 end
 
 
@@ -7318,9 +7332,159 @@ function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor
 end
 
 
+-- A coordblock owns one temporary Active label for the currently supertracked quest.
+-- Keep the original tag as its identity so a frame rebuild can recover the selected
+-- link without storing display text or touching the separate {coords:...} format.
+function RQE:GetCoordblockDisplayLabel(data)
+	local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+	if not (x and y and mapID) then return data end
+
+	local active = self.ActiveCoordblock
+	if active and not self:IsCoordblockWaypointProtected() then active = nil end
+
+	if active and active.data == data then return "[Active]" end
+	return string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+end
+
+-- Anchor compact waypoint help beside the actual link region rather than
+-- converting the cursor through UI scale.  This keeps it adjacent to the
+-- hovered line as the mouse moves and avoids covering nearby coordblocks.
+function RQE:AnchorCoordblockTooltip(linkFrame)
+	if not linkFrame or not linkFrame.GetLeft or not linkFrame.GetBottom then return end
+	local left, bottom = linkFrame:GetLeft(), linkFrame:GetBottom()
+	if not left or not bottom then return end
+	local placeLeft = left >= GameTooltip:GetWidth() + 12
+	local placeBelow = bottom >= GameTooltip:GetHeight() + 12
+	GameTooltip:ClearAllPoints()
+	if placeLeft then
+		if placeBelow then
+			GameTooltip:SetPoint("TOPRIGHT", linkFrame, "BOTTOMLEFT", -8, -6)
+		else
+			GameTooltip:SetPoint("BOTTOMRIGHT", linkFrame, "TOPLEFT", -8, 6)
+		end
+	else
+		if placeBelow then
+			GameTooltip:SetPoint("TOPLEFT", linkFrame, "BOTTOMRIGHT", 8, -6)
+		else
+			GameTooltip:SetPoint("BOTTOMLEFT", linkFrame, "TOPRIGHT", 8, 6)
+		end
+	end
+end
+
+-- A clicked coordblock temporarily owns the live waypoint for its quest,
+-- player map and step.  Automatic hotspot/Blizzard refreshes consult this
+-- before clearing TomTom or the user pin; a real context transition releases it.
+function RQE:IsCoordblockWaypointProtected(questID, stepIndex)
+	local active = self.ActiveCoordblock
+	if not active then return self:IsManualFlightMasterWaypointProtected() end
+
+	local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	if active.questID ~= trackedQuestID
+		or (active.playerMapID and playerMapID and active.playerMapID ~= playerMapID)
+		or (active.stepIndex and currentStep and active.stepIndex ~= currentStep)
+		or (tonumber(questID) == active.questID and stepIndex
+			and active.stepIndex and active.stepIndex ~= tonumber(stepIndex)) then
+		self.ActiveCoordblock = nil
+		return false
+	end
+
+	return true
+end
+
+-- A manually selected flight master also owns its waypoint until the player
+-- changes maps, changes its originating quest step, or explicitly selects
+-- another destination.  Quest automation
+-- uses the same early-return guard as an Active coordblock.
+function RQE:IsManualFlightMasterWaypointProtected()
+	local ownerMapID = self.ManualFlightMasterWaypointMapID
+	if not ownerMapID then return false end
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+	local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+	local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	local ownerStepChanged = trackedQuestID == self.ManualFlightMasterWaypointQuestID
+		and self.ManualFlightMasterWaypointStepIndex and currentStep
+		and self.ManualFlightMasterWaypointStepIndex ~= currentStep
+	if (playerMapID and playerMapID ~= ownerMapID) or ownerStepChanged then
+		self.ManualFlightMasterWaypointMapID = nil
+		self.ManualFlightMasterWaypointQuestID = nil
+		self.ManualFlightMasterWaypointStepIndex = nil
+		self.NearestFlightMasterSet = false
+		return false
+	end
+	return true
+end
+
+function RQE:ReleaseActiveCoordblockWaypoint()
+	if not self.ActiveCoordblock then return end
+	self.ActiveCoordblock = nil
+	C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
+end
+
+function RQE:SetActiveCoordblock(data)
+	local questID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+	if not questID or questID <= 0 then return false end
+	-- A second click on [Active] must restore a TomTom point that disappeared
+	-- at its arrival radius; the previous-coordinate cache is not proof that
+	-- its live waypoint still exists.  This explicit click also replaces a
+	-- manually selected flight-master destination.
+	self._lastWP = nil
+	self.ManualFlightMasterWaypointMapID = nil
+	self.ManualFlightMasterWaypointQuestID = nil
+	self.ManualFlightMasterWaypointStepIndex = nil
+	self.NearestFlightMasterSet = false
+	self.ActiveCoordblock = {
+		questID = questID,
+		data = data,
+		stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex or self.StepIndexForCoordMatch),
+		playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player"),
+	}
+	return true
+end
+
+-- Re-render only existing coordblock-bearing labels.  Rebuilding the whole focus
+-- panel here duplicates its FontString regions and can leave overlapping links.
+function RQE:RefreshActiveCoordblockLinks()
+	local active = self.ActiveCoordblock
+	if active then self:IsCoordblockWaypointProtected() end
+
+	for _, text in ipairs(self.StepsText or {}) do
+		if text.IsShown and text:IsShown() and text._rqeRichText
+			and text._rqeRichText:find("{coordblock:", 1, true) then
+			RQE.RenderTextWithItemsSteps(text, text._rqeRichText, text._rqeRichFont,
+				text._rqeRichFontSize, text._rqeRichColor, text._rqeRichParent)
+		end
+	end
+	for _, text in ipairs(self.SeparateCoordblockFonts or {}) do
+		if text.IsShown and text:IsShown() and text._rqeRichText then
+			RQE.RenderTextWithItemsSteps(text, text._rqeRichText, text._rqeRichFont,
+				text._rqeRichFontSize, text._rqeRichColor, text._rqeRichParent)
+		end
+	end
+
+	local htmlFrame = self.SeparateStepText
+	if htmlFrame and htmlFrame._rqeCoordblockHTMLBase and htmlFrame._rqeCoordblockLinks then
+		local html = htmlFrame._rqeCoordblockHTMLBase
+		for href, data in pairs(htmlFrame._rqeCoordblockLinks) do
+			local escapedHref = href:gsub("([^%w])", "%%%1")
+			local pattern = '(<a href="' .. escapedHref .. '">|cff40e0d0)%b[](|r</a>)'
+			html = html:gsub(pattern, function(before, after)
+				return before .. self:GetCoordblockDisplayLabel(data) .. after
+			end)
+		end
+		htmlFrame:SetText(html)
+	end
+end
+
 -- Render rich text with multiple {item:id:name} tags and attach separate hover frames used in the individual steps
 function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, textColor, customParent)
 	if not rawText or rawText == "" or not parentFrame then return end
+	parentFrame._rqeRichText = rawText
+	parentFrame._rqeRichFont = font
+	parentFrame._rqeRichFontSize = fontSize
+	parentFrame._rqeRichColor = textColor
+	parentFrame._rqeRichParent = customParent
 
 	-- Clean up any old hover frames
 	if parentFrame._rqeSegments then
@@ -7348,11 +7512,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 
 	-- Coord Blocks
 	displayText = displayText:gsub("{coordblock:([^}]+)}", function(data)
-		local x, y = data:match("(%d+%.?%d*),(%d+%.?%d*)")
-		if x and y then
-			return string.format("|cff40e0d0[%.2f, %.2f]|r", tonumber(x), tonumber(y))
-		end
-		return data
+		return "|cff40e0d0" .. RQE:GetCoordblockDisplayLabel(data) .. "|r"
 	end)
 
 	parentFrame:SetText(displayText)
@@ -7412,7 +7572,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 		end
 
 		if isCoordBlock then
-			return string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+			return RQE:GetCoordblockDisplayLabel(data)
 		end
 
 		return string.format("[coords: %.2f, %.2f map %s]", tonumber(x), tonumber(y), mapID)
@@ -7637,11 +7797,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 							return data
 						end)
 						:gsub("{coordblock:([^}]+)}", function(data)
-							local bx, by = data:match("(%d+%.?%d*),(%d+%.?%d*)")
-							if bx and by then
-								return string.format("[%.2f, %.2f]", tonumber(bx), tonumber(by))
-							end
-							return data
+							return RQE:GetCoordblockDisplayLabel(data)
 						end)
 						:gsub("|c%x%x%x%x%x%x%x%x", "")
 						:gsub("|r", "")
@@ -7721,16 +7877,12 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 						:gsub("{item:%d+:([^}]+)}", "[%1]")
 						:gsub("{spell:%d+:([^}]+)}", "[%1]")
 						:gsub("{coordblock:([^}]+)}", function(data)
-							local bx, by = data:match("(%d+%.?%d*),(%d+%.?%d*)")
-							if bx and by then
-								return string.format("[%.2f, %.2f]", tonumber(bx), tonumber(by))
-							end
-							return data
+							return RQE:GetCoordblockDisplayLabel(data)
 						end)
 						:gsub("|c%x%x%x%x%x%x%x%x", "")
 						:gsub("|r", "")
 
-					local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+					local label = RQE:GetCoordblockDisplayLabel(coordData)
 					measureFS:SetText(label)
 					local tagWidth = measureFS:GetStringWidth()
 
@@ -7766,12 +7918,23 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 					hover:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", coordX, -coordY)
 
 					hover:SetScript("OnEnter", function()
-						GameTooltip:SetOwner(hover, "ANCHOR_CURSOR")
+						GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
 						GameTooltip:SetText("|cffffff00Waypoint: " .. x .. ", " .. y .. "|r")
 						GameTooltip:Show()
+						RQE._coordblockTooltipOwner = hover
+						RQE:AnchorCoordblockTooltip(hover)
+						hover:SetScript("OnUpdate", function(self)
+							if RQE._coordblockTooltipOwner ~= self or not GameTooltip:IsShown() then
+								self:SetScript("OnUpdate", nil)
+								return
+							end
+							RQE:AnchorCoordblockTooltip(self)
+						end)
 					end)
 
 					hover:SetScript("OnLeave", function()
+						if RQE._coordblockTooltipOwner == hover then RQE._coordblockTooltipOwner = nil end
+						hover:SetScript("OnUpdate", nil)
 						GameTooltip:Hide()
 					end)
 
@@ -7782,7 +7945,16 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 							RQE._currentTomTomUID = nil
 						end
 						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+						local markedActive = RQE:SetActiveCoordblock(coordData)
 						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
+						if markedActive then
+							-- Rebuild visible labels after the click handler returns; focus-frame
+							-- paragraphs may be destroyed by the same refresh.
+							C_Timer.After(0, function()
+								if not RQE.ActiveCoordblock or RQE.ActiveCoordblock.data ~= coordData then return end
+								RQE:RefreshActiveCoordblockLinks()
+							end)
+						end
 					end)
 
 					table.insert(parentFrame._rqeSegments, hover)
@@ -9529,6 +9701,10 @@ function RQE:SetDisplayedStepFromStepsList(stepIndex)
 	local questData = questID and RQE.getQuestData(questID)
 	local isSearchedStepZero = stepIndex == 0 and RQE:CanNavigateSearchedQuestSteps(questID)
 	if not questData or (not isSearchedStepZero and not questData[stepIndex]) then return end
+	if self.ActiveCoordblock and self.ActiveCoordblock.stepIndex
+		and self.ActiveCoordblock.stepIndex ~= tonumber(stepIndex) then
+		self:ReleaseActiveCoordblockWaypoint()
+	end
 
 	RQE.ManualStepPreview = true
 	RQE.ManualPreviewQuestID = questID
@@ -11140,6 +11316,10 @@ function RQE:ClickWaypointButtonForIndex(index)
 	if InCombatLockdown() then
 		self.RunPeriodicChecksAfterCombat = true
 		return
+	end
+	if self.ActiveCoordblock and self.ActiveCoordblock.stepIndex
+		and self.ActiveCoordblock.stepIndex ~= tonumber(index) then
+		self:ReleaseActiveCoordblockWaypoint()
 	end
 
 	if RQE.db.profile.enableStepControls then
@@ -14576,16 +14756,34 @@ function RQE.PrintQuestlineDetails(questLineID)
 end
 
 
--- Custom handler for clickable quest titles
-hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+-- Custom handler for clickable quest titles. Legacy chat frames dispatch their
+-- hyperlink click through ChatFrame_OnHyperlinkShow rather than SetItemRef.
+local function HandleRQEQuestTooltipLink(link)
 	local linkType, questID = strsplit(":", link)
-	if linkType == "questtip" then
+	if linkType == "questtip" or linkType == "rqecontribquest" then
 		questID = tonumber(questID)
 		if questID then
-			RQE:ShowCustomQuestTooltip(questID)
+			local contributionData = linkType == "rqecontribquest"
+				and RQE.ContributionQuestTooltipCache
+				and RQE.ContributionQuestTooltipCache[questID]
+			RQE:ShowCustomQuestTooltip(
+				questID,
+				contributionData and contributionData.questData,
+				contributionData and contributionData.title
+			)
 		end
 	end
-end)
+end
+
+if type(ChatFrame_OnHyperlinkShow) == "function" then
+	hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
+		HandleRQEQuestTooltipLink(link)
+	end)
+else
+	hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+		HandleRQEQuestTooltipLink(link)
+	end)
+end
 
 
 -- Returns the available quests at a quest giver when GOSSIP_SHOW is called from EventManager
@@ -17534,6 +17732,14 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 
 	local xPct, yPct = xNorm * 100, yNorm * 100
 	local title = string.format('Flight Master: %s', node.name or "Unknown")
+	-- This menu action is an explicit destination choice.  Release a selected
+	-- coordblock before Replace, then protect the flight-master waypoint from
+	-- a later automatic quest/hotspot refresh (even if supertracking changes).
+	self:ReleaseActiveCoordblockWaypoint()
+	self.ManualFlightMasterWaypointMapID = nil
+	self.ManualFlightMasterWaypointQuestID = nil
+	self.ManualFlightMasterWaypointStepIndex = nil
+	self.NearestFlightMasterSet = false
 
 	C_Map.ClearUserWaypoint()
 
@@ -17560,6 +17766,10 @@ function RQE:SetTomTomWaypointToClosestFlightMaster()
 			print(string.format(">> Blizzard waypoint => %s (%.2f, %.2f, mapID %d) [TomTom not available/disabled]", title, xPct, yPct, mapID))
 		end
 	end
+	self.ManualFlightMasterWaypointMapID = mapID
+	self.ManualFlightMasterWaypointQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
+	self.ManualFlightMasterWaypointStepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	self.NearestFlightMasterSet = true
 
 	return { name = node.name, mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct }
 end
