@@ -908,6 +908,7 @@ end
 -- Function to handle the clearing of the RQEFrame when the "C" button is pressed (or similar functionality is desired)
 function RQE.Buttons.ClearButtonPressed()
 	RQE.ClearButtonPressed = true	 -- FORCES the next clear (might need to add a check to make sure that the player physically pressed the button for this to actually clear the frame)
+	RQE.ActiveCoordblock = nil	 -- C clears the temporary [Active] coordblock label with the window
 
 	-- RESET the throttling system so next update actually fires
 	RQE.FrameState = {
@@ -2085,6 +2086,604 @@ end
 		-- end
 	-- end
 -- end
+
+
+-- Active implementation ----------------------------------------------------
+--
+-- Retail exposes tracked quest items directly. Classic Era/SoD and TBC may
+-- not, so those clients also use Questie's sourceItemId data when Questie is
+-- available. The resulting buttons all use secure item attributes and never
+-- consume a character or account macro slot.
+-- This first phase handles quest items only. Spell and ExtraActionButton1
+-- actions require a separate secure-action extension.
+
+local QUEST_ITEM_BUTTON_SIZE = 32
+local QUEST_ITEM_BUTTON_SPACING = 4
+local QUEST_ITEM_BUTTON_FALLBACK_TEXTURE = "Interface\\Icons\\INV_Misc_QuestionMark"
+
+-- Keep buttons by quest ID while displayed, then return unused buttons to a
+-- pool. The flags prevent duplicate hooks and combine repeated refresh calls.
+RQE.SpecialQuestItemButtons = RQE.SpecialQuestItemButtons or {
+	activeByQuestID = {},
+	buttonPool = {},
+	allButtons = {},
+	actionsPending = false,
+	updateScheduled = false,
+	hookInstalled = false,
+	frameHooksInstalled = false,
+}
+
+local questItemButtonState = RQE.SpecialQuestItemButtons
+local legacyQuestieDB
+
+
+-- Check combat before creating, hiding, moving, or assigning attributes on a
+-- SecureActionButtonTemplate. Visual cooldown and usability updates may run
+-- during combat; protected button changes wait for PLAYER_REGEN_ENABLED.
+local function QuestItemButtonsInCombat()
+	return type(InCombatLockdown) == "function" and InCombatLockdown()
+end
+
+
+-- Native special-item functions take a quest-log index, not a quest ID. Use
+-- RQE_API.lua's normalized lookup: it selects Retail's native index API and
+-- scans the legacy quest log when SoD/TBC do not expose the same function.
+local function GetRQEQuestLogIndex(questID)
+	if not RQE.API or type(RQE.API.GetLogIndexForQuestID) ~= "function" then return nil end
+	local questLogIndex = tonumber(RQE.API.GetLogIndexForQuestID(questID))
+	return questLogIndex and questLogIndex > 0 and questLogIndex or nil
+end
+
+
+-- Questie is optional and only consulted on Classic/SoD and TBC. Cache a
+-- successful import, but retry a missing module in case Questie starts later.
+local function GetQuestieDatabase()
+	if isRetail then return nil end
+	if legacyQuestieDB then return legacyQuestieDB end
+
+	if QuestieLoader and type(QuestieLoader.ImportModule) == "function" then
+		local ok, module = pcall(QuestieLoader.ImportModule, QuestieLoader, "QuestieDB")
+		if ok and module then
+			legacyQuestieDB = module
+		end
+	end
+
+	return legacyQuestieDB
+end
+
+
+-- Normalize modern C_Container results and older positional bag API returns
+-- to item ID, hyperlink, icon, and stack count.
+local function GetContainerItemDetails(bag, slot)
+	if C_Container and type(C_Container.GetContainerItemInfo) == "function" then
+		local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
+		if itemInfo then
+			return itemInfo.itemID, itemInfo.hyperlink, itemInfo.iconFileID, itemInfo.stackCount
+		end
+	elseif type(GetContainerItemInfo) == "function" then
+		local texture, count, _, _, _, _, link, _, _, itemID = GetContainerItemInfo(bag, slot)
+		if not itemID and type(link) == "string" then
+			itemID = tonumber(link:match("item:(%d+)"))
+		end
+		return itemID, link, texture, count
+	end
+end
+
+
+-- Questie's sourceItemId identifies a quest item, but the button is shown only
+-- once the player has that item in a bag and a usable item link can be found.
+local function FindItemInBags(wantedItemID)
+	wantedItemID = tonumber(wantedItemID)
+	if not wantedItemID then return nil end
+
+	local lastBag = tonumber(NUM_BAG_SLOTS) or 4
+	if Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag then
+		lastBag = math.max(lastBag, Enum.BagIndex.ReagentBag)
+	end
+
+	for bag = 0, lastBag do
+		local numSlots = 0
+		if C_Container and type(C_Container.GetContainerNumSlots) == "function" then
+			numSlots = C_Container.GetContainerNumSlots(bag) or 0
+		elseif type(GetContainerNumSlots) == "function" then
+			numSlots = GetContainerNumSlots(bag) or 0
+		end
+
+		for slot = 1, numSlots do
+			local itemID, link, texture, count = GetContainerItemDetails(bag, slot)
+			if tonumber(itemID) == wantedItemID then
+				return link or ("item:" .. wantedItemID), texture, count, wantedItemID
+			end
+		end
+	end
+end
+
+
+-- Provide the native special-item return shape from Questie's quest record:
+-- link, icon, stack count, show-after-complete flag, and item ID.
+local function GetLegacyQuestItemInfo(questID)
+	local questieDB = GetQuestieDatabase()
+	if not questieDB or type(questieDB.GetQuest) ~= "function" then return nil end
+
+	local ok, quest = pcall(questieDB.GetQuest, questID)
+	if not ok or type(quest) ~= "table" or not quest.sourceItemId then return nil end
+
+	local link, texture, charges, itemID = FindItemInBags(quest.sourceItemId)
+	if not link then return nil end
+	return link, texture, charges, false, itemID
+end
+
+
+-- Prefer Blizzard's quest-log association where it exists. Questie supplies
+-- a fallback on legacy clients when the native function returns no item.
+local function GetSpecialQuestItemInfo(questID, questLogIndex)
+	if type(GetQuestLogSpecialItemInfo) == "function" then
+		local ok, link, texture, charges, showItemWhenComplete =
+			pcall(GetQuestLogSpecialItemInfo, questLogIndex)
+		if ok and link then
+			return link, texture, charges, showItemWhenComplete,
+				tonumber(link:match("item:(%d+)"))
+		end
+	end
+
+	return GetLegacyQuestItemInfo(questID)
+end
+
+
+-- The item disappears on completion unless Blizzard explicitly allows it to
+-- remain. RQE.API.IsComplete normalizes the differing client return shapes.
+local function IsRQEQuestComplete(questID)
+	if RQE.API and type(RQE.API.IsComplete) == "function" then
+		local ok, result = pcall(RQE.API.IsComplete, questID)
+		if ok then
+			if type(result) == "table" then
+				return result.isComplete == true or result.isComplete == 1
+			end
+			return result == true or result == 1
+		end
+	end
+
+	if C_QuestLog and type(C_QuestLog.IsComplete) == "function" then
+		local ok, complete = pcall(C_QuestLog.IsComplete, questID)
+		if ok then return complete == true or complete == 1 end
+	end
+	return false
+end
+
+
+-- Show quest-log charges when supplied; otherwise read the actual bag count.
+local function GetQuestItemCount(itemLink, itemID, charges)
+	if type(charges) == "number" and charges > 0 then
+		return charges
+	end
+
+	if C_Item and type(C_Item.GetItemCount) == "function" then
+		return C_Item.GetItemCount(itemID or itemLink) or 0
+	end
+	if type(GetItemCount) == "function" then
+		return GetItemCount(itemID or itemLink) or 0
+	end
+	return 0
+end
+
+
+-- Prefer a quest-specific cooldown when that API is present; otherwise use
+-- item cooldown APIs. Clear the cooldown display when no cooldown is active.
+local function UpdateQuestItemButtonCooldown(button)
+	local questLogIndex = button.questLogIndex
+	local ok, startTime, duration, enable
+	if questLogIndex and type(GetQuestLogSpecialItemCooldown) == "function" then
+		ok, startTime, duration, enable = pcall(GetQuestLogSpecialItemCooldown, questLogIndex)
+	elseif button.itemID and C_Item and type(C_Item.GetItemCooldown) == "function" then
+		ok, startTime, duration, enable = pcall(C_Item.GetItemCooldown, button.itemID)
+	elseif button.itemID and C_Container and type(C_Container.GetItemCooldown) == "function" then
+		ok, startTime, duration, enable = pcall(C_Container.GetItemCooldown, button.itemID)
+	elseif button.itemID and type(GetItemCooldown) == "function" then
+		ok, startTime, duration, enable = pcall(GetItemCooldown, button.itemID)
+	end
+
+	if ok and startTime and duration and duration > 0 and enable ~= 0 then
+		button.cooldown:SetCooldown(startTime, duration)
+	else
+		button.cooldown:SetCooldown(0, 0)
+	end
+end
+
+
+-- Refresh the visible button's usability, range tint, and cooldown without
+-- changing secure attributes. Unknown range leaves the icon normally colored.
+local function UpdateQuestItemButtonState(button)
+	if not button:IsShown() then return end
+
+	local usable = true
+	if type(IsUsableItem) == "function" and button.itemLink then
+		local itemUsable = IsUsableItem(button.itemLink)
+		if itemUsable ~= nil then
+			usable = itemUsable == true or itemUsable == 1
+		end
+	end
+
+	local inRange
+	if button.questLogIndex and type(IsQuestLogSpecialItemInRange) == "function" then
+		local ok, rangeResult = pcall(IsQuestLogSpecialItemInRange, button.questLogIndex)
+		if ok then inRange = rangeResult end
+	end
+	if inRange == nil
+		and not isRetail
+		and button.itemID
+		and C_Item
+		and type(C_Item.IsItemInRange) == "function"
+		and ((UnitExists("target") and not UnitIsFriend("player", "target")) or not QuestItemButtonsInCombat())
+	then
+		local ok, rangeResult = pcall(C_Item.IsItemInRange, button.itemID, "target")
+		if ok then inRange = rangeResult end
+	end
+
+	if button.icon.SetDesaturated then
+		button.icon:SetDesaturated(not usable)
+	end
+	if inRange == 0 or inRange == false then
+		button.icon:SetVertexColor(1, 0.25, 0.25)
+	elseif usable then
+		button.icon:SetVertexColor(1, 1, 1)
+	else
+		button.icon:SetVertexColor(0.55, 0.55, 0.55)
+	end
+
+	UpdateQuestItemButtonCooldown(button)
+end
+
+
+-- Tooltip uses the stored item hyperlink for both native and Questie items.
+-- The native quest-log tooltip remains a fallback if no link is available.
+local function QuestItemButtonOnEnter(button)
+	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
+	if button.itemLink then
+		GameTooltip:SetHyperlink(button.itemLink)
+	elseif button.questLogIndex and type(GameTooltip.SetQuestLogSpecialItem) == "function" then
+		GameTooltip:SetQuestLogSpecialItem(button.questLogIndex)
+	end
+	GameTooltip:Show()
+end
+
+
+-- Remove the item tooltip as soon as the mouse leaves the button.
+local function QuestItemButtonOnLeave()
+	GameTooltip:Hide()
+end
+
+
+-- Reuse a free secure button or create one with icon, count, order number,
+-- cooldown, and tooltip regions. No ordinary Lua OnClick invokes the item:
+-- SecureActionButtonTemplate performs the configured item action itself.
+local function CreateQuestItemButton()
+	local container = questItemButtonState.container
+	if not container then return nil end
+
+	local button = table.remove(questItemButtonState.buttonPool)
+	if not button then
+		button = CreateFrame("Button", nil, container, "SecureActionButtonTemplate")
+		button:SetSize(QUEST_ITEM_BUTTON_SIZE, QUEST_ITEM_BUTTON_SIZE)
+
+		button.icon = button:CreateTexture(nil, "BORDER")
+		button.icon:SetPoint("TOPLEFT", button, "TOPLEFT", 2, -2)
+		button.icon:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -2, 2)
+		button.icon:SetTexture(QUEST_ITEM_BUTTON_FALLBACK_TEXTURE)
+
+		button:SetNormalTexture("Interface\\Buttons\\UI-Quickslot2")
+		local normalTexture = button:GetNormalTexture()
+		if normalTexture then
+			normalTexture:ClearAllPoints()
+			normalTexture:SetPoint("CENTER")
+			normalTexture:SetSize(QUEST_ITEM_BUTTON_SIZE + 14, QUEST_ITEM_BUTTON_SIZE + 14)
+		end
+		button:SetPushedTexture("Interface\\Buttons\\UI-Quickslot-Depress")
+		button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+
+		button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+		button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -2, 2)
+		button.count:SetJustifyH("RIGHT")
+
+		button.order = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+		button.order:SetPoint("TOPLEFT", button, "TOPLEFT", 3, -3)
+		button.order:SetJustifyH("LEFT")
+
+		button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+		button.cooldown:SetAllPoints(button.icon)
+
+		button:SetScript("OnEnter", QuestItemButtonOnEnter)
+		button:SetScript("OnLeave", QuestItemButtonOnLeave)
+		button:SetScript("OnUpdate", function(self, elapsed)
+			self.rqeUpdateElapsed = (self.rqeUpdateElapsed or 0) + elapsed
+			if self.rqeUpdateElapsed >= 0.2 then
+				self.rqeUpdateElapsed = 0
+				UpdateQuestItemButtonState(self)
+			end
+		end)
+
+		questItemButtonState.allButtons[#questItemButtonState.allButtons + 1] = button
+	end
+
+	-- SecureActionButtonTemplate can execute on mouse-down when the player's
+	-- ActionButtonUseKeyDown setting is enabled. Register both phases so the
+	-- item action fires at the client's selected phase, including pooled buttons.
+	button:RegisterForClicks("AnyDown", "AnyUp")
+	button:SetParent(container)
+	button:Show()
+	return button
+end
+
+
+-- Clear the quest's secure item action and visual state before pooling its
+-- button, so the next quest cannot inherit an old link or cooldown.
+local function ReleaseQuestItemButton(questID)
+	local button = questItemButtonState.activeByQuestID[questID]
+	if not button then return end
+
+	questItemButtonState.activeByQuestID[questID] = nil
+	button:Hide()
+	button:ClearAllPoints()
+	button:SetAttribute("type", nil)
+	button:SetAttribute("item", nil)
+	button:SetAttribute("type*", nil)
+	button:SetAttribute("item*", nil)
+	button:SetAttribute("questLogIndex", nil)
+	button:SetAttribute("questID", nil)
+	button.questID = nil
+	button.questLogIndex = nil
+	button.itemLink = nil
+	button.itemID = nil
+	button.count:SetText("")
+	button.order:SetText("")
+	button.cooldown:SetCooldown(0, 0)
+	questItemButtonState.buttonPool[#questItemButtonState.buttonPool + 1] = button
+end
+
+
+-- Place the secure button sidecar on UIParent, immediately outside the upper
+-- left of RQEQuestFrame. This follows tracker movement without making the
+-- tracker itself the parent of protected buttons.
+local function EnsureQuestItemButtonContainer()
+	if questItemButtonState.container then return questItemButtonState.container end
+	if not RQE.RQEQuestFrame then return nil end
+
+	local container = CreateFrame("Frame", "RQEQuestItemButtonContainer", UIParent)
+	container:SetSize(QUEST_ITEM_BUTTON_SIZE, 1)
+	container:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPLEFT", -6, -4)
+	container:SetFrameStrata(RQE.RQEQuestFrame:GetFrameStrata())
+	container:SetFrameLevel(RQE.RQEQuestFrame:GetFrameLevel() + 5)
+	container:Hide()
+	questItemButtonState.container = container
+	return container
+end
+
+
+-- Bind one displayed quest to its item button. The quest ID owns the pooled
+-- button; the log index finds native item data; orderIndex labels the stack.
+-- All secure attributes are assigned only after combat lockdown has ended.
+function RQE.Buttons.CreateOrUpdateQuestItemButton(questID, questLogIndex, orderIndex)
+	if QuestItemButtonsInCombat() then
+		questItemButtonState.actionsPending = true
+		return nil
+	end
+
+	questID = tonumber(questID)
+	questLogIndex = tonumber(questLogIndex)
+	if not questID or not questLogIndex then return nil end
+
+	local itemLink, itemTexture, charges, showItemWhenComplete, itemID =
+		GetSpecialQuestItemInfo(questID, questLogIndex)
+	if not itemLink or (IsRQEQuestComplete(questID) and not showItemWhenComplete) then
+		ReleaseQuestItemButton(questID)
+		return nil
+	end
+
+	local button = questItemButtonState.activeByQuestID[questID]
+	if not button then
+		button = CreateQuestItemButton()
+		if not button then return nil end
+		questItemButtonState.activeByQuestID[questID] = button
+	end
+
+	button.questID = questID
+	button.questLogIndex = questLogIndex
+	button.itemLink = itemLink
+	button.itemID = itemID or tonumber(itemLink:match("item:(%d+)"))
+	-- Use the secure action's wildcard click attributes and an item:ID token.
+	-- This mirrors a /use item:ID action for either mouse button, including on
+	-- Classic/TBC clients that do not activate a full item hyperlink reliably.
+	local secureItem = button.itemID and ("item:" .. button.itemID) or itemLink
+	button:SetAttribute("type", "item")
+	button:SetAttribute("item", secureItem)
+	button:SetAttribute("type*", "item")
+	button:SetAttribute("item*", secureItem)
+	button:SetAttribute("questLogIndex", questLogIndex)
+	button:SetAttribute("questID", questID)
+	button.icon:SetTexture(itemTexture or QUEST_ITEM_BUTTON_FALLBACK_TEXTURE)
+	button.count:SetText(GetQuestItemCount(itemLink, button.itemID, charges))
+	button.order:SetText(orderIndex or "")
+	UpdateQuestItemButtonState(button)
+	return button
+end
+
+
+-- Use only the currently shown normal/campaign tracker rows. Sort by RQE's
+-- tracker row index so the sidecar follows displayed quest order.
+local function GetOrderedRQEQuestRows()
+	local rows = {}
+	for index, row in pairs(RQE.QuestLogIndexButtons or {}) do
+		if row and row.questID and row.IsShown and row:IsShown() then
+			rows[#rows + 1] = {
+				index = tonumber(index) or 9999,
+				row = row,
+			}
+		end
+	end
+	table.sort(rows, function(left, right) return left.index < right.index end)
+	return rows
+end
+
+
+-- Rebuild the visible sidecar from current tracker rows. Buttons are stacked
+-- from its top edge, numbered by item-button order, and released when their
+-- quest row or special item is no longer present. They are not row-anchored.
+function RQE.Buttons.UpdateQuestItemButtons()
+	if QuestItemButtonsInCombat() then
+		questItemButtonState.actionsPending = true
+		return
+	end
+
+	questItemButtonState.actionsPending = false
+	local container = EnsureQuestItemButtonContainer()
+	if not container then return end
+
+	local seenQuestIDs = {}
+	local visibleButtonCount = 0
+	for _, rowData in ipairs(GetOrderedRQEQuestRows()) do
+		local questID = tonumber(rowData.row.questID)
+		local questLogIndex = questID and GetRQEQuestLogIndex(questID)
+		if questID and questLogIndex then
+			local button = RQE.Buttons.CreateOrUpdateQuestItemButton(
+				questID,
+				questLogIndex,
+				visibleButtonCount + 1
+			)
+			if button then
+				visibleButtonCount = visibleButtonCount + 1
+				seenQuestIDs[questID] = true
+				button.order:SetText(visibleButtonCount)
+				button:ClearAllPoints()
+				button:SetPoint(
+					"TOP",
+					container,
+					"TOP",
+					0,
+					-(visibleButtonCount - 1) * (QUEST_ITEM_BUTTON_SIZE + QUEST_ITEM_BUTTON_SPACING)
+				)
+			end
+		end
+	end
+
+	local staleQuestIDs = {}
+	for questID in pairs(questItemButtonState.activeByQuestID) do
+		if not seenQuestIDs[questID] then
+			staleQuestIDs[#staleQuestIDs + 1] = questID
+		end
+	end
+	for _, questID in ipairs(staleQuestIDs) do
+		ReleaseQuestItemButton(questID)
+	end
+
+	container:SetHeight(math.max(1, visibleButtonCount * (QUEST_ITEM_BUTTON_SIZE + QUEST_ITEM_BUTTON_SPACING)))
+	if visibleButtonCount > 0 and RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
+		container:SetAlpha(1)
+		container:Show()
+	else
+		container:Hide()
+	end
+end
+
+
+-- Queue one refresh for a burst of tracker, quest-log, or bag updates. A
+-- combat-time refresh marks pending work for the next safe update instead.
+function RQE.Buttons.ScheduleQuestItemButtonUpdate()
+	if questItemButtonState.updateScheduled then return end
+	questItemButtonState.updateScheduled = true
+
+	local function RunUpdate()
+		questItemButtonState.updateScheduled = false
+		RQE.Buttons.UpdateQuestItemButtons()
+	end
+
+	if C_Timer and type(C_Timer.After) == "function" then
+		C_Timer.After(0, RunUpdate)
+	else
+		RunUpdate()
+	end
+end
+
+
+-- Publish the shared button implementation under RQE's public method names
+-- after QuestingModule.lua has loaded its older experimental definitions.
+local function PublishQuestItemButtonAPI()
+	-- QuestingModule.lua contains an older experimental method. Publishing here
+	-- after ADDON_LOADED makes this shared, quiet implementation authoritative
+	-- on Retail, Classic Era/SoD, and TBC Anniversary.
+	RQE.CreateOrUpdateQuestItemButton = function(_, questID, questLogIndex, orderIndex)
+		return RQE.Buttons.CreateOrUpdateQuestItemButton(questID, questLogIndex, orderIndex)
+	end
+	RQE.UpdateQuestItemButtons = function()
+		return RQE.Buttons.UpdateQuestItemButtons()
+	end
+end
+
+
+-- Refresh after the tracker renders and when it shows, hides, or changes size.
+-- Hook flags prevent repeated installation on login/world event sequences.
+local function InstallQuestItemButtonHooks()
+	PublishQuestItemButtonAPI()
+
+	if not questItemButtonState.hookInstalled
+		and type(UpdateRQEQuestFrame) == "function"
+		and type(hooksecurefunc) == "function"
+	then
+		hooksecurefunc("UpdateRQEQuestFrame", function()
+			RQE.Buttons.ScheduleQuestItemButtonUpdate()
+		end)
+		questItemButtonState.hookInstalled = true
+	end
+
+	if RQE.RQEQuestFrame and not questItemButtonState.frameHooksInstalled then
+		RQE.RQEQuestFrame:HookScript("OnShow", function()
+			RQE.Buttons.ScheduleQuestItemButtonUpdate()
+		end)
+		RQE.RQEQuestFrame:HookScript("OnHide", function()
+			local container = questItemButtonState.container
+			if not container then return end
+			if QuestItemButtonsInCombat() then
+				container:SetAlpha(0)
+			else
+				container:Hide()
+			end
+		end)
+		RQE.RQEQuestFrame:HookScript("OnSizeChanged", function()
+			RQE.Buttons.ScheduleQuestItemButtonUpdate()
+		end)
+		questItemButtonState.frameHooksInstalled = true
+	end
+end
+
+
+-- Events catch quest-watch and inventory changes that may occur without an RQE
+-- tracker render. Leaving combat applies any deferred protected updates;
+-- Questie loading clears its cached module so legacy data can be rediscovered.
+local questItemButtonEventFrame = CreateFrame("Frame")
+questItemButtonEventFrame:RegisterEvent("ADDON_LOADED")
+questItemButtonEventFrame:RegisterEvent("PLAYER_LOGIN")
+questItemButtonEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+questItemButtonEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+questItemButtonEventFrame:RegisterEvent("QUEST_LOG_UPDATE")
+questItemButtonEventFrame:RegisterEvent("BAG_UPDATE")
+questItemButtonEventFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
+questItemButtonEventFrame:SetScript("OnEvent", function(_, event, addonName)
+	if event == "ADDON_LOADED" then
+		if addonName == "RQE" then
+			InstallQuestItemButtonHooks()
+		elseif type(addonName) == "string" and addonName:match("^Questie") then
+			legacyQuestieDB = nil
+		else
+			return
+		end
+	else
+		InstallQuestItemButtonHooks()
+	end
+
+	if event == "PLAYER_REGEN_ENABLED" or not QuestItemButtonsInCombat() then
+		RQE.Buttons.ScheduleQuestItemButtonUpdate()
+	else
+		questItemButtonState.actionsPending = true
+	end
+end)
 
 
 ----------------------------------------------------
