@@ -3695,6 +3695,13 @@ function UpdateRQEQuestFrame()
 
 					-- Make sure player is actually hovering over the button
 					if not self:IsMouseOver() then return end
+					-- A physical quest-row press explicitly returns waypoint ownership
+					-- to the normal DB/Blizzard selector, even for the same quest.
+					RQE:ReleaseActiveCoordblockWaypoint()
+					RQE.ManualFlightMasterWaypointMapID = nil
+					RQE.ManualFlightMasterWaypointQuestID = nil
+					RQE.ManualFlightMasterWaypointStepIndex = nil
+					RQE.NearestFlightMasterSet = false
 
 					RQE:ClearSeparateFocusFrame()
 					-- RQE:SaveSuperTrackedQuestToCharacter()
