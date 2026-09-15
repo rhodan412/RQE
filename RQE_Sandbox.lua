@@ -199,6 +199,25 @@ local function InitializeSandbox()
 		end
 	end
 
+	-- Lua treats "coordOrder { ... }" as a call to a global coordOrder
+	-- function, not as a table field. Correct only an ACTIVE, standalone
+	-- route-field line; Legacy Runtime comments stay untouched, and promoted
+	-- Contribution comments are corrected after their promotion below.
+	local function NormalizeBareCoordOrderFields(code)
+		local corrected = 0
+		local lines = {}
+		code = code:gsub("\r\n", "\n")
+		for line in (code .. "\n"):gmatch("(.-)\n") do
+			local indent, rest = line:match("^(%s*)coordOrder%s*{(.*)$")
+			if indent then
+				line = indent .. "coordOrder = {" .. rest
+				corrected = corrected + 1
+			end
+			lines[#lines + 1] = line
+		end
+		return table.concat(lines, "\n"), corrected
+	end
+
 	-------------------------------------------------------
 	-- #1c2. Normalized Sandbox chat export
 	-------------------------------------------------------
@@ -266,6 +285,28 @@ local function InitializeSandbox()
 			print("\t\t\t\t" .. hotspotsPrefix .. "},")
 		elseif type(stepData.coordinates) == "table" then
 			PrintSandboxExportCoordinate("\t\t\t\t" .. stepPrefix .. "coordinates = ", stepData.coordinates, false)
+		end
+
+		-- Keep authored route-point numbers intact when exporting a saved
+		-- Contribution Sandbox test. Legacy Runtime reads the raw Lua table
+		-- directly; both modes use the same coordOrder field at runtime.
+		if type(stepData.coordOrder) == "table" and #stepData.coordOrder > 0 then
+			print("\t\t\t\t" .. stepPrefix .. "coordOrder = {")
+			for _, point in ipairs(stepData.coordOrder) do
+				local x, y = tonumber(point.x), tonumber(point.y)
+				local mapID = tonumber(point.mapID)
+				if x and y and mapID then
+					local line = string.format(
+						"\t\t\t\t\t%s{ x = %.2f, y = %.2f, mapID = %d, visitedRadius = %s",
+						stepPrefix, x, y, mapID, tostring(point.visitedRadius or 5))
+					if point.entryNo then line = line .. ", entryNo = " .. tostring(point.entryNo) end
+					if point.wayText and point.wayText ~= "" then
+						line = line .. ", wayText = \"" .. EscapeSandboxExportString(point.wayText) .. "\""
+					end
+					print(line .. " },")
+				end
+			end
+			print("\t\t\t\t" .. stepPrefix .. "},")
 		end
 
 		local checksPrefix = stepData._rqeContributionCommentedChecks and "-- " or stepPrefix
@@ -554,12 +595,22 @@ local function InitializeSandbox()
 			code = NormalizeLegacyMaskedStepHeaders(code)
 			code = PromoteCommentedSandboxSteps(code)
 		end
+		local correctedCoordOrders
+		code, correctedCoordOrders = NormalizeBareCoordOrderFields(code)
+		if correctedCoordOrders > 0 then
+			print("|cffffff00[RQE Sandbox]|r Corrected coordOrder { to coordOrder = {; use the latter form in RQEDatabase.lua.")
+		end
 
 		local func, err = loadstring("return " .. code)
 		if not func then print("|cffff0000Lua Error in " .. GetCurrentSandboxModeName() .. ":|r " .. tostring(err)) return end
 		local ok, data = pcall(func)
-		if not ok or type(data) ~= "table" then
-			print("|cffff0000Error parsing " .. GetCurrentSandboxModeName() .. " data.|r") return
+		if not ok then
+			print("|cffff0000Error parsing " .. GetCurrentSandboxModeName() .. " data:|r " .. tostring(data))
+			return
+		end
+		if type(data) ~= "table" then
+			print("|cffff0000Error parsing " .. GetCurrentSandboxModeName() .. " data: expected a quest table, got " .. type(data) .. ".|r")
+			return
 		end
 
 		NormalizePipesInTable(data)
