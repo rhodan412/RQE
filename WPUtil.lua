@@ -346,6 +346,10 @@ end
 
 -- Centralized replace helper for TomTom/Blizzard pins
 function RQE.Waypoints:Replace(mapID, xNorm, yNorm, title)
+	-- A manually clicked coordblock owns the current quest waypoint until
+	-- quest, map, or step context changes; automatic replacements must not
+	-- clear its TomTom arrow or Blizzard pin.
+	if RQE:IsCoordblockWaypointProtected() then return end
 	if not RQEFrame:IsShown() then return end
 
 	-- Normalize safety: require valid waypoint data
@@ -411,6 +415,7 @@ end
 
 -- Ensures the arrow points at the *current* chosen hotspot; switches only if the chosen index changed
 function RQE:EnsureWaypointForSupertracked()
+	if self:IsCoordblockWaypointProtected() then return end
 	if not RQEFrame:IsShown() then return end
 
 	if not RQE.API.IsSuperTrackingQuest() then return end	--if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
