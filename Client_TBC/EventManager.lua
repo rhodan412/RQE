@@ -3629,7 +3629,8 @@ function RQE.handleSuperTracking()
 
 		-- Check if TomTom is loaded and compatibility is enabled and if so to clear the waypoint
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
+			and not RQE:IsCoordblockWaypointProtected() then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
@@ -7627,7 +7628,9 @@ function RQE.handleQuestTurnIn(...)
 		if not isSuperTracking or (questID == RQE.previousSuperTrackedQuestID) then
 			RQE.Buttons.ClearButtonPressed()	-- Simulate pressing the "C" ClearButton
 			-- Clear user waypoint and reset TomTom if loaded
-			C_Map.ClearUserWaypoint()
+			if not RQE:IsCoordblockWaypointProtected() then
+				C_Map.ClearUserWaypoint()
+			end
 
 			-- Reset the "Clicked" WaypointButton to nil
 			RQE.LastClickedIdentifier = nil
@@ -7637,7 +7640,8 @@ function RQE.handleQuestTurnIn(...)
 
 			-- Check if TomTom is loaded and compatibility is enabled
 			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
+			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
+				and not RQE:IsCoordblockWaypointProtected() then
 				TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
