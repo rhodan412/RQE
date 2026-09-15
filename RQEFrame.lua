@@ -1390,6 +1390,21 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 	local yOffset = -20  -- Vertical distance to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 	local baseYOffset = -20
 
+	-- Old step FontStrings are regions, not children of the hover container.
+	-- Hide them before recreating the step list or their coordblocks stack on top
+	-- of the next quest's steps after a tracking refresh.
+	for _, oldText in ipairs(RQE.StepsText or {}) do
+		if oldText._rqeSegments then
+			for _, segment in ipairs(oldText._rqeSegments) do
+				if segment.Hide then segment:Hide() end
+				if segment.SetParent then segment:SetParent(nil) end
+			end
+		end
+		if oldText.Hide then oldText:Hide() end
+		if oldText.SetText then oldText:SetText("") end
+	end
+	RQE.StepsText = {}
+
 	-- 🧹 Create or reuse a dedicated container for hover buttons
 	if not RQE.StepsHoverContainer then
 		RQE.StepsHoverContainer = CreateFrame("Frame", "RQE_StepsHoverContainer", content)
@@ -1427,6 +1442,7 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		-- Create StepsText
 		local raw = StepsText[i] or "No description available."
 		local hasCoords = raw:match("{coords:") or raw:match("{coordblock:")
+		local hasCoordblock = raw:find("{coordblock:", 1, true) ~= nil
 		-- local hasCoords = raw:match("{coords:")
 		local hasHoverables = raw:match("{item:") or raw:match("{spell:")
 
@@ -1594,6 +1610,15 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			StepText:SetWordWrap(true)
 			StepText:SetText("")
 			RQE.RenderTextWithItemsSteps(StepText, raw, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.StepsHoverContainer)
+			if hasCoordblock then
+				-- A zero-height FontString centers multi-line coordblocks across
+				-- earlier step rows.  Reserve the rendered height before anchoring.
+				local visualText = StepText:GetText() or ""
+				local lineBreaks = select(2, visualText:gsub("\n", ""))
+				local measuredHeight = StepText:GetStringHeight() or 0
+				StepText:SetHeight(math.max(20, measuredHeight + 4, (lineBreaks + 1) * 14))
+				StepText:SetJustifyV("TOP")
+			end
 		end
 
 		StepText:SetWidth(RQEFrame:GetWidth() - 80)
@@ -1705,14 +1730,16 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 			local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
-			if questID then
+			if questID and not RQE:IsCoordblockWaypointProtected(questID) then
 				local waypointText = C_QuestLog.GetNextWaypointText(questID)
 				if not waypointText then
 					C_Map.ClearUserWaypoint()
 				end
 			end
 
-			if RQE.OkayWaypointButtonToMove or RQE.WaypointButtonHover or RQE.hoveringOnRQEFrameAndButton then
+			if (RQE.OkayWaypointButtonToMove or RQE.WaypointButtonHover
+				or RQE.hoveringOnRQEFrameAndButton)
+				and not RQE:IsCoordblockWaypointProtected(questID) then
 				-- Check if TomTom is loaded and compatibility is enabled
 				if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 					TomTom.waydb:ResetProfile()
@@ -2471,6 +2498,14 @@ function RQE.InitializeSeparateFocusFrame()
 			return
 		end
 
+		-- Coordblock selection belongs only to the current Blizzard supertrack.
+		-- Clear it even when the newly selected quest has no coordblocks to render.
+		local activeCoordblock = RQE.ActiveCoordblock
+		if activeCoordblock
+			and activeCoordblock.questID ~= tonumber(RQE.API.GetSuperTrackedQuestID()) then
+			RQE.ActiveCoordblock = nil
+		end
+
 		-- Prevent re-entrant rebuilds
 		if RQE.IsUpdatingSeparateFocusFrame then
 			return
@@ -2542,9 +2577,19 @@ function RQE.InitializeSeparateFocusFrame()
 				end
 			end
 		end
+		-- Paragraph FontStrings are frame regions rather than children.  A
+		-- same-quest refresh can bypass ClearSeparateFocusFrame's change gate;
+		-- discard the old regions before drawing new coordblock labels.
+		for _, region in ipairs({RQE.SeparateContentFrame:GetRegions()}) do
+			if region.GetObjectType and region:GetObjectType() == "FontString" then
+				region:Hide()
+				region:SetText("")
+			end
+		end
 
 		RQE.CurrentlySuperQuestID = displayedQuestID
 		RQE:ClearSeparateFocusFrame()
+		RQE.SeparateCoordblockFonts = {}
 
 		-- ✅ Improved quest data handling (for DB-less quests)
 		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
@@ -2659,6 +2704,8 @@ function RQE.InitializeSeparateFocusFrame()
 			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
 
 			local html = paragraphs[1]
+			StepText._rqeCoordblockLinks = {}
+			StepText._rqeCoordblockByPoint = {}
 
 			-- 🔗 Replace {item}, {spell}, {coords}
 			html = html:gsub("{item:(%d+):([^}]+)}", function(id, name)
@@ -2677,10 +2724,15 @@ function RQE.InitializeSeparateFocusFrame()
 				end
 				if not (x and y and mapID) then return data end
 
-				local label = string.format("[%.2f, %.2f]", tonumber(x), tonumber(y))
+				local label = RQE:GetCoordblockDisplayLabel(data)
 				local href = title and
 					string.format("coords:%s,%s,%s;title:%s", x, y, mapID, title) or
 					string.format("coords:%s,%s,%s", x, y, mapID)
+				-- This suffix identifies compact links without changing {coords:...}.
+				href = href .. ";rqeCoordblock"
+				StepText._rqeCoordblockLinks[href] = data
+				local pointKey = string.format("%.2f,%.2f,%d", tonumber(x), tonumber(y), tonumber(mapID))
+				StepText._rqeCoordblockByPoint[pointKey] = data
 
 				return string.format('<a href="%s">|cff40e0d0%s|r</a>', href, label)
 			end)
@@ -2719,16 +2771,31 @@ function RQE.InitializeSeparateFocusFrame()
 			html = html:gsub("\n", "<br>")
 			local wrappedHTML = string.format("<html><body><p>%s</p></body></html>", html)
 			StepText:SetText(wrappedHTML)
+			StepText._rqeCoordblockHTMLBase = wrappedHTML
 
 			-- Hyperlink click handler
 			StepText:SetScript("OnHyperlinkClick", function(self, link, text, button)
+				local coordblockData = self._rqeCoordblockLinks and self._rqeCoordblockLinks[link]
+				local waypointLink = link:gsub(";rqeCoordblock$", "")
 				local x, y, mapID, title =
-					link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
+					waypointLink:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+);title:(.+)")
 				if not x then
-					x, y, mapID = link:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+					x, y, mapID = waypointLink:match("coords:(%d+%.?%d*),(%d+%.?%d*),(%d+)")
 				end
 				if x and y and mapID then
+					-- Some SimpleHTML clients return a normalized href without our
+					-- suffix.  A compact visible label can still identify its point;
+					-- the full {coords:...} label contains "coords:" and is excluded.
+					if not coordblockData and (not text or not text:find("coords:", 1, true)) then
+						local pointKey = string.format("%.2f,%.2f,%d", tonumber(x), tonumber(y), tonumber(mapID))
+						coordblockData = self._rqeCoordblockByPoint and self._rqeCoordblockByPoint[pointKey]
+					end
+					local markedActive = coordblockData and RQE:SetActiveCoordblock(coordblockData)
 					RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+					if markedActive and TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
+						TomTom.waydb:ResetProfile()
+						RQE._currentTomTomUID = nil
+					end
 					RQE:CreateWaypoint(
 						tonumber(x),
 						tonumber(y),
@@ -2737,10 +2804,19 @@ function RQE.InitializeSeparateFocusFrame()
 					)
 					print(string.format("|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
 						x, y, mapID, (title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""))
+					if markedActive then
+						C_Timer.After(0, function()
+							if RQE.ActiveCoordblock and RQE.ActiveCoordblock.data == coordblockData then
+								RQE:RefreshActiveCoordblockLinks()
+							end
+						end)
+					end
 				end
 			end)
 
-			StepText:SetScript("OnHyperlinkEnter", function(_, link)
+			StepText:SetScript("OnHyperlinkEnter", function(self, link, text)
+				if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
+				self:SetScript("OnUpdate", nil)
 				if type(link) ~= "string" then return end
 
 				local linkType, id = link:match("^(%a+):(.+)$")
@@ -2761,13 +2837,32 @@ function RQE.InitializeSeparateFocusFrame()
 						GameTooltip:Show()
 					end
 				elseif linkType == "coords" then
-					GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					local compactLink = self._rqeCoordblockLinks and self._rqeCoordblockLinks[link]
+					local isCompact = compactLink or link:find(";rqeCoordblock", 1, true)
+					if isCompact then
+						GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+					else
+						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
+					end
 					GameTooltip:SetText("Click to create a waypoint", 1, 1, 1)
 					GameTooltip:Show()
+					if isCompact then
+						RQE._coordblockTooltipOwner = self
+						RQE:AnchorCoordblockTooltip(self)
+						self:SetScript("OnUpdate", function(frame)
+							if RQE._coordblockTooltipOwner ~= frame or not GameTooltip:IsShown() then
+								frame:SetScript("OnUpdate", nil)
+								return
+							end
+							RQE:AnchorCoordblockTooltip(frame)
+						end)
+					end
 				end
 			end)
 
-			StepText:SetScript("OnHyperlinkLeave", function()
+			StepText:SetScript("OnHyperlinkLeave", function(self)
+				if RQE._coordblockTooltipOwner == self then RQE._coordblockTooltipOwner = nil end
+				self:SetScript("OnUpdate", nil)
 				GameTooltip:Hide()
 			end)
 
@@ -2824,6 +2919,9 @@ function RQE.InitializeSeparateFocusFrame()
 
 						-- Render hover-capable markup (items/spells, etc.)
 						RQE.RenderTextWithItemsSteps(fs, line, "Fonts\\FRIZQT__.TTF", 12, {1, 1, 0.8}, RQE.SeparateContentFrame)
+						if line:find("{coordblock:", 1, true) then
+							table.insert(RQE.SeparateCoordblockFonts, fs)
+						end
 
 						local h2 = fs.GetStringHeight and fs:GetStringHeight() or 16
 						yOffset = yOffset - (h2 + 8)
