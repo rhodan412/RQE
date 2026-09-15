@@ -181,6 +181,7 @@ end
 
 -- Main function to determine which method to use based on waypoint text
 function RQE:CreateUnknownQuestWaypoint(questID, mapID)
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("~~~ Waypoint Creation Function: 92 ~~~")
 
 	if not RQEFrame:IsShown() then return end
@@ -214,6 +215,7 @@ function RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	RQE.superMapID = nil
 
 	C_Timer.After(0.5, function()
+		if RQE:IsCoordblockWaypointProtected() then return end
 		if not questID then
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
@@ -357,6 +359,7 @@ end
 
 -- Create a Waypoint when there is Direction Text available
 function RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("~~~ Waypoint Creation Function: 276 ~~~")
 
 	if RQE.db.profile.enableTravelSuggestions then
@@ -610,6 +613,7 @@ end
 
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
+	if self:IsCoordblockWaypointProtected() then return end
 	if not RQEFrame:IsShown() then return end
 
 	-- print("~~~ Waypoint Creation Function: 401 ~~~")
@@ -658,6 +662,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 	else
 		-- Fetch coordinates using super tracking data
 		C_Timer.After(0.1, function()
+			if RQE:IsCoordblockWaypointProtected() then return end
 			local extractedQuestID = nil
 
 			-- Ensure QuestIDText exists and is valid before extracting the quest ID
@@ -823,6 +828,7 @@ function RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			end
 
 			C_Timer.After(0.5, function()
+				if RQE:IsCoordblockWaypointProtected() then return end
 				if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
 					waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText
 				end
@@ -876,6 +882,7 @@ end
 
 -- Create a Waypoint when there is No Direction Text available
 function RQE:CreateUnknownQuestWaypointForEvent(questID, mapID)
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("~~~ Waypoint Creation Function: 559 ~~~")
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
@@ -982,6 +989,7 @@ end
 
 -- Create a Waypoint for a specific quest step using questID and stepIndex
 function RQE:CreateWaypointForStep(questID, stepIndex)
+	if self:IsCoordblockWaypointProtected(questID, stepIndex) then return end
 	-- print("~~~ Waypoint Creation Function: 645 ~~~")
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
@@ -1045,6 +1053,7 @@ function RQE:CreateWaypointForStep(questID, stepIndex)
 
 	-- Set a timer to handle waypoint setting (with delay for compatibility reasons)
 	C_Timer.After(0.5, function()
+		if RQE:IsCoordblockWaypointProtected() then return end
 		if RQE.DescriptionText and RQE.DescriptionText ~= "No direction available." then
 			waypointTitle = waypointTitle .. "\n" .. RQE.DescriptionText -- Append DirectionText on a new line if available
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -1084,6 +1093,7 @@ end
 
 -- Create a Waypoint Using C_QuestLog.GetNextWaypoint
 function RQE:CreateQuestWaypointFromNextWaypoint(questID)
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("~~~ Waypoint Creation Function: 726 ~~~")
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
@@ -1169,6 +1179,7 @@ end
 
 -- Create a Waypoint Using C_QuestLog.GetNextWaypointForMap with Exclusion List
 function RQE:CreateSuperTrackedQuestWaypointFromNextWaypointOnCurrentMap()
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("~~~ Waypoint Creation Function: 797 ~~~")
 	if RQE.db.profile.enableTravelSuggestions then
 		if RQE.NearestFlightMasterSet then return end
@@ -1330,6 +1341,7 @@ end
 -- This version also creates waypoints using TomTom if available.
 -- @param stepIndex: Index of the quest step
 function RQE:OnCoordinateClicked()
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("RQE:OnCoordinateClicked() is running")
 
 	if not RQEFrame:IsShown() then return end
@@ -1407,6 +1419,7 @@ end
 
 -- Force the waypoint for the currently super-tracked quest using the intended priority.
 function RQE:ForceWaypointForSupertracked(qid, mapID)
+	if self:IsCoordblockWaypointProtected() then return end
 	-- print("~~~ Waypoint Creation Function: 1137 ~~~")
 	if not RQEFrame:IsShown() then return end
 
