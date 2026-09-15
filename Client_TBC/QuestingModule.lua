@@ -3784,6 +3784,16 @@ function UpdateRQEQuestFrame()
 						-- rather than RQE.ClickQuestLogIndexButton().  During combat, update
 						-- only RQE-managed selection and existing frame text, then defer the
 						-- macro, waypoint, button, and full-frame refresh work.
+						local sameQuestReselect = tonumber(RQE.API.GetSuperTrackedQuestID())
+							== tonumber(questID)
+						local previousStep = tonumber(RQE.AddonSetStepIndex
+							or RQE.CurrentDisplayedStepIndex)
+						RQE._coordOrderReselect = {
+							questID = questID, expiresAt = GetTime() + 5,
+							readyAt = GetTime() + (sameQuestReselect and 0 or 0.75),
+							sameQuest = sameQuestReselect, previousStep = previousStep,
+							armed = false,
+						}
 						if InCombatLockdown() then
 							RQE.ManualSuperTrack = true
 							RQE.ManualSuperTrackedQuestID = questID
@@ -3829,7 +3839,7 @@ function UpdateRQEQuestFrame()
 								--RQE.ResumeAutomaticFromManualPreview = true
 								if RQE.db.profile.autoClickWaypointButton then
 									C_Timer.After(0.1, function()
-										RQE.AddonSetStepIndex = 1
+										if not sameQuestReselect then RQE.AddonSetStepIndex = 1 end
 										RQE:StartPeriodicChecks()
 									end)
 								end
@@ -3847,17 +3857,20 @@ function UpdateRQEQuestFrame()
 							RQE._currentTomTomUID = nil
 						end
 
-						-- Simulates click of the "W" Button and then the Waypoint Button[1] to start to ensure correct waypoint coord creation
-						RQE.SetInitialWaypointToOne()
+						-- New quests start at button 1; reselecting the same quest keeps
+						-- its current step for the nearest ordered-point re-anchor.
+						if not sameQuestReselect then RQE.SetInitialWaypointToOne() end
 
 						-- Scrolls the RQEFrame to top on super track
 						RQE.ScrollFrameToTop()
 
 						-- Reset the "Clicked" WaypointButton to nil
-						RQE.LastClickedIdentifier = nil
+						if not sameQuestReselect then RQE.LastClickedIdentifier = nil end
 
-						-- Reset the Last Clicked WaypointButton to be "1"
-						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
+						-- Preserve the active button on a same-quest reselect; otherwise
+						-- StartPeriodicChecks would briefly evaluate step 1 again.
+						RQE.LastClickedButtonRef = (sameQuestReselect and previousStep
+							and RQE.WaypointButtons[previousStep]) or RQE.WaypointButtons[1]
 
 						-- Get the currently super tracked quest ID
 						local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
@@ -3877,6 +3890,9 @@ function UpdateRQEQuestFrame()
 						-- RQE.API.SetSuperTrackedQuestID(questID)
 						RQE:SyncCarboniteQuestTracking(questID, false)
 						RQE.API.SetSuperTrackedQuestID(questID)
+						if RQE._coordOrderReselect and RQE._coordOrderReselect.questID == questID then
+							RQE._coordOrderReselect.armed = true
+						end
 						if RQE.DisplayClassicQuestLogDetails then
 							RQE:DisplayClassicQuestLogDetails(questID)
 						end
@@ -4658,8 +4674,8 @@ function UpdateRQEWorldQuestFrame()
 
 					RQE.TrackedQuests[questID] = nil
 					UpdateRQEWorldQuestFrame()
-				else
-					if RQE.hoveringOnFrame then
+					else
+						if RQE.hoveringOnFrame then
 						RQE.shouldCheckFinalStep = true
 						RQE.CheckAndSetFinalStep()
 					end
