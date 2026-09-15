@@ -1,4 +1,4 @@
-12.1.0.3
+12.1.0.3 (2026.09.15)
 
 	**HIGHLIGHTS**
 		- Item and spell tooltips in the Separate Focus Frame now remain hoverable when names wrap beside punctuation in Retail, Classic, and TBC.
@@ -37,6 +37,17 @@
 		- Compact coordblock tooltips now consistently open below and slightly left of the mouse, matching the preferred Quest Helper view while avoiding the hovered waypoint text.
 		- Compact waypoint tooltips now follow the mouse within a link and stay within a nearby left-offset limit instead of remaining at the pointer's entry position.
 		- Compact waypoint tooltips now sit just below and to the left of their hovered link in both Quest Helper step views, without covering the coordblock text.
+		- Optional coordOrder chains now keep the current supertracked step's route waypoint until its arrival radius, advance past later points reached early, and return to normal quest guidance when the route ends across Retail, Season of Discovery, and TBC Anniversary.
+		- Legacy Runtime and Contribution Sandbox tests can now use numbered coordOrder points, and a manually selected flight master or [Active] coordblock still takes precedence over automatic route guidance.
+		- Both Sandbox modes now recognize a pasted coordOrder { route field, explain that database entries require coordOrder = {, and show the underlying Lua error if a different Sandbox test fails.
+		- A supertracked step's usable same-map coordOrder point now takes precedence over portal/travel direction text in the Quest Helper and step-distance readout; existing direction guidance remains the fallback when the chain is absent, finished, or on another map.
+		- Re-selecting an RQE tracker quest now anchors its ordered route to the nearest waypoint without bouncing back to entry 1; selecting the same quest preserves its current step across the tracker refresh in Retail, Season of Discovery, and TBC Anniversary.
+		- Current-map ordered routes and database hotspots now take priority over portal direction text and waypoint titles, while removed [Active] links and vanished flight-master pins no longer block local quest guidance.
+		- Quest Helper directions now show only Blizzard's next-waypoint text, or "No direction available" when it has none; coordinates no longer create an extra instruction.
+		- A current-map ordered route now blocks delayed portal waypoint creation, including after a same-quest tracking refresh, while the real portal guidance remains available when no route applies.
+		- Ordered routes now use a Blizzard map pin when TomTom is unavailable and restore a removed point before its five-yard arrival threshold.
+		- Current-map quest hotspots now retain waypoint priority even without TomTom or Carbonite; if no pin can be installed, normal portal guidance remains available.
+		- When no current-map ordered point or hotspot applies, portal waypoints now accept Blizzard's direct mapID/x/y result on Retail and legacy clients.
 
 	Buttons.lua
 		- Added a pooled secure quest-item sidecar anchored to RQEQuestFrame, using Retail's native special-item data and an optional Questie source-item fallback on legacy clients; coalesced tracker, quest-log, bag, and login refreshes, deferred protected button changes until combat ends, and exposed item icons, counts, cooldowns, tooltips, range/usability coloring, and completion-aware visibility without consuming saved macro slots. (2026.09.14.2013)
@@ -73,17 +84,27 @@
 		- Reworked Season of Discovery compact-link tooltip positioning to open below and slightly left of the mouse, switching sides or above only when screen edges require it so entry direction no longer changes the preferred placement. (2026.09.15.0022)
 		- Repositioned the Season of Discovery compact coordblock tooltip only while its hover region remains active and capped the text-clearance shift to 160 UI pixels from the pointer; this keeps a moved cursor close to its tooltip without covering adjacent waypoint labels. (2026.09.15.0038)
 		- Replaced Season of Discovery compact-tooltip cursor/UI-scale positioning with a direct anchor eight pixels left and six pixels below the hovered coordblock region, with screen-edge side and vertical fallbacks; the tooltip now stays beside that link in StepsText and SeparateFocusFrame instead of drifting far down the screen. (2026.09.15.0050)
+		- Extended the existing manual-waypoint protection gate to include shared coordOrder chains after [Active] and flight-master checks, and bypassed that gate only while the explicit flight-master menu choice installs its own waypoint; ordered guidance now survives Classic/Season of Discovery automatic refreshes without stealing a manual destination. (2026.09.15.0142)
+		- Cleared the chain's cached target when a compact link or flight master is chosen so releasing that manual waypoint reinstalls the correct ordered point rather than relying on a stale coordinate match. (2026.09.15.0142)
+		- Preferred the shared current-map coordOrder direction over the native next-waypoint text only when the API-supertracked Season of Discovery quest has an active point, so local ordered steps no longer display unrelated portal advice while route-free steps keep their former guidance. (2026.09.15.0211)
+		- Kept an authored, nonempty step.directionText ahead of the native next-waypoint text when no current-map ordered point is usable, preserving Season of Discovery database travel guidance after a route ends or moves to another map. (2026.09.15.0219)
+		- Discarded [Active] ownership when the selected step no longer contains a coordblock, checked that a manually chosen TomTom or Blizzard flight-master pin still exists before protecting it, and let a searched-but-supertracked quest use current-map route or hotspot directions; this prevents stale manual state or portal advice from hiding Season of Discovery local guidance. (2026.09.15.0332)
+		- Flagged the next waypoint creation as the player's explicit coordblock click, allowing the clicked [Active] link to restore its own point while unrelated direct waypoint calls remain subject to the manual-selection guard. (2026.09.15.0351)
+		- Kept the Season of Discovery Quest Helper direction line sourced from C_QuestLog.GetNextWaypointText alone and stopped queuing Blizzard portal transitions while an ordered current-map route or manual waypoint owns the destination. (2026.09.15.1022)
 
 	Client_Classic/EventManager.lua
 		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for Classic/Season of Discovery so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
 		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for Classic/Season of Discovery so timed vehicle quest steps are reevaluated after control returns even when objective text has not changed. (2026.09.10.1153)
 		- Recorded QUEST_TURNED_IN dependency completions and cleared their per-parent state on parent acceptance, removal, or turn-in, providing lifecycle-safe repeatable side-quest progression in Classic/Season of Discovery. (2026.09.11.2332)
 		- Preserved a manually selected flight-master or [Active] waypoint through the hidden-tracker supertrack refresh and unrelated turn-in cleanup instead of directly resetting TomTom or Blizzard's user pin. (2026.09.15.0004)
+		- Distinguished a transient same-quest row reselection from a real supertracked quest change in Season of Discovery SUPER_TRACKING_CHANGED, preserving the selected DB step and ordered waypoint through redraw, hidden-tracker handling, and deferred TomTom cleanup instead of resetting to step 1. (2026.09.15.1037)
 
 	Client_Classic/QuestingModule.lua
 		- Kept Open Sandbox available from the Classic/Season of Discovery quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
 		- Released a selected compact coordblock when its physical QuestLogIndexButton is clicked, allowing the player's explicit quest choice to resume normal waypoint selection. (2026.09.15.0004)
 		- Also released a manually selected flight-master destination on a physical quest-row button press, letting that explicit Season of Discovery quest selection place its own waypoint without weakening automatic-refresh protection. (2026.09.15.0018)
+		- Marked physical quest-row reselections for a delayed nearest-route re-anchor after supertracking is restored, and preserved the prior step and clicked button when the same quest is selected; Season of Discovery ordered waypoints no longer flash to a nearby point then reset to entry 1. (2026.09.15.0332)
+		- Recorded whether a physical Season of Discovery quest-row selection is a same-quest reselect and its previous step so subsequent supertracking events can distinguish a transient redraw from a genuine new quest. (2026.09.15.1022)
 
 	Client_Classic/RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
@@ -97,6 +118,13 @@
 
 	Client_Classic/WaypointManager.lua
 		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
+		- Blocked direct automatic CreateWaypoint calls while the shared coordOrder chain owns the supertracked step, keeping Season of Discovery Blizzard or hotspot updates from overwriting the current route point. (2026.09.15.0142)
+		- Preferred matching current-map database hotspots before direction-text and no-direction waypoint fallbacks, kept a live manually selected flight master protected even in the low-level creator, and titled local hotspot arrows from their coordinates or wayText rather than unrelated portal text. (2026.09.15.0332)
+		- Applied the shared manual-waypoint ownership guard in direct waypoint creation, with a one-call exception for an explicit coordblock click; automatic Season of Discovery calls cannot steal [Active] or an ordered route point. (2026.09.15.0351)
+		- Used the searched-quest waypoint path only for a searched quest that is not also API-supertracked, so a tracked Season of Discovery Sandbox route or current-map hotspot retains priority while genuinely searched quests keep their existing path. (2026.09.15.0355)
+		- Rechecked route and manual ownership before the Season of Discovery event waypoint path clears a pin, before its delayed TomTom replacement, and before its Blizzard fallback, preventing asynchronous event work from stealing an ordered point. (2026.09.15.1022)
+		- Accepted the three-value C_QuestLog.GetNextWaypoint mapID/x/y result in the Season of Discovery portal fallback before trying its older POI/table shapes, so legitimate direction waypoints remain creatable when no current-map route or hotspot applies. (2026.09.15.1104)
+		- Corrected the Season of Discovery forced-waypoint fallback's C_QuestLog.GetNextWaypoint result order to mapID/x/y, preventing the map ID from being validated as an X coordinate when Blizzard supplies direct coordinates. (2026.09.15.1109)
 
 	Client_TBC/Core.lua
 		- Mirrored the SeparateFocusFrame rich-tag wrap correction so item and spell hover regions follow names that wrap beside adjacent punctuation. (2026.09.07.2359)
@@ -123,17 +151,27 @@
 		- Reworked TBC Anniversary compact-link tooltip positioning to open below and slightly left of the mouse, switching sides or above only when screen edges require it so entry direction no longer changes the preferred placement. (2026.09.15.0022)
 		- Repositioned the TBC Anniversary compact coordblock tooltip only while its hover region remains active and capped the text-clearance shift to 160 UI pixels from the pointer; this keeps a moved cursor close to its tooltip without covering adjacent waypoint labels. (2026.09.15.0038)
 		- Replaced TBC Anniversary compact-tooltip cursor/UI-scale positioning with a direct anchor eight pixels left and six pixels below the hovered coordblock region, with screen-edge side and vertical fallbacks; the tooltip now stays beside that link in StepsText and SeparateFocusFrame instead of drifting far down the screen. (2026.09.15.0050)
+		- Extended the existing manual-waypoint protection gate to include shared coordOrder chains after [Active] and flight-master checks, and bypassed that gate only while the explicit flight-master menu choice installs its own waypoint; ordered guidance now survives TBC Anniversary automatic refreshes without stealing a manual destination. (2026.09.15.0142)
+		- Cleared the chain's cached target when a compact link or flight master is chosen so releasing that manual waypoint reinstalls the correct ordered point rather than relying on a stale coordinate match. (2026.09.15.0142)
+		- Preferred the shared current-map coordOrder direction over the native next-waypoint text only when the API-supertracked TBC Anniversary quest has an active point, so local ordered steps no longer display unrelated portal advice while route-free steps keep their former guidance. (2026.09.15.0211)
+		- Kept an authored, nonempty step.directionText ahead of the native next-waypoint text when no current-map ordered point is usable, preserving TBC Anniversary database travel guidance after a route ends or moves to another map. (2026.09.15.0219)
+		- Discarded [Active] ownership when the selected step no longer contains a coordblock, checked that a manually chosen TomTom or Blizzard flight-master pin still exists before protecting it, and let a searched-but-supertracked quest use current-map route or hotspot directions; this prevents stale manual state or portal advice from hiding TBC Anniversary local guidance. (2026.09.15.0332)
+		- Flagged the next waypoint creation as the player's explicit coordblock click, allowing the clicked [Active] link to restore its own point while unrelated direct waypoint calls remain subject to the manual-selection guard. (2026.09.15.0351)
+		- Kept the TBC Anniversary Quest Helper direction line sourced from C_QuestLog.GetNextWaypointText alone and stopped queuing Blizzard portal transitions while an ordered current-map route or manual waypoint owns the destination. (2026.09.15.1022)
 
 	Client_TBC/EventManager.lua
 		- Mirrored the nil-safe QUEST_DETAIL NPC diagnostic for TBC Anniversary so automatic quests without a target print an empty NPC entry instead of raising a Lua error. (2026.09.10.1153)
 		- Mirrored unconditional PLAYER_CONTROL_GAINED periodic-check queuing for TBC Anniversary so an incomplete bombing run can return Mission: Gateways Murketh and Shaadraz to its Wing Commander Brack reboarding step after control returns. (2026.09.10.1153)
 		- Recorded QUEST_TURNED_IN dependency completions and cleared their per-parent state on parent acceptance, removal, or turn-in, providing lifecycle-safe repeatable side-quest progression in TBC Anniversary. (2026.09.11.2332)
 		- Preserved a manually selected flight-master or [Active] waypoint through the hidden-tracker supertrack refresh and unrelated turn-in cleanup instead of directly resetting TomTom or Blizzard's user pin. (2026.09.15.0004)
+		- Distinguished a transient same-quest row reselection from a real supertracked quest change in TBC Anniversary SUPER_TRACKING_CHANGED, preserving the selected DB step and ordered waypoint through redraw, hidden-tracker handling, and deferred TomTom cleanup instead of resetting to step 1. (2026.09.15.1037)
 
 	Client_TBC/QuestingModule.lua
 		- Kept Open Sandbox available from the TBC Anniversary quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
 		- Released a selected compact coordblock when its physical QuestLogIndexButton is clicked, allowing the player's explicit quest choice to resume normal waypoint selection. (2026.09.15.0004)
 		- Also released a manually selected flight-master destination on a physical quest-row button press, letting that explicit TBC Anniversary quest selection place its own waypoint without weakening automatic-refresh protection. (2026.09.15.0018)
+		- Marked physical quest-row reselections for a delayed nearest-route re-anchor after supertracking is restored, and preserved the prior step and clicked button when the same quest is selected; TBC Anniversary ordered waypoints no longer flash to a nearby point then reset to entry 1. (2026.09.15.0332)
+		- Recorded whether a physical TBC Anniversary quest-row selection is a same-quest reselect and its previous step so subsequent supertracking events can distinguish a transient redraw from a genuine new quest. (2026.09.15.1022)
 
 	Client_TBC/RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
@@ -147,6 +185,13 @@
 
 	Client_TBC/WaypointManager.lua
 		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
+		- Blocked direct automatic CreateWaypoint calls while the shared coordOrder chain owns the supertracked step, keeping TBC Anniversary Blizzard or hotspot updates from overwriting the current route point. (2026.09.15.0142)
+		- Preferred matching current-map database hotspots before direction-text and no-direction waypoint fallbacks, kept a live manually selected flight master protected even in the low-level creator, and titled local hotspot arrows from their coordinates or wayText rather than unrelated portal text. (2026.09.15.0332)
+		- Applied the shared manual-waypoint ownership guard in direct waypoint creation, with a one-call exception for an explicit coordblock click; automatic TBC Anniversary calls cannot steal [Active] or an ordered route point. (2026.09.15.0351)
+		- Used the searched-quest waypoint path only for a searched quest that is not also API-supertracked, so a tracked TBC Anniversary Sandbox route or current-map hotspot retains priority while genuinely searched quests keep their existing path. (2026.09.15.0355)
+		- Rechecked route and manual ownership before the TBC Anniversary event waypoint path clears a pin, before its delayed TomTom replacement, and before its Blizzard fallback, preventing asynchronous event work from stealing an ordered point. (2026.09.15.1022)
+		- Accepted the three-value C_QuestLog.GetNextWaypoint mapID/x/y result in the TBC Anniversary portal fallback before trying its older POI/table shapes, so legitimate direction waypoints remain creatable when no current-map route or hotspot applies. (2026.09.15.1104)
+		- Corrected the TBC Anniversary forced-waypoint fallback's C_QuestLog.GetNextWaypoint result order to mapID/x/y, preventing the map ID from being validated as an X coordinate when Blizzard supplies direct coordinates. (2026.09.15.1109)
 
 	Core.lua
 		- Adjusted SeparateFocusFrame item/spell hover layout to keep punctuation immediately following a rich tag in its final wrap unit, so wrapped multi-word names remain aligned without changing StepsText or coordinate/coordblock waypoint overlays. (2026.09.07.2359)
@@ -170,6 +215,13 @@
 		- Reworked Retail compact-link tooltip positioning to open below and slightly left of the mouse, switching sides or above only when screen edges require it so entry direction no longer changes the preferred placement. (2026.09.15.0022)
 		- Repositioned the Retail compact coordblock tooltip only while its hover region remains active and capped the text-clearance shift to 160 UI pixels from the pointer; this keeps a moved cursor close to its tooltip without covering adjacent waypoint labels. (2026.09.15.0038)
 		- Replaced Retail compact-tooltip cursor/UI-scale positioning with a direct anchor eight pixels left and six pixels below the hovered coordblock region, with screen-edge side and vertical fallbacks; the tooltip now stays beside that link in StepsText and SeparateFocusFrame instead of drifting far down the screen. (2026.09.15.0050)
+		- Extended the existing manual-waypoint protection gate to include shared coordOrder chains after [Active] and flight-master checks, and bypassed that gate only while the explicit flight-master menu choice installs its own waypoint; ordered guidance now survives Retail automatic refreshes without stealing a manual destination. (2026.09.15.0142)
+		- Cleared the chain's cached target when a compact link or flight master is chosen so releasing that manual waypoint reinstalls the correct ordered point rather than relying on a stale coordinate match. (2026.09.15.0142)
+		- Preferred the shared current-map coordOrder direction over Blizzard's next-waypoint text only when the Retail API-supertracked quest has an active ordered point, so quest 93709 can show its Dornogal route instead of the Stormwind portal suggestion while route-free steps keep their former guidance. (2026.09.15.0211)
+		- Kept an authored, nonempty step.directionText ahead of Blizzard's next-waypoint text when no current-map ordered point is usable, preserving Retail database travel guidance after a route ends or moves to another map. (2026.09.15.0219)
+		- Discarded [Active] ownership when the selected step no longer contains a coordblock, checked that a manually chosen TomTom or Blizzard flight-master pin still exists before protecting it, and let a searched-but-supertracked quest use current-map route or hotspot directions; this prevents stale manual state or portal advice from hiding Retail local guidance. (2026.09.15.0332)
+		- Flagged the next waypoint creation as the player's explicit coordblock click, allowing the clicked [Active] link to restore its own point while unrelated direct waypoint calls remain subject to the manual-selection guard. (2026.09.15.0351)
+		- Kept the Retail Quest Helper direction line sourced from C_QuestLog.GetNextWaypointText alone and stopped queuing Blizzard portal transitions while an ordered current-map route or manual waypoint owns the destination. (2026.09.15.1022)
 
 	DatabaseMain.lua
 		- Restricted Retail quest-data selection to Retail-era database sections, excluding Wrath Anniversary, Burning Crusade Anniversary, and Season of Discovery fallbacks whose shared quest IDs can use different map IDs and coordinates. (2026.09.08.0024)
@@ -187,11 +239,14 @@
 		- Normalized Retail QUEST_ACCEPTED's quest-log-index and quest-ID payload, recorded declared dependency turn-ins before quest removal, and cleared their state when the parent is accepted again, removed, or turned in so each parent attempt receives isolated repeatable side-quest progress. (2026.09.11.2332)
 		- Corrected Retail 12.1 QUEST_ACCEPTED parsing to use its first payload as the quest ID, with optional second-payload compatibility, and guarded quest-link creation against a missing ID so automatic tracking continues without a GetQuestLink usage error. (2026.09.11.2347)
 		- Preserved a manually selected flight-master or [Active] waypoint through the hidden-tracker supertrack refresh and unrelated turn-in cleanup instead of directly resetting TomTom or Blizzard's user pin. (2026.09.15.0004)
+		- Distinguished a transient same-quest row reselection from a real supertracked quest change in Retail SUPER_TRACKING_CHANGED, preserving the selected DB step and ordered waypoint through redraw, hidden-tracker handling, and deferred TomTom cleanup instead of resetting to step 1. (2026.09.15.1037)
 
 	QuestingModule.lua
 		- Kept Open Sandbox available from the Retail quest context menu when RQE_Contribution is not loaded, so Legacy Runtime testing remains accessible. (2026.09.08.1416)
 		- Released a selected compact coordblock when its physical QuestLogIndexButton is clicked, allowing the player's explicit quest choice to resume normal waypoint selection. (2026.09.15.0004)
 		- Also released a manually selected flight-master destination on a physical quest-row button press, letting that explicit Retail quest selection place its own waypoint without weakening automatic-refresh protection. (2026.09.15.0018)
+		- Marked physical quest-row reselections for a delayed nearest-route re-anchor after supertracking is restored, and preserved the prior step and clicked button when the same quest is selected; Retail ordered waypoints no longer flash to a nearby point then reset to entry 1. (2026.09.15.0332)
+		- Recorded whether a physical Retail quest-row selection is a same-quest reselect and its previous step so subsequent supertracking events can distinguish a transient redraw from a genuine new quest. (2026.09.15.1022)
 
 	RQE_API.lua
 		- Added cross-client quest-link and quest-level helpers that prefer Blizzard's quest-ID APIs, fall back to normalized quest-log metadata, and extract a cached level from a quest link when necessary, allowing dependent addons to report consistent quest metadata in Retail, Classic/Season of Discovery, and TBC Anniversary. (2026.09.10.1744)
@@ -210,6 +265,8 @@
 		- Deferred standalone initialization until PLAYER_LOGIN so the Sandbox no longer reaches DebugLog before RQE's profile database exists, while remaining independent of RQE_Contribution. (2026.09.08.1416)
 		- Normalized legacy-style active step headers with fully commented bodies before Contribution comment promotion, allowing those pasted snippets to load as editable Contribution steps instead of producing an unmatched-table Lua error. (2026.09.08.1416)
 		- Reset the selected Sandbox tab to Legacy Runtime whenever the editor opens, making right-click Open Sandbox and the slash command start in the raw-Lua testing view while preserving manual tab switching during the session. (2026.09.11.0858)
+		- Preserved coordOrder point coordinates, arrival radii, optional wayText, and explicit entryNo values in Contribution Sandbox chat exports while leaving Legacy Runtime's direct Lua parsing untouched, so either mode can test and retain authored ordered routes. (2026.09.15.0142)
+		- Corrected standalone active coordOrder { field lines to coordOrder = { before either Sandbox mode evaluates pasted Lua, while retaining commented Legacy lines and correcting promoted Contribution lines; reported the correction and included the underlying runtime error in future parsing failures so typo-driven nil-call errors no longer produce only a generic failure. (2026.09.15.0202)
 
 	RQE.toc
 		- Updated version# (2026.09.07.2359)
@@ -218,6 +275,7 @@
 		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
 		- Added additional quests to Classic Season of Discovery. (2026.09.09.0320)
 		- Added quests to Burning Crusade and temporarily removed quests from DB for TBC Anniversary until Retail Outland is closer to completion (2026.09.10.1153)
+		- Added more quests to Burning Crusade (2026.09.15.0352)
 
 	RQEFrame.lua
 		- Routed SeparateFocusFrame coordblocks through the existing native coordinate hyperlink path while preserving their compact [x, y] display and waypoint title. (2026.09.07.2359)
@@ -231,9 +289,31 @@
 
 	WaypointManager.lua
 		- Guarded automatic database-hotspot, Blizzard next-waypoint, and delayed waypoint creation while an explicit [Active] coordblock or flight-master destination owns the current map waypoint, so periodic refreshes cannot replace that manual selection. (2026.09.15.0004)
+		- Blocked direct automatic CreateWaypoint calls while the shared coordOrder chain owns the supertracked step, keeping Retail Blizzard or hotspot updates from overwriting the current route point. (2026.09.15.0142)
+		- Preferred matching current-map database hotspots before direction-text and no-direction waypoint fallbacks, kept a live manually selected flight master protected even in the low-level creator, and titled local hotspot arrows from their coordinates or wayText rather than unrelated portal text. (2026.09.15.0332)
+		- Applied the shared manual-waypoint ownership guard in direct waypoint creation, with a one-call exception for an explicit coordblock click; automatic Retail calls cannot steal [Active] or an ordered route point. (2026.09.15.0351)
+		- Used the searched-quest waypoint path only for a searched quest that is not also API-supertracked, so a tracked Retail Sandbox route or current-map hotspot retains priority while genuinely searched quests keep their existing path. (2026.09.15.0355)
+		- Rechecked route and manual ownership before the Retail event waypoint path clears a pin, before its delayed TomTom or Carbonite replacement, and before its Blizzard fallback, preventing asynchronous event work from stealing an ordered point. (2026.09.15.1022)
+		- Accepted the three-value C_QuestLog.GetNextWaypoint mapID/x/y result in the Retail portal fallback before trying its older POI/table shapes, so legitimate direction waypoints remain creatable when no current-map route or hotspot applies. (2026.09.15.1104)
+		- Corrected the Retail forced-waypoint fallback's C_QuestLog.GetNextWaypoint result order to mapID/x/y, preventing the map ID from being validated as an X coordinate when Blizzard supplies direct coordinates. (2026.09.15.1109)
 
 	WPUtil.lua
 		- Blocked centralized TomTom/Blizzard replacement and hotspot assurance while a manual coordblock or flight-master destination owns the waypoint, keeping periodic selection from stealing the player's selected arrow. (2026.09.15.0004)
+		- Normalized optional per-step coordOrder points by explicit entryNo or array order, scoped visited-prefix and active-point state to the API-supertracked quest and step, and polled movement for yard-accurate visitedRadius arrivals; reaching a later point skips earlier entries without regressing, while absent or unusable routes fall back to the existing hotspot/Blizzard paths. (2026.09.15.0142)
+		- Installed chain points through the shared waypoint replacement helper with TomTom auto-clearing disabled until RQE reaches the authored radius, protected that point from routine replacements, and aligned the step-distance readout with it; manual flight-master installation bypasses only the route gate and a completed chain resumes ordinary quest guidance. (2026.09.15.0142)
+		- Re-ran the ordinary waypoint resolver immediately when a quest, step, or map context change leaves a previously active chain without a usable point, preventing an obsolete route arrow from remaining until another quest-log update. (2026.09.15.0148)
+		- Exposed the active current-map route point as a direction string, refreshed the Quest Helper text as movement polling advances it, and probed the route before calculating the supertracked step's tracker distance; this aligns visible guidance with the ordered waypoint even before a normal quest update. (2026.09.15.0211)
+		- Compared the route's TomTom UID with the current waypoint UID before suppressing a duplicate installation, and restored ordinary direction text when the chain finishes or a map/step transition makes it unusable so a stale portal or route label cannot persist. (2026.09.15.0211)
+		- Treated Quest Helper visibility and the active Sandbox entry as route-context changes in the lightweight poll, ensuring a route is probed when the frame opens or a Legacy/Contribution override changes even if the supertracked quest, step, and map stayed the same. (2026.09.15.0214)
+		- Restored authored step.directionText before client next-waypoint text when an ordered route completes or becomes unavailable, keeping the route-first/directionText-second priority consistent for database and either Sandbox source. (2026.09.15.0219)
+		- Added a one-shot physical quest-row nearest-point re-anchor that survives transient supertrack and step resets, can move forward or back within the ordered chain, and wakes the route poll even after completion; ordinary movement remains sticky until the authored yard radius is reached. (2026.09.15.0332)
+		- Selected only current-map step.coordinateHotspots before directionText in Quest Helper and fallback distance guidance, excluding continentID-only points, and released an [Active] coordblock when its link is removed from the active Sandbox or database step. (2026.09.15.0332)
+		- Left a cross-map coordinateHotspot unapplied when no current-map hotspot exists but an authored or client next-waypoint direction is available, preserving the requested directionText fallback without suppressing local coordOrder priority. (2026.09.15.0351)
+		- Removed synthesized coordinateHotspot and coordOrder direction strings, sourced displayed guidance and cross-map fallback decisions from C_QuestLog.GetNextWaypointText, refreshed that text on quest/step/map changes, and retained a completed same-quest route-reselect token through deferred supertracking events. (2026.09.15.1022)
+		- Added a route-only Blizzard map-pin fallback when TomTom is unavailable and verified that either TomTom or Blizzard's existing pin is still live before treating an ordered point as unchanged, so reached or removed points are restored until RQE's visitedRadius advances the chain. (2026.09.15.1037)
+		- Verified same-map coordinateHotspot ownership against a real installed waypoint, reused the Blizzard pin-presence check, and installed a normal Blizzard map pin when TomTom and Carbonite are absent without supertracking that pin; this prevents an empty cached hotspot from suppressing the portal fallback across all three client versions. (2026.09.15.1059)
+		- Verified ordered-route Blizzard pin installation before granting route ownership, and checked a same-map TomTom hotspot's actual presence before reusing its cached target; a failed or removed pin is retried instead of falsely blocking portal guidance in Retail, Season of Discovery, and TBC Anniversary. (2026.09.15.1109)
+		- Cleared the stale duplicate-coordinate and TomTom UID caches after detecting a vanished matching-map hotspot, allowing the low-level waypoint creator to reinstall that exact coordinate instead of skipping it as unchanged. (2026.09.15.1112)
 
 
 12.1.0.2 (2026.09.07)
