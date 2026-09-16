@@ -5621,6 +5621,11 @@ end
 -- supertrack and waypoint have settled.
 function RQE:AutoSuperTrackClosestQuest(onComplete)
 	if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") then return end
+	-- Keep a current ordered route when nearest-quest automation runs.
+	if self:HasCurrentCoordOrderStep() then
+		if onComplete then onComplete() end
+		return
+	end
 
 	local functionName = "RQE:AutoSuperTrackClosestQuest()"
 
@@ -5681,6 +5686,10 @@ function RQE:AutoSuperTrackClosestQuest(onComplete)
 			-- supertrack, then use the normal RQE quest-button flow for its details.
 			C_Timer.After(0.15, function()
 				if InCombatLockdown() or not RQE.db.profile.enableAutoSuperTrackSwap then return end
+				if RQE:HasCurrentCoordOrderStep() then
+					if onComplete then onComplete() end
+					return
+				end
 				RQE.API.SetSuperTrackedQuestID(closestQuestID)
 				-- RQE.ClickQuestLogIndexButton(closestQuestID)
 				-- A simulated QuestLogIndexButton click does not enter its full
@@ -16423,55 +16432,49 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 		if questID and questID > 0 then
 			local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 			if objectives and #objectives > 0 then
-				for i, obj in ipairs(objectives) do
-					-- Some objectives expose itemID directly, others only in text
-					local fulfilled = tonumber(obj.numFulfilled or 0)
-					local required  = tonumber(obj.numRequired or 0)
+				-- An x macro belongs to the current DB step. Its item tag and
+				-- neededAmt identify the requested item even if its name is uncached.
+				local questData = RQE.getQuestData and RQE.getQuestData(questID)
+				local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
+				local step = questData and stepIndex and questData[stepIndex]
+				local itemTag = "{item:" .. tostring(itemID) .. ":"
+				local objectiveIndex = step and tonumber(step.objectiveIndex)
+				local needed = step and type(step.neededAmt) == "table"
+					and tonumber(step.neededAmt[1])
+				if step and type(step.description) == "string"
+					and step.description:find(itemTag, 1, true)
+					and objectiveIndex and needed and needed > 0 then
+					local objective = objectives[objectiveIndex]
+					local fulfilled = objective and tonumber(objective.numFulfilled)
+					if fulfilled == nil and GetQuestObjectiveInfo then
+						local _, _, _, apiFulfilled = GetQuestObjectiveInfo(
+							questID, objectiveIndex, false)
+						fulfilled = tonumber(apiFulfilled)
+					end
+					if fulfilled ~= nil then finalQuantity = needed - fulfilled end
+				end
 
-					-- If this looks like an item collection objective
-					if required and required > 0 then
-						-- Try to match itemID if Blizzard provides it
-						if obj.type == "item" and obj.itemID and obj.itemID == itemID then
-							finalQuantity = required - fulfilled
-
-							if (not finalQuantity or finalQuantity <= 0) then
-								finalQuantity = required
-								print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
-							end
-						-- elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
-							-- finalQuantity = required - fulfilled
-
-							-- if (not finalQuantity or finalQuantity <= 0) then
-								-- finalQuantity = required
-								-- print("|cFFFF3333[RQE]|r finalQuantity returned invalid. Adjusting purchase amount to be " .. finalQuantity)
-							-- end
-						elseif obj.text and string.find(obj.text, C_Item.GetItemNameByID(itemID) or "") then
-							-- Keep original text-matching fallback, but add a guard against fractional/invalid values
-							finalQuantity = required - fulfilled
-
-							finalQuantity = tonumber(finalQuantity) or 0
-							finalQuantity = math.floor(finalQuantity + 0.5)
-
-							-- if finalQuantity <= 0 then
-								-- finalQuantity = required
-								-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-									-- print("|cFFFF3333[RQE]|r Sanitized quantity was invalid. Falling back to required amount = " .. finalQuantity)
-								-- end
-							-- end
-							if (not finalQuantity or finalQuantity <= 0) then
-								finalQuantity = required
+				-- Other x macros retain the native-objective fallback, but an
+				-- empty item name must never match every objective's text.
+				if finalQuantity == nil then
+					local itemName = C_Item and C_Item.GetItemNameByID
+						and C_Item.GetItemNameByID(itemID)
+					for i, obj in ipairs(objectives) do
+						local itemIDMatches = obj.itemID
+							and tonumber(obj.itemID) == tonumber(itemID)
+						local textMatches = itemName and itemName ~= ""
+							and type(obj.text) == "string"
+							and obj.text:find(itemName, 1, true)
+						if itemIDMatches or textMatches then
+							local required = tonumber(obj.numRequired)
+							local fulfilled = tonumber(obj.numFulfilled)
+							if required and fulfilled then
+								finalQuantity = required - fulfilled
 								if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-									print("|cFFFF3333[RQE]|r Sanitized quantity was invalid. Falling back to required amount = " .. finalQuantity)
+									print("|cffffff00[RQE]|r Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
 								end
+								break
 							end
-						end
-
-						if finalQuantity and finalQuantity > 0 then
-							if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-								print("|cffffff00[RQE]|r Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
-								print("|cff00ff00[RQE]|r Resolved Quantity = " .. finalQuantity)
-							end
-							break -- stop once we find a match
 						end
 					end
 				end
@@ -16490,10 +16493,9 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 	end
 
 	-- Final check
-	if not finalQuantity or finalQuantity < 0 then
-		if RQE.db.profile.debugLevel == "INFO" then
-			print("Invalid or negative quantity. Aborting.")
-		end
+	if not finalQuantity or finalQuantity <= 0 then
+		print("|cFFFF3333[RQE]|r No remaining amount could be safely determined for item "
+			.. tostring(itemID) .. "; purchase canceled.")
 		return
 	end
 
