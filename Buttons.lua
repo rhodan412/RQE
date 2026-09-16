@@ -872,8 +872,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 
 	-- Nested functions
 	ClearButton:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 6, -6)  -- Anchoring
-	ClearButton:SetScript("OnClick", function()
-
+	local function clearWindowAfterConfirmation()
 		-- Code for ClearButton functionality here
 		RQE.Buttons.ClearButtonPressed()
 		RQE.searchedQuestID = nil
@@ -896,6 +895,13 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 				RQE.ManuallyTrackedQuests[questID] = nil
 			end
 		end
+	end
+	ClearButton:SetScript("OnClick", function(_, mouseButton)
+		-- Internal clear callers invoke the script without a mouse button; only
+		-- the player's physical C press asks to abandon an ordered route.
+		if mouseButton and RQE:RequestCoordOrderTrackingConfirmation("clear", nil,
+			clearWindowAfterConfirmation) then return end
+		clearWindowAfterConfirmation()
 	end)
 
 	CreateTooltip(ClearButton, "Clear Window")  -- Tooltip
