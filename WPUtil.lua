@@ -458,7 +458,7 @@ function RQE:EnsureWaypointForSupertracked()
 	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then return end
 
-	local stepIndex = RQE.AddonSetStepIndex or 1
+	local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex) or 1
 	local questData = RQE.getQuestData and RQE.getQuestData(questID)
 	local step = questData and questData[stepIndex]
 	if not step then return end
@@ -1323,6 +1323,225 @@ local function NormalizeCoordOrder(route)
 	return points
 end
 
+-- The active database/Sandbox step is the sole source for route UI and
+-- interruption protection. entryNo is a point number, never a stepIndex.
+function RQE:GetCurrentCoordOrderStep()
+	local questID = self.API and self.API.GetSuperTrackedQuestID
+		and tonumber(self.API.GetSuperTrackedQuestID())
+	local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	local questData = questID and self.getQuestData and self.getQuestData(questID)
+	local step = questData and stepIndex and questData[stepIndex]
+	local route = step and step.coordOrder
+	if type(route) ~= "table" or not route[1] then return nil end
+	local points = NormalizeCoordOrder(route)
+	if not points then return nil end
+	return questID, stepIndex, questData, step, route, points
+end
+
+function RQE:HasCurrentCoordOrderStep()
+	return self:GetCurrentCoordOrderStep() ~= nil
+end
+
+-- A physical quest-row press or C click is deferred until Yes. Five seconds,
+-- No, Escape, and changing the guarded quest/step all leave tracking intact.
+function RQE:RequestCoordOrderTrackingConfirmation(action, targetQuestID, onYes)
+	local questID, stepIndex, questData, _, route = self:GetCurrentCoordOrderStep()
+	if not questID or (action == "switch" and tonumber(targetQuestID) == questID)
+		then return false end
+	local questLink = self.API and self.API.GetQuestLink
+		and self.API.GetQuestLink(questID)
+	local name = questData.title or (self.API and self.API.GetTitleForQuestID
+		and self.API.GetTitleForQuestID(questID)) or ("Quest " .. questID)
+	local label = questLink or name
+	local popupKey = action == "clear" and "RQE_COORDORDER_CLEAR_CONFIRM"
+		or "RQE_COORDORDER_SWITCH_CONFIRM"
+	if not StaticPopupDialogs[popupKey] then
+		StaticPopupDialogs[popupKey] = {
+			text = action == "clear"
+				and "|cffffcc66%s|r is following an ordered route. Clearing restarts it if you return. Clear the window?"
+				or "|cffffcc66%s|r is following an ordered route. Changing quests restarts it if you return. Switch quests?",
+			button1 = YES, button2 = NO, timeout = 5,
+			whileDead = 1, hideOnEscape = 1,
+			OnAccept = function()
+				local pending = RQE._coordOrderPendingConfirmation
+				RQE._coordOrderPendingConfirmation = nil
+				if not pending or GetTime() > pending.expiresAt then return end
+				local currentQuest, currentStep, _, _, currentRoute =
+					RQE:GetCurrentCoordOrderStep()
+				if currentQuest == pending.questID and currentStep == pending.stepIndex
+					and currentRoute == pending.route then
+					pending.onYes()
+				end
+			end,
+			OnCancel = function() RQE._coordOrderPendingConfirmation = nil end,
+		}
+	end
+	if self._coordOrderPendingConfirmation then
+		StaticPopup_Hide(self._coordOrderPendingConfirmation.popupKey)
+	end
+	local pending = {
+		questID = questID, stepIndex = stepIndex, route = route,
+		popupKey = popupKey, expiresAt = GetTime() + 5, onYes = onYes,
+	}
+	self._coordOrderPendingConfirmation = pending
+	StaticPopup_Show(popupKey, label)
+	C_Timer.After(5, function()
+		if RQE._coordOrderPendingConfirmation == pending then
+			RQE._coordOrderPendingConfirmation = nil
+			StaticPopup_Hide(popupKey)
+		end
+	end)
+	return true
+end
+
+function RQE:RefreshCoordOrderFocusLinks()
+	local buttons = self.SeparateCoordOrderButtons
+	if not buttons then return end
+	local state = self._coordOrderState
+	for _, button in ipairs(buttons) do
+		local active = state and state.questID == button.questID
+			and state.stepIndex == button.stepIndex
+			and state.route == button.route
+			and state.currentIdx == button.index
+			and state.visitedUntil < #state.points
+			and not self.ActiveCoordblock
+			and not self.ManualFlightMasterWaypointMapID
+		local label = active and "[Active]."
+			or string.format("[%.2f, %.2f].", button.point.x * 100,
+				button.point.y * 100)
+		if button.label:GetText() ~= label then
+			button.label:SetText(label)
+			button:SetWidth(button.label:GetStringWidth() + 10)
+		end
+	end
+end
+
+-- Native route rows do not depend on the SimpleHTML client's supported tag
+-- subset and keep a real hit rectangle through Separate Focus scrolling.
+function RQE:RenderCoordOrderFocusButtons(routeLinks, questID, stepIndex,
+	yOffset, wheelHandler)
+	local parent = self.SeparateContentFrame
+	if not parent or type(routeLinks) ~= "table" then return end
+	self.SeparateCoordOrderButtons = {}
+	for row, link in ipairs(routeLinks) do
+		local button = CreateFrame("Button", nil, parent)
+		button:SetPoint("TOPLEFT", parent, "TOPLEFT", 45,
+			yOffset - (row - 1) * 20)
+		button:SetSize(130, 18)
+		button:SetFrameLevel(parent:GetFrameLevel() + 3)
+		button:EnableMouseWheel(true)
+		button:SetScript("OnMouseWheel", wheelHandler)
+		button.questID, button.stepIndex = questID, stepIndex
+		button.index, button.point, button.route = link.index,
+			link.point, link.route
+		local label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		label:SetPoint("LEFT", button, "LEFT", 0, 0)
+		label:SetFont("Fonts\\FRIZQT__.TTF", 12)
+		label:SetTextColor(202/255, 168/255, 1) -- pale lilac #CAA8FF
+		button.label = label
+		button:SetScript("OnClick", function(self)
+			RQE:SelectCoordOrderFocusPoint(self.questID, self.stepIndex,
+				self.index)
+		end)
+		button:SetScript("OnEnter", function(self)
+			GameTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+			GameTooltip:SetText("Click to follow this route waypoint", 1, 1, 1)
+			GameTooltip:Show()
+			RQE._coordblockTooltipOwner = self
+			RQE:AnchorCoordblockTooltip(self)
+			self:SetScript("OnUpdate", function(frame)
+				if RQE._coordblockTooltipOwner ~= frame
+					or not GameTooltip:IsShown() then
+					frame:SetScript("OnUpdate", nil)
+					return
+				end
+				RQE:AnchorCoordblockTooltip(frame)
+			end)
+		end)
+		button:SetScript("OnLeave", function(self)
+			if RQE._coordblockTooltipOwner == self then
+				RQE._coordblockTooltipOwner = nil
+			end
+			self:SetScript("OnUpdate", nil)
+			GameTooltip:Hide()
+		end)
+		button:Show()
+		self.SeparateCoordOrderButtons[#self.SeparateCoordOrderButtons + 1] = button
+	end
+	self:SyncCoordOrderWaypoint()
+	self:RefreshCoordOrderFocusLinks()
+end
+
+function RQE:RenderCoordOrderFocusBelowText(routeLinks, questID, stepIndex,
+	wheelHandler, explicitOffset)
+	local parent = self.SeparateContentFrame
+	if not parent then return end
+	if explicitOffset then
+		self:RenderCoordOrderFocusButtons(routeLinks, questID, stepIndex,
+			explicitOffset, wheelHandler)
+		return
+	end
+	if not parent:GetTop() then return end
+	local lowestBottom
+	local function consider(region)
+		if region and region.IsShown and region:IsShown()
+			and region.GetBottom then
+			local bottom = region:GetBottom()
+			if bottom and (not lowestBottom or bottom < lowestBottom) then
+				lowestBottom = bottom
+			end
+		end
+	end
+	for _, child in ipairs({ parent:GetChildren() }) do consider(child) end
+	for _, region in ipairs({ parent:GetRegions() }) do consider(region) end
+	local offset = lowestBottom and -(parent:GetTop() - lowestBottom) - 12
+		or -50
+	self:RenderCoordOrderFocusButtons(routeLinks, questID, stepIndex,
+		offset, wheelHandler)
+end
+
+-- Explicitly choosing any visible route entry rebases that one session-only
+-- chain, then the normal arrival poll resumes using each point's own radius.
+function RQE:SelectCoordOrderFocusPoint(questID, stepIndex, pointIndex)
+	local currentQuest, currentStep, _, _, route, points =
+		self:GetCurrentCoordOrderStep()
+	questID, stepIndex, pointIndex = tonumber(questID), tonumber(stepIndex),
+		tonumber(pointIndex)
+	if currentQuest ~= questID or currentStep ~= stepIndex
+		or not pointIndex or not points[pointIndex] then return false end
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		and C_Map.GetBestMapForUnit("player")
+	if points[pointIndex].mapID ~= playerMapID then return false end
+	local state = self._coordOrderState
+	if not state or state.questID ~= questID or state.stepIndex ~= stepIndex
+		or state.route ~= route then
+		state = { questID = questID, stepIndex = stepIndex, route = route,
+			points = points, visitedUntil = 0, currentIdx = nil,
+			playerMapID = playerMapID }
+		self._coordOrderState = state
+	end
+	state.visitedUntil = pointIndex - 1
+	state.currentIdx, state.uid, state.completedNow = nil, nil, nil
+	if self._coordOrderReselect and self._coordOrderReselect.questID == questID then
+		self._coordOrderReselect.rebased = true
+	end
+	self._lastWP = nil
+	local hadActiveCoordblock = self.ActiveCoordblock ~= nil
+	self.ActiveCoordblock = nil
+	self.ManualFlightMasterWaypointMapID = nil
+	self.ManualFlightMasterWaypointQuestID = nil
+	self.ManualFlightMasterWaypointStepIndex = nil
+	self.ManualFlightMasterWaypointUID = nil
+	self.ManualFlightMasterWaypointUsesBlizzard = nil
+	self.NearestFlightMasterSet = false
+	local installed = self:SyncCoordOrderWaypoint()
+	if hadActiveCoordblock and self.RefreshActiveCoordblockLinks then
+		self:RefreshActiveCoordblockLinks()
+	end
+	self:RefreshCoordOrderFocusLinks()
+	return installed
+end
+
 -- State is intentionally session-only. The current route point is sticky until
 -- its own arrival radius is reached, or the player reaches a LATER route point
 -- first; in the latter case all earlier entries become visited and cannot be
@@ -1571,6 +1790,7 @@ coordOrderPoll:SetScript("OnUpdate", function(self, elapsed)
 		RestoreOrdinaryQuestDirection(questID)
 		RQE:CreateUnknownQuestWaypoint(questID, mapID)
 	end
+	RQE:RefreshCoordOrderFocusLinks()
 end)
 
 
