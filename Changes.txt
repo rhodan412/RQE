@@ -1,3 +1,82 @@
+12.1.0.4
+
+	**HIGHLIGHTS**
+		- Auction-house quantity macros now request only the remaining quest items, even when an item name has not loaded, across Retail, Season of Discovery, and TBC Anniversary.
+		- Holding Alt, Ctrl, or Shift now scrolls the Separate Focus Frame up or down from anywhere inside it; an unmodified wheel still scrolls the main Quest Helper across Retail, Season of Discovery, and TBC Anniversary.
+		- The Separate Focus Frame now returns to its true top after a map, zone, or minimap-subzone change when the mouse is outside it, without interrupting a hovered frame.
+		- The Separate Focus Frame's * button is easier to hover and now creates the current quest step's waypoint directly across Retail, Season of Discovery, and TBC Anniversary.
+		- Current-step coordOrder points now appear as lilac, clickable route links with an [Active] marker in the Separate Focus Frame only; manually choosing a point resumes automatic progression at its own arrival radius.
+		- Switching quests or pressing C while following an ordered route now asks for confirmation; No or five seconds without an answer keeps the current quest tracked.
+		- Nearest-quest auto-tracking now leaves a supertracked quest's current ordered step in place across Retail, Season of Discovery, and TBC Anniversary.
+		- Ordered-route rows in Separate Focus now display as clean clickable text, without raw HTML tags appearing in quest steps.
+
+	Buttons.lua
+		- Deferred the physical C button's existing clear actions behind the shared five-second ordered-route confirmation while leaving internal script-driven clear callers unchanged; declining or ignoring the prompt keeps the quest, frame, and waypoint intact. (2026.09.15.1630)
+
+	Client_Classic/Core.lua
+		- Resolved dynamic AH macro quantities from the active database or Sandbox step's item tag, neededAmt, and objectiveIndex before using native objective data; rejected empty item-name matches and zero or unknown deficits so Classic/Season of Discovery purchase preparation cannot choose another objective or re-buy a completed one. (2026.09.15.1506)
+		- Prevented nearest-quest auto-tracking from swapping a current ordered-route step before or during its delayed selection; the stopped-movement callback still redraws the tracker when the swap is intentionally skipped. (2026.09.15.1630)
+		- Kept generated Focus route labels synchronized when an authored coordblock's [Active] state is refreshed, avoiding replacement of lilac route links with their HTML placeholders in Classic/Season of Discovery. (2026.09.15.1630)
+		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while nearest-quest route protection remains in place. (2026.09.15.1642)
+
+	Client_Classic/QuestingModule.lua
+		- Checked a physical new-quest QuestLogIndexButton press for a current ordered route before releasing waypoint ownership or clearing frame state; Yes resumes that same button's normal selection without requiring continued mouse hover, while No or timeout leaves tracking untouched. (2026.09.15.1630)
+
+	Client_Classic/RQEFrame.lua
+		- Sent modified mouse-wheel input to the Separate Focus scroll frame from its border, scroll frame, content, or SimpleHTML step text instead of requiring hover over only the first text region; plain-wheel input retains the main Quest Helper scroll path in Classic/Season of Discovery. (2026.09.15.1536)
+		- Watched player map ID, map name, zone name, and minimap subzone while the Separate Focus Frame is visible, resetting its scroll to zero only when the location changes outside a hover; a hovered location change is consumed without a later mouse-leave reset. (2026.09.15.1536)
+		- Enlarged the fixed Separate Focus * button's native hit rectangle around its unchanged 30x30 artwork, raised it above scrolled content, and forwarded modifier-wheel input so its visual glow remains reliably hoverable and the Focus scroll behavior stays consistent in Classic/Season of Discovery. (2026.09.15.1556)
+		- Replaced the * button's StepsText click delegation with current-supertracked-step waypoint selection, matching its tooltip to the selected valid same-map hotspot or step coordinate and preserving step-one macro behavior; clicking now places the displayed destination without depending on unrelated StepsText hover flags. (2026.09.15.1556)
+		- Generated current-map, numbered coordOrder links after the complete active step description only in Separate Focus SimpleHTML, colored them lilac rather than coordblock turquoise, and connected click/hover to shared route rebasing and [Active] refresh in Classic/Season of Discovery. (2026.09.15.1630)
+		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
+
+	Client_TBC/Core.lua
+		- Resolved dynamic AH macro quantities from the active database or Sandbox step's item tag, neededAmt, and objectiveIndex before using native objective data; rejected empty item-name matches and zero or unknown deficits so TBC Anniversary purchase preparation cannot choose another objective or re-buy a completed one. (2026.09.15.1506)
+		- Prevented nearest-quest auto-tracking from swapping a current ordered-route step before or during its delayed selection; the stopped-movement callback still redraws the tracker when the swap is intentionally skipped. (2026.09.15.1630)
+		- Kept generated Focus route labels synchronized when an authored coordblock's [Active] state is refreshed, avoiding replacement of lilac route links with their HTML placeholders in TBC Anniversary. (2026.09.15.1630)
+		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while nearest-quest route protection remains in place. (2026.09.15.1642)
+
+	Client_TBC/QuestingModule.lua
+		- Checked a physical new-quest QuestLogIndexButton press for a current ordered route before releasing waypoint ownership or clearing frame state; Yes resumes that same button's normal selection without requiring continued mouse hover, while No or timeout leaves tracking untouched. (2026.09.15.1630)
+
+	Client_TBC/RQEFrame.lua
+		- Sent modified mouse-wheel input to the Separate Focus scroll frame from its border, scroll frame, content, or SimpleHTML step text instead of requiring hover over only the first text region; plain-wheel input retains the main Quest Helper scroll path in TBC Anniversary. (2026.09.15.1536)
+		- Watched player map ID, map name, zone name, and minimap subzone while the Separate Focus Frame is visible, resetting its scroll to zero only when the location changes outside a hover; a hovered location change is consumed without a later mouse-leave reset. (2026.09.15.1536)
+		- Enlarged the fixed Separate Focus * button's native hit rectangle around its unchanged 30x30 artwork, raised it above scrolled content, and forwarded modifier-wheel input so its visual glow remains reliably hoverable and the Focus scroll behavior stays consistent in TBC Anniversary. (2026.09.15.1556)
+		- Replaced the * button's StepsText click delegation with current-supertracked-step waypoint selection, matching its tooltip to the selected valid same-map hotspot or step coordinate and preserving step-one macro behavior; clicking now places the displayed destination without depending on unrelated StepsText hover flags. (2026.09.15.1556)
+		- Generated current-map, numbered coordOrder links after the complete active step description only in Separate Focus SimpleHTML, colored them lilac rather than coordblock turquoise, and connected click/hover to shared route rebasing and [Active] refresh in TBC Anniversary. (2026.09.15.1630)
+		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
+
+	Core.lua
+		- Used the current supertracked database or Sandbox step's authored item tag, neededAmt, and objectiveIndex to calculate an AH macro's remaining quantity before a guarded native-objective fallback; an uncached item name no longer matches the first unrelated objective, and completed or indeterminate requests stop before the Retail purchase confirmation. (2026.09.15.1506)
+		- Blocked Retail nearest-quest auto-tracking while the supertracked current step has coordOrder, including the delayed replacement phase, so a movement or zone refresh cannot silently abandon the route. (2026.09.15.1630)
+		- Preserved generated Focus route [Active] labels while refreshing authored coordblock links, keeping both hyperlink types readable when they coexist in a step description. (2026.09.15.1630)
+		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while Retail nearest-quest route protection remains in place. (2026.09.15.1642)
+
+	QuestingModule.lua
+		- Deferred a physical new-quest QuestLogIndexButton press before any Retail route or frame mutation, asking for a five-second confirmation and resuming the original row selection on Yes even after the pointer moves onto the dialog. (2026.09.15.1630)
+
+	RQE.toc
+		- Updated version# (2026.09.15.1905)
+
+	RQEDatabase.lua
+		- Updated some Midnight quests in the DB (2026.09.15.1905)
+
+	RQEFrame.lua
+		- Sent modified mouse-wheel input to the Separate Focus scroll frame from its border, scroll frame, content, or SimpleHTML step text instead of requiring hover over only the first text region; plain-wheel input retains the main Quest Helper scroll path in Retail. (2026.09.15.1536)
+		- Watched player map ID, map name, zone name, and minimap subzone while the Separate Focus Frame is visible, resetting its scroll to zero only when the location changes outside a hover; a hovered location change is consumed without a later mouse-leave reset. (2026.09.15.1536)
+		- Enlarged the fixed Separate Focus * button's native hit rectangle around its unchanged 30x30 artwork, raised it above scrolled content, and forwarded modifier-wheel input so its visual glow remains reliably hoverable and the Focus scroll behavior stays consistent in Retail. (2026.09.15.1556)
+		- Replaced the * button's StepsText click delegation with current-supertracked-step waypoint selection, matching its tooltip to the selected valid same-map hotspot or step coordinate and preserving step-one macro behavior; clicking now places the displayed destination without depending on unrelated StepsText hover flags. (2026.09.15.1556)
+		- Appended current-map coordOrder points from the supertracked database or Sandbox step to Separate Focus only, using clickable lilac SimpleHTML links and shared [Active] route labels without changing StepsText or the authored description. (2026.09.15.1630)
+		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
+
+	WPUtil.lua
+		- Resolved the shared current-step waypoint helper's stepIndex from the active or displayed numbered step before its legacy fallback, keeping the Separate Focus * button's click and tooltip on the same database or Sandbox step across Retail and legacy clients. (2026.09.15.1556)
+		- Added a validated current-step coordOrder lookup and short shared confirmation dialogs that retain the supertracked quest on No, Escape, timeout, or a changed quest context; Yes alone runs the saved physical switch or clear action. (2026.09.15.1630)
+		- Added manual route-point rebasing, existing [Active] link re-click restoration, lilac Focus label refresh, and poll-driven transitions that continue using each authored visitedRadius before normal hotspot guidance resumes. (2026.09.15.1630)
+		- Rendered ordered-point Focus labels through real clickable buttons with stable scroll-aware hover areas rather than unsupported HTML anchors, updating [Active] directly from route state and placing rows below the existing step text without altering authored descriptions. (2026.09.15.1642)
+
+
 12.1.0.3 (2026.09.15)
 
 	**HIGHLIGHTS**
