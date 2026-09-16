@@ -2492,6 +2492,30 @@ RQE.ToggleFrameLock()
 
 
 -- Function to initialize a separate Focused Step Frame with scrolling
+local function HandleSeparateFocusMouseWheel(_, delta)
+	-- ALT/CTRL/SHIFT (either left or right key) scrolls the Focus Frame
+	-- anywhere inside it. A plain wheel keeps scrolling the main RQEFrame.
+	local focusFrame = RQE.SeparateFocusFrame
+	local modifierHeld = IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown()
+	local target = focusFrame and focusFrame:IsMouseOver() and modifierHeld
+		and RQE.SeparateScrollFrame or RQE.ScrollFrame
+	if not target then return end
+	local current = tonumber(target:GetVerticalScroll()) or 0
+	local maximum = tonumber(target:GetVerticalScrollRange()) or 0
+	target:SetVerticalScroll(math.max(0, math.min(current - delta * 20, maximum)))
+end
+
+local function GetSeparateFocusLocation()
+	local mapID = C_Map and C_Map.GetBestMapForUnit
+		and C_Map.GetBestMapForUnit("player")
+	local mapInfo = mapID and C_Map and C_Map.GetMapInfo
+		and C_Map.GetMapInfo(mapID)
+	local mapName = mapInfo and mapInfo.name or ""
+	local zoneName = GetZoneText and GetZoneText() or ""
+	local minimapZone = GetMinimapZoneText and GetMinimapZoneText() or ""
+	return mapID, mapName, zoneName, minimapZone
+end
+
 function RQE.InitializeSeparateFocusFrame()
 	-- Create the new independent frame
 	if not RQE.SeparateFocusFrame then
@@ -2509,6 +2533,8 @@ function RQE.InitializeSeparateFocusFrame()
 		})
 		RQE.SeparateFocusFrame:SetBackdropColor(0, 0, 0, 0.4)
 		RQE.SeparateFocusFrame:EnableMouse(true)
+		RQE.SeparateFocusFrame:EnableMouseWheel(true)
+		RQE.SeparateFocusFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 		RQE.SeparateFocusFrame:Show()
 	end
 
@@ -2518,6 +2544,7 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.SeparateScrollFrame:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", -5, -10)
 		RQE.SeparateScrollFrame:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -30, 10)
 		RQE.SeparateScrollFrame:EnableMouseWheel(true)
+		RQE.SeparateScrollFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 		RQE.SeparateScrollFrame:SetClipsChildren(true)
 		RQE.SeparateScrollFrame:Show()
 	end
@@ -2535,7 +2562,37 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.SeparateContentFrame:SetWidth(RQE.SeparateFocusFrame:GetWidth() - 40)  -- Adjust width for padding
 		RQE.SeparateContentFrame:SetHeight(1000)  -- Initial height for content; will adjust dynamically
 		RQE.SeparateScrollFrame:SetScrollChild(RQE.SeparateContentFrame)
+		RQE.SeparateContentFrame:EnableMouseWheel(true)
+		RQE.SeparateContentFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 		RQE.SeparateContentFrame:Show()
+	end
+
+	-- Zone events already request a top reset, but map names and minimap
+	-- subzones can settle later. Check only while this visible frame updates.
+	if not RQE._separateFocusLocationWatcher then
+		local watcher = CreateFrame("Frame", nil, RQE.SeparateFocusFrame)
+		watcher.elapsed = 0
+		watcher:SetScript("OnUpdate", function(self, elapsed)
+			self.elapsed = self.elapsed + elapsed
+			if self.elapsed < 0.4 then return end
+			self.elapsed = 0
+			if not (RQEFrame and RQEFrame:IsShown()) then return end
+			local mapID, mapName, zoneName, minimapZone =
+				GetSeparateFocusLocation()
+			local changed = self.hasLocation and
+				(self.mapID ~= mapID or self.mapName ~= mapName
+					or self.zoneName ~= zoneName
+					or self.minimapZone ~= minimapZone)
+			self.mapID, self.mapName = mapID, mapName
+			self.zoneName, self.minimapZone = zoneName, minimapZone
+			self.hasLocation = true
+			-- Consume the change while hovered; never reset later on mouse leave.
+			if changed and not RQE.SeparateFocusFrame:IsMouseOver() then
+				RQE.FocusScrollFrameToTop()
+			end
+		end)
+		watcher:Show()
+		RQE._separateFocusLocationWatcher = watcher
 	end
 
 	-- Function to update the content dynamically
@@ -2655,6 +2712,7 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.CurrentlySuperQuestID = displayedQuestID
 		RQE:ClearSeparateFocusFrame()
 		RQE.SeparateCoordblockFonts = {}
+		RQE.SeparateCoordOrderButtons = {}
 
 		-- ✅ Improved quest data handling (for DB-less quests)
 		local stepIndex = tonumber(RQE.AddonSetStepIndex) or 1
@@ -2730,6 +2788,21 @@ function RQE.InitializeSeparateFocusFrame()
 
 		local formattedText = string.format("%d/%d: %s", stepIndex, totalSteps, stepDescription)
 		formattedText = formattedText:gsub("||c", "|c"):gsub("||r", "|r"):gsub("||H", "|H"):gsub("||h", "|h")
+		-- Generate route links only for this supertracked Focus step. StepsText
+		-- continues to show exactly the authored description.
+		local routeLinks = {}
+		local routeQuest, routeStep, _, _, routeData, routePoints = RQE:GetCurrentCoordOrderStep()
+		local playerMapID = C_Map and C_Map.GetBestMapForUnit
+			and C_Map.GetBestMapForUnit("player")
+		if routeQuest == tonumber(questID) and routeStep == stepIndex then
+			for index, point in ipairs(routePoints) do
+				if point.mapID == playerMapID then
+					routeLinks[#routeLinks + 1] = {
+						index = index, point = point, route = routeData,
+					}
+				end
+			end
+		end
 		RQE.StepIndexForCoordMatch = stepIndex
 		RQE.totalStepforQuest = totalSteps
 
@@ -2744,6 +2817,7 @@ function RQE.InitializeSeparateFocusFrame()
 		-- Coordblocks use the same native hyperlink path as full coordinate links,
 		-- but retain their compact [x, y] display.
 		local hasCoords = formattedText:match("{coords:") or formattedText:match("{coordblock:")
+		local routeStartOffset
 
 		if hasCoords then
 			-- ✅ Always use SimpleHTML for the first paragraph; use FontStrings only for additional lines
@@ -2757,6 +2831,8 @@ function RQE.InitializeSeparateFocusFrame()
 			-- 🧭 Create SimpleHTML for the first paragraph
 			local StepText = CreateFrame("SimpleHTML", nil, RQE.SeparateContentFrame)
 			RQE.SeparateStepText = StepText
+			StepText:EnableMouseWheel(true)
+			StepText:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 			StepText:SetFontObject("p", GameFontNormal)
 			StepText:SetFontObject("h1", GameFontNormal)
 			StepText:SetFontObject("h2", GameFontNormal)
@@ -3045,6 +3121,7 @@ function RQE.InitializeSeparateFocusFrame()
 					print("RQE DEBUG: FontString paragraph height:", h)
 				end
 			end
+			routeStartOffset = yOffset - 8
 		end
 
 		-- RQE.SeparateStepText:Show()
@@ -3056,46 +3133,19 @@ function RQE.InitializeSeparateFocusFrame()
 
 		-- Update content height dynamically
 		RQE.UpdateSeparateContentHeight()
+		if #routeLinks > 0 then
+			C_Timer.After(0.1, function()
+				if buildToken ~= RQE._SeparateFocusBuildToken
+					or RQE.CurrentDisplayedQuestID ~= questID
+					or RQE.CurrentDisplayedStepIndex ~= stepIndex then return end
+				RQE:RenderCoordOrderFocusBelowText(routeLinks, questID,
+					stepIndex, HandleSeparateFocusMouseWheel, routeStartOffset)
+				RQE.UpdateSeparateContentHeight()
+			end)
+		end
 
 		finishUpdate()
 	end
-
-	-- Attach the mouse wheel scroll script to the scroll frame
-	RQE.SeparateScrollFrame:SetScript("OnMouseWheel", function(self, delta)
-		-- Check if the mouse is over the SeparateStepText
-		if RQE.SeparateStepText and RQE.SeparateStepText:IsMouseOver() then
-			-- Check if Alt, Ctrl, or Shift is being held down
-			if IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown() then
-				-- Handle scrolling for the SeparateScrollFrame
-				local currentScroll = self:GetVerticalScroll()
-				local maxScroll = self:GetVerticalScrollRange()
-
-				-- Adjust the scroll speed
-				local newScroll = currentScroll - (delta * 20)
-
-				-- Ensure the new scroll position is within valid bounds
-				newScroll = math.max(0, math.min(newScroll, maxScroll))
-
-				-- Set the new scroll position
-				self:SetVerticalScroll(newScroll)
-			end
-		else
-			-- If not over SeparateStepText or no modifier key is held, pass the scroll event to the main RQEFrame
-			if RQE.ScrollFrame then
-				local currentScroll = RQE.ScrollFrame:GetVerticalScroll()
-				local maxScroll = RQE.ScrollFrame:GetVerticalScrollRange()
-
-				-- Adjust the scroll speed
-				local newScroll = currentScroll - (delta * 20)
-
-				-- Ensure the new scroll position is within valid bounds
-				newScroll = math.max(0, math.min(newScroll, maxScroll))
-
-				-- Set the new scroll position for the main frame
-				RQE.ScrollFrame:SetVerticalScroll(newScroll)
-			end
-		end
-	end)
 
 	-- Function to dynamically update the content height
 	function RQE.UpdateSeparateContentHeight()
@@ -3120,11 +3170,17 @@ function RQE.InitializeSeparateFocusWaypoints()
 	if not RQE.SeparateWaypointButton then
 		RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateFocusFrame)
 		--RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
-		RQE.SeparateWaypointButton:SetSize(30, 30)
-		RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateFocusFrame, "TOPLEFT", 33, -5)
+		-- The artwork remains 30x30, but the native hit rectangle includes
+		-- its glow and stays fixed when the Focus Frame content scrolls.
+		RQE.SeparateWaypointButton:SetSize(40, 40)
+		RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateFocusFrame, "TOPLEFT", 38, 0)
+		RQE.SeparateWaypointButton:SetFrameLevel(RQE.SeparateScrollFrame:GetFrameLevel() + 3)
+		RQE.SeparateWaypointButton:EnableMouseWheel(true)
+		RQE.SeparateWaypointButton:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 		--RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
 		local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
-		bg:SetAllPoints()
+		bg:SetSize(30, 30)
+		bg:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER")
 		bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 
 		-- Create the number label
@@ -3135,10 +3191,15 @@ function RQE.InitializeSeparateFocusWaypoints()
 
 		-- Add the click event for the Waypoint Button
 		RQE.SeparateWaypointButton:SetScript("OnClick", function()
-			if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
-				RQE.WaypointButtons[RQE.AddonSetStepIndex]:Click()
+			local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
+			local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
+			local questData = questID and RQE.getQuestData(questID)
+			if questData and stepIndex and questData[stepIndex] then
+				-- Do not delegate to StepsText: its waypoint branch depends on
+				-- StepsText hover flags, which hovering this button never sets.
+				RQE:EnsureWaypointForSupertracked()
 				-- If the RQE.AddonSetStepIndex is "1" then it will build the macro associated with that stepIndex
-				if RQE.AddonSetStepIndex == 1 then
+				if stepIndex == 1 then
 					-- Tier Two Importance: 
 					if RQE.db.profile.autoClickWaypointButton then
 						C_Timer.After(0.1, function()
@@ -3162,7 +3223,7 @@ function RQE.InitializeSeparateFocusWaypoints()
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
-					print("No waypoint button found for the current step.")
+					print("No supertracked quest step found for the Focus Frame waypoint button.")
 				end
 			end
 		end)
@@ -3228,25 +3289,34 @@ function RQE.FocusScrollFrameToTop()
 	if RQE.SeparateFocusFrame and not RQE.SeparateFocusFrame:IsMouseOver() then
 		if RQE.SeparateScrollFrame then
 			-- Set the scroll position of the SeparateScrollFrame to the top
-			RQE.SeparateScrollFrame:SetVerticalScroll(10)
+			RQE.SeparateScrollFrame:SetVerticalScroll(0)
 		end
 	end
 end
 
 
--- Function to retrieve the tooltip data for the specific stepIndex from the RQEDatabase
+-- Tooltip and click both follow the current supertracked step's hotspot choice.
 function RQE.GetTooltipDataForCButton()
-	local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
-	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-	local questData = RQE.getQuestData(questID)
+	local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex) or 1
+	local questID = tonumber(RQE.API.GetSuperTrackedQuestID())
+	local questData = questID and RQE.getQuestData(questID)
 
 	if questData and questData[stepIndex] then
 		local step = questData[stepIndex]
 
-		-- Prefer hotspots if present; else legacy single coordinates
+		-- Prefer the selector's current target, but a valid current-map
+		-- hotspot outranks a stale cross-map target just as the click does.
 		if step.coordinateHotspots then
 			local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
-			if smap and sx and sy then
+			local playerMapID = C_Map and C_Map.GetBestMapForUnit
+				and C_Map.GetBestMapForUnit("player")
+			if playerMapID and smap ~= playerMapID then
+				local localMap, localX, localY = RQE.WPUtil.GetSameMapHotspot(
+					questID, stepIndex, playerMapID)
+				if localMap then smap, sx, sy = localMap, localX, localY end
+			end
+			smap, sx, sy = tonumber(smap), tonumber(sx), tonumber(sy)
+			if smap and smap > 0 and sx and sx > 0 and sy and sy > 0 then
 				local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", sx * 100, sy * 100, smap)
 				RQE.SeparateFocusCoordData = coordsText
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -3254,9 +3324,12 @@ function RQE.GetTooltipDataForCButton()
 				end
 				return coordsText
 			end
-		elseif step.coordinates then
-			local x, y, mapID = step.coordinates.x, step.coordinates.y, step.coordinates.mapID
-			if x and y and mapID then
+		end
+		if step.coordinates and type(step.coordinates) == "table" then
+			local x, y, mapID = tonumber(step.coordinates.x),
+				tonumber(step.coordinates.y), tonumber(step.coordinates.mapID)
+			if x and y and x > 0 and y > 0 and mapID and mapID > 0 then
+				if x <= 1 and y <= 1 then x, y = x * 100, y * 100 end
 				local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
 				RQE.SeparateFocusCoordData = coordsText
 				if RQE.db.profile.debugLevel == "INFO+" then
