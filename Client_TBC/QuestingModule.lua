@@ -3687,14 +3687,24 @@ function UpdateRQEQuestFrame()
 
 				-- Quest Watch List
 				QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
-				QuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
+				QuestLogIndexButton:SetScript("OnMouseDown", function(self, button, confirmed)
+					local shiftLeftClick = not confirmed and IsShiftKeyDown()
+						and button == "LeftButton"
+					if not confirmed and not self:IsMouseOver() then return end
+					if not confirmed and not shiftLeftClick
+						and RQE:RequestCoordOrderTrackingConfirmation("switch", questID,
+							function()
+								if self.questID ~= questID then return end
+								local handler = self:GetScript("OnMouseDown")
+								if handler then handler(self, button, true) end
+							end) then return end
 				RQE.QuestLogIndexButtonPressed = true
 				-- QuestLogIndexButton:SetScript("OnClick", function(self, button)	-- changed as was causing issues when Mythic/Scenario mode was enabled the button wouldn't click
 					RQE.OkaytoUpdateCreateSteps = true
 					RQE.AllFramesShouldUpdate = true
 
 					-- Make sure player is actually hovering over the button
-					if not self:IsMouseOver() then return end
+					if not confirmed and not self:IsMouseOver() then return end
 					-- A physical quest-row press explicitly returns waypoint ownership
 					-- to the normal DB/Blizzard selector, even for the same quest.
 					RQE:ReleaseActiveCoordblockWaypoint()
@@ -3718,7 +3728,7 @@ function UpdateRQEQuestFrame()
 						RQE:CheckCoordHotspotsInSteps(questID)
 					end
 
-					if IsShiftKeyDown() and button == "LeftButton" then
+					if shiftLeftClick then
 						if RQE.db.profile.debugLevel == "INFO+" then
 							if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
 								print("Not hovering over RQEQuestFrame!")
@@ -3807,7 +3817,7 @@ function UpdateRQEQuestFrame()
 							return
 						end
 
-						if RQE.hoveringOnFrame then
+						if RQE.hoveringOnFrame or confirmed then
 							RQE.DontUpdateFrame = false
 
 							-- Leaving manual step preview mode and returning control to automatic quest progression.
