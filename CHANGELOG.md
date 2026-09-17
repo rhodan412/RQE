@@ -11,6 +11,9 @@
 		- Ordered-route rows in Separate Focus now display as clean clickable text, without raw HTML tags appearing in quest steps.
 		- Step descriptions in the Separate Focus Frame now start closer to the top border across Retail, Season of Discovery, and TBC Anniversary.
 		- Adjusted Separate Focus step spacing again so the text sits comfortably below the border.
+		- Auction-house macros using x now buy the full remaining named quest objective, even when that objective advances through several steps.
+		- WoW Forever now ignores invalid quest-title IDs and displays AceGUI checkboxes when its legacy UI helper is absent.
+		- WoW Forever now uses Forever-specific quest guidance when available and Season of Discovery data for other Vanilla quests.
 
 	Buttons.lua
 		- Deferred the physical C button's existing clear actions behind the shared five-second ordered-route confirmation while leaving internal script-driven clear callers unchanged; declining or ignoring the prompt keeps the quest, frame, and waypoint intact. (2026.09.15.1630)
@@ -20,6 +23,7 @@
 		- Prevented nearest-quest auto-tracking from swapping a current ordered-route step before or during its delayed selection; the stopped-movement callback still redraws the tracker when the swap is intentionally skipped. (2026.09.15.1630)
 		- Kept generated Focus route labels synchronized when an authored coordblock's [Active] state is refreshed, avoiding replacement of lilac route links with their HTML placeholders in Classic/Season of Discovery. (2026.09.15.1630)
 		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while nearest-quest route protection remains in place. (2026.09.15.1642)
+		- Changed x-quantity AH macros to use the matched named objective's total requirement minus progress, rather than the current step's intermediate neededAmt; if Blizzard omits that total, use the highest threshold for the same item and objective so staged collection quests request their full remaining amount in Classic/Season of Discovery. (2026.09.17.0950)
 
 	Client_Classic/QuestingModule.lua
 		- Checked a physical new-quest QuestLogIndexButton press for a current ordered route before releasing waypoint ownership or clearing frame state; Yes resumes that same button's normal selection without requiring continued mouse hover, while No or timeout leaves tracking untouched. (2026.09.15.1630)
@@ -39,6 +43,7 @@
 		- Prevented nearest-quest auto-tracking from swapping a current ordered-route step before or during its delayed selection; the stopped-movement callback still redraws the tracker when the swap is intentionally skipped. (2026.09.15.1630)
 		- Kept generated Focus route labels synchronized when an authored coordblock's [Active] state is refreshed, avoiding replacement of lilac route links with their HTML placeholders in TBC Anniversary. (2026.09.15.1630)
 		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while nearest-quest route protection remains in place. (2026.09.15.1642)
+		- Changed x-quantity AH macros to use the matched named objective's total requirement minus progress, rather than the current step's intermediate neededAmt; if Blizzard omits that total, use the highest threshold for the same item and objective so staged collection quests request their full remaining amount in TBC Anniversary. (2026.09.17.0950)
 
 	Client_TBC/QuestingModule.lua
 		- Checked a physical new-quest QuestLogIndexButton press for a current ordered route before releasing waypoint ownership or clearing frame state; Yes resumes that same button's normal selection without requiring continued mouse hover, while No or timeout leaves tracking untouched. (2026.09.15.1630)
@@ -58,9 +63,17 @@
 		- Blocked Retail nearest-quest auto-tracking while the supertracked current step has coordOrder, including the delayed replacement phase, so a movement or zone refresh cannot silently abandon the route. (2026.09.15.1630)
 		- Preserved generated Focus route [Active] labels while refreshing authored coordblock links, keeping both hyperlink types readable when they coexist in a step description. (2026.09.15.1630)
 		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while Retail nearest-quest route protection remains in place. (2026.09.15.1642)
+		- Changed x-quantity AH macros to use the matched named objective's total requirement minus progress, rather than the current step's intermediate neededAmt; if Blizzard omits that total, use the highest threshold for the same item and objective so staged collection quests request their full remaining amount in Retail. (2026.09.17.0950)
+
+	DatabaseMain.lua
+		- Added a 1.60.x Forever database order that checks ForeverClassic before VanillaSoD, so Forever-specific quest entries take precedence while existing Season of Discovery guidance remains available as a fallback. (2026.09.17.1503)
 
 	QuestingModule.lua
 		- Deferred a physical new-quest QuestLogIndexButton press before any Retail route or frame mutation, asking for a five-second confirmation and resuming the original row selection on Yes even after the pointer moves onto the dialog. (2026.09.15.1630)
+
+	RQE_API.lua
+		- Identified the 1.60.x Forever client separately from Season of Discovery and supplied its missing SetDesaturation helper through the texture method, allowing bundled AceGUI checkboxes to update without changing other clients. (2026.09.17.1442)
+		- Validated Forever quest IDs before calling the native GetTitleForQuestID method, returning no title for out-of-range sentinel values instead of raising an API argument error. (2026.09.17.1442)
 
 	RQE.toc
 		- Updated version# (2026.09.15.1905)
