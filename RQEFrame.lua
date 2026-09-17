@@ -2493,7 +2493,7 @@ function RQE.InitializeSeparateFocusFrame()
 	-- Create the scroll frame
 	if not RQE.SeparateScrollFrame then
 		RQE.SeparateScrollFrame = CreateFrame("ScrollFrame", "RQE_SeparateScrollFrame", RQE.SeparateFocusFrame, "UIPanelScrollFrameTemplate")
-		RQE.SeparateScrollFrame:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", -5, -10)
+		RQE.SeparateScrollFrame:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", -5, -7)
 		RQE.SeparateScrollFrame:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -30, 10)
 		RQE.SeparateScrollFrame:EnableMouseWheel(true)
 		RQE.SeparateScrollFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
@@ -2667,7 +2667,7 @@ function RQE.InitializeSeparateFocusFrame()
 			RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
 			RQE.SeparateStepText:SetHeight(0)
 			RQE.SeparateStepText:SetWordWrap(true)
-			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -7)
 
 			local fallbackText = "No step description available"
 			RQE.SeparateStepText:SetText("")
@@ -2685,7 +2685,7 @@ function RQE.InitializeSeparateFocusFrame()
 				RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
 				RQE.SeparateStepText:SetHeight(0)
 				RQE.SeparateStepText:SetWordWrap(true)
-				RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+				RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -7)
 
 				local formattedText = string.format("1/0: Quest in DB w/o any available steps.")
 				RQE.SeparateStepText:SetText("")
@@ -2777,7 +2777,7 @@ function RQE.InitializeSeparateFocusFrame()
 			StepText:SetTextColor("p", 1, 1, 0.8)
 			StepText:SetTextColor("h1", 1, 1, 0.8)
 			StepText:SetTextColor("h2", 1, 1, 0.8)
-			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -10)
+			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -7)
 
 			local html = paragraphs[1]
 			StepText._rqeCoordblockLinks = {}
@@ -3028,7 +3028,7 @@ function RQE.InitializeSeparateFocusFrame()
 				table.insert(paragraphs, cleaned)
 			end
 
-			local yOffset = -10
+			local yOffset = -7
 			for i, line in ipairs(paragraphs) do
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print(string.format("RQE DEBUG: Rendering FontString paragraph #%d: %s", i, line))
