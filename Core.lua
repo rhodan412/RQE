@@ -15221,8 +15221,9 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 		if questID and questID > 0 then
 			local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
 			if objectives and #objectives > 0 then
-				-- An x macro belongs to the current DB step. Its item tag and
-				-- neededAmt identify the requested item even if its name is uncached.
+				-- The current step's item tag identifies the objective even when
+				-- the item name is uncached. neededAmt may only be an intermediate
+				-- step threshold, not the full quest objective quantity.
 				local questData = RQE.getQuestData and RQE.getQuestData(questID)
 				local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
 				local step = questData and stepIndex and questData[stepIndex]
@@ -15232,15 +15233,38 @@ function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 					and tonumber(step.neededAmt[1])
 				if step and type(step.description) == "string"
 					and step.description:find(itemTag, 1, true)
-					and objectiveIndex and needed and needed > 0 then
+					and objectiveIndex then
 					local objective = objectives[objectiveIndex]
+					local required = objective and tonumber(objective.numRequired)
 					local fulfilled = objective and tonumber(objective.numFulfilled)
-					if fulfilled == nil and GetQuestObjectiveInfo then
-						local _, _, _, apiFulfilled = GetQuestObjectiveInfo(
+					if (required == nil or fulfilled == nil) and GetQuestObjectiveInfo then
+						local _, _, _, apiFulfilled, apiRequired = GetQuestObjectiveInfo(
 							questID, objectiveIndex, false)
-						fulfilled = tonumber(apiFulfilled)
+						required = required or tonumber(apiRequired)
+						fulfilled = fulfilled or tonumber(apiFulfilled)
 					end
-					if fulfilled ~= nil then finalQuantity = needed - fulfilled end
+					if fulfilled ~= nil then
+						if required and required > 0 then
+							finalQuantity = required - fulfilled
+						elseif required == nil then
+							-- When Blizzard omits a total, use the largest threshold
+							-- for this same item/objective, not the current step alone.
+							local target = needed
+							for _, candidate in pairs(questData) do
+								if type(candidate) == "table"
+									and tonumber(candidate.objectiveIndex) == objectiveIndex
+									and type(candidate.description) == "string"
+									and candidate.description:find(itemTag, 1, true) then
+									local threshold = type(candidate.neededAmt) == "table"
+										and tonumber(candidate.neededAmt[1])
+									if threshold and threshold > (target or 0) then
+										target = threshold
+									end
+								end
+							end
+							if target and target > 0 then finalQuantity = target - fulfilled end
+						end
+					end
 				end
 
 				-- Other x macros retain the native-objective fallback, but an
