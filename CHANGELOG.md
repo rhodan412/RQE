@@ -9,6 +9,8 @@
 		- Switching quests or pressing C while following an ordered route now asks for confirmation; No or five seconds without an answer keeps the current quest tracked.
 		- Nearest-quest auto-tracking now leaves a supertracked quest's current ordered step in place across Retail, Season of Discovery, and TBC Anniversary.
 		- Ordered-route rows in Separate Focus now display as clean clickable text, without raw HTML tags appearing in quest steps.
+		- Step descriptions in the Separate Focus Frame now start closer to the top border across Retail, Season of Discovery, and TBC Anniversary.
+		- Adjusted Separate Focus step spacing again so the text sits comfortably below the border.
 
 	Buttons.lua
 		- Deferred the physical C button's existing clear actions behind the shared five-second ordered-route confirmation while leaving internal script-driven clear callers unchanged; declining or ignoring the prompt keeps the quest, frame, and waypoint intact. (2026.09.15.1630)
@@ -29,6 +31,8 @@
 		- Replaced the * button's StepsText click delegation with current-supertracked-step waypoint selection, matching its tooltip to the selected valid same-map hotspot or step coordinate and preserving step-one macro behavior; clicking now places the displayed destination without depending on unrelated StepsText hover flags. (2026.09.15.1556)
 		- Generated current-map, numbered coordOrder links after the complete active step description only in Separate Focus SimpleHTML, colored them lilac rather than coordblock turquoise, and connected click/hover to shared route rebasing and [Active] refresh in Classic/Season of Discovery. (2026.09.15.1630)
 		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
+		- Reduced the Separate Focus scroll area's top inset and the fallback, SimpleHTML, and plain step-text insets from ten to two pixels, raising descriptions without placing them against the border in Classic/Season of Discovery. (2026.09.16.1850)
+		- Increased the Focus scroll and step-text top insets from two to seven pixels after in-game feedback showed the first line too close to the border, retaining a modest upward shift from the original position in Classic/Season of Discovery. (2026.09.16.1903)
 
 	Client_TBC/Core.lua
 		- Resolved dynamic AH macro quantities from the active database or Sandbox step's item tag, neededAmt, and objectiveIndex before using native objective data; rejected empty item-name matches and zero or unknown deficits so TBC Anniversary purchase preparation cannot choose another objective or re-buy a completed one. (2026.09.15.1506)
@@ -46,6 +50,8 @@
 		- Replaced the * button's StepsText click delegation with current-supertracked-step waypoint selection, matching its tooltip to the selected valid same-map hotspot or step coordinate and preserving step-one macro behavior; clicking now places the displayed destination without depending on unrelated StepsText hover flags. (2026.09.15.1556)
 		- Generated current-map, numbered coordOrder links after the complete active step description only in Separate Focus SimpleHTML, colored them lilac rather than coordblock turquoise, and connected click/hover to shared route rebasing and [Active] refresh in TBC Anniversary. (2026.09.15.1630)
 		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
+		- Reduced the Separate Focus scroll area's top inset and the fallback, SimpleHTML, and plain step-text insets from ten to two pixels, raising descriptions without placing them against the border in TBC Anniversary. (2026.09.16.1850)
+		- Increased the Focus scroll and step-text top insets from two to seven pixels after in-game feedback showed the first line too close to the border, retaining a modest upward shift from the original position in TBC Anniversary. (2026.09.16.1903)
 
 	Core.lua
 		- Used the current supertracked database or Sandbox step's authored item tag, neededAmt, and objectiveIndex to calculate an AH macro's remaining quantity before a guarded native-objective fallback; an uncached item name no longer matches the first unrelated objective, and completed or indeterminate requests stop before the Retail purchase confirmation. (2026.09.15.1506)
@@ -61,6 +67,7 @@
 
 	RQEDatabase.lua
 		- Updated some Midnight quests in the DB (2026.09.15.1905)
+		- Updated some Horde Hellfire Peninsula and Zangarmarsh quests in the DB (2026.09.17.0200)
 
 	RQEFrame.lua
 		- Sent modified mouse-wheel input to the Separate Focus scroll frame from its border, scroll frame, content, or SimpleHTML step text instead of requiring hover over only the first text region; plain-wheel input retains the main Quest Helper scroll path in Retail. (2026.09.15.1536)
@@ -69,6 +76,8 @@
 		- Replaced the * button's StepsText click delegation with current-supertracked-step waypoint selection, matching its tooltip to the selected valid same-map hotspot or step coordinate and preserving step-one macro behavior; clicking now places the displayed destination without depending on unrelated StepsText hover flags. (2026.09.15.1556)
 		- Appended current-map coordOrder points from the supertracked database or Sandbox step to Separate Focus only, using clickable lilac SimpleHTML links and shared [Active] route labels without changing StepsText or the authored description. (2026.09.15.1630)
 		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
+		- Reduced the Separate Focus scroll area's top inset and the fallback, SimpleHTML, and plain step-text insets from ten to two pixels, raising descriptions without placing them against the border in Retail. (2026.09.16.1850)
+		- Increased the Focus scroll and step-text top insets from two to seven pixels after in-game feedback showed the first line too close to the border, retaining a modest upward shift from the original position in Retail. (2026.09.16.1903)
 
 	WPUtil.lua
 		- Resolved the shared current-step waypoint helper's stepIndex from the active or displayed numbered step before its legacy fallback, keeping the Separate Focus * button's click and tooltip on the same database or Sandbox step across Retail and legacy clients. (2026.09.15.1556)
