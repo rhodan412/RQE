@@ -159,6 +159,10 @@ function RQE.getQuestData(questID)
 		databaseOrder = { "BurningCrusadeAnniversary", "VanillaSoD" }
 	elseif majorVersion == 2 then
 		databaseOrder = { "BurningCrusade", "Vanilla" }
+	elseif majorVersion == 1 and minorVersion == 60 then
+		-- Forever-specific quests override shared SoD entries; SoD supplies the
+		-- existing Vanilla quest data until a Forever entry is authored.
+		databaseOrder = { "ForeverClassic", "VanillaSoD" }
 	elseif majorVersion == 1 and minorVersion >= 15 then
 		-- databaseOrder = { "VanillaSoD", "Vanilla" }
 		databaseOrder = { "VanillaSoD" }
