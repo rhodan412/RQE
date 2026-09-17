@@ -30,6 +30,7 @@ local version, build, _, tocversion = GetBuildInfo()
 local major, minor, patch = string.match(version, "(%d+)%.(%d+)%.?(%d*)")
 major, minor, patch = tonumber(major), tonumber(minor), tonumber(patch) or 0
 local isLegacyClient = major == 1 or major == 2
+local isForever = major == 1 and minor == 60
 -- Use Blizzard's client-family identifier, not an expansion version number.
 local isRetail = WOW_PROJECT_ID ~= nil
 	and WOW_PROJECT_MAINLINE ~= nil
@@ -44,6 +45,7 @@ RQE.API.GameVersion = {
 	patch = patch,
 	toc = tocversion,
 	isClassicEra = major == 1,
+	isForever = isForever,
 	isTBC = major == 2,
 	isRetail = isRetail,
 	clientProfile = major == 1 and "classic" or (major == 2 and "tbc" or "retail"),
@@ -56,6 +58,16 @@ RQE.API.GameVersion = {
 	supportsAchievements = major >= 3,
 	supportsWarband = major >= 11,
 }
+
+-- Forever omits the global helper expected by the bundled AceGUI checkbox.
+-- Keep the compatibility fallback local to this client family.
+if isForever and type(SetDesaturation) ~= "function" then
+	function SetDesaturation(texture, desaturated)
+		if texture and type(texture.SetDesaturated) == "function" then
+			texture:SetDesaturated(desaturated and true or false)
+		end
+	end
+end
 
 function RQE.API.IsLegacyClient()
 	return RQE.API.GameVersion and RQE.API.GameVersion.usesLegacyQuestLog == true
@@ -3444,6 +3456,14 @@ if isLegacyClient then
 	end
 
 	RQE.API.GetTitleForQuestID = function(questID)
+		-- Forever's native method rejects quest IDs outside a signed 32-bit range.
+		-- Some quest sources use larger sentinel values during early startup.
+		if isForever then
+			questID = tonumber(questID)
+			if not questID or questID < 1 or questID > 2147483647 or questID % 1 ~= 0 then
+				return nil
+			end
+		end
 		if Has(NativeQuestLog, "GetTitleForQuestID") then return NativeQuestLog.GetTitleForQuestID(questID) end
 		local index = RQE.API.GetLogIndexForQuestID(questID)
 		return index and type(GetQuestLogTitle) == "function" and GetQuestLogTitle(index) or nil
