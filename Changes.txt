@@ -1,4 +1,4 @@
-12.1.0.4
+12.1.0.4 (2026.09.18)
 
 	**HIGHLIGHTS**
 		- Auction-house quantity macros now request only the remaining quest items, even when an item name has not loaded, across Retail, Season of Discovery, and TBC Anniversary.
@@ -14,6 +14,10 @@
 		- Auction-house macros using x now buy the full remaining named quest objective, even when that objective advances through several steps.
 		- WoW Forever now ignores invalid quest-title IDs and displays AceGUI checkboxes when its legacy UI helper is absent.
 		- WoW Forever now uses Forever-specific quest guidance when available and Season of Discovery data for other Vanilla quests.
+		- Retail vehicle quests now return to the preceding control step when its required aura disappears, keeping quest guidance aligned after leaving a vehicle.
+		- Cancel-aura macros now show their full commands in the Magic Button tooltip on Retail, Season of Discovery, WoW Forever, and TBC Anniversary.
+		- Cancel-aura macro arrays now show "Cancel Aura:" above the spell's native tooltip while keeping their chosen Magic Button icon on every supported client.
+		- The Retail quest tracker now waits until combat ends before restoring its visibility, preventing protected-action errors during scenario visibility checks.
 
 	Buttons.lua
 		- Deferred the physical C button's existing clear actions behind the shared five-second ordered-route confirmation while leaving internal script-driven clear callers unchanged; declining or ignoring the prompt keeps the quest, frame, and waypoint intact. (2026.09.15.1630)
@@ -64,12 +68,18 @@
 		- Preserved generated Focus route [Active] labels while refreshing authored coordblock links, keeping both hyperlink types readable when they coexist in a step description. (2026.09.15.1630)
 		- Removed the interim route-HTML refresh path after the Focus route moved to native buttons; authored coordblock [Active] refresh now retains its original renderer while Retail nearest-quest route protection remains in place. (2026.09.15.1642)
 		- Changed x-quantity AH macros to use the matched named objective's total requirement minus progress, rather than the current step's intermediate neededAmt; if Blizzard omits that total, use the highest threshold for the same item and objective so staged collection quests request their full remaining amount in Retail. (2026.09.17.0950)
+		- Deferred Retail UpdateTrackerVisibility changes to the RQE and Blizzard Objective Trackers during combat, including non-scenario updates, because RQEQuestFrame anchors secure quest-item buttons and Show can be protected during lockdown. (2026.09.18.0910)
 
 	DatabaseMain.lua
 		- Added a 1.60.x Forever database order that checks ForeverClassic before VanillaSoD, so Forever-specific quest entries take precedence while existing Season of Discovery guidance remains available as a fallback. (2026.09.17.1503)
 
+	EventManager.lua
+		- Limited Retail UPDATE_VEHICLE_ACTIONBAR quest checks to the active step and its predecessor, including single and grouped buff/debuff checks; coalesced rapid bar updates, reselected a failed preceding positive aura step before the queued periodic check, and corrected vehicle-specific debug messages so leaving a controlled vehicle restores the appropriate quest guidance without scanning unrelated steps. (2026.09.17.1835)
+		- Reapplied the current Retail tracker visibility settings once on PLAYER_REGEN_ENABLED when a combat-time update was deferred, so configuration and scenario changes take effect after lockdown. (2026.09.18.0910)
+
 	QuestingModule.lua
 		- Deferred a physical new-quest QuestLogIndexButton press before any Retail route or frame mutation, asking for a five-second confirmation and resuming the original row selection on Yes even after the pointer moves onto the dialog. (2026.09.15.1630)
+		- Stopped the Retail scenario visibility watchdog from retrying tracker Show during combat and deferred Objective Tracker enforcement from frame hooks until combat ends. (2026.09.18.0910)
 
 	RQE_API.lua
 		- Identified the 1.60.x Forever client separately from Season of Discovery and supplied its missing SetDesaturation helper through the texture method, allowing bundled AceGUI checkboxes to update without changing other clients. (2026.09.17.1442)
@@ -80,7 +90,8 @@
 
 	RQEDatabase.lua
 		- Updated some Midnight quests in the DB (2026.09.15.1905)
-		- Updated some Horde Hellfire Peninsula and Zangarmarsh quests in the DB (2026.09.17.0200)
+		- Updated Horde Hellfire Peninsula and Zangarmarsh quests in the DB (2026.09.17.0200)
+		- Updated some Horde Shadowmoon Valley quests in the DB (2026.09.18.1623)
 
 	RQEFrame.lua
 		- Sent modified mouse-wheel input to the Separate Focus scroll frame from its border, scroll frame, content, or SimpleHTML step text instead of requiring hover over only the first text region; plain-wheel input retains the main Quest Helper scroll path in Retail. (2026.09.15.1536)
@@ -91,6 +102,10 @@
 		- Replaced the interim SimpleHTML route markup with native lilac Focus buttons below the existing description renderer; plain steps no longer expose raw HTML tags, authored item/spell/coordblock display remains unchanged, and StepsText receives no generated route rows. (2026.09.15.1642)
 		- Reduced the Separate Focus scroll area's top inset and the fallback, SimpleHTML, and plain step-text insets from ten to two pixels, raising descriptions without placing them against the border in Retail. (2026.09.16.1850)
 		- Increased the Focus scroll and step-text top insets from two to seven pixels after in-game feedback showed the first line too close to the border, retaining a modest upward shift from the original position in Retail. (2026.09.16.1903)
+
+	RQEMacro.lua
+		- Recognized #showtooltip item:67097 on Retail and item:54068 on legacy clients as cancel-aura macro markers, displaying a Cancel Aura heading with the complete macro body on the Magic Button; let these marked macros bypass macroArray spell-tooltip overrides so their /cancelaura command remains visible on every supported client. (2026.09.17.1855)
+		- Gave macroArray entries with spellIDTooltip their spell tooltip even when their macro uses the cancel-aura item marker; detected /cancelaura in the active macro and prefixed the native spell details with "Cancel Aura:", using AddSpellByID where available and a first-line legacy fallback, while plain marked macros retain the full macro-text tooltip. (2026.09.17.1913)
 
 	WPUtil.lua
 		- Resolved the shared current-step waypoint helper's stepIndex from the active or displayed numbered step before its legacy fallback, keeping the Separate Focus * button's click and tooltip on the same database or Sandbox step across Retail and legacy clients. (2026.09.15.1556)
