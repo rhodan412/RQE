@@ -127,6 +127,7 @@ local eventsToRegister = {
 	"UNIT_SPELLCAST_SUCCEEDED",
 	"UPDATE_INSTANCE_INFO",
 	"UPDATE_OVERRIDE_ACTIONBAR",
+	"UPDATE_VEHICLE_ACTIONBAR",
 	"UPDATE_MOUSEOVER_UNIT",
 	-- "UPDATE_SHAPESHIFT_COOLDOWN",
 	-- "UPDATE_SHAPESHIFT_FORM",
@@ -181,6 +182,7 @@ local function CurrentStepUsesObjectiveStatus(questID)
 
 	return false
 end
+
 
 -- Retail refreshes quest-map pins as part of super-tracking changes. An
 -- automatic change made from an event handler during any combat can taint that
@@ -365,6 +367,7 @@ local function HandleEvents(frame, event, ...)
 		UNIT_QUEST_LOG_CHANGED = RQE.handleUnitQuestLogChange,
 		UPDATE_INSTANCE_INFO = RQE.handleInstanceInfoUpdate,
 		UPDATE_OVERRIDE_ACTIONBAR = RQE.handleOverrideActionBar,
+		UPDATE_VEHICLE_ACTIONBAR = RQE.handleVehicleActionBar,
 		UPDATE_MOUSEOVER_UNIT = RQE.handleUpdateMouseoverUnit,
 		UPDATE_SHAPESHIFT_COOLDOWN = RQE.handleUpdateShapeShiftCD,
 		UPDATE_SHAPESHIFT_FORM = RQE.handleUpdateShapeShiftForm,
@@ -1235,6 +1238,12 @@ end
 -- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 function RQE.handlePlayerRegenEnabled()
 	local mythicMode = RQE.db.profile.mythicScenarioMode
+
+	-- Reapply the latest tracker settings after a combat-time visibility request.
+	if RQE.UpdateTrackerVisibilityAfterCombat then
+		RQE.UpdateTrackerVisibilityAfterCombat = nil
+		RQE:UpdateTrackerVisibility()
+	end
 
 	-- Apply the latest automatic tracking request deferred by combat only after
 	-- Blizzard's combat UI transition has settled. The common helper also keeps
@@ -2793,6 +2802,93 @@ function RQE.handleOverrideActionBar()
 			end
 		end)
 	end
+end
+
+
+-- Recheck the active vehicle-related quest steps when the vehicle action bar changes.
+function RQE.handleVehicleActionBar()
+	local questID = RQE.API.GetSuperTrackedQuestID()
+	if not questID then return end
+
+	-- Vehicle and override bar updates can arrive together. Keep only the latest
+	-- vehicle callback and let the player's aura state settle before inspecting it.
+	if RQE._vehicleActionBarTimer then
+		RQE._vehicleActionBarTimer:Cancel()
+	end
+	RQE._vehicleActionBarTimer = C_Timer.NewTimer(0.4, function()
+		RQE._vehicleActionBarTimer = nil
+
+		-- A different quest may have become supertracked during the delay.
+		if RQE.API.GetSuperTrackedQuestID() ~= questID then return end
+
+		local questData = RQE.getQuestData(questID)
+		local stepIndex = tonumber(RQE.AddonSetStepIndex)
+			or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+			or 1
+		local currentStep = questData and questData[stepIndex]
+		local previousStep = questData and questData[stepIndex - 1]
+		if not currentStep then return end
+
+		local function IsAuraCheck(checkData)
+			return checkData and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff")
+		end
+
+		-- Both the single `check` form and each entry in `checks` can test an aura.
+		local function StepHasAuraCheck(stepData)
+			if not stepData then return false end
+			if IsAuraCheck(stepData) then return true end
+			if type(stepData.checks) == "table" then
+				for _, checkData in ipairs(stepData.checks) do
+					if IsAuraCheck(checkData) then return true end
+				end
+			end
+			return false
+		end
+
+		local currentHasAuraCheck = StepHasAuraCheck(currentStep)
+		local previousHasAuraCheck = StepHasAuraCheck(previousStep)
+		if not currentHasAuraCheck and not previousHasAuraCheck then return end
+
+		-- When the selected action step follows an aura gate, losing that aura
+		-- requires selecting the gate again. Periodic checks alone retain the
+		-- current step when an earlier check fails.
+		local function PositiveAuraCheckFailed(checkData, checkStepIndex)
+			if not IsAuraCheck(checkData) or checkData.mod == "NOT" or checkData.logic == "NOT" then
+				return false
+			end
+			if type(checkData.check) ~= "table" or #checkData.check == 0
+				or type(checkData.neededAmt) ~= "table" or #checkData.neededAmt == 0 then
+				return false
+			end
+			return not RQE[checkData.funct](RQE, questID, checkStepIndex, checkData.check, checkData.neededAmt)
+		end
+
+		local previousGateFailed = false
+		if not currentHasAuraCheck and previousHasAuraCheck then
+			previousGateFailed = PositiveAuraCheckFailed(previousStep, stepIndex - 1)
+			if type(previousStep.checks) == "table" then
+				for _, checkData in ipairs(previousStep.checks) do
+					if PositiveAuraCheckFailed(checkData, stepIndex - 1) then
+						previousGateFailed = true
+						break
+					end
+				end
+			end
+		end
+
+		if previousGateFailed then
+			if RQE.db.profile.debugLevel == "INFO+" then
+				print("UPDATE_VEHICLE_ACTIONBAR: Aura gate failed; returning quest", questID,
+					"from step", stepIndex, "to step", stepIndex - 1)
+			end
+			RQE:ClickWaypointButtonForIndex(stepIndex - 1)
+		elseif RQE.db.profile.debugLevel == "INFO+" then
+			print("UPDATE_VEHICLE_ACTIONBAR: Rechecking quest", questID, "at step", stepIndex)
+		end
+
+		-- Queue after any rewind so the checker starts from the selected step.
+		RQE:QueuePeriodicChecks("UPDATE_VEHICLE_ACTIONBAR", 0.2, questID)
+	end)
 end
 
 
