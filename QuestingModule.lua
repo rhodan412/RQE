@@ -364,7 +364,7 @@ end
 -- Failsafe check handled regularly to ensure that RQEQuestFrame is being correctly managed
 local objectiveTrackerWatchdog = CreateFrame("Frame")
 objectiveTrackerWatchdog:SetScript("OnUpdate", function()
-	if RQE.db.profile.mythicScenarioMode then
+	if RQE.db.profile.mythicScenarioMode and not InCombatLockdown() then
 		if not C_Scenario.IsInScenario() then
 			RQE:UpdateTrackerVisibility()
 		end
@@ -374,6 +374,10 @@ end)
 
 function RQE:EnforceObjectiveTrackerVisibility()
 	if RQE.db.profile.toggleBlizzObjectiveTracker or RQE.db.profile.mythicScenarioMode then
+		return
+	end
+	if InCombatLockdown() then
+		RQE.UpdateTrackerVisibilityAfterCombat = true
 		return
 	end
 
@@ -3214,7 +3218,7 @@ function RQE:QuestRewardsTooltip(tooltip, questID)
 		if choiceItemsCount > 0 then tooltip:AddLine("\nAdditional rewards:") else tooltip:AddLine("Rewards:") end
 
 		if rewardXP > 0 then tooltip:AddLine("XP: " .. FormatLargeNumber(rewardXP), 1, 1, 1) end
-		if rewardMoney > 0 then tooltip:AddLine("Gold: " .. GetCoinTextureString(rewardMoney), 1, 1, 1) end
+		if rewardMoney > 0 then tooltip:AddLine("Gold: " .. C_CurrencyInfo.GetCoinTextureString(rewardMoney), 1, 1, 1) end
 		if rewardArtifactXP > 0 then tooltip:AddLine("Artifact Power: " .. FormatLargeNumber(rewardArtifactXP), 1, 1, 1) end
 		if rewardHonor > 0 then tooltip:AddLine("Honor: " .. rewardHonor, 1, 1, 1) end
 		if playerTitle then tooltip:AddLine("Title: " .. playerTitle, 1, 1, 1) end
