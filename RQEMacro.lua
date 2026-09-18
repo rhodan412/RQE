@@ -8,6 +8,20 @@ Handles the creation of the macro button as it relates to quests in the DB file
 
 RQEMacro = RQEMacro or {}
 local isRetail = RQE.IsRetail == true
+local cancelAuraTooltipItemID = isRetail and 67097 or 54068
+
+-- The dedicated item marker identifies a cancel-aura macro on each client.
+local function IsCancelAuraTooltipMacro(macroBody)
+	return type(macroBody) == "string"
+		and tonumber(macroBody:match("^%s*#showtooltip%s+item:(%d+)")) == cancelAuraTooltipItemID
+end
+
+local function HasCancelAuraCommand(macroBody)
+	if type(macroBody) ~= "string" then return false end
+	local lowerBody = macroBody:lower()
+	return lowerBody:match("^%s*/cancelaura%s+") ~= nil
+		or lowerBody:match("[\r\n]%s*/cancelaura%s+") ~= nil
+end
 
 RQEMacro.pendingMacroSets = RQEMacro.pendingMacroSets or {} -- Queue for macro set operations
 RQEMacro.pendingMacroOperations = RQEMacro.pendingMacroOperations or {}
@@ -482,6 +496,39 @@ local function RQEShowWrappedMacroTooltip(owner, title, macroBody)
 	GameTooltip:Show()
 end
 
+-- Put the action label above Blizzard's spell details for cancel-aura arrays.
+local function RQEShowCancelAuraSpellTooltip(owner, spellID, macroBody)
+	GameTooltip:SetOwner(owner, "ANCHOR_BOTTOMLEFT")
+	GameTooltip:SetMinimumWidth(0)
+
+	-- AddSpellByID appends the native spell tooltip after our first line when
+	-- the client provides it, preserving range, channeling, and spell text.
+	if type(GameTooltip.AddSpellByID) == "function" then
+		GameTooltip:SetText("Cancel Aura:", 1, 0.82, 0)
+		GameTooltip:AddSpellByID(spellID)
+		if GameTooltip:NumLines() > 1 then
+			GameTooltip:Show()
+			return
+		end
+	end
+
+	-- Legacy fallback: retain the native spell tooltip and place the label
+	-- above its title inside the first text region.
+	GameTooltip:ClearLines()
+	GameTooltip:SetSpellByID(spellID)
+	local tooltipName = GameTooltip:GetName()
+	local titleLine = tooltipName and _G[tooltipName .. "TextLeft1"]
+	local spellTitle = titleLine and titleLine:GetText()
+	if spellTitle and spellTitle ~= "" then
+		titleLine:SetText("|cffffd200Cancel Aura:|r\n" .. spellTitle)
+		GameTooltip:Show()
+		return
+	end
+
+	-- An unknown spell ID can still show the actionable macro text.
+	RQEShowWrappedMacroTooltip(owner, "Cancel Aura:", macroBody)
+end
+
 
 -- Function to update the Magic Button Tooltip dynamically
 function RQEMacro:UpdateMagicButtonTooltip()
@@ -502,15 +549,28 @@ function RQEMacro:UpdateMagicButtonTooltip()
 
 		if step and step.macroArray and type(step.macroArray) == "table" then
 			local entry = step.macroArray[1]
+			-- Spell-backed arrays take precedence over an item marker; plain
+			-- marked macros still use the full macro-text tooltip below.
 			if entry and entry.spellIDTooltip then
 				local spellID = entry.spellIDTooltip
 
-				-- Override existing OnEnter/OnLeave behavior for spell tooltip
+				-- Read the current macro on hover so UPDATE_MACROS timing cannot
+				-- leave an old cancel-aura classification on the button.
 				MagicButton:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
-					GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
-					GameTooltip:SetSpellByID(spellID)
-					GameTooltip:Show()
+					local hoverMacroIndex = GetMacroIndexByName("RQE Macro")
+					local hoverMacroBody
+					if hoverMacroIndex and hoverMacroIndex > 0 then
+						local _, _, body = GetMacroInfo(hoverMacroIndex)
+						hoverMacroBody = body
+					end
+					if HasCancelAuraCommand(hoverMacroBody) then
+						RQEShowCancelAuraSpellTooltip(self, spellID, hoverMacroBody)
+					else
+						GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+						GameTooltip:SetSpellByID(spellID)
+						GameTooltip:Show()
+					end
 				end)
 				MagicButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
@@ -527,14 +587,14 @@ function RQEMacro:UpdateMagicButtonTooltip()
 			[841] = true, [2554] = true, [4588] = true, [4787] = true,
 			[5061] = true, [5830] = true, [23784] = true, [28372] = true,
 			[28885] = true, [30817] = true, [28912] = true, [45786] = true,
-			[118474] = true, [143680] = true, [153541] = true,
+			[67097] = true, [118474] = true, [143680] = true, [153541] = true,
 		}
 	else
 		exceptionItemIDs = {
 			[841] = true, [2554] = true, [4588] = true, [4787] = true,
 			[5061] = true, [5830] = true, [2058] = true, [11753] = true,
 			[206995] = true, [4382] = true, [21561] = true, [20337] = true,
-			[7270] = true, [3081] = true, [1165] = true,
+			[7270] = true, [3081] = true, [1165] = true, [54068] = true,
 		}
 	end
 
@@ -581,6 +641,8 @@ function RQEMacro:UpdateMagicButtonTooltip()
 					RQEShowWrappedMacroTooltip(self, "Pull Timer!", macroBody)
 				elseif itemID == 2554 then
 					RQEShowWrappedMacroTooltip(self, "Turn in the quest", macroBody)
+				elseif itemID == cancelAuraTooltipItemID and IsCancelAuraTooltipMacro(macroBody) then
+					RQEShowWrappedMacroTooltip(self, "Cancel Aura", macroBody)
 				elseif itemID == 4588 then
 					RQEShowWrappedMacroTooltip(self, "Kill Mob(s)", macroBody)
 				elseif itemID == 4787 then
