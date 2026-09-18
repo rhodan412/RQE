@@ -2272,6 +2272,13 @@ end
 
 -- Helper function to toggle display of the RQEQuestFrame in the mythicScenarioMode
 function RQE:UpdateTrackerVisibility()
+	-- The tracker is an anchor for secure quest-item buttons. Visibility and
+	-- ObjectiveTrackerFrame changes must wait until combat lockdown ends.
+	if InCombatLockdown() then
+		self.UpdateTrackerVisibilityAfterCombat = true
+		return
+	end
+
 	local inScenario = C_Scenario.IsInScenario()
 	local mythicMode = self.db.profile.mythicScenarioMode
 	local configWantsQuestFrame = self.db.profile.enableQuestFrame
@@ -2288,11 +2295,6 @@ function RQE:UpdateTrackerVisibility()
 		if self.EnforceObjectiveTrackerVisibility then
 			self:EnforceObjectiveTrackerVisibility()
 		end
-		return
-	end
-
-	if InCombatLockdown() and inScenario then
-		-- print(">> InCombatLockdown() – skipping UpdateTrackerVisibility")
 		return
 	end
 
