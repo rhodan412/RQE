@@ -3387,6 +3387,132 @@ RQE.API.IsOnQuest = function(questID)
 end
 
 
+-- Runs a legacy selected-quest query for a specific quest while preserving the
+-- player's prior quest-log selection. Older timer/failure APIs do not accept a
+-- quest ID and instead inspect whichever quest is selected in the quest log.
+local function QueryLegacySelectedQuest(questID, query)
+	if not isLegacyClient
+		or type(query) ~= "function"
+		or type(GetQuestLogSelection) ~= "function"
+		or type(SelectQuestLogEntry) ~= "function"
+	then
+		return nil
+	end
+
+	local questLogIndex = RQE.API.GetLogIndexForQuestID and RQE.API.GetLogIndexForQuestID(questID)
+	if not questLogIndex then
+		return nil
+	end
+
+	local rawPreviousSelection = GetQuestLogSelection()
+	local previousSelection = tonumber(rawPreviousSelection) or 0
+	if previousSelection ~= questLogIndex then
+		SelectQuestLogEntry(questLogIndex)
+	end
+
+	local succeeded, result = pcall(query)
+	if previousSelection ~= questLogIndex then
+		SelectQuestLogEntry(previousSelection)
+	end
+
+	return succeeded and result or nil
+end
+
+
+-- Use: local isFailed = RQE.API.IsQuestFailed(questID)
+-- Normalizes Retail's ID-based API and the failure value returned by legacy
+-- quest-log entries. IsCurrentQuestFailed is retained as a final capability
+-- fallback for older clients whose log entry omits the completion state.
+RQE.API.IsQuestFailed = function(questID)
+	questID = tonumber(questID)
+	if not questID or questID <= 0 then
+		return false
+	end
+
+	local isFailed = isLegacyClient and NativeQuestLog.IsFailed
+		or (C_QuestLog and C_QuestLog.IsFailed)
+	if type(isFailed) == "function" then
+		return isFailed(questID) == true
+	end
+
+	local questLogIndex = RQE.API.GetLogIndexForQuestID and RQE.API.GetLogIndexForQuestID(questID)
+	local questInfo = questLogIndex and RQE.API.GetQuestLogInfo and RQE.API.GetQuestLogInfo(questLogIndex)
+	if questInfo then
+		return questInfo.isComplete == -1 or questInfo.isComplete == "-1"
+	end
+
+	if type(IsCurrentQuestFailed) == "function" then
+		return QueryLegacySelectedQuest(questID, IsCurrentQuestFailed) == true
+	end
+
+	return false
+end
+
+
+-- Use: local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds(questID)
+-- Ordinary timed quests use C_QuestLog.GetTimeAllowed on current Retail. Task
+-- quests expose a separate seconds-left API, while legacy quest logs expose
+-- only GetQuestLogTimeLeft for the currently selected quest.
+RQE.API.GetQuestTimeRemainingSeconds = function(questID)
+	questID = tonumber(questID)
+	if not questID or questID <= 0 then
+		return nil
+	end
+
+	local getTimeAllowed = isLegacyClient and NativeQuestLog.GetTimeAllowed
+		or (C_QuestLog and C_QuestLog.GetTimeAllowed)
+	if type(getTimeAllowed) == "function" then
+		local totalTime, elapsedTime = getTimeAllowed(questID)
+		totalTime, elapsedTime = tonumber(totalTime), tonumber(elapsedTime)
+		if totalTime and elapsedTime then
+			return math.max(0, totalTime - elapsedTime)
+		end
+	end
+
+	local getTaskSeconds = isLegacyClient and NativeTaskQuest.GetQuestTimeLeftSeconds
+		or (C_TaskQuest and C_TaskQuest.GetQuestTimeLeftSeconds)
+	if type(getTaskSeconds) == "function" then
+		local rawSecondsLeft = getTaskSeconds(questID)
+		local secondsLeft = tonumber(rawSecondsLeft)
+		if secondsLeft then
+			return math.max(0, secondsLeft)
+		end
+	end
+
+	if type(GetQuestLogTimeLeft) == "function" then
+		local secondsLeft = QueryLegacySelectedQuest(questID, GetQuestLogTimeLeft)
+		secondsLeft = tonumber(secondsLeft)
+		if secondsLeft then
+			return math.max(0, secondsLeft)
+		end
+	end
+
+	return nil
+end
+
+
+-- Use: local shouldDisplay = RQE.API.ShouldDisplayTimeRemaining(questID)
+-- Some 9.x-era clients expose the explicit predicate, while newer clients
+-- communicate the same state by returning timing data from GetTimeAllowed.
+RQE.API.ShouldDisplayTimeRemaining = function(questID)
+	questID = tonumber(questID)
+	if not questID or questID <= 0 then
+		return false
+	end
+
+	local shouldDisplay = isLegacyClient and NativeQuestLog.ShouldDisplayTimeRemaining
+		or (C_QuestLog and C_QuestLog.ShouldDisplayTimeRemaining)
+	if type(shouldDisplay) == "function" and shouldDisplay(questID) == true then
+		return true
+	end
+
+	-- Some Retail quests return false from the display predicate while still
+	-- exposing a valid countdown through GetTimeAllowed. Treat timing data as
+	-- authoritative so watched, non-supertracked timed quests remain visible.
+	return RQE.API.GetQuestTimeRemainingSeconds(questID) ~= nil
+end
+
+
 -- Use: local isWorldQuest = RQE.API.IsWorldQuest(questID)
 -- instead of: C_QuestLog.IsWorldQuest(questID)
 RQE.API.IsWorldQuest = function(questID)
