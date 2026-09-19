@@ -610,6 +610,20 @@ RQE.QuestNameText:SetHeight(0)
 RQE.QuestNameText:EnableMouse(true)
 
 
+-- Classic's GetQuestLogTimeLeft reads the selected quest rather than taking a
+-- quest ID. Keep its countdown on this single-quest helper instead of trying
+-- to attach that state to every row in the multi-quest tracker.
+RQE.QuestStatusText = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -12)
+RQE.QuestStatusText:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
+RQE.QuestStatusText:SetJustifyH("LEFT")
+RQE.QuestStatusText:SetJustifyV("TOP")
+RQE.QuestStatusText:SetWidth(RQEFrame:GetWidth() - 35)
+RQE.QuestStatusText:SetHeight(0)
+RQE.QuestStatusText:SetText("")
+RQE.QuestStatusText:Hide()
+
+
 -- Create DirectionTextFrame
 RQE.DirectionTextFrame = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 
@@ -649,6 +663,92 @@ RQE.DirectionTextFrame:SetWordWrap(true)
 RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 50)
 RQE.DirectionTextFrame:SetHeight(0)
 RQE.DirectionTextFrame:EnableMouse(true)
+
+
+local function AnchorDirectionBelowQuestStatus(hasStatus)
+	RQE.DirectionTextFrame:ClearAllPoints()
+	if hasStatus then
+		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestStatusText, "BOTTOMLEFT", 0, -10)
+	elseif RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
+		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -20)
+	else
+		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -20)
+	end
+end
+
+
+local legacyQuestTimerState = { questID = nil, expiresAt = nil, nextProbe = 0 }
+
+local function GetLegacyQuestTimerSeconds(questID)
+	local now = GetTime()
+	if legacyQuestTimerState.questID ~= questID then
+		legacyQuestTimerState.questID = questID
+		legacyQuestTimerState.expiresAt = nil
+		legacyQuestTimerState.nextProbe = 0
+	end
+
+	-- Resynchronize occasionally so completing, restarting, or extending a
+	-- timer is reflected without selecting the quest every rendered second.
+	if now >= legacyQuestTimerState.nextProbe then
+		local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds(questID)
+		legacyQuestTimerState.nextProbe = now + 5
+		legacyQuestTimerState.expiresAt = secondsLeft ~= nil and (now + secondsLeft) or nil
+	end
+
+	return legacyQuestTimerState.expiresAt
+		and math.max(0, legacyQuestTimerState.expiresAt - now) or nil
+end
+
+
+local function UpdateLegacyQuestStatusText()
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID
+		and RQE.API.GetSuperTrackedQuestID()
+	local questID = tonumber(RQE.searchedQuestID)
+		or tonumber(RQE.DisplayedQuestID)
+		or tonumber(superTrackedQuestID)
+	local statusText, isFailed, isUrgent
+
+	if questID and RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
+		statusText, isFailed = FAILED or "Failed", true
+		legacyQuestTimerState.expiresAt = nil
+		legacyQuestTimerState.nextProbe = 0
+	elseif questID and RQE.API.GetQuestTimeRemainingSeconds then
+		local secondsLeft = GetLegacyQuestTimerSeconds(questID)
+		if secondsLeft ~= nil then
+			local displaySeconds = math.max(0, math.ceil(secondsLeft))
+			local timeText = SecondsToTime and SecondsToTime(displaySeconds)
+				or tostring(displaySeconds)
+			statusText = (TIME_REMAINING or "Time Remaining:") .. " " .. timeText
+			isUrgent = displaySeconds <= 59
+		end
+	end
+
+	local wasShown = RQE.QuestStatusText:IsShown()
+	RQE.QuestStatusText:SetText(statusText or "")
+	if isFailed then
+		RQE.QuestStatusText:SetTextColor(1, 51/255, 51/255)
+	elseif isUrgent then
+		RQE.QuestStatusText:SetTextColor(1, 102/255, 51/255)
+	else
+		RQE.QuestStatusText:SetTextColor(102/255, 204/255, 102/255)
+	end
+	RQE.QuestStatusText:SetShown(statusText ~= nil)
+	AnchorDirectionBelowQuestStatus(statusText ~= nil)
+
+	if wasShown ~= (statusText ~= nil) and RQE.UpdateContentSize then
+		RQE:UpdateContentSize()
+	end
+end
+
+
+local questStatusUpdater = CreateFrame("Frame", nil, RQEFrame)
+questStatusUpdater.elapsed = 0
+questStatusUpdater:SetScript("OnUpdate", function(self, elapsed)
+	self.elapsed = self.elapsed + elapsed
+	if self.elapsed < 1 then return end
+	self.elapsed = 0
+	UpdateLegacyQuestStatusText()
+end)
 
 
 -- Create QuestDescription Text
@@ -1302,6 +1402,7 @@ function AdjustRQEFrameWidths(newWidth)
 	-- Adjust width for each element
 	RQE.QuestIDText:SetWidth(newWidth - dynamicPadding - 25)
 	RQE.QuestNameText:SetWidth(newWidth - dynamicPadding - 65)
+	RQE.QuestStatusText:SetWidth(newWidth - dynamicPadding - 65)
 	RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
 	RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
 	RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
@@ -2333,7 +2434,8 @@ function RQE:UpdateContentSize()
 	self.StepsText = self.StepsText or {}	-- Failsafe to ensure that table is loaded following VARIABLES_LOADED event firing
 
 	local n = #self.StepsText	-- The number of steps
-	local totalHeight = 110 + (40 * n) + (40 * n) + 40 * (n - 1) + 25
+	local statusHeight = self.QuestStatusText and self.QuestStatusText:IsShown() and 20 or 0
+	local totalHeight = 110 + (40 * n) + (40 * n) + 40 * (n - 1) + 25 + statusHeight
 	content:SetHeight(totalHeight)
 	slider:SetMinMaxValues(0, content:GetHeight())
 end
