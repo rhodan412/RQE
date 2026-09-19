@@ -2576,8 +2576,60 @@ function RQE:ClearRQEQuestFrame()
 			if QuestLogIndexButton.QuestZoneInfo then
 				QuestLogIndexButton.QuestZoneInfo:Hide()
 			end
+			if QuestLogIndexButton.QuestStatusInfo then
+				QuestLogIndexButton.QuestStatusInfo:Hide()
+			end
 		end
 	end
+end
+
+
+-- Classic's timer API reports only the currently selected quest, so countdowns
+-- belong to the single-quest RQEFrame. The multi-quest tracker still shows a
+-- failure line between the affected quest's name and zone/distance line.
+local function GetTrackedQuestStatusText(questID)
+	if RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
+		return FAILED or "Failed", true
+	end
+	return nil, false
+end
+
+
+local function UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
+	local statusLine = questButton and questButton.QuestStatusInfo
+	if not statusLine or not questNameLine or not followingLine then return end
+
+	local statusText, isFailed = GetTrackedQuestStatusText(questID)
+	statusLine:SetText(statusText or "")
+	if isFailed then
+		statusLine:SetTextColor(1, 51/255, 51/255)
+	else
+		statusLine:SetTextColor(1, 209/255, 0)
+	end
+	statusLine:SetShown(statusText ~= nil)
+
+	followingLine:ClearAllPoints()
+	followingLine:SetPoint("TOPLEFT", statusText and statusLine or questNameLine, "BOTTOMLEFT", 0, -3)
+	return statusText ~= nil, isFailed
+end
+
+
+local function StartTrackedQuestStatusUpdates(questButton, questID, questNameLine, followingLine)
+	local hasStatus, isFailed = UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
+	if not hasStatus or isFailed then
+		questButton:SetScript("OnUpdate", nil)
+		return
+	end
+	questButton.rqeQuestStatusElapsed = 0
+	questButton:SetScript("OnUpdate", function(self, elapsed)
+		self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
+		if self.rqeQuestStatusElapsed < 0.25 then return end
+		self.rqeQuestStatusElapsed = 0
+		local stillHasStatus, nowFailed = UpdateTrackedQuestStatusLine(self, questID, questNameLine, followingLine)
+		if not stillHasStatus or nowFailed then
+			self:SetScript("OnUpdate", nil)
+		end
+	end)
 end
 
 
@@ -3484,6 +3536,7 @@ function UpdateRQEQuestFrame()
 	-- end
 
 	local campaignQuestCount, regularQuestCount, worldQuestCount, bonusQuestCount = 0, 0, 0, 0
+	local campaignStatusLineCount, regularStatusLineCount = 0, 0
 	RQE.campaignQuestCount = campaignQuestCount
 	RQE.bonusQuestCount = bonusQuestCount
 	RQE.regularQuestCount = regularQuestCount + RQE.bonusQuestCount -- Include bonus quests in the count
@@ -3510,7 +3563,8 @@ function UpdateRQEQuestFrame()
 
 	for _, watchedQuest in ipairs(RQE.SortedWatchedQuests) do
 		local questID = watchedQuest.questID
-		if C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID) then
+		local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+		if isCampaignQuest then
 			RQE.campaignQuestCount = RQE.campaignQuestCount + 1
 		elseif RQE.API.IsWorldQuest(questID) then
 		--elseif C_QuestLog.IsWorldQuest(questID) then
@@ -3518,14 +3572,21 @@ function UpdateRQEQuestFrame()
 		-- elseif C_QuestLog.IsQuestTask(questID) then
 			-- RQE.worldQuestCount = RQE.worldQuestCount + 1
 		end
+		if not RQE.API.IsWorldQuest(questID) and GetTrackedQuestStatusText(questID) then
+			if isCampaignQuest then
+				campaignStatusLineCount = campaignStatusLineCount + 1
+			else
+				regularStatusLineCount = regularStatusLineCount + 1
+			end
+		end
 	end
 
 	-- Calculate the number of regular quests
 	RQE.regularQuestCount = numTrackedQuests - RQE.campaignQuestCount
 
 	-- Calculate frame heights
-	local campaignHeight = baseHeight + (RQE.campaignQuestCount * questHeight)
-	local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + extraHeightForScenario
+	local campaignHeight = baseHeight + (RQE.campaignQuestCount * questHeight) + (campaignStatusLineCount * 14)
+	local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + (regularStatusLineCount * 14) + extraHeightForScenario
 	local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
 	local achievementHeight = supportsAchievements and (baseHeight + (RQE.AchievementsFrame.achieveCount * 40)) or 0
 
@@ -4012,6 +4073,16 @@ function UpdateRQEQuestFrame()
 				QuestLogIndexButton.rqeQuestTitle = questTitle
 				QuestLogIndexButton.rqeQuestTag = questTag
 
+				local QuestStatusInfo = RQE.QuestLogIndexButtons[i].QuestStatusInfo or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				QuestStatusInfo:ClearAllPoints()
+				QuestStatusInfo:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -3)
+				QuestStatusInfo:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+				QuestStatusInfo:SetJustifyH("LEFT")
+				QuestStatusInfo:SetJustifyV("TOP")
+				QuestStatusInfo:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
+				QuestStatusInfo:SetHeight(0)
+				QuestLogIndexButton.QuestStatusInfo = QuestStatusInfo
+
 				-- Use Classic's quest UI map first, with Task Quest data as a fallback.
 				-- This is intentionally per tracked quest rather than the player's map.
 				local questZoneMapID = GetQuestUiMapID and GetQuestUiMapID(questID)
@@ -4052,6 +4123,7 @@ function UpdateRQEQuestFrame()
 				QuestZoneInfo:Show()
 				QuestLogIndexButton.QuestZoneInfo = QuestZoneInfo
 				QuestLogIndexButton.rqeQuestZoneText = questZoneText
+				StartTrackedQuestStatusUpdates(QuestLogIndexButton, questID, QuestLevelAndName, QuestZoneInfo)
 
 				-- Show the yard distance to the same active-step hotspot used by the
 				-- Classic tracker proximity sort, on the right of the zone information.
