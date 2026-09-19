@@ -2751,8 +2751,71 @@ function RQE:ClearRQEQuestFrame()
 			if QuestLogIndexButton.QuestObjectivesOrDescription then
 				QuestLogIndexButton.QuestObjectivesOrDescription:Hide()
 			end
+			if QuestLogIndexButton.QuestStatusInfo then
+				QuestLogIndexButton.QuestStatusInfo:Hide()
+			end
 		end
 	end
+end
+
+
+-- Returns the player-facing line inserted between a tracked quest's name and
+-- distance. Failure takes precedence over a timer, including at zero seconds.
+local function GetTrackedQuestStatusText(questID)
+	if RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
+		return FAILED or "Failed", true
+	end
+
+	local secondsLeft = RQE.API.GetQuestTimeRemainingSeconds
+		and RQE.API.GetQuestTimeRemainingSeconds(questID)
+	if secondsLeft ~= nil then
+		local displaySeconds = math.max(0, math.ceil(secondsLeft))
+		local timeText = SecondsToTime and SecondsToTime(displaySeconds)
+			or tostring(displaySeconds)
+		return (TIME_REMAINING or "Time Remaining:") .. " " .. timeText, false, displaySeconds <= 59
+	end
+
+	return nil, false, false
+end
+
+
+local function UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
+	local statusLine = questButton and questButton.QuestStatusInfo
+	if not statusLine or not questNameLine or not followingLine then return end
+
+	local statusText, isFailed, isUrgent = GetTrackedQuestStatusText(questID)
+	statusLine:SetText(statusText or "")
+	if isFailed then
+		statusLine:SetTextColor(1, 51/255, 51/255)
+	elseif isUrgent then
+		statusLine:SetTextColor(1, 102/255, 51/255)
+	else
+		statusLine:SetTextColor(1, 209/255, 0)
+	end
+	statusLine:SetShown(statusText ~= nil)
+
+	followingLine:ClearAllPoints()
+	followingLine:SetPoint("TOPLEFT", statusText and statusLine or questNameLine, "BOTTOMLEFT", 0, -3)
+	return statusText ~= nil, isFailed
+end
+
+
+local function StartTrackedQuestStatusUpdates(questButton, questID, questNameLine, followingLine)
+	local hasStatus, isFailed = UpdateTrackedQuestStatusLine(questButton, questID, questNameLine, followingLine)
+	if not hasStatus or isFailed then
+		questButton:SetScript("OnUpdate", nil)
+		return
+	end
+	questButton.rqeQuestStatusElapsed = 0
+	questButton:SetScript("OnUpdate", function(self, elapsed)
+		self.rqeQuestStatusElapsed = (self.rqeQuestStatusElapsed or 0) + elapsed
+		if self.rqeQuestStatusElapsed < 0.25 then return end
+		self.rqeQuestStatusElapsed = 0
+		local stillHasStatus, nowFailed = UpdateTrackedQuestStatusLine(self, questID, questNameLine, followingLine)
+		if not stillHasStatus or nowFailed then
+			self:SetScript("OnUpdate", nil)
+		end
+	end)
 end
 
 
@@ -3453,6 +3516,7 @@ function UpdateRQEQuestFrame()
 	-- end
 
 	local campaignQuestCount, regularQuestCount, worldQuestCount, bonusQuestCount = 0, 0, 0, 0
+	local campaignStatusLineCount, regularStatusLineCount = 0, 0
 	RQE.campaignQuestCount = campaignQuestCount
 	RQE.bonusQuestCount = bonusQuestCount
 	RQE.regularQuestCount = regularQuestCount + RQE.bonusQuestCount -- Include bonus quests in the count
@@ -3478,7 +3542,8 @@ function UpdateRQEQuestFrame()
 
 	for i = 1, numTrackedQuests do
 		local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-		if C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID) then
+		local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+		if isCampaignQuest then
 			RQE.campaignQuestCount = RQE.campaignQuestCount + 1
 		elseif RQE.API.IsWorldQuest(questID) then
 		--elseif C_QuestLog.IsWorldQuest(questID) then
@@ -3486,14 +3551,21 @@ function UpdateRQEQuestFrame()
 		-- elseif C_QuestLog.IsQuestTask(questID) then
 			-- RQE.worldQuestCount = RQE.worldQuestCount + 1
 		end
+		if not RQE.API.IsWorldQuest(questID) and GetTrackedQuestStatusText(questID) then
+			if isCampaignQuest then
+				campaignStatusLineCount = campaignStatusLineCount + 1
+			else
+				regularStatusLineCount = regularStatusLineCount + 1
+			end
+		end
 	end
 
 	-- Calculate the number of regular quests
 	RQE.regularQuestCount = numTrackedQuests - RQE.campaignQuestCount
 
 	-- Calculate frame heights
-	local campaignHeight = baseHeight + (RQE.campaignQuestCount * questHeight)
-	local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + extraHeightForScenario
+	local campaignHeight = baseHeight + (RQE.campaignQuestCount * questHeight) + (campaignStatusLineCount * 14)
+	local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + (regularStatusLineCount * 14) + extraHeightForScenario
 	local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
 	local achievementHeight = baseHeight + (RQE.AchievementsFrame.achieveCount * 40)
 
@@ -3913,6 +3985,16 @@ function UpdateRQEQuestFrame()
 				QuestLevelAndName:SetText(levelText .. " " .. questTitle)
 				--QuestLevelAndName:SetText(string.format("[%s] %s", questLevel, questTitle))
 
+				local QuestStatusInfo = RQE.QuestLogIndexButtons[i].QuestStatusInfo or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				QuestStatusInfo:ClearAllPoints()
+				QuestStatusInfo:SetPoint("TOPLEFT", QuestLevelAndName, "BOTTOMLEFT", 0, -3)
+				QuestStatusInfo:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+				QuestStatusInfo:SetJustifyH("LEFT")
+				QuestStatusInfo:SetJustifyV("TOP")
+				QuestStatusInfo:SetWidth(RQE.RQEQuestFrame:GetWidth() - 110)
+				QuestStatusInfo:SetHeight(0)
+				QuestLogIndexButton.QuestStatusInfo = QuestStatusInfo
+
 				-- Display the current distance to this quest's next incomplete RQE step
 				-- between its title and objective text, matching the Classic trackers.
 				local distance, stepIndex = questData.distanceYards, questData.stepIndex
@@ -3929,6 +4011,7 @@ function UpdateRQEQuestFrame()
 				QuestDistanceInfo:Show()
 				QuestLogIndexButton.QuestDistanceInfo = QuestDistanceInfo
 				QuestLogIndexButton.rqeTrackerDistanceStepIndex = stepIndex
+				StartTrackedQuestStatusUpdates(QuestLogIndexButton, questID, QuestLevelAndName, QuestDistanceInfo)
 
 				-- Create or reuse the QuestObjectives label
 				local QuestObjectives = RQE.QuestLogIndexButtons[i].QuestObjectives or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
