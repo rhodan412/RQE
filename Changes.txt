@@ -1,3 +1,57 @@
+12.1.0.5
+
+	**HIGHLIGHTS**
+		- Timed and failed quests now show their live status in RQE: Retail quest rows place it between the quest name and distance, while Classic/Season of Discovery and TBC Anniversary place the active countdown in the Quest Helper and show failed status in affected tracker rows.
+		- The Retail Quest Helper now also previews the active quest countdown or failed state beneath its quest name, matching the new Classic/Season of Discovery and TBC Anniversary presentation.
+		- Quest Helper countdown and failed lines now align with direction text on every client, while quests without either status retain their existing layout.
+		- Quest timers turn orange-red at 59 seconds remaining, and Quest Helper status spacing is more evenly balanced across every supported client.
+		- Retail timed quests now show their countdown in the RQE Quest Tracker even when Blizzard's display predicate reports false for the watched quest.
+		- Quest Helper countdowns above 59 seconds now use a soft green color across Retail, Classic/Season of Discovery, and TBC Anniversary.
+
+	Client_Classic/QuestingModule.lua
+		- Added a red failed-quest line between the quest name and combined zone/distance line, reanchoring the distance content and reserving tracker height only for failed Classic/Season of Discovery quests; countdowns remain out of the multi-quest tracker because the legacy timer API reads only the selected quest. (2026.09.19.0931)
+
+	Client_Classic/RQEFrame.lua
+		- Added a live active-quest countdown beneath the Quest Helper quest name using the legacy selected-quest timer path, replaced it with red failed status when appropriate, and dynamically reanchored direction text and scroll height as the status appears or disappears in Classic/Season of Discovery. (2026.09.19.0931)
+		- Cached the Classic/Season of Discovery active countdown against GetTime and resynchronized it from the selected-quest API every five seconds, keeping one-second display updates accurate without repeatedly changing and restoring the quest-log selection every frame. (2026.09.19.0934)
+		- Shifted the 13-point countdown or failed line into the Quest Helper direction-text column and anchored direction text directly beneath it, preserving the existing no-status layout in Classic/Season of Discovery. (2026.09.19.0943)
+		- Lowered the Quest Helper timer/failed line four pixels, raised its following direction text ten pixels, and changed countdowns displaying 59 seconds or less from gold to orange-red while retaining stronger red for failure in Classic/Season of Discovery. (2026.09.19.0951)
+		- Changed the normal Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, retaining orange-red urgency and red failure states in Classic/Season of Discovery. (2026.09.19.1009)
+
+	Client_TBC/QuestingModule.lua
+		- Added a red failed-quest line between the quest name and combined zone/distance line, reanchoring the distance content and reserving tracker height only for failed TBC Anniversary quests; countdowns remain out of the multi-quest tracker because the legacy timer API reads only the selected quest. (2026.09.19.0931)
+
+	Client_TBC/RQEFrame.lua
+		- Added a live active-quest countdown beneath the Quest Helper quest name using the legacy selected-quest timer path, replaced it with red failed status when appropriate, and dynamically reanchored direction text and scroll height as the status appears or disappears in TBC Anniversary. (2026.09.19.0931)
+		- Cached the TBC Anniversary active countdown against GetTime and resynchronized it from the selected-quest API every five seconds, keeping one-second display updates accurate without repeatedly changing and restoring the quest-log selection every frame. (2026.09.19.0934)
+		- Shifted the 13-point countdown or failed line into the Quest Helper direction-text column and anchored direction text directly beneath it, preserving the existing no-status layout in TBC Anniversary. (2026.09.19.0943)
+		- Lowered the Quest Helper timer/failed line four pixels, raised its following direction text ten pixels, and changed countdowns displaying 59 seconds or less from gold to orange-red while retaining stronger red for failure in TBC Anniversary. (2026.09.19.0951)
+		- Changed the normal Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, retaining orange-red urgency and red failure states in TBC Anniversary. (2026.09.19.1009)
+
+	QuestingModule.lua
+		- Added a live gold countdown or red failed notification between each Retail tracked quest's name and distance, with failure taking precedence, automatic quarter-second countdown refreshes, conditional distance reanchoring, and extra content height only for rows that show status. (2026.09.19.0931)
+		- Changed Retail tracked-quest countdowns from gold to orange-red when their displayed remaining time reaches 59 seconds, while failed status continues to take precedence in stronger red. (2026.09.19.0951)
+		- Read valid remaining seconds directly when building Retail tracker status rows instead of requiring Blizzard's display predicate first, allowing timed watched quests to place their countdown in the same line used by failed status. (2026.09.19.0956)
+
+	RQE.toc
+		- Updated version# (2026.09.19.1310)
+
+	RQE_API.lua
+		- Added normalized failed-state, time-remaining visibility, and seconds-remaining wrappers using Retail's C_QuestLog IsFailed/GetTimeAllowed APIs, task-quest time as a fallback, and preserved-selection legacy GetQuestLogTimeLeft/IsCurrentQuestFailed support; captured optional timer results before numeric conversion so non-timed quests safely return nil instead of raising an argument error. (2026.09.19.0931)
+		- Treated an available legacy quest-log entry's completion value as authoritative for failure detection, avoiding selected-quest fallback calls for ordinary incomplete quests while retaining IsCurrentQuestFailed when no log entry state is available. (2026.09.19.0934)
+		- Compared legacy completion state directly against numeric or string -1 instead of coercing it, allowing clients that expose a boolean isComplete field to remain safely classified as not failed. (2026.09.19.0935)
+		- Treated valid countdown data as authoritative when Blizzard's ShouldDisplayTimeRemaining predicate returns false, normalizing timed watched quests that still expose their remaining duration through GetTimeAllowed. (2026.09.19.0956)
+
+	RQEDatabase.lua
+		- Updated some Horde Borean Tundra quests in the DB (2026.09.19.1310)
+
+	RQEFrame.lua
+		- Mirrored the active quest's gold countdown or red failed notification beneath the Retail Quest Helper quest name using the modern normalized quest-ID APIs, with live refreshes and dynamic direction-text, width, and scroll-height adjustment matching the legacy-client preview. (2026.09.19.0935)
+		- Shifted the 13-point countdown or failed line into the Retail Quest Helper direction-text column and anchored direction text directly beneath it, preserving the existing no-status layout. (2026.09.19.0943)
+		- Lowered the Quest Helper timer/failed line four pixels, raised its following direction text ten pixels, and changed countdowns displaying 59 seconds or less from gold to orange-red while retaining stronger red for failure on Retail. (2026.09.19.0951)
+		- Changed the normal Retail Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, without changing the RQE Quest Tracker timer color or the urgent and failed states. (2026.09.19.1009)
+
+
 12.1.0.4 (2026.09.18)
 
 	**HIGHLIGHTS**
