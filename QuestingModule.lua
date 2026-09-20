@@ -84,6 +84,26 @@ ScrollFrame:SetScrollChild(content)
 content:SetAllPoints()
 RQE.QTcontent = content
 
+local TRACKER_QUEST_BUTTON_SIZE = 35
+local TRACKER_QUEST_LABEL_GAP = 5
+local TRACKER_THEMED_BUTTON_TOP_OFFSET = 2
+
+local function GetTrackerQuestLabelInset()
+	return (RQE.UI and RQE.UI:IsEnabled()) and 46 or 40
+end
+
+local function AnchorTrackerQuestButton(button, label)
+	button:ClearAllPoints()
+	if RQE.UI and RQE.UI:IsEnabled() then
+		-- Themed quest names may wrap to multiple lines. Top-align the button to
+		-- the title instead of centering it on the full FontString height so every
+		-- badge begins on the same visual row regardless of title wrapping.
+		button:SetPoint("TOPRIGHT", label, "TOPLEFT", -TRACKER_QUEST_LABEL_GAP, TRACKER_THEMED_BUTTON_TOP_OFFSET)
+	else
+		button:SetPoint("RIGHT", label, "LEFT", -TRACKER_QUEST_LABEL_GAP, 0)
+	end
+end
+
 
 -- Quest-log search controls remain fixed below the tracker header while the
 -- category frames continue to scroll in the content area beneath them.
@@ -1017,13 +1037,10 @@ function AdjustQuestItemWidths(frameWidth)
 		RQE.CampaignFrame,
 		RQE.QuestsFrame,
 		RQE.WorldQuestsFrame,
+		RQE.BonusQuestsFrame,
+		RQE.TaskQuestsFrame,
 		RQE.AchievementsFrame,
 	}
-	local themed = RQE.UI and RQE.UI:IsEnabled()
-	if themed then
-		table.insert(childFrames, RQE.BonusQuestsFrame)
-		table.insert(childFrames, RQE.TaskQuestsFrame)
-	end
 
 	-- Adjust width for each element
 	for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
@@ -1095,8 +1112,9 @@ function AdjustQuestItemWidths(frameWidth)
 
 	for _, childFrame in ipairs(childFrames) do
 		if childFrame then
-			-- Set the child frame's width
-			local childWidth = themed and math.max(1, frameWidth - 40) or frameWidth
+			-- Both presentations live inside the same viewport gutters. Keeping the
+			-- child at viewport width gives legacy headers a visible right edge too.
+			local childWidth = math.max(1, frameWidth - 40)
 			childFrame:SetWidth(childWidth)
 
 			-- Ordinary section .header values are their title FontStrings; the
@@ -1105,7 +1123,7 @@ function AdjustQuestItemWidths(frameWidth)
 			if childFrame.header then
 				local objectType = childFrame.header.GetObjectType and childFrame.header:GetObjectType()
 				if objectType == "FontString" then
-					childFrame.header:SetWidth(themed and math.max(1, childWidth - textPadding) or frameWidth)
+					childFrame.header:SetWidth(math.max(1, childWidth - textPadding))
 				end
 			end
 		end
@@ -1120,6 +1138,11 @@ function AdjustQuestItemWidths(frameWidth)
 		RQE.AchievementsFrame.achievementHeader:SetWidth(frameWidth - textPadding)
 	end
 end
+
+
+-- Apply the viewport width once at creation; OnSizeChanged keeps it current
+-- after this when the player resizes or a saved frame width is restored.
+AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 
 ---------------------------
@@ -1960,8 +1983,39 @@ function RQE:GetTrackerQuestStepDistance(questID, stepIndex, useProvidedStepInde
 end
 
 
+-- Match the precision used by the visible Quest Helper coordinate header. Raw
+-- C_Map coordinates can drift by tiny fractions while the player is standing
+-- still, which otherwise makes rounded yard labels oscillate by a few yards.
+local function GetTrackedDistancePositionCell()
+	local mapID = C_Map.GetBestMapForUnit("player")
+	local position = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+	if not position then return nil end
+
+	local x, y = position:GetXY()
+	if not x or not y then return nil end
+	return mapID, math.floor(x * 10000 + 0.5), math.floor(y * 10000 + 0.5)
+end
+
+
+local function GetUnresolvedTrackedDistanceQuestIDs()
+	local questIDs = {}
+	local found = false
+	for _, questButton in pairs(RQE.QuestLogIndexButtons or {}) do
+		local distanceText = questButton and questButton.QuestDistanceInfo
+		local text = distanceText and distanceText:GetText()
+		if questButton and questButton:IsShown() and type(text) == "string" and text:find("N/A", 1, true) then
+			local questID = tonumber(questButton.questID)
+			if questID then questIDs[questID] = true end
+			found = true
+		end
+	end
+	return questIDs, found
+end
+
+
 -- Update the visible tracker distance labels without rebuilding the quest frame.
--- The 0.2-second throttle keeps this inexpensive for long lists.
+-- The 0.2-second throttle keeps this inexpensive for long lists, while the
+-- coordinate cell prevents stationary C_Map jitter from changing the display.
 function RQE:RefreshTrackedQuestDistances(force)
 	if not (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then return end
 
@@ -1972,6 +2026,23 @@ function RQE:RefreshTrackedQuestDistances(force)
 		return
 	end
 	RQE.lastTrackedQuestDistanceRefresh = now
+
+	local unresolvedQuestIDs, hasUnresolvedDistance = GetUnresolvedTrackedDistanceQuestIDs()
+	local unresolvedOnly = false
+	local mapID, gridX, gridY = GetTrackedDistancePositionCell()
+	if mapID then
+		local samePosition = RQE.lastTrackedQuestDistanceMapID == mapID
+			and RQE.lastTrackedQuestDistanceGridX == gridX
+			and RQE.lastTrackedQuestDistanceGridY == gridY
+		if not force and samePosition and not hasUnresolvedDistance then
+			return
+		end
+		unresolvedOnly = not force and samePosition
+		RQE.lastTrackedQuestDistanceMapID = mapID
+		RQE.lastTrackedQuestDistanceGridX = gridX
+		RQE.lastTrackedQuestDistanceGridY = gridY
+	end
+
 	local liveQuestID, liveStepIndex = GetLiveTrackerQuestStep()
 	if liveQuestID and liveStepIndex then
 		RQE.trackerQuestStepCache[liveQuestID] = liveStepIndex
@@ -1980,24 +2051,26 @@ function RQE:RefreshTrackedQuestDistances(force)
 	for _, questButton in pairs(RQE.QuestLogIndexButtons or {}) do
 		if questButton and questButton:IsShown() and questButton.questID and questButton.QuestDistanceInfo then
 			local questID = tonumber(questButton.questID)
-			local stepIndex = tonumber(questButton.rqeTrackerDistanceStepIndex)
+			if not unresolvedOnly or unresolvedQuestIDs[questID] then
+				local stepIndex = tonumber(questButton.rqeTrackerDistanceStepIndex)
 
-			-- Reading the already-resolved live step is O(1), and it is accepted
-			-- only for the quest that owns AddonSetStepIndex. Other rows retain
-			-- their own cached values (for example, step 1 is never changed to
-			-- quest 29509's step 9).
-			if liveQuestID == questID and liveStepIndex then
-				stepIndex = liveStepIndex
-			elseif not stepIndex then
-				local savedStepIndex = questID and RQE.trackerQuestStepCache[questID]
-				stepIndex = tonumber(savedStepIndex)
+				-- Reading the already-resolved live step is O(1), and it is accepted
+				-- only for the quest that owns AddonSetStepIndex. Other rows retain
+				-- their own cached values (for example, step 1 is never changed to
+				-- quest 29509's step 9).
+				if liveQuestID == questID and liveStepIndex then
+					stepIndex = liveStepIndex
+				elseif not stepIndex then
+					local savedStepIndex = questID and RQE.trackerQuestStepCache[questID]
+					stepIndex = tonumber(savedStepIndex)
+				end
+
+				local distance = RQE:GetTrackerQuestStepDistance(questID, stepIndex, true)
+				questButton.rqeTrackerDistanceStepIndex = stepIndex
+				questButton.QuestDistanceInfo:SetText(
+					distance and string.format("Distance: %.0f yds", distance) or "Distance: N/A"
+				)
 			end
-
-			local distance = RQE:GetTrackerQuestStepDistance(questID, stepIndex, true)
-			questButton.rqeTrackerDistanceStepIndex = stepIndex
-			questButton.QuestDistanceInfo:SetText(
-				distance and string.format("Distance: %.0f yds", distance) or "Distance: N/A"
-			)
 		end
 	end
 end
@@ -2561,7 +2634,7 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 
 	-- Create the BQ supertrack button
 	local bonusQuestButton = CreateFrame("Button", nil, parentFrame)
-	bonusQuestButton:SetSize(32, 32)
+	bonusQuestButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 	local buttonText = bonusQuestButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	buttonText:SetPoint("CENTER", bonusQuestButton, "CENTER", 0, 0)
@@ -2594,10 +2667,10 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 	if lastElement then
 		bonusQuestLabel:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -20)
 	else
-		bonusQuestLabel:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
+		bonusQuestLabel:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", GetTrackerQuestLabelInset(), -40)
 	end
 
-	bonusQuestButton:SetPoint("RIGHT", bonusQuestLabel, "LEFT", -5, 0)
+	AnchorTrackerQuestButton(bonusQuestButton, bonusQuestLabel)
 
 	-- Button click: supertrack this bonus quest
 	bonusQuestButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
@@ -3729,7 +3802,7 @@ function UpdateRQEQuestFrame()
 				local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 				local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
-				local dailyFrequency = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 2
+				local dailyFrequency = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 1
 				local isDailyQuest = info.frequency == dailyFrequency
 
 				local parentFrame
@@ -3750,7 +3823,7 @@ function UpdateRQEQuestFrame()
 				---@field bg Texture
 				---@field number FontString
 				local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)	-- TAINT?: possibly source if run in combat
-				QuestLogIndexButton:SetSize(35, 35)
+				QuestLogIndexButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 				-- Create or update the background texture
 				local bg = QuestLogIndexButton.bg or QuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
@@ -4065,13 +4138,13 @@ function UpdateRQEQuestFrame()
 				RQE.QuestLogIndexButtons[i].QuestObjectives = QuestObjectives
 
 				-- Anchor logic based on the quest type and index of lastelement/first
+				QuestLevelAndName:ClearAllPoints()
 				if lastElement then
 					QuestLevelAndName:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
 				else
-					local rowInset = (RQE.UI and RQE.UI:IsEnabled()) and 46 or 40
-					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", rowInset, -40)
+					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", GetTrackerQuestLabelInset(), -40)
 				end
-				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
+				AnchorTrackerQuestButton(QuestLogIndexButton, QuestLevelAndName)
 
 				-- Set Justification and Word Wrap
 				QuestLevelAndName:SetJustifyH("LEFT")
@@ -4582,7 +4655,7 @@ function UpdateRQEWorldQuestFrame()
 			-- Retrieve or initialize the WQuestLogIndexButton for the current questID
 			local WQuestLogIndexButton = RQE.WorldQuestsFrame["WQButton" .. questID] or CreateFrame("Button", "WQButton" .. questID, RQE.WorldQuestsFrame)	-- TAINT?: possibly source if run in combat
 			RQE.WorldQuestsFrame["WQButton" .. questID] = WQuestLogIndexButton
-			WQuestLogIndexButton:SetSize(35, 35)
+			WQuestLogIndexButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 			-- Ensure the button always has the correct background texture based on its tracking state
 			local bg = WQuestLogIndexButton.bg or WQuestLogIndexButton:CreateTexture(nil, "BACKGROUND")
@@ -4766,7 +4839,7 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Position WQuestLogIndexButton relative to WQuestLevelAndName
-			WQuestLogIndexButton:SetPoint("RIGHT", WQuestLevelAndName, "LEFT", 0, 0)
+			AnchorTrackerQuestButton(WQuestLogIndexButton, WQuestLevelAndName)
 
 			-- Function to format time left based on seconds
 			local function FormatTimeLeft(secondsLeft)
@@ -4854,10 +4927,10 @@ function UpdateRQEWorldQuestFrame()
 			end)
 
 			-- Positioning logic for WQuestLevelAndName
+			WQuestLevelAndName:ClearAllPoints()
 			if i == 1 then
 				-- If this is the first world quest, position it at the top left of the frame
-				local rowInset = (RQE.UI and RQE.UI:IsEnabled()) and 41 or 35
-				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", rowInset, yOffset)
+				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", GetTrackerQuestLabelInset(), yOffset)
 			else
 				-- For the second and subsequent world quests, position them relative to the last world quest element
 				if lastWorldQuestElement then
@@ -4865,8 +4938,7 @@ function UpdateRQEWorldQuestFrame()
 				else
 					-- Fallback to the top left position if for some reason the last element doesn't exist
 					-- This should not happen if player's world quest elements are handled correctly
-					local rowInset = (RQE.UI and RQE.UI:IsEnabled()) and 41 or 35
-					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", rowInset, yOffset - (i * padding))
+					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", GetTrackerQuestLabelInset(), yOffset - (i * padding))
 				end
 			end
 
@@ -5051,7 +5123,7 @@ function UpdateRQETaskQuestFrame()
 	for _, taskQuest in ipairs(taskQuests) do
 		local questID = taskQuest.questID
 		local button = CreateFrame("Button", nil, taskFrame)
-		button:SetSize(32, 32)
+		button:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 		local background = button:CreateTexture(nil, "BACKGROUND")
 		background:SetAllPoints()
@@ -5074,9 +5146,9 @@ function UpdateRQETaskQuestFrame()
 		if lastElement then
 			title:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
 		else
-			title:SetPoint("TOPLEFT", taskFrame, "TOPLEFT", 40, -40)
+			title:SetPoint("TOPLEFT", taskFrame, "TOPLEFT", GetTrackerQuestLabelInset(), -40)
 		end
-		button:SetPoint("RIGHT", title, "LEFT", -5, 0)
+		AnchorTrackerQuestButton(button, title)
 
 		local objectives = taskFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		objectives:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
