@@ -278,6 +278,7 @@ headerText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
 headerText:SetTextColor(239/255, 191/255, 90/255)
 headerText:SetText("RQE Quest Tracker")
 headerText:SetWordWrap(true)
+RQE.QuestTrackerHeaderText = headerText
 
 RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. frame:GetHeight())
 
@@ -883,6 +884,7 @@ RQE.Buttons.HQButton(RQE.RQEQuestFrame)
 
 -- Create buttons using functions from Buttons.lua for RQEQuestFrame (Left Side)
 RQE.Buttons.ZQButton(RQE.RQEQuestFrame)
+RQE.Buttons.UpdateQuestTrackerHeaderTitle()
 
 
 ---------------------------
@@ -922,6 +924,7 @@ end
 
 -- Define the function to save frame position
 function SaveQuestFrameSize()
+	if RQE.QTMinimized then return end
 	local width, height = RQE.RQEQuestFrame:GetSize()
 	RQE.db.profile.QuestFramePosition.frameWidth = width
 	RQE.db.profile.QuestFramePosition.frameHeight = height
