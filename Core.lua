@@ -319,6 +319,7 @@ local defaults = {
 		isQuestFrameMaximized = true,  -- Setting for maximized/minimized state
 		LFGActiveEntryUpdate = false,
 		MainFrameOpacity = 0.55,
+		useModernTheme = true,
 		minimapButtonAngle = 125,
 		mythicScenarioMode = true,
 		PlayerEnteringWorld = false,
@@ -333,7 +334,7 @@ local defaults = {
 			xPos = -40,
 			yPos = 150,
 			anchorPoint = "BOTTOMRIGHT",
-			frameWidth = 325,
+			frameWidth = 355,
 			frameHeight = 450
 		},
 		QuestFrameOpacity = 0.55,
@@ -616,6 +617,7 @@ function RQE:OnEnable()
 
 	-- Apply UI settings after profile is set
 	self:ApplyUISettings()
+	if self.UI and self.UI.ApplySavedTheme then self.UI:ApplySavedTheme() end
 end
 
 
@@ -2678,7 +2680,7 @@ end
 -- Function to update the RQEQuestFrame size based on the current profile settings
 function RQE:UpdateQuestFrameSize()
 	-- Update the quest frame size similarly, using its respective profile settings
-	local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 325
+	local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 355
 	local questFrameHeight = self.db.profile.QuestFramePosition.frameHeight or 450
 	if questFrameHeight <= 30 then
 		questFrameHeight = 450
@@ -5359,7 +5361,7 @@ end
 function RQE:ResetFrameSizeToDBorDefault()
 	local RQEWidth = 420
 	local RQEHeight = 300
-	local RQEQuestWidth = 325
+	local RQEQuestWidth = 355
 	local RQEQuestHeight = 450
 
 	-- Update the database
@@ -5439,7 +5441,7 @@ end
 
 -- When the frame is maximized
 function RQE:MaximizeQuestFrame()
-	local defaultWidth = RQE.db.profile.QuestFrameWidth or 325  -- Replace 300 with the default width
+	local defaultWidth = RQE.db.profile.QuestFrameWidth or 355  -- Replace 300 with the default width
 	local defaultHeight = RQE.db.profile.QuestFrameHeight or 450  -- Replace 450 with the default height
 
 	local width = RQE.db.profile.QuestFramePosition.originalWidth or defaultWidth
@@ -5452,7 +5454,7 @@ end
 
 -- When the frame is minimized
 function RQE:MinimizeQuestFrame()
-	RQE.RQEQuestFrame:SetSize(325, 30)
+	RQE.RQEQuestFrame:SetSize(355, (RQE.UI and RQE.UI:IsEnabled()) and 48 or 30)
 	RQE.db.profile.isQuestFrameMaximized = false
 end
 
@@ -7080,6 +7082,11 @@ function RQE.SearchModule:CreateSearchBox()
 		RQE:SaveSuperTrackedQuestToCharacter()
 	end)
 
+	if RQE.UI then
+		RQE.UI:StyleSearchBox(editBox.editbox or editBox.frame)
+		RQE.UI:StyleTextButton(editBox.button)
+		RQE.UI:StyleTextButton(examineButton.frame)
+	end
 	return editBox, examineButton
 end
 
