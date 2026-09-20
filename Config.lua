@@ -54,30 +54,22 @@ RQE.Settings = {}
 
 -- Function to open the Frame Settings panel
 function RQE:OpenFrameSettings()
-	if self.optionsFrame.frame then
-		SettingsPanel:OpenToCategory(self.optionsFrame.frame)
-	end
+	RQE.ConfigUI:OpenRegisteredPanel("frame")
 end
 
 -- Function to open the Font Settings panel
 function RQE:OpenFontSettings()
-	if self.optionsFrame.font then
-		SettingsPanel:OpenToCategory(self.optionsFrame.font)
-	end
+	RQE.ConfigUI:OpenRegisteredPanel("font")
 end
 
 -- Function to open the Debug Options panel
 function RQE:OpenDebugOptions()
-	if self.optionsFrame.debug then
-		SettingsPanel:OpenToCategory(self.optionsFrame.debug)
-	end
+	RQE.ConfigUI:OpenRegisteredPanel("debug")
 end
 
 -- Function to open the Profiles panel
 function RQE:OpenProfiles()
-	if self.optionsFrame.profiles then
-		SettingsPanel:OpenToCategory(self.optionsFrame.profiles)
-	end
+	RQE.ConfigUI:OpenRegisteredPanel("profiles")
 end
 
 
@@ -1325,22 +1317,12 @@ function RQE:CreateConfigFrame()
 		frame:SetTitle("Rhodan's Quest Explorer Settings")
 		frame:SetStatusText("Configure your settings")
 		frame:SetCallback("OnClose", function(widget)
-			AceGUI:Release(widget)
-			self.configFrame = nil  -- Clear the reference when the frame is closed
+			widget:Hide()
 		end)
 		frame:SetLayout("Flow")
-		frame:SetWidth(600)  -- Increase the width of the frame
-		frame:SetHeight(400)  -- Set a specific height for the frame
-
-		-- Create a hidden frame to handle ESC key closure
-		local escFrame = CreateFrame("Frame", "RQEConfigFrameEscHandler", UIParent)
-		escFrame:SetAllPoints(frame.frame)
-		escFrame:SetScript("OnHide", function()
-			if self.configFrame then
-				self.configFrame:Hide()
-			end
-		end)
-		table.insert(UISpecialFrames, escFrame:GetName())
+		frame:SetWidth(920)
+		frame:SetHeight(680)
+		RQE.ConfigUI:SkinConfigFrame(frame)
 
 		local tabGroup = AceGUI:Create("TabGroup")
 		tabGroup:SetLayout("Flow")
@@ -1355,18 +1337,14 @@ function RQE:CreateConfigFrame()
 		})
 
 		tabGroup:SetCallback("OnGroupSelected", function(container, event, group)
-			container:ReleaseChildren()
-			if group == "general" then
-				RQE:AddGeneralSettingsWidgets(container)
-			elseif group == "frame" then
-				RQE:AddFrameSettingsWidgets(container)
-			elseif group == "font" then
-				RQE:AddFontSettingsWidgets(container)
-			elseif group == "debug" then
-				RQE:AddDebugSettingsWidgets(container)
-			elseif group == "profiles" then
-				RQE:AddProfileSettingsWidgets(container)
-			end
+			local pages = {
+				general = "RQE_Main",
+				frame = "RQE_Frame",
+				font = "RQE_Font",
+				debug = "RQE_Debug",
+				profiles = "RQE_Profiles",
+			}
+			RQE.ConfigUI:OpenOptionsPage(container, pages[group])
 		end)
 
 		tabGroup:SelectTab("general")
