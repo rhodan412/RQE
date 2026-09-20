@@ -464,6 +464,18 @@ RQE.options = {
 					width = "full",
 					order = 3,
 				},
+				useModernTheme = {
+					type = "toggle",
+					name = "Azure & Gold RQE Theme",
+					desc = "Uses RQE's custom Azure, Golden Yellow, and charcoal frames and icon controls. Reload the UI after changing this option.",
+					get = function() return RQE.db.profile.useModernTheme ~= false end,
+					set = function(_, value)
+						RQE.db.profile.useModernTheme = value
+						print("|cFFFFD700[RQE]|r Theme changed. Type |cFF008CFF/reload|r to update every frame.")
+					end,
+					width = "full",
+					order = 3.5,
+				},
 				framePosition = {
 					type = "group",
 					name = "Main Frame Position",
@@ -2043,6 +2055,17 @@ function RQE:AddFrameSettingsWidgets(container)
 	end)
 
 	scrollFrame:AddChild(enableStepControlsCheckbox)
+
+	local modernThemeCheckbox = AceGUI:Create("CheckBox")
+	modernThemeCheckbox:SetLabel("Azure & Gold RQE Theme")
+	modernThemeCheckbox:SetDescription("Custom RQE frames, headers, and icon controls. Reload the UI after changing this option.")
+	modernThemeCheckbox:SetValue(RQE.db.profile.useModernTheme ~= false)
+	modernThemeCheckbox:SetFullWidth(true)
+	modernThemeCheckbox:SetCallback("OnValueChanged", function(_, _, value)
+		RQE.db.profile.useModernTheme = value
+		print("|cFFFFD700[RQE]|r Theme changed. Type |cFF008CFF/reload|r to update every frame.")
+	end)
+	scrollFrame:AddChild(modernThemeCheckbox)
 
 	-- Main Frame Position Group
 	local framePositionGroup = AceGUI:Create("InlineGroup")
