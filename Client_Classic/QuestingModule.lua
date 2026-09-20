@@ -56,7 +56,7 @@ else
 	yPos = 150  -- Default y position if db is not available
 end
 
-RQE.RQEQuestFrame:SetSize(325, 450)
+RQE.RQEQuestFrame:SetSize(350, 450)
 RQE.RQEQuestFrame:SetPoint("CENTER", UIParent, "CENTER", xPos, yPos)
 RQE.RQEQuestFrame:SetBackdrop({
 	bgFile = "Interface/Tooltips/UI-Tooltip-Background",
@@ -67,6 +67,7 @@ RQE.RQEQuestFrame:SetBackdrop({
 	insets = { left = 0, right = 0, top = 1, bottom = 0 }
 })
 RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.QuestFrameOpacity)
+if RQE.UI then RQE.UI:StylePanel(RQE.RQEQuestFrame, RQE.db.profile.QuestFrameOpacity, "tracker") end
 
 -- Create the ScrollFrame
 local ScrollFrame = CreateFrame("ScrollFrame", nil, RQE.RQEQuestFrame)
@@ -115,6 +116,11 @@ questTrackerSearchInput:SetAutoFocus(false)
 questTrackerSearchInput:SetFontObject("GameFontHighlight")
 questTrackerSearchInput:SetTextInsets(6, 6, 0, 0)
 RQE.QuestTrackerSearchInput = questTrackerSearchInput
+if RQE.UI then
+	RQE.UI:StyleTextButton(questTrackerSearchButton)
+	RQE.UI:StyleTextButton(questTrackerRestoreButton)
+	RQE.UI:StyleSearchBox(questTrackerSearchInput)
+end
 
 local function ShowQuestTrackerSearchTooltip(self, text)
 	GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -182,7 +188,8 @@ end)
 -- controls from extending below that compact frame and restore them on expand.
 RQE.RQEQuestFrame:HookScript("OnSizeChanged", function(_, _, height)
 	if RQE.QuestTrackerSearchRow then
-		if height <= 30 then
+		local collapsedHeight = (RQE.UI and RQE.UI:IsEnabled()) and 48 or 30
+		if height <= collapsedHeight then
 			RQE.QuestTrackerSearchRow:Hide()
 		else
 			RQE.QuestTrackerSearchRow:Show()
@@ -269,6 +276,7 @@ header:SetBackdrop({
 	insets = { left = 4, right = 4, top = 4, bottom = 4 }
 })
 header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+if RQE.UI then RQE.UI:StyleHeader(header, false) end
 header:SetPoint("TOPLEFT", 0, 0)
 header:SetPoint("TOPRIGHT", 0, 0)
 
@@ -359,6 +367,7 @@ local function CreateChildFrame(name, parent, offsetX, offsetY, width, height)
 	local frame = CreateFrame("Frame", name, parent, "BackdropTemplate")
 	frame:SetSize(width, height)
 	frame:SetPoint("TOPLEFT", parent, "TOPLEFT", offsetX, offsetY)
+	if RQE.UI then RQE.UI:StylePanel(frame, 0.10, "section") end
 	return frame
 end
 
@@ -495,6 +504,7 @@ local function CreateChildFrameHeader(childFrame, title)
 		insets = { left = 4, right = 4, top = 4, bottom = 4 }
 	})
 	header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+	if RQE.UI then RQE.UI:StyleHeader(header, true) end
 	header:SetPoint("TOPLEFT", childFrame, "TOPLEFT", 0, 0)
 	header:SetPoint("TOPRIGHT", childFrame, "TOPRIGHT", 0, 0)
 
@@ -505,6 +515,7 @@ local function CreateChildFrameHeader(childFrame, title)
 	headerText:SetTextColor(239/255, 191/255, 90/255)
 	headerText:SetText(title)
 	headerText:SetWordWrap(true)
+	childFrame.headerFrame = header
 
 	return headerText  -- Return the FontString instead of the frame
 end
@@ -530,6 +541,7 @@ function RQE:CreateRecipeTrackingFrame()
 
 	-- Set the backdrop color
 	recipeFrame:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+	if RQE.UI then RQE.UI:StylePanel(recipeFrame, 0.72, "section") end
 
 	-- Store the frame for future reference
 	RQE.recipeTrackingFrame = recipeFrame
@@ -596,6 +608,7 @@ local function CreateUniqueScenarioHeader(scenarioFrame, title)
 		insets = { left = 4, right = 4, top = 4, bottom = 4 }
 	})
 	header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+	if RQE.UI then RQE.UI:StyleHeader(header, true) end
 	header:SetPoint("TOPLEFT", scenarioFrame, "TOPLEFT", 0, 0)
 	header:SetPoint("TOPRIGHT", scenarioFrame, "TOPRIGHT", 0, 0)
 
@@ -812,14 +825,22 @@ function ResetChildFramesToDefault()
 end
 
 
+-- The themed child-frame border needs enough room below wrapped objectives to
+-- remain visually distinct from both the text and the following section header.
+local function GetQuestSectionBottomPadding()
+	return (RQE.UI and RQE.UI:IsEnabled()) and 18 or 10
+end
+
+
 -- Adjust Set Point Anchor of Child Frames based on LastElements
 function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
 	-- Reset positions to default first
 	ResetChildFramesToDefault()
+	local elementStackGap = GetQuestSectionBottomPadding() + 5
 
 	-- Adjusting Quests child frame position based on last campaign element
 	if lastCampaignElement then
-		RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+		RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -elementStackGap)
 	elseif not RQE.CampaignFrame:IsShown() and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 		-- If there are no campaign quests but ScenarioChildFrame is shown
 		RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
@@ -831,10 +852,10 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
 	-- Adjusting World Quests child frame position based on last campaign element
 	if lastQuestElement then
 		-- If there's a last element in the regular quests frame, anchor to it
-		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
+		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -elementStackGap)
 	elseif lastCampaignElement then
 		-- If there's no last regular quest element but a last campaign element, anchor to it
-		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -elementStackGap)
 	elseif RQE.CampaignFrame:IsShown() and not lastCampaignElement then
 		-- If the Campaign frame is shown but there's no last campaign element, anchor to the Campaign frame
 		RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
@@ -851,11 +872,11 @@ function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWo
 
 	-- Adjust AchievementsFrame position based on the presence of WorldQuest elements
 	if RQE.WorldQuestsFrame:IsShown() and lastWorldQuestElement then
-		RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", -40, -15)
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", -40, -elementStackGap)
 	elseif not RQE.WorldQuestsFrame:IsShown() and lastQuestElement then
-		RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -15)
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -elementStackGap)
 	elseif not RQE.WorldQuestsFrame:IsShown() and lastCampaignElement then
-		RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -15)
+		RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -elementStackGap)
 	elseif RQE.WorldQuestsFrame:IsShown() or RQE.QuestsFrame:IsShown() then
 		RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame or RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
 	elseif RQE.ScenarioChildFrame:IsShown() then
@@ -1019,6 +1040,11 @@ function AdjustQuestItemWidths(frameWidth)
 		RQE.WorldQuestsFrame,
 		RQE.AchievementsFrame,
 	}
+	local themed = RQE.UI and RQE.UI:IsEnabled()
+	if themed then
+		table.insert(childFrames, RQE.BonusQuestsFrame)
+		table.insert(childFrames, RQE.TaskQuestsFrame)
+	end
 
 	-- Adjust width for each element
 	for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
@@ -1095,16 +1121,16 @@ function AdjustQuestItemWidths(frameWidth)
 	for _, childFrame in ipairs(childFrames) do
 		if childFrame then
 			-- Set the child frame's width
-			childFrame:SetWidth(frameWidth)
+			local childWidth = themed and math.max(1, frameWidth - 40) or frameWidth
+			childFrame:SetWidth(childWidth)
 
-			-- Assuming each childFrame has a 'header' frame and 'headerText' as described
+			-- Ordinary section .header values are their title FontStrings; the
+			-- scenario stores a header frame whose two anchors already follow the
+			-- corrected child width.
 			if childFrame.header then
-				-- Adjust the header frame's width to match the child frame
-				childFrame.header:SetWidth(frameWidth)
-
-				-- If there's a text element within the header, adjust its width considering padding
-				if childFrame.header.headerText then
-					childFrame.header.headerText:SetWidth(frameWidth - textPadding)
+				local objectType = childFrame.header.GetObjectType and childFrame.header:GetObjectType()
+				if objectType == "FontString" then
+					childFrame.header:SetWidth(themed and math.max(1, childWidth - textPadding) or frameWidth)
 				end
 			end
 		end
@@ -2369,6 +2395,12 @@ function RQE.AddBonusQuestToFrame(parentFrame, lastElement, questID, questTitle)
 		buttonTexture:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 	else
 		buttonTexture:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+	end
+	bonusQuestButton.bg = buttonTexture
+	bonusQuestButton.number = buttonText
+	if RQE.UI then
+		RQE.UI:StyleQuestIndexButton(bonusQuestButton,
+			RQE.API.GetSuperTrackedQuestID() == questID, "Bonus")
 	end
 
 	-- Create a FontString for the quest title
@@ -3710,6 +3742,8 @@ function UpdateRQEQuestFrame()
 				local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 				local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+				local dailyFrequency = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 2
+				local isDailyQuest = info.frequency == dailyFrequency
 
 				local parentFrame
 				local lastElement
@@ -3748,6 +3782,10 @@ function UpdateRQEQuestFrame()
 				number:SetTextColor(1, 0.7, 0.2)
 				number:SetText(questIndex)
 				QuestLogIndexButton.number = number  -- Save for future reference
+				local questKind = isCampaignQuest and "Campaign"
+					or isBonusQuest and "Bonus"
+					or isDailyQuest and "Daily" or "Normal"
+				if RQE.UI then RQE.UI:StyleQuestIndexButton(QuestLogIndexButton, isSuperTracked, questKind) end
 
 				-- Quest Watch List
 				QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
@@ -4158,7 +4196,8 @@ function UpdateRQEQuestFrame()
 				if lastElement then
 					QuestLevelAndName:SetPoint("TOPLEFT", lastElement, "BOTTOMLEFT", 0, -15)
 				else
-					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", 40, -40)
+					local rowInset = (RQE.UI and RQE.UI:IsEnabled()) and 46 or 40
+					QuestLevelAndName:SetPoint("TOPLEFT", parentFrame, "TOPLEFT", rowInset, -40)
 				end
 				QuestLogIndexButton:SetPoint("RIGHT", QuestLevelAndName, "LEFT", -5, 0)
 
@@ -4555,7 +4594,7 @@ function UpdateRQEQuestFrame()
 		local frameTop = sectionFrame:GetTop()
 		local elementBottom = lastElement:GetBottom()
 		if frameTop and elementBottom then
-			sectionFrame:SetHeight(math.max(80, frameTop - elementBottom + 10))
+			sectionFrame:SetHeight(math.max(80, frameTop - elementBottom + GetQuestSectionBottomPadding()))
 		end
 	end
 
@@ -4580,7 +4619,7 @@ function UpdateRQEQuestFrame()
 		local frameTop = RQE.BonusQuestsFrame:GetTop()
 		local objectiveBottom = lastBonusQuestElement:GetBottom()
 		if frameTop and objectiveBottom then
-			bonusFrameHeight = math.max(80, frameTop - objectiveBottom + 10)
+			bonusFrameHeight = math.max(80, frameTop - objectiveBottom + GetQuestSectionBottomPadding())
 		end
 	end
 	RQE.BonusQuestsFrame:SetHeight(bonusFrameHeight)
@@ -4632,7 +4671,7 @@ function UpdateRQEWorldQuestFrame()
 	end
 
 	-- Define padding value
-	local padding = 10 -- Example padding value
+	local padding = GetQuestSectionBottomPadding()
 	local yOffset = -45 -- Y offset for the first element
 
 	-- Get the player's current map ID
@@ -4720,6 +4759,7 @@ function UpdateRQEWorldQuestFrame()
 			end
 
 			WQuestLogIndexButton.number = WQnumber
+			if RQE.UI then RQE.UI:StyleQuestIndexButton(WQuestLogIndexButton, isSuperTracked, "World") end
 
 			-- Set flag to check if correct macro
 			if RQE.RQEQuestFrame then
@@ -4964,7 +5004,8 @@ function UpdateRQEWorldQuestFrame()
 			-- Positioning logic for WQuestLevelAndName
 			if i == 1 then
 				-- If this is the first world quest, position it at the top left of the frame
-				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset)
+				local rowInset = (RQE.UI and RQE.UI:IsEnabled()) and 41 or 35
+				WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", rowInset, yOffset)
 			else
 				-- For the second and subsequent world quests, position them relative to the last world quest element
 				if lastWorldQuestElement then
@@ -4972,7 +5013,8 @@ function UpdateRQEWorldQuestFrame()
 				else
 					-- Fallback to the top left position if for some reason the last element doesn't exist
 					-- This should not happen if player's world quest elements are handled correctly
-					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", 35, yOffset - (i * padding))
+					local rowInset = (RQE.UI and RQE.UI:IsEnabled()) and 41 or 35
+					WQuestLevelAndName:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "TOPLEFT", rowInset, yOffset - (i * padding))
 				end
 			end
 
@@ -5208,7 +5250,7 @@ function UpdateRQETaskQuestFrame()
 		local frameTop = taskFrame:GetTop()
 		local objectiveBottom = lastElement:GetBottom()
 		if frameTop and objectiveBottom then
-			taskFrameHeight = math.max(80, frameTop - objectiveBottom + 10)
+			taskFrameHeight = math.max(80, frameTop - objectiveBottom + GetQuestSectionBottomPadding())
 		end
 	end
 	taskFrame:SetHeight(taskFrameHeight)
