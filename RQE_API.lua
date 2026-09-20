@@ -873,13 +873,13 @@ if isLegacyClient then
 
 	-- Existing legacy modules still call these map functions directly. Only
 	-- fill missing methods; never replace a Blizzard implementation.
-	C_Map = C_Map or {}
-	C_Map.GetBestMapForUnit = C_Map.GetBestMapForUnit or RQE.API.GetBestMapForUnit
-	C_Map.GetMapInfo = C_Map.GetMapInfo or RQE.API.GetMapInfo
-	C_Map.GetPlayerMapPosition = C_Map.GetPlayerMapPosition or RQE.API.GetPlayerMapPosition
-	C_Map.ClearUserWaypoint = C_Map.ClearUserWaypoint or RQE.API.ClearUserWaypoint
-	C_Map.SetUserWaypoint = C_Map.SetUserWaypoint or RQE.API.SetUserWaypoint
-	C_Map.HasUserWaypoint = C_Map.HasUserWaypoint or RQE.API.HasUserWaypoint
+	if not C_Map then C_Map = {} end
+	if not C_Map.GetBestMapForUnit then C_Map.GetBestMapForUnit = RQE.API.GetBestMapForUnit end
+	if not C_Map.GetMapInfo then C_Map.GetMapInfo = RQE.API.GetMapInfo end
+	if not C_Map.GetPlayerMapPosition then C_Map.GetPlayerMapPosition = RQE.API.GetPlayerMapPosition end
+	if not C_Map.ClearUserWaypoint then C_Map.ClearUserWaypoint = RQE.API.ClearUserWaypoint end
+	if not C_Map.SetUserWaypoint then C_Map.SetUserWaypoint = RQE.API.SetUserWaypoint end
+	if not C_Map.HasUserWaypoint then C_Map.HasUserWaypoint = RQE.API.HasUserWaypoint end
 end
 
 
@@ -3719,44 +3719,47 @@ if isLegacyClient then
 		return type(SetAbandonQuest) == "function" and SetAbandonQuest() or false
 	end
 
-	-- Transitional aliases are required by the existing legacy module code. Do
-	-- not write to C_SuperTrack or C_AddOns: those namespaces are protected.
-	C_QuestLog = C_QuestLog or {}
-	C_QuestLog.GetNumQuestLogEntries = C_QuestLog.GetNumQuestLogEntries or RQE.API.GetNumQuestLogEntries
-	C_QuestLog.GetInfo = C_QuestLog.GetInfo or RQE.API.GetQuestLogInfo
-	C_QuestLog.GetQuestObjectives = C_QuestLog.GetQuestObjectives or RQE.API.GetQuestObjectives
-	C_QuestLog.GetNumQuestObjectives = C_QuestLog.GetNumQuestObjectives or RQE.API.GetNumQuestObjectives
-	C_QuestLog.GetLogIndexForQuestID = C_QuestLog.GetLogIndexForQuestID or RQE.API.GetLogIndexForQuestID
-	C_QuestLog.GetTitleForQuestID = C_QuestLog.GetTitleForQuestID or RQE.API.GetTitleForQuestID
-	C_QuestLog.IsQuestFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted or RQE.API.IsQuestFlaggedCompleted
-	C_QuestLog.GetNextWaypoint = C_QuestLog.GetNextWaypoint or RQE.API.GetNextWaypoint
-	C_QuestLog.GetNextWaypointForMap = C_QuestLog.GetNextWaypointForMap or RQE.API.GetNextWaypointForMap
-	C_QuestLog.GetNextWaypointText = C_QuestLog.GetNextWaypointText or RQE.API.GetNextWaypointText
-	C_QuestLog.GetQuestType = C_QuestLog.GetQuestType or RQE.API.GetQuestType
-	C_QuestLog.IsQuestTask = C_QuestLog.IsQuestTask or RQE.API.IsQuestTask
-	C_QuestLog.IsMetaQuest = C_QuestLog.IsMetaQuest or RQE.API.IsMetaQuest
-	C_QuestLog.IsThreatQuest = C_QuestLog.IsThreatQuest or RQE.API.IsThreatQuest
-	C_QuestLog.GetQuestsOnMap = C_QuestLog.GetQuestsOnMap or RQE.API.GetQuestsOnMap
-	C_QuestLog.GetNumQuestWatches = C_QuestLog.GetNumQuestWatches or RQE.API.GetNumQuestWatches
-	C_QuestLog.GetNumWorldQuestWatches = C_QuestLog.GetNumWorldQuestWatches or RQE.API.GetNumWorldQuestWatches
-	C_QuestLog.GetQuestWatchType = C_QuestLog.GetQuestWatchType or RQE.API.GetQuestWatchType
-	C_QuestLog.GetQuestIDForQuestWatchIndex = C_QuestLog.GetQuestIDForQuestWatchIndex or RQE.API.GetQuestIDForQuestWatchIndex
-	C_QuestLog.GetQuestIDForWorldQuestWatchIndex = C_QuestLog.GetQuestIDForWorldQuestWatchIndex or RQE.API.GetQuestIDForWorldQuestWatchIndex
-	C_QuestLog.GetDistanceSqToQuest = C_QuestLog.GetDistanceSqToQuest or RQE.API.GetDistanceSqToQuest
-	C_QuestLog.AddQuestWatch = C_QuestLog.AddQuestWatch or RQE.API.AddQuestWatch
-	C_QuestLog.RemoveQuestWatch = C_QuestLog.RemoveQuestWatch or RQE.API.RemoveQuestWatch
-	C_QuestLog.IsQuestObjectiveComplete = C_QuestLog.IsQuestObjectiveComplete or RQE.API.IsQuestObjectiveComplete
-	C_QuestLog.IsQuestWatched = C_QuestLog.IsQuestWatched or RQE.API.IsQuestWatched
-	C_QuestLog.RemoveWorldQuestWatch = C_QuestLog.RemoveWorldQuestWatch or RQE.API.RemoveWorldQuestWatch
-	C_QuestLog.AddWorldQuestWatch = C_QuestLog.AddWorldQuestWatch or RQE.API.AddWorldQuestWatch
-	C_QuestLog.IsPushableQuest = C_QuestLog.IsPushableQuest or RQE.API.IsPushableQuest
-	C_QuestLog.GetSelectedQuest = C_QuestLog.GetSelectedQuest or RQE.API.GetSelectedQuest
-	C_QuestLog.SetSelectedQuest = C_QuestLog.SetSelectedQuest or RQE.API.SetSelectedQuest
-	C_QuestLog.SetAbandonQuest = C_QuestLog.SetAbandonQuest or RQE.API.SetAbandonQuest
-	C_QuestLog.SortQuestWatches = C_QuestLog.SortQuestWatches or function() end
-	C_QuestLog.IsComplete = C_QuestLog.IsComplete or function() return false end
-	C_QuestLog.ReadyForTurnIn = C_QuestLog.ReadyForTurnIn or function() return false end
-	C_QuestLog.IsQuestFlaggedCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount or function() return false end
+	-- Transitional aliases are required by the existing legacy module code.
+	-- Never reassign an existing namespace or method, even to the same value:
+	-- that taints Blizzard callers. Forever nameplates read C_QuestLog while
+	-- coloring unit levels, before their restricted layout and health updates.
+	-- C_SuperTrack and C_AddOns stay untouched, including missing methods.
+	if not C_QuestLog then C_QuestLog = {} end
+	if not C_QuestLog.GetNumQuestLogEntries then C_QuestLog.GetNumQuestLogEntries = RQE.API.GetNumQuestLogEntries end
+	if not C_QuestLog.GetInfo then C_QuestLog.GetInfo = RQE.API.GetQuestLogInfo end
+	if not C_QuestLog.GetQuestObjectives then C_QuestLog.GetQuestObjectives = RQE.API.GetQuestObjectives end
+	if not C_QuestLog.GetNumQuestObjectives then C_QuestLog.GetNumQuestObjectives = RQE.API.GetNumQuestObjectives end
+	if not C_QuestLog.GetLogIndexForQuestID then C_QuestLog.GetLogIndexForQuestID = RQE.API.GetLogIndexForQuestID end
+	if not C_QuestLog.GetTitleForQuestID then C_QuestLog.GetTitleForQuestID = RQE.API.GetTitleForQuestID end
+	if not C_QuestLog.IsQuestFlaggedCompleted then C_QuestLog.IsQuestFlaggedCompleted = RQE.API.IsQuestFlaggedCompleted end
+	if not C_QuestLog.GetNextWaypoint then C_QuestLog.GetNextWaypoint = RQE.API.GetNextWaypoint end
+	if not C_QuestLog.GetNextWaypointForMap then C_QuestLog.GetNextWaypointForMap = RQE.API.GetNextWaypointForMap end
+	if not C_QuestLog.GetNextWaypointText then C_QuestLog.GetNextWaypointText = RQE.API.GetNextWaypointText end
+	if not C_QuestLog.GetQuestType then C_QuestLog.GetQuestType = RQE.API.GetQuestType end
+	if not C_QuestLog.IsQuestTask then C_QuestLog.IsQuestTask = RQE.API.IsQuestTask end
+	if not C_QuestLog.IsMetaQuest then C_QuestLog.IsMetaQuest = RQE.API.IsMetaQuest end
+	if not C_QuestLog.IsThreatQuest then C_QuestLog.IsThreatQuest = RQE.API.IsThreatQuest end
+	if not C_QuestLog.GetQuestsOnMap then C_QuestLog.GetQuestsOnMap = RQE.API.GetQuestsOnMap end
+	if not C_QuestLog.GetNumQuestWatches then C_QuestLog.GetNumQuestWatches = RQE.API.GetNumQuestWatches end
+	if not C_QuestLog.GetNumWorldQuestWatches then C_QuestLog.GetNumWorldQuestWatches = RQE.API.GetNumWorldQuestWatches end
+	if not C_QuestLog.GetQuestWatchType then C_QuestLog.GetQuestWatchType = RQE.API.GetQuestWatchType end
+	if not C_QuestLog.GetQuestIDForQuestWatchIndex then C_QuestLog.GetQuestIDForQuestWatchIndex = RQE.API.GetQuestIDForQuestWatchIndex end
+	if not C_QuestLog.GetQuestIDForWorldQuestWatchIndex then C_QuestLog.GetQuestIDForWorldQuestWatchIndex = RQE.API.GetQuestIDForWorldQuestWatchIndex end
+	if not C_QuestLog.GetDistanceSqToQuest then C_QuestLog.GetDistanceSqToQuest = RQE.API.GetDistanceSqToQuest end
+	if not C_QuestLog.AddQuestWatch then C_QuestLog.AddQuestWatch = RQE.API.AddQuestWatch end
+	if not C_QuestLog.RemoveQuestWatch then C_QuestLog.RemoveQuestWatch = RQE.API.RemoveQuestWatch end
+	if not C_QuestLog.IsQuestObjectiveComplete then C_QuestLog.IsQuestObjectiveComplete = RQE.API.IsQuestObjectiveComplete end
+	if not C_QuestLog.IsQuestWatched then C_QuestLog.IsQuestWatched = RQE.API.IsQuestWatched end
+	if not C_QuestLog.RemoveWorldQuestWatch then C_QuestLog.RemoveWorldQuestWatch = RQE.API.RemoveWorldQuestWatch end
+	if not C_QuestLog.AddWorldQuestWatch then C_QuestLog.AddWorldQuestWatch = RQE.API.AddWorldQuestWatch end
+	if not C_QuestLog.IsPushableQuest then C_QuestLog.IsPushableQuest = RQE.API.IsPushableQuest end
+	if not C_QuestLog.GetSelectedQuest then C_QuestLog.GetSelectedQuest = RQE.API.GetSelectedQuest end
+	if not C_QuestLog.SetSelectedQuest then C_QuestLog.SetSelectedQuest = RQE.API.SetSelectedQuest end
+	if not C_QuestLog.SetAbandonQuest then C_QuestLog.SetAbandonQuest = RQE.API.SetAbandonQuest end
+	if not C_QuestLog.SortQuestWatches then C_QuestLog.SortQuestWatches = function() end end
+	if not C_QuestLog.IsComplete then C_QuestLog.IsComplete = function() return false end end
+	if not C_QuestLog.ReadyForTurnIn then C_QuestLog.ReadyForTurnIn = function() return false end end
+	if not C_QuestLog.IsQuestFlaggedCompletedOnAccount then C_QuestLog.IsQuestFlaggedCompletedOnAccount = function() return false end end
 end
 
 
@@ -3951,13 +3954,13 @@ if isLegacyClient then
 		return Has(NativeTaskQuest, "GetQuestZoneID") and NativeTaskQuest.GetQuestZoneID(questID) or nil
 	end
 
-	C_TaskQuest = C_TaskQuest or {}
-	C_TaskQuest.GetQuestsOnMap = C_TaskQuest.GetQuestsOnMap or RQE.API.GetQuestsOnMap_Task
-	C_TaskQuest.GetQuestZoneID = C_TaskQuest.GetQuestZoneID or RQE.API.GetQuestZoneID
-	C_CampaignInfo = C_CampaignInfo or {}
-	C_CampaignInfo.IsCampaignQuest = C_CampaignInfo.IsCampaignQuest or function() return false end
-	C_CampaignInfo.GetCampaignID = C_CampaignInfo.GetCampaignID or function() return nil end
-	C_CampaignInfo.GetCampaignInfo = C_CampaignInfo.GetCampaignInfo or function() return nil end
+	if not C_TaskQuest then C_TaskQuest = {} end
+	if not C_TaskQuest.GetQuestsOnMap then C_TaskQuest.GetQuestsOnMap = RQE.API.GetQuestsOnMap_Task end
+	if not C_TaskQuest.GetQuestZoneID then C_TaskQuest.GetQuestZoneID = RQE.API.GetQuestZoneID end
+	if not C_CampaignInfo then C_CampaignInfo = {} end
+	if not C_CampaignInfo.IsCampaignQuest then C_CampaignInfo.IsCampaignQuest = function() return false end end
+	if not C_CampaignInfo.GetCampaignID then C_CampaignInfo.GetCampaignID = function() return nil end end
+	if not C_CampaignInfo.GetCampaignInfo then C_CampaignInfo.GetCampaignInfo = function() return nil end end
 end
 
 
@@ -4170,9 +4173,9 @@ if isLegacyClient then
 		return Has(NativeScenario, "GetInfo") and NativeScenario.GetInfo() or nil
 	end
 
-	C_Scenario = C_Scenario or {}
-	C_Scenario.IsInScenario = C_Scenario.IsInScenario or RQE.API.IsInScenario
-	C_Scenario.GetInfo = C_Scenario.GetInfo or RQE.API.GetScenarioInfo
+	if not C_Scenario then C_Scenario = {} end
+	if not C_Scenario.IsInScenario then C_Scenario.IsInScenario = RQE.API.IsInScenario end
+	if not C_Scenario.GetInfo then C_Scenario.GetInfo = RQE.API.GetScenarioInfo end
 end
 
 
