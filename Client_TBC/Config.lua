@@ -601,6 +601,9 @@ RQE.options = {
 					end,
 					set = function(_, newValue)
 						RQE.db.profile.enableStepControls = newValue
+						if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then
+							RQE.Buttons.UpdateHeaderNavigation()
+						end
 					end,
 					width = "full",
 					order = 3,
@@ -2149,6 +2152,9 @@ function RQE:AddFrameSettingsWidgets(container)
 	enableStepControlsCheckbox:SetValue(RQE.db.profile.enableStepControls)
 	enableStepControlsCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 		RQE.db.profile.enableStepControls = value
+		if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then
+			RQE.Buttons.UpdateHeaderNavigation()
+		end
 	end)
 
 	enableStepControlsCheckbox:SetFullWidth(true)
