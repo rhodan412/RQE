@@ -717,8 +717,16 @@ end
 function RQE:ToggleStepControls()
 	if RQE.db.profile.enableStepControls then
 		RQE.db.profile.enableStepControls = false
+
+		C_Timer.After(0.45, function()
+			RQE:StartPeriodicChecks()
+		end)
 	else
 		RQE.db.profile.enableStepControls = true
+	end
+
+	if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then
+		RQE.Buttons.UpdateHeaderNavigation()
 	end
 end
 
@@ -3469,6 +3477,10 @@ function RQE:UpdateQuestFrameSize()
 	-- Update the quest frame size similarly, using its respective profile settings
 	local questFrameWidth = self.db.profile.QuestFramePosition.frameWidth or 325
 	local questFrameHeight = self.db.profile.QuestFramePosition.frameHeight or 450
+	if questFrameHeight <= 30 then
+		questFrameHeight = 450
+		self.db.profile.QuestFramePosition.frameHeight = questFrameHeight
+	end
 
 	-- Error handling for quest frame
 	local success, err = pcall(function()
@@ -6602,22 +6614,22 @@ end
 
 -- When the frame is maximized
 function RQE:MaximizeFrame()
-	local defaultWidth = RQE.db.profile.frameWidth or 420  -- Replace 400 with the default from Core.lua
-	local defaultHeight = RQE.db.profile.frameHeight or 300  -- Replace 300 with the default from Core.lua
-
-	local width = RQE.db.profile.framePosition.originalWidth or defaultWidth
-	local height = RQE.db.profile.framePosition.originalHeight or defaultHeight
+	local position = RQE.db.profile.framePosition or {}
+	local width = position.frameWidth or position.originalWidth or 420
+	local height = position.frameHeight or position.originalHeight or 300
 
 	RQEFrame:SetSize(width, height)
 	RQE.db.profile.isFrameMaximized = true
 end
 
 
+--[[ Disabled with the retired RQEFrame +/- controls.
 -- When the frame is minimized
 function RQE:MinimizeFrame()
 	RQEFrame:SetSize(420, 30)
 	RQE.db.profile.isFrameMaximized = false
 end
+]]
 
 
 -- Function to Update the Opacity of Main Frame and Quest Tracker
@@ -7162,9 +7174,7 @@ end
 RQEFrame = RQEFrame or CreateFrame("Frame", "RQEFrame", UIParent)
 
 
--- Initialize other UI components like MinimizeButton, MaximizeButton, etc.
-RQE.MinimizeButton = RQE.MinimizeButton or {}
-RQE.MaximizeButton = RQE.MaximizeButton or {}
+-- RQEFrame minimize/maximize button placeholders retired with those controls.
 
 
 -- Initialize SearchEditBox (Make it global to access it from other files)
@@ -7532,6 +7542,9 @@ function RQE:RefreshActiveCoordblockLinks()
 			end)
 		end
 		htmlFrame:SetText(html)
+	end
+	if self.Buttons and self.Buttons.UpdateHeaderNavigation then
+		self.Buttons.UpdateHeaderNavigation()
 	end
 end
 
@@ -7997,22 +8010,7 @@ function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, text
 					end)
 
 					hover:SetScript("OnMouseDown", function()
-						-- Clear TomTom waypoint when Waypoint Coordblock is clicked
-						if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
-							TomTom.waydb:ResetProfile()
-							RQE._currentTomTomUID = nil
-						end
-						RQE.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
-						local markedActive = RQE:SetActiveCoordblock(coordData)
-						RQE:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID), title or "Custom Waypoint")
-						if markedActive then
-							-- Rebuild visible labels after the click handler returns; focus-frame
-							-- paragraphs may be destroyed by the same refresh.
-							C_Timer.After(0, function()
-								if not RQE.ActiveCoordblock or RQE.ActiveCoordblock.data ~= coordData then return end
-								RQE:RefreshActiveCoordblockLinks()
-							end)
-						end
+						RQE:SelectCoordblockWaypoint(coordData)
 					end)
 
 					table.insert(parentFrame._rqeSegments, hover)
