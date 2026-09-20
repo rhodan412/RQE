@@ -25,6 +25,8 @@
 		- Azure & Gold now keeps the Separate Focus panel consistently edge-aligned and responsive for every quest type, gives tracker quest categories distinct pictorial badges, and fully contains unchanged header controls in taller title bars.
 		- Azure & Gold icons now retain brighter source colors at in-game scale, and the Separate Focus control uses the supplied blue-and-gold compass inside the panel with a matching text gutter; the legacy * is larger in the same position.
 		- Every Quest Tracker child section now leaves comfortable space between its final objective and lower border while preserving a clean gap before the following section header.
+		- The legacy Separate Focus layout now keeps its * close to the left border and its step text close to that control without changing the approved Azure & Gold placement.
+		- Legacy Separate Focus step descriptions now sit at the balanced spacing shown by the original presentation while retaining the corrected * position.
 
 	Buttons.lua
 		- Disabled creation of the obsolete QF and RQEFrame minimize/maximize buttons, reanchored manual step navigation directly beside Close, and added a compact conditional ◀ WP current/total ▶ navigator whose ordinary addon buttons remain usable in combat. (2026.09.19.1912)
@@ -87,6 +89,8 @@
 		- Inset the themed SG-specific status and direction anchors fifteen pixels so timed World Quests align their status, direction, description, objectives, and Focus panel content with quests that do not show SG in Classic/Season of Discovery. (2026.09.19.2352)
 		- Reduced the themed SG-specific status and direction inset from fifteen to eight pixels, retaining button clearance without pushing time, direction, description, and objective text too far right in Classic/Season of Discovery. (2026.09.20.0023)
 		- Moved the Separate Focus control ten pixels inside and six pixels below the panel corner, shifted every focus-text renderer to a shared 66-pixel inset with matching responsive widths, and enlarged the legacy * glyph for consistent themed and unthemed transitions in Classic/Season of Discovery. (2026.09.20.0023)
+		- Split Separate Focus positioning by presentation mode in Classic/Season of Discovery: legacy mode now anchors the * at 2/-4 and all focus text at 45 pixels, while Azure & Gold retains its existing 10/-6 control and 66-pixel text insets unchanged. (2026.09.20.0047)
+		- Moved only the Classic/Season of Discovery legacy Separate Focus text inset from 45 to 52 pixels so numbered descriptions and the no-description fallback match the original visual spacing; button and Azure & Gold positions remain unchanged. (2026.09.20.0056)
 
 	Client_TBC/Config.lua
 		- Refreshed Quest Helper header navigation immediately from both TBC Anniversary StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
@@ -134,6 +138,8 @@
 		- Inset the themed SG-specific status and direction anchors fifteen pixels so timed World Quests align their status, direction, description, objectives, and Focus panel content with quests that do not show SG in TBC Anniversary. (2026.09.19.2352)
 		- Reduced the themed SG-specific status and direction inset from fifteen to eight pixels, retaining button clearance without pushing time, direction, description, and objective text too far right in TBC Anniversary. (2026.09.20.0023)
 		- Moved the Separate Focus control ten pixels inside and six pixels below the panel corner, shifted every focus-text renderer to a shared 66-pixel inset with matching responsive widths, and enlarged the legacy * glyph for consistent themed and unthemed transitions in TBC Anniversary. (2026.09.20.0023)
+		- Split Separate Focus positioning by presentation mode in TBC Anniversary: legacy mode now anchors the * at 2/-4 and all focus text at 45 pixels, while Azure & Gold retains its existing 10/-6 control and 66-pixel text insets unchanged. (2026.09.20.0047)
+		- Moved only the TBC Anniversary legacy Separate Focus text inset from 45 to 52 pixels so numbered descriptions and the no-description fallback match the original visual spacing; button and Azure & Gold positions remain unchanged. (2026.09.20.0056)
 
 	Config.lua
 		- Refreshed Retail Quest Helper header navigation immediately from both StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
@@ -245,6 +251,8 @@
 		- Inset the themed SG-specific status and direction anchors fifteen pixels so timed World Quests align their status, direction, description, objectives, and Focus panel content with quests that do not show SG on Retail/WoW Forever. (2026.09.19.2352)
 		- Reduced the themed SG-specific status and direction inset from fifteen to eight pixels, retaining button clearance without pushing time, direction, description, and objective text too far right on Retail/WoW Forever. (2026.09.20.0023)
 		- Moved the Separate Focus control ten pixels inside and six pixels below the panel corner, shifted every focus-text renderer to a shared 66-pixel inset with matching responsive widths, and enlarged the legacy * glyph for consistent themed and unthemed transitions on Retail/WoW Forever. (2026.09.20.0023)
+		- Split Separate Focus positioning by presentation mode on Retail/WoW Forever: legacy mode now anchors the * at 2/-4 and all focus text at 45 pixels, while Azure & Gold retains its existing 10/-6 control and 66-pixel text insets unchanged. (2026.09.20.0047)
+		- Moved only the Retail/WoW Forever legacy Separate Focus text inset from 45 to 52 pixels so numbered descriptions and the no-description fallback match the original visual spacing; button and Azure & Gold positions remain unchanged. (2026.09.20.0056)
 
 	RQEMacro.lua
 		- Added a presentation-only exception-item icon overlay for the Magic Button while preserving the secure macro, Blizzard icon fallback for every other action, cooldown/count layers, and all existing tooltip content. (2026.09.19.2203)
