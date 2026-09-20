@@ -1,4 +1,4 @@
-12.1.0.5
+12.1.0.5 (2026.09.20)
 
 	**HIGHLIGHTS**
 		- Timed and failed quests now show their live status in RQE: Retail quest rows place it between the quest name and distance, while Classic/Season of Discovery and TBC Anniversary place the active countdown in the Quest Helper and show failed status in affected tracker rows.
@@ -16,6 +16,17 @@
 		- Turning off StepIndex controls now resumes automatic step and waypoint evaluation after the manual preview is released.
 		- The RQE Quest Tracker now expands reliably, keeps the same header width in both states, and shows only the appropriate minimize or maximize button.
 		- The RQE Quest Tracker title now remains evenly centered between the ZQ and F buttons in both expanded and collapsed views.
+		- RQE now offers a unified Azure and Golden Yellow visual theme with custom frames, section headers, and pictorial controls across Retail, Season of Discovery, TBC Anniversary, and WoW Forever; the original presentation remains available in settings.
+		- The RQE-owned Contribution Step Editor launcher is restored with its new scroll-and-seal icon, while older Contribution builds' duplicate launcher is hidden automatically.
+		- Azure & Gold now fully replaces inherited Blizzard frame, header, button, filter, and search-window styling while the disabled setting restores the untouched original presentation after reload.
+		- Quest, step, waypoint, group-search, and supported Magic Button actions now use clearer state-aware Azure & Gold artwork without changing their actions or tooltips.
+		- Azure & Gold headers now fully contain their inset controls, tracker sections retain both decorated ends, filter labels fit their buttons, search fields use ornate framing, and supported Magic Button actions receive a larger high-contrast surround.
+		- Azure & Gold now gives the Separate Focus waypoint control its proper compass artwork, centers tracker sections at every frame width, and presents supported Magic Button artwork in a lighter, more compact mount.
+		- Azure & Gold now keeps the Separate Focus panel consistently edge-aligned and responsive for every quest type, gives tracker quest categories distinct pictorial badges, and fully contains unchanged header controls in taller title bars.
+		- Azure & Gold icons now retain brighter source colors at in-game scale, and the Separate Focus control uses the supplied blue-and-gold compass inside the panel with a matching text gutter; the legacy * is larger in the same position.
+		- Every Quest Tracker child section now leaves comfortable space between its final objective and lower border while preserving a clean gap before the following section header.
+		- The legacy Separate Focus layout now keeps its * close to the left border and its step text close to that control without changing the approved Azure & Gold placement.
+		- Legacy Separate Focus step descriptions now sit at the balanced spacing shown by the original presentation while retaining the corrected * position.
 
 	Buttons.lua
 		- Disabled creation of the obsolete QF and RQEFrame minimize/maximize buttons, reanchored manual step navigation directly beside Close, and added a compact conditional ◀ WP current/total ▶ navigator whose ordinary addon buttons remain usable in combat. (2026.09.19.1912)
@@ -25,15 +36,26 @@
 		- Added adjacent-step availability checks to the shared header refresh so < disables on the first navigable step and > disables when no following database step exists; retained the synthetic step 0 boundary used by searched Classic/TBC quests and refreshes button state immediately after manual navigation. (2026.09.19.1930)
 		- Corrected RQE Quest Tracker collapse controls so Maximize keeps the frame enabled and restores its content, search row, resize handle, and prior scrollbar state; overlaid the mutually exclusive +/- buttons in one header slot, preserved the full-width header while collapsed, and hid all content below it. (2026.09.19.1945)
 		- Added shared RQE Quest Tracker title layout that bounds and centers the text between the ZQ and F buttons, keeping its position independent of the frame's expanded or collapsed state. (2026.09.19.1951)
+		- Replaced abbreviation-only Quest Helper and Quest Tracker controls with the shared theme's descriptive icon artwork while retaining every existing tooltip and click handler; styled menu and debug-log controls without changing their behavior. (2026.09.19.2101)
+		- Restored an RQE-owned Contribution Step Editor launcher that appears when RQE Contribution is loaded, preserves the existing editor toggle and refresh actions, and safely hides the duplicate button created by transitional Contribution builds. (2026.09.19.2101)
+		- Matched the collapsed Quest Tracker height to the Azure & Gold header's larger 34-pixel control row while retaining the original 30-pixel legacy collapse height. (2026.09.19.2210)
+		- Raised the Azure & Gold collapsed Quest Tracker height to the final 44-pixel header size so its unchanged icon buttons remain completely inside the frame decoration. (2026.09.19.2251)
+		- Made themed quest-filter menus measure their rendered labels, widen as needed, and use taller rows, preventing Auto-Track Zone Quests and submenu captions from escaping their button or menu bounds. (2026.09.19.2251)
+		- Raised the Azure & Gold Quest Tracker collapsed height to 48 pixels so the taller title bar remains fully visible without resizing its controls. (2026.09.19.2347)
 
 	Client_Classic/Config.lua
 		- Refreshed Quest Helper header navigation immediately from both Classic/Season of Discovery StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
+		- Added the Azure & Gold RQE Theme setting to both Classic/Season of Discovery configuration interfaces, with reload guidance so every already-created frame changes consistently. (2026.09.19.2101)
 
 	Client_Classic/Core.lua
 		- Updated the Classic/Season of Discovery StepIndex toggle to refresh header visibility, routed coordblock clicks through the shared waypoint selector, refreshed header numbering with [Active] labels, and retired unused minimize/maximize placeholders. (2026.09.19.1912)
 		- Changed the remaining full-frame restore helper to use the saved framePosition width and height before legacy original-size fallbacks, preserving the player's configured Classic/Season of Discovery Quest Helper size after retiring minimization. (2026.09.19.1913)
 		- Delayed StartPeriodicChecks briefly when disabling Classic/Season of Discovery StepIndex controls so automatic step and waypoint selection resumes after manual-preview state is released. (2026.09.19.1945)
 		- Recovered legacy RQE Quest Tracker profiles whose collapsed 30-pixel height had been saved as their normal height by restoring the standard full height during size application. (2026.09.19.1945)
+		- Enabled the Azure & Gold presentation by default for Classic/Season of Discovery profiles without altering any quest-processing defaults. (2026.09.19.2101)
+		- Applied the selected visual theme only after AceDB restores the Classic/Season of Discovery profile and normal frame settings, preventing an off profile from receiving early-load themed textures. (2026.09.19.2203)
+		- Standardized the Classic/Season of Discovery Quest Tracker's initial, fallback, maximize, and minimized widths on the new 350-pixel default and used the themed 44-pixel collapsed height without changing legacy-mode height. (2026.09.19.2251)
+		- Updated the Classic/Season of Discovery themed minimize fallback to the new 48-pixel header height while retaining the legacy 30-pixel behavior. (2026.09.19.2347)
 
 	Client_Classic/EventManager.lua
 		- Removed the obsolete saved minimize/maximize restoration branch and now restores the configured full Quest Helper with its scroll content visible, preventing an older minimized profile from leaving the frame collapsed without a + button. (2026.09.19.1912)
@@ -42,6 +64,13 @@
 		- Added a red failed-quest line between the quest name and combined zone/distance line, reanchoring the distance content and reserving tracker height only for failed Classic/Season of Discovery quests; countdowns remain out of the multi-quest tracker because the legacy timer API reads only the selected quest. (2026.09.19.0931)
 		- Prevented the temporary 30-pixel collapsed RQE Quest Tracker height from overwriting the saved full frame size in Classic/Season of Discovery. (2026.09.19.1945)
 		- Registered the Classic/Season of Discovery Quest Tracker title with the shared ZQ-to-F centering layout after all header buttons are created. (2026.09.19.1951)
+		- Applied the shared dark panel, generated section-header artwork, Azure outlines, Golden Yellow accents, styled search controls, and icon toolbar to the Classic/Season of Discovery Quest Tracker. (2026.09.19.2101)
+		- Registered every scrolling quest section for complete resizable borders, retained its header frame for point-ended art, and gave tracked quest indexes distinct normal and supertracked button states in Classic/Season of Discovery. (2026.09.19.2203)
+		- Used the active theme's header height when hiding the Classic/Season of Discovery collapsed tracker's search row, preventing the row from protruding beneath the larger Azure & Gold header. (2026.09.19.2210)
+		- Inset themed quest-number buttons six pixels, sized every child section to the actual scroll viewport (including Bonus and Task sections), and raised the theme-aware collapse threshold to 44 pixels so rows and both point-ended header caps remain visible in Classic/Season of Discovery. (2026.09.19.2251)
+		- Replaced themed Campaign, World, Daily, Bonus, and Normal quest row labels with semantic pictorial badges in Classic/Season of Discovery while retaining quest indexes, WQ, and BQ text in the legacy presentation. (2026.09.19.2347)
+		- Raised the Classic/Season of Discovery themed search-row collapse threshold to 48 pixels to match the taller tracker header. (2026.09.19.2347)
+		- Added theme-aware bottom clearance to Campaign, Normal, World, Bonus, and Task sections and increased their element-based stacking offset by the same amount, keeping wrapped final objectives clear of both the lower border and the next header in Classic/Season of Discovery. (2026.09.20.0023)
 
 	Client_Classic/RQEFrame.lua
 		- Added a live active-quest countdown beneath the Quest Helper quest name using the legacy selected-quest timer path, replaced it with red failed status when appropriate, and dynamically reanchored direction text and scroll height as the status appears or disappears in Classic/Season of Discovery. (2026.09.19.0931)
@@ -51,15 +80,31 @@
 		- Changed the normal Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, retaining orange-red urgency and red failure states in Classic/Season of Discovery. (2026.09.19.1009)
 		- Replaced the normal Quest Helper countdown's green with soft coral #FFAA77 while preserving orange-red urgency and red failure states in Classic/Season of Discovery. (2026.09.19.1021)
 		- Stopped creating QF and minimize/maximize header controls, initialized the conditional waypoint navigator and setting-aware step arrows, and removed the retired +/- visibility handler in Classic/Season of Discovery. (2026.09.19.1912)
+		- Applied the unified themed panel, generated header, icon search control, Contribution launcher, and compass-style Separate Focus waypoint control to Classic/Season of Discovery without changing their existing actions. (2026.09.19.2101)
+		- Replaced the themed W and SG labels with waypoint-target and group-search artwork, themed numbered step buttons by active state, and registered the AceGUI Search Frame for the complete Classic/Season of Discovery skin. (2026.09.19.2203)
+		- Kept the timer/failed line vertically below SG while returning status, direction, description, objectives, and the Separate Focus panel to their original left content column in Classic/Season of Discovery. (2026.09.19.2251)
+		- Registered the Separate Focus waypoint control for deferred Azure & Gold styling so frames created before profile theme application replace the legacy * with the Waypoint icon while disabled themes retain the original control. (2026.09.19.2317)
+		- Anchored the themed Separate Focus panel at fixed 20-pixel Quest Helper gutters, derived its width directly from the live parent width, resized its scrolling text content with it, and restored the main StepsText to its prior left column for every quest type in Classic/Season of Discovery. (2026.09.19.2347)
+		- Shifted the Separate Focus Waypoint control two pixels right and three pixels down inside the panel border and enlarged its icon area so the strengthened Azure compass field remains visible. (2026.09.19.2347)
+		- Inset the themed SG-specific status and direction anchors fifteen pixels so timed World Quests align their status, direction, description, objectives, and Focus panel content with quests that do not show SG in Classic/Season of Discovery. (2026.09.19.2352)
+		- Reduced the themed SG-specific status and direction inset from fifteen to eight pixels, retaining button clearance without pushing time, direction, description, and objective text too far right in Classic/Season of Discovery. (2026.09.20.0023)
+		- Moved the Separate Focus control ten pixels inside and six pixels below the panel corner, shifted every focus-text renderer to a shared 66-pixel inset with matching responsive widths, and enlarged the legacy * glyph for consistent themed and unthemed transitions in Classic/Season of Discovery. (2026.09.20.0023)
+		- Split Separate Focus positioning by presentation mode in Classic/Season of Discovery: legacy mode now anchors the * at 2/-4 and all focus text at 45 pixels, while Azure & Gold retains its existing 10/-6 control and 66-pixel text insets unchanged. (2026.09.20.0047)
+		- Moved only the Classic/Season of Discovery legacy Separate Focus text inset from 45 to 52 pixels so numbered descriptions and the no-description fallback match the original visual spacing; button and Azure & Gold positions remain unchanged. (2026.09.20.0056)
 
 	Client_TBC/Config.lua
 		- Refreshed Quest Helper header navigation immediately from both TBC Anniversary StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
+		- Added the Azure & Gold RQE Theme setting to both TBC Anniversary configuration interfaces, with reload guidance so every already-created frame changes consistently. (2026.09.19.2101)
 
 	Client_TBC/Core.lua
 		- Updated the TBC Anniversary StepIndex toggle to refresh header visibility, routed coordblock clicks through the shared waypoint selector, refreshed header numbering with [Active] labels, and retired unused minimize/maximize placeholders. (2026.09.19.1912)
 		- Changed the remaining full-frame restore helper to use the saved framePosition width and height before legacy original-size fallbacks, preserving the player's configured TBC Anniversary Quest Helper size after retiring minimization. (2026.09.19.1913)
 		- Delayed StartPeriodicChecks briefly when disabling TBC Anniversary StepIndex controls so automatic step and waypoint selection resumes after manual-preview state is released. (2026.09.19.1945)
 		- Recovered legacy RQE Quest Tracker profiles whose collapsed 30-pixel height had been saved as their normal height by restoring the standard full height during size application. (2026.09.19.1945)
+		- Enabled the Azure & Gold presentation by default for TBC Anniversary profiles without altering any quest-processing defaults. (2026.09.19.2101)
+		- Applied the selected visual theme only after AceDB restores the TBC Anniversary profile and normal frame settings, preventing an off profile from receiving early-load themed textures. (2026.09.19.2203)
+		- Standardized the TBC Anniversary Quest Tracker's initial, fallback, maximize, and minimized widths on the new 350-pixel default and used the themed 44-pixel collapsed height without changing legacy-mode height. (2026.09.19.2251)
+		- Updated the TBC Anniversary themed minimize fallback to the new 48-pixel header height while retaining the legacy 30-pixel behavior. (2026.09.19.2347)
 
 	Client_TBC/EventManager.lua
 		- Removed the obsolete saved minimize/maximize restoration branch and now restores the configured full Quest Helper with its scroll content visible, preventing an older minimized profile from leaving the frame collapsed without a + button. (2026.09.19.1912)
@@ -68,6 +113,13 @@
 		- Added a red failed-quest line between the quest name and combined zone/distance line, reanchoring the distance content and reserving tracker height only for failed TBC Anniversary quests; countdowns remain out of the multi-quest tracker because the legacy timer API reads only the selected quest. (2026.09.19.0931)
 		- Prevented the temporary 30-pixel collapsed RQE Quest Tracker height from overwriting the saved full frame size in TBC Anniversary. (2026.09.19.1945)
 		- Registered the TBC Anniversary Quest Tracker title with the shared ZQ-to-F centering layout after all header buttons are created. (2026.09.19.1951)
+		- Applied the shared dark panel, generated section-header artwork, Azure outlines, Golden Yellow accents, styled search controls, and icon toolbar to the TBC Anniversary Quest Tracker. (2026.09.19.2101)
+		- Registered every scrolling quest section for complete resizable borders, retained its header frame for point-ended art, and gave tracked quest indexes distinct normal and supertracked button states in TBC Anniversary. (2026.09.19.2203)
+		- Used the active theme's header height when hiding the TBC Anniversary collapsed tracker's search row, preventing the row from protruding beneath the larger Azure & Gold header. (2026.09.19.2210)
+		- Inset themed quest-number buttons six pixels, sized every child section to the actual scroll viewport (including Bonus and Task sections), and raised the theme-aware collapse threshold to 44 pixels so rows and both point-ended header caps remain visible in TBC Anniversary. (2026.09.19.2251)
+		- Replaced themed Campaign, World, Daily, Bonus, and Normal quest row labels with semantic pictorial badges in TBC Anniversary while retaining quest indexes, WQ, and BQ text in the legacy presentation. (2026.09.19.2347)
+		- Raised the TBC Anniversary themed search-row collapse threshold to 48 pixels to match the taller tracker header. (2026.09.19.2347)
+		- Added theme-aware bottom clearance to Campaign, Normal, World, Bonus, and Task sections and increased their element-based stacking offset by the same amount, keeping wrapped final objectives clear of both the lower border and the next header in TBC Anniversary. (2026.09.20.0023)
 
 	Client_TBC/RQEFrame.lua
 		- Added a live active-quest countdown beneath the Quest Helper quest name using the legacy selected-quest timer path, replaced it with red failed status when appropriate, and dynamically reanchored direction text and scroll height as the status appears or disappears in TBC Anniversary. (2026.09.19.0931)
@@ -77,18 +129,75 @@
 		- Changed the normal Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, retaining orange-red urgency and red failure states in TBC Anniversary. (2026.09.19.1009)
 		- Replaced the normal Quest Helper countdown's green with soft coral #FFAA77 while preserving orange-red urgency and red failure states in TBC Anniversary. (2026.09.19.1021)
 		- Stopped creating QF and minimize/maximize header controls, initialized the conditional waypoint navigator and setting-aware step arrows, and removed the retired +/- visibility handler in TBC Anniversary. (2026.09.19.1912)
+		- Applied the unified themed panel, generated header, icon search control, Contribution launcher, and compass-style Separate Focus waypoint control to TBC Anniversary without changing their existing actions. (2026.09.19.2101)
+		- Replaced the themed W and SG labels with waypoint-target and group-search artwork, themed numbered step buttons by active state, and registered the AceGUI Search Frame for the complete TBC Anniversary skin. (2026.09.19.2203)
+		- Kept the timer/failed line vertically below SG while returning status, direction, description, objectives, and the Separate Focus panel to their original left content column in TBC Anniversary. (2026.09.19.2251)
+		- Registered the Separate Focus waypoint control for deferred Azure & Gold styling so frames created before profile theme application replace the legacy * with the Waypoint icon while disabled themes retain the original control. (2026.09.19.2317)
+		- Anchored the themed Separate Focus panel at fixed 20-pixel Quest Helper gutters, derived its width directly from the live parent width, resized its scrolling text content with it, and restored the main StepsText to its prior left column for every quest type in TBC Anniversary. (2026.09.19.2347)
+		- Shifted the Separate Focus Waypoint control two pixels right and three pixels down inside the panel border and enlarged its icon area so the strengthened Azure compass field remains visible. (2026.09.19.2347)
+		- Inset the themed SG-specific status and direction anchors fifteen pixels so timed World Quests align their status, direction, description, objectives, and Focus panel content with quests that do not show SG in TBC Anniversary. (2026.09.19.2352)
+		- Reduced the themed SG-specific status and direction inset from fifteen to eight pixels, retaining button clearance without pushing time, direction, description, and objective text too far right in TBC Anniversary. (2026.09.20.0023)
+		- Moved the Separate Focus control ten pixels inside and six pixels below the panel corner, shifted every focus-text renderer to a shared 66-pixel inset with matching responsive widths, and enlarged the legacy * glyph for consistent themed and unthemed transitions in TBC Anniversary. (2026.09.20.0023)
+		- Split Separate Focus positioning by presentation mode in TBC Anniversary: legacy mode now anchors the * at 2/-4 and all focus text at 45 pixels, while Azure & Gold retains its existing 10/-6 control and 66-pixel text insets unchanged. (2026.09.20.0047)
+		- Moved only the TBC Anniversary legacy Separate Focus text inset from 45 to 52 pixels so numbered descriptions and the no-description fallback match the original visual spacing; button and Azure & Gold positions remain unchanged. (2026.09.20.0056)
 
 	Config.lua
 		- Refreshed Retail Quest Helper header navigation immediately from both StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
+		- Added the Azure & Gold RQE Theme setting to both Retail/WoW Forever configuration interfaces, with reload guidance so every already-created frame changes consistently. (2026.09.19.2101)
 
 	Core.lua
 		- Updated the Retail StepIndex toggle to refresh header visibility, routed coordblock clicks through the shared waypoint selector, refreshed header numbering with both visible [Active] renderers, and retired unused minimize/maximize placeholders. (2026.09.19.1912)
 		- Changed the remaining full-frame restore helper to use the saved framePosition width and height before legacy original-size fallbacks, preserving the player's configured Retail Quest Helper size after retiring minimization. (2026.09.19.1913)
 		- Preserved the delayed StartPeriodicChecks call when disabling Retail StepIndex controls so automatic step and waypoint selection resumes after manual-preview state is released. (2026.09.19.1945)
 		- Recovered legacy RQE Quest Tracker profiles whose collapsed 30-pixel height had been saved as their normal height by restoring the standard full height during size application. (2026.09.19.1945)
+		- Enabled the Azure & Gold presentation by default for Retail and WoW Forever profiles without altering any quest-processing defaults. (2026.09.19.2101)
+		- Applied the selected visual theme only after AceDB restores the Retail/WoW Forever profile and normal frame settings, preventing an off profile from receiving early-load themed textures; also styled the Search Frame's AceGUI input and Track control. (2026.09.19.2203)
+		- Matched the remaining Retail/WoW Forever minimize helper to the theme's 44-pixel header while retaining the original 30-pixel legacy height. (2026.09.19.2251)
+		- Updated the Retail/WoW Forever themed minimize fallback to the new 48-pixel header height while preserving the user's 355-pixel default width and legacy 30-pixel height. (2026.09.19.2347)
 
 	EventManager.lua
 		- Removed the obsolete saved minimize/maximize restoration branch and now restores the configured full Quest Helper with its scroll content visible, preventing an older minimized profile from leaving the frame collapsed without a + button. (2026.09.19.1912)
+
+	Media/UI/Buttons/*.tga
+		- Added lossless normal, hover, pressed, disabled, and scalable wide-button textures with Azure metalwork, Golden Yellow trim, and charcoal centers for the shared RQE theme. (2026.09.19.2101)
+
+	Media/UI/Icons/*.tga
+		- Added transparent pictorial controls for clear, waypoint removal, search, contribution, step and waypoint navigation, close, filter, collapse/expand, Separate Focus waypoint creation, and tracker filters. (2026.09.19.2101)
+		- Added twenty transparent action icons for waypoint targeting, group search, and every supported exception macro category; exports remain 32-bit uncompressed TGA for reliable WoW alpha rendering. (2026.09.19.2203)
+		- Added stable Campaign, World, Daily, Bonus, and Normal tracker-badge exports and strengthened the Waypoint compass's Azure field for legibility at Separate Focus button scale. (2026.09.19.2347)
+		- Regenerated the themed toolbar, quest-category, and action icons with restrained color, brightness, and contrast restoration after downscaling; replaced Waypoint with the supplied full-resolution blue-and-gold compass while retaining transparent 32-bit TGA output. (2026.09.20.0023)
+
+	Media/UI/Panels/*.tga
+		- Added generated full header and section-header art designed for three-slice resizing without distorting the decorated end caps. (2026.09.19.2101)
+
+	Media/UI/Source/build_assets.py
+		- Added a deterministic Pillow-based source builder that crops the approved image sheets and exports WoW-ready 32-bit TGA icons, controls, and panel textures. (2026.09.19.2101)
+		- Added the documented 5x4 action-sheet export contract so waypoint, group-search, and semantic macro icons rebuild to stable names shared by every client. (2026.09.19.2203)
+		- Added deterministic Azure emphasis for the small Waypoint compass and semantic quest-badge aliases for Campaign, World, Daily, Bonus, and Normal tracker rows. (2026.09.19.2347)
+		- Added an alpha-preserving saturation, brightness, and contrast pass for downscaled theme icons and a dedicated Waypoint source path, preserving vivid source colors without changing WoW's uncompressed RGBA TGA compatibility. (2026.09.20.0023)
+
+	Media/UI/Source/RQE-Action-Icon-Sheet.png
+		- Added the retained lossless source sheet for waypoint, group-search, and semantic Magic Button action artwork. (2026.09.19.2203)
+
+	Media/UI/Source/RQE-Assets-Preview.png
+		- Added a visual inventory of the generated RQE controls and resizable header treatments for review and future iteration. (2026.09.19.2101)
+
+	Media/UI/Source/RQE-Frame-Sheet.png
+		- Retained the generated lossless source sheet for the themed header, section header, button states, and wide text-button treatment. (2026.09.19.2101)
+
+	Media/UI/Source/RQE-Icon-Sheet.png
+		- Retained the generated lossless source sheet for the Quest Helper, navigation, waypoint, and general toolbar icon family. (2026.09.19.2101)
+
+	Media/UI/Source/RQE-Quest-Icon-Sheet.png
+		- Retained the generated lossless source sheet for the RQE Quest Tracker filter icon family. (2026.09.19.2101)
+
+	Media/UI/Source/RQE-Waypoint-Icon.png
+		- Added the supplied transparent full-resolution blue-and-gold compass as the dedicated Separate Focus source, avoiding color and detail loss from shared-sheet extraction. (2026.09.20.0023)
+
+	Media/UI/Source/THEMES.md
+		- Documented the fixed action-icon cell order, exact Azure and Golden Yellow palette, rebuild process, and the registration step needed to add rather than replace a future theme. (2026.09.19.2203)
+		- Documented the five semantic tracker-badge filenames that future theme packs must provide for drop-in quest-category artwork. (2026.09.19.2347)
+		- Documented the dedicated Separate Focus compass source and clarified that alpha-preserving icon color restoration compensates for downscaling rather than a Blizzard TGA limitation. (2026.09.20.0023)
 
 	QuestingModule.lua
 		- Added a live gold countdown or red failed notification between each Retail tracked quest's name and distance, with failure taking precedence, automatic quarter-second countdown refreshes, conditional distance reanchoring, and extra content height only for rows that show status. (2026.09.19.0931)
@@ -96,9 +205,26 @@
 		- Read valid remaining seconds directly when building Retail tracker status rows instead of requiring Blizzard's display predicate first, allowing timed watched quests to place their countdown in the same line used by failed status. (2026.09.19.0956)
 		- Prevented the temporary 30-pixel collapsed RQE Quest Tracker height from overwriting the saved full frame size on Retail. (2026.09.19.1945)
 		- Registered the Retail Quest Tracker title with the shared ZQ-to-F centering layout after all header buttons are created. (2026.09.19.1951)
+		- Applied the shared dark panel, generated section-header artwork, Azure outlines, Golden Yellow accents, styled search controls, and icon toolbar to the Retail/WoW Forever Quest Tracker. (2026.09.19.2101)
+		- Registered every scrolling quest section for complete resizable borders, retained its header frame for point-ended art, and gave tracked quest indexes distinct normal and supertracked button states on Retail/WoW Forever. (2026.09.19.2203)
+		- Used the active theme's header height when hiding the Retail/WoW Forever collapsed tracker's search row, preventing the row from protruding beneath the larger Azure & Gold header. (2026.09.19.2210)
+		- Inset themed quest-number buttons six pixels, sized every child section to the actual scroll viewport (including Bonus and Task sections), and raised the theme-aware collapse threshold to 44 pixels so rows and both point-ended header caps remain visible on Retail/WoW Forever. (2026.09.19.2251)
+		- Replaced themed Campaign, World, Daily, Bonus, and Normal quest row labels with semantic pictorial badges on Retail/WoW Forever while retaining quest indexes, WQ, and BQ text in the legacy presentation. (2026.09.19.2347)
+		- Raised the Retail/WoW Forever themed search-row collapse threshold to 48 pixels to match the taller tracker header. (2026.09.19.2347)
+		- Added theme-aware bottom clearance to Campaign, Normal, World, Bonus, and Task sections and increased their element-based stacking offset by the same amount, keeping wrapped final objectives clear of both the lower border and the next header on Retail/WoW Forever. (2026.09.20.0023)
+
+	RQE-Camelot.TOC
+		- Loaded the presentation-only UITheme module for WoW Forever after the compatibility API and before frame construction. (2026.09.19.2101)
+
+	RQE-Classic.toc
+		- Loaded the presentation-only UITheme module for Classic/Season of Discovery after the compatibility API and before frame construction. (2026.09.19.2101)
+
+	RQE-Tbc.toc
+		- Loaded the presentation-only UITheme module for TBC Anniversary after the compatibility API and before frame construction. (2026.09.19.2101)
 
 	RQE.toc
 		- Updated version# (2026.09.19.1310)
+		- Loaded the presentation-only UITheme module for Retail after the compatibility API and before frame construction. (2026.09.19.2101)
 
 	RQE_API.lua
 		- Added normalized failed-state, time-remaining visibility, and seconds-remaining wrappers using Retail's C_QuestLog IsFailed/GetTimeAllowed APIs, task-quest time as a fallback, and preserved-selection legacy GetQuestLogTimeLeft/IsCurrentQuestFailed support; captured optional timer results before numeric conversion so non-timed quests safely return nil instead of raising an argument error. (2026.09.19.0931)
@@ -107,7 +233,7 @@
 		- Treated valid countdown data as authoritative when Blizzard's ShouldDisplayTimeRemaining predicate returns false, normalizing timed watched quests that still expose their remaining duration through GetTimeAllowed. (2026.09.19.0956)
 
 	RQEDatabase.lua
-		- Updated some Horde Borean Tundra quests in the DB (2026.09.19.1310)
+		- Updated some Horde Borean Tundra quests in the DB (2026.09.20.0335)
 
 	RQEFrame.lua
 		- Mirrored the active quest's gold countdown or red failed notification beneath the Retail Quest Helper quest name using the modern normalized quest-ID APIs, with live refreshes and dynamic direction-text, width, and scroll-height adjustment matching the legacy-client preview. (2026.09.19.0935)
@@ -116,6 +242,35 @@
 		- Changed the normal Retail Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, without changing the RQE Quest Tracker timer color or the urgent and failed states. (2026.09.19.1009)
 		- Replaced the normal Retail Quest Helper countdown's green with soft coral #FFAA77 without changing the RQE Quest Tracker timer or the urgent and failed states. (2026.09.19.1021)
 		- Stopped creating QF and minimize/maximize header controls, initialized the conditional waypoint navigator and setting-aware step arrows, and removed the retired +/- visibility handler on Retail. (2026.09.19.1912)
+		- Applied the unified themed panel, generated header, icon search control, Contribution launcher, and compass-style Separate Focus waypoint control to Retail/WoW Forever without changing their existing actions. (2026.09.19.2101)
+		- Replaced the themed W and SG labels with waypoint-target and group-search artwork, themed numbered step buttons by active state, and registered the AceGUI Search Frame for the complete Retail/WoW Forever skin. (2026.09.19.2203)
+		- Kept the timer/failed line vertically below SG while returning status, direction, description, objectives, and the Separate Focus panel to their original left content column on Retail/WoW Forever. (2026.09.19.2251)
+		- Registered the Separate Focus waypoint control for deferred Azure & Gold styling so frames created before profile theme application replace the legacy * with the Waypoint icon while disabled themes retain the original control. (2026.09.19.2317)
+		- Anchored the themed Separate Focus panel at fixed 20-pixel Quest Helper gutters, derived its width directly from the live parent width, resized its scrolling text content with it, and restored the main StepsText to its prior left column for every quest type on Retail/WoW Forever. (2026.09.19.2347)
+		- Shifted the Separate Focus Waypoint control two pixels right and three pixels down inside the panel border and enlarged its icon area so the strengthened Azure compass field remains visible. (2026.09.19.2347)
+		- Inset the themed SG-specific status and direction anchors fifteen pixels so timed World Quests align their status, direction, description, objectives, and Focus panel content with quests that do not show SG on Retail/WoW Forever. (2026.09.19.2352)
+		- Reduced the themed SG-specific status and direction inset from fifteen to eight pixels, retaining button clearance without pushing time, direction, description, and objective text too far right on Retail/WoW Forever. (2026.09.20.0023)
+		- Moved the Separate Focus control ten pixels inside and six pixels below the panel corner, shifted every focus-text renderer to a shared 66-pixel inset with matching responsive widths, and enlarged the legacy * glyph for consistent themed and unthemed transitions on Retail/WoW Forever. (2026.09.20.0023)
+		- Split Separate Focus positioning by presentation mode on Retail/WoW Forever: legacy mode now anchors the * at 2/-4 and all focus text at 45 pixels, while Azure & Gold retains its existing 10/-6 control and 66-pixel text insets unchanged. (2026.09.20.0047)
+		- Moved only the Retail/WoW Forever legacy Separate Focus text inset from 45 to 52 pixels so numbered descriptions and the no-description fallback match the original visual spacing; button and Azure & Gold positions remain unchanged. (2026.09.20.0056)
+
+	RQEMacro.lua
+		- Added a presentation-only exception-item icon overlay for the Magic Button while preserving the secure macro, Blizzard icon fallback for every other action, cooldown/count layers, and all existing tooltip content. (2026.09.19.2203)
+
+	UITheme.lua
+		- Added the shared presentation layer for Azure and Golden Yellow panels, three-slice headers, scalable text buttons, pictorial controls, search fields, disabled states, and the optional classic-style fallback. (2026.09.19.2101)
+		- Added late-load integration that reskins RQE's Contribution launcher after RQE Contribution creates its editor, without taking ownership of editor processing or data. (2026.09.19.2101)
+		- Deferred all skin application until the saved profile is available, ensuring a disabled theme reload reconstructs the untouched original frames and buttons while an enabled reload strips inherited Blizzard layers. (2026.09.19.2203)
+		- Added exact #0057B8/#FFD700 keylines, complete eight-slice resizable borders, rounded main headers, point-ended child headers, larger icon controls, disabled text-button states, Search Frame styling, W/SG art, state-aware index art, semantic Magic Button overlays, and a named theme asset registry for future packs. (2026.09.19.2203)
+		- Increased main headers to 44 pixels, inset their unchanged-size button groups, moved tracker content beneath them, mirrored point-header end caps, replaced flat blue edit-box outlines with ornate eight-slice fields, and aligned the fixed search row with the new geometry. (2026.09.19.2251)
+		- Replaced mapped Magic Button normal and highlight textures outright and gave the themed Magic Button a 42-pixel presentation over a 92%-opaque 50-pixel Azure & Gold surround; ordinary macro items retain their Blizzard icon inside the same readable themed mount. (2026.09.19.2251)
+		- Reduced the themed Magic Button to 38 pixels inside a 44-pixel surround, lowered only the surround fill to 28% opacity, optically centered mapped action art three pixels upward in both normal and highlight states, and retained the secure macro and tooltip behavior unchanged. (2026.09.19.2317)
+		- Added per-control options to deferred legacy-button styling for the 40-pixel Separate Focus Waypoint icon and centered the themed Quest Tracker viewport with equal 20-pixel side gutters that continue to resize with the parent frame. (2026.09.19.2317)
+		- Raised both Azure & Gold main headers from 44 to 48 pixels and moved their content rows down four pixels without changing any header-button dimensions. (2026.09.19.2347)
+		- Inset ordinary Blizzard Magic Button art by two pixels to visually match custom action artwork without replacing its icon, macro, click behavior, or tooltip. (2026.09.19.2347)
+		- Added semantic Campaign, World, Daily, Bonus, and Normal quest-badge rendering that hides numeric labels only while the theme is enabled and retains active-row background states. (2026.09.19.2347)
+		- Widened the Quest Helper viewport toward its scrollbar and added themed Separate Focus button positioning so the Focus panel maintains minimal equal gutters and keeps its compass clear of the panel border. (2026.09.19.2347)
+		- Anchored the themed Separate Focus icon ten pixels inside and six pixels below the panel corner so its complete decorated border remains within the frame and aligns with the shared focus-text gutter. (2026.09.20.0023)
 
 	WPUtil.lua
 		- Added current-step coordblock and current-map coordOrder enumeration for the header navigator, including no-selection starts, non-wrapping Back/Forward targeting, endpoint state, and direct reuse of existing manual ordered-route selection. (2026.09.19.1912)
