@@ -64,8 +64,12 @@ local function CreateBorder(button)
 end
 
 
--- Refreshes the Previous/Next step tooltips if either button is currently being hovered.
+-- Refreshes Previous/Next enabled states and any tooltip currently being hovered.
 function RQE.Buttons.RefreshStepNavigationTooltips()
+	if RQE.Buttons.UpdateHeaderNavigation then
+		RQE.Buttons.UpdateHeaderNavigation()
+	end
+
 	local function RefreshButton(button)
 		if not button then return end
 		if not button:IsMouseOver() then return end
@@ -169,9 +173,9 @@ RQE.UnknownButtonTooltip = function()
 		if RQE.db.profile.autoClickWaypointButton then
 			if RQE.db.profile.debugLevel == "INFO" then
 				RQE.ClickWButton()
-				C_Timer.After(3.5, function()
+				C_Timer.After(0.3, function()
 					--RQE:StartPeriodicChecks()	-- Redundant as this will get run when pressing the "W" button rather than also mousing over it
-					C_Timer.After(0.6, function()
+					C_Timer.After(0.2, function()
 						RQE.CheckAndClickSeparateWaypointButtonButton()
 						-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
 						if RQE.db.profile.debugLevel == "INFO" then
@@ -405,6 +409,11 @@ function RQE:KhadgarCoordsMatch(questID)
 		RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 	end)
 
+
+	if RQEFrame and not RQEFrame:IsMouseOver() then
+		return
+	end
+
 	C_Timer.After(1.2, function()
 		RQE:CheckCoordHotspotsInSteps(questID)
 	end)
@@ -435,6 +444,10 @@ function RQE:CoordsNOMatch(questID)
 	C_Timer.After(0.5, function()
 		RQE:PlayThrottledSound(135755)	-- VO_82_Mechagnome_Citizen_Formal_F_Greetings
 	end)
+
+	if RQEFrame and not RQEFrame:IsMouseOver() then
+		return
+	end
 
 	C_Timer.After(1.2, function()
 		RQE:CheckCoordHotspotsInSteps(questID)
@@ -1030,6 +1043,8 @@ function RQE.Buttons.CreateSearchButton(RQEFrame)
 end
 
 
+--[[ Disabled: the RQEQuestFrame and Blizzard Objective Tracker no longer use
+the old QF header toggle.
 -- Parent function to show/hide the QuestingModule frame
 function RQE.Buttons.CreateQMButton(RQEFrame)
 	local QMButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
@@ -1056,6 +1071,7 @@ function RQE.Buttons.CreateQMButton(RQEFrame)
 
 	return QMButton
 end
+]]
 
 
 -- Returns the currently displayed stepIndex, preferring manual preview over automatic progress.
@@ -1070,6 +1086,35 @@ function RQE:GetDisplayedStepIndex()
 		or RQE.AddonSetStepIndex
 		or RQE.CurrentStepIndex
 		or 1
+end
+
+
+-- Returns whether the manual step controls have a valid adjacent step in each
+-- direction. Searched Classic/TBC quests retain their synthetic pickup step 0.
+local function GetStepNavigationAvailability()
+	local questID
+	if isRetail then
+		questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
+	else
+		questID = RQE.searchedQuestID or RQE.DisplayedQuestID
+			or RQE.API.GetSuperTrackedQuestID()
+	end
+
+	local questData = questID and RQE.getQuestData(questID)
+	local currentStep = tonumber(RQE:GetDisplayedStepIndex())
+	if not questData or not currentStep then return false, false end
+
+	local firstStep = 1
+	if not isRetail and RQE.CanNavigateSearchedQuestSteps
+		and RQE:CanNavigateSearchedQuestSteps(questID) then
+		firstStep = 0
+	end
+
+	local previousStep = currentStep - 1
+	local canGoBack = currentStep > firstStep
+		and (previousStep == 0 or questData[previousStep] ~= nil)
+	local canGoForward = questData[currentStep + 1] ~= nil
+	return canGoBack, canGoForward
 end
 
 
@@ -1097,6 +1142,7 @@ function RQE.Buttons.CreateCloseButton(RQEFrame)
 end
 
 
+--[[ Disabled: the RQEFrame no longer exposes minimize/maximize controls.
 -- Parent function to Create MaximizeButton
 function RQE.Buttons.CreateMaximizeButton(RQEFrame, originalWidth, originalHeight, content, ScrollFrame, slider)
 	local MaximizeButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
@@ -1151,6 +1197,7 @@ function RQE.Buttons.CreateMinimizeButton(RQEFrame, originalWidth, originalHeigh
 	RQE.debugLog("CreateMinimizeButton: Function exited.")
 	return MinimizeButton
 end
+]]
 
 
 -- Creates the Previous Step button for manual step preview navigation.
@@ -1254,8 +1301,7 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 
 	NextStepButton:SetFrameStrata("MEDIUM")
 	NextStepButton:SetFrameLevel(3)
-	NextStepButton:SetPoint("TOPRIGHT", RQE.MinimizeButton or RQE.MaximizeButton, "TOPLEFT", -3, 0)
-	--NextStepButton:SetPoint("TOPRIGHT", RQE.PrevStepButton, "TOPLEFT", -3, 0)
+	NextStepButton:SetPoint("TOPRIGHT", RQE.CloseButton, "TOPLEFT", -3, 0)
 
 	NextStepButton:SetScript("OnEnter", function(self)
 		if isRetail then
@@ -1341,6 +1387,163 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 
 	CreateBorder(NextStepButton)
 	return NextStepButton
+end
+
+
+-- Creates the combat-safe, contextual waypoint navigator in the RQEFrame header.
+-- These are ordinary addon buttons: they do not inherit protected action state
+-- and can select coordblock/coordOrder entries during combat.
+function RQE.Buttons.CreateHeaderWaypointControls(RQEFrame)
+	local BackButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+	BackButton:SetSize(18, 18)
+	BackButton:SetText("<<")
+	BackButton:SetFrameStrata("MEDIUM")
+	BackButton:SetFrameLevel(3)
+	RQE.HeaderWaypointBackButton = BackButton
+
+	local Status = CreateFrame("Frame", nil, RQEFrame)
+	Status:SetSize(48, 18)
+	Status:SetFrameStrata("MEDIUM")
+	Status:SetFrameLevel(3)
+	local StatusText = Status:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	StatusText:SetPoint("CENTER", Status, "CENTER", 0, 0)
+	StatusText:SetTextColor(239/255, 191/255, 90/255)
+	RQE.HeaderWaypointStatus = Status
+	RQE.HeaderWaypointStatusText = StatusText
+
+	local ForwardButton = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+	ForwardButton:SetSize(18, 18)
+	ForwardButton:SetText(">>")
+	ForwardButton:SetFrameStrata("MEDIUM")
+	ForwardButton:SetFrameLevel(3)
+	RQE.HeaderWaypointForwardButton = ForwardButton
+
+	BackButton:SetScript("OnClick", function()
+		if RQE.SelectHeaderWaypointByOffset then
+			RQE:SelectHeaderWaypointByOffset(-1)
+		end
+	end)
+	ForwardButton:SetScript("OnClick", function()
+		if RQE.SelectHeaderWaypointByOffset then
+			RQE:SelectHeaderWaypointByOffset(1)
+		end
+	end)
+	BackButton:SetScript("OnEnter", function(self)
+		local selection = RQE.GetCurrentHeaderWaypointSelection
+			and RQE:GetCurrentHeaderWaypointSelection()
+		if not selection then return end
+		local target = selection.currentPosition > 0
+			and selection.currentPosition - 1 or selection.total
+		if target >= 1 then
+			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			GameTooltip:SetText("Go back to waypoint " .. target)
+			GameTooltip:Show()
+		end
+	end)
+	ForwardButton:SetScript("OnEnter", function(self)
+		local selection = RQE.GetCurrentHeaderWaypointSelection
+			and RQE:GetCurrentHeaderWaypointSelection()
+		if not selection then return end
+		local target = selection.currentPosition > 0
+			and selection.currentPosition + 1 or 1
+		if target <= selection.total then
+			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+			GameTooltip:SetText("Advance to waypoint " .. target)
+			GameTooltip:Show()
+		end
+	end)
+	BackButton:SetScript("OnLeave", HideTooltip)
+	ForwardButton:SetScript("OnLeave", HideTooltip)
+
+	CreateBorder(BackButton)
+	CreateBorder(ForwardButton)
+	BackButton:Hide()
+	Status:Hide()
+	ForwardButton:Hide()
+	return BackButton, Status, ForwardButton
+end
+
+
+-- Updates visibility, enabled state, and anchoring for both header navigation
+-- groups. Waypoint controls close the gap left by hidden step controls.
+function RQE.Buttons.UpdateHeaderNavigation()
+	local closeButton = RQE.CloseButton
+	local prevButton = RQE.PrevStepButton
+	local nextButton = RQE.NextStepButton
+	if not closeButton or not prevButton or not nextButton then return end
+
+	local stepControlsVisible = RQE.db and RQE.db.profile
+		and RQE.db.profile.enableStepControls == true
+	if stepControlsVisible then
+		nextButton:ClearAllPoints()
+		nextButton:SetPoint("TOPRIGHT", closeButton, "TOPLEFT", -3, 0)
+		prevButton:ClearAllPoints()
+		prevButton:SetPoint("TOPRIGHT", nextButton, "TOPLEFT", -3, 0)
+		nextButton:Show()
+		prevButton:Show()
+		local canGoBack, canGoForward = GetStepNavigationAvailability()
+		if canGoBack then prevButton:Enable()
+		else prevButton:Disable() end
+		if canGoForward then nextButton:Enable()
+		else nextButton:Disable() end
+	else
+		nextButton:Hide()
+		prevButton:Hide()
+	end
+
+	local BackButton = RQE.HeaderWaypointBackButton
+	local Status = RQE.HeaderWaypointStatus
+	local StatusText = RQE.HeaderWaypointStatusText
+	local ForwardButton = RQE.HeaderWaypointForwardButton
+	if not (BackButton and Status and StatusText and ForwardButton) then return end
+
+	local selection = RQE.GetCurrentHeaderWaypointSelection
+		and RQE:GetCurrentHeaderWaypointSelection()
+	local showWaypoints = selection and selection.total and selection.total > 0
+	if showWaypoints then
+		local rightAnchor = stepControlsVisible and prevButton or closeButton
+		ForwardButton:ClearAllPoints()
+		ForwardButton:SetPoint("TOPRIGHT", rightAnchor, "TOPLEFT", -3, 0)
+		Status:ClearAllPoints()
+		Status:SetPoint("TOPRIGHT", ForwardButton, "TOPLEFT", -1, 0)
+		BackButton:ClearAllPoints()
+		BackButton:SetPoint("TOPRIGHT", Status, "TOPLEFT", -1, 0)
+
+		StatusText:SetText(string.format("WP %d/%d",
+			selection.currentPosition or 0, selection.total))
+		local current = selection.currentPosition or 0
+		if current == 0 or current > 1 then BackButton:Enable()
+		else BackButton:Disable() end
+		if current == 0 or current < selection.total then ForwardButton:Enable()
+		else ForwardButton:Disable() end
+		BackButton:Show()
+		Status:Show()
+		ForwardButton:Show()
+	else
+		BackButton:Hide()
+		Status:Hide()
+		ForwardButton:Hide()
+	end
+
+	-- Center the title inside the space that remains between the left utility
+	-- buttons and whichever navigation group currently begins on the right.
+	if RQE.headerText and RQE.RQEFrameHeader then
+		local leftAnchor = RQE.ContributeButton or RQE.SearchButton or RQE.RQEFrameHeader
+		local rightAnchor
+		if showWaypoints then
+			rightAnchor = BackButton
+		elseif stepControlsVisible then
+			rightAnchor = prevButton
+		else
+			rightAnchor = closeButton
+		end
+
+		RQE.headerText:ClearAllPoints()
+		RQE.headerText:SetWordWrap(false)
+		RQE.headerText:SetJustifyH("CENTER")
+		RQE.headerText:SetPoint("LEFT", leftAnchor, "RIGHT", 8, 0)
+		RQE.headerText:SetPoint("RIGHT", rightAnchor, "LEFT", -8, 0)
+	end
 end
 
 
@@ -1469,6 +1672,22 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
 end
 
 
+-- Centers the Quest Tracker title inside the usable span between the left and
+-- right header-button clusters instead of across the entire frame width.
+function RQE.Buttons.UpdateQuestTrackerHeaderTitle()
+	local title = RQE.QuestTrackerHeaderText
+	local leftAnchor = RQE.ZQButton
+	local rightAnchor = RQE.QTQuestFilterButton
+	if not title or not leftAnchor or not rightAnchor then return end
+
+	title:ClearAllPoints()
+	title:SetWordWrap(false)
+	title:SetJustifyH("CENTER")
+	title:SetPoint("LEFT", leftAnchor, "RIGHT", 8, 0)
+	title:SetPoint("RIGHT", rightAnchor, "LEFT", -8, 0)
+end
+
+
 -- Parent function to create QTCloseButton for RQEQuestFrame
 function RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
 	local QTCloseButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelCloseButton")
@@ -1505,19 +1724,33 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
 
 	QTMaximizeButton:SetPoint("TOPRIGHT", RQE.QTQuestCloseButton, "TOPLEFT", -3, 0)
 	QTMaximizeButton:SetScript("OnClick", function()
-		RQE.db.profile.enableQuestFrame = false
-		RQE.RQEQuestFrame:Show()
-
-		-- Set RQE.QTMinimized to false since we're maximizing the frame
+		RQE.db.profile.enableQuestFrame = true
+		RQE.isRQEQuestFrameManuallyClosed = false
 		RQE.QTMinimized = false
 
-		-- Restore the frame to its original size
-		RQEQuestFrame:SetSize(RQE.QToriginalWidth, RQE.QToriginalHeight)
-		RQE.QTScrollFrame:Show()
-		RQE.QMQTResizeButton:Show()
+		local profileSize = RQE.db.profile.QuestFramePosition or {}
+		local restoredWidth = RQE.QToriginalWidth
+			or profileSize.frameWidth or RQEQuestFrame:GetWidth() or 325
+		local restoredHeight = RQE.QToriginalHeight
+			or (profileSize.frameHeight and profileSize.frameHeight > 30
+				and profileSize.frameHeight) or 450
+		RQEQuestFrame:SetSize(restoredWidth, restoredHeight)
+
+		if RQE.QTScrollFrame then RQE.QTScrollFrame:Show() end
+		if RQE.QuestTrackerSearchRow then RQE.QuestTrackerSearchRow:Show() end
+		if RQE.QMQTslider then
+			if RQE.QTSliderWasShown then RQE.QMQTslider:Show()
+			else RQE.QMQTslider:Hide() end
+		end
+		RQE.QTSliderWasShown = nil
+		if RQE.QMQTResizeButton then RQE.QMQTResizeButton:Show() end
+		QTMaximizeButton:Hide()
+		if RQE.QTQuestMinimizeButton then RQE.QTQuestMinimizeButton:Show() end
+		RQEQuestFrame:Show()
 	end)
 	CreateTooltip(QTMaximizeButton, "Maximize Quest Tracker")
 	CreateBorder(QTMaximizeButton)
+	QTMaximizeButton:Hide()
 
 	return QTMaximizeButton
 end
@@ -1534,22 +1767,28 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 	QTMinimizeButton:SetFrameStrata("MEDIUM")
 	QTMinimizeButton:SetFrameLevel(3)
 
-	QTMinimizeButton:SetPoint("TOPRIGHT", RQE.QTQuestMaximizeButton, "TOPLEFT", -3, 0)
+	QTMinimizeButton:SetPoint("TOPRIGHT", RQE.QTQuestCloseButton, "TOPLEFT", -3, 0)
 	QTMinimizeButton:SetScript("OnClick", function()
 		RQE.QToriginalWidth, RQE.QToriginalHeight = RQEQuestFrame:GetWidth(), RQEQuestFrame:GetHeight()
 
-		-- Set RQE.QTMinimized to false since we're maximizing the frame
+		-- Set the state before resizing so the compact height is not saved as
+		-- the player's normal Quest Tracker height.
 		RQE.QTMinimized = true
 
-		RQEQuestFrame:SetSize(300, 30)
+		-- Preserve the full frame width so both header states line up exactly.
+		RQEQuestFrame:SetHeight(30)
 
 		-- Hide the ScrollFrame if they exist
 		if RQE.QTScrollFrame then
 			RQE.QTScrollFrame:Hide()
 		end
+		if RQE.QuestTrackerSearchRow then
+			RQE.QuestTrackerSearchRow:Hide()
+		end
 
 		-- Hide the Slider if they exist
 		if RQE.QMQTslider then
+			RQE.QTSliderWasShown = RQE.QMQTslider:IsShown()
 			RQE.QMQTslider:Hide()
 		end
 
@@ -1557,6 +1796,9 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 		if RQE.QMQTResizeButton then
 			RQE.QMQTResizeButton:Hide()
 		end
+
+		QTMinimizeButton:Hide()
+		if RQE.QTQuestMaximizeButton then RQE.QTQuestMaximizeButton:Show() end
 	end)
 	CreateTooltip(QTMinimizeButton, "Minimize Quest Tracker")
 	CreateBorder(QTMinimizeButton)
@@ -1698,7 +1940,9 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 	QTFilterButton:SetText("F")
 	RQE.QTQuestFilterButton = QTFilterButton
 
-	QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMinimizeButton, "TOPLEFT", -3, 0)
+	-- Minimize and Maximize occupy the same header slot, so anchoring to either
+	-- keeps the filter and title placement identical in both states.
+	QTFilterButton:SetPoint("TOPRIGHT", RQE.QTQuestMaximizeButton, "TOPLEFT", -3, 0)
 	QTFilterButton:SetFrameStrata("MEDIUM")
 	QTFilterButton:SetFrameLevel(3)
 
