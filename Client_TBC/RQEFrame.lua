@@ -672,17 +672,29 @@ RQE.DirectionTextFrame:SetWidth(RQEFrame:GetWidth() - 50)
 RQE.DirectionTextFrame:SetHeight(0)
 RQE.DirectionTextFrame:EnableMouse(true)
 
+-- Keep the complete direction value on the FontString for tooltip and routing
+-- consumers, then let the shared layout decide whether it merits a visible row.
+local oldSetDirectionText = RQE.DirectionTextFrame.SetText
+function RQE.DirectionTextFrame:SetText(text)
+	local result = oldSetDirectionText(self, text)
+	if RQE.RefreshQuestHelperTextLayout then
+		RQE:RefreshQuestHelperTextLayout()
+	end
+	return result
+end
+
 
 local function AnchorDirectionBelowQuestStatus(hasStatus)
 	local themed = RQE.UI and RQE.UI:IsEnabled()
 	local searchGroupShown = RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown()
+	local noGroupTextOffset = themed and -30 or -35
 	RQE.QuestStatusText:ClearAllPoints()
 	if themed and searchGroupShown then
 		-- Keep timer/failure status clear of the two-button W/SG stack without
 		-- shifting the shared text column noticeably farther right.
 		RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 8, -8)
 	else
-		RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -12)
+		RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", noGroupTextOffset, -12)
 	end
 	RQE.DirectionTextFrame:ClearAllPoints()
 	if hasStatus then
@@ -694,8 +706,26 @@ local function AnchorDirectionBelowQuestStatus(hasStatus)
 			RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -20)
 		end
 	else
-		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -20)
+		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", noGroupTextOffset, -20)
 	end
+end
+
+
+local function IsQuestHelperAvailabilityTimer(questID)
+	if RQE.API.IsWorldQuest and RQE.API.IsWorldQuest(questID) then
+		return true
+	end
+	local questLogIndex = RQE.API.GetLogIndexForQuestID
+		and RQE.API.GetLogIndexForQuestID(questID)
+	local questInfo = questLogIndex and RQE.API.GetQuestLogInfo
+		and RQE.API.GetQuestLogInfo(questLogIndex)
+	local frequency = questInfo and tonumber(questInfo.frequency)
+	local frequencyEnum = Enum and Enum.QuestFrequency
+	local daily = frequencyEnum and tonumber(frequencyEnum.Daily) or 1
+	local weekly = frequencyEnum and tonumber(frequencyEnum.Weekly) or 2
+	local scheduled = frequencyEnum and tonumber(frequencyEnum.ResetByScheduler) or 3
+	return frequency ~= nil
+		and (frequency == daily or frequency == weekly or frequency == scheduled)
 end
 
 
@@ -729,9 +759,14 @@ local function UpdateLegacyQuestStatusText()
 		or tonumber(RQE.DisplayedQuestID)
 		or tonumber(superTrackedQuestID)
 	local statusText, isFailed, isUrgent
+	local suppressAvailabilityTimer = questID
+		and IsQuestHelperAvailabilityTimer(questID)
 
 	if questID and RQE.API.IsQuestFailed and RQE.API.IsQuestFailed(questID) then
 		statusText, isFailed = FAILED or "Failed", true
+		legacyQuestTimerState.expiresAt = nil
+		legacyQuestTimerState.nextProbe = 0
+	elseif suppressAvailabilityTimer then
 		legacyQuestTimerState.expiresAt = nil
 		legacyQuestTimerState.nextProbe = 0
 	elseif questID and RQE.API.GetQuestTimeRemainingSeconds then
@@ -756,6 +791,9 @@ local function UpdateLegacyQuestStatusText()
 	end
 	RQE.QuestStatusText:SetShown(statusText ~= nil)
 	AnchorDirectionBelowQuestStatus(statusText ~= nil)
+	if RQE.RefreshQuestHelperTextLayout then
+		RQE:RefreshQuestHelperTextLayout()
+	end
 
 	if wasShown ~= (statusText ~= nil) and RQE.UpdateContentSize then
 		RQE:UpdateContentSize()
@@ -799,6 +837,7 @@ end
 -- Hook SetText so we can truncate before displaying
 local oldSetText = RQE.QuestDescription.SetText
 function RQE.QuestDescription:SetText(text)
+	local displayText = text
 	if type(text) == "string" and text ~= "" then
 		-- Step 1: Isolate only the first paragraph
 		local firstPara, rest = text:match("^(.-)\r?\n\r?\n(.*)")
@@ -824,11 +863,14 @@ function RQE.QuestDescription:SetText(text)
 		if (rest and #rest > 0) or tooLong then
 			truncated = truncated .. "..."
 		end
-
-		return oldSetText(self, truncated)
+		displayText = truncated
 	end
 
-	return oldSetText(self, text)
+	local result = oldSetText(self, displayText)
+	if RQE.RefreshQuestHelperTextLayout then
+		RQE:RefreshQuestHelperTextLayout()
+	end
+	return result
 end
 
 RQE.QuestDescription:SetJustifyH("LEFT")
@@ -884,27 +926,152 @@ RQE.QuestObjectives:SetHeight(0)
 RQE.QuestObjectives:EnableMouse(true)
 
 
--- Display MapID with Tracker Frame
+local function HasQuestHelperText(fontString)
+	local text = fontString and fontString:GetText()
+	return type(text) == "string" and text:find("%S") ~= nil
+end
+
+
+local function NormalizeQuestHelperText(text)
+	if type(text) ~= "string" then return "" end
+	return text:gsub("|c%x%x%x%x%x%x%x%x", "")
+		:gsub("|r", "")
+		:lower()
+		:gsub("^%s+", "")
+		:gsub("%s+$", "")
+		:gsub("[%.!]+$", "")
+end
+
+
+-- Reflow the variable Quest Helper rows onto the nearest visible predecessor.
+-- The fallback strings stay populated for addon logic, but do not consume a row.
+function RQE:RefreshQuestHelperTextLayout()
+	if not (RQE.QuestStatusText and RQE.DirectionTextFrame
+		and RQE.QuestDescription and RQE.QuestObjectives) then return end
+
+	local hasStatus = RQE.QuestStatusText:IsShown()
+	local normalizedDirection = NormalizeQuestHelperText(RQE.DirectionTextFrame:GetText())
+	local normalizedDescription = NormalizeQuestHelperText(RQE.QuestDescription:GetText())
+	local hasDirection = HasQuestHelperText(RQE.DirectionTextFrame)
+		and normalizedDirection ~= "no direction available"
+	local hasDescription = HasQuestHelperText(RQE.QuestDescription)
+		and normalizedDescription ~= "no description available"
+	local hasObjectives = HasQuestHelperText(RQE.QuestObjectives)
+	local signature = table.concat({
+		hasStatus and "1" or "0",
+		hasDirection and "1" or "0",
+		hasDescription and "1" or "0",
+		hasObjectives and "1" or "0",
+		(RQE.UI and RQE.UI:IsEnabled()) and "1" or "0",
+		(RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown()) and "1" or "0",
+		tostring(RQE.DirectionTextFrame:GetText() or ""),
+		tostring(RQE.QuestDescription:GetText() or ""),
+		tostring(RQE.QuestObjectives:GetText() or ""),
+	}, ":")
+	if RQE._questHelperTextLayoutSignature == signature then return end
+	RQE._questHelperTextLayoutSignature = signature
+
+	AnchorDirectionBelowQuestStatus(hasStatus)
+	RQE.DirectionTextFrame:SetShown(hasDirection)
+	RQE.QuestDescription:SetShown(hasDescription)
+	RQE.QuestObjectives:SetShown(hasObjectives)
+
+	local firstContent = hasDescription and RQE.QuestDescription or RQE.QuestObjectives
+	firstContent:ClearAllPoints()
+	if hasDirection then
+		firstContent:SetPoint("TOPLEFT", RQE.DirectionTextFrame, "BOTTOMLEFT", 0, -17)
+	elseif hasStatus then
+		-- Occupy the same first row that DirectionText would have used.
+		firstContent:SetPoint("TOPLEFT", RQE.QuestStatusText, "BOTTOMLEFT", 0, -10)
+	else
+		-- DirectionText retains the theme/button-aware base anchor even while hidden.
+		firstContent:SetPoint("TOPLEFT", RQE.DirectionTextFrame, "TOPLEFT", 0, 0)
+	end
+
+	if hasDescription then
+		RQE.QuestObjectives:ClearAllPoints()
+		RQE.QuestObjectives:SetPoint("TOPLEFT", RQE.QuestDescription, "BOTTOMLEFT", 0, -17)
+	end
+
+	if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
+	if RQE.UpdateContentSize then RQE:UpdateContentSize() end
+end
+
+
+local oldSetObjectivesText = RQE.QuestObjectives.SetText
+function RQE.QuestObjectives:SetText(text)
+	local result = oldSetObjectivesText(self, text)
+	RQE:RefreshQuestHelperTextLayout()
+	return result
+end
+
+
+-- Direction text can change after a map, zone, or minimap-subzone transition
+-- without the supertracked quest changing. Refresh just this value and reflow.
+function RQE:RefreshQuestHelperDirectionForLocation()
+	local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID
+		and tonumber(RQE.API.GetSuperTrackedQuestID())
+	local searchedQuestID = tonumber(RQE.searchedQuestID)
+	if searchedQuestID and searchedQuestID ~= superTrackedQuestID then
+		RQE:RefreshQuestHelperTextLayout()
+		return
+	end
+
+	local questID = superTrackedQuestID or tonumber(RQE.DisplayedQuestID)
+	if not questID then
+		RQE:RefreshQuestHelperTextLayout()
+		return
+	end
+
+	local directionText = RQE.GetCoordOrderDirection
+		and RQE:GetCoordOrderDirection(questID)
+	if not directionText or directionText == "" then
+		directionText = RQE.API.GetNextWaypointText
+			and RQE.API.GetNextWaypointText(questID)
+	end
+	if directionText == "" then directionText = nil end
+	RQEFrame.DirectionText = directionText
+	RQE.DirectionTextFrame:SetText(directionText or "No direction available.")
+end
+
+
+RQE:RefreshQuestHelperTextLayout()
+
+
+-- Compact in-frame location rail shared by MapID, player coordinates, and step distance.
 ---@class RQEFrame : Frame
 ---@field MapIDText FontString
 RQEFrame = RQEFrame or CreateFrame("Frame", "RQEFrame", UIParent, "BackdropTemplate")
 
-local MapIDText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-if MapIDText then
-	MapIDText:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 15, 15)
-	MapIDText:SetFont("Fonts\\SKURRI.TTF", 16, "OUTLINE")
-	MapIDText:SetText("Map ID: " .. tostring(C_Map.GetBestMapForUnit("player")))
-end
+local LocationInfoBar = CreateFrame("Frame", nil, RQEFrame, "BackdropTemplate")
+LocationInfoBar:SetHeight(24)
+LocationInfoBar:EnableMouse(false)
+LocationInfoBar:SetBackdrop({
+	bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+	tile = true, tileSize = 16, edgeSize = 8,
+	insets = { left = 2, right = 2, top = 2, bottom = 2 },
+})
+LocationInfoBar:SetBackdropColor(0.04, 0.04, 0.04, 0.86)
+RQE.LocationInfoBar = LocationInfoBar
+
+local MapIDText = LocationInfoBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+MapIDText:SetPoint("LEFT", LocationInfoBar, "LEFT", 8, 0)
+MapIDText:SetJustifyH("LEFT")
+MapIDText:SetWordWrap(false)
+local initialMapID = C_Map.GetBestMapForUnit("player")
+MapIDText:SetText(initialMapID and ("Map " .. tostring(initialMapID)) or "Map —")
+LocationInfoBar.MapIDText = MapIDText
 RQEFrame.MapIDText = MapIDText
 
 
 -- Create Font String for Coordinates
-local CoordinatesText = RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-if CoordinatesText then
-	CoordinatesText:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -15, 15)  -- Adjust the offsets as needed
-	CoordinatesText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
-	CoordinatesText:SetText("")
-end
+local CoordinatesText = LocationInfoBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+CoordinatesText:SetPoint("CENTER", LocationInfoBar, "CENTER", 0, 0)
+CoordinatesText:SetJustifyH("CENTER")
+CoordinatesText:SetWordWrap(false)
+CoordinatesText:SetText("—")
+LocationInfoBar.CoordinatesText = CoordinatesText
 RQEFrame.CoordinatesText = CoordinatesText
 
 -- Mirror Retail's frame-visible refresh path while retaining Classic's Blizzard
@@ -927,14 +1094,27 @@ end
 
 
 -- Create Font String for Step Distance (once)
-RQEFrame.StepDistanceText = RQEFrame.StepDistanceText or RQEFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-RQEFrame.StepDistanceText:SetFont("Fonts\\FRIZQT__.TTF", 15, "OUTLINE")
-RQEFrame.StepDistanceText:SetJustifyH("LEFT")
+local StepDistanceText = LocationInfoBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+StepDistanceText:SetPoint("RIGHT", LocationInfoBar, "RIGHT", -8, 0)
+StepDistanceText:SetJustifyH("RIGHT")
+StepDistanceText:SetWordWrap(false)
+StepDistanceText:SetText("—")
+LocationInfoBar.StepDistanceText = StepDistanceText
+RQEFrame.StepDistanceText = StepDistanceText
 
--- Anchor it ABOVE your Coordinates text (blue arrow area)
--- Your CoordinatesText is at TOPRIGHT (-15, 15). Put StepDistance slightly above it.
-RQEFrame.StepDistanceText:SetPoint("BOTTOMRIGHT", RQEFrame.CoordinatesText, "TOPRIGHT", 0, 2)
-RQEFrame.StepDistanceText:SetText("")
+local function LayoutLocationInfoText(_, width)
+	local fieldWidth = math.max(1, ((width or LocationInfoBar:GetWidth() or 0) - 24) / 3)
+	MapIDText:SetWidth(fieldWidth)
+	CoordinatesText:SetWidth(fieldWidth)
+	StepDistanceText:SetWidth(fieldWidth)
+end
+LocationInfoBar:SetScript("OnSizeChanged", LayoutLocationInfoText)
+LayoutLocationInfoText(LocationInfoBar, LocationInfoBar:GetWidth())
+
+if RQE.UI then
+	RQE.UI:StyleLocationInfoBar(LocationInfoBar)
+	RQE.UI:RefreshLocationInfoBar()
+end
 
 
 -- Create Font String for Addon Memory Usage
@@ -2635,16 +2815,18 @@ local function GetSeparateFocusLocation()
 	return mapID, mapName, zoneName, minimapZone
 end
 
--- The themed Focus panel follows the Quest Helper's live width rather than
--- inheriting the horizontal offset of whichever quest text happens to precede
--- it. This keeps World Quest and ordinary quest layouts identical.
+-- Keep the Focus panel inside the Quest Helper viewport instead of inheriting
+-- the horizontal offset of whichever quest text happens to precede it. Legacy
+-- uses the clipped content width so both backdrop sides remain visible; the
+-- themed calculation retains its approved dimensions.
 function RQE:LayoutSeparateFocusFrame()
-	if not (RQE.UI and RQE.UI:IsEnabled() and RQE.SeparateFocusFrame
-		and RQE.content and RQE.QuestObjectives) then return end
+	if not (RQE.SeparateFocusFrame and RQE.content and RQE.QuestObjectives) then return end
 	local contentTop = RQE.content:GetTop()
 	local objectivesBottom = RQE.QuestObjectives:GetBottom()
 	if not contentTop or not objectivesBottom then return end
-	local focusWidth = math.max(1, RQEFrame:GetWidth() - 40)
+	local themed = RQE.UI and RQE.UI:IsEnabled()
+	local focusWidth = themed and math.max(1, RQEFrame:GetWidth() - 40)
+		or math.max(1, RQE.content:GetWidth() - 10)
 	local focusTop = objectivesBottom - contentTop - 10
 	RQE.SeparateFocusFrame:ClearAllPoints()
 	RQE.SeparateFocusFrame:SetPoint("TOPLEFT", RQE.content, "TOPLEFT", 10, focusTop)
@@ -2740,9 +2922,13 @@ function RQE.InitializeSeparateFocusFrame()
 			self.mapID, self.mapName = mapID, mapName
 			self.zoneName, self.minimapZone = zoneName, minimapZone
 			self.hasLocation = true
-			-- Consume the change while hovered; never reset later on mouse leave.
-			if changed and not RQE.SeparateFocusFrame:IsMouseOver() then
-				RQE.FocusScrollFrameToTop()
+			-- Re-evaluate direction immediately. Consume only the scroll reset while
+			-- hovered so it is never applied later on mouse leave.
+			if changed then
+				RQE:RefreshQuestHelperDirectionForLocation()
+				if not RQE.SeparateFocusFrame:IsMouseOver() then
+					RQE.FocusScrollFrameToTop()
+				end
 			end
 		end)
 		watcher:Show()
@@ -2889,10 +3075,10 @@ function RQE.InitializeSeparateFocusFrame()
 			RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			RQE.SeparateStepText:SetJustifyH("LEFT")
 			RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
-			RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+			RQE.SeparateStepText:SetWidth(focusTextWidth)
 			RQE.SeparateStepText:SetHeight(0)
 			RQE.SeparateStepText:SetWordWrap(true)
-			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -7)
+			RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, -7)
 
 			local fallbackText = "No step description available"
 			RQE.SeparateStepText:SetText("")
@@ -2907,10 +3093,10 @@ function RQE.InitializeSeparateFocusFrame()
 				RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 				RQE.SeparateStepText:SetJustifyH("LEFT")
 				RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
-				RQE.SeparateStepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+				RQE.SeparateStepText:SetWidth(focusTextWidth)
 				RQE.SeparateStepText:SetHeight(0)
 				RQE.SeparateStepText:SetWordWrap(true)
-				RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -7)
+				RQE.SeparateStepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, -7)
 
 				local formattedText = string.format("1/0: Quest in DB w/o any available steps.")
 				RQE.SeparateStepText:SetText("")
