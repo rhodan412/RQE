@@ -1839,7 +1839,7 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
 	end)
 	CreateTooltip(QTMaximizeButton, "Maximize Quest Tracker")
 	CreateBorder(QTMaximizeButton)
-	if RQE.UI then RQE.UI:StyleIconButton(QTMaximizeButton, "Expand") end
+	if RQE.UI then RQE.UI:StyleIconButton(QTMaximizeButton, "Collapse") end
 	QTMaximizeButton:Hide()
 
 	return QTMaximizeButton
@@ -1893,7 +1893,7 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 	end)
 	CreateTooltip(QTMinimizeButton, "Minimize Quest Tracker")
 	CreateBorder(QTMinimizeButton)
-	if RQE.UI then RQE.UI:StyleIconButton(QTMinimizeButton, "Collapse") end
+	if RQE.UI then RQE.UI:StyleIconButton(QTMinimizeButton, "Expand") end
 
 	return QTMinimizeButton
 end
@@ -1949,23 +1949,96 @@ function RQE_QuestMenuMixin:OnLoad()
 end
 
 
+local function TrimLastUTF8Character(text)
+	local lastByte = #text
+	while lastByte > 1 do
+		local byte = text:byte(lastByte)
+		if not byte or byte < 128 or byte >= 192 then break end
+		lastByte = lastByte - 1
+	end
+	return text:sub(1, math.max(0, lastByte - 1))
+end
+
+
+local function CountUTF8Characters(text)
+	local count = 0
+	for index = 1, #text do
+		local byte = text:byte(index)
+		if byte and (byte < 128 or byte >= 192) then count = count + 1 end
+	end
+	return count
+end
+
+
+local function BuildThemedMenuLabel(fullText)
+	local texturePrefix, label = fullText:match("^(|T.-|t%s*)(.*)$")
+	texturePrefix = texturePrefix or ""
+	label = label or fullText
+	local characterCount = CountUTF8Characters(label)
+	local maximumLabelCharacters = 27
+	local shortened = label
+	while characterCount > maximumLabelCharacters do
+		shortened = TrimLastUTF8Character(shortened)
+		characterCount = characterCount - 1
+	end
+	local truncated = shortened ~= label
+	local suffix = truncated and "....." or ""
+	return texturePrefix .. shortened .. suffix,
+		characterCount + (truncated and 5 or 0), truncated, texturePrefix ~= ""
+end
+
+
 function RQE_QuestMenuMixin:RefreshLayout()
 	local themed = RQE.UI and RQE.UI:IsEnabled()
-	local rowHeight = themed and 28 or 20
+	local rowHeight = themed and 30 or 20
 	local rowGap = themed and 4 or 5
-	local horizontalPadding = themed and 36 or 20
-	local menuWidth = themed and 230 or math.max(150, self:GetWidth() or 150)
+	local menuWidth
+	local maximumButtonWidth = 0
 
-	for _, button in ipairs(self.buttons) do
-		local fontString = button.GetFontString and button:GetFontString()
-		local textWidth = fontString and fontString:GetStringWidth() or 0
-		menuWidth = math.max(menuWidth, math.ceil(textWidth + horizontalPadding))
+	if themed then
+		-- Each entry follows its own label up to a fixed ceiling. This keeps short
+		-- submenu entries compact while preventing long database names from making
+		-- a menu excessively wide or drawing through the ornate end caps.
+		local menuSideGutter = 10
+		local minimumButtonWidth = 210
+		local maximumAllowedButtonWidth = 448
+		local buttonTextPadding = 64
+		local estimatedCharacterWidth = 12
+		for _, button in ipairs(self.buttons) do
+			local fullText = button.RQEFullMenuText or (button.GetText and button:GetText()) or ""
+			local displayText, displayCharacters, truncated, hasInlineTexture = BuildThemedMenuLabel(fullText)
+			button:SetText(displayText)
+			button.RQEMenuTextTruncated = truncated
+			local estimatedTextWidth = (displayCharacters * estimatedCharacterWidth)
+				+ (hasInlineTexture and 20 or 0)
+			button.RQEThemedMenuWidth = math.min(maximumAllowedButtonWidth,
+				math.max(minimumButtonWidth, estimatedTextWidth + buttonTextPadding))
+			maximumButtonWidth = math.max(maximumButtonWidth, button.RQEThemedMenuWidth)
+		end
+		menuWidth = maximumButtonWidth + (menuSideGutter * 2)
+	else
+		menuWidth = math.max(150, self:GetWidth() or 150)
+		maximumButtonWidth = menuWidth - 20
+		for _, button in ipairs(self.buttons) do
+			button:SetText(button.RQEFullMenuText or (button.GetText and button:GetText()) or "")
+			button.RQEMenuTextTruncated = nil
+		end
 	end
 
 	self:SetWidth(menuWidth)
 	for index, button in ipairs(self.buttons) do
+		local buttonWidth = themed and button.RQEThemedMenuWidth or maximumButtonWidth
 		button:ClearAllPoints()
-		button:SetSize(menuWidth - 20, rowHeight)
+		button:SetSize(buttonWidth, rowHeight)
+		local fontString = button.GetFontString and button:GetFontString()
+		if themed and fontString then
+			fontString:ClearAllPoints()
+			fontString:SetPoint("CENTER", button, "CENTER", 0, 0)
+			fontString:SetSize(math.max(1, buttonWidth - 54), rowHeight)
+			fontString:SetJustifyH("CENTER")
+			fontString:SetJustifyV("MIDDLE")
+			if fontString.SetWordWrap then fontString:SetWordWrap(false) end
+		end
 		if index == 1 then
 			button:SetPoint("TOP", self, "TOP", 0, -10)
 		else
@@ -1980,8 +2053,9 @@ end
 
 -- Updated AddButton function to return the created button
 function RQE_QuestMenuMixin:AddButton(text, onClick, isSubmenu)
+	local fullText = text .. (isSubmenu and " >" or "")
 	for _, button in ipairs(self.buttons) do
-		if button:GetText() == text .. (isSubmenu and " >" or "") then
+		if (button.RQEFullMenuText or button:GetText()) == fullText then
 			return
 		end
 	end
@@ -1989,8 +2063,22 @@ function RQE_QuestMenuMixin:AddButton(text, onClick, isSubmenu)
 	local button = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
 	Mixin(button, RQE_QuestButtonMixin)
 	button:OnLoad()
-	button:SetText(text .. (isSubmenu and " >" or ""))
+	button.RQEFullMenuText = fullText
+	button:SetText(fullText)
 	button:SetScript("OnClick", onClick)
+	button:HookScript("OnEnter", function(owner)
+		if owner.RQEMenuTextTruncated and GameTooltip then
+			local tooltipText = (owner.RQEFullMenuText or ""):gsub("|T.-|t%s*", "")
+			GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+			-- Retail 12.1 uses the color-object SetText overload; the text-only
+			-- form remains compatible with every supported client.
+			GameTooltip:SetText(tooltipText)
+			GameTooltip:Show()
+		end
+	end)
+	button:HookScript("OnLeave", function(owner)
+		if owner.RQEMenuTextTruncated and GameTooltip then GameTooltip:Hide() end
+	end)
 
 	table.insert(self.buttons, button)
 	self:RefreshLayout()
@@ -2076,6 +2164,14 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 end
 
 
+local function HideQuestFilterSubMenus(owner)
+	for _, menuKey in ipairs({ "CampaignSubMenu", "QuestTypeSubMenu", "ZoneQuestSubMenu", "QuestLineSubMenu" }) do
+		local menu = owner[menuKey]
+		if menu then menu:Hide() end
+	end
+end
+
+
 -- Create the Dropdown Menu
 function RQE:ShowQuestFilterMenu()
 	if not self.QuestFilterDropDownMenu then
@@ -2134,12 +2230,14 @@ function RQE:ShowQuestFilterMenu()
 
 			-- Update the button text to reflect the new state
 			if RQE.db.profile.autoTrackZoneQuests then
-				button:SetText("|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests")
+				button.RQEFullMenuText = "|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests"
+				button:SetText(button.RQEFullMenuText)
 				if isRetail then
 					RQE.DisplayCurrentZoneQuests()
 				end
 			else
-				button:SetText("Auto-Track Zone Quests")
+				button.RQEFullMenuText = "Auto-Track Zone Quests"
+				button:SetText(button.RQEFullMenuText)
 			end
 			local menu = button:GetParent()
 			if menu and menu.RefreshLayout then menu:RefreshLayout() end
@@ -2147,7 +2245,9 @@ function RQE:ShowQuestFilterMenu()
 
 		-- Initial state setup for the button
 		if RQE.db.profile.autoTrackZoneQuests then
-			self.QuestFilterDropDownMenu.buttons[#self.QuestFilterDropDownMenu.buttons]:SetText("|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests")
+			local autoTrackButton = self.QuestFilterDropDownMenu.buttons[#self.QuestFilterDropDownMenu.buttons]
+			autoTrackButton.RQEFullMenuText = "|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests"
+			autoTrackButton:SetText(autoTrackButton.RQEFullMenuText)
 			self.QuestFilterDropDownMenu:RefreshLayout()
 		end
 
@@ -2213,8 +2313,15 @@ function RQE:ShowQuestFilterMenu()
 		self:CreateQuestLineSubMenu()
 	end
 
-	-- Toggle Menu Visibility
-	self.QuestFilterDropDownMenu:ToggleMenu(self.QTQuestFilterButton)
+	-- Closing the filter from its header button closes the complete menu tree,
+	-- not only the first tier. Also clear stale submenus before a fresh open.
+	if self.QuestFilterDropDownMenu:IsShown() then
+		HideQuestFilterSubMenus(self)
+		self.QuestFilterDropDownMenu:HideMenu()
+	else
+		HideQuestFilterSubMenus(self)
+		self.QuestFilterDropDownMenu:ShowMenu(self.QTQuestFilterButton)
+	end
 end
 
 
