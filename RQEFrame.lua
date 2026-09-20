@@ -686,7 +686,7 @@ local function UpdateRetailQuestStatusText()
 	elseif isUrgent then
 		RQE.QuestStatusText:SetTextColor(1, 102/255, 51/255)
 	else
-		RQE.QuestStatusText:SetTextColor(102/255, 204/255, 102/255)
+		RQE.QuestStatusText:SetTextColor(1, 170/255, 119/255)
 	end
 	RQE.QuestStatusText:SetShown(statusText ~= nil)
 	AnchorDirectionBelowQuestStatus(statusText ~= nil)
@@ -895,12 +895,14 @@ RQEFrame.CPUUsageText = CPUUsageText
 RQE.Buttons.CreateClearButton(RQEFrame)
 RQE.Buttons.CreateRWButton(RQEFrame)
 RQE.Buttons.CreateSearchButton(RQEFrame)
-RQE.Buttons.CreateQMButton(RQEFrame)
+-- RQE.Buttons.CreateQMButton(RQEFrame) -- Disabled: QF no longer controls the redesigned quest/objective trackers.
 RQE.Buttons.CreateCloseButton(RQEFrame)
-RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
-RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
+-- RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
+-- RQE.Buttons.CreateMinimizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
 RQE.Buttons.CreateNextStepButton(RQEFrame)
 RQE.Buttons.CreatePreviousStepButton(RQEFrame)
+RQE.Buttons.CreateHeaderWaypointControls(RQEFrame)
+RQE.Buttons.UpdateHeaderNavigation()
 
 
 -- Magic Button
@@ -918,24 +920,7 @@ searchExecuteButton:SetText(">")
 -- #6. Event Handlers
 ---------------------------
 
--- Function for Update Button Visibility
-function UpdateButtonVisibility()
-	if RQE.db.profile.isMinimized then
-		RQE.MinimizeButton:Hide()
-		RQE.MaximizeButton:Show()
-	else
-		RQE.MinimizeButton:Show()
-		RQE.MaximizeButton:Hide()
-	end
-
-	-- Save the current minimized state to the SavedVariables
-	RQEFrame.isMinimized = not RQEFrame.isMinimized
-	RQE.db.profile.isMinimized = RQEFrame.isMinimized
-
-	-- Add these lines for debugging
-	local point, relativeTo, relativePoint, xOfs, yOfs = RQE.MinimizeButton:GetPoint()
-	point, relativeTo, relativePoint, xOfs, yOfs = RQE.MaximizeButton:GetPoint()
-end
+-- UpdateButtonVisibility was used only by the removed RQEFrame +/- controls.
 
 
 -- Event to update text widths when the frame is resized
