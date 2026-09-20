@@ -7,9 +7,41 @@
 		- Quest timers turn orange-red at 59 seconds remaining, and Quest Helper status spacing is more evenly balanced across every supported client.
 		- Retail timed quests now show their countdown in the RQE Quest Tracker even when Blizzard's display predicate reports false for the watched quest.
 		- Quest Helper countdowns above 59 seconds now use a soft green color across Retail, Classic/Season of Discovery, and TBC Anniversary.
+		- Quest Helper countdowns above 59 seconds now use soft coral instead of green across Retail, Classic/Season of Discovery, and TBC Anniversary.
+		- Quest Helper coordinate steps now provide combat-usable header Back/Forward controls that select coordblock or ordered-route waypoints and keep their existing [Active] labels synchronized.
+		- The Quest Helper header no longer shows the obsolete QF or minimize/maximize controls, and its manual step arrows now appear only while StepIndex controls are enabled.
+		- The Quest Helper title now sits beside the left utility buttons, and waypoint navigation uses readable double arrows instead of unsupported triangle glyphs.
+		- The Contribution Step Editor $ button is restored, and the Quest Helper title is centered in the space between the left tools and navigation controls.
+		- Manual step navigation now greys out < on the first step and > on the final step, matching waypoint navigation endpoint feedback.
+		- Turning off StepIndex controls now resumes automatic step and waypoint evaluation after the manual preview is released.
+		- The RQE Quest Tracker now expands reliably, keeps the same header width in both states, and shows only the appropriate minimize or maximize button.
+		- The RQE Quest Tracker title now remains evenly centered between the ZQ and F buttons in both expanded and collapsed views.
+
+	Buttons.lua
+		- Disabled creation of the obsolete QF and RQEFrame minimize/maximize buttons, reanchored manual step navigation directly beside Close, and added a compact conditional ◀ WP current/total ▶ navigator whose ordinary addon buttons remain usable in combat. (2026.09.19.1912)
+		- Added shared header layout refresh logic that hides manual step arrows with enableStepControls, closes the waypoint-control gap when they are hidden, disables waypoint endpoints without wrapping, and shifts the title clear of coordinate controls. (2026.09.19.1912)
+		- Left-aligned the Quest Helper title twelve pixels after the Search button and replaced unsupported waypoint triangle glyphs with ASCII << and >> labels, retaining single < and > glyphs for the separate step controls. (2026.09.19.1913)
+		- Centered the Quest Helper title within the live space between the Contribution/Search button cluster and the current waypoint, step, or Close control, keeping the title balanced as conditional header controls appear or disappear. (2026.09.19.1924)
+		- Added adjacent-step availability checks to the shared header refresh so < disables on the first navigable step and > disables when no following database step exists; retained the synthetic step 0 boundary used by searched Classic/TBC quests and refreshes button state immediately after manual navigation. (2026.09.19.1930)
+		- Corrected RQE Quest Tracker collapse controls so Maximize keeps the frame enabled and restores its content, search row, resize handle, and prior scrollbar state; overlaid the mutually exclusive +/- buttons in one header slot, preserved the full-width header while collapsed, and hid all content below it. (2026.09.19.1945)
+		- Added shared RQE Quest Tracker title layout that bounds and centers the text between the ZQ and F buttons, keeping its position independent of the frame's expanded or collapsed state. (2026.09.19.1951)
+
+	Client_Classic/Config.lua
+		- Refreshed Quest Helper header navigation immediately from both Classic/Season of Discovery StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
+
+	Client_Classic/Core.lua
+		- Updated the Classic/Season of Discovery StepIndex toggle to refresh header visibility, routed coordblock clicks through the shared waypoint selector, refreshed header numbering with [Active] labels, and retired unused minimize/maximize placeholders. (2026.09.19.1912)
+		- Changed the remaining full-frame restore helper to use the saved framePosition width and height before legacy original-size fallbacks, preserving the player's configured Classic/Season of Discovery Quest Helper size after retiring minimization. (2026.09.19.1913)
+		- Delayed StartPeriodicChecks briefly when disabling Classic/Season of Discovery StepIndex controls so automatic step and waypoint selection resumes after manual-preview state is released. (2026.09.19.1945)
+		- Recovered legacy RQE Quest Tracker profiles whose collapsed 30-pixel height had been saved as their normal height by restoring the standard full height during size application. (2026.09.19.1945)
+
+	Client_Classic/EventManager.lua
+		- Removed the obsolete saved minimize/maximize restoration branch and now restores the configured full Quest Helper with its scroll content visible, preventing an older minimized profile from leaving the frame collapsed without a + button. (2026.09.19.1912)
 
 	Client_Classic/QuestingModule.lua
 		- Added a red failed-quest line between the quest name and combined zone/distance line, reanchoring the distance content and reserving tracker height only for failed Classic/Season of Discovery quests; countdowns remain out of the multi-quest tracker because the legacy timer API reads only the selected quest. (2026.09.19.0931)
+		- Prevented the temporary 30-pixel collapsed RQE Quest Tracker height from overwriting the saved full frame size in Classic/Season of Discovery. (2026.09.19.1945)
+		- Registered the Classic/Season of Discovery Quest Tracker title with the shared ZQ-to-F centering layout after all header buttons are created. (2026.09.19.1951)
 
 	Client_Classic/RQEFrame.lua
 		- Added a live active-quest countdown beneath the Quest Helper quest name using the legacy selected-quest timer path, replaced it with red failed status when appropriate, and dynamically reanchored direction text and scroll height as the status appears or disappears in Classic/Season of Discovery. (2026.09.19.0931)
@@ -17,9 +49,25 @@
 		- Shifted the 13-point countdown or failed line into the Quest Helper direction-text column and anchored direction text directly beneath it, preserving the existing no-status layout in Classic/Season of Discovery. (2026.09.19.0943)
 		- Lowered the Quest Helper timer/failed line four pixels, raised its following direction text ten pixels, and changed countdowns displaying 59 seconds or less from gold to orange-red while retaining stronger red for failure in Classic/Season of Discovery. (2026.09.19.0951)
 		- Changed the normal Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, retaining orange-red urgency and red failure states in Classic/Season of Discovery. (2026.09.19.1009)
+		- Replaced the normal Quest Helper countdown's green with soft coral #FFAA77 while preserving orange-red urgency and red failure states in Classic/Season of Discovery. (2026.09.19.1021)
+		- Stopped creating QF and minimize/maximize header controls, initialized the conditional waypoint navigator and setting-aware step arrows, and removed the retired +/- visibility handler in Classic/Season of Discovery. (2026.09.19.1912)
+
+	Client_TBC/Config.lua
+		- Refreshed Quest Helper header navigation immediately from both TBC Anniversary StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
+
+	Client_TBC/Core.lua
+		- Updated the TBC Anniversary StepIndex toggle to refresh header visibility, routed coordblock clicks through the shared waypoint selector, refreshed header numbering with [Active] labels, and retired unused minimize/maximize placeholders. (2026.09.19.1912)
+		- Changed the remaining full-frame restore helper to use the saved framePosition width and height before legacy original-size fallbacks, preserving the player's configured TBC Anniversary Quest Helper size after retiring minimization. (2026.09.19.1913)
+		- Delayed StartPeriodicChecks briefly when disabling TBC Anniversary StepIndex controls so automatic step and waypoint selection resumes after manual-preview state is released. (2026.09.19.1945)
+		- Recovered legacy RQE Quest Tracker profiles whose collapsed 30-pixel height had been saved as their normal height by restoring the standard full height during size application. (2026.09.19.1945)
+
+	Client_TBC/EventManager.lua
+		- Removed the obsolete saved minimize/maximize restoration branch and now restores the configured full Quest Helper with its scroll content visible, preventing an older minimized profile from leaving the frame collapsed without a + button. (2026.09.19.1912)
 
 	Client_TBC/QuestingModule.lua
 		- Added a red failed-quest line between the quest name and combined zone/distance line, reanchoring the distance content and reserving tracker height only for failed TBC Anniversary quests; countdowns remain out of the multi-quest tracker because the legacy timer API reads only the selected quest. (2026.09.19.0931)
+		- Prevented the temporary 30-pixel collapsed RQE Quest Tracker height from overwriting the saved full frame size in TBC Anniversary. (2026.09.19.1945)
+		- Registered the TBC Anniversary Quest Tracker title with the shared ZQ-to-F centering layout after all header buttons are created. (2026.09.19.1951)
 
 	Client_TBC/RQEFrame.lua
 		- Added a live active-quest countdown beneath the Quest Helper quest name using the legacy selected-quest timer path, replaced it with red failed status when appropriate, and dynamically reanchored direction text and scroll height as the status appears or disappears in TBC Anniversary. (2026.09.19.0931)
@@ -27,11 +75,27 @@
 		- Shifted the 13-point countdown or failed line into the Quest Helper direction-text column and anchored direction text directly beneath it, preserving the existing no-status layout in TBC Anniversary. (2026.09.19.0943)
 		- Lowered the Quest Helper timer/failed line four pixels, raised its following direction text ten pixels, and changed countdowns displaying 59 seconds or less from gold to orange-red while retaining stronger red for failure in TBC Anniversary. (2026.09.19.0951)
 		- Changed the normal Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, retaining orange-red urgency and red failure states in TBC Anniversary. (2026.09.19.1009)
+		- Replaced the normal Quest Helper countdown's green with soft coral #FFAA77 while preserving orange-red urgency and red failure states in TBC Anniversary. (2026.09.19.1021)
+		- Stopped creating QF and minimize/maximize header controls, initialized the conditional waypoint navigator and setting-aware step arrows, and removed the retired +/- visibility handler in TBC Anniversary. (2026.09.19.1912)
+
+	Config.lua
+		- Refreshed Retail Quest Helper header navigation immediately from both StepIndex-control setting callbacks so the manual arrows match the saved option without a frame rebuild. (2026.09.19.1912)
+
+	Core.lua
+		- Updated the Retail StepIndex toggle to refresh header visibility, routed coordblock clicks through the shared waypoint selector, refreshed header numbering with both visible [Active] renderers, and retired unused minimize/maximize placeholders. (2026.09.19.1912)
+		- Changed the remaining full-frame restore helper to use the saved framePosition width and height before legacy original-size fallbacks, preserving the player's configured Retail Quest Helper size after retiring minimization. (2026.09.19.1913)
+		- Preserved the delayed StartPeriodicChecks call when disabling Retail StepIndex controls so automatic step and waypoint selection resumes after manual-preview state is released. (2026.09.19.1945)
+		- Recovered legacy RQE Quest Tracker profiles whose collapsed 30-pixel height had been saved as their normal height by restoring the standard full height during size application. (2026.09.19.1945)
+
+	EventManager.lua
+		- Removed the obsolete saved minimize/maximize restoration branch and now restores the configured full Quest Helper with its scroll content visible, preventing an older minimized profile from leaving the frame collapsed without a + button. (2026.09.19.1912)
 
 	QuestingModule.lua
 		- Added a live gold countdown or red failed notification between each Retail tracked quest's name and distance, with failure taking precedence, automatic quarter-second countdown refreshes, conditional distance reanchoring, and extra content height only for rows that show status. (2026.09.19.0931)
 		- Changed Retail tracked-quest countdowns from gold to orange-red when their displayed remaining time reaches 59 seconds, while failed status continues to take precedence in stronger red. (2026.09.19.0951)
 		- Read valid remaining seconds directly when building Retail tracker status rows instead of requiring Blizzard's display predicate first, allowing timed watched quests to place their countdown in the same line used by failed status. (2026.09.19.0956)
+		- Prevented the temporary 30-pixel collapsed RQE Quest Tracker height from overwriting the saved full frame size on Retail. (2026.09.19.1945)
+		- Registered the Retail Quest Tracker title with the shared ZQ-to-F centering layout after all header buttons are created. (2026.09.19.1951)
 
 	RQE.toc
 		- Updated version# (2026.09.19.1310)
@@ -50,6 +114,12 @@
 		- Shifted the 13-point countdown or failed line into the Retail Quest Helper direction-text column and anchored direction text directly beneath it, preserving the existing no-status layout. (2026.09.19.0943)
 		- Lowered the Quest Helper timer/failed line four pixels, raised its following direction text ten pixels, and changed countdowns displaying 59 seconds or less from gold to orange-red while retaining stronger red for failure on Retail. (2026.09.19.0951)
 		- Changed the normal Retail Quest Helper countdown color above 59 seconds from gold to soft green #66CC66, without changing the RQE Quest Tracker timer color or the urgent and failed states. (2026.09.19.1009)
+		- Replaced the normal Retail Quest Helper countdown's green with soft coral #FFAA77 without changing the RQE Quest Tracker timer or the urgent and failed states. (2026.09.19.1021)
+		- Stopped creating QF and minimize/maximize header controls, initialized the conditional waypoint navigator and setting-aware step arrows, and removed the retired +/- visibility handler on Retail. (2026.09.19.1912)
+
+	WPUtil.lua
+		- Added current-step coordblock and current-map coordOrder enumeration for the header navigator, including no-selection starts, non-wrapping Back/Forward targeting, endpoint state, and direct reuse of existing manual ordered-route selection. (2026.09.19.1912)
+		- Centralized coordblock selection so header buttons and text links install the same protected waypoint, clear competing route ownership, and refresh [Active] in both StepsText and Separate Focus while ordered-route changes refresh their Focus-only labels and header count. (2026.09.19.1912)
 
 
 12.1.0.4 (2026.09.18)
