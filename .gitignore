@@ -2,3 +2,6 @@
 .gitattributes
 AGENTS.md
 .vscode/
+Media/UI/Source/__pycache__/
+Media/UI/Source/build_assets.py
+Media/UI/Source/THEMES.md

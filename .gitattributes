@@ -2,3 +2,7 @@ AGENTS.md export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
 .vscode/ export-ignore
+Media/UI/Source/__pycache__ export-ignore
+Media/UI/Source/__pycache__/** export-ignore
+Media/UI/Source/build_assets.py export-ignore
+Media/UI/Source/THEMES.md export-ignore
