@@ -1,3 +1,181 @@
+12.1.0.6 (2026.09.20)
+
+	**HIGHLIGHTS**
+		- Fixed Forever Beta nameplate taint caused by RQE rewriting existing Blizzard API tables during startup.
+		- Azure & Gold gives the detached RQE action button a darker, more readable background behind transparent macro artwork.
+		- Azure & Gold header-button icons are now visually centered within their button surrounds.
+		- Azure & Gold quest-filter entries now share a consistent size with comfortable space around every label.
+		- Azure & Gold filter menus now use centered, text-sized entries and shorten exceptionally long submenu labels cleanly.
+		- Corrected themed filter-menu sizing and finished optical centering for the remaining Quest Helper and Quest Tracker controls.
+		- The Quest Tracker filter toggle now closes every open menu tier, shortened-label tooltips no longer error, and the remaining themed header icons are precisely aligned.
+		- Quest Tracker Minimize now uses the downward arrow and Maximize uses the upward arrow, matching the direction each action changes the frame.
+		- The Quest Helper now presents MapID, player coordinates, and waypoint distance in a compact in-frame information rail for both Azure & Gold and legacy appearances.
+		- Separate Focus fallback messages now keep the same clear icon-to-text spacing as ordinary step descriptions.
+		- Quest Helper now hides unavailable direction and description placeholders and closes their empty vertical gaps automatically.
+		- Quest Helper now reserves its countdown row for ordinary timed quests instead of world-quest or recurring-quest availability windows.
+		- Legacy Quest Tracker section borders now end at the scroll viewport edge and resize with the tracker.
+		- Quest Tracker distance labels now remain stable while the player is stationary and refresh when the displayed player coordinates or map change.
+		- Legacy Separate Focus panels now retain a complete left border for quests that show the W/SG control stack.
+		- Quest Tracker row buttons now share the World Quest badge's visual scale and one consistent title column across every quest section.
+		- Azure & Gold Quest Helper quest names now sit slightly lower beside the W/SG controls; legacy placement is unchanged.
+		- Azure & Gold Quest Tracker badges now line up consistently with the first line of their quest titles, including wrapped names.
+		- Refined Azure & Gold Quest Tracker badge placement so each badge begins just above its quest title anchor.
+		- Supertracked Azure & Gold Quest Tracker badges now use a strong additive glow that clearly distinguishes them from ordinary tracked quests.
+		- Legacy Quest Helper Separate Focus panels now retain a clearly visible right border at every frame width.
+		- RQE's Interface AddOns pages and standalone configuration window now use one permanent, polished charcoal, Azure, and Golden Yellow design with a custom character portrait, clearer sections, tabs, fields, and controls.
+		- RQE settings now use concise icon-led cards and logical task groupings, while AddOn Settings opens RQE's own Blizzard Interface page directly.
+		- Blizzard AddOns pages now retain their native border style while RQE's standalone window keeps its ornate frame; option labels remain fully readable, Escape closes the standalone window, and the broker menu dismisses when no longer in use.
+
+	Ace3 Libraries
+		- Updated for Forever/Camelot (2026.09.20.0646)
+
+	Buttons.lua
+		- Reworked themed quest-filter sizing around a shared button width instead of shrinking each measured menu width, reserved sufficient space for ornate end caps and inline checkbox textures, and increased row height slightly so every initial filter entry remains consistently framed without text touching its boundary. Legacy menu dimensions remain unchanged. (2026.09.20.0801)
+		- Extended themed filter sizing to every submenu with per-entry widths between 150 and 310 pixels, UTF-8-safe ellipsis truncation and full-label tooltips at the upper limit, explicit center-center FontString anchoring, and retained full labels for duplicate detection and Auto-Track checkbox refreshes. Legacy menu layout remains unchanged. (2026.09.20.0803)
+		- Replaced unreliable constrained-FontString width measurements with deterministic UTF-8 character sizing, 190-to-352-pixel themed buttons, 27-character labels, and the requested five-dot cutoff so primary and secondary filter entries no longer shrink beneath or draw through their text. Explicit center-center text boxes and full-label tooltips are retained. (2026.09.20.0806)
+		- Increased the deterministic themed filter allowance to 210-to-448-pixel buttons using a conservative twelve-pixel character estimate, ensuring both full and five-dot-shortened labels remain visibly inside the ornate caps at the in-game font scale. (2026.09.20.0809)
+		- Made the Quest Tracker Filter button close Campaign, Quest Type, Zone, and Quest Line submenus whenever it closes the primary menu, and changed truncated-label tooltips to the cross-client text-only GameTooltip:SetText overload to prevent the Retail 12.1 argument-range Lua error. (2026.09.20.0832)
+		- Swapped the themed Quest Tracker Collapse/Expand artwork assignments so Minimize displays the downward arrow and Maximize displays the upward arrow while preserving the existing click behavior and mutually exclusive visibility. (2026.09.20.0841)
+
+	Client_Classic/Config.lua
+		- Enlarged the Classic/Season of Discovery standalone configuration window and applies the permanent shared configuration presentation before its tabbed option content is created. (2026.09.20.1055)
+		- Replaced the standalone Classic/Season of Discovery window's duplicated manual control layout with the same composed AceConfig pages used by Blizzard Interface, and routed its page-opening helpers through the registered-category navigator. (2026.09.20.1123)
+		- Removed the one-use UISpecialFrames proxy from the Classic/Season of Discovery standalone configuration window so the shared persistent Escape handler controls closure reliably across repeated openings. (2026.09.20.1140)
+		- Changed the Classic/Season of Discovery configuration Close action to hide and retain its themed AceGUI frame instead of releasing it into the global widget pool, preserving reliable reopening and preventing addon-specific frame hooks from reaching unrelated AceGUI windows. (2026.09.20.1140)
+
+	Client_Classic/Core.lua
+		- Converted Classic/Season of Discovery MapID and coordinate output to the compact information-rail format, refreshes the rail even when the current map has not changed, and collapses or restores its reserved viewport space immediately when the existing display settings change. (2026.09.20.0854)
+		- Registered every Classic/Season of Discovery Interface AddOns page with the permanent configuration presentation, uses a stable uncolored parent category, and retains the Profiles panel reference for direct opening. (2026.09.20.1055)
+		- Composed the Classic/Season of Discovery settings into the new card layout before registration, retained every Blizzard category ID for exact navigation, registered the streamlined profile controls, and made `/rqe config` open RQE's own page directly. (2026.09.20.1123)
+
+	Client_Classic/QuestingModule.lua
+		- Sized every legacy and themed Classic/Season of Discovery tracker child section, header frame, and title to the live scroll viewport rather than the wider outer tracker; Bonus and Task sections now participate in the same resize pass, so legacy header and child borders terminate visibly and follow parent-width changes. (2026.09.20.0940)
+		- Keyed Classic/Season of Discovery tracker distance refreshes to the player's MapID and two-decimal coordinate cell, preventing tiny stationary C_Map drift from oscillating rounded yard labels while retaining forced post-selection refreshes, unresolved-distance retries, and updates during movement or map transitions. (2026.09.20.0944)
+		- Applied the corrected Classic/Season of Discovery child-section viewport width immediately when the tracker module creates its frames, then retained the existing OnSizeChanged path for saved-width restoration and live resizing so the legacy right border is correct without requiring a manual resize first. (2026.09.20.0951)
+		- Restricted same-coordinate Classic/Season of Discovery fallback retries to only the quest rows still displaying an unavailable distance, so one unresolved POI cannot cause already-resolved stationary distances elsewhere in the tracker to recalculate. (2026.09.20.0952)
+		- Standardized Classic/Season of Discovery Campaign, Normal, Daily, World, Bonus, and Task tracker rows on a 35-pixel quest button, a five-pixel title gap, and the same theme-aware title inset; reused row anchors are cleared before placement so every child section begins on the identical button and text columns. (2026.09.20.1000)
+		- Corrected the Classic/Season of Discovery fallback daily-frequency value used to choose tracker badge artwork, preserving the Daily icon on clients where the modern frequency enum is unavailable. (2026.09.20.1002)
+		- Top-aligned Azure & Gold Classic/Season of Discovery tracker buttons to the first line of each quest title with a two-pixel downward inset, preventing single-line and wrapped titles from centering their badges at different heights; legacy centered placement remains unchanged. (2026.09.20.1011)
+		- Refined the Azure & Gold Classic/Season of Discovery tracker-button anchor from two pixels below to two pixels above the quest-title top edge, matching the reviewed Campaign, Normal, Daily, and World Quest alignment while retaining legacy centering. (2026.09.20.1018)
+
+	Client_Classic/RQEFrame.lua
+		- Replaced the two world-space location labels with an in-frame three-column information rail containing left-aligned MapID, centered player coordinates, and right-aligned waypoint distance; the responsive fields share the available width without overlapping quest content. (2026.09.20.0854)
+		- Routed database-missing and empty-database Separate Focus fallback text through the same theme-aware left inset and responsive width used by ordinary step descriptions, preserving a clear gap beside the waypoint icon in both Azure & Gold and legacy Classic/Season of Discovery layouts. (2026.09.20.0903)
+		- Added a visibility-aware Quest Helper text chain for Classic/Season of Discovery that retains fallback direction and description values internally while hiding their placeholder rows, anchors objectives to the nearest visible status/direction/description predecessor, and lets Separate Focus plus subsequent step text move upward with the compacted content in both themes. Map ID, map name, zone, and minimap-subzone changes now recompute direction visibility without requiring a newly supertracked quest. (2026.09.20.0920)
+		- Suppressed daily/weekly availability-window countdowns from the Classic/Season of Discovery Quest Helper while retaining ordinary timed-quest countdowns such as quest 11690, and moved the themed no-Search-Group status/direction column five pixels right through one shared anchor offset without changing legacy placement. (2026.09.20.0940)
+		- Extended the responsive Separate Focus geometry to the legacy Classic/Season of Discovery presentation, anchoring the panel inside fixed viewport gutters so its left backdrop edge is not clipped when the W/SG controls are present; also corrected recurring-frequency fallbacks so daily, weekly, and scheduler-reset availability windows all remain hidden from the Quest Helper status row. (2026.09.20.0947)
+		- Derived the legacy Classic/Season of Discovery Separate Focus width from the clipped Quest Helper content viewport and its ten-pixel left inset, bringing the panel's right backdrop edge inside the visible area while preserving the existing Azure & Gold width. (2026.09.20.1031)
+
+	Client_TBC/Config.lua
+		- Enlarged the TBC Anniversary standalone configuration window and applies the permanent shared configuration presentation before its tabbed option content is created. (2026.09.20.1055)
+		- Replaced the standalone TBC Anniversary window's duplicated manual control layout with the same composed AceConfig pages used by Blizzard Interface, and routed its page-opening helpers through the registered-category navigator. (2026.09.20.1123)
+		- Removed the one-use UISpecialFrames proxy from the TBC Anniversary standalone configuration window so the shared persistent Escape handler controls closure reliably across repeated openings. (2026.09.20.1140)
+		- Changed the TBC Anniversary configuration Close action to hide and retain its themed AceGUI frame instead of releasing it into the global widget pool, preserving reliable reopening and preventing addon-specific frame hooks from reaching unrelated AceGUI windows. (2026.09.20.1140)
+
+	Client_TBC/Core.lua
+		- Converted TBC Anniversary MapID and coordinate output to the compact information-rail format, refreshes the rail even when the current map has not changed, and collapses or restores its reserved viewport space immediately when the existing display settings change. (2026.09.20.0854)
+		- Registered every TBC Anniversary Interface AddOns page with the permanent configuration presentation, uses a stable uncolored parent category, and retains the Profiles panel reference for direct opening. (2026.09.20.1055)
+		- Composed the TBC Anniversary settings into the new card layout before registration, retained every Blizzard category ID for exact navigation, registered the streamlined profile controls, and made `/rqe config` open RQE's own page directly. (2026.09.20.1123)
+
+	Client_TBC/QuestingModule.lua
+		- Sized every legacy and themed TBC Anniversary tracker child section, header frame, and title to the live scroll viewport rather than the wider outer tracker; Bonus and Task sections now participate in the same resize pass, so legacy header and child borders terminate visibly and follow parent-width changes. (2026.09.20.0940)
+		- Keyed TBC Anniversary tracker distance refreshes to the player's MapID and two-decimal coordinate cell, preventing tiny stationary C_Map drift from oscillating rounded yard labels while retaining forced post-selection refreshes, unresolved-distance retries, and updates during movement or map transitions. (2026.09.20.0944)
+		- Applied the corrected TBC Anniversary child-section viewport width immediately when the tracker module creates its frames, then retained the existing OnSizeChanged path for saved-width restoration and live resizing so the legacy right border is correct without requiring a manual resize first. (2026.09.20.0951)
+		- Restricted same-coordinate TBC Anniversary fallback retries to only the quest rows still displaying an unavailable distance, so one unresolved POI cannot cause already-resolved stationary distances elsewhere in the tracker to recalculate. (2026.09.20.0952)
+		- Standardized TBC Anniversary Campaign, Normal, Daily, World, Bonus, and Task tracker rows on a 35-pixel quest button, a five-pixel title gap, and the same theme-aware title inset; reused row anchors are cleared before placement so every child section begins on the identical button and text columns. (2026.09.20.1000)
+		- Corrected the TBC Anniversary fallback daily-frequency value used to choose tracker badge artwork, preserving the Daily icon on clients where the modern frequency enum is unavailable. (2026.09.20.1002)
+		- Top-aligned Azure & Gold TBC Anniversary tracker buttons to the first line of each quest title with a two-pixel downward inset, preventing single-line and wrapped titles from centering their badges at different heights; legacy centered placement remains unchanged. (2026.09.20.1011)
+		- Refined the Azure & Gold TBC Anniversary tracker-button anchor from two pixels below to two pixels above the quest-title top edge, matching the reviewed Campaign, Normal, Daily, and World Quest alignment while retaining legacy centering. (2026.09.20.1018)
+
+	Client_TBC/RQEFrame.lua
+		- Replaced the two world-space location labels with an in-frame three-column information rail containing left-aligned MapID, centered player coordinates, and right-aligned waypoint distance; the responsive fields share the available width without overlapping quest content. (2026.09.20.0854)
+		- Routed database-missing and empty-database Separate Focus fallback text through the same theme-aware left inset and responsive width used by ordinary step descriptions, preserving a clear gap beside the waypoint icon in both Azure & Gold and legacy TBC Anniversary layouts. (2026.09.20.0903)
+		- Added a visibility-aware Quest Helper text chain for TBC Anniversary that retains fallback direction and description values internally while hiding their placeholder rows, anchors objectives to the nearest visible status/direction/description predecessor, and lets Separate Focus plus subsequent step text move upward with the compacted content in both themes. Map ID, map name, zone, and minimap-subzone changes now recompute direction visibility without requiring a newly supertracked quest. (2026.09.20.0920)
+		- Suppressed daily/weekly availability-window countdowns from the TBC Anniversary Quest Helper while retaining ordinary timed-quest countdowns such as quest 11690, and moved the themed no-Search-Group status/direction column five pixels right through one shared anchor offset without changing legacy placement. (2026.09.20.0940)
+		- Extended the responsive Separate Focus geometry to the legacy TBC Anniversary presentation, anchoring the panel inside fixed viewport gutters so its left backdrop edge is not clipped when the W/SG controls are present; also corrected recurring-frequency fallbacks so daily, weekly, and scheduler-reset availability windows all remain hidden from the Quest Helper status row. (2026.09.20.0947)
+		- Derived the legacy TBC Anniversary Separate Focus width from the clipped Quest Helper content viewport and its ten-pixel left inset, bringing the panel's right backdrop edge inside the visible area while preserving the existing Azure & Gold width. (2026.09.20.1031)
+
+	Config.lua
+		- Enlarged the Retail/Forever standalone configuration window and applies the permanent shared configuration presentation before its tabbed option content is created. (2026.09.20.1055)
+		- Replaced the standalone Retail/Forever window's duplicated manual control layout with the same composed AceConfig pages used by Blizzard Interface, and routed its page-opening helpers through the registered-category navigator. (2026.09.20.1123)
+		- Removed the one-use UISpecialFrames proxy from the Retail/Forever standalone configuration window so the shared persistent Escape handler controls closure reliably across repeated openings. (2026.09.20.1140)
+		- Changed the Retail/Forever configuration Close action to hide and retain its themed AceGUI frame instead of releasing it into the global widget pool, preserving reliable reopening and preventing addon-specific frame hooks from reaching unrelated AceGUI windows. (2026.09.20.1140)
+
+	ConfigTheme.lua
+		- Added a theme-independent configuration presentation shared by all clients: charcoal surfaces, Azure borders, Golden Yellow keylines and headings, a portrait title treatment, styled tabs, groups, buttons, checkboxes, sliders, dropdowns, edit fields, and automatic styling for dynamically rebuilt AceGUI content. (2026.09.20.1055)
+		- Styled both Blizzard Interface AddOns panels and RQE's standalone configuration frame without consulting the optional tracker-theme preference, so configuration has one permanent appearance while preserving every existing option and callback. (2026.09.20.1055)
+		- Reorganized General, Frame, Font, Debug, and Profile settings into concise icon-titled cards with task-based flow, shorter labels, compact three-column controls, preset font-size selectors, and one shared renderer for Blizzard and standalone views; retained the portrait only in the standalone title bar so Blizzard pages no longer overlap it. (2026.09.20.1123)
+		- Added registered-category navigation with Retail and legacy fallbacks, and corrected the composed Font and Profile tables to remove range-only fields and internal metadata before AceConfig validation. (2026.09.20.1123)
+		- Separated configuration presentation by host: Blizzard AddOns pages now preserve their native canvas, controls, and essential Ace borders, while only RQE's standalone window receives the ornate Azure & Gold shell and portrait. Expanded every composed toggle to a measured multi-column width so full labels flow onto additional rows instead of being ellipsized, and added a persistent keyboard handler that hides the standalone window on Escape. (2026.09.20.1140)
+		- Added mode-aware AceGUI container styling and native-widget restoration so widgets recycled after an ornate standalone tab cannot carry Azure surfaces or recolored controls into Blizzard's AddOns pages. Standalone content retains its framed cards while Blizzard content consistently returns to native Ace presentation. (2026.09.20.1140)
+
+	Core.lua
+		- Converted Retail/Forever MapID and coordinate output to compact `Map 2393` and `50.45, 68.70` values, updates the display before the unchanged-map early return, and refreshes rail visibility and viewport placement whenever either existing display option changes. (2026.09.20.0854)
+		- Registered every Retail/Forever Interface AddOns page with the permanent configuration presentation, uses a stable uncolored parent category, and retains the Profiles panel reference for direct opening. (2026.09.20.1055)
+		- Composed the Retail/Forever settings into the new card layout before registration, retained every Blizzard category ID for exact navigation, registered the streamlined profile controls, and made `/rqe config` open RQE's own page directly. (2026.09.20.1123)
+
+	Media/UI/Config/RQEConfigPortrait.tga
+		- Added the 256-pixel WoW-ready portrait used by the permanent configuration headers, centered on the supplied horned character with enough sunset background to remain dimensional at small display sizes. (2026.09.20.1055)
+
+	Media/UI/Source/RQE-Config-Portrait.png
+		- Retained the approved full-resolution square configuration portrait source for future lossless UI-asset rebuilds. (2026.09.20.1055)
+
+	QuestingModule.lua
+		- Sized every legacy and themed Retail/Forever tracker child section, header frame, and title to the live scroll viewport rather than the wider outer tracker; Bonus and Task sections now participate in the same resize pass, so legacy header and child borders terminate visibly and follow parent-width changes. (2026.09.20.0940)
+		- Keyed Retail/Forever tracker distance refreshes to the player's MapID and two-decimal coordinate cell, preventing the one-second POI retry from turning tiny stationary C_Map drift into oscillating rounded yard labels while preserving unresolved-distance retries and updates during movement, transport travel, or map transitions. (2026.09.20.0944)
+		- Applied the corrected Retail/Forever child-section viewport width immediately when the tracker module creates its frames, then retained the existing OnSizeChanged path for saved-width restoration and live resizing so the legacy right border is correct without requiring a manual resize first. (2026.09.20.0951)
+		- Restricted same-coordinate Retail/Forever POI retries to only the quest rows still displaying `Distance: N/A`, so an unresolved quest cannot cause already-resolved stationary distance labels elsewhere in the tracker to recalculate. (2026.09.20.0952)
+		- Standardized Retail/Forever Campaign, Normal, Daily, World, Bonus, and Task tracker rows on a 35-pixel quest button, a five-pixel title gap, and the same theme-aware title inset; reused row anchors are cleared before placement so every child section begins on the identical button and text columns. (2026.09.20.1000)
+		- Corrected the Retail/Forever fallback daily-frequency value used to choose tracker badge artwork, preserving the Daily icon on clients where the modern frequency enum is unavailable. (2026.09.20.1002)
+		- Top-aligned Azure & Gold Retail/Forever tracker buttons to the first line of each quest title with a two-pixel downward inset, preventing single-line and wrapped titles from centering their badges at different heights; legacy centered placement remains unchanged. (2026.09.20.1011)
+		- Refined the Azure & Gold Retail/Forever tracker-button anchor from two pixels below to two pixels above the quest-title top edge, matching the reviewed Campaign, Normal, Daily, and World Quest alignment while retaining legacy centering. (2026.09.20.1018)
+
+	RQE_API.lua
+		- Replaced unconditional compatibility namespace and method reassignments with missing-only guards for C_QuestLog, C_Map, C_TaskQuest, C_CampaignInfo, and C_Scenario. Existing Blizzard tables/functions are now left unwritten: Forever nameplate level coloring reads C_QuestLog.GetTrivialRange before restricted anchor measurements and health updates, so tainting that shared namespace contaminated the nameplate setup and could prevent its aura unit from being initialized. Missing legacy fallbacks are retained. (2026.09.20.0646)
+
+	RQE-Camelot.TOC
+		- Loads the permanent shared configuration presentation before Retail/Forever configuration construction. (2026.09.20.1055)
+
+	RQE-Classic.toc
+		- Loads the permanent shared configuration presentation before Classic/Season of Discovery configuration construction. (2026.09.20.1055)
+
+	RQE-Tbc.toc
+		- Loads the permanent shared configuration presentation before TBC Anniversary configuration construction. (2026.09.20.1055)
+
+	RQE.toc
+		- Updated version# (2026.09.20.0646)
+		- Loads the permanent shared configuration presentation before Retail/Forever configuration construction. (2026.09.20.1055)
+
+	RQEDatabase.lua
+		- Updated some Horde quests in DB for Borean Tundra (2026.09.20.1507)
+
+	RQEFrame.lua
+		- Replaced the Retail/Forever world-space MapID, coordinates, and distance labels with a mouse-transparent three-column information rail directly below the Quest Helper header; field widths respond to frame resizing and retain the existing display objects and update paths. (2026.09.20.0854)
+		- Routed database-missing and empty-database Separate Focus fallback text through the same theme-aware left inset and responsive width used by ordinary step descriptions, preventing `No step description available` from touching the waypoint icon in both Azure & Gold and legacy Retail/Forever layouts. (2026.09.20.0903)
+		- Added a visibility-aware Quest Helper text chain for Retail/Forever that retains fallback direction and description values internally while hiding their placeholder rows, anchors objectives to the nearest visible status/direction/description predecessor, and lets Separate Focus plus subsequent step text move upward with the compacted content in both themes. Map ID, map name, zone, and minimap-subzone changes now recompute direction visibility without requiring a newly supertracked quest. (2026.09.20.0920)
+		- Suppressed world-quest and daily/weekly availability-window countdowns from the Retail/Forever Quest Helper while retaining ordinary timed-quest countdowns such as quest 11690, and moved the themed no-Search-Group status/direction column five pixels right through one shared anchor offset without changing legacy placement or Quest Tracker timers. (2026.09.20.0940)
+		- Extended the responsive Separate Focus geometry to the legacy Retail/Forever presentation, anchoring the panel inside fixed viewport gutters so its left backdrop edge is not clipped when the W/SG controls are present; also corrected recurring-frequency fallbacks so daily, weekly, and scheduler-reset availability windows all remain hidden from the Quest Helper status row. (2026.09.20.0947)
+		- Derived the legacy Retail/Forever Separate Focus width from the clipped Quest Helper content viewport and its ten-pixel left inset, bringing the panel's right backdrop edge inside the visible area while preserving the existing Azure & Gold width. (2026.09.20.1031)
+
+	RQEMinimap.lua
+		- Replaced display-name-based AddOn Settings navigation with the exact registered RQE category ID, so the LDB/minimap menu opens RQE's General Settings page instead of Blizzard's generic Controls page. (2026.09.20.1123)
+		- Anchored LDB menus to the actual display instance, closes them immediately after an action, and added pointer-aware dismissal that monitors both the originating broker/minimap button and the complete child-button menu region, preventing the dropdown from lingering after the cursor moves to configuration controls. (2026.09.20.1140)
+
+	UITheme.lua
+		- Increased the themed Magic Button surround's charcoal opacity from 0.28 to 0.68 so transparent action artwork such as the crossed swords remains distinct against bright world backgrounds while retaining visible translucency. (2026.09.20.0755)
+		- Reanchored themed button icons from opposing corners to an explicit center point and added small artwork-specific optical offsets where uneven transparent source margins previously left header symbols appearing low or sideways. Non-themed buttons remain unchanged. (2026.09.20.0759)
+		- Refined optical offsets for Completed, Hide Completed, Filter, Collapse, Close, all four Quest Helper header actions, Waypoint Target, and Search Group so their visible artwork is centered inside themed button surrounds; retained the already-approved Show All and Zone placement. (2026.09.20.0806)
+		- Applied the final reviewed optical adjustments: raised Remove Waypoint and Contribution one pixel, shifted both Collapse and Expand one pixel left, and shifted Close one pixel left without changing its approved vertical position; retained every icon placement the player already approved. (2026.09.20.0832)
+		- Shifted the downward-arrow Expand artwork one pixel right after its reassignment to Minimize, while retaining the approved placement of the upward-arrow Collapse artwork now used by Maximize. (2026.09.20.0841)
+		- Added shared location-rail presentation and layout management: Azure & Gold uses a 28-pixel charcoal strip with Azure and gold keylines, legacy mode uses a 24-pixel bordered strip, and both collapse when MapID and coordinates are disabled while restoring the original Quest Helper viewport anchor. (2026.09.20.0854)
+		- Cached the location rail's theme and visibility layout state so the ten-times-per-second coordinate display updates only replace text instead of repeatedly clearing and rebuilding frame anchors. (2026.09.20.0855)
+		- Preserved the approved World Quest badge footprint while enlarging Campaign, Daily, Normal, and Bonus badge texture boxes according to their differing transparent source margins; all remain centered for a later optical-alignment pass. Also lowered every Azure & Gold Quest Helper quest-name anchor four pixels and reflowed its Focus panel/content, without changing legacy placement. (2026.09.20.1000)
+		- Changed themed quest-row selection rendering to keep the normal button base and composite the Hover artwork above it with full additive blending whenever that quest is supertracked, matching the strong visual pop of an actually hovered Separate Focus button while leaving non-supertracked rows and generic numbered waypoint buttons unchanged. (2026.09.20.1024)
+
+	WPUtil.lua
+		- Shortened waypoint-distance output for the information rail to `338.3 yd` or a compact percentage and displays an em dash when no usable step waypoint is available, while retaining the existing coordinate-setting and distance-calculation behavior. (2026.09.20.0854)
+
+
 12.1.0.5 (2026.09.20)
 
 	**HIGHLIGHTS**
@@ -360,12 +538,12 @@
 		- Deferred a physical new-quest QuestLogIndexButton press before any Retail route or frame mutation, asking for a five-second confirmation and resuming the original row selection on Yes even after the pointer moves onto the dialog. (2026.09.15.1630)
 		- Stopped the Retail scenario visibility watchdog from retrying tracker Show during combat and deferred Objective Tracker enforcement from frame hooks until combat ends. (2026.09.18.0910)
 
+	RQE.toc
+		- Updated version# (2026.09.15.1905)
+
 	RQE_API.lua
 		- Identified the 1.60.x Forever client separately from Season of Discovery and supplied its missing SetDesaturation helper through the texture method, allowing bundled AceGUI checkboxes to update without changing other clients. (2026.09.17.1442)
 		- Validated Forever quest IDs before calling the native GetTitleForQuestID method, returning no title for out-of-range sentinel values instead of raising an API argument error. (2026.09.17.1442)
-
-	RQE.toc
-		- Updated version# (2026.09.15.1905)
 
 	RQEDatabase.lua
 		- Updated some Midnight quests in the DB (2026.09.15.1905)
@@ -643,6 +821,9 @@
 		- Marked physical quest-row reselections for a delayed nearest-route re-anchor after supertracking is restored, and preserved the prior step and clicked button when the same quest is selected; Retail ordered waypoints no longer flash to a nearby point then reset to entry 1. (2026.09.15.0332)
 		- Recorded whether a physical Retail quest-row selection is a same-quest reselect and its previous step so subsequent supertracking events can distinguish a transient redraw from a genuine new quest. (2026.09.15.1022)
 
+	RQE.toc
+		- Updated version# (2026.09.07.2359)
+
 	RQE_API.lua
 		- Added cross-client quest-link and quest-level helpers that prefer Blizzard's quest-ID APIs, fall back to normalized quest-log metadata, and extract a cached level from a quest link when necessary, allowing dependent addons to report consistent quest metadata in Retail, Classic/Season of Discovery, and TBC Anniversary. (2026.09.10.1744)
 		- Hardened legacy quest-link lookup by validating the quest ID embedded in every returned hyperlink and retrying with the normalized quest-log index only on Classic/Season of Discovery and TBC Anniversary, preventing older index-style behavior from linking the wrong quest. (2026.09.10.1746)
@@ -662,9 +843,6 @@
 		- Reset the selected Sandbox tab to Legacy Runtime whenever the editor opens, making right-click Open Sandbox and the slash command start in the raw-Lua testing view while preserving manual tab switching during the session. (2026.09.11.0858)
 		- Preserved coordOrder point coordinates, arrival radii, optional wayText, and explicit entryNo values in Contribution Sandbox chat exports while leaving Legacy Runtime's direct Lua parsing untouched, so either mode can test and retain authored ordered routes. (2026.09.15.0142)
 		- Corrected standalone active coordOrder { field lines to coordOrder = { before either Sandbox mode evaluates pasted Lua, while retaining commented Legacy lines and correcting promoted Contribution lines; reported the correction and included the underlying runtime error in future parsing failures so typo-driven nil-call errors no longer produce only a generic failure. (2026.09.15.0202)
-
-	RQE.toc
-		- Updated version# (2026.09.07.2359)
 
 	RQEDatabase.lua
 		- Added additional Midnight quests to DB for Season 2. (2026.09.07.2359)
@@ -747,11 +925,11 @@
 	RQE.toc
 		- Updated interface/version#. (2026.09.06.1809)
 
-	RQEFrame.lua
-		- Added item and spell handling to the SeparateFocusFrame's native hyperlinks when a step also contains coordinate text, preserving item/spell tooltips across wrapped HTML links without changing coordinate waypoint behavior. (2026.09.07.1854)
-
 	RQEDatabase.lua
 		- Added additional Midnight quests to DB for Season 2. (2026.09.06.1809)
+
+	RQEFrame.lua
+		- Added item and spell handling to the SeparateFocusFrame's native hyperlinks when a step also contains coordinate text, preserving item/spell tooltips across wrapped HTML links without changing coordinate waypoint behavior. (2026.09.07.1854)
 
 	RQEMacro.lua
 		- Retail, TBC Anniversary and Classic now use the main file instead of their own separate macro files for coding. (2026.09.06.1809)
@@ -903,11 +1081,11 @@
 	RQE_API.lua
 		- Updated RQE.API.GetNumQuestLogEntries(), RQE.API.GetQuestObjectives(questID), RQE.API.IsSuperTrackingQuest(), RQE.API.GetQuestObjectives(questID), RQE.API.GetNumQuestLogEntries(), RQE.API.GetSuperTrackedQuestID(), RQE.API.GetTitleForQuestID(questID), RQE.API.GetQuestLogInfo(questLogIndex), RQE.API.IsWorldQuest(questID), RQE.API.IsOnQuest(questID) (2026.08.01.1707)
 
-	RQEDatabase.lua
-		- Updated many daily and weekly quests in the DB (2026.08.01.1707)
-
 	RQE_Sandbox.lua
 		- Updated C_SuperTrack.GetSuperTrackedQuestID() calls to use RQE.API.GetSuperTrackedQuestID() in the RQE_API instead (2026.08.01.1707)
+
+	RQEDatabase.lua
+		- Updated many daily and weekly quests in the DB (2026.08.01.1707)
 
 	RQEFrame.lua
 		- Updated C_QuestLog.GetQuestObjectives(questID) calls to use RQE.API.GetQuestObjectives(questID) in the RQE_API instead (2026.08.01.1707)
@@ -1497,10 +1675,6 @@
 	RQE.toc
 		- Updated version# (2026.01.29.1911)
 
-	RQEFrame.lua
-		- Added code to create the string for the display of distance to coordinate block and attach it to the coordinate block (above RQEFrame) that displays current player coordinates (2026.01.24.2003)
-		- Removed some print out information that was no longer needed (2026.01.26.0258)
-
 	RQEDatabase.lua
 		- Updated remaining Storm Peaks (alliance/natural) quests to the DB (2026.01.23.0528)
 		- Updated many quests in Icecrown (alliance/neutral) in the DB (2026.01.24.0528)
@@ -1511,6 +1685,10 @@
 		- Updated many alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.28.0350)
 		- Updated more alliance/Scryer quests in DB for Shadowmoon Valley (2026.01.29.0021)
 		- Updated several Scryer quests in DB for Netherstorm (2026.01.29.1911)
+
+	RQEFrame.lua
+		- Added code to create the string for the display of distance to coordinate block and attach it to the coordinate block (above RQEFrame) that displays current player coordinates (2026.01.24.2003)
+		- Removed some print out information that was no longer needed (2026.01.26.0258)
 
 	RQEMacro.lua
 		- Updated macro coding for searched quests changing from this "/run RQE:SetMarkerIfNeeded('target', 3)" to "/tm 3" for quest giver (2026.01.25.0555)
@@ -1643,6 +1821,9 @@
 		- Removed calls to save watched quests and supertrack quest when RQE:QuestType fires as this was resulting in the supertracked quest being set to nil before the restoration could happen on reload/login (2025.11.22.1851)
 		- After clicking the questlogindexbutton, to supertrack a quest or world quest, the list of tracked quests and supertrack quest is saved for later restoration (2025.12.08.2356)
 
+	QuestingModule.lua
+		- Removed situation where RQEQuestFrame (quest tracker) is not being updated in combat as this is generally a very helpful thing as you make progress, but may need to add it take with modifications if problems with lag (2025.12.06.2331)
+
 	RQE.toc
 		- Updated interface/version# (2025.12.05.0359)
 
@@ -1666,9 +1847,6 @@
 		- Removed RQE:ClickWaypointButtonForIndex(i) call within WaypointButton:SetScript("OnClick", function() as this was causing a loop (2025.11.22.1449)
 		- Requires player to be hovering over the stepInded or "W" button in the RQEFrame for TomTom profile to reset, CoordsText to be generated or clicked reducing lag caused from frequent calls to this especially when skyriding between subzones (2025.11.22.1449)
 		- Updated function for the clicking (sometimes handled thru different function vs player click) of the "W" or stepsIndex Button to update waypoint also if the RQE.OkayWaypointButtonToMove flag is set to true from the RQE:StartPeriodicChecks() (2025.11.22.1603)
-
-	QuestingModule.lua
-		- Removed situation where RQEQuestFrame (quest tracker) is not being updated in combat as this is generally a very helpful thing as you make progress, but may need to add it take with modifications if problems with lag (2025.12.06.2331)
 
 	WaypointManager.lua
 		- Removed initial call to reset TomTom profile and set UID to nil every time RQE:CreateUnknownQuestWaypointWithDirectionText fires as this was something that was checked and updated appropriately within the RQE.Waypoints:Replace call a few lines further down (2025.11.22.1449)
@@ -1941,11 +2119,11 @@
 		- Added most side quests in Highmountain to the quest DB (2025.11.08.0416)
 		- Added/updates campaign and leveling quests for Val'sharah, Azsuna, Highmountain and Stormheim [7266/17664 2026-03-12 WQ: 2602] (2025.11.08.2054)
 
-	RQEMacro.lua
-		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
-
 	RQEFrame.lua
 		- Added options to menu to show the Sandbox window and print information from the supertracked quest if a Sandbox entry exists [author-mode ONLY] (2025.10.25.1924)
+
+	RQEMacro.lua
+		- Fixed icon/item information for 'weaken' tooltip (2025.11.01.0214)
 
 	WaypointManager.lua
 		- Updates to some debugMode requirements for printing information on location (2025.10.25.0026)
@@ -2066,18 +2244,18 @@
 	RQE.toc
 		- Updated Interface# and version# (2025.10.14.0142)
 
-	RQEMacro.lua
-		- Refactored SetQuestStepMacro() to support both legacy and array-based macros, with automatic spell tooltip and icon assignment. (2025.10.14.0801)
-		- Improved UpdateMagicButtonTooltip() to dynamically show spell tooltips for macroArray steps. (2025.10.14.0801)
-		- Added normalization for numeric icon IDs to prevent API mismatches during macro creation. (2025.10.14.1959)
-		- Updated Magic macro button to include cooldown for both items and spells (2025.10.16.1726)
-
 	RQEDatabase.lua
 		- Updated quest DB for more additions to the Legion expansion (2025.10.14.0209)
 		- Updates to the quest DB for Legion quests and also added macroArray for questID 42537 to display spell tooltip and ability to click extra action button (2025.10.14.0801)
 		- Added additional Legion quests to the DB for Remix (2025.10.14.0801)
 		- Updated quests for Legion Remix, including some order hall campaigns, and added some profession quests from Dragonflight to the DB (2025.10.16.2358)
 		- Added some world quests and early player housing quests [preliminary] to DB (2025.10.18.1450)
+
+	RQEMacro.lua
+		- Refactored SetQuestStepMacro() to support both legacy and array-based macros, with automatic spell tooltip and icon assignment. (2025.10.14.0801)
+		- Improved UpdateMagicButtonTooltip() to dynamically show spell tooltips for macroArray steps. (2025.10.14.0801)
+		- Added normalization for numeric icon IDs to prevent API mismatches during macro creation. (2025.10.14.1959)
+		- Updated Magic macro button to include cooldown for both items and spells (2025.10.16.1726)
 
 	WaypointManager.lua
 		- Modified debug print to require specific debugLevel setting (2025.10.14.0142)
@@ -2223,9 +2401,6 @@
 		- Added new file to maintain what the API is with the current Blizzard system to future-proof and add for eventual functionality across other game versions (2025.09.26)
 		- Added and updated API calls and saving them to a table (2025.09.27)
 
-	RQEFrame.lua
-		- Added check for if tracked quest was world quest so that the tooltip would only add an extra line above the RQE.SeparateStepText if it was not a world quest (2025.09.22)
-
 	RQEDatabase.lua
 		- Added some additional description and objective text within the DB (2025.09.22)
 		- Added additional quests including questID 72396 that has multi-map visited bands support (2025.09.23)
@@ -2238,6 +2413,9 @@
 		- Added additional quests with continentIDs for quests in the coordinateHotspots (2025.10.03.1419)
 		- Updates to some Duskwood quests to the DB (2025.10.04.1402)
 		- Added Westfall quests to DB (2025.10.05.0555)
+
+	RQEFrame.lua
+		- Added check for if tracked quest was world quest so that the tooltip would only add an extra line above the RQE.SeparateStepText if it was not a world quest (2025.09.22)
 
 	RQEMacro.lua
 		- Updated RQE:GenerateNpcMacroIfNeeded(questID) to replace legacy /script SetRaidTarget("target",3) line with /run RQE:SetMarkerIfNeeded('target', 8). This change standardizes marker assignment through RQE’s internal handler, ensuring consistent icon logic and compatibility with NPC marker validation routines. (2025.10.04.1513)
@@ -3519,6 +3697,9 @@
 		- Added flags for click of the "W" button within the RQEFrame so that it fires at more appropriate times and nixing much of the potential redundancy (including one that checks numfullfilled vs required to avoid clicking button multiple times when the stepIndex remains at 1)
 		- Added function to close the RQEFrame and RQEQuestFrame and show the Blizzard Objective Tracker so that players could use run macro to complete quests that were completed via the Blizzard Objective Tracker
 
+	QuestingModule.lua
+		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
+
 	RQE.toc
 		- Update version# with the upcoming release of patch 11.0.7
 
@@ -3540,9 +3721,6 @@
 
 	RQEFrame.lua
 		- Modified totalHeight of the RQEFrame content to handle larger numbers of quest steps
-
-	QuestingModule.lua
-		- Better handle if mouse is over the RQEQuestFrame when handling updates - this GREATLY improves memory performance from ~20mb to 7mb
 
 	WPUtil.lua
 		- Commented out/removed code that dealt with opening the quest details/map when determining coordinates for quest (this is no longer needed as the DB will contain most of these waypoints and keeping this was resulting in complication of the map opening at inappropriate times.
@@ -4190,21 +4368,21 @@
 		- Added RQE:CheckObjectiveProgress function for purposes of checking what stepIndex player should be on for a given quest
 		- Update to StartPeriodicChecks to include potential for CheckDBObjectiveStatus in the RQEDatabase
 
+	DatabaseMain.lua
 	DebugLog.lua
 		- Added debug coding for button click checks (disabled for players as not relevant)
 
-	DatabaseMain.lua
+	EventManager.lua
+	QuestingModule.lua
+		- Prevent WaypointButton (stepIndex# buttons) from being updated while in combat as may have been responsible for button passthru error
+
 	RQEDatabase.lua
 		- Include WarWithin for examining of information from the RQEDatabase
 		- Added campaign quests through Isle of Dorn and part of The Ringing Deeps (including waypoints and macros)
 
-	EventManager.lua
 	RQEFrame.lua
 		- Update the content height of the RQEFrame after a brief delay following ADDON_LOADED and SUPER_TRACKING_CHANGED events in order to populate for quests with many steps
 		- Added RQE:UpdateContentSize to when using scrollwheel as some quests with >7 objectives were being cut off/hidden unless frame were resized
-		- Prevent WaypointButton (stepIndex# buttons) from being updated while in combat as may have been responsible for button passthru error
-
-	QuestingModule.lua
 		- Prevent WaypointButton (stepIndex# buttons) from being updated while in combat as may have been responsible for button passthru error
 
 	RQEMacro.lua
@@ -4299,13 +4477,13 @@
 	QuestingModule.lua
 		- API updates to change IsAddOnLoaded to C_AddOns.IsAddOnLoaded
 
-	RQEMinimap.lua
-		- Fix to LDBdatabroker as buttons weren't clicking before
-		- Fix to Minimap Button as buttons weren't clicking before
-
 	RQE.toc
 		- Included 110005 in the accepted Game versions
 
+
+	RQEMinimap.lua
+		- Fix to LDBdatabroker as buttons weren't clicking before
+		- Fix to Minimap Button as buttons weren't clicking before
 
 11.0.2.1 (2024-08-14)
 
