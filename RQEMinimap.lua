@@ -46,33 +46,25 @@ end
 
 -- Open AddOn Settings function
 function RQE:OpenSettings()
-	if isRetail then
-		if SettingsPanel then
-			SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
-		else
-			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-		end
-	else
-		if self.optionsFrame then
-			local categoryName = self.optionsFrame.name
-			local category = Settings and Settings.GetCategory and Settings.GetCategory(categoryName)
-
-			if category and category.GetID then
-				local categoryID = category:GetID()
-				if C_SettingsUtil and C_SettingsUtil.OpenSettingsPanel then
-					C_SettingsUtil.OpenSettingsPanel(categoryID)
-				elseif Settings and Settings.OpenToCategory then
-					Settings.OpenToCategory(categoryID)
-				end
-				return
-			elseif InterfaceOptionsFrame_OpenToCategory then
-				InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
-				InterfaceOptionsFrame_OpenToCategory(self.optionsFrame)
-				return
-			end
-		end
+	if RQE.ConfigUI and RQE.ConfigUI.OpenRegisteredPanel then
+		RQE.ConfigUI:OpenRegisteredPanel("general")
 	end
+end
+
+local function isPointerOver(frame)
+	if not frame or not frame.IsShown or not frame:IsShown() then return false end
+	if isRetail and frame.IsMouseOver then
+		return frame:IsMouseOver()
+	end
+	return MouseIsOver and MouseIsOver(frame) or false
+end
+
+function RQE:HideLDBDropdownMenus()
+	if self.CustomMenu then
+		self.CustomMenu.RQEOutsideTime = 0
+		self.CustomMenu:Hide()
+	end
+	if self.MoreOptionsMenu then self.MoreOptionsMenu:Hide() end
 end
 
 
@@ -86,7 +78,7 @@ local ldb = LibStub:GetLibrary("LibDataBroker-1.1")
 local RQEdataBroker = ldb:NewDataObject("RQE", {
 	type = "launcher",
 	icon = "Interface\\Addons\\RQE\\Textures\\rhodan.tga",
-	OnClick = function(_, button)
+	OnClick = function(display, button)
 
 		if IsShiftKeyDown() and button == "LeftButton" then
 			RQE:ToggleDebugLog()
@@ -99,12 +91,13 @@ local RQEdataBroker = ldb:NewDataObject("RQE", {
 			RQE:OpenSettings()
 
 		elseif button == "RightButton" then
-			RQE.lastClickedFrame = _G["BazookaHL_RQE"]  -- Set the LDB button as the last clicked frame
+			RQE.lastClickedFrame = display  -- Use the actual LDB display that was clicked.
 			RQE:ShowLDBDropdownMenu()
 		end
 	end,
 
 	OnEnter = function(display)
+		RQE.lastClickedFrame = display
 		if RQE.hoverTimers[display] then
 			RQE:CancelTimer(RQE.hoverTimers[display])
 		end
@@ -321,6 +314,7 @@ end)
 
 -- Function that handles the OnEnter for the MinimapButton
 RQE.MinimapButton:SetScript("OnEnter", function(self)
+	RQE.lastClickedFrame = self
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 	GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPRIGHT")
 
@@ -543,14 +537,28 @@ function RQE:ShowLDBDropdownMenu()
 				if RQE.MoreOptionsMenu then RQE.MoreOptionsMenu:Hide() end
 			end)
 		end)
+
+		-- Parent-frame OnLeave is not reliable after the pointer crosses a child
+		-- button.  Track the complete menu and its anchor while visible so the
+		-- menu always dismisses shortly after the pointer leaves both regions.
+		self.CustomMenu:SetScript("OnUpdate", function(menu, elapsed)
+			if isPointerOver(menu) or isPointerOver(RQE.lastClickedFrame) or isPointerOver(RQE.MoreOptionsMenu) then
+				menu.RQEOutsideTime = 0
+				return
+			end
+			menu.RQEOutsideTime = (menu.RQEOutsideTime or 0) + elapsed
+			if menu.RQEOutsideTime >= 0.2 then
+				RQE:HideLDBDropdownMenus()
+			end
+		end)
 	end
 
 	-- Ensure buttons are only added once
 	if #self.CustomMenu.buttons == 0 then
-		self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE.ToggleBothFramesfromLDB() end)
-		self.CustomMenu:AddButton("AddOn Settings", function() RQE:OpenSettings() end)
-		self.CustomMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
-		self.CustomMenu:AddButton("Debug Log", function() RQE:ToggleDebugLog() end)
+		self.CustomMenu:AddButton("Toggle Frame(s)", function() RQE:HideLDBDropdownMenus(); RQE.ToggleBothFramesfromLDB() end)
+		self.CustomMenu:AddButton("AddOn Settings", function() RQE:HideLDBDropdownMenus(); RQE:OpenSettings() end)
+		self.CustomMenu:AddButton("Config Window", function() RQE:HideLDBDropdownMenus(); RQE:ToggleConfigFrame() end)
+		self.CustomMenu:AddButton("Debug Log", function() RQE:HideLDBDropdownMenus(); RQE:ToggleDebugLog() end)
 		-- self.CustomMenu:AddButton("More Options", function() RQE:ShowMoreOptionsMenu(self.CustomMenu) end, true)	-- THIS IS BEING COMMENTED OUT AS THE SUBCATEGORIES FOR THE IN-GAME CONFIG OPTIONS ARE NOT WORKING YET
 	end
 
@@ -600,11 +608,11 @@ function RQE:ShowMoreOptionsMenu(parentMenu)
 
 	-- Ensure buttons are only added once
 	if #self.MoreOptionsMenu.buttons == 0 then
-		self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:OpenFrameSettings() end)
-		self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:OpenFontSettings() end)
-		self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:OpenDebugOptions() end)
-		self.MoreOptionsMenu:AddButton("Profiles", function() RQE:OpenProfiles() end)
-		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:ToggleConfigFrame() end)
+		self.MoreOptionsMenu:AddButton("Frame Settings", function() RQE:HideLDBDropdownMenus(); RQE:OpenFrameSettings() end)
+		self.MoreOptionsMenu:AddButton("Font Settings", function() RQE:HideLDBDropdownMenus(); RQE:OpenFontSettings() end)
+		self.MoreOptionsMenu:AddButton("Debug Options", function() RQE:HideLDBDropdownMenus(); RQE:OpenDebugOptions() end)
+		self.MoreOptionsMenu:AddButton("Profiles", function() RQE:HideLDBDropdownMenus(); RQE:OpenProfiles() end)
+		self.MoreOptionsMenu:AddButton("Config Window", function() RQE:HideLDBDropdownMenus(); RQE:ToggleConfigFrame() end)
 	end
 
 	-- Toggle More Options menu visibility
