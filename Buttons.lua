@@ -56,6 +56,7 @@ end
 -- Waypoint Buttons for Unlisted Quests (those not in the RQEDatabase)
 -- Local function to create border
 local function CreateBorder(button)
+	if RQE.UI and RQE.UI:IsEnabled() then return end
 	local border = button:CreateTexture(nil, "BACKGROUND")
 	border:SetColorTexture(1, 1, 1, 1)
 	border:SetAlpha(0.25)  -- Set the alpha to 0.5 (50% opacity)
@@ -919,6 +920,7 @@ function RQE.Buttons.CreateClearButton(RQEFrame)
 
 	CreateTooltip(ClearButton, "Clear Window")  -- Tooltip
 	CreateBorder(ClearButton)  -- Border
+	if RQE.UI then RQE.UI:StyleIconButton(ClearButton, "Clear") end
 
 	return ClearButton
 end
@@ -1013,6 +1015,7 @@ function RQE.Buttons.CreateRWButton(RQEFrame)
 
 	CreateTooltip(RWButton, "Remove Waypoints")
 	CreateBorder(RWButton)
+	if RQE.UI then RQE.UI:StyleIconButton(RWButton, "RemoveWaypoint") end
 
 	return RWButton
 end
@@ -1038,8 +1041,82 @@ function RQE.Buttons.CreateSearchButton(RQEFrame)
 
 	CreateTooltip(SearchButton, "Search by Quest ID")
 	CreateBorder(SearchButton)
+	if RQE.UI then RQE.UI:StyleIconButton(SearchButton, "Search") end
 
 	return SearchButton
+end
+
+
+local function IsContributionAddonLoaded()
+	if isRetail then
+		return C_AddOns and C_AddOns.IsAddOnLoaded
+			and C_AddOns.IsAddOnLoaded("RQE_Contribution")
+	end
+	return RQE.API and RQE.API.IsAddOnLoaded
+		and RQE.API.IsAddOnLoaded("RQE_Contribution")
+end
+
+
+-- RQE owns the Contribution launcher so its placement and skin remain stable.
+-- RQE_Contribution continues to own the editor frame and every editor action.
+function RQE.Buttons.CreateContributionButton(RQEFrame)
+	if RQE.RQEContributionButton then return RQE.RQEContributionButton end
+
+	local button = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+	button:SetSize(18, 18)
+	button:SetText("$")
+	button:SetFrameStrata("MEDIUM")
+	button:SetFrameLevel(3)
+	button:SetPoint("TOPLEFT", RQE.SearchButton, "TOPRIGHT", 3, 0)
+	button:Hide()
+	RQE.RQEContributionButton = button
+
+	button:SetScript("OnClick", function()
+		local editor = RQE.ContributeFrame
+		if not editor then return end
+		local showEditor = not editor:IsShown()
+		if showEditor then editor:Show() else editor:Hide() end
+
+		if RQE_Contribution and RQE_Contribution.ToggleContributeButtons then
+			RQE_Contribution:ToggleContributeButtons(showEditor)
+		end
+		if showEditor and C_Timer and C_Timer.After then
+			C_Timer.After(2, function()
+				if editor:IsShown() and RQE_Contribution
+					and RQE_Contribution.SearchQuestIDFieldInStepEditor then
+					RQE_Contribution:SearchQuestIDFieldInStepEditor()
+				end
+			end)
+		end
+	end)
+
+	CreateTooltip(button, "Show/Hide RQE Contribution Step Editor")
+	CreateBorder(button)
+	if RQE.UI then RQE.UI:StyleContributionButton(button) end
+	return button
+end
+
+
+function RQE.Buttons.RefreshContributionButton()
+	local button = RQE.RQEContributionButton
+	if not button then return end
+
+	if IsContributionAddonLoaded() and RQE.ContributeFrame then
+		-- During the transition, older Contribution builds may still create
+		-- their own launcher. Hide that duplicate and restore RQE's owner.
+		local duplicate = RQE.ContributeButton
+		if duplicate and duplicate ~= button then duplicate:Hide() end
+		RQE.ContributeButton = button
+		button:Show()
+		if RQE.UI then RQE.UI:StyleContributionButton(button) end
+	else
+		if RQE.ContributeButton == button then RQE.ContributeButton = nil end
+		button:Hide()
+	end
+
+	if RQE.Buttons.UpdateHeaderNavigation then
+		RQE.Buttons.UpdateHeaderNavigation()
+	end
 end
 
 
@@ -1137,6 +1214,7 @@ function RQE.Buttons.CreateCloseButton(RQEFrame)
 	end)
 	CreateTooltip(CloseButton, "Close/Hide Frame")
 	CreateBorder(CloseButton)
+	if RQE.UI then RQE.UI:StyleIconButton(CloseButton, "Close") end
 
 	return CloseButton
 end
@@ -1288,6 +1366,7 @@ function RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 	end)
 
 	CreateBorder(PrevStepButton)
+	if RQE.UI then RQE.UI:StyleIconButton(PrevStepButton, "PreviousStep") end
 	return PrevStepButton
 end
 
@@ -1386,6 +1465,7 @@ function RQE.Buttons.CreateNextStepButton(RQEFrame)
 	end)
 
 	CreateBorder(NextStepButton)
+	if RQE.UI then RQE.UI:StyleIconButton(NextStepButton, "NextStep") end
 	return NextStepButton
 end
 
@@ -1457,6 +1537,10 @@ function RQE.Buttons.CreateHeaderWaypointControls(RQEFrame)
 
 	CreateBorder(BackButton)
 	CreateBorder(ForwardButton)
+	if RQE.UI then
+		RQE.UI:StyleIconButton(BackButton, "PreviousWaypoint")
+		RQE.UI:StyleIconButton(ForwardButton, "NextWaypoint")
+	end
 	BackButton:Hide()
 	Status:Hide()
 	ForwardButton:Hide()
@@ -1571,6 +1655,7 @@ function RQE.Buttons.CQButton(RQEQuestFrame)
 
 	CreateTooltip(CQButton, "Show All Quests \n in RQE Quest Tracker")  -- Tooltip
 	CreateBorder(CQButton)  -- Border
+	if RQE.UI then RQE.UI:StyleIconButton(CQButton, "ShowAll") end
 
 	return CQButton
 end
@@ -1603,6 +1688,7 @@ function RQE.Buttons.SCButton(RQEQuestFrame)
 		CreateTooltip(SCButton, "Show All Completed Quests")
 	end
 	CreateBorder(SCButton)  -- Border
+	if RQE.UI then RQE.UI:StyleIconButton(SCButton, "Completed") end
 
 	return SCButton
 end
@@ -1633,6 +1719,7 @@ function RQE.Buttons.HQButton(RQEQuestFrame)
 
 	CreateTooltip(HQButton, "Hide watched Completed Quests")  -- Tooltip
 	CreateBorder(HQButton)  -- Border
+	if RQE.UI then RQE.UI:StyleIconButton(HQButton, "HideCompleted") end
 
 	return HQButton
 end
@@ -1667,6 +1754,7 @@ function RQE.Buttons.ZQButton(RQEQuestFrame)
 
 	CreateTooltip(ZQButton, "Show zone quests")  -- Tooltip
 	CreateBorder(ZQButton)  -- Border
+	if RQE.UI then RQE.UI:StyleIconButton(ZQButton, "Zone") end
 
 	return ZQButton
 end
@@ -1706,6 +1794,7 @@ function RQE.Buttons.CreateQuestCloseButton(RQEQuestFrame)
 	end)
 	CreateTooltip(QTCloseButton, "Close/Hide Quest Tracker")
 	CreateBorder(QTCloseButton)
+	if RQE.UI then RQE.UI:StyleIconButton(QTCloseButton, "Close") end
 
 	return QTCloseButton
 end
@@ -1730,7 +1819,7 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
 
 		local profileSize = RQE.db.profile.QuestFramePosition or {}
 		local restoredWidth = RQE.QToriginalWidth
-			or profileSize.frameWidth or RQEQuestFrame:GetWidth() or 325
+			or profileSize.frameWidth or RQEQuestFrame:GetWidth() or 355
 		local restoredHeight = RQE.QToriginalHeight
 			or (profileSize.frameHeight and profileSize.frameHeight > 30
 				and profileSize.frameHeight) or 450
@@ -1750,6 +1839,7 @@ function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, ori
 	end)
 	CreateTooltip(QTMaximizeButton, "Maximize Quest Tracker")
 	CreateBorder(QTMaximizeButton)
+	if RQE.UI then RQE.UI:StyleIconButton(QTMaximizeButton, "Expand") end
 	QTMaximizeButton:Hide()
 
 	return QTMaximizeButton
@@ -1776,7 +1866,8 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 		RQE.QTMinimized = true
 
 		-- Preserve the full frame width so both header states line up exactly.
-		RQEQuestFrame:SetHeight(30)
+		local collapsedHeight = (RQE.UI and RQE.UI:IsEnabled()) and 48 or 30
+		RQEQuestFrame:SetHeight(collapsedHeight)
 
 		-- Hide the ScrollFrame if they exist
 		if RQE.QTScrollFrame then
@@ -1802,6 +1893,7 @@ function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, Q
 	end)
 	CreateTooltip(QTMinimizeButton, "Minimize Quest Tracker")
 	CreateBorder(QTMinimizeButton)
+	if RQE.UI then RQE.UI:StyleIconButton(QTMinimizeButton, "Collapse") end
 
 	return QTMinimizeButton
 end
@@ -1829,6 +1921,7 @@ function RQE_QuestButtonMixin:OnLoad()
 	pushedTexture:SetColorTexture(0.05, 0.05, 0.05, 0.8)
 	pushedTexture:SetAllPoints(self)
 	self:SetPushedTexture(pushedTexture)
+	if RQE.UI then RQE.UI:StyleTextButton(self) end
 end
 
 
@@ -1852,6 +1945,36 @@ function RQE_QuestMenuMixin:OnLoad()
 		insets = { left = 4, right = 4, top = 4, bottom = 4 },
 	})
 	self:SetBackdropColor(0, 0, 0, 0.8)
+	if RQE.UI then RQE.UI:StylePanel(self, 0.94, "menu") end
+end
+
+
+function RQE_QuestMenuMixin:RefreshLayout()
+	local themed = RQE.UI and RQE.UI:IsEnabled()
+	local rowHeight = themed and 28 or 20
+	local rowGap = themed and 4 or 5
+	local horizontalPadding = themed and 36 or 20
+	local menuWidth = themed and 230 or math.max(150, self:GetWidth() or 150)
+
+	for _, button in ipairs(self.buttons) do
+		local fontString = button.GetFontString and button:GetFontString()
+		local textWidth = fontString and fontString:GetStringWidth() or 0
+		menuWidth = math.max(menuWidth, math.ceil(textWidth + horizontalPadding))
+	end
+
+	self:SetWidth(menuWidth)
+	for index, button in ipairs(self.buttons) do
+		button:ClearAllPoints()
+		button:SetSize(menuWidth - 20, rowHeight)
+		if index == 1 then
+			button:SetPoint("TOP", self, "TOP", 0, -10)
+		else
+			button:SetPoint("TOP", self.buttons[index - 1], "BOTTOM", 0, -rowGap)
+		end
+	end
+
+	local rowsHeight = (#self.buttons * rowHeight) + (math.max(0, #self.buttons - 1) * rowGap)
+	self:SetHeight(rowsHeight + 20)
 end
 
 
@@ -1867,17 +1990,10 @@ function RQE_QuestMenuMixin:AddButton(text, onClick, isSubmenu)
 	Mixin(button, RQE_QuestButtonMixin)
 	button:OnLoad()
 	button:SetText(text .. (isSubmenu and " >" or ""))
-	button:SetSize(self:GetWidth() - 20, 20)
 	button:SetScript("OnClick", onClick)
 
-	if #self.buttons == 0 then
-		button:SetPoint("TOP", self, "TOP", 0, -10)
-	else
-		button:SetPoint("TOP", self.buttons[#self.buttons], "BOTTOM", 0, -5)
-	end
-
 	table.insert(self.buttons, button)
-	self:SetHeight((#self.buttons * (20 + 5)) + 20)
+	self:RefreshLayout()
 end
 
 
@@ -1954,6 +2070,7 @@ function RQE.Buttons.CreateQuestFilterButton(RQEQuestFrame, QToriginalWidth, QTo
 
 	CreateTooltip(QTFilterButton, "Filter Quests")
 	CreateBorder(QTFilterButton)
+	if RQE.UI then RQE.UI:StyleIconButton(QTFilterButton, "Filter") end
 
 	return QTFilterButton
 end
@@ -2024,11 +2141,14 @@ function RQE:ShowQuestFilterMenu()
 			else
 				button:SetText("Auto-Track Zone Quests")
 			end
+			local menu = button:GetParent()
+			if menu and menu.RefreshLayout then menu:RefreshLayout() end
 		end)
 
 		-- Initial state setup for the button
 		if RQE.db.profile.autoTrackZoneQuests then
 			self.QuestFilterDropDownMenu.buttons[#self.QuestFilterDropDownMenu.buttons]:SetText("|TInterface\\Buttons\\UI-CheckBox-Check:20|t Auto-Track Zone Quests")
+			self.QuestFilterDropDownMenu:RefreshLayout()
 		end
 
 		self.QuestFilterDropDownMenu:AddButton("Completed Quests", function()
@@ -2957,6 +3077,7 @@ function RQE.Buttons.CreateDebugLogCloseButton(logFrame)
 	closeButton:SetScript("OnClick", function(self, button)
 		logFrame:Hide()
 	end)
+	if RQE.UI then RQE.UI:StyleIconButton(closeButton, "Close") end
 end
 
 
