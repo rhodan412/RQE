@@ -255,6 +255,7 @@ RQEFrame:SetBackdrop({
 	insets = { left = 0, right = 0, top = 1, bottom = 0 }
 })
 RQEFrame:SetBackdropColor(0, 0, 0, RQE.db.profile.MainFrameOpacity)
+if RQE.UI then RQE.UI:StylePanel(RQEFrame, RQE.db.profile.MainFrameOpacity, "main") end
 RQE.OnCoordinateClicked = RQE.OnCoordinateClicked or function() end
 
 
@@ -287,6 +288,7 @@ header:SetBackdrop({
 	insets = { left = 4, right = 4, top = 4, bottom = 4 }
 })
 header:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
+if RQE.UI then RQE.UI:StyleHeader(header, false) end
 header:SetPoint("TOPLEFT", 0, 0)
 header:SetPoint("TOPRIGHT", 0, 0)
 RQE.RQEFrameHeader = header
@@ -427,6 +429,7 @@ local label = RQE.UnknownQuestButton:CreateFontString(nil, "OVERLAY", "GameFontN
 label:SetPoint("CENTER", RQE.UnknownQuestButton, "CENTER")
 label:SetText("W")  -- W for Waypoint
 label:SetTextColor(1, 1, 0)
+RQE.UnknownQuestButtonLabel = label
 
 
 -- Add mouseover tooltip (functions listed in Buttons.lua)
@@ -457,11 +460,16 @@ local sgLabel = RQE.SearchGroupButton:CreateFontString(nil, "OVERLAY", "GameFont
 sgLabel:SetPoint("CENTER", RQE.SearchGroupButton, "CENTER")
 sgLabel:SetText("SG")  -- SG for Search Group
 sgLabel:SetTextColor(1, 1, 0)  -- Adjust color as needed
+RQE.SearchGroupButtonLabel = sgLabel
 
 
 -- Add bg to the global RQE table
 RQE.bg = bg
 RQE.sgbg = sgBg
+if RQE.UI then
+	RQE.UI:StyleLegacyActionButton(RQE.UnknownQuestButton, bg, label, "WaypointTarget")
+	RQE.UI:StyleLegacyActionButton(RQE.SearchGroupButton, sgBg, sgLabel, "SearchGroup")
+end
 
 
 -- Function to set up a tooltip for a given frame and multiple text lines
@@ -647,11 +655,25 @@ RQE.DirectionTextFrame:EnableMouse(true)
 
 
 local function AnchorDirectionBelowQuestStatus(hasStatus)
+	local themed = RQE.UI and RQE.UI:IsEnabled()
+	local searchGroupShown = RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown()
+	RQE.QuestStatusText:ClearAllPoints()
+	if themed and searchGroupShown then
+		-- Keep timer/failure status clear of the two-button W/SG stack without
+		-- shifting the shared text column noticeably farther right.
+		RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 5, -8)
+	else
+		RQE.QuestStatusText:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -20)
+	end
 	RQE.DirectionTextFrame:ClearAllPoints()
 	if hasStatus then
 		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestStatusText, "BOTTOMLEFT", 0, -10)
-	elseif RQE.SearchGroupButton and RQE.SearchGroupButton:IsShown() then
-		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -20)
+	elseif searchGroupShown then
+		if themed then
+			RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 5, -12)
+		else
+			RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.SearchGroupButton, "BOTTOMLEFT", 0, -20)
+		end
 	else
 		RQE.DirectionTextFrame:SetPoint("TOPLEFT", RQE.QuestNameText, "BOTTOMLEFT", -35, -20)
 	end
@@ -895,6 +917,7 @@ RQEFrame.CPUUsageText = CPUUsageText
 RQE.Buttons.CreateClearButton(RQEFrame)
 RQE.Buttons.CreateRWButton(RQEFrame)
 RQE.Buttons.CreateSearchButton(RQEFrame)
+RQE.Buttons.CreateContributionButton(RQEFrame)
 -- RQE.Buttons.CreateQMButton(RQEFrame) -- Disabled: QF no longer controls the redesigned quest/objective trackers.
 RQE.Buttons.CreateCloseButton(RQEFrame)
 -- RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
@@ -902,6 +925,7 @@ RQE.Buttons.CreateCloseButton(RQEFrame)
 RQE.Buttons.CreateNextStepButton(RQEFrame)
 RQE.Buttons.CreatePreviousStepButton(RQEFrame)
 RQE.Buttons.CreateHeaderWaypointControls(RQEFrame)
+RQE.Buttons.RefreshContributionButton()
 RQE.Buttons.UpdateHeaderNavigation()
 
 
@@ -914,6 +938,7 @@ local searchExecuteButton = CreateFrame("Button", nil, RQEFrame.SearchFrame, "UI
 searchExecuteButton:SetSize(18, 18)
 searchExecuteButton:SetPoint("LEFT", SearchEditBox, "RIGHT", 5, 0)
 searchExecuteButton:SetText(">")
+if RQE.UI then RQE.UI:StyleIconButton(searchExecuteButton, "Search", { size = 22 }) end
 
 
 ---------------------------
@@ -1335,6 +1360,7 @@ function AdjustRQEFrameWidths(newWidth)
 	RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
 	RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
 	RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
+	if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
 
 	RQE:UpdateContentSize()
 end
@@ -1412,6 +1438,7 @@ function CreateSearchFrame(showFrame)
 	local searchBox, examineButton = RQE.SearchModule:CreateSearchBox()
 	SearchFrame:AddChild(searchBox)
 	SearchFrame:AddChild(examineButton)
+	if RQE.UI then RQE.UI:StyleAceFrame(SearchFrame) end
 
 	-- Fixing the positioning issue
 	SearchFrame.frame:ClearAllPoints()
@@ -1689,7 +1716,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 
 		if i == 1 then
 			if RQE.SeparateFocusFrame then
-				StepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "BOTTOMLEFT", 50, yOffset)
+				local stepInset = (RQE.UI and RQE.UI:IsEnabled()) and 35 or 50
+				StepText:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "BOTTOMLEFT", stepInset, yOffset)
 			elseif self.QuestObjectives then
 				StepText:SetPoint("TOPLEFT", self.QuestObjectives, "BOTTOMLEFT", 35, yOffset)
 			elseif self.QuestDescription then
@@ -1749,6 +1777,8 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 		number:SetPoint("CENTER", WaypointButton, "CENTER")
 		number:SetText(i)
 		number:SetTextColor(1, 1, 0)
+		WaypointButton.number = number
+		if RQE.UI then RQE.UI:StyleQuestIndexButton(WaypointButton, RQE.LastClickedIdentifier == i) end
 
 		WaypointButton:SetScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
@@ -1827,10 +1857,12 @@ function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
 			-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 			if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
 				RQE.LastClickedWaypointButton.bg:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
+				if RQE.UI then RQE.UI:StyleQuestIndexButton(RQE.LastClickedWaypointButton, false) end
 			end
 
 			-- Update the texture of the currently clicked button
 			bg:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
+			if RQE.UI then RQE.UI:StyleQuestIndexButton(WaypointButton, true) end
 
 			-- Use AddonSetStepIndex if available
 			local effectiveStepIndex = RQE.AddonSetStepIndex or i
@@ -2529,6 +2561,39 @@ local function GetSeparateFocusLocation()
 	return mapID, mapName, zoneName, minimapZone
 end
 
+-- The themed Focus panel follows the Quest Helper's live width rather than
+-- inheriting the horizontal offset of whichever quest text happens to precede
+-- it. This keeps World Quest and ordinary quest layouts identical.
+function RQE:LayoutSeparateFocusFrame()
+	if not (RQE.UI and RQE.UI:IsEnabled() and RQE.SeparateFocusFrame
+		and RQE.content and RQE.QuestObjectives) then return end
+	local contentTop = RQE.content:GetTop()
+	local objectivesBottom = RQE.QuestObjectives:GetBottom()
+	if not contentTop or not objectivesBottom then return end
+	local focusWidth = math.max(1, RQEFrame:GetWidth() - 40)
+	local focusTop = objectivesBottom - contentTop - 10
+	RQE.SeparateFocusFrame:ClearAllPoints()
+	RQE.SeparateFocusFrame:SetPoint("TOPLEFT", RQE.content, "TOPLEFT", 10, focusTop)
+	RQE.SeparateFocusFrame:SetWidth(focusWidth)
+	if RQE.SeparateContentFrame then
+		local contentWidth = math.max(1, focusWidth - 40)
+		RQE.SeparateContentFrame:SetWidth(contentWidth)
+		for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
+			if child.GetObjectType and child:GetObjectType() == "SimpleHTML" then
+				child:SetWidth(math.max(1, contentWidth - 81))
+			end
+		end
+		for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+			if region.GetObjectType and region:GetObjectType() == "FontString" then
+				region:SetWidth(math.max(1, contentWidth - 91))
+			end
+		end
+		if RQE.SeparateStepText then
+			RQE.SeparateStepText:SetWidth(math.max(1, contentWidth - 81))
+		end
+	end
+end
+
 function RQE.InitializeSeparateFocusFrame()
 	-- Create the new independent frame
 	if not RQE.SeparateFocusFrame then
@@ -2545,6 +2610,7 @@ function RQE.InitializeSeparateFocusFrame()
 			insets = { left = 0, right = 0, top = 1, bottom = 0 }
 		})
 		RQE.SeparateFocusFrame:SetBackdropColor(0, 0, 0, 0.4)
+		if RQE.UI then RQE.UI:StylePanel(RQE.SeparateFocusFrame, 0.58, "focus") end
 		RQE.SeparateFocusFrame:EnableMouse(true)
 		RQE.SeparateFocusFrame:EnableMouseWheel(true)
 		RQE.SeparateFocusFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
@@ -2579,6 +2645,7 @@ function RQE.InitializeSeparateFocusFrame()
 		RQE.SeparateContentFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 		RQE.SeparateContentFrame:Show()
 	end
+	RQE:LayoutSeparateFocusFrame()
 
 	-- Zone events already request a top reset, but map names and minimap
 	-- subzones can settle later. Check only while this visible frame updates.
@@ -2615,6 +2682,12 @@ function RQE.InitializeSeparateFocusFrame()
 			print("Error: SeparateContentFrame not found.")
 			return
 		end
+		RQE:LayoutSeparateFocusFrame()
+		-- Keep the approved Azure & Gold spacing intact while returning the
+		-- borderless legacy * control and its text to a tighter left column.
+		local focusTextInset = (RQE.UI and RQE.UI:IsEnabled()) and 66 or 52
+		local focusTextWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 15)
+		local focusTextNarrowWidth = math.max(1, RQE.SeparateContentFrame:GetWidth() - focusTextInset - 25)
 
 		-- Coordblock selection belongs only to the current Blizzard supertrack.
 		-- Clear it even when the newly selected quest has no coordblocks to render.
@@ -2834,11 +2907,11 @@ function RQE.InitializeSeparateFocusFrame()
 			StepText:SetFontObject("h2", GameFontNormal)
 			StepText:SetJustifyH("p", "LEFT")
 			StepText:SetHyperlinksEnabled(true)
-			StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+			StepText:SetWidth(focusTextWidth)
 			StepText:SetTextColor("p", 1, 1, 0.8)
 			StepText:SetTextColor("h1", 1, 1, 0.8)
 			StepText:SetTextColor("h2", 1, 1, 0.8)
-			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, -7)
+			StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, -7)
 
 			local html = paragraphs[1]
 			StepText._rqeCoordblockLinks = {}
@@ -3047,8 +3120,8 @@ function RQE.InitializeSeparateFocusFrame()
 						end
 
 						local fs = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-						fs:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, yOffset)
-						fs:SetWidth(RQE.SeparateContentFrame:GetWidth() - 70)
+						fs:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, yOffset)
+						fs:SetWidth(focusTextNarrowWidth)
 						fs:SetJustifyH("LEFT")
 						fs:SetTextColor(1, 1, 0.8)
 						fs:SetWordWrap(true)
@@ -3102,9 +3175,9 @@ function RQE.InitializeSeparateFocusFrame()
 				end
 				StepText:SetJustifyH("LEFT")
 				StepText:SetTextColor(1, 1, 0.8)
-				StepText:SetWidth(RQE.SeparateContentFrame:GetWidth() - 60)
+				StepText:SetWidth(focusTextWidth)
 				StepText:SetWordWrap(true)
-				StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", 45, yOffset)
+				StepText:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, yOffset)
 				StepText:SetText(line)
 
 				-- Handle hover-capable markup for item/spell tags even when no coords exist
@@ -3169,7 +3242,9 @@ function RQE.InitializeSeparateFocusWaypoints()
 		-- The artwork remains 30x30, but the native hit rectangle includes
 		-- its glow and stays fixed when the Focus Frame content scrolls.
 		RQE.SeparateWaypointButton:SetSize(40, 40)
-		RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateFocusFrame, "TOPLEFT", 38, 0)
+		-- This is the legacy placement. Azure & Gold reapplies its independent
+		-- 10/-6 inset through StyleLegacyActionButton below.
+		RQE.SeparateWaypointButton:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", 2, -4)
 		RQE.SeparateWaypointButton:SetFrameLevel(RQE.SeparateScrollFrame:GetFrameLevel() + 3)
 		RQE.SeparateWaypointButton:EnableMouseWheel(true)
 		RQE.SeparateWaypointButton:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
@@ -3181,9 +3256,14 @@ function RQE.InitializeSeparateFocusWaypoints()
 
 		-- Create the number label
 		local number = RQE.SeparateWaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-		number:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER", 0, -2)
+		number:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER", 0, -1)
+		number:SetFont("Fonts\\FRIZQT__.TTF", 22, "OUTLINE")
 		number:SetText("*")
 		number:SetTextColor(1, 1, 0)
+		if RQE.UI then
+			RQE.UI:StyleLegacyActionButton(RQE.SeparateWaypointButton, bg, number,
+				"Waypoint", { size = 40, iconInset = 3, focusInset = true })
+		end
 
 		-- Add the click event for the Waypoint Button
 		RQE.SeparateWaypointButton:SetScript("OnClick", function()
