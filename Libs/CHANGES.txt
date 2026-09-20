@@ -1,53 +1,72 @@
 ------------------------------------------------------------------------
-r1356 | nevcairiel | 2024-12-05 06:15:30 +0000 (Thu, 05 Dec 2024) | 1 line
-Changed paths:
-   M /trunk
-   M /trunk/AceGUI-3.0/widgets/AceGUIContainer-TreeGroup.lua
-
-AceGUI-3.0: TreeGroup: Re-factor button hiding to help avoid bizarre button breakage
-------------------------------------------------------------------------
-r1355 | funkehdude | 2024-11-20 01:54:56 +0000 (Wed, 20 Nov 2024) | 1 line
-Changed paths:
-   M /trunk/Ace3.toc
-
-bump toc
-------------------------------------------------------------------------
-r1354 | funkehdude | 2024-09-10 14:01:06 +0000 (Tue, 10 Sep 2024) | 1 line
-Changed paths:
-   M /trunk/Ace3.toc
-
-bump toc
-------------------------------------------------------------------------
-r1353 | nevcairiel | 2024-08-27 13:37:35 +0000 (Tue, 27 Aug 2024) | 8 lines
-Changed paths:
-   M /trunk
-   M /trunk/AceDB-3.0/AceDB-3.0.lua
-
-AceDB-3.0: Handle unloaded namespaces in Reset/Copy/Delete functions
-
-When applying profile changes to namespaces, we should also handle
-namespaces that are not currently loaded.
-
-These may be from optional Load-on-Demand parts that are not currently
-loaded, but the expectation is that the database behaves consistent
-no matter what is currently active.
-------------------------------------------------------------------------
-r1352 | funkehdude | 2024-07-24 18:29:31 +0000 (Wed, 24 Jul 2024) | 1 line
+r1414 | funkehdude | 2026-09-18 01:23:16 +0000 (Fri, 18 Sep 2026) | 1 line
 Changed paths:
    M /trunk/.luacheckrc
+   M /trunk/AceDB-3.0/AceDB-3.0.lua
 
-Update luacheck
+AceDB-3.0: Compatibility with WoW Forever
 ------------------------------------------------------------------------
-r1351 | funkehdude | 2024-07-24 18:23:24 +0000 (Wed, 24 Jul 2024) | 1 line
+r1413 | funkehdude | 2026-09-17 22:54:34 +0000 (Thu, 17 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/Ace3.toc
+
+Bump toc
+------------------------------------------------------------------------
+r1412 | funkehdude | 2026-09-08 01:02:22 +0000 (Tue, 08 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/Ace3.toc
+
+Bump toc
+------------------------------------------------------------------------
+r1411 | funkehdude | 2026-09-06 22:47:39 +0000 (Sun, 06 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/AceGUI-3.0/widgets/AceGUIWidget-Icon.lua
+   M /trunk/AceGUI-3.0/widgets/AceGUIWidget-Label.lua
+
+AceGUI-3.0: Forgot to bump versions.
+------------------------------------------------------------------------
+r1410 | funkehdude | 2026-09-06 22:45:42 +0000 (Sun, 06 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/AceGUI-3.0/widgets/AceGUIWidget-Icon.lua
+   M /trunk/AceGUI-3.0/widgets/AceGUIWidget-Label.lua
+
+AceGUI-3.0: Add `:SetImageByAtlas` API to the `AceGUIWidget-Icon` and `AceGUIWidget-Label` widgets.
+------------------------------------------------------------------------
+r1409 | funkehdude | 2026-09-03 22:41:24 +0000 (Thu, 03 Sep 2026) | 1 line
 Changed paths:
    M /trunk/AceConfig-3.0/AceConfigDialog-3.0/AceConfigDialog-3.0.lua
 
-AceConfigDialog-3.0: Don't change keyboard input propagation in combat when showing the popup
+AceConfig-3.0/AceConfigDialog-3.0: Slightly bigger popup size.
 ------------------------------------------------------------------------
-r1350 | funkehdude | 2024-07-24 17:55:50 +0000 (Wed, 24 Jul 2024) | 1 line
+r1408 | funkehdude | 2026-09-03 15:37:56 +0000 (Thu, 03 Sep 2026) | 1 line
 Changed paths:
-   M /trunk/Ace3.toc
+   M /trunk/AceDBOptions-3.0/AceDBOptions-3.0.lua
 
-Restore old toc versions, these are here purely to compensate for bad addon updaters, we don't actually care if we fully support these versions of wow
+AceDBOptions-3.0: Increase the character limit to 50, increase the width of the dropdown so that a 50 character profile should always show.
+------------------------------------------------------------------------
+r1407 | funkehdude | 2026-09-03 15:26:34 +0000 (Thu, 03 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/AceDB-3.0/AceDB-3.0.lua
+
+AceDB-3.0: Bump limit to 50 characters
+------------------------------------------------------------------------
+r1406 | funkehdude | 2026-09-03 04:12:17 +0000 (Thu, 03 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/AceDB-3.0/AceDB-3.0.lua
+
+AceDB-3.0: Restrict profile names to between 1 and 30 characters. Existing profiles remain and can be copied to a new name.
+------------------------------------------------------------------------
+r1405 | funkehdude | 2026-09-03 02:03:09 +0000 (Thu, 03 Sep 2026) | 1 line
+Changed paths:
+   M /trunk/.luacheckrc
+   M /trunk/AceDBOptions-3.0/AceDBOptions-3.0.lua
+
+AceDBOptions-3.0: Validate new profile names (Restrict to 30 characters, must contain some text)
+------------------------------------------------------------------------
+r1404 | funkehdude | 2026-08-26 22:31:26 +0000 (Wed, 26 Aug 2026) | 1 line
+Changed paths:
+   M /trunk/AceGUI-3.0/widgets/AceGUIWidget-Heading.lua
+
+AceGUI-3.0/widgets/AceGUIWidget-Heading: Support secret text
 ------------------------------------------------------------------------
 
