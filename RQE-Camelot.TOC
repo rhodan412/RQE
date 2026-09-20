@@ -49,6 +49,7 @@ TaintLess.xml
 # Core Functionality
 Core.lua
 RQE_API.lua
+UITheme.lua
 DebugLog.lua
 RQEMinimap.lua
 
