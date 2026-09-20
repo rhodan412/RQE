@@ -37,6 +37,7 @@ Known Bugs:
 None
 
 Images:
+
 Redesigned UI - Before-and-after comparison of RQE’s new Azure & Gold theme, enabled by default. It adds custom frames and section headers, clearer icon-based controls, distinct quest-category badges, improved search and filter styling, and a redesigned Separate Focus way
 ![New Theme](https://github.com/user-attachments/assets/20cc73c9-fd9f-4ffc-a3c6-f596f17b79b7)
 
