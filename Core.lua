@@ -540,23 +540,31 @@ function RQE:OnInitialize()
 	--self:GetCharacterInfo()
 
 	-- Register UI Options
+	RQE.ConfigUI:ComposeOptions(RQE.options)
+	local optionsCategory = "Rhodan's Quest Explorer"
+	self.optionsCategoryIDs = self.optionsCategoryIDs or {}
 	AC:RegisterOptionsTable("RQE_Main", RQE.options.args.general)
-	self.optionsFrame = ACD:AddToBlizOptions("RQE_Main", "|cFFCC99FFRhodan's Quest Explorer|r")
+	self.optionsFrame, self.optionsCategoryIDs.general = ACD:AddToBlizOptions("RQE_Main", optionsCategory)
+	RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame, "General Settings")
 
 	-- Register UI Pages
 	AC:RegisterOptionsTable("RQE_Frame", RQE.options.args.frame)
-	self.optionsFrame.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+	self.optionsFrame.frame, self.optionsCategoryIDs.frame = ACD:AddToBlizOptions("RQE_Frame", "Frame Settings", optionsCategory)
+	RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.frame, "Frame Settings")
 
 	AC:RegisterOptionsTable("RQE_Font", RQE.options.args.font)
-	self.optionsFrame.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", "|cFFCC99FFRhodan's Quest Explorer|r")
+	self.optionsFrame.font, self.optionsCategoryIDs.font = ACD:AddToBlizOptions("RQE_Font", "Font Settings", optionsCategory)
+	RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.font, "Font Settings")
 
 	AC:RegisterOptionsTable("RQE_Debug", RQE.options.args.debug)
-	self.optionsFrame.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", "|cFFCC99FFRhodan's Quest Explorer|r")
+	self.optionsFrame.debug, self.optionsCategoryIDs.debug = ACD:AddToBlizOptions("RQE_Debug", "Debug Options", optionsCategory)
+	RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.debug, "Debug Options")
 
 	-- Register Profiles Section
-	local profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db)
+	local profiles = RQE.ConfigUI:ComposeProfiles(LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db))
 	AC:RegisterOptionsTable("RQE_Profiles", profiles)
-	ACD:AddToBlizOptions("RQE_Profiles", "Profiles", "|cFFCC99FFRhodan's Quest Explorer|r")
+	self.optionsFrame.profiles, self.optionsCategoryIDs.profiles = ACD:AddToBlizOptions("RQE_Profiles", "Profiles", optionsCategory)
+	RQE.ConfigUI:RegisterOptionsPanel(self.optionsFrame.profiles, "Profiles")
 
 	-- Register chat commands
 	self:RegisterChatCommand("rqe", "SlashCommand")
@@ -685,6 +693,7 @@ function RQE:ApplyUISettings()
 		-- Code to hide MapID
 		RQEFrame.MapIDText:Hide()
 	end
+	if RQE.UI and RQE.UI.RefreshLocationInfoBar then RQE.UI:RefreshLocationInfoBar() end
 
 	-- Ensure that frame opacity is set to default values
 	local MainOpacity = RQE.db.profile.MainFrameOpacity
@@ -2110,15 +2119,7 @@ end
 -- SlashCommand function
 function RQE:SlashCommand(input)
 	if input == "config" then
-		-- Open the config panel
-		if SettingsPanel then
-			-- Use the new API to open the correct settings panel
-			SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
-		else
-			-- Fallback for older versions, force open Interface Options to the AddOns tab
-			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-			InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer") -- Sometimes needs to be called twice due to Blizzard quirk
-		end
+		RQE.ConfigUI:OpenRegisteredPanel("general")
 	elseif input == "frame" or input == "toggle" then
 		-- Toggle the frame visibility
 		if RQEFrame:IsShown() then
@@ -2143,12 +2144,7 @@ function RQE:SlashCommand(input)
 		end
 
 		if openFrame and openFrame.name == "Rhodan's Quest Explorer" then
-			if SettingsPanel then
-				SettingsPanel:OpenToCategory("|cFFCC99FFRhodan's Quest Explorer|r")
-			else
-				InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-				InterfaceOptionsFrame_OpenToCategory("Rhodan's Quest Explorer")
-			end
+			RQE.ConfigUI:OpenRegisteredPanel("general")
 		end
 	else
 		print("Available commands for /rqe:")
@@ -2560,6 +2556,14 @@ function RQE:UpdateMapIDDisplay()
 
 	local mapID = C_Map.GetBestMapForUnit("player")
 	--UpdateWorldQuestTrackingForMap(mapID)
+	if RQEFrame and RQEFrame.MapIDText then
+		if RQE.db.profile.showMapID then
+			RQEFrame.MapIDText:SetText(mapID and ("Map " .. tostring(mapID)) or "Map —")
+		else
+			RQEFrame.MapIDText:SetText("")
+		end
+	end
+	if RQE.UI and RQE.UI.RefreshLocationInfoBar then RQE.UI:RefreshLocationInfoBar() end
 
 	-- Debug: always show BEFORE/AFTER even if one is nil
 	if RQE.db.profile.debugLevel == "INFO+" then
@@ -2581,12 +2585,6 @@ function RQE:UpdateMapIDDisplay()
 
 	-- Update cache
 	RQE.lastMapID = mapID
-
-	if RQE.db.profile.showMapID and mapID then
-		RQEFrame.MapIDText:SetText("MapID: " .. mapID)
-	else
-		RQEFrame.MapIDText:SetText("")
-	end
 
 	-- Run check to update stepIndex of the supertracked quest but only if the player isn't on a taxi, then the StartPeriodicChecks will run after they land
 	if UnitOnTaxi("player") then return end
@@ -7171,7 +7169,7 @@ function RQE:UpdateCoordinates()
 				-- y = y * 100  -- converting to percentage
 				-- x = RQERoundMapFraction(x) * 100
 				-- y = RQERoundMapFraction(y) * 100
-				RQEFrame.CoordinatesText:SetText(string.format("Coordinates: %.2f, %.2f", x * 100, y * 100))
+				RQEFrame.CoordinatesText:SetText(string.format("%.2f, %.2f", x * 100, y * 100))
 			else
 				RQEFrame.CoordinatesText:SetText("")
 			end
@@ -7181,9 +7179,10 @@ function RQE:UpdateCoordinates()
 	else
 		-- If mapID is invalid, don't try to update coordinates and clear any existing coordinate text
 		if RQEFrame.CoordinatesText then
-			RQEFrame.CoordinatesText:SetText("")
+			RQEFrame.CoordinatesText:SetText(RQE.db.profile.showCoordinates and "—" or "")
 		end
 	end
+	if RQE.UI and RQE.UI.RefreshLocationInfoBar then RQE.UI:RefreshLocationInfoBar() end
 end
 
 
