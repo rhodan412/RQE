@@ -44,8 +44,9 @@ UI.Colors = UI.Themes[UI.ActiveTheme].colors
 UI.Textures = UI.Themes[UI.ActiveTheme].textures
 UI.Registry = UI.Registry or {
 	panels = {}, headers = {}, iconButtons = {}, textButtons = {}, searchBoxes = {},
-	legacyButtons = {}, aceFrames = {},
+	legacyButtons = {}, aceFrames = {}, locationBars = {},
 }
+UI.Registry.locationBars = UI.Registry.locationBars or {}
 
 local function profileReady()
 	return RQE.db and type(RQE.db.GetCurrentProfile) == "function" and RQE.db.profile
@@ -220,12 +221,132 @@ function UI:StyleHeader(header, child)
 	if self:IsEnabled() then self:_ApplyHeader(header, child) end
 end
 
+function UI:_ApplyLegacyLocationInfoBar(bar)
+	if not bar then return end
+	bar:SetBackdrop({
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+		tile = true, tileSize = 16, edgeSize = 8,
+		insets = { left = 2, right = 2, top = 2, bottom = 2 },
+	})
+	bar:SetBackdropColor(0.04, 0.04, 0.04, 0.86)
+	bar:SetBackdropBorderColor(0.45, 0.45, 0.45, 0.8)
+	bar:SetHeight(24)
+	if bar.MapIDText then
+		bar.MapIDText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		bar.MapIDText:SetTextColor(1, 0.82, 0)
+	end
+	if bar.CoordinatesText then
+		bar.CoordinatesText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		bar.CoordinatesText:SetTextColor(1, 1, 1)
+	end
+	if bar.StepDistanceText then
+		bar.StepDistanceText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		bar.StepDistanceText:SetTextColor(1, 0.82, 0)
+	end
+end
+
+function UI:_ApplyLocationInfoBar(bar)
+	if not bar then return end
+	stripNineSlice(bar)
+	bar:SetBackdrop({ bgFile = WHITE, edgeFile = nil, insets = { left = 1, right = 1, top = 1, bottom = 1 } })
+	bar:SetBackdropColor(self.Colors.charcoalRaised[1], self.Colors.charcoalRaised[2], self.Colors.charcoalRaised[3], 0.9)
+	bar:SetHeight(28)
+	local azure = ensureColorLine(bar, "RQEThemeLocationAzure", {
+		self.Colors.azureBright[1], self.Colors.azureBright[2], self.Colors.azureBright[3], 0.9,
+	})
+	azure:ClearAllPoints(); azure:SetPoint("TOPLEFT", 1, -1); azure:SetPoint("TOPRIGHT", -1, -1); azure:SetHeight(1)
+	local gold = ensureColorLine(bar, "RQEThemeLocationGold", {
+		self.Colors.gold[1], self.Colors.gold[2], self.Colors.gold[3], 0.78,
+	})
+	gold:ClearAllPoints(); gold:SetPoint("BOTTOMLEFT", 1, 1); gold:SetPoint("BOTTOMRIGHT", -1, 1); gold:SetHeight(1)
+	if bar.MapIDText then
+		bar.MapIDText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		bar.MapIDText:SetTextColor(self.Colors.gold[1], self.Colors.gold[2], self.Colors.gold[3])
+	end
+	if bar.CoordinatesText then
+		bar.CoordinatesText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		bar.CoordinatesText:SetTextColor(0.72, 0.9, 1)
+	end
+	if bar.StepDistanceText then
+		bar.StepDistanceText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+		bar.StepDistanceText:SetTextColor(self.Colors.gold[1], self.Colors.gold[2], self.Colors.gold[3])
+	end
+end
+
+function UI:StyleLocationInfoBar(bar)
+	remember(self.Registry.locationBars, bar)
+	self:_ApplyLegacyLocationInfoBar(bar)
+	if self:IsEnabled() then self:_ApplyLocationInfoBar(bar) end
+end
+
+function UI:RefreshLocationInfoBar()
+	local mainFrame = RQE.RQEFrame or RQEFrame or _G["RQE.RQEFrame"]
+	local bar = RQE.LocationInfoBar
+	if not (mainFrame and RQE.ScrollFrame) then return end
+	local profile = RQE.db and RQE.db.profile
+	local showMap = profile and profile.showMapID == true
+	local showCoordinates = profile and profile.showCoordinates == true
+	local showBar = bar and (showMap or showCoordinates)
+	local themed = self:IsEnabled()
+	local layoutKey = table.concat({ themed and "theme" or "legacy", showMap and "map" or "", showCoordinates and "coords" or "" }, ":")
+	if bar and bar.RQELocationLayoutKey == layoutKey then return end
+	if bar then bar.RQELocationLayoutKey = layoutKey end
+
+	if bar then
+		bar:ClearAllPoints()
+		if themed then
+			bar:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -50)
+			bar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -20, -50)
+			bar:SetHeight(28)
+		else
+			bar:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -32)
+			bar:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -30, -32)
+			bar:SetHeight(24)
+		end
+		if bar.MapIDText then bar.MapIDText:SetShown(showMap) end
+		if bar.CoordinatesText then bar.CoordinatesText:SetShown(showCoordinates) end
+		if bar.StepDistanceText then bar.StepDistanceText:SetShown(showCoordinates) end
+		bar:SetShown(showBar)
+	end
+
+	RQE.ScrollFrame:ClearAllPoints()
+	local topOffset
+	if themed then topOffset = showBar and -84 or -52
+	else topOffset = showBar and -62 or -40 end
+	RQE.ScrollFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, topOffset)
+	RQE.ScrollFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", themed and -20 or -30, 10)
+end
+
+-- The generated icon canvases do not all have balanced transparent margins.
+-- These small optical corrections center the visible symbols, rather than
+-- merely centering each full 64x64 source canvas inside its button.
+local ICON_OPTICAL_OFFSETS = {
+	Clear = { 0, 3 },
+	RemoveWaypoint = { -1, 3 },
+	Search = { 0, 3 },
+	Contribution = { 1, 4 },
+	Completed = { -1, 1 },
+	HideCompleted = { -1, 1 },
+	Zone = { 0, -1 },
+	Filter = { 1, 1 },
+	Collapse = { -1, 1 },
+	Expand = { 0, 0 },
+	Close = { -1, 1 },
+	WaypointTarget = { -2, 3 },
+	SearchGroup = { 0, 2 },
+}
+
 function UI:_ApplyIconButton(button, iconName, options)
 	if not button then return end
 	options = options or {}
 	self:StripBlizzardButton(button)
 	local size = tonumber(options.size) or 25
 	local inset = tonumber(options.iconInset) or 2
+	local iconSize = math.max(1, size - (inset * 2))
+	local opticalOffset = ICON_OPTICAL_OFFSETS[iconName]
+	local offsetX = opticalOffset and opticalOffset[1] or 0
+	local offsetY = opticalOffset and opticalOffset[2] or 0
 	button:SetSize(size, size)
 	if options.focusInset and button.GetParent then
 		button:ClearAllPoints()
@@ -240,8 +361,8 @@ function UI:_ApplyIconButton(button, iconName, options)
 	setButtonTexture(button, "SetDisabledTexture", self.Textures.buttonDisabled)
 	if not button.RQEThemeIcon then button.RQEThemeIcon = button:CreateTexture(nil, "ARTWORK", nil, 6) end
 	button.RQEThemeIcon:ClearAllPoints()
-	button.RQEThemeIcon:SetPoint("TOPLEFT", inset, -inset)
-	button.RQEThemeIcon:SetPoint("BOTTOMRIGHT", -inset, inset)
+	button.RQEThemeIcon:SetSize(iconSize, iconSize)
+	button.RQEThemeIcon:SetPoint("CENTER", button, "CENTER", offsetX, offsetY)
 	button.RQEThemeIcon:SetTexture(self.Textures.icons .. iconName .. ".tga")
 	button.RQEThemeIcon:Show()
 	if not button.RQEThemeStateHooks then
@@ -365,27 +486,56 @@ local QUEST_BADGE_ICON = {
 	Normal = "QuestNormal",
 }
 
+-- QuestWorld already has the approved visual footprint. The other source
+-- images contain progressively larger transparent margins, so their texture
+-- boxes are enlarged independently while all row button frames remain 35x35.
+-- Positioning stays centered for now; artwork-specific optical offsets are a
+-- separate concern.
+local QUEST_BADGE_SIZE = {
+	Campaign = { 35, 31 },
+	World = { 27, 27 },
+	Daily = { 31, 31 },
+	Bonus = { 31, 31 },
+	Normal = { 33, 31 },
+}
+
 function UI:StyleQuestIndexButton(button, active, questKind)
 	if not self:IsEnabled() or not button then return end
+	local iconName = questKind and QUEST_BADGE_ICON[questKind]
 	local bg = button.bg
 	if bg then
-		bg:SetTexture(active and self.Textures.buttonHover or self.Textures.buttonNormal)
+		-- Quest rows reproduce the normal-plus-additive-highlight composition used
+		-- by an actually hovered themed button. Generic numbered waypoint buttons
+		-- retain their existing background swap behavior.
+		bg:SetTexture(iconName and self.Textures.buttonNormal
+			or (active and self.Textures.buttonHover or self.Textures.buttonNormal))
 		bg:SetTexCoord(0, 1, 0, 1)
 		bg:SetAllPoints(button)
 		bg:Show()
 	end
-	local iconName = questKind and QUEST_BADGE_ICON[questKind]
 	if iconName then
+		if not button.RQEThemeQuestActiveGlow then
+			button.RQEThemeQuestActiveGlow = button:CreateTexture(nil, "OVERLAY", nil, 7)
+			button.RQEThemeQuestActiveGlow:SetBlendMode("ADD")
+		end
+		button.RQEThemeQuestActiveGlow:ClearAllPoints()
+		button.RQEThemeQuestActiveGlow:SetAllPoints(button)
+		button.RQEThemeQuestActiveGlow:SetTexture(self.Textures.buttonHover)
+		button.RQEThemeQuestActiveGlow:SetTexCoord(0, 1, 0, 1)
+		button.RQEThemeQuestActiveGlow:SetAlpha(1)
+		button.RQEThemeQuestActiveGlow:SetShown(active == true)
 		if not button.RQEThemeQuestBadge then
 			button.RQEThemeQuestBadge = button:CreateTexture(nil, "ARTWORK", nil, 6)
 		end
+		local badgeSize = QUEST_BADGE_SIZE[questKind] or QUEST_BADGE_SIZE.World
 		button.RQEThemeQuestBadge:ClearAllPoints()
-		button.RQEThemeQuestBadge:SetPoint("TOPLEFT", button, "TOPLEFT", 4, -4)
-		button.RQEThemeQuestBadge:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -4, 4)
+		button.RQEThemeQuestBadge:SetPoint("CENTER", button, "CENTER", 0, 0)
+		button.RQEThemeQuestBadge:SetSize(badgeSize[1], badgeSize[2])
 		button.RQEThemeQuestBadge:SetTexture(self.Textures.icons .. iconName .. ".tga")
 		button.RQEThemeQuestBadge:Show()
 		if button.number then button.number:Hide() end
 	else
+		if button.RQEThemeQuestActiveGlow then button.RQEThemeQuestActiveGlow:Hide() end
 		if button.RQEThemeQuestBadge then button.RQEThemeQuestBadge:Hide() end
 		if button.number then
 			button.number:SetTextColor(self.Colors.gold[1], self.Colors.gold[2], self.Colors.gold[3])
@@ -430,7 +580,9 @@ function UI:UpdateMagicButtonActionIcon(button, macroBody)
 		button.RQEThemeMagicBackdrop:EnableMouse(false)
 		button.RQEThemeMagicBackdrop:SetPoint("TOPLEFT", button, "TOPLEFT", -3, 3)
 		button.RQEThemeMagicBackdrop:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 3, -3)
-		self:_ApplyPanel(button.RQEThemeMagicBackdrop, 0.28, "section")
+		-- Keep transparent action artwork readable against bright world scenes
+		-- without making the detached Magic Button surround fully opaque.
+		self:_ApplyPanel(button.RQEThemeMagicBackdrop, 0.68, "section")
 		button:HookScript("OnShow", function(owner)
 			if UI:IsEnabled() and owner.RQEThemeMagicBackdrop then owner.RQEThemeMagicBackdrop:Show() end
 		end)
@@ -492,11 +644,16 @@ function UI:_ApplyFrameLayout()
 		RQE.CloseButton:ClearAllPoints()
 		RQE.CloseButton:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -14, -9)
 	end
-	if RQE.ScrollFrame and mainFrame then
-		RQE.ScrollFrame:ClearAllPoints()
-		RQE.ScrollFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, -52)
-		RQE.ScrollFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -20, 10)
+	if RQE.QuestNameText and RQE.QuestIDText then
+		-- Lower every themed quest-name row equally so quests with and without the
+		-- SG control retain one baseline. Legacy construction keeps its original
+		-- -8 offset because this layout pass runs only for Azure & Gold.
+		RQE.QuestNameText:ClearAllPoints()
+		RQE.QuestNameText:SetPoint("TOPLEFT", RQE.QuestIDText, "BOTTOMLEFT", 0, -12)
 	end
+	self:RefreshLocationInfoBar()
+	if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
+	if RQE.UpdateContentSize then RQE:UpdateContentSize() end
 
 	if RQE.RQEQuestFrameHeader then RQE.RQEQuestFrameHeader:SetHeight(48) end
 	if RQE.CQButton and RQE.RQEQuestFrame then
@@ -592,6 +749,7 @@ function UI:ApplySavedTheme()
 		hideRegion(e.data.background); hideRegion(e.data.label)
 		self:_ApplyIconButton(e.target, e.data.iconName, e.data.options or { size = 30, iconInset = 2 })
 	end
+	for _, e in ipairs(self.Registry.locationBars) do self:_ApplyLocationInfoBar(e.target) end
 	for _, e in ipairs(self.Registry.aceFrames) do self:_ApplyAceFrame(e.target) end
 	self:_ApplyFrameLayout()
 	if RQE.headerText then RQE.headerText:SetFont("Fonts\\SKURRI.TTF", 17, "OUTLINE") end
