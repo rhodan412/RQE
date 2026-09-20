@@ -3110,47 +3110,11 @@ function RQE.handleVariablesLoaded()
 		RQE.debugLog("Invalid frame position or anchor point.")
 	end
 
-	-- Initialize frame maximized/minimized state
-	if RQE.db.profile.isFrameMaximized then
-		-- Code to maximize the frame
-		-- C_Timer.After(0.3, function()
-			-- if not InCombatLockdown() then
-				-- RQEFrame:ClearAllPoints()
-			-- end
-		-- end)
-		RQEFrame:ClearAllPoints()
-		RQEFrame:SetPoint(anchorPoint, UIParent, anchorPoint, xPos, yPos)
-		RQE:MaximizeFrame()
-		if RQE.ScrollFrame then
-			RQE.ScrollFrame:Show()
-		else
-			RQE.debugLog("RQE.ScrollFrame is not initialized.")
-		end
-
-		if RQE.slider then
-			RQE.slider:Show()
-		else
-			RQE.debugLog("RQE.slider is not initialized.")
-		end
-
-		RQE.MinimizeButton:Show()
-		RQE.MaximizeButton:Hide()
-
-	else
-		-- Code to minimize the frame
-		RQEFrame:SetSize(420, 30)
-
-		if RQE.ScrollFrame then
-			RQE.ScrollFrame:Hide()
-		end
-
-		if RQE.slider then
-			RQE.slider:Hide()
-		end
-
-		RQE.MaximizeButton:Show()
-		RQE.MinimizeButton:Hide()
-	end
+	-- The RQEFrame +/- controls are retired; always restore the configured
+	-- full frame so an old minimized profile cannot strand it at header height.
+	RQE:MaximizeFrame()
+	if RQE.ScrollFrame then RQE.ScrollFrame:Show() end
+	if RQE.slider then RQE.slider:Show() end
 
 	-- Clear frame data and waypoints
 	C_Map.ClearUserWaypoint()
