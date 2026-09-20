@@ -1951,7 +1951,7 @@ function RQE:UpdateStepDistance()
 
 	local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 	if not questID then
-		RQEFrame.StepDistanceText:SetText("")
+		RQEFrame.StepDistanceText:SetText("—")
 		return
 	end
 
@@ -1960,20 +1960,20 @@ function RQE:UpdateStepDistance()
 	-- ✅ DB-only coords (stable)
 	local x, y, mapID = RQE:GetDBStepCoordinates(questID, stepIndex)
 	if not (x and y and mapID) then
-		RQEFrame.StepDistanceText:SetText("Step Distance: N/A")
+		RQEFrame.StepDistanceText:SetText("—")
 		return
 	end
 
 	local dist, unit = RQE.WPUtil.PlayerDistanceTo(mapID, x, y)
 	if not dist then
-		RQEFrame.StepDistanceText:SetText("Step Distance: N/A")
+		RQEFrame.StepDistanceText:SetText("—")
 		return
 	end
 
 	if unit == "yards" then
-		RQEFrame.StepDistanceText:SetText(string.format("%.1f yards away", dist))
+		RQEFrame.StepDistanceText:SetText(string.format("%.1f yd", dist))
 	else
-		RQEFrame.StepDistanceText:SetText(string.format("Step Distance: %.1f%%", dist * 100))
+		RQEFrame.StepDistanceText:SetText(string.format("%.1f%%", dist * 100))
 	end
 end
 
