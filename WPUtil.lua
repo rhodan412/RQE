@@ -1338,6 +1338,143 @@ function RQE:GetCurrentCoordOrderStep()
 	return questID, stepIndex, questData, step, route, points
 end
 
+-- Installs a coordblock through the same state and refresh path used by its
+-- clickable StepsText/Separate Focus label.
+function RQE:SelectCoordblockWaypoint(data)
+	if type(data) ~= "string" then return false end
+	local x, y, mapID, title =
+		data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
+	if not x then
+		x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+	end
+	if not (x and y and mapID) then return false end
+
+	if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
+		TomTom.waydb:ResetProfile()
+		self._currentTomTomUID = nil
+	end
+	self.LastClickedCoords = { tonumber(x), tonumber(y), tonumber(mapID) }
+	local markedActive = self:SetActiveCoordblock(data)
+	self:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID),
+		title or "Custom Waypoint")
+	if markedActive then
+		C_Timer.After(0, function()
+			if not RQE.ActiveCoordblock or RQE.ActiveCoordblock.data ~= data then return end
+			RQE:RefreshActiveCoordblockLinks()
+			if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then
+				RQE.Buttons.UpdateHeaderNavigation()
+			end
+		end)
+	end
+	return markedActive
+end
+
+
+-- Returns the selectable waypoint entries for the current displayed step.
+-- coordOrder remains limited to the player's current map, matching its Focus
+-- links; authored coordblocks retain their description order on every map.
+function RQE:GetCurrentHeaderWaypointSelection()
+	local questID = self.API and self.API.GetSuperTrackedQuestID
+		and tonumber(self.API.GetSuperTrackedQuestID())
+	local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
+	local questData = questID and self.getQuestData and self.getQuestData(questID)
+	local step = questData and stepIndex and questData[stepIndex]
+	if not (questID and stepIndex and step) then return nil end
+
+	local coordblocks = {}
+	if type(step.description) == "string" then
+		for data in step.description:gmatch("{coordblock:([^}]+)}") do
+			local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
+			if x and y and mapID then
+				coordblocks[#coordblocks + 1] = { data = data }
+			end
+		end
+	end
+
+	local activeCoordblockPosition = 0
+	local active = self.ActiveCoordblock
+	if active and active.questID == questID
+		and (not active.stepIndex or active.stepIndex == stepIndex) then
+		for index, entry in ipairs(coordblocks) do
+			if entry.data == active.data then
+				activeCoordblockPosition = index
+				break
+			end
+		end
+	end
+	if activeCoordblockPosition > 0 then
+		return {
+			source = "coordblock", questID = questID, stepIndex = stepIndex,
+			entries = coordblocks, total = #coordblocks,
+			currentPosition = activeCoordblockPosition,
+		}
+	end
+
+	local routeQuest, routeStep, _, _, route, points = self:GetCurrentCoordOrderStep()
+	local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		and C_Map.GetBestMapForUnit("player")
+	if routeQuest == questID and routeStep == stepIndex and playerMapID then
+		local entries = {}
+		local currentPosition = 0
+		local state = self._coordOrderState
+		for pointIndex, point in ipairs(points) do
+			if point.mapID == playerMapID then
+				entries[#entries + 1] = { index = pointIndex, point = point, route = route }
+				if state and state.questID == questID and state.stepIndex == stepIndex
+					and state.route == route and state.currentIdx == pointIndex then
+					currentPosition = #entries
+				end
+			end
+		end
+		if #entries > 0 then
+			if state and state.questID == questID and state.stepIndex == stepIndex
+				and state.route == route and state.visitedUntil >= #state.points then
+				currentPosition = #entries
+			end
+			return {
+				source = "coordOrder", questID = questID, stepIndex = stepIndex,
+				entries = entries, total = #entries, currentPosition = currentPosition,
+			}
+		end
+	end
+
+	if #coordblocks > 0 then
+		return {
+			source = "coordblock", questID = questID, stepIndex = stepIndex,
+			entries = coordblocks, total = #coordblocks, currentPosition = 0,
+		}
+	end
+	return nil
+end
+
+
+-- Moves backward or forward without wrapping. With no manual coordblock/route
+-- selection yet, Forward starts at one and Back starts at the final entry.
+function RQE:SelectHeaderWaypointByOffset(offset)
+	offset = tonumber(offset)
+	if offset ~= -1 and offset ~= 1 then return false end
+	local selection = self:GetCurrentHeaderWaypointSelection()
+	if not selection or selection.total < 1 then return false end
+	local current = selection.currentPosition or 0
+	local target = current == 0 and (offset > 0 and 1 or selection.total)
+		or current + offset
+	if target < 1 or target > selection.total then return false end
+
+	local entry = selection.entries[target]
+	local selected
+	if selection.source == "coordOrder" then
+		selected = self:SelectCoordOrderFocusPoint(selection.questID,
+			selection.stepIndex, entry.index)
+	else
+		selected = self:SelectCoordblockWaypoint(entry.data)
+	end
+	if self.Buttons and self.Buttons.UpdateHeaderNavigation then
+		self.Buttons.UpdateHeaderNavigation()
+	end
+	return selected == true
+end
+
+
 function RQE:HasCurrentCoordOrderStep()
 	return self:GetCurrentCoordOrderStep() ~= nil
 end
@@ -1395,8 +1532,7 @@ function RQE:RequestCoordOrderTrackingConfirmation(action, targetQuestID, onYes)
 end
 
 function RQE:RefreshCoordOrderFocusLinks()
-	local buttons = self.SeparateCoordOrderButtons
-	if not buttons then return end
+	local buttons = self.SeparateCoordOrderButtons or {}
 	local state = self._coordOrderState
 	for _, button in ipairs(buttons) do
 		local active = state and state.questID == button.questID
@@ -1413,6 +1549,9 @@ function RQE:RefreshCoordOrderFocusLinks()
 			button.label:SetText(label)
 			button:SetWidth(button.label:GetStringWidth() + 10)
 		end
+	end
+	if self.Buttons and self.Buttons.UpdateHeaderNavigation then
+		self.Buttons.UpdateHeaderNavigation()
 	end
 end
 
@@ -1760,6 +1899,9 @@ coordOrderPoll:SetScript("OnUpdate", function(self, elapsed)
 		or self.sandboxEntry ~= sandboxEntry
 	self.questID, self.stepIndex, self.mapID = questID, stepIndex, mapID
 	self.frameShown, self.sandboxEntry = frameShown, sandboxEntry
+	if contextChanged and RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then
+		RQE.Buttons.UpdateHeaderNavigation()
+	end
 	if not frameShown then return end
 	if contextChanged and questID then RestoreOrdinaryQuestDirection(questID) end
 	local pendingReselect = RQE._coordOrderReselect
