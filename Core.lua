@@ -525,7 +525,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				QuestDescription = {
 					font = "Fonts\\FRIZQT__.TTF",
 					size = 14,
-					color = {0/255, 255/255, 153/255}  -- RGB for Cyan
+					color = {102/255, 204/255, 255/255}  -- Default: Sky Blue (#66CCFF)
 				},
 				QuestObjectives = {
 					font = "Fonts\\FRIZQT__.TTF",
