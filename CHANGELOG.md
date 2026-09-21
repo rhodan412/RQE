@@ -12,6 +12,11 @@
 		- Standalone settings now refresh their selected page after profile changes made through Blizzard AddOn Settings, including when reopened.
 		- Broker and minimap AddOn Settings shortcuts now explain combat restrictions and open the requested page after combat instead of causing a protected-action error.
 		- Coordinate text and location-bar layout no longer switch ahead of combat-deferred frame geometry when changing profiles.
+		- Updated the compiled Quest Helper and Quest Tracker starting layouts across Retail, Forever, Season of Discovery, and TBC Anniversary, including every recognized screen-resolution preset.
+		- Updated the Season of Discovery and TBC Anniversary default frame layouts while retaining their existing background opacity.
+		- The Retail, Season of Discovery, and TBC Anniversary minimap and data-broker launcher now use a dedicated circular portrait icon.
+		- Separated RQE's icon artwork so the physical minimap button is circular while the AddOns list and data-broker launcher retain the square portrait.
+		- Retail and Forever font settings now include every bundled RQE typeface with live previews in the standalone configuration menu.
 
 	Buttons.lua
 		- Routed the shared Quest Tracker maximize fallback through the centralized coded geometry instead of duplicating its default width and height, while retaining the active profile and live-frame precedence. (2026.09.20.1635)
@@ -26,8 +31,9 @@
 		- Added physical game-resolution detection and editable per-resolution Classic/Season of Discovery geometry presets, with the prior frame geometry repeated for each supplied resolution and as the fallback so existing behavior remains unchanged until individual rows are tuned. (2026.09.20.1647)
 		- Removed repeated manual profile selection/fallback and delegated restoration, profile callbacks, and geometry updates to the shared guarded application path; explicit coded geometry resets still write the active profile before any combat-deferred application. (2026.09.20.1824)
 		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves and guaranteed temporary missing-data capture cleanup after producer errors. (2026.09.20.1824)
-
 		- Deferred coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
+		- Updated the fallback and every recognized Classic/Season of Discovery resolution preset to Quest Helper TOPRIGHT -40/-235 at 420x345 and Quest Tracker BOTTOMRIGHT -40/130 at 355x465; AceDB profile defaults and INFO recovery resets inherit the same compiled geometry without changing opacity. (2026.09.20.2138)
+		- Revised the fallback and every recognized Classic/Season of Discovery resolution preset to Quest Helper TOPRIGHT -40/-225 at 420x355 and Quest Tracker BOTTOMRIGHT -40/125 at 355x470, while preserving both existing 55% opacity defaults. (2026.09.20.2210)
 
 	Client_Classic/EventManager.lua
 		- Corrected the Classic/Season of Discovery login fallback for the Quest Tracker vertical offset from 150 to the shared default of 110. (2026.09.20.1530)
@@ -56,8 +62,9 @@
 		- Added physical game-resolution detection and editable per-resolution TBC Anniversary geometry presets, with the prior frame geometry repeated for each supplied resolution and as the fallback so existing behavior remains unchanged until individual rows are tuned. (2026.09.20.1647)
 		- Removed repeated manual profile selection/fallback and delegated restoration, profile callbacks, and geometry updates to the shared guarded application path; explicit coded geometry resets still write the active profile before any combat-deferred application. (2026.09.20.1824)
 		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves and guaranteed temporary missing-data capture cleanup after producer errors. (2026.09.20.1824)
-
 		- Deferred coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
+		- Updated the fallback and every recognized TBC Anniversary resolution preset to Quest Helper TOPRIGHT -40/-235 at 420x345 and Quest Tracker BOTTOMRIGHT -40/130 at 355x465; AceDB profile defaults and INFO recovery resets inherit the same compiled geometry without changing opacity. (2026.09.20.2138)
+		- Revised the fallback and every recognized TBC Anniversary resolution preset to Quest Helper TOPRIGHT -40/-225 at 420x355 and Quest Tracker BOTTOMRIGHT -40/125 at 355x470, while preserving both existing 55% opacity defaults. (2026.09.20.2210)
 
 	Client_TBC/EventManager.lua
 		- Corrected the TBC Anniversary login fallback for the Quest Tracker vertical offset from 150 to the shared default of 110. (2026.09.20.1530)
@@ -79,6 +86,7 @@
 
 	Config.lua
 		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
+		- Added the shared bundled-font registry, resilient font-path lookup, preview-rendering dropdown widget, and reusable font selector to Retail/Forever; both AceConfig and standalone settings now expose all bundled typefaces for header, quest ID, quest name, direction, and quest-description text while preserving the existing SKURRI and FRIZQT__ defaults. (2026.09.20.2335)
 
 	ConfigTheme.lua
 		- Tracked the standalone custom AceGUI page, subscribed it to AceConfig registry changes, and coalesced deferred page rebuilding after widget callbacks; refreshed the selected page on window show to eliminate stale profile names and lists after edits in Blizzard Settings. (2026.09.20.1942)
@@ -91,6 +99,7 @@
 		- Removed repeated manual profile selection/fallback and delegated restoration, profile callbacks, and geometry updates to the shared guarded application path; explicit coded geometry resets still write the active profile before any combat-deferred application. (2026.09.20.1824)
 		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves, added the missing Retail early-save guards, and made restoredSomething local to each focus-restore attempt. (2026.09.20.1824)
 		- Deferred Retail/Forever coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
+		- Updated the fallback and every recognized Retail/Forever resolution preset to Quest Helper TOPRIGHT -40/-235 at 420x345 and Quest Tracker BOTTOMRIGHT -40/130 at 355x465; AceDB profile defaults and INFO recovery resets inherit the same compiled geometry without changing opacity. (2026.09.20.2138)
 
 	DebugLog.lua
 		- Made export/quest capture logging and timestamp suppression session-local, allowing captures without changing saved logging or timestamp preferences in the current or subsequently selected profile. (2026.09.20.1824)
@@ -131,11 +140,12 @@
 		- Routed Retail/Forever Quest Helper creation and restoration through the centralized profile-aware geometry source, and normalized drag saves to the active profile's anchorPoint/xPos/yPos schema so later restores use the same values. (2026.09.20.1635)
 		- Prevented drag/resize/logout callbacks from saving provisional, combat-delayed, or application-time geometry; routed ADDON_LOADED position restoration through the guarded shared path and restricted right-click coded-default recovery to INFO/INFO+. (2026.09.20.1824)
 
-	Tests/ProfilePersistenceTest.py
-		- Added offline Lua 5.1 regressions using the bundled AceDB and mocked game frames/events/timers for saved/fresh profiles, combat startup and profile switches, copy/reset, minimized geometry, bindings/unbinding, interrupted application, logout/reload, Forever realm keys, quest-state guards, and capture preference isolation. (2026.09.20.1824)
-		- Extended regression coverage to malformed saved anchor fallback and releasing a previous scenario profile's Quest Tracker Show override. (2026.09.20.1826)
-		- Added case-insensitive manifest discovery and asserted that all four clients, including Forever's separate .TOC, load ProfileManager exactly once immediately after their Core module. (2026.09.20.1828)
-		- Added mocked regressions for custom-page notification coalescing, hidden/reopened pages, latest-tab refresh, queued combat Settings navigation, and coordinate guards across all three Core implementations; included ConfigTheme and UITheme in Lua 5.1 syntax checks. (2026.09.20.1942)
+	RQEMinimap.lua
+		- Changed the shared LibDataBroker launcher icon from rhodan.tga to the dedicated rhodan-minimap.tga asset, applying the circular minimap button artwork to Retail, Season of Discovery, and TBC Anniversary through their common launcher implementation. (2026.09.20.2239)
+		- Separated the shared icon assignments: the LibDataBroker launcher again uses rhodan.tga, while the physical minimap button now explicitly uses the circular rhodan-minimap.tga asset across Retail, Forever, Season of Discovery, and TBC Anniversary. (2026.09.20.2318)
+
+	Textures/rhodan-minimap.TGA
+		- Converted the dedicated minimap portrait from a square presentation to a centered circular icon by making only the four outer corners transparent, preserving the original 256-by-256 portrait artwork inside the circle. (2026.09.20.2239)
 
 	UITheme.lua
 		- Deferred location-bar visibility and scroll-frame anchor changes while a profile layout is pending, preventing coordinate visibility from partially switching during combat before the selected geometry can apply. (2026.09.20.1942)
