@@ -685,8 +685,11 @@ function UI:_ApplyFrameLayout()
 	end
 	if RQE.QMQTslider and RQE.RQEQuestFrame then
 		RQE.QMQTslider:ClearAllPoints()
-		RQE.QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -90)
-		RQE.QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
+		RQE.QMQTslider:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPRIGHT", -7, -90)
+		RQE.QMQTslider:SetPoint("BOTTOMRIGHT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -7, 14)
+		if RQE.UpdateQuestTrackerScrollbarVisual then
+			RQE.UpdateQuestTrackerScrollbarVisual(RQE.QTcontent and RQE.QTcontent:GetHeight())
+		end
 	end
 	if AdjustQuestItemWidths and RQE.RQEQuestFrame then
 		AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
