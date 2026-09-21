@@ -98,7 +98,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 		-- Check if a quest is being super-tracked
 		RQE.isPlayerSuperTrackingQuest() -- Check to see if anything is being super tracked
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
 		if not RQE.isSuperTracking or not isSuperTracking then
 			RQE.debugLog("No quest is currently being super-tracked.")
@@ -106,7 +106,7 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		end
 
 		-- Get the quest ID of the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			RQE.debugLog("Super-tracked quest ID not found.")
 			return false
