@@ -1019,9 +1019,22 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 
 	local oldSetObjectivesText = RQE.QuestObjectives.SetText
+	RQE.QuestObjectives.RQERawSetText = oldSetObjectivesText
 	-- Reflow the dependent Quest Helper rows whenever the displayed objectives change.
 	function RQE.QuestObjectives:SetText(text)
 		local result = oldSetObjectivesText(self, text)
+		local questID = tonumber(RQE.searchedQuestID)
+			or tonumber(RQE.DisplayedQuestID)
+			or (RQE.API.GetSuperTrackedQuestID
+				and tonumber(RQE.API.GetSuperTrackedQuestID()))
+		local hasObjectiveText = type(text) == "string" and text:find("%S") ~= nil
+		if hasObjectiveText and questID and RQE.ApplyTrackerObjectiveDisplay then
+			RQE.ApplyTrackerObjectiveDisplay(
+				RQEFrame, questID, self, RQE.content, text)
+		elseif RQEFrame.RQEProgressBar then
+			RQEFrame.RQEProgressBar:Hide()
+		end
+		if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
 		RQE:RefreshQuestHelperTextLayout()
 		return result
 	end
@@ -1624,6 +1637,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		RQE.DirectionTextFrame:SetWidth(newWidth - dynamicPadding - 55)
 		RQE.QuestDescription:SetWidth(newWidth - dynamicPadding - 45)
 		RQE.QuestObjectives:SetWidth(newWidth - dynamicPadding - 45)
+		if RQEFrame.RQEProgressBar and RQE.LayoutObjectiveProgressBar then
+			RQE.LayoutObjectiveProgressBar(RQEFrame.RQEProgressBar)
+		end
 		if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
 
 		RQE:UpdateContentSize()
@@ -2811,7 +2827,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	function RQE:LayoutSeparateFocusFrame()
 		if not (RQE.SeparateFocusFrame and RQE.content and RQE.QuestObjectives) then return end
 		local contentTop = RQE.content:GetTop()
-		local objectivesBottom = RQE.QuestObjectives:GetBottom()
+		local objectiveBottomRegion = RQEFrame.RQEProgressBar
+			and RQEFrame.RQEProgressBar:IsShown()
+			and RQEFrame.RQEProgressBar or RQE.QuestObjectives
+		local objectivesBottom = objectiveBottomRegion:GetBottom()
 		if not contentTop or not objectivesBottom then return end
 		local themed = RQE.UI and RQE.UI:IsEnabled()
 		local focusWidth = themed and math.max(1, RQEFrame:GetWidth() - 40)
