@@ -49,6 +49,7 @@ TaintLess.xml
 
 # Core Functionality
 Core.lua
+ProfileManager.lua
 RQE_API.lua
 UITheme.lua
 ConfigTheme.lua
