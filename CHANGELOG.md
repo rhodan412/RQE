@@ -1,3 +1,146 @@
+12.1.0.7
+
+	**HIGHLIGHTS**
+		- Standardized the default Quest Helper and Quest Tracker positions and sizes across Retail, Forever, Season of Discovery, and TBC Anniversary.
+		- Centralized RQE frame geometry so profiles retain their custom layouts while Reset Position and Reset Size always restore the addon's compiled defaults.
+		- RQE frame defaults can now be tuned independently for common game resolutions while preserving the existing layout for every resolution initially.
+		- Profiles now consistently reapply both frame layouts and their related settings when switching, copying, resetting, or reloading.
+		- Login/reload during combat now preserves saved frame geometry and restores it after combat instead of saving a temporary startup layout.
+		- Data capture no longer changes saved logging preferences; timestamp toggles preserve the debug level, and clearing or switching macro bindings removes the previous override.
+		- Protected saved quest tracking, searched-quest focus, and Retail step progress from early startup saves and delayed display refreshes.
+		- Switching profiles now releases any Quest Tracker visibility suppression left by the previous profile's scenario mode.
+		- Standalone settings now refresh their selected page after profile changes made through Blizzard AddOn Settings, including when reopened.
+		- Broker and minimap AddOn Settings shortcuts now explain combat restrictions and open the requested page after combat instead of causing a protected-action error.
+		- Coordinate text and location-bar layout no longer switch ahead of combat-deferred frame geometry when changing profiles.
+
+	Buttons.lua
+		- Routed the shared Quest Tracker maximize fallback through the centralized coded geometry instead of duplicating its default width and height, while retaining the active profile and live-frame precedence. (2026.09.20.1635)
+		- Consolidated macro overrides on keyBindSetting, migrated legacy macroBindingKey only when no modern value exists, cleared previous bindings when unbinding or when the macro is missing, and deferred protected binding changes during combat on every client. (2026.09.20.1824)
+
+	Client_Classic/Config.lua
+		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
+
+	Client_Classic/Core.lua
+		- Changed the Classic/Season of Discovery Quest Tracker's missing-anchor fallback from CENTER to BOTTOMRIGHT, matching its saved defaults and reset behavior. (2026.09.20.1532)
+		- Added the single Classic/Season of Discovery geometry source for both RQE-owned frames, wired AceDB defaults and all position/size application paths to prefer active-profile values, and made the INFO recovery resets explicitly bypass SavedVariables for the compiled TOPRIGHT -40/-285 at 420x335 and BOTTOMRIGHT -40/110 at 355x450 layouts. (2026.09.20.1635)
+		- Added physical game-resolution detection and editable per-resolution Classic/Season of Discovery geometry presets, with the prior frame geometry repeated for each supplied resolution and as the fallback so existing behavior remains unchanged until individual rows are tuned. (2026.09.20.1647)
+		- Removed repeated manual profile selection/fallback and delegated restoration, profile callbacks, and geometry updates to the shared guarded application path; explicit coded geometry resets still write the active profile before any combat-deferred application. (2026.09.20.1824)
+		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves and guaranteed temporary missing-data capture cleanup after producer errors. (2026.09.20.1824)
+
+		- Deferred coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
+
+	Client_Classic/EventManager.lua
+		- Corrected the Classic/Season of Discovery login fallback for the Quest Tracker vertical offset from 150 to the shared default of 110. (2026.09.20.1530)
+		- Added complete Classic/Season of Discovery login fallbacks for both frame anchors and Quest Helper offsets, ensuring partial profiles still resolve to TOPRIGHT at -40/-285 and BOTTOMRIGHT at -40/110. (2026.09.20.1532)
+		- Replaced the Classic/Season of Discovery login-time position copies with the shared profile-aware geometry accessor for both RQEFrame and RQEQuestFrame. (2026.09.20.1635)
+		- Removed independent startup frame anchors/sizes and repeated profile reselection, routed geometry to the shared combat retry path, and moved the initial quest restore schedule out of the gameplay login handler. (2026.09.20.1824)
+		- Normalized searchedQuestID to a numeric ID or nil instead of an empty-table placeholder and guarded the delayed startup clear/restore refresh; preserved pending character state during early logout and included searched-only state in the login guard. (2026.09.20.1824)
+
+	Client_Classic/QuestingModule.lua
+		- Initialized the Classic/Season of Discovery Quest Tracker from its saved anchor with a BOTTOMRIGHT fallback instead of briefly placing BOTTOMRIGHT offsets relative to screen center. Default size remains 355 by 450. (2026.09.20.1530)
+		- Initialized the Classic/Season of Discovery Quest Tracker's anchor, offsets, width, and height through the centralized profile-aware geometry source, eliminating its remaining duplicated startup defaults. (2026.09.20.1635)
+		- Guarded Quest Tracker position and size persistence until the active profile has fully applied. (2026.09.20.1824)
+
+	Client_Classic/RQEFrame.lua
+		- Corrected the Classic/Season of Discovery Quest Helper's pre-profile horizontal fallback from 40 to -40 so its TOPRIGHT startup placement matches the shared default. Default size remains 420 by 335. (2026.09.20.1530)
+		- Changed the Classic/Season of Discovery Quest Helper restore fallback from screen center to its TOPRIGHT -40/-285 default. (2026.09.20.1532)
+		- Routed Classic/Season of Discovery Quest Helper creation and restoration through the centralized profile-aware geometry source, and normalized drag saves to the active profile's anchorPoint/xPos/yPos schema so later restores use the same values. (2026.09.20.1635)
+		- Prevented drag/resize/logout callbacks from saving provisional, combat-delayed, or application-time geometry; routed ADDON_LOADED position restoration through the guarded shared path and restricted right-click coded-default recovery to INFO/INFO+. (2026.09.20.1824)
+
+	Client_TBC/Config.lua
+		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
+
+	Client_TBC/Core.lua
+		- Changed the TBC Anniversary Quest Tracker's missing-anchor fallback from CENTER to BOTTOMRIGHT, matching its saved defaults and reset behavior. (2026.09.20.1532)
+		- Added the single TBC Anniversary geometry source for both RQE-owned frames, wired AceDB defaults and all position/size application paths to prefer active-profile values, and made the INFO recovery resets explicitly bypass SavedVariables for the compiled TOPRIGHT -40/-285 at 420x335 and BOTTOMRIGHT -40/110 at 355x450 layouts. (2026.09.20.1635)
+		- Added physical game-resolution detection and editable per-resolution TBC Anniversary geometry presets, with the prior frame geometry repeated for each supplied resolution and as the fallback so existing behavior remains unchanged until individual rows are tuned. (2026.09.20.1647)
+		- Removed repeated manual profile selection/fallback and delegated restoration, profile callbacks, and geometry updates to the shared guarded application path; explicit coded geometry resets still write the active profile before any combat-deferred application. (2026.09.20.1824)
+		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves and guaranteed temporary missing-data capture cleanup after producer errors. (2026.09.20.1824)
+
+		- Deferred coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
+
+	Client_TBC/EventManager.lua
+		- Corrected the TBC Anniversary login fallback for the Quest Tracker vertical offset from 150 to the shared default of 110. (2026.09.20.1530)
+		- Added complete TBC Anniversary login fallbacks for both frame anchors and Quest Helper offsets, ensuring partial profiles still resolve to TOPRIGHT at -40/-285 and BOTTOMRIGHT at -40/110. (2026.09.20.1532)
+		- Replaced the TBC Anniversary login-time position copies with the shared profile-aware geometry accessor for both RQEFrame and RQEQuestFrame. (2026.09.20.1635)
+		- Removed independent startup frame anchors/sizes and repeated profile reselection, routed geometry to the shared combat retry path, and moved the initial quest restore schedule out of the gameplay login handler. (2026.09.20.1824)
+		- Normalized searchedQuestID to a numeric ID or nil instead of an empty-table placeholder and guarded the delayed startup clear/restore refresh; preserved pending character state during early logout and included searched-only state in the login guard. (2026.09.20.1824)
+
+	Client_TBC/QuestingModule.lua
+		- Initialized the TBC Anniversary Quest Tracker from its saved anchor with a BOTTOMRIGHT fallback instead of briefly placing BOTTOMRIGHT offsets relative to screen center. Default size remains 355 by 450. (2026.09.20.1530)
+		- Initialized the TBC Anniversary Quest Tracker's anchor, offsets, width, and height through the centralized profile-aware geometry source, eliminating its remaining duplicated startup defaults. (2026.09.20.1635)
+		- Guarded Quest Tracker position and size persistence until the active profile has fully applied. (2026.09.20.1824)
+
+	Client_TBC/RQEFrame.lua
+		- Corrected the TBC Anniversary Quest Helper's pre-profile horizontal fallback from 40 to -40 so its TOPRIGHT startup placement matches the shared default. Default size remains 420 by 335. (2026.09.20.1530)
+		- Changed the TBC Anniversary Quest Helper restore fallback from screen center to its TOPRIGHT -40/-285 default. (2026.09.20.1532)
+		- Routed TBC Anniversary Quest Helper creation and restoration through the centralized profile-aware geometry source, and normalized drag saves to the active profile's anchorPoint/xPos/yPos schema so later restores use the same values. (2026.09.20.1635)
+		- Prevented drag/resize/logout callbacks from saving provisional, combat-delayed, or application-time geometry; routed ADDON_LOADED position restoration through the guarded shared path and restricted right-click coded-default recovery to INFO/INFO+. (2026.09.20.1824)
+
+	Config.lua
+		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
+
+	ConfigTheme.lua
+		- Tracked the standalone custom AceGUI page, subscribed it to AceConfig registry changes, and coalesced deferred page rebuilding after widget callbacks; refreshed the selected page on window show to eliminate stale profile names and lists after edits in Blizzard Settings. (2026.09.20.1942)
+		- Guarded every registered-settings shortcut against combat, printed one explanatory message per pending request, and queued the latest category for a checked post-combat open without invoking protected Settings APIs during lockdown. (2026.09.20.1942)
+
+	Core.lua
+		- Changed the Retail/Forever Quest Tracker's missing-anchor fallback from CENTER to BOTTOMRIGHT, matching its saved defaults and reset behavior. (2026.09.20.1532)
+		- Added the single Retail/Forever geometry source for both RQE-owned frames, wired AceDB defaults and all position/size application paths to prefer active-profile values, and made the INFO recovery resets explicitly bypass SavedVariables for the compiled TOPRIGHT -40/-285 at 420x335 and BOTTOMRIGHT -40/110 at 355x450 layouts. (2026.09.20.1635)
+		- Added physical game-resolution detection and editable per-resolution Retail/Forever geometry presets, with the prior frame geometry repeated for each supplied resolution and as the fallback so existing behavior remains unchanged until individual rows are tuned. (2026.09.20.1647)
+		- Removed repeated manual profile selection/fallback and delegated restoration, profile callbacks, and geometry updates to the shared guarded application path; explicit coded geometry resets still write the active profile before any combat-deferred application. (2026.09.20.1824)
+		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves, added the missing Retail early-save guards, and made restoredSomething local to each focus-restore attempt. (2026.09.20.1824)
+		- Deferred Retail/Forever coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
+
+	DebugLog.lua
+		- Made export/quest capture logging and timestamp suppression session-local, allowing captures without changing saved logging or timestamp preferences in the current or subsequently selected profile. (2026.09.20.1824)
+
+	EventManager.lua
+		- Added complete Retail/Forever login fallbacks for both frame anchors and offsets, ensuring partial profiles resolve to the shared Quest Helper TOPRIGHT -40/-285 and Quest Tracker BOTTOMRIGHT -40/110 defaults. (2026.09.20.1532)
+		- Replaced the Retail/Forever login-time position copies with the shared profile-aware geometry accessor for both RQEFrame and RQEQuestFrame. (2026.09.20.1635)
+		- Removed independent startup frame anchors/sizes and repeated profile reselection, routed geometry to the shared combat retry path, and moved the initial quest restore schedule out of the gameplay login handler. (2026.09.20.1824)
+		- Normalized searchedQuestID to a numeric ID or nil instead of an empty-table placeholder and guarded the delayed startup clear/restore refresh. (2026.09.20.1824)
+
+	ProfileManager.lua
+		- Added the shared world-ready, combat-deferred profile application path for both frames and their opacity, fonts, coordinates, minimap, visibility, header controls, and macro bindings; selected-profile values remain authoritative and theme selection retains its existing reload requirement. (2026.09.20.1824)
+		- Added pending/applying/profile-identity save guards, independent world-entry/combat-end retry events, and guarded character-state restore scheduling after world entry so provisional geometry and unrelated gameplay-handler errors cannot overwrite saved layouts. (2026.09.20.1824)
+		- Preserved the Quest Tracker full-size expansion cache when applying a different profile while minimized, cleared stale disabled diagnostic labels, and refreshed registered configuration pages only after actual profile changes. (2026.09.20.1824)
+		- Retained all nine valid screen anchors with a coded fallback for malformed saved anchors, and released the previous profile's scenario Show suppression before reapplying the selected visibility settings. (2026.09.20.1826)
+
+	QuestingModule.lua
+		- Initialized the Retail/Forever Quest Tracker from its saved anchor with a BOTTOMRIGHT fallback instead of briefly placing BOTTOMRIGHT offsets relative to screen center. Default size remains 355 by 450. (2026.09.20.1530)
+		- Initialized the Retail/Forever Quest Tracker's anchor, offsets, width, and height through the centralized profile-aware geometry source, eliminating its remaining duplicated startup defaults. (2026.09.20.1635)
+		- Guarded Quest Tracker position and size persistence until the active profile has fully applied; also protected the SavedVariables-backed per-quest step cache from startup recalculation/pruning before tracking restoration completes. (2026.09.20.1824)
+
+	RQE-Camelot.TOC
+		- Loaded ProfileManager immediately after Retail/Forever Core so Forever also receives startup save guards and combat-deferred profile restoration; version metadata is unchanged. (2026.09.20.1828)
+
+	RQE-Classic.toc
+		- Loaded the shared ProfileManager immediately after the client Core module so persistence guards exist before frames and gameplay handlers are constructed; version metadata is unchanged. (2026.09.20.1824)
+
+	RQE-Tbc.toc
+		- Loaded the shared ProfileManager immediately after the client Core module so persistence guards exist before frames and gameplay handlers are constructed; version metadata is unchanged. (2026.09.20.1824)
+
+	RQE.toc
+		- Updated version# (2026.09.20.1507)
+		- Loaded the shared ProfileManager immediately after the client Core module so persistence guards exist before frames and gameplay handlers are constructed; version metadata is unchanged. (2026.09.20.1824)
+
+	RQEFrame.lua
+		- Corrected the Retail/Forever Quest Helper's pre-profile horizontal fallback from 40 to -40 so its TOPRIGHT startup placement matches the shared default. Default size remains 420 by 335. (2026.09.20.1530)
+		- Changed the Retail/Forever Quest Helper restore fallback from screen center to its TOPRIGHT -40/-285 default. (2026.09.20.1532)
+		- Routed Retail/Forever Quest Helper creation and restoration through the centralized profile-aware geometry source, and normalized drag saves to the active profile's anchorPoint/xPos/yPos schema so later restores use the same values. (2026.09.20.1635)
+		- Prevented drag/resize/logout callbacks from saving provisional, combat-delayed, or application-time geometry; routed ADDON_LOADED position restoration through the guarded shared path and restricted right-click coded-default recovery to INFO/INFO+. (2026.09.20.1824)
+
+	Tests/ProfilePersistenceTest.py
+		- Added offline Lua 5.1 regressions using the bundled AceDB and mocked game frames/events/timers for saved/fresh profiles, combat startup and profile switches, copy/reset, minimized geometry, bindings/unbinding, interrupted application, logout/reload, Forever realm keys, quest-state guards, and capture preference isolation. (2026.09.20.1824)
+		- Extended regression coverage to malformed saved anchor fallback and releasing a previous scenario profile's Quest Tracker Show override. (2026.09.20.1826)
+		- Added case-insensitive manifest discovery and asserted that all four clients, including Forever's separate .TOC, load ProfileManager exactly once immediately after their Core module. (2026.09.20.1828)
+		- Added mocked regressions for custom-page notification coalescing, hidden/reopened pages, latest-tab refresh, queued combat Settings navigation, and coordinate guards across all three Core implementations; included ConfigTheme and UITheme in Lua 5.1 syntax checks. (2026.09.20.1942)
+
+	UITheme.lua
+		- Deferred location-bar visibility and scroll-frame anchor changes while a profile layout is pending, preventing coordinate visibility from partially switching during combat before the selected geometry can apply. (2026.09.20.1942)
+
+
 12.1.0.6 (2026.09.20)
 
 	**HIGHLIGHTS**
@@ -130,9 +273,6 @@
 		- Top-aligned Azure & Gold Retail/Forever tracker buttons to the first line of each quest title with a two-pixel downward inset, preventing single-line and wrapped titles from centering their badges at different heights; legacy centered placement remains unchanged. (2026.09.20.1011)
 		- Refined the Azure & Gold Retail/Forever tracker-button anchor from two pixels below to two pixels above the quest-title top edge, matching the reviewed Campaign, Normal, Daily, and World Quest alignment while retaining legacy centering. (2026.09.20.1018)
 
-	RQE_API.lua
-		- Replaced unconditional compatibility namespace and method reassignments with missing-only guards for C_QuestLog, C_Map, C_TaskQuest, C_CampaignInfo, and C_Scenario. Existing Blizzard tables/functions are now left unwritten: Forever nameplate level coloring reads C_QuestLog.GetTrivialRange before restricted anchor measurements and health updates, so tainting that shared namespace contaminated the nameplate setup and could prevent its aura unit from being initialized. Missing legacy fallbacks are retained. (2026.09.20.0646)
-
 	RQE-Camelot.TOC
 		- Loads the permanent shared configuration presentation before Retail/Forever configuration construction. (2026.09.20.1055)
 
@@ -145,6 +285,9 @@
 	RQE.toc
 		- Updated version# (2026.09.20.0646)
 		- Loads the permanent shared configuration presentation before Retail/Forever configuration construction. (2026.09.20.1055)
+
+	RQE_API.lua
+		- Replaced unconditional compatibility namespace and method reassignments with missing-only guards for C_QuestLog, C_Map, C_TaskQuest, C_CampaignInfo, and C_Scenario. Existing Blizzard tables/functions are now left unwritten: Forever nameplate level coloring reads C_QuestLog.GetTrivialRange before restricted anchor measurements and health updates, so tainting that shared namespace contaminated the nameplate setup and could prevent its aura unit from being initialized. Missing legacy fallbacks are retained. (2026.09.20.0646)
 
 	RQEDatabase.lua
 		- Updated some Horde quests in DB for Borean Tundra (2026.09.20.1507)
