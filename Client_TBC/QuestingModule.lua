@@ -1080,11 +1080,14 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			frameWidth = RQE.RQEQuestFrame:GetWidth() -- Adjust RQEQuestFrame to specific frame
 		end
 
-		-- Define base parameters for dynamic padding calculation
+		-- Quest row margins must match the fixed 100/110 in the rendering paths.
+		-- Movement also calls this function; scaling those margins made unchanged
+		-- objectives wrap differently and changed the width of attached progress bars.
+		-- Other responsive elements retain their existing proportional padding.
 		local baseWidth = 400
 		local paddingMultiplier = (frameWidth - baseWidth) / 400
 
-		-- Define base padding for different elements
+		-- Define fixed quest row margins and base padding for other elements
 		local basePadding = {
 			-- Quest Base Padding
 			QuestLevelAndName = 100,
@@ -1112,22 +1115,22 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		-- Adjust widths for elements in RQE.QuestLogIndexButtons
 		for i, button in ipairs(RQE.QuestLogIndexButtons or {}) do
 			if button.QuestLevelAndName then
-				button.QuestLevelAndName:SetWidth(frameWidth - (basePadding.QuestLevelAndName * (1 + paddingMultiplier)))
+				button.QuestLevelAndName:SetWidth(frameWidth - basePadding.QuestLevelAndName)
 			end
 
 			if button.QuestZoneInfo then
-				button.QuestZoneInfo:SetWidth(frameWidth - (basePadding.QuestObjectives * (1 + paddingMultiplier)))
+				button.QuestZoneInfo:SetWidth(frameWidth - basePadding.QuestObjectives)
 			end
 
 			if button.QuestObjectives then
-				-- Adjust the width of QuestObjectives, considering the base padding and padding multiplier
-				local dynamicPadding = basePadding.QuestObjectives * (1 + paddingMultiplier)
+				-- Match the objective width assigned when the quest row is rendered
+				local dynamicPadding = basePadding.QuestObjectives
 				button.QuestObjectives:SetWidth(frameWidth - dynamicPadding)
 			end
 
 			if button.QuestObjectivesOrDescription then
-				-- Adjust the width of QuestObjectivesOrDescription, considering the base padding and padding multiplier
-				local dynamicPadding = basePadding.QuestObjectivesOrDescription * (1 + paddingMultiplier)
+				-- Match the description width assigned when the quest row is rendered
+				local dynamicPadding = basePadding.QuestObjectivesOrDescription
 				button.QuestObjectivesOrDescription:SetWidth(frameWidth - dynamicPadding)
 			end
 		end
@@ -1151,19 +1154,19 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
 			-- Adjust WQuestLevelAndName width for each WQuestLogIndexButton
 			if WQuestLogIndexButton.WQuestLevelAndName then
-				local dynamicPadding = basePadding.WQuestLevelAndName * (1 + paddingMultiplier)
+				local dynamicPadding = basePadding.WQuestLevelAndName
 				WQuestLogIndexButton.WQuestLevelAndName:SetWidth(frameWidth - dynamicPadding)
 			end
 
 			-- Adjust WQuestObjectives width for each WQuestLogIndexButton
 			if WQuestLogIndexButton.QuestObjectives then
-				local dynamicPadding = basePadding.WQuestObjectives * (1 + paddingMultiplier)
+				local dynamicPadding = basePadding.WQuestObjectives
 				WQuestLogIndexButton.QuestObjectives:SetWidth(frameWidth - dynamicPadding)
 			end
 
 			-- Adjust WQuestObjectivesOrDescription width for each WQuestLogIndexButton
 			if WQuestLogIndexButton.QuestObjectivesOrDescription then
-				local dynamicPadding = basePadding.WQuestObjectivesOrDescription * (1 + paddingMultiplier)
+				local dynamicPadding = basePadding.WQuestObjectivesOrDescription
 				WQuestLogIndexButton.QuestObjectivesOrDescription:SetWidth(frameWidth - dynamicPadding)
 			end
 
@@ -1183,15 +1186,15 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		-- Adjust widths for elements in RQE.QuestLogIndexButtons
 		for i, button in pairs(RQE.QuestLogIndexButtons or {}) do
 			if button.QuestLevelAndName then
-				button.QuestLevelAndName:SetWidth(frameWidth - (basePadding.QuestLevelAndName * (1 + paddingMultiplier)))
+				button.QuestLevelAndName:SetWidth(frameWidth - basePadding.QuestLevelAndName)
 			end
 
 			if button.QuestZoneInfo then
-				button.QuestZoneInfo:SetWidth(frameWidth - (basePadding.QuestObjectives * (1 + paddingMultiplier)))
+				button.QuestZoneInfo:SetWidth(frameWidth - basePadding.QuestObjectives)
 			end
 
 			if button.QuestObjectivesOrDescription then
-				button.QuestObjectivesOrDescription:SetWidth(frameWidth - (basePadding.QuestObjectivesOrDescription * (1 + paddingMultiplier)))
+				button.QuestObjectivesOrDescription:SetWidth(frameWidth - basePadding.QuestObjectivesOrDescription)
 			end
 
 			if button.QuestTypeLabel then
