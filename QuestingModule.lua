@@ -320,14 +320,24 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	RQE.debugLog("Frame size: Width = " .. frame:GetWidth() .. ", Height = " .. frame:GetHeight())
 
-	-- Create the Slider (Scrollbar)
+	-- Create a trackless Slider.  It remains the scroll-position controller in
+	-- both presentations, but only Azure & Gold exposes its draggable gold thumb.
+	-- Keeping this independent from UIPanelScrollBarTemplate avoids stock arrow
+	-- buttons and the dark Blizzard trough around the indicator.
 	---@class RQE.QMQTslider : Slider
 	---@field QMQTslider.scrollStep number
-	local QMQTslider = CreateFrame("Slider", nil, ScrollFrame, "UIPanelScrollBarTemplate")
-	QMQTslider:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPRIGHT", -20, -72)  -- Align with the scrollable area below the search row.
-	QMQTslider:SetPoint("BOTTOMLEFT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -20, 20)
+	local QMQTslider = CreateFrame("Slider", nil, RQE.RQEQuestFrame)
+	QMQTslider:SetOrientation("VERTICAL")
+	QMQTslider:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPRIGHT", -7, -90)
+	QMQTslider:SetPoint("BOTTOMRIGHT", RQE.RQEQuestFrame, "BOTTOMRIGHT", -7, 14)
+	QMQTslider:SetWidth(10)
 	QMQTslider:SetMinMaxValues(0, content:GetHeight())
 	QMQTslider:SetValueStep(1)
+	QMQTslider:SetObeyStepOnDrag(false)
+	QMQTslider:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
+	local QMQTthumb = QMQTslider:GetThumbTexture()
+	QMQTthumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+	QMQTthumb:SetSize(4, 54)
 	QMQTslider.scrollStep = 1
 	QMQTslider:Hide()
 
@@ -336,6 +346,71 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	QMQTslider:SetScript("OnValueChanged", function(self, value)
 		RQE.QTScrollFrame:SetVerticalScroll(value)
 	end)
+
+	-- Synchronize range, thumb size, and visibility after category layout settles.
+	-- Legacy mode intentionally retains mouse-wheel scrolling without drawing a
+	-- scrollbar; the themed thumb length reflects the visible share of content.
+	function RQE.UpdateQuestTrackerScrollbarVisual(contentHeight)
+		if not RQE.QMQTslider or not RQE.QTScrollFrame then return end
+
+		local _, maximum = RQE.QMQTslider:GetMinMaxValues()
+		local themed = RQE.UI and RQE.UI:IsEnabled()
+		if not themed or RQE.QTMinimized or not RQE.QTScrollFrame:IsShown()
+			or not maximum or maximum <= 0 then
+			RQE.QMQTslider:Hide()
+			return
+		end
+
+		local viewportHeight = math.max(1, RQE.QTScrollFrame:GetHeight() or 1)
+		local totalHeight = math.max(viewportHeight, tonumber(contentHeight)
+			or (viewportHeight + maximum))
+		local trackHeight = math.max(1, RQE.QMQTslider:GetHeight() or viewportHeight)
+		local thumbHeight = math.max(42, math.min(trackHeight,
+			math.floor(trackHeight * viewportHeight / totalHeight + 0.5)))
+		local thumb = RQE.QMQTslider:GetThumbTexture()
+		if thumb then
+			thumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+			thumb:SetSize(4, thumbHeight)
+			thumb:Show()
+		end
+		RQE.QMQTslider:Show()
+	end
+
+	function RQE.RefreshQuestTrackerScrollRange()
+		if not RQE.QTcontent or not RQE.QTScrollFrame or not RQE.QMQTslider then return end
+		if RQE.RefreshTrackerProgressBarLayouts then
+			RQE.RefreshTrackerProgressBarLayouts()
+		end
+
+		local contentTop = RQE.QTcontent:GetTop()
+		local lowestBottom
+		for _, section in ipairs({
+			RQE.ScenarioChildFrame, RQE.CampaignFrame, RQE.QuestsFrame,
+			RQE.WorldQuestsFrame, RQE.BonusQuestsFrame, RQE.TaskQuestsFrame,
+			RQE.AchievementsFrame, RQE.recipeTrackingFrame,
+		}) do
+			if section and section:IsShown() then
+				local bottom = section:GetBottom()
+				if bottom and (not lowestBottom or bottom < lowestBottom) then
+					lowestBottom = bottom
+				end
+			end
+		end
+
+		local viewportHeight = math.max(1, RQE.QTScrollFrame:GetHeight() or 1)
+		local measuredHeight = viewportHeight
+		if contentTop and lowestBottom then
+			measuredHeight = math.max(viewportHeight, contentTop - lowestBottom + 10)
+		end
+		RQE.QTcontent:SetHeight(measuredHeight)
+
+		local maximum = math.max(0, measuredHeight - viewportHeight)
+		RQE.QMQTslider:SetMinMaxValues(0, maximum)
+		if RQE.QMQTslider:GetValue() > maximum then
+			RQE.QMQTslider:SetValue(maximum)
+		end
+		RQE.UpdateQuestTrackerScrollbarVisual(measuredHeight)
+	end
 
 	ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 		local value = QMQTslider:GetValue()
@@ -842,7 +917,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Adjusting Quests child frame position based on last campaign element
 		if lastCampaignElement then
-			RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -elementStackGap)
+			RQE.QuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -GetTrackerQuestLabelInset(), -elementStackGap)
 		elseif not RQE.CampaignFrame:IsShown() and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 			-- If there are no campaign quests but ScenarioChildFrame is shown
 			RQE.QuestsFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
@@ -854,10 +929,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Adjusting World Quests child frame position based on last campaign element
 		if lastQuestElement then
 			-- If there's a last element in the regular quests frame, anchor to it
-			RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -elementStackGap)
+			RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -GetTrackerQuestLabelInset(), -elementStackGap)
 		elseif lastCampaignElement then
 			-- If there's no last regular quest element but a last campaign element, anchor to it
-			RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -elementStackGap)
+			RQE.WorldQuestsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -GetTrackerQuestLabelInset(), -elementStackGap)
 		elseif RQE.CampaignFrame:IsShown() and not lastCampaignElement then
 			-- If the Campaign frame is shown but there's no last campaign element, anchor to the Campaign frame
 			RQE.WorldQuestsFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -15)
@@ -874,11 +949,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Adjust AchievementsFrame position based on the presence of WorldQuest elements
 		if RQE.WorldQuestsFrame:IsShown() and lastWorldQuestElement then
-			RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", -40, -elementStackGap)
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", lastWorldQuestElement, "BOTTOMLEFT", -GetTrackerQuestLabelInset(), -elementStackGap)
 		elseif not RQE.WorldQuestsFrame:IsShown() and lastQuestElement then
-			RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -40, -elementStackGap)
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", lastQuestElement, "BOTTOMLEFT", -GetTrackerQuestLabelInset(), -elementStackGap)
 		elseif not RQE.WorldQuestsFrame:IsShown() and lastCampaignElement then
-			RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -40, -elementStackGap)
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", lastCampaignElement, "BOTTOMLEFT", -GetTrackerQuestLabelInset(), -elementStackGap)
 		elseif RQE.WorldQuestsFrame:IsShown() or RQE.QuestsFrame:IsShown() then
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame or RQE.QuestsFrame, "BOTTOMLEFT", 0, -15)
 		elseif RQE.ScenarioChildFrame:IsShown() then
@@ -1002,11 +1077,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			frameWidth = RQE.RQEQuestFrame:GetWidth() -- Adjust RQEQuestFrame to specific frame
 		end
 
-		-- Define base parameters for dynamic padding calculation
+		-- Quest row margins must match the fixed 100/110 in the rendering paths.
+		-- Movement also calls this function; scaling those margins made unchanged
+		-- objectives wrap differently and changed the width of attached progress bars.
+		-- Other responsive elements retain their existing proportional padding.
 		local baseWidth = 400
 		local paddingMultiplier = (frameWidth - baseWidth) / 400
 
-		-- Define base padding for different elements
+		-- Define fixed quest row margins and base padding for other elements
 		local basePadding = {
 			-- Quest Base Padding
 			QuestLevelAndName = 100,
@@ -1034,18 +1112,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Adjust widths for elements in RQE.QuestLogIndexButtons
 		for i, button in ipairs(RQE.QuestLogIndexButtons or {}) do
 			if button.QuestLevelAndName then
-				button.QuestLevelAndName:SetWidth(frameWidth - (basePadding.QuestLevelAndName * (1 + paddingMultiplier)))
+				button.QuestLevelAndName:SetWidth(frameWidth - basePadding.QuestLevelAndName)
 			end
 
 			if button.QuestObjectives then
-				-- Adjust the width of QuestObjectives, considering the base padding and padding multiplier
-				local dynamicPadding = basePadding.QuestObjectives * (1 + paddingMultiplier)
+				-- Match the objective width assigned when the quest row is rendered
+				local dynamicPadding = basePadding.QuestObjectives
 				button.QuestObjectives:SetWidth(frameWidth - dynamicPadding)
 			end
 
 			if button.QuestObjectivesOrDescription then
-				-- Adjust the width of QuestObjectivesOrDescription, considering the base padding and padding multiplier
-				local dynamicPadding = basePadding.QuestObjectivesOrDescription * (1 + paddingMultiplier)
+				-- Match the description width assigned when the quest row is rendered
+				local dynamicPadding = basePadding.QuestObjectivesOrDescription
 				button.QuestObjectivesOrDescription:SetWidth(frameWidth - dynamicPadding)
 			end
 		end
@@ -1069,19 +1147,19 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
 			-- Adjust WQuestLevelAndName width for each WQuestLogIndexButton
 			if WQuestLogIndexButton.WQuestLevelAndName then
-				local dynamicPadding = basePadding.WQuestLevelAndName * (1 + paddingMultiplier)
+				local dynamicPadding = basePadding.WQuestLevelAndName
 				WQuestLogIndexButton.WQuestLevelAndName:SetWidth(frameWidth - dynamicPadding)
 			end
 
 			-- Adjust WQuestObjectives width for each WQuestLogIndexButton
 			if WQuestLogIndexButton.QuestObjectives then
-				local dynamicPadding = basePadding.WQuestObjectives * (1 + paddingMultiplier)
+				local dynamicPadding = basePadding.WQuestObjectives
 				WQuestLogIndexButton.QuestObjectives:SetWidth(frameWidth - dynamicPadding)
 			end
 
 			-- Adjust WQuestObjectivesOrDescription width for each WQuestLogIndexButton
 			if WQuestLogIndexButton.QuestObjectivesOrDescription then
-				local dynamicPadding = basePadding.WQuestObjectivesOrDescription * (1 + paddingMultiplier)
+				local dynamicPadding = basePadding.WQuestObjectivesOrDescription
 				WQuestLogIndexButton.QuestObjectivesOrDescription:SetWidth(frameWidth - dynamicPadding)
 			end
 
@@ -1101,11 +1179,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Adjust widths for elements in RQE.QuestLogIndexButtons
 		for i, button in pairs(RQE.QuestLogIndexButtons or {}) do
 			if button.QuestLevelAndName then
-				button.QuestLevelAndName:SetWidth(frameWidth - (basePadding.QuestLevelAndName * (1 + paddingMultiplier)))
+				button.QuestLevelAndName:SetWidth(frameWidth - basePadding.QuestLevelAndName)
 			end
 
 			if button.QuestObjectivesOrDescription then
-				button.QuestObjectivesOrDescription:SetWidth(frameWidth - (basePadding.QuestObjectivesOrDescription * (1 + paddingMultiplier)))
+				button.QuestObjectivesOrDescription:SetWidth(frameWidth - basePadding.QuestObjectivesOrDescription)
 			end
 
 			if button.QuestTypeLabel then
@@ -1147,6 +1225,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					local objectType = childFrame.header.GetObjectType and childFrame.header:GetObjectType()
 					if objectType == "FontString" then
 						childFrame.header:SetWidth(math.max(1, childWidth - textPadding))
+					end
+				end
+
+				-- Percentage bars are section children rather than FontStrings. Re-size
+				-- them after the section and objective widths settle.
+				if RQE.LayoutObjectiveProgressBar then
+					for _, child in ipairs({ childFrame:GetChildren() }) do
+						if child.RQEObjectiveText then
+							RQE.LayoutObjectiveProgressBar(child)
+						end
 					end
 				end
 			end
@@ -2755,8 +2843,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		bonusQuestObjectives:SetText(objectivesText)
 
 		bonusQuestObjectives:SetPoint("TOPLEFT", bonusQuestLabel, "BOTTOMLEFT", 0, -5)
+		local bonusObjectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
+			bonusQuestButton, questID, bonusQuestObjectives, parentFrame, objectivesText)
 
 		table.insert(RQE.bonusQuestElements, bonusQuestObjectives)
+		if bonusObjectiveLastElement ~= bonusQuestObjectives then
+			table.insert(RQE.bonusQuestElements, bonusObjectiveLastElement)
+		end
 
 		-- Tooltip
 		bonusQuestLabel:SetScript("OnEnter", function(self)
@@ -2785,7 +2878,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			GameTooltip:Hide()
 		end)
 
-		return bonusQuestObjectives
+		return bonusObjectiveLastElement
 	end
 
 
@@ -2874,6 +2967,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end
 				if QuestLogIndexButton.QuestStatusInfo then
 					QuestLogIndexButton.QuestStatusInfo:Hide()
+				end
+				if QuestLogIndexButton.RQEProgressBar then
+					QuestLogIndexButton.RQEProgressBar:Hide()
 				end
 			end
 		end
@@ -3295,6 +3391,180 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		return table.concat(t)
+	end
+
+
+	-- Builds Retail tracker objective text and, when Blizzard explicitly reports a
+	-- progressbar objective, separates its label from the numeric percentage.  A
+	-- missing type or percentage deliberately falls back to the original one-line
+	-- objective text so unusual quests never lose information.
+	local function BuildTrackerObjectiveDisplay(questID)
+		local objectivesData = RQE.API.GetQuestObjectives(questID)
+		if type(objectivesData) ~= "table" or #objectivesData == 0 then
+			return nil, nil
+		end
+
+		local isReadyForTurnIn = C_QuestLog.IsComplete(questID)
+			or C_QuestLog.ReadyForTurnIn(questID)
+		local lines = {}
+		local progressInfo
+
+		for objectiveIndex, objective in ipairs(objectivesData) do
+			local description = tostring(objective.text or "")
+			local objectiveType = objective.type or objective.objectiveType
+			if not objectiveType and RQE.API.GetQuestObjectiveInfo then
+				local ok, info = pcall(RQE.API.GetQuestObjectiveInfo,
+					questID, objectiveIndex, false)
+				if ok and type(info) == "table" then
+					objectiveType = info.objectiveType or info.type
+				end
+			end
+
+			local percentage
+			if not progressInfo and objectiveType == "progressbar"
+				and type(GetQuestProgressBarPercent) == "function" then
+				local ok, value = pcall(GetQuestProgressBarPercent, questID)
+				if ok then percentage = tonumber(value) end
+			end
+
+			if percentage then
+				percentage = math.max(0, math.min(100, percentage))
+				local label = description
+				label = label:gsub("%s*%(%s*%d+%.?%d*%%%s*%)%s*$", "")
+				label = label:gsub("%s*[:%-]?%s*%d+%.?%d*%%%s*$", "")
+				if label == "" then label = PROGRESS or "Progress" end
+				progressInfo = { label = label, percentage = percentage }
+				description = label
+			end
+
+			local color
+			if isReadyForTurnIn or objective.finished then
+				color = RQE.ColorGREEN
+			elseif (objective.numFulfilled or 0) > 0 then
+				color = RQE.ColorYELLOW
+			else
+				color = RQE.ColorWHITE
+			end
+			lines[#lines + 1] = (color or "") .. description .. (RQE.ColorRESET or "")
+		end
+
+		return table.concat(lines, "\n"), progressInfo
+	end
+
+
+	-- Sizes a percentage bar from its objective column. Tracker bars compensate
+	-- for child-frame horizontal offsets so all categories share one right edge;
+	-- the Quest Helper uses a deliberately shorter responsive width.
+	function RQE.LayoutObjectiveProgressBar(progressBar)
+		if not progressBar or not progressBar.RQEObjectiveText then return end
+		local objectiveText = progressBar.RQEObjectiveText
+		local parentFrame = progressBar.RQEObjectiveParent
+		local textWidth = math.max(1, objectiveText:GetWidth() or 1)
+		local width
+
+		if RQE.content and parentFrame == RQE.content then
+			width = textWidth * 0.78
+		else
+			local sectionOffset = 0
+			if parentFrame and RQE.QTcontent then
+				local sectionLeft = parentFrame:GetLeft()
+				local contentLeft = RQE.QTcontent:GetLeft()
+				if sectionLeft and contentLeft then
+					sectionOffset = math.max(0, sectionLeft - contentLeft)
+				end
+			end
+			width = textWidth - 28 - sectionOffset
+		end
+
+		progressBar:ClearAllPoints()
+		progressBar:SetPoint("TOPLEFT", objectiveText, "BOTTOMLEFT", 0, -5)
+		progressBar:SetWidth(math.max(80, width))
+	end
+
+
+	function RQE.RefreshTrackerProgressBarLayouts()
+		for _, section in ipairs({
+			RQE.CampaignFrame, RQE.QuestsFrame, RQE.WorldQuestsFrame,
+			RQE.BonusQuestsFrame, RQE.TaskQuestsFrame,
+		}) do
+			if section then
+				for _, child in ipairs({ section:GetChildren() }) do
+					if child.RQEObjectiveText then
+						RQE.LayoutObjectiveProgressBar(child)
+					end
+				end
+			end
+		end
+	end
+
+
+	-- Applies the shared objective presentation to Campaign/Meta, Normal, World,
+	-- Bonus, and Task rows.  The returned region is the true bottom-most element
+	-- and is therefore safe to use for the following row and child-frame anchors.
+	function RQE.ApplyTrackerObjectiveDisplay(owner, questID, objectiveText, parentFrame, fallbackText)
+		if not owner or not objectiveText or not parentFrame then return objectiveText end
+
+		local displayText, progressInfo = BuildTrackerObjectiveDisplay(questID)
+		if displayText == nil or displayText == "" then
+			displayText = fallbackText or RQE.colorizeObjectives(questID) or ""
+		end
+		if type(objectiveText.RQERawSetText) == "function" then
+			objectiveText.RQERawSetText(objectiveText, displayText)
+		else
+			objectiveText:SetText(displayText)
+		end
+
+		local progressBar = owner.RQEProgressBar
+		if not progressInfo then
+			if progressBar then progressBar:Hide() end
+			return objectiveText
+		end
+
+		if not progressBar then
+			-- Keep the border on an outer frame and inset the StatusBar fill. A
+			-- StatusBar's own fill can otherwise cover its backdrop edge at 100%.
+			progressBar = CreateFrame("Frame", nil, parentFrame, "BackdropTemplate")
+			progressBar:SetHeight(16)
+			progressBar:SetBackdrop({
+				bgFile = "Interface\\Buttons\\WHITE8X8",
+				edgeFile = "Interface\\Buttons\\WHITE8X8",
+				edgeSize = 1,
+				insets = { left = 1, right = 1, top = 1, bottom = 1 },
+			})
+			progressBar.RQEFill = CreateFrame("StatusBar", nil, progressBar)
+			progressBar.RQEFill:SetPoint("TOPLEFT", progressBar, "TOPLEFT", 3, -3)
+			progressBar.RQEFill:SetPoint("BOTTOMRIGHT", progressBar, "BOTTOMRIGHT", -3, 3)
+			progressBar.RQEFill:SetMinMaxValues(0, 100)
+			progressBar.RQEFill:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+			progressBar.RQEFillBackground = progressBar.RQEFill:CreateTexture(nil, "BACKGROUND")
+			progressBar.RQEFillBackground:SetAllPoints()
+			progressBar.RQEFillBackground:SetColorTexture(5 / 255, 10 / 255, 22 / 255, 1)
+			progressBar.RQEPercentText = progressBar.RQEFill:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			progressBar.RQEPercentText:SetPoint("CENTER")
+			progressBar.RQEPercentText:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+			progressBar.RQEPercentText:SetTextColor(1, 1, 1)
+			owner.RQEProgressBar = progressBar
+		end
+
+		progressBar:SetParent(parentFrame)
+		progressBar.RQEObjectiveText = objectiveText
+		progressBar.RQEObjectiveParent = parentFrame
+		RQE.LayoutObjectiveProgressBar(progressBar)
+		progressBar:SetFrameLevel(parentFrame:GetFrameLevel() + 2)
+		progressBar.RQEFill:SetFrameLevel(progressBar:GetFrameLevel())
+		progressBar.RQEFill:SetStatusBarColor(0 / 255, 87 / 255, 184 / 255, 1)
+		if RQE.UI and RQE.UI:IsEnabled() then
+			progressBar:SetBackdropColor(9 / 255, 14 / 255, 23 / 255, 0.98)
+			progressBar:SetBackdropBorderColor(1, 215 / 255, 0, 1)
+		else
+			progressBar:SetBackdropColor(0.03, 0.03, 0.06, 0.95)
+			progressBar:SetBackdropBorderColor(0.55, 0.55, 0.62, 1)
+		end
+		progressBar.RQEFill:SetValue(progressInfo.percentage)
+		progressBar.RQEPercentText:SetText(string.format("%d%%",
+			math.floor(progressInfo.percentage + 0.5)))
+		progressBar:Show()
+		return progressBar
 	end
 
 
@@ -4192,13 +4462,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					QuestObjectivesOrDescription:SetWordWrap(true)
 					QuestObjectivesOrDescription:EnableMouse(true)
 
-					-- Update the last element tracker for the correct type
-					if isCampaignQuest then
-						lastCampaignElement = QuestObjectivesOrDescription
-					else  -- Regular quest
-						lastQuestElement = QuestObjectivesOrDescription
-					end
-
 					QuestObjectivesOrDescription:SetScript("OnMouseDown", function(self, button)
 						if button == "RightButton" then
 							ShowQuestDropdown(self, questID)
@@ -4468,14 +4731,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						local questObjectivesOrDescriptionHeight = QuestObjectivesOrDescription:GetStringHeight()
 					end
 
-					-- Check if objectivesText is blank
-					if objectivesText and objectivesText ~= "" then
-						-- Colorize each objective individually
-						local colorizedObjectives = colorizeObjectives(questID)
-						QuestObjectivesOrDescription:SetText(colorizedObjectives)
+					local objectiveFallback = objectivesText and objectivesText ~= ""
+						and colorizeObjectives(questID) or questObjectivesText
+					local objectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
+						QuestLogIndexButton, questID, QuestObjectivesOrDescription,
+						parentFrame, objectiveFallback)
+
+					-- A progress bar, when present, becomes the row bottom so the next
+					-- quest and the following category header reserve its full height.
+					if isCampaignQuest then
+						lastCampaignElement = objectiveLastElement
 					else
-						-- If there are no objectives, set the text as is (fallback)
-						QuestObjectivesOrDescription:SetText(questObjectivesText)
+						lastQuestElement = objectiveLastElement
 					end
 
 					-- Save the FontString in a table for future reference
@@ -4494,7 +4761,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					QuestLogIndexButton:Show()
 
 					-- Update lastQuestObjectivesOrDescription for the next iteration
-					lastQuestObjectivesOrDescription = QuestObjectivesOrDescription
+					lastQuestObjectivesOrDescription = objectiveLastElement
 
 					local elementHeight = QuestLogIndexButton:GetHeight()
 					totalHeight = totalHeight + elementHeight + spacingBetweenElements
@@ -4560,18 +4827,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		UpdateHeader(RQE.WorldQuestsFrame, "World Quests", RQE.worldQuestCount)
 		UpdateHeader(RQE.BonusQuestsFrame, "Bonus Quests", RQE.bonusQuestCount)
 
-		-- Update scrollbar range and visibility
-		local scrollFrameHeight = RQE.QTScrollFrame:GetHeight()
-		if totalHeight > scrollFrameHeight then
-			RQE.QMQTslider:SetMinMaxValues(0, totalHeight - scrollFrameHeight)
-			RQE.QMQTslider:Show()
-		else
-			RQE.QMQTslider:Hide()
-		end
-
 		-- Visibility Update Check for RQEQuestFrame
 		UpdateRQEWorldQuestFrame()
 		UpdateRQETaskQuestFrame()
+		RQE.RefreshQuestTrackerScrollRange()
+		C_Timer.After(0, RQE.RefreshQuestTrackerScrollRange)
 	end
 
 
@@ -4603,6 +4863,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				button:Hide()
 				button.WQuestLevelAndName:Hide()
 				button.QuestObjectivesOrDescription:Hide()
+				if button.RQEProgressBar then button.RQEProgressBar:Hide() end
 			end
 		end
 
@@ -4628,6 +4889,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.WorldQuestsFrame:Show()
 		else
 			RQE.WorldQuestsFrame:Hide()
+			RQE.RefreshQuestTrackerScrollRange()
 			return -- Exit early if no quests to display
 		end
 
@@ -4796,12 +5058,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					end
 				end
 
-				-- Apply colorization to objectivesText
-				local objectivesText = RQE.colorizeObjectives(questID)
-
-				if RQE.WQuestObjectives then  -- Check if QuestObjectives is initialized
-					RQE.WQuestObjectives:SetText(objectivesText)
-				end
+				-- Apply colorization to objectivesText. Progress-bar objectives are
+				-- converted after this label receives its final anchor below distance.
+				objectivesText = RQE.colorizeObjectives(questID)
+				WQuestObjectives:SetText(objectivesText)
 
 				-- Untrack World Quest
 				WQuestLevelAndName:SetScript("OnMouseDown", function(self, button)
@@ -4888,6 +5148,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Set position of the WQuestObjectives based on TimeLeft
 				WQuestObjectives:SetPoint("TOPLEFT", WQuestDistance, "BOTTOMLEFT", 0, -5)
+				local worldObjectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
+					WQuestLogIndexButton, questID, WQuestObjectives,
+					RQE.WorldQuestsFrame, objectivesText)
 
 				-- Untrack World Quest
 				WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
@@ -4920,8 +5183,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestLogIndexButton:Show()
 				WQuestObjectives:Show()
 
-				--lastElement = WQuestObjectives  -- Update the last element for next iteration
-				lastWorldQuestElement = WQuestObjectives  -- Update the last element for next iteration
+				lastWorldQuestElement = worldObjectiveLastElement
 
 				-- Set the mouseover tooltip for the World Quest button
 				WQuestLevelAndName:SetScript("OnEnter", function(self)
@@ -5041,6 +5303,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- or objective wraps.  Recheck then so the Bonus Quests header always
 		-- follows the real bottom of the World Quests row.
 		C_Timer.After(0, ResizeWorldQuestSection)
+		RQE.RefreshQuestTrackerScrollRange()
 	end
 
 
@@ -5076,6 +5339,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				RQE.AchievementsFrame:ClearAllPoints()
 				RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
 			end
+			RQE.RefreshQuestTrackerScrollRange()
 			return
 		end
 
@@ -5132,7 +5396,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			objectives:SetJustifyH("LEFT")
 			objectives:SetWordWrap(true)
 			objectives:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
-			objectives:SetText(RQE.colorizeObjectives(questID) or "")
+			local taskObjectivesText = RQE.colorizeObjectives(questID) or ""
+			objectives:SetText(taskObjectivesText)
+			local taskObjectiveLastElement = RQE.ApplyTrackerObjectiveDisplay(
+				button, questID, objectives, taskFrame, taskObjectivesText)
 
 			button:RegisterForClicks("LeftButtonUp")
 			button:SetScript("OnClick", function()
@@ -5153,7 +5420,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			table.insert(RQE.TaskQuestElements, button)
 			table.insert(RQE.TaskQuestElements, title)
 			table.insert(RQE.TaskQuestElements, objectives)
-			lastElement = objectives
+			if taskObjectiveLastElement ~= objectives then
+				table.insert(RQE.TaskQuestElements, taskObjectiveLastElement)
+			end
+			lastElement = taskObjectiveLastElement
 		end
 
 		-- Size the Task Quests section to its final rendered objective so the
@@ -5173,6 +5443,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.AchievementsFrame:ClearAllPoints()
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", taskFrame, "BOTTOMLEFT", 0, -15)
 		end
+		RQE.RefreshQuestTrackerScrollRange()
 	end
 
 
