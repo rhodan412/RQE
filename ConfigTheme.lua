@@ -26,6 +26,153 @@ local COLORS = {
 	muted = { 145 / 255, 156 / 255, 174 / 255 },
 }
 
+-- Register the shared color-preview controls after the active client Config.lua
+-- has populated RQE's named font-color registry.
+function ConfigUI:RegisterFontColorWidgets(AceGUI)
+	if not AceGUI then return end
+
+	local itemBaseLibrary = LibStub("AceGUI-3.0-DropDown-ItemBase", true)
+	local itemWidgetType = "Dropdown-Item-RQEColorPreview"
+
+	if itemBaseLibrary and not AceGUI:GetWidgetVersion(itemWidgetType) then
+		local ItemBase = itemBaseLibrary.GetItemBase()
+
+		local function UpdateCheckedState(self)
+			if self.value then
+				self.check:Show()
+			else
+				self.check:Hide()
+			end
+		end
+
+		local function SetValue(self, value)
+			self.value = value
+			UpdateCheckedState(self)
+		end
+
+		local function GetValue(self)
+			return self.value
+		end
+
+		local function SetText(self, text)
+			ItemBase.SetText(self, text)
+
+			local key = RQE.FontColorKeyByLabel[text] or RQE.FontColorKeyByLabel[self.text:GetText()]
+			local option = key and RQE.FontColorOptions[key]
+			if option then
+				local r, g, b = RQE:GetFontColorRGB(key)
+				self.preview:SetColorTexture(r, g, b, 1)
+				self.preview:Show()
+			else
+				self.preview:Hide()
+			end
+		end
+
+		local function OnRelease(self)
+			ItemBase.OnRelease(self)
+			self:SetValue(nil)
+			self.preview:Hide()
+		end
+
+		local function OnClick(frame)
+			local self = frame.obj
+			if self.disabled then return end
+			self:SetValue(not self.value)
+			self:Fire("OnValueChanged", self.value)
+		end
+
+		local function Constructor()
+			local self = ItemBase.Create(itemWidgetType)
+			local preview = self.frame:CreateTexture(nil, "OVERLAY")
+			preview:SetSize(13, 13)
+			preview:SetPoint("RIGHT", self.frame, "RIGHT", -8, 0)
+			preview:Hide()
+			self.preview = preview
+
+			self.text:ClearAllPoints()
+			self.text:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 18, 0)
+			self.text:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -29, 0)
+			self.SetValue = SetValue
+			self.GetValue = GetValue
+			self.SetText = SetText
+			self.OnRelease = OnRelease
+			self.frame:SetScript("OnClick", OnClick)
+			AceGUI:RegisterAsWidget(self)
+			return self
+		end
+
+		AceGUI:RegisterWidgetType(itemWidgetType, Constructor, 1 + ItemBase.version)
+	end
+
+	-- Decorate AceGUI's standard dropdown so the selected color also retains
+	-- a live filled square while remaining fully compatible with AceConfig.
+	local dropdownWidgetType = "RQEColorDropdown"
+	if not AceGUI:GetWidgetVersion(dropdownWidgetType) then
+		local function Constructor()
+			local self = AceGUI:Create("Dropdown")
+			local BaseOnAcquire = self.OnAcquire
+			local BaseOnRelease = self.OnRelease
+			local BaseSetText = self.SetText
+			local BaseSetValue = self.SetValue
+
+			self.type = dropdownWidgetType
+			self.RQEBaseType = "Dropdown"
+			self.RQESkipNextAcquire = true
+
+			local preview = self.frame:CreateTexture(nil, "OVERLAY")
+			preview:SetSize(13, 13)
+			preview:SetPoint("RIGHT", self.button, "LEFT", -3, 2)
+			preview:Hide()
+			self.colorPreview = preview
+
+			self.text:ClearAllPoints()
+			self.text:SetPoint("LEFT", self.dropdown, "LEFT", 25, 2)
+			self.text:SetPoint("RIGHT", preview, "LEFT", -5, 0)
+
+			function self:UpdateColorPreview(value)
+				local key = RQE.FontColorOptions[value] and value
+					or RQE.FontColorKeyByHex[type(value) == "string" and value:lower() or ""]
+					or RQE.FontColorKeyByLabel[value]
+				if key then
+					local r, g, b = RQE:GetFontColorRGB(key)
+					self.colorPreview:SetColorTexture(r, g, b, 1)
+					self.colorPreview:Show()
+				else
+					self.colorPreview:Hide()
+				end
+			end
+
+			self.OnAcquire = function(widget)
+				if widget.RQESkipNextAcquire then
+					widget.RQESkipNextAcquire = nil
+					return
+				end
+				BaseOnAcquire(widget)
+				widget.colorPreview:Hide()
+			end
+
+			self.OnRelease = function(widget)
+				widget.colorPreview:Hide()
+				BaseOnRelease(widget)
+			end
+
+			self.SetText = function(widget, text)
+				BaseSetText(widget, text)
+				widget:UpdateColorPreview(text)
+			end
+
+			self.SetValue = function(widget, value)
+				BaseSetValue(widget, value)
+				widget:UpdateColorPreview(value)
+			end
+
+			return self
+		end
+
+		AceGUI:RegisterWidgetType(dropdownWidgetType, Constructor, 1)
+	end
+end
+
 local function colorFont(fontString, color)
 	if fontString and fontString.SetTextColor then
 		fontString:SetTextColor(color[1], color[2], color[3], color[4] or 1)
@@ -141,7 +288,7 @@ function ConfigUI:SkinWidget(widget)
 	if not widget then return end
 	watchContainer(widget, "styled")
 
-	local kind = widget.type
+	local kind = widget.RQEBaseType or widget.type
 	if kind == "Button" then
 		colorFont(widget.text, COLORS.gold)
 	elseif kind == "CheckBox" then
@@ -246,7 +393,7 @@ function ConfigUI:UseNativeWidget(widget)
 	if not widget then return end
 	watchContainer(widget, "native")
 
-	local kind = widget.type
+	local kind = widget.RQEBaseType or widget.type
 	if kind == "Button" then
 		colorFont(widget.text, COLORS.gold)
 	elseif kind == "CheckBox" then
