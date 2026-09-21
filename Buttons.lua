@@ -1717,8 +1717,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			if RQE.QTScrollFrame then RQE.QTScrollFrame:Show() end
 			if RQE.QuestTrackerSearchRow then RQE.QuestTrackerSearchRow:Show() end
 			if RQE.QMQTslider then
-				if RQE.QTSliderWasShown then RQE.QMQTslider:Show()
-				else RQE.QMQTslider:Hide() end
+				if RQE.UpdateQuestTrackerScrollbarVisual then
+					RQE.UpdateQuestTrackerScrollbarVisual(
+						RQE.QTcontent and RQE.QTcontent:GetHeight())
+				elseif RQE.QTSliderWasShown then
+					RQE.QMQTslider:Show()
+				else
+					RQE.QMQTslider:Hide()
+				end
 			end
 			RQE.QTSliderWasShown = nil
 			if RQE.QMQTResizeButton then RQE.QMQTResizeButton:Show() end
