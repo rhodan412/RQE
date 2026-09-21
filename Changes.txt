@@ -1,4 +1,4 @@
-12.1.0.7
+12.1.0.7 (2026.09.21)
 
 	**HIGHLIGHTS**
 		- Standardized the default Quest Helper and Quest Tracker positions and sizes across Retail, Forever, Season of Discovery, and TBC Anniversary.
@@ -17,13 +17,22 @@
 		- The Retail, Season of Discovery, and TBC Anniversary minimap and data-broker launcher now use a dedicated circular portrait icon.
 		- Separated RQE's icon artwork so the physical minimap button is circular while the AddOns list and data-broker launcher retain the square portrait.
 		- Retail and Forever font settings now include every bundled RQE typeface with live previews in the standalone configuration menu.
+		- Azure & Gold now uses a clean draggable gold scroll indicator without stock scrollbar arrows; legacy mode keeps the indicator hidden while retaining mouse-wheel scrolling.
+		- Retail and Forever percentage objectives now display a separate objective label and inset Azure progress bar, with the percentage centered inside and the existing text retained whenever Blizzard does not provide progress-bar data.
+		- Font Color selectors now provide a unified expanded palette with live swatches in both configuration interfaces on every supported client.
+		- Quest Description text now defaults to Sky Blue across Retail, Forever, Season of Discovery, and TBC Anniversary.
+		- Font Color menus now use clearer reviewed names and follow a visual spectrum from warm colors through cool colors, purples, pinks, and neutrals.
+		- Fixed Quest Tracker objectives changing line wraps during movement and refreshes across Retail, Forever, Season of Discovery, and TBC Anniversary, including Retail/Forever progress bars changing width.
 
 	Buttons.lua
 		- Routed the shared Quest Tracker maximize fallback through the centralized coded geometry instead of duplicating its default width and height, while retaining the active profile and live-frame precedence. (2026.09.20.1635)
 		- Consolidated macro overrides on keyBindSetting, migrated legacy macroBindingKey only when no modern value exists, cleared previous bindings when unbinding or when the macro is missing, and deferred protected binding changes during combat on every client. (2026.09.20.1824)
+		- Routed Retail/Forever Quest Tracker expansion through the custom scrollbar visibility refresh so Azure & Gold restores its thumb only for overflowing content and legacy mode never exposes it; other clients retain their existing slider restoration. (2026.09.21.1341)
 
 	Client_Classic/Config.lua
 		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
+		- Unified all five text-role color selectors on the shared 17-color palette, preserved the existing Lavender, Soft Rose, Silver, and Sky Blue choices, added ordered color-preview controls to Blizzard AddOn Settings and the standalone window, and corrected the Quest Description tooltip to identify its Sky Blue default. (2026.09.21.1443)
+		- Renamed the #0057B8, #FF00FF, #FF7F00, #66CCFF, #B266FF, and #FF99CC dropdown displays to Cobalt, Fuchsia, Dark Orange, Maya Blue, Medium Purple, and Carnation Pink without changing their RGB values; reordered the complete palette by visible hue and updated the Quest Description default tooltip to Maya Blue. (2026.09.21.1501)
 
 	Client_Classic/Core.lua
 		- Changed the Classic/Season of Discovery Quest Tracker's missing-anchor fallback from CENTER to BOTTOMRIGHT, matching its saved defaults and reset behavior. (2026.09.20.1532)
@@ -46,6 +55,7 @@
 		- Initialized the Classic/Season of Discovery Quest Tracker from its saved anchor with a BOTTOMRIGHT fallback instead of briefly placing BOTTOMRIGHT offsets relative to screen center. Default size remains 355 by 450. (2026.09.20.1530)
 		- Initialized the Classic/Season of Discovery Quest Tracker's anchor, offsets, width, and height through the centralized profile-aware geometry source, eliminating its remaining duplicated startup defaults. (2026.09.20.1635)
 		- Guarded Quest Tracker position and size persistence until the active profile has fully applied. (2026.09.20.1824)
+		- Matched both normal-quest sizing passes and the world-quest sizing pass to the renderer's fixed 100-unit title and 110-unit objective/description margins, including the Classic/Season of Discovery zone/distance label; prevents movement and quest refreshes from alternating text widths while retaining actual frame resizing and other responsive element padding. (2026.09.21.1509)
 
 	Client_Classic/RQEFrame.lua
 		- Corrected the Classic/Season of Discovery Quest Helper's pre-profile horizontal fallback from 40 to -40 so its TOPRIGHT startup placement matches the shared default. Default size remains 420 by 335. (2026.09.20.1530)
@@ -55,6 +65,8 @@
 
 	Client_TBC/Config.lua
 		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
+		- Unified all five text-role color selectors on the shared 17-color palette, preserved the existing Lavender, Soft Rose, Silver, and Sky Blue choices, added ordered color-preview controls to Blizzard AddOn Settings and the standalone window, and corrected the Quest Description tooltip to identify its Sky Blue default. (2026.09.21.1443)
+		- Renamed the #0057B8, #FF00FF, #FF7F00, #66CCFF, #B266FF, and #FF99CC dropdown displays to Cobalt, Fuchsia, Dark Orange, Maya Blue, Medium Purple, and Carnation Pink without changing their RGB values; reordered the complete palette by visible hue and updated the Quest Description default tooltip to Maya Blue. (2026.09.21.1501)
 
 	Client_TBC/Core.lua
 		- Changed the TBC Anniversary Quest Tracker's missing-anchor fallback from CENTER to BOTTOMRIGHT, matching its saved defaults and reset behavior. (2026.09.20.1532)
@@ -77,6 +89,7 @@
 		- Initialized the TBC Anniversary Quest Tracker from its saved anchor with a BOTTOMRIGHT fallback instead of briefly placing BOTTOMRIGHT offsets relative to screen center. Default size remains 355 by 450. (2026.09.20.1530)
 		- Initialized the TBC Anniversary Quest Tracker's anchor, offsets, width, and height through the centralized profile-aware geometry source, eliminating its remaining duplicated startup defaults. (2026.09.20.1635)
 		- Guarded Quest Tracker position and size persistence until the active profile has fully applied. (2026.09.20.1824)
+		- Matched both normal-quest sizing passes and the world-quest sizing pass to the renderer's fixed 100-unit title and 110-unit objective/description margins, including the TBC Anniversary zone/distance label; prevents movement and quest refreshes from alternating text widths while retaining actual frame resizing and other responsive element padding. (2026.09.21.1509)
 
 	Client_TBC/RQEFrame.lua
 		- Corrected the TBC Anniversary Quest Helper's pre-profile horizontal fallback from 40 to -40 so its TOPRIGHT startup placement matches the shared default. Default size remains 420 by 335. (2026.09.20.1530)
@@ -87,10 +100,13 @@
 	Config.lua
 		- Separated timestamp toggling from debugLevel and stored cleared macro keybindings as an explicit empty value so the saved selection reliably unbinds the previous override. (2026.09.20.1824)
 		- Added the shared bundled-font registry, resilient font-path lookup, preview-rendering dropdown widget, and reusable font selector to Retail/Forever; both AceConfig and standalone settings now expose all bundled typefaces for header, quest ID, quest name, direction, and quest-description text while preserving the existing SKURRI and FRIZQT__ defaults. (2026.09.20.2335)
+		- Added the ordered 17-color font registry and shared RGB/hex conversion helpers, retained every prior choice, wired all five text roles in Blizzard AddOn Settings and the standalone window to color-preview dropdowns, and updated the Quest Description tooltip for its Sky Blue default. (2026.09.21.1443)
+		- Renamed the #0057B8, #FF00FF, #FF7F00, #66CCFF, #B266FF, and #FF99CC dropdown displays to Cobalt, Fuchsia, Dark Orange, Maya Blue, Medium Purple, and Carnation Pink without changing their RGB values; reordered the complete palette by visible hue and updated the Quest Description default tooltip to Maya Blue. (2026.09.21.1501)
 
 	ConfigTheme.lua
 		- Tracked the standalone custom AceGUI page, subscribed it to AceConfig registry changes, and coalesced deferred page rebuilding after widget callbacks; refreshed the selected page on window show to eliminate stale profile names and lists after edits in Blizzard Settings. (2026.09.20.1942)
 		- Guarded every registered-settings shortcut against combat, printed one explanatory message per pending request, and queued the latest category for a checked post-combat open without invoking protected Settings APIs during lockdown. (2026.09.20.1942)
+		- Registered reusable AceGUI color-preview menu items and selected-value dropdown swatches, and made the custom color control inherit standard dropdown skinning in both native and ornate configuration presentations. (2026.09.21.1443)
 
 	Core.lua
 		- Changed the Retail/Forever Quest Tracker's missing-anchor fallback from CENTER to BOTTOMRIGHT, matching its saved defaults and reset behavior. (2026.09.20.1532)
@@ -100,6 +116,7 @@
 		- Removed contribution capture writes and delayed timestamp resets from saved debug preferences; guarded tracking/focus restoration against event-driven saves, added the missing Retail early-save guards, and made restoredSomething local to each focus-restore attempt. (2026.09.20.1824)
 		- Deferred Retail/Forever coordinate text updates while profile geometry is pending, allowing the shared application pass to restore text and layout together after combat. (2026.09.20.1942)
 		- Updated the fallback and every recognized Retail/Forever resolution preset to Quest Helper TOPRIGHT -40/-235 at 420x345 and Quest Tracker BOTTOMRIGHT -40/130 at 355x465; AceDB profile defaults and INFO recovery resets inherit the same compiled geometry without changing opacity. (2026.09.20.2138)
+		- Changed the Retail/Forever Quest Description profile default from Cyan to Sky Blue (RGB 102/204/255, #66CCFF), matching the existing Season of Discovery and TBC Anniversary default while preserving saved profile selections. (2026.09.21.1443)
 
 	DebugLog.lua
 		- Made export/quest capture logging and timestamp suppression session-local, allowing captures without changing saved logging or timestamp preferences in the current or subsequently selected profile. (2026.09.20.1824)
@@ -120,6 +137,12 @@
 		- Initialized the Retail/Forever Quest Tracker from its saved anchor with a BOTTOMRIGHT fallback instead of briefly placing BOTTOMRIGHT offsets relative to screen center. Default size remains 355 by 450. (2026.09.20.1530)
 		- Initialized the Retail/Forever Quest Tracker's anchor, offsets, width, and height through the centralized profile-aware geometry source, eliminating its remaining duplicated startup defaults. (2026.09.20.1635)
 		- Guarded Quest Tracker position and size persistence until the active profile has fully applied; also protected the SavedVariables-backed per-quest step cache from startup recalculation/pruning before tracking restoration completes. (2026.09.20.1824)
+		- Replaced the Retail/Forever stock Quest Tracker scrollbar with a trackless controller whose proportional gold thumb is draggable only in Azure & Gold, remains synchronized with mouse-wheel movement, and stays hidden in legacy mode and when content fits or the tracker is collapsed. (2026.09.21.1341)
+		- Added shared Retail/Forever percentage-objective rendering for Campaign/Meta, Normal, World, Bonus, and Task rows: verified progressbar objectives split into a label plus an inset Azure fill within a persistent gold outline, show their rounded percentage inside the bar, preserve the original one-line text when API data is unavailable, and participate in responsive row, child-frame, and scroll-range measurements. (2026.09.21.1341)
+		- Kept percentage bars on the standard quest-text column, shortened them only at the right edge, and separated the Azure fill from the outer frame so completed progress cannot cover the gold outline or horizontally offset subsequent quests and category frames. (2026.09.21.1348)
+		- Standardized tracker progress-bar right edges across horizontally offset quest categories while retaining each row's normal left text column, reapplies those widths after resizing and layout refreshes, and made the themed proportional scrollbar's Golden Yellow color explicit as RGB 255/215/0 (#FFD700). (2026.09.21.1410)
+		- Replaced the themed child-section anchor's legacy 40-pixel correction with the live 46-pixel quest-label inset, keeping every category frame, quest text column, and percentage bar on the same horizontal origin whether the preceding row has a progress bar or ordinary objective text. (2026.09.21.1412)
+		- Matched AdjustQuestItemWidths to the fixed 100-unit quest-title and 110-unit objective/description margins used when Campaign/Meta, Normal, and World quest rows render; removed the competing proportional row margins from both normal-quest passes and the world-quest pass so movement-stop, refresh, and resize updates preserve wrapping and attached Retail/Forever percentage-bar widths at an unchanged frame size. Actual frame resizing and other responsive element padding retain their existing behavior. (2026.09.21.1509)
 
 	RQE-Camelot.TOC
 		- Loaded ProfileManager immediately after Retail/Forever Core so Forever also receives startup save guards and combat-deferred profile restoration; version metadata is unchanged. (2026.09.20.1828)
@@ -139,6 +162,8 @@
 		- Changed the Retail/Forever Quest Helper restore fallback from screen center to its TOPRIGHT -40/-285 default. (2026.09.20.1532)
 		- Routed Retail/Forever Quest Helper creation and restoration through the centralized profile-aware geometry source, and normalized drag saves to the active profile's anchorPoint/xPos/yPos schema so later restores use the same values. (2026.09.20.1635)
 		- Prevented drag/resize/logout callbacks from saving provisional, combat-delayed, or application-time geometry; routed ADDON_LOADED position restoration through the guarded shared path and restricted right-click coded-default recovery to INFO/INFO+. (2026.09.20.1824)
+		- Applied the shared Retail/Forever progressbar presentation to Quest Helper objectives, placed the bar beneath the complete objective block, and made Separate Focus use the bar as its vertical predecessor so additional objectives and responsive frame widths remain collision-free; empty and API-incomplete states retain their prior text and hide the bar. (2026.09.21.1348)
+		- Reduced the Quest Helper objective bar to 78% of its responsive text width and reapplies that proportion whenever the frame is resized, keeping the bar comfortably inside the Quest Helper and Separate Focus right boundary. (2026.09.21.1410)
 
 	RQEMinimap.lua
 		- Changed the shared LibDataBroker launcher icon from rhodan.tga to the dedicated rhodan-minimap.tga asset, applying the circular minimap button artwork to Retail, Season of Discovery, and TBC Anniversary through their common launcher implementation. (2026.09.20.2239)
@@ -149,6 +174,7 @@
 
 	UITheme.lua
 		- Deferred location-bar visibility and scroll-frame anchor changes while a profile layout is pending, preventing coordinate visibility from partially switching during combat before the selected geometry can apply. (2026.09.20.1942)
+		- Anchored the Azure & Gold Quest Tracker's trackless scroll indicator inside the right frame border and refreshes its themed visibility after the saved layout applies. (2026.09.21.1341)
 
 
 12.1.0.6 (2026.09.20)
