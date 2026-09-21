@@ -578,6 +578,9 @@ end
 
 function ConfigUI:OpenOptionsPage(container, appName)
 	if not container or not appName then return end
+	-- Custom AceGUI containers are not included in AceConfigDialog's automatic
+	-- refresh list. Remember the current page, including while its window hides.
+	self.optionsContainer, self.optionsAppName = container, appName
 	container:ReleaseChildren()
 	local page = LibStub("AceGUI-3.0"):Create("ScrollFrame")
 	page:SetLayout("Flow")
@@ -593,8 +596,47 @@ function ConfigUI:OpenOptionsPage(container, appName)
 	self:SkinWidget(page)
 end
 
+-- Coalesce notifications until the current widget callback has finished before
+-- releasing its controls. Read the latest page so a tab change cannot revive it.
+function ConfigUI:RefreshStandalonePage()
+	if self.refreshQueued then return end
+	self.refreshQueued = true
+	C_Timer.After(0, function()
+		self.refreshQueued = nil
+		local container = self.optionsContainer
+		if container and container.frame:IsShown() then
+			self:OpenOptionsPage(container, self.optionsAppName)
+		end
+	end)
+end
+
+LibStub("AceConfigRegistry-3.0").RegisterCallback(ConfigUI, "ConfigTableChange", function(_, appName)
+	if appName == ConfigUI.optionsAppName then ConfigUI:RefreshStandalonePage() end
+end)
+
+-- Blizzard's secure menu can open Settings in combat, but an addon shortcut
+-- cannot call its protected opener. Queue only the latest requested category.
+local settingsEvents = CreateFrame("Frame")
+settingsEvents:RegisterEvent("PLAYER_REGEN_ENABLED")
+settingsEvents:SetScript("OnEvent", function()
+	C_Timer.After(0, function()
+		if InCombatLockdown() or not ConfigUI.pendingPanelKey then return end
+		local panelKey = ConfigUI.pendingPanelKey
+		ConfigUI.pendingPanelKey = nil
+		ConfigUI:OpenRegisteredPanel(panelKey)
+	end)
+end)
+
 function ConfigUI:OpenRegisteredPanel(panelKey)
 	panelKey = panelKey or "general"
+	if InCombatLockdown() then
+		if not self.pendingPanelKey then
+			print("RQE: AddOn Settings will open after combat. You can still open them manually through Blizzard's menu.")
+		end
+		self.pendingPanelKey = panelKey
+		return false
+	end
+	self.pendingPanelKey = nil
 	local frame = RQE.optionsFrame
 	if panelKey ~= "general" and frame then frame = frame[panelKey] end
 	local categoryID = RQE.optionsCategoryIDs and RQE.optionsCategoryIDs[panelKey]
@@ -663,6 +705,9 @@ function ConfigUI:SkinConfigFrame(widget)
 	watchContainer(widget, "styled")
 	local frame = widget.frame
 	if not frame then return end
+	-- A hidden window may have missed registry refreshes while another settings
+	-- surface changed profiles. Rebuild its selected page when shown again.
+	frame:HookScript("OnShow", function() ConfigUI:RefreshStandalonePage() end)
 	skinSurface(frame, 0.96, 2)
 	if RQE.UI and RQE.UI._ApplyAceFrame then RQE.UI:_ApplyAceFrame(widget) end
 
