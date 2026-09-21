@@ -131,7 +131,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.AddToDebugLog(output)
 	end
 
-
 	-- Custom Info Message Function (exact format: " RQE Info (Core.lua @ Line 3640): ...")
 	function RQE:CustomLogMsg(line, color, filePath, message, ...)
 		-- reduce "Interface/AddOns/RQE/Core.lua" to just "Core.lua"
@@ -156,7 +155,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to log general info messages (now includes file + line)
 	function RQE.infoLog(message, ...)
 		if RQE.db and RQE.db.profile.debugMode then
@@ -171,7 +169,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to log general debug messages
 	function RQE.debugLog(message, ...)
 		if RQE.db and RQE.db.profile.debugMode then
@@ -184,7 +181,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Function to log warning messages
 	function RQE.warningLog(message, ...)
@@ -199,7 +195,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to log critical messages
 	function RQE.criticalLog(message, ...)
 		if RQE.db and RQE.db.profile.debugMode then
@@ -212,7 +207,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	--- Prints a message with contextual info (file, provided function name, line number).
 	--- Works safely even inside C_Timer, hooks, or callbacks.
@@ -261,7 +255,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #3b. Early Profile Validation
@@ -604,7 +597,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.savedAutomaticWorldQuestWatches = {}
 	end
 
-
 	-------------------------------------------------------
 	-- #5b. Dragonriding Mount Lookup
 	-------------------------------------------------------
@@ -618,7 +610,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		"Windborne Velocidrake",
 		"Winding Slitherdrake"
 	}
-
 
 	-------------------------------------------------------
 	-- #5c. AceAddon Initialization
@@ -663,9 +654,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		--self:UpdateFrameFromProfile()
-
-		-- Load character-specific data
 		-- Load character-specific data
 		if self.GetCharacterInfo then
 			self:GetCharacterInfo()
@@ -674,7 +662,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				print("GetCharacterInfo() is not available during OnInitialize().")
 			end
 		end
-		--self:GetCharacterInfo()
 
 		-- Register UI Options
 		RQE.ConfigUI:ComposeOptions(RQE.options)
@@ -732,7 +719,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Final UI Setup
-		--self:UpdateFramePosition()
 		if self.UpdateFramePosition then
 			self:UpdateFramePosition()
 		else
@@ -745,7 +731,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		UIDropDownMenu_Initialize(RQE.FilterDropDownMenu, RQE.InitializeFilterDropdown)
 	end
 
-
 	-------------------------------------------------------
 	-- #5d. Enable & Profile Application
 	-------------------------------------------------------
@@ -757,7 +742,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self:RequestProfileApply()
 	end
 
-
 	-- Helper function for default frame positions
 	function RQE:EnsureDefaults()
 		self.db.profile.framePosition = self.db.profile.framePosition or CopyTable(defaults.profile.framePosition)
@@ -766,14 +750,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self.db.char = self.db.char or CopyTable(defaults.char or {})
 	end
 
-
 	-- Function to restore the correct profile from SavedVariables
 	function RQE:RestoreSavedProfile()
 		-- Do not reselect or fall back to Default after AceDB has resolved the
 		-- character assignment. Restore only the selected profile's UI state.
 		self:RequestProfileApply()
 	end
-
 
 	-- Function to apply UI settings after restoring profile
 	function RQE:ApplyUISettings()
@@ -794,7 +776,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQEFrame:SetBackdropColor(0, 0, 0, MainOpacity) -- Setting the opacity
 		RQE.RQEQuestFrame:SetBackdropColor(0, 0, 0, QuestOpacity) -- Same for the quest frame
 	end
-
 
 	-------------------------------------------------------
 	-- #5e. Startup Quest Diagnostics
@@ -831,7 +812,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		print("===================================")
 	end
 
-
 	-------------------------------------------------------
 	-- #5f. Step-Control Settings
 	-------------------------------------------------------
@@ -841,7 +821,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:ToggleStepControls()
 		RQE:ToggleAutoClickWaypointButton()
 	end
-
 
 	-- This function will enable/disable the step controls
 	function RQE:ToggleStepControls()
@@ -860,7 +839,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- This function will enable/disable the auto click waypoint button
 	function RQE:ToggleAutoClickWaypointButton()
 		if RQE.db.profile.autoClickWaypointButton then
@@ -869,7 +847,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.db.profile.autoClickWaypointButton = true
 		end
 	end
-
 
 	-- Function that prints the quest data as it relates to a certain quest such as type, numRequired, finished (true/false), text, objectiveType and numFulfilled
 	function RQE:PrintQuestData(questID)
@@ -880,7 +857,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the quest data from the API
-		local questData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local questData = RQE.API.GetQuestObjectives(questID)
 
 		-- Print formatted output
 		print("Quest Data for QuestID:", questID)
@@ -900,7 +877,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("  Data is not a table or is empty.")
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #5g. Quest-Filter Dropdown Initialization
@@ -936,8 +912,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			info.func = RQE.filterZoneQuests
 			UIDropDownMenu_AddButton(info, level)
 
-			-- ... other first-level items ...
-
 			info.text = "Select Campaign..."
 			info.hasArrow = true  -- Important for creating a submenu
 			info.value = "campaign_submenu"  -- Used to identify this item in the next level
@@ -953,7 +927,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #5h. Primary Frame Initialization
 	-------------------------------------------------------
@@ -961,11 +934,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- InitializeFrame function
 	function RQE:InitializeFrame()
 		local functionName = "RQE:InitializeFrame()"
-
-		--self:Initialize()  -- Call Initialize() within InitializeFrame
-
-		-- Call the function to initialize the separate focus frame
-		-- RQE.InitializeSeparateFocusFrame()
 
 		-- Call the function to initialize the separate focus frame
 		if RQE.InitializeSeparateFocusFrame then
@@ -977,7 +945,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Add logic to update frame with the current super tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if questID then
 			local questInfo = RQE.getQuestData(questID)
 			if questInfo then
@@ -987,7 +955,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #5i. Configuration Refresh
@@ -1103,7 +1070,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-------------------------------------------------------
 	-- #6b. Separate Focus Clear Decisions
 	-------------------------------------------------------
@@ -1136,11 +1102,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Guard function to decide whether it should clear the SeparateFocusFrame
 	function RQE:ShouldClearSeparateFocusFrame()
 		 -- Always refresh the real supertracked quest
-		RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Always define these FIRST
 		local newQuest = RQE.CurrentlySuperQuestID
@@ -1187,7 +1152,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-------------------------------------------------------
 	-- #6c. Auto-Completable Quest Handling
 	-------------------------------------------------------
@@ -1195,7 +1159,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to auto-watch only auto-completable quests
 	function RQE:WatchAutoCompletableUnwatchedQuests(verbose)
 		local added = 0
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		for i = 1, numEntries do
 			local info = RQE.API.GetQuestLogInfo(i)
 			if info and not info.isHeader then
@@ -1213,7 +1177,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print(("RQE: added %d auto-completable quest(s) to watch on login."):format(added))
 		end
 	end
-
 
 	-- Returns true if the given quest is complete and can be auto-turned-in anywhere
 	function RQE:IsQuestAutoComplete(questID)
@@ -1256,7 +1219,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return isAuto
 	end
 
-
 	-- Attempts to show the native Blizzard auto-complete dialog; returns true if shown
 	function RQE:ShowAutoCompleteDialog(questID)
 		if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
@@ -1287,23 +1249,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-------------------------------------------------------
 	-- #6d. Coordinate & Super-Tracking Persistence
 	-------------------------------------------------------
 
 	-- Saves x, y, mapID ionformation to the RQE.DatabaseSuperX, RQE.DatabaseSuperY, RQE.DatabaseSuperMapID addon variables when fired
 	function RQE.SaveCoordData()
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if RQE.db.profile.autoClickWaypointButton and RQE.AreStepsDisplayed(questID) then
 			if questID then
 				-- Logic for updating location data
 				local questData = RQE.getQuestData(questID)
-				-- if questData and questData.location and questData.location.x and questData.location.y and questData.location.mapID then
-					-- -- Update the location data for the examined quest
-					-- RQE.DatabaseSuperX = questData.location.x / 100
-					-- RQE.DatabaseSuperY = questData.location.y / 100
-					-- RQE.DatabaseSuperMapID = questData.location.mapID
 				local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
 				local finalMapID
 
@@ -1331,26 +1287,25 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function that saves data of the Super Tracked Quest
 	function RQE.SaveSuperTrackData()
 		-- Extracts Details of Quest if possible
 		RQE.ExtractAndSaveQuestCoordinates()
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		if questID then
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
 			local questTitle = RQE.API.GetTitleForQuestID(questID)
-			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			local posX, posY
 
 			if isWorldQuest then
 				posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
 			else
 				if not posX or not posX and mapID then
-					local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+					local questID = RQE.API.GetSuperTrackedQuestID()
 					local mapID = GetQuestUiMapID(questID)
 					if mapID == 0 then mapID = nil end
 				else
@@ -1386,7 +1341,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #6e. Per-Character Quest Watch Persistence
 	-------------------------------------------------------
@@ -1403,28 +1357,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the currently supertracked quest ID
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-
-		-- -- Ensure we have a valid quest ID before saving
-		-- if superTrackedQuestID and superTrackedQuestID > 0 then
-			-- -- Check if it is a world quest
-			-- local isWorldQuest = C_QuestLog.IsWorldQuest(superTrackedQuestID)
-
-			-- -- Save it to the character-specific table with world quest flag
-			-- RQECharacterDB.superTrackedQuestID = superTrackedQuestID
-			-- RQECharacterDB.isWorldQuest = isWorldQuest
-
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Saved supertracked quest for this character: " .. superTrackedQuestID)
-			-- end
-		-- else
-			-- RQECharacterDB.superTrackedQuestID = nil
-			-- RQECharacterDB.isWorldQuest = nil
-		-- end
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Case 1: Real supertracked quest (quest log / world quest)
 		if superTrackedQuestID and superTrackedQuestID > 0 then
-			local isWorldQuest = RQE.API.IsWorldQuest(superTrackedQuestID)	--C_QuestLog.IsWorldQuest(superTrackedQuestID)
+			local isWorldQuest = RQE.API.IsWorldQuest(superTrackedQuestID)
 
 			RQECharacterDB.superTrackedQuestID = superTrackedQuestID
 			RQECharacterDB.isWorldQuest = isWorldQuest
@@ -1455,7 +1392,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQECharacterDB.isWorldQuest = nil
 		RQECharacterDB.searchedQuestID = nil
 	end
-
 
 	-- Function to save the currently watched/tracked quests to the character-specific table
 	function RQE:SaveTrackedQuestsToCharacter()
@@ -1505,7 +1441,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to restore the saved supertracked quest for the current character
 	function RQE:RestoreSuperTrackedQuestForCharacter()
 		-- Restoring watch/focus state can synchronously fire normal save events.
@@ -1525,9 +1460,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local isWorldQuest = RQECharacterDB.isWorldQuest
 
 				if isWorldQuest then
-					local isWorldQuestStillAvailable =
-						RQE.API.IsWorldQuest(savedQuestID) and RQE.API.GetQuestObjectives(savedQuestID) ~= nil
-						--C_QuestLog.IsWorldQuest(savedQuestID) and C_QuestLog.GetQuestObjectives(savedQuestID) ~= nil
+					local isWorldQuestStillAvailable = RQE.API.IsWorldQuest(savedQuestID) and RQE.API.GetQuestObjectives(savedQuestID) ~= nil
 
 					if isWorldQuestStillAvailable then
 						RQE:AutoSetSuperTrackedQuestID(savedQuestID)
@@ -1607,7 +1540,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function to restore the watched/tracked quests for the current character
 	function RQE:RestoreTrackedQuestsForCharacter()
 		-- Restoring watch/focus state can synchronously fire normal save events.
@@ -1639,25 +1571,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
-	-- #6f. Legacy Waypoint Restoration (Disabled)
-	-------------------------------------------------------
-
-	-- function RQE:UpdateWaypointForStep(questID, stepIndex)
-		-- local questData = RQE.getQuestData(questID)
-		-- if questData and questData[stepIndex] then
-			-- local stepData = questData[stepIndex]
-			-- if stepData and stepData.coordinates then
-				-- -- Logic to set the new waypoint
-				-- RQE:OnCoordinateClicked()	--RQE:OnCoordinateClicked(stepIndex)
-			-- end
-		-- end
-	-- end
-
-
-	-------------------------------------------------------
-	-- #6g. Expansion & Contribution Data Collection
+	-- #6f. Expansion & Contribution Data Collection
 	-------------------------------------------------------
 
 	-- Obtain addon Contribution Data
@@ -1684,17 +1599,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Obtain addon Contribution Data for completed quests
 	function RQE.GetCompletedDataForAddon()
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-
 
 			RQE:BeginDebugLogCapture()
 			RQE_Contribution.GetCompletedContributionInfo()
 
 			RQE.ToggleDebugLogFrame()
-
 
 			C_Timer.After(2, function()
 				RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
@@ -1704,11 +1616,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Obtain addon Contribution Data
 	function RQE.GetSandBoxDataForAddon()
 		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-
 
 			RQE:BeginDebugLogCapture()
 			RQE.GetAllSandboxInfo()
@@ -1720,11 +1630,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Obtain WQ Information for Expansion: Midnight
 	function RQE.GetMidnightWQ()
-
-
 		RQE:BeginDebugLogCapture()
 
 		local clicked = GetMouseButtonClicked()
@@ -1742,11 +1649,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: The War Within
 	function RQE.GetTheWarWithinWQ()
-
-
 		RQE:BeginDebugLogCapture()
 
 		local clicked = GetMouseButtonClicked()
@@ -1764,11 +1668,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: Dragonflight
 	function RQE.GetDragonflightWQ()
-
-
 		RQE:BeginDebugLogCapture()
 
 		local clicked = GetMouseButtonClicked()
@@ -1786,11 +1687,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: Shadowlands
 	function RQE.GetShadowlandsWQ()
-
-
 		RQE:BeginDebugLogCapture()
 
 		local clicked = GetMouseButtonClicked()
@@ -1808,11 +1706,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: Battle for Azeroth
 	function RQE.GetBFAWQ()
-
-
 		RQE:BeginDebugLogCapture()
 
 		local clicked = GetMouseButtonClicked()
@@ -1830,11 +1725,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: Legion
 	function RQE.GetLegionWQ()
-
-
 		RQE:BeginDebugLogCapture()
 
 		local clicked = GetMouseButtonClicked()
@@ -1852,11 +1744,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: Misc
 	function RQE.GetWoDWQ()
-
-
 		RQE:BeginDebugLogCapture()
 		local clicked = GetMouseButtonClicked()
 
@@ -1873,11 +1762,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-- Obtain WQ Information for Expansion: Misc
 	function RQE.MiscWQ()
-
-
 		RQE:BeginDebugLogCapture()
 		local clicked = GetMouseButtonClicked()
 
@@ -1894,9 +1780,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ToggleDebugLogFrame()
 	end
 
-
 	-------------------------------------------------------
-	-- #6h. Missing Quest Capture & Super-Track Details
+	-- #6g. Missing Quest Capture & Super-Track Details
 	-------------------------------------------------------
 
 	-- Obtain Quest Objectives and Quest Description Text for quests in player log where an empty set exists for either in the DB (that will contain data and isn't a hidden/emissary quest)
@@ -1919,8 +1804,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				else
 					RQE:BeginDebugLogCapture()
 				end
-
-
 
 				local textCaptureOK, textCaptureError = pcall(function()
 					RQE_Contribution:CheckMissingQuestTextData()
@@ -1968,17 +1851,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						end
 					end
 				end
-
 			end
 		end
 
 	end
 
-
 	-- Function to obtain the quest details and print them on screen
 	function RQE.ObtainSuperTrackQuestDetails()
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest() or RQE.isSuperTracking
-		--local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest() or RQE.isSuperTracking
 		if not isSuperTracking then return end
 
 		C_Timer.After(0.15, function()
@@ -1986,7 +1866,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if RQEFrame and RQEFrame:IsShown() and RQE.QuestIDText and RQE.QuestIDText:GetText() then
 					RQE.TheSuperQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				else
-					RQE.TheSuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+					RQE.TheSuperQuestID = RQE.API.GetSuperTrackedQuestID()
 				end
 
 				local questName = "Unknown Quest"
@@ -2011,9 +1891,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-------------------------------------------------------
-	-- #6i. Contribution Data Cleanup Dialogs
+	-- #6h. Contribution Data Cleanup Dialogs
 	-------------------------------------------------------
 
 	-- Function to Show Confirmation Dialog for Deleting Data
@@ -2042,7 +1921,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		StaticPopup_Show("RQE_DELETE_CONFIRM")
 	end
 
-
 	-- Shows confirmation before removing contribution entries that already
 	-- exist in RQEDatabase.Vanilla. Sandbox-only entries will be preserved.
 	function RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
@@ -2067,7 +1945,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		StaticPopup_Show("RQE_CONTRIBUTION_DB_CLEANUP_CONFIRM")
 	end
 
-
 	-- Removes only RQE Contribution saved-variable entries whose quest IDs
 	-- already exist in RQEDatabase.Vanilla, then offers to reload the UI.
 	function RQE:ExecuteRQEDatabaseContributionCleanup()
@@ -2081,7 +1958,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("Error: Unable to clean RQE Contribution data. Function not found.")
 		end
 	end
-
 
 	-- Function to Show Confirmation Dialog for Reloading the UI
 	function RQE:ShowReloadConfirmationDialog()
@@ -2106,7 +1982,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		StaticPopup_Show("RQE_RELOAD_CONFIRM")
 	end
 
-
 	-- Function to Run the Data Deletion
 	function RQE:ExecuteDataDeletion()
 		if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
@@ -2120,17 +1995,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Capture the super-tracked quest's current navigation coordinates for reuse by RQE.
 	function RQE.ExtractAndSaveQuestCoordinates()
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		if not questID then
 			RQE.debugLog("No QuestID found. Cannot proceed.")
 			return
 		end
 
-		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)
 		local mapID, posX, posY, completed, objective
 
 		if isWorldQuest then
@@ -2180,14 +2054,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.mapID = mapID
 	end
 
-
 	-- Function controls the restoration of the quest that is super tracked to the RQEFrame
 	function RQE:HandleSuperTrackedQuestUpdate()
 		local functionName = "RQE:HandleSuperTrackedQuestUpdate()"
 
 		-- Save the current super tracked quest ID
-		local savedSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		local isWorldQuest = RQE.API.IsWorldQuest(savedSuperTrackedQuestID)	--C_QuestLog.IsWorldQuest(savedSuperTrackedQuestID)
+		local savedSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
+		local isWorldQuest = RQE.API.IsWorldQuest(savedSuperTrackedQuestID)
 
 		-- Check if the quest was manually tracked
 		local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[savedSuperTrackedQuestID]
@@ -2224,9 +2097,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-------------------------------------------------------
-	-- #6j. Slash Commands & Manual Maintenance
+	-- #6i. Slash Commands & Manual Maintenance
 	-------------------------------------------------------
 
 	-- Function to Reset LFG roles after leaving raid group created through the SearchGroup Button in RQEFrame
@@ -2234,7 +2106,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Set default roles DAMAGE only: (leader, tank, healer, damage)
 		SetLFGRoles(false, false, false, true)
 	end
-
 
 	-- SlashCommand function
 	function RQE:SlashCommand(input)
@@ -2248,7 +2119,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQE.MagicButton:Hide()
 				end
 			else
-				-- print("~~ RQEFrame:Show: 1415 ~~")
 				RQEFrame:Show()
 				if RQE.MagicButton then
 					RQE.MagicButton:Show()
@@ -2276,7 +2146,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
 
-
 	-- SlashCommand to Reset LFG Role
 	SLASH_RESETROLE1 = "/rqeresetrole"
 	-- Refresh the Blizzard group-finder role controls when the reset slash command is used.
@@ -2289,15 +2158,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Register the slash command
 	RQE:RegisterChatCommand("rqe", "SlashCommand")
-
 
 	-- This function will clear the WQ Tracking for a specific quest
 	function RQE:ClearSpecificWQTracking(questID)
 		if RQE.API.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
-		--if C_QuestLog.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
 			C_QuestLog.RemoveWorldQuestWatch(questID)
 		end
 	end
@@ -2332,7 +2198,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:SetProfileOnce()
 	end
 
-
 	--- Sets the user profile for the addon, but only once to avoid overwriting.
 	--- If no profile is specified, defaults to the current player's name and realm.
 	--- @param chosenProfile string|nil - The manually chosen profile or nil.
@@ -2346,26 +2211,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to gather character info if addon is set to default to player name instead of account wide
 	function RQE:GetCharacterInfo()
 		local characterName = UnitName("player")
 		local characterRealm = GetRealmName()
 		local characterKey = characterName .. " - " .. characterRealm
-
-		-- -- Check if character-specific data exists in the database
-		-- if not self.db.char.characters then
-			-- self.db.char.characters = {}
-		-- end
-
-		-- -- Initialize or load character-specific settings
-		-- if not self.db.char.characters[characterKey] then
-			-- self.db.char.characters[characterKey] = {
-			-- -- Initialize character-specific settings here
-			-- }
-		-- end
 	end
-
 
 	-- Profile Refresh Function
 	function RQE:RefreshConfig()
@@ -2388,14 +2239,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:ShowRQEFramesOnLogin()
 		-- Show the frames only if they are not already shown
 		if not RQEFrame:IsShown() then
-			-- print("~~ RQEFrame:Show: 1546 ~~")
 			RQEFrame:Show()
 		end
 		if not RQE.RQEQuestFrame:IsShown() then
 			RQE.RQEQuestFrame:Show()
 		end
 	end
-
 
 	-- Function to initialize the objective tracker state based on the checkbox and frames visibility
 	function RQE:InitializeObjectiveTracker()
@@ -2406,7 +2255,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			ObjectiveTrackerFrame:Hide()
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #8b. Scenario-Aware Tracker Visibility
@@ -2440,24 +2288,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		-- print(">> UpdateTrackerVisibility: inScenario =", inScenario, "| mythicMode =", mythicMode, "| configWantsQuestFrame =", configWantsQuestFrame)
-
-		-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-			-- C_AddOns.LoadAddOn("Blizzard_ObjectiveTracker")
-		-- end
-
-		-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-			-- C_AddOns.LoadAddOn("Blizzard_ScenarioObjectiveTracker")
-		-- end
-
-		-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-			-- C_AddOns.LoadAddOn("Blizzard_BonusObjectiveTracker")
-		-- end
-
-		-- if not C_AddOns.IsAddOnLoaded("Blizzard_ObjectiveTracker") then
-			-- C_AddOns.LoadAddOn("Blizzard_CampaignQuestObjectiveTracker")
-		-- end
-
 		if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
 			if mythicMode and inScenario then
 				if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
@@ -2470,7 +2300,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		if mythicMode and inScenario then
-			-- print(">> Scenario + MythicMode active – forcing hide RQEQuestFrame")
 			RQE.forceHideRQEQuestFrame = true
 
 			if self.RQEQuestFrame then
@@ -2482,13 +2311,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				self.RQEQuestFrame.Show = function() end
 
 				if self.RQEQuestFrame:IsShown() then
-					-- print(">> Hiding RQEQuestFrame")
 					self.RQEQuestFrame:Hide()
 				end
 			end
 
 			if ObjectiveTrackerFrame then
-				-- print(">> Showing ObjectiveTrackerFrame")
 				ObjectiveTrackerFrame.ignoreFramePositionManager = true
 				ObjectiveTrackerFrame:SetParent(UIParent)
 				ObjectiveTrackerFrame:ClearAllPoints()
@@ -2500,7 +2327,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- === Post-scenario OR MythicMode disabled ===
-		-- print(">> Scenario ended or MythicMode off – restoring visibility from config")
 		RQE.forceHideRQEQuestFrame = false
 
 		-- Restore original Show method if it was patched
@@ -2511,10 +2337,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		if self.RQEQuestFrame then
 			if configWantsQuestFrame then
-				-- print(">> Showing RQEQuestFrame (config enabled)")
 				self.RQEQuestFrame:Show()
 			else
-				-- print(">> Hiding RQEQuestFrame (config disabled)")
 				self.RQEQuestFrame:Hide()
 			end
 		end
@@ -2562,28 +2386,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		ObjectiveTrackerFrame.isBeingMoved = true
 	end
 
-
-	-- -- Hook the Objective Tracker's OnShow event to enforce the state based on visibility conditions
-	-- ObjectiveTrackerFrame:HookScript("OnShow", function()
-		-- if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-			-- if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-				-- ObjectiveTrackerFrame:Hide()
-			-- end
-		-- end
-	-- end)
-
-
-	-- -- Continuous checking with OnUpdate to enforce the visibility state of the Blizzard Objective Tracker
-	-- local hideObjectiveTrackerFrame = CreateFrame("Frame")
-	-- hideObjectiveTrackerFrame:SetScript("OnUpdate", function()
-		-- if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-			-- if RQEFrame:IsShown() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then
-				-- ObjectiveTrackerFrame:Hide()
-			-- end
-		-- end
-	-- end)
-
-
 	-------------------------------------------------------
 	-- #8d. Minimap & Map-ID Display Toggles
 	-------------------------------------------------------
@@ -2603,7 +2405,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		LibStub("AceConfigRegistry-3.0"):NotifyChange("RQE")
 	end
 
-
 	-- Function to update the state of the MapID checkbox based on the current profile settings
 	function RQE:ToggleMapIDCheckbox()
 		local newValue = not RQE.db.profile.showMapID
@@ -2614,7 +2415,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.MapIDCheckbox:SetChecked(newValue)
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #8e. RQE Frame Visibility Rules
@@ -2629,7 +2429,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local questIDTextContent = self.QuestIDText and self.QuestIDText:GetText() or ""
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local isSuperTracking = superTrackedQuestID and superTrackedQuestID > 0
-		--local isSuperTracking = C_SuperTrack.GetSuperTrackedQuestID() and C_SuperTrack.GetSuperTrackedQuestID() > 0
 
 		if (self.db.profile.hideRQEFrameWhenEmpty and (questIDTextContent == "" or not isSuperTracking)) or self.isRQEFrameManuallyClosed then
 			if not RQE.db.profile.enableFrame then
@@ -2640,7 +2439,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		else
 			if RQE.db.profile.enableFrame then
-				-- print("~~ RQEFrame:Show: 1757 ~~")
 				RQEFrame:Show()
 				if RQE.MagicButton then
 					RQE.MagicButton:Show()
@@ -2651,7 +2449,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Check if MagicButton should be visible based on macro body
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
-
 
 	-- Function to Show/Hide RQEQuestFrame when frames are empty
 	function RQE:UpdateRQEQuestFrameVisibility()
@@ -2675,10 +2472,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if C_CampaignInfo.IsCampaignQuest(questID) then
 					self.campaignQuestCount = self.campaignQuestCount + 1
 				elseif RQE.API.IsWorldQuest(questID) then
-				--elseif C_QuestLog.IsWorldQuest(questID) then
 					self.worldQuestCount = self.worldQuestCount + 1
-				-- elseif C_QuestLog.IsQuestTask(questID) then
-					-- self.worldQuestCount = self.worldQuestCount + 1
 				else
 					self.regularQuestCount = self.regularQuestCount + 1
 				end
@@ -2744,13 +2538,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:StartPeriodicChecks()	-- Fires on map change RQE:UpdateMapIDDisplay() but might need to adjust so it only fires if CheckDBZoneChange is part of the current step (or any step in the current supertracked quest)
 	end
 
-
 	-- Function to update the frame based on the current profile settings
 	function RQE:UpdateFramePosition()
 		-- Share startup/profile-switch protection, including deferred combat work.
 		self:RequestProfileApply()
 	end
-
 
 	-- Function to update the RQEQuestFrame based on the current profile settings
 	function RQE:UpdateQuestFramePosition()
@@ -2758,20 +2550,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self:RequestProfileApply()
 	end
 
-
 	-- Function to update the RQEFrame size based on the current profile settings
 	function RQE:UpdateFrameSize()
 		-- Share startup/profile-switch protection, including deferred combat work.
 		self:RequestProfileApply()
 	end
 
-
 	-- Function to update the RQEQuestFrame size based on the current profile settings
 	function RQE:UpdateQuestFrameSize()
 		-- Share startup/profile-switch protection, including deferred combat work.
 		self:RequestProfileApply()
 	end
-
 
 	-------------------------------------------------------
 	-- #9b. Main Frame & Waypoint Clearing
@@ -2784,10 +2573,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.QuestIDText:SetText("")
 		end
 		RQE.DisplayedQuestID = nil
-
-		-- if RQE.QuestIDText then
-			-- RQE.QuestIDText:SetText("")
-		-- end
 
 		if RQE.QuestNameText then
 			RQE.QuestNameText:SetText("")
@@ -2842,7 +2627,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
 
-
 	-- Clear Waypoint Buttons
 	function RQE:ClearWaypointButtonData()
 		if RQE.WaypointButtons then
@@ -2851,7 +2635,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #9c. Quest Database Tracking Buckets
@@ -2885,19 +2668,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function that track quests that are in the DB but have no steps
 	function RQE.TrackDBQuestsWithoutSteps()
 		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				-- print("~~~ Remove Quest Watch: 1889 ~~~")
 				C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
 		C_Timer.After(0.5, function()
-			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
 				if info and not info.isHeader then
 					local questID = info.questID
@@ -2914,19 +2695,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function that track quests that are in the DB and have steps
 	function RQE.TrackDBQuestsWithSteps()
 		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				-- print("~~~ Remove Quest Watch: 1918 ~~~")
 				C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
 		C_Timer.After(0.5, function()
-			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
 				if info and not info.isHeader then
 					local questID = info.questID
@@ -2943,19 +2722,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function that track quests that are NOT in the DB at all
 	function RQE.TrackQuestsNotInDB()
 		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				-- print("~~~ Remove Quest Watch: 1947 ~~~")
 				C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
 		C_Timer.After(0.5, function()
-			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
 				if info and not info.isHeader then
 					local questID = info.questID
@@ -2971,7 +2748,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end)
 	end
-
 
 	-------------------------------------------------------
 	-- #9d. Separate Focus Frame Clearing & Recovery
@@ -3048,47 +2824,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end)
 		end
 
-		-- if RQE._lastSeparateClearReason == "StepIndex changed" then
-			-- RQE._lastSeparateClearReason = nil
-
-			-- C_Timer.After(0.05, function()
-				-- if RQE.UpdateSeparateFocusFrame then
-					-- RQE:UpdateSeparateFocusFrame()
-				-- end
-			-- end)
-		-- end
-
 		RQE.ClearButtonPressed = false
 	end
 
-
 	-------------------------------------------------------
-	-- #9e. Legacy Separate Focus Clear (Disabled)
-	-------------------------------------------------------
-
-	-- -- Function to clear the contents of the SeparateFocusFrame
-	-- function RQE:ClearSeparateFocusFrame()
-		-- -- Check if the SeparateFocusFrame exists
-		-- if not RQE.SeparateFocusFrame then
-			-- return
-		-- end
-
-		-- -- Ensure the frame is initialized	-- WAS CAUSING TEXT TO POSSIBLY BE YELLOW AND NOT HAVE WAYPOINT BUTTON INTIALIZED CORRECTLY IN SEPARATE FOCUS FRAME
-		-- RQE.InitializeSeparateFocusFrame()
-
-		-- -- Ensure SeparateStepText exists
-		-- if not RQE.SeparateStepText then
-			-- RQE.InitializeSeparateFocusFrame()
-		-- end
-
-		-- if RQE.SeparateStepText then
-			-- RQE.SeparateStepText:SetText("No step description available for this step.")
-		-- end
-	-- end
-
-
-	-------------------------------------------------------
-	-- #9f. Separate Focus Consistency Checks
+	-- #9e. Separate Focus Consistency Checks
 	-------------------------------------------------------
 
 	-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty
@@ -3119,7 +2859,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info
 	function RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
@@ -3155,11 +2894,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						print("|cff00ff00" .. text .. "|r")
 					end
 				end
-
-				-- if text ~= "" and not ignoredTexts[text] then
-					-- separateHasMeaningfulText = true
-					-- break
-				-- end
 			end
 		end
 
@@ -3179,16 +2913,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return true
 		end
 
-		-- if rqeFrameHasQuest then
-			-- return true
-		-- end
-
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("|cFFFF3333[RQE]|r SeparateFocusFrame has text but RQEFrame is missing quest data.")
 			print("|cff99ccff[RQE]|r Forcing UpdateFrame()")
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("|cff99ccff[RQE]|r SuperTracked QuestID:", tostring(questID))
@@ -3206,9 +2936,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-------------------------------------------------------
-	-- #9g. Frame Content Diagnostics
+	-- #9f. Frame Content Diagnostics
 	-------------------------------------------------------
 
 	-- Debug helper to determine if the SeparateFocusFrame is actually empty
@@ -3303,7 +3032,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Debug helper to determine if the RQEFrame currently contains a quest
 	function RQE:DebugRQEFrameContents()
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -3375,14 +3103,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
-	-- #9h. Clear Decisions & Objective Snapshots
+	-- #9g. Clear Decisions & Objective Snapshots
 	-------------------------------------------------------
 
 	-- Colorization of the RQEFrame
 	local function colorizeObjectives(questID)
-		local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesData = RQE.API.GetQuestObjectives(questID)
 		local colorizedText = ""
 		local t = {}
 
@@ -3415,7 +3142,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return table.concat(t)
 	end
 
-
 	-- Simulates pressing the "Clear Window" Button
 	function RQE:PerformClearActions()
 		RQE:ClearFrameData()
@@ -3432,14 +3158,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function check if RQEFrame frame should be cleared
 	function RQE:ShouldClearFrame()
 		-- Attempt to directly extract questID from RQE.QuestIDText if available
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Early exit if there's still no valid questID
@@ -3453,20 +3177,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
 		local isQuestInLog = RQE.API.IsOnQuest(extractedQuestID)
-		local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)	--C_QuestLog.IsWorldQuest(extractedQuestID)
+		local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)
 		local isBeingSearched = RQE.searchedQuestID == extractedQuestID
 		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
 
 		local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
 		local isBonusQuest = C_QuestLog.IsQuestTask(extractedQuestID) or C_QuestLog.IsThreatQuest(extractedQuestID)
 		local isSuperTrackedQuest = RQE.API.GetSuperTrackedQuestID() == extractedQuestID
-		--local isSuperTrackedQuest = C_SuperTrack.GetSuperTrackedQuestID() == extractedQuestID
 		local isDatabaseQuest = RQE.getQuestData(extractedQuestID) ~= nil
 
 		if isBonusQuest and isSuperTrackedQuest and isDatabaseQuest then
 			return
 		end
-		-- local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
 
 		local watchedQuests = {}
 		for i = 1, C_QuestLog.GetNumQuestWatches() do
@@ -3527,7 +3249,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				extractedQuestID = RQE.DisplayedQuestID
-				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 
 			-- Early exit if there's still no valid questID
@@ -3538,7 +3259,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Clears RQEFrame if listed quest is not one that is presently in the player's quest log or is being searched
 			local isQuestInLog = RQE.API.IsOnQuest(extractedQuestID)
-			local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)	--C_QuestLog.IsWorldQuest(extractedQuestID)
+			local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)
 			local isBeingSearched = RQE.searchedQuestID == extractedQuestID
 			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
 			local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
@@ -3581,7 +3302,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end)
 	end
-
 
 	-- Function to check if the quest in RQEFrame is either the searched quest or a tracked/watched quest, and clear if not
 	function RQE:CheckAndClearUntrackedQuest()
@@ -3638,13 +3358,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return true
 		end
 
-		-- if RQE:CompareObjectiveTables(oldObj, newObj) then
-			-- RQE.LastObjectiveSnapshot = newObj
-			-- return true
-		-- end
-
-		-- return false
-
 		-- Detect real changes
 		local changed = RQE:CompareObjectiveTables(oldObj, newObj)
 
@@ -3659,7 +3372,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Saves current objective progress to table
 	function RQE:GetQuestObjectiveSnapshot(questID)
-		local objs = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objs = RQE.API.GetQuestObjectives(questID)
 		if not objs then return nil end
 
 		local snapshot = {}
@@ -3699,24 +3412,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.LastMinimapZoneSnapshot = newZoneSnapshot
 			return true
 		end
-
-		-- local newMinimapZone = GetMinimapZoneText() or ""
-		-- newMinimapZone = newMinimapZone:lower()
-
-		-- local oldMinimapZone = RQE.LastMinimapZoneSnapshot or ""
-
-		-- local directionChanged = (newDir ~= oldDir)
-		-- local minimapZoneChanged = (newMinimapZone ~= oldMinimapZone)
-
-		-- if directionChanged or minimapZoneChanged then
-			-- RQE.LastDirectionSnapshot = newDir
-			-- RQE.LastMinimapZoneSnapshot = newZoneSnapshot
-			-- return true
-		-- end
-
 		return false
 	end
-
 
 	-- Compares progress of previous objectives completed/required of supertracked quest with the current objective status
 	function RQE:CompareObjectiveTables(old, new)
@@ -3744,10 +3441,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if a.numRequired ~= b.numRequired then return true end
 			end
 		end
-
 		return false
 	end
-
 
 	-- Determines if there was a change to the previous table of the RQE.FrameState:
 	-- if new quest is supertracked, if stepIndex changed, or objectives, but will return true if first run
@@ -3848,9 +3543,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-------------------------------------------------------
-	-- #9i. Main Quest Frame Rendering
+	-- #9h. Main Quest Frame Rendering
 	-------------------------------------------------------
 
 	-- Helper function to normalize quest IDs safely
@@ -3864,13 +3558,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return nil
 	end
 
-
 	-- UpdateFrame function
 	function UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 		if RQE.DontUpdateFrame then return end
 
 		-- Check if the player is supertracking anything and if not it will run the function to check if the frame should be cleared
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking and not RQE.searchedQuestID then
 			RQE:ShouldClearFrame()
 			return
@@ -3882,9 +3575,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:CheckSuperTrackedQuestAndStep()
 
 		-- Priority: explicit param > search override > current super-tracked
-		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		-- questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
+		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
+		questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
 
 		-- Only continue if something actually changed
 		if not RQE.AllFramesShouldUpdate then
@@ -3924,7 +3616,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Super-tracking incorrectly changed, swapping it back to " .. extractedQuestID)
 			end
-			-- print("~~~ SetSuperTrack: 2223~~~")
 			RQE:AutoSetSuperTrackedQuestID(extractedQuestID)
 			RQE:SaveSuperTrackedQuestToCharacter()
 		end
@@ -3934,14 +3625,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		if RQE.QuestIDText then
-			-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
 			RQE.DisplayedQuestID = RQE:NormalizeQuestID(questID)
 			RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
 		end
-
-		-- if RQE.QuestIDText then
-			-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
-		-- end
 
 		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
 		local questName
@@ -3986,7 +3672,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- For QuestObjectives
-		local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesTable = RQE.API.GetQuestObjectives(questID)
 		local objectivesText = objectivesTable and "" or "No objectives available."
 		if objectivesTable then
 			for _, objective in pairs(objectivesTable) do
@@ -3996,7 +3682,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Apply colorization to objectivesText
 		local objectivesText = colorizeObjectives(questID)
-		--objectivesText = colorizeObjectives(questID)
 
 		if RQE.QuestObjectives then  -- Check if QuestObjectives is initialized
 			RQE.QuestObjectives:SetText(objectivesText)
@@ -4046,8 +3731,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQE.DirectionTextFrame:SetText("No direction available.")
 				end
 			end
-
-			--RQE.DontUpdateFrame = true
 		else
 			-- Install a usable same-map coordOrder point before other waypoint
 			-- creators run, but never synthesize directionText from coordinates.
@@ -4082,7 +3765,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.searchedQuestID and RQE.searchedQuestID == questID then
 			-- Check if the quest is in the player's quest log
 			local isQuestInLog = RQE.API.IsOnQuest(questID)
-			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
 
 			-- When the RQEFrame is updated for a searched quest that is not in the player's quest log
@@ -4136,17 +3819,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						end
 					end
 
-					-- local dbEntry = RQE.getQuestData(questID)
-					-- if dbEntry and type(dbEntry.npc) == "table" then
-						-- local npcName = dbEntry.npc[1]
-						-- if type(npcName) == "string" then
-							-- npcName = npcName:match("^%s*(.-)%s*$") -- trim whitespace
-							-- if npcName ~= "" then
-								-- pickupText = pickupText .. " from " .. npcName
-							-- end
-						-- end
-					-- end
-
 					RQE.QuestObjectives:SetText(pickupText)
 					-- RQE.QuestObjectives:SetText("Quest not located in player's Log, please pick up quest")
 					RQE.QuestObjectives:SetTextColor(1, 1, 1) -- White color for completed criteria
@@ -4169,9 +3841,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.QuestLogIndexButtonPressed = false
 	end
 
-
 	-------------------------------------------------------
-	-- #9j. Waypoint Button Automation
+	-- #9i. Waypoint Button Automation
 	-------------------------------------------------------
 
 	-- Function that will click the "W" button in the RQEFrame
@@ -4186,19 +3857,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.SeparateWaypointButton then
 			-- Click the button if it exists
 			RQE.SeparateWaypointButton:Click()
-		-- else
-			-- -- Debugging: Provide feedback if the button doesn't exist
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("|cffff0000Error: SeparateWaypointButton is not initialized or available.|r")
-			-- end
 		end
 	end
-
 
 	-- Function to check if the quest has steps or if it's not in the database and player isn't in party/raid instance
 	function RQE.CheckAndClickWButton()
 		if RQE:IsCoordblockWaypointProtected() then return end
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then return end
 		
 		if InCombatLockdown() then
@@ -4216,7 +3881,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the current quest ID displayed in the RQEFrame
-		local questID = RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()
 
 		-- Check if the quest ID exists
 		if not questID or questID == 0 then
@@ -4291,7 +3956,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function to check for waypoint text and create a waypoint if available
 	function RQE:CheckAndCreateSuperTrackedQuestWaypoint()
 		if self:IsCoordblockWaypointProtected() then return end
@@ -4304,7 +3968,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Retrieve the currently super-tracked quest ID
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID or questID == 0 then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest found.")
@@ -4337,9 +4001,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
-	-- #9k. Quest Tooltips
+	-- #9j. Quest Tooltips
 	-------------------------------------------------------
 
 	-- Create the tooltip when mousing over certain assets
@@ -4361,7 +4024,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Add objectives
-		local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesTable = RQE.API.GetQuestObjectives(questID)
 		local objectivesText = objectivesTable and "" or "No objectives available."
 		if objectivesTable then
 			for _, objective in pairs(objectivesTable) do
@@ -4385,8 +4048,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		GameTooltip:Show()
 	end
 
-
-	-- /run RQE:ShowCustomQuestTooltip(66635)
 	-- Function that displays a tooltip when mousing over quests in the chat log after doing a 'print questline'
 	RQE.QuestLinePrintCache = RQE.QuestLinePrintCache or {}
 
@@ -4458,12 +4119,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			objectivesText = objectivesText ~= "" and objectivesText or (questObjectives or "")
 		end
 
-		-- if logIndex then
-			-- local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
-			-- descriptionText = questDesc or ""
-			-- objectivesText = questObjectives or ""
-		-- end
-
 		local objText = GetQuestObjectiveInfo(questID, 1, false)
 		local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
 
@@ -4471,55 +4126,54 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		GameTooltip:SetOwner(ChatFrame1, "ANCHOR_TOPRIGHT", 30, 30)
 		GameTooltip:ClearLines()
 
-				-- 🟨 Quest title (always gold)
-				GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
+		-- 🟨 Quest title (always gold)
+		GameTooltip:AddLine(questTitle, 1, 0.82, 0, true)
 
-				-- 🔴🟢🟠 Status message
-				GameTooltip:AddLine(statusText, statusR, statusG, statusB, true)
+		-- 🔴🟢🟠 Status message
+		GameTooltip:AddLine(statusText, statusR, statusG, statusB, true)
 
-				-- 📜 Description
-				if descriptionText ~= "" then
-					GameTooltip:AddLine(" ", 1, 1, 1, false)
-					GameTooltip:AddLine(descriptionText, 1.0, 0.75, 0.79, true)
-				else
-					GameTooltip:AddLine(" ", 1, 1, 1, false)
-					GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
-				end
+		-- 📜 Description
+		if descriptionText ~= "" then
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine(descriptionText, 1.0, 0.75, 0.79, true)
+		else
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine("No quest description available.", 0.8, 0.8, 0.8, true)
+		end
 
-				-- 📘 Objectives Comment (if present)
-				if objectivesQuestText ~= "" then
-					GameTooltip:AddLine(" ", 1, 1, 1, false)
-					GameTooltip:AddLine("Objective:", 1, 0.82, 0, true)
-					GameTooltip:AddLine(objectivesQuestText, 0.9, 0.95, 1, true)
-				end
+		-- 📘 Objectives Comment (if present)
+		if objectivesQuestText ~= "" then
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine("Objective:", 1, 0.82, 0, true)
+			GameTooltip:AddLine(objectivesQuestText, 0.9, 0.95, 1, true)
+		end
 
-				-- ✅ Requirements
-				if objectivesText ~= "" or showFallbackObjective then
-					GameTooltip:AddLine(" ", 1, 1, 1, false)
-					GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
-					if objectivesText ~= "" then
-						GameTooltip:AddLine("- " .. objectivesText, 1, 1, 1, true)
-					elseif showFallbackObjective then
-						GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
-					end
-				else
-					GameTooltip:AddLine(" ", 1, 1, 1, false)
-					GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
-					GameTooltip:AddLine("Objective requirements unavailable", 0.8, 0.8, 0.8, true)
-				end
+		-- ✅ Requirements
+		if objectivesText ~= "" or showFallbackObjective then
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+			if objectivesText ~= "" then
+				GameTooltip:AddLine("- " .. objectivesText, 1, 1, 1, true)
+			elseif showFallbackObjective then
+				GameTooltip:AddLine("- " .. objText, 1, 1, 1, true)
+			end
+		else
+			GameTooltip:AddLine(" ", 1, 1, 1, false)
+			GameTooltip:AddLine("Requirements:", 1, 0.82, 0, true)
+			GameTooltip:AddLine("Objective requirements unavailable", 0.8, 0.8, 0.8, true)
+		end
 
-				-- Add Rewards
-				GameTooltip:AddLine(" ")
-				RQE:QuestRewardsTooltip(GameTooltip, questID)
+		-- Add Rewards
+		GameTooltip:AddLine(" ")
+		RQE:QuestRewardsTooltip(GameTooltip, questID)
 
-				GameTooltip:AddLine(" ", 1, 1, 1, false)
-				GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
-				GameTooltip:Show()
+		GameTooltip:AddLine(" ", 1, 1, 1, false)
+		GameTooltip:AddLine("QuestID: " .. questID, 1, 1, 0.6, true)
+		GameTooltip:Show()
 	end
 
-
 	-------------------------------------------------------
-	-- #9l. Nearest Quest Super-Tracking
+	-- #9k. Nearest Quest Super-Tracking
 	-------------------------------------------------------
 
 	-- Function to find the closest quest currently being tracked
@@ -4569,12 +4223,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						end
 					end
 				end
-				-- for i = 1, 10 do
-					-- local step = questData[i]
-					-- if step and step.coordinates then
-						-- return RQE:GetDistance(playerMapID, px, py, step.coordinates.mapID, step.coordinates.x / 100, step.coordinates.y / 100)
-					-- end
-				-- end
 			end
 			return math.huge
 		end
@@ -4606,7 +4254,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return closestQuestID
 	end
 
-
 	-- Function to Auto Supertrack the Nearest Watched Quest
 	function RQE:AutoSuperTrackClosestQuest()
 		if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
@@ -4615,26 +4262,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		local functionName = "RQE:AutoSuperTrackClosestQuest()"
 
-		-- -- Debounce: prevent multiple zone-change triggers within 2 seconds
-		-- local now = GetTime()
-		-- if RQE.LastZoneChangeTime and (now - RQE.LastZoneChangeTime) < 2 then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Debounce: Skipping AutoSuperTrackClosestQuest (zone change spam)")
-			-- end
-			-- return
-		-- end
-		-- RQE.LastZoneChangeTime = now
-
-		-- -- Continue with delayed AutoSuperTrackClosestQuest
-		-- C_Timer.After(1.0, function()
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("From ZONE_CHANGED_NEW_AREA event — tracking nearest quest.")
-			-- end
-			-- RQE:AutoSuperTrackClosestQuest()
-		-- end)
-
 		local closestQuestID = RQE:GetClosestTrackedQuest()
-		local supertrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local supertrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		if closestQuestID and closestQuestID ~= 0 then
 			if closestQuestID ~= supertrackedQuestID then
@@ -4668,7 +4297,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Helper function to RQE:AutoSuperTrackClosestQuest() to force the nearest quest to be supertracked
 	function RQE:ForceSuperTrackQuestProperly(questID)
@@ -4721,7 +4349,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function to supertrack the first watched quest matching the player's current map ID
 	function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 		-- Get the player's current map ID
@@ -4765,13 +4392,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for _, questID in ipairs(watchedQuestIDs) do
 			-- Get the map ID associated with the quest
 			local questMapID = GetQuestUiMapID(questID)
-			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			if questMapID then
 				-- Check if the quest's map ID matches the player's current map ID
 				if questMapID == playerMapID then
 					-- Supertrack this quest
 					if not isWorldQuest then
-						-- print("~~~ SetSuperTrack: 2843~~~")
 						RQE:AutoSetSuperTrackedQuestID(questID)
 						RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3334 ~~")
 						UpdateFrame()
@@ -4787,20 +4413,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
-	-- #9m. Coordinate Hotspots & World Quest Tracking
+	-- #9l. Coordinate Hotspots & World Quest Tracking
 	-------------------------------------------------------
 
 	-- Checks whether steps use legacy `coordinates` instead of `coordinateHotspots`
 	function RQE:CheckCoordHotspotsInSteps(questID)
 		if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
 		if C_AddOns.IsAddOnLoaded("Chattynator") then return end
-
-		-- -- Restrict audit tool to approved characters
-		-- if not RQE_Contribution:IsAuthorizedCoordAuditPlayer() then
-			-- return
-		-- end
 
 		questID = tonumber(questID)
 		if not questID then
@@ -4881,16 +4501,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Calls function that displays a visual and audio alert depending on whether legacy coords were found
 		if legacyCount > 0 then
-			--PlaySound(1285)  -- legacy coords found
 			RQE:LegacyCoordsDetected(questID)
 		else
-			--PlaySound(737)  -- no legacy coords found
 			RQE:NoLegacyCoordsDetected(questID)
 		end
 
 		print(RQE.ColorPURPLE .. ("Summary: legacy=%d, hotspots=%d, both=%d, none=%d"):format(legacyCount, hotspotCount, bothCount, noneCount) .. RQE.ColorRESET)
 	end
-
 
 	-- Function that tracks the closest quest on certain events in the Event Manager
 	function RQE.TrackClosestQuest()
@@ -4909,7 +4526,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- If a closest quest was found, set it as the supertracked quest
 			if closestQuestID then
-				-- print("~~~ SetSuperTrack: 2874~~~")
 				RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 				RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -4939,8 +4555,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
-
 
 	-- Refresh automatic world-quest tracking for the supplied map.
 	function UpdateWorldQuestTrackingForMap(uiMapID)
@@ -5016,9 +4630,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
-	-- #9n. World Quest Cleanup
+	-- #9m. World Quest Cleanup
 	-------------------------------------------------------
 
 	-- Function to remove world quests from tracking if the player leaves the subzone
@@ -5058,7 +4671,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
 
 				-- Store all the quest IDs currently in the player's area (map and subzone)
-				--if watchType == Enum.QuestWatchType.Automatic then
 				if isAutomatic then
 					if not isInArea then
 						C_QuestLog.RemoveWorldQuestWatch(questID)
@@ -5073,7 +4685,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if isAutomatic then
 					if not questsInAreaLookup[questID] then
 						-- Get quest's coordinates
-						local questPosition = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+						local questPosition = RQE.API.GetQuestObjectives(questID)
 
 						-- Check if player is within the subzone radius of the quest
 						local questInSubzone = false
@@ -5120,7 +4732,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Remove Tracking of all World Quests (called on PLAYER_LOGIN from EventManager if selected in the configuration)
 	function RemoveAllTrackedWorldQuests()
 		-- Get the number of currently tracked World Quests
@@ -5138,15 +4749,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
-	-- #9o. Super-Tracking Status Helpers
+	-- #9n. Super-Tracking Status Helpers
 	-------------------------------------------------------
 
 	-- Function that removes a quest from being super tracked but not actually removing the watch
 	function RQE:RemoveSuperTrackingFromQuest()
 		-- Step 1: Get the currently super-tracked quest ID
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Debugging: Print the currently super-tracked quest ID
 		RQE.infoLog("Currently Super Tracked Quest ID:", superTrackedQuestID or "None")
@@ -5154,7 +4764,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Step 2: Remove the super-tracking by setting it to 0
 		if superTrackedQuestID and superTrackedQuestID ~= 0 then
 			C_SuperTrack.SetSuperTrackedQuestID(0)
-			-- RQE:SaveSuperTrackedQuestToCharacter()
 			RQE.infoLog("Removed super-tracking from quest ID:", superTrackedQuestID)
 		else
 			RQE.infoLog("No quest is currently super-tracked.")
@@ -5166,20 +4775,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.infoLog("RQEQuestFrame updated to reflect super-tracking changes.")
 	end
 
-
 	-- Function that checks to see if a player is currently tracking a quest
 	function RQE.isPlayerSuperTrackingQuest()
 		if RQE.currentSuperTrackedQuestID == RQE.previousSuperTrackedQuestID then return end
 
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			local extractedQuestID = RQE.DisplayedQuestID
-			-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Extracted questID is: " .. tostring(extractedQuestID))
 			end
 			RQE.isSuperTracking = true
 			RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID	-- Added failsafe in case questID isn't yet registered in the RQEFrame, but something is being super tracked and should be considered
-			--RQE.CurrentlySuperQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE.isSuperTracking is " .. tostring(RQE.isSuperTracking) .. ". Currently SuperTracked questID: " .. tostring(RQE.CurrentlySuperQuestID) .. " saved to RQE.CurrentlySuperQuestID addon variable")
 			end
@@ -5223,7 +4829,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Iterate through each step in the current scenario
 		local stepID = scenarioInfo.currentStage
 		local numCriteria = select(3, C_Scenario.GetStepInfo())
-		--local numCriteria = C_Scenario.GetNumCriteria() or 0
 
 		for criteriaIndex = 1, numCriteria do
 			-- Fetch criteria information using GetCriteriaInfo
@@ -5265,7 +4870,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #10b. Legacy Scenario Widget Diagnostics (Disabled)
@@ -5337,7 +4941,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- print("---------------------------------------------------")
 	-- end
 
-
 	-------------------------------------------------------
 	-- #10c. Scenario Timer Lifecycle
 	-------------------------------------------------------
@@ -5369,7 +4972,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Start the timer and shows the UI elements
 	--- @class TimerFrame : Frame
 	--- @field timeSinceLastUpdate number
@@ -5386,7 +4988,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		timerFrame:Show()
 	end
 
-
 	-- Stops the timer and hides the UI elements
 	function RQE.Timer_Stop()
 		local timerFrame = RQE.TimerFrame or (RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.timerFrame)
@@ -5399,7 +5000,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		timerFrame:Hide()
 		RQE.TimerFrame = nil
 	end
-
 
 	--Checks active timers and starts/stops the timer as necessary
 	function RQE.Timer_CheckTimers()
@@ -5430,7 +5030,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #10d. Torghast Event Details
 	-------------------------------------------------------
@@ -5456,7 +5055,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		}
 		return typeMapping[eventType] or "Unknown Type"
 	end
-
 
 	-- Function to update Torghast details in the RQE table
 	function RQE.UpdateTorghastDetails(eventLevel, eventType)
@@ -5507,7 +5105,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:UpdateFramePosition()
 	end
 
-
 	-- Function for Button in Configuration that will reset the size of the RQEFrame and RQEQuestFrame to default values
 	function RQE:ResetFrameSizeToDBorDefault()
 		local _, _, _, RQEWidth, RQEHeight = self:GetFrameGeometry("RQEFrame", true)
@@ -5523,14 +5120,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self:RequestProfileApply()
 	end
 
-
 	-- Function that resets both the frame size and position to default
 	function RQE:ResetFrameAndSizeToDefault()
 		RQE:ResetFrameSizeToDBorDefault()
 		RQE:ResetFramePositionToDBorDefault()
 		RQE:ResetQuestFramePositionToDBorDefault()
 	end
-
 
 	-------------------------------------------------------
 	-- #11b. Main Frame Display Controls
@@ -5547,20 +5142,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.db.profile.isFrameMaximized = true
 	end
 
-
 	-------------------------------------------------------
 	-- #11c. Retired Minimize & Quest Frame Controls
 	-------------------------------------------------------
-
-	--[[ Disabled with the retired RQEFrame +/- controls.
-	-- When the frame is minimized
-	function RQE:MinimizeFrame()
-		local _, _, _, frameWidth = self:GetFrameGeometry("RQEFrame")
-		RQEFrame:SetSize(frameWidth, 30)
-		RQE.db.profile.isFrameMaximized = false
-	end
-	]]
-
 
 	-- Function to Update the Opacity of Main Frame and Quest Tracker
 	function RQE:UpdateFrameOpacity()
@@ -5586,7 +5170,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:UpdateQuestFramePosition()
 	end
 
-
 	-- When the frame is maximized
 	function RQE:MaximizeQuestFrame()
 		local _, _, _, defaultWidth, defaultHeight = self:GetFrameGeometry("RQEQuestFrame")
@@ -5597,7 +5180,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.RQEQuestFrame:SetSize(width, height)
 		RQE.db.profile.isQuestFrameMaximized = true
 	end
-
 
 	-- When the frame is minimized
 	function RQE:MinimizeQuestFrame()
@@ -5626,7 +5208,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to populate the activeEvents table with today's events
 	function RQE:UpdateActiveEvents()
 		-- Clear the table each time this function runs
@@ -5643,7 +5224,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Function to check if a specific eventID is active
 	-- /run RQE:IsEventActive(324)	-- Check to see if Hallow's End event (eventID 324) is active
@@ -5664,7 +5244,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 	end
-
 
 	-- Populate the next supported quest in a holiday-event series.
 	function RQE:PopulateNextQuestInEventSeries(eventID)
@@ -5703,13 +5282,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				-- Manual fallback to populate RQEFrame if UpdateFrame does not display it
 				if RQE.QuestIDText then
-					-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
 					RQE.DisplayedQuestID = RQE:NormalizeQuestID(questID)
 					RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
 				end
-				-- if RQE.QuestIDText then
-					-- RQE.QuestIDText:SetText("Quest ID: " .. (questID or "N/A"))
-				-- end
 
 				if RQE.QuestNameText then
 					RQE.QuestNameText:SetText("Quest Name: " .. questInfo.title)
@@ -5794,18 +5369,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if currentEventID then
 				RQE:PopulateNextQuestInEventSeries(currentEventID)
 			end
-			-- if currentEventID == 324 then
-				-- RQE:PopulateNextQuestInEventSeries(324)
-			-- end
 		end
 	end)
-
 
 	-- Define a table for holiday event quest IDs
 	RQE.eventQuests = {
 		--[324] = {12397, 13437} -- Hallow's End Holiday event
 	}
-
 
 	-------------------------------------------------------
 	-- #12b. Quest Targeting & Raid Markers
@@ -5850,7 +5420,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Helper: true if the quest is relevant (supertracked, searched, watched, or in RQE's tracked sets)
 	function RQE:IsQuestRelevant(questID)
 		if not questID then return false end
@@ -5859,9 +5428,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Super-tracked
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest() or RQE.isSuperTracking		--local isSuperTracking = (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) or RQE.isSuperTracking
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest() or RQE.isSuperTracking
 		if isSuperTracking then
-			local st = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local st = RQE.API.GetSuperTrackedQuestID()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Supertracked is " .. tostring(st))
 			end
@@ -5912,22 +5481,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-- Helper function to return the texture icon for the marker
 	local function GetRaidMarkerIcon(marker)
 		if not marker then return "" end
 		return "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_" .. marker .. ":0|t"
 	end
 
-
 	-- Local helper: is a specific quest objective complete?
 	local function _IsObjectiveComplete(questID, objectiveIndex)
 		if not questID or not objectiveIndex then return false end
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		if not objectives or not objectives[objectiveIndex] then return false end
 		return objectives[objectiveIndex].finished
 	end
-
 
 	-- Core marking logic for a given unitID (e.g., "mouseover", "target")
 	local function TryMarkUnit(unitID, mobList)
@@ -5936,7 +5502,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local unitName = UnitName(unitID)
 		local isDead = UnitIsDead(unitID)
 		local currentMarker = GetRaidTargetIndex(unitID)
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		for _, mob in ipairs(mobList) do
 			if unitName == mob.name then
@@ -5966,7 +5532,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Cached mob list to avoid rebuilding every mouseover
 	local _cachedQuestID, _cachedStepIndex, _cachedMobList = nil, nil, nil
 
@@ -5995,7 +5560,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return _cachedMobList or {}
 	end
-
 
 	-- Function to mark mob on mouseover or target if it matches quest mob or NPC from DB	-- THIS WAS KILLED BY BLIZZARD IN PATCH 12.0
 	function RQE:MarkQuestMobOnMouseover()
@@ -6073,7 +5637,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- TryMarkUnit("target", mobList)
 	end
 
-
 	-- Safely set a raid marker only if needed.
 	-- unitID: "target" (default), "mouseover", "nameplateX", etc.
 	-- desired: 1-8 (⭐=1, ◯=2, ◆=3, △=4, ☾=5, ◼=6, ✖=7, ☠=8)
@@ -6112,13 +5675,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Initialize RQEFrame
 	RQEFrame = RQEFrame or CreateFrame("Frame", "RQEFrame", UIParent)
 
-
 	-- RQEFrame minimize/maximize button placeholders retired with those controls.
-
 
 	-- Initialize SearchEditBox (Make it global to access it from other files)
 	SearchEditBox = CreateFrame("EditBox", "RQESearchEditBox", RQEFrame, "InputBoxTemplate")
-
 
 	-- Initialize position, size, etc. for SearchEditBox
 	SearchEditBox:SetAutoFocus(false)
@@ -6127,7 +5687,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	SearchEditBox:SetPoint("TOPLEFT", RQEFrame, "TOPLEFT", 10, -10) -- Adjust the position as needed
 	SearchEditBox:SetFontObject("GameFontNormal")
 	SearchEditBox:SetText("Edit...")  -- Default text
-
 
 	-------------------------------------------------------
 	-- #13b. Rich-Text Item Tag Parsing
@@ -6143,7 +5702,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return nil
 	end
 
-
 	-- Render text by replacing tags with colored [Name]
 	function RQE.RenderTextWithItemTags(text)
 		if not text then return text end
@@ -6151,7 +5709,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		text = text:gsub("%[item:(%d+):([^%]]+)%]", "|cffffffff[%2]|r")
 		return text
 	end
-
 
 	-- Converts rich text into properly spaced SimpleHTML content
 	function RQE.BuildHTMLFromRichText(raw)
@@ -6216,7 +5773,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Wrap the body content
 		return string.format('<html><body><p>%s</p></body></html>', html)
 	end
-
 
 	-- ✅ Renders the HTML with proper spacing and working coords/items/spells used in the Separate Focus Frame and dealing with coords using SimpleHTML
 	function RQE.RenderTextWithItems(parentFrame, rawText, font, fontSize, textColor, customParent)
@@ -6301,7 +5857,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- 🧾 Fallback to plain text for normal lines
 		parentFrame:SetText(rawText)
 	end
-
 
 	-------------------------------------------------------
 	-- #13c. Coordinate-Block Waypoint State
@@ -6578,9 +6133,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		elseif type(size) == "number" then
 			lineHeight = size + 2
 		end
-		-- local lineHeight = parentFrame:GetLineHeight()
 		local yOffset, rawPos = 0, 1
-
 
 		-- FontStrings perform the final word wrapping, so an item/spell hover cannot
 		-- be represented by a single rectangle.  Lay out each visible word here and
@@ -6990,7 +6543,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		measureFS:Hide()
 	end
 
-
 	-------------------------------------------------------
 	-- #13e. Spell & Item Tooltip Handlers
 	-------------------------------------------------------
@@ -7030,7 +6582,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return hover
 	end
-
 
 	-- Utility function for showing item tooltips on hover (for quest descriptions, etc.)
 	function RQE:CreateItemTooltip(frame, itemID)
@@ -7201,11 +6752,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if foundQuestID then
 				-- Logic for updating location data
 				local questData = RQE.getQuestData(foundQuestID)
-				-- if questData and questData.location then
-					-- -- Update the location data for the examined quest
-					-- RQE.DatabaseSuperX = questData.location.x / 100
-					-- RQE.DatabaseSuperY = questData.location.y / 100
-					-- RQE.DatabaseSuperMapID = questData.location.mapID
 				local x, y, mapID, continentID = RQE.GetPrimaryLocation(questData)
 				local finalMapID
 
@@ -7226,7 +6772,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 
 				-- Local Variables for World Quest/Quest in Log
-				local isWorldQuest = RQE.API.IsWorldQuest(foundQuestID)		--C_QuestLog.IsWorldQuest(foundQuestID)
+				local isWorldQuest = RQE.API.IsWorldQuest(foundQuestID)
 				local isQuestInLog = RQE.API.IsOnQuest(foundQuestID)
 				local watchType = C_QuestLog.GetQuestWatchType(foundQuestID)
 
@@ -7236,7 +6782,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				-- Super Track the Searched Quest if in the Quest Log
 				if isQuestInLog then
-					-- print("~~~ SetSuperTrack: 3854~~~")
 					C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
 					RQE:SaveSuperTrackedQuestToCharacter()
 				end
@@ -7298,17 +6843,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.UpdateTrackedAchievementList()
 	end
 
-
 	-------------------------------------------------------
 	-- #15b. Player Map Position & Coordinate Display
 	-------------------------------------------------------
 
 	-- Utility function to check if a quest is super-tracked
 	function RQE.IsQuestSuperTracked()
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		return superTrackedQuestID ~= nil
 	end
-
 
 	-- Rounds a normalized map coordinate so percentage displays use two decimals.
 	local function RQERoundMapFraction(value)
@@ -7362,20 +6905,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Keep the visible location display with the applied layout during a queued
 		-- profile switch. The shared application pass refreshes it after combat.
 		if self.ProfileApplyPending and not self.ApplyingProfile then return end
-		--if not IsPlayerMoving() then return end
-		-- local mapID = C_Map.GetBestMapForUnit("player")
 		local mapID, x, y = self:GetCurrentPlayerMapPosition()
 
 		-- Check if the mapID is valid before proceeding
 		if mapID then
-			-- local position = C_Map.GetPlayerMapPosition(mapID, "player")
 			if RQEFrame.CoordinatesText then  -- Check if CoordinatesText is initialized
 				if RQE.db.profile.showCoordinates and x and y then
-					-- local x, y = position:GetXY()
-					-- x = x * 100  -- converting to percentage
-					-- y = y * 100  -- converting to percentage
-					-- x = RQERoundMapFraction(x) * 100
-					-- y = RQERoundMapFraction(y) * 100
 					RQEFrame.CoordinatesText:SetText(string.format("%.2f, %.2f", x * 100, y * 100))
 				else
 					RQEFrame.CoordinatesText:SetText("")
@@ -7391,7 +6926,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		if RQE.UI and RQE.UI.RefreshLocationInfoBar then RQE.UI:RefreshLocationInfoBar() end
 	end
-
 
 	-------------------------------------------------------
 	-- #15c. Manual Frame Toggles
@@ -7414,7 +6948,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 			self.db.profile.enableFrame = false
 		else
-			-- print("~~ RQEFrame:Show: 4336 ~~")
 			RQEFrame:Show()
 			if RQE.MagicButton then
 				RQE.MagicButton:Show()
@@ -7427,26 +6960,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
 
-
 	-- Function to toggle the visibility of the RQEQuestFrame
 	function RQE:ToggleRQEQuestFrame()
-		-- print(">> ToggleRQEQuestFrame called – forceHide =", RQE.forceHideRQEQuestFrame)
 
 		if RQE.forceHideRQEQuestFrame then
-			-- print(">> Force-hide is active – hiding RQEQuestFrame")
 			self.RQEQuestFrame:Hide()
 			return
 		end
 
 		if self.db.profile.enableQuestFrame then
-			-- print(">> Config enabled – showing RQEQuestFrame")
 			RQE.RQEQuestFrame:Show()
 		else
-			-- print(">> Config disabled – hiding RQEQuestFrame")
 			RQE.RQEQuestFrame:Hide()
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #15d. Step Inspection & Quest Abandonment
@@ -7472,7 +6999,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	---Abandons a quest with the given questID. Optionally shows a confirmation dialog if items will be lost.
 	---@param questID number The ID of the quest to abandon.
@@ -7521,8 +7047,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
-
 	-------------------------------------------------------
 	-- #15e. Table Formatting & Collection Helpers
 	-------------------------------------------------------
@@ -7538,7 +7062,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return table.concat(itemNames, ", ")
 	end
 
-
 	-- Utility function to convert table to string for debug purposes
 	function RQE:TableToString(tbl)
 		if type(tbl) ~= "table" then
@@ -7552,7 +7075,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return result .. "}"
 	end
 
-
 	-- Utility function to check if a value exists in a table
 	function table.includes(tbl, value)
 		for _, v in pairs(tbl) do
@@ -7562,7 +7084,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return false
 	end
-
 
 	-- Utility function to convert a table of elements
 	function countTableElements(tbl)
@@ -7595,23 +7116,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- World quests should have classification 10
 		if classification == Enum.QuestClassification.WorldQuest then
 			return "WorldQuest"
-		-- elseif classification == Enum.QuestClassification.BonusObjective then
-			-- return "BonusObjective"
 		else
 			return "Other"
 		end
 	end
 
-
 	-- Initialize quest progress snapshots and automatically watch quests that gain progress.
 	function AutoWatchQuestsWithProgress()
 		if isFirstRun then
 			-- On first run, just populate lastKnownProgress without tracking
-			for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local questInfo = RQE.API.GetQuestLogInfo(i)
 				if questInfo and not questInfo.isHeader then
 					local questID = questInfo.questID
-					local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+					local objectives = RQE.API.GetQuestObjectives(questID)
 					local currentProgress = CalculateCurrentProgress(objectives)
 					lastKnownProgress[questID] = currentProgress
 				end
@@ -7622,7 +7140,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			TrackQuestsWithNewProgress()
 		end
 	end
-
 
 	-- Count the completed objectives in a quest-objective collection.
 	function CalculateCurrentProgress(objectives)
@@ -7635,18 +7152,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return currentProgress
 	end
 
-
 	-- Compare quest progress snapshots and watch quests whose completed-objective count increased.
 	function TrackQuestsWithNewProgress()
-		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+		for i = 1, RQE.API.GetNumQuestLogEntries() do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
 				local questID = questInfo.questID
-				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+				local objectives = RQE.API.GetQuestObjectives(questID)
 				local currentProgress = CalculateCurrentProgress(objectives)
 
 				if currentProgress > (lastKnownProgress[questID] or 0) then
-					local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+					local isWorldQuest = RQE.API.IsWorldQuest(questID)
 					if isWorldQuest then
 						C_QuestLog.AddWorldQuestWatch(questID)
 					else
@@ -7659,11 +7175,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Return whether any objective for the supplied quest currently shows progress.
 	function HasQuestProgress(questID)
 		-- Use the WoW API to get quest objectives
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		if not objectives then return false end
 
 		for i, objective in ipairs(objectives) do
@@ -7675,7 +7190,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false -- Return false if all objectives are finished or no objectives are found
 	end
-
 
 	-------------------------------------------------------
 	-- #16b. Quest Data Loading, Building & Step Output
@@ -7706,7 +7220,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to build quest data from WoW API
 	function RQE:BuildQuestData(questID)
 		local questData = {}
@@ -7717,7 +7230,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		questData.directionText = C_QuestLog.GetNextWaypointText(questID)
 
 		-- Fetch quest objectives
-		local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesTable = RQE.API.GetQuestObjectives(questID)
 		questData.objectives = objectivesTable
 
 		-- Fetch quest description
@@ -7728,7 +7241,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return questData
 	end
-
 
 	-- Function to print quest steps to chat
 	function PrintQuestStepsToChat(questID)
@@ -7762,28 +7274,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			CoordsText[i] = cText or "--"
 			MapIDs[i] = mID
 			questHeader[i] = desc:match("^(.-)\n") or desc
-
-		-- for i, step in ipairs(questInfo) do
-			-- StepsText[i] = step.description
-			-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
-			-- MapIDs[i] = step.coordinates.mapID
-			-- questHeader[i] = step.description:match("^(.-)\n") or step.description
-
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- -- Debug messages
-				-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. i .. ": " .. StepsText[i], 0, 1, 0) -- Green color
-				-- DEFAULT_CHAT_FRAME:AddMessage("Coordinates " .. i .. ": " .. CoordsText[i], 0, 1, 0) -- Green color
-				-- DEFAULT_CHAT_FRAME:AddMessage("MapID " .. i .. ": " .. tostring(MapIDs[i]), 0, 1, 0) -- Green color
-				-- DEFAULT_CHAT_FRAME:AddMessage("Header " .. i .. ": " .. questHeader[i], 0, 1, 0) -- Green color
-			-- end
 		end
-
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- DEFAULT_CHAT_FRAME:AddMessage("Quest Steps Printed for QuestID: " .. tostring(questID), 0, 1, 0) -- Green color
-		-- end
 		return StepsText, CoordsText, MapIDs, questHeader
 	end
-
 
 	-------------------------------------------------------
 	-- #16c. Zone, Bonus & Task Quest Discovery
@@ -7824,7 +7317,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Prints the useful live state for a task quest.
 	function RQE:PrintTaskQuestInfo(questID)
 		if type(questID) ~= "number" then
@@ -7849,7 +7341,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			tostring(displayAsObjective)
 		))
 	end
-
 
 	-- Retrieve all of the bonus quests in the player's current zone to be updated to the RQEQuestFrame and placed under the RQE.QuestsFrame child
 	function RQE:GetBonusQuestsInCurrentZone()
@@ -7903,7 +7394,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return bonusQuests
 	end
 
-
 	-- Retrieve all of the task quests in the player's current zone that are available to them
 	function RQE:GetActiveTrackedTaskQuests()
 		local taskQuests = {}
@@ -7932,7 +7422,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return taskQuests
 	end
 
-
 	-- Inspect/Print the TaskPOIs on Player's Current Map
 	function RQE:InspectTaskPOIs()
 		local playerMapID = C_Map.GetBestMapForUnit("player")
@@ -7955,7 +7444,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #16d. Quest Completion & External Reference Links
 	-------------------------------------------------------
@@ -7968,7 +7456,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE:ConfigurationChanged()
 		end
 	end
-
 
 	-- Function to generate frame on menu choice that will display the wowhead link for a given quest
 	function RQE:ShowWowheadLink(questID)
@@ -8061,7 +7548,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		linkFrame:Show()
 	end
 
-
 	local f = CreateFrame("Frame")
 	f:RegisterEvent("CHAT_MSG_ADDON")
 	f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
@@ -8076,7 +7562,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			editBox:Hide()
 		end
 	end)
-
 
 	-- Function to generate frame on menu choice that will display the wowhead link for a given quest
 	function RQE:ShowWowWikiLink(questID)
@@ -8176,7 +7661,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		linkFrame:Show()
 	end
 
-
 	-- Variables to track the last known states
 	RQE.lastKnownQuestID = nil
 	RQE.lastKnownZoneID = nil
@@ -8189,7 +7673,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Compare current quest, zone, aura, and inventory snapshots with their last recorded values.
 	function RQE.hasStateChanged()
-		local currentQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local currentQuestID = RQE.API.GetSuperTrackedQuestID()
 		local currentZoneID = C_Map.GetBestMapForUnit("player")
 		local currentBuffs = RQE.getCurrentBuffs()
 		local currentInventory = RQE.getCurrentInventory()
@@ -8211,7 +7695,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	-- Function to check if a quest is a World Quest by its classification
 	function RQE:IsWorldQuest(questID)
@@ -8248,7 +7731,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-- Collect objective data for every quest currently watched by Blizzard.
 	function RQE.getAllWatchedQuestsObjectives()
 		local objectives = {}
@@ -8261,7 +7743,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return objectives
 	end
-
 
 	-- Function to place Current Objectives in table
 	function RQE.getCurrentQuestObjectives(questID)
@@ -8279,19 +7760,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return objectives
 	end
 
-
 	-- Function to place Current Buffs in table
 	function RQE.getCurrentBuffs()
 		local buffs = {}
 		for i = 1, 40 do  -- Typically there are not more than 40 buffs
 			local name = C_UnitAuras.GetBuffDataByIndex("player", i)
-			--local name = UnitBuff("player", i)
 			if not name then break end
 			table.insert(buffs, name)
 		end
 		return buffs
 	end
-
 
 	-- Function to place Current Inventory in table
 	function RQE.getCurrentInventory()
@@ -8311,7 +7789,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return inventory
 	end
 
-
 	-- Compare Function Tables for Buffs and Inventory
 	function RQE.compareTables(t1, t2)
 		if #t1 ~= #t2 then return false end
@@ -8320,7 +7797,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return true
 	end
-
 
 	-------------------------------------------------------
 	-- #16f. Step Index Resolution & Final-Step Selection
@@ -8345,10 +7821,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return #questData  -- Return the last step if all objectives are complete or ready for turn-in
 	end
 
-
 	-- Function to find and set the final step for the super-tracked quest
 	function RQE:FindAndSetFinalStep()
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		if not superTrackedQuestID then
 			RQE.debugLog("No super-tracked quest ID found.")
@@ -8373,7 +7848,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self.FinalStep = nil
 	end
 
-
 	-- Set initial waypoint button to 1
 	function RQE.SetInitialWaypointToOne()
 		if not RQE.db.profile.autoClickWaypointButton then
@@ -8384,10 +7858,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
 		if isSuperTracking then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			local stepIndex = RQE.AddonSetStepIndex or 1
 
 			-- Tier Four Importance: RQE.SETINITIALWAYPOINTTOONE Function
@@ -8404,7 +7878,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
-			--RQE.SetMacroForFinalStep(questID, stepIndex)
 		end
 
 		RQE.SetInitialFromAccept = false
@@ -8422,11 +7895,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function to check and set the final step
 	function RQE.CheckAndSetFinalStep()
 		C_Timer.After(1, function()
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 			if not superTrackedQuestID then
 				RQE.debugLog("No super tracked quest ID found, skipping check.")
@@ -8440,7 +7912,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				return
 			end
 
-			local objectives = RQE.API.GetQuestObjectives(superTrackedQuestID)	--C_QuestLog.GetQuestObjectives(superTrackedQuestID)
+			local objectives = RQE.API.GetQuestObjectives(superTrackedQuestID)
 			if not objectives or #objectives == 0 then
 				RQE.debugLog("Quest", tostring(superTrackedQuestID), "has no objectives or failed to retrieve objectives.")
 				RQE.shouldCheckFinalStep = false
@@ -8505,15 +7977,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							RQE.isCheckingMacroContents = false
 						end)
 					end)
-
-					-- RQE.isCheckingMacroContents = true
-					-- RQEMacro:CreateMacroForCurrentStep()
-					-- C_Timer.After(3, function()
-						-- RQE.CreateMacroForCheckAndSetFinalStep = false
-						-- RQE.isCheckingMacroContents = false
-					-- end)
-
-					-- RQE.SetMacroForFinalStep(superTrackedQuestID, finalStepIndex)
 				else
 					RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
 					RQE.infoLog("Final Index is: " .. finalStepIndex)
@@ -8523,7 +7986,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		RQE.shouldCheckFinalStep = false
 	end
-
 
 	-------------------------------------------------------
 	-- #16g. Quest-Step Macro Generation
@@ -8545,7 +8007,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.debugLog("No macro data found for the final step.")
 		end
 	end
-
 
 	-- Combine individual check results using `mod`
 	function RQE:CombineCheckResults(results, stepData)
@@ -8596,11 +8057,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return overallResult
 	end
 
-
 	-- Function that creates a macro based on the current stepIndex of the current super tracked quest
 	function RQEMacro:CreateMacroForCurrentStep()
 		-- Retrieve the questID that is currently being supertracked
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		local isInInstance, instanceType = IsInInstance()
 		if not questID then
 			return
@@ -8619,9 +8079,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end
 		end
-
-		-- -- Clears the RQEMacro before creating a fresh one	-- keeping this in place resulted in the macro being cleared too frequently and sometimes being left empty at those inappropriate times
-		-- RQEMacro:ClearMacroContentByName("RQE Macro")
 
 		-- Retrieve the quest data from the database
 		local questData = RQE.getQuestData(questID)
@@ -8665,9 +8122,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			macroContent = stepData.macro
 		end
 
-		-- Combine the macro data into a single string
-		-- local macroContent = type(stepData.macro) == "table" and table.concat(stepData.macro, "\n") or stepData.macro
-
 		-- Print the macro content for debugging
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Creating or updating 'RQE Macro' with content:", macroContent)
@@ -8675,10 +8129,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Set or update the macro using the provided content
 		RQEMacro:SetQuestStepMacro(questID, stepIndex, macroContent, false)
-		-- RQEMacro:SetMacro("RQE Macro", "INV_MISC_QUESTIONMARK", macroContent, false)
 		RQE.Buttons.UpdateMagicButtonVisibility()
 	end
-
 
 	-- Helper function to check if the final step contains `funct = "CheckDBComplete"`
 	function RQE:HasCheckDBComplete(questData)
@@ -8690,7 +8142,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false, finalStepIndex
 	end
 
-
 	-------------------------------------------------------
 	-- #16h. Manual Step Preview & Periodic Evaluation
 	-------------------------------------------------------
@@ -8699,7 +8150,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:SetDisplayedStepFromStepsList(stepIndex)
 		if not RQE.db.profile.enableStepControls then return end
 
-		local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 		local questData = questID and RQE.getQuestData(questID)
 		if not questData or not questData[stepIndex] then return end
 		if self.ActiveCoordblock and self.ActiveCoordblock.stepIndex
@@ -8730,7 +8181,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Clears manual step preview mode and optionally resumes automatic quest progress evaluation.
 	function RQE:ClearManualStepPreview(runChecks)
 		if not RQE.db.profile.enableStepControls then return end
@@ -8738,32 +8188,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ManualStepPreview = false
 		RQE.ManualPreviewQuestID = nil
 		RQE.ManualPreviewStepIndex = nil
-		--RQE.ResumeAutomaticFromManualPreview = false
 
 		if runChecks ~= false then
 			RQE:StartPeriodicChecks()
 		end
 	end
 
-
 	-- Scheduler to help with CPU load when calling RQE:StartPeriodicChecks()
 	function RQE:QueuePeriodicChecks(reason, delay, questID)
 		delay = delay or 0.20
-		questID = questID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		questID = questID or RQE.API.GetSuperTrackedQuestID()
 
 		if not questID or questID <= 0 then
 			return
 		end
-
-		-- SeparateFocusFrame validation is handled inside StartPeriodicChecks()
-		-- -- Checks to make sure that the SeparateFocusFrame contains information when it should
-		-- C_Timer.After(1.1, function()
-			-- RQE:CheckAndRefreshSeparateFocusFrame()
-		-- end)
-
-		-- C_Timer.After(1.7, function()
-			-- RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
-		-- end)
 
 		-- Prevent many timers for the same thing from stacking
 		if self._scheduledPeriodicCheck then
@@ -8778,7 +8216,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self._scheduledPeriodicCheck = C_Timer.NewTimer(delay, function()
 			self._scheduledPeriodicCheck = nil
 
-			local activeQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local activeQuestID = RQE.API.GetSuperTrackedQuestID()
 			if not activeQuestID or activeQuestID <= 0 then
 				return
 			end
@@ -8802,7 +8240,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Periodic check setup comparing with entry in RQEDatabase
 	function RQE:StartPeriodicChecks()
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -8821,10 +8258,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
-		--local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Current superTrackedQuestID:", superTrackedQuestID)
@@ -8863,22 +8298,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
 				RQE:ClearManualStepPreview(false)
 				RQE.ManualStepOverrideQLIB = false
-				--RQE.AddonSetStepIndex = 1		-- this setting was resetting the stepIndex to 1 when enableStepControls was activated, but wouldn't properly advance a step below
 			end
 		end
-
-		-- if RQE.db.profile.enableStepControls then
-			-- if RQE.ManualStepOverrideQLIB or (RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex) then
-			-- --if RQE.ManualStepPreview and RQE.ManualPreviewQuestID == superTrackedQuestID and RQE.ManualPreviewStepIndex then
-				-- -- Explicitly resume automatic progression
-				-- RQE:ClearManualStepPreview(false)
-				-- RQE.ManualPreviewQuestID = nil
-				-- RQE.ManualPreviewStepIndex = nil
-				-- RQE.ManualStepOverrideQLIB = false
-				-- RQE.AddonSetStepIndex = 1
-				-- -- RQE.ResumeAutomaticFromManualPreview = false
-			-- end
-		-- end
 
 		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -8915,18 +8336,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 					-- Refresh frames so Separate Focus shows 2/2
 					if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
-					--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
 					if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
-
-					-- Optionally, if you want your transition/portal waypoint to appear too:
-					-- RQE:FindQuestZoneTransition(superTrackedQuestID)
-					-- (leave commented if you only want Blizzard's arrow)
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Quest ready for turn-in but final step does not contain `CheckDBComplete`. No action taken.")
 				end
-				-- keep going
 			end
 		end
 
@@ -9129,13 +8544,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end)
 
 				return
-
-				-- local playerMapID = C_Map.GetBestMapForUnit("player")
-				-- if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
-				-- --if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
-				-- if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
-				-- RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
-				-- return  -- Skip waypoint creation only
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("WaypointText present; current step requires CheckDBZoneChange -> continuing periodic checks.")
@@ -9197,7 +8605,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:UpdateStepDistance()
 	end
 
-
 	-------------------------------------------------------
 	-- #16i. Runtime Map, Quest & Coordinate Checks
 	-------------------------------------------------------
@@ -9229,7 +8636,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Check if the player has completed the quest or not
 	-- Usage: cond = "RQE.CheckQuestState(12345, 'COMPLETED')" or "RQE.CheckQuestState(12345, 'INCOMPLETE')"
 	function RQE.CheckQuestState(self, questID, state)
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		local foundInfo
 
 		-- Find the quest entry by ID
@@ -9271,7 +8678,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	-- Checks if the player is within `maxYards` of (x, y) on `mapID`.
 	-- Accepts x/y as either 0–100 (percent coords like 32.42) or 0–1 normalized.
@@ -9333,21 +8739,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				print(string.format("RQE.CheckCoordinateDistance(): ~ dist=%.1f yards (threshold=%d)", dist, originalMaxYards))
 			end
 			return dist <= maxYards
-
-			-- local dx, dy = HBD:GetZoneDistance(pMapID, px, py, mapID, x, y)
-			-- if not (dx and dy) then
-				-- -- Different instances/continents or an unmapped transition — treat as not in range
-				-- if RQE.db.profile.debugLevel == "INFO" then
-					-- print(("RQE.CheckCoordinateDistance(): no zone distance between %s and %s"):format(tostring(pMapID), tostring(mapID)))
-				-- end
-				-- return false
-			-- end
-
-			-- local dist = math.sqrt(dx*dx + dy*dy)
-			-- if RQE.db.profile.debugLevel == "INFO" then
-				-- print(string.format("RQE.CheckCoordinateDistance(): dist=%.1f yards (threshold=%d)", dist, maxYards))
-			-- end
-			-- return dist <= maxYards
 		end
 
 		-- Fallback (no HBD): approximate using normalized distance on same map only
@@ -9378,16 +8769,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return approxYards <= maxYards
 	end
 
-
 	-- Helper function to find the x, y and mapID that exists for the RQE.CheckCoordinateDistance() conditional in the DB file
 	function RQE:CheckCoordinateDistanceConditional()
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
-		--local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 		if not superTrackedQuestID then return end
 
 		local questData = self.getQuestData(superTrackedQuestID)
@@ -9422,7 +8810,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #16j. Spell & Objective Checks
@@ -9477,32 +8864,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-	-- -- Check if the player knows a given spellID
-	-- -- Usage: cond = "RQE.CheckKnownSpell(23922)"
-	-- function RQE.CheckKnownSpell(self, spellID)
-		-- -- Validate input
-		-- if not spellID or type(spellID) ~= "number" then
-			-- if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
-				-- print("RQE.CheckKnownSpell(): Invalid or missing spellID")
-			-- end
-			-- return false
-		-- end
-
-		-- -- Use the Blizzard API to check if the player knows the spell
-		-- local isKnown = IsSpellKnown(spellID)
-
-		-- if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
-			-- if isKnown then
-				-- print(string.format("RQE.CheckKnownSpell(): Player knows spellID %d — conditional TRUE", spellID))
-			-- else
-				-- print(string.format("RQE.CheckKnownSpell(): Player does NOT know spellID %d — conditional FALSE", spellID))
-			-- end
-		-- end
-
-		-- return isKnown
-	-- end
-
-
 	-- Check if one or more objectives of the currently super-tracked quest are complete (OR logic)
 	-- Usage examples:
 	--   cond = "RQE.CheckObjectiveStatus(1)"
@@ -9512,7 +8873,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO")
 
 		-- Get the currently super-tracked questID
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID or questID == 0 then
 			if debugEnabled then
 				print("RQE.CheckObjectiveStatus(): No super-tracked quest found.")
@@ -9521,7 +8882,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the objectives for that quest
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		if not objectives or #objectives == 0 then
 			if debugEnabled then
 				print(string.format("RQE.CheckObjectiveStatus(): No objectives found for questID %d.", questID))
@@ -9583,7 +8944,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	-------------------------------------------------------
 	-- #16k. Player Identity Checks
@@ -9660,7 +9020,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	--[[ 
 	--------------------------------------------------------------
 	RQE.CheckPlayerRace(...)
@@ -9720,7 +9079,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	--[[ 
 	--------------------------------------------------------------
 	RQE.CheckPlayerClass(...)
@@ -9779,7 +9137,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	--[[ 
 	--------------------------------------------------------------
@@ -9845,7 +9202,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return true
 	end
 
-
 	--[[ 
 	--------------------------------------------------------------
 	RQE.CheckNotPlayerRace(...)
@@ -9900,7 +9256,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return true
 	end
-
 
 	--[[ 
 	--------------------------------------------------------------
@@ -9957,7 +9312,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return true
 	end
 
-
 	-------------------------------------------------------
 	-- #16l. Scenario & Zone-Name Checks
 	-------------------------------------------------------
@@ -10006,7 +9360,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 	end
-
 
 	----------------------------------------------------------------------
 	-- Improved Zone/Subzone or mapID conditional check
@@ -10074,7 +9427,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-------------------------------------------------------
 	-- #16m. Displayed Quest Step Validation & Advancement
 	-------------------------------------------------------
@@ -10090,11 +9442,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to check the current quest step and perform actions accordingly
 	function RQE.CheckThatQuestStep()
 		-- Retrieve the questID from the RQEFrame
-		local questID = RQE.searchedQuestID or (RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))) or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or (RQE.QuestIDText and tonumber(RQE.QuestIDText:GetText():match("%d+"))) or RQE.API.GetSuperTrackedQuestID()
 
 		-- Check if a valid questID was found
 		if not questID then
@@ -10103,7 +9454,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get quest objectives
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		local questData = RQE.getQuestData(questID)
 
 		if not questData then
@@ -10230,7 +9581,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.CheckAndBuildMacroIfNeeded()
 	end
 
-
 	-- Function advances the quest step by simulating a click on the corresponding WaypointButton
 	function RQE:AdvanceQuestStep(questID, stepIndex)
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -10293,7 +9643,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function to check if steps are displayed in the RQEFrame for a given questID
 	function RQE.AreStepsDisplayed(questID)
 		local questInfo = RQE.getQuestData(questID)
@@ -10307,7 +9656,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	-------------------------------------------------------
 	-- #16n. Step Waypoint Selection
@@ -10324,7 +9672,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			if not button then
 				local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
-				--local questID = C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 				local questData = questID and RQE.getQuestData(questID)
 
 				RQE:ClearManualStepPreview(false)
@@ -10454,7 +9801,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #16o. Post-Advance Faction, Class & Failure Routing
 	-------------------------------------------------------
@@ -10465,7 +9811,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("~~ Running RQE:HandleFactionLogicAfterAdvance ~~")
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then return end
 
 		local questData = RQE.getQuestData(questID)
@@ -10495,13 +9841,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- After faction logic, check failedfunc
 		C_Timer.After(0.5, function()
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 			if superTrackedQuestID then
 				RQE:HandleFailedFunction(superTrackedQuestID, RQE.AddonSetStepIndex)
 			end
 		end)
 	end
-
 
 	-- Handles description prefixes like "PALADIN-A:", "PRIEST-N:", "WARLOCK-H:".
 	-- Intended to be called AFTER RQE:HandleFactionLogicAfterAdvance().
@@ -10513,7 +9858,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("~~ Running RQE:HandleClassFactionLogicAfterAdvance ~~")
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if debug then print("ClassLogic: No supertracked quest, aborting.") end
 			return
@@ -10562,7 +9907,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Match "CLASS-TAG:" at the start, but allow leading whitespace:
 			--   e.g. "PALADIN-H: ...", "   PRIEST-N: ...", etc.
 			local classToken, factionTag = description:match("^%s*(%u+)%-(%u):")
-			--local classToken, factionTag = description:match("^%s*(%u+)%-(A|H|N):")
 			if not classToken or not factionTag then
 				if debug then
 					print("ClassLogic: no CLASS-TAG header found on step", idx, "- not skipping due to class.")
@@ -10645,7 +9989,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to handle failedfunc logic for CheckDBZoneChange
 	function RQE:HandleFailedFunction(questID, stepIndex)
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -10704,7 +10047,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false -- No failure conditions triggered
 	end
 
-
 	-------------------------------------------------------
 	-- #16p. Database Model, Buff & Debuff Checks
 	-------------------------------------------------------
@@ -10726,23 +10068,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		check = check or {}
 		neededAmt = neededAmt or {}
 
-		-- old:
-		-- -- Optional mode: combine active buff stacks with completed quest-objective progress.
-		-- -- Existing CheckDBBuff entries remain unchanged unless this DB field is true.
-		-- local objectiveProgress = 0
-		-- local totalQuestData = self.getQuestData(questID)
-		-- local totalStepData = totalQuestData and totalQuestData[stepIndex]
-		--
-		-- if totalStepData and totalStepData.combineBuffAndObjectiveProgress then
-		-- 	local objectives = C_QuestLog.GetQuestObjectives(questID)
-		-- 	local objectiveIndex = tonumber(totalStepData.objectiveIndex) or 1
-		-- 	local objective = objectives and objectives[objectiveIndex]
-		--
-		-- 	if objective then
-		-- 		objectiveProgress = tonumber(objective.numFulfilled) or 0
-		-- 	end
-		-- end
-
 		-- Accepts either:
 		-- neededAmt = { "4" }			 Buff stacks alone must reach 4.
 		-- neededAmt = { "4+objective" }   Buff stacks plus objective progress must reach 4.
@@ -10760,74 +10085,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return tonumber(rawAmount) or 1, false
 		end
 
-		-- old:
-		-- -- Returns the fulfilled amount for the objective assigned to this DB step.
-		-- local function GetCurrentObjectiveProgress()
-		-- 	local questData = self.getQuestData(questID)
-		-- 	local stepData = questData and questData[stepIndex]
-		--
-		-- 	if not stepData then
-		-- 		return 0
-		-- 	end
-		--
-		-- 	local objectiveIndex = tonumber(stepData.objectiveIndex) or 1
-		-- 	local objectives = C_QuestLog.GetQuestObjectives(questID)
-		-- 	local objective = objectives and objectives[objectiveIndex]
-		--
-		-- 	if not objective then
-		-- 		return 0
-		-- 	end
-		--
-		-- 	return tonumber(objective.numFulfilled) or 0
-		-- end
-		--
-		-- -- Evaluates a buff against either its stack count or its combined
-		-- -- stack count plus objective progress.
-		-- local function EvaluateBuffAmount(buffName, rawNeededAmount)
-		-- 	local requiredAmount, includeObjectiveProgress =
-		-- 		ParseRequiredAmount(rawNeededAmount)
-		--
-		-- 	local aura = C_UnitAuras.GetAuraDataBySpellName(
-		-- 		"player",
-		-- 		buffName,
-		-- 		"HELPFUL"
-		-- 	)
-		--
-		-- 	local currentStacks = 0
-		--
-		-- 	if aura then
-		-- 		-- Non-stacking buffs may report 0 applications even though present.
-		-- 		currentStacks =
-		-- 			(aura.applications and aura.applications > 0)
-		-- 			and aura.applications
-		-- 			or 1
-		-- 	end
-		--
-		-- 	local objectiveProgress = 0
-		--
-		-- 	if includeObjectiveProgress then
-		-- 		objectiveProgress = GetCurrentObjectiveProgress()
-		-- 	end
-		--
-		-- 	local currentTotal = currentStacks + objectiveProgress
-		-- 	local passed = currentTotal >= requiredAmount
-		--
-		-- 	if RQE.db.profile.debugLevel == "INFO+" then
-		-- 		print(
-		-- 			"CheckDBBuff() - Buff evaluation:",
-		-- 			buffName,
-		-- 			"buff stacks:", currentStacks,
-		-- 			"objective progress:", objectiveProgress,
-		-- 			"combined total:", currentTotal,
-		-- 			"required:", requiredAmount,
-		-- 			"combined mode:", tostring(includeObjectiveProgress),
-		-- 			"passed:", tostring(passed)
-		-- 		)
-		-- 	end
-		--
-		-- 	return passed
-		-- end
-
 		-- Returns the objective progress and objective index assigned to this step.
 		local function GetCurrentObjectiveProgress()
 			local questData = self.getQuestData(questID)
@@ -10839,7 +10096,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				return 0, objectiveIndex
 			end
 
-			local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+			local objectives = RQE.API.GetQuestObjectives(questID)
 			local objective = objectives and objectives[objectiveIndex]
 
 			if not objective then
@@ -10917,16 +10174,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						)
 					end
 
-					-- old:
-					-- -- Recheck after Blizzard has updated the aura stack.
-					-- RQE:QueuePeriodicChecks(
-					-- 	"COMBINED_BUFF_OBJECTIVE_SETTLE",
-					-- 	0.80,
-					-- 	questID
-					-- )
-					--
-					-- return false
-
 					-- This must be a dedicated timer rather than QueuePeriodicChecks.
 					-- QueuePeriodicChecks may already contain an earlier check that
 					-- fires before the aura stack has finished updating.
@@ -10940,7 +10187,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 						-- Only re-evaluate if this is still the supertracked quest.
 						if RQE.API.GetSuperTrackedQuestID() ~= questID then
-						--if C_SuperTrack.GetSuperTrackedQuestID() ~= questID then
 							return
 						end
 
@@ -11001,45 +10247,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Evaluate `check` directly if provided.
 		if #check > 0 and #neededAmt > 0 then
 			for i, buffName in ipairs(check) do
-				-- old:
-				-- local requiredStacks = tonumber(neededAmt[i]) or 1
-				--
-				-- local aura = C_UnitAuras.GetAuraDataBySpellName(
-				-- 	"player",
-				-- 	buffName,
-				-- 	"HELPFUL"
-				-- )
-				--
-				-- local currentStacks = 0
-				--
-				-- if aura then
-				-- 	currentStacks =
-				-- 		(aura.applications and aura.applications > 0)
-				-- 		and aura.applications
-				-- 		or 1
-				-- end
-				--
-				-- if currentStacks < requiredStacks then
-				-- 	if RQE.db.profile.debugLevel == "INFO+" then
-				-- 		print(
-				-- 			"CheckDBBuff() - Buff missing or insufficient stacks:",
-				-- 			buffName,
-				-- 			"current:", currentStacks,
-				-- 			"required:", requiredStacks
-				-- 		)
-				-- 	end
-				-- 	return false
-				-- else
-				-- 	if RQE.db.profile.debugLevel == "INFO+" then
-				-- 		print(
-				-- 			"CheckDBBuff() - Buff stack check passed:",
-				-- 			buffName,
-				-- 			"current:", currentStacks,
-				-- 			"required:", requiredStacks
-				-- 		)
-				-- 	end
-				-- end
-
 				if not EvaluateBuffAmount(buffName, neededAmt[i]) then
 					return false
 				end
@@ -11120,46 +10327,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		for i, buffName in ipairs(check) do
-			-- old:
-			-- local requiredStacks = tonumber(neededAmt[i]) or 1
-			--
-			-- local aura = C_UnitAuras.GetAuraDataBySpellName(
-			-- 	"player",
-			-- 	buffName,
-			-- 	"HELPFUL"
-			-- )
-			--
-			-- local currentStacks = 0
-			--
-			-- if aura then
-			-- 	currentStacks =
-			-- 		(aura.applications and aura.applications > 0)
-			-- 		and aura.applications
-			-- 		or 1
-			-- end
-			--
-			-- if currentStacks >= requiredStacks then
-			-- 	if RQE.db.profile.debugLevel == "INFO+" then
-			-- 		print(
-			-- 			"CheckDBBuff() - Buff stack check passed:",
-			-- 			buffName,
-			-- 			"current:", currentStacks,
-			-- 			"required:", requiredStacks,
-			-- 			". Advancing quest step."
-			-- 		)
-			-- 	end
-			-- 	return true
-			-- else
-			-- 	if RQE.db.profile.debugLevel == "INFO+" then
-			-- 		print(
-			-- 			"CheckDBBuff() - Buff missing or insufficient stacks:",
-			-- 			buffName,
-			-- 			"current:", currentStacks,
-			-- 			"required:", requiredStacks
-			-- 		)
-			-- 	end
-			-- end
-
 			if EvaluateBuffAmount(buffName, neededAmt[i]) then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print(
@@ -11179,265 +10346,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
-
-	-- -- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
-	-- function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("~~ Running RQE:CheckDBBuff ~~")
-		-- end
-
-		-- -- Use provided `check` and `neededAmt` if available
-		-- check = check or {}
-		-- neededAmt = neededAmt or {}
-
-		-- -- Optional mode: combine active buff stacks with completed quest-objective progress.
-		-- -- Existing CheckDBBuff entries remain unchanged unless this DB field is true.
-		-- local objectiveProgress = 0
-		-- local totalQuestData = self.getQuestData(questID)
-		-- local totalStepData = totalQuestData and totalQuestData[stepIndex]
-
-		-- if totalStepData and totalStepData.combineBuffAndObjectiveProgress then
-			-- local objectives = C_QuestLog.GetQuestObjectives(questID)
-			-- local objectiveIndex = tonumber(totalStepData.objectiveIndex) or 1
-			-- local objective = objectives and objectives[objectiveIndex]
-
-			-- if objective then
-				-- objectiveProgress = tonumber(objective.numFulfilled) or 0
-			-- end
-		-- end
-
-		-- -- Evaluate `check` directly if provided
-		-- if #check > 0 and #neededAmt > 0 then
-			-- for i, buffName in ipairs(check) do
-				-- local requiredStacks = tonumber(neededAmt[i]) or 1
-
-				-- -- old:
-				-- -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-				-- -- if not aura then
-				-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
-				-- -- 		print("CheckDBBuff() - Buff not active:", buffName)
-				-- -- 	end
-				-- -- 	return false
-				-- -- else
-				-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
-				-- -- 		print("CheckDBBuff() - Buff active:", buffName)
-				-- -- 	end
-				-- -- end
-
-				-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-				-- local currentStacks = 0
-
-				-- if aura then
-					-- currentStacks = (aura.applications and aura.applications > 0) and aura.applications or 1
-				-- end
-
-				-- if currentStacks < requiredStacks then
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("CheckDBBuff() - Buff missing or insufficient stacks:", buffName, "current:", currentStacks, "required:", requiredStacks)
-					-- end
-					-- return false
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("CheckDBBuff() - Buff stack check passed:", buffName, "current:", currentStacks, "required:", requiredStacks)
-					-- end
-				-- end
-			-- end
-
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - All buffs matched for provided `check`.")
-			-- end
-			-- return true
-		-- end
-
-		-- -- Fallback to quest data if `check` and `neededAmt` are not directly provided
-		-- local questData = self.getQuestData(questID)
-		-- if not questData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - No quest data found for questID:", questID)
-			-- end
-			-- return false
-		-- end
-
-		-- local stepData = questData[stepIndex]
-		-- if not stepData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
-			-- end
-			-- return false
-		-- end
-
-		-- -- Evaluate `checks` if present
-		-- if stepData.checks then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
-			-- end
-			-- local success = self:EvaluateStepChecks(questID, stepIndex)
-			-- if success then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
-				-- end
-				-- return true
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff checks failed.")
-				-- end
-				-- return false
-			-- end
-		-- end
-
-		-- -- Evaluate single `check` from step data
-		-- check = stepData.check or {}
-		-- neededAmt = stepData.neededAmt or {}
-
-		-- if #check == 0 then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - No buffs to check.")
-			-- end
-			-- return false
-		-- end
-
-		-- for i, buffName in ipairs(check) do
-			-- local requiredStacks = tonumber(neededAmt[i]) or 1
-
-			-- -- old:
-			-- -- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-			-- -- if aura then
-			-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
-			-- -- 		print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
-			-- -- 	end
-			-- -- 	return true
-			-- -- else
-			-- -- 	if RQE.db.profile.debugLevel == "INFO+" then
-			-- -- 		print("CheckDBBuff() - Buff not active:", buffName)
-			-- -- 	end
-			-- -- end
-
-			-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-			-- local currentStacks = 0
-
-			-- if aura then
-				-- currentStacks = (aura.applications and aura.applications > 0) and aura.applications or 1
-			-- end
-
-			-- if currentStacks >= requiredStacks then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff stack check passed:", buffName, "current:", currentStacks, "required:", requiredStacks, ". Advancing quest step.")
-				-- end
-				-- return true
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff missing or insufficient stacks:", buffName, "current:", currentStacks, "required:", requiredStacks)
-				-- end
-			-- end
-		-- end
-
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("CheckDBBuff() - No buffs matched.")
-		-- end
-		-- return false
-	-- end
-
-
-	-- -- Function will check if the player currently has any of the buffs specified in the quest's check or checks field.
-	-- function RQE:CheckDBBuff(questID, stepIndex, check, neededAmt)
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("~~ Running RQE:CheckDBBuff ~~")
-		-- end
-
-		-- -- Use provided `check` and `neededAmt` if available
-		-- check = check or {}
-		-- neededAmt = neededAmt or {}
-
-		-- -- Evaluate `check` directly if provided
-		-- if #check > 0 and #neededAmt > 0 then
-			-- for i, buffName in ipairs(check) do
-				-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-				-- if not aura then
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("CheckDBBuff() - Buff not active:", buffName)
-					-- end
-					-- return false
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("CheckDBBuff() - Buff active:", buffName)
-					-- end
-				-- end
-			-- end
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - All buffs matched for provided `check`.")
-			-- end
-			-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
-			-- return true
-		-- end
-
-		-- -- Fallback to quest data if `check` and `neededAmt` are not directly provided
-		-- local questData = self.getQuestData(questID)
-		-- if not questData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - No quest data found for questID:", questID)
-			-- end
-			-- return false
-		-- end
-
-		-- local stepData = questData[stepIndex]
-		-- if not stepData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - No step data found for stepIndex:", stepIndex)
-			-- end
-			-- return false
-		-- end
-
-		-- -- Evaluate `checks` if present
-		-- if stepData.checks then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - Using EvaluateStepChecks for multiple checks.")
-			-- end
-			-- local success = self:EvaluateStepChecks(questID, stepIndex)
-			-- if success then
-				-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff checks succeeded. Advancing quest step.")
-				-- end
-				-- return true
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff checks failed.")
-				-- end
-				-- return false
-			-- end
-		-- end
-
-		-- -- Evaluate single `check` from step data
-		-- check = stepData.check or {}
-		-- if #check == 0 then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckDBBuff() - No buffs to check.")
-			-- end
-			-- return false
-		-- end
-
-		-- for _, buffName in ipairs(check) do
-			-- local aura = C_UnitAuras.GetAuraDataBySpellName("player", buffName, "HELPFUL")
-			-- if aura then
-				-- --self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff active:", buffName, ". Advancing quest step.")
-				-- end
-				-- return true
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckDBBuff() - Buff not active:", buffName)
-				-- end
-			-- end
-		-- end
-
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("CheckDBBuff() - No buffs matched.")
-		-- end
-		-- return false
-	-- end
-
 
 	-- Function will check if the player currently has any of the debuffs specified in the quest's check or checks field.
 	function RQE:CheckDBDebuff(questID, stepIndex, check, neededAmt)
@@ -11520,7 +10428,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for _, debuffName in ipairs(check) do
 			local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
 			if aura then
-				--self:ClickWaypointButtonForIndex(stepIndex)	-- FIRES from StartPeriodicChecks function, this is probably redundant!
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("CheckDBDebuff() - Debuff active:", debuffName, ". Advancing quest step.")
 				end
@@ -11537,7 +10444,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return false
 	end
-
 
 	-------------------------------------------------------
 	-- #16q. Database Inventory Checks
@@ -11581,7 +10487,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			local objectiveIndex = tonumber(stepData.objectiveIndex) or 1
-			local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+			local objectives = RQE.API.GetQuestObjectives(questID)
 			local objective = objectives and objectives[objectiveIndex]
 
 			if not objective then
@@ -11604,22 +10510,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Evaluate `check` and `neededAmt` directly if provided.
 		if #check > 0 and #neededAmt > 0 then
 			for i, condition in ipairs(check) do
-				-- old:
-				-- local amount = tonumber(neededAmt[i]) or 1
-				-- local itemCount = GetItemCount(condition, false)
-				--
-				-- if itemCount < amount then
-				-- 	if RQE.db.profile.debugLevel == "INFO+" then
-				-- 		print(
-				-- 			"Inventory check failed for item:",
-				-- 			condition,
-				-- 			"needed:", amount,
-				-- 			"found:", itemCount
-				-- 		)
-				-- 	end
-				-- 	return false
-				-- end
-
 				local requiredAmount, includeObjectiveProgress =
 					ParseRequiredAmount(neededAmt[i])
 
@@ -11713,61 +10603,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
-	-- -- Main function to check inventory conditions (Array/Checks or Check compatible)
-	-- function RQE:CheckDBInventory(questID, stepIndex, check, neededAmt)
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("~~~ Running CheckDBInventory ~~~")
-		-- end
-
-		-- -- Ensure `check` and `neededAmt` are valid
-		-- check = check or {}
-		-- neededAmt = neededAmt or {}
-
-		-- -- Debug print
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Evaluating check:", table.concat(check, ", "), "with neededAmt:", table.concat(neededAmt, ", "))
-		-- end
-
-		-- -- Evaluate `check` and `neededAmt` directly if provided
-		-- if #check > 0 and #neededAmt > 0 then
-			-- for i, condition in ipairs(check) do
-				-- local amount = tonumber(neededAmt[i]) or 1
-				-- local itemCount = GetItemCount(condition, false) -- Replace with your inventory check logic
-				-- if itemCount < amount then
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Inventory check failed for item:", condition, "needed:", amount, "found:", itemCount)
-					-- end
-					-- return false
-				-- end
-			-- end
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("All inventory conditions met for check:", table.concat(check, ", "), "neededAmt:", table.concat(neededAmt, ", "))
-			-- end
-			-- return true
-		-- end
-
-		-- -- Fallback to `EvaluateStepChecks` if `check` and `neededAmt` are not directly provided
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("Falling back to EvaluateStepChecks for questID:", questID, "stepIndex:", stepIndex)
-		-- end
-		-- local success = self:EvaluateStepChecks(questID, stepIndex)
-		-- if success then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("~ Success ~")
-				-- print("Inventory conditions met for questID:", questID, "stepIndex:", stepIndex)
-			-- end
-			-- return true
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("~ Failure ~")
-				-- print("Inventory conditions NOT met for questID:", questID, "stepIndex:", stepIndex)
-			-- end
-			-- return false
-		-- end
-	-- end
-
-
 	-------------------------------------------------------
 	-- #16r. Logical Condition Evaluation
 	-------------------------------------------------------
@@ -11802,7 +10637,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Helper function to evaluate AND conditions for `check`
 	function RQE:evaluateAndCondition(andItems, neededAmt)
 		for index, itemID in ipairs(andItems) do
@@ -11814,7 +10648,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return true -- Pass if all AND conditions are met
 	end
-
 
 	-- Helper function to evaluate OR conditions for `check`
 	function RQE:evaluateOrCondition(orItems, neededAmt)
@@ -11828,13 +10661,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false -- Fail if no OR conditions are met
 	end
 
-
 	-- Helper function to evaluate NOT conditions for `check`
 	function RQE:evaluateNotCondition(itemID, requiredAmount)
 		local itemCount = C_Item.GetItemCount(itemID)
 		return itemCount < requiredAmount -- Return true if the player does NOT have the required amount
 	end
-
 
 	-- Evaluate if using 'check' or 'checks' and if it is 'checks' this function will evaluate, otherwise with 'check' it will hand off to another function
 	function RQE:EvaluateStepChecks(questID, stepIndex)
@@ -11912,7 +10743,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false, nil -- No checks to evaluate
 	end
 
-
 	-- Evaluate AND conditions for `checks`
 	function RQE:EvaluateAndCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
 		for i, condition in ipairs(check) do
@@ -11923,7 +10753,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return true
 	end
-
 
 	-- Evaluate OR conditions for `checks`
 	function RQE:EvaluateOrCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
@@ -11936,7 +10765,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-- Evaluate NOT conditions for `checks`
 	function RQE:EvaluateNotCondition(checkFunction, check, neededAmt, questID, stepIndex, checkData)
 		for i, condition in ipairs(check) do
@@ -11947,7 +10775,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return true
 	end
-
 
 	-------------------------------------------------------
 	-- #16s. Zone Change, Completion & Dependency Checks
@@ -12031,15 +10858,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					return true
 				end
 			end
-
-			-- for _, subZone in ipairs(check) do
-				-- if currentSubZone == subZone then
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Player is in the required subzone:", subZone)
-					-- end
-					-- return true -- Subzone matches
-				-- end
-			-- end
 
 			-- If no match in subzone checks
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -12151,7 +10969,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return isReady
 	end
 
-
 	-- Return the per-character completion latch used for repeatable or scripted
 	-- dependency quests whose completion is not retained by Blizzard's flag API.
 	function RQE:GetQuestDependencyCompletionStore()
@@ -12159,7 +10976,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self.db.char.questDependencyCompletions = self.db.char.questDependencyCompletions or {}
 		return self.db.char.questDependencyCompletions
 	end
-
 
 	-- Clear cached dependency-completion state for the supplied parent quest.
 	function RQE:ClearQuestDependencyCompletions(parentQuestID)
@@ -12169,7 +10985,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			store[parentQuestID] = nil
 		end
 	end
-
 
 	-- Determine whether a quest step explicitly depends on another quest's completion.
 	function RQE:QuestUsesCompletionDependency(parentQuestID, dependencyQuestID)
@@ -12197,7 +11012,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return false
 	end
-
 
 	-- Remember a turned-in dependency for every active quest whose database entry
 	-- references it. QUEST_TURNED_IN is authoritative when repeatable/scripted
@@ -12249,7 +11063,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return recordedAny
 	end
-
 
 	-- Check whether a quest is ready for turn-in, has a persistent completion flag,
 	-- or was observed turning in during the current parent-quest attempt.
@@ -12308,7 +11121,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return isCompleted
 	end
 
-
 	-- Function to check if the player's faction is Alliance and advance the quest step if true
 	function RQE:CheckFactionGroupAlliance(questID, stepIndex, check, neededAmt)
 		local englishFaction = UnitFactionGroup("player")
@@ -12363,7 +11175,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-- Function to check if the player's faction is Horde and advance the quest step if true
 	function RQE:CheckFactionGroupHorde(questID, stepIndex, check, neededAmt)
 		local englishFaction = UnitFactionGroup("player")
@@ -12395,7 +11206,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #16t. Objective, Conditional & Scenario Checks
 	-------------------------------------------------------
@@ -12411,7 +11221,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		neededAmt = neededAmt or {}
 
 		-- Retrieve quest objectives and data
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		local questData = RQE.getQuestData(questID)
 
 		-- Early return if no quest is super-tracked or if data is missing
@@ -12487,7 +11297,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 					-- Only enforce .finished if this step requires full completion
 					local enforceFinished = (fulfilled >= objective.numRequired)
-					--local needsFinished = true -- Always require .finished for safety
 
 					-- Debug info before deciding
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -12578,7 +11387,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 		return false
 	end
-
 
 	--[[ 
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -12685,7 +11493,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
 	-- Function to check the current scenario stage
 	function RQE:CheckScenarioStage(questID, stepIndex)
 		-- Ensure the player is in a scenario
@@ -12764,116 +11571,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return false
 	end
 
-
-	-- -- Function to check scenario criteria progress (Array/Checks or Check compatible)
-	-- function RQE:CheckScenarioCriteria(questID, stepIndex, check, neededAmt)
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("~~ Running RQE:CheckScenarioCriteria ~~")
-		-- end
-
-		-- -- Ensure the player is in a scenario
-		-- if not C_Scenario.IsInScenario() then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckScenarioCriteria() - Player is not in a scenario.")
-			-- end
-			-- return false
-		-- end
-
-		-- -- Fetch general scenario information
-		-- local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-		-- if not scenarioInfo then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckScenarioCriteria() - No active scenario information available.")
-			-- end
-			-- return false
-		-- end
-
-		-- -- Use provided `check` and `neededAmt` if available
-		-- check = check or {}
-		-- neededAmt = neededAmt or {}
-
-		-- -- Evaluate `check` directly if provided
-		-- if #check > 0 and #neededAmt > 0 then
-			-- for i, criteriaIndex in ipairs(check) do
-				-- local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
-				-- if criteriaInfo then
-					-- if criteriaInfo.quantity < tonumber(neededAmt[i] or criteriaInfo.totalQuantity) then
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("CheckScenarioCriteria() - Criteria " .. criteriaIndex .. " not yet met. Progress:", criteriaInfo.quantity, "/", neededAmt[i])
-						-- end
-						-- return false
-					-- end
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("CheckScenarioCriteria() - Invalid criteria index:", criteriaIndex)
-					-- end
-					-- return false
-				-- end
-			-- end
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckScenarioCriteria() - All criteria checks met.")
-			-- end
-			-- self:ClickWaypointButtonForIndex(stepIndex)
-			-- return true
-		-- end
-
-		-- -- Fallback to quest data if `check` and `neededAmt` are not provided
-		-- local questData = self.getQuestData(questID)
-		-- if not questData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckScenarioCriteria() - No quest data found for quest ID:", questID)
-			-- end
-			-- return false
-		-- end
-
-		-- local stepData = questData[stepIndex]
-		-- if not stepData then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckScenarioCriteria() - No step data found for quest ID:", questID)
-			-- end
-			-- return false
-		-- end
-
-		-- -- Handle multiple `checks`
-		-- if stepData.checks then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("CheckScenarioCriteria() - Using EvaluateStepChecks for multiple checks.")
-			-- end
-			-- local success = self:EvaluateStepChecks(questID, stepIndex)
-			-- if success then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckScenarioCriteria() - Scenario criteria checks met for stepIndex:", stepIndex)
-				-- end
-				-- self:ClickWaypointButtonForIndex(stepIndex)
-				-- return true
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckScenarioCriteria() - Scenario criteria checks NOT met for stepIndex:", stepIndex)
-				-- end
-				-- return false
-			-- end
-		-- end
-
-		-- -- Check single scenario criteria
-		-- local numCriteria = select(3, C_Scenario.GetStepInfo())
-		-- for criteriaIndex = 1, numCriteria do
-			-- local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-			-- if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("CheckScenarioCriteria() - Scenario criteria met. Advancing to next step.")
-				-- end
-				-- self:ClickWaypointButtonForIndex(stepIndex)
-				-- return true
-			-- end
-		-- end
-
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("CheckScenarioCriteria() - Scenario criteria not yet met.")
-		-- end
-		-- return false
-	-- end
-
-
 	-- Function to check scenario criteria progress
 	function RQE:CheckScenarioCriteria(questID, stepIndex)
 		-- Ensure the player is in a scenario
@@ -12948,10 +11645,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		SortQuestsByProximity()
 	end
 
-
 	-- Contain filters for the RQEQuestingFrame
 	RQE.filterCompleteQuests = function()
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
@@ -12959,7 +11655,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if C_QuestLog.IsComplete(questInfo.questID) then
 					C_QuestLog.AddQuestWatch(questInfo.questID)
 				elseif questInfo.questID then
-					-- print("~~~ Remove Quest Watch: 7289 ~~~")
 					C_QuestLog.RemoveQuestWatch(questInfo.questID)
 				end
 			end
@@ -12973,7 +11668,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		SortQuestsByProximity()
 	end
 
-
 	-- Function for Hiding Completed Watched Quests
 	function RQE:HideCompletedWatchedQuests()
 		-- Iterate through all quests currently being watched
@@ -12984,7 +11678,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				-- Check if the quest is completed
 				if isQuestComplete then
 					-- Remove the quest from the watch list if it is completed
-					-- print("~~~ Remove Quest Watch: 7314 ~~~")
 					C_QuestLog.RemoveQuestWatch(qID)
 				end
 			end
@@ -12998,7 +11691,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		SortQuestsByProximity()
 	end
 
-
 	-------------------------------------------------------
 	-- #17b. Daily & Weekly Quest Frequency Filters
 	-------------------------------------------------------
@@ -13008,7 +11700,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.DailyQuests = {}
 		RQE.WeeklyQuests = {}
 
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
@@ -13026,7 +11718,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Rebuild frequency caches and reduce the watched quest list to daily and weekly quests.
 	RQE.filterDailyWeeklyQuests = function()
 		RQE.ScanAndCacheQuestFrequencies()  -- Ensure daily and weekly quests are up-to-date
@@ -13035,7 +11726,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local numQuestWatches = C_QuestLog.GetNumQuestWatches()
 		for i = numQuestWatches, 1, -1 do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-			-- print("~~~ Remove Quest Watch: 7359 ~~~")
 			C_QuestLog.RemoveQuestWatch(questID)
 		end
 
@@ -13056,7 +11746,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Sort Quest List by Proximity after populating RQEQuestFrame
 		SortQuestsByProximity()
 	end
-
 
 	-------------------------------------------------------
 	-- #17c. Zone Quest Discovery & Filtering
@@ -13105,7 +11794,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return mapIDs
 	end
 
-
 	-- Preserve Retail's existing Blizzard-derived zone association.  It is kept
 	-- separate from the DB lookup so each active quest can belong to both sources.
 	function RQE:GetQuestBlizzardZoneMapID(questID)
@@ -13127,13 +11815,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return uiMapID and uiMapID ~= 0 and uiMapID or nil
 	end
 
-
 	-- Scan active quests and cache them by their associated zone maps.
 	function RQE.ScanAndCacheZoneQuests()
 		RQE.ZoneQuests = {}
 		RQE.ZoneQuestDatabaseMatches = {}
 
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader and questInfo.questID then
@@ -13161,7 +11848,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- A stable signature lets the frequent quest-log events refresh automatic ZQ
 	-- only when a DB pickup/current-step membership has actually changed.
 	function RQE:GetZoneQuestDatabaseMembershipSignature(mapID)
@@ -13175,7 +11861,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		table.sort(questIDs)
 		return tostring(mapID) .. ":" .. table.concat(questIDs, ",")
 	end
-
 
 	-- QUEST_LOG_UPDATE can fire several times for one change, including after a
 	-- watch-list update.  Coalesce those events and only re-filter when the active
@@ -13207,7 +11892,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end)
 	end
-
 
 	-- Update tracked-quest ordering and selection for the player's current zone.
 	function RQE.UpdateTrackedQuestsToCurrentZone()
@@ -13242,7 +11926,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			-- If a watched quest is not on the current map, untrack it
 			if questID and not questIDSet[questID] then
-				-- print("~~~ Remove Quest Watch: 7436 ~~~")
 				C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
@@ -13252,10 +11935,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		UpdateRQEQuestFrame()
 	end
 
-
 	-- Function that when run will print out the Map that is associated with quests in the player's questlog
 	function RQE.ShowQuestsforMap()
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
@@ -13269,7 +11951,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Build the sorted zone list used by quest-filter menus.
 	function RQE.BuildZoneQuestMenuList()
@@ -13309,7 +11990,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return zoneQuestMenuList
 	end
 
-
 	-- Apply a zone filter and update the quest list to matching quests.
 	function RQE.filterByZone(zoneID)
 		zoneID = tonumber(zoneID)
@@ -13333,7 +12013,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = numQuestWatches, 1, -1 do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if not questIDSet[questID] then
-				-- print("~~~ Remove Quest Watch: 7517 ~~~")
 				C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
@@ -13363,7 +12042,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Detect the current zone and refresh the active zone quest filter when needed.
 	function RQE.CheckAndUpdateForCurrentZone(zoneID)
 		local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
@@ -13377,7 +12055,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.UpdateTrackedQuestsToCurrentZone()
 		end
 	end
-
 
 	-- Function to display quests for the current zone
 	function RQE.DisplayCurrentZoneQuests()
@@ -13395,10 +12072,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.filterByZone(mapID)
 	end
 
-
 	-- Apply a quest-type filter to the active quest-log entries.
 	function RQE.filterByQuestType(questType)
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
@@ -13419,7 +12095,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if shouldWatch then
 					C_QuestLog.AddQuestWatch(questInfo.questID)
 				else
-					-- print("~~~ Remove Quest Watch: 7600 ~~~")
 					C_QuestLog.RemoveQuestWatch(questInfo.questID)
 				end
 			end
@@ -13432,7 +12107,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Sort Quest List by Proximity after populating RQEQuestFrame
 		SortQuestsByProximity()
 	end
-
 
 	-------------------------------------------------------
 	-- #17d. Campaign Discovery & Filtering
@@ -13454,7 +12128,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Collect the campaigns represented by quests currently in the quest log.
 	function RQE.GetCampaignsFromQuestLog()
 		local campaigns = {}
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
@@ -13471,11 +12145,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return campaigns
 	end
 
-
 	-- Scan active quests and cache their campaign identifiers and names.
 	function RQE.ScanAndCacheCampaigns()
 		RQE.Campaigns = {}
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
@@ -13492,7 +12165,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Build the sorted campaign list used by quest-filter menus.
 	function RQE.BuildCampaignMenuList()
@@ -13527,10 +12199,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return campaignMenuList
 	end
 
-
 	-- Apply a campaign filter and update the quest list to matching quests.
 	function RQE.filterByCampaign(campaignID)
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
@@ -13539,7 +12210,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if questCampaignID == campaignID then
 					C_QuestLog.AddQuestWatch(questInfo.questID)
 				else
-					-- print("~~~ Remove Quest Watch: 7711 ~~~")
 					C_QuestLog.RemoveQuestWatch(questInfo.questID)
 				end
 			end
@@ -13552,7 +12222,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Sort Quest List by Proximity after populating RQEQuestFrame
 		SortQuestsByProximity()
 	end
-
 
 	-------------------------------------------------------
 	-- #17e. Quest-Line Discovery & Filtering
@@ -13596,7 +12265,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Get the X, Y, and MapID of a particular quest
 	function RQE.GetQuestUiMapID(questID)
 		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
@@ -13607,12 +12275,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		print("X:", tostring(x), "Y:", tostring(y))
 	end
 
-
 	-- Function to Request and Cache all quest lines in player's quest log
 	function RQE.RequestAndCacheQuestLines()
 		local refreshedQuestLines = {}
 
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
@@ -13659,7 +12326,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.QuestLines = refreshedQuestLines
 	end
 
-
 	-- Function to Build questline list for the menu based on cached questlines
 	function RQE.BuildQuestLineMenuList()
 		local questLineMenuList = {}
@@ -13690,7 +12356,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return questLineMenuList
 	end
 
-
 	-- Menu Filter for Questline-specific
 	function RQE.filterByQuestLine(questLineID)
 		-- Get the quests for the selected questline
@@ -13710,14 +12375,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = numQuestWatches, 1, -1 do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if not questIDSet[questID] then
-				-- print("~~~ Remove Quest Watch: 7854 ~~~")
 				C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
 		-- Add the quests from the selected questline to the watch list
 		for _, questID in ipairs(questIDsForLine) do
-			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			if isWorldQuest then
 				C_QuestLog.AddWorldQuestWatch(questID)
 			else
@@ -13732,7 +12396,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Sort Quest List by Proximity after populating RQEQuestFrame
 		SortQuestsByProximity()
 	end
-
 
 	-- Function to print quest IDs of a questline along with clickable quest names.
 	-- Blizzard returns the raw questline membership immediately, but generic quest
@@ -13979,7 +12642,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-------------------------------------------------------
 	-- #17f. Quest Tooltip Links & Quest-Type Filters
 	-------------------------------------------------------
@@ -14017,7 +12679,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Returns the available quests at a quest giver when GOSSIP_SHOW is called from EventManager
 	function RQE.GetAvailableQuests()
 		-- Fetch the available quests using the Gossip API
@@ -14035,14 +12696,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Scans Quest Log for the various Types that each quest is assigned to
 	function RQE.ScanQuestTypes()
 		if type(RQE.QuestTypes) ~= "table" then
 			RQE.QuestTypes = {}  -- Initialize as an empty table if it's not already a table
 		end
 		wipe(RQE.QuestTypes)  -- Clear the table to prevent duplications
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
@@ -14063,7 +12723,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Translate a numeric quest type into the label used by RQE menus and diagnostics.
 	function RQE.GetQuestTypeName(questType)
@@ -14102,7 +12761,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return questTypeNames[questType] or "Unknown Type"
 		end
 	end
-
 
 	-- Build Menu List for the QuestTypes in QuestLog
 	function RQE.BuildQuestTypeMenuList()
@@ -14170,7 +12828,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.RefreshTrackedQuestDistances then
 			RQE:RefreshTrackedQuestDistances()
 		end
-		--RQE:MaybeUpdateWaypointOnSnap(elapsed)
 
 		-- Throttle: ~4x/sec while moving
 		updAccum = (updAccum or 0) + (elapsed or 0)
@@ -14179,7 +12836,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Only care if something is super-tracked
 		if not RQE.API.IsSuperTrackingQuest() then
-		--if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then
 			return
 		end
 
@@ -14220,7 +12876,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to start the OnUpdate script
 	function RQE:StartUpdatingCoordinates()
 		if not isMoving then
@@ -14230,7 +12885,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to stop the OnUpdate script
 	function RQE:StopUpdatingCoordinates()
 		RQE.isMonitoringCoordinateDistance = false
@@ -14239,7 +12893,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			isMoving = false
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #18b. Manual & Automatic World Quest Persistence
@@ -14263,7 +12916,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.infoLog("Saved World Quest ID:", questID)
 		end
 	end
-
 
 	-- Function to remove a manually tracked world quest
 	function RQE:RemoveManuallyTrackedWorldQuest(questID)
@@ -14293,7 +12945,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		UpdateRQEWorldQuestFrame()
 	end
 
-
 	-- Function to save the currently watched world quests with Automatic watch type
 	function RQE:SaveAutomaticWorldQuestWatches()
 		wipe(RQE.savedAutomaticWorldQuestWatches)
@@ -14312,7 +12963,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.infoLog("Saved World Quest ID:", questID)
 		end
 	end
-
 
 	-- Function to remove an automatically tracked world quest
 	function RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
@@ -14338,7 +12988,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function to restore saved watched world quests
 	function RQE:RestoreSavedWorldQuestWatches()
 		local questsToRestore = {}
@@ -14354,7 +13003,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 			local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
 			if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
-			--if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
 				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Manually tracking World Quest ID " .. questID)
@@ -14366,7 +13014,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Start the restoration process
 		restoreNext()
 	end
-
 
 	-- Function to restore saved automatically watched world quests
 	function RQE:RestoreSavedAutomaticWorldQuestWatches()
@@ -14383,7 +13030,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 			local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
 			if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
-			--if C_QuestLog.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
 				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Automatically tracking World Quest ID " .. questID)
@@ -14395,7 +13041,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Start the restoration process
 		restoreNext()
 	end
-
 
 	-------------------------------------------------------
 	-- #18c. World Map Quest Collection
@@ -14414,7 +13059,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-- Prints the quests that are on the current player map
 	function RQE.GetMapQuests()
@@ -14446,7 +13090,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Prints the quests that are on the current player map
 	function RQE.GetWorldMapQuests()
 		-- Get the player's current map ID
@@ -14476,7 +13119,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("-------")
 		end
 	end
-
 
 	-- Pulls map information for quests in the present zone and saves them
 	function RQE.PullDataFromMapQuests()
@@ -14515,7 +13157,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return questData
 	end
 
-
 	-- Function to get coordinates for a specific quest
 	function RQE.GetQuestCoordinates(questID)
 		-- Get the quests on the current map
@@ -14528,7 +13169,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return nil, nil, nil
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #18d. Automatic World Quest Cleanup
@@ -14583,7 +13223,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Remove automatically watched world quests that no longer belong to the player's current map.
 	function RQE.UntrackAutomaticWorldQuestsByMap()
 		local playerMapID = C_Map.GetBestMapForUnit("player")
@@ -14613,7 +13252,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local visibleQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			visibleQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -14640,7 +13279,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #18e. Objective Completion Monitoring & Alerts
 	-------------------------------------------------------
@@ -14658,7 +13296,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the currently super tracked quest ID
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local isOnQuest = RQE.API.IsOnQuest(visibleQuestID)
 
 		-- Check if the visible quest is not a regular quest
@@ -14681,7 +13319,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Create Event for the sound of Quest Progress/Completion
 	local eventFrame = CreateFrame("Frame")
 	eventFrame:RegisterEvent("QUEST_LOG_UPDATE")
@@ -14693,11 +13330,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Capture the initial objective-completion state used by quest sound notifications.
 	local function InitializeQuestObjectiveCompletion()
 		if RQE.db.profile.enableStepControls then
-			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(questIndex)
 				if info and not info.isHeader then
 					local questID = info.questID
-					local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+					local objectives = RQE.API.GetQuestObjectives(questID)
 
 					if objectives then
 						for i, objective in ipairs(objectives) do
@@ -14708,11 +13345,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end
 		else
-			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(questIndex)
 				if info and not info.isHeader then
 					local questID = info.questID
-					local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+					local objectives = RQE.API.GetQuestObjectives(questID)
 					for i, objective in ipairs(objectives) do
 						local key = questID .. "-" .. i
 						questObjectiveCompletion[key] = objective.finished
@@ -14722,7 +13359,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Detect new objective or quest completions and play the configured notification sound.
 	local function CheckQuestObjectivesAndPlaySound()
 		if RQE.db.profile.enableStepControls then
@@ -14730,11 +13366,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local playSoundForCompletion = false
 			local playSoundForObjectives = false
 
-			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(questIndex)
 				if info and not info.isHeader then
 					local questID = info.questID
-					local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+					local objectives = RQE.API.GetQuestObjectives(questID)
 
 					if objectives then
 						local allObjectivesComplete = true
@@ -14763,23 +13399,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end
 
-			--RQE.isCheckingMacroContents = true
-
 			if playSoundForCompletion then
 				PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
 				C_Timer.After(5, function() soundCooldown = false end)
-				--RQEMacro:CreateMacroForCurrentStep()
 			elseif playSoundForObjectives then
 				PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
 				C_Timer.After(5, function() soundCooldown = false end)
-				--RQEMacro:CreateMacroForCurrentStep()
 			end
 
 			-- Only run periodic checks if objectives actually changed
 			if RQE.db.profile.autoClickWaypointButton then
-				local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+				local questID = RQE.API.GetSuperTrackedQuestID()
 
 				if questID then
 					C_Timer.After(0.65, function()
@@ -14804,11 +13436,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local playSoundForCompletion = false
 			local playSoundForObjectives = false
 
-			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+			for questIndex = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(questIndex)
 				if info and not info.isHeader then
 					local questID = info.questID
-					local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+					local objectives = RQE.API.GetQuestObjectives(questID)
 					local allObjectivesComplete = true
 					for i, objective in ipairs(objectives) do
 						local key = questID .. "-" .. i
@@ -14833,23 +13465,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end
 
-			--RQE.isCheckingMacroContents = true
-
 			if playSoundForCompletion then
 				PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
 				C_Timer.After(5, function() soundCooldown = false end)
-				--RQEMacro:CreateMacroForCurrentStep()
 			elseif playSoundForObjectives then
 				PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
 				C_Timer.After(5, function() soundCooldown = false end)
-				--RQEMacro:CreateMacroForCurrentStep()
 			end
 
 			-- Only run periodic checks if objectives actually changed
 			if RQE.db.profile.autoClickWaypointButton then
-				local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+				local questID = RQE.API.GetSuperTrackedQuestID()
 
 				if questID then
 					C_Timer.After(0.65, function()
@@ -14880,7 +13508,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end)
 
-
 	-------------------------------------------------------
 	-- #18f. Super-Tracked Quest Button Automation
 	-------------------------------------------------------
@@ -14890,7 +13517,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if InCombatLockdown() then return end
 
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			if not questID then
 				RQE.debugLog("No super tracked quest.")
 				return
@@ -14904,7 +13531,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #18g. Graphics & Performance Diagnostics
@@ -14920,7 +13546,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("RQE: Graphics Outline Mode " .. (newSetting == "1" and "enabled." or "disabled."))
 		end
 	end
-
 
 	-- Function to toggle script profiling and prompt for reload
 	function RQE:ToggleCPUProfiling()
@@ -14952,7 +13577,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Show the popup
 		StaticPopup_Show("RQE_CPU_PROFILING_TOGGLE")
 	end
-
 
 	-- Function to check the CPU usage of the addon
 	function RQE:CheckCPUUsage()
@@ -14993,7 +13617,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to check the memory usage of addon
 	function RQE:CheckMemoryUsage()
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
@@ -15025,21 +13648,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #18h. Step Advancement & Macro Backup
 	-------------------------------------------------------
 
 	-- Advance an eligible quest to its next database step and refresh the related macro and frame state.
 	function RQE:AdvanceNextStep(questID)
-		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Check to advance to next step in quest
 		if RQE.db.profile.autoClickWaypointButton then
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				extractedQuestID = RQE.DisplayedQuestID
-				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 
 			-- Determine questID based on various fallbacks
@@ -15047,11 +13668,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			C_Timer.After(0.5, function()
 				RQE:ClickSuperTrackedQuestButton()
-				--RQE:CheckAndAdvanceStep(questID)
 			end)
 		end
 	end
-
 
 	-- Function to check macro contents and build a new macro if needed
 	function RQE.CheckAndBuildMacroIfNeeded()
@@ -15062,7 +13681,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
 		if not isMacroCorrect then
-			--RQE:BuildQuestMacroBackup()
 			-- Tier Four Importance: RQE.CheckAndBuildMacroIfNeeded function
 			RQE.CreateMacroForCheckAndBuildMacroIfNeed = true
 			RQEMacro:CreateMacroForCurrentStep()
@@ -15078,13 +13696,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Handles building the macro from the super tracked quest
 	function RQE:BuildQuestMacroBackup()
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
 		if isSuperTracking then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()	
 
 			-- Allow time for the UI to update and for the super track to register
 			C_Timer.After(1, function()
@@ -15111,10 +13728,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Click the quest-log button corresponding to the currently super-tracked quest.
 	function RQE:ClickSuperTrackedQuestButton()
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		if not superTrackedQuestID or superTrackedQuestID == 0 then
 			RQE.debugLog("No super tracked quest.")
 			return
@@ -15136,7 +13752,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.debugLog("Button for super tracked quest ID not found:", superTrackedQuestID)
 	end
 
-
 	-- Click the cached non-blacklisted super-tracked quest button when available.
 	function RQE:ClickSuperTrackedNonBlacklistQuestButton()
 		for _, button in pairs(RQE.QuestLogIndexButtons) do
@@ -15146,7 +13761,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #18i. Profession Recipe Tracking & Crafting
@@ -15236,71 +13850,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.recipeTrackingFrame:Show()
 	end
 
-
-	-- -- Smart crafting function: crafts a specified number, or determines remaining amount via quest objectives if 'x' is passed
-	-- function RQE:CraftRecipeSmart(spellID, quantity)
-		-- if not spellID then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Crafting failed: No spellID provided.")
-			-- end
-			-- return
-		-- end
-
-		-- local amountToCraft
-
-		-- if type(quantity) == "number" and quantity > 0 then
-			-- amountToCraft = quantity
-
-		-- elseif quantity == "x" or tostring(quantity or "x") == "x" then
-			-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
-			-- if not questID or questID == 0 then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("No supertracked quest found for dynamic crafting.")
-				-- end
-				-- return
-			-- end
-
-			-- local text = select(1, GetQuestObjectiveInfo(questID, 1, false)) or ""
-			-- local fulfilled, required = string.match(text, "(%d+)%s*/%s*(%d+)")
-			-- fulfilled = tonumber(fulfilled)
-			-- required = tonumber(required)
-
-			-- if not fulfilled or not required then
-				-- if RQE.db.profile.debugLevel == "INFO" then
-					-- print("Could not parse crafting requirement from objective text:", text)
-				-- end
-				-- return
-			-- end
-
-			-- amountToCraft = required - fulfilled
-			-- if amountToCraft <= 0 then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Objective already fulfilled or no crafting needed.")
-				-- end
-				-- return
-			-- end
-
-			-- if RQE.db.profile.debugLevel == "INFO" then
-				-- print("Crafting quantity resolved from quest: " .. amountToCraft)
-			-- end
-
-		-- else
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Invalid quantity value passed to CraftRecipeSmart.")
-			-- end
-			-- return
-		-- end
-
-		-- if amountToCraft and amountToCraft > 0 then
-			-- C_TradeSkillUI.CraftRecipe(spellID, amountToCraft)
-
-			-- if RQE.db.profile.debugLevel == "INFO" then
-				-- print("Crafting " .. amountToCraft .. " item(s) for spellID: " .. spellID)
-			-- end
-		-- end
-	-- end
-
-
 	-- Craft Specific Item for Quest
 	function RQE:CraftSpecificItem(recipeSpellID)
 		if RQE.db.profile.debugLevel ~= "INFO+" then return end
@@ -15326,7 +13875,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.alreadyPrintedSchematics = true
 		end
 	end
-
 
 	-- Display an ItemLink for the required Reagents
 	function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
@@ -15388,7 +13936,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		print(reagentsString)
 	end
 
-
 	-------------------------------------------------------
 	-- #18j. Merchant Purchasing
 	-------------------------------------------------------
@@ -15423,7 +13970,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end)
 	end
-
 
 	-- Function to confirm and buy an item from a merchant
 	function RQE:ConfirmAndBuyMerchantItem(index, quantity)
@@ -15494,141 +14040,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		StaticPopup_Show("RQE_CONFIRM_PURCHASE")
 	end
 
-
 	-------------------------------------------------------
-	-- #18k. Legacy Merchant Purchasing (Disabled)
+	-- #18k. Auction House Purchasing
 	-------------------------------------------------------
-
-	-- -- Function to confirm and buy an item from a merchant
-	-- function RQE:ConfirmAndBuyMerchantItem(index, quantity)
-		-- local itemName = C_MerchantFrame.GetItemInfo(index)	-- The following has been implemented with 11.0.5, but will be changing possibly to 'C_MerchantFrame.GetItemInfo' in 12.0 expansion
-		-- --local itemName, _, _, _, _, _, _, _, _, _, _, = C_MerchantFrame.GetItemInfo(index)
-		-- local maxStack = GetMerchantItemMaxStack(index)
-		-- local itemLink = GetMerchantItemLink(index)
-		-- quantity = tonumber(quantity) or 1  -- Default to buying 1 if no quantity specified, and ensure it's a number
-		-- maxStack = tonumber(maxStack) or 1  -- Ensure maxStack is a number, defaulting to 1 if not available
-
-		-- if not itemName then
-			-- RQE.debugLog("Error: Unable to retrieve item name for merchant index " .. tostring(index))
-			-- return
-		-- end
-
-		-- if not itemLink then
-			-- RQE.debugLog("Warning: Unable to retrieve item link for merchant index " .. tostring(index) .. ", using item name instead.")
-		-- end
-
-		-- local itemDisplay = itemLink or itemName
-
-		-- StaticPopupDialogs["RQE_CONFIRM_PURCHASE"] = {
-			-- text = "Do you want to buy " .. quantity .. " of " .. itemDisplay .. "?",
-			-- button1 = "Yes",
-			-- button2 = "No",
-			-- OnShow = function(self)
-				-- local itemFrame = CreateFrame("Frame", nil, self)
-				-- itemFrame:SetAllPoints(self.text)
-				-- itemFrame:SetScript("OnEnter", function()
-					-- GameTooltip:SetOwner(itemFrame, "ANCHOR_TOP")
-					-- GameTooltip:SetHyperlink(itemLink)
-					-- GameTooltip:Show()
-				-- end)
-				-- itemFrame:SetScript("OnLeave", function()
-					-- GameTooltip:Hide()
-				-- end)
-			-- end,
-			-- OnAccept = function()
-				-- if quantity > maxStack then
-					-- local fullStacks = math.floor(quantity / maxStack)
-					-- local remainder = quantity % maxStack
-					-- for i = 1, fullStacks do
-						-- BuyMerchantItem(index, maxStack)
-					-- end
-					-- if remainder > 0 then
-						-- BuyMerchantItem(index, remainder)
-					-- end
-				-- else
-					-- BuyMerchantItem(index, quantity)
-				-- end
-			-- end,
-			-- timeout = 0,
-			-- whileDead = true,
-			-- hideOnEscape = true,
-			-- preferredIndex = 3,  -- Avoid taint from UIParent
-		-- }
-		-- StaticPopup_Show("RQE_CONFIRM_PURCHASE")
-	-- end
-
-
-	-------------------------------------------------------
-	-- #18l. Auction House Purchasing
-	-------------------------------------------------------
-
-	-- -- Function that handles a series of functions related to purchasing an item from the AH	FIX MADE FOR 'X' RETURNING NIL (2025.09.30)
-	-- function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
-		-- local finalQuantity
-
-		-- -- Case 1: If a valid number is passed, use it directly
-		-- if type(quantity) == "number" and quantity > 0 then
-			-- finalQuantity = quantity
-
-		-- -- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
-		-- else
-			-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
-			-- if questID and questID > 0 then
-				-- -- local _, _, _, _fulfilled = GetQuestObjectiveInfo(questID, 1, false)
-				-- -- local _, _, _, _, _required = GetQuestObjectiveInfo(questID, 1, false)
-
-				-- -- local fulfilled = tonumber(_fulfilled or 0)
-				-- -- local required = tonumber(_required or 0)
-
-				-- local objectives = C_QuestLog.GetQuestObjectives(questID)
-				-- if objectives and objectives[1] then
-					-- local fulfilled = tonumber(objectives[1].numFulfilled or 0)
-					-- local required  = tonumber(objectives[1].numRequired or 0)
-
-					-- if fulfilled and required and required > fulfilled then
-						-- finalQuantity = required - fulfilled
-						-- if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-							-- print("Required: " .. required .. " & Fulfilled: " .. fulfilled)
-							-- print("Resolved Quantity: " .. finalQuantity)
-						-- end
-					-- else
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("Could not determine required purchase quantity from quest objectives.")
-						-- end
-						-- return
-					-- end
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("Quest has no objectives or objectives[1] missing.")
-					-- end
-					-- return
-				-- end
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("No supertracked quest found for dynamic quantity resolution.")
-				-- end
-				-- return
-			-- end
-		-- end
-
-		-- -- Final check
-		-- if not finalQuantity then
-			-- if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("Invalid quantity. Aborting.")
-			-- end
-			-- return
-		-- end
-
-		-- -- Purchase logic
-		-- if C_AddOns.IsAddOnLoaded("CraftSim") then
-		-- --if C_AddOns.IsAddOnLoaded("CraftSim") or C_AddOns.IsAddOnLoaded("TradeSkillMaster") then
-			-- RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
-		-- else
-			-- RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
-			-- RQE:ConfirmAndPurchaseCommodity(itemID, finalQuantity)
-		-- end
-	-- end
-
 
 	-- Function that handles a series of functions related to purchasing an item from the AH	-- FIX TO MAKE WORK WITH DIFFERENT OBJECTIVE NUMBERS (OTHER THAN JUST OBJECTIVE #1) (2025.09.30)
 	function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
@@ -15640,9 +14054,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
 		else
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			if questID and questID > 0 then
-				local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+				local objectives = RQE.API.GetQuestObjectives(questID)
 				if objectives and #objectives > 0 then
 					-- The current step's item tag identifies the objective even when
 					-- the item name is uncached. neededAmt may only be an intermediate
@@ -15787,7 +14201,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Function that searches for and prints out the prices for an item
 	function RQE:SearchAndDisplayCommodityResults(itemID, quantity)
 		if not AuctionHouseFrame or not AuctionHouseFrame:IsShown() then
@@ -15827,7 +14240,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end)
 	end
-
 
 	-- Function to confirm and purchase a commodity from the auction house
 	function RQE:ConfirmAndPurchaseCommodity(itemID, quantity)
@@ -15911,9 +14323,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-------------------------------------------------------
-	-- #18m. Dragonriding Mount Detection
+	-- #18l. Dragonriding Mount Detection
 	-------------------------------------------------------
 
 	-- Function that checks to see if player has a DragonRiding Aura/Mount active
@@ -15970,7 +14381,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		[27779] = 1,
 	}
 
-
 	-- Function to get the closest quest that isn't blacklisted
 	function RQE:GetClosestNonBlacklistedQuest()
 		local nextClosestQuestID = nil
@@ -15980,13 +14390,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local playerMapID = C_Map.GetBestMapForUnit("player")
 
 		-- Iterate through all quests in the player's quest log
-		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+		for i = 1, RQE.API.GetNumQuestLogEntries() do
 			local info = RQE.API.GetQuestLogInfo(i)
 
 			-- Only consider quests that are on the map, are being tracked, and are not blacklisted
 			if info and info.isOnMap and RQE.API.IsOnQuest(info.questID) and not RQE.questConditions[info.questID] then
 				-- Get the quest's objectives to find position/distance
-				local questPosition = RQE.API.GetQuestObjectives(info.questID)	--C_QuestLog.GetQuestObjectives(info.questID)
+				local questPosition = RQE.API.GetQuestObjectives(info.questID)
 
 				-- Ensure the quest position is valid
 				if questPosition then
@@ -16004,7 +14414,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return nextClosestQuestID
 	end
 
-
 	-- Function to check if the supertracked quest matches the array and stepIndex
 	function RQE:CheckSuperTrackedQuestAndStep()
 		-- This is automatic watch-list maintenance. Map pin and Area POI providers
@@ -16013,7 +14422,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if WorldMapFrame and WorldMapFrame:IsShown() then return end
 
 		-- Get the currently super-tracked quest ID
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		RQE.BlackListedQuestID = superTrackedQuestID
 
 		-- Get the current step index from the addon
@@ -16025,7 +14434,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.BlacklistUnderway = true
 
 			-- Temporarily remove the quest from the watch list
-			-- print("~~~ Remove Quest Watch: 9462 ~~~")
 			C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
 			RQE.Buttons.ClearButtonPressed()
 
@@ -16035,7 +14443,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			if nextClosestQuestID then
 				-- Set the supertracked quest to the next closest non-blacklisted quest
-				-- print("~~~ SetSuperTrack: 9332~~~")
 				RQE:AutoSetSuperTrackedQuestID(nextClosestQuestID)
 				RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -16044,18 +14451,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
 				C_Timer.After(2.5, function()
-					C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)	--C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID, 1)
+					C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)
 				end)
 			end
 		end
 	end
 
-
 	-- Function to supertrack a random quest
 	function RQE:SupertrackRandomQuest()
 		local functionName = "RQE:SupertrackRandomQuest()"
 
-		local numQuests = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numQuests = RQE.API.GetNumQuestLogEntries()
 		local randomIndex = math.random(1, numQuests)
 
 		-- Iterate through the player's quest log to find a valid random quest
@@ -16063,7 +14469,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local info = RQE.API.GetQuestLogInfo(i)
 			if info and info.questID then
 				-- Found a quest, supertrack it
-				-- print("~~~ SetSuperTrack: 9358~~~")
 				C_SuperTrack.SetSuperTrackedQuestID(info.questID)
 				RQE:SaveSuperTrackedQuestToCharacter()
 
@@ -16080,7 +14485,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Fallback: No quests found
 		print("No quests found to supertrack.")
 	end
-
 
 	-------------------------------------------------------
 	-- #20b. Scenario Logging & Experimental Timers
@@ -16108,7 +14512,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Inspect active world timers and synchronize RQE's supported scenario timer.
 	function RQE.ScenarioTimer_CheckTimers(...)
 		-- only supporting 1 active timer
@@ -16133,7 +14536,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- we had an update but didn't find a valid timer, kill the timer if it's running
 		ScenarioTimer_Stop();
 	end
-
 
 	-- Frame to handle the gossip event securely
 	local RQEGossipFrame = CreateFrame("Frame", "RQEGossipFrame", UIParent)
@@ -16160,7 +14562,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		npcName = nil,
 		optionIndex = nil
 	}
-
 
 	-------------------------------------------------------
 	-- #20c. Gossip Automation & Diagnostics
@@ -16208,7 +14609,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function to set a single gossip option
 	function RQE.SelectGossipOption(npcName, optionIndex)
 		-- Ensure gossip automation is enabled
@@ -16226,7 +14626,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("Single gossip selection set for NPC:", npcName, "to select option:", optionIndex)
 		end
 	end
-
 
 	-- Function to set multiple gossip selections
 	function RQE.SelectMultipleGossipOptions(npcName, ...)
@@ -16264,7 +14663,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			ProcessNextGossipOption()
 		end
 	end
-
 
 	-- Function that dumps gossip options into chat
 	-- Run with "/run DevTools_Dump(RQE.API.GetGossipOptions())"
@@ -16308,7 +14706,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return options
 	end
 
-
 	-- Securely hook event handler to process gossip
 	RQEGossipFrame:SetScript("OnEvent", function(self, event)
 		if event == "GOSSIP_SHOW" then
@@ -16323,7 +14720,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			selectedGossipOption.currentIndex = 1
 		end
 	end)
-
 
 	-- Securely hook the frame's event handler for single gossip
 	RQEGossipFrame:HookScript("OnEvent", function(self, event)
@@ -16363,19 +14759,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end)
 
-
 	-- Closes the gossip window to ensure that the options are clean slate
 	function RQE.ResetGossipWindow()
 		if UnitExists("npc") then
 			C_GossipInfo.CloseGossip() -- Close the gossip window
-			-- C_Timer.After(0.2, function() -- Wait a moment before reopening
-				-- C_PlayerInteractionManager.InteractUnit("npc") -- Reopen the gossip window
-			-- end)
-		-- else
-			-- print("No NPC is currently targeted.")
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #20d. Flight Master Search & Travel Recommendations
@@ -16437,7 +14826,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return closestNode
 	end
-
 
 	-- Returns { mapID, x, y, xPct, yPct, label, source="waypoint" } or nil.
 	-- Prints a test line and then calls CreateUnknownQuestWaypointNoDirectionText to place the waypoint.
@@ -16552,7 +14940,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return { mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct, label = label, source = "waypoint" }
 	end
 
-
 	-- Obtains the closest flight master that is known to a map position
 	function RQE:GetClosestFlightMasterToCoords(mapID, targetX, targetY)
 		if not mapID or not targetX or not targetY then
@@ -16591,7 +14978,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		return closestNode
 	end
-
 
 	-- Determines and prints the closest flight master to the questID that is passed to the function
 	function RQE:GetClosestFlightMasterToQuest(questID)
@@ -16670,13 +15056,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Function that determines the fastest travel method to reach a given quest
 	function RQE:RecommendFastestTravelMethod(questID)
 		if not RQE.db.profile.enableTravelSuggestions then return end
 
 		if not questID then
-			RQE.SuperTrackedQuestIDForSpeed = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.SuperTrackedQuestIDForSpeed = RQE.API.GetSuperTrackedQuestID()
 		else
 			RQE.SuperTrackedQuestIDForSpeed = questID
 		end
@@ -16761,7 +15146,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Returns normalized Euclidean distance for same-map coords
 	function RQE:GetDistance(mapID1, x1, y1, mapID2, x2, y2)
 		if not (x1 and y1 and x2 and y2) then return math.huge end
@@ -16774,7 +15158,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local dy = (y2 - y1)
 		return math.sqrt(dx * dx + dy * dy) * 10000 -- scale to approx "yards"
 	end
-
 
 	-- Gather the estimated speed the player is currently traveling
 	function RQE:EstimatePlayerSpeed(sampleTime)
@@ -16810,7 +15193,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 	end
 
-
 	-- Ask the player if they want a TomTom waypoint to the closest flight master, then set it on Yes.
 	function RQE:AskSetWaypointToClosestFlightMaster()
 		if UnitOnTaxi("player") then return end  -- No popups while flying
@@ -16837,7 +15219,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		}
 		StaticPopup_Show("RQE_CONFIRM_WP_CLOSEST_FM")
 	end
-
 
 	-- Create a TomTom (or Blizzard) waypoint to the closest discovered flight master on the current map.
 	function RQE:SetTomTomWaypointToClosestFlightMaster()
@@ -16920,7 +15301,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return { name = node.name, mapID = mapID, x = xNorm, y = yNorm, xPct = xPct, yPct = yPct }
 	end
 
-
 	-------------------------------------------------------
 	-- #20e. Coordinate & Map Diagnostics
 	-------------------------------------------------------
@@ -16990,12 +15370,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end	
 	end
 
-
-	-- Old truncation helper retained for reference; RQERoundMapFraction above is active.
-	-- local function RQETruncateDebugMapFraction(value)
-		-- return math.floor((tonumber(value) or 0) * 10000) / 10000
-	-- end
-
 	-- Fetches the player's position in relation to their current continent
 	function RQE.DebugPrintPlayerContinentPosition(questID)
 		if not RQEFrame:IsShown() then return end
@@ -17015,8 +15389,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get normalized x, y for the current map
-		-- local pos = C_Map.GetPlayerMapPosition(mapID, "player")
-		-- if not pos then
 		if not rawX or not rawY then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Unable to get player position on mapID:", mapID)
@@ -17024,11 +15396,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		-- local x, y = pos.x, pos.y
-		-- local x = RQETruncateDebugMapFraction(pos.x)
-		-- local y = RQETruncateDebugMapFraction(pos.y)
-		-- local x = RQERoundMapFraction(pos.x)
-		-- local y = RQERoundMapFraction(pos.y)
 		local x = RQERoundMapFraction(rawX)
 		local y = RQERoundMapFraction(rawY)
 
@@ -17092,11 +15459,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						print("Tracked QuestID: " .. tostring(questID))
 					end
 
-					-- local cx, cy = contPos.x, contPos.y
-					-- local cx = RQETruncateDebugMapFraction(contPos.x)
-					-- local cy = RQETruncateDebugMapFraction(contPos.y)
-					-- local cx = RQERoundMapFraction(contPos.x)
-					-- local cy = RQERoundMapFraction(contPos.y)
 					local rawContX, rawContY = contPos:GetXY()
 					local cx = RQERoundMapFraction(rawContX)
 					local cy = RQERoundMapFraction(rawContY)
@@ -17116,7 +15478,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Print in coordinateHotspots format
 		if not RQE.MapAndContinentFromQuestAccepted then
-			local trackedQuestID = questID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local trackedQuestID = questID or RQE.API.GetSuperTrackedQuestID()
 
 			local dbEntry = RQE.getQuestData(trackedQuestID)
 			local stepIndex = RQE.AddonSetStepIndex or 1
@@ -17159,11 +15521,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					local hotspotMapID = hasDBCoords and dbMapID or mapID
 					
 					if contPos then
-						-- local cx, cy = contPos.x, contPos.y
-						-- local cx = RQETruncateDebugMapFraction(contPos.x)
-						-- local cy = RQETruncateDebugMapFraction(contPos.y)
-						-- local cx = RQERoundMapFraction(contPos.x)
-						-- local cy = RQERoundMapFraction(contPos.y)
 						local rawContX, rawContY = contPos:GetXY()
 						local cx = RQERoundMapFraction(rawContX)
 						local cy = RQERoundMapFraction(rawContY)
@@ -17224,11 +15581,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					locY = locY or (hasDBCoords and dbY) or (y * 100)
 					locMapID = locMapID or (hasDBCoords and dbMapID) or mapID
 
-					-- local cx, cy = contPos.x, contPos.y
-					-- local cx = RQETruncateDebugMapFraction(contPos.x)
-					-- local cy = RQETruncateDebugMapFraction(contPos.y)
-					-- local cx = RQERoundMapFraction(contPos.x)
-					-- local cy = RQERoundMapFraction(contPos.y)
 					local rawContX, rawContY = contPos:GetXY()
 					local cx = RQERoundMapFraction(rawContX)
 					local cy = RQERoundMapFraction(rawContY)
@@ -17280,7 +15632,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.MapAndContinentFromQuestTurnIn = false
 	end
 
-
 	-------------------------------------------------------
 	-- #20f. Quest Step Coordinate Reporting
 	-------------------------------------------------------
@@ -17299,7 +15650,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		if maxStep == 0 then return 1 end
 
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 
 		for i = 1, maxStep do
 			local step = questData[i]
@@ -17326,7 +15677,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		return maxStep
 	end
 
-
 	-- Function that converts location/coordinates into locations/coordinateHotspots
 	function RQE.PrintCoordsForQuestStep(questID, stepIndex)
 		local maincolor = RQE.ColorPINK or "|cffff69b4"
@@ -17345,7 +15695,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		if not questID then
 			questID = RQE.CurrentDisplayedQuestID
-				or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+				or RQE.API.GetSuperTrackedQuestID()
 
 			stepIndex = RQE.CurrentDisplayedStepIndex or 1
 		else
@@ -17475,7 +15825,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-- Popup: ask for questID + stepIndex, then print locations/coordinateHotspots
 	function RQE.ShowPrintCoordsPopup()
 		StaticPopupDialogs["RQE_PRINT_COORDS_FOR_QUEST_STEP"] = {
@@ -17494,7 +15843,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local editBox = self.editBox or self:GetEditBox()
 				if editBox then
 					local questID = RQE.CurrentDisplayedQuestID
-						or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+						or RQE.API.GetSuperTrackedQuestID()
 						or ""
 
 					local stepIndex = RQE.CurrentDisplayedStepIndex
@@ -17527,7 +15876,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		StaticPopup_Show("RQE_PRINT_COORDS_FOR_QUEST_STEP")
 	end
-
 
 	-- Popup: ask for stepIndex, then print locations/coordinateHotspots for the tracked questID
 	function RQE.ShowPrintCoordsForDisplayedQuestPopup(passedQuestID)
@@ -17581,7 +15929,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		StaticPopup_Show("RQE_PRINT_COORDS_FOR_DISPLAYED_QUEST")
 	end
 
-
 	-- Debug to print TomTom waypoints and also player coordinates as they relate to the DB
 	function RQE:Debug_PlayerCoordinates()
 		if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
@@ -17633,7 +15980,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #20g. Quest & Super-Track Debug Output
 	-------------------------------------------------------
@@ -17645,7 +15991,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local numEntries = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numEntries = RQE.API.GetNumQuestLogEntries()
 		local foundInfo
 
 		for questLogIndex = 1, numEntries do
@@ -17687,10 +16033,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		print("|cff33FF99-------------------------------------------|r")
 	end
 
-
 	-- Prints the supertracked quest from Sandbox (or DB if not found)
 	function RQE.PrintSupertrackedQuest()
-		local questID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID or questID == 0 then
 			print("|cffff6666[RQE]|r No supertracked quest found.")
 			return
@@ -17820,7 +16165,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		tprintTabs("},", 2)
 	end
 
-
 	-------------------------------------------------------
 	-- #20h. Channel, Casting & Navigation Diagnostics
 	-------------------------------------------------------
@@ -17855,7 +16199,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		print("------------------------------------------------")
 	end
 
-
 	-- Debug utility: Prints channeling info for the player
 	function RQE.CheckCastingInfo()
 		local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitChannelInfo("player")
@@ -17882,7 +16225,6 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		print(string.format("Not Interruptible: %s", tostring(notInterruptible)))
 		print("------------------------------------------------")
 	end
-
 
 	-- Function that prints out the distance to the current waypoint in yards
 	function RQE:Debug_NavGetDistance()
