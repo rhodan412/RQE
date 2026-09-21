@@ -96,7 +96,79 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 	end
 
 	-------------------------------------------------------
-	-- #1c. Font Preview Dropdown Widget
+	-- #1c. Font Color Registry & RGB Lookup
+	-------------------------------------------------------
+
+	-- Named colors available throughout both Font Settings interfaces. The
+	-- original choices retain their existing RGB values; the additional
+	-- choices reuse colors already established elsewhere in RQE.
+	RQE.FontColorOptions = {
+		Yellow = { label = "Yellow", hex = "ffff00" },
+		Green = { label = "Green", hex = "00ff00" },
+		Cyan = { label = "Cyan", hex = "00ff99" },
+		Canary = { label = "Canary", hex = "ffffd9" },
+		["Cream Can"] = { label = "Cream Can", hex = "edbf59" },
+		White = { label = "White", hex = "ffffff" },
+		Silver = { label = "Silver", hex = "c0c0c0" },
+		["Dark Orange"] = { label = "Dark Orange", hex = "ff7f00" },
+		Crimson = { label = "Crimson", hex = "dc143c" },
+		["Hot Pink"] = { label = "Hot Pink", hex = "ff69b4" },
+		Fuchsia = { label = "Fuchsia", hex = "ff00ff" },
+		Lavender = { label = "Lavender", hex = "c9a0ff" },
+		["Carnation Pink"] = { label = "Carnation Pink", hex = "ff99cc" },
+		["Medium Purple"] = { label = "Medium Purple", hex = "b266ff" },
+		["Maya Blue"] = { label = "Maya Blue", hex = "66ccff" },
+		Cobalt = { label = "Cobalt", hex = "0057b8" },
+		["Golden Yellow"] = { label = "Golden Yellow", hex = "ffd700" },
+	}
+
+	RQE.FontColorOrder = {
+		"Crimson", "Dark Orange", "Cream Can", "Golden Yellow", "Yellow", "Canary",
+		"Green", "Cyan", "Maya Blue", "Cobalt", "Medium Purple", "Lavender",
+		"Fuchsia", "Hot Pink", "Carnation Pink", "Silver", "White",
+	}
+	RQE.FontColorLabels = {}
+	RQE.FontColorLabelsByHex = {}
+	RQE.FontColorKeyByHex = {}
+	RQE.FontColorKeyByLabel = {}
+	RQE.FontColorHexOrder = {}
+
+	for index, key in ipairs(RQE.FontColorOrder) do
+		local option = RQE.FontColorOptions[key]
+		RQE.FontColorLabels[key] = option.label
+		RQE.FontColorLabelsByHex[option.hex] = option.label
+		RQE.FontColorKeyByHex[option.hex] = key
+		RQE.FontColorKeyByLabel[option.label] = key
+		RQE.FontColorHexOrder[index] = option.hex
+	end
+
+	-- Function to resolve a saved RGB triplet to its matching named color key
+	function RQE:GetFontColorKey(color)
+		if type(color) ~= "table" then return nil end
+
+		local function ToByte(value)
+			return math.max(0, math.min(255, math.floor(((tonumber(value) or 0) * 255) + 0.5)))
+		end
+
+		local hex = string.format("%02x%02x%02x", ToByte(color[1]), ToByte(color[2]), ToByte(color[3]))
+		return self.FontColorKeyByHex[hex]
+	end
+
+	-- Function to resolve a named or hexadecimal color key to normalized RGB
+	function RQE:GetFontColorRGB(value)
+		local option = self.FontColorOptions[value]
+		if not option and type(value) == "string" then
+			option = self.FontColorOptions[self.FontColorKeyByHex[value:lower()]]
+		end
+		if not option then return nil end
+
+		return tonumber(option.hex:sub(1, 2), 16) / 255,
+			tonumber(option.hex:sub(3, 4), 16) / 255,
+			tonumber(option.hex:sub(5, 6), 16) / 255
+	end
+
+	-------------------------------------------------------
+	-- #1d. Font & Color Preview Dropdown Widgets
 	-------------------------------------------------------
 
 	-- Render both configuration surfaces' individual font names in their own
@@ -194,6 +266,8 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 			AceGUI:RegisterWidgetType(widgetType, Constructor, 1 + ItemBase.version)
 		end
 	end
+
+	RQE.ConfigUI:RegisterFontColorWidgets(AceGUI)
 
 
 --------------------------------------------------
@@ -927,51 +1001,19 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 										name = "Font Color",
 										desc = "Default: Cream Can",
 										type = "select",
-										values = {
-											["Yellow"] = "Yellow",
-											["Green"] = "Green",
-											["Cyan"] = "Cyan",
-											["Canary"] = "Canary",
-											["Cream Can"] = "Cream Can",
-											-- Add other named colors here
-										},
+										values = RQE.FontColorLabels,
+										sorting = RQE.FontColorOrder,
+										dialogControl = "RQEColorDropdown",
+										itemControl = "Dropdown-Item-RQEColorPreview",
 										get = function(info)
-											local color = RQE.db.profile.textSettings.headerText.color
-											local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-
-											if hexColor == "ffff00" then
-												return "Yellow"
-											elseif hexColor == "00ff00" then
-												return "Green"
-											elseif hexColor == "00ff99" then
-												return "Cyan"
-											elseif hexColor == "ffffd9" then
-												return "Canary"
-											elseif hexColor == "edbf59" then
-												return "Cream Can"
-											end
+											return RQE:GetFontColorKey(RQE.db.profile.textSettings.headerText.color)
 										end,
 										set = function(info, val)
-											local hexColor
-											if val == "Yellow" then
-												hexColor = "ffff00"
-											elseif val == "Green" then
-												hexColor = "00ff00"
-											elseif val == "Cyan" then
-												hexColor = "00ff99"
-											elseif val == "Canary" then
-												hexColor = "ffffd9"
-											elseif val == "Cream Can" then
-												hexColor = "edbf59"
+											local r, g, b = RQE:GetFontColorRGB(val)
+											if r then
+												RQE.db.profile.textSettings.headerText.color = { r, g, b }
+												RQE:ConfigurationChanged()
 											end
-
-											local r = tonumber(hexColor:sub(1,2), 16) / 255
-											local g = tonumber(hexColor:sub(3,4), 16) / 255
-											local b = tonumber(hexColor:sub(5,6), 16) / 255
-											RQE.db.profile.textSettings.headerText.color = {r, g, b}
-
-											local new_value = val
-											RQE:ConfigurationChanged()
 										end,
 										order = 3,
 									},
@@ -1013,51 +1055,19 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 										name = "Font Color",
 										desc = "Default: Yellow",
 										type = "select",
-										values = {
-											["Yellow"] = "Yellow",
-											["Green"] = "Green",
-											["Cyan"] = "Cyan",
-											["Canary"] = "Canary",
-											["Cream Can"] = "Cream Can",
-											-- Add other named colors here
-										},
+										values = RQE.FontColorLabels,
+										sorting = RQE.FontColorOrder,
+										dialogControl = "RQEColorDropdown",
+										itemControl = "Dropdown-Item-RQEColorPreview",
 										get = function(info)
-											local color = RQE.db.profile.textSettings.QuestIDText.color
-											local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-
-											if hexColor == "ffff00" then
-												return "Yellow"
-											elseif hexColor == "00ff00" then
-												return "Green"
-											elseif hexColor == "00ff99" then
-												return "Cyan"
-											elseif hexColor == "ffffd9" then
-												return "Canary"
-											elseif hexColor == "edbf59" then
-												return "Cream Can"
-											end
+											return RQE:GetFontColorKey(RQE.db.profile.textSettings.QuestIDText.color)
 										end,
 										set = function(info, val)
-											local hexColor
-											if val == "Yellow" then
-												hexColor = "ffff00"
-											elseif val == "Green" then
-												hexColor = "00ff00"
-											elseif val == "Cyan" then
-												hexColor = "00ff99"
-											elseif val == "Canary" then
-												hexColor = "ffffd9"
-											elseif val == "Cream Can" then
-												hexColor = "edbf59"
+											local r, g, b = RQE:GetFontColorRGB(val)
+											if r then
+												RQE.db.profile.textSettings.QuestIDText.color = { r, g, b }
+												RQE:ConfigurationChanged()
 											end
-
-											local r = tonumber(hexColor:sub(1,2), 16) / 255
-											local g = tonumber(hexColor:sub(3,4), 16) / 255
-											local b = tonumber(hexColor:sub(5,6), 16) / 255
-											RQE.db.profile.textSettings.QuestIDText.color = {r, g, b}
-
-											local new_value = val
-											RQE:ConfigurationChanged()
 										end,
 										order = 3,
 									},
@@ -1099,51 +1109,19 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 										name = "Font Color",
 										desc = "Default: Yellow",
 										type = "select",
-										values = {
-											["Yellow"] = "Yellow",
-											["Green"] = "Green",
-											["Cyan"] = "Cyan",
-											["Canary"] = "Canary",
-											["Cream Can"] = "Cream Can",
-											-- Add other named colors here
-										},
+										values = RQE.FontColorLabels,
+										sorting = RQE.FontColorOrder,
+										dialogControl = "RQEColorDropdown",
+										itemControl = "Dropdown-Item-RQEColorPreview",
 										get = function(info)
-											local color = RQE.db.profile.textSettings.QuestNameText.color
-											local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-
-											if hexColor == "ffff00" then
-												return "Yellow"
-											elseif hexColor == "00ff00" then
-												return "Green"
-											elseif hexColor == "00ff99" then
-												return "Cyan"
-											elseif hexColor == "ffffd9" then
-												return "Canary"
-											elseif hexColor == "edbf59" then
-												return "Cream Can"
-											end
+											return RQE:GetFontColorKey(RQE.db.profile.textSettings.QuestNameText.color)
 										end,
 										set = function(info, val)
-											local hexColor
-											if val == "Yellow" then
-												hexColor = "ffff00"
-											elseif val == "Green" then
-												hexColor = "00ff00"
-											elseif val == "Cyan" then
-												hexColor = "00ff99"
-											elseif val == "Canary" then
-												hexColor = "ffffd9"
-											elseif val == "Cream Can" then
-												hexColor = "edbf59"
+											local r, g, b = RQE:GetFontColorRGB(val)
+											if r then
+												RQE.db.profile.textSettings.QuestNameText.color = { r, g, b }
+												RQE:ConfigurationChanged()
 											end
-
-											local r = tonumber(hexColor:sub(1,2), 16) / 255
-											local g = tonumber(hexColor:sub(3,4), 16) / 255
-											local b = tonumber(hexColor:sub(5,6), 16) / 255
-											RQE.db.profile.textSettings.QuestNameText.color = {r, g, b}
-
-											local new_value = val
-											RQE:ConfigurationChanged()
 										end,
 										order = 3,
 									},
@@ -1185,51 +1163,19 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 										name = "Font Color",
 										desc = "Default: Yellow",
 										type = "select",
-										values = {
-											["Yellow"] = "Yellow",
-											["Green"] = "Green",
-											["Cyan"] = "Cyan",
-											["Canary"] = "Canary",
-											["Cream Can"] = "Cream Can",
-											-- Add other named colors here
-										},
+										values = RQE.FontColorLabels,
+										sorting = RQE.FontColorOrder,
+										dialogControl = "RQEColorDropdown",
+										itemControl = "Dropdown-Item-RQEColorPreview",
 										get = function(info)
-											local color = RQE.db.profile.textSettings.DirectionTextFrame.color
-											local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-
-											if hexColor == "ffff00" then
-												return "Yellow"
-											elseif hexColor == "00ff00" then
-												return "Green"
-											elseif hexColor == "00ff99" then
-												return "Cyan"
-											elseif hexColor == "ffffd9" then
-												return "Canary"
-											elseif hexColor == "edbf59" then
-												return "Cream Can"
-											end
+											return RQE:GetFontColorKey(RQE.db.profile.textSettings.DirectionTextFrame.color)
 										end,
 										set = function(info, val)
-											local hexColor
-											if val == "Yellow" then
-												hexColor = "ffff00"
-											elseif val == "Green" then
-												hexColor = "00ff00"
-											elseif val == "Cyan" then
-												hexColor = "00ff99"
-											elseif val == "Canary" then
-												hexColor = "ffffd9"
-											elseif val == "Cream Can" then
-												hexColor = "edbf59"
+											local r, g, b = RQE:GetFontColorRGB(val)
+											if r then
+												RQE.db.profile.textSettings.DirectionTextFrame.color = { r, g, b }
+												RQE:ConfigurationChanged()
 											end
-
-											local r = tonumber(hexColor:sub(1,2), 16) / 255
-											local g = tonumber(hexColor:sub(3,4), 16) / 255
-											local b = tonumber(hexColor:sub(5,6), 16) / 255
-											RQE.db.profile.textSettings.DirectionTextFrame.color = {r, g, b}
-
-											local new_value = val
-											RQE:ConfigurationChanged()
 										end,
 										order = 3,
 									},
@@ -1269,73 +1215,21 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 									},
 									fontColor = {
 										name = "Font Color",
-										desc = "Default: Cyan",
+										desc = "Default: Maya Blue",
 										type = "select",
-										values = {
-											["Yellow"] = "Yellow",
-											["Green"] = "Green",
-											["Cyan"] = "Cyan",
-											["Canary"] = "Canary",
-											["Cream Can"] = "Cream Can",
-											["Sky Blue"] = "Sky Blue",
-											["Lavender"] = "Lavender",
-											["Soft Rose"] = "Soft Rose",
-											["Silver"] = "Silver",
-											-- Add other named colors here
-										},
+										values = RQE.FontColorLabels,
+										sorting = RQE.FontColorOrder,
+										dialogControl = "RQEColorDropdown",
+										itemControl = "Dropdown-Item-RQEColorPreview",
 										get = function(info)
-											local color = RQE.db.profile.textSettings.QuestDescription.color
-											local hexColor = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-
-											if hexColor == "ffff00" then
-												return "Yellow"
-											elseif hexColor == "00ff00" then
-												return "Green"
-											elseif hexColor == "00ff99" then
-												return "Cyan"
-											elseif hexColor == "ffffd9" then
-												return "Canary"
-											elseif hexColor == "edbf59" then
-												return "Cream Can"
-											elseif hexColor == "66ccff" then
-												return "Sky Blue"
-											elseif hexColor == "c9a0ff" then
-												return "Lavender"
-											elseif hexColor == "ff99cc" then
-												return "Soft Rose"
-											elseif hexColor == "c0c0c0" then
-												return "Silver"
-											end
+											return RQE:GetFontColorKey(RQE.db.profile.textSettings.QuestDescription.color)
 										end,
 										set = function(info, val)
-											local hexColor
-											if val == "Yellow" then
-												hexColor = "ffff00"
-											elseif val == "Green" then
-												hexColor = "00ff00"
-											elseif val == "Cyan" then
-												hexColor = "00ff99"
-											elseif val == "Canary" then
-												hexColor = "ffffd9"
-											elseif val == "Cream Can" then
-												hexColor = "edbf59"
-											elseif val == "Sky Blue" then
-												hexColor = "66ccff"
-											elseif val == "Lavender" then
-												hexColor = "c9a0ff"
-											elseif val == "Soft Rose" then
-												hexColor = "ff99cc"
-											elseif val == "Silver" then
-												hexColor = "c0c0c0"
+											local r, g, b = RQE:GetFontColorRGB(val)
+											if r then
+												RQE.db.profile.textSettings.QuestDescription.color = { r, g, b }
+												RQE:ConfigurationChanged()
 											end
-
-											local r = tonumber(hexColor:sub(1,2), 16) / 255
-											local g = tonumber(hexColor:sub(3,4), 16) / 255
-											local b = tonumber(hexColor:sub(5,6), 16) / 255
-											RQE.db.profile.textSettings.QuestDescription.color = {r, g, b}
-
-											local new_value = val
-											RQE:ConfigurationChanged()
 										end,
 										order = 3,
 									},
@@ -2531,37 +2425,25 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 		fontSizeAndColorGroup:SetLayout("Flow")
 		scrollFrame:AddChild(fontSizeAndColorGroup)
 
-		local colorList = {
-			["ffff00"] = "Yellow",
-			["00ff00"] = "Green",
-			["00ff99"] = "Cyan",
-			["ffffd9"] = "Canary",
-			["edbf59"] = "Cream Can",
-			["66ccff"] = "Sky Blue",
-			["c9a0ff"] = "Lavender",
-			["ff99cc"] = "Soft Rose",
-			["c0c0c0"] = "Silver",
-		}
-
 		-- Function to convert a saved RGB color into its dropdown hexadecimal key
 		local function SetColorDropdownValue(color)
-			local hexColor = string.format("%02x%02x%02x", color[1] * 255, color[2] * 255, color[3] * 255)
-			return hexColor
+			local key = RQE:GetFontColorKey(color)
+			return key and RQE.FontColorOptions[key].hex or nil
 		end
 
 		-- Helper function to create font color dropdown
 		local function CreateFontColorDropdown(group, label, profilePath)
-			local dropdown = AceGUI:Create("Dropdown")
+			local dropdown = AceGUI:Create("RQEColorDropdown")
 			dropdown:SetLabel(label)
-			dropdown:SetList(colorList)
+			dropdown:SetList(RQE.FontColorLabelsByHex, RQE.FontColorHexOrder, "Dropdown-Item-RQEColorPreview")
 			dropdown:SetValue(SetColorDropdownValue(RQE.db.profile.textSettings[profilePath].color))
 			dropdown:SetFullWidth(true)
 			dropdown:SetCallback("OnValueChanged", function(widget, event, value)
-				local r = tonumber(value:sub(1, 2), 16) / 255
-				local g = tonumber(value:sub(3, 4), 16) / 255
-				local b = tonumber(value:sub(5, 6), 16) / 255
-				RQE.db.profile.textSettings[profilePath].color = { r, g, b }
-				RQE:ConfigurationChanged()
+				local r, g, b = RQE:GetFontColorRGB(value)
+				if r then
+					RQE.db.profile.textSettings[profilePath].color = { r, g, b }
+					RQE:ConfigurationChanged()
+				end
 			end)
 			group:AddChild(dropdown)
 		end
