@@ -293,13 +293,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 				RQE.DontPrintTransitionBits = true
 				RQE:FindQuestZoneTransition(questID)
 				RQE.DontPrintTransitionBits = false
-				--RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 			else
 				RQE:CreateUnknownQuestWaypointNoDirectionText(questID, mapID)
 			end
 		end)
 	end
-
 
 	-------------------------------------------------------
 	-- #4b. Searched Quest Location Waypoints
@@ -597,10 +595,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Use arrowTitle for the waypoint itself
-		local waypointTitle = RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm, arrowTitle)	--local waypointTitle = arrowTitle
-		-- if RQE.db.profile.debugLevel == "INFO+" then
-			-- print("waypointTitle - 451: " .. tostring(waypointTitle))
-		-- end
+		local waypointTitle = RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm, arrowTitle)	
 
 		-- 10) Place waypoint(s)
 		C_Map.ClearUserWaypoint()
@@ -636,7 +631,6 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- Only block world quests
 		if not RQE.API.IsWorldQuest(candidateQuestID) then
-		--if not C_QuestLog.IsWorldQuest(candidateQuestID) then
 			return false
 		end
 
@@ -719,7 +713,6 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 				-- Ensure QuestIDText exists and is valid before extracting the quest ID
 				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 					extractedQuestID = RQE.DisplayedQuestID
-					-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				end
 
 				-- Use either extractedQuestID or current super-tracked quest ID
@@ -1070,7 +1063,6 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- Get normalized coords for either legacy or hotspots
 		local x, y, mapID = RQE:GetStepCoordinates(stepIndex)
-		--local x, y, mapID = stepData.coordinates.x, stepData.coordinates.y, stepData.coordinates.mapID
 		if not (x and y and mapID) then
 			print("Invalid coordinates for questID:", questID, "stepIndex:", stepIndex)
 			return
@@ -1262,7 +1254,6 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		local extractedQuestID = nil
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Retrieve the currently super-tracked quest ID
@@ -1311,17 +1302,12 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			print(string.format("Setting Waypoint: QuestID: %d, MapID: %d, X: %.2f, Y: %.2f", questID, mapID, x, y))
 		end
 
-		-- Clear existing waypoint
-		--C_Map.ClearUserWaypoint()
-
 		-- Create a new user waypoint
 		local waypointData = {
 			uiMapID = mapID,
 			position = CreateVector2D(x / 100, y / 100),
 			name = waypointText
 		}
-		--C_Map.SetUserWaypoint(waypointData)
-		--C_SuperTrack.SetSuperTrackedUserWaypoint(true)
 
 		-- TomTom Integration (if enabled)
 		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
@@ -1420,7 +1406,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		if not RQEFrame:IsShown() then return end
 
 		local stepIndex = RQE.AddonSetStepIndex or 1
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		if not questID then
 			RQE.debugLog("No super-tracked quest.")
@@ -1491,7 +1477,7 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		if self:IsCoordblockWaypointProtected() then return end
 		if not RQEFrame:IsShown() then return end
 
-		if not RQE.API.IsSuperTrackingQuest() then return end		--if not (C_SuperTrack.IsSuperTrackingQuest and C_SuperTrack.IsSuperTrackingQuest()) then return end
+		if not RQE.API.IsSuperTrackingQuest() then return end
 		qid   = qid   or RQE.API.GetSuperTrackedQuestID()
 		mapID = mapID or C_Map.GetBestMapForUnit("player")
 		if not qid or not mapID then return end
