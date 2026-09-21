@@ -76,7 +76,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		border:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0.15, -0.15)
 	end
 
-
 	-------------------------------------------------------
 	-- #2b. Step Navigation Tooltip Refresh
 	-------------------------------------------------------
@@ -102,7 +101,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RefreshButton(RQE.PrevStepButton)
 		RefreshButton(RQE.NextStepButton)
 	end
-
 
 	-------------------------------------------------------
 	-- #2c. Unknown Quest Waypoint Tooltip
@@ -185,7 +183,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 							-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
 							if RQE.db.profile.debugLevel == "INFO" then
 								local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
-								local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+								local questID = RQE.API.GetSuperTrackedQuestID()
 								local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
 
 								-- Ensure quest data exists and has the coordinate data
@@ -205,11 +203,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 											if RQE.WCoordData == RQE.SeparateFocusCoordData then
 												RQE:KhadgarCoordsMatch(RQE.API.GetSuperTrackedQuestID())
-												--RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 											else
 												RQE:CoordsNOMatch(RQE.API.GetSuperTrackedQuestID())
 												print("DB Coordinates do NOT Match Blizzard coordinates for quest step!")
-												-- RQE:PlayThrottledSound(135755)
 											end
 										end
 
@@ -249,7 +245,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				local extractedQuestID
 				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 					extractedQuestID = RQE.DisplayedQuestID
-					-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				end
 
 				RQE.CurrentTrackedQuestID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
@@ -382,7 +377,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
 	-------------------------------------------------------
 	-- #2d. Coordinate Validation Alerts
 	-------------------------------------------------------
@@ -422,7 +416,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
 	-- Function that handles the alert/sound when the coords do not between DB and Blizz
 	function RQE:CoordsNOMatch(questID)
 		local isContributionLoaded
@@ -457,7 +450,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
 	-- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
 	function RQE:LegacyCoordsDetected(questID)
 		local isContributionLoaded
@@ -477,7 +469,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RQE:PlayThrottledSound(4574)	-- igPVPUpdate
 		end)
 	end
-
 
 	-- Function that handles the alert when the DB entry contains legacy "coordinates" in any stepIndex
 	function RQE:NoDBEntryForQuest(questID)
@@ -503,7 +494,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
 	-- Function that handles the alert when the DB entry contains NO legacy "coordinates" in any stepIndex and only coordinateHotspots
 	function RQE:NoLegacyCoordsDetected(questID)
 		local isContributionLoaded
@@ -525,7 +515,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
 	-------------------------------------------------------
 	-- #2e. Unknown Quest Button Interaction
 	-------------------------------------------------------
@@ -537,7 +526,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			GameTooltip:Hide()
 		end)
 	end
-
 
 	-- Add a mouse down event to simulate a button press
 	RQE.UnknownQuestButtonMouseDown = function()
@@ -612,7 +600,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
 	-- Add a mouse up event to reset the texture
 	RQE.UnknownQuestButtonMouseUp = function()
 		RQE.UnknownQuestButton:SetScript("OnMouseUp", function(self, button)
@@ -622,12 +609,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 	end
 
-
-	-- Handles the Raid Message Alert and sound when group is forming/no longer forming in LFG
 	-------------------------------------------------------
 	-- #2f. Group Finder Sounds & Button Feedback
 	-------------------------------------------------------
 
+	-- Handles the Raid Message Alert and sound when group is forming/no longer forming in LFG
 	-- Prevents sound from playing on top of each other if switching between forming group and no longer forming group
 	RQE.lastSoundTime = RQE.lastSoundTime or 0
 	RQE.soundThrottle = 2 -- seconds between sounds
@@ -641,7 +627,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-- Function that handles the alert/sound when LFG quest group no longer forming
 	function RQE:StopFormingLFG()
 		local leavemessage = "LFG Group has been delisted."
@@ -649,20 +634,18 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
 	end
 
-
 	-- Function that handles the alert/sound when LFG quest group is forming
 	function RQE:FormLFG()
 		local createmessage = "Your quest group is forming."
 		RaidNotice_AddMessage(RaidWarningFrame, createmessage, ChatTypeInfo["RAID_WARNING"])
 	end
 
-
 	-- Function to attach Search Group press handling for searching, creating, or delisting quest groups
 	RQE.SearchGroupButtonMouseDown = function()
 		RQE.SearchGroupButton:SetScript("OnMouseDown", function(self, button)
 			RQE.sgbg:SetAlpha(0.5)  -- Lower the alpha to simulate a button press
 
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			if not questID then
 				print("No super-tracked quest to handle LFG.")
 				return
@@ -780,7 +763,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return MagicButton
 	end
 
-
 	-------------------------------------------------------
 	-- #3b. Macro Visibility & Override Binding
 	-------------------------------------------------------
@@ -814,7 +796,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-- Function to set up an override key binding for macro
 	function RQE:SetupOverrideMacroBinding()
 		if not self.db then return end
@@ -843,13 +824,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-- Function to reapply the saved macro binding at login or reload
 	function RQE:ReapplyMacroBinding()
 		-- The configuration and login paths must use the same canonical field.
 		self:SetupOverrideMacroBinding()
 	end
-
 
 	-- Remember to clear the override binding when it's no longer needed or when UI is hidden
 	local function ClearOverrideMacroBinding()
@@ -862,7 +841,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		-- This will clear all override bindings associated with the ownerFrame
 		ClearOverrideBindings(ownerFrame)
 	end
-
 
 	-------------------------------------------------------
 	-- #3c. Clear Button & Confirmation Flow
@@ -920,7 +898,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		return ClearButton
 	end
-
 
 	-- Function to handle the clearing of the RQEFrame when the "C" button is pressed (or similar functionality is desired)
 	function RQE.Buttons.ClearButtonPressed()
@@ -1018,7 +995,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return RWButton
 	end
 
-
 	-------------------------------------------------------
 	-- #3e. Search & Contribution Launchers
 	-------------------------------------------------------
@@ -1048,7 +1024,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return SearchButton
 	end
 
-
 	-- Function to detect the Contribution addon through the API available on the active client
 	local function IsContributionAddonLoaded()
 		if isRetail then
@@ -1058,7 +1033,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return RQE.API and RQE.API.IsAddOnLoaded
 			and RQE.API.IsAddOnLoaded("RQE_Contribution")
 	end
-
 
 	-- RQE owns the Contribution launcher so its placement and skin remain stable.
 	-- RQE_Contribution continues to own the editor frame and every editor action.
@@ -1099,7 +1073,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return button
 	end
 
-
 	-- Function to show, hide, and restyle the Contribution launcher when its editor becomes available
 	function RQE.Buttons.RefreshContributionButton()
 		local button = RQE.RQEContributionButton
@@ -1123,7 +1096,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #3f. Displayed Step & Navigation Availability
 	-------------------------------------------------------
@@ -1141,7 +1113,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			or RQE.CurrentStepIndex
 			or 1
 	end
-
 
 	-- Returns whether the manual step controls have a valid adjacent step in each
 	-- direction. Searched Classic/TBC quests retain their synthetic pickup step 0.
@@ -1171,7 +1142,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return canGoBack, canGoForward
 	end
 
-
 	-------------------------------------------------------
 	-- #3g. Quest Helper Close Button
 	-------------------------------------------------------
@@ -1199,7 +1169,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		return CloseButton
 	end
-
 
 	-------------------------------------------------------
 	-- #3h. Manual Previous & Next Step Controls
@@ -1292,7 +1261,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if RQE.UI then RQE.UI:StyleIconButton(PrevStepButton, "PreviousStep") end
 		return PrevStepButton
 	end
-
 
 	-- Creates the Next Step button for manual step preview navigation.
 	function RQE.Buttons.CreateNextStepButton(RQEFrame)
@@ -1391,7 +1359,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if RQE.UI then RQE.UI:StyleIconButton(NextStepButton, "NextStep") end
 		return NextStepButton
 	end
-
 
 	-------------------------------------------------------
 	-- #3i. Contextual Waypoint Header Controls
@@ -1590,7 +1557,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return CQButton
 	end
 
-
 	-- Parent function to create the Show Completed button.
 	function RQE.Buttons.SCButton(RQEQuestFrame)
 		local SCButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
@@ -1623,7 +1589,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return SCButton
 	end
 
-
 	-- Parent function to Create HQButton
 	function RQE.Buttons.HQButton(RQEQuestFrame)
 		local HQButton = CreateFrame("Button", nil, RQEQuestFrame, "UIPanelButtonTemplate")
@@ -1649,7 +1614,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		return HQButton
 	end
-
 
 	-- Parent function to Create ZQButton
 	function RQE.Buttons.ZQButton(RQEQuestFrame)
@@ -1680,7 +1644,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		return ZQButton
 	end
-
 
 	-------------------------------------------------------
 	-- #4b. Tracker Header Layout & Window Controls
@@ -1724,7 +1687,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		return QTCloseButton
 	end
-
 
 	-- Parent function to Create QTMaximizeButton for RQEQuestFrame
 	function RQE.Buttons.CreateQuestMaximizeButton(RQEQuestFrame, originalWidth, originalHeight, content, ScrollFrame, slider)
@@ -1771,7 +1733,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		return QTMaximizeButton
 	end
-
 
 	-- Parent function to Create QTMinimizeButton for RQEQuestFrame
 	function RQE.Buttons.CreateQuestMinimizeButton(RQEQuestFrame, QToriginalWidth, QToriginalHeight, QTcontent, QTScrollFrame, QTslider)
@@ -2258,7 +2219,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #4f. Campaign, Type, Zone & Quest-Line Submenus
 	-------------------------------------------------------
@@ -2304,7 +2264,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-- Create the Quest Type Submenu
 	function RQE:CreateQuestTypeSubMenu()
 		if not self.QuestTypeSubMenu then
@@ -2340,7 +2299,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 	end
 
-
 	-- Create the Zone Quests Submenu
 	function RQE:CreateZoneQuestSubMenu()
 		if not self.ZoneQuestSubMenu then
@@ -2375,7 +2333,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			end
 		end
 	end
-
 
 	-- Create the Quest Line Submenu
 	function RQE:CreateQuestLineSubMenu()
@@ -2447,7 +2404,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	local questItemButtonState = RQE.SpecialQuestItemButtons
 	local legacyQuestieDB
 
-
 	-------------------------------------------------------
 	-- #5b. Combat, Quest Log & Inventory Compatibility
 	-------------------------------------------------------
@@ -2459,7 +2415,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return type(InCombatLockdown) == "function" and InCombatLockdown()
 	end
 
-
 	-- Native special-item functions take a quest-log index, not a quest ID. Use
 	-- RQE_API.lua's normalized lookup: it selects Retail's native index API and
 	-- scans the legacy quest log when SoD/TBC do not expose the same function.
@@ -2468,7 +2423,6 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local questLogIndex = tonumber(RQE.API.GetLogIndexForQuestID(questID))
 		return questLogIndex and questLogIndex > 0 and questLogIndex or nil
 	end
-
 
 	-- Questie is optional and only consulted on Classic/SoD and TBC. Cache a
 	-- successful import, but retry a missing module in case Questie starts later.
