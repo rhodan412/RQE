@@ -281,6 +281,9 @@ function UI:StyleLocationInfoBar(bar)
 end
 
 function UI:RefreshLocationInfoBar()
+	-- Location visibility also changes scroll-frame anchors. Do not apply the
+	-- selected profile's bar layout ahead of its combat-deferred frame geometry.
+	if RQE.ProfileApplyPending and not RQE.ApplyingProfile then return end
 	local mainFrame = RQE.RQEFrame or RQEFrame or _G["RQE.RQEFrame"]
 	local bar = RQE.LocationInfoBar
 	if not (mainFrame and RQE.ScrollFrame) then return end
