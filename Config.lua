@@ -268,7 +268,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		return 1  -- default to 1 (NONE) if not found
 	end
 
-
 	-- Utility function to convert between string and index
 	local function getAnchorPointIndex(str)
 		for i, v in ipairs(anchorPointOptions) do
@@ -278,7 +277,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		end
 		return 1  -- default to 1 if not found
 	end
-
 
 	-------------------------------------------------------
 	-- #4b. General Behavior Options
@@ -323,7 +321,7 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 						get = function(info) return RQE.db.profile.enableQuestFrame end,
 						set = function(info, value)
 							RQE.db.profile.enableQuestFrame = value
-							RQE:UpdateTrackerVisibility()	--RQE:ToggleRQEQuestFrame()
+							RQE:UpdateTrackerVisibility()
 						end,
 						order = 3,
 					},
@@ -592,10 +590,9 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 				},
 			},
 
-
-	-------------------------------------------------------
-	-- #4c. Frame & Tracker Geometry Options
-	-------------------------------------------------------
+			-------------------------------------------------------
+			-- #4c. Frame & Tracker Geometry Options
+			-------------------------------------------------------
 
 			frame = {
 				name = "Frame Settings",
@@ -879,10 +876,9 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 				},
 			},
 
-
-	-------------------------------------------------------
-	-- #4d. Font Styling Options
-	-------------------------------------------------------
+			-------------------------------------------------------
+			-- #4d. Font Styling Options
+			-------------------------------------------------------
 
 			font = {
 				name = "Font Settings",
@@ -1328,10 +1324,9 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 				},
 			},
 
-
-	-------------------------------------------------------
-	-- #4e. Debug & Performance Options
-	-------------------------------------------------------
+			-------------------------------------------------------
+			-- #4e. Debug & Performance Options
+			-------------------------------------------------------
 
 			debug = {
 				name = "Debug Options",
@@ -1455,7 +1450,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		},
 	}
 
-
 	-------------------------------------------------------
 	-- #4f. Chat Command Panel Routes
 	-------------------------------------------------------
@@ -1522,7 +1516,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #5b. Config Window Visibility Toggle
 	-------------------------------------------------------
@@ -1540,7 +1533,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		end
 	end
 
-
 	-------------------------------------------------------
 	-- #5c. General Settings Widgets
 	-------------------------------------------------------
@@ -1553,7 +1545,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		scrollFrame:SetFullWidth(true)
 		scrollFrame:SetFullHeight(true) -- This will allow the scroll frame to take up the full height of the parent container
 		container:AddChild(scrollFrame)
-
 
 		-------------------------------------------------------
 		-- #5c.i. Core Frame & Map Display Controls
@@ -1610,7 +1601,7 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		enableQuestFrameCheckbox:SetValue(RQE.db.profile.enableQuestFrame)
 		enableQuestFrameCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 			RQE.db.profile.enableQuestFrame = value
-			RQE:UpdateTrackerVisibility()	--RQE:ToggleRQEQuestFrame()
+			RQE:UpdateTrackerVisibility()
 		end)
 
 		-- Add a tooltip description for enableQuestFrameCheckbox (RQE.db.profile.enableQuestFrame)
@@ -1743,7 +1734,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 
 		scrollFrame:AddChild(showCoordinatesCheckbox)
 
-
 		-------------------------------------------------------
 		-- #5c.ii. Quest Automation & World Quest Controls
 		-------------------------------------------------------
@@ -1869,7 +1859,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		end)
 
 		scrollFrame:AddChild(enableQuestAbandonConfirmCheckbox)
-
 
 		-------------------------------------------------------
 		-- #5c.iii. Provider Compatibility & Super-Tracking Controls
@@ -2137,7 +2126,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		scrollFrame:AddChild(spacer)
 	end
 
-
 	-------------------------------------------------------
 	-- #5d. Frame Settings Widgets
 	-------------------------------------------------------
@@ -2157,7 +2145,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		framePositionGroup:SetFullWidth(true)
 		framePositionGroup:SetLayout("Flow")
 		scrollFrame:AddChild(framePositionGroup)
-
 
 		-------------------------------------------------------
 		-- #5d.i. Tracker Behavior & Theme Controls
@@ -2264,7 +2251,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 			BOTTOM = "BOTTOM",
 			BOTTOMRIGHT = "BOTTOMRIGHT",
 		}
-
 
 		-------------------------------------------------------
 		-- #5d.ii. Main Frame Geometry Controls
@@ -2394,7 +2380,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		questFramePositionGroup:SetLayout("Flow")
 		scrollFrame:AddChild(questFramePositionGroup)
 
-
 		-------------------------------------------------------
 		-- #5d.iii. Quest Tracker Geometry Controls
 		-------------------------------------------------------
@@ -2523,7 +2508,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		scrollFrame:AddChild(spacer)
 	end
 
-
 	-------------------------------------------------------
 	-- #5e. Font Settings Widgets
 	-------------------------------------------------------
@@ -2551,7 +2535,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 			["ffffd9"] = "Canary",
 			["edbf59"] = "Cream Can"
 		}
-
 
 		-------------------------------------------------------
 		-- #5e.i. Font Color & Style Dropdown Helpers
@@ -2604,7 +2587,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		headerTextGroup:SetFullWidth(true)
 		headerTextGroup:SetLayout("Flow")
 		fontSizeAndColorGroup:AddChild(headerTextGroup)
-
 
 		-------------------------------------------------------
 		-- #5e.ii. Text Element Style Controls
@@ -2790,7 +2772,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		scrollFrame:AddChild(spacer)
 	end
 
-
 	-------------------------------------------------------
 	-- #5f. Debug Settings Widgets
 	-------------------------------------------------------
@@ -2808,10 +2789,9 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		local function RefreshDebugTab()
 			scrollFrame:ReleaseChildren() -- Clear all current children
 
-
-		-------------------------------------------------------
-		-- #5f.i. Debug Mode & Resource Metrics
-		-------------------------------------------------------
+			-------------------------------------------------------
+			-- #5f.i. Debug Mode & Resource Metrics
+			-------------------------------------------------------
 
 			-- Enable Debug Mode Checkbox
 			local debugModeCheckbox = AceGUI:Create("CheckBox")
@@ -2986,7 +2966,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 
 				-- Additional options for "INFO" level
 				if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-
 
 					-------------------------------------------------------
 					-- #5f.iii. Event Trace Toggles
@@ -3866,7 +3845,6 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		-- Initial setup of the Debug tab
 		RefreshDebugTab()
 	end
-
 
 	-------------------------------------------------------
 	-- #5g. Profile Management Widgets
