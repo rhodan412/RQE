@@ -565,30 +565,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.recipeButton = recipeButton
 
 		RQE.recipeButton:EnableMouse(true)
-
-		-- RQE.recipeButton:SetScript("OnClick", function()
-			-- -- Open the TradeSkill UI and jump to the specific recipe
-			-- C_TradeSkillUI.OpenRecipe(recipeID)
-		-- end)
-
-		-- -- Show the tooltip when the mouse leaves
-		-- RQE.recipeButton:SetScript("OnEnter", function()
-			-- GameTooltip:AddLine("Left-click to toggle frame.", 0.8, 0.8, 0.8, true)
-			-- GameTooltip:Show()
-		-- end)
-
-		-- -- Hide the tooltip when the mouse leaves
-		-- RQE.recipeButton:SetScript("OnLeave", function()
-			-- GameTooltip:Hide()
-		-- end)
-
-		-- -- Add a click handler to open the recipe when clicked
-		-- RQE.recipeButton:SetScript("OnClick", function()
-			-- -- Open the TradeSkill UI and jump to the specific recipe
-			-- C_TradeSkillUI.OpenRecipe(recipeID)
-		-- end)
 	end
-
 
 	-- Create headers for each child frame
 	RQE.CampaignFrame.header = CreateChildFrameHeader(RQE.CampaignFrame, "Campaign")
@@ -597,8 +574,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	RQE.BonusQuestsFrame.header = CreateChildFrameHeader(RQE.BonusQuestsFrame, "Bonus Quests")
 	RQE.TaskQuestsFrame.header = CreateChildFrameHeader(RQE.TaskQuestsFrame, "Task Quests")
 	RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
-	--RQE.recipeTrackingFrame.header = CreateChildFrameHeader(RQE.recipeTrackingFrame, "Profession")
-
 
 	-------------------------------------------------------
 	-- #3e. Scenario Header & Dynamic Height
@@ -677,7 +652,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	local function UpdateHeader(frame, baseTitle, questCount)
 		local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
-		local numShownEntries, numQuestsInLog = RQE.API.GetNumQuestLogEntries()	--C_QuestLog.GetNumQuestLogEntries()
+		local numShownEntries, numQuestsInLog = RQE.API.GetNumQuestLogEntries()
 		local titleText = baseTitle
 		if frame == RQE.QuestsFrame then
 			titleText = titleText .. " (" .. questCount .. "/" .. numQuestsInLog .. "/" .. maxQuests .. ")"
@@ -1313,7 +1288,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Loop through all quest log entries
-		for i = 1, RQE.API.GetNumQuestLogEntries() do	--C_QuestLog.GetNumQuestLogEntries() do
+		for i = 1, RQE.API.GetNumQuestLogEntries() do
 			local info = RQE.API.GetQuestLogInfo(i)
 			if info and not info.isHeader then
 				local questID = info.questID
@@ -2169,7 +2144,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		for i = 1, numTrackedWorldQuests do
 			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID and RQE.API.IsWorldQuest(questID) then
-			--if questID and C_QuestLog.IsWorldQuest(questID) then
 				local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
 				table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge, type = "WQ" })
 			end
@@ -2672,7 +2646,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		local buttonTexture = bonusQuestButton:CreateTexture(nil, "BACKGROUND")
 		buttonTexture:SetAllPoints(bonusQuestButton)
-		if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+		if RQE.API.GetSuperTrackedQuestID() == questID then
 			buttonTexture:SetTexture("Interface\\AddOns\\RQE\\Textures\\UL_Sky_Floor_Light.blp")
 		else
 			buttonTexture:SetTexture("Interface\\Artifacts\\Artifacts-PerkRing-Final-Mask")
@@ -2731,13 +2705,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end)
 
 				C_Timer.After(0.50, function()
-					if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+					if RQE.API.GetSuperTrackedQuestID() == questID then
 						RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 					end
 				end)
 
 				C_Timer.After(1.00, function()
-					if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+					if RQE.API.GetSuperTrackedQuestID() == questID then
 						RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 					end
 
@@ -2758,7 +2732,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		table.insert(RQE.bonusQuestElements, bonusQuestLabel)
 
 		-- Fetch and set the objectives text from the quest log
-		local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesTable = RQE.API.GetQuestObjectives(questID)
 		local objectivesText = objectivesTable and "" or "No objectives available."
 
 		if objectivesTable then
@@ -3254,7 +3228,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to Colorize the Quest Tracker Module based on objective progress using the API
 	local function colorizeObjectives(questID)
-		local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesData = RQE.API.GetQuestObjectives(questID)
 		local colorizedText = ""
 		local t = {}
 
@@ -3290,7 +3264,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to Colorize the Quest Tracker Module based on objective progress using the API (currently applies to tooltip within RQEFrame only)
 	function RQE.colorizeObjectives(questID)
-		local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesData = RQE.API.GetQuestObjectives(questID)
 		local colorizedText = ""
 		local t = {}
 
@@ -3634,7 +3608,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		for i = 1, numTrackedQuests do
 			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID and not RQE.API.IsWorldQuest(questID) then
-			--if questID and not C_QuestLog.IsWorldQuest(questID) then
 				regularQuestUpdated = true
 			end
 		end
@@ -4000,7 +3973,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 									RQE.ObtainSuperTrackQuestDetails()
 
-									--RQE.ResumeAutomaticFromManualPreview = true
 									if RQE.db.profile.autoClickWaypointButton then
 										C_Timer.After(0.1, function()
 											if not sameQuestReselect then RQE.AddonSetStepIndex = 1 end
@@ -4094,7 +4066,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					local _, questObjectivesText = GetQuestLogQuestText(questIndex)
 
 					-- Fetch Quest Objectives
-					local objectivesTable = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+					local objectivesTable = RQE.API.GetQuestObjectives(questID)
 					local objectivesText = objectivesTable and "" or "No objectives available."
 
 					if objectivesTable then
@@ -4690,13 +4662,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQnumber:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
 				WQnumber:SetTextColor(1, 0.7, 0.2)
 
-				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+				local isWorldQuest = RQE.API.IsWorldQuest(questID)
 				local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
 
 				if isWorldQuest then
 					WQnumber:SetText("WQ")
-				-- elseif isBonusQuest then
-					-- WQnumber:SetText("BQ")
 				end
 
 				WQuestLogIndexButton.number = WQnumber
