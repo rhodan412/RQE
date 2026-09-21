@@ -549,7 +549,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		UpdateRQEQuestFrame()
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if isSuperTracking then
 			UpdateFrame()
 		end
@@ -565,25 +565,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	function RQE.handleGossipClosed()
 		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when GOSSIP_CLOSED event fires acting as a fail safe for some "gossip' quests that may not trigger what is necessary to update this frame otherwise
 
-		-- THE FOLLOWING SECTION BROKE AFTER WOW 12.0 PATCH
-		-- -- Clear the raid marker from the current target only if it's circle or "2" for the idx
-		-- if UnitExists("target") then
-			-- local idx = GetRaidTargetIndex("target")
-			-- if idx == 2 then
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Clearing raid marker 2 on target after GOSSIP_CLOSED")
-				-- end
-				-- SetRaidTarget("target", 0)
-				-- -- RemoveRaidTargets()	-- BEING REMOVED ENTIRELY in PATCH 12.0
-			-- else
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("Not clearing following GOSSIP_CLOSED as the index for the raid marker is " .. idx)
-				-- end
-			-- end
-		-- end
-
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super tracked quest ID found, skipping aura checks.")
@@ -667,7 +650,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Function that handles the GOSSIP_CONFIRM_CANCEL event
 	function RQE.handleGossipConfirmCancel()
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then return end
 
 		-- Nils out the npcName and Gossip optionIndex so that the same selection won't be run over and over again
@@ -697,13 +680,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		-- C_Timer.After(0.1, function()
-			-- if not InCombatLockdown() then
-				-- RQE:CheckWatchedQuestsSync()	-- Fires when GOSSIP_SHOW event is called
-			-- end
-		-- end)
-
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then return end
 
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
@@ -743,7 +720,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Check if we need to run StartPeriodicChecks
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping inventory checks.")
@@ -804,10 +781,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				end)
 			end
-
-			-- C_Timer.After(0.2, function()
-				-- RQE:StartPeriodicChecks()
-			-- end)
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("ITEM_COUNT_CHANGED ignored: current step does not require CheckDBInventory")
@@ -825,7 +798,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping inventory checks.")
@@ -907,7 +880,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		local currentRealZone = (GetRealZoneText() or ""):lower()
 
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping inventory checks.")
@@ -994,7 +967,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("RQE:StartPeriodicChecks() fired from BAG_UPDATE event")
 				end
-				--RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
 			end)
 		else
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -1024,10 +996,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then return end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		local questData = questID and RQE.getQuestData(questID)
 		if not questData then return end
 
@@ -1062,7 +1034,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	function RQE.handleMerchantUpdate()
 		if not RQE.db.profile.autoClickWaypointButton then return end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping merchant update checks.")
@@ -1171,7 +1143,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		if not RQE.db.profile.autoClickWaypointButton then return end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping inventory change checks.")
@@ -1319,14 +1291,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end)
 		end
 
-		-- -- Updates RQEQuestFrame after combat ends
-		-- if RQE.RunUpdateRQEQuestFrameAfterCombat then
-			-- C_Timer.After(0.2, function()
-				-- UpdateRQEQuestFrame()
-				-- RQE.RunUpdateRQEQuestFrameAfterCombat = false
-			-- end)
-		-- end
-
 		-- Updates RQEWorldQuestFrame after combat ends
 		if RQE.RunUpdateRQEWorldQuestFrame then
 			C_Timer.After(0.2, function()
@@ -1339,26 +1303,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Entering handlePlayerRegenEnabled function.", 1, 0.65, 0.5) -- Light Salmon
 		end
 
-		-- C_Timer.After(0.8, function()
-			-- -- RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the PLAYER_REGEN_ENABLED event	-- COMMENTED OUT AS A RESULT OF LARGE CPU RESOURCE (LAG) INCREASE WHEN THIS EVENT FIRES
-		-- end)
-
-		-- if RQE.ReClickQuestLogIndexButtonAfterCombat then
-			-- RQE.ClickQuestLogIndexButton(RQE.QuestButtonToReClickAfterCombat)
-			-- RQE.ReClickQuestLogIndexButtonAfterCombat = false
-		-- end
-
-		-- if RQE.CheckNClickWButtonAfterCombat then
-			-- C_Timer.After(0.7, function()
-				-- RQE.CheckAndClickWButton()
-			-- end)
-			-- RQE.CheckNClickWButtonAfterCombat = false
-		-- end
-
 		if not mythicMode then
 			-- Check and execute any deferred scenario updates
 			if RQE.deferredScenarioCriteriaUpdate then
-				--RQE.canUpdateFromCriteria = true
 				RQE.updateScenarioCriteriaUI()
 				RQE.deferredScenarioCriteriaUpdate = false
 			end
@@ -1378,7 +1325,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			-- Get the currently super-tracked quest
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			if not questID or questID <= 0 then
 				return
 			end
@@ -1520,7 +1467,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if not OnTaxi and not isResting then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
-				-- print("~~~ RQE:SortWatchedQuestsByProximity(): 1196 ~~~")
 				RQE:SortWatchedQuestsByProximity()	-- Sorts RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
@@ -1542,7 +1488,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				extractedQuestID = RQE.DisplayedQuestID
-				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
 					DEFAULT_CHAT_FRAME:AddMessage("Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.65, 0.5) -- Light Salmon
 				end
@@ -1553,7 +1498,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			-- Determine questID based on various fallbacks
-			local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showPlayerMountDisplayChanged then
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: Final QuestID for advancing step: " .. tostring(questID), 1, 0.65, 0.5) -- Light Salmon
 			end
@@ -1594,8 +1539,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 			end
 		end
-
-		--if not inBlobState then return end
 
 		local OnTaxi = UnitOnTaxi("player")
 		local isResting = IsResting()
@@ -1685,7 +1628,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Check if autoClickWaypointButton is selected in the configuration
 		C_Timer.After(2.5, function()
 			if RQE.db.profile.autoClickWaypointButton then
-				local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+				local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 				-- Click the "W" Button is autoclick is selected and no steps or questData exist
 				RQE.ClickQuestLogIndexButton(currentSuperTrackedQuestID)
 			end
@@ -1708,22 +1651,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		if RQE.db.profile.autoClickWaypointButton then
 			C_Timer.After(12, function()
-				local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+				local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 				if isSuperTracking then
-				local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-					-- print("/run RQE:FindQuestZoneTransition(" .. tostring(questID) .. ")")
+				local questID = RQE.API.GetSuperTrackedQuestID()
 					RQE.DontPrintTransitionBits = true
 					RQE:FindQuestZoneTransition(questID)
 					RQE.DontPrintTransitionBits = false
 				end
 			end)
 		end
-
-		-- -- Updates frame with data from the super tracked quest (if any)
-		-- if RQE.CurrentlySuperQuestID == nil then
-			-- RQE:ClearWaypointButtonData()
-			-- RQE:ClearSeparateFocusFrame()
-		-- end
 	end
 
 
@@ -1757,8 +1693,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		else
 			return
 		end
-
-		--RQE:RestoreFramePosition()
 
 		if RQE.RestoreFramePosition then
 			RQE:RestoreFramePosition()
@@ -1829,14 +1763,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.WaypointButtonHover = false
 
 		-- Making sure that the variables are cleared
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then
 			RQE.CurrentlySuperQuestID = nil
 			RQE.isSuperTracking = false
 			RQE.SuperTrackChangeToDifferentQuestOccurred = false
 			RQE.SuperTrackUpdatingFrameWithStepTextInfo = false
 		else
-			RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.CurrentlySuperQuestID = RQE.API.GetSuperTrackedQuestID()
 		end
 
 		-- Initialize the saved variable if it doesn't exist
@@ -1846,8 +1780,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.TrackedAchievementIDs = RQE_TrackedAchievements
 
 		-- Add this line to update tracked achievements as soon as the addon is loaded
-		-- RQE.UpdateTrackedAchievements()
-		-- RQE.UpdateTrackedAchievementList()
 		if RQE.UpdateTrackedAchievements then
 			RQE.UpdateTrackedAchievements()
 		else
@@ -1876,16 +1808,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				RQE:UpdateFrameOpacity()  -- Update the frame opacity
 			end
 		end)
-
-		-- C_Timer.After(2, function()
-			-- RQE:UpdateTrackerVisibility()
-		-- end)
-
-		-- -- Updates frame with data from the super tracked quest (if any)
-		-- if RQE.CurrentlySuperQuestID == nil then
-			-- RQE:ClearWaypointButtonData()
-			-- RQE:ClearSeparateFocusFrame()
-		-- end
 	end
 
 
@@ -1917,7 +1839,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 			end
 
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not isSuperTracking then return end
 
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.BossKill then
@@ -1946,7 +1868,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 			end
 
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not isSuperTracking then return end
 
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.EncounterEnd then
@@ -2075,11 +1997,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SCENARIO_UPDATE fires
 		end
 
-		--RQE.saveScenarioData(RQE, event, newStep)
 		RQE.updateScenarioUI()
 		RQE.UpdateCampaignFrameAnchor()
-		-- print("~~~ UpdateRQEQuestFrame(): 1723 ~~~")
-		--UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 		RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 	end
@@ -2236,11 +2155,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		RQE.StopScenarioTimer()
 		RQE.StartScenarioTimer()
-		RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
-		-- RQE.HandleTimerStart(timerID)
+		RQE.CheckScenarioStartTime()
 
 		RQE.updateScenarioUI()
-		-- print("~~~ UpdateRQEQuestFrame(): 1858 ~~~")
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 	end
 
@@ -2306,7 +2223,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 		C_Timer.After(4, function()
 			RQE.updateScenarioUI()
-			-- print("~~~ UpdateRQEQuestFrame(): 1924 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: Initialized Scenario Frame.", 0.0, 1.0, 1.0)	-- Aqua
@@ -2322,13 +2238,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles the MINIMAP_UPDATE_ZOOM event
 	-- Fired when the minimap scaling factor is changed. This happens, generally, whenever the player moves indoors from outside, or vice versa. To test the player's location, compare the minimapZoom and minimapInsideZoom CVars with the current minimap zoom level (see Minimap:GetZoom). 
 	function RQE.handleMiniMapZoom()
-		-- print("[RQE] handleMiniMapZoom() firing")
-
 		-- Persistent state to avoid redundant checks
 		local lastCheckedZone = ""
 		local lastCheckedStepIndex = nil
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("[RQE] No supertracked questID found.")
@@ -2429,14 +2343,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end)
 			end
 
-			-- C_Timer.After(1.3, function()
-				-- if RQE.db.profile.debugLevel == "INFO+" then
-					-- print("[RQE] Detected CheckDBZoneChange logic. Scheduling RQE:StartPeriodicChecks()...")
-					-- print("[RQE] RQE:StartPeriodicChecks() running from MINIMAP_UPDATE_ZOOM")
-				-- end
-				-- RQE:StartPeriodicChecks()
-			-- end)
-
 			-- Optional: Trigger quest button click on zone mismatch
 			if isFailedZoneCheck and matchedStepIndex == RQE.AddonSetStepIndex then
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -2531,7 +2437,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if not OnTaxi then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
-				-- print("~~~ UpdateRQEQuestFrame(): 1913 ~~~")
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
@@ -2539,42 +2444,18 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		-- RQE:AutoSuperTrackClosestQuest()
-
 		RQE.canSortQuests = true
-		-- print("~~~ SortQuestsByProximity(): 1924 ~~~")
 		SortQuestsByProximity()
 		RQE:AutoClickQuestLogIndexWaypointButton()
 
 		-- Only run periodic checks if objectives actually changed
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 
 			if questID then
 				C_Timer.After(0.25, function()
 
 					RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
-
-					-- if RQE:DidObjectivesChange(questID) then
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("PLAYER_CONTROL_GAINED → objective change → StartPeriodicChecks()")
-						-- end
-
-						-- RQE.StartPerioFromPlayerControlGained = true
-
-						-- RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
-
-						-- -- C_Timer.After(0.10, function()
-							-- -- RQE:StartPeriodicChecks()
-						-- -- end)
-
-						-- C_Timer.After(3, function()
-							-- RQE.StartPerioFromPlayerControlGained = false
-						-- end)
-
-					-- elseif RQE.db.profile.debugLevel == "INFO+" then
-						-- print("PLAYER_CONTROL_GAINED → no objective change → skipping StartPeriodicChecks()")
-					-- end
 				end)
 			end
 		end
@@ -2585,8 +2466,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		local extractedQuestID = RQE.DisplayedQuestID
-		-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 		RQE:FindQuestZoneTransition(questID)
 	end
@@ -2624,12 +2504,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end)
 		end
 
-		-- C_Timer.After(0.3, function()
-			-- RQE.CanCheckFrame = true
-			-- RQE:CheckFrameVisibility()
-			-- RQE.CanCheckFrame = false
-		-- end)
-
 		-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
 		if C_Scenario.IsInScenario() then return end
 		if not RQE.db.profile.autoClickWaypointButton then return end
@@ -2638,26 +2512,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			return
 		end
 
-		-- local isSuperTracking = C_SuperTrack.IsSuperTrackingQuest()
-		-- if RQEFrame:IsShown() and not isSuperTracking then
-			-- RQE.Buttons.ClearButtonPressed()
-		-- end
-
 		local isFlying = IsFlying("player")
 		local isMounted = IsMounted()
 		local onTaxi = UnitOnTaxi("player")
 		local isResting = IsResting()
-
-		-- if not OnTaxi and not isResting then	-- Heavy Lag
-			-- if not RQE.hoveringOnFrame then
-				-- RQE.SortOnly = true
-				-- -- print("~~~ UpdateRQEQuestFrame(): 1984 ~~~")
-				-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_STARTED_MOVING event fires
-				-- C_Timer.After(0.5, function()
-					-- RQE.SortOnly = false
-				-- end)
-			-- end
-		-- end
 
 		if not isFlying and not isMounted and not onTaxi then
 			C_Timer.After(0.3, function()
@@ -2709,10 +2567,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	 
 		RQE:StopUpdatingCoordinates()
 
-		-- if not isInRaid and groupSize < 6 then
-			-- SortQuestsByProximity()
-		-- end
-
 		AdjustRQEFrameWidths()
 		AdjustQuestItemWidths()
 
@@ -2725,32 +2579,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 			end
 		end
-
-		-- if not isInRaid and groupSize < 6 then
-			-- if not C_Scenario.IsInScenario() then
-				-- if not InCombatLockdown() then
-					-- C_Timer.After(0.25, function()
-						-- RQE.isCheckingMacroContents = true
-						-- RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STOPPED_MOVING event fires
-						-- C_Timer.After(0.3, function()
-							-- RQE.isCheckingMacroContents = false
-						-- end)
-					-- end)
-				-- end
-			-- end
-		-- end
-
-		-- -- Update Display of CPU Usage of Addon
-		-- if RQE.db and RQE.db.profile.displayRQEcpuUsage then
-			-- RQE:CheckCPUUsage()
-		-- end
 	end
 
 
 	-- Function handling the UPDATE_OVERRIDE_ACTIONBAR event function
 	function RQE.handleOverrideActionBar()
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super tracked quest ID found, skipping aura checks.")
@@ -2807,7 +2642,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from UPDATE_OVERRIDE_ACTIONBAR ~~")
 				end
-				RQE.ClickQuestLogIndexButton(RQE.API.GetSuperTrackedQuestID())	--C_SuperTrack.GetSuperTrackedQuestID())
+				RQE.ClickQuestLogIndexButton(RQE.API.GetSuperTrackedQuestID())
 				if questID then
 					RQE:QueuePeriodicChecks("UPDATE_OVERRIDE_ACTIONBAR", 0.5, questID)
 				else
@@ -3025,7 +2860,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Fired in response to the CVars, Keybindings and other associated "Blizzard" variables being loaded
 	function RQE.handleVariablesLoaded()
 		RQE:InitializeFrame()
-		--isVariablesLoaded = true
 		C_Timer.After(0.5, function()
 			HideObjectiveTracker()
 		end)
@@ -3036,9 +2870,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.ScenarioChildFrame:Hide()
 		end
 
-		-- print("~~~ RQE:QuestType(): 2176 ~~~")
 		RQE:QuestType() -- Runs UpdateRQEQuestFrame and UpdateRQEWorldQuestFrame as quest list is generated
-		-- print("~~~ SortQuestsByProximity(): 2177 ~~~")
 		SortQuestsByProximity()
 
 		-- Initialize StepsText (or other fields that need early initialization)
@@ -3184,11 +3016,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 
 				RQE.AllFramesShouldUpdate = true
-				--RQE.ResumeAutomaticFromManualPreview = true
 
 				C_Timer.After(0.05, function()
 					UpdateFrame()
-					--RQE:ClearSeparateFocusFrame()
 					RQE:UpdateSeparateFocusFrame()
 					C_Timer.After(1, function()
 						RQE.AllFramesShouldUpdate = false
@@ -3204,8 +3034,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Clear hotspot choice so next read re-evaluates on the new map
 		if RQE.API.IsSuperTrackingQuest() then
-		--if C_SuperTrack.IsSuperTrackingQuest() then
-			local qid = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local qid = RQE.API.GetSuperTrackedQuestID()
 			-- Clear just the current step (safe + light)
 			local sidx = RQE.AddonSetStepIndex or 1
 			if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
@@ -3214,7 +3043,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Optional: auto-refresh stash so tooltips/arrow update without /reload
-		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then	--if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then
 			local sidx = RQE.AddonSetStepIndex or 1
 			local x, y, mid = RQE:GetStepCoordinates(sidx)
 			if x and y and mid then
@@ -3224,15 +3053,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 		C_Timer.After(3, function()
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-			if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
+			if not RQE.isSuperTracking or not isSuperTracking then
 				if not RQEFrame:IsShown() then return end
 				if not isSuperTracking then
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
-						-- print("~~~ SetSuperTrack: 2236~~~")
 						RQE:AutoSetSuperTrackedQuestID(closestQuestID)
-						--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the charcter's currently supertracked quest when PLAYER_ENTERING_WORLD event fires
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 							DEFAULT_CHAT_FRAME:AddMessage("PEW 01 Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
 						end
@@ -3259,7 +3086,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end)
 
 		C_Timer.After(5, function()
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 		end)
@@ -3325,26 +3152,20 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 			end
 
-			-- print("~~~ UpdateRQEQuestFrame(): 2464 ~~~")
-			-- C_Timer.After(10, function()
-				-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_ENTERING_WORLD event fires
-			-- end)
-
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 				extractedQuestID = RQE.DisplayedQuestID
-				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			end
 
 			-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-			local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()
 			local questInfo = RQE.getQuestData(questID)
 			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 			if questID then
 				-- Only run periodic checks if objectives actually changed
 				if RQE.db.profile.autoClickWaypointButton then
-					local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+					local questID = RQE.API.GetSuperTrackedQuestID()
 
 					if questID then
 						C_Timer.After(0.35, function()
@@ -3364,13 +3185,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 								end
 
 								RQE.StartPerioFromPlayerEnteringWorld = true
-
-								--RQE.ResumeAutomaticFromManualPreview = true
 								RQE:QueuePeriodicChecks("PLAYER_ENTERING_WORLD", 0.1, questID)
-
-								-- C_Timer.After(0.10, function()
-									-- RQE:StartPeriodicChecks()
-								-- end)
 
 								C_Timer.After(3, function()
 									RQE.StartPerioFromPlayerEnteringWorld = false
@@ -3398,20 +3213,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		C_Timer.After(2, function()
-			-- print("~~~ RQE:QuestType(): 2508 ~~~")
 			RQE:QuestType()
 
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			if questID then
 				if RQE.API.IsWorldQuest(questID) then
-				--if C_QuestLog.IsWorldQuest(questID) then
 					-- This is a World Quest that is currently super tracked
 					RQE.infoLog("Super tracked quest is a World Quest:", questID)
 					RQE:ClickWorldQuestButton(questID)
 				else
 					-- This is a regular quest or other content that is super tracked
 					RQE.infoLog("Super tracked content is not a World Quest:", questID)
-					-- Handle regular quest or other actions if necessary
 				end
 			end
 		end)
@@ -3473,12 +3285,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handling SUPER_TRACKING_CHANGED Event
 	-- Fired when the actively tracked location is changed
 	function RQE.handleSuperTracking()
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
-			-- startTime = debugprofilestop()  -- Start timer
-		-- end
-
-		local newQID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		RQE.LastSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local newQID = RQE.API.GetSuperTrackedQuestID()
+		RQE.LastSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local oldQID = RQE.previousSuperTrackedQuestID
 		local reselect = RQE._coordOrderReselect
 		if reselect and reselect.sameQuest and tonumber(newQID)
@@ -3526,10 +3334,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			local superQuestID
 
 			if not RQE.API.IsSuperTrackingQuest() and not reselectPending then
-			--if not C_SuperTrack.IsSuperTrackingQuest() then
 				RQE.Buttons.ClearButtonPressed()
 			else
-				superQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+				superQuestID = RQE.API.GetSuperTrackedQuestID()
 			end
 
 			local questID = superQuestID or newQID or RQE.DisplayedQuestID
@@ -3544,7 +3351,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				RQE.AddonSetStepIndex = 1
 				RQE.LastClickedButtonRef = nil
 			end
-			RQE.previousSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.previousSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 			-- Check if TomTom is loaded and compatibility is enabled and if so to clear the waypoint
 			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
@@ -3603,8 +3410,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Clear hotspot choice so next read re-evaluates on the new map
 		if RQE.API.IsSuperTrackingQuest() then
-		--if C_SuperTrack.IsSuperTrackingQuest() then
-			local qid = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local qid = RQE.API.GetSuperTrackedQuestID()
 			-- Clear just the current step (safe + light)
 			local sidx = RQE.AddonSetStepIndex or 1
 			if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
@@ -3613,7 +3419,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Optional: auto-refresh stash so tooltips/arrow update without /reload
-		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then		--if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then
 			local sidx = RQE.AddonSetStepIndex or 1
 			local x, y, mid = RQE:GetStepCoordinates(sidx)
 			if x and y and mid then
@@ -3628,11 +3434,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded = true
 
 		-- Making sure that the variables are cleared
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then
 			RQE.currentSuperTrackedQuestID = nil
 		else
-			RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		end
 
 		if RQE.currentSuperTrackedQuestID == nil and not reselectPending then
@@ -3650,22 +3456,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Optimize by updating the separate frame only if needed
 		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when SUPER_TRACKING_CHANGED event fires
 
-		-- -- Adds a check to advise if the DB entry details are incomplete for a quest
-		-- if RQE.db.profile.debugLevel == "INFO" then
-			-- if RQE.totalStepforQuest < RQE.StepIndexForCoordMatch then
-				-- print("~~ DB Entry is incomplete for " .. RQE.currentSuperTrackedQuestID ..  ~~")
-			-- end
-		-- end
-
 		RQE.FocusScrollFrameToTop()
 
 		local extractedQuestID
-		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Extract questID from RQE's custom UI if available
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Check if the super-tracked quest ID has changed
@@ -3713,20 +3511,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- If player is no longer super tracking, they will instead super-track the nearest quest. If there continues to be no quest super tracked it will clear the Separate Focus Frame
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
 		if RQE.db.profile.enableNearestSuperTrack then
 			if not RQE.ClearButtonPressed then
 				if not isSuperTracking then
-					if not RQE.isSuperTracking or not isSuperTracking then	--if RQE.db.profile.enableNearestSuperTrack then
+					if not RQE.isSuperTracking or not isSuperTracking then
 						if not RQEFrame:IsShown() then return end
 						local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 						if closestQuestID then
-							-- print("~~~ SetSuperTrack: 2562~~~")
 							RQE:AutoSetSuperTrackedQuestID(closestQuestID)
-							-- print("~~~ SaveTrackedQuestsToCharacter: 2598 ~~~")
 							RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when SUPER_TRACKING_CHANGED event fires
-							--RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when SUPER_TRACKING_CHANGED event fires
 							if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventSuperTrackingChanged then
 								DEFAULT_CHAT_FRAME:AddMessage("SUPER_TRACKING_CHANGED Debug: Super-tracked quest set to closest quest ID: " .. tostring(closestQuestID), 1, 0.75, 0.79)		-- Pink
 							end
@@ -3746,12 +3541,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		-- C_Timer.After(0.3, function()
-			-- if not isSuperTracking then
-				-- RQE:ClearSeparateFocusFrame()
-			-- end
-		-- end)
-
 		-- Check if the objective is a progress bar
 		local stepIndex = RQE.AddonSetStepIndex or 1
 		if RQE.currentSuperTrackedQuestID then
@@ -3770,7 +3559,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Only run periodic checks if objectives actually changed
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 
 			if questID then
 				C_Timer.After(0.25, function()
@@ -3784,10 +3573,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 						RQE.StartPerioFromSuperTrackChange = true
 
 						RQE:QueuePeriodicChecks("SUPER_TRACKING_CHANGED", 0.1, questID)
-
-						-- C_Timer.After(0.10, function()
-							-- RQE:StartPeriodicChecks()
-						-- end)
 
 						C_Timer.After(3, function()
 							RQE.StartPerioFromSuperTrackChange = false
@@ -3817,23 +3602,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.lastClickedObjectiveIndex = 0
 		end
 
-		-- if RQE.ManualSuperTrack then
-			-- RQE:ClearFrameData()  -- changed from RQE.ClearFrameData() - which is nothing
-			-- RQE.lastClickedObjectiveIndex = 0
-		-- end
-
 		-- Reset the manual super tracking flag now that we're handling it
 		RQE.ManualSuperTrack = nil
 
-		-- print("~~~ RQE:QuestType(): 2761 ~~~")
 		RQE:QuestType()
 		RQE.superTrackingChanged = true
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		local mapID = C_Map.GetBestMapForUnit("player")
 
 		-- Runs check to make sure still super tracking as this doesn't need to run if SUPER_TRACKING_CHANGED fires as it goes from a supertracked quest to nil
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if isSuperTracking then
 			if questID then
 				local questName
@@ -3863,13 +3642,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		-- -- Simulate clicking the RWButton
-		-- if RQE.RWButton and RQE.RWButton:GetScript("OnClick") then
-			-- RQE.RWButton:GetScript("OnClick")()
-		-- end
-
 		C_Timer.After(0.05, function()
-			local qid = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local qid = RQE.API.GetSuperTrackedQuestID()
 			local pid = C_Map.GetBestMapForUnit("player")
 			RQE:ForceWaypointForSupertracked(qid, pid)
 		end)
@@ -3988,7 +3762,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.AllFramesShouldUpdate = true
 			RQE.OkaytoUpdateCreateSteps = true
 			RQE.QuestLogIndexButtonPressed = true
-			--RQE:ClearSeparateFocusFrame()
 			RQE:ShouldClearFrame()
 			C_Timer.After(1, function()
 				RQE:AutoSetSuperTrackedQuestID(questID)
@@ -4010,7 +3783,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		if questID and not RQE.API.IsWorldQuest(questID) then
-		--if questID and not C_QuestLog.IsWorldQuest(questID) then
 			table.insert(RQE.DelayedQuestWatchCheck, questID)
 
 			-- Delay processing of all quest watches after multiple acceptances
@@ -4024,7 +3796,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		local questLink = questID and GetQuestLink(questID) or nil
 
 		RQE.QuestStepsBlocked(questID)	-- Function call that checks to see if quest is in the DB already, but nothing is printed unless debug mode is set to 'Info'
@@ -4039,21 +3811,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE:CheckCoordHotspotsInSteps(questID)
 		end
 
-		-- -- Check if the quest is a bonus objective
-		-- if questID and C_QuestInfoSystem.GetQuestClassification(questID) == 8 then  -- 8 = Bonus Quest
-			-- UpdateRQEBonusQuestFrame(questID)
-		-- end
-
 		C_Timer.After(1, function()
-			-- print("~~~ RQE:QuestType(): 2888 ~~~")
 			RQE:QuestType()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest (fires during QUEST_ACCEPTED event) - possible duplicate
 		end)
 
 		-- Clear the raid marker from the current target
-		if UnitExists("target") then
+		-- if UnitExists("target") then
 			-- SetRaidTarget("target", 0)	-- possible complications in 12.0
 			-- RemoveRaidTargets()
-		end
+		-- end
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 			DEFAULT_CHAT_FRAME:AddMessage("QA 01 Debug: QUEST_ACCEPTED event triggered for questID: " .. tostring(questID), 0.46, 0.62, 1)	-- Cornflower Blue
@@ -4063,9 +3829,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.alreadyPrintedSchematics = false
 
 		if questID then
-			--if questID == 82957 then return end
 			RQE.LastAcceptedQuest = questID
-			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			local isTaskQuest = C_QuestLog.IsQuestTask(questID)
 			local isMetaQuest = C_QuestLog.IsMetaQuest(questID)
 			local watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -4116,9 +3881,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 							DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)	-- Cornflower Blue
 						end
-					-- elseif isTaskQuest then
-						-- local isTaskQuest = C_QuestLog.IsQuestTask(questID)
-						-- C_QuestLog.AddQuestWatch(questID)
 					else
 						C_QuestLog.AddQuestWatch(questID)	-- Designed to be called in the event that the quest accepted is something like a meta quest
 					end
@@ -4129,10 +3891,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				-- Reapply the manual super-tracked quest ID if it's set and different from the current one
 				if RQE.ManualSuperTrack then
 					local superTrackIDToApply = RQE.ManualSuperTrackedQuestID
-					if superTrackIDToApply and superTrackIDToApply ~= RQE.API.GetSuperTrackedQuestID() then	--C_SuperTrack.GetSuperTrackedQuestID() then
-						-- print("~~~ SetSuperTrack: 2808~~~")
+					if superTrackIDToApply and superTrackIDToApply ~= RQE.API.GetSuperTrackedQuestID() then
 						RQE:AutoSetSuperTrackedQuestID(superTrackIDToApply)
-						-- print("~~~ SaveTrackedQuestsToCharacter: 2869 ~~~")
 						RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_ACCEPTED event fires
 						RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_ACCEPTED event fires
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
@@ -4141,12 +3901,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					end
 				end
 			end)
-
-			-- C_Timer.After(1.5, function()
-				-- if C_QuestLog.IsOnQuest(questID) and not C_QuestLog.IsQuestWatched(questID) then
-					-- C_QuestLog.AddQuestWatch(questID)
-				-- end
-			-- end)
 
 			if playerMapID and questMapID and playerMapID == questMapID then
 				RQE.infoLog("questMapID is " .. questMapID .. " and playerMapID is " .. playerMapID)
@@ -4157,9 +3911,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		-- print("~~~ RQE:QuestType(): 3004 ~~~")
 		RQE:QuestType()
-		--UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_ACCEPTED event fires - possible duplicate
 		RQE:UpdateRQEQuestFrameVisibility()
 
 		RQE.CheckClickWButtonPossible = true
@@ -4180,9 +3932,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Only runs an update of the RQEFrame if the QUEST_ACCEPTED questID matches the quest that is currently supertracked
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if isSuperTracking then
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 			if questID == superTrackedQuestID then
 				C_Timer.After(1, function()  -- Delay of 1 second
 					UpdateFrame()
@@ -4195,7 +3947,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- -- Tier Four Importance: QUEST_ACCEPTED event
 		if RQE.db.profile.autoClickWaypointButton then
-			local currentSuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local currentSuperQuestID = RQE.API.GetSuperTrackedQuestID()
 			if RQE.LastAcceptedQuest == currentSuperQuestID then
 
 				if questID then
@@ -4206,28 +3958,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					end)
 				end
 			end
-
-			-- C_Timer.After(2.3, function()
-				-- -- RQE.StartPerioFromQuestAccepted = true
-				-- -- if not RQE.StartPerioFromUQLC then
-					-- -- if not RQE.SuperTrackChangeRanStartPeriodicChecks then
-						-- local currentSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-						-- if RQE.LastAcceptedQuest == currentSuperQuestID then
-							-- -- print("RQE.LastAcceptedQuest is " .. RQE.LastAcceptedQuest)
-							-- -- print("currentSuperQuestID is " .. currentSuperQuestID)
-							-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires	-- May need to remove if issues
-						-- -- else
-							-- -- print("RQE.LastAcceptedQuest is " .. RQE.LastAcceptedQuest)
-							-- -- print("currentSuperQuestID is " .. currentSuperQuestID)
-						-- end
-						-- -- C_Timer.After(3, function()
-							-- -- RQE.StartPerioFromQuestAccepted = false
-						-- -- end)
-					-- -- end
-					-- -- RQE.SuperTrackChangeRanStartPeriodicChecks = false
-				-- -- end
-				-- -- RQE.StartPerioFromUQLC = false
-			-- end)
 		end
 
 		-- Update Display of Memory Usage of Addon
@@ -4311,19 +4041,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_EXITING_VEHICLE fires
 				end)
 			end
-
-			-- C_Timer.After(1.8, function()
-				-- RQE:StartPeriodicChecks()
-			-- end)
 		end
 
 		if event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
-			--print(tostring(event))
-
 			-- Clear hotspot choice so next read re-evaluates on the new map
 			if RQE.API.IsSuperTrackingQuest() then
-			--if C_SuperTrack.IsSuperTrackingQuest() then
-				local qid = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+				local qid = RQE.API.GetSuperTrackedQuestID()
 				if not qid then return end
 
 				if RQE:DidDirectionTextChange(qid) then
@@ -4353,7 +4076,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 			-- Optional: auto-refresh stash so tooltips/arrow update without /reload
 			if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then
-			--if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
 				local sidx = RQE.AddonSetStepIndex or 1
 				local x, y, mid = RQE:GetStepCoordinates(sidx)
 				if x and y and mid then
@@ -4369,7 +4091,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if not OnTaxi and not isResting then
 					if not RQE.hoveringOnFrame then
 						RQE.SortOnly = true
-						-- print("~~~ UpdateRQEQuestFrame(): 3133 ~~~")
 						UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
 						C_Timer.After(0.5, function()
 							RQE.SortOnly = false
@@ -4383,23 +4104,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.CheckAndClickSeparateWaypointButtonButton()
 		end
 
-		-- RQE:UpdateMapIDDisplay()
-		-- RQE:UpdateCoordinates()
-		-- RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
-		-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when UNIT_EXITING_VEHICLE, ZONE_CHANGED and ZONE_CHANGED_INDOORS events fire
-
 		C_Timer.After(0.5, function()
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
 				local extractedQuestID = RQE.DisplayedQuestID
-				-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				if not extractedQuestID or extractedQuestID == 0 then
 					RQEMacro:ClearMacroContentByName("RQE Macro")
 					RQE:ClearSeparateFocusFrame()
 				end
-			-- else
-				-- -- If QuestIDText is nil or has no text, ensure the macro and frame are cleared
-				-- RQEMacro:ClearMacroContentByName("RQE Macro")
-				-- RQE:ClearSeparateFocusFrame()
 			end
 		end)
 
@@ -4441,26 +4152,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
 				end)
 			end
-		-- else
-			-- C_Timer.After(0.5, function()
-				-- local extractedQuestID
-				-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-					-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-				-- end
-
-				-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-				-- local questID = RQE.searchedQuestID or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-				-- local questInfo = RQE.getQuestData(questID)
-				-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-				-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-			-- end)
 		end
 
 		-- Update Display of Memory Usage of Addon
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
 			if RQE.PlayerMountStatus ~= "Flying" and not InCombatLockdown() then
-			-- if not IsFlying("player") or not InCombatLockdown() then
 				RQE.debugLog("Player not flying or dragonriding")
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
 					RQE:CheckMemoryUsage()
@@ -4477,7 +4173,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping zone checks.")
@@ -4609,7 +4305,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Failed zone check. Clicking supertracked quest button.")
 					end
-					RQE.ClickQuestLogIndexButton(RQE.API.GetSuperTrackedQuestID())	--C_SuperTrack.GetSuperTrackedQuestID())
+					RQE.ClickQuestLogIndexButton(RQE.API.GetSuperTrackedQuestID())
 				end)
 			end
 
@@ -4645,7 +4341,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles the event ZONE_CHANGED_NEW_AREA
 	-- Fires when the player enters a new zone
 	function RQE.handleZoneNewAreaChange()
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		RQE.OkayCheckBonusQuests = true
 
 		RQE:UpdateMapIDDisplay()
@@ -4654,7 +4350,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		C_Timer.After(0.5, function()
 			if isSuperTracking then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 				RQE.DontPrintTransitionBits = true
 				RQE:FindQuestZoneTransition(questID)
 				RQE.DontPrintTransitionBits = false
@@ -4663,8 +4359,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Clear hotspot choice so next read re-evaluates on the new map
 		if RQE.API.IsSuperTrackingQuest() then
-		--if C_SuperTrack.IsSuperTrackingQuest() then
-			local qid = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local qid = RQE.API.GetSuperTrackedQuestID()
 			local sidx = RQE.AddonSetStepIndex or 1
 
 			-- Guard against missing questID
@@ -4684,7 +4379,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					end)
 
 					C_Timer.After(0.10, function()
-						local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+						local questID = RQE.API.GetSuperTrackedQuestID()
 						if questID then
 							RQE:QueuePeriodicChecks("ZONE_CHANGED_NEW_AREA", 0.05, questID)
 						else
@@ -4749,7 +4444,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Optional: auto-refresh stash so tooltips/arrow update without /reload
-		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then		--if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
+		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then
 			local sidx = RQE.AddonSetStepIndex or 1
 			local x, y, mid = RQE:GetStepCoordinates(sidx)
 			if x and y and mid then
@@ -4759,17 +4454,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
-		-- C_Timer.After(0.5, function()
-			-- RQE:UpdateTrackerVisibility()
-		-- end)
-
 		local OnTaxi = UnitOnTaxi("player")
 		local isResting = IsResting()
 
 		if not OnTaxi and not isResting then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
-				-- print("~~~ UpdateRQEQuestFrame(): 3425 ~~~")
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
 				C_Timer.After(0.5, function()
 					RQE.SortOnly = false
@@ -4778,7 +4468,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super-tracked quest ID found, skipping zone checks.")
@@ -4792,14 +4482,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 		RQE.FocusScrollFrameToTop()
 
-		-- -- Checks to see if in scenario and if no, will reset the scenario timer
-		-- if not C_Scenario.IsInScenario() then
-			-- C_Timer.After(0.7, function()
-				RQE.StopScenarioTimer()
-				RQE.StartScenarioTimer()
-				RQE.CheckScenarioStartTime()
-			-- end)
-		-- end
+		RQE.StopScenarioTimer()
+		RQE.StartScenarioTimer()
+		RQE.CheckScenarioStartTime()
 
 		-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
 		if RQE.HasDragonraceAura() then
@@ -4818,7 +4503,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Check to advance to next step in quest
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 			local playerMapID = C_Map.GetBestMapForUnit("player")
 			local questData = RQE.getQuestData(questID)
 
@@ -4828,7 +4513,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if questData then
 				if RQE.LastClickedButtonRef == nil then return end
 				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
 				local stepData = questData[stepIndex]
 
 				if stepData then
@@ -4852,44 +4536,27 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		--if RQE.PlayerMountStatus == "Flying" then
-		-- if not UnitOnTaxi("player") and not RQE.isDragonRiding then
-			C_Timer.After(1.5, function()
+		C_Timer.After(1.5, function()
 
-				-- Get the current map ID
-				local mapID = C_Map.GetBestMapForUnit("player")
-				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-					DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
-				end
+			-- Get the current map ID
+			local mapID = C_Map.GetBestMapForUnit("player")
+			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
+				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
+			end
 
-				if RQE.db.profile.autoTrackZoneQuests then
-					RQE.DisplayCurrentZoneQuests()
-				end
+			if RQE.db.profile.autoTrackZoneQuests then
+				RQE.DisplayCurrentZoneQuests()
+			end
 
-				-- print("~~~ SortQuestsByProximity(): 3516 ~~~")
-				SortQuestsByProximity()
+			SortQuestsByProximity()
 
-				AdjustRQEFrameWidths()
-				AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
-			end)
-
-		-- elseif RQE.PlayerMountStatus == "Dragonriding" then
-		-- --elseif not UnitOnTaxi("player") and RQE.isDragonRiding then
-			-- RQE.canSortQuests = true
-			-- C_Timer.After(0.5, function()
-				-- -- Get the current map ID
-				-- local mapID = C_Map.GetBestMapForUnit("player")
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-					-- DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
-				-- end
-				-- RQE:UpdateMapIDDisplay()
-			-- end)
-		-- end
+			AdjustRQEFrameWidths()
+			AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
+		end)
 
 		-- Update Display of Memory Usage of Addon
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
 			if not RQE.PlayerMountStatus == "Flying" and not InCombatLockdown() then
-			--if not IsFlying("player") or not InCombatLockdown() then
 				RQE.debugLog("Player not flying or dragonriding")
 				RQE:CheckMemoryUsage()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
@@ -4995,15 +4662,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		C_Timer.After(0.3, function()
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not isSuperTracking then return end
 
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 
 			C_Timer.After(2.6, function()
-				if RQE.db.profile.debugLevel == "INFO" then
-					-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UI_INFO_MESSAGE event function")
-				end
 				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 			end)
 
@@ -5132,275 +4796,6 @@ local function StepUsesAuraCheck(step)
 		end
 
 		return
-
-		--[[
-		-- Retired Retail UNIT_AURA payload handling. It intentionally remains here
-		-- as historical context, but 12.1 secret values make it unsafe to execute.
-		-- Print Event-specific Args
-		if RQE.db.profile.showArgPayloadInfo then
-			local args = {...}
-			for i, arg in ipairs(args) do
-				if type(arg) == "table" then
-					print("Arg " .. i .. ": (table)")
-					for k, v in pairs(arg) do
-						print("  " .. tostring(k) .. ": " .. tostring(v))
-					end
-				else
-					print("Arg " .. i .. ": " .. tostring(arg))
-				end
-			end
-		end
-
-		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("Unit Target:", unitTarget)
-
-			-- Handle `updateInfo` (ensure it's a table and display all details)
-			if type(updateInfo) == "table" then
-				print("Update Info:")
-
-				-- Check for full update
-				if updateInfo.isFullUpdate then
-					print("  Full Update: true")
-				else
-					print("  Full Update: false")
-				end
-
-				-- Print added auras
-				if updateInfo.addedAuras then
-					print("  Added Auras:")
-					for _, aura in ipairs(updateInfo.addedAuras) do
-						print(string.format(
-							"	Aura Name: %s, SpellID: %d, IsHelpful: %s, IsHarmful: %s, SourceUnit: %s",
-							aura.name or "Unknown",
-							aura.spellId or 0,
-							tostring(aura.isHelpful),
-							tostring(aura.isHarmful),
-							tostring(aura.sourceUnit or "None")
-						))
-					end
-				else
-					print("  Added Auras: None")
-				end
-
-				-- Print updated auras
-				if updateInfo.updatedAuraInstanceIDs then
-					print("  Updated Auras:")
-					for _, instanceID in ipairs(updateInfo.updatedAuraInstanceIDs) do
-						local auraData = C_UnitAuras.GetAuraDataByAuraInstanceID(unitTarget, instanceID)
-						if auraData then
-							print(string.format(
-								"Updated Aura: %s, SpellID: %d, Applications: %d, ExpirationTime: %s",
-								auraData.name or "Unknown",
-								auraData.spellId or 0,
-								auraData.applications or 0,
-								auraData.expirationTime or "Unknown"
-							))
-						else
-							print("	Aura Data not available for InstanceID:", instanceID)
-						end
-					end
-				else
-					print("  Updated Auras: None")
-				end
-
-				-- Print removed auras
-				if updateInfo.removedAuraInstanceIDs then
-					print("  Removed Auras:")
-					for _, instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-						print(string.format("Removed Aura InstanceID: %d", instanceID))
-					end
-				else
-					print("  Removed Auras: None")
-				end
-			else
-				print("Update Info: None or not a table")
-			end
-		end
-
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("|cffffff00EventHandler triggered with event:|r", event)  -- Print the event name in yellow
-		end
-
-		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		if not questID then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No super tracked quest ID found, skipping aura checks.")
-			end
-			return
-		end
-
-		local questData = RQE.getQuestData(questID)
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No quest data available for quest ID:", questID)
-			end
-			return
-		end
-
-		-- Determine the current stepIndex
-		local stepIndex = RQE.AddonSetStepIndex or 1
-		local stepData = questData[stepIndex]
-		if not stepData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-			end
-			return
-		end
-
-		-- A stack decrease is normally reported through updatedAuraInstanceIDs,
-		-- while complete aura removal is reported through removedAuraInstanceIDs.
-		-- Check the entire quest instead of only the current step because a stale
-		-- combined total may have temporarily moved the addon to CheckDBComplete.
-		local function HasAuraUpdates(auraUpdates)
-			return type(auraUpdates) == "table"
-				and next(auraUpdates) ~= nil
-		end
-
-		local hasChangedOrRemovedAura =
-			type(updateInfo) == "table"
-			and (
-				updateInfo.isFullUpdate
-				or HasAuraUpdates(updateInfo.updatedAuraInstanceIDs)
-				or HasAuraUpdates(updateInfo.removedAuraInstanceIDs)
-			)
-
-		if hasChangedOrRemovedAura then
-			-- Detect combined amount expressions that add the live quest-objective count.
-			local function AmountUsesObjective(neededAmounts)
-				if type(neededAmounts) ~= "table" then
-					return false
-				end
-
-				for _, rawAmount in ipairs(neededAmounts) do
-					if type(rawAmount) == "string"
-						and rawAmount:match("%+%s*objective%s*$")
-					then
-						return true
-					end
-				end
-
-				return false
-			end
-
-			-- Determine whether any quest step combines a buff count with objective progress.
-			local function QuestUsesCombinedBuffObjective()
-				for _, questStep in ipairs(questData) do
-					-- Handle a step with a single `check`.
-					if questStep.funct == "CheckDBBuff"
-						and AmountUsesObjective(questStep.neededAmt)
-					then
-						return true
-					end
-
-					-- Handle a step with multiple `checks`.
-					if type(questStep.checks) == "table" then
-						for _, checkData in ipairs(questStep.checks) do
-							if checkData.funct == "CheckDBBuff"
-								and AmountUsesObjective(checkData.neededAmt)
-							then
-								return true
-							end
-						end
-					end
-				end
-
-				return false
-			end
-
-			if QuestUsesCombinedBuffObjective() then
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print(
-						"UNIT_AURA - Updated or removed aura detected "
-						.. "for a combined buff/objective quest. "
-						.. "Scheduling corrective check.",
-						"questID:", questID,
-						"current stepIndex:", stepIndex
-					)
-				end
-
-				-- Combine rapid aura updates into one final correction.
-				if RQE.CombinedAuraObjectiveRecheckTimer then
-					RQE.CombinedAuraObjectiveRecheckTimer:Cancel()
-					RQE.CombinedAuraObjectiveRecheckTimer = nil
-				end
-
-				RQE.CombinedAuraObjectiveRecheckTimer =
-					C_Timer.NewTimer(0.20, function()
-						RQE.CombinedAuraObjectiveRecheckTimer = nil
-
-						if RQE.API.GetSuperTrackedQuestID() ~= questID then
-						--if C_SuperTrack.GetSuperTrackedQuestID() ~= questID then
-							return
-						end
-
-						if RQE.db.profile.debugLevel == "INFO+" then
-							print(
-								"UNIT_AURA - Running combined "
-								.. "buff/objective corrective check.",
-								"questID:", questID
-							)
-						end
-
-						RQE:StartPeriodicChecks()
-					end)
-
-				-- This corrective path already handles the aura update.
-				return
-			end
-		end
-
-		-- Check if any added auras match the current step's checks
-		if updateInfo and updateInfo.addedAuras then
-			for _, aura in ipairs(updateInfo.addedAuras) do
-				-- Compare added aura name or spell ID to stepData.check or stepData.checks
-				local matchesAura = false
-				if stepData.checks then
-					for _, checkData in ipairs(stepData.checks) do
-						if checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff" then
-							for _, checkValue in ipairs(checkData.check) do
-								if not InCombatLockdown() then
-									local checkValueNum = tonumber(checkValue)
-									--if checkValueNum and checkValueNum == aura.spellId then
-									if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
-										matchesAura = true
-										break
-									end
-								end
-							end
-						end
-						if matchesAura then break end
-					end
-				elseif stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff" then
-					for _, checkValue in ipairs(stepData.check) do
-						local checkValueNum = tonumber(checkValue)
-						--if checkValueNum and checkValueNum == aura.spellId then
-						if checkValue == tostring(aura.name) or checkValue == tostring(aura.spellId) then
-							matchesAura = true
-							break
-						end
-					end
-				end
-
-				-- If a match is found, trigger periodic checks
-				if matchesAura then
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print(string.format("Aura %s (SpellID: %d) matched quest step. Running periodic checks.", aura.name, aura.spellId))
-					end
-					C_Timer.After(0.5, function()
-						RQE:StartPeriodicChecks()
-					end)
-					return
-				end
-			end
-		end
-
-		-- Default debug for unrelated auras
-		if RQE.db.profile.debugLevel == "INFO+" then
-			print("UNIT_AURA not related to current stepIndex:", stepIndex, "for questID:", questID)
-		end
-		--]]
 	end
 
 
@@ -5427,7 +4822,7 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No super tracked quest ID found, skipping aura checks.")
@@ -5484,7 +4879,7 @@ local function StepUsesAuraCheck(step)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from UNIT_MODEL_CHANGED ~~")
 				end
-				RQE.ClickQuestLogIndexButton(RQE.API.GetSuperTrackedQuestID())	--C_SuperTrack.GetSuperTrackedQuestID())
+				RQE.ClickQuestLogIndexButton(RQE.API.GetSuperTrackedQuestID())
 				if questID then
 					RQE:QueuePeriodicChecks("UNIT_MODEL_CHANGED", 0.5, questID)
 				else
@@ -5525,7 +4920,7 @@ local function StepUsesAuraCheck(step)
 			return
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID or questID <= 0 then
 			return
 		end
@@ -5632,13 +5027,10 @@ local function StepUsesAuraCheck(step)
 		-----------------------------------------
 		-- CONDITIONAL BLOCK: Only if player + quest
 		-----------------------------------------
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then return end
 
 		C_Timer.After(2.5, function()
-			if RQE.db.profile.debugLevel == "INFO+" then
-				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within UNIT_QUEST_LOG_CHANGED event function")
-			end
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
@@ -5689,7 +5081,7 @@ local function StepUsesAuraCheck(step)
 				-- Delayed retry for objective-based steps, such as profession crafting objectives
 				if CurrentStepUsesObjectiveStatus(questID) then
 					C_Timer.After(0.75, function()
-						if RQE.API.GetSuperTrackedQuestID() == questID then		--if C_SuperTrack.GetSuperTrackedQuestID() == questID then
+						if RQE.API.GetSuperTrackedQuestID() == questID then	
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Running delayed objective-status recheck for questID:", questID)
 							end
@@ -5698,43 +5090,6 @@ local function StepUsesAuraCheck(step)
 						end
 					end)
 				end
-
-				-- if RQE:DidObjectivesChange(questID) then
-					-- RQE.StartPerioFromUnitQuestLogChanged = true
-
-					-- if questID then
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("Running RQE:StartPeriodicChecks() due to changes detected")
-						-- end
-						-- RQE:QueuePeriodicChecks("UNIT_QUEST_LOG_CHANGED", 0.25, questID)
-						-- RQE.PeriodicIsFiring = true
-					-- else
-						-- C_Timer.After(0.25, function()
-							-- if RQE.db.profile.debugLevel == "INFO+" then
-								-- print("Running RQE:StartPeriodicChecks() due to changes detected")
-							-- end
-
-							-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_QUEST_LOG_CHANGED fires
-							-- RQE.PeriodicIsFiring = true
-						-- end)
-					-- end
-
-					-- -- C_Timer.After(0.25, function()
-						-- -- if RQE.db.profile.debugLevel == "INFO+" then
-							-- -- print("Running RQE:StartPeriodicChecks() due to changes detected")
-						-- -- end
-						-- -- RQE:StartPeriodicChecks()
-						-- -- RQE.PeriodicIsFiring = true
-					-- -- end)
-
-					-- C_Timer.After(3, function()
-						-- RQE.StartPerioFromUnitQuestLogChanged = false
-					-- end)
-				-- else
-					-- if RQE.db.profile.debugLevel == "INFO+" then
-						-- print("UQLC: No objective progress change → NOT running StartPeriodicChecks()")
-					-- end
-				-- end
 
 				-----------------------------------------
 				-- Maintain existing waypoint button refresh logic
@@ -5837,10 +5192,8 @@ local function StepUsesAuraCheck(step)
 			RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 		else
 			RQE.ScenarioChildFrame:Hide()
-			-- RQE.StopTimer()
 		end
 
-		-- print("~~~ UpdateRQEQuestFrame(): 4141 ~~~")
 		UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when SCENARIO_CRITERA_UPDATE event fires
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ScenarioCriteriaUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("updateScenarioCriteriaUI: Called UpdateRQEQuestFrame (1431).", 1, 0.75, 0.79)		-- Pink
@@ -5911,14 +5264,12 @@ local function StepUsesAuraCheck(step)
 				RQE.InitializeScenarioFrame()
 				RQE.UpdateScenarioFrame()
 				RQE.StartScenarioTimer()
-				RQE.CheckScenarioStartTime()	--RQE.StartScenarioTimer() --RQE.StartTimer()
+				RQE.CheckScenarioStartTime()
 				RQE.QuestScrollFrameToTop()  -- Moves ScrollFrame of RQEQuestFrame to top
 			else
 				RQE.ScenarioChildFrame:Hide()
-				-- RQE.StopTimer()
 			end
 
-			-- print("~~~ UpdateRQEQuestFrame(): 4221 ~~~")
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 
 			if RQE.db.profile.debugLevel == "INFO+" or (RQE.db.profile.ScenarioCriteriaUpdate or RQE.db.profile.ScenarioCompleted or RQE.db.profile.ScenarioUpdate) then
@@ -5941,10 +5292,6 @@ local function StepUsesAuraCheck(step)
 	-- Handles UPDATE_INSTANCE_INFO Event
 	-- Fired when data from RequestRaidInfo is available and also when player uses portals
 	function RQE.handleInstanceInfoUpdate()
-		-- C_Timer.After(1.5, function()
-			-- RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
-		-- end)
-
 		-- Clicks the button to trigger a waypoint creation shortly after login of the current supertracked quest
 		if not C_Scenario.IsInScenario() then
 			C_Timer.After(1.15, function()
@@ -5978,7 +5325,7 @@ local function StepUsesAuraCheck(step)
 
 		-- Tier Three Importance: UPDATE_INSTANCE_INFO event
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.API.GetSuperTrackedQuestID()
 
 			-- Only run if we HAVE a supertracked quest
 			if questID then
@@ -5995,17 +5342,6 @@ local function StepUsesAuraCheck(step)
 					C_Timer.After(3, function()
 						RQE.StartPerioFromInstanceInfoUpdate = false
 					end)
-
-					-- C_Timer.After(0.15, function()
-						-- if RQE.db.profile.debugLevel == "INFO+" then
-							-- print("UPDATE_INSTANCE_INFO: Objective change → StartPeriodicChecks()")
-						-- end
-						-- RQE:StartPeriodicChecks()
-					-- end)
-
-					-- C_Timer.After(3, function()
-						-- RQE.StartPerioFromInstanceInfoUpdate = false
-					-- end)
 
 				elseif RQE.db.profile.debugLevel == "INFO+" then
 					print("UPDATE_INSTANCE_INFO: No objective change → skipping StartPeriodicChecks()")
@@ -6029,7 +5365,6 @@ local function StepUsesAuraCheck(step)
 
 		-- Update RQEFrame and Refresh Quest Tracker
 		UpdateFrame()
-		-- print("~~~ RQE:QuestType(): 4294 ~~~")
 		RQE:QuestType()
 
 		RQE.UpdateInstanceInfoOkay = false
@@ -6044,29 +5379,6 @@ local function StepUsesAuraCheck(step)
 		if RQE.QueueAutoTrackZoneQuestRefresh then
 			RQE:QueueAutoTrackZoneQuestRefresh()
 		end
-
-		-- -- Clear hotspot choice so next read re-evaluates on the new map
-		-- if C_SuperTrack.IsSuperTrackingQuest() then
-			-- local qid = C_SuperTrack.GetSuperTrackedQuestID()
-			-- -- Clear just the current step (safe + light)
-			-- local sidx = RQE.AddonSetStepIndex or 1
-			-- if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
-				-- RQE.WPUtil.ClearHotspotState(qid, sidx, false)
-			-- end
-		-- end
-
-		-- -- Optional: auto-refresh stash so tooltips/arrow update without /reload
-		-- if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
-			-- local sidx = RQE.AddonSetStepIndex or 1
-			-- local x, y, mid = RQE:GetStepCoordinates(sidx)
-			-- if x and y and mid then
-				-- RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mid
-			-- end
-		-- end
-
-		-- C_Timer.After(0.5, function()
-			-- RQE:ShouldClearFrame()
-		-- end)
 
 		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
 
@@ -6086,13 +5398,8 @@ local function StepUsesAuraCheck(step)
 			RQE.ReadyToRestoreAutoWorldQuests = false
 		end
 
-		-- -- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
-		-- if RQE.HasDragonraceAura() then
-			-- return
-		-- end
-
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
+		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest Status Update Triggered. SuperTracking: " .. tostring(isSuperTracking) .. ", Super Tracked QuestID: " .. tostring(RQE.currentSuperTrackedQuestID), 0, 1, 0)  -- Bright Green
@@ -6101,11 +5408,10 @@ local function StepUsesAuraCheck(step)
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-		local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()
 		local questInfo = RQE.getQuestData(questID)
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
@@ -6113,9 +5419,7 @@ local function StepUsesAuraCheck(step)
 			C_Timer.After(0.7, function()
 				if questID then
 					if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
-						-- print("~~~ SetSuperTrack: 4140~~~")
 						RQE:AutoSetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
-						-- print("~~~ SaveTrackedQuestsToCharacter: 4203 ~~~")
 						RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires
 						RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE events fire
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestStatusUpdate then
@@ -6166,12 +5470,6 @@ local function StepUsesAuraCheck(step)
 				UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
 			end)
 		end
-
-		-- if not IsPlayerMoving() then	-- Might need to remove IsPlayerMoving if quest complete doesn't properly update when it should show as complete
-			-- -- print("~~~ UpdateRQEQuestFrame(): 4384 ~~~")
-			-- UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_LOG_UPDATE, QUEST_POI_UPDATE and TASK_PROGRESS_UPDATE event fires	-- FIRES FAIRLY OFTEN, BUT MAY NEED TO RE-ENABLE
-			-- UpdateRQEWorldQuestFrame()
-		-- end
 
 		-- Checks to make sure that the SeparateFocusFrame contains information when it should
 		C_Timer.After(1.35, function()
@@ -6238,16 +5536,6 @@ local function StepUsesAuraCheck(step)
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_CURRENCY_LOOT_RECEIVED for questID: " .. tostring(questID) .. ", CurrencyID: " .. tostring(currencyId) .. ", Quantity: " .. tostring(quantity), 0, 1, 0)  -- Bright Green
 		end
 
-		-- -- Saving event specific information before calling the status update function
-		-- RQE.latestEventInfo = {
-			-- eventType = "QUEST_CURRENCY_LOOT_RECEIVED",
-			-- questID = questID,
-			-- currencyId = currencyId,
-			-- quantity = quantity
-		-- }
-
-		--RQE.handleQuestStatusUpdate()
-
 		RQE.QuestScrollFrameToTop()
 	end
 
@@ -6275,9 +5563,9 @@ local function StepUsesAuraCheck(step)
 			end
 		end
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if isSuperTracking or RQE.isSuperTracking then
-			local superQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local superQuestID = RQE.API.GetSuperTrackedQuestID()
 			if superQuestID == questID then
 				if numFulfilled ~= 0 or 1 then
 					print("RQE.GreaterThanOneProgress is true")
@@ -6290,9 +5578,6 @@ local function StepUsesAuraCheck(step)
 		end
 
 		C_Timer.After(2.1, function()
-			if RQE.db.profile.debugLevel == "INFO" then
-				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_CRITERIA_UPDATE event function")
-			end
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
@@ -6309,8 +5594,6 @@ local function StepUsesAuraCheck(step)
 			numFulfilled = numFulfilled,
 			numRequired = numRequired
 		}
-
-		--RQE.handleQuestStatusUpdate()
 	end
 
 
@@ -6353,16 +5636,6 @@ local function StepUsesAuraCheck(step)
 				end
 			end
 		end
-
-		-- -- Saving event specific information before calling the status update function
-		-- RQE.latestEventInfo = {
-			-- eventType = "QUEST_LOOT_RECEIVED",
-			-- questID = questID,
-			-- itemLink = itemLink,
-			-- quantity = quantity
-		-- }
-
-		--RQE.handleQuestStatusUpdate()
 	end
 
 
@@ -6396,10 +5669,7 @@ local function StepUsesAuraCheck(step)
 			eventType = "QUESTLINE_UPDATE",
 			requestRequired = requestRequired
 		}
-
-		--RQE.handleQuestStatusUpdate()
 	end
-
 
 	-------------------------------------------------------
 	-- #5o. Quest Completion, Scene & Removal Events
@@ -6422,11 +5692,10 @@ local function StepUsesAuraCheck(step)
 
 		local extractedQuestID
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestComplete then
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for Extracted QuestID: " .. tostring(extractedQuestID), 0, 0.75, 0.75)
 				DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for SuperTracked QuestID: " .. tostring(RQE.currentSuperTrackedQuestID), 0, 0.75, 0.75)
@@ -6434,7 +5703,7 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Determine questID based on various fallbacks
-		local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()
 		local questInfo = RQE.getQuestData(questID)
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
@@ -6442,7 +5711,6 @@ local function StepUsesAuraCheck(step)
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 		end
 
-		--RQE.searchedQuestID = nil	-- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 		-- Reset manually tracked quests
 		if RQE.ManuallyTrackedQuests then
 			for questID in pairs(RQE.ManuallyTrackedQuests) do
@@ -6453,25 +5721,12 @@ local function StepUsesAuraCheck(step)
 		RQE:QuestComplete(questID)
 
 		C_Timer.After(2.1, function()
-			if RQE.db.profile.debugLevel == "INFO" then
-				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_COMPLETE event function")
-			end
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
 		-- Update RQEFrame and Refresh Quest Tracker
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs) -- was commented out for unknown reason
-		-- print("~~~ RQE:QuestType(): 4617 ~~~")
 		RQE:QuestType()
-
-		-- C_Timer.After(0.4, function()
-			-- if not InCombatLockdown() then
-				-- RQEFrame:ClearAllPoints()
-				-- RQE.RQEQuestFrame:ClearAllPoints()
-			-- end
-		-- end)
-		-- print("~~~ SortQuestsByProximity(): 4619 ~~~")
-		--SortQuestsByProximity()
 
 		AdjustRQEFrameWidths()
 		AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
@@ -6487,8 +5742,6 @@ local function StepUsesAuraCheck(step)
 			DEFAULT_CHAT_FRAME:AddMessage("QAC 05 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)		-- Pink
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Quest completion process concluded for questID: " .. tostring(questID), 0, 0.75, 0.75)
 		end
-
-		--RQE:AutoSuperTrackClosestQuest()
 
 		RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_COMPLETE event fires
 		RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_COMPLETE event fires
@@ -6509,14 +5762,6 @@ local function StepUsesAuraCheck(step)
 					end)
 				end)
 			end
-
-			-- C_Timer.After(1.3, function()
-				-- RQE.StartPerioFromQuestComplete = true
-				-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_COMPLETE fires
-				-- C_Timer.After(3, function()
-					-- RQE.StartPerioFromQuestComplete = false
-				-- end)
-			-- end)
 		end
 	end
 
@@ -6550,16 +5795,10 @@ local function StepUsesAuraCheck(step)
 			end
 		end
 
-		-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-		-- local questID = RQE.searchedQuestID or questID --or extractedQuestID or C_SuperTrack.GetSuperTrackedQuestID()
-		-- local questInfo = RQE.getQuestData(questID)
-		-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAutocomplete then
 			DEFAULT_CHAT_FRAME:AddMessage("QAC 03 Debug: Quest completion process started for questID: " .. tostring(questID), 0, 0.75, 0.75)  -- Blue-green color
 		end
 
-		--RQE.searchedQuestID = nil	-- THIS MIGHT NEED TO BE COMMENTED OUT IF THE SEARCHED QUEST GETS REMOVED ANYTIME A QUEST IS COMPLETED
 		-- Reset manually tracked quests
 		if RQE.ManuallyTrackedQuests then
 			for questID in pairs(RQE.ManuallyTrackedQuests) do
@@ -6571,23 +5810,14 @@ local function StepUsesAuraCheck(step)
 
 		C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
-				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_AUTOCOMPLETE event function")
 			end
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
 		-- Update RQEFrame and Refresh Quest Tracker
 		UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-		-- print("~~~ RQE:QuestType(): 4700 ~~~")
 		RQE:QuestType()
 
-		-- C_Timer.After(0.25, function()
-			-- if not InCombatLockdown() then
-				-- RQEFrame:ClearAllPoints()		-- ClearsAllPoints within QUEST_AUTOCOMPLETE without a SetPoint	(possible issue with 11.2)
-				-- RQE.RQEQuestFrame:ClearAllPoints()
-			-- end
-		-- end)
-		-- print("~~~ SortQuestsByProximity(): 4701 ~~~")
 		SortQuestsByProximity()
 
 		AdjustRQEFrameWidths()
@@ -6686,131 +5916,6 @@ local function StepUsesAuraCheck(step)
 		C_Timer.After(0.15, function()
 			RQE:SaveTrackedQuestsToCharacter()
 		end)
-
-		-- -- if not InCombatLockdown() then
-			-- -- RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_REMOVED event is called
-		-- -- end
-		
-		-- if questID == RQE.searchedQuestID then
-			-- RQE.DontUpdateFrame = false
-
-			-- local extractedQuestID
-			-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-			-- end
-
-			-- if extractedQuestID == questID then
-				-- RQE.Buttons.ClearButtonPressed()
-			-- end
-			
-			-- C_Timer.After(0.1, function()
-				-- UpdateFrame()
-			-- end)
-		-- end
-
-		-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-		-- if isWorldQuest then
-			-- RQE:RemoveAutomaticallyTrackedWorldQuest(questID)
-		-- end
-
-		-- RQE:SaveAutomaticWorldQuestWatches()
-		-- RQE.ReadyToRestoreAutoWorldQuests = true
-		-- RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_REMOVED event fires
-
-		-- RQE.currentSuperTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-
-		-- -- C_Timer.After(1, function()
-			-- -- print("~~~ UpdateRQEQuestFrame(): 4812 ~~~")
-			-- -- UpdateRQEQuestFrame()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to remove quest (fires during QUEST_REMOVED event)
-		-- -- end)
-
-		-- if not RQE.currentSuperTrackedQuestID then
-			-- RQE.currentSuperTrackedQuestID = RQE.LastSuperTrackedQuestID  -- Use the last known super-tracked questID if current is nil
-		-- end
-
-		-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-			-- DEFAULT_CHAT_FRAME:AddMessage("Debug: QUEST_REMOVED event triggered for questID: " .. tostring(questID) .. ", wasReplayQuest: " .. tostring(wasReplayQuest), 0.82, 0.70, 0.55) -- Light brown color
-		-- end
-
-		-- -- C_Timer.After(0.4, function()
-			-- -- if not InCombatLockdown() then
-				-- -- RQEFrame:ClearAllPoints()
-				-- -- RQE.RQEQuestFrame:ClearAllPoints()
-			-- -- end
-		-- -- end)
-
-		-- -- print("~~~ RQE:QuestType(): 4844 ~~~")
-		-- RQE:QuestType()
-		-- -- print("~~~ SortQuestsByProximity(): 4837 ~~~")
-		-- SortQuestsByProximity()
-
-		-- AdjustRQEFrameWidths()
-		-- AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
-
-		-- RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
-		-- RQE:ShouldClearFrame()
-
-		-- -- Check if the questID is valid and if it was being tracked automatically
-		-- if questID and RQE.TrackedQuests[questID] == Enum.QuestWatchType.Automatic then
-
-			-- -- Remove the quest from the tracking list
-			-- local isWorldQuest = C_QuestLog.IsWorldQuest(questID)
-
-			-- if isWorldQuest then
-				-- C_QuestLog.RemoveWorldQuestWatch(questID)
-			-- end
-
-			-- -- Clear the saved state for this quest
-			-- RQE.TrackedQuests[questID] = nil
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved  then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Debug: Removed automatic World Quest watch for questID: " .. tostring(questID), 0.82, 0.70, 0.55) -- Light brown color
-			-- end
-		-- end
-
-		-- -- FLAG: Is the below necessary? Or redundant code that results in slowing
-		-- -- Check if the removed quest is the currently super-tracked quest
-		-- if questID == RQE.LastSuperTrackedQuestID then
-			-- -- Clear user waypoint and reset TomTom if loaded
-			-- C_Map.ClearUserWaypoint()
-
-			-- -- Check if TomTom is loaded and compatibility is enabled
-			-- local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
-			-- if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
-				-- TomTom.waydb:ResetProfile()
-				-- RQE._currentTomTomUID = nil
-			-- end
-
-			-- local extractedQuestID
-			-- if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-				-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-			-- end
-
-			-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-			-- local questID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
-			-- local questInfo = RQE.getQuestData(questID)
-			-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
-
-			-- -- Update RQEFrame
-			-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-
-			-- -- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
-			-- RQE:UpdateRQEFrameVisibility()
-
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-				-- DEFAULT_CHAT_FRAME:AddMessage("QR 01 Debug: Updated RQEFrame Visibility.", 1, 0.75, 0.79)		-- Pink
-			-- end
-
-			-- RQE:UpdateRQEQuestFrameVisibility()
-
-			-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestRemoved then
-				-- DEFAULT_CHAT_FRAME:AddMessage("QR 02 Debug: Updated RQEQuestFrame Visibility.", 1, 0.75, 0.79)		-- Pink
-			-- end
-		-- end
-
-		-- -- -- Resets Quest Progress ***
-		-- -- RQE.hasStateChanged()
-		-- -- RQE.hasQuestProgressChanged()
-		-- RQE.QuestRemoved = true
 	end
 
 
@@ -6865,12 +5970,6 @@ local function StepUsesAuraCheck(step)
 			RQE:CheckCPUUsage()
 		end
 
-		-- -- Check if autoClickWaypointButton is selected in the configuration
-		-- if RQE.db.profile.autoClickWaypointButton then
-			-- -- Click the "W" Button is autoclick is selected and no steps or questData exist	-- commented out as this is handled further down in this event function
-			-- RQE.CheckAndClickWButton()
-		-- end
-
 		-- Checks to see if the quest and stepIndex are blacklisted from RQEFrame updates due to heavy load on the add-on and lag
 		RQE:CheckSuperTrackedQuestAndStep()
 
@@ -6892,8 +5991,8 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Initialize variables
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
+		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		if isSuperTracking and RQE.currentSuperTrackedQuestID and RQE.currentSuperTrackedQuestID ~= questID then
 			C_Timer.After(0.7, function()
@@ -6910,7 +6009,7 @@ local function StepUsesAuraCheck(step)
 		end
 
 		if isSuperTracking and RQE.currentSuperTrackedQuestID == questID then
-			RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 			local superTrackedQuestName = "Unknown Quest" -- Default if ID is nil or no title found
 
 			if RQE.currentSuperTrackedQuestID then
@@ -6934,9 +6033,7 @@ local function StepUsesAuraCheck(step)
 				end
 			end
 		elseif not isSuperTracking then
-			-- print("~~~ SetSuperTrack: 4783~~~")
 			RQE:AutoSetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
-			-- print("~~~ SaveTrackedQuestsToCharacter: 4849 ~~~")
 			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_UPDATE event fires
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_UPDATE event fires
 
@@ -6958,19 +6055,6 @@ local function StepUsesAuraCheck(step)
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
-		-- C_Timer.After(0.45, function()
-			-- if not InCombatLockdown() then
-				-- RQEFrame:ClearAllPoints()		-- ClearsAllPoints within QUEST_WATCH_UPDATE without a SetPoint	(possible issue with 11.2)
-				-- RQE.RQEQuestFrame:ClearAllPoints()
-			-- end
-		-- end)
-
-		-- -- Further processing
-		-- -- print("~~~ RQE:QuestType(): 5040 ~~~")
-		-- RQE:QuestType()
-		-- -- print("~~~ SortQuestsByProximity(): 5032 ~~~")
-		-- SortQuestsByProximity()
-
 		AdjustRQEFrameWidths()
 		AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
@@ -6991,7 +6075,7 @@ local function StepUsesAuraCheck(step)
 		-- already watched nor complete. Re-adding a watched World Quest retriggers
 		-- Retail's quest-map refresh, which can reach protected map-pin setup during
 		-- a world-boss encounter without changing the watch list at all.
-		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)
 		local isTaskQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
 		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or false
 		local watchType = C_QuestLog.GetQuestWatchType(questID)
@@ -7038,38 +6122,19 @@ local function StepUsesAuraCheck(step)
 				CoordsText[i] = cText or "--"
 				MapIDs[i] = mID
 				questHeader[i] = desc:match("^(.-)\n") or desc
-
-				-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
-					-- DEFAULT_CHAT_FRAME:AddMessage("QWU 08 Debug: Step " .. i .. ": " .. StepsText[i], 0.56, 0.93, 0.56)	-- Light Green
-					-- DEFAULT_CHAT_FRAME:AddMessage("QWU 09 Debug: Coordinates " .. i .. ": " .. CoordsText[i], 0.56, 0.93, 0.56)	-- Light Green
-					-- DEFAULT_CHAT_FRAME:AddMessage("QWU 10 Debug: MapID " .. i .. ": " .. tostring(MapIDs[i]), 0.56, 0.93, 0.56)	-- Light Green
-					-- DEFAULT_CHAT_FRAME:AddMessage("QWU 11 Debug: Header " .. i .. ": " .. questHeader[i], 0.56, 0.93, 0.56)	-- Light Green
-				-- end
 			end
 		end
-
-		-- if questInfo then
-			-- -- If you need details about the quest, fetch them here
-			-- for i, step in ipairs(questInfo) do
-				-- StepsText[i] = step.description
-				-- CoordsText[i] = string.format("%.1f, %.1f", step.coordinates.x, step.coordinates.y)
-				-- MapIDs[i] = step.coordinates.mapID
-				-- questHeader[i] = step.description:match("^(.-)\n") or step.description
-			-- end
-		-- end
 
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
 				DEFAULT_CHAT_FRAME:AddMessage("QWU 12 Debug: Extracted quest ID from QuestIDText: " .. tostring(extractedQuestID), 0.56, 0.93, 0.56)	-- Light Green
 			end
 		end
 
 		-- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-		local advanceQuestID =	RQE.searchedQuestID	or extractedQuestID	or (isSuperTracking and RQE.currentSuperTrackedQuestID)	or questID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-		--local advanceQuestID = RQE.searchedQuestID or extractedQuestID or questID or C_SuperTrack.GetSuperTrackedQuestID()
+		local advanceQuestID =	RQE.searchedQuestID	or extractedQuestID	or (isSuperTracking and RQE.currentSuperTrackedQuestID)	or questID or RQE.API.GetSuperTrackedQuestID()
 
 		local questInfo = RQE.getQuestData(advanceQuestID)
 		if questInfo then
@@ -7096,12 +6161,6 @@ local function StepUsesAuraCheck(step)
 								end
 							end)
 						end
-
-						-- C_Timer.After(0.10, function()
-							-- if RQE.db.profile.debugLevel == "INFO+" then
-								-- print("Objective change → continuing StartPeriodicChecks()")
-							-- end
-						-- end)
 					else
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("QWU: No objective change → skipping StartPeriodicChecks()")
@@ -7182,9 +6241,6 @@ local function StepUsesAuraCheck(step)
 			RQE.UnitQuestLogChangedFired = false
 		end)
 
-		-- print("~~~ RQE:QuestType(): 5192 ~~~")
-		-- RQE:QuestType()	-- Determines if UpdateRQEQuestFrame or UpdateRQEWorldQuestFrame gets updated and useful for clearing frame
-
 		C_Timer.After(2.5, function()
 			RQE:ShouldClearFrame()
 		end)
@@ -7193,8 +6249,7 @@ local function StepUsesAuraCheck(step)
 
 		-- Clear hotspot choice so next read re-evaluates on the new map
 		if RQE.API.IsSuperTrackingQuest() then
-		--if C_SuperTrack.IsSuperTrackingQuest() then
-			local qid = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local qid = RQE.API.GetSuperTrackedQuestID()
 			-- Clear just the current step (safe + light)
 			local sidx = RQE.AddonSetStepIndex or 1
 			if RQE.WPUtil and RQE.WPUtil.ClearHotspotState then
@@ -7204,7 +6259,6 @@ local function StepUsesAuraCheck(step)
 
 		-- Optional: auto-refresh stash so tooltips/arrow update without /reload
 		if RQE and RQE.GetStepCoordinates and RQE.API.IsSuperTrackingQuest() then
-		--if RQE and RQE.GetStepCoordinates and C_SuperTrack.IsSuperTrackingQuest() then
 			local sidx = RQE.AddonSetStepIndex or 1
 			local x, y, mid = RQE:GetStepCoordinates(sidx)
 			if x and y and mid then
@@ -7218,13 +6272,8 @@ local function StepUsesAuraCheck(step)
 			end)
 
 			-- Local variables for the event
-			local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-
-			-- Check to see if actively doing a Dragonriding Race and if so will skip rest of this event function
-			-- if RQE.HasDragonraceAura() then
-				-- return
-			-- end
+			local isWorldQuest = RQE.API.IsWorldQuest(questID)
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 
 			RQE.UpdateInstanceInfoOkay = true	-- Flag to allow UPDATE_INSTANCE_INFO to run next time it is called
 
@@ -7234,7 +6283,6 @@ local function StepUsesAuraCheck(step)
 					DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEWorldQuestFrame (2206).", 1, 0.75, 0.79)		-- Pink
 				end
 			else
-				-- print("~~~ UpdateRQEQuestFrame(): 5183 ~~~")
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires (possible duplicate)
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
 					DEFAULT_CHAT_FRAME:AddMessage("QUEST_WATCH_LIST_CHANGED: Called UpdateRQEQuestFrame (2209).", 1, 0.75, 0.79)		-- Pink
@@ -7246,24 +6294,8 @@ local function StepUsesAuraCheck(step)
 			end
 
 			if isSuperTracking then
-				local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+				local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 				if superTrackedQuestID == questID then
-					-- -- Determine questID, questInfo, StepsText, CoordsText and MapIDs based on various fallbacks
-					-- local questInfo = RQE.getQuestData(superTrackedQuestID)
-					-- if questInfo then
-						-- local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}	-- Initialize variables StepsText, CoordsText, MapIds and questHeader
-						-- local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)	-- Populates recently initialized variables
-
-						-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-							-- DEFAULT_CHAT_FRAME:AddMessage("QWLC 01 Debug: Quest info found for questID: " .. tostring(questID), 0.4, 0.6, 1.0)
-						-- end
-						-- UpdateFrame(questID, questInfo, StepsText, CoordsText, MapIDs)
-					-- else
-						-- if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
-							-- DEFAULT_CHAT_FRAME:AddMessage("QWLC 02 Debug: No quest info found for questID: " .. tostring(questID), 0.4, 0.6, 1.0)
-						-- end
-					-- end
-
 					AdjustRQEFrameWidths()
 
 					-- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
@@ -7312,11 +6344,10 @@ local function StepUsesAuraCheck(step)
 
 			-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 			if RQE.db.profile.enableNearestSuperTrack then
-				if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+				if not RQE.isSuperTracking or not isSuperTracking then
 					if not RQEFrame:IsShown() then return end
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
-						-- print("~~~ SetSuperTrack: 5034~~~")
 						RQE:AutoSetSuperTrackedQuestID(closestQuestID)
 						RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestListWatchListChanged then
@@ -7339,9 +6370,8 @@ local function StepUsesAuraCheck(step)
 
 			-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
 			if RQE.QuestAddedForWatchListChanged and not isSuperTracking then
-				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+				local isWorldQuest = RQE.API.IsWorldQuest(questID)
 				if not isWorldQuest then
-					-- print("~~~ SetSuperTrack: 5059~~~")
 					RQE:AutoSetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 					UpdateFrame()
@@ -7437,7 +6467,7 @@ local function StepUsesAuraCheck(step)
 		end
 
 		C_Timer.After(0.5, function()
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not RQE.previousSuperTrackedQuestID then
 				RQE.previousSuperTrackedQuestID = nil
 			end
@@ -7463,19 +6493,10 @@ local function StepUsesAuraCheck(step)
 					RQE._currentTomTomUID = nil
 				end
 
-				-- RQE:ClearSeparateFocusFrame()
-				-- UpdateFrame()
-
 				-- Update the visibility or content of RQEFrame as needed
 				RQE:UpdateRQEFrameVisibility()
 			end
-			-- print("~~~ RQE:QuestType(): 5395 ~~~")
-			--RQE:QuestType()
 		end)
-
-		-- C_Timer.After(1.5, function()
-			-- RQEMacro:ClearMacroContentByName("RQE Macro")
-		-- end)
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn then
 			DEFAULT_CHAT_FRAME:AddMessage("QTI 01 Debug: QUEST_TURNED_IN event triggered for questID: " .. tostring(questID) .. ", XP Reward: " .. tostring(xpReward) .. ", Money Reward: " .. tostring(moneyReward) .. " copper", 1.0, 0.08, 0.58)  -- Bright Pink
@@ -7486,7 +6507,6 @@ local function StepUsesAuraCheck(step)
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestTurnedIn then
 			DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: SuperTrackedQuestID: " .. tostring(RQE.API.GetSuperTrackedQuestID()), 1.0, 0.08, 0.58)
-			--DEFAULT_CHAT_FRAME:AddMessage("QTI 02 Debug: SuperTrackedQuestID: " .. tostring(C_SuperTrack.GetSuperTrackedQuestID()), 1.0, 0.08, 0.58)
 		end
 
 		-- Update the visibility or content of RQEQuestFrame as needed
@@ -7614,22 +6634,14 @@ local function StepUsesAuraCheck(step)
 	-- Handling QUEST_FINISHED event
 	-- Fired whenever the quest frame changes (from Detail to Progress to Reward, etc.) or is closed
 	function RQE.handleQuestFinished()
-		-- print("~~~ Running Event Function: RQE.handleQuestFinished() ~~~")
-		-- Clear the raid marker from the current target
-		-- if UnitExists("target") then
-			-- SetRaidTarget("target", 0)
-		-- end
-
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 		if RQE.db.profile.enableNearestSuperTrack then
-			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-			if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
+			if not RQE.isSuperTracking or not isSuperTracking then
 				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
-					-- print("~~~ SetSuperTrack: 5269~~~")
 					RQE:AutoSetSuperTrackedQuestID(closestQuestID)
-					-- print("~~~ SaveTrackedQuestsToCharacter: 5344 ~~~")
 					RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_FINISHED event fires
 					RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_FINISHED event fires
 					if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
@@ -7653,16 +6665,15 @@ local function StepUsesAuraCheck(step)
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 			DEFAULT_CHAT_FRAME:AddMessage("QF 01 Debug: ExtractedQuestID: " .. tostring(extractedQuestID), 1, 0.75, 0.79)		-- Pink
 		end
 
-		local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
+		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if isSuperTracking then
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 				DEFAULT_CHAT_FRAME:AddMessage("QF 03 Debug: SuperTrackedQuestID: " .. tostring(superTrackedQuestID), 1, 0.75, 0.79)		-- Pink
 			end
@@ -7671,14 +6682,11 @@ local function StepUsesAuraCheck(step)
 		end
 
 		C_Timer.After(2.1, function()
-			if RQE.db.profile.debugLevel == "INFO" then
-				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_FINISHED event function")
-			end
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
 		-- Determine questID based on various fallbacks
-		local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or extractedQuestID or RQE.API.GetSuperTrackedQuestID()
 		local questInfo = RQE.getQuestData(questID)
 		if questInfo then
 			local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
@@ -7693,7 +6701,6 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Refresh Quest Tracker
-		-- print("~~~ RQE:QuestType(): 5578 ~~~")
 		RQE:QuestType()
 
 		-- Update the visibility or content of RQEFrame and RQEQuestFrame as needed
@@ -7873,7 +6880,6 @@ local function StepUsesAuraCheck(step)
 			print("Showing RQE frames and hiding Blizzard Tracker")
 			-- Show RQE frames and hide Blizzard Tracker
 			if RQEFrame and not RQEFrame:IsShown() then
-				-- print("~~ RQEFrame:Show: 123 ~~")
 				RQEFrame:Show()
 			end
 			if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsShown() then
@@ -7918,7 +6924,6 @@ local function StepUsesAuraCheck(step)
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQE:ClearSeparateFocusFrame()
-			-- print("~~ RQEFrame:Show: 176 ~~")
 			RQEFrame:Show()
 			UpdateFrame()
 
