@@ -558,7 +558,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Function to Colorize the RQEFrame Quest Helper Module
 	local function colorizeObjectives(questID)
-		local objectivesData = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesData = RQE.API.GetQuestObjectives(questID)
 		local colorizedText = ""
 
 		for _, objective in ipairs(objectivesData) do
@@ -1242,7 +1242,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Add a click event to open the quest details for the current QuestID
 	RQE.QuestIDText:SetScript("OnMouseDown", function(self, button)
 		if button == "LeftButton" and not IsShiftKeyDown() then
-			local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID	--C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
+			local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 			OpenQuestLogToQuestDetails(questID)
 			return
 		end
@@ -1253,7 +1253,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	if RQE.QuestNameText then  -- Check if QuestNameText is initialized
 		RQE.QuestNameText:SetScript("OnMouseDown", function(self, button)
 			if button == "LeftButton" and not IsShiftKeyDown() then
-				local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID	--C_SuperTrack.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
+				local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 				OpenQuestLogToQuestDetails(questID)
 				return
 			end
@@ -1374,15 +1374,14 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		local extractedQuestID
-		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		extractedQuestID = RQE.DisplayedQuestID
-		-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 
 		questID = effectiveQuestID or extractedQuestID or currentSuperTrackedQuestID
-		local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+		local isWorldQuest = RQE.API.IsWorldQuest(questID)
 
 		local questData = RQE.getQuestData(effectiveQuestID)
-		local questTitle = RQE.API.GetTitleForQuestID(questID)  -- = questData and questData.title or "Unknown Quest"
+		local questTitle = RQE.API.GetTitleForQuestID(questID)
 		GameTooltip:SetText(questTitle)
 
 		if RQE.DatabaseSuperX and not RQE.API.IsOnQuest(questID) and not isWorldQuest then
@@ -1430,10 +1429,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				end
 				GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
 				if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-					--GameTooltip:AddLine(" ")
 					GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
 				else
-					--GameTooltip:AddLine(" ")
 					GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
 				end
 			end
@@ -1441,7 +1438,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Add objectives
-		local objectivesInfo = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectivesInfo = RQE.API.GetQuestObjectives(questID)
 		if objectivesInfo and #objectivesInfo > 0 then
 			GameTooltip:AddLine("Objectives:")
 
@@ -1452,7 +1449,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			end
 
 			local colorizedObjectives = RQE.colorizeObjectives(questID)
-			--local colorizedObjectives = colorizeObjectives(questID)
 			GameTooltip:AddLine(colorizedObjectives, 1, 1, 1, true)  -- true for wrap
 			GameTooltip:AddLine(" ")
 		else
@@ -1478,14 +1474,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- Check if RQE.SeparateStepText exists and has text
 			local stepText = RQE.GetSeparateStepText()
 			if stepText ~= "" then
-			-- if RQE.SeparateStepText and RQE.SeparateStepText:GetText() ~= "" then
-				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
+				local isWorldQuest = RQE.API.IsWorldQuest(questID)	
 				if not isWorldQuest then
 					GameTooltip:AddLine(" ")
 				end
 				GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
 				GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
-				-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
 			else
 				GameTooltip:AddLine(" ")
 				GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
@@ -1559,7 +1553,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Add mouseover event for QuestIDText
 	RQE.QuestIDText:SetScript("OnEnter", function(self)
-		local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
 		if questID then
 			CreateQuestTooltip(self, questID)
 		end
@@ -1570,11 +1564,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	RQE.QuestIDText:SetScript("OnMouseUp", function(self, button)
 		if button == "RightButton" then
-			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
 			if questID then
 				ShowQuestDropdownRQEFrame(self, questID)
-			-- elseif RQE.searchedQuestID then
-				-- ShowQuestDropdownRQEFrame(self, RQE.searchedQuestID)
 			end
 		end
 	end)
@@ -1582,7 +1574,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Add mouseover event for QuestNameText
 	if RQE.QuestNameText then
 		RQE.QuestNameText:SetScript("OnEnter", function(self)
-			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
 			if questID then
 				CreateQuestTooltip(self, questID)
 			end
@@ -1597,11 +1589,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	RQE.QuestNameText:SetScript("OnMouseUp", function(self, button)
 		if button == "RightButton" then
-			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
 			if questID then
 				ShowQuestDropdownRQEFrame(self, questID)
-			-- elseif RQE.searchedQuestID then
-				-- ShowQuestDropdownRQEFrame(self, RQE.searchedQuestID)
 			end
 		end
 	end)
@@ -1694,7 +1684,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	function CreateSearchFrame(showFrame)
 		if not showFrame then
 			if RQEFrame.SearchFrame then
-				--RQEFrame.SearchFrame:Hide()  -- COMMENTING OUT DUE TO API ERROR
 				RQEFrame.SearchFrame = nil
 			end
 			return
@@ -1825,7 +1814,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 			local StepText
 			if false and hasCoords then
-			--if hasCoords then
 				-- 🧭 SimpleHTML for coordinate hyperlinks
 				StepText = CreateFrame("SimpleHTML", nil, content)
 				table.insert(RQE.StepsText, StepText)
@@ -2105,9 +2093,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				local extractedQuestID
 				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 					extractedQuestID = RQE.DisplayedQuestID
-					-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 				end
-				local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+				local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 				local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
 				if questID and not RQE:IsCoordblockWaypointProtected(questID) then
@@ -2132,17 +2119,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 					-- Call function to handle the coordinate click (IDEALLY IF MOUSE ACTUALLY CLICKS THE "W" BUTTON and may cause some post-combat lag)
 					RQE.SaveCoordData()
-					RQE:OnCoordinateClicked() --RQE:OnCoordinateClicked(i)
+					RQE:OnCoordinateClicked()
 					RQE.OkayWaypointButtonToMove = false
 				end
-
-				-- if not UnitOnTaxi("player") then
-					-- local IsAdvancedFlyableArea = IsAdvancedFlyableArea()
-					-- if IsAdvancedFlyableArea then
-					-- RQE.SaveCoordData()
-					-- RQE:OnCoordinateClicked() -- Necessary to keep waypoint from disappearing when mousing over or clicking the "W" Button but fires frequently when on dragonriding
-					-- end
-				-- end
 
 				-- This part resets the texture of the last clicked button, but also contains some checks for updating identifiers.
 				if RQE.LastClickedWaypointButton and RQE.LastClickedWaypointButton ~= WaypointButton then
@@ -2258,11 +2237,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Check and Advance Steps
 	function RQE:CheckAndAdvanceStep(questID)
-		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()	 -- TEMPORARILY COMMENTING OUT IN ORDER TO GET RQE:StartPeriodicChecks() OPERATIONAL
+		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local extractedQuestID
 		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
 			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
 		end
 
 		-- Determine questID based on various fallbacks
@@ -2285,7 +2263,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Retrieve objectives for the questID
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		if not objectives or #objectives == 0 then
 			RQE.debugLog("Quest", questID, "has no objectives or failed to retrieve objectives.")
 			return
@@ -2366,58 +2344,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		return count
 	end
 
-
-	-- -- Simulate WaypointButton click for the next step upon completion of a quest objective and print debug statements
-	-- function RQE:ClickWaypointButtonForNextObjectiveIndex(nextObjectiveIndex, questData)
-		-- -- If the quest is completed, prioritize clicking the button for objectiveIndex 99
-		-- if nextObjectiveIndex == 99 then
-			-- for stepIndex, stepData in ipairs(questData) do
-				-- if stepData.objectiveIndex == 99 then
-					-- local button = RQE.WaypointButtons[stepIndex]
-					-- if button then
-						-- RQE.infoLog("Quest is complete. Clicking WaypointButton for quest turn-in (ObjectiveIndex 99).")
-						-- button:Click()
-						-- RQE.lastClickedObjectiveIndex = 99
-
-						-- -- Call to update the waypoint for the quest completion objective
-						-- C_Timer.After(1, function()  -- Delay of 1 second
-							-- RQE.ClickUnknownQuestButton()
-						-- end)
-						-- return
-					-- end
-				-- end
-			-- end
-		-- end
-
-		-- -- Check if this is a new objectiveIndex, not the same as the last clicked one.
-		-- if RQE.lastClickedObjectiveIndex == nextObjectiveIndex then
-			-- RQE.infoLog("ObjectiveIndex " .. nextObjectiveIndex .. " was already clicked. Skipping.")
-			-- return
-		-- end
-
-		-- for _, stepData in ipairs(questData) do
-			-- if stepData.objectiveIndex == nextObjectiveIndex then
-				-- local button = RQE.WaypointButtons[_] -- Assuming WaypointButtons are stored in a manner that mirrors questData
-				-- if button then
-					-- -- Simulate the click
-					-- RQE.infoLog("Clicking WaypointButton for objectiveIndex:", nextObjectiveIndex)
-					-- button:Click() -- `OnClick` will now use the button's direct data
-					-- -- Update the lastClickedObjectiveIndex since we've moved to a new objective.
-					-- RQE.lastClickedObjectiveIndex = nextObjectiveIndex
-
-					-- -- Call to update the waypoint for the quest completion objective
-					-- C_Timer.After(1, function()  -- Delay of 1 second
-						-- RQE.ClickUnknownQuestButton()
-					-- end)
-					-- return
-				-- end
-			-- end
-		-- end
-		-- UpdateRQEQuestFrame()
-		-- UpdateRQEWorldQuestFrame()
-	-- end
-
-
 	-- Function to check if all objectives for a given quest are completed
 	function RQE:AreAllObjectivesCompleted(questID)
 		-- Check if questID is valid
@@ -2426,10 +2352,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		local status, objectives = pcall(RQE.API.GetQuestObjectives, questID)
-		--local status, objectives = pcall(C_QuestLog.GetQuestObjectives, questID)
 
 		if not status or not objectives or #objectives == 0 then
-		--if not status or not objectives then
 			return false
 		end
 
@@ -2460,7 +2384,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 		local extractedQuestID = RQE.DisplayedQuestID
 		-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
 		RQE:SaveSuperTrackedQuestToCharacter()
@@ -2482,7 +2406,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Retrieve the super-tracked quest ID
-		local questID = questID or RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = questID or RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()
 		if not questID or questID == 0 then
 			return
 		end
@@ -2520,7 +2444,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Function to create a group for the current quest
 	function RQE:LFG_Create(questID)
 		-- Determine the questID
-		local questID = questID or RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = questID or RQE.currentSuperTrackedQuestID or RQE.API.GetSuperTrackedQuestID()
 		if not questID or questID == 0 then
 			print("LFG_Create: Invalid or missing questID.")
 			return
@@ -2624,7 +2548,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		local isInGroup = IsInGroup()
 		local isInRaid = IsInRaid()
 		local isInstanceGroup = IsInInstance()
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Trigger the role selection only if the player was in an outdoor raid group
 		if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
@@ -3056,19 +2980,17 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- If we're in "searched quest mode" and it's not a real quest, bail out early (freeze SeparateFocus)
 			local searchedID = RQE.searchedQuestID
 			if searchedID and not RQE.API.IsOnQuest(searchedID) and not RQE.API.IsWorldQuest(searchedID) then
-			--if searchedID and not C_QuestLog.IsOnQuest(searchedID) and not C_QuestLog.IsWorldQuest(searchedID) then
 				finishUpdate()
 				return
 			end
 
 			-- Otherwise, follow Blizzard supertrack, but only if it's valid
 			if not RQE.API.IsSuperTrackingQuest() then
-			--if not C_SuperTrack.IsSuperTrackingQuest() then
 				finishUpdate()
 				return
 			end
 
-			displayedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+			displayedQuestID = RQE.API.GetSuperTrackedQuestID()
 			if not displayedQuestID or displayedQuestID <= 0 then
 				finishUpdate()
 				return
@@ -3077,18 +2999,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- Optional: ensure the supertracked quest is actually real/active
 			local isLogQuest = RQE.API.IsOnQuest(displayedQuestID)
 
-			--local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and RQE.API.GetQuestObjectives(displayedQuestID) ~= nil
-			--local isActiveWorldQuest = C_QuestLog.IsWorldQuest(displayedQuestID) and C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
-
 			local hasDBQuest = RQE.getQuestData(displayedQuestID) ~= nil
 			local displayedObjectives = RQE.API.GetQuestObjectives(displayedQuestID)
 			local hasObjectives = type(displayedObjectives) == "table" and #displayedObjectives > 0
 
-			--local hasObjectives = RQE.API.GetQuestObjectives(displayedQuestID) ~= nil
-			--local hasObjectives = C_QuestLog.GetQuestObjectives(displayedQuestID) ~= nil
-
 			if not (isLogQuest or hasDBQuest or hasObjectives) then
-			--if not (isLogQuest or isActiveWorldQuest or hasDBQuest or hasObjectives) then
 				finishUpdate()
 				return
 			end
@@ -3584,7 +3499,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		-- Create or update Waypoint Button
 		if not RQE.SeparateWaypointButton then
 			RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateFocusFrame)
-			--RQE.SeparateWaypointButton = CreateFrame("Button", nil, RQE.SeparateContentFrame)
 			-- The artwork remains 30x30, but the native hit rectangle includes
 			-- its glow and stays fixed when the Focus Frame content scrolls.
 			RQE.SeparateWaypointButton:SetSize(40, 40)
@@ -3594,7 +3508,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			RQE.SeparateWaypointButton:SetFrameLevel(RQE.SeparateScrollFrame:GetFrameLevel() + 3)
 			RQE.SeparateWaypointButton:EnableMouseWheel(true)
 			RQE.SeparateWaypointButton:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
-			--RQE.SeparateWaypointButton:SetPoint("TOPRIGHT", RQE.SeparateStepText, "TOPLEFT", -10, 0)
 			local bg = RQE.SeparateWaypointButton:CreateTexture(nil, "BACKGROUND")
 			bg:SetSize(30, 30)
 			bg:SetPoint("CENTER", RQE.SeparateWaypointButton, "CENTER")
@@ -3640,7 +3553,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 									end)
 								end)
 							end)
-							--RQE.CheckAndBuildMacroIfNeeded()
 						end
 					end
 				else
@@ -3675,7 +3587,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		RQE.SeparateWaypointButton:Show()
 	end
 
-
 	-------------------------------------------------------
 	-- #8h. Focus Tooltip & Scroll Utilities
 	-------------------------------------------------------
@@ -3694,7 +3605,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			GameTooltip:AddLine(" ")
 			GameTooltip:AddLine("|cfffffd9fQuest Help for Current Step:|r", 1, 1, 1, true) -- Canary title
 			GameTooltip:AddLine("|cffa9a9ff" .. stepText .. "|r", nil, nil, nil, true)
-			-- GameTooltip:AddLine("|cffa9a9ff" .. RQE.GetSeparateStepText() .. "|r", nil, nil, nil, true)
 		else
 			GameTooltip:AddLine(" ")
 			GameTooltip:AddLine("|cffff0000No additional focus data available.|r", 1, 1, 1, true) -- Default message in red
@@ -3703,12 +3613,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		GameTooltip:Show()
 	end
 
-
 	-- Function to create a tooltip to hide
 	function RQE.HideFocusScrollFrameTooltip()
 		GameTooltip:Hide()
 	end
-
 
 	-- Function to scroll the SeparateFocusFrame to the top
 	function RQE.FocusScrollFrameToTop()
@@ -3719,7 +3627,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			end
 		end
 	end
-
 
 	-------------------------------------------------------
 	-- #8i. Coordinate-Block Tooltip Data
@@ -3773,34 +3680,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		return "No tooltip available."
 	end
 
-	-- function RQE.GetTooltipDataForCButton()	-- OLD METHOD RELYING ON THE SINGLE COORDINATE BLOCK METHOD AND NOT THE MULTI ARRAY
-		-- local stepIndex = RQE.AddonSetStepIndex or 1  -- Default to step index 1 if none is set
-		-- local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		-- local questData = RQE.getQuestData(questID)  -- Fetch quest data from RQEDatabase
-
-		-- -- Ensure quest data exists and has the coordinate data
-		-- if questData and questData[stepIndex] and questData[stepIndex].coordinates then
-			-- -- Extract coordinate information for the current stepIndex
-			-- local coordData = questData[stepIndex].coordinates
-			-- local x, y, mapID = coordData.x, coordData.y, coordData.mapID
-
-			-- -- Format the coordinate text
-			-- local coordsText = string.format("Coordinates: (%.2f, %.2f) - MapID: %d", x, y, mapID)
-			-- --local coordsText = string.format("Coordinates: %.2f, %.2f (Map ID: %d)", x, y, mapID)
-			-- RQE.SeparateFocusCoordData = coordsText
-
-			-- if RQE.db.profile.debugLevel == "INFO" then
-				-- DEFAULT_CHAT_FRAME:AddMessage("Step " .. RQE.AddonSetStepIndex .. " coords: " .. coordsText, 1, 1, 0)
-			-- end
-
-			-- -- Return the formatted coordinate text
-			-- return coordsText
-		-- else
-			-- return "No tooltip available."  -- Fallback if no data is available
-		-- end
-	-- end
-
-
 	-------------------------------------------------------
 	-- #8j. Coordinate Button Tooltip Hooks
 	-------------------------------------------------------
@@ -3829,23 +3708,18 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end)
 	end
 
-
 	-------------------------------------------------------
 	-- #8k. Periodic Frame Visibility Monitor
 	-------------------------------------------------------
 
 	-- Check which visibility state the RQEFrame and RQEQuestFrame should be
 	function RQE:CheckFrameVisibility()
-	-- local checkRQEFrames = CreateFrame("Frame")
-	-- checkRQEFrames:SetScript("OnUpdate", function()
-
 		-- Check for the RQEFrame visibility setting
 		if RQE.db.profile.enableFrame then
 			-- Show the RQEFrame if it should be enabled and is not currently shown
 			if not InCombatLockdown() then
 				if not RQEFrame:IsShown() then
-					if RQEFrame then 
-						-- print("~~ RQEFrame:Show: 2264 ~~")
+					if RQEFrame then
 						RQEFrame:Show()
 					end
 				end
@@ -3884,7 +3758,6 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		local isMoving = IsPlayerMoving()
 		local inScenario = C_Scenario.IsInScenario()
 
-		--if RQE.CanCheckFrame or not isMoving then
 		if not isMoving or inScenario then
 			RQE:CheckFrameVisibility()
 		end
