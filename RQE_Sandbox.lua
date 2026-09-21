@@ -446,7 +446,6 @@ local function InitializeSandbox()
 
 	local questIDBox = CreateFrame("EditBox", nil, SandboxFrame, "InputBoxTemplate")
 	questIDBox:SetSize(120, 25)
-	-- questIDBox:SetPoint("TOPLEFT", 20, -50)
 	questIDBox:SetPoint("LEFT", questIDLabel, "RIGHT", 10, 0)
 	questIDBox:SetAutoFocus(false)
 	questIDBox:SetNumeric(true)
@@ -721,7 +720,7 @@ local function InitializeSandbox()
 	-------------------------------------------------------
 	SandboxFrame:SetScript("OnShow", function()
 		currentSandboxMode = "legacy"
-		local questID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		UpdateModeControls()
 		LoadSandboxEntry(questID)
 	end)
