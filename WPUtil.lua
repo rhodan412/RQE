@@ -702,7 +702,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- Check if an objective is complete
 	local function IsObjectiveComplete(questID, objectiveIndex)
 		if not questID or not objectiveIndex then return false end
-		local objectives = RQE.API.GetQuestObjectives(questID)	--C_QuestLog.GetQuestObjectives(questID)
+		local objectives = RQE.API.GetQuestObjectives(questID)
 		if not objectives or not objectives[objectiveIndex] then return false end
 		return objectives[objectiveIndex].finished
 	end
@@ -1184,7 +1184,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- Slash command to easier access the dump
 	SLASH_RQEDUMP1 = "/rqedump"
 	SlashCmdList.RQEDUMP = function()
-		local qid = RQE.API.GetSuperTrackedQuestID()	--local qid = C_SuperTrack.GetSuperTrackedQuestID()
+		local qid = RQE.API.GetSuperTrackedQuestID()
 		local sidx = RQE.AddonSetStepIndex or 1
 		if RQE.WPUtil and RQE.WPUtil.DebugDumpBands then
 			RQE.WPUtil.DebugDumpBands(qid, sidx)
@@ -2076,7 +2076,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			return
 		end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then
 			RQEFrame.StepDistanceText:SetText("—")
 			return
