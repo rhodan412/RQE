@@ -49,6 +49,12 @@ function RQE:ApplyCurrentProfile()
 
 		RestoreGeometry(RQEFrame, helper, "RQEFrame")
 		RestoreGeometry(self.RQEQuestFrame, tracker, "RQEQuestFrame")
+		if self.SetRQEFrameLocked then
+			self.SetRQEFrameLocked(profile.lockRQEFrame == true, false)
+		end
+		if self.SetRQEQuestFrameLocked then
+			self.SetRQEQuestFrameLocked(profile.lockRQEQuestFrame == true, false)
+		end
 		-- Minimize is session state, not a different saved full-size layout.
 		-- Refresh its expansion cache when switching profiles while collapsed.
 		if self.QTMinimized then
@@ -81,6 +87,10 @@ function RQE:ApplyCurrentProfile()
 		self:UpdateTrackerVisibility()
 		self.Buttons.UpdateHeaderNavigation()
 		self:SetupOverrideMacroBinding()
+		if self.ApplyCreatureObjectPreviewLayout then self.ApplyCreatureObjectPreviewLayout() end
+		if profile.enableCreatureObjectPreview == false and self.HideCreatureObjectPreview then
+			self.HideCreatureObjectPreview()
+		end
 		-- Diagnostic tickers read the new profile themselves. Clear stale text
 		-- immediately when disabled without changing the global CPU-profiling CVar.
 		if not profile.displayRQEmemUsage and RQEFrame.MemoryUsageText then
