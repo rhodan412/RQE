@@ -41,8 +41,8 @@ Images:
 Redesigned UI - Before-and-after comparison of RQE’s new Azure & Gold theme, enabled by default. It adds custom frames and section headers, clearer icon-based controls, distinct quest-category badges, improved search and filter styling, and a redesigned Separate Focus way
 ![New Theme](https://github.com/user-attachments/assets/20cc73c9-fd9f-4ffc-a3c6-f596f17b79b7)
 
-Navigate through different tabs to customize the RQE addon's frames, fonts, and color
-![Navigate through different tabs to customize the RQE addon's frames, fonts, and color.](https://github.com/user-attachments/assets/0f24e405-f535-4a13-8536-2a3784814e26)
+Preview NPC models and object images directly from quest-step links, alongside RQE’s quest guidance and Azure & Gold Quest Tracker.
+![RQE | Questing at a glance.](https://github.com/user-attachments/assets/9f52c4aa-10c9-4441-8726-9548e6ecbeaa)
 
 Save time with RQE! The GIF here shows an example of that with 'The Ghostfish' quest from Wrath of the Lich King. It's an item that once looted, you have to click on it to complete the quest within ONE MINUTE. RQE watches your inventory for many such quest items.![fishing](https://github.com/user-attachments/assets/5f635ddb-a233-493f-b86b-0ff0676a87ab)
 
