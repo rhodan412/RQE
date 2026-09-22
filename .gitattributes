@@ -8,3 +8,8 @@ Media/UI/Source/__pycache__ export-ignore
 Media/UI/Source/__pycache__/** export-ignore
 Media/UI/Source/build_assets.py export-ignore
 Media/UI/Source/THEMES.md export-ignore
+Media/ObjectPreviews/PNG/ export-ignore
+Media/ObjectPreviews/PNG/** export-ignore
+Media/ObjectPreviews/__pycache__/ export-ignore
+Media/ObjectPreviews/__pycache__/** export-ignore
+Media/ObjectPreviews/convert_png_to_tga.py export-ignore

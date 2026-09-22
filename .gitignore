@@ -6,3 +6,6 @@ AGENTS.md
 Media/UI/Source/__pycache__/
 Media/UI/Source/build_assets.py
 Media/UI/Source/THEMES.md
+Media/ObjectPreviews/PNG/
+Media/ObjectPreviews/__pycache__/
+Media/ObjectPreviews/convert_png_to_tga.py
