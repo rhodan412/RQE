@@ -1,3 +1,148 @@
+12.1.0.8 (2026.09.22)
+
+	**HIGHLIGHTS**
+		- Added a reusable in-game 3D preview window for NPC creature IDs and mapped world-object models, including direct `/run` testing helpers.
+		- Step-description NPC and object links now open persistent previews on mouseover, with object images supplied by RQE and per-profile placement, size, and enable controls.
+		- Object previews now support numeric IDs and author-defined alphanumeric image keys such as F00483 without relying on unavailable Blizzard GameObject model lookup.
+		- NPC previews now center creature models within the popup instead of leaving them crowded into its lower-left corner.
+		- NPC and object previews now support drag-to-pan and mouse-wheel zoom, while a dedicated Azure & Gold title bar moves the popup independently.
+		- Creature and object previews now close automatically when the active quest step or supertracked quest changes, while hovering another preview link replaces the current subject immediately.
+		- Azure & Gold now adds draggable, proportional scroll indicators to the full Quest Helper and its Separate Focus panel, with mouse-wheel support and no stock arrow buttons.
+		- Clearing the Quest Helper with its C button now closes any open NPC or object preview as part of the same reset.
+		- Empty Quest Helper and Separate Focus panels no longer show scroll indicators when there is no quest or focused-step content to scroll.
+		- Quest Helper and Quest Tracker positions and sizes can now be locked independently from their right-click menus, with each profile defaulting to unlocked.
+		- Quest-linked NPC and object previews now close when the Quest Helper no longer contains searched or supertracked quest content, while direct testing previews remain available.
+		- Custom object preview keys beginning with a letter now keep their internal key out of the popup title, while official numeric object IDs remain visible.
+		- Quest Helper and Quest Tracker lock controls are now available in both Blizzard AddOn Settings and RQE's standalone configuration window and stay synchronized with the right-click menus.
+		- Every standalone configuration tab now opens with a trackless Golden Yellow scrollbar already initialized, without stock scrollbar arrows or requiring a window resize.
+		- Fixed reversed scrollbar dragging in the configuration window, Quest Helper, Separate Focus, and Quest Tracker, and made thin scrollbars easier to grab without changing mouse-wheel behavior.
+		- Object preview links now resolve images by ID or custom key independently of link wording; preview titles use the descriptive filename and hide letter-prefixed custom IDs.
+
+	Buttons.lua
+		- Closed and reset the shared NPC/object preview from the centralized Quest Helper clear action, so a confirmed C-button clear cannot leave an unrelated preview window open. (2026.09.21.2321)
+		- Kept the Quest Tracker resize grip hidden when a locked tracker is restored from its minimized state, preventing maximize from bypassing the saved lock. (2026.09.22.0001)
+
+	Client_Classic/Config.lua
+		- Added profile-backed NPC/object preview enable, anchor, RQEFrame-relative anchor, X/Y offset, and scale controls to both Season of Discovery/Forever configuration interfaces. (2026.09.21.2016)
+		- Added live Quest Helper and Quest Tracker position-and-size lock toggles to both Classic/Season of Discovery configuration interfaces, backed by the active account-wide AceDB profile while leaving numeric geometry controls usable. (2026.09.22.0001)
+
+	Client_Classic/Core.lua
+		- Added default-enabled per-profile preview layout settings and rich {npc:ID:name}/{object:key:name} rendering with wrapped mouseover regions for Season of Discovery and Forever. (2026.09.21.2016)
+		- Reset Classic/Season of Discovery Quest Helper and Separate Focus scroll positions, ranges, child height, and themed indicators when their content is cleared, preventing the fixed Compass control from creating false overflow. (2026.09.21.2327)
+		- Added unlocked-by-default per-profile Quest Helper and Quest Tracker lock values, and marked mouseover description previews as quest-bound so Classic/Season of Discovery safety clears can dismiss them without affecting direct testing previews. (2026.09.21.2344)
+
+	Client_Classic/QuestingModule.lua
+		- Added a profile-backed right-click Lock/Unlock Quest Tracker Position & Size action for Classic/Season of Discovery; locking disables both dragging and the resize grip while preserving menu access, and unlocking restores both controls. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after Classic/Season of Discovery Quest Tracker lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied the shared cursor-to-scroll drag controller to the Classic/Season of Discovery Quest Tracker so dragging down increases its scroll offset while retaining existing wheel input. (2026.09.22.1022)
+
+	Client_Classic/RQEFrame.lua
+		- Recognized NPC and alphanumeric object image tags in Season of Discovery/Forever step descriptions, including SeparateFocusFrame hyperlink rendering and persistent preview activation. (2026.09.21.2016)
+		- Replaced the Classic/Season of Discovery Quest Helper's fixed-height scroll estimate and stock arrow scrollbar with actual rendered-content measurement and a draggable proportional Golden Yellow thumb; added a separately draggable Azure thumb for overflowing Separate Focus content, synchronized both with mouse-wheel input, and kept both indicators hidden in legacy mode. (2026.09.21.2315)
+		- Required a positive tracked/displayed quest or visible quest heading before showing the Classic/Season of Discovery Quest Helper thumb, eliminating its empty-frame indicator even when stale geometry still reports overflow. (2026.09.21.2327)
+		- Added a profile-backed right-click Lock/Unlock Quest Helper Position & Size action for Classic/Season of Discovery, hiding its resize grip and disabling movement while locked; hyperlink-triggered previews now participate in quest-empty cleanup. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after Classic/Season of Discovery Quest Helper lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied explicit downward-positive dragging to the Classic/Season of Discovery Quest Helper and Separate Focus scrollbars, widened their invisible grab areas, and capped proportional thumbs at their track heights without changing wheel behavior or theme visibility. (2026.09.22.1022)
+
+	Client_TBC/Config.lua
+		- Added profile-backed NPC/object preview enable, anchor, RQEFrame-relative anchor, X/Y offset, and scale controls to both TBC Anniversary configuration interfaces. (2026.09.21.2016)
+		- Added live Quest Helper and Quest Tracker position-and-size lock toggles to both TBC Anniversary configuration interfaces, backed by the active account-wide AceDB profile while leaving numeric geometry controls usable. (2026.09.22.0001)
+
+	Client_TBC/Core.lua
+		- Added default-enabled per-profile preview layout settings and rich {npc:ID:name}/{object:key:name} rendering with wrapped mouseover regions for TBC Anniversary. (2026.09.21.2016)
+		- Reset TBC Anniversary Quest Helper and Separate Focus scroll positions, ranges, child height, and themed indicators when their content is cleared, preventing the fixed Compass control from creating false overflow. (2026.09.21.2327)
+		- Added unlocked-by-default per-profile Quest Helper and Quest Tracker lock values, and marked mouseover description previews as quest-bound so TBC Anniversary safety clears can dismiss them without affecting direct testing previews. (2026.09.21.2344)
+
+	Client_TBC/QuestingModule.lua
+		- Added a profile-backed right-click Lock/Unlock Quest Tracker Position & Size action for TBC Anniversary; locking disables both dragging and the resize grip while preserving menu access, and unlocking restores both controls. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after TBC Anniversary Quest Tracker lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied the shared cursor-to-scroll drag controller to the TBC Anniversary Quest Tracker so dragging down increases its scroll offset while retaining existing wheel input. (2026.09.22.1022)
+
+	Client_TBC/RQEFrame.lua
+		- Recognized NPC and alphanumeric object image tags in TBC Anniversary step descriptions, including SeparateFocusFrame hyperlink rendering and persistent preview activation. (2026.09.21.2016)
+		- Replaced the TBC Anniversary Quest Helper's fixed-height scroll estimate and stock arrow scrollbar with actual rendered-content measurement and a draggable proportional Golden Yellow thumb; added a separately draggable Azure thumb for overflowing Separate Focus content, synchronized both with mouse-wheel input, and kept both indicators hidden in legacy mode. (2026.09.21.2315)
+		- Required a positive tracked/displayed quest or visible quest heading before showing the TBC Anniversary Quest Helper thumb, eliminating its empty-frame indicator even when stale geometry still reports overflow. (2026.09.21.2327)
+		- Added a profile-backed right-click Lock/Unlock Quest Helper Position & Size action for TBC Anniversary, hiding its resize grip and disabling movement while locked; hyperlink-triggered previews now participate in quest-empty cleanup. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after TBC Anniversary Quest Helper lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied explicit downward-positive dragging to the TBC Anniversary Quest Helper and Separate Focus scrollbars, widened their invisible grab areas, and capped proportional thumbs at their track heights without changing wheel behavior or theme visibility. (2026.09.22.1022)
+
+	Config.lua
+		- Added profile-backed NPC/object preview enable, anchor, RQEFrame-relative anchor, X/Y offset, and scale controls to both Retail/Forever configuration interfaces. (2026.09.21.2016)
+		- Added live Quest Helper and Quest Tracker position-and-size lock toggles to both Retail/Forever configuration interfaces, backed by the active account-wide AceDB profile while leaving numeric geometry controls usable. (2026.09.22.0001)
+
+	ConfigTheme.lua
+		- Placed the creature/object preview settings group on the composed Frame settings page so Blizzard AddOn Settings exposes the same controls as RQE's standalone window. (2026.09.21.2016)
+		- Added the lock controls to each composed layout section and replaced the standalone window's pooled stock scrollbars with always-initialized proportional Golden Yellow thumbs; removed their tracks/arrows, forced a settled opening layout, retained mouse-wheel and thumb dragging, and restores native scrollbar presentation if a pooled widget is reused by Blizzard Settings. (2026.09.22.0001)
+		- Replaced native proportional-thumb dragging with the shared downward-positive controller, forwarded wheel input to the existing AceGUI handler, preserved the wider transparent grab area during styling refreshes, and hid it when pooled widgets return to native Blizzard Settings styling. (2026.09.22.1022)
+
+	Core.lua
+		- Added default-enabled per-profile preview layout settings and rich {npc:ID:name}/{object:key:name} rendering with wrapped mouseover regions for Retail/Forever. (2026.09.21.2016)
+		- Reset Retail/Forever Quest Helper and Separate Focus scroll positions, ranges, child height, and themed indicators when their content is cleared, preventing the fixed Compass control from creating false overflow. (2026.09.21.2327)
+		- Added unlocked-by-default per-profile Quest Helper and Quest Tracker lock values, and marked mouseover description previews as quest-bound so Retail/Forever safety clears can dismiss them without affecting direct testing previews. (2026.09.21.2344)
+
+	ProfileManager.lua
+		- Reapplied the selected profile's preview layout during profile restoration and closes an open preview immediately when the newly selected profile disables mouseover previews. (2026.09.21.2016)
+		- Reapplied the selected profile's independent Quest Helper and Quest Tracker lock states after profile changes without rewriting the saved choices. (2026.09.21.2344)
+
+	QuestingModule.lua
+		- Added a profile-backed right-click Lock/Unlock Quest Tracker Position & Size action for Retail/Forever; locking disables both dragging and the resize grip while preserving menu access, and unlocking restores both controls. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after Retail/Forever Quest Tracker lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied the shared downward-positive drag controller to the Retail/Forever Quest Tracker, retained its existing wheel handler, and capped the proportional thumb at its track height for small layouts. (2026.09.22.1022)
+
+	RQE-Camelot.TOC
+		- Loaded the shared creature/object model-preview module immediately after the centralized API layer for Classic Forever. (2026.09.21.1828)
+		- Loaded the shared object-image catalog before the preview viewer for Classic Forever, enabling ID-based image lookup and filename-derived titles. (2026.09.22.1049)
+
+	RQE-Classic.toc
+		- Loaded the shared creature/object model-preview module immediately after the centralized API layer for Season of Discovery. (2026.09.21.1828)
+		- Loaded the shared object-image catalog before the preview viewer for Season of Discovery, enabling ID-based image lookup and filename-derived titles. (2026.09.22.1049)
+
+	RQE-Tbc.toc
+		- Loaded the shared creature/object model-preview module immediately after the centralized API layer for TBC Anniversary. (2026.09.21.1828)
+		- Loaded the shared object-image catalog before the preview viewer for TBC Anniversary, enabling ID-based image lookup and filename-derived titles. (2026.09.22.1049)
+
+	RQE.toc
+		- Updated version# (2026.09.21.1812)
+		- Loaded the shared creature/object model-preview module immediately after the centralized API layer for Retail. (2026.09.21.1828)
+		- Loaded the shared object-image catalog before the Retail preview viewer, enabling ID-based image lookup and filename-derived titles without changing the addon version. (2026.09.22.1049)
+
+	RQE_API.lua
+		- Added client-aware creation, clearing, positioning, creature-ID loading, and model-file loading wrappers for reusable preview widgets; Retail prefers CinematicModel while re-release clients prefer PlayerModel, with guarded fallback in both directions. (2026.09.21.1828)
+		- Kept GameObject entry IDs distinct from model file IDs because Blizzard exposes direct SetCreature loading but no equivalent SetGameObject model lookup, preventing unrelated assets from being rendered accidentally. (2026.09.21.1828)
+		- Removed the unsupported object model-file loading wrapper and reapplied NPC camera centering after SetCreature so object previews use bundled images while live NPC models remain correctly framed. (2026.09.21.2016)
+		- Reset full-body portrait position and apply a compact-window screen-space camera offset after creature assignment, centering NPC models without changing their model scale. (2026.09.21.2210)
+		- Retained a fresh camera-options table for each NPC load and always resets its camera-distance scale, allowing interactive pan/zoom changes without carrying the preceding NPC's zoom into a new preview. (2026.09.21.2227)
+		- Added a shared scale-aware scrollbar drag controller with a 20-unit transparent hit area, explicit top-to-bottom cursor mapping, clamped values, track-click positioning, unchanged wheel callback forwarding, and drag cancellation on release or hide. (2026.09.22.1022)
+
+	RQE_ModelPreview.lua
+		- Added a movable, Escape-closeable model popup and public RQE.CreatureOrObject, RQE.NPC, RQE.Object, and RQE.Model testing helpers; invalid types, failed loads, and unmapped objects now produce explicit in-frame and chat feedback. (2026.09.21.1828)
+		- Added a lightweight session object-model registry so future quest metadata can associate a GameObject entry ID with its Blizzard model file ID and optional camera settings without embedding screenshots. (2026.09.21.1828)
+		- Replaced the experimental object-model registry and raw model helper with bundled TGA image previews keyed by numeric or alphanumeric names, retained Blizzard model loading for NPCs, and anchored the persistent closeable window to RQEFrame using per-profile point, offset, and scale values. (2026.09.21.2016)
+		- Persisted drag-adjusted preview offsets back to the active profile while retaining the selected RQEFrame-relative anchor pair, so manually moved previews no longer snap back on the next mouseover. (2026.09.21.2027)
+		- Resolved object tags to descriptive `<key> - <name>.tga` filenames first, with key-only TGA fallback and filename-safe label normalization, allowing authors to identify preview assets before inserting their tags into the quest database. (2026.09.21.2047)
+		- Reapplied NPC camera framing from OnModelLoaded after Blizzard finishes installing the creature model, preventing late model loads from restoring the lower-left-biased default camera. (2026.09.21.2210)
+		- Split the popup into a clipped interactive viewport and dedicated Azure & Gold title bar: dragging the viewport pans NPC models or zoomed object images, the mouse wheel zooms either preview with safe limits, dragging the header alone moves and saves the window, and every newly opened preview resets to its centered view. (2026.09.21.2227)
+		- Captured the displayed quest, authoritative step index, supertracked quest, and preview identity for every opened NPC/object preview; the popup now closes after a real step or tracked-quest transition and clears the previous subject before another hover link replaces it, without reacting to partial objective progress. (2026.09.21.2315)
+		- Distinguished quest-linked previews from direct `/run` testing previews, periodically closes only the former when no searched, supertracked, or visibly displayed Quest Helper content remains, and omits letter-prefixed custom object keys from popup titles while retaining numeric official object IDs. (2026.09.21.2344)
+		- Stopped a stale internal displayed-quest ID from keeping a quest-linked preview open after the Quest Helper safety clear; an active search, supertrack, numeric visible quest heading, or visible quest name is now required. (2026.09.22.0005)
+		- Resolved object texture paths and preview names from the shared key-indexed image catalog before legacy label/key-only fallbacks; kept hyperlink wording independent, retained explicit texture overrides and NPC behavior, and displayed official numeric IDs on a second title line while hiding letter-prefixed custom keys. (2026.09.22.1049)
+
+	RQEDatabase.lua
+		- Updated several quests (Alliance/Horde) in Borean Tundra within DB (2026.09.22.1407)
+
+	RQEFrame.lua
+		- Recognized NPC and alphanumeric object image tags in Retail/Forever step descriptions, including SeparateFocusFrame hyperlink rendering and persistent preview activation. (2026.09.21.2016)
+		- Made the Retail/Forever Quest Helper scroll its complete measured document, including wrapped quest text, progress objectives, the Separate Focus panel as one unit, and every database step; added a theme-only proportional Golden Yellow thumb that supports direct dragging and mouse-wheel movement without a trough or arrow buttons. (2026.09.21.2315)
+		- Added an independent proportional Azure #0057B8 thumb for overflowing Separate Focus content, with direct drag, targeted mouse-wheel movement, minimum thumb sizing, synchronized top resets, and hidden legacy/non-overflow states. (2026.09.21.2315)
+		- Required a positive tracked/displayed quest or visible quest heading before showing the Retail/Forever Quest Helper thumb, eliminating its empty-frame indicator even when stale geometry still reports overflow. (2026.09.21.2327)
+		- Added a profile-backed right-click Lock/Unlock Quest Helper Position & Size action for Retail/Forever, hiding its resize grip and disabling movement while locked; hyperlink-triggered previews now participate in quest-empty cleanup. (2026.09.21.2344)
+		- Notified the shared Frame Settings page after Retail/Forever Quest Helper lock changes so right-click and configuration controls remain synchronized. (2026.09.22.0001)
+		- Applied explicit downward-positive dragging to the Retail/Forever Quest Helper and Separate Focus scrollbars, widened their invisible grab areas, and capped proportional thumbs at their track heights without changing wheel behavior or theme visibility. (2026.09.22.1022)
+
+	UITheme.lua
+		- Reanchored and refreshed the Quest Helper and Separate Focus slider controllers whenever Azure & Gold reapplies responsive frame geometry, keeping each proportional thumb aligned with the current themed viewport and content range. (2026.09.21.2315)
+
+
 12.1.0.7 (2026.09.21)
 
 	**HIGHLIGHTS**
@@ -126,6 +271,9 @@
 		- Replaced the Retail/Forever login-time position copies with the shared profile-aware geometry accessor for both RQEFrame and RQEQuestFrame. (2026.09.20.1635)
 		- Removed independent startup frame anchors/sizes and repeated profile reselection, routed geometry to the shared combat retry path, and moved the initial quest restore schedule out of the gameplay login handler. (2026.09.20.1824)
 		- Normalized searchedQuestID to a numeric ID or nil instead of an empty-table placeholder and guarded the delayed startup clear/restore refresh. (2026.09.20.1824)
+
+	Media/ObjectPreviews/ObjectPreviewCatalog.lua
+		- Added the runtime image-key catalog for existing bundled TGAs, separating each exact filename and descriptive title from quest-link labels; the local converter refreshes this shipped table after conversion and when only existing TGAs are present. (2026.09.22.1049)
 
 	ProfileManager.lua
 		- Added the shared world-ready, combat-deferred profile application path for both frames and their opacity, fonts, coordinates, minimap, visibility, header controls, and macro bindings; selected-profile values remain authoritative and theme selection retains its existing reload requirement. (2026.09.20.1824)
