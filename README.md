@@ -30,7 +30,7 @@ RQE has addon builds for Retail, Classic Era/Season of Discovery, Classic Foreve
 
 | Quest guidance | Quest search and reference links |
 | --- | --- |
-| [![Watch the RQE overview](https://img.youtube.com/vi/JKvJi32zfag/hqdefault.jpg)](https://www.youtube.com/watch?v=JKvJi32zfag) | [![Watch RQE search Wowhead and Warcraft Wiki](https://img.youtube.com/vi/0jAIiBSai3I/hqdefault.jpg)](https://www.youtube.com/watch?v=0jAIiBSai3I) |
+| [![Watch the RQE overview](https://github.com/user-attachments/assets/646aaa29-921c-432a-9371-23b054c0669f)](https://www.youtube.com/watch?v=JKvJi32zfag) | [![Watch RQE search Wowhead and Warcraft Wiki](https://github.com/user-attachments/assets/94117e37-7fbf-4d2d-996d-99f303f3ea0e)](https://www.youtube.com/watch?v=0jAIiBSai3I) |
 
 RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect quest lines, tooltips, and quest-giver locations.
 
