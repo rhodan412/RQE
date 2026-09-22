@@ -50,7 +50,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 
 	-- Initialize to some state (locked or unlocked, based on your preference)
-	local isFrameLocked = true  -- Change this based on your need
+	local isFrameLocked = RQE.db.profile.lockRQEFrame == true
 
 
 	-------------------------------------------------------
@@ -123,6 +123,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		end
 
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
+				RQE.ToggleFrameLock()
+			end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			local isPlayerInGroup = IsInGroup()
 			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
@@ -210,6 +214,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID() or RQE.CurrentDisplayedQuestID
 			local questLabel = questID and tostring(questID) or "<Nothing Tracked>"
+			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
+				RQE.ToggleFrameLock()
+			end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 
 			if RQE_SandboxEditor then
 				rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
@@ -318,9 +326,13 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	-- Create the content frame
 	local content = CreateFrame("Frame", nil, ScrollFrame)
 	RQE.content = content
-	content:SetSize(360, 600)  -- Set the content size here
+	content:SetPoint("TOPLEFT", ScrollFrame, "TOPLEFT", 0, 0)
+	content:SetSize(math.max(1, ScrollFrame:GetWidth()), 600)
 	ScrollFrame:SetScrollChild(content)
-	content:SetAllPoints()
+	ScrollFrame:SetScript("OnSizeChanged", function(self, width)
+		content:SetWidth(math.max(1, width or self:GetWidth() or 1))
+		if RQE.UpdateContentSize then RQE:UpdateContentSize() end
+	end)
 
 
 	-------------------------------------------------------
@@ -371,75 +383,70 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	-- end)
 
 
-	-- Create the Slider (Scrollbar)
-	local slider = CreateFrame("Slider", nil, ScrollFrame)
+	-- Keep a trackless slider as the scroll-position controller in both themes.
+	-- Azure & Gold exposes only its proportional gold thumb; legacy mode keeps
+	-- wheel scrolling but draws no bar, trough, or arrow buttons.
+	local slider = CreateFrame("Slider", nil, RQEFrame)
 	RQE.slider = slider
-	slider:SetPoint("TOPLEFT", RQEFrame, "TOPRIGHT", -20, -55)
-	slider:SetPoint("BOTTOMLEFT", RQEFrame, "BOTTOMRIGHT", -20, 45)
-	slider:SetMinMaxValues(0, content:GetHeight())
-	slider:SetValueStep(0.2)
+	slider:SetOrientation("VERTICAL")
+	slider:SetPoint("TOPRIGHT", RQEFrame, "TOPRIGHT", -7, -55)
+	slider:SetPoint("BOTTOMRIGHT", RQEFrame, "BOTTOMRIGHT", -7, 14)
+	slider:SetMinMaxValues(0, 0)
+	slider:SetValueStep(1)
+	slider:SetObeyStepOnDrag(false)
+	slider:EnableMouse(true)
 	slider.scrollStep = 1
-	slider:SetWidth(12)  -- Set the width of the scrollbar
-
-	-- Set a custom background for the scrollbar
-	local bg = slider:CreateTexture(nil, "BACKGROUND")
-	bg:SetAllPoints(slider)
-	bg:SetColorTexture(0.15, 0.15, 0.15, 0.65) -- A dark gray, semi-transparent background
-
-	-- Set a custom thumb texture for the scrollbar
-	local thumb = slider:CreateTexture(nil, "OVERLAY")
-	thumb:SetTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal") -- A custom thumb texture
-	--thumb:SetTexture("Interface\\AddOns\\RQE\\Textures\\YourCustomThumbTexture")
-	thumb:SetSize(12, 12)
-	slider:SetThumbTexture(thumb)
-
-	-- Add up and down arrow buttons to the scrollbar (optional)
-	local upButton = CreateFrame("Button", nil, slider, "UIPanelScrollUpButtonTemplate")
-	upButton:SetPoint("BOTTOM", slider, "TOP", 0, 0)
-	upButton:SetScript("OnClick", function()
-		slider:SetValue(slider:GetValue() - 20) -- Scroll up by a set amount
-	end)
-
-	local downButton = CreateFrame("Button", nil, slider, "UIPanelScrollDownButtonTemplate")
-	downButton:SetPoint("TOP", slider, "BOTTOM", 0, 0)
-	downButton:SetScript("OnClick", function()
-		slider:SetValue(slider:GetValue() + 20) -- Scroll down by a set amount
-	end)
-
-
-	-- Ensure the thumb texture is created correctly
-	local thumb = slider:CreateTexture(nil, "OVERLAY")
-	thumb:SetSize(16, 32)  -- Adjust the size as needed
-	thumb:SetTexture("Interface\\Buttons\\UI-ScrollBar-Knob")  -- Use any texture you want
-	slider:SetThumbTexture(thumb)
-
-	-- Create the Animation Group for the thumb
-	local animGroup = thumb:CreateAnimationGroup()
-
-	-- Create an Alpha Animation within the group
-	local pulse = animGroup:CreateAnimation("Alpha")
-	pulse:SetFromAlpha(1) -- Start from fully opaque
-	pulse:SetToAlpha(0.5) -- Fade to 50% opacity
-	pulse:SetDuration(0.5) -- Duration of the fade
-	pulse:SetSmoothing("IN_OUT") -- Smooth the animation
-
-	-- Set the looping mode on the animation group
-	animGroup:SetLooping("BOUNCE")
-
-	-- Start the animation when the mouse enters the scrollbar
-	slider:SetScript("OnEnter", function(self)
-		RQE:UpdateContentSize()
-		animGroup:Play()
-	end)
-
-	-- Stop the animation when the mouse leaves the scrollbar
-	slider:SetScript("OnLeave", function(self)
-		animGroup:Stop()
-	end)
+	slider:SetWidth(10)
+	slider:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
+	local thumb = slider:GetThumbTexture()
+	thumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+	thumb:SetSize(4, 54)
+	slider:Hide()
 
 	slider:SetScript("OnValueChanged", function(self, value)
 		ScrollFrame:SetVerticalScroll(value)
 	end)
+	slider:EnableMouseWheel(true)
+	slider:SetScript("OnMouseWheel", function(self, delta)
+		self:SetValue(self:GetValue() - delta * 40)
+	end)
+	RQE.API.ConfigureScrollbarDrag(slider)
+
+	function RQE.UpdateQuestHelperScrollbarVisual(contentHeight)
+		if not RQE.slider or not RQE.ScrollFrame then return end
+		local _, maximum = RQE.slider:GetMinMaxValues()
+		local themed = RQE.UI and RQE.UI:IsEnabled()
+		local questIDText = RQE.QuestIDText and RQE.QuestIDText:GetText()
+		local questNameText = RQE.QuestNameText and RQE.QuestNameText:GetText()
+		local displayedQuestID = tonumber(RQE.DisplayedQuestID)
+		local searchedQuestID = tonumber(RQE.searchedQuestID)
+		local superTrackedQuestID = RQE.API and RQE.API.GetSuperTrackedQuestID
+			and tonumber(RQE.API.GetSuperTrackedQuestID())
+		local hasDisplayedQuest = (displayedQuestID and displayedQuestID > 0)
+			or (searchedQuestID and searchedQuestID > 0)
+			or (superTrackedQuestID and superTrackedQuestID > 0)
+			or (type(questIDText) == "string" and questIDText:find("%S"))
+			or (type(questNameText) == "string" and questNameText:find("%S"))
+		if not themed or not hasDisplayedQuest or not RQE.ScrollFrame:IsShown()
+			or not maximum or maximum <= 0 then
+			RQE.slider:Hide()
+			return
+		end
+
+		local viewportHeight = math.max(1, RQE.ScrollFrame:GetHeight() or 1)
+		local totalHeight = math.max(viewportHeight, tonumber(contentHeight)
+			or (viewportHeight + maximum))
+		local trackHeight = math.max(1, RQE.slider:GetHeight() or viewportHeight)
+		local thumbHeight = math.min(trackHeight, math.max(42,
+			math.floor(trackHeight * viewportHeight / totalHeight + 0.5)))
+		local sliderThumb = RQE.slider:GetThumbTexture()
+		if sliderThumb then
+			sliderThumb:SetColorTexture(255 / 255, 215 / 255, 0 / 255, 1) -- #FFD700
+			sliderThumb:SetSize(4, thumbHeight)
+			sliderThumb:Show()
+		end
+		RQE.slider:Show()
+	end
 
 	-------------------------------------------------------
 	-- #5c. Frame Context Click & Scroll Reset
@@ -1706,11 +1713,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	ScrollFrame:SetScript("OnMouseWheel", function(self, delta)
 		local value = slider:GetValue()
 		if delta > 0 then
-			slider:SetValue(value - 25) -- A Change from 20 to 25 on both slider SetValues increases the scroll speed
+			slider:SetValue(value - 40)
 		else
-			slider:SetValue(value + 25)
+			slider:SetValue(value + 40)
 		end
-		RQE:UpdateContentSize()
 	end)
 
 
@@ -1898,6 +1904,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			local hasCoordblock = raw:find("{coordblock:", 1, true) ~= nil
 			-- local hasCoords = raw:match("{coords:")
 			local hasHoverables = raw:match("{item:") or raw:match("{spell:")
+				or raw:match("{npc:") or raw:match("{object:")
 
 			local StepText
 			if false and hasCoords then
@@ -2759,15 +2766,42 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	end
 
 
-	-- Function to update the content size dynamically based on the number of steps
+	-- Measure the actual bottom-most rendered element so wrapped quest text,
+	-- objective bars, Separate Focus, and every database step share one scrollable
+	-- document instead of estimating height from the step count.
 	function RQE:UpdateContentSize()
 		self.StepsText = self.StepsText or {}	-- Failsafe to ensure that table is loaded following VARIABLES_LOADED event firing
+		if not (content and ScrollFrame and slider) then return end
 
-		local n = #self.StepsText	-- The number of steps
-		local statusHeight = self.QuestStatusText and self.QuestStatusText:IsShown() and 20 or 0
-		local totalHeight = 110 + (40 * n) + (40 * n) + 40 * (n - 1) + 25 + statusHeight
-		content:SetHeight(totalHeight)
-		slider:SetMinMaxValues(0, content:GetHeight())
+		local viewportHeight = math.max(1, ScrollFrame:GetHeight() or 1)
+		local contentTop = content:GetTop()
+		local lowestBottom
+		local function IncludeRegion(region)
+			if not region or region == RQE.StepsHoverContainer
+				or not region.IsShown or not region:IsShown() then return end
+			local bottom = region.GetBottom and region:GetBottom()
+			if bottom and (not lowestBottom or bottom < lowestBottom) then
+				lowestBottom = bottom
+			end
+		end
+
+		for _, child in ipairs({ content:GetChildren() }) do IncludeRegion(child) end
+		for _, region in ipairs({ content:GetRegions() }) do
+			if region.GetObjectType and region:GetObjectType() == "FontString" then
+				IncludeRegion(region)
+			end
+		end
+
+		local measuredHeight = viewportHeight
+		if contentTop and lowestBottom then
+			measuredHeight = math.max(viewportHeight, contentTop - lowestBottom + 20)
+		end
+		content:SetHeight(measuredHeight)
+
+		local maximum = math.max(0, measuredHeight - viewportHeight)
+		slider:SetMinMaxValues(0, maximum)
+		if slider:GetValue() > maximum then slider:SetValue(maximum) end
+		RQE.UpdateQuestHelperScrollbarVisual(measuredHeight)
 	end
 
 
@@ -2896,10 +2930,20 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 	end)
 
 
-	-- Toggle function
-	function RQE.ToggleFrameLock()
+	function RQE.IsRQEFrameLocked()
+		return isFrameLocked
+	end
+
+	function RQE.SetRQEFrameLocked(locked, persist)
+		isFrameLocked = locked == true
+		RQEFrame:EnableMouse(true)  -- Retain right-click access while locked.
 		if isFrameLocked then
-			RQEFrame:EnableMouse(true)  -- Keep this true to still capture right-clicks
+			RQEFrame:SetMovable(false)
+			RQEFrame:SetResizable(false)
+			RQEFrame:SetScript("OnDragStart", nil)
+			RQEFrame:SetScript("OnDragStop", nil)
+			RQE.resizeGrip:Hide()
+		else
 			RQEFrame:SetMovable(true)
 			RQEFrame:SetResizable(true)
 			RQEFrame:RegisterForDrag("LeftButton")
@@ -2909,22 +2953,22 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 				RQE:SaveFramePosition()
 			end)
 			RQE.resizeGrip:Show()
-		else
-			RQEFrame:EnableMouse(true)  -- Keep this true to still capture right-clicks
-			RQEFrame:SetMovable(false)
-			RQEFrame:SetResizable(false)
-			RQEFrame:SetScript("OnDragStart", nil)
-			RQEFrame:SetScript("OnDragStop", nil)
-			RQE.resizeGrip:Hide()
 		end
-
-		isFrameLocked = not isFrameLocked
+		if persist ~= false and RQE.db and RQE.db.profile then
+			RQE.db.profile.lockRQEFrame = isFrameLocked
+			local registry = LibStub("AceConfigRegistry-3.0", true)
+			if registry then registry:NotifyChange("RQE_Frame") end
+		end
 		UpdateMenuText()  -- Make sure this function is called here
+	end
+
+	function RQE.ToggleFrameLock()
+		RQE.SetRQEFrameLocked(not isFrameLocked)
 	end
 
 
 	-- Initialize frame lock state
-	RQE.ToggleFrameLock()
+	RQE.SetRQEFrameLocked(RQE.db.profile.lockRQEFrame == true, false)
 
 
 	-------------------------------------------------------
@@ -2942,7 +2986,11 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		if not target then return end
 		local current = tonumber(target:GetVerticalScroll()) or 0
 		local maximum = tonumber(target:GetVerticalScrollRange()) or 0
-		target:SetVerticalScroll(math.max(0, math.min(current - delta * 20, maximum)))
+		local value = math.max(0, math.min(current - delta * 30, maximum))
+		local controller = target == RQE.SeparateScrollFrame
+			and RQE.SeparateFocusSlider or RQE.slider
+		if controller then controller:SetValue(value)
+		else target:SetVerticalScroll(value) end
 	end
 
 	-- Capture the current map, zone, and minimap names used to detect Separate Focus location changes.
@@ -3022,9 +3070,9 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 
 		-- Create the scroll frame
 		if not RQE.SeparateScrollFrame then
-			RQE.SeparateScrollFrame = CreateFrame("ScrollFrame", "RQE_SeparateScrollFrame", RQE.SeparateFocusFrame, "UIPanelScrollFrameTemplate")
+			RQE.SeparateScrollFrame = CreateFrame("ScrollFrame", "RQE_SeparateScrollFrame", RQE.SeparateFocusFrame)
 			RQE.SeparateScrollFrame:SetPoint("TOPLEFT", RQE.SeparateFocusFrame, "TOPLEFT", -5, -7)
-			RQE.SeparateScrollFrame:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -30, 10)
+			RQE.SeparateScrollFrame:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -12, 10)
 			RQE.SeparateScrollFrame:EnableMouseWheel(true)
 			RQE.SeparateScrollFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 			RQE.SeparateScrollFrame:SetClipsChildren(true)
@@ -3041,12 +3089,40 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		-- Create the content frame for the scroll frame
 		if not RQE.SeparateContentFrame then
 			RQE.SeparateContentFrame = CreateFrame("Frame", "RQE_SeparateContentFrame", RQE.SeparateScrollFrame)
+			RQE.SeparateContentFrame:SetPoint("TOPLEFT", RQE.SeparateScrollFrame, "TOPLEFT", 0, 0)
 			RQE.SeparateContentFrame:SetWidth(RQE.SeparateFocusFrame:GetWidth() - 40)  -- Adjust width for padding
-			RQE.SeparateContentFrame:SetHeight(1000)  -- Initial height for content; will adjust dynamically
+			RQE.SeparateContentFrame:SetHeight(math.max(1, RQE.SeparateScrollFrame:GetHeight()))
 			RQE.SeparateScrollFrame:SetScrollChild(RQE.SeparateContentFrame)
 			RQE.SeparateContentFrame:EnableMouseWheel(true)
 			RQE.SeparateContentFrame:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
 			RQE.SeparateContentFrame:Show()
+		end
+
+		if not RQE.SeparateFocusSlider then
+			local focusSlider = CreateFrame("Slider", nil, RQE.SeparateFocusFrame)
+			RQE.SeparateFocusSlider = focusSlider
+			focusSlider:SetOrientation("VERTICAL")
+			focusSlider:SetPoint("TOPRIGHT", RQE.SeparateFocusFrame, "TOPRIGHT", -6, -9)
+			focusSlider:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -6, 10)
+			focusSlider:SetWidth(8)
+			focusSlider:SetMinMaxValues(0, 0)
+			focusSlider:SetValueStep(1)
+			focusSlider:SetObeyStepOnDrag(false)
+			focusSlider:EnableMouse(true)
+			focusSlider:SetThumbTexture("Interface\\Buttons\\WHITE8X8")
+			local focusThumb = focusSlider:GetThumbTexture()
+			focusThumb:SetColorTexture(0 / 255, 87 / 255, 184 / 255, 1) -- Azure #0057B8
+			focusThumb:SetSize(4, 42)
+			focusSlider:SetFrameLevel(RQE.SeparateFocusFrame:GetFrameLevel() + 5)
+			focusSlider:SetScript("OnValueChanged", function(_, value)
+				RQE.SeparateScrollFrame:SetVerticalScroll(value)
+			end)
+			focusSlider:EnableMouseWheel(true)
+			focusSlider:SetScript("OnMouseWheel", function(self, delta)
+				self:SetValue(self:GetValue() - delta * 30)
+			end)
+			RQE.API.ConfigureScrollbarDrag(focusSlider)
+			focusSlider:Hide()
 		end
 		RQE:LayoutSeparateFocusFrame()
 
@@ -3121,6 +3197,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 			-- Release the Separate Focus update guard on every completed or aborted refresh path.
 			local function finishUpdate()
 				RQE.IsUpdatingSeparateFocusFrame = false
+				if RQE.UpdateSeparateContentHeight then RQE.UpdateSeparateContentHeight() end
 			end
 
 			-- Decide which quest SeparateFocus should display
@@ -3355,6 +3432,14 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					return string.format('<a href="spell:%s">|cff66ccff[%s]|r</a>', id, name)
 				end)
 
+				html = html:gsub("{npc:(%d+):([^}]+)}", function(id, name)
+					return string.format('<a href="rqenpc:%s">|cff66ff66[%s]|r</a>', id, name)
+				end)
+
+				html = html:gsub("{object:([%a%d]+):([^}]+)}", function(id, name)
+					return string.format('<a href="rqeobject:%s">|cffffd700[%s]|r</a>', id, name)
+				end)
+
 				html = html:gsub("{coordblock:([^}]+)}", function(data)
 					local x, y, mapID, title =
 						data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)%s*;%s*waypointTitle:%s*\"([^\"]+)\"")
@@ -3475,6 +3560,12 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 							GameTooltip:SetSpellByID(spellID)
 							GameTooltip:Show()
 						end
+					elseif linkType == "rqenpc" then
+						local name = tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):match("^%[(.*)%]$")
+						if RQE.ShowNPCPreview then RQE.ShowNPCPreview(tonumber(id), name, true) end
+					elseif linkType == "rqeobject" then
+						local name = tostring(text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):match("^%[(.*)%]$")
+						if RQE.ShowObjectImagePreview then RQE.ShowObjectImagePreview(id, name, nil, true) end
 					elseif linkType == "coords" then
 						local compactLink = self._rqeCoordblockLinks and self._rqeCoordblockLinks[link]
 						local isCompact = compactLink or link:find(";rqeCoordblock", 1, true)
@@ -3641,6 +3732,10 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 					RQE.UpdateSeparateContentHeight()
 				end)
 			end
+			C_Timer.After(0.12, function()
+				if buildToken ~= RQE._SeparateFocusBuildToken then return end
+				RQE.UpdateSeparateContentHeight()
+			end)
 
 			finishUpdate()
 		end
@@ -3649,13 +3744,81 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		-- #8f.i. Focus Content Height Finalization
 		-------------------------------------------------------
 
-	-- Function to dynamically update the content height
-		function RQE.UpdateSeparateContentHeight()
-			local desiredHeight = 0
-			for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
-				desiredHeight = desiredHeight + child:GetHeight() + 5 -- Adjust for spacing
+		function RQE.UpdateSeparateFocusScrollbarVisual(contentHeight)
+			if not (RQE.SeparateFocusSlider and RQE.SeparateScrollFrame
+				and RQE.SeparateFocusFrame) then return end
+			local _, maximum = RQE.SeparateFocusSlider:GetMinMaxValues()
+			local themed = RQE.UI and RQE.UI:IsEnabled()
+			local hasMeaningfulContent = false
+			local function CheckText(region)
+				if hasMeaningfulContent or not region or not region.IsShown
+					or not region:IsShown() or not region.GetText then return end
+				local text = region:GetText()
+				hasMeaningfulContent = type(text) == "string" and text:find("%S") ~= nil
 			end
-			RQE.SeparateContentFrame:SetHeight(math.max(desiredHeight, 1000)) -- Ensure minimum height for visibility
+			if RQE.SeparateContentFrame then
+				for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do CheckText(child) end
+				for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do CheckText(region) end
+			end
+			if not themed or not RQE.SeparateFocusFrame:IsShown()
+				or not hasMeaningfulContent or not maximum or maximum <= 0 then
+				RQE.SeparateFocusSlider:Hide()
+				return
+			end
+
+			local viewportHeight = math.max(1, RQE.SeparateScrollFrame:GetHeight() or 1)
+			local totalHeight = math.max(viewportHeight, tonumber(contentHeight)
+				or (viewportHeight + maximum))
+			local trackHeight = math.max(1, RQE.SeparateFocusSlider:GetHeight() or viewportHeight)
+			local thumbHeight = math.min(trackHeight, math.max(26,
+				math.floor(trackHeight * viewportHeight / totalHeight + 0.5)))
+			local focusThumb = RQE.SeparateFocusSlider:GetThumbTexture()
+			if focusThumb then
+				focusThumb:SetColorTexture(0 / 255, 87 / 255, 184 / 255, 1) -- Azure #0057B8
+				focusThumb:SetSize(4, thumbHeight)
+				focusThumb:Show()
+			end
+			RQE.SeparateFocusSlider:Show()
+		end
+
+		-- Measure the actual focused-step regions rather than maintaining the old
+		-- permanent 1000-pixel child, which made short steps appear scrollable.
+		function RQE.UpdateSeparateContentHeight()
+			if not (RQE.SeparateContentFrame and RQE.SeparateScrollFrame) then return end
+			local viewportHeight = math.max(1, RQE.SeparateScrollFrame:GetHeight() or 1)
+			local contentTop = RQE.SeparateContentFrame:GetTop()
+			local lowestBottom
+			local function IncludeRegion(region)
+				if not region or not region.IsShown or not region:IsShown() then return end
+				local bottom = region.GetBottom and region:GetBottom()
+				if bottom and (not lowestBottom or bottom < lowestBottom) then
+					lowestBottom = bottom
+				end
+			end
+
+			for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
+				IncludeRegion(child)
+			end
+			for _, region in ipairs({ RQE.SeparateContentFrame:GetRegions() }) do
+				if region.GetObjectType and region:GetObjectType() == "FontString" then
+					IncludeRegion(region)
+				end
+			end
+
+			local desiredHeight = viewportHeight
+			if contentTop and lowestBottom then
+				desiredHeight = math.max(viewportHeight, contentTop - lowestBottom + 10)
+			end
+			RQE.SeparateContentFrame:SetHeight(desiredHeight)
+
+			if RQE.SeparateFocusSlider then
+				local maximum = math.max(0, desiredHeight - viewportHeight)
+				RQE.SeparateFocusSlider:SetMinMaxValues(0, maximum)
+				if RQE.SeparateFocusSlider:GetValue() > maximum then
+					RQE.SeparateFocusSlider:SetValue(maximum)
+				end
+				RQE.UpdateSeparateFocusScrollbarVisual(desiredHeight)
+			end
 		end
 
 		-- Initial update to content height
@@ -3806,6 +3969,7 @@ TBC quest helper frame construction, interaction, persistence, and focused-step 
 		if RQE.SeparateFocusFrame and not RQE.SeparateFocusFrame:IsMouseOver() then
 			if RQE.SeparateScrollFrame then
 				-- Set the scroll position of the SeparateScrollFrame to the top
+				if RQE.SeparateFocusSlider then RQE.SeparateFocusSlider:SetValue(0) end
 				RQE.SeparateScrollFrame:SetVerticalScroll(0)
 			end
 		end
