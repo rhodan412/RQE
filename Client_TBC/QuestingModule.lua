@@ -57,6 +57,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	--- @field questCount number
 	RQE.RQEQuestFrame = CreateFrame("Frame", "RQEQuestFrame", UIParent, BackdropTemplateMixin and "BackdropTemplate")
 	local frame = RQE.RQEQuestFrame
+	local isQuestFrameLocked = RQE.db.profile.lockRQEQuestFrame == true
 
 	-- Frame properties come from the active profile, falling back to the shared coded defaults.
 	local anchorPoint, xPos, yPos, frameWidth, frameHeight = RQE:GetFrameGeometry("RQEQuestFrame")
@@ -299,6 +300,42 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	end)
 	RQE.QMQTResizeButton = resizeBtn
 
+	function RQE.IsRQEQuestFrameLocked()
+		return isQuestFrameLocked
+	end
+
+	function RQE.SetRQEQuestFrameLocked(locked, persist)
+		isQuestFrameLocked = locked == true
+		frame:EnableMouse(true) -- Retain right-click access while locked.
+		if isQuestFrameLocked then
+			frame:SetMovable(false)
+			frame:SetResizable(false)
+			frame:SetScript("OnDragStart", nil)
+			resizeBtn:Hide()
+		else
+			frame:SetMovable(true)
+			frame:SetResizable(true)
+			frame:RegisterForDrag("LeftButton")
+			frame:SetScript("OnDragStart", frame.StartMoving)
+			frame:SetScript("OnDragStop", function()
+				frame:StopMovingOrSizing()
+				if SaveQuestFramePosition then SaveQuestFramePosition() end
+			end)
+			resizeBtn:Show()
+		end
+		if persist ~= false and RQE.db and RQE.db.profile then
+			RQE.db.profile.lockRQEQuestFrame = isQuestFrameLocked
+			local registry = LibStub("AceConfigRegistry-3.0", true)
+			if registry then registry:NotifyChange("RQE_Frame") end
+		end
+	end
+
+	function RQE.ToggleRQEQuestFrameLock()
+		RQE.SetRQEQuestFrameLocked(not isQuestFrameLocked)
+	end
+
+	RQE.SetRQEQuestFrameLocked(RQE.db.profile.lockRQEQuestFrame == true, false)
+
 	-------------------------------------------------------
 	-- #2e. Tracker Header & Scrollbar
 	-------------------------------------------------------
@@ -361,6 +398,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-------------------------------------------------------
 	-- #2f. Scroll Position Reset
 	-------------------------------------------------------
+	RQE.API.ConfigureScrollbarDrag(QMQTslider, function(_, delta)
+		local handler = ScrollFrame:GetScript("OnMouseWheel")
+		if handler then handler(ScrollFrame, delta) end
+	end)
 
 	-- Function that Scrolls the RQEQuestFrame to the top as long as player doesn't have mouse in RQEQuestFrame window
 	-- function RQE.QuestScrollFrameToTop()
@@ -2139,6 +2180,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
+				RQE.ToggleRQEQuestFrameLock()
+			end)
+			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			local isPlayerInGroup = IsInGroup()
 			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
@@ -2216,6 +2261,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEQuestFrame(self)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
+				RQE.ToggleRQEQuestFrameLock()
+			end)
+			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
