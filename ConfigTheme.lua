@@ -284,6 +284,105 @@ local function watchContainer(widget, mode)
 	widget.RQEConfigAddChildWrapped = true
 end
 
+local function updateStyledScrollFrame(widget)
+	local scrollbar = widget and widget.scrollbar
+	local scrollframe = widget and widget.scrollframe
+	local content = widget and widget.content
+	local outerFrame = widget and widget.frame
+	if not scrollbar or not scrollframe or not content or not outerFrame then return end
+
+	-- AceGUI creates this slider from UIPanelScrollBarTemplate. Retain its
+	-- value callbacks, but remove the template track and arrow controls.
+	local thumb = scrollbar:GetThumbTexture()
+	for _, region in ipairs({ scrollbar:GetRegions() }) do
+		if region ~= thumb then region:Hide() end
+	end
+	for _, child in ipairs({ scrollbar:GetChildren() }) do
+		if child ~= scrollbar.RQEDragHandle then
+			child:Hide()
+			if child.Disable then child:Disable() end
+		end
+	end
+
+	scrollbar:ClearAllPoints()
+	scrollbar:SetPoint("TOPRIGHT", outerFrame, "TOPRIGHT", -2, -2)
+	scrollbar:SetPoint("BOTTOMRIGHT", outerFrame, "BOTTOMRIGHT", -2, 2)
+	scrollbar:SetWidth(10)
+	scrollbar:Show()
+
+	if thumb then
+		thumb:SetTexture(WHITE)
+		thumb:SetVertexColor(COLORS.gold[1], COLORS.gold[2], COLORS.gold[3], 1)
+		thumb:SetWidth(4)
+		local trackHeight = math.max(1, scrollbar:GetHeight())
+		local viewportHeight = math.max(0, scrollframe:GetHeight())
+		local contentHeight = math.max(0, content:GetHeight())
+		local ratio = contentHeight > 0 and math.min(1, viewportHeight / contentHeight) or 1
+		thumb:SetHeight(math.min(trackHeight, math.max(32, trackHeight * ratio)))
+	end
+	RQE.API.ConfigureScrollbarDrag(scrollbar, function(_, delta)
+		local handler = scrollframe:GetScript("OnMouseWheel")
+		if handler then handler(scrollframe, delta) end
+	end)
+end
+
+local function restoreNativeScrollFrame(widget)
+	local scrollbar = widget and widget.scrollbar
+	local scrollframe = widget and widget.scrollframe
+	if not scrollbar or not scrollframe then return end
+	local thumb = scrollbar:GetThumbTexture()
+	local original = widget.RQEConfigOriginalScrollThumb
+
+	for _, region in ipairs({ scrollbar:GetRegions() }) do region:Show() end
+	for _, child in ipairs({ scrollbar:GetChildren() }) do
+		if child == scrollbar.RQEDragHandle then
+			child:Hide()
+		else
+			if child.Enable then child:Enable() end
+			child:Show()
+		end
+	end
+	scrollbar:ClearAllPoints()
+	scrollbar:SetPoint("TOPLEFT", scrollframe, "TOPRIGHT", 4, -16)
+	scrollbar:SetPoint("BOTTOMLEFT", scrollframe, "BOTTOMRIGHT", 4, 16)
+	scrollbar:SetWidth(16)
+	if thumb then
+		thumb:SetTexture(original and original.texture or "Interface\\Buttons\\UI-ScrollBar-Knob")
+		thumb:SetVertexColor(1, 1, 1, 1)
+		if original then thumb:SetSize(original.width, original.height) end
+	end
+	if widget.scrollBarShown then scrollbar:Show() else scrollbar:Hide() end
+end
+
+local function styleScrollFrame(widget)
+	if not widget or not widget.scrollbar then return end
+	if not widget.RQEConfigScrollbarStyled then
+		widget.RQEConfigScrollbarStyled = true
+		local originalThumb = widget.scrollbar:GetThumbTexture()
+		if originalThumb then
+			widget.RQEConfigOriginalScrollThumb = {
+				texture = originalThumb:GetTexture(),
+				width = originalThumb:GetWidth() > 0 and originalThumb:GetWidth() or 24,
+				height = originalThumb:GetHeight() > 0 and originalThumb:GetHeight() or 24,
+			}
+		end
+		local originalFixScroll = widget.FixScroll
+		widget.FixScroll = function(owner, ...)
+			local result = originalFixScroll(owner, ...)
+			if owner.RQEConfigChildMode == "styled" then updateStyledScrollFrame(owner) end
+			return result
+		end
+		if widget.frame and widget.frame.HookScript then
+			widget.frame:HookScript("OnShow", function()
+				C_Timer.After(0, function()
+					if widget.RQEConfigChildMode == "styled" then updateStyledScrollFrame(widget) end
+				end)
+			end)
+		end
+	end
+	updateStyledScrollFrame(widget)
+end
+
 function ConfigUI:SkinWidget(widget)
 	if not widget then return end
 	watchContainer(widget, "styled")
@@ -368,10 +467,7 @@ function ConfigUI:SkinWidget(widget)
 		skinSurface(widget.border or widget.frame, 0.82, 0)
 		self:SkinWidget(widget.dropdown)
 	elseif kind == "ScrollFrame" then
-		if widget.scrollbar then
-			local thumb = widget.scrollbar:GetThumbTexture()
-			if thumb then thumb:SetVertexColor(COLORS.gold[1], COLORS.gold[2], COLORS.gold[3], 1) end
-		end
+		styleScrollFrame(widget)
 	end
 
 	if widget.children then
@@ -447,8 +543,7 @@ function ConfigUI:UseNativeWidget(widget)
 	elseif kind == "Keybinding" then
 		colorFont(widget.label, COLORS.gold)
 	elseif kind == "ScrollFrame" and widget.scrollbar then
-		local thumb = widget.scrollbar:GetThumbTexture()
-		if thumb then thumb:SetVertexColor(1, 1, 1, 1) end
+		restoreNativeScrollFrame(widget)
 	end
 
 	if widget.children then
@@ -552,13 +647,15 @@ local function configurePositionGroup(group, iconName, title)
 		frameWidth = "Width",
 		frameHeight = "Height",
 	}
-	local order = { "anchorPoint", "xPos", "yPos", "MainFrameOpacity", "QuestFrameOpacity", "frameWidth", "frameHeight" }
+	local order = { "lockPosition", "anchorPoint", "xPos", "yPos", "MainFrameOpacity", "QuestFrameOpacity", "frameWidth", "frameHeight" }
 	for index, key in ipairs(order) do
 		local option = group.args[key]
 		if option then
-			option.name = labels[key]
+			option.name = key == "lockPosition"
+				and ("Lock " .. title:gsub(" Layout$", "") .. " position and size")
+				or labels[key]
 			option.order = index
-			option.width = 1
+			option.width = key == "lockPosition" and "full" or 1
 		end
 	end
 end
@@ -571,7 +668,8 @@ local function composeFramePage(page)
 	placeOption(behavior.args, source, used, "mythicScenarioMode", "Use Blizzard tracker in scenarios", 2, 1.85)
 	placeOption(behavior.args, source, used, "enableStepControls", "Manual step navigation", 3, 1.5)
 	placeOption(behavior.args, source, used, "useModernTheme", "Azure & Gold tracker frames", 4, 1.6)
-	appendRemaining(behavior, source, used, 4)
+	placeOption(behavior.args, source, used, "creatureObjectPreview", "Creature and object previews", 5, "full")
+	appendRemaining(behavior, source, used, 5)
 
 	configurePositionGroup(source.framePosition, "WaypointTarget", "Quest Helper Layout")
 	configurePositionGroup(source.QuestFramePosition, "QuestWorld", "Quest Tracker Layout")
@@ -741,6 +839,18 @@ function ConfigUI:OpenOptionsPage(container, appName)
 	page:AddChild(content)
 	LibStub("AceConfigDialog-3.0"):Open(appName, content)
 	self:SkinWidget(page)
+	local function RefreshPageScroll()
+		if not page.frame or not page.frame:IsShown() then return end
+		if content.DoLayout then content:DoLayout() end
+		if page.DoLayout then page:DoLayout() end
+		if page.FixScroll then page:FixScroll() end
+		updateStyledScrollFrame(page)
+	end
+	-- AceConfig finishes sizing several nested groups after Open returns. Force
+	-- the initial range once on the next frame and once after that settling pass,
+	-- so a small settings window never needs a manual resize to reveal its thumb.
+	C_Timer.After(0, RefreshPageScroll)
+	C_Timer.After(0.05, RefreshPageScroll)
 end
 
 -- Coalesce notifications until the current widget callback has finished before
