@@ -903,6 +903,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	function RQE.Buttons.ClearButtonPressed()
 		RQE.ClearButtonPressed = true	 -- FORCES the next clear (might need to add a check to make sure that the player physically pressed the button for this to actually clear the frame)
 		RQE.ActiveCoordblock = nil	 -- C clears the temporary [Active] coordblock label with the window
+		if RQE.HideCreatureObjectPreview then
+			RQE.HideCreatureObjectPreview()
+		end
 
 		-- RESET the throttling system so next update actually fires
 		RQE.FrameState = {
@@ -1727,7 +1730,13 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				end
 			end
 			RQE.QTSliderWasShown = nil
-			if RQE.QMQTResizeButton then RQE.QMQTResizeButton:Show() end
+			if RQE.QMQTResizeButton then
+				if RQE.IsRQEQuestFrameLocked and RQE.IsRQEQuestFrameLocked() then
+					RQE.QMQTResizeButton:Hide()
+				else
+					RQE.QMQTResizeButton:Show()
+				end
+			end
 			QTMaximizeButton:Hide()
 			if RQE.QTQuestMinimizeButton then RQE.QTQuestMinimizeButton:Show() end
 			RQEQuestFrame:Show()
