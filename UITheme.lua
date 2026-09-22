@@ -319,6 +319,14 @@ function UI:RefreshLocationInfoBar()
 	else topOffset = showBar and -62 or -40 end
 	RQE.ScrollFrame:SetPoint("TOPLEFT", mainFrame, "TOPLEFT", 10, topOffset)
 	RQE.ScrollFrame:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", themed and -20 or -30, 10)
+	if RQE.slider then
+		RQE.slider:ClearAllPoints()
+		RQE.slider:SetPoint("TOPRIGHT", mainFrame, "TOPRIGHT", -7, topOffset)
+		RQE.slider:SetPoint("BOTTOMRIGHT", mainFrame, "BOTTOMRIGHT", -7, 14)
+		if RQE.UpdateQuestHelperScrollbarVisual then
+			RQE.UpdateQuestHelperScrollbarVisual(RQE.content and RQE.content:GetHeight())
+		end
+	end
 end
 
 -- The generated icon canvases do not all have balanced transparent margins.
@@ -657,6 +665,12 @@ function UI:_ApplyFrameLayout()
 	self:RefreshLocationInfoBar()
 	if RQE.LayoutSeparateFocusFrame then RQE:LayoutSeparateFocusFrame() end
 	if RQE.UpdateContentSize then RQE:UpdateContentSize() end
+	if RQE.SeparateFocusSlider and RQE.SeparateFocusFrame then
+		RQE.SeparateFocusSlider:ClearAllPoints()
+		RQE.SeparateFocusSlider:SetPoint("TOPRIGHT", RQE.SeparateFocusFrame, "TOPRIGHT", -6, -9)
+		RQE.SeparateFocusSlider:SetPoint("BOTTOMRIGHT", RQE.SeparateFocusFrame, "BOTTOMRIGHT", -6, 10)
+		if RQE.UpdateSeparateContentHeight then RQE.UpdateSeparateContentHeight() end
+	end
 
 	if RQE.RQEQuestFrameHeader then RQE.RQEQuestFrameHeader:SetHeight(48) end
 	if RQE.CQButton and RQE.RQEQuestFrame then
