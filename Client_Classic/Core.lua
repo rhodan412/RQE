@@ -460,8 +460,18 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			isFrameMaximized = true,  -- Setting for maximized/minimized state
 			isQuestFrameMaximized = true,  -- Setting for maximized/minimized state
 			LFGActiveEntryUpdate = false,
+			lockRQEFrame = false,
+			lockRQEQuestFrame = false,
 			MainFrameOpacity = 0.55,
 			useModernTheme = true,
+			enableCreatureObjectPreview = true,
+			creatureObjectPreviewPosition = {
+				point = "TOPRIGHT",
+				relativePoint = "TOPLEFT",
+				x = -12,
+				y = -105,
+				scale = 1,
+			},
 			minimapButtonAngle = 125,
 			mythicScenarioMode = true,
 			PlayerEnteringWorld = false,
@@ -3592,6 +3602,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE.QuestIDText:SetText("")
 		end
 		RQE.DisplayedQuestID = nil
+		if RQE.slider then
+			RQE.slider:SetValue(0)
+			RQE.slider:Hide()
+		end
 
 		-- if RQE.QuestIDText then
 			-- RQE.QuestIDText:SetText("")
@@ -4011,8 +4025,16 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
-		-- Reset the content area height so scrolling resets
-		RQE.SeparateContentFrame:SetHeight(1000)
+		-- Reset the content area to the visible viewport; an empty focus panel
+		-- (including its fixed Compass button) must not manufacture overflow.
+		local focusHeight = RQE.SeparateScrollFrame
+			and math.max(1, RQE.SeparateScrollFrame:GetHeight() or 1) or 1
+		RQE.SeparateContentFrame:SetHeight(focusHeight)
+		if RQE.SeparateFocusSlider then
+			RQE.SeparateFocusSlider:SetMinMaxValues(0, 0)
+			RQE.SeparateFocusSlider:SetValue(0)
+			RQE.SeparateFocusSlider:Hide()
+		end
 
 		if RQE._lastSeparateClearReason == "StepIndex changed" or RQE._lastSeparateClearReason == "Quest completed" or RQE._lastSeparateClearReason == "Quest flagged complete" or RQE._lastSeparateClearReason == "QuestID changed" then
 			RQE._lastSeparateClearReason = nil
@@ -7763,6 +7785,8 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		local displayText = rawText
 		displayText = displayText:gsub("{item:(%d+):([^}]+)}", "|cffff66cc[%2]|r")	-- The cffff66cc is a light pink color for the tooltip text
 		displayText = displayText:gsub("{spell:(%d+):([^}]+)}", "|cff66ccff[%2]|r")	-- ✨ NEW (color for spells)
+		displayText = displayText:gsub("{npc:(%d+):([^}]+)}", "|cff66ff66[%2]|r")
+		displayText = displayText:gsub("{object:([%a%d]+):([^}]+)}", "|cffffd700[%2]|r")
 
 		displayText = displayText:gsub("{coords:([^}]+)}", function(data)
 			local x, y, mapID = data:match("(%d+%.?%d*),(%d+%.?%d*),(%d+)")
@@ -7844,7 +7868,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		end
 
 		-- Create an interactive hover region for a rendered item, spell, or coordinate tag.
-		local function CreateTagHover(tagType, tagID, x, y, width)
+		local function CreateTagHover(tagType, tagID, tagName, x, y, width)
 			if width <= 0 then return end
 
 			local hover = CreateFrame("Frame", nil, baseParent)
@@ -7865,16 +7889,26 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
 					GameTooltip:Show()
 				end)
-			else
+			elseif tagType == "spell" then
 				hover:SetScript("OnEnter", function(self)
 					GameTooltip:Hide()
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
 					GameTooltip:SetSpellByID(hoveredID)
 					GameTooltip:Show()
 				end)
+			elseif tagType == "npc" then
+				hover:SetScript("OnEnter", function()
+					if RQE.ShowNPCPreview then RQE.ShowNPCPreview(hoveredID, tagName, true) end
+				end)
+			elseif tagType == "object" then
+				hover:SetScript("OnEnter", function()
+					if RQE.ShowObjectImagePreview then RQE.ShowObjectImagePreview(hoveredID, tagName, nil, true) end
+				end)
 			end
 
-			hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+			if tagType == "item" or tagType == "spell" then
+				hover:SetScript("OnLeave", function() GameTooltip:Hide() end)
+			end
 			table.insert(parentFrame._rqeSegments, hover)
 		end
 
@@ -7896,7 +7930,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 
 			-- Measure and place one rich-text fragment while preserving its interactive tag metadata.
-			local function PlaceFragment(fragment, tagType, tagID)
+			local function PlaceFragment(fragment, tagType, tagID, tagName)
 				if fragment == "" then return end
 				measureFS:SetText(fragment)
 				local width = measureFS:GetStringWidth()
@@ -7914,7 +7948,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					measureFS:SetText(focusLineText)
 					cursorX = measureFS:GetStringWidth()
 					if tagType then
-						CreateTagHover(tagType, tagID, cursorX, cursorY, width)
+						CreateTagHover(tagType, tagID, tagName, cursorX, cursorY, width)
 					end
 					focusLineText = focusLineText .. fragment
 					measureFS:SetText(focusLineText)
@@ -7927,13 +7961,13 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					NewVisualLine()
 				end
 				if tagType then
-					CreateTagHover(tagType, tagID, cursorX, cursorY, width)
+					CreateTagHover(tagType, tagID, tagName, cursorX, cursorY, width)
 				end
 				cursorX = cursorX + width
 			end
 
 			-- Wrap and place a text chunk within the available rich-text width.
-			local function PlaceChunk(chunk, tagType, tagID)
+			local function PlaceChunk(chunk, tagType, tagID, tagName)
 				if chunk == "" then return end
 				measureFS:SetText(chunk)
 				local chunkWrapWidth = measureFS:GetStringWidth()
@@ -7945,7 +7979,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					end
 				end
 				if chunkWrapWidth <= maxWidth then
-					PlaceFragment(chunk, tagType, tagID)
+					PlaceFragment(chunk, tagType, tagID, tagName)
 					return
 				end
 
@@ -7956,18 +7990,18 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 					local character = chunk:sub(index, index)
 					measureFS:SetText(fragment .. character)
 					if fragment ~= "" and cursorX + measureFS:GetStringWidth() > maxWidth then
-						PlaceFragment(fragment, tagType, tagID)
+						PlaceFragment(fragment, tagType, tagID, tagName)
 						NewVisualLine()
 						fragment = character
 					else
 						fragment = fragment .. character
 					end
 				end
-				PlaceFragment(fragment, tagType, tagID)
+				PlaceFragment(fragment, tagType, tagID, tagName)
 			end
 
 			-- Split visible tagged text into lines and feed each line into the rich-text layout.
-			local function AddVisibleText(visibleText, tagType, tagID)
+			local function AddVisibleText(visibleText, tagType, tagID, tagName)
 				visibleText = StripColorCodes(visibleText)
 				local start = 1
 				while start <= #visibleText do
@@ -7986,7 +8020,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						end
 					end
 					for chunk in visualLine:gmatch("%S+%s*") do
-						PlaceChunk(chunk, tagType, tagID)
+						PlaceChunk(chunk, tagType, tagID, tagName)
 					end
 					if not newline then break end
 					NewVisualLine()
@@ -8008,14 +8042,16 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			local rawPosition = 1
 			while rawPosition <= #text do
 				local tagStart, tagEnd, tagType, tagID, tagName =
-					text:find("{([%a]+):(%d+):([^}]+)}", rawPosition)
+					text:find("{([%a]+):([%a%d]+):([^}]+)}", rawPosition)
 				if not tagStart then
 					AddPlainText(text:sub(rawPosition))
 					break
 				end
 
 				AddPlainText(text:sub(rawPosition, tagStart - 1))
-				if tagType == "item" or tagType == "spell" then
+				local numericTag = tagType == "item" or tagType == "spell" or tagType == "npc"
+				local supportedTag = (numericTag and tonumber(tagID)) or (tagType == "object" and tagID:match("^[%a%d]+$"))
+				if supportedTag then
 					-- FontString word wrapping keeps punctuation directly after a rich tag
 					-- with the tag's final word (for example, "Parchment]).").  Include
 					-- that non-space suffix in the SeparateFocus layout token so its hover
@@ -8027,7 +8063,8 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						adjacentSuffix = text:sub(tagEnd + 1):match("^([^%s{]+)") or ""
 					end
 
-					AddVisibleText("[" .. tagName .. "]" .. adjacentSuffix, tagType, tonumber(tagID))
+					AddVisibleText("[" .. tagName .. "]" .. adjacentSuffix, tagType,
+						tagType == "object" and tagID or tonumber(tagID), tagName)
 					rawPosition = tagEnd + 1 + #adjacentSuffix
 				else
 					AddPlainText(text:sub(tagStart, tagEnd))
