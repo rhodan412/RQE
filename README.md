@@ -1,92 +1,73 @@
-Rhodan's Quest Explorer (RQE)
-=============================
-Unlock your full questing potential in World of Warcraft with Rhodan’s Quest Explorer (RQE), your ultimate guide to navigating Azeroth’s challenges more efficiently. RQE not only guides you step-by-step through each quest, but also integrates seamlessly with your game to enhance every part of the questing experience.
+# Rhodan's Quest Explorer (RQE)
 
-**What does RQE do? Check out the video to learn more:**
+RQE is a quest helper and tracker for World of Warcraft. It brings the next objective, a waypoint, and practical step-by-step guidance together for quests supported by its database.
 
-[![What does RQE add-on do?](https://img.youtube.com/vi/JKvJi32zfag/0.jpg)](https://www.youtube.com/watch?v=JKvJi32zfag "RQE addon")
-[![ RQE Search Wowhead and Warcraft Wiki](https://img.youtube.com/vi/0jAIiBSai3I/0.jpg)](https://www.youtube.com/watch?v=0jAIiBSai3I "RQE addon2")
+[Download on CurseForge](https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer) · [Watch the overview](https://www.youtube.com/watch?v=JKvJi32zfag) · [Report an issue](https://github.com/rhodan412/RQE/issues)
 
-**Key Features:**
-Detailed Quest Insights: Provides in-depth details for each quest, including objectives, locations, and step-by-step navigation, ensuring you never miss a beat.
-Interactive Map Points: Automatically sets waypoints to your next objective, complete with coordinates and customized navigation options.
-Customizable User Interface: Adjust the RQE interface to suit your gameplay style, with scalable windows and detailed control over what information is displayed.
-Integrated Group Finder: Easily form or join groups with others who are on the same quest, directly from the quest interface.
-Advanced Macros: Utilize built-in macros for specific quests, helping you target the right NPC or interact with quest items quickly and efficiently.
-Step-by-Step Manual Progression: Manually progress through quest stages with a simple click, giving you control over each step of your quest journey.
-Quest Completion Tracking: Keeps track of your quest progress, including any prerequisites or sequential steps needed to unlock further objectives.
+![RQE's Quest Helper, NPC and object previews, and Quest Tracker](https://github.com/user-attachments/assets/9f52c4aa-10c9-4441-8726-9548e6ecbeaa)
 
-Chat commands
--------------
-* /rqe - shows the list of options
+*Hover a highlighted NPC or object name in a quest step to see what you are looking for. The Quest Helper and Quest Tracker keep the route and objectives in view.*
 
-* /rqe config - activates settings panel
-* /rqe toggle - toggle on/off frame
+## What RQE helps you do
 
-Links
------
-* The latest release is available on [CurseForge]([https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer](https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer)
+- **Follow guided quest steps.** Read the current objective, location, and instructions for supported quests. Move between steps manually when needed.
+- **Find the next destination.** Follow map waypoints and coordinates associated with the active step.
+- **Track progress.** Keep quest objectives visible in the Quest Helper and Quest Tracker, and search for a quest even when it is not currently tracked.
+- **Recognize NPCs and objects.** Mouse over linked names in step descriptions to open a movable preview. Zoom or pan the view when you need a closer look.
+- **Use quest-aware controls.** Access helpful targeting and quest-item macros where a step provides them. RQE can update its macro button when a needed quest item becomes available.
+- **Choose your layout.** Move, resize, or lock the main frames; adjust fonts, colors, previews, and the Azure & Gold theme in settings.
+- **Find a group.** Use the quest interface to find groups for eligible quests.
 
-Current Limitations:
---------------------
-* There is no countdown timer for Scenario stages, so if you're using this to find out how long between stages for super bloom, or whatever - don't hold your breath as this add-on won't do it. This is something that I would love to put in, but this may require a fairly large re-work.
-* Currently special quest items/spells (such as the Area52 Special from the quest: "Mission: The Abyssal Shelf") aren't displayed in the Quest Watch frame or Super-Tracked frame (this is something that I am looking to add)
+## Get started
 
-Known Bugs:
------------
-None
+1. [Install RQE from CurseForge](https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer) for your WoW client and enable the addon.
+2. Track or search for a quest to view its information in RQE. Quests with authored guidance show a sequence of steps and waypoints.
+3. Type `/rqe` in chat to see the available commands. Use `/rqe config` for settings or `/rqe toggle` to show or hide the Quest Helper.
 
-Images:
--------
-Redesigned UI - Before-and-after comparison of RQE’s new Azure & Gold theme, enabled by default. It adds custom frames and section headers, clearer icon-based controls, distinct quest-category badges, improved search and filter styling, and a redesigned Separate Focus way
-![New Theme](https://github.com/user-attachments/assets/20cc73c9-fd9f-4ffc-a3c6-f596f17b79b7)
+RQE has addon builds for Retail, Classic Era/Season of Discovery, Classic Forever, and TBC Anniversary. Guided step coverage varies by quest.
 
-Preview NPC models and object images directly from quest-step links, alongside RQE’s quest guidance and Azure & Gold Quest Tracker.
-![RQE | Questing at a glance.](https://github.com/user-attachments/assets/9f52c4aa-10c9-4441-8726-9548e6ecbeaa)
+## See it in action
 
-Save time with RQE! The GIF here shows an example of that with 'The Ghostfish' quest from Wrath of the Lich King. It's an item that once looted, you have to click on it to complete the quest within ONE MINUTE. RQE watches your inventory for many such quest items.![fishing](https://github.com/user-attachments/assets/5f635ddb-a233-493f-b86b-0ff0676a87ab)
+| Quest guidance | Quest search and reference links |
+| --- | --- |
+| [![Watch the RQE overview](https://img.youtube.com/vi/JKvJi32zfag/hqdefault.jpg)](https://www.youtube.com/watch?v=JKvJi32zfag) | [![Watch RQE search Wowhead and Warcraft Wiki](https://img.youtube.com/vi/0jAIiBSai3I/hqdefault.jpg)](https://www.youtube.com/watch?v=0jAIiBSai3I) |
 
-Receive guidance step-by-step as you navigate quests in the add-on's database of waypoints
-![Receive guidance step-by-step as you navigate quests in the add-on's database of waypoints.](https://github.com/user-attachments/assets/9e549a8a-6529-44dc-84e8-12b3135e13c2)
+RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect quest lines, tooltips, and quest-giver locations.
 
-Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests)
-![Navigate your tracked quests and waypoints (provided through custom step-by-step waypoints on a variety of quests).](https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c)
+## More examples
 
-QoL Update!
-![Toggle between or choose Blizzard's in-game objective tracker or RQE's tracker, but still benefit from quest help (v12.0.7.4!](https://github.com/user-attachments/assets/6cd710e2-54c2-4452-a5ae-904b244751b6)
+### Azure & Gold interface
 
-Queue for group world quests, including the world boss!
-![WQ Queueing.](https://github.com/user-attachments/assets/8637cb2d-dce5-4038-b55b-dfb542446b8d)
-![fishing](https://github.com/user-attachments/assets/ab7fe220-a1cc-4336-a412-777fd0d88f28)
+The optional Azure & Gold theme gives RQE's frames, sections, and controls a consistent look.
 
-Check out the rewards you have for a particular quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame')
-![Check out the rewards you have for a particu![fishing](https://github.com/user-attachments/assets/77f70807-5de1-4325-a52d-345a447ee3a4)
-lar quest by mousing over the quest information in either the RQEFrame ('SuperTrack Frame') or the RQEQuestFrame ('Quest Tracker Frame').](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
+![RQE Azure and Gold theme](https://github.com/user-attachments/assets/20cc73c9-fd9f-4ffc-a3c6-f596f17b79b7)
 
-Tooltips to help provide additional information
-![Tooltips to help provide additional information.](https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968)
+### A quest item when time matters
 
-View your teams progress on a dungeon or scenario to find out which bosses remain
-![View your teams progress on a dungeon or scenario to find out which bosses remain.](https://github.com/user-attachments/assets/84f7e7b2-f44a-4c0a-b09c-791150c8429d)
+In *The Ghostfish*, the caught item must be used quickly. This example shows RQE updating its quest macro button when the item becomes available.
 
-The ability to search through different filters such as specific campaign quests, specific zone quests, completed quests and more
-![The ability to search through different filters such as specific campaign quests, specific zone quests, completed quests and more.](https://github.com/user-attachments/assets/fa2af154-6c85-406d-bff3-496d132bfa20)
+![RQE updating its macro button for The Ghostfish](https://github.com/user-attachments/assets/5f635ddb-a233-493f-b86b-0ff0676a87ab)
 
-Search for specific quests whether you are on the quest or not
-![Search for specific quests whether you are on the quest or not.](https://github.com/user-attachments/assets/636ae204-33e9-4973-b791-e4d14116aeb2)
+<details>
+<summary>More screenshots and feature examples</summary>
 
-Mythic/Scenario Mode to automatically enable default Blizzard Tracker when transitioning into scenario
-![mythic mode](https://github.com/user-attachments/assets/bcb934dd-d354-407d-882d-a3943d0894cb)
+- [Step-by-step quest guidance](https://github.com/user-attachments/assets/9e549a8a-6529-44dc-84e8-12b3135e13c2)
+- [Tracked quests and waypoints](https://github.com/user-attachments/assets/13f32e34-e4ea-48d8-848c-681059b0180c)
+- [Switching between Blizzard's tracker and RQE's tracker](https://github.com/user-attachments/assets/6cd710e2-54c2-4452-a5ae-904b244751b6)
+- [Group finder for world quests](https://github.com/user-attachments/assets/8637cb2d-dce5-4038-b55b-dfb542446b8d)
+- [Quest reward preview](https://github.com/user-attachments/assets/4a43d504-bda1-4693-9289-bc71a494760d)
+- [Additional quest tooltips](https://github.com/user-attachments/assets/d0ce9e53-3db8-42a6-a7f6-4ffc71ce5968)
+- [Dungeon or scenario boss progress](https://github.com/user-attachments/assets/84f7e7b2-f44a-4c0a-b09c-791150c8429d)
+- [Quest search filters](https://github.com/user-attachments/assets/fa2af154-6c85-406d-bff3-496d132bfa20)
+- [Search for an untracked quest](https://github.com/user-attachments/assets/636ae204-33e9-4973-b791-e4d14116aeb2)
+- [Mythic/Scenario Mode](https://github.com/user-attachments/assets/bcb934dd-d354-407d-882d-a3943d0894cb)
+- [Spell and item cooldowns on the macro button](https://github.com/user-attachments/assets/7faca85a-6175-4422-b279-e5779c15f890)
+- [Extra Action Button support](https://github.com/user-attachments/assets/93a13e45-9a17-435f-b9c1-e578705f1638)
 
-**New in v11.2.5.0: Tooltips and ready for Legion Remix! (spell tooltips available in 11.2.5.1)**
+</details>
 
-<img width="681" height="586" alt="RQE with tooltips" src="https://github.com/user-attachments/assets/a5b135f6-5484-48a5-bfcb-802bb5b5dd3e" />
-<img width="421" height="676" alt="RQE spell tooltips in v11 2 5 1" src="https://github.com/user-attachments/assets/4f5e7996-a5bf-44a2-b99c-b338b8fe2f87" />
+## Compatibility and feedback
 
-** Cooldown timers with 11.2.5.1 **
+When RQE and World Quest Tracker are enabled together, some quests may appear as both world quests and regular quests. This has not been reproduced with either addon running alone; there is no confirmed workaround yet.
 
-![RQE CD in Magic Button GIF 2](https://github.com/user-attachments/assets/7faca85a-6175-4422-b279-e5779c15f890)
-
-Click the Extra Action Button via the RQE Button
-
-<img width="684" height="300" alt="RQE Extra Action Button" src="https://github.com/user-attachments/assets/93a13e45-9a17-435f-b9c1-e578705f1638" />
+If you run into a problem or have a feature request, [open a GitHub issue](https://github.com/rhodan412/RQE/issues). Issues are easier for the author to track than CurseForge comments.
