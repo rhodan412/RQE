@@ -722,12 +722,68 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 						width = "full",
 						order = 3.5,
 					},
+					creatureObjectPreview = {
+						type = "group",
+						name = "Creature and Object Preview",
+						inline = true,
+						order = 3.6,
+						args = {
+							enabled = {
+								type = "toggle", name = "Show previews on mouseover", order = 1, width = "full",
+								desc = "Shows a persistent NPC model or bundled object image when an NPC or object link in a step description is moused over.",
+								get = function() return RQE.db.profile.enableCreatureObjectPreview ~= false end,
+								set = function(_, value)
+									RQE.db.profile.enableCreatureObjectPreview = value
+									if not value and RQE.HideCreatureObjectPreview then RQE.HideCreatureObjectPreview() end
+								end,
+							},
+							point = {
+								type = "select", name = "Preview anchor", order = 2,
+								values = { TOPLEFT="TOPLEFT", TOP="TOP", TOPRIGHT="TOPRIGHT", LEFT="LEFT", CENTER="CENTER", RIGHT="RIGHT", BOTTOMLEFT="BOTTOMLEFT", BOTTOM="BOTTOM", BOTTOMRIGHT="BOTTOMRIGHT" },
+								get = function() return RQE.db.profile.creatureObjectPreviewPosition.point end,
+								set = function(_, value) RQE.db.profile.creatureObjectPreviewPosition.point = value; if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end end,
+							},
+							relativePoint = {
+								type = "select", name = "RQEFrame anchor", order = 3,
+								values = { TOPLEFT="TOPLEFT", TOP="TOP", TOPRIGHT="TOPRIGHT", LEFT="LEFT", CENTER="CENTER", RIGHT="RIGHT", BOTTOMLEFT="BOTTOMLEFT", BOTTOM="BOTTOM", BOTTOMRIGHT="BOTTOMRIGHT" },
+								get = function() return RQE.db.profile.creatureObjectPreviewPosition.relativePoint end,
+								set = function(_, value) RQE.db.profile.creatureObjectPreviewPosition.relativePoint = value; if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end end,
+							},
+							x = {
+								type = "range", name = "Horizontal offset", min = -800, max = 800, step = 1, order = 4,
+								get = function() return RQE.db.profile.creatureObjectPreviewPosition.x end,
+								set = function(_, value) RQE.db.profile.creatureObjectPreviewPosition.x = value; if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end end,
+							},
+							y = {
+								type = "range", name = "Vertical offset", min = -800, max = 800, step = 1, order = 5,
+								get = function() return RQE.db.profile.creatureObjectPreviewPosition.y end,
+								set = function(_, value) RQE.db.profile.creatureObjectPreviewPosition.y = value; if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end end,
+							},
+							scale = {
+								type = "range", name = "Preview size", min = 0.5, max = 2, step = 0.05, isPercent = true, order = 6,
+								get = function() return RQE.db.profile.creatureObjectPreviewPosition.scale end,
+								set = function(_, value) RQE.db.profile.creatureObjectPreviewPosition.scale = value; if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end end,
+							},
+						},
+					},
 					framePosition = {
 						type = "group",
 						name = "Main Frame Position",
 						inline = true,
 						order = 4,
 						args = {
+							lockPosition = {
+								type = "toggle",
+								name = "Lock Quest Helper Position & Size",
+								desc = "Prevents mouse dragging and resizing of the Quest Helper. Position and size settings on this page remain available.",
+								get = function() return RQE.db.profile.lockRQEFrame == true end,
+								set = function(_, value)
+									RQE.db.profile.lockRQEFrame = value == true
+									if RQE.SetRQEFrameLocked then RQE.SetRQEFrameLocked(value) end
+								end,
+								width = "full",
+								order = 0,
+							},
 							anchorPoint = {
 								type = 'select',
 								name = 'Anchor Point',
@@ -840,6 +896,18 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 						inline = true,
 						order = 5,  -- Set this order to wherever you want it to appear
 						args = {
+							lockPosition = {
+								type = "toggle",
+								name = "Lock Quest Tracker Position & Size",
+								desc = "Prevents mouse dragging and resizing of the Quest Tracker. Position and size settings on this page remain available.",
+								get = function() return RQE.db.profile.lockRQEQuestFrame == true end,
+								set = function(_, value)
+									RQE.db.profile.lockRQEQuestFrame = value == true
+									if RQE.SetRQEQuestFrameLocked then RQE.SetRQEQuestFrameLocked(value) end
+								end,
+								width = "full",
+								order = 0,
+							},
 							anchorPoint = {
 								type = 'select',
 								name = 'Anchor Point',
@@ -2145,12 +2213,77 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		end)
 		scrollFrame:AddChild(modernThemeCheckbox)
 
+		local previewPosition = RQE.db.profile.creatureObjectPreviewPosition
+		local previewAnchorPoints = {
+			TOPLEFT = "TOPLEFT", TOP = "TOP", TOPRIGHT = "TOPRIGHT",
+			LEFT = "LEFT", CENTER = "CENTER", RIGHT = "RIGHT",
+			BOTTOMLEFT = "BOTTOMLEFT", BOTTOM = "BOTTOM", BOTTOMRIGHT = "BOTTOMRIGHT",
+		}
+		local previewGroup = AceGUI:Create("InlineGroup")
+		previewGroup:SetTitle("Creature and Object Preview")
+		previewGroup:SetFullWidth(true)
+		previewGroup:SetLayout("Flow")
+
+		local previewEnabled = AceGUI:Create("CheckBox")
+		previewEnabled:SetLabel("Show previews on mouseover")
+		previewEnabled:SetDescription("Shows a persistent NPC model or bundled object image when an NPC or object link in a step description is moused over.")
+		previewEnabled:SetValue(RQE.db.profile.enableCreatureObjectPreview ~= false)
+		previewEnabled:SetFullWidth(true)
+		previewEnabled:SetCallback("OnValueChanged", function(_, _, value)
+			RQE.db.profile.enableCreatureObjectPreview = value
+			if not value and RQE.HideCreatureObjectPreview then RQE.HideCreatureObjectPreview() end
+		end)
+		previewGroup:AddChild(previewEnabled)
+
+		local function AddPreviewDropdown(label, field)
+			local widget = AceGUI:Create("Dropdown")
+			widget:SetLabel(label)
+			widget:SetList(previewAnchorPoints)
+			widget:SetValue(previewPosition[field])
+			widget:SetRelativeWidth(0.5)
+			widget:SetCallback("OnValueChanged", function(_, _, value)
+				previewPosition[field] = value
+				if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end
+			end)
+			previewGroup:AddChild(widget)
+		end
+		AddPreviewDropdown("Preview anchor", "point")
+		AddPreviewDropdown("RQEFrame anchor", "relativePoint")
+
+		local function AddPreviewSlider(label, field, minimum, maximum, step)
+			local widget = AceGUI:Create("Slider")
+			widget:SetLabel(label)
+			widget:SetSliderValues(minimum, maximum, step)
+			widget:SetValue(previewPosition[field])
+			widget:SetRelativeWidth(field == "scale" and 1 or 0.5)
+			widget:SetCallback("OnValueChanged", function(_, _, value)
+				previewPosition[field] = value
+				if RQE.ApplyCreatureObjectPreviewLayout then RQE.ApplyCreatureObjectPreviewLayout() end
+			end)
+			previewGroup:AddChild(widget)
+		end
+		AddPreviewSlider("Horizontal offset", "x", -800, 800, 1)
+		AddPreviewSlider("Vertical offset", "y", -800, 800, 1)
+		AddPreviewSlider("Preview size", "scale", 0.5, 2, 0.05)
+		scrollFrame:AddChild(previewGroup)
+
 		-- Main Frame Position Group
 		local framePositionGroup = AceGUI:Create("InlineGroup")
 		framePositionGroup:SetTitle("Main Frame Position")
 		framePositionGroup:SetFullWidth(true)
 		framePositionGroup:SetLayout("Flow")
 		scrollFrame:AddChild(framePositionGroup)
+
+		local lockFrameCheckbox = AceGUI:Create("CheckBox")
+		lockFrameCheckbox:SetLabel("Lock Quest Helper Position & Size")
+		lockFrameCheckbox:SetDescription("Prevents mouse dragging and resizing; the position and size controls below remain available.")
+		lockFrameCheckbox:SetValue(RQE.db.profile.lockRQEFrame == true)
+		lockFrameCheckbox:SetFullWidth(true)
+		lockFrameCheckbox:SetCallback("OnValueChanged", function(_, _, value)
+			RQE.db.profile.lockRQEFrame = value == true
+			if RQE.SetRQEFrameLocked then RQE.SetRQEFrameLocked(value) end
+		end)
+		framePositionGroup:AddChild(lockFrameCheckbox)
 
 		-- Anchor Points List
 		local anchorPoints = {
@@ -2292,6 +2425,17 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		questFramePositionGroup:SetFullWidth(true)
 		questFramePositionGroup:SetLayout("Flow")
 		scrollFrame:AddChild(questFramePositionGroup)
+
+		local lockQuestFrameCheckbox = AceGUI:Create("CheckBox")
+		lockQuestFrameCheckbox:SetLabel("Lock Quest Tracker Position & Size")
+		lockQuestFrameCheckbox:SetDescription("Prevents mouse dragging and resizing; the position and size controls below remain available.")
+		lockQuestFrameCheckbox:SetValue(RQE.db.profile.lockRQEQuestFrame == true)
+		lockQuestFrameCheckbox:SetFullWidth(true)
+		lockQuestFrameCheckbox:SetCallback("OnValueChanged", function(_, _, value)
+			RQE.db.profile.lockRQEQuestFrame = value == true
+			if RQE.SetRQEQuestFrameLocked then RQE.SetRQEQuestFrameLocked(value) end
+		end)
+		questFramePositionGroup:AddChild(lockQuestFrameCheckbox)
 
 		-------------------------------------------------------
 		-- #5d.iii. Quest Tracker Geometry Controls
