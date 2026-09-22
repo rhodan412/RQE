@@ -25,6 +25,78 @@ Usage:
 RQE = RQE or {}
 RQE.API = RQE.API or {}
 
+-- Proportional scroll thumbs need explicit top-to-bottom cursor mapping.
+-- Keep the slider's value callbacks (and wheel behavior), but intercept native
+-- thumb dragging with a wider transparent hit area above the slider.
+function RQE.API.ConfigureScrollbarDrag(slider, wheelHandler)
+	local handle = slider.RQEDragHandle
+	if handle then
+		handle.wheelHandler = wheelHandler
+		handle:Show()
+		return handle
+	end
+
+	handle = CreateFrame("Frame", nil, slider)
+	slider.RQEDragHandle = handle
+	handle.wheelHandler = wheelHandler
+	handle:SetPoint("TOP", slider, "TOP")
+	handle:SetPoint("BOTTOM", slider, "BOTTOM")
+	handle:SetWidth(20)
+	handle:SetFrameLevel(slider:GetFrameLevel() + 1)
+	handle:EnableMouse(true)
+	handle:EnableMouseWheel(true)
+
+	local function stopDrag(self)
+		self.dragStartY = nil
+		self:SetScript("OnUpdate", nil)
+	end
+	local function geometry()
+		local minimum, maximum = slider:GetMinMaxValues()
+		local height = math.max(0, slider:GetHeight())
+		local thumb = slider:GetThumbTexture()
+		local thumbHeight = math.min(height, thumb and thumb:GetHeight() or 0)
+		return minimum, maximum, math.max(0, height - thumbHeight), thumbHeight
+	end
+	local function updateDrag(self)
+		if not IsMouseButtonDown("LeftButton") then stopDrag(self); return end
+		local minimum, maximum, travel = geometry()
+		if maximum <= minimum or travel <= 0 then stopDrag(self); return end
+		local _, cursorY = GetCursorPosition()
+		-- Screen Y increases upward; scroll values increase downward.
+		local delta = (self.dragStartY - cursorY) / slider:GetEffectiveScale()
+		local value = self.dragStartValue + delta / travel * (maximum - minimum)
+		slider:SetValue(math.max(minimum, math.min(maximum, value)))
+	end
+	handle:SetScript("OnMouseDown", function(self, button)
+		if button ~= "LeftButton" then return end
+		local minimum, maximum, travel, thumbHeight = geometry()
+		if maximum <= minimum or travel <= 0 then return end
+		local _, cursorY = GetCursorPosition()
+		local top = slider:GetTop()
+		if not top then return end
+		local offset = top - cursorY / slider:GetEffectiveScale()
+		local thumbTop = (slider:GetValue() - minimum) / (maximum - minimum) * travel
+		-- Preserve the grabbed point within the thumb. Track clicks center it.
+		if offset < thumbTop or offset > thumbTop + thumbHeight then
+			local fraction = math.max(0, math.min(1, (offset - thumbHeight / 2) / travel))
+			slider:SetValue(minimum + fraction * (maximum - minimum))
+		end
+		self.dragStartY = cursorY
+		self.dragStartValue = slider:GetValue()
+		self:SetScript("OnUpdate", updateDrag)
+	end)
+	handle:SetScript("OnMouseUp", function(self, button)
+		if button == "LeftButton" then stopDrag(self) end
+	end)
+	handle:SetScript("OnHide", stopDrag)
+	handle:SetScript("OnMouseWheel", function(self, delta)
+		stopDrag(self)
+		local handler = self.wheelHandler or slider:GetScript("OnMouseWheel")
+		if handler then handler(slider, delta) end
+	end)
+	return handle
+end
+
 -- Detect client build
 local version, build, _, tocversion = GetBuildInfo()
 local major, minor, patch = string.match(version, "(%d+)%.(%d+)%.?(%d*)")
@@ -4389,6 +4461,106 @@ else
 	end
 end
 
+
+-------------------------------------------------
+-- #🖼️ Creature Model Preview APIs
+-------------------------------------------------
+
+-- Model widgets are available on every supported client, but the preferred
+-- widget type differs. Retail's CinematicModel provides the same creature-ID
+-- loading path used by Blizzard UI and Narcissus; the re-release clients use
+-- PlayerModel first and fall back to CinematicModel when necessary.
+function RQE.API.CreateCreaturePreviewModel(parent)
+	local preferredTypes
+	if isRetail then
+		preferredTypes = { "CinematicModel", "PlayerModel" }
+	else
+		preferredTypes = { "PlayerModel", "CinematicModel" }
+	end
+
+	for _, frameType in ipairs(preferredTypes) do
+		local ok, model = pcall(CreateFrame, frameType, nil, parent)
+		if ok and model then
+			model.RQEModelFrameType = frameType
+			if type(model.UseModelCenterToTransform) == "function" then
+				pcall(model.UseModelCenterToTransform, model, true)
+			end
+			return model, frameType
+		end
+	end
+
+	return nil, nil, "This client did not provide a compatible model widget."
+end
+
+function RQE.API.ClearCreaturePreviewModel(model)
+	if not model then return end
+	if type(model.ClearModel) == "function" then
+		pcall(model.ClearModel, model)
+	elseif type(model.SetModel) == "function" then
+		pcall(model.SetModel, model, nil)
+	end
+end
+
+function RQE.API.ConfigureCreaturePreviewModel(model, options)
+	if not model then return end
+	options = type(options) == "table" and options or {}
+
+	if type(model.UseModelCenterToTransform) == "function" then
+		pcall(model.UseModelCenterToTransform, model, true)
+	end
+	if type(model.SetFacing) == "function" then
+		pcall(model.SetFacing, model, tonumber(options.facing) or -0.5236)
+	end
+	if type(model.SetPortraitZoom) == "function" then
+		pcall(model.SetPortraitZoom, model, tonumber(options.portraitZoom) or 0)
+	end
+	if type(model.SetPosition) == "function" then
+		pcall(model.SetPosition, model,
+			tonumber(options.positionX) or 0,
+			tonumber(options.positionY) or 0,
+			tonumber(options.positionZ) or 0)
+	end
+	if type(model.SetViewTranslation) == "function" then
+		-- SetCreature's full-body camera sits low and left in this compact
+		-- viewport. Screen-space translation keeps differently sized NPCs
+		-- centered without changing their model-space scale.
+		pcall(model.SetViewTranslation, model,
+			tonumber(options.viewX) or 40,
+			tonumber(options.viewY) or 32)
+	end
+	if options.camera ~= nil and type(model.SetCamera) == "function" then
+		pcall(model.SetCamera, model, tonumber(options.camera) or 0)
+	end
+	if type(model.SetCamDistanceScale) == "function" then
+		pcall(model.SetCamDistanceScale, model, tonumber(options.scale) or 1)
+	end
+end
+
+-- creatureID is a Creature/NPC entry ID, not a display ID. Blizzard resolves
+-- the corresponding model from client data when SetCreature is available.
+function RQE.API.SetCreaturePreviewModel(model, creatureID, options)
+	creatureID = tonumber(creatureID)
+	if not model or not creatureID or creatureID <= 0 then
+		return false, "A positive NPC creature ID is required."
+	end
+	if type(model.SetCreature) ~= "function" then
+		return false, "This client's model widget cannot load a creature ID."
+	end
+	options = type(options) == "table" and options or {}
+
+	RQE.API.ClearCreaturePreviewModel(model)
+	local ok, err = pcall(model.SetCreature, model, creatureID)
+	if not ok then
+		return false, tostring(err)
+	end
+	model.RQEPreviewOptions = options
+	-- SetCreature may replace the model's camera transform, so apply RQE's
+	-- centering/facing after the creature has been assigned. The preview's
+	-- OnModelLoaded callback reapplies it once Blizzard finishes loading.
+	RQE.API.ConfigureCreaturePreviewModel(model, options)
+	if type(model.RefreshCamera) == "function" then pcall(model.RefreshCamera, model) end
+	return true
+end
 
 -------------------------------------------------
 -- #🛠️ Miscellaneous APIs
