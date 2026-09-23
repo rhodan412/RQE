@@ -1,0 +1,101 @@
+name: "Bug report"
+description: "Report a problem with RQE quest guidance, frames, waypoints, previews, settings, or client compatibility."
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve RQE. A quest ID, current step, and exact reproduction steps are especially useful. You do not need the RQE_Contribution addon to report an issue.
+
+        Before sharing a Lua error, screenshot, or SavedVariables file, remove any personal information you do not want posted publicly.
+  - type: input
+    id: rqe-version
+    attributes:
+      label: RQE version
+      description: "Find this in the in-game AddOns list or the download file name."
+      placeholder: "Example: 3.9.25 (or 'not sure')"
+    validations:
+      required: true
+  - type: dropdown
+    id: wow-client
+    attributes:
+      label: World of Warcraft client
+      description: "Choose the game client where the issue occurs."
+      options:
+        - "Retail"
+        - "TBC Anniversary"
+        - "Classic Season of Discovery"
+        - "Classic Forever"
+        - "Other or not sure"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - "Quest Helper or guided steps"
+        - "Quest Tracker or search"
+        - "Waypoints or TomTom integration"
+        - "NPC or object previews"
+        - "Quest-aware actions or macros"
+        - "Settings, frames, or profiles"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: bug
+    attributes:
+      label: What happened?
+      description: "Describe the visible problem and what RQE displayed or did."
+      placeholder: "Example: The Quest Helper showed a blank current step after I selected a quest."
+    validations:
+      required: true
+  - type: input
+    id: quest
+    attributes:
+      label: Quest name and ID
+      description: "If the issue involves a specific quest, include both its name and numeric ID."
+      placeholder: "Example: The Sub-Chieftains (11907)"
+  - type: input
+    id: step
+    attributes:
+      label: Current step or location
+      description: "Include the step number, zone, map coordinates, or waypoint if relevant."
+      placeholder: "Example: Step 1/5, Borean Tundra, map 114"
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: "Start from the in-game state before the problem; number each action."
+      placeholder: |
+        1. Log in with ...
+        2. Open RQE and select ...
+        3. Click or hover ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: "What should RQE have shown or done?"
+    validations:
+      required: true
+  - type: textarea
+    id: lua-error
+    attributes:
+      label: Lua error or debug output
+      description: "Paste the full error and stack trace if one appeared. Leave blank if there was no error."
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or video
+      description: "Drag images or recordings here, if they help show the issue."
+  - type: textarea
+    id: addon-context
+    attributes:
+      label: Other relevant context
+      description: "Mention other quest/waypoint addons, whether a reload helps, and anything else that changes the result."
+      placeholder: "Example: TomTom is enabled; the issue persists after /reload."
