@@ -2,7 +2,7 @@
 
 RQE is a quest helper and tracker for World of Warcraft. It brings the next objective, a waypoint, and practical step-by-step guidance together for quests supported by its database.
 
-[Download on CurseForge](https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer) · [Watch the overview](https://www.youtube.com/watch?v=JKvJi32zfag) · [Report an issue](https://github.com/rhodan412/RQE/issues)
+[Download on CurseForge](https://www.curseforge.com/wow/addons/rqe-rhodans-quest-explorer) · [Wiki / player guide](https://github.com/rhodan412/RQE/wiki) · [Watch the overview](https://www.youtube.com/watch?v=JKvJi32zfag) · [Report an issue](https://github.com/rhodan412/RQE/issues)
 
 ![RQE's Quest Helper, NPC and object previews, and Quest Tracker](https://github.com/user-attachments/assets/9f52c4aa-10c9-4441-8726-9548e6ecbeaa)
 
@@ -35,6 +35,26 @@ RQE has addon builds for Retail, Classic Era/Season of Discovery, Classic Foreve
 RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect quest lines, tooltips, and quest-giver locations.
 
 ## More examples
+
+### Interactive guidance
+
+Click a panel to view it at full size. The [player guide](https://github.com/rhodan412/RQE/wiki) explains the controls in detail.
+
+| Interactive quest-step links | Quest-aware actions |
+| --- | --- |
+| [![Item and spell tooltips in RQE steps](https://github.com/user-attachments/assets/f011e2db-743d-48ae-9eca-1edbd8d85522)](https://github.com/user-attachments/assets/f011e2db-743d-48ae-9eca-1edbd8d85522) | [![RQE action button and quest macro](https://github.com/user-attachments/assets/3888da5b-bb78-47b0-945a-05cb60ac7fe8)](https://github.com/user-attachments/assets/3888da5b-bb78-47b0-945a-05cb60ac7fe8) |
+
+<details>
+<summary>More illustrated features: quest context, search, and settings</summary>
+
+| Quest context and guided steps | Search, filters, and references |
+| --- | --- |
+| ![Quest Helper and Tracker context](https://github.com/user-attachments/assets/f33a2a80-4a93-4899-b87f-e249385b6d51) | ![Quest search, filters, and reference links](https://github.com/user-attachments/assets/724f5e10-c713-48fb-8f85-d0474501921d) |
+
+![RQE frame, font, and profile settings](https://github.com/user-attachments/assets/c581fe08-874f-4eae-8009-19be32341c67)
+
+</details>
+
 
 ### Azure & Gold interface
 
