@@ -1,0 +1,74 @@
+name: "Feature request"
+description: "Suggest a player-facing improvement to RQE."
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us what would make questing clearer or smoother for you. Feature requests are welcome here; you do not need to contribute code or use the RQE_Contribution addon.
+  - type: input
+    id: rqe-version
+    attributes:
+      label: RQE version
+      description: "Optional, but helpful if the suggestion builds on current behavior."
+      placeholder: "Example: 3.9.25"
+  - type: dropdown
+    id: wow-client
+    attributes:
+      label: World of Warcraft client
+      description: "Select the client this request concerns most."
+      options:
+        - "All supported clients"
+        - "Retail"
+        - "TBC Anniversary"
+        - "Classic Season of Discovery"
+        - "Classic Forever"
+        - "Not sure"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area of RQE
+      options:
+        - "Quest Helper or guided steps"
+        - "Quest Tracker or search"
+        - "Waypoints or TomTom integration"
+        - "NPC or object previews"
+        - "Quest-aware actions or macros"
+        - "Settings, frames, or profiles"
+        - "Other"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would this improve?
+      description: "Describe the questing situation or limitation you are trying to address."
+      placeholder: "When I am ..., it is hard to ..."
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested behavior
+      description: "Describe how you would like RQE to behave. A rough idea is enough."
+      placeholder: "I would like RQE to ..."
+    validations:
+      required: true
+  - type: input
+    id: quest
+    attributes:
+      label: Example quest name and ID
+      description: "If a particular quest illustrates the request, include its name and numeric ID."
+      placeholder: "Example: The Sub-Chieftains (11907)"
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples, mockups, or screenshots
+      description: "Add steps, screenshots, or a sketch to show the desired experience, if useful."
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround or alternatives
+      description: "Optional: how do you handle this today?"
