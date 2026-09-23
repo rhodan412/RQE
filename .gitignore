@@ -1,5 +1,8 @@
 .gitignore
 .gitattributes
+# Keep GitHub-only metadata trackable; .gitattributes omits it from Git archives.
+!/.github/
+!/.github/**
 AGENTS.md
 .vscode/
 /Tests/
