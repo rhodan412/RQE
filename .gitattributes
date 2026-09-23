@@ -1,6 +1,7 @@
 AGENTS.md export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
+/.github/** export-ignore
 .vscode/ export-ignore
 /Tests/ export-ignore
 /Tests/** export-ignore
