@@ -214,10 +214,24 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 	-- #5a. Central Event Dispatcher
 	-------------------------------------------------------
 
+	local supplementalEventTraceFlags = {
+		ADDON_LOADED = "showAddonLoaded",
+		CLIENT_SCENE_CLOSED = "ClientSceneClosed",
+		QUEST_LOOT_RECEIVED = "QuestLootReceived",
+		QUEST_REMOVED = "QuestRemoved",
+		UPDATE_INSTANCE_INFO = "UpdateInstanceInfo",
+	}
+
 	-- On Event Handler
 	local function HandleEvents(frame, event, ...)
+		local profile = RQE.db.profile
+		local supplementalFlag = supplementalEventTraceFlags[event]
+		if profile.debugMode and profile.debugLevel == "INFO+" and supplementalFlag
+			and profile[supplementalFlag] and (event ~= "ADDON_LOADED" or select(1, ...) == "RQE") then
+			print("RQE event:", event)
+		end
 		-- List of events to exclude from printing
-		if (RQE.db.profile.debugLevel == "INFO") and (RQE.db.profile.showEventDebugInfo) then
+		if (profile.debugLevel == "INFO" or profile.debugLevel == "INFO+") and profile.showEventDebugInfo then
 			local excludeEvents = {
 				["ADDON_LOADED"] = true,
 				["BAG_UPDATE"] = true,
@@ -375,7 +389,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local alreadyEarned = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -405,7 +419,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local isTracked = select(5, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -468,7 +482,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local autoCombatResult = select(8, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -584,7 +598,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local cost = select(5, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -618,7 +632,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local uiTextureKit = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -660,7 +674,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local itemID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -813,7 +827,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local bagID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -946,7 +960,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local itemID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1087,7 +1101,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		}
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1488,7 +1502,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local newMapID = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1582,7 +1596,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local inBlobState = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1641,7 +1655,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- Print Event-specific Args
 		if RQE.db.profile.debugLevel == "INFO" then
 			print("~~~ PLAYER_LEVEL_UP has fired~~~ ")
-		--if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		--if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -1939,7 +1953,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			local encounterName = select(4, ...)
 
 			-- Print Event-specific Args
-			if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+			if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 				local args = {...}  -- Capture all arguments into a table
 				for i, arg in ipairs(args) do
 					if type(arg) == "table" then
@@ -1968,7 +1982,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			local success = select(7, ...)
 
 			-- Print Event-specific Args
-			if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+			if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 				local args = {...}  -- Capture all arguments into a table
 				for i, arg in ipairs(args) do
 					if type(arg) == "table" then
@@ -1998,7 +2012,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local created = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2032,7 +2046,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local money = select(5, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2068,7 +2082,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local newStep = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2127,7 +2141,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local criteriaID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2220,7 +2234,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local totalTime = select(5, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2252,7 +2266,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local timerID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2287,7 +2301,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local timerID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -2317,7 +2331,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local type = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -3014,7 +3028,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if RQE.db.profile.debugLevel ~= "INFO+" then return end
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -3117,7 +3131,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local isReload = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -4019,7 +4033,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -4355,7 +4369,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local hasPitch = select(9, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -5048,7 +5062,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local tracked = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -5104,7 +5118,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local message = select(4, ...)
 		
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -5489,7 +5503,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		if unitTarget ~= "player" then return end
 		
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -5583,7 +5597,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local castBarID = select(6, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -5684,7 +5698,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6169,7 +6183,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 			-- RQE:ShouldClearFrame()
 		-- end)
 
-		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_LOG_UPDATE, QUEST_POI_UPDATE or TASK_PROGRESS_UPDATE events fire
+		RQE:QueueSeparateFocusRefresh() -- Combine quest-log/POI/progress bursts into one focus rebuild.
 
 		-- Resets the flag that prevents UNIT_QUEST_LOG_CHANGED from firing immediately following QUEST_WATCH_UPDATE
 		if RQE.QuestWatchFiringNoUnitQuestLogUpdateNeeded then
@@ -6319,7 +6333,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local quantity = select(5, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6377,7 +6391,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local numRequired = select(8, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6456,7 +6470,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6489,7 +6503,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local requestRequired = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6646,7 +6660,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local questID = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6732,7 +6746,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local sceneType = select(3, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6799,7 +6813,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		end
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -6962,7 +6976,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		RQE.LastQuestWatchQuestID = questID
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -7272,7 +7286,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		local added = select(4, ...)
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -7595,7 +7609,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- print("~~~ Running Event Function: RQE.handleQuestTurnIn(...) ~~~")
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
@@ -7693,7 +7707,7 @@ Classic event registration, quest-state routing, combat deferrals, and frame coo
 		-- print("~~~ Running Event Function: RQE.handleQuestDetail(...) ~~~")
 
 		-- Print Event-specific Args
-		if RQE.db.profile.debugLevel == "INFO" and RQE.db.profile.showArgPayloadInfo then
+		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
 			for i, arg in ipairs(args) do
 				if type(arg) == "table" then
