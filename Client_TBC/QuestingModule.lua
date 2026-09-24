@@ -2180,10 +2180,6 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
-			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
-				RQE.ToggleRQEQuestFrameLock()
-			end)
-			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			local isPlayerInGroup = IsInGroup()
 			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
@@ -2192,11 +2188,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
 			end
 
-			if RQE_SandboxEditor then
-				rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
-			end
-
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+				if RQE_SandboxEditor then
+					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+				end
 				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 				rootDescription:CreateButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
@@ -2248,6 +2243,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
+			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
+				RQE.ToggleRQEQuestFrameLock()
+			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
 			if RQE.db.profile.debugLevel ~= "NONE" then
@@ -2261,10 +2260,6 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEQuestFrame(self)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
-			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
-				RQE.ToggleRQEQuestFrameLock()
-			end)
-			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
@@ -2272,6 +2267,9 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 				rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			end
+			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
+				RQE.ToggleRQEQuestFrameLock()
+			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 		end)
 	end
