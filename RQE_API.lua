@@ -25,6 +25,115 @@ Usage:
 RQE = RQE or {}
 RQE.API = RQE.API or {}
 
+-- Quest rendering pools. WoW UI objects are reused rather than discarded on
+-- every refresh. Pools are separated by owner/group/type and grow only to the
+-- largest simultaneously displayed document, never by number of refreshes.
+local renderScripts = {
+	"OnUpdate", "OnEnter", "OnLeave", "OnMouseDown", "OnMouseUp", "OnClick",
+	"OnHyperlinkEnter", "OnHyperlinkLeave", "OnHyperlinkClick", "OnMouseWheel",
+}
+
+function RQE.API.ReleaseRichTextHovers(text)
+	if not text or not text._rqeSegments then return end
+	for _, hover in ipairs(text._rqeSegments) do
+		RQE.API.ReleaseRenderObject(hover)
+	end
+	wipe(text._rqeSegments)
+end
+
+function RQE.API.ReleaseRenderObject(object)
+	if not object then return end
+	local pool = object._rqeRenderPool
+	if pool and not pool.active[object] then return end
+	RQE.API.ReleaseRichTextHovers(object)
+	local ownsTooltip = RQE._coordblockTooltipOwner == object
+		or (GameTooltip and GameTooltip.GetOwner and GameTooltip:GetOwner() == object)
+	if RQE._coordblockTooltipOwner == object then RQE._coordblockTooltipOwner = nil end
+	if ownsTooltip and GameTooltip then GameTooltip:Hide() end
+	object:Hide()
+	if object.SetScript and object.HasScript then
+		for _, script in ipairs(renderScripts) do
+			if object:HasScript(script) then object:SetScript(script, nil) end
+		end
+	end
+	if object.EnableMouse then object:EnableMouse(false) end
+	object:ClearAllPoints()
+	-- Unused coordinate labels may never have received a font from their caller.
+	local objectType = object:GetObjectType()
+	if objectType == "SimpleHTML" or (objectType == "FontString" and object:GetFont()) then
+		object:SetText("")
+	end
+	object.htmlText = nil
+	object._rqeRichText, object._rqeRichFont, object._rqeRichFontSize = nil, nil, nil
+	object._rqeRichColor, object._rqeRichParent = nil, nil
+	object._rqeCoordblockLinks, object._rqeCoordblockByPoint = nil, nil
+	object.questID, object.stepIndex, object.index, object.point, object.route = nil, nil, nil, nil, nil
+	if pool then
+		pool.active[object] = nil
+		local free = pool.free[object._rqeRenderKey]
+		free[#free + 1] = object
+	end
+end
+
+function RQE.API.ReleaseRenderGroup(parent, group)
+	local pool = parent and parent._rqeRenderPools and parent._rqeRenderPools[group]
+	if not pool then return end
+	for object in pairs(pool.active) do RQE.API.ReleaseRenderObject(object) end
+end
+
+function RQE.API.AcquireRenderObject(parent, group, objectType, template, slot)
+	parent._rqeRenderPools = parent._rqeRenderPools or {}
+	local pool = parent._rqeRenderPools[group]
+	if not pool then
+		pool = { active = {}, free = {}, created = 0 }
+		parent._rqeRenderPools[group] = pool
+	end
+	local key = objectType .. ":" .. (template or "") .. ":" .. tostring(slot or "")
+	pool.free[key] = pool.free[key] or {}
+	local object = table.remove(pool.free[key])
+	if not object then
+		if objectType == "FontString" then
+			object = parent:CreateFontString(nil, "OVERLAY", template or "GameFontNormal")
+		else
+			object = CreateFrame(objectType, nil, parent, template)
+		end
+		object._rqeRenderPool, object._rqeRenderKey = pool, key
+		pool.created = pool.created + 1
+	end
+	pool.active[object] = true
+	if object:GetParent() ~= parent then object:SetParent(parent) end
+	object:ClearAllPoints()
+	object:SetAlpha(1)
+	if objectType == "FontString" then
+		object:SetHeight(0)
+		object:SetJustifyV("MIDDLE")
+	end
+	if object.EnableMouse then object:EnableMouse(objectType ~= "FontString") end
+	object:Show()
+	return object
+end
+
+-- One hidden measuring region per content owner, not one per paragraph/render.
+function RQE.API.GetRichTextMeasure(parent)
+	if not parent._rqeMeasureText then
+		parent._rqeMeasureText = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+		parent._rqeMeasureText:Hide()
+	end
+	return parent._rqeMeasureText
+end
+
+-- Coalesce quest-log/POI event bursts. Explicit step selections still refresh
+-- immediately; their renderer cancels this pending redundant pass.
+function RQE:QueueSeparateFocusRefresh()
+	if self._focusRefreshTimer then return end
+	self._focusRefreshTimer = C_Timer.NewTimer(0.05, function()
+		self._focusRefreshTimer = nil
+		if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
+	end)
+end
+
+-- End quest rendering pools.
+
 -- Proportional scroll thumbs need explicit top-to-bottom cursor mapping.
 -- Keep the slider's value callbacks (and wheel behavior), but intercept native
 -- thumb dragging with a wider transparent hit area above the slider.
