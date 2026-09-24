@@ -465,7 +465,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				y = -105,
 				scale = 1,
 			},
-			minimapButtonAngle = 125,
+			minimapButtonAngle = 175,
 			mythicScenarioMode = true,
 			PlayerEnteringWorld = false,
 			PlayerStartedMoving = false,
@@ -501,7 +501,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			showEventAchievementEarned = false,
 			showEventContentTrackingUpdate = false,
 			showEventCriteriaEarned = false,
-			showEventDebugInfoCheckbox = false,
+			showEventDebugInfo = false,
 			showEventSuperTrackingChanged = false,
 			showItemCountChanged = false,
 			showMapID = true,
@@ -509,6 +509,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			showPlayerLogin = false,
 			showPlayerRegenEnabled = false,
 			showPlayerMountDisplayChanged = false,
+			showStartPeriodicCheckInfo = false,
 			showTrackedAchievementUpdate = false,
 			StartTimer = false,
 			textSettings = {
@@ -2578,6 +2579,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- ClearFrameData function
 	function RQE:ClearFrameData()
+		if RQE.HideCreatureObjectPreview then RQE.HideCreatureObjectPreview(true) end
+		if self._focusRefreshTimer then
+			self._focusRefreshTimer:Cancel()
+			self._focusRefreshTimer = nil
+		end
 		-- Clear the Quest ID and Quest Name
 		if RQE.QuestIDText then
 			RQE.QuestIDText:SetText("")
@@ -2803,12 +2809,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		-- Hide and remove the main SimpleHTML/FontString (first paragraph)
-		if RQE.SeparateStepText then
-			RQE.SeparateStepText:Hide()
-			RQE.SeparateStepText:SetParent(nil)
-			RQE.SeparateStepText = nil
+		-- Release only the transient quest content; retain the reusable widgets.
+		if not RQE.IsUpdatingSeparateFocusFrame then
+			RQE._SeparateFocusBuildToken = (RQE._SeparateFocusBuildToken or 0) + 1
 		end
+		RQE.API.ReleaseRenderGroup(RQE.SeparateContentFrame, "focus")
+		RQE.API.ReleaseRenderGroup(RQE.SeparateContentFrame, "focusRoutes")
+		RQE.SeparateStepText = nil
+		RQE.SeparateCoordblockFonts = {}
+		RQE.SeparateCoordOrderButtons = {}
 
 		-- Hide and remove ALL dynamically created children (including red warning FontStrings)
 		for _, child in ipairs({ RQE.SeparateContentFrame:GetChildren() }) do
@@ -6080,21 +6089,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Render rich text with multiple {item:id:name} tags and attach separate hover frames used in the individual steps
 	function RQE.RenderTextWithItemsSteps(parentFrame, rawText, font, fontSize, textColor, customParent)
-		if not rawText or rawText == "" or not parentFrame then return end
+		if not parentFrame then return end
+		RQE.API.ReleaseRichTextHovers(parentFrame)
+		if not rawText or rawText == "" then
+			parentFrame:SetText("")
+			parentFrame._rqeRichText = nil
+			return
+		end
 		parentFrame._rqeRichText = rawText
 		parentFrame._rqeRichFont = font
 		parentFrame._rqeRichFontSize = fontSize
 		parentFrame._rqeRichColor = textColor
 		parentFrame._rqeRichParent = customParent
 
-		-- Clean up any old hover frames
-		if parentFrame._rqeSegments then
-			for _, seg in ipairs(parentFrame._rqeSegments) do
-				if seg.Hide then seg:Hide() end
-				if seg.SetParent then seg:SetParent(nil) end
-			end
-		end
-		parentFrame._rqeSegments = {}
+		parentFrame._rqeSegments = parentFrame._rqeSegments or {}
 
 		-- Replace rich entity tags with [name] visually.
 		local displayText = rawText
@@ -6146,7 +6154,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			fontPath, size, flags = "Fonts\\FRIZQT__.TTF", 12, ""
 		end
 
-		local measureFS = parentFrame:GetParent():CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+		local measureFS = RQE.API.GetRichTextMeasure(customParent or parentFrame:GetParent() or UIParent)
 		measureFS:SetFont(font or fontPath, fontSize or size, flags)
 
 		local baseParent = customParent or parentFrame:GetParent() or UIParent
@@ -6185,7 +6193,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local function CreateTagHover(tagType, tagID, tagName, x, y, width)
 			if width <= 0 then return end
 
-			local hover = CreateFrame("Frame", nil, baseParent)
+			local hover = RQE.API.AcquireRenderObject(baseParent, "hover", "Frame")
 			local hoveredID = tagID
 			hover:EnableMouse(true)
 			hover:SetFrameStrata("TOOLTIP")
@@ -6451,7 +6459,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							coordY = coordY + lineHeight
 						end
 
-						local hover = CreateFrame("Frame", nil, baseParent)
+						local hover = RQE.API.AcquireRenderObject(baseParent, "hover", "Frame")
 						hover:EnableMouse(true)
 						hover:SetFrameStrata("TOOLTIP")
 						hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
@@ -6532,7 +6540,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							coordY = coordY + lineHeight
 						end
 
-						local hover = CreateFrame("Frame", nil, baseParent)
+						local hover = RQE.API.AcquireRenderObject(baseParent, "hover", "Frame")
 						hover:EnableMouse(true)
 						hover:SetFrameStrata("TOOLTIP")
 						hover:SetFrameLevel((baseParent:GetFrameLevel() or 0) + 10 + (#parentFrame._rqeSegments))
@@ -6577,6 +6585,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			rawPos = nextLine and (nextLine + 1) or (#rawText + 1)
 		end
 
+		measureFS:SetText("")
 		measureFS:Hide()
 	end
 
@@ -8297,6 +8306,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			extractedQuestID = RQE.DisplayedQuestID
 		end
 		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
+		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
+			print("RQE StartPeriodicChecks: questID", tostring(superTrackedQuestID))
+		end
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Current superTrackedQuestID:", superTrackedQuestID)
