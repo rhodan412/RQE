@@ -32,6 +32,13 @@ local MAX_OBJECT_ZOOM = 5
 
 local previewFrame
 
+local function CancelPreviewLoad(frame)
+	if frame.loadTimer then
+		frame.loadTimer:Cancel()
+		frame.loadTimer = nil
+	end
+end
+
 local VALID_ANCHOR_POINTS = {
 	TOPLEFT = true, TOP = true, TOPRIGHT = true,
 	LEFT = true, CENTER = true, RIGHT = true,
@@ -195,6 +202,18 @@ local function PreparePreviewIdentity(frame, previewKey)
 	CapturePreviewQuestContext(frame, previewKey)
 end
 
+-- Moving between wrapped fragments of the same link must not reload the model
+-- or reset the player's pan/zoom. Failed loads remain retryable on the next hover.
+local function IsCurrentPreview(frame, key, kind, title, questBound, source)
+	if not frame:IsShown() or frame.previewKey ~= key or frame.previewKind ~= kind
+		or frame.Title:GetText() ~= title or frame.previewSource ~= source
+		or frame.previewRequiresQuest ~= (questBound == true)
+		or not (frame.previewReady or frame.loadTimer) then return false end
+	local questID, stepIndex, superTrackedQuestID = GetPreviewQuestContext()
+	return frame.previewQuestID == questID and frame.previewStepIndex == stepIndex
+		and frame.previewSuperTrackedQuestID == superTrackedQuestID
+end
+
 local function NormalizePreviewType(previewType)
 	if type(previewType) ~= "string" then return nil end
 	previewType = string.lower(previewType)
@@ -245,7 +264,7 @@ local function CreatePreviewFrame()
 		if button == "RightButton" then self:Hide() end
 	end)
 	frame.contextElapsed = 0
-	frame:SetScript("OnUpdate", function(self, elapsed)
+	local function CheckPreviewContext(self, elapsed)
 		if not self:IsShown() or not self.previewKey then return end
 		self.contextElapsed = (self.contextElapsed or 0) + elapsed
 		if self.contextElapsed < 0.10 then return end
@@ -262,6 +281,10 @@ local function CreatePreviewFrame()
 		if questChanged or stepChanged or superTrackChanged or questDisplayCleared then
 			self:Hide()
 		end
+	end
+	frame:SetScript("OnShow", function(self)
+		self.contextElapsed = 0
+		self:SetScript("OnUpdate", CheckPreviewContext)
 	end)
 
 	if type(frame.SetBackdrop) == "function" then
@@ -375,7 +398,10 @@ local function CreatePreviewFrame()
 		frame.Model:SetAllPoints(frame.Content)
 		frame.Model:EnableMouse(false)
 		frame.Model:SetScript("OnModelLoaded", function(model)
-			if model.RQEPreviewToken ~= frame.requestToken then return end
+			if not frame:IsShown() or frame.previewKind ~= "npc"
+				or model.RQEPreviewToken ~= frame.requestToken then return end
+			CancelPreviewLoad(frame)
+			frame.previewReady = true
 			-- Blizzard can replace camera transforms while SetCreature finishes;
 			-- apply the compact-window centering only after the model is ready.
 			RQE.API.ConfigureCreaturePreviewModel(model, model.RQEPreviewOptions)
@@ -405,7 +431,10 @@ local function CreatePreviewFrame()
 	frame.Help:SetText("Drag view  •  Wheel zoom  •  Title moves window")
 
 	frame:SetScript("OnHide", function(self)
+		CancelPreviewLoad(self)
+		self:SetScript("OnUpdate", nil)
 		self.requestToken = (self.requestToken or 0) + 1
+		self.previewReady, self.previewSource = nil, nil
 		self.previewKind = nil
 		self.previewKey = nil
 		self.previewQuestID = nil
@@ -417,7 +446,9 @@ local function CreatePreviewFrame()
 		if self.Content then StopViewportDrag(self.Content) end
 		if self.Model then
 			self.Model.RQEPreviewToken = nil
+			self.Model.RQEPreviewOptions = nil
 			self.Model:SetAlpha(0)
+			self.Model:Hide()
 			RQE.API.ClearCreaturePreviewModel(self.Model)
 		end
 		if self.Image then
@@ -426,6 +457,7 @@ local function CreatePreviewFrame()
 		end
 	end)
 
+	frame:Hide()
 	AddToSpecialFrames(frame:GetName())
 	previewFrame = frame
 	RQE.ApplyCreatureObjectPreviewLayout()
@@ -448,14 +480,19 @@ function RQE.ApplyCreatureObjectPreviewLayout()
 	end
 end
 
-function RQE.HideCreatureObjectPreview()
-	if previewFrame then previewFrame:Hide() end
+function RQE.HideCreatureObjectPreview(questOnly)
+	if previewFrame and (not questOnly or previewFrame.previewRequiresQuest) then
+		previewFrame:Hide()
+	end
 end
 
 local function BeginPreview(title, previewKey, loader, unavailableMessage, questBound)
 	local frame = CreatePreviewFrame()
+	if IsCurrentPreview(frame, previewKey, "npc", title, questBound) then return true end
+	CancelPreviewLoad(frame)
 	RQE.ApplyCreatureObjectPreviewLayout()
 	PreparePreviewIdentity(frame, previewKey)
+	frame.previewReady, frame.previewSource = false, nil
 	frame.requestToken = (frame.requestToken or 0) + 1
 	local token = frame.requestToken
 	frame.Title:SetText(title)
@@ -482,18 +519,27 @@ local function BeginPreview(title, previewKey, loader, unavailableMessage, quest
 		return false
 	end
 
-	C_Timer.After(LOAD_TIMEOUT, function()
-		if frame:IsShown() and frame.requestToken == token and frame.Status:IsShown() then
-			frame.Status:SetText(unavailableMessage or "Blizzard returned no displayable model for this ID.")
-		end
-	end)
+	if not frame.previewReady then
+		frame.loadTimer = C_Timer.NewTimer(LOAD_TIMEOUT, function()
+			if frame.requestToken ~= token then return end
+			frame.loadTimer = nil
+			if frame:IsShown() and frame.Status:IsShown() then
+				frame.Status:SetText(unavailableMessage or "Blizzard returned no displayable model for this ID.")
+			end
+		end)
+	end
 	return true
 end
 
 local function BeginImagePreview(title, previewKey, texturePaths, unavailableMessage, questBound)
 	local frame = CreatePreviewFrame()
+	if type(texturePaths) ~= "table" then texturePaths = { texturePaths } end
+	local source = table.concat(texturePaths, "\n")
+	if IsCurrentPreview(frame, previewKey, "object", title, questBound, source) then return true end
+	CancelPreviewLoad(frame)
 	RQE.ApplyCreatureObjectPreviewLayout()
 	PreparePreviewIdentity(frame, previewKey)
+	frame.previewReady, frame.previewSource = false, source
 	frame.requestToken = (frame.requestToken or 0) + 1
 	frame.Title:SetText(title)
 	frame.previewKind = "object"
@@ -505,16 +551,17 @@ local function BeginImagePreview(title, previewKey, texturePaths, unavailableMes
 
 	if frame.Model then
 		frame.Model.RQEPreviewToken = nil
+		frame.Model.RQEPreviewOptions = nil
 		frame.Model:SetAlpha(0)
 		frame.Model:Hide()
 		RQE.API.ClearCreaturePreviewModel(frame.Model)
 	end
 
-	if type(texturePaths) ~= "table" then texturePaths = { texturePaths } end
 	for _, texturePath in ipairs(texturePaths) do
 		frame.Image:SetTexture(nil)
 		local ok, loaded = pcall(frame.Image.SetTexture, frame.Image, texturePath)
 		if ok and loaded ~= false then
+			frame.previewReady = true
 			ApplyObjectViewport(frame)
 			frame.Image:Show()
 			frame.Status:Hide()
