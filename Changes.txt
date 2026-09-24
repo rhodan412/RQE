@@ -1,3 +1,98 @@
+12.1.0.9 (2026.09.24)
+
+	**HIGHLIGHTS**
+		- Refreshed RQE's in-game icons with a square AddOns/data-broker image and a matching round minimap image; the configuration header now shows the square icon too.
+		- Fixed the data-broker shortcut menu appearing far from its launcher by anchoring it directly beneath the clicked icon.
+		- Moved Quest Helper and Quest Tracker position-and-size lock controls into the bottom section of their right-click menus, directly above Hide Frames.
+		- Open Sandbox now appears in Quest Helper and Quest Tracker right-click menus only when RQE Contribution is loaded.
+		- Classic and TBC Quest Helper and Quest Tracker menus now also hide Open Sandbox unless RQE Contribution is loaded.
+		- Reduced repeated Quest Helper rendering and background refresh work while preserving quest links, route controls, and NPC/object previews; fixed an unset-font error when clearing unused coordinate labels.
+		- Repeatedly hovering the same NPC/object preview no longer reloads it or resets its pan and zoom, and closing it stops pending loading and interaction work.
+		- Restored immediate Blizzard Objective Tracker visibility checks to prevent brief flashes when moving or tracking quests while RQE's tracker is active.
+		- Restored INFO and INFO+ event, payload, and per-event chat diagnostics in both AddOn Settings and RQE's configuration window across supported clients.
+
+	Client_Classic/Core.lua
+		- Reused rich-text hover regions and one hidden measurement FontString per content owner, released old hover callbacks even for empty text, and returned Separate Focus paragraphs/routes to their pools on clear; quest clears now cancel queued focus refreshes and immediately close quest-bound previews without hiding direct-test previews. (2026.09.23.1647)
+		- Corrected the saved default for Show Event Debug Info and added a disabled periodic-check trace default; the optional INFO+ periodic trace now prints its selected quest ID. (2026.09.23.2135)
+
+	Client_Classic/EventManager.lua
+		- Queued the shared quest-status Separate Focus refresh so quest-log, POI, and progress event bursts share one short delayed rebuild while explicit step selections remain immediate. (2026.09.23.1647)
+		- Restored filtered event-name tracing at INFO+ and payload tracing at INFO/INFO+; added chat output for formerly inert ADDON_LOADED, CLIENT_SCENE_CLOSED, QUEST_LOOT_RECEIVED, QUEST_REMOVED, and UPDATE_INSTANCE_INFO switches. (2026.09.23.2135)
+
+	Client_Classic/QuestingModule.lua
+		- Moved the Quest Tracker lock/unlock action directly above Hide Frames in both quest-specific and frame-background menus, keeping the action available without leading the menu. (2026.09.22.2146)
+		- Moved Open Sandbox inside the RQE_Contribution loaded check in the quest-specific Quest Tracker menu, so the editor shortcut appears only with the companion addon loaded. (2026.09.23.1045)
+
+	Client_Classic/RQEFrame.lua
+		- Moved the Quest Helper lock/unlock action below the final separator and above Hide Frames in both right-click menus; kept Reset Frames immediately after Hide Frames when debug options are shown. (2026.09.22.2146)
+		- Moved Open Sandbox inside the RQE_Contribution loaded check in both Quest Helper right-click menus, so the editor shortcut appears only with the companion addon loaded. (2026.09.23.1045)
+		- Reused step labels, coordinate labels, numbered buttons/decorations, and Separate Focus FontString/SimpleHTML paragraphs; rebuilt current-step lookup arrays, kept stable per-step button identities, released callbacks on clear, cancelled superseded queued focus refreshes, and coalesced delayed step-layout updates to prevent per-refresh UI accumulation. (2026.09.23.1647)
+
+	Client_TBC/Core.lua
+		- Reused rich-text hover regions and one hidden measurement FontString per content owner, released old hover callbacks even for empty text, and returned Separate Focus paragraphs/routes to their pools on clear; quest clears now cancel queued focus refreshes and immediately close quest-bound previews without hiding direct-test previews. (2026.09.23.1647)
+		- Corrected the saved default for Show Event Debug Info and added a disabled periodic-check trace default; the optional INFO+ periodic trace now prints its selected quest ID. (2026.09.23.2135)
+
+	Client_TBC/EventManager.lua
+		- Queued the shared quest-status Separate Focus refresh so quest-log, POI, and progress event bursts share one short delayed rebuild while explicit step selections remain immediate. (2026.09.23.1647)
+		- Restored filtered event-name tracing at INFO+ and payload tracing at INFO/INFO+; added chat output for formerly inert ADDON_LOADED, CLIENT_SCENE_CLOSED, QUEST_LOOT_RECEIVED, QUEST_REMOVED, and UPDATE_INSTANCE_INFO switches. (2026.09.23.2135)
+
+	Client_TBC/QuestingModule.lua
+		- Moved the Quest Tracker lock/unlock action directly above Hide Frames in both quest-specific and frame-background menus, keeping the action available without leading the menu. (2026.09.22.2146)
+		- Moved Open Sandbox inside the RQE_Contribution loaded check in the quest-specific Quest Tracker menu, so the editor shortcut appears only with the companion addon loaded. (2026.09.23.1045)
+
+	Client_TBC/RQEFrame.lua
+		- Moved the Quest Helper lock/unlock action below the final separator and above Hide Frames in both right-click menus; kept Reset Frames immediately after Hide Frames when debug options are shown. (2026.09.22.2146)
+		- Moved Open Sandbox inside the RQE_Contribution loaded check in both Quest Helper right-click menus, so the editor shortcut appears only with the companion addon loaded. (2026.09.23.1045)
+		- Reused step labels, coordinate labels, numbered buttons/decorations, and Separate Focus FontString/SimpleHTML paragraphs; rebuilt current-step lookup arrays, kept stable per-step button identities, released callbacks on clear, cancelled superseded queued focus refreshes, and coalesced delayed step-layout updates to prevent per-refresh UI accumulation. (2026.09.23.1647)
+
+	ConfigTheme.lua
+		- Replaced the standalone configuration header's old portrait path with the square rhodan icon texture and showed its complete image without cropping, keeping the settings window aligned with the refreshed in-game branding. (2026.09.22.1348)
+		- Composed the shared Debug Options page with INFO event/payload switches and grouped INFO+ system, quest, and encounter trace switches from the existing profile flags, so both settings surfaces expose the same controls on every client. (2026.09.23.2135)
+
+	Core.lua
+		- Reused rich-text hover regions and one hidden measurement FontString per content owner, released old hover callbacks even for empty text, and returned Separate Focus paragraphs/routes to their pools on clear; quest clears now cancel queued focus refreshes and immediately close quest-bound previews without hiding direct-test previews. (2026.09.23.1647)
+		- Corrected the saved default for Show Event Debug Info and added a disabled periodic-check trace default; the optional INFO+ periodic trace now prints its selected quest ID. (2026.09.23.2135)
+
+	EventManager.lua
+		- Queued the shared quest-status Separate Focus refresh so quest-log, POI, and progress event bursts share one short delayed rebuild while explicit step selections remain immediate. (2026.09.23.1647)
+		- Restored filtered event-name tracing at INFO+ and payload tracing at INFO/INFO+; added chat output for formerly inert ADDON_LOADED, CLIENT_SCENE_CLOSED, QUEST_LOOT_RECEIVED, QUEST_REMOVED, and UPDATE_INSTANCE_INFO switches. (2026.09.23.2135)
+
+	QuestingModule.lua
+		- Moved the Quest Tracker lock/unlock action directly above Hide Frames in both quest-specific and frame-background menus, keeping the action available without leading the menu. (2026.09.22.2146)
+		- Moved Open Sandbox inside the RQE_Contribution loaded check in the quest-specific Quest Tracker menu, so the editor shortcut appears only with the companion addon loaded. (2026.09.23.1042)
+		- Throttled the Retail objective-tracker visibility watchdog to half-second checks instead of checking every rendered frame, retaining its scenario and combat guards and matching the existing Classic/TBC cadence. (2026.09.23.1647)
+		- Removed the newly introduced half-second throttle from the Retail objective-tracker visibility watchdog, restoring its original every-frame OnUpdate cadence to address Blizzard tracker flashes after movement or quest-tracking updates; retained scenario, combat, and profile guards and all other performance improvements. (2026.09.23.1659)
+
+	RQE.toc
+		- Updated version# (2026.09.22.1407)
+
+	RQE_API.lua
+		- Added shared render pools keyed by content owner, rendering group, widget type, and optional stable slot; recycling clears transient scripts, tooltip ownership, anchors, and quest references while retaining reusable UI objects and a single hidden text-measurement region per owner. (2026.09.23.1647)
+		- Gave pooled FontStrings a default GameFontNormal font and guarded text clearing for legacy fontless regions; stopped cleanup from touching unconfigured Button text, preventing the reported FontString:SetText(): Font not set error on unused coordinate labels. (2026.09.23.1647)
+		- Added a cancellable 50 ms Separate Focus refresh queue that combines event bursts without delaying direct step-selection refreshes. (2026.09.23.1647)
+
+	RQE_ModelPreview.lua
+		- Kept the singleton NPC/object viewer while deduplicating repeated hovers for the same ready/loading subject and quest context, preserving pan/zoom; failed loads remain retryable and changed explicit image paths still replace the preview. (2026.09.23.1647)
+		- Replaced anonymous load timeouts with cancellable timers, cancels them on model readiness/replacement/hide, and disables context/drag updates while closed; hiding clears model options, the live model, and the image texture, while stale timeout/model callbacks cannot restore a closed preview. (2026.09.23.1647)
+
+	RQEDatabase.lua
+		- Added additional Horde quests to the DB for Borean Tundra and some in Dragonflight. (2026.09.24.0055)
+
+	RQEFrame.lua
+		- Moved the Quest Helper lock/unlock action below the final separator and above Hide Frames in both right-click menus; kept Reset Frames immediately after Hide Frames when debug options are shown. (2026.09.22.2146)
+		- Moved Open Sandbox inside the RQE_Contribution loaded check in both Quest Helper right-click menus, so the editor shortcut appears only with the companion addon loaded. (2026.09.23.1042)
+		- Reused step labels, coordinate labels, numbered buttons/decorations, and Separate Focus FontString/SimpleHTML paragraphs; rebuilt current-step lookup arrays, kept stable per-step button identities, released callbacks on clear, cancelled superseded queued focus refreshes, and coalesced delayed step-layout updates to prevent per-refresh UI accumulation. (2026.09.23.1647)
+
+	RQEMacro.lua
+		- Limited Magic Button macro parsing, item-count lookup, and cooldown-state polling to ten checks per second instead of the rendering frame rate; retained native cooldown animation, quantity display, no-macro cleanup, and existing combat restrictions. (2026.09.23.1647)
+
+	RQEMinimap.lua
+		- Anchored the main launcher menu beneath the actual clicked data-broker display instead of relying on a specific broker-frame name and detached fallback offset, while preserving the minimap button's placement behavior. (2026.09.22.1348)
+
+	WPUtil.lua
+		- Reused Separate Focus ordered-route buttons and their label regions by row, replacing current quest/step/point data and scripts on each rebuild and releasing obsolete route rows and tooltip updates on clear. (2026.09.23.1647)
+
+
 12.1.0.8 (2026.09.22)
 
 	**HIGHLIGHTS**
