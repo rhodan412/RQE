@@ -14,7 +14,7 @@ RQE.ConfigUI = RQE.ConfigUI or {}
 local ConfigUI = RQE.ConfigUI
 local COMPOSED_OPTIONS = setmetatable({}, { __mode = "k" })
 local ROOT = "Interface\\AddOns\\RQE\\Media\\UI\\"
-local PORTRAIT = ROOT .. "Config\\RQEConfigPortrait.tga"
+local PORTRAIT = "Interface\\AddOns\\RQE\\Textures\\rhodan.tga"
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 
 local COLORS = {
@@ -739,6 +739,21 @@ local function composeFontPage(page)
 	page.args = args
 end
 
+local function addDebugTraceOptions(group, definitions)
+	for order, definition in ipairs(definitions) do
+		local key, label = definition[1], definition[2]
+		group.args[key] = {
+			type = "toggle",
+			name = label,
+			desc = definition[3] or ("Print " .. label .. " diagnostics to chat when this event is available on the current client."),
+			order = order + 1,
+			width = 1.5,
+			get = function() return RQE.db.profile[key] == true end,
+			set = function(_, value) RQE.db.profile[key] = value end,
+		}
+	end
+end
+
 local function composeDebugPage(page)
 	local source = page.args
 	local used = { debug = true }
@@ -757,7 +772,83 @@ local function composeDebugPage(page)
 		if tools.args.resetFramePosition then tools.args.resetFramePosition.name = "Reset positions"; tools.args.resetFramePosition.width = 1 end
 		if tools.args.resetFrameSize then tools.args.resetFrameSize.name = "Reset sizes"; tools.args.resetFrameSize.width = 1 end
 	end
-	page.args = { diagnostics = diagnostics, tools = tools }
+	local infoTrace = createOptionGroup("Search", "INFO event tracing", 3)
+	infoTrace.hidden = function()
+		local profile = RQE.db.profile
+		return not profile.debugMode or (profile.debugLevel ~= "INFO" and profile.debugLevel ~= "INFO+")
+	end
+	infoTrace.args.note = {
+		type = "description", name = "Enable only the traces you need; event and payload output can be very frequent.",
+		order = 1, width = "full",
+	}
+	addDebugTraceOptions(infoTrace, {
+		{ "showEventDebugInfo", "Event names and memory", "Print event names and RQE memory usage for the filtered event stream." },
+		{ "showArgPayloadInfo", "Event arguments / payloads", "Print the event arguments and payloads captured by RQE's event handlers." },
+	})
+
+	local function infoPlusOnly()
+		local profile = RQE.db.profile
+		return not profile.debugMode or profile.debugLevel ~= "INFO+"
+	end
+	local worldTrace = createOptionGroup("Settings", "INFO+ world and system events", 4)
+	worldTrace.hidden = infoPlusOnly
+	addDebugTraceOptions(worldTrace, {
+		{ "showStartPeriodicCheckInfo", "Periodic checks", "Print the quest selected when StartPeriodicChecks runs." },
+		{ "showAddonLoaded", "ADDON_LOADED" },
+		{ "showPlayerLogin", "PLAYER_LOGIN" },
+		{ "PlayerEnteringWorld", "PLAYER_ENTERING_WORLD" },
+		{ "PlayerStartedMoving", "PLAYER_STARTED_MOVING" },
+		{ "PlayerStoppedMoving", "PLAYER_STOPPED_MOVING" },
+		{ "showPlayerRegenEnabled", "PLAYER_REGEN_ENABLED" },
+		{ "showPlayerMountDisplayChanged", "PLAYER_MOUNT_DISPLAY_CHANGED" },
+		{ "ZoneChange", "Zone changes / vehicle exit" },
+		{ "UpdateInstanceInfo", "UPDATE_INSTANCE_INFO" },
+		{ "ClientSceneOpened", "CLIENT_SCENE_OPENED" },
+		{ "ClientSceneClosed", "CLIENT_SCENE_CLOSED" },
+		{ "showItemCountChanged", "ITEM_COUNT_CHANGED" },
+		{ "LFGActiveEntryUpdate", "LFG_LIST_ACTIVE_ENTRY_UPDATE" },
+		{ "WorldStateTimerStart", "WORLD_STATE_TIMER_START" },
+		{ "WorldStateTimerStop", "WORLD_STATE_TIMER_STOP" },
+		{ "JailorsTowerLevelUpdate", "JAILERS_TOWER_LEVEL_UPDATE" },
+	})
+
+	local questTrace = createOptionGroup("QuestNormal", "INFO+ quest and achievement events", 5)
+	questTrace.hidden = infoPlusOnly
+	addDebugTraceOptions(questTrace, {
+		{ "QuestAccepted", "QUEST_ACCEPTED" },
+		{ "QuestStatusUpdate", "Quest status updates" },
+		{ "QuestCurrencyLootReceived", "QUEST_CURRENCY_LOOT_RECEIVED" },
+		{ "QuestLogCriteriaUpdate", "QUEST_LOG_CRITERIA_UPDATE" },
+		{ "QuestLootReceived", "QUEST_LOOT_RECEIVED" },
+		{ "QuestlineUpdate", "QUESTLINE_UPDATE" },
+		{ "QuestComplete", "QUEST_COMPLETE" },
+		{ "QuestAutocomplete", "QUEST_AUTOCOMPLETE" },
+		{ "QuestRemoved", "QUEST_REMOVED" },
+		{ "QuestWatchUpdate", "QUEST_WATCH_UPDATE" },
+		{ "QuestListWatchListChanged", "QUEST_WATCH_LIST_CHANGED" },
+		{ "QuestTurnedIn", "QUEST_TURNED_IN" },
+		{ "QuestFinished", "QUEST_FINISHED" },
+		{ "showEventAchievementEarned", "ACHIEVEMENT_EARNED" },
+		{ "showEventCriteriaEarned", "CRITERIA_EARNED" },
+		{ "showTrackedAchievementUpdate", "TRACKED_ACHIEVEMENT_UPDATE" },
+	})
+
+	local encounterTrace = createOptionGroup("QuestCampaign", "INFO+ encounters and tracking", 6)
+	encounterTrace.hidden = infoPlusOnly
+	addDebugTraceOptions(encounterTrace, {
+		{ "BossKill", "BOSS_KILL" },
+		{ "EncounterEnd", "ENCOUNTER_END" },
+		{ "ScenarioCompleted", "SCENARIO_COMPLETED" },
+		{ "ScenarioCriteriaUpdate", "SCENARIO_CRITERIA_UPDATE" },
+		{ "ScenarioUpdate", "SCENARIO_UPDATE" },
+		{ "StartTimer", "START_TIMER" },
+		{ "showEventContentTrackingUpdate", "CONTENT_TRACKING_UPDATE" },
+		{ "showEventSuperTrackingChanged", "SUPER_TRACKING_CHANGED" },
+	})
+	page.args = {
+		diagnostics = diagnostics, tools = tools, infoTrace = infoTrace,
+		worldTrace = worldTrace, questTrace = questTrace, encounterTrace = encounterTrace,
+	}
 end
 
 function ConfigUI:ComposeOptions(options)
@@ -933,7 +1024,7 @@ local function createPortrait(parent, size, x, y)
 	portrait:SetPoint("TOPLEFT", 4, -4)
 	portrait:SetPoint("BOTTOMRIGHT", -4, 4)
 	portrait:SetTexture(PORTRAIT)
-	portrait:SetTexCoord(0.04, 0.96, 0.04, 0.96)
+	portrait:SetTexCoord(0, 1, 0, 1)
 	parent.RQEConfigPortraitFrame = portraitFrame
 	return portraitFrame
 end
