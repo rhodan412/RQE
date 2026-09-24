@@ -893,7 +893,12 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		-------------------------------------------------------
 
 		-- ✅ Unified OnUpdate: Handles both item count + cooldown greyout
-		MagicButton:SetScript("OnUpdate", function(self)
+		MagicButton:SetScript("OnUpdate", function(self, elapsed)
+			-- The cooldown widget animates itself; item counts/macro parsing do not
+			-- need to run at the rendering frame rate.
+			self.rqeStateElapsed = (self.rqeStateElapsed or 0) + elapsed
+			if self.rqeStateElapsed < 0.1 then return end
+			self.rqeStateElapsed = 0
 			local macroIndex = GetMacroIndexByName("RQE Macro")
 			if not macroIndex or macroIndex == 0 then
 				if self.CountText then self.CountText:SetText("") end
