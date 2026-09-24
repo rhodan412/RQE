@@ -1657,9 +1657,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		yOffset, wheelHandler)
 		local parent = self.SeparateContentFrame
 		if not parent or type(routeLinks) ~= "table" then return end
+		RQE.API.ReleaseRenderGroup(parent, "focusRoutes")
 		self.SeparateCoordOrderButtons = {}
 		for row, link in ipairs(routeLinks) do
-			local button = CreateFrame("Button", nil, parent)
+			local button = RQE.API.AcquireRenderObject(parent, "focusRoutes", "Button", nil, row)
 			button:SetPoint("TOPLEFT", parent, "TOPLEFT", 45,
 				yOffset - (row - 1) * 20)
 			button:SetSize(130, 18)
@@ -1669,7 +1670,7 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			button.questID, button.stepIndex = questID, stepIndex
 			button.index, button.point, button.route = link.index,
 				link.point, link.route
-			local label = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			local label = button.label or button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			label:SetPoint("LEFT", button, "LEFT", 0, 0)
 			label:SetFont("Fonts\\FRIZQT__.TTF", 12)
 			label:SetTextColor(202/255, 168/255, 1) -- pale lilac #CAA8FF
