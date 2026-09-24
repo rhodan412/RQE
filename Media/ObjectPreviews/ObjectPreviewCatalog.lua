@@ -2,9 +2,14 @@
 -- Keys select images; filename labels supply titles, not hyperlink text.
 RQE = RQE or {}
 RQE.ObjectPreviewCatalog = {
+	["187677"] = { file = "187677 - Scourged Earth.tga", name = "Scourged Earth" },
 	["187900"] = { file = "187900 - Fizzcrank Spare Parts.tga", name = "Fizzcrank Spare Parts" },
 	["187984"] = { file = "187984 - West Point Station Valve.tga", name = "West Point Station Valve" },
 	["187985"] = { file = "187985 - North Point Station Valve.tga", name = "North Point Station Valve" },
 	["187986"] = { file = "187986 - Mid Point Station Valve.tga", name = "Mid Point Station Valve" },
 	["188109"] = { file = "188109 - South Point Station Valve.tga", name = "South Point Station Valve" },
+	["188236"] = { file = "188236 - Horde Armaments.tga", name = "Horde Armaments" },
+	["190335"] = { file = "190335 - The Gearmaster's Manual.tga", name = "The Gearmaster's Manual" },
+	["bt001"] = { file = "bt001 - Portal to Naxxanar.tga", name = "Portal to Naxxanar" },
+	["bt002"] = { file = "bt002 - Portal to Middle Naxxanar.tga", name = "Portal to Middle Naxxanar" },
 }
