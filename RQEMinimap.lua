@@ -492,23 +492,13 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 		self:ClearAllPoints()
 
 		local screenWidth = GetScreenWidth()
-		local screenHeight = GetScreenHeight()
-		local anchorX, anchorY = anchorFrame:GetCenter()
+		local anchorX = anchorFrame:GetCenter()
 
-		local isTopHalf = anchorY > (screenHeight / 2)
 		local isLeftHalf = anchorX < (screenWidth / 2)
 
-		-- If the anchor frame is the LDB button
-		if not isSubmenu and anchorFrame == _G["BazookaHL_RQE"] then
-			-- Directly anchor the main menu below the LDB button, considering screen side
-			if isLeftHalf then
-				self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
-			else
-				self:SetPoint("TOPRIGHT", anchorFrame, "BOTTOMRIGHT", 0, -5)
-			end
-		-- If the anchor frame is the Minimap button
-		elseif not isSubmenu and anchorFrame == RQE.MinimapButton then
-			-- Dynamically position relative to the Minimap button
+		-- LDB displays have different frame names across broker bars. Anchor the
+		-- main menu to the actual clicked display, just as for the minimap button.
+		if not isSubmenu then
 			if isLeftHalf then
 				self:SetPoint("TOPLEFT", anchorFrame, "BOTTOMLEFT", 0, -5)
 			else
@@ -520,13 +510,6 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 				self:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT", 10, -60)
 			else
 				self:SetPoint("TOPRIGHT", anchorFrame, "TOPRIGHT", -10, -60)
-			end
-		else
-			-- Fallback positioning for any other cases
-			if isLeftHalf then
-				self:SetPoint("TOPLEFT", anchorFrame, "TOPRIGHT", 10, -85)
-			else
-				self:SetPoint("TOPRIGHT", anchorFrame, "TOPLEFT", -10, -85)
 			end
 		end
 
