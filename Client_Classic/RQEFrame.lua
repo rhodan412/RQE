@@ -123,20 +123,15 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		end
 
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
-			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
-				RQE.ToggleFrameLock()
-			end)
-			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			local isPlayerInGroup = IsInGroup()
 			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
 			local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
-			if RQE_SandboxEditor then
-				rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
-			end
-
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+				if RQE_SandboxEditor then
+					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+				end
 				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
@@ -191,10 +186,13 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
+				RQE.ToggleFrameLock()
+			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
 		end)
@@ -214,16 +212,11 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
 			local questID = RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID() or RQE.CurrentDisplayedQuestID
 			local questLabel = questID and tostring(questID) or "<Nothing Tracked>"
-			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
-				RQE.ToggleFrameLock()
-			end)
-			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-
-			if RQE_SandboxEditor then
-				rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
-			end
 
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+				if RQE_SandboxEditor then
+					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
+				end
 				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				rootDescription:CreateButton("Print coordinateHotspot for [questID stepIndex]", function() RQE.ShowPrintCoordsPopup() end)
@@ -256,13 +249,15 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
 				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
 				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
-				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
+			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
+			rootDescription:CreateButton(isFrameLocked and "Unlock Quest Helper Position & Size" or "Lock Quest Helper Position & Size", function()
+				RQE.ToggleFrameLock()
+			end)
 			rootDescription:CreateButton("Hide Frames ~10 seconds", function() RQE:TempBlizzObjectiveTracker() end)
 
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				rootDescription:CreateButton("Reset frames to Default size & position", function() RQE:ResetFrameAndSizeToDefault() end)
 			end
 		end)
@@ -1813,67 +1808,28 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 	--- @field stepIndex number
 	--- @field bg Texture
 	function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+		local lastClickedIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex
+		local lastWaypointIndex = self.LastClickedWaypointButton
+			and self.WaypointButtonIndices[self.LastClickedWaypointButton]
+		self.LastClickedButtonRef, self.LastClickedWaypointButton = nil, nil
+		RQE.API.ReleaseRenderGroup(content, "steps")
+		self.WaypointButtonHover = false
 		-- Initialize an array to store the heights
 		local stepTextHeights = {}
 		RQE.CurrentQuestSteps = {}
 		local yOffset = -20  -- Vertical distance to move everything down by (the smaller the number the bigger the gap - so -35 < -30)
 		local baseYOffset = -20
 
-		-- Old step FontStrings are regions, not children of the hover container.
-		-- Hide them before recreating the step list or their coordblocks stack on top
-		-- of the next quest's steps after a tracking refresh.
-		for _, oldText in ipairs(RQE.StepsText or {}) do
-			if oldText._rqeSegments then
-				for _, segment in ipairs(oldText._rqeSegments) do
-					if segment.Hide then segment:Hide() end
-					if segment.SetParent then segment:SetParent(nil) end
-				end
-			end
-			if oldText.Hide then oldText:Hide() end
-			if oldText.SetText then oldText:SetText("") end
-		end
 		RQE.StepsText = {}
+		RQE.CoordsText = {}
+		RQE.WaypointButtons = {}
+		RQE.WaypointButtonIndices = {}
 
 		-- 🧹 Create or reuse a dedicated container for hover buttons
 		if not RQE.StepsHoverContainer then
 			RQE.StepsHoverContainer = CreateFrame("Frame", "RQE_StepsHoverContainer", content)
 			RQE.StepsHoverContainer:SetAllPoints(content)
-		else
-			-- Clean up any old children from the last quest
-			for _, child in ipairs({RQE.StepsHoverContainer:GetChildren()}) do
-				child:Hide()
-				child:SetParent(nil)
-			end
 		end
-
-		if self.StepsText then
-			for _, textElement in ipairs(self.StepsText) do
-				textElement:SetText("")
-				textElement:Hide()
-			end
-		end
-
-		if self.CoordsText then
-			for i, textElement in ipairs(self.CoordsText) do
-				textElement:Hide()
-			end
-		end
-
-		if self.WaypointButtons then
-			for i, buttonElement in ipairs(self.WaypointButtons) do
-				buttonElement:Hide()
-			end
-		end
-
-		-- CreateStepsText builds new frame objects for every render.  Keeping the
-		-- previous arrays made a delayed step selection resolve index 1 to a hidden
-		-- button from an earlier render, whose callback still held stale step data.
-		-- Once the old objects are hidden above, begin a fresh index set so the
-		-- current quest's buttons and text always agree with their step numbers.
-		self.StepsText = {}
-		self.CoordsText = {}
-		self.WaypointButtons = {}
-		self.WaypointButtonIndices = {}
 
 		-- Initialize or reset the MapIDs
 		self.MapIDs = MapIDs  -- Save MapIDs in RQEFrame
@@ -1897,7 +1853,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			if false and hasCoords then
 			--if hasCoords then
 				-- 🧭 SimpleHTML for coordinate hyperlinks
-				StepText = CreateFrame("SimpleHTML", nil, content)
+				StepText = RQE.API.AcquireRenderObject(content, "steps", "SimpleHTML", nil, i)
 				table.insert(RQE.StepsText, StepText)
 				StepText:SetFontObject("p", GameFontNormal)
 				StepText:SetFontObject("h1", GameFontNormal)
@@ -2048,7 +2004,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				end)
 			else
 				-- 🧾 Normal text (as before)
-				StepText = content:CreateFontString(nil, "OVERLAY")
+				StepText = RQE.API.AcquireRenderObject(content, "steps", "FontString", nil, "step:" .. i)
 				table.insert(RQE.StepsText, StepText)
 				StepText:SetFont("Fonts\\FRIZQT__.TTF", 12)
 				StepText:SetJustifyH("LEFT")
@@ -2071,7 +2027,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			StepText:SetWidth(RQEFrame:GetWidth() - 80)
 
 			-- Create CoordsText
-			local CoordText = content:CreateFontString(nil, "OVERLAY")
+			local CoordText = RQE.API.AcquireRenderObject(content, "steps", "FontString", nil, "coord:" .. i)
 			table.insert(RQE.CoordsText, CoordText)
 
 			if i == 1 then
@@ -2096,12 +2052,16 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 			-- Create the WaypointButton
 			---@type WaypointButton
-			local WaypointButton = CreateFrame("Button", nil, content)
+			local WaypointButton = RQE.API.AcquireRenderObject(content, "steps", "Button", nil, i)
+			if i == lastClickedIndex then self.LastClickedButtonRef = WaypointButton end
+			if i == lastWaypointIndex then self.LastClickedWaypointButton = WaypointButton end
 			WaypointButton:SetPoint("TOPRIGHT", StepText, "TOPLEFT", -10, 10)
 			WaypointButton:SetSize(30, 30)  -- Set size to 30x30
 
 			-- Use the custom texture for the background
-			local bg = WaypointButton:CreateTexture(nil, "BACKGROUND")  -- changed to WaypointButton from WaypointButtons
+			local bg = WaypointButton.bg or WaypointButton:CreateTexture(nil, "BACKGROUND")
+			WaypointButton.bg = bg
+			bg:SetAlpha(1)
 			bg:SetAllPoints()
 
 			if RQE.db.profile.enableStepControls then
@@ -2133,7 +2093,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			end
 
 			-- Create the number label
-			local number = WaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+			local number = WaypointButton.number or WaypointButton:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 			number:SetPoint("CENTER", WaypointButton, "CENTER")
 			number:SetText(i)
 			number:SetTextColor(1, 1, 0)
@@ -2316,9 +2276,12 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 		end
 
 		-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
-		C_Timer.After(0.5, function()
-			RQE:UpdateContentSize()
-		end)
+		if not self._stepsLayoutTimer then
+			self._stepsLayoutTimer = C_Timer.NewTimer(0.5, function()
+				self._stepsLayoutTimer = nil
+				self:UpdateContentSize()
+			end)
+		end
 	end
 
 
@@ -2728,11 +2691,14 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 	-- Function to clear StepsText in RQEFrame.lua
 	function RQE:ClearStepsTextInFrame()
-		if self.StepsText then
-			for i, textElement in ipairs(self.StepsText) do
-				textElement:SetText("")	-- Clear the text
-			end
+		if self._stepsLayoutTimer then
+			self._stepsLayoutTimer:Cancel()
+			self._stepsLayoutTimer = nil
 		end
+		RQE.API.ReleaseRenderGroup(content, "steps")
+		self.StepsText, self.CoordsText, self.WaypointButtons, self.WaypointButtonIndices = {}, {}, {}, {}
+		self.LastClickedButtonRef, self.LastClickedWaypointButton = nil, nil
+		self.WaypointButtonHover = false
 	end
 
 
@@ -3134,6 +3100,10 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 
 		-- Function to update the content dynamically
 		function RQE:UpdateSeparateFocusFrame()
+			if self._focusRefreshTimer then
+				self._focusRefreshTimer:Cancel()
+				self._focusRefreshTimer = nil
+			end
 			-- Make sure the SeparateContentFrame exists
 			if not RQE.SeparateContentFrame then
 				print("Error: SeparateContentFrame not found.")
@@ -3232,27 +3202,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				return
 			end
 
-			-- Clear any existing children in the content frame
-			for _, child in ipairs({RQE.SeparateContentFrame:GetChildren()}) do
-				if child then
-					child:Hide()
-					if child.SetText then
-						child:SetText("")
-					end
-					if child ~= RQE.SeparateScrollFrame and child ~= RQE.SeparateContentFrame then
-						child:SetParent(nil)
-					end
-				end
-			end
-			-- Paragraph FontStrings are frame regions rather than children.  A
-			-- same-quest refresh can bypass ClearSeparateFocusFrame's change gate;
-			-- discard the old regions before drawing new coordblock labels.
-			for _, region in ipairs({RQE.SeparateContentFrame:GetRegions()}) do
-				if region.GetObjectType and region:GetObjectType() == "FontString" then
-					region:Hide()
-					region:SetText("")
-				end
-			end
+			RQE.API.ReleaseRenderGroup(RQE.SeparateContentFrame, "focus")
+			RQE.API.ReleaseRenderGroup(RQE.SeparateContentFrame, "focusRoutes")
+			RQE.SeparateStepText = nil
 
 			RQE.CurrentlySuperQuestID = displayedQuestID
 			RQE:ClearSeparateFocusFrame()
@@ -3271,7 +3223,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			-- ✅ Quest handling logic
 			if not questData then
 				-- Quest not in DB at all
-				RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+				RQE.SeparateStepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 				RQE.SeparateStepText:SetJustifyH("LEFT")
 				RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
 				RQE.SeparateStepText:SetWidth(focusTextWidth)
@@ -3289,7 +3241,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				totalSteps = #questData
 				if totalSteps == 0 then
 					-- Quest in DB, but no steps — display "1/0"
-					RQE.SeparateStepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					RQE.SeparateStepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 					RQE.SeparateStepText:SetJustifyH("LEFT")
 					RQE.SeparateStepText:SetTextColor(1, 1, 0.8)
 					RQE.SeparateStepText:SetWidth(focusTextWidth)
@@ -3351,14 +3303,6 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			RQE.StepIndexForCoordMatch = stepIndex
 			RQE.totalStepforQuest = totalSteps
 
-			-- Remove any old SeparateStepText if it exists (since SimpleHTML can't reuse FontString)
-			if RQE.SeparateStepText then
-				RQE.SeparateStepText:Hide()
-				RQE.SeparateStepText:SetText("")
-				RQE.SeparateStepText:SetParent(nil)
-				RQE.SeparateStepText = nil
-			end
-
 			-- Coordblocks use the same native hyperlink path as full coordinate links,
 			-- but retain their compact [x, y] display.
 			local hasCoords = formattedText:match("{coords:") or formattedText:match("{coordblock:")
@@ -3374,7 +3318,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 				if #paragraphs == 0 then table.insert(paragraphs, cleaned) end
 
 				-- 🧭 Create SimpleHTML for the first paragraph
-				local StepText = CreateFrame("SimpleHTML", nil, RQE.SeparateContentFrame)
+				local StepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "SimpleHTML")
 				RQE.SeparateStepText = StepText
 				StepText:EnableMouseWheel(true)
 				StepText:SetScript("OnMouseWheel", HandleSeparateFocusMouseWheel)
@@ -3609,7 +3553,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 								print(string.format("RQE DEBUG: Rendering paragraph #%d below HTML: %s", i, line))
 							end
 
-							local fs = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+							local fs = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 							fs:SetPoint("TOPLEFT", RQE.SeparateContentFrame, "TOPLEFT", focusTextInset, yOffset)
 							fs:SetWidth(focusTextNarrowWidth)
 							fs:SetJustifyH("LEFT")
@@ -3658,7 +3602,7 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 						print(string.format("RQE DEBUG: Rendering FontString paragraph #%d: %s", i, line))
 					end
 
-					local StepText = RQE.SeparateContentFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					local StepText = RQE.API.AcquireRenderObject(RQE.SeparateContentFrame, "focus", "FontString", "GameFontNormal")
 					-- RQE.SeparateStepText = StepText
 					if i == 1 then
 						RQE.SeparateStepText = StepText
