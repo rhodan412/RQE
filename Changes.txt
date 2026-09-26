@@ -1,3 +1,248 @@
+12.1.0.10 (2026.09.26)
+
+	**HIGHLIGHTS**
+		- Quest objective updates now keep the selected guidance step and waypoint instead of returning vehicle quests to their boarding step.
+		- Restored automatic quest-step selection during combat progress updates when manual step controls are disabled, across Retail, Classic, and TBC.
+		- Consuming a quest item now advances inventory-based guidance steps after bags update, without requiring a manual Quest Tracker click.
+		- Quest steps can return to an earlier guidance step when an item or other configured condition is no longer met, keeping separate collect and use macros in sync.
+		- Retry steps now recognize item and spell IDs, zone and minimap names, and give completed objectives priority over fallback guidance.
+		- Inventory-based quest steps now respond to bag and player inventory changes without quest-specific zone lists.
+		- Quests ready to turn in now stay on their final guidance step when Blizzard also supplies waypoint text.
+		- Root and shared modules now use one client-aware API layer for Retail, Classic/SoD, TBC Anniversary, and Forever; unavailable optional APIs are handled centrally.
+		- Corrected merchant purchase confirmation prices and scenario timer data reads for modern table-returning APIs.
+		- Auction House quest macros now buy the remaining amount for the selected item objective, including partially collected materials.
+		- Quest-objective Auction House macros no longer depend on a global quantity variable, preventing accidental one-item purchases.
+		- Newly focused quests now reconcile their guidance step after quest data settles, including quests accepted with objectives already complete and intermediate steps before turn-in.
+		- Accepting quests or filtering zone watches no longer replaces an existing focused quest when "Choose a quest when none is focused" is enabled.
+		- Tracked achievements now scroll fully into view when criteria wrap or several achievements are tracked.
+		- Profession recipes now have their own tracker section above Achievements, with every tracked recipe and its materials visible together.
+		- Recipe titles and ingredients now show tooltips and open the profession recipe when clicked, including inspection of unlearned recipes.
+		- Ingredient counts update as materials change and turn green when enough are held to craft one recipe.
+		- Shift+left-clicking a recipe or ingredient now untracks that recipe.
+		- Tracked recipes keep the Quest Tracker visible even when no quests or achievements are tracked.
+		- Achievement tracking now shows numeric progress such as 98/100, and description-only achievements show their objective instead of a blank line.
+		- Achievement tooltips now include the category, completed-criteria summary, and achievement icon.
+		- Shift+left-clicking a tracked achievement now untracks it from RQE.
+		- Numeric achievement objectives now show both progress and the objective text, as with Bridge Over Troubled Fire and Venomous Weapons of Conquest.
+		- Profession ingredient totals now include every usable quality in bags, personal bank, reagent bank, and account bank, so completion colors reflect available crafting materials.
+		- Tracked recipe titles now show how many crafts the currently counted materials support, such as W-47CH D0G [x5].
+		- Quest Tracker sections can now be moved up or down in either settings interface; each profile keeps its own order, and the original layout can be restored at any time.
+		- Fixed tracker-section reordering errors when moving a quest type above the current top section, including Normal above Campaign; the Azure & Gold order controls now remain aligned in the configuration window.
+		- Quest Tracker sections other than Scenario can now be collapsed or expanded independently, with each profile remembering its choices and the remaining sections closing the gaps.
+		- Fixed quest text showing through collapsed sections and Profession ingredients overlapping the following section after expand/collapse.
+		- Corrected oversized Normal Quest panels when they follow a collapsed Campaign header, keeping the next sections close to the visible quest rows.
+		- Moving tracker sections in the standalone settings window now keeps the order controls in view instead of jumping to the top of Frame Settings.
+		- Child-section collapse buttons now sit within their header borders while the main Quest Tracker button keeps its existing size.
+		- Search and Restore are larger and easier to read in both Quest Tracker styles, with clearer Azure & Gold borders around their labels.
+		- Moving tracker sections no longer flashes the standalone settings page at the top before returning to the order controls.
+
+	Buttons.lua
+		- Routed shared button quest, map, item cooldown/range, macro binding, and addon checks through RQE.API.Client or ResolveClientAPI; preserved each replaced source line in a dated Previous Blizzard call comment so shared buttons use supported client implementations and remain easy to revert. (2026.09.25.0856)
+
+	Client_Classic/Config.lua
+		- Added the shared tracker-section ordering controls to Classic/SoD Frame Settings so the active profile can rearrange sections without changing their default layout. (2026.09.26.1207)
+
+	Client_Classic/Core.lua
+		- Preserved the selected step and waypoint as numeric indices before the Classic quest helper releases pooled step buttons, so quest-log redraws can rebind the current selection. (2026.09.24.1626)
+		- Added opt-in failedcheck/failedchecks retry routing after normal progression, with per-condition failedIndex targets and validation, while preserving the existing zone-change failure path and leaving unconfigured steps unchanged. (2026.09.24.2152)
+		- Resolved item IDs, spell IDs, and map names in Classic retry checks; evaluated scenario, conditional, and completion retries without invoking their step-changing normal handlers, and moved single-zone retries behind normal completion. (2026.09.24.2210)
+		- Evaluated the selected Classic retry step's normal completion before earlier steps in a rescan, using the active numeric step index when a pooled button reference lags, so a completed objective cannot be overridden by a fallback. (2026.09.24.2215)
+		- Skipped the normal Classic step scan after turn-in readiness selects a final CheckDBComplete step, so Blizzard waypoint text cannot move past the final DB step or run earlier checks again. (2026.09.24.2223)
+		- Limited the initial ready-to-turn-in rescan to a newly focused quest, checking intermediate DB steps before selecting the final turn-in step while leaving ordinary ready checks on their fast path. (2026.09.25.1347)
+		- Ignored queued step checks whose quest ID no longer matches focus, and preserved the resolved guidance index if step buttons have not rendered yet. (2026.09.25.1347)
+		- Prevented closest-quest fallback from replacing an already focused quest during watch-list changes. (2026.09.25.1347)
+		- Removed the displayed-quest fallback from Classic StartPeriodicChecks; full guidance progression now requires a positive current super-tracked quest ID, leaving tracker-only step reads for distance. (2026.09.25.1358)
+		- Moved Classic tracked-recipe text below the new Profession header, counted its visible recipe, and sized the section for its ingredients so expanded content is not clipped after a section toggle. (2026.09.26.1331)
+		- Remembered the Classic Profession section's measured ingredient height separately from its collapsed header height, so expanding restores room for the recipe before later sections reflow. (2026.09.26.1351)
+
+	Client_Classic/EventManager.lua
+		- Registered BAG_UPDATE_DELAYED and queued a coalesced step check only when the active Classic quest step uses CheckDBInventory, so consumed quest items can advance guidance without checking unrelated bag changes. (2026.09.24.2116)
+		- Included inventory-based failure checks in the delayed bag-event filter so configured retry steps are reevaluated when a consumable disappears. (2026.09.24.2152)
+		- Routed Classic zone retry reevaluations from area and subzone events through StartPeriodicChecks instead of clicking a failed-zone waypoint directly, so normal completion takes priority. (2026.09.24.2210)
+		- Removed the Classic BAG_UPDATE and UNIT_INVENTORY_CHANGED quest-and-zone allowlists; settled bag updates retain the shared inventory-step filter, while player inventory events queue the same coalesced check for normal and failure inventory conditions. (2026.09.24.2221)
+		- Reconciled guidance once after a new super-tracked quest settles instead of checking merely because a quest was accepted; the callback verifies that the same quest remains focused. (2026.09.25.1347)
+		- Guarded blank-frame recovery and watched-quest auto-selection with the actual focused quest ID, so acceptance and zone-watch changes do not steal focus. (2026.09.25.1347)
+
+	Client_Classic/QuestingModule.lua
+		- Bypassed fixed Campaign-to-Normal, Task, and Achievement anchors while a custom tracker order is active, including quest redraws and child-frame repositioning, so reordering cannot form circular frame dependencies in Classic/SoD. (2026.09.26.1249)
+		- Used the managed anchor path for collapsed Classic/SoD sections even at default order, retained the Achievement header and its control across redraws, and constrained changing section titles to leave room for the collapse button. (2026.09.26.1331)
+		- Added a header to the Classic/SoD Profession section and kept it hidden until a recipe is tracked, allowing that section to participate in profile-saved collapsing and reordering. (2026.09.26.1331)
+		- Parent tracked Classic/SoD quest buttons and their objective text to their Campaign or Normal section, reparenting reused buttons when a quest category changes, so collapsed and hidden sections cannot bleed into later headers. (2026.09.26.1351)
+		- Remember the last measured Campaign and Normal content heights during Classic/SoD quest redraws, reusing them when a newly moved section's screen coordinates are not ready instead of retaining the oversized estimate. (2026.09.26.1402)
+		- Enlarged the Classic/SoD tracker Search and Restore controls while preserving their input-field anchors; marked only these controls for the clearer themed button treatment. (2026.09.26.1441)
+
+	Client_Classic/RQEFrame.lua
+		- Restored selected Classic step and waypoint references after pooled redraws and assigned every rebuilt step button its index even with manual step controls disabled, preserving automatic progression. (2026.09.24.1626)
+
+	Client_TBC/Config.lua
+		- Added the shared tracker-section ordering controls to TBC Anniversary Frame Settings, storing custom section positions in the selected profile. (2026.09.26.1207)
+
+	Client_TBC/Core.lua
+		- Preserved the selected step and waypoint as numeric indices before the TBC quest helper releases pooled step buttons, so quest-log redraws can rebind the current selection. (2026.09.24.1626)
+		- Added opt-in failedcheck/failedchecks retry routing after normal progression, with per-condition failedIndex targets and validation, while preserving the existing zone-change failure path and leaving unconfigured steps unchanged. (2026.09.24.2152)
+		- Resolved item IDs, spell IDs, and map names in TBC retry checks; evaluated scenario, conditional, and completion retries without invoking their step-changing normal handlers, and moved single-zone retries behind normal completion. (2026.09.24.2210)
+		- Evaluated the selected TBC retry step's normal completion before earlier steps in a rescan, using the active numeric step index when a pooled button reference lags, so a completed objective cannot be overridden by a fallback. (2026.09.24.2215)
+		- Skipped the normal TBC step scan after turn-in readiness selects a final CheckDBComplete step, so Blizzard waypoint text cannot move past the final DB step or run earlier checks again. (2026.09.24.2223)
+		- Limited the initial ready-to-turn-in rescan to a newly focused quest, checking intermediate DB steps before selecting the final turn-in step while leaving ordinary ready checks on their fast path. (2026.09.25.1347)
+		- Ignored queued step checks whose quest ID no longer matches focus, and preserved the resolved guidance index if step buttons have not rendered yet. (2026.09.25.1347)
+		- Prevented closest-quest fallback from replacing an already focused quest during watch-list changes. (2026.09.25.1347)
+		- Removed the displayed-quest fallback from TBC StartPeriodicChecks; full guidance progression now requires a positive current super-tracked quest ID, leaving tracker-only step reads for distance. (2026.09.25.1358)
+		- Moved TBC tracked-recipe text below the new Profession header, counted its visible recipe, and sized the section for its ingredients so expanded content is not clipped after a section toggle. (2026.09.26.1331)
+		- Remembered the TBC Profession section's measured ingredient height separately from its collapsed header height, so expanding restores room for the recipe before later sections reflow. (2026.09.26.1351)
+
+	Client_TBC/EventManager.lua
+		- Registered BAG_UPDATE_DELAYED and queued a coalesced step check only when the active TBC quest step uses CheckDBInventory, so consumed quest items can advance guidance without checking unrelated bag changes. (2026.09.24.2116)
+		- Included inventory-based failure checks in the delayed bag-event filter so configured retry steps are reevaluated when a consumable disappears. (2026.09.24.2152)
+		- Routed TBC zone retry reevaluations from area and subzone events through StartPeriodicChecks instead of clicking a failed-zone waypoint directly, so normal completion takes priority. (2026.09.24.2210)
+		- Removed the TBC BAG_UPDATE and UNIT_INVENTORY_CHANGED quest-and-zone allowlists; settled bag updates retain the shared inventory-step filter, while player inventory events queue the same coalesced check for normal and failure inventory conditions. (2026.09.24.2221)
+		- Reconciled guidance once after a new super-tracked quest settles instead of checking merely because a quest was accepted; the callback verifies that the same quest remains focused. (2026.09.25.1347)
+		- Guarded blank-frame recovery and watched-quest auto-selection with the actual focused quest ID, so acceptance and zone-watch changes do not steal focus. (2026.09.25.1347)
+
+	Client_TBC/QuestingModule.lua
+		- Bypassed fixed Campaign-to-Normal, Task, and Achievement anchors while a custom tracker order is active, including quest redraws and child-frame repositioning, so reordering cannot form circular frame dependencies in TBC Anniversary. (2026.09.26.1249)
+		- Used the managed anchor path for collapsed TBC sections even at default order, retained the Achievement header and its control across redraws, and constrained changing section titles to leave room for the collapse button. (2026.09.26.1331)
+		- Added a header to the TBC Profession section and kept it hidden until a recipe is tracked, allowing that section to participate in profile-saved collapsing and reordering. (2026.09.26.1331)
+		- Parent tracked TBC quest buttons and their objective text to their Campaign or Normal section, reparenting reused buttons when a quest category changes, so collapsed and hidden sections cannot bleed into later headers. (2026.09.26.1351)
+		- Remember the last measured Campaign and Normal content heights during TBC quest redraws, reusing them when a newly moved section's screen coordinates are not ready instead of retaining the oversized estimate. (2026.09.26.1402)
+		- Enlarged the TBC Anniversary tracker Search and Restore controls while preserving their input-field anchors; marked only these controls for the clearer themed button treatment. (2026.09.26.1441)
+
+	Client_TBC/RQEFrame.lua
+		- Restored selected TBC step and waypoint references after pooled redraws and assigned every rebuilt step button its index even with manual step controls disabled, preserving automatic progression. (2026.09.24.1626)
+
+	Config.lua
+		- Routed CVar reads/writes and player/max-level queries through the unified client API, retaining the original expressions in dated comments so configuration behavior uses the active client implementation. (2026.09.25.0856)
+		- Added the shared tracker-section ordering controls to Retail/Forever Frame Settings for profile-specific section placement. (2026.09.26.1207)
+
+	ConfigTheme.lua
+		- Routed deferred refresh timers and combat-lockdown checks through the shared API surface, retaining original-call comments so themed configuration updates keep the same scheduling and combat behavior. (2026.09.25.0856)
+		- Built Current Order, Up/Down, Default, and restore controls from one AceConfig definition; kept Blizzard Settings native while presenting the controls inside the Azure & Gold Frame Settings page. (2026.09.26.1207)
+		- Presented each tracker-order row as one aligned line in the standalone Azure & Gold window while retaining the native Blizzard AddOn Settings layout and the Restore default order control. (2026.09.26.1249)
+		- Preserved the standalone settings page's scroll value when order actions trigger an AceConfig rebuild, restoring it after layout settles and ignoring stale page callbacks so repeated Up/Down clicks stay in view. (2026.09.26.1417)
+		- Held the standalone scroll offset through AceConfig's synchronous order-control rebuild, refreshed existing page content in place, and skipped a duplicate standalone order notification refresh so Up/Down clicks no longer show the top of the page between frames. (2026.09.26.1441)
+
+	Core.lua
+		- Saved the selected step and waypoint indices before UpdateFrame clears its pooled step buttons, then passed them into the rebuild so QUEST_LOG_UPDATE does not lose automatic progression state. (2026.09.24.1604)
+		- Preferred the active numeric AddonSetStepIndex when retaining the selected step through Retail redraws, avoiding a stale button reference overriding the current automatic step. (2026.09.24.1626)
+		- Added opt-in failedcheck/failedchecks retry routing after normal progression, with per-condition failedIndex targets and validation, while preserving the existing zone-change failure path and leaving unconfigured steps unchanged. (2026.09.24.2152)
+		- Resolved item IDs, spell IDs, and map names in Retail retry checks; evaluated scenario, conditional, and completion retries without invoking their step-changing normal handlers, and moved single-zone retries behind normal completion. (2026.09.24.2210)
+		- Evaluated the selected Retail retry step's normal completion before earlier steps in a rescan, using the active numeric step index when a pooled button reference lags, so a completed objective cannot be overridden by a fallback. (2026.09.24.2215)
+		- Skipped the normal Retail step scan after turn-in readiness selects a final CheckDBComplete step, so Blizzard waypoint text cannot move past the final DB step or run earlier checks again. (2026.09.24.2223)
+		- Migrated root quest, map, scenario, gossip, item/spell/aura, merchant/auction, group, unit, timer, and diagnostic calls and feature references to RQE.API.Client/ResolveClientAPI, with a dated original-source comment for every changed line; Classic/TBC Core files remain unchanged. (2026.09.25.0856)
+		- Made AceAddon adopt the RQE table initialized by RQE_API.lua so early API and rendering helpers survive addon construction after the Retail/Forever load-order change. (2026.09.25.0856)
+		- Read merchant name/price from the MerchantItemInfo table and reused the fetched price for the purchase confirmation; read scenario duration/elapsed from ScenarioCriteriaInfo fields instead of unpacking nonexistent tuple positions. (2026.09.25.0856)
+		- Read indexed quest-objective counts for dynamic Auction House purchases even when the objective list supplies numeric counts; use the selected step neededAmt and the greater of objective progress or bag stock, without double-counting, to request only the remaining materials. Retained explicit numeric quantities and canceled resolved zero amounts; missing objective lists no longer block known-step resolution. (2026.09.25.0920)
+		- Scoped the initial ready-to-turn-in intermediate-step scan to the quest that just gained focus, while ordinary ready checks retain the final-step shortcut. (2026.09.25.1347)
+		- Dropped stale queued checks for a different focused quest and kept the resolved step visible when its button has not rendered. (2026.09.25.1347)
+		- Stopped closest-quest fallback and the zone-watch filter from replacing a valid quest that was already focused before the watch list changed. (2026.09.25.1347)
+		- Removed the displayed-quest fallback from Retail/Forever StartPeriodicChecks; full guidance progression now uses only a positive current super-tracked quest ID. (2026.09.25.1358)
+		- Replaced single-recipe text assembly with a fresh read of both tracked recipe lists, required reagent slots, and owned item/currency counts; request uncached item names so every tracked recipe, including unlearned recipes, can display its materials. (2026.09.26.0900)
+		- Count the visible Profession section when deciding whether the Quest Tracker is empty, so tracked recipes remain accessible with no quest or achievement watches. (2026.09.26.0908)
+		- Read tracked recipe IDs, schematics, required slots, reagent quantities, and currencies through RQE.API so profession data access is maintained in one client-aware layer. (2026.09.26.0934)
+		- Use the shared API's aggregated reagent count for each required profession slot, so the tracker combines quality variants and banked materials while retaining its single-item tooltip. (2026.09.26.1007)
+
+	DatabaseMain.lua
+		- Routed GetBuildInfo and the optional garrison-info lookup through the central API while preserving database-selection rules and original-call comments; RQEDatabase.lua is not modified. (2026.09.25.0856)
+
+	DebugLog.lua
+		- Routed map, scenario, and instance context queries through the central API, preserving original-call comments so diagnostic snapshots use the same client compatibility paths as gameplay modules. (2026.09.25.0856)
+
+	EventManager.lua
+		- Registered BAG_UPDATE_DELAYED and queued a coalesced step check only when the active Retail quest step uses CheckDBInventory, allowing consumed keys such as quest 12069's to advance while avoiding redundant checks for other quests. (2026.09.24.2116)
+		- Included inventory-based failure checks in the delayed bag-event filter so configured retry steps are reevaluated when a consumable disappears. (2026.09.24.2152)
+		- Routed Retail zone retry reevaluations from area and subzone events through StartPeriodicChecks instead of clicking a failed-zone waypoint directly, so normal completion takes priority. (2026.09.24.2210)
+		- Removed the Retail BAG_UPDATE and UNIT_INVENTORY_CHANGED quest-and-zone allowlists; settled bag updates retain the shared inventory-step filter, while player inventory events queue the same coalesced check for normal and failure inventory conditions. (2026.09.24.2221)
+		- Migrated root event-handler quest/map/scenario state queries, addon/unit checks, deferred callbacks, and supertracking calls to the central API with dated original-call comments; event registration and the Classic/TBC handlers remain unchanged. (2026.09.25.0856)
+		- Moved settled step reconciliation from acceptance to an actual super-tracking change, checking only while the same quest remains focused and avoiding a duplicate early focus pass. (2026.09.25.1347)
+		- Prevented blank-frame recovery and watched-quest fallback from selecting a newly accepted or watched quest when another quest already has focus. (2026.09.25.1347)
+		- Refresh the profession section on recipe tracking, settled bag changes, currency changes, item-name loads, and world entry; removing one tracked recipe now leaves the others visible and reload restores the tracked list. (2026.09.26.0900)
+		- Keep the global type function available during CONTENT_TRACKING_UPDATE diagnostics and use the achievement content type constant; rely on the existing tracked-achievement updater for one refresh after a Shift+click untrack. (2026.09.26.0920)
+		- Refresh tracked recipe counts when the bank opens or bank slots change, so stored reagent totals appear without waiting for a bag update. (2026.09.26.1007)
+
+	ProfileManager.lua
+		- Routed profile-apply timers, combat-lockdown checks, and error-handler lookup through the shared API, preserving original expressions so profile restoration retains its deferral and error-reporting behavior across clients. (2026.09.25.0856)
+		- Reapplied the active profile's tracker-section layout when profiles change or reset, including restoration of the original layout when leaving a custom order. (2026.09.26.1207)
+
+	QuestingModule.lua
+		- Migrated root tracker quest/objective/reward, item/aura, map, scenario, party-progress, and timer calls plus optional API references to the central API, retaining dated source comments and preserving the UI widget/frame operations. (2026.09.25.0856)
+		- Sized the achievement section from rendered headers and criteria, retained that height through quest redraws, and refreshed the tracker scroll range after wrapped text settles. Let the scroll child keep its measured height instead of constraining it to the viewport, so all achievements remain reachable below the fixed search row. (2026.09.25.1746)
+		- Built a dedicated, dynamically sized Profession child frame above Achievements with clickable recipe and reagent rows, recipe/item tooltips, learned-recipe opening and unlearned-recipe inspection, and green completion counts; reanchor and measure the scroll area as sections change. (2026.09.26.0900)
+		- Made Shift+left-click on a profession title or ingredient untrack that row's recipe, including its recraft state, while an ordinary left-click still opens the recipe. (2026.09.26.0905)
+		- Reevaluate tracker visibility after the Profession child frame shows or hides, so tracking a recipe alone opens the Quest Tracker and removing the last recipe restores its empty-frame behavior. (2026.09.26.0908)
+		- Format numeric achievement criteria from their quantity and total fields, using a compact current/required count for single progress criteria, and fall back to the achievement description when no usable criterion text exists; retain all individual criteria in the tracker. (2026.09.26.0919)
+		- Populate achievement header tooltips from the game's achievement link so category, criteria completion, and icon match the underlying achievement data, while retaining an ID line and a basic fallback when no link is available. (2026.09.26.0919)
+		- Make Shift+left-click on an achievement title stop manually tracking that achievement and dismiss its tooltip, while ordinary left-click still opens the achievement. (2026.09.26.0920)
+		- Follow up the numeric criteria display by retaining its objective text after the current/required count, so single-criterion achievements show both progress and purpose rather than an isolated fraction. (2026.09.26.0921)
+		- Routed new profession and achievement tooltip, tracking, recipe-opening, and modifier-key actions through RQE.API while retaining the existing tracker display and click behavior. (2026.09.26.0934)
+		- Added a material-limited craft count to each tracked recipe title by taking the smallest whole-number count across its required reagent rows; recipes without a measurable required reagent retain their plain title. (2026.09.26.1146)
+		- Routed fixed-order quest, Task, recipe, and child-frame anchor paths through the selected custom tracker layout when active, preventing reverse anchors from clearing the Quest Tracker or raising circular SetPoint errors in Retail and Forever. (2026.09.26.1249)
+		- Routed Retail/Forever quest and Task redraws through the managed layout whenever a section is collapsed, kept the Achievement header and its button intact, and reserved title width for ellipsis before the button. (2026.09.26.1331)
+		- Exposed the tracked-recipe count to section presentation so the Profession border appears only with tracked recipes while its collapsed header preserves the selected profile state. (2026.09.26.1331)
+		- Parent tracked Retail/Forever quest rows to their actual Campaign or Normal section instead of the common scroll content, including reused rows that change category, so collapse clips the entire quest row. (2026.09.26.1351)
+		- Saved Profession's full rendered recipe-and-ingredient height before section presentation can clamp it to a collapsed header, preventing Achievements from anchoring across visible ingredients after expansion. (2026.09.26.1351)
+		- Retain Retail/Forever Campaign and Normal measured content heights across redraws when a collapsed predecessor temporarily leaves the next section's coordinates unresolved, avoiding its oversized count-based height. (2026.09.26.1402)
+		- Enlarged Retail/Forever Quest Tracker Search and Restore in both visual modes, retaining their fixed row and input-field anchors and applying scoped themed styling only to these actions. (2026.09.26.1441)
+
+	RQE-Camelot.TOC
+		- Loaded RQE_API.lua before the root Core.lua and ProfileManager.lua so Forever has its unified client API available during root-module initialization; interface and version metadata are unchanged. (2026.09.25.0856)
+		- Loaded the shared tracker-order module after Forever's tracker frames so profile-specific section ordering is available without changing version metadata. (2026.09.26.1207)
+
+	RQE-Classic.toc
+		- Loaded the shared tracker-order module after the Classic/SoD tracker frames so its section-order controls can reflow visible sections. (2026.09.26.1207)
+
+	RQE-Tbc.toc
+		- Loaded the shared tracker-order module after the TBC Anniversary tracker frames so its section-order controls can reflow visible sections. (2026.09.26.1207)
+
+	RQE.toc
+		- Updated version# (2026.09.24.0056)
+		- Loaded RQE_API.lua before the root Core.lua and ProfileManager.lua so Retail metadata reads and hook registration can use the unified API during file loading; interface and version metadata are unchanged. (2026.09.25.0856)
+		- Loaded the shared tracker-order module after Retail's tracker frames, retaining the existing TOC version metadata. (2026.09.26.1207)
+
+	RQEDatabase.lua
+		- Set quest 11999 and 12000 step 2 to complete on the Plans objective and added an inventory failure target of step 1, so consuming an empty Personal Effects bag restores the collect instruction and macro. (2026.09.24.2157)
+		- Updated dynamic Auction House macros in the database to omit the quantity variable, using RQE:SearchPreparePurchaseConfirmAH(itemID) so nil selects the remaining-objective calculation without global-variable collisions. Kept explicit numeric quantities for inventory-based purchases, including quest 29517 Shiny Bauble (10), Coarse Thread (5), and Blue Dye (5) macros. (2026.09.25.0939)
+
+	RQEFrame.lua
+		- Let step rendering rebind the prior selected step and waypoint buttons from numeric indices after pooled objects clear their old stepIndex fields. (2026.09.24.1604)
+		- Assigned every rebuilt Retail step button its index with manual step controls disabled, so a quest progress redraw cannot leave automatic step evaluation reading a nil button index and falling back to step 1. (2026.09.24.1626)
+		- Migrated root Quest Helper quest, item, map, party-progress, LFG, addon, and timer calls and availability checks to the central API with dated original-source comments; resolved the quest ID before reading quest text and treated a false listing result as a failure instead of logging success. (2026.09.25.0857)
+
+	RQEMacro.lua
+		- Routed macro creation/edit/deletion, item and spell lookups/cooldowns, quest checks, timing, and combat/input checks through the central API, preserving dated original-source comments and the existing protected-action call context. (2026.09.25.0856)
+
+	RQEMinimap.lua
+		- Routed launcher addon checks, waypoint clearing, timers, cursor/screen queries, and combat/modifier state through the unified API, retaining original-call comments and leaving minimap widget behavior intact. (2026.09.25.0856)
+
+	RQE_API.lua
+		- Added the RQE.API.Client surface for all 298 audited game API names, including those still called directly in the untouched Classic/TBC files; native dispatch preserves multiple returns, nils, booleans, callback arguments, and timer handles, while ResolveClientAPI distinguishes real/native-or-adapted support from unsupported defaults. (2026.09.25.0856)
+		- Separated the real game version from API-generation routing: Forever 1.60 selects the Midnight API generation, while Classic/SoD and Anniversary retain legacy quest-log adapters. Captured native namespaces before existing compatibility shims and kept all new dispatch inside RQE without replacing native Blizzard methods. (2026.09.25.0856)
+		- Added explicit bidirectional item/container/spell/merchant conversions, spell-bank conversion, legacy aura/gossip and scenario adapters, quest-ID/log-index and watch helpers, and selected-quest reward lookups that restore selection after success or error. Unsupported APIs use explicit nil/false/count/list contracts without pretending unsupported transactions succeeded. (2026.09.25.0856)
+		- Filled modern flat map/waypoint/watch/scenario helper gaps, unified quest-description access, retained Forever quest-ID validation, and reconciled both merchant helper contracts with the native MerchantItemInfo table. (2026.09.25.0856)
+		- Added tracker-facing profession data and action helpers plus tooltip and achievement-untracking helpers, keeping their game API calls in the shared Retail/Forever API layer. (2026.09.26.0934)
+		- Count each distinct reagent item across carried inventory, personal bank, reagent bank, and account bank, and combine the eligible quality variants for a recipe slot without double-counting IDs. (2026.09.26.1007)
+
+	RQE_ModelPreview.lua
+		- Routed preview-load timers and cursor-position queries through the shared API with original-call comments; model widget calls and preview layout remain unchanged. (2026.09.25.0856)
+
+	TrackerOrder.lua
+		- Normalized and saved section keys per AceDB profile, preserved each client's existing order as its default, and provided immediate move/reset operations without changing the default anchoring path. (2026.09.26.1207)
+		- Reanchored visible Scenario, Campaign/Meta, Normal, World, Bonus, Task, Profession, and Achievement sections after legacy renderer updates and section visibility/size changes; coalesced scroll-range refreshes and measured Classic/TBC reordered content so bottom sections remain reachable. (2026.09.26.1207)
+		- Detached every tracker section before applying a reordered anchor chain, restored the default chain before its next fixed-order render, and ignored stale custom-order scroll callbacks after reset to avoid circular dependencies and residual layout changes. (2026.09.26.1249)
+		- Added profile-saved collapse buttons to every non-Scenario child header using the Quest Tracker chevrons, with title ellipsis, header-only collapsed height, and section borders shown only for expanded tracked content. (2026.09.26.1331)
+		- Reflowed visible sections in profile order after toggles and independent redraws, anchoring below a collapsed header with a modest gap or below the final rendered item of an expanded section, while restoring default anchors when no managed layout remains. (2026.09.26.1331)
+		- Restore and enforce Profession's separately recorded full content height on expansion before anchoring the following visible section, while preserving the collapsed header height and profile-specific section order. (2026.09.26.1351)
+		- Recheck visible quest-section heights after the ordered anchor chain settles, then reflow and update the scroll range when an initial redraw retained a coarse height beneath a collapsed predecessor. (2026.09.26.1402)
+		- Sized only child-section themed collapse/expand chevrons to 20 pixels, leaving a border gap without changing the main Quest Tracker header button. (2026.09.26.1417)
+
+	UITheme.lua
+		- Raised only the themed tracker Search and Restore button heights and cropped transparent margins from their shared wide-button art, making Azure & Gold borders and label padding more visible without changing other text buttons. (2026.09.26.1441)
+
+	WaypointManager.lua
+		- Migrated root waypoint/map/POI, quest-location, supertracking, addon, and timer calls to the central API with dated original expressions so the selected client implementation owns waypoint API differences. (2026.09.25.0856)
+
+	WPUtil.lua
+		- Routed shared waypoint map/player-position, movement/time, addon, and deferred-update calls and availability checks through the central API, preserving dated comments and existing coordinate/path calculations. (2026.09.25.0856)
+
+
 12.1.0.9 (2026.09.24)
 
 	**HIGHLIGHTS**
