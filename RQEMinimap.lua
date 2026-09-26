@@ -77,7 +77,8 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 		if isRetail and frame.IsMouseOver then
 			return frame:IsMouseOver()
 		end
-		return MouseIsOver and MouseIsOver(frame) or false
+		-- Previous Blizzard call changed 2026.09.25: return MouseIsOver and MouseIsOver(frame) or false
+		return RQE.API.ResolveClientAPI("MouseIsOver") and RQE.API.Client.MouseIsOver(frame) or false
 	end
 
 	-- Function to close the main launcher menu and any open More Options submenu
@@ -107,13 +108,15 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 		-- Handles launcher clicks for frame visibility, logging, settings, and menus
 		OnClick = function(display, button)
 
-			if IsShiftKeyDown() and button == "LeftButton" then
+			-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
+			if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
 				RQE:ToggleDebugLog()
 
 			elseif button == "LeftButton" then
 				RQE.ToggleBothFramesfromLDB()
 
-			elseif button == "RightButton" and IsShiftKeyDown() then
+			-- Previous Blizzard call changed 2026.09.25: elseif button == "RightButton" and IsShiftKeyDown() then
+			elseif button == "RightButton" and RQE.API.Client.IsShiftKeyDown() then
 				RQE:OpenSettings()
 
 			elseif button == "RightButton" then
@@ -165,23 +168,27 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 	function RQE.ToggleBothFramesfromLDB()
 		if RQEFrame:IsShown() then
 			RQE:SaveSuperTrackedQuestToCharacter()
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				if RQEFrame then
 					RQEFrame:Hide()
 				end
 			end
 			RQE.db.profile.enableFrame = false
 
-			C_Map.ClearUserWaypoint()
+			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+			RQE.API.Client.C_Map.ClearUserWaypoint()
 
 			-- Check if TomTom is loaded and compatibility is enabled
-			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
 			end
 
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				if RQE.MagicButton then
 					RQE.MagicButton:Hide()
 				end
@@ -192,7 +199,8 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			RQE.isRQEFrameManuallyClosed = true
 			RQE.isRQEQuestFrameManuallyClosed = true
 
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE.db.profile.toggleBlizzObjectiveTracker then
 					RQE:ToggleObjectiveTracker()
 				end
@@ -201,14 +209,16 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				if RQEFrame then
 					RQEFrame:Show()
 				end
 			end
 			RQE.db.profile.enableFrame = true
 
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				if RQE.MagicButton then
 					RQE.MagicButton:Show()
 				end
@@ -223,7 +233,8 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 
 		RQE.updateScenarioUI() -- Necessary to check/update if scenario information was present in the RQEQuestFrame, closed and then re-opened outside of a scenario
 
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			if RQE.db.profile.enableFrame then
 				RQE:RestoreSuperTrackedQuestForCharacter()
 			else
@@ -280,7 +291,8 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 
 	-- Function to keep the button within the minimap's perimeter
 	function RQE:UpdateMinimapButtonPosition()
-		local x, y = GetCursorPosition()
+		-- Previous Blizzard call changed 2026.09.25: local x, y = GetCursorPosition()
+		local x, y = RQE.API.Client.GetCursorPosition()
 		local scale = Minimap:GetEffectiveScale()
 		x = x / scale
 		y = y / scale
@@ -325,13 +337,15 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 	-- Register Minimap Button OnClick Function
 	RQE.MinimapButton:SetScript("OnMouseUp", function(self, button)
 		if button == "LeftButton" then
-			if IsShiftKeyDown() then
+			-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() then
+			if RQE.API.Client.IsShiftKeyDown() then
 				RQE:ToggleDebugLog()  -- Shift + Left Click
 			else
 				RQE.ToggleBothFramesfromLDB()
 			end
 		elseif button == "RightButton" then
-			if IsShiftKeyDown() then
+			-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() then
+			if RQE.API.Client.IsShiftKeyDown() then
 				RQE:OpenSettings()  -- Shift + Right Click
 			else
 				RQE.lastClickedFrame = self  -- Set the minimap button as the last clicked frame
@@ -491,7 +505,8 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 	function RQE_MenuMixin:ShowMenu(anchorFrame, isSubmenu)
 		self:ClearAllPoints()
 
-		local screenWidth = GetScreenWidth()
+		-- Previous Blizzard call changed 2026.09.25: local screenWidth = GetScreenWidth()
+		local screenWidth = RQE.API.Client.GetScreenWidth()
 		local anchorX = anchorFrame:GetCenter()
 
 		local isLeftHalf = anchorX < (screenWidth / 2)
@@ -555,15 +570,18 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 			end)
 
 			self.CustomMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOverMenu
 					local isMouseOverMoreOptions
 					if isRetail then
 						isMouseOverMenu = self and self:IsMouseOver()
 						isMouseOverMoreOptions = RQE.MoreOptionsMenu and RQE.MoreOptionsMenu:IsMouseOver()
 					else
-						isMouseOverMenu = self and MouseIsOver(self)
-						isMouseOverMoreOptions = RQE.MoreOptionsMenu and MouseIsOver(RQE.MoreOptionsMenu)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverMenu = self and MouseIsOver(self)
+						isMouseOverMenu = self and RQE.API.Client.MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverMoreOptions = RQE.MoreOptionsMenu and MouseIsOver(RQE.MoreOptionsMenu)
+						isMouseOverMoreOptions = RQE.MoreOptionsMenu and RQE.API.Client.MouseIsOver(RQE.MoreOptionsMenu)
 					end
 					if isMouseOverMenu or isMouseOverMoreOptions then
 						-- Do nothing, the mouse is still over the menu or its related submenus
@@ -629,15 +647,18 @@ LibDataBroker launcher, minimap button, frame toggles, and dropdown menus
 				parentMenu:Show()
 			end)
 			self.MoreOptionsMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOverMenu
 					local isMouseOverParent
 					if isRetail then
 						isMouseOverMenu = self:IsMouseOver()
 						isMouseOverParent = parentMenu:IsMouseOver()
 					else
-						isMouseOverMenu = MouseIsOver(self)
-						isMouseOverParent = MouseIsOver(parentMenu)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverMenu = MouseIsOver(self)
+						isMouseOverMenu = RQE.API.Client.MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverParent = MouseIsOver(parentMenu)
+						isMouseOverParent = RQE.API.Client.MouseIsOver(parentMenu)
 					end
 					if not isMouseOverMenu and not isMouseOverParent then
 						self:Hide()
