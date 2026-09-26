@@ -75,7 +75,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		local isMacroCorrect = RQE.CheckCurrentMacroContents()
 		RQE.CheckCurrentMacroContents()
 
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			if RQE.isCheckingMacroContents then
 				RQE.isCheckingMacroContents = false
 			end
@@ -140,13 +141,15 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		local expectedMacroBody = type(questStep.macro) == "table" and table.concat(questStep.macro, "\n") or questStep.macro
 
 		-- Get the current macro contents
-		local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+		local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 		if not macroIndex or macroIndex == 0 then
 			RQE.debugLog("Macro 'RQE Macro' not found.")
 			return false
 		end
 
-		local _, _, currentMacroBody = GetMacroInfo(macroIndex)
+		-- Previous Blizzard call changed 2026.09.25: local _, _, currentMacroBody = GetMacroInfo(macroIndex)
+		local _, _, currentMacroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 		if not currentMacroBody then
 			RQE.debugLog("Failed to retrieve current macro contents.")
 			return false
@@ -171,14 +174,16 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function to check if the macro contains any content
 	function RQE:ShouldClearMacro(macroName)
-		local macroIndex = GetMacroIndexByName(macroName)
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName(macroName)
+		local macroIndex = RQE.API.Client.GetMacroIndexByName(macroName)
 		if not macroIndex or macroIndex == 0 then
 			-- No macro exists
 			return false
 		end
 
 		-- Fetch the current macro content
-		local _, _, macroBody = GetMacroInfo(macroIndex)
+		-- Previous Blizzard call changed 2026.09.25: local _, _, macroBody = GetMacroInfo(macroIndex)
+		local _, _, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 
 		-- Check if macro body has any content
 		if macroBody and macroBody ~= "" then
@@ -195,14 +200,17 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function for Updating the RQE Magic Button Icon to match with RQE macro
 	RQE.Buttons.UpdateMagicButtonIcon = function()
-		if not isRetail and InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if not isRetail and InCombatLockdown() then
+		if not isRetail and RQE.API.Client.InCombatLockdown() then
 			RQE.RefreshMagicButtonAfterCombat = true
 			return
 		end
 
-		local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+		local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 		if macroIndex and macroIndex > 0 then
-			local _, iconID, macroBody = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, iconID, macroBody = GetMacroInfo(macroIndex)
+			local _, iconID, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 			if iconID then
 				local MagicButton = RQE.MagicButton --_G["RQEMagicButton"]
 				if MagicButton then
@@ -240,7 +248,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			if entry.iconFileID then
 				iconFileID = entry.iconFileID
 			elseif entry.spellIDTooltip then
-				local spellInfo = C_Spell.GetSpellInfo(entry.spellIDTooltip)
+				-- Previous Blizzard call changed 2026.09.25: local spellInfo = C_Spell.GetSpellInfo(entry.spellIDTooltip)
+				local spellInfo = RQE.API.Client.C_Spell.GetSpellInfo(entry.spellIDTooltip)
 				if spellInfo and spellInfo.iconID then
 					iconFileID = spellInfo.iconID
 				end
@@ -256,7 +265,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			iconFileID = tostring(iconFileID)
 		end
 
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			if isRetail then
 				-- Queue for after combat.
 				table.insert(self.pendingMacroSets, {
@@ -313,7 +323,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		end
 		RQEMacro:SetQuestStepMacro(questID, 0, macroLines, true)
 
-		C_Timer.After(0.35, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		RQE.API.Client.C_Timer.After(0.35, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 		return true
@@ -327,7 +338,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	-- Generates a macro on a searched quest from the DB file if it is valid and player doesn't yet have the searched quest (and wasn't flagged as completed)
 	function RQE:GenerateNpcMacroIfNeeded(questID)
 		-- Check if quest is in player log
-		if C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.GetLogIndexForQuestID(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompleted(questID) or C_QuestLog.GetLogIndexForQuestID(questID) then
+		if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) or RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID) then
 			return -- Player already has or completed the quest
 		end
 
@@ -355,7 +367,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		end
 		RQEMacro:SetQuestStepMacro(questID, 1, macroLines, true)
 
-		C_Timer.After(0.35, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		RQE.API.Client.C_Timer.After(0.35, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 	end
@@ -371,7 +384,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Updated to use the existing structure
 	function RQEMacro:SetMacro(name, iconFileID, body, perCharacter)
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			-- Queue the macro operation for after combat
 			if isRetail then
 				table.insert(self.pendingMacroOperations, {name = name, iconFileID = iconFileID, body = body, perCharacter = perCharacter})
@@ -392,26 +406,32 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			iconFileID = tostring(iconFileID)
 		end
 
-		local macroIndex = GetMacroIndexByName(name)
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName(name)
+		local macroIndex = RQE.API.Client.GetMacroIndexByName(name)
 		if macroIndex == 0 then -- Macro doesn't exist, create a new one
-			local numAccountMacros, numCharacterMacros = GetNumMacros()
+			-- Previous Blizzard call changed 2026.09.25: local numAccountMacros, numCharacterMacros = GetNumMacros()
+			local numAccountMacros, numCharacterMacros = RQE.API.Client.GetNumMacros()
 			if perCharacter and numCharacterMacros < self.MAX_CHARACTER_MACROS then
-				macroIndex = CreateMacro(name, iconFileID, body, 1)
+				-- Previous Blizzard call changed 2026.09.25: macroIndex = CreateMacro(name, iconFileID, body, 1)
+				macroIndex = RQE.API.Client.CreateMacro(name, iconFileID, body, 1)
 			elseif not perCharacter and numAccountMacros < self.MAX_ACCOUNT_MACROS then
-				macroIndex = CreateMacro(name, iconFileID, body, nil)
+				-- Previous Blizzard call changed 2026.09.25: macroIndex = CreateMacro(name, iconFileID, body, nil)
+				macroIndex = RQE.API.Client.CreateMacro(name, iconFileID, body, nil)
 			else
 				RQE.debugLog("Cannot create macro. Maximum number of macros reached.")
 				return nil
 			end
 		else -- Macro exists, update it
 			if not isRetail then
-				local _, _, currentBody = GetMacroInfo(macroIndex)
+				-- Previous Blizzard call changed 2026.09.25: local _, _, currentBody = GetMacroInfo(macroIndex)
+				local _, _, currentBody = RQE.API.Client.GetMacroInfo(macroIndex)
 				if currentBody == body then
 					return macroIndex
 				end
 			end
 
-			EditMacro(macroIndex, name, iconFileID, body)
+			-- Previous Blizzard call changed 2026.09.25: EditMacro(macroIndex, name, iconFileID, body)
+			RQE.API.Client.EditMacro(macroIndex, name, iconFileID, body)
 		end
 		return macroIndex
 	end
@@ -423,7 +443,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function to clear a specific macro by name
 	function RQEMacro:ClearMacroContentByName(macroName)
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			-- Queue the macro clear request for after combat
 			if isRetail then
 				table.insert(self.pendingMacroClears, macroName)
@@ -442,28 +463,33 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	-- Internal function that actually clears the macro content
 	function RQEMacro:ActuallyClearMacroContentByName(macroName)
 		-- Check for being inside an instance with a raid or party
-		local isInInstance, instanceType = IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local isInInstance, instanceType = IsInInstance()
+		local isInInstance, instanceType = RQE.API.Client.IsInInstance()
 
 		-- Adds a check if player is in party or raid instance, if so, will not allow macro check to run further
 		if isInInstance and (instanceType == "party" or instanceType == "raid") then
 			return
 		end
 
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			return
 		end
 
-		local macroIndex = GetMacroIndexByName(macroName)
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName(macroName)
+		local macroIndex = RQE.API.Client.GetMacroIndexByName(macroName)
 		if macroIndex ~= 0 then
 			if not isRetail then
-				local _, _, currentBody = GetMacroInfo(macroIndex)
+				-- Previous Blizzard call changed 2026.09.25: local _, _, currentBody = GetMacroInfo(macroIndex)
+				local _, _, currentBody = RQE.API.Client.GetMacroInfo(macroIndex)
 				if not currentBody or currentBody:match("^%s*$") then
 					return
 				end
 			end
 
 			-- Macro found, clear its content
-			EditMacro(macroIndex, nil, nil, " ")
+			-- Previous Blizzard call changed 2026.09.25: EditMacro(macroIndex, nil, nil, " ")
+			RQE.API.Client.EditMacro(macroIndex, nil, nil, " ")
 		else
 			-- Macro not found, log this
 			RQE.debugLog("Macro not found: " .. macroName)
@@ -478,7 +504,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 	-- Replays Classic/TBC macro work queued during combat. Their EventManager
 	-- calls this from PLAYER_REGEN_ENABLED; Retail keeps its existing queue flow.
 	function RQEMacro:ProcessPendingMacroOperations()
-		if isRetail or InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if isRetail or InCombatLockdown() then
+		if isRetail or RQE.API.Client.InCombatLockdown() then
 			return false
 		end
 
@@ -529,9 +556,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 	-- Function to delete a macro by name
 	function RQEMacro:DeleteMacroByName(name)
-		local macroIndex = GetMacroIndexByName(name)
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName(name)
+		local macroIndex = RQE.API.Client.GetMacroIndexByName(name)
 		if macroIndex ~= 0 then
-			DeleteMacro(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: DeleteMacro(macroIndex)
+			RQE.API.Client.DeleteMacro(macroIndex)
 		end
 	end
 
@@ -640,7 +669,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 		-- #7a.i. Combat Deferral & Button Validation
 		-------------------------------------------------------
 
-		if not isRetail and InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if not isRetail and InCombatLockdown() then
+		if not isRetail and RQE.API.Client.InCombatLockdown() then
 			RQE.RefreshMagicButtonAfterCombat = true
 			return
 		end
@@ -670,10 +700,12 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 					-- leave an old cancel-aura classification on the button.
 					MagicButton:SetScript("OnEnter", function(self)
 						GameTooltip:Hide()
-						local hoverMacroIndex = GetMacroIndexByName("RQE Macro")
+						-- Previous Blizzard call changed 2026.09.25: local hoverMacroIndex = GetMacroIndexByName("RQE Macro")
+						local hoverMacroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 						local hoverMacroBody
 						if hoverMacroIndex and hoverMacroIndex > 0 then
-							local _, _, body = GetMacroInfo(hoverMacroIndex)
+							-- Previous Blizzard call changed 2026.09.25: local _, _, body = GetMacroInfo(hoverMacroIndex)
+							local _, _, body = RQE.API.Client.GetMacroInfo(hoverMacroIndex)
 							hoverMacroBody = body
 						end
 						if HasCancelAuraCommand(hoverMacroBody) then
@@ -730,14 +762,16 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
 
 			-- Get the macro index and contents
-			local macroIndex = GetMacroIndexByName("RQE Macro")
+			-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+			local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 			if not macroIndex or macroIndex == 0 then
 				GameTooltip:SetText("Macro 'RQE Macro' not found.")
 				GameTooltip:Show()
 				return
 			end
 
-			local _, _, macroBody = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, _, macroBody = GetMacroInfo(macroIndex)
+			local _, _, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 			if not macroBody or macroBody == "" then
 				GameTooltip:SetText("Macro content not found.")
 				GameTooltip:Show()
@@ -745,7 +779,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			end
 
 			-- Debug mode: Show raw macro text
-			if RQE.db.profile.debugLevel == "INFO+" or IsShiftKeyDown() then
+			-- Previous Blizzard call changed 2026.09.25: if RQE.db.profile.debugLevel == "INFO+" or IsShiftKeyDown() then
+			if RQE.db.profile.debugLevel == "INFO+" or RQE.API.Client.IsShiftKeyDown() then
 				GameTooltip:SetText("Macro:\n" .. macroBody, nil, nil, nil, nil, true)
 				GameTooltip:Show()
 				return
@@ -796,7 +831,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 					return
 				else
 					-- Display the item tooltip if not an exception
-					local itemLink = select(2, C_Item.GetItemInfo(itemID))
+					-- Previous Blizzard call changed 2026.09.25: local itemLink = select(2, C_Item.GetItemInfo(itemID))
+					local itemLink = select(2, RQE.API.Client.C_Item.GetItemInfo(itemID))
 					if itemLink then
 						GameTooltip:SetHyperlink(itemLink)
 						GameTooltip:Show()
@@ -812,9 +848,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 			if useTarget then
 				-- Attempt to resolve as an item
-				local itemLink = select(2, C_Item.GetItemInfo(useTarget))
+				-- Previous Blizzard call changed 2026.09.25: local itemLink = select(2, C_Item.GetItemInfo(useTarget))
+				local itemLink = select(2, RQE.API.Client.C_Item.GetItemInfo(useTarget))
 				if not itemLink then
-					local itemID = tonumber(useTarget) or select(1, C_Item.GetItemInfoInstant(useTarget))
+					-- Previous Blizzard call changed 2026.09.25: local itemID = tonumber(useTarget) or select(1, C_Item.GetItemInfoInstant(useTarget))
+					local itemID = tonumber(useTarget) or select(1, RQE.API.Client.C_Item.GetItemInfoInstant(useTarget))
 					if itemID then
 						itemLink = "item:" .. itemID
 					end
@@ -827,7 +865,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				end
 
 				-- Attempt to resolve as a spell
-				local spellInfo = C_Spell.GetSpellInfo(useTarget)
+				-- Previous Blizzard call changed 2026.09.25: local spellInfo = C_Spell.GetSpellInfo(useTarget)
+				local spellInfo = RQE.API.Client.C_Spell.GetSpellInfo(useTarget)
 				if spellInfo then
 					GameTooltip:SetSpellByID(spellInfo.spellID)
 					GameTooltip:Show()
@@ -856,9 +895,11 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 		-- Hook tooltip refresh so the remaining cooldown shows live
 		MagicButton:HookScript("OnEnter", function(self)
-			local macroIndex = GetMacroIndexByName("RQE Macro")
+			-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+			local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 			if not macroIndex or macroIndex == 0 then return end
-			local _, _, macroBody = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, _, macroBody = GetMacroInfo(macroIndex)
+			local _, _, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 			if not macroBody or macroBody == "" then return end
 
 			local spellName = macroBody:match("/cast%s+(.+)")
@@ -868,22 +909,27 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 			-- 12.0 fix for tooltips not being able to update when in combat, but this will update once combat ends
 			if spellName then
-				if not InCombatLockdown() then
-					local spellInfo = C_Spell.GetSpellInfo(spellName)
+				-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+				if not RQE.API.Client.InCombatLockdown() then
+					-- Previous Blizzard call changed 2026.09.25: local spellInfo = C_Spell.GetSpellInfo(spellName)
+					local spellInfo = RQE.API.Client.C_Spell.GetSpellInfo(spellName)
 					if spellInfo then
-						local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+						-- Previous Blizzard call changed 2026.09.25: local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+						local cd = RQE.API.Client.C_Spell.GetSpellCooldown(spellInfo.spellID)
 						if cd and cd.isEnabled then
 							cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
 						end
 					end
 				end
 			elseif itemName then
-				cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+				-- Previous Blizzard call changed 2026.09.25: cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+				cdStart, cdDur, cdEnable = RQE.API.Client.C_Item.GetItemCooldown(itemName)
 			end
 
 			if cdEnable and cdDur and cdDur > 1 then
 				GameTooltip:AddLine(string.format("|cff00ffffCooldown remaining: %.0f sec|r",
-					math.max(0, (cdStart + cdDur) - GetTime())), 1, 1, 1)
+					-- Previous Blizzard call changed 2026.09.25: math.max(0, (cdStart + cdDur) - GetTime())), 1, 1, 1)
+					math.max(0, (cdStart + cdDur) - RQE.API.Client.GetTime())), 1, 1, 1)
 				GameTooltip:Show()
 			end
 		end)
@@ -899,7 +945,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			self.rqeStateElapsed = (self.rqeStateElapsed or 0) + elapsed
 			if self.rqeStateElapsed < 0.1 then return end
 			self.rqeStateElapsed = 0
-			local macroIndex = GetMacroIndexByName("RQE Macro")
+			-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+			local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 			if not macroIndex or macroIndex == 0 then
 				if self.CountText then self.CountText:SetText("") end
 				if self.CooldownUpdater then self.CooldownUpdater:Clear() end
@@ -907,7 +954,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 				return
 			end
 
-			local _, _, macroBody = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, _, macroBody = GetMacroInfo(macroIndex)
+			local _, _, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 			if not macroBody or macroBody == "" then
 				if self.CountText then self.CountText:SetText("") end
 				if self.CooldownUpdater then self.CooldownUpdater:Clear() end
@@ -922,12 +970,14 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 			if not itemID then
 				local itemName = macroBody:match("/use%s+(.+)")
 				if itemName then
-					itemID = C_Item.GetItemInfoInstant(itemName)
+					-- Previous Blizzard call changed 2026.09.25: itemID = C_Item.GetItemInfoInstant(itemName)
+					itemID = RQE.API.Client.C_Item.GetItemInfoInstant(itemName)
 				end
 			end
 
 			if itemID then
-				local itemCount = C_Item.GetItemCount(itemID)
+				-- Previous Blizzard call changed 2026.09.25: local itemCount = C_Item.GetItemCount(itemID)
+				local itemCount = RQE.API.Client.C_Item.GetItemCount(itemID)
 				if itemCount and itemCount > 0 then
 					if itemCount > 999 then itemCount = 999 end
 					self.CountText:SetText(itemCount)
@@ -947,10 +997,13 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 
 			-- Fixed display of CD when during combat if the macro is a 'spell' vs an 'item'
 			if spellName then
-				if not InCombatLockdown() then
-					local spellInfo = C_Spell.GetSpellInfo(spellName)
+				-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+				if not RQE.API.Client.InCombatLockdown() then
+					-- Previous Blizzard call changed 2026.09.25: local spellInfo = C_Spell.GetSpellInfo(spellName)
+					local spellInfo = RQE.API.Client.C_Spell.GetSpellInfo(spellName)
 					if spellInfo then
-						local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+						-- Previous Blizzard call changed 2026.09.25: local cd = C_Spell.GetSpellCooldown(spellInfo.spellID)
+						local cd = RQE.API.Client.C_Spell.GetSpellCooldown(spellInfo.spellID)
 						if cd and cd.isEnabled then
 							cdStart, cdDur, cdEnable = cd.startTime, cd.duration, cd.isEnabled
 						end
@@ -961,7 +1014,8 @@ Quest macro generation, deferred updates, Magic Button state, and tooltip behavi
 					end
 				end
 			elseif itemName then
-				cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+				-- Previous Blizzard call changed 2026.09.25: cdStart, cdDur, cdEnable = C_Item.GetItemCooldown(itemName)
+				cdStart, cdDur, cdEnable = RQE.API.Client.C_Item.GetItemCooldown(itemName)
 			end
 
 			if cdEnable and cdDur and cdDur > 1 then
