@@ -125,18 +125,18 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	local questTrackerSearchRow = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
 	questTrackerSearchRow:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -40)
 	questTrackerSearchRow:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPRIGHT", -30, -40)
-	questTrackerSearchRow:SetHeight(26)
+	questTrackerSearchRow:SetHeight(30)
 	RQE.QuestTrackerSearchRow = questTrackerSearchRow
 
 	local questTrackerRestoreButton = CreateFrame("Button", nil, questTrackerSearchRow, "UIPanelButtonTemplate")
-	questTrackerRestoreButton:SetSize(72, 24)
+	questTrackerRestoreButton:SetSize(90, 28)
 	questTrackerRestoreButton:SetPoint("RIGHT", questTrackerSearchRow, "RIGHT", 0, 0)
 	questTrackerRestoreButton:SetText("Restore")
 	questTrackerRestoreButton:Disable()
 	RQE.QuestTrackerRestoreButton = questTrackerRestoreButton
 
 	local questTrackerSearchButton = CreateFrame("Button", nil, questTrackerSearchRow, "UIPanelButtonTemplate")
-	questTrackerSearchButton:SetSize(68, 24)
+	questTrackerSearchButton:SetSize(82, 28)
 	questTrackerSearchButton:SetPoint("RIGHT", questTrackerRestoreButton, "LEFT", -4, 0)
 	questTrackerSearchButton:SetText("Search")
 	RQE.QuestTrackerSearchButton = questTrackerSearchButton
@@ -150,8 +150,8 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	questTrackerSearchInput:SetTextInsets(6, 6, 0, 0)
 	RQE.QuestTrackerSearchInput = questTrackerSearchInput
 	if RQE.UI then
-		RQE.UI:StyleTextButton(questTrackerSearchButton)
-		RQE.UI:StyleTextButton(questTrackerRestoreButton)
+		RQE.UI:StyleTextButton(questTrackerSearchButton, { trackerAction = true })
+		RQE.UI:StyleTextButton(questTrackerRestoreButton, { trackerAction = true })
 		RQE.UI:StyleSearchBox(questTrackerSearchInput)
 	end
 
@@ -646,6 +646,8 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 		-- Store the frame for future reference
 		RQE.recipeTrackingFrame = recipeFrame
+		recipeFrame.header = CreateChildFrameHeader(recipeFrame, "Profession")
+		recipeFrame.trackedRecipeCount = 0
 
 		-- Add a clickable button or interactive text for the recipe
 		local recipeButton = CreateFrame("Button", nil, RQE.recipeTrackingFrame, "GameFontNormal")
@@ -658,6 +660,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		RQE.recipeButton = recipeButton
 
 		RQE.recipeButton:EnableMouse(true)
+		recipeFrame:Hide()
 
 		-- RQE.recipeButton:SetScript("OnClick", function()
 			-- -- Open the TradeSkill UI and jump to the specific recipe
@@ -691,7 +694,6 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	RQE.TaskQuestsFrame.header = CreateChildFrameHeader(RQE.TaskQuestsFrame, "Task Quests")
 	--RQE.BonusObjectivesFrame.header = CreateChildFrameHeader(RQE.BonusObjectivesFrame, "Bonus Objectives")
 	RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
-	--RQE.recipeTrackingFrame.header = CreateChildFrameHeader(RQE.recipeTrackingFrame, "Profession")
 
 
 	-- ScenarioChildFrame header
@@ -778,7 +780,11 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		else
 			titleText = titleText .. " (" .. questCount .. ")"
 		end
-		frame.header:SetText(titleText)
+		if RQE.RefreshTrackerSectionHeaderText then
+			RQE:RefreshTrackerSectionHeaderText(frame, titleText)
+		else
+			frame.header:SetText(titleText)
+		end
 	end
 
 
@@ -791,6 +797,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-------------------------------------------------------
 
 	function UpdateFrameAnchors()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
 		-- Clear all points to prevent any previous anchoring affecting the new setup
 		RQE.CampaignFrame:ClearAllPoints()
 		RQE.QuestsFrame:ClearAllPoints()
@@ -900,6 +910,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Make the function global or move it outside where it is defined so it can be accessed by UpdateFrameAnchors
 	function ResetChildFramesToDefault()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
 		-- CampaignFrame positioning
 		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 			RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
@@ -955,6 +969,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Adjust Set Point Anchor of Child Frames based on LastElements
 	function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+			return
+		end
 		-- Reset positions to default first
 		ResetChildFramesToDefault()
 		local elementStackGap = GetQuestSectionBottomPadding() + 5
@@ -1014,6 +1032,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Update the Campaign frame anchor dynamically based on the state of the ScenarioChild being is present or not
 	function RQE.UpdateCampaignFrameAnchor()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
 		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 			-- If ScenarioChildFrame is present and shown, anchor CampaignFrame to ScenarioChildFrame
 			RQE.CampaignFrame:ClearAllPoints()  -- Clear existing points
@@ -1190,6 +1212,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			RQE.TaskQuestsFrame,
 			RQE.AchievementsFrame,
 		}
+		if RQE.recipeTrackingFrame then childFrames[#childFrames + 1] = RQE.recipeTrackingFrame end
 
 		-- Adjust width for each element
 		for _, WQuestLogIndexButton in pairs(RQE.WQuestLogIndexButtons or {}) do
@@ -1276,7 +1299,11 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				if childFrame.header then
 					local objectType = childFrame.header.GetObjectType and childFrame.header:GetObjectType()
 					if objectType == "FontString" then
-						childFrame.header:SetWidth(math.max(1, childWidth - textPadding))
+						if childFrame._rqeCollapseButton and RQE.RefreshTrackerSectionHeaderText then
+							RQE:RefreshTrackerSectionHeaderText(childFrame)
+						else
+							childFrame.header:SetWidth(math.max(1, childWidth - textPadding))
+						end
 					end
 				end
 			end
@@ -3232,12 +3259,12 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	function RQE:ClearAchievementFrame()
 		-- Check if the achievements frame exists
 		if RQE.AchievementsFrame then
-			local header = RQE.AchievementsFrame.header
+			local headerFrame = RQE.AchievementsFrame.headerFrame
 
 			-- Iterate through all child frames and hide them
 			local children = {RQE.AchievementsFrame:GetChildren()}
 			for _, child in ipairs(children) do
-				if child ~= header then
+				if child ~= headerFrame then
 					child:Hide()
 					child:SetParent(nil)
 				end
@@ -3246,12 +3273,14 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			-- Clear all font strings in the frame
 			local regions = {RQE.AchievementsFrame:GetRegions()}
 			for _, region in ipairs(regions) do
-				if region:GetObjectType() == "FontString" then
+				if region:GetObjectType() == "FontString" and region ~= RQE.AchievementsFrame.header then
 					region:Hide()
 				end
 			end
 		end
-		RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+		if not RQE.AchievementsFrame.headerFrame then
+			RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+		end
 	end
 
 
@@ -3953,6 +3982,11 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		-- Create a variable to hold the last QuestObjectivesOrDescription
 		local lastQuestObjectivesOrDescription = nil
 
+		-- The fixed Campaign -> Normal -> World chain can cycle after a custom
+		-- reorder; use the complete profile order before building quest rows.
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+		else
 		-- Create the Set Point for the Regular Quests Child Frame
 		if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
 			-- If CampaignFrame is present and shown, anchor QuestsFrame to CampaignFrame
@@ -4009,6 +4043,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			RQE.AchievementsFrame:ClearAllPoints()
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 		end
+		end
 
 		-- Separate variables to track the last element in each child frame
 		local lastCampaignElement, lastQuestElement, lastWorldQuestElement = nil, nil, nil
@@ -4063,7 +4098,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 					---@class QuestLogIndexButton : Button
 					---@field bg Texture
 					---@field number FontString
-					local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)	-- TAINT?: possibly source if run in combat
+					local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, parentFrame)	-- TAINT?: possibly source if run in combat
+					if QuestLogIndexButton:GetParent() ~= parentFrame then
+						QuestLogIndexButton:SetParent(parentFrame)
+					end
 					QuestLogIndexButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 					-- Create or update the background texture
@@ -4895,7 +4933,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			local frameTop = sectionFrame:GetTop()
 			local elementBottom = lastElement:GetBottom()
 			if frameTop and elementBottom then
-				sectionFrame:SetHeight(math.max(80, frameTop - elementBottom + GetQuestSectionBottomPadding()))
+				sectionFrame._rqeRenderedHeight = math.max(80, frameTop - elementBottom + GetQuestSectionBottomPadding())
+				sectionFrame:SetHeight(sectionFrame._rqeRenderedHeight)
+			elseif sectionFrame._rqeRenderedHeight then
+				sectionFrame:SetHeight(sectionFrame._rqeRenderedHeight)
 			end
 		end
 
@@ -5458,15 +5499,21 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	function UpdateRQETaskQuestFrame()
 		local taskFrame = RQE.TaskQuestsFrame
 		if not taskFrame then return end
+		local managedLayout = RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout()
 
 		local taskQuests = RQE:GetActiveTrackedTaskQuests()
 		RQE:ClearTaskQuestElements()
 		taskFrame.questCount = #taskQuests
-		taskFrame.header:SetText("Task Quests (" .. taskFrame.questCount .. ")")
+		local taskTitle = "Task Quests (" .. taskFrame.questCount .. ")"
+		if RQE.RefreshTrackerSectionHeaderText then
+			RQE:RefreshTrackerSectionHeaderText(taskFrame, taskTitle)
+		else
+			taskFrame.header:SetText(taskTitle)
+		end
 
 		if taskFrame.questCount == 0 then
 			taskFrame:Hide()
-			if RQE.AchievementsFrame and RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
+			if not managedLayout and RQE.AchievementsFrame and RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
 				RQE.AchievementsFrame:ClearAllPoints()
 				RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
 			end
@@ -5474,6 +5521,9 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		end
 
 		taskFrame:Show()
+		if managedLayout then
+			RQE:ApplyTrackerSectionOrder()
+		else
 		taskFrame:ClearAllPoints()
 		if RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
 			taskFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
@@ -5487,6 +5537,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			taskFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
 		else
 			taskFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+		end
 		end
 
 		local lastElement
@@ -5564,7 +5615,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		taskFrame:SetHeight(taskFrameHeight)
 
 		-- Keep Achievements below the new section whenever it is visible.
-		if RQE.AchievementsFrame then
+		if not managedLayout and RQE.AchievementsFrame then
 			RQE.AchievementsFrame:ClearAllPoints()
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", taskFrame, "BOTTOMLEFT", 0, -15)
 		end
