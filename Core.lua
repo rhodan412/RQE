@@ -76,7 +76,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Initialize RQE addon with AceAddon
 	---@class RQE : AceAddon  -- This line declares that RQE is a subclass of AceAddon
-	RQE = LibStub("AceAddon-3.0"):NewAddon("RQE", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
+	RQE = LibStub("AceAddon-3.0"):NewAddon(RQE, "RQE", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 
 	-- AceConfig and AceConfigDialog references
 	local AC = LibStub("AceConfig-3.0")
@@ -161,7 +161,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local debugLevel = RQE.db.profile.debugLevel
 			if debugLevel == "INFO" or debugLevel == "INFO+" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
 				-- grab the caller's file and line
-				local stack = debugstack(2, 1, 0)
+				-- Previous Blizzard call changed 2026.09.25: local stack = debugstack(2, 1, 0)
+				local stack = RQE.API.Client.debugstack(2, 1, 0)
 				-- capture "anything up to colon" as filePath, then the line number
 				local _, _, filePath, line = string.find(stack, "([^:]-):(%d+):")
 				RQE:CustomLogMsg(line, "cf9999FF", filePath or "Unknown.lua", message, ...)
@@ -174,7 +175,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.db and RQE.db.profile.debugMode then
 			local debugLevel = RQE.db.profile.debugLevel
 			if debugLevel == "DEBUG" then
-				local stack = debugstack(2, 1, 0)
+				-- Previous Blizzard call changed 2026.09.25: local stack = debugstack(2, 1, 0)
+				local stack = RQE.API.Client.debugstack(2, 1, 0)
 				local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
 				fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
 				RQE:CustomDebugLog(line, "cfC4C45C", fileName .. " Debug: " .. message, ...)
@@ -187,7 +189,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.db and RQE.db.profile.debugMode then
 			local debugLevel = RQE.db.profile.debugLevel
 			if debugLevel == "DEBUG" or debugLevel == "WARNING" then
-				local stack = debugstack(2, 1, 0)
+				-- Previous Blizzard call changed 2026.09.25: local stack = debugstack(2, 1, 0)
+				local stack = RQE.API.Client.debugstack(2, 1, 0)
 				local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
 				fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
 				RQE:CustomDebugLog(line, "ffFF7F00", fileName .. " Warning: " .. message, ...)
@@ -200,7 +203,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.db and RQE.db.profile.debugMode then
 			local debugLevel = RQE.db.profile.debugLevel
 			if debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
-				local stack = debugstack(2, 1, 0)
+				-- Previous Blizzard call changed 2026.09.25: local stack = debugstack(2, 1, 0)
+				local stack = RQE.API.Client.debugstack(2, 1, 0)
 				local _, _, fileName, line = string.find(stack, "([^\\]-):(%d+):")
 				fileName = string.gsub(fileName, "@Interface/AddOns/", "@")  -- Simplify file name
 				RQE:CustomDebugLog(line, "ffD63333", fileName .. " Critical: " .. message, ...)
@@ -214,12 +218,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	--- @param message string The message to print
 	--- @param ... any Additional values to append
 	function RQE.smartPrint(funcName, message, ...)
-		if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+		-- Previous Blizzard call changed 2026.09.25: if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+		if not RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
 		if RQE.db and RQE.db.profile.debugMode then
 			local debugLevel = RQE.db.profile.debugLevel
 			if debugLevel == "INFO+" then
 			-- if debugLevel == "INFO" or debugLevel == "INFO+" or debugLevel == "DEBUG" or debugLevel == "WARNING" or debugLevel == "CRITICAL" then
-				local stack = debugstack(2, 1, 0)
+				-- Previous Blizzard call changed 2026.09.25: local stack = debugstack(2, 1, 0)
+				local stack = RQE.API.Client.debugstack(2, 1, 0)
 				local _, _, filePath, line = string.find(stack, "([^:]-):(%d+):")
 
 				local shortFile = (filePath and filePath:match("([^/\\]+)$")) or "Unknown.lua"
@@ -339,14 +345,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Resolve the active client window to the nearest supported frame-geometry resolution preset.
 	function RQE:GetClientResolutionKey()
 		local screenWidth, screenHeight
-		if type(GetPhysicalScreenSize) == "function" then
-			screenWidth, screenHeight = GetPhysicalScreenSize()
+		-- Previous Blizzard call changed 2026.09.25: if type(GetPhysicalScreenSize) == "function" then
+		if type(RQE.API.ResolveClientAPI("GetPhysicalScreenSize")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: screenWidth, screenHeight = GetPhysicalScreenSize()
+			screenWidth, screenHeight = RQE.API.Client.GetPhysicalScreenSize()
 		end
 
 		if not screenWidth or not screenHeight then
 			local effectiveScale = UIParent and UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1
-			screenWidth = type(GetScreenWidth) == "function" and GetScreenWidth() * effectiveScale or nil
-			screenHeight = type(GetScreenHeight) == "function" and GetScreenHeight() * effectiveScale or nil
+			-- Previous Blizzard call changed 2026.09.25: screenWidth = type(GetScreenWidth) == "function" and GetScreenWidth() * effectiveScale or nil
+			screenWidth = type(RQE.API.ResolveClientAPI("GetScreenWidth")) == "function" and RQE.API.Client.GetScreenWidth() * effectiveScale or nil
+			-- Previous Blizzard call changed 2026.09.25: screenHeight = type(GetScreenHeight) == "function" and GetScreenHeight() * effectiveScale or nil
+			screenHeight = type(RQE.API.ResolveClientAPI("GetScreenHeight")) == "function" and RQE.API.Client.GetScreenHeight() * effectiveScale or nil
 		end
 
 		screenWidth = tonumber(screenWidth)
@@ -629,7 +639,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Addon Initialization
 	function RQE:OnInitialize()
 		-- Start the timer
-		RQE.startTime = debugprofilestop()
+		-- Previous Blizzard call changed 2026.09.25: RQE.startTime = debugprofilestop()
+		RQE.startTime = RQE.API.Client.debugprofilestop()
 
 		RQEDB = RQEDB or {}	-- Ensure the saved var exists
 
@@ -800,7 +811,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the quest log index for the given quest ID
-		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 
 		if not questLogIndex then
 			print("Error: Could not find quest log index for Quest ID:", questID)
@@ -838,7 +850,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.db.profile.enableStepControls then
 			RQE.db.profile.enableStepControls = false
 
-			C_Timer.After(0.45, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
+			RQE.API.Client.C_Timer.After(0.45, function()
 				RQE:StartPeriodicChecks()
 			end)
 		else
@@ -862,7 +875,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function that prints the quest data as it relates to a certain quest such as type, numRequired, finished (true/false), text, objectiveType and numFulfilled
 	function RQE:PrintQuestData(questID)
 		-- Ensure the quest data is available
-		if not HaveQuestData(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if not HaveQuestData(questID) then
+		if not RQE.API.Client.HaveQuestData(questID) then
 			print("Quest data is not available for QuestID:", questID)
 			return
 		end
@@ -1031,7 +1045,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to open the quest log and show specific quest details
 	--- @param questID number The quest ID.
 	function OpenQuestLogToQuestDetails(questID)
-		if InCombatLockdown() then return end
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
+		if RQE.API.Client.InCombatLockdown() then return end
 
 		if RQE.searchedQuestID ~= nil then
 			return
@@ -1041,8 +1056,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if type(questID) ~= "number" then
 			if RQE and RQE.db and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") then
 				print("OpenQuestLogToQuestDetails: invalid questID:", tostring(questID))
-				if debugstack then
-					print(debugstack(2, 4, 4))  -- optional: short stack trace
+				-- Previous Blizzard call changed 2026.09.25: if debugstack then
+				if RQE.API.ResolveClientAPI("debugstack") then
+					-- Previous Blizzard call changed 2026.09.25: print(debugstack(2, 4, 4))  -- optional: short stack trace
+					print(RQE.API.Client.debugstack(2, 4, 4))  -- optional: short stack trace
 				end
 			end
 			return
@@ -1059,7 +1076,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		---@type number|nil
 		-- you can optionally pass `true` as the second argument if you want to ignore waypoints:
 		-- local mapID = GetQuestUiMapID(questID, true) or C_TaskQuest.GetQuestZoneID(questID)
-		local mapID = GetQuestUiMapID(questID) or C_TaskQuest.GetQuestZoneID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local mapID = GetQuestUiMapID(questID) or C_TaskQuest.GetQuestZoneID(questID)
+		local mapID = RQE.API.Client.GetQuestUiMapID(questID) or RQE.API.Client.C_TaskQuest.GetQuestZoneID(questID)
 		if mapID == 0 then mapID = nil end
 		OpenQuestLog(mapID)
 		QuestMapFrame_ShowQuestDetails(questID)
@@ -1069,12 +1087,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Helper function to see if a given quest is being watched
 	function RQE:IsQuestWatched(questID)
 		if not questID then return false end
-		if C_QuestLog.GetQuestWatchType then
-			return C_QuestLog.GetQuestWatchType(questID) ~= nil
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.GetQuestWatchType then
+		if RQE.API.ResolveClientAPI("C_QuestLog.GetQuestWatchType") then
+			-- Previous Blizzard call changed 2026.09.25: return C_QuestLog.GetQuestWatchType(questID) ~= nil
+			return RQE.API.Client.C_QuestLog.GetQuestWatchType(questID) ~= nil
 		end
-		local n = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
+		-- Previous Blizzard call changed 2026.09.25: local n = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
+		local n = RQE.API.ResolveClientAPI("C_QuestLog.GetNumQuestWatches") and RQE.API.Client.C_QuestLog.GetNumQuestWatches() or 0
 		for i = 1, n do
-			if C_QuestLog.GetQuestIDForQuestWatchIndex(i) == questID then
+			-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.GetQuestIDForQuestWatchIndex(i) == questID then
+			if RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i) == questID then
 				return true
 			end
 		end
@@ -1132,7 +1154,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- If in combat, never consume state
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			-- Defer the clear and do NOT check actual step changes
 			return true
 		end
@@ -1176,7 +1199,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if info and not info.isHeader then
 				local qid = info.questID
 				if qid and self:IsQuestAutoComplete(qid) and not self:IsQuestWatched(qid) then
-					local ok = C_QuestLog.AddQuestWatch(qid)
+					-- Previous Blizzard call changed 2026.09.25: local ok = C_QuestLog.AddQuestWatch(qid)
+					local ok = RQE.API.Client.C_QuestLog.AddQuestWatch(qid)
 					if ok then added = added + 1 end
 					if verbose and self.db and self.db.profile and self.db.profile.debugLevel == "INFO+" then
 						print(("RQE: watching auto-completable quest %d (%s)"):format(qid, info.title or ""))
@@ -1202,20 +1226,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 
-		if C_QuestLog.IsFailed and C_QuestLog.IsFailed(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsFailed and C_QuestLog.IsFailed(questID) then
+		if RQE.API.ResolveClientAPI("C_QuestLog.IsFailed") and RQE.API.Client.C_QuestLog.IsFailed(questID) then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(("IsQuestAutoComplete: quest %d is failed"):format(questID))
 			end
 			return false
 		end
 
-		local isComplete = C_QuestLog.IsComplete(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isComplete = C_QuestLog.IsComplete(questID)
+		local isComplete = RQE.API.Client.C_QuestLog.IsComplete(questID)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(("IsQuestAutoComplete: C_QuestLog.IsComplete=%s"):format(tostring(isComplete)))
 		end
 		if not isComplete then return false end
 
-		local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		local logIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(("IsQuestAutoComplete: logIndex=%s"):format(tostring(logIndex)))
 		end
@@ -1250,7 +1277,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(("ShowAutoCompleteDialog: calling ShowQuestComplete(%d)"):format(questID))
 			end
-			ShowQuestComplete(questID)
+			-- Previous Blizzard call changed 2026.09.25: ShowQuestComplete(questID)
+			RQE.API.Client.ShowQuestComplete(questID)
 			return true
 		end
 
@@ -1277,8 +1305,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if mapID then
 					finalMapID = mapID
 				elseif continentID then
-					local playerMapID = C_Map.GetBestMapForUnit("player")
-					local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+					local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+					-- Previous Blizzard call changed 2026.09.25: local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					local parent = playerMapID and RQE.API.Client.C_Map.GetMapInfo(playerMapID).parentMapID
 					if parent == continentID then
 						finalMapID = continentID
 					end
@@ -1306,21 +1336,26 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		if questID then
-			local playerMapID = C_Map.GetBestMapForUnit("player")
-			local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+			local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local mapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
+			local mapID = RQE.API.Client.C_TaskQuest.GetQuestZoneID(questID) or RQE.API.Client.GetQuestUiMapID(questID)
 			local questTitle = RQE.API.GetTitleForQuestID(questID)
 			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			local posX, posY
 
 			if isWorldQuest then
-				posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+				-- Previous Blizzard call changed 2026.09.25: posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+				posX, posY = RQE.API.Client.C_TaskQuest.GetQuestLocation(questID, mapID)
 			else
 				if not posX or not posX and mapID then
 					local questID = RQE.API.GetSuperTrackedQuestID()
-					local mapID = GetQuestUiMapID(questID)
+					-- Previous Blizzard call changed 2026.09.25: local mapID = GetQuestUiMapID(questID)
+					local mapID = RQE.API.Client.GetQuestUiMapID(questID)
 					if mapID == 0 then mapID = nil end
 				else
-					posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+					-- Previous Blizzard call changed 2026.09.25: posX, posY = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+					posX, posY = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, mapID)
 				end
 			end
 
@@ -1340,7 +1375,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				RQE.superY = posY
 			end
 
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				if RQE.superX == nil or RQE.superY == nil then
 					RQE.SaveSuperTrackData()
 					return
@@ -1421,8 +1457,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local currentlyTrackedQuestIDs = {}
 
 		-- Loop through the tracked quests
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
 				currentlyTrackedQuestIDs[questID] = true
 				-- Save the tracked quest ID
@@ -1458,7 +1496,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self.PendingTrackerStateRestore = true
 		local functionName = "RQE:RestoreSuperTrackedQuestForCharacter()"
 
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			-- Per-attempt state must not leak into a later searched-quest restore.
 			local restoredSomething = false
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -1533,12 +1572,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Tracking and focus are restored; normal persistence can resume.
 			RQE.PendingTrackerStateRestore = false
 
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): restore ~~")
 				UpdateFrame()
 
 				-- IMPORTANT: run macro generation AFTER UpdateFrame settles
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					if RQE.searchedQuestID then
 						RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
 					end
@@ -1546,7 +1587,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end)
 		end)
 
-		C_Timer.After(0.35, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		RQE.API.Client.C_Timer.After(0.35, function()
 			RQE.InitializeSeparateFocusWaypoints()
 		end)
 	end
@@ -1570,7 +1612,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for _, questID in ipairs(RQECharacterDB.trackedQuests) do
 			if RQE.API.IsOnQuest(questID) then
 				-- Enable tracking for the quest if it's still in the quest log
-				C_QuestLog.AddQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Restored tracking for quest:", questID)
 				end
@@ -1588,12 +1631,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Obtain addon Contribution Data
 	function RQE.GetDataForAddon()
-		if IsShiftKeyDown() then
+		-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() then
+		if RQE.API.Client.IsShiftKeyDown() then
 			RQE.GetCompletedDataForAddon()
 			return
 		end
 
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 
 
 			RQE:BeginDebugLogCapture()
@@ -1602,7 +1647,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.ToggleDebugLogFrame()
 
 
-			C_Timer.After(2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+			RQE.API.Client.C_Timer.After(2, function()
 				RQE:ShowDeleteConfirmationDialog()
 			end)
 		else
@@ -1612,14 +1658,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Obtain addon Contribution Data for completed quests
 	function RQE.GetCompletedDataForAddon()
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 
 			RQE:BeginDebugLogCapture()
 			RQE_Contribution.GetCompletedContributionInfo()
 
 			RQE.ToggleDebugLogFrame()
 
-			C_Timer.After(2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+			RQE.API.Client.C_Timer.After(2, function()
 				RQE:ShowRQEDatabaseContributionCleanupConfirmationDialog()
 			end)
 		else
@@ -1629,7 +1677,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Obtain addon Contribution Data
 	function RQE.GetSandBoxDataForAddon()
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 
 			RQE:BeginDebugLogCapture()
 			RQE.GetAllSandboxInfo()
@@ -1645,9 +1694,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.GetMidnightWQ()
 		RQE:BeginDebugLogCapture()
 
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(12)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(12)
@@ -1664,9 +1715,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.GetTheWarWithinWQ()
 		RQE:BeginDebugLogCapture()
 
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(11)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(11)
@@ -1683,9 +1736,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.GetDragonflightWQ()
 		RQE:BeginDebugLogCapture()
 
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(10)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(10)
@@ -1702,9 +1757,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.GetShadowlandsWQ()
 		RQE:BeginDebugLogCapture()
 
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(9)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(9)
@@ -1721,9 +1778,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.GetBFAWQ()
 		RQE:BeginDebugLogCapture()
 
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(8)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(8)
@@ -1740,9 +1799,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.GetLegionWQ()
 		RQE:BeginDebugLogCapture()
 
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(7)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(7)
@@ -1758,9 +1819,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Obtain WQ Information for Expansion: Misc
 	function RQE.GetWoDWQ()
 		RQE:BeginDebugLogCapture()
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(6)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(6)
@@ -1776,9 +1839,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Obtain WQ Information for Expansion: Misc
 	function RQE.MiscWQ()
 		RQE:BeginDebugLogCapture()
-		local clicked = GetMouseButtonClicked()
+		-- Previous Blizzard call changed 2026.09.25: local clicked = GetMouseButtonClicked()
+		local clicked = RQE.API.Client.GetMouseButtonClicked()
 
-		if IsControlKeyDown() and clicked == "LeftButton" then
+		-- Previous Blizzard call changed 2026.09.25: if IsControlKeyDown() and clicked == "LeftButton" then
+		if RQE.API.Client.IsControlKeyDown() and clicked == "LeftButton" then
 			RQE_Contribution.PrintIncorrectMapIDs(5)
 		elseif clicked == "LeftButton" then
 			RQE_Contribution.GetMissingWQ(5)
@@ -1798,7 +1863,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Obtain Quest Objectives and Quest Description Text for quests in player log where an empty set exists for either in the DB (that will contain data and isn't a hidden/emissary quest)
 	function RQE.GetMissingQuestData(acceptedQuestID, captureGeneration)
 		if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				local questID = tonumber(acceptedQuestID)
 				local isQuestAcceptCapture = questID ~= nil
 				if not questID then
@@ -1828,7 +1894,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				if not textCaptureOK then
 
-					geterrorhandler()(textCaptureError)
+					-- Previous Blizzard call changed 2026.09.25: geterrorhandler()(textCaptureError)
+					RQE.API.Client.geterrorhandler()(textCaptureError)
 					return
 				end
 
@@ -1856,7 +1923,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 							if not npcCaptureOK then
 
-								geterrorhandler()(npcCaptureError)
+								-- Previous Blizzard call changed 2026.09.25: geterrorhandler()(npcCaptureError)
+								RQE.API.Client.geterrorhandler()(npcCaptureError)
 								return
 							end
 						end
@@ -1872,7 +1940,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest() or RQE.isSuperTracking
 		if not isSuperTracking then return end
 
-		C_Timer.After(0.15, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		RQE.API.Client.C_Timer.After(0.15, function()
 			if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
 				if RQEFrame and RQEFrame:IsShown() and RQE.QuestIDText and RQE.QuestIDText:GetText() then
 					RQE.TheSuperQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -1962,7 +2031,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE_Contribution and RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase then
 			RQE_Contribution.RemoveContributionsAlreadyInRQEDatabase()
 
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE:ShowReloadConfirmationDialog()
 			end)
 		else
@@ -1978,7 +2048,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			button1 = "Reload",
 			button2 = "Cancel",
 			OnAccept = function()
-				ReloadUI()
+				-- Previous Blizzard call changed 2026.09.25: ReloadUI()
+				RQE.API.Client.ReloadUI()
 			end,
 			OnCancel = function()
 				print("Not Reloading the UI")
@@ -1998,7 +2069,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE_Contribution and RQE_Contribution.DeleteAllContributionInfo then
 			RQE_Contribution.DeleteAllContributionInfo()
 			print("All contribution data has been deleted.")
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE:ShowReloadConfirmationDialog()
 			end)
 		else
@@ -2020,18 +2092,21 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		if isWorldQuest then
 			-- It's a world quest, use the TaskQuest APIs
-			mapID = C_TaskQuest.GetQuestZoneID(questID)
+			-- Previous Blizzard call changed 2026.09.25: mapID = C_TaskQuest.GetQuestZoneID(questID)
+			mapID = RQE.API.Client.C_TaskQuest.GetQuestZoneID(questID)
 
 			-- Ensure mapID is valid before calling GetQuestLocation
 			if mapID then
-				posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+				-- Previous Blizzard call changed 2026.09.25: posX, posY = C_TaskQuest.GetQuestLocation(questID, mapID)
+				posX, posY = RQE.API.Client.C_TaskQuest.GetQuestLocation(questID, mapID)
 			else
 				RQE.debugLog("Invalid mapID for World QuestID:", questID)
 				return
 			end
 		else
 			-- Not a world quest, use the existing logic
-			mapID = GetQuestUiMapID(questID)
+			-- Previous Blizzard call changed 2026.09.25: mapID = GetQuestUiMapID(questID)
+			mapID = RQE.API.Client.GetQuestUiMapID(questID)
 		end
 
 		if not mapID then
@@ -2043,7 +2118,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- opening or hiding Blizzard's map here can taint a later Area POI tooltip
 		-- widget refresh after a world-boss update.
 		if not posX or not posY then
-			local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			-- Previous Blizzard call changed 2026.09.25: local nextPosX, nextPosY, nextMapID, wpType = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			local nextPosX, nextPosY, nextMapID, wpType = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, mapID)
 
 			if nextMapID == nil or nextPosX == nil or nextPosY == nil then
 				RQE.debugLog("Next Waypoint - MapID:", nextMapID, "X:", nextPosX, "Y:", nextPosY, "Waypoint Type:", wpType)
@@ -2077,7 +2153,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[savedSuperTrackedQuestID]
 
 		-- Check if the quest is completed
-		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(savedSuperTrackedQuestID)
+		-- Previous Blizzard call changed 2026.09.25: local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(savedSuperTrackedQuestID)
+		local isQuestCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(savedSuperTrackedQuestID)
 
 		-- Determine if the quest is being tracked due to a search and is not completed
 		local trackedViaSearchAndNotCompleted = RQE.searchedQuestID == savedSuperTrackedQuestID and not isQuestCompleted
@@ -2094,7 +2171,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:RemoveSuperTrackingFromQuest()
 
 		-- Restore the super-tracked quest after a delay for non-world quests
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			if savedSuperTrackedQuestID then
 				-- Fetch quest info from RQEDatabase if available
 				local questInfo = RQE.getQuestData(savedSuperTrackedQuestID)
@@ -2115,7 +2193,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to Reset LFG roles after leaving raid group created through the SearchGroup Button in RQEFrame
 	function ResetLFGRoles()
 		-- Set default roles DAMAGE only: (leader, tank, healer, damage)
-		SetLFGRoles(false, false, false, true)
+		-- Previous Blizzard call changed 2026.09.25: SetLFGRoles(false, false, false, true)
+		RQE.API.Client.SetLFGRoles(false, false, false, true)
 	end
 
 	-- SlashCommand function
@@ -2174,8 +2253,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- This function will clear the WQ Tracking for a specific quest
 	function RQE:ClearSpecificWQTracking(questID)
-		if RQE.API.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
-			C_QuestLog.RemoveWorldQuestWatch(questID)
+		-- Previous Blizzard call changed 2026.09.25: if RQE.API.IsWorldQuest(questID) and C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
+		if RQE.API.IsWorldQuest(questID) and RQE.API.Client.C_QuestLog.GetQuestWatchType(questID) == Enum.QuestWatchType.Automatic then
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 		end
 	end
 
@@ -2194,7 +2275,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Initialize saved variables
 	RQECharacterDB = RQECharacterDB or {}
 	RQECharacterDB.trackedQuestStepIndexes = RQECharacterDB.trackedQuestStepIndexes or {}
-	RQE.Version = C_AddOns.GetAddOnMetadata("RQE", "Version")
+	-- Previous Blizzard call changed 2026.09.25: RQE.Version = C_AddOns.GetAddOnMetadata("RQE", "Version")
+	RQE.Version = RQE.API.Client.C_AddOns.GetAddOnMetadata("RQE", "Version")
 	RQE.debugLog("Initialized saved variables.")
 
 
@@ -2214,7 +2296,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	--- @param chosenProfile string|nil - The manually chosen profile or nil.
 	function RQE:SetProfileOnce(chosenProfile)
 		if not RQE.profileHasBeenSet then
-			local profileToSet = chosenProfile or (UnitName("player") .. " - " .. GetRealmName())
+			-- Previous Blizzard call changed 2026.09.25: local profileToSet = chosenProfile or (UnitName("player") .. " - " .. GetRealmName())
+			local profileToSet = chosenProfile or (RQE.API.Client.UnitName("player") .. " - " .. RQE.API.Client.GetRealmName())
 			if type(profileToSet) == "string" then
 				RQE.infoLog("Profile set to", profileToSet)
 			end
@@ -2224,8 +2307,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to gather character info if addon is set to default to player name instead of account wide
 	function RQE:GetCharacterInfo()
-		local characterName = UnitName("player")
-		local characterRealm = GetRealmName()
+		-- Previous Blizzard call changed 2026.09.25: local characterName = UnitName("player")
+		local characterName = RQE.API.Client.UnitName("player")
+		-- Previous Blizzard call changed 2026.09.25: local characterRealm = GetRealmName()
+		local characterRealm = RQE.API.Client.GetRealmName()
 		local characterKey = characterName .. " - " .. characterRealm
 	end
 
@@ -2275,12 +2360,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:UpdateTrackerVisibility()
 		-- The tracker is an anchor for secure quest-item buttons. Visibility and
 		-- ObjectiveTrackerFrame changes must wait until combat lockdown ends.
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			self.UpdateTrackerVisibilityAfterCombat = true
 			return
 		end
 
-		local inScenario = C_Scenario.IsInScenario()
+		-- Previous Blizzard call changed 2026.09.25: local inScenario = C_Scenario.IsInScenario()
+		local inScenario = RQE.API.Client.C_Scenario.IsInScenario()
 		local mythicMode = self.db.profile.mythicScenarioMode
 		local configWantsQuestFrame = self.db.profile.enableQuestFrame
 
@@ -2299,7 +2386,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
+		-- Previous Blizzard call changed 2026.09.25: if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
+		if not RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite Quest") then
 			if mythicMode and inScenario then
 				if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
 					self.RQEQuestFrame:Hide()
@@ -2433,7 +2521,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to Show/Hide RQEFrame when frames are empty
 	function RQE:UpdateRQEFrameVisibility()
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			return
 		end
 
@@ -2463,7 +2552,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to Show/Hide RQEQuestFrame when frames are empty
 	function RQE:UpdateRQEQuestFrameVisibility()
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			return
 		end
 
@@ -2474,13 +2564,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Pull data of number of tracked achievements
 		RQE.AchievementsFrame.achieveCount = RQE.GetNumTrackedAchievements()
-		self.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: self.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+		self.worldQuestCount = RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches()
 
 		-- Iterate through tracked quests to count them
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				if C_CampaignInfo.IsCampaignQuest(questID) then
+				-- Previous Blizzard call changed 2026.09.25: if C_CampaignInfo.IsCampaignQuest(questID) then
+				if RQE.API.Client.C_CampaignInfo.IsCampaignQuest(questID) then
 					self.campaignQuestCount = self.campaignQuestCount + 1
 				elseif RQE.API.IsWorldQuest(questID) then
 					self.worldQuestCount = self.worldQuestCount + 1
@@ -2491,7 +2585,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Check conditions for showing/hiding the frame, including manual closure
-		if (self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0 and not self.isInScenario)) or self.isRQEQuestFrameManuallyClosed then
+		if (self.db.profile.hideRQEQuestFrameWhenEmpty and (self.campaignQuestCount + self.regularQuestCount + self.worldQuestCount + self.AchievementsFrame.achieveCount == 0
+			and not (self.recipeTrackingFrame and self.recipeTrackingFrame:IsShown()) and not self.isInScenario)) or self.isRQEQuestFrameManuallyClosed then
 			RQE.RQEQuestFrame:Hide()
 		else
 			RQE.RQEQuestFrame:Show()
@@ -2509,10 +2604,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to update MapID display
 	function RQE:UpdateMapIDDisplay()
-		local newMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local newMapID = C_Map.GetBestMapForUnit("player")
+		local newMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		local oldMapID = RQE.lastMapID
 
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		--UpdateWorldQuestTrackingForMap(mapID)
 		if RQEFrame and RQEFrame.MapIDText then
 			if RQE.db.profile.showMapID then
@@ -2545,7 +2642,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.lastMapID = mapID
 
 		-- Run check to update stepIndex of the supertracked quest but only if the player isn't on a taxi, then the StartPeriodicChecks will run after they land
-		if UnitOnTaxi("player") then return end
+		-- Previous Blizzard call changed 2026.09.25: if UnitOnTaxi("player") then return end
+		if RQE.API.Client.UnitOnTaxi("player") then return end
 		RQE:StartPeriodicChecks()	-- Fires on map change RQE:UpdateMapIDDisplay() but might need to adjust so it only fires if CheckDBZoneChange is part of the current step (or any step in the current supertracked quest)
 	end
 
@@ -2683,21 +2781,26 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if stepIndex == 1 and totalSteps == 0 then
 			if RQE.db.profile.debugLevel == "INFO" then
 				print("~~ Quest " .. questID .. " is in the DB but has no steps to display. ~~")
-				PlaySound(1283)
+				-- Previous Blizzard call changed 2026.09.25: PlaySound(1283)
+				RQE.API.Client.PlaySound(1283)
 			end
 		end
 	end
 
 	-- Function that track quests that are in the DB but have no steps
 	function RQE.TrackDBQuestsWithoutSteps()
-		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		for i = RQE.API.Client.C_QuestLog.GetNumQuestWatches(), 1, -1 do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
 				if info and not info.isHeader then
@@ -2707,7 +2810,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					local questData = RQE.getQuestData(questID)
 
 					if questData and #questData == 0 then
-						C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						RQE.API.Client.C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
 						DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFFFF00[In DB, but has no steps (need to update DB entry)]|r", 0.46, 0.82, 0.95)
 					end
 				end
@@ -2717,14 +2821,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that track quests that are in the DB and have steps
 	function RQE.TrackDBQuestsWithSteps()
-		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		for i = RQE.API.Client.C_QuestLog.GetNumQuestWatches(), 1, -1 do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
 				if info and not info.isHeader then
@@ -2734,7 +2842,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					local questData = RQE.getQuestData(questID)
 
 					if questData and #questData > 0 then
-						C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						RQE.API.Client.C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
 						DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. string.format(" |cFFFFFFFF--|r |cFF00FF00[In DB: %d step(s)]|r", #questData), 0.46, 0.82, 0.95)
 					end
 				end
@@ -2744,14 +2853,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that track quests that are NOT in the DB at all
 	function RQE.TrackQuestsNotInDB()
-		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		for i = RQE.API.Client.C_QuestLog.GetNumQuestWatches(), 1, -1 do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			for i = 1, RQE.API.GetNumQuestLogEntries() do
 				local info = RQE.API.GetQuestLogInfo(i)
 				if info and not info.isHeader then
@@ -2761,7 +2874,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					local questData = RQE.getQuestData(questID)
 
 					if not questData then
-						C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						RQE.API.Client.C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Automatic)
 						DEFAULT_CHAT_FRAME:AddMessage(messagePrefix .. " |cFFFFFFFF--|r |cFFFF0001[Not in DB]|r", 0.46, 0.82, 0.95)
 					end
 				end
@@ -2786,7 +2900,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE._lastSeparateQuestID = RQE.CurrentlySuperQuestID
 		RQE._lastSeparateStepIndex = RQE.AddonSetStepIndex or 1
 
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("|cFFFF3333[RQE]|r SeparateFocusFrame will clear after combat ends")
 			end
@@ -2848,7 +2963,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE._lastSeparateClearReason == "StepIndex changed" or RQE._lastSeparateClearReason == "Quest completed" or RQE._lastSeparateClearReason == "Quest flagged complete" or RQE._lastSeparateClearReason == "QuestID changed" then
 			RQE._lastSeparateClearReason = nil
 
-			C_Timer.After(0.10, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.10, function()
+			RQE.API.Client.C_Timer.After(0.10, function()
 				if RQE.UpdateSeparateFocusFrame then
 					RQE:UpdateSeparateFocusFrame()
 				end
@@ -2959,7 +3075,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.UpdateTheFrameNoMatterWhat = true
 			UpdateFrame(questID)
 
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.UpdateTheFrameNoMatterWhat = false
 			end)
 		end
@@ -3145,7 +3262,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local t = {}
 
 		-- Check if the quest is ready for turn-in
-		local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		local isReadyForTurnIn = RQE.API.Client.C_QuestLog.IsComplete(questID) or RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
 		local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
 		if objectivesData then
@@ -3210,10 +3328,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local isQuestInLog = RQE.API.IsOnQuest(extractedQuestID)
 		local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)
 		local isBeingSearched = RQE.searchedQuestID == extractedQuestID
-		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+		-- Previous Blizzard call changed 2026.09.25: local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+		local isQuestCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
 
 		local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
-		local isBonusQuest = C_QuestLog.IsQuestTask(extractedQuestID) or C_QuestLog.IsThreatQuest(extractedQuestID)
+		-- Previous Blizzard call changed 2026.09.25: local isBonusQuest = C_QuestLog.IsQuestTask(extractedQuestID) or C_QuestLog.IsThreatQuest(extractedQuestID)
+		local isBonusQuest = RQE.API.Client.C_QuestLog.IsQuestTask(extractedQuestID) or RQE.API.Client.C_QuestLog.IsThreatQuest(extractedQuestID)
 		local isSuperTrackedQuest = RQE.API.GetSuperTrackedQuestID() == extractedQuestID
 		local isDatabaseQuest = RQE.getQuestData(extractedQuestID) ~= nil
 
@@ -3222,14 +3342,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		local watchedQuests = {}
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local watchedQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if watchedQuestID then
 				watchedQuests[watchedQuestID] = true
 			end
 		end
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local watchedWorldQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if watchedWorldQuestID then
 				watchedQuests[watchedWorldQuestID] = true
 			end
@@ -3275,7 +3399,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to initiate a delayed re-check and clear operation
 	function RQE:DelayedClearCheck()
-		C_Timer.After(3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+		RQE.API.Client.C_Timer.After(3, function()
 			-- Attempt to directly extract questID from RQE.QuestIDText if available
 			local extractedQuestID
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -3292,18 +3417,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local isQuestInLog = RQE.API.IsOnQuest(extractedQuestID)
 			local isWorldQuest = RQE.API.IsWorldQuest(extractedQuestID)
 			local isBeingSearched = RQE.searchedQuestID == extractedQuestID
-			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+			-- Previous Blizzard call changed 2026.09.25: local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
+			local isQuestCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(extractedQuestID)
 			local manuallyTracked = RQE.ManuallyTrackedQuests and RQE.ManuallyTrackedQuests[extractedQuestID]
 
 			local watchedQuests = {}
-			for i = 1, C_QuestLog.GetNumQuestWatches() do
-				local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+			for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+				-- Previous Blizzard call changed 2026.09.25: local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+				local watchedQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 				if watchedQuestID then
 					watchedQuests[watchedQuestID] = true
 				end
 			end
-			for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-				local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+				-- Previous Blizzard call changed 2026.09.25: local watchedWorldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+				local watchedWorldQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 				if watchedWorldQuestID then
 					watchedQuests[watchedWorldQuestID] = true
 				end
@@ -3350,8 +3480,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			isQuestRelevant = true
 		else
 			-- Loop through the regular quests tracked in RQEQuestFrame
-			for i = 1, C_QuestLog.GetNumQuestWatches() do
-				local trackedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+			for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+				-- Previous Blizzard call changed 2026.09.25: local trackedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+				local trackedQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 				if trackedQuestID == displayedQuestID then
 					isQuestRelevant = true
 					break
@@ -3360,8 +3492,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Loop through the world quests tracked in RQEQuestFrame if not already found
 			if not isQuestRelevant then
-				for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-					local worldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+				-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+				for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+					-- Previous Blizzard call changed 2026.09.25: local worldQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+					local worldQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 					if worldQuestID == displayedQuestID then
 						isQuestRelevant = true
 						break
@@ -3426,11 +3560,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:DidDirectionTextChange(questID)
 		if not questID then return false end
 
-		local newDir = C_QuestLog.GetNextWaypointText(questID) or ""
+		-- Previous Blizzard call changed 2026.09.25: local newDir = C_QuestLog.GetNextWaypointText(questID) or ""
+		local newDir = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID) or ""
 		local oldDir = RQE.LastDirectionSnapshot or ""
 
-		local newMinimapZone = (GetMinimapZoneText() or ""):lower()
-		local newRealZone = (GetRealZoneText() or ""):lower()
+		-- Previous Blizzard call changed 2026.09.25: local newMinimapZone = (GetMinimapZoneText() or ""):lower()
+		local newMinimapZone = (RQE.API.Client.GetMinimapZoneText() or ""):lower()
+		-- Previous Blizzard call changed 2026.09.25: local newRealZone = (GetRealZoneText() or ""):lower()
+		local newRealZone = (RQE.API.Client.GetRealZoneText() or ""):lower()
 		local newZoneSnapshot = newMinimapZone .. "||" .. newRealZone
 
 		local oldZoneSnapshot = RQE.LastMinimapZoneSnapshot or ""
@@ -3489,7 +3626,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local objectives = self:GetQuestObjectiveSnapshot(questID)
 
 		-- Completion snapshot
-		local ready = C_QuestLog.ReadyForTurnIn(questID) or C_QuestLog.IsComplete(questID)
+		-- Previous Blizzard call changed 2026.09.25: local ready = C_QuestLog.ReadyForTurnIn(questID) or C_QuestLog.IsComplete(questID)
+		local ready = RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) or RQE.API.Client.C_QuestLog.IsComplete(questID)
 
 		-- FORCE UPDATE
 		if RQE.UpdateTheFrameNoMatterWhat then
@@ -3608,6 +3746,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Priority: explicit param > search override > current super-tracked
 		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 		questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()
+		local wasDisplayingQuest = RQE.DisplayedQuestID == questID
 
 		-- Only continue if something actually changed
 		if not RQE.AllFramesShouldUpdate then
@@ -3660,7 +3799,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.QuestIDText:SetText("Quest ID: " .. (RQE.DisplayedQuestID or "N/A"))
 		end
 
-		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		local questName
 
 		-- Using the centralized data access function to fetch quest data
@@ -3683,16 +3823,28 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.debugLog("questInfo.objectives is ", questInfo.objectives)
 
 			if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+				-- ReleaseRenderGroup clears each button's stepIndex. Capture numeric
+				-- selections before the render clear so a quest-progress refresh
+				-- cannot make the next periodic check start over at step 1.
+				local selectedStepIndex, selectedWaypointIndex
+				if wasDisplayingQuest then
+					selectedStepIndex = tonumber(RQE.AddonSetStepIndex)
+						or (RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex)
+					selectedWaypointIndex = RQE.LastClickedWaypointButton
+						and RQE.WaypointButtonIndices[RQE.LastClickedWaypointButton]
+				end
 				RQE:ClearStepsTextInFrame()
-				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+				RQE:CreateStepsText(StepsText, CoordsText, MapIDs, selectedStepIndex, selectedWaypointIndex)
 			end
 		end
 
 		-- For QuestDescription
 		if RQE.QuestDescription then  -- Check if QuestDescription is initialized
-			local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+			-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+			local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 			if questLogIndex then
-				local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+				-- Previous Blizzard call changed 2026.09.25: local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+				local _, questObjectives = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 				local QuestDescription = questObjectives
 				local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 
@@ -3737,8 +3889,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						finalMapID = mapID
 					elseif continentID then
 						-- Only fall back to continentID if player is on that continent
-						local playerMapID = C_Map.GetBestMapForUnit("player")
-						local pInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+						-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+						local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+						-- Previous Blizzard call changed 2026.09.25: local pInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+						local pInfo = playerMapID and RQE.API.Client.C_Map.GetMapInfo(playerMapID)
 						local parent = pInfo and pInfo.parentMapID
 						if parent == continentID then
 							finalMapID = continentID
@@ -3746,10 +3900,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 
 					if finalMapID then
-						local mapInfo = C_Map.GetMapInfo(finalMapID)
+						-- Previous Blizzard call changed 2026.09.25: local mapInfo = C_Map.GetMapInfo(finalMapID)
+						local mapInfo = RQE.API.Client.C_Map.GetMapInfo(finalMapID)
 						if mapInfo then
 							zoneName = mapInfo.name or "Unknown"
-							local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
+							-- Previous Blizzard call changed 2026.09.25: local parentMapInfo = C_Map.GetMapInfo(mapInfo.parentMapID or 0)
+							local parentMapInfo = RQE.API.Client.C_Map.GetMapInfo(mapInfo.parentMapID or 0)
 							if parentMapInfo then
 								continentName = parentMapInfo.name or "Unknown"
 							end
@@ -3768,8 +3924,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local DirectionText = RQE.GetCoordOrderDirection
 				and RQE:GetCoordOrderDirection(questID)
 			if not DirectionText or DirectionText == "" then
-				DirectionText = C_QuestLog and C_QuestLog.GetNextWaypointText
-					and C_QuestLog.GetNextWaypointText(questID)
+				-- Previous Blizzard call changed 2026.09.25: DirectionText = C_QuestLog and C_QuestLog.GetNextWaypointText
+				DirectionText = C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointText")
+					-- Previous Blizzard call changed 2026.09.25: and C_QuestLog.GetNextWaypointText(questID)
+					and RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 			end
 			if DirectionText == "" then DirectionText = nil end
 			RQEFrame.DirectionText = DirectionText  -- Save to addon table
@@ -3784,7 +3942,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.UnknownQuestButton:Show()
 
 		-- Runs a check to see if the super tracked quest allows for forming quest group (such as World Boss WQ)
-		if questID and C_LFGList.CanCreateQuestGroup(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if questID and C_LFGList.CanCreateQuestGroup(questID) then
+		if questID and RQE.API.Client.C_LFGList.CanCreateQuestGroup(questID) then
 			-- If a quest group can be created for this quest, show the button
 			RQE.SearchGroupButton:Show()
 		else
@@ -3797,7 +3956,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Check if the quest is in the player's quest log
 			local isQuestInLog = RQE.API.IsOnQuest(questID)
 			local isWorldQuest = RQE.API.IsWorldQuest(questID)
-			local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+			local isQuestCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID)
 
 			-- When the RQEFrame is updated for a searched quest that is not in the player's quest log
 			if not isQuestInLog and not isWorldQuest then  -- If the quest is not in the log and not a World Quest, update the texts accordingly
@@ -3838,7 +3998,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 						-- Resolve mapID -> zone name
 						if primaryMapID then
-							local mapInfo = C_Map.GetMapInfo(primaryMapID)
+							-- Previous Blizzard call changed 2026.09.25: local mapInfo = C_Map.GetMapInfo(primaryMapID)
+							local mapInfo = RQE.API.Client.C_Map.GetMapInfo(primaryMapID)
 							local zoneName = mapInfo and mapInfo.name
 
 							if type(zoneName) == "string" then
@@ -3865,7 +4026,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE:ShouldClearFrame()
 
 		-- Visibility Update Check for RQEMagic Button
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 
@@ -3897,13 +4059,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 		if not isSuperTracking then return end
 		
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			RQE.CheckNClickWButtonAfterCombat = true
 			return
 		end
 
 		-- Adds a check if player is in party or raid instance; if so, will not allow the function to continue further
-		local isInInstance, instanceType = IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local isInInstance, instanceType = IsInInstance()
+		local isInInstance, instanceType = RQE.API.Client.IsInInstance()
 		if isInInstance and (instanceType == "party" or instanceType == "raid") then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Player is in a party or raid instance. Exiting function.")
@@ -3941,7 +4105,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.ClickWButton()
 			return
 		else
-			local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 			if not waypointText then
 				RQE.CheckAndClickSeparateWaypointButtonButton()
 				return
@@ -3951,7 +4116,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- If quest exists but has no steps defined, click the "W" button
 		local hasSteps = false
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			for _, step in pairs(questData) do
 				if type(step) == "table" and step.description then
 					hasSteps = true
@@ -3976,7 +4142,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 				RQE.ClickWButton()
 			else
-				local waypointText = C_QuestLog.GetNextWaypointText(questID)
+				-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+				local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 				if not waypointText then
 					RQE.CheckAndClickSeparateWaypointButtonButton()
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -4009,7 +4176,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Retrieve the Next Waypoint text
 		local questData = RQE.getQuestData(questID)
-		local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 		if waypointText and waypointText ~= "" then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Waypoint text found:", waypointText, "- Creating a waypoint.")
@@ -4046,9 +4214,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		GameTooltip:AddLine(" ")  -- Blank line
 
 		-- Add description
-		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		if questLogIndex then
-			local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+			local _, questObjectives = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 			local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 			GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 			GameTooltip:AddLine(" ")
@@ -4110,9 +4280,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			or (questData and questData.title)
 			or (questLineInfo and questLineInfo.questName)
 			or "Quest name unavailable"
-		local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local logIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		local logIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		local isOnQuest = RQE.API.IsOnQuest(questID)
-		local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
+		-- Previous Blizzard call changed 2026.09.25: local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
+		local isComplete = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) -- <- more accurate check
 
 		-- Define status color and text
 		local statusText, statusR, statusG, statusB
@@ -4145,12 +4317,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Fallback if not found in DB
 		if (descriptionText == "" or objectivesText == "") and logIndex then
-			local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
+			-- Previous Blizzard call changed 2026.09.25: local questDesc, questObjectives = GetQuestLogQuestText(logIndex)
+			local questDesc, questObjectives = RQE.API.Client.GetQuestLogQuestText(logIndex)
 			descriptionText = descriptionText ~= "" and descriptionText or (questDesc or "")
 			objectivesText = objectivesText ~= "" and objectivesText or (questObjectives or "")
 		end
 
-		local objText = GetQuestObjectiveInfo(questID, 1, false)
+		-- Previous Blizzard call changed 2026.09.25: local objText = GetQuestObjectiveInfo(questID, 1, false)
+		local objText = RQE.API.Client.GetQuestObjectiveInfo(questID, 1, false)
 		local showFallbackObjective = (not objectivesText or objectivesText == "") and objText
 
 		GameTooltip:Hide()
@@ -4210,7 +4384,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to find the closest quest currently being tracked
 	function RQE:GetClosestTrackedQuest()
 		local closestQuestID, closestDistance = nil, math.huge
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ No valid playerMapID found. Exiting GetClosestTrackedQuest. ~~")
@@ -4218,7 +4393,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		local playerPos = RQE.API.Client.C_Map.GetPlayerMapPosition(playerMapID, "player")
 		if not playerPos then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ No valid player position found for mapID:", playerMapID)
@@ -4259,10 +4435,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Iterate all watched quests
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
-				local distance, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: local distance, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+				local distance, onContinent = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(questID)
 				local finalDist = math.huge
 
 				if distance and onContinent then
@@ -4287,7 +4466,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to Auto Supertrack the Nearest Watched Quest
 	function RQE:AutoSuperTrackClosestQuest()
-		if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
+		-- Previous Blizzard call changed 2026.09.25: if not RQE.db.profile.enableAutoSuperTrackSwap or InCombatLockdown() or UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
+		if not RQE.db.profile.enableAutoSuperTrackSwap or RQE.API.Client.InCombatLockdown() or RQE.API.Client.UnitOnTaxi("player") or (WorldMapFrame and WorldMapFrame:IsShown()) then return end
 		-- Automatic nearest-quest changes never interrupt a numbered route.
 		if self:HasCurrentCoordOrderStep() then return end
 
@@ -4305,7 +4485,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				RQE.Buttons.ClearButtonPressed()
 				RQE:AutoSetSuperTrackedQuestID(0)
 
-				C_Timer.After(0.3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+				RQE.API.Client.C_Timer.After(0.3, function()
 					if RQE:HasCurrentCoordOrderStep() then return end
 					RQE:ForceSuperTrackQuestProperly(closestQuestID)
 					RQE.ClickQuestLogIndexButton(closestQuestID)
@@ -4315,13 +4496,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						print("Supertracking closest quest:", closestQuestID)
 					end
 
-					C_Timer.After(0.3, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+					RQE.API.Client.C_Timer.After(0.3, function()
 						RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3219 ~~")
 						UpdateFrame()
 						UpdateRQEQuestFrame()
 					end)
 
-					C_Timer.After(0.4, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.4, function()
+					RQE.API.Client.C_Timer.After(0.4, function()
 						RQE.CheckAndClickWButton()
 					end)
 				end)
@@ -4335,9 +4518,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Step 1: Save all currently watched quests BEFORE nuking them
 		RQE.SavedQuestWatches = {}
-		local numWatches = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numWatches = C_QuestLog.GetNumQuestWatches()
+		local numWatches = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		for i = 1, numWatches do
-			local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local watchedQuestID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local watchedQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if watchedQuestID then
 				table.insert(RQE.SavedQuestWatches, watchedQuestID)
 			end
@@ -4345,21 +4530,26 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Step 2: Remove all watched quests
 		for _, qid in ipairs(RQE.SavedQuestWatches) do
-			C_QuestLog.RemoveQuestWatch(qid)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(qid)
+			RQE.API.Client.C_QuestLog.RemoveQuestWatch(qid)
 		end
 
 		-- Step 3: Add the target quest back
-		C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
+		RQE.API.Client.C_QuestLog.AddQuestWatch(questID, Enum.QuestWatchType.Manual)
 
 		-- Step 4: Force supertrack
 		RQE:AutoSetSuperTrackedQuestID(questID)
-		SetCVar("superTrackedQuestID", questID)
+		-- Previous Blizzard call changed 2026.09.25: SetCVar("superTrackedQuestID", questID)
+		RQE.API.Client.SetCVar("superTrackedQuestID", questID)
 
 		-- Step 5: After a slight delay, re-add previously watched quests (except the one we supertracked)
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			for _, qid in ipairs(RQE.SavedQuestWatches) do
 				if qid ~= questID then
-					C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
+					RQE.API.Client.C_QuestLog.AddQuestWatch(qid, Enum.QuestWatchType.Manual)
 				end
 			end
 
@@ -4370,9 +4560,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end)
 
 		-- Step 6: Additional delay to re-force supertracking after Blizzard refreshes
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			RQE:AutoSetSuperTrackedQuestID(questID)
-			SetCVar("superTrackedQuestID", questID)
+			-- Previous Blizzard call changed 2026.09.25: SetCVar("superTrackedQuestID", questID)
+			RQE.API.Client.SetCVar("superTrackedQuestID", questID)
 
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Final forced SuperTracking quest ID after rewatch:", questID)
@@ -4383,7 +4575,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to supertrack the first watched quest matching the player's current map ID
 	function RQE:SuperTrackFirstWatchedQuestInCurrentZone()
 		-- Get the player's current map ID
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then
 			return
 		end
@@ -4395,16 +4588,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local watchedQuestIDs = {}
 
 			-- Get world quest watches
-			for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-				local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+				-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+				local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 				if questID then
 					table.insert(watchedQuestIDs, questID)
 				end
 			end
 
 			-- Get regular quest watches
-			for i = 1, C_QuestLog.GetNumQuestWatches() do
-				local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+			for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+				-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+				local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 				if questID then
 					table.insert(watchedQuestIDs, questID)
 				end
@@ -4422,7 +4619,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Iterate through the watched quests
 		for _, questID in ipairs(watchedQuestIDs) do
 			-- Get the map ID associated with the quest
-			local questMapID = GetQuestUiMapID(questID)
+			-- Previous Blizzard call changed 2026.09.25: local questMapID = GetQuestUiMapID(questID)
+			local questMapID = RQE.API.Client.GetQuestUiMapID(questID)
 			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			if questMapID then
 				-- Check if the quest's map ID matches the player's current map ID
@@ -4450,8 +4648,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Checks whether steps use legacy `coordinates` instead of `coordinateHotspots`
 	function RQE:CheckCoordHotspotsInSteps(questID)
-		if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
-		if C_AddOns.IsAddOnLoaded("Chattynator") then return end
+		-- Previous Blizzard call changed 2026.09.25: if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+		if not RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("Chattynator") then return end
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("Chattynator") then return end
 
 		questID = tonumber(questID)
 		if not questID then
@@ -4543,6 +4743,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function that tracks the closest quest on certain events in the Event Manager
 	function RQE.TrackClosestQuest()
 		if not RQEFrame:IsShown() then return end
+		-- "Choose a quest when none is focused" must not replace an
+		-- already-focused quest when watch lists or zone filters change.
+		if (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
 
 		local functionName = "RQE.TrackClosestQuest()"
 
@@ -4570,7 +4773,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			-- Optionally trigger an update to the frame
-			C_Timer.After(1.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+			RQE.API.Client.C_Timer.After(1.5, function()
 				RQE.smartPrint(functionName, "~~ Firing UpdateFrame(): 3379 ~~")
 				UpdateFrame()
 			end)
@@ -4594,14 +4798,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local taskPOIs = C_TaskQuest.GetQuestsOnMap(uiMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		-- Previous Blizzard call changed 2026.09.25: local taskPOIs = C_TaskQuest.GetQuestsOnMap(uiMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		local taskPOIs = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(uiMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 		local trackedQuests = {}
 		local maxTracked = 1
 		local currentTrackedCount = 0
 
 		-- Retrieve the currently tracked quests to avoid duplicates
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local watchedQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local watchedQuestID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local watchedQuestID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if watchedQuestID then
 				trackedQuests[watchedQuestID] = true
 				currentTrackedCount = currentTrackedCount + 1
@@ -4618,7 +4825,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				-- Only proceed if the quest is a world quest (classification 10)
 				if questID and RQE:IsWorldQuest(questID) then
 					-- Fetch additional info to check if the quest is in the area
-					local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
+					-- Previous Blizzard call changed 2026.09.25: local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
+					local isInArea, isOnMap, numObjectives = RQE.API.Client.GetTaskInfo(questID)
 
 					if isInArea then
 						if RQE.db.profile.debugLevel == "INFO+" then
@@ -4627,7 +4835,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 						-- Check if the quest is already tracked
 						if not trackedQuests[questID] then
-							C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+							-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+							RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
 							trackedQuests[questID] = true
 							currentTrackedCount = currentTrackedCount + 1
 
@@ -4650,7 +4859,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("World QuestID: " .. questID .. " (not in area)")
 						end
-						C_QuestLog.RemoveWorldQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 					end
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -4667,7 +4877,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to remove world quests from tracking if the player leaves the subzone
 	function RQE:RemoveWorldQuestsIfOutOfSubzone()
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- Check if playerMapID is valid
 		if not playerMapID then
@@ -4678,7 +4889,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the player's current position on the map (subzone level)
-		local playerPosition = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local playerPosition = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		local playerPosition = RQE.API.Client.C_Map.GetPlayerMapPosition(playerMapID, "player")
 
 		if not playerPosition then
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -4690,21 +4902,27 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local playerX, playerY = playerPosition:GetXY()
 
 		-- Fetch quests in the player's current map area
-		local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		-- Previous Blizzard call changed 2026.09.25: local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		local questsInArea = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 		local questsInAreaLookup = {}
 
 		-- Check currently tracked world quests
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
-				local watchType = C_QuestLog.GetQuestWatchType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 				local isAutomatic = watchType == Enum.QuestWatchType.Automatic
-				local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
+				-- Previous Blizzard call changed 2026.09.25: local isInArea, isOnMap, numObjectives = GetTaskInfo(questID)
+				local isInArea, isOnMap, numObjectives = RQE.API.Client.GetTaskInfo(questID)
 
 				-- Store all the quest IDs currently in the player's area (map and subzone)
 				if isAutomatic then
 					if not isInArea then
-						C_QuestLog.RemoveWorldQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 					end
 				end
 
@@ -4736,7 +4954,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 						if not questInSubzone then
 							-- Remove quest from tracking if not in the same subzone
-							C_QuestLog.RemoveWorldQuestWatch(questID)
+							-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+							RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Removed World Quest: " .. questID .. " from tracking because it's out of the current subzone.")
 							end
@@ -4766,16 +4985,19 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Remove Tracking of all World Quests (called on PLAYER_LOGIN from EventManager if selected in the configuration)
 	function RemoveAllTrackedWorldQuests()
 		-- Get the number of currently tracked World Quests
-		local numWorldQuestWatches = C_QuestLog.GetNumWorldQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numWorldQuestWatches = C_QuestLog.GetNumWorldQuestWatches()
+		local numWorldQuestWatches = RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches()
 
 		-- Loop backwards through the list of tracked World Quests
 		-- Backwards iteration is necessary because removing a quest changes the indices
 		for i = numWorldQuestWatches, 1, -1 do
 			-- Get the quest ID of the ith tracked World Quest
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
 				-- Remove the World Quest from being tracked
-				C_QuestLog.RemoveWorldQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 			end
 		end
 	end
@@ -4794,7 +5016,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Step 2: Remove the super-tracking by setting it to 0
 		if superTrackedQuestID and superTrackedQuestID ~= 0 then
-			C_SuperTrack.SetSuperTrackedQuestID(0)
+			-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(0)
+			RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(0)
 			RQE.infoLog("Removed super-tracking from quest ID:", superTrackedQuestID)
 		else
 			RQE.infoLog("No quest is currently super-tracked.")
@@ -4840,13 +5063,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to fetch/print Scenario Criteria Step by Step updated for Patch 11.0
 	function RQE.PrintAllScenarioBits()
 		-- Check if the player is currently in a scenario
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			print("Not currently in a scenario.")
 			return
 		end
 
 		-- Fetch general scenario information
-		local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		local scenarioInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
 		if scenarioInfo then
 			print("Scenario Name: " .. scenarioInfo.name)
 			print("Current Stage: " .. scenarioInfo.currentStage .. " of " .. scenarioInfo.numStages)
@@ -4859,11 +5084,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Iterate through each step in the current scenario
 		local stepID = scenarioInfo.currentStage
-		local numCriteria = select(3, C_Scenario.GetStepInfo())
+		-- Previous Blizzard call changed 2026.09.25: local numCriteria = select(3, C_Scenario.GetStepInfo())
+		local numCriteria = select(3, RQE.API.Client.C_Scenario.GetStepInfo())
 
 		for criteriaIndex = 1, numCriteria do
 			-- Fetch criteria information using GetCriteriaInfo
-			local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+			-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+			local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 			if criteriaInfo then
 				print("Criteria " .. criteriaIndex .. ":")
 				print("  Description: " .. (criteriaInfo.description or ""))
@@ -4882,7 +5109,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			-- Fetch criteria information using GetCriteriaInfoByStep
-			local criteriaInfoByStep = C_ScenarioInfo.GetCriteriaInfoByStep(stepID, criteriaIndex)
+			-- Previous Blizzard call changed 2026.09.25: local criteriaInfoByStep = C_ScenarioInfo.GetCriteriaInfoByStep(stepID, criteriaIndex)
+			local criteriaInfoByStep = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfoByStep(stepID, criteriaIndex)
 			if criteriaInfoByStep then
 				print("Criteria By Step " .. criteriaIndex .. ":")
 				print("  Description: " .. (criteriaInfoByStep.description or ""))
@@ -4992,7 +5220,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self.timeSinceLastUpdate = self.timeSinceLastUpdate + elapsed
 
 		if self.timeSinceLastUpdate >= 1 then
-			local timeLeft = self.endTime - GetTime()  -- Calculate the remaining time
+			-- Previous Blizzard call changed 2026.09.25: local timeLeft = self.endTime - GetTime()  -- Calculate the remaining time
+			local timeLeft = self.endTime - RQE.API.Client.GetTime()  -- Calculate the remaining time
 			if timeLeft > 0 then
 				-- Scenario Timer display
 				RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
@@ -5013,7 +5242,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		timerFrame.endTime = GetTime() + duration
+		-- Previous Blizzard call changed 2026.09.25: timerFrame.endTime = GetTime() + duration
+		timerFrame.endTime = RQE.API.Client.GetTime() + duration
 		timerFrame:SetScript("OnUpdate", RQE.Timer_OnUpdate)
 		RQE.TimerFrame = timerFrame
 		timerFrame:Show()
@@ -5035,7 +5265,9 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	--Checks active timers and starts/stops the timer as necessary
 	function RQE.Timer_CheckTimers()
 		-- Retrieve the timer information (example: for the first criteria)
-		local duration, elapsed = select(10, C_ScenarioInfo.GetCriteriaInfo(1))
+		-- Previous Blizzard call changed 2026.09.25: local duration, elapsed = select(10, C_ScenarioInfo.GetCriteriaInfo(1))
+		local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(1)
+		local duration, elapsed = criteriaInfo and criteriaInfo.duration, criteriaInfo and criteriaInfo.elapsed
 		RQE.infoLog("[CheckTimers] Duration is " .. tostring(duration))
 		RQE.infoLog("[CheckTimers] Elapsed is " .. tostring(elapsed))
 
@@ -5089,7 +5321,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to update Torghast details in the RQE table
 	function RQE.UpdateTorghastDetails(eventLevel, eventType)
-		local level = GetJailersTowerLevel()
+		-- Previous Blizzard call changed 2026.09.25: local level = GetJailersTowerLevel()
+		local level = RQE.API.Client.GetJailersTowerLevel()
 		local layerNum, floorID
 
 		-- Calculate the Torghast layer number and floor ID based on the level
@@ -5245,11 +5478,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.activeEvents = {}
 
 		-- Get today's date
-		local today = C_DateAndTime.GetCurrentCalendarTime()
+		-- Previous Blizzard call changed 2026.09.25: local today = C_DateAndTime.GetCurrentCalendarTime()
+		local today = RQE.API.Client.C_DateAndTime.GetCurrentCalendarTime()
 
 		-- Loop through events for today and store them in the table
-		for i = 1, C_Calendar.GetNumDayEvents(0, today.monthDay) do
-			local eventInfo = C_Calendar.GetDayEvent(0, today.monthDay, i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_Calendar.GetNumDayEvents(0, today.monthDay) do
+		for i = 1, RQE.API.Client.C_Calendar.GetNumDayEvents(0, today.monthDay) do
+			-- Previous Blizzard call changed 2026.09.25: local eventInfo = C_Calendar.GetDayEvent(0, today.monthDay, i)
+			local eventInfo = RQE.API.Client.C_Calendar.GetDayEvent(0, today.monthDay, i)
 			if eventInfo then
 				RQE.activeEvents[eventInfo.eventID] = eventInfo.title
 			end
@@ -5296,7 +5532,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Iterate through the quest list to find the first incomplete quest
 		for _, questID in ipairs(questList) do
-			local isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID)
+			local isCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID)
 
 			if not isCompleted then
 				-- Fetch quest information from RQEDatabase, if available
@@ -5424,9 +5661,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		for i = 1, 40 do  -- Scan nameplates (you could use a different method if not using nameplates)
 			local unitID = "nameplate" .. i
-			if UnitExists(unitID) then
-				local unitName = UnitName(unitID)
-				local isDead = UnitIsDead(unitID)
+			-- Previous Blizzard call changed 2026.09.25: if UnitExists(unitID) then
+			if RQE.API.Client.UnitExists(unitID) then
+				-- Previous Blizzard call changed 2026.09.25: local unitName = UnitName(unitID)
+				local unitName = RQE.API.Client.UnitName(unitID)
+				-- Previous Blizzard call changed 2026.09.25: local isDead = UnitIsDead(unitID)
+				local isDead = RQE.API.Client.UnitIsDead(unitID)
 
 				for _, mob in ipairs(mobList) do
 					if unitName == mob.name then
@@ -5434,7 +5674,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 							--TargetUnit(unitID)
 
 							if mob.marker then
-								SetRaidTarget(unitID, mob.marker)
+								-- Previous Blizzard call changed 2026.09.25: SetRaidTarget(unitID, mob.marker)
+								RQE.API.Client.SetRaidTarget(unitID, mob.marker)
 							end
 
 							if RQE.db.profile.debugLevel == "INFO+" then
@@ -5471,9 +5712,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- In quest log & watched (covers world quests too if watched)
-		local logIndex = C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local logIndex = C_QuestLog.GetLogIndexForQuestID and C_QuestLog.GetLogIndexForQuestID(questID)
+		local logIndex = RQE.API.ResolveClientAPI("C_QuestLog.GetLogIndexForQuestID") and RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		if logIndex then
-			if (C_QuestLog.IsQuestWatched and C_QuestLog.IsQuestWatched(questID)) or (C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(questID)) then
+			-- Previous Blizzard call changed 2026.09.25: if (C_QuestLog.IsQuestWatched and C_QuestLog.IsQuestWatched(questID)) or (C_QuestLog.GetQuestWatchType and C_QuestLog.GetQuestWatchType(questID)) then
+			if (RQE.API.ResolveClientAPI("C_QuestLog.IsQuestWatched") and RQE.API.Client.C_QuestLog.IsQuestWatched(questID)) or (RQE.API.ResolveClientAPI("C_QuestLog.GetQuestWatchType") and RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)) then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Quest of tracked quest is " .. tostring(questID))
 				end
@@ -5528,11 +5771,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Core marking logic for a given unitID (e.g., "mouseover", "target")
 	local function TryMarkUnit(unitID, mobList)
-		if not UnitExists(unitID) then return end
+		-- Previous Blizzard call changed 2026.09.25: if not UnitExists(unitID) then return end
+		if not RQE.API.Client.UnitExists(unitID) then return end
 
-		local unitName = UnitName(unitID)
-		local isDead = UnitIsDead(unitID)
-		local currentMarker = GetRaidTargetIndex(unitID)
+		-- Previous Blizzard call changed 2026.09.25: local unitName = UnitName(unitID)
+		local unitName = RQE.API.Client.UnitName(unitID)
+		-- Previous Blizzard call changed 2026.09.25: local isDead = UnitIsDead(unitID)
+		local isDead = RQE.API.Client.UnitIsDead(unitID)
+		-- Previous Blizzard call changed 2026.09.25: local currentMarker = GetRaidTargetIndex(unitID)
+		local currentMarker = RQE.API.Client.GetRaidTargetIndex(unitID)
 		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		for _, mob in ipairs(mobList) do
@@ -5546,7 +5793,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					if (mob.mustBeAlive and not isDead) or (mob.mustBeAlive == false and isDead) then
 						-- Only change the marker if it's different from what it should be
 						if currentMarker ~= mob.marker then
-							SetRaidTarget(unitID, mob.marker)
+							-- Previous Blizzard call changed 2026.09.25: SetRaidTarget(unitID, mob.marker)
+							RQE.API.Client.SetRaidTarget(unitID, mob.marker)
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Re-marked mob on " .. unitID .. ": " .. unitName .. " with " .. GetRaidMarkerIcon(mob.marker))
 							end
@@ -5675,9 +5923,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		unitID = unitID or "target"
 		local idx = tonumber(desired)
 		if not idx or idx < 1 or idx > 8 then return false end
-		if not UnitExists(unitID) then return false end
+		-- Previous Blizzard call changed 2026.09.25: if not UnitExists(unitID) then return false end
+		if not RQE.API.Client.UnitExists(unitID) then return false end
 
-		local current = GetRaidTargetIndex(unitID)
+		-- Previous Blizzard call changed 2026.09.25: local current = GetRaidTargetIndex(unitID)
+		local current = RQE.API.Client.GetRaidTargetIndex(unitID)
 		if current == idx then
 			-- Already correct; do nothing.
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -5686,9 +5936,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 
-		SetRaidTarget(unitID, idx)
+		-- Previous Blizzard call changed 2026.09.25: SetRaidTarget(unitID, idx)
+		RQE.API.Client.SetRaidTarget(unitID, idx)
 		if RQE.db.profile.debugLevel == "INFO+" then
-			local name = UnitName(unitID) or unitID
+			-- Previous Blizzard call changed 2026.09.25: local name = UnitName(unitID) or unitID
+			local name = RQE.API.Client.UnitName(unitID) or unitID
 			print(("Applied marker %d to %s."):format(idx, name))
 		end
 		return true
@@ -5833,7 +6085,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					if linkType == "item" then
 						GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
 						GameTooltip:SetItemByID(tonumber(id))
-						local count = C_Item.GetItemCount(id) or 0
+						-- Previous Blizzard call changed 2026.09.25: local count = C_Item.GetItemCount(id) or 0
+						local count = RQE.API.Client.C_Item.GetItemCount(id) or 0
 						GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
 						GameTooltip:Show()
 					elseif linkType == "spell" then
@@ -5869,7 +6122,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end)
 
 				-- Auto height fix
-				C_Timer.After(0.05, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				RQE.API.Client.C_Timer.After(0.05, function()
 					local h = Simple:GetContentHeight() or 20
 					Simple:SetHeight(h + 6)
 				end)
@@ -5942,7 +6196,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local active = self.ActiveCoordblock
 		if active then
 			local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
-			local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+			local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit") and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
 			local questData = trackedQuestID and self.getQuestData
 				and self.getQuestData(trackedQuestID)
@@ -5971,7 +6226,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:IsManualFlightMasterWaypointProtected()
 		local ownerMapID = self.ManualFlightMasterWaypointMapID
 		if not ownerMapID then return false end
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit") and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		local trackedQuestID = self.API and self.API.GetSuperTrackedQuestID and tonumber(self.API.GetSuperTrackedQuestID())
 		local currentStep = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
 		local ownerStepChanged = trackedQuestID == self.ManualFlightMasterWaypointQuestID
@@ -5989,8 +6245,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				self.ManualFlightMasterWaypointTitle)
 		end
 		if self.ManualFlightMasterWaypointUsesBlizzard and C_Map
-			and C_Map.GetUserWaypoint then
-			local wp = C_Map.GetUserWaypoint()
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetUserWaypoint then
+			and RQE.API.ResolveClientAPI("C_Map.GetUserWaypoint") then
+			-- Previous Blizzard call changed 2026.09.25: local wp = C_Map.GetUserWaypoint()
+			local wp = RQE.API.Client.C_Map.GetUserWaypoint()
 			local pos = wp and wp.position
 			local x, y
 			if pos then
@@ -6017,7 +6275,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:ReleaseActiveCoordblockWaypoint()
 		if not self.ActiveCoordblock then return end
 		self.ActiveCoordblock = nil
-		C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
+		RQE.API.Client.C_Timer.After(0, function() self:RefreshActiveCoordblockLinks() end)
 	end
 
 	-- Activate a coordinate block and create or replace its live waypoint.
@@ -6038,7 +6297,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			questID = questID,
 			data = data,
 			stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex or self.StepIndexForCoordMatch),
-			playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player"),
+			-- Previous Blizzard call changed 2026.09.25: playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player"),
+			playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit") and RQE.API.Client.C_Map.GetBestMapForUnit("player"),
 		}
 		-- The immediately following CreateWaypoint belongs to this explicit click;
 		-- later automatic calls must still respect the [Active] selection.
@@ -6207,7 +6467,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					GameTooltip:Hide()
 					GameTooltip:SetOwner(self, "ANCHOR_CURSOR_RIGHT")
 					GameTooltip:SetItemByID(hoveredID)
-					local count = C_Item.GetItemCount(hoveredID) or 0
+					-- Previous Blizzard call changed 2026.09.25: local count = C_Item.GetItemCount(hoveredID) or 0
+					local count = RQE.API.Client.C_Item.GetItemCount(hoveredID) or 0
 					GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
 					GameTooltip:Show()
 				end)
@@ -6636,9 +6897,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			GameTooltip:SetItemByID(itemID)
 
 			-- Append the player's current quantity in bags
-			local itemName = GetItemInfo(itemID)
+			-- Previous Blizzard call changed 2026.09.25: local itemName = GetItemInfo(itemID)
+			local itemName = RQE.API.Client.GetItemInfo(itemID)
 			if itemName then
-				local count = GetItemCount(itemID, false, false) or 0
+				-- Previous Blizzard call changed 2026.09.25: local count = GetItemCount(itemID, false, false) or 0
+				local count = RQE.API.Client.GetItemCount(itemID, false, false) or 0
 				GameTooltip:AddLine(" ")
 				GameTooltip:AddLine("|cFF00FF00You have:|r " .. count, 1, 1, 1)
 			end
@@ -6730,11 +6993,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 			-- Handling multiple found quest IDs
 			for _, foundQuestID in ipairs(foundQuestIDs) do
-				local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
-				local isQuestCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
+				-- Previous Blizzard call changed 2026.09.25: local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
+				local isQuestCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(foundQuestID)
+				-- Previous Blizzard call changed 2026.09.25: local isQuestCompletedOnAccount = C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
+				local isQuestCompletedOnAccount = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(foundQuestID)
 
-				C_Timer.After(0.2, function()
-					local questLink = GetQuestLink(foundQuestID)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
+					-- Previous Blizzard call changed 2026.09.25: local questLink = GetQuestLink(foundQuestID)
+					local questLink = RQE.API.Client.GetQuestLink(foundQuestID)
 					if questLink then
 						print("Quest ID: " .. foundQuestID .. " - " .. questLink)
 					else
@@ -6804,8 +7071,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if mapID then
 					finalMapID = mapID
 				elseif continentID then
-					local playerMapID = C_Map.GetBestMapForUnit("player")
-					local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+					local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+					-- Previous Blizzard call changed 2026.09.25: local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+					local parent = playerMapID and RQE.API.Client.C_Map.GetMapInfo(playerMapID).parentMapID
 					if parent == continentID then
 						finalMapID = continentID
 					end
@@ -6820,7 +7089,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				-- Local Variables for World Quest/Quest in Log
 				local isWorldQuest = RQE.API.IsWorldQuest(foundQuestID)
 				local isQuestInLog = RQE.API.IsOnQuest(foundQuestID)
-				local watchType = C_QuestLog.GetQuestWatchType(foundQuestID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(foundQuestID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(foundQuestID)
 
 				-- Found a quest, now set it as the searchedQuestID
 				RQE.searchedQuestID = foundQuestID
@@ -6828,20 +7098,25 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				-- Super Track the Searched Quest if in the Quest Log
 				if isQuestInLog then
-					C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
+					-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
+					RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(foundQuestID)
 					RQE:SaveSuperTrackedQuestToCharacter()
 				end
 
 				-- Add the quest to the tracker
 				if isWorldQuest then
-					C_QuestLog.AddWorldQuestWatch(foundQuestID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(foundQuestID)
+					RQE.API.Client.C_QuestLog.AddWorldQuestWatch(foundQuestID)
 				else
-					C_QuestLog.AddQuestWatch(foundQuestID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(foundQuestID)
+					RQE.API.Client.C_QuestLog.AddQuestWatch(foundQuestID)
 				end
 
 				-- Print quest link or name
-				C_Timer.After(0.2, function()
-					local questLink = GetQuestLink(foundQuestID)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
+					-- Previous Blizzard call changed 2026.09.25: local questLink = GetQuestLink(foundQuestID)
+					local questLink = RQE.API.Client.GetQuestLink(foundQuestID)
 					if questLink then
 						print("Quest ID: " .. foundQuestID .. " - " .. questLink)
 					else
@@ -6909,10 +7184,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Single Blizzard-map API source for RQE's current player position.
 	-- This deliberately does not read position data from TomTom.
 	function RQE:GetCurrentPlayerMapPosition()
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then return nil end
 
-		local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		local position = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not position then return nil end
 
 		local x, y = position:GetXY()
@@ -6930,7 +7207,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:StartCoordinateDisplayUpdates()
 		if coordinateDisplayTicker then return end
 
-		coordinateDisplayTicker = C_Timer.NewTicker(0.10, function()
+		-- Previous Blizzard call changed 2026.09.25: coordinateDisplayTicker = C_Timer.NewTicker(0.10, function()
+		coordinateDisplayTicker = RQE.API.Client.C_Timer.NewTicker(0.10, function()
 			if RQEFrame and RQEFrame:IsShown()
 				and RQE.db and RQE.db.profile and RQE.db.profile.showCoordinates then
 				RQE:UpdateCoordinates()
@@ -7051,9 +7329,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:AbandonQuest(questID)
 		if not questID then return end  -- Ensure questID is valid
 
-		local oldSelectedQuest = C_QuestLog.GetSelectedQuest()
-		C_QuestLog.SetSelectedQuest(questID)
-		local questLink = GetQuestLink(oldSelectedQuest)  -- Generate the quest link
+		-- Previous Blizzard call changed 2026.09.25: local oldSelectedQuest = C_QuestLog.GetSelectedQuest()
+		local oldSelectedQuest = RQE.API.Client.C_QuestLog.GetSelectedQuest()
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SetSelectedQuest(questID)
+		RQE.API.Client.C_QuestLog.SetSelectedQuest(questID)
+		-- Previous Blizzard call changed 2026.09.25: local questLink = GetQuestLink(oldSelectedQuest)  -- Generate the quest link
+		local questLink = RQE.API.Client.GetQuestLink(oldSelectedQuest)  -- Generate the quest link
 
 		if questLink then
 			if RQE.db.profile.debugLevel == "INFO+"  or RQE.db.profile.debugLevel == "INFO+" then
@@ -7061,15 +7342,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		C_QuestLog.SetAbandonQuest()
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SetAbandonQuest()
+		RQE.API.Client.C_QuestLog.SetAbandonQuest()
 
 		-- Check the addon settings to decide whether to show the confirmation dialogues
 		if not RQE.db.profile.enableQuestAbandonConfirm then
 			-- Quest name for the confirmation dialog
-			local title = QuestUtils_GetQuestName(C_QuestLog.GetAbandonQuest()) or "Unknown Quest"
+			-- Previous Blizzard call changed 2026.09.25: local title = QuestUtils_GetQuestName(C_QuestLog.GetAbandonQuest()) or "Unknown Quest"
+			local title = QuestUtils_GetQuestName(RQE.API.Client.C_QuestLog.GetAbandonQuest()) or "Unknown Quest"
 
 			-- Determine if there are items to be lost upon abandoning the quest
-			local items = C_QuestLog.GetAbandonQuestItems()
+			-- Previous Blizzard call changed 2026.09.25: local items = C_QuestLog.GetAbandonQuestItems()
+			local items = RQE.API.Client.C_QuestLog.GetAbandonQuestItems()
 			if items and #items > 0 then
 				-- If there are items, concatenate their names
 				local itemNames = BuildItemNames(items)
@@ -7082,13 +7366,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		else
 			-- If the setting is disabled, abandon the quest directly without confirmation
-			C_QuestLog.AbandonQuest()
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AbandonQuest()
+			RQE.API.Client.C_QuestLog.AbandonQuest()
 		end
 
 		-- Restore the previously selected quest
-		C_QuestLog.SetSelectedQuest(oldSelectedQuest)
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SetSelectedQuest(oldSelectedQuest)
+		RQE.API.Client.C_QuestLog.SetSelectedQuest(oldSelectedQuest)
 
-		C_Timer.After(1.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+		RQE.API.Client.C_Timer.After(1.5, function()
 			RQE.CheckQuestInfoExists()	-- Clears the RQEFrame if nothing is being supertracked (as the focus frame sometimes contains data when it shouldn't)
 		end)
 	end
@@ -7102,7 +7389,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if not itemLinks or #itemLinks == 0 then return nil end
 		local itemNames = {}
 		for _, itemLink in ipairs(itemLinks) do
-			local itemName = GetItemInfo(itemLink)
+			-- Previous Blizzard call changed 2026.09.25: local itemName = GetItemInfo(itemLink)
+			local itemName = RQE.API.Client.GetItemInfo(itemLink)
 			table.insert(itemNames, itemName)
 		end
 		return table.concat(itemNames, ", ")
@@ -7157,7 +7445,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Enhanced function to check the correct classification of the quest
 	local function GetCorrectQuestType(questID)
-		local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+		-- Previous Blizzard call changed 2026.09.25: local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+		local classification = RQE.API.Client.C_QuestInfoSystem.GetQuestClassification(questID)
 
 		-- World quests should have classification 10
 		if classification == Enum.QuestClassification.WorldQuest then
@@ -7210,9 +7499,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				if currentProgress > (lastKnownProgress[questID] or 0) then
 					local isWorldQuest = RQE.API.IsWorldQuest(questID)
 					if isWorldQuest then
-						C_QuestLog.AddWorldQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID)
 					else
-						C_QuestLog.AddQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 					end
 				end
 
@@ -7272,8 +7563,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Fetch basic quest details from WoW API
 		questData.name = RQE.API.GetTitleForQuestID(questID)
-		questData.questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-		questData.directionText = C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: questData.questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		questData.questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: questData.directionText = C_QuestLog.GetNextWaypointText(questID)
+		questData.directionText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 
 		-- Fetch quest objectives
 		local objectivesTable = RQE.API.GetQuestObjectives(questID)
@@ -7281,7 +7574,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Fetch quest description
 		if questData.questLogIndex then
-			local _, questDescription = GetQuestLogQuestText(questData.questLogIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, questDescription = GetQuestLogQuestText(questData.questLogIndex)
+			local _, questDescription = RQE.API.Client.GetQuestLogQuestText(questData.questLogIndex)
 			questData.description = questDescription
 		end
 
@@ -7331,7 +7625,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Retrieve all of the non-campaign/regular quests in the player's current zone
 	function RQE:GetAllQuestsInCurrentZone()
 		-- Get the player's current map ID
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Debug: Could not determine the player's current map ID.")
@@ -7343,7 +7638,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get task POIs in the current zone
-		local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		local taskPOIs = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)
 		if not taskPOIs or #taskPOIs == 0 then
 			print("Debug: No tasks or bonus quests found in the current map.")
 			return
@@ -7371,17 +7667,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		local title, factionID, capped, displayAsObjective =
-			C_TaskQuest.GetQuestInfoByQuestID(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_TaskQuest.GetQuestInfoByQuestID(questID)
+			RQE.API.Client.C_TaskQuest.GetQuestInfoByQuestID(questID)
 
 		print(string.format(
 			"|cff00ffff[RQE]|r quest=%d title=%s task=%s onQuest=%s world=%s threat=%s classification=%s faction=%s capped=%s displayAsObjective=%s",
 			questID,
 			tostring(title),
-			tostring(C_QuestLog.IsQuestTask(questID)),
-			tostring(C_QuestLog.IsOnQuest(questID)),
-			tostring(C_QuestLog.IsWorldQuest(questID)),
-			tostring(C_QuestLog.IsThreatQuest(questID)),
-			tostring(C_QuestInfoSystem.GetQuestClassification(questID)),
+			-- Previous Blizzard call changed 2026.09.25: tostring(C_QuestLog.IsQuestTask(questID)),
+			tostring(RQE.API.Client.C_QuestLog.IsQuestTask(questID)),
+			-- Previous Blizzard call changed 2026.09.25: tostring(C_QuestLog.IsOnQuest(questID)),
+			tostring(RQE.API.Client.C_QuestLog.IsOnQuest(questID)),
+			-- Previous Blizzard call changed 2026.09.25: tostring(C_QuestLog.IsWorldQuest(questID)),
+			tostring(RQE.API.Client.C_QuestLog.IsWorldQuest(questID)),
+			-- Previous Blizzard call changed 2026.09.25: tostring(C_QuestLog.IsThreatQuest(questID)),
+			tostring(RQE.API.Client.C_QuestLog.IsThreatQuest(questID)),
+			-- Previous Blizzard call changed 2026.09.25: tostring(C_QuestInfoSystem.GetQuestClassification(questID)),
+			tostring(RQE.API.Client.C_QuestInfoSystem.GetQuestClassification(questID)),
 			tostring(factionID),
 			tostring(capped),
 			tostring(displayAsObjective)
@@ -7394,7 +7696,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.bonusQuestCount = 0
 
 		-- Get the player's current map ID
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Debug: Could not determine the player's current map ID.")
@@ -7406,7 +7709,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get task POIs in the current zone
-		local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		local taskPOIs = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)
 		if not taskPOIs or #taskPOIs == 0 then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Debug: No tasks or bonus quests found in the current map.")
@@ -7421,7 +7725,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for _, poi in ipairs(taskPOIs) do
 			local questID = poi.questID -- Extract quest ID
 			if questID then
-				local classification = C_QuestInfoSystem.GetQuestClassification(questID) or -1 -- Get classification
+				-- Previous Blizzard call changed 2026.09.25: local classification = C_QuestInfoSystem.GetQuestClassification(questID) or -1 -- Get classification
+				local classification = RQE.API.Client.C_QuestInfoSystem.GetQuestClassification(questID) or -1 -- Get classification
 				if classification == 8 or classification == 9 then -- Check for BonusObjective or Threat
 					local questTitle = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -7445,16 +7750,21 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local taskQuests = {}
 
 		for questID in pairs(RQE.ActiveTaskQuests) do
-			if C_QuestLog.IsQuestTask(questID)
+			-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestTask(questID)
+			if RQE.API.Client.C_QuestLog.IsQuestTask(questID)
 				and RQE.API.IsOnQuest(questID)
 				and not RQE.API.IsWorldQuest(questID)
-				and not C_QuestLog.IsThreatQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: and not C_QuestLog.IsThreatQuest(questID)
+				and not RQE.API.Client.C_QuestLog.IsThreatQuest(questID)
 			then
-				local title = C_TaskQuest.GetQuestInfoByQuestID(questID)
-					or C_QuestLog.GetTitleForQuestID(questID)
+				-- Previous Blizzard call changed 2026.09.25: local title = C_TaskQuest.GetQuestInfoByQuestID(questID)
+				local title = RQE.API.Client.C_TaskQuest.GetQuestInfoByQuestID(questID)
+					-- Previous Blizzard call changed 2026.09.25: or C_QuestLog.GetTitleForQuestID(questID)
+					or RQE.API.Client.C_QuestLog.GetTitleForQuestID(questID)
 					or "Unknown Task Quest"
 
-				local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+				local distanceSq = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(questID)
 
 				table.insert(taskQuests, {
 					questID = questID,
@@ -7470,13 +7780,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Inspect/Print the TaskPOIs on Player's Current Map
 	function RQE:InspectTaskPOIs()
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then
 			print("No Map ID Found")
 			return
 		end
 
-		local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local taskPOIs = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		local taskPOIs = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)
 		if not taskPOIs or #taskPOIs == 0 then
 			print("No Task POIs Found")
 			return
@@ -7531,8 +7843,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				wowHeadeditBox:SetFocus()
 				wowHeadeditBox:HighlightText()
 				-- Copy the text
-				if not InCombatLockdown() then
-					C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+				-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+				if not RQE.API.Client.InCombatLockdown() then
+					-- Previous Blizzard call changed 2026.09.25: C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+					RQE.API.Client.C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", RQE.API.Client.UnitName("player"))
 				else
 					print("Cannot copy while in combat.")
 				end
@@ -7597,7 +7911,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	local f = CreateFrame("Frame")
 	f:RegisterEvent("CHAT_MSG_ADDON")
 	f:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
-		if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == UnitName("player") then
+		-- Previous Blizzard call changed 2026.09.25: if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == UnitName("player") then
+		if event == "CHAT_MSG_ADDON" and prefix == "RQE" and message == "CopyRequest" and sender == RQE.API.Client.UnitName("player") then
 			-- Attempt to use the hidden chat frame method to copy text
 			local editBox = ChatFrame1EditBox or ChatEdit_ChooseBoxForSend() -- Fallback to an existing chat edit box
 			editBox:Show()
@@ -7644,8 +7959,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				wowWikieditBox:SetFocus()
 				wowWikieditBox:HighlightText()
 				-- Copy the text
-				if not InCombatLockdown() then
-					C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+				-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+				if not RQE.API.Client.InCombatLockdown() then
+					-- Previous Blizzard call changed 2026.09.25: C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", UnitName("player"))
+					RQE.API.Client.C_ChatInfo.SendAddonMessage("RQE", "CopyRequest", "WHISPER", RQE.API.Client.UnitName("player"))
 				else
 					print("Cannot copy while in combat.")
 				end
@@ -7720,7 +8037,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Compare current quest, zone, aura, and inventory snapshots with their last recorded values.
 	function RQE.hasStateChanged()
 		local currentQuestID = RQE.API.GetSuperTrackedQuestID()
-		local currentZoneID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local currentZoneID = C_Map.GetBestMapForUnit("player")
+		local currentZoneID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		local currentBuffs = RQE.getCurrentBuffs()
 		local currentInventory = RQE.getCurrentInventory()
 
@@ -7744,7 +8062,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to check if a quest is a World Quest by its classification
 	function RQE:IsWorldQuest(questID)
-		local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+		-- Previous Blizzard call changed 2026.09.25: local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+		local classification = RQE.API.Client.C_QuestInfoSystem.GetQuestClassification(questID)
 		return classification == 10  -- 10 corresponds to World Quest
 	end
 
@@ -7780,9 +8099,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Collect objective data for every quest currently watched by Blizzard.
 	function RQE.getAllWatchedQuestsObjectives()
 		local objectives = {}
-		local watchedQuests = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local watchedQuests = C_QuestLog.GetNumQuestWatches()
+		local watchedQuests = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		for i = 1, watchedQuests do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID then
 				objectives[questID] = RQE.getCurrentQuestObjectives(questID)
 			end
@@ -7793,9 +8114,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to place Current Objectives in table
 	function RQE.getCurrentQuestObjectives(questID)
 		local objectives = {}
-		local numObjectives = C_QuestLog.GetNumQuestObjectives(questID)
+		-- Previous Blizzard call changed 2026.09.25: local numObjectives = C_QuestLog.GetNumQuestObjectives(questID)
+		local numObjectives = RQE.API.Client.C_QuestLog.GetNumQuestObjectives(questID)
 		for i = 1, numObjectives do
-			local description, _, completed, fulfilled, required = GetQuestObjectiveInfo(questID, i, false)
+			-- Previous Blizzard call changed 2026.09.25: local description, _, completed, fulfilled, required = GetQuestObjectiveInfo(questID, i, false)
+			local description, _, completed, fulfilled, required = RQE.API.Client.GetQuestObjectiveInfo(questID, i, false)
 			table.insert(objectives, {
 				description = description,
 				completed = completed,
@@ -7810,7 +8133,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.getCurrentBuffs()
 		local buffs = {}
 		for i = 1, 40 do  -- Typically there are not more than 40 buffs
-			local name = C_UnitAuras.GetBuffDataByIndex("player", i)
+			-- Previous Blizzard call changed 2026.09.25: local name = C_UnitAuras.GetBuffDataByIndex("player", i)
+			local name = RQE.API.Client.C_UnitAuras.GetBuffDataByIndex("player", i)
 			if not name then break end
 			table.insert(buffs, name)
 		end
@@ -7821,10 +8145,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE.getCurrentInventory()
 		local inventory = {}
 		for bag = 1, 5 do  -- Main bags + Reagent Bag (doesn't count items in Bank or Reagent Bank)
-			for slot = 1, C_Container.GetContainerNumSlots(bag) do
-				local itemID = C_Container.GetContainerItemID(bag, slot)
+			-- Previous Blizzard call changed 2026.09.25: for slot = 1, C_Container.GetContainerNumSlots(bag) do
+			for slot = 1, RQE.API.Client.C_Container.GetContainerNumSlots(bag) do
+				-- Previous Blizzard call changed 2026.09.25: local itemID = C_Container.GetContainerItemID(bag, slot)
+				local itemID = RQE.API.Client.C_Container.GetContainerItemID(bag, slot)
 				if itemID then
-					local _, itemCount = C_Container.GetContainerItemInfo(bag, slot)
+					-- Previous Blizzard call changed 2026.09.25: local _, itemCount = C_Container.GetContainerItemInfo(bag, slot)
+					local _, itemCount = RQE.API.Client.C_Container.GetContainerItemInfo(bag, slot)
 					if not inventory[itemID] then
 						inventory[itemID] = 0
 					end
@@ -7857,8 +8184,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		for index, step in ipairs(questData) do
-			if not C_QuestLog.ReadyForTurnIn(questID) then
-				if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
+			-- Previous Blizzard call changed 2026.09.25: if not C_QuestLog.ReadyForTurnIn(questID) then
+			if not RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
+				-- Previous Blizzard call changed 2026.09.25: if not C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
+				if not RQE.API.Client.C_QuestLog.IsQuestObjectiveComplete(questID, step.objectiveIndex) then
 					return index  -- Return the index of the first incomplete objective
 				end
 			end
@@ -7911,7 +8240,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local stepIndex = RQE.AddonSetStepIndex or 1
 
 			-- Tier Four Importance: RQE.SETINITIALWAYPOINTTOONE Function
-			C_Timer.After(0.35, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+			RQE.API.Client.C_Timer.After(0.35, function()
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -7920,7 +8250,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 
 				RQEMacro:CreateMacroForCurrentStep()
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
@@ -7928,7 +8259,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		RQE.SetInitialFromAccept = false
 
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			if RQE.LastClickedIdentifier == 1 then
 				RQE.WaypointButtons[1]:Click()
 			else
@@ -7943,7 +8275,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to check and set the final step
 	function RQE.CheckAndSetFinalStep()
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 			if not superTrackedQuestID then
@@ -8003,14 +8336,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				return
 			end
 
-			C_Timer.After(1.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+			RQE.API.Client.C_Timer.After(1.5, function()
 				if highestCompletedObjectiveIndex == 99 then
 					RQE.infoLog("Highest Completed Objective is: " .. highestCompletedObjectiveIndex)
 					RQE.infoLog("Final Index is: " .. finalStepIndex)
 					-- Tier Four Importance: RQE.CHECKANDSETFINALSTEP Function
 					RQE.CreateMacroForCheckAndSetFinalStep = true
 
-					C_Timer.After(0.1, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+					RQE.API.Client.C_Timer.After(0.1, function()
 						RQE.isCheckingMacroContents = true
 						local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -8019,7 +8354,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						end
 
 						RQEMacro:CreateMacroForCurrentStep()
-						C_Timer.After(0.2, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						RQE.API.Client.C_Timer.After(0.2, function()
 							RQE.isCheckingMacroContents = false
 						end)
 					end)
@@ -8107,7 +8443,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQEMacro:CreateMacroForCurrentStep()
 		-- Retrieve the questID that is currently being supertracked
 		local questID = RQE.API.GetSuperTrackedQuestID()
-		local isInInstance, instanceType = IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local isInInstance, instanceType = IsInInstance()
+		local isInInstance, instanceType = RQE.API.Client.IsInInstance()
 		if not questID then
 			return
 		end
@@ -8259,16 +8596,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		self._scheduledPeriodicReason = reason
 		self._lastPeriodicQuestID = questID
 
-		self._scheduledPeriodicCheck = C_Timer.NewTimer(delay, function()
+		-- Previous Blizzard call changed 2026.09.25: self._scheduledPeriodicCheck = C_Timer.NewTimer(delay, function()
+		self._scheduledPeriodicCheck = RQE.API.Client.C_Timer.NewTimer(delay, function()
 			self._scheduledPeriodicCheck = nil
 
 			local activeQuestID = RQE.API.GetSuperTrackedQuestID()
 			if not activeQuestID or activeQuestID <= 0 then
 				return
 			end
+			-- A queued update for an unfocused quest must not examine the
+			-- quest that happened to gain focus before this timer fired.
+			if tonumber(activeQuestID) ~= tonumber(self._lastPeriodicQuestID) then
+				return
+			end
 
 			-- Optional cooldown so back-to-back events in the same burst don't all run
-			local now = GetTime()
+			-- Previous Blizzard call changed 2026.09.25: local now = GetTime()
+			local now = RQE.API.Client.GetTime()
 			local elapsed = now - (self._lastPeriodicRunTime or 0)
 			if elapsed < 0.40 then
 				-- Preserve the latest requested reevaluation instead of losing it to
@@ -8287,25 +8631,24 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	end
 
 	-- Periodic check setup comparing with entry in RQEDatabase
-	function RQE:StartPeriodicChecks()
+	function RQE:StartPeriodicChecks(newlyFocusedQuestID)
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("~~~ Running RQE:StartPeriodicChecks() ~~~")
 		end
 
 		-- Checks to make sure that the SeparateFocusFrame contains information when it should
-		C_Timer.After(1.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.1, function()
+		RQE.API.Client.C_Timer.After(1.1, function()
 			RQE:CheckAndRefreshSeparateFocusFrame()
 		end)
 
-		C_Timer.After(1.7, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.7, function()
+		RQE.API.Client.C_Timer.After(1.7, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = RQE.DisplayedQuestID
-		end
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
+		-- The displayed tracker quest is not necessarily the focused quest.
+		local superTrackedQuestID = tonumber(RQE.API.GetSuperTrackedQuestID())
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
 			print("RQE StartPeriodicChecks: questID", tostring(superTrackedQuestID))
 		end
@@ -8314,7 +8657,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			print("Current superTrackedQuestID:", superTrackedQuestID)
 		end
 
-		if not superTrackedQuestID then return end
+		if not superTrackedQuestID or superTrackedQuestID <= 0 then return end
 
 		RQE.CheckAndClickSeparateWaypointButtonButton()	-- If this button exists and is valid it will click the button automatically at start, but might need to check that a waypoint doesn't already exist before running this call
 
@@ -8351,41 +8694,64 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		-- A pooled button reference may lag the displayed index after a redraw.
+		-- Prefer the active numeric index for steps that opt in to retry checks.
+		local activeRetryIndex = tonumber(RQE.AddonSetStepIndex)
+		local activeRetryStep = activeRetryIndex and questData[activeRetryIndex]
+		if activeRetryStep and (activeRetryStep.failedcheck or activeRetryStep.failedchecks) then
+			stepIndex = activeRetryIndex
+		end
+		local selectedStepIndex = tonumber(stepIndex) or 1
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("stepIndex being evaluated:", stepIndex)
 		end
 
 		-- Handle turn-in readiness
-		if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
+		-- Previous Blizzard call changed 2026.09.25: local questReadyForTurnIn = C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
+		local questReadyForTurnIn = RQE.API.Client.C_QuestLog.ReadyForTurnIn(superTrackedQuestID)
+		local readyTurnInStepIndex
+		local initialReadyStepScan = false
+		if questReadyForTurnIn then
 			local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
 			if hasCheckDBComplete then
-				local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
-				if not waypointText then
-					-- No Blizzard waypoint text: advance to final step and stop here.
-					self:ClickWaypointButtonForIndex(finalStepIndex)
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
-					end
-					RQE.OkayWaypointButtonToMove = true
-					return
+				-- On a new focus, a ready quest can still have an intermediate DB
+				-- step to evaluate before its final turn-in instruction.
+				initialReadyStepScan = tonumber(newlyFocusedQuestID) == tonumber(superTrackedQuestID)
+					and finalStepIndex > 2
+				if initialReadyStepScan then
+					stepIndex = 1
+					selectedStepIndex = 1
 				else
-					-- Blizzard is already guiding the player.
-					-- Keep our logic running, but make the UI reflect the turn-in step.
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Quest ready for turn-in and waypointText present; syncing UI to final step (no auto-advance).")
-					end
+					readyTurnInStepIndex = finalStepIndex
+					-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+					local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+					if not waypointText then
+						-- No Blizzard waypoint text: advance to final step and stop here.
+						self:ClickWaypointButtonForIndex(finalStepIndex)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+						end
+						RQE.OkayWaypointButtonToMove = true
+						return
+					else
+						-- Blizzard is already guiding the player.
+						-- Keep our logic running, but make the UI reflect the turn-in step.
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Quest ready for turn-in and waypointText present; syncing UI to final step (no auto-advance).")
+						end
 
-					-- Make RQE display step 2/2 (final) without forcing our own waypoint.
-					stepIndex = finalStepIndex
-					RQE.AddonSetStepIndex = finalStepIndex
-					if RQE.db.profile.enableStepControls then
-						RQE.CurrentStepIndex = finalStepIndex
-						RQE.StoredStepIndex = finalStepIndex
-					end
+						-- Make RQE display the final step without forcing our own waypoint.
+						stepIndex = finalStepIndex
+						RQE.AddonSetStepIndex = finalStepIndex
+						if RQE.db.profile.enableStepControls then
+							RQE.CurrentStepIndex = finalStepIndex
+							RQE.StoredStepIndex = finalStepIndex
+						end
 
-					-- Refresh frames so Separate Focus shows 2/2
-					if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
-					if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+						-- Refresh frames so Separate Focus shows the final step.
+						if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+						if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+					end
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -8394,8 +8760,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		-- Iterate over all steps to evaluate which one should be active
-		for i, stepData in ipairs(questData) do
+		-- Retry-enabled steps must get their own normal completion check first,
+		-- even if an earlier step would currently fail in a full rescan.
+		-- Ordinary turn-in checks select the final DB step above; a newly
+		-- focused quest checks its intermediate steps first.
+		-- Skip normal checks; the waypoint-text path still refreshes the UI below.
+		local firstStepToEvaluate = readyTurnInStepIndex and (#questData + 1) or 1
+		local selectedStepForRetry = questData[selectedStepIndex]
+		if not readyTurnInStepIndex and selectedStepForRetry and (selectedStepForRetry.failedcheck or selectedStepForRetry.failedchecks) then
+			firstStepToEvaluate = selectedStepIndex
+		end
+		local lastStepToEvaluate = initialReadyStepScan and (#questData - 1) or #questData
+		for i = firstStepToEvaluate, lastStepToEvaluate do
+			local stepData = questData[i]
+			if not stepData then break end
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Evaluating stepIndex:", i)
 			end
@@ -8534,8 +8912,167 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
+		-- Only the selected step may opt in to a backward retry. Evaluate its
+		-- normal completion first, then use failedchecks when it remains active.
+		-- A single zone failedcheck retains its existing failed-zone meaning;
+		-- grouped failedchecks use the usual unmet-condition retry meaning.
+		if not questReadyForTurnIn and stepIndex == selectedStepIndex then
+			local selectedStep = questData[selectedStepIndex]
+			local failedChecks = selectedStep and selectedStep.failedchecks
+			if failedChecks == nil and selectedStep and selectedStep.failedcheck then
+				failedChecks = {{
+					mod = selectedStep.failedfunc == "CheckDBZoneChange" and "NOT" or "",
+					check = selectedStep.failedcheck,
+					neededAmt = selectedStep.failedNeededAmt or { "1" },
+					funct = selectedStep.failedfunc,
+					failedIndex = selectedStep.failedIndex,
+				}}
+			end
+
+			if type(failedChecks) == "table" and #failedChecks > 0 then
+				-- Each entry names its own return step; the first unmet entry
+				-- supplies the target when the combined checks fail.
+				local function EvaluateFailedCheck(checkData, checkFunction)
+					local funct = checkData.funct
+					local check = checkData.check
+					local neededAmt = checkData.neededAmt
+					if #check == 0 or #neededAmt == 0 then return nil end
+
+					if funct == "CheckDBInventory" then
+						local items = {}
+						for i, item in ipairs(check) do
+							items[i] = tonumber(item) or item
+						end
+						return checkFunction(self, superTrackedQuestID, selectedStepIndex, items, neededAmt)
+					elseif funct == "CheckDBBuff" or funct == "CheckDBDebuff" then
+						local spells = {}
+						for i, spell in ipairs(check) do
+							local spellID = tonumber(spell)
+							if spellID then
+								-- Previous Blizzard call changed 2026.09.25: local spellInfo = C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(spellID)
+								local spellInfo = C_Spell and RQE.API.ResolveClientAPI("C_Spell.GetSpellInfo") and RQE.API.Client.C_Spell.GetSpellInfo(spellID)
+								-- Previous Blizzard call changed 2026.09.25: spells[i] = (C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(spellID))
+								spells[i] = (C_Spell and RQE.API.ResolveClientAPI("C_Spell.GetSpellName") and RQE.API.Client.C_Spell.GetSpellName(spellID))
+									or (spellInfo and spellInfo.name)
+									-- Previous Blizzard call changed 2026.09.25: or (GetSpellInfo and GetSpellInfo(spellID))
+									or (RQE.API.ResolveClientAPI("GetSpellInfo") and RQE.API.Client.GetSpellInfo(spellID))
+								if not spells[i] then return nil end
+							else
+							spells[i] = spell
+							end
+						end
+						return checkFunction(self, superTrackedQuestID, selectedStepIndex, spells, neededAmt)
+					elseif funct == "CheckDBZoneChange" then
+						-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+						local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+						-- Previous Blizzard call changed 2026.09.25: local mapInfo = mapID and C_Map.GetMapInfo(mapID)
+						local mapInfo = mapID and RQE.API.Client.C_Map.GetMapInfo(mapID)
+						local names = {
+							mapInfo and mapInfo.name,
+							-- Previous Blizzard call changed 2026.09.25: GetMinimapZoneText(), GetSubZoneText(), GetZoneText(), GetRealZoneText(),
+							RQE.API.Client.GetMinimapZoneText(), RQE.API.Client.GetSubZoneText(), RQE.API.Client.GetZoneText(), RQE.API.Client.GetRealZoneText(),
+						}
+						for _, zone in ipairs(check) do
+							local zoneID = tonumber(zone)
+							if zoneID and zoneID == mapID then return true end
+							if not zoneID then
+								local wanted = tostring(zone):lower():gsub("^%s+", ""):gsub("%s+$", "")
+								for _, name in pairs(names) do
+									if type(name) == "string" and name:lower():gsub("^%s+", ""):gsub("%s+$", "") == wanted then
+										return true
+									end
+								end
+							end
+						end
+						return false
+					elseif funct == "CheckScenarioStage" then
+						local requiredStage = tonumber(neededAmt[1])
+						if not requiredStage then return nil end
+						-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_Scenario and C_Scenario.IsInScenario()
+						local scenarioInfo = C_Scenario and RQE.API.Client.C_Scenario.IsInScenario()
+							-- Previous Blizzard call changed 2026.09.25: and C_ScenarioInfo and C_ScenarioInfo.GetScenarioInfo and C_ScenarioInfo.GetScenarioInfo()
+							and C_ScenarioInfo and RQE.API.ResolveClientAPI("C_ScenarioInfo.GetScenarioInfo") and RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
+						local currentStage = scenarioInfo and tonumber(scenarioInfo.currentStage)
+						return currentStage and currentStage >= requiredStage or false
+					elseif funct == "CheckScenarioCriteria" then
+						local criteriaIndex = tonumber(check[1])
+						local requiredAmount = tonumber(neededAmt[1])
+						if not criteriaIndex or not requiredAmount then return nil end
+						-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_Scenario and C_Scenario.IsInScenario()
+						local criteriaInfo = C_Scenario and RQE.API.Client.C_Scenario.IsInScenario()
+							-- Previous Blizzard call changed 2026.09.25: and C_ScenarioInfo and C_ScenarioInfo.GetCriteriaInfo and C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+							and C_ScenarioInfo and RQE.API.ResolveClientAPI("C_ScenarioInfo.GetCriteriaInfo") and RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+						if not criteriaInfo then return false end
+						local threshold = requiredAmount == 1 and criteriaInfo.totalQuantity or requiredAmount
+						return tonumber(criteriaInfo.quantity) and tonumber(threshold)
+							and criteriaInfo.quantity >= threshold or false
+					elseif funct == "CheckDBConditionalsOnly" then
+						local expression = check[1]
+						if type(expression) ~= "string" then return nil end
+						local funcName, rawParams = expression:match("^RQE%.([%w_]+)%((.-)%)$")
+						local safeCondition = funcName == "CheckKnownSpell" or funcName == "CheckMap"
+							or funcName == "CheckQuestState" or funcName == "CheckCoordinateDistance"
+						if not safeCondition or type(RQE[funcName]) ~= "function" then return nil end
+						local args = {}
+						for param in string.gmatch(rawParams or "", "[^,%s]+") do
+							args[#args + 1] = tonumber(param) or param:gsub("^['\"]", ""):gsub("['\"]$", "")
+						end
+					local ok, result = pcall(RQE[funcName], RQE, unpack(args))
+					if not ok then return nil end
+					return not not result
+					elseif funct == "CheckDBComplete" then
+						local checkedQuestID = tonumber(check[1])
+						if not checkedQuestID then return nil end
+						-- Previous Blizzard call changed 2026.09.25: return C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+						return RQE.API.Client.C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+					elseif funct == "CheckDBObjectiveStatus" then
+						if tonumber(check[1]) ~= tonumber(superTrackedQuestID) then return nil end
+					elseif funct == "CheckDBQuestCompleted" then
+						if not tonumber(check[1]) then return nil end
+					end
+
+					return checkFunction(self, superTrackedQuestID, selectedStepIndex, check, neededAmt)
+				end
+				local failedResults = {}
+				local validFailedChecks = true
+				local failedIndex
+				for j, checkData in ipairs(failedChecks) do
+					local functionName = type(checkData) == "table" and functionMap[checkData.funct]
+					local checkFunction = functionName and self[functionName]
+					local targetIndex = type(checkData) == "table" and tonumber(checkData.failedIndex)
+					if type(checkFunction) ~= "function" or type(checkData.check) ~= "table"
+						or type(checkData.neededAmt) ~= "table" or not targetIndex
+						or targetIndex < 1 or targetIndex >= selectedStepIndex
+						or targetIndex % 1 ~= 0 or not questData[targetIndex] then
+						validFailedChecks = false
+						break
+					end
+					local result = EvaluateFailedCheck(checkData, checkFunction)
+					if result == nil then
+						validFailedChecks = false
+						break
+					end
+					failedResults[j] = result
+					if failedIndex == nil and ((checkData.mod == "NOT" and result)
+						or (checkData.mod ~= "NOT" and not result)) then
+						failedIndex = targetIndex
+					end
+				end
+
+				if validFailedChecks and failedIndex
+					and not self:CombineCheckResults(failedResults, { checks = failedChecks }) then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Failed step checks; returning to stepIndex:", failedIndex)
+					end
+					stepIndex = failedIndex
+					RQE.OkayWaypointButtonToMove = true
+				end
+			end
+		end
+
 		-- Early-return if waypoint text exists AND current step is not a zone-change step
-		local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+		-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+		local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(superTrackedQuestID)
 		if waypointText then
 			local cur = questData[stepIndex]
 			local isZoneChangeCheck = false
@@ -8565,7 +9102,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQE.StoredStepIndex = stepIndex
 				end
 
-				local playerMapID = C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+				local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 				if UpdateFrame then
 					UpdateFrame(superTrackedQuestID, questData)
@@ -8578,7 +9116,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 
 				-- Refresh the macro before leaving this early-return branch
-				C_Timer.After(0.20, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.20, function()
+				RQE.API.Client.C_Timer.After(0.20, function()
 					RQE.isCheckingMacroContents = true
 
 					local isMacroCorrect = RQE.CheckCurrentMacroContents()
@@ -8587,7 +9126,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						RQEMacro:CreateMacroForCurrentStep()
 					end
 
-					C_Timer.After(0.20, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.20, function()
+					RQE.API.Client.C_Timer.After(0.20, function()
 						RQE.isCheckingMacroContents = false
 					end)
 				end)
@@ -8616,7 +9156,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		C_Timer.After(0.15, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		RQE.API.Client.C_Timer.After(0.15, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -8625,7 +9166,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
 		end)
@@ -8648,7 +9190,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Final cleanup
 		RQE.NewZoneChange = false
-		C_Timer.After(0.45, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
+		RQE.API.Client.C_Timer.After(0.45, function()
 			RQE:UpdateSeparateFocusFrame()
 		end)
 		RQE:UpdateStepDistance()
@@ -8661,7 +9204,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Check if the player is currently in one or more possible mapIDs
 	-- Usage: cond = "RQE.CheckMap(1, 10, 199)"
 	function RQE.CheckMap(self, ...)
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		local mapIDs = { ... } -- captures all args
 		if not playerMapID then return false end
 
@@ -8699,7 +9243,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- If the quest isn't in the log, it may already be turned in
 		if not foundInfo then
-			local isComplete = C_QuestLog.IsComplete(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isComplete = C_QuestLog.IsComplete(questID)
+			local isComplete = RQE.API.Client.C_QuestLog.IsComplete(questID)
 			if isComplete and state == "COMPLETED" then
 				return true
 			elseif not isComplete and state == "INCOMPLETE" then
@@ -8710,7 +9255,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- If the quest is in the log, use its info
-		local isComplete = foundInfo.isComplete or C_QuestLog.IsComplete(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isComplete = foundInfo.isComplete or C_QuestLog.IsComplete(questID)
+		local isComplete = foundInfo.isComplete or RQE.API.Client.C_QuestLog.IsComplete(questID)
 
 		if state == "COMPLETED" then
 			return isComplete
@@ -8753,8 +9299,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local HBD = LibStub and LibStub("HereBeDragons-2.0", true)
 		if HBD then
 			-- Get the player's current zone position (map + normalized coords)
-			local pMapID = C_Map.GetBestMapForUnit("player")
-			local pPos = pMapID and C_Map.GetPlayerMapPosition(pMapID, "player")
+			-- Previous Blizzard call changed 2026.09.25: local pMapID = C_Map.GetBestMapForUnit("player")
+			local pMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local pPos = pMapID and C_Map.GetPlayerMapPosition(pMapID, "player")
+			local pPos = pMapID and RQE.API.Client.C_Map.GetPlayerMapPosition(pMapID, "player")
 			if not (pMapID and pPos) then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("RQE.CheckCoordinateDistance(): cannot get player position")
@@ -8791,7 +9339,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Fallback (no HBD): approximate using normalized distance on same map only
-		local pMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local pMapID = C_Map.GetBestMapForUnit("player")
+		local pMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if pMapID ~= mapID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE.CheckCoordinateDistance(): HBD missing and player not on target map — returning false")
@@ -8799,7 +9348,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 
-		local pPos = C_Map.GetPlayerMapPosition(pMapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local pPos = C_Map.GetPlayerMapPosition(pMapID, "player")
+		local pPos = RQE.API.Client.C_Map.GetPlayerMapPosition(pMapID, "player")
 		if not pPos then return false end
 		local px, py = pPos:GetXY()
 
@@ -8885,7 +9435,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for _, spellID in ipairs(spellIDs) do
 			local numericID = tonumber(spellID)
 			if numericID then
-				local isKnown = IsSpellKnown(numericID)
+				-- Previous Blizzard call changed 2026.09.25: local isKnown = IsSpellKnown(numericID)
+				local isKnown = RQE.API.Client.IsSpellKnown(numericID)
 				if debugEnabled then
 					print(string.format("RQE.CheckKnownSpell(): Checking spellID %d -> %s", numericID, tostring(isKnown)))
 				end
@@ -9012,7 +9563,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local allowedFactions = { ... }
 
 		-- Retrieve the player's faction
-		local playerFaction, localizedFaction = UnitFactionGroup("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerFaction, localizedFaction = UnitFactionGroup("player")
+		local playerFaction, localizedFaction = RQE.API.Client.UnitFactionGroup("player")
 		if not playerFaction then
 			if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE.CheckPlayerFaction(): Unable to determine player faction.")
@@ -9084,7 +9636,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
 
 		-- Retrieve player's race
-		local playerRace, localizedRace = UnitRace("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerRace, localizedRace = UnitRace("player")
+		local playerRace, localizedRace = RQE.API.Client.UnitRace("player")
 		if not playerRace then
 			if debugEnabled then
 				print("RQE.CheckPlayerRace(): Unable to determine player race.")
@@ -9143,7 +9696,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
 
 		-- Retrieve player's class
-		local playerClass, localizedClass = UnitClass("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerClass, localizedClass = UnitClass("player")
+		local playerClass, localizedClass = RQE.API.Client.UnitClass("player")
 		if not playerClass then
 			if debugEnabled then
 				print("RQE.CheckPlayerClass(): Unable to determine player class.")
@@ -9199,7 +9753,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Check that the player's faction does not match any blocked faction value.
 	function RQE.CheckNotPlayerFaction(self, ...)
 		local blockedFactions = { ... }
-		local playerFaction, localizedFaction = UnitFactionGroup("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerFaction, localizedFaction = UnitFactionGroup("player")
+		local playerFaction, localizedFaction = RQE.API.Client.UnitFactionGroup("player")
 		local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
 
 		if not playerFaction then
@@ -9264,7 +9819,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local blockedRaces = { ... }
 		local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
 
-		local playerRace, localizedRace = UnitRace("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerRace, localizedRace = UnitRace("player")
+		local playerRace, localizedRace = RQE.API.Client.UnitRace("player")
 		if not playerRace then
 			if debugEnabled then
 				print("RQE.CheckNotPlayerRace(): Unable to determine player race.")
@@ -9319,7 +9875,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local blockedClasses = { ... }
 		local debugEnabled = (RQE.db and RQE.db.profile.debugLevel == "INFO+")
 
-		local playerClass, localizedClass = UnitClass("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerClass, localizedClass = UnitClass("player")
+		local playerClass, localizedClass = RQE.API.Client.UnitClass("player")
 		if not playerClass then
 			if debugEnabled then
 				print("RQE.CheckNotPlayerClass(): Unable to determine player class.")
@@ -9377,7 +9934,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Ensure the player is in a scenario
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			if RQE.db and RQE.db.profile.debugLevel == "INFO+" then
 				print(("RQE.CheckScenarioStageCompleted(): Player is not in a scenario (questID=%d)"):format(questID))
 			end
@@ -9385,7 +9943,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Retrieve scenario info safely
-		local name, currentStage, numStages = C_Scenario.GetInfo()
+		-- Previous Blizzard call changed 2026.09.25: local name, currentStage, numStages = C_Scenario.GetInfo()
+		local name, currentStage, numStages = RQE.API.Client.C_Scenario.GetInfo()
 		currentStage = tonumber(currentStage) or 0
 		local targetStage = tonumber(scenarioStage) or 0
 
@@ -9426,9 +9985,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 
-		local currentMapID = C_Map.GetBestMapForUnit("player")
-		local zone = (GetZoneText() or ""):gsub("%s+$", "")
-		local subzone = (GetSubZoneText() or ""):gsub("%s+$", "")
+		-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player")
+		local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local zone = (GetZoneText() or ""):gsub("%s+$", "")
+		local zone = (RQE.API.Client.GetZoneText() or ""):gsub("%s+$", "")
+		-- Previous Blizzard call changed 2026.09.25: local subzone = (GetSubZoneText() or ""):gsub("%s+$", "")
+		local subzone = (RQE.API.Client.GetSubZoneText() or ""):gsub("%s+$", "")
 		if subzone == "" then subzone = zone end
 
 		-- Normalize (strip punctuation, parentheses, lowercase)
@@ -9554,7 +10116,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Check if the quest is ready for turn-in first
-		local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isReadyTurnIn = C_QuestLog.ReadyForTurnIn(questID)
+		local isReadyTurnIn = RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
 		if isReadyTurnIn then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Quest is ready for turn-in. Clicking final step associated with objectiveIndex 99.")
@@ -9684,9 +10247,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Apply faction logic after ensuring state is consistent
-		C_Timer.After(0.7, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+		RQE.API.Client.C_Timer.After(0.7, function()
 			RQE:HandleFactionLogicAfterAdvance()
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				RQE:HandleClassFactionLogicAfterAdvance()
 			end)
 		end)
@@ -9741,7 +10306,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					RQEMacro:CreateMacroForCurrentStep()
 				end
 
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					if questID then
 						RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
 					end
@@ -9786,7 +10352,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			-- Ensure the macro and UI are refreshed only once
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				-- Refresh UI (Waypoint and Focus Frames)
 				RQE:OnCoordinateClicked()
 				RQE.InitializeSeparateFocusFrame()
@@ -9798,15 +10365,26 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end)
 
 			-- Apply faction logic after ensuring state is consistent
-			C_Timer.After(0.7, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			RQE.API.Client.C_Timer.After(0.7, function()
 				RQE:HandleFactionLogicAfterAdvance()
-				C_Timer.After(1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+				RQE.API.Client.C_Timer.After(1, function()
 					RQE:HandleClassFactionLogicAfterAdvance()
 				end)
 			end)
 		else
-			local button = self.WaypointButtons[index]
+			local button = self.WaypointButtons and self.WaypointButtons[index]
 			if not button then
+				-- Focus can change before its step controls are rendered. Keep the
+				-- resolved step instead of silently leaving the old one displayed.
+				local questID = RQE.API.GetSuperTrackedQuestID()
+				self.LastClickedButtonRef = nil
+				self.CurrentStepIndex = index
+				self.AddonSetStepIndex = index
+				self.StoredStepIndex = index
+				if questID and UpdateFrame then UpdateFrame(questID) end
+				if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
 				return
 			end
 
@@ -9829,7 +10407,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			button:Click()
 
 			-- Ensure the macro and UI are refreshed only once
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				-- Refresh UI (Waypoint and Focus Frames)
 				RQE:OnCoordinateClicked()
 				RQE.InitializeSeparateFocusFrame()
@@ -9841,9 +10420,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end)
 
 			-- Apply faction logic after ensuring state is consistent
-			C_Timer.After(0.7, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			RQE.API.Client.C_Timer.After(0.7, function()
 				RQE:HandleFactionLogicAfterAdvance()
-				C_Timer.After(1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+				RQE.API.Client.C_Timer.After(1, function()
 					RQE:HandleClassFactionLogicAfterAdvance()
 				end)
 			end)
@@ -9871,7 +10452,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if not stepData then return end
 
 		local description = stepData.description or ""
-		local englishFaction = UnitFactionGroup("player")
+		-- Previous Blizzard call changed 2026.09.25: local englishFaction = UnitFactionGroup("player")
+		local englishFaction = RQE.API.Client.UnitFactionGroup("player")
 
 		-- Check faction-based skipping
 		if description:find("^ALLIANCE:") and englishFaction ~= "Alliance" then
@@ -9888,13 +10470,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 		end
 
-		-- After faction logic, check failedfunc
-		C_Timer.After(0.5, function()
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
-			if superTrackedQuestID then
-				RQE:HandleFailedFunction(superTrackedQuestID, RQE.AddonSetStepIndex)
-			end
-		end)
+		-- StartPeriodicChecks evaluates retry conditions after normal step checks.
 	end
 
 	-- Handles description prefixes like "PALADIN-A:", "PRIEST-N:", "WARLOCK-H:".
@@ -9920,8 +10496,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Player info
-		local englishFaction = UnitFactionGroup("player") or "Neutral" -- "Alliance", "Horde", "Neutral"
-		local _, englishClass = UnitClass("player")					-- e.g. "PRIEST", "PALADIN"
+		-- Previous Blizzard call changed 2026.09.25: local englishFaction = UnitFactionGroup("player") or "Neutral" -- "Alliance", "Horde", "Neutral"
+		local englishFaction = RQE.API.Client.UnitFactionGroup("player") or "Neutral" -- "Alliance", "Horde", "Neutral"
+		-- Previous Blizzard call changed 2026.09.25: local _, englishClass = UnitClass("player")					-- e.g. "PRIEST", "PALADIN"
+		local _, englishClass = RQE.API.Client.UnitClass("player")					-- e.g. "PRIEST", "PALADIN"
 		if englishClass then
 			englishClass = englishClass:upper()
 		end
@@ -10063,6 +10641,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Check for failedfunc and failedcheck
+		-- StartPeriodicChecks handles the opt-in non-zone retry fields. Keep this
+		-- older callback for its original zone-change routing only.
+		if stepData.failedfunc and stepData.failedfunc ~= "CheckDBZoneChange" then
+			return false
+		end
 		if stepData.failedfunc and stepData.failedcheck then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Failed function detected for stepIndex:", stepIndex, "Failed Function:", stepData.failedfunc)
@@ -10167,7 +10750,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local requiredAmount, includeObjectiveProgress =
 				ParseRequiredAmount(rawNeededAmount)
 
-			local aura = C_UnitAuras.GetAuraDataBySpellName(
+			-- Previous Blizzard call changed 2026.09.25: local aura = C_UnitAuras.GetAuraDataBySpellName(
+			local aura = RQE.API.Client.C_UnitAuras.GetAuraDataBySpellName(
 				"player",
 				buffName,
 				"HELPFUL"
@@ -10211,7 +10795,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					-- the NPCs that were just delivered, so temporarily prevent the
 					-- combined check from advancing.
 					state.objectiveProgress = objectiveProgress
-					state.settleUntil = GetTime() + 0.75
+					-- Previous Blizzard call changed 2026.09.25: state.settleUntil = GetTime() + 0.75
+					state.settleUntil = RQE.API.Client.GetTime() + 0.75
 
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(
@@ -10231,7 +10816,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						state.settleTimer = nil
 					end
 
-					state.settleTimer = C_Timer.NewTimer(0.80, function()
+					-- Previous Blizzard call changed 2026.09.25: state.settleTimer = C_Timer.NewTimer(0.80, function()
+					state.settleTimer = RQE.API.Client.C_Timer.NewTimer(0.80, function()
 						state.settleTimer = nil
 
 						-- Only re-evaluate if this is still the supertracked quest.
@@ -10257,7 +10843,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				-- Continue suppressing combined advancement until the settling
 				-- period started above has finished.
 				if state.settleUntil then
-					if GetTime() < state.settleUntil then
+					-- Previous Blizzard call changed 2026.09.25: if GetTime() < state.settleUntil then
+					if RQE.API.Client.GetTime() < state.settleUntil then
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print(
 								"CheckDBBuff() - Combined check still settling:",
@@ -10409,7 +10996,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Evaluate `check` directly if provided
 		if #check > 0 and #neededAmt > 0 then
 			for i, debuffName in ipairs(check) do
-				local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+				-- Previous Blizzard call changed 2026.09.25: local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+				local aura = RQE.API.Client.C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
 				if not aura then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("CheckDBDebuff() - Debuff not active:", debuffName)
@@ -10475,7 +11063,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		for _, debuffName in ipairs(check) do
-			local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+			-- Previous Blizzard call changed 2026.09.25: local aura = C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
+			local aura = RQE.API.Client.C_UnitAuras.GetAuraDataBySpellName("player", debuffName, "HARMFUL")
 			if aura then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("CheckDBDebuff() - Debuff active:", debuffName, ". Advancing quest step.")
@@ -10562,7 +11151,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local requiredAmount, includeObjectiveProgress =
 					ParseRequiredAmount(neededAmt[i])
 
-				local itemCount = GetItemCount(condition, false) or 0
+				-- Previous Blizzard call changed 2026.09.25: local itemCount = GetItemCount(condition, false) or 0
+				local itemCount = RQE.API.Client.GetItemCount(condition, false) or 0
 				local objectiveProgress = 0
 
 				if includeObjectiveProgress then
@@ -10660,7 +11250,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:evaluateCondition(check, neededAmt)
 		if type(check) == "string" then
 			-- Simple case for a single item
-			local itemCount = C_Item.GetItemCount(check)
+			-- Previous Blizzard call changed 2026.09.25: local itemCount = C_Item.GetItemCount(check)
+			local itemCount = RQE.API.Client.C_Item.GetItemCount(check)
 			local requiredAmount = tonumber(neededAmt[1]) or 1
 			return itemCount >= requiredAmount
 		elseif type(check) == "table" then
@@ -10690,7 +11281,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:evaluateAndCondition(andItems, neededAmt)
 		for index, itemID in ipairs(andItems) do
 			local requiredAmount = tonumber(neededAmt[index]) or 1
-			local itemCount = C_Item.GetItemCount(itemID)
+			-- Previous Blizzard call changed 2026.09.25: local itemCount = C_Item.GetItemCount(itemID)
+			local itemCount = RQE.API.Client.C_Item.GetItemCount(itemID)
 			if itemCount < requiredAmount then
 				return false -- Fail if any condition in AND is not met
 			end
@@ -10702,7 +11294,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:evaluateOrCondition(orItems, neededAmt)
 		for index, itemID in ipairs(orItems) do
 			local requiredAmount = tonumber(neededAmt[index]) or 1
-			local itemCount = C_Item.GetItemCount(itemID)
+			-- Previous Blizzard call changed 2026.09.25: local itemCount = C_Item.GetItemCount(itemID)
+			local itemCount = RQE.API.Client.C_Item.GetItemCount(itemID)
 			if itemCount >= requiredAmount then
 				return true -- Pass if any condition in OR is met
 			end
@@ -10712,7 +11305,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Helper function to evaluate NOT conditions for `check`
 	function RQE:evaluateNotCondition(itemID, requiredAmount)
-		local itemCount = C_Item.GetItemCount(itemID)
+		-- Previous Blizzard call changed 2026.09.25: local itemCount = C_Item.GetItemCount(itemID)
+		local itemCount = RQE.API.Client.C_Item.GetItemCount(itemID)
 		return itemCount < requiredAmount -- Return true if the player does NOT have the required amount
 	end
 
@@ -10840,10 +11434,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		neededAmt = neededAmt or {}
 
 		-- Get the player's current map ID and subzone name
-		local currentMapID = C_Map.GetBestMapForUnit("player")
-		local currentSubZone = GetSubZoneText() or "" -- Subzone name
-		local currentZone = GetZoneText() or "" 		-- Zone name
-		local currentRealZone = GetRealZoneText() or ""	-- Real Zone Text
+		-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player")
+		local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local currentSubZone = GetSubZoneText() or "" -- Subzone name
+		local currentSubZone = RQE.API.Client.GetSubZoneText() or "" -- Subzone name
+		-- Previous Blizzard call changed 2026.09.25: local currentZone = GetZoneText() or "" 		-- Zone name
+		local currentZone = RQE.API.Client.GetZoneText() or "" 		-- Zone name
+		-- Previous Blizzard call changed 2026.09.25: local currentRealZone = GetRealZoneText() or ""	-- Real Zone Text
+		local currentRealZone = RQE.API.Client.GetRealZoneText() or ""	-- Real Zone Text
 
 		-- Fall back to zone name if subzone is blank
 		if currentSubZone == "" then
@@ -10994,13 +11592,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			questID = tonumber(check[1])
 		end
 
-		local isReady = C_QuestLog.ReadyForTurnIn(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isReady = C_QuestLog.ReadyForTurnIn(questID)
+		local isReady = RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print(string.format("CheckDBComplete: Quest %d is %sready for turn-in.", questID, isReady and "" or "NOT "))
 		end
 
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -11009,7 +11609,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()
-			C_Timer.After(3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			RQE.API.Client.C_Timer.After(3, function()
 				RQE.CreateMacroForCheckAndSetFinalStep = false
 				RQE.isCheckingMacroContents = false
 			end)
@@ -11137,15 +11738,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return false
 		end
 
-		local isReady = C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+		-- Previous Blizzard call changed 2026.09.25: local isReady = C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+		local isReady = RQE.API.Client.C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
 		local completionFunction = RQE.API and RQE.API.IsQuestFlaggedCompleted
 		local isFlaggedCompleted
 		if type(completionFunction) == "function" then
 			isFlaggedCompleted = completionFunction(checkedQuestID) == true
-		elseif C_QuestLog and type(C_QuestLog.IsQuestFlaggedCompleted) == "function" then
-			isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(checkedQuestID) == true
-		elseif type(IsQuestFlaggedCompleted) == "function" then
-			isFlaggedCompleted = IsQuestFlaggedCompleted(checkedQuestID) == true
+		-- Previous Blizzard call changed 2026.09.25: elseif C_QuestLog and type(C_QuestLog.IsQuestFlaggedCompleted) == "function" then
+		elseif C_QuestLog and type(RQE.API.ResolveClientAPI("C_QuestLog.IsQuestFlaggedCompleted")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: isFlaggedCompleted = C_QuestLog.IsQuestFlaggedCompleted(checkedQuestID) == true
+			isFlaggedCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(checkedQuestID) == true
+		-- Previous Blizzard call changed 2026.09.25: elseif type(IsQuestFlaggedCompleted) == "function" then
+		elseif type(RQE.API.ResolveClientAPI("IsQuestFlaggedCompleted")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: isFlaggedCompleted = IsQuestFlaggedCompleted(checkedQuestID) == true
+			isFlaggedCompleted = RQE.API.Client.IsQuestFlaggedCompleted(checkedQuestID) == true
 		else
 			isFlaggedCompleted = false
 		end
@@ -11172,7 +11778,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to check if the player's faction is Alliance and advance the quest step if true
 	function RQE:CheckFactionGroupAlliance(questID, stepIndex, check, neededAmt)
-		local englishFaction = UnitFactionGroup("player")
+		-- Previous Blizzard call changed 2026.09.25: local englishFaction = UnitFactionGroup("player")
+		local englishFaction = RQE.API.Client.UnitFactionGroup("player")
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Checking if player's faction is Alliance: " .. tostring(englishFaction))
@@ -11226,7 +11833,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to check if the player's faction is Horde and advance the quest step if true
 	function RQE:CheckFactionGroupHorde(questID, stepIndex, check, neededAmt)
-		local englishFaction = UnitFactionGroup("player")
+		-- Previous Blizzard call changed 2026.09.25: local englishFaction = UnitFactionGroup("player")
+		local englishFaction = RQE.API.Client.UnitFactionGroup("player")
 		local currentStepIndex = RQE.AddonSetStepIndex
 
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -11301,11 +11909,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local objective = objectives[objectiveIndex]
 
 				-- Determine the objective type
-				local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(questID, objectiveIndex, false)
+				-- Previous Blizzard call changed 2026.09.25: local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(questID, objectiveIndex, false)
+				local _, objectiveType, _, fulfilled, required = RQE.API.Client.GetQuestObjectiveInfo(questID, objectiveIndex, false)
 
 				-- Check if the objective is a progress bar
 				if objectiveType == "progressbar" then
-					local progress = GetQuestProgressBarPercent(questID) -- Get the progress percentage
+					-- Previous Blizzard call changed 2026.09.25: local progress = GetQuestProgressBarPercent(questID) -- Get the progress percentage
+					local progress = RQE.API.Client.GetQuestProgressBarPercent(questID) -- Get the progress percentage
 
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(string.format("Quest %d Objective %d is a progress bar: %d%% complete (Required: %d%%)", questID, objectiveIndex, progress, amount))
@@ -11545,12 +12155,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to check the current scenario stage
 	function RQE:CheckScenarioStage(questID, stepIndex)
 		-- Ensure the player is in a scenario
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			return false
 		end
 
 		-- Fetch general scenario information
-		local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		local scenarioInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
 		if not scenarioInfo then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No active scenario information available.")
@@ -11623,12 +12235,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to check scenario criteria progress
 	function RQE:CheckScenarioCriteria(questID, stepIndex)
 		-- Ensure the player is in a scenario
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			return false
 		end
 
 		-- Fetch general scenario information
-		local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		local scenarioInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
 		if not scenarioInfo then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No active scenario information available.")
@@ -11638,10 +12252,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Iterate through scenario criteria
 		local stepID = scenarioInfo.currentStage
-		local numCriteria = select(3, C_Scenario.GetStepInfo())
+		-- Previous Blizzard call changed 2026.09.25: local numCriteria = select(3, C_Scenario.GetStepInfo())
+		local numCriteria = select(3, RQE.API.Client.C_Scenario.GetStepInfo())
 
 		for criteriaIndex = 1, numCriteria do
-			local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+			-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+			local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 
 			if criteriaInfo and criteriaInfo.quantity >= criteriaInfo.totalQuantity then
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -11674,10 +12290,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	RQE.filterAllTrackedQuests = function()
 		-- Replace the current watch list so this view contains precisely the quests
 		-- from the player's quest log, not previously watched world quests.
-		for watchIndex = C_QuestLog.GetNumQuestWatches(), 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+		-- Previous Blizzard call changed 2026.09.25: for watchIndex = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		for watchIndex = RQE.API.Client.C_QuestLog.GetNumQuestWatches(), 1, -1 do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
 			if questID then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
@@ -11685,7 +12304,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for questLogIndex = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(questLogIndex)
 			if questInfo and not questInfo.isHeader and questInfo.questID then
-				C_QuestLog.AddQuestWatch(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questInfo.questID)
+				RQE.API.Client.C_QuestLog.AddQuestWatch(questInfo.questID)
 			end
 		end
 
@@ -11701,10 +12321,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
-				if C_QuestLog.IsComplete(questInfo.questID) then
-					C_QuestLog.AddQuestWatch(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsComplete(questInfo.questID) then
+				if RQE.API.Client.C_QuestLog.IsComplete(questInfo.questID) then
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questInfo.questID)
+					RQE.API.Client.C_QuestLog.AddQuestWatch(questInfo.questID)
 				elseif questInfo.questID then
-					C_QuestLog.RemoveQuestWatch(questInfo.questID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questInfo.questID)
+					RQE.API.Client.C_QuestLog.RemoveQuestWatch(questInfo.questID)
 				end
 			end
 		end
@@ -11720,14 +12343,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function for Hiding Completed Watched Quests
 	function RQE:HideCompletedWatchedQuests()
 		-- Iterate through all quests currently being watched
-		for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
-			local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-			local isQuestComplete = C_QuestLog.IsComplete(qID)
+		-- Previous Blizzard call changed 2026.09.25: for i = C_QuestLog.GetNumQuestWatches(), 1, -1 do
+		for i = RQE.API.Client.C_QuestLog.GetNumQuestWatches(), 1, -1 do
+			-- Previous Blizzard call changed 2026.09.25: local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local qID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local isQuestComplete = C_QuestLog.IsComplete(qID)
+			local isQuestComplete = RQE.API.Client.C_QuestLog.IsComplete(qID)
 			if qID then
 				-- Check if the quest is completed
 				if isQuestComplete then
 					-- Remove the quest from the watch list if it is completed
-					C_QuestLog.RemoveQuestWatch(qID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(qID)
+					RQE.API.Client.C_QuestLog.RemoveQuestWatch(qID)
 				end
 			end
 		end
@@ -11753,7 +12380,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
-				local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: local tagInfo = C_QuestLog.GetQuestTagInfo(questInfo.questID)
+				local tagInfo = RQE.API.Client.C_QuestLog.GetQuestTagInfo(questInfo.questID)
 				local questTagID = tagInfo and tagInfo.tagID
 				local frequency = questInfo.frequency
 
@@ -11772,20 +12400,25 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ScanAndCacheQuestFrequencies()  -- Ensure daily and weekly quests are up-to-date
 
 		-- Loop through the current quest watches and remove all
-		local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		local numQuestWatches = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		for i = numQuestWatches, 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-			C_QuestLog.RemoveQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 		end
 
 		-- Add daily quests
 		for questID, _ in pairs(RQE.DailyQuests) do
-			C_QuestLog.AddQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 		end
 
 		-- Add weekly quests
 		for questID, _ in pairs(RQE.WeeklyQuests) do
-			C_QuestLog.AddQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 		end
 
 		-- Update FrameUI
@@ -11847,16 +12480,22 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- separate from the DB lookup so each active quest can belong to both sources.
 	function RQE:GetQuestBlizzardZoneMapID(questID)
 		local uiMapID
-		if C_QuestLog and type(C_QuestLog.GetQuestAdditionalHighlights) == "function" then
-			uiMapID = C_QuestLog.GetQuestAdditionalHighlights(questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and type(C_QuestLog.GetQuestAdditionalHighlights) == "function" then
+		if C_QuestLog and type(RQE.API.ResolveClientAPI("C_QuestLog.GetQuestAdditionalHighlights")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: uiMapID = C_QuestLog.GetQuestAdditionalHighlights(questID)
+			uiMapID = RQE.API.Client.C_QuestLog.GetQuestAdditionalHighlights(questID)
 		end
 
 		if not uiMapID or uiMapID == 0 then
-			if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
-				uiMapID = C_TaskQuest.GetQuestZoneID(questID)
+			-- Previous Blizzard call changed 2026.09.25: if C_TaskQuest and type(C_TaskQuest.GetQuestZoneID) == "function" then
+			if C_TaskQuest and type(RQE.API.ResolveClientAPI("C_TaskQuest.GetQuestZoneID")) == "function" then
+				-- Previous Blizzard call changed 2026.09.25: uiMapID = C_TaskQuest.GetQuestZoneID(questID)
+				uiMapID = RQE.API.Client.C_TaskQuest.GetQuestZoneID(questID)
 			end
-			if (not uiMapID or uiMapID == 0) and type(GetQuestUiMapID) == "function" then
-				uiMapID = GetQuestUiMapID(questID)
+			-- Previous Blizzard call changed 2026.09.25: if (not uiMapID or uiMapID == 0) and type(GetQuestUiMapID) == "function" then
+			if (not uiMapID or uiMapID == 0) and type(RQE.API.ResolveClientAPI("GetQuestUiMapID")) == "function" then
+				-- Previous Blizzard call changed 2026.09.25: uiMapID = GetQuestUiMapID(questID)
+				uiMapID = RQE.API.Client.GetQuestUiMapID(questID)
 			end
 		end
 
@@ -11923,13 +12562,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		self.AutoTrackZoneQuestRefreshQueued = true
-		C_Timer.After(0.3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+		RQE.API.Client.C_Timer.After(0.3, function()
 			self.AutoTrackZoneQuestRefreshQueued = false
 			if not (self.db and self.db.profile and self.db.profile.autoTrackZoneQuests) then
 				return
 			end
 
-			local mapID = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+			local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			if not mapID then
 				return
 			end
@@ -11945,7 +12586,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Update tracked-quest ordering and selection for the player's current zone.
 	function RQE.UpdateTrackedQuestsToCurrentZone()
 		-- Determine the player's current zone/mapID
-		local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+		local currentPlayerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not currentPlayerMapID then
 			return
 		end
@@ -11954,7 +12596,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- pickup/current-step matches that Blizzard does not report for this map.
 		RQE.ScanAndCacheZoneQuests()
 		local questIDSet = {}
-		local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local questsOnMap = C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
+		local questsOnMap = RQE.API.Client.C_QuestLog.GetQuestsOnMap(currentPlayerMapID)
 		if questsOnMap then
 			for _, questInfo in ipairs(questsOnMap) do
 				if questInfo and questInfo.questID then
@@ -11970,12 +12613,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Iterate through all quests the player is currently watching
-		local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		local numQuestWatches = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		for i = numQuestWatches, 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			-- If a watched quest is not on the current map, untrack it
 			if questID and not questIDSet[questID] then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
@@ -11990,11 +12636,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
-				local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
+				local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = RQE.API.Client.C_QuestLog.GetQuestAdditionalHighlights(questInfo.questID)
 				if uiMapID ~= 0 then
 					print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. uiMapID)
 				else
-					local zoneID = GetQuestUiMapID(questInfo.questID) or C_TaskQuest.GetQuestZoneID(questInfo.questID)
+					-- Previous Blizzard call changed 2026.09.25: local zoneID = GetQuestUiMapID(questInfo.questID) or C_TaskQuest.GetQuestZoneID(questInfo.questID)
+					local zoneID = RQE.API.Client.GetQuestUiMapID(questInfo.questID) or RQE.API.Client.C_TaskQuest.GetQuestZoneID(questInfo.questID)
 					print ("QuestID: " .. questInfo.questID .. " belongs with MapID: " .. zoneID)
 				end
 			end
@@ -12007,7 +12655,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.ZoneQuests = RQE.ZoneQuests or {}  -- Ensure RQE.ZoneQuests is not nil
 
 		for zoneID, quests in pairs(RQE.ZoneQuests) do
-			local mapInfo = C_Map.GetMapInfo(zoneID)
+			-- Previous Blizzard call changed 2026.09.25: local mapInfo = C_Map.GetMapInfo(zoneID)
+			local mapInfo = RQE.API.Client.C_Map.GetMapInfo(zoneID)
 			if mapInfo then
 				local zoneName = mapInfo.name
 				table.insert(zoneQuestMenuList, {
@@ -12045,6 +12694,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if not zoneID then
 			return
 		end
+		local focusedQuestBeforeFilter = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
 
 		-- Refresh before every filter pass so ZQ, the zone menu, and auto-tracking
 		-- all use the latest quest progress and current-step DB locations.
@@ -12058,11 +12708,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Remove quests that are not in the selected zone
-		local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		local numQuestWatches = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		for i = numQuestWatches, 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if not questIDSet[questID] then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
@@ -12071,7 +12724,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Add the quests from the selected zone to the watch list
 		for _, questID in ipairs(questIDsForZone) do
-			C_QuestLog.AddQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 		end
 
 		-- Update FrameUI
@@ -12082,8 +12736,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		SortQuestsByProximity()
 
 		RQE.CheckAndUpdateForCurrentZone(zoneID)
+		-- Filtering the watched list must not turn a previously focused quest
+		-- into an implicit request to focus one of the newly watched quests.
+		if focusedQuestBeforeFilter > 0
+			and RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(focusedQuestBeforeFilter)
+			and tonumber(RQE.API.GetSuperTrackedQuestID()) ~= focusedQuestBeforeFilter then
+			RQE:AutoSetSuperTrackedQuestID(focusedQuestBeforeFilter)
+		end
 
-		local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+		local currentPlayerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if RQE.db and RQE.db.profile and RQE.db.profile.autoTrackZoneQuests
 			and currentPlayerMapID == zoneID
 		then
@@ -12093,7 +12755,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Detect the current zone and refresh the active zone quest filter when needed.
 	function RQE.CheckAndUpdateForCurrentZone(zoneID)
-		local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local currentPlayerMapID = C_Map.GetBestMapForUnit("player")
+		local currentPlayerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not currentPlayerMapID then
 			return
 		end
@@ -12108,7 +12771,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to display quests for the current zone
 	function RQE.DisplayCurrentZoneQuests()
 		-- Step 1: Determine the player's current zone
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			return
 		end
@@ -12128,7 +12792,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
 				-- Fetch the current quest's type
-				local currentQuestType = C_QuestLog.GetQuestType(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: local currentQuestType = C_QuestLog.GetQuestType(questInfo.questID)
+				local currentQuestType = RQE.API.Client.C_QuestLog.GetQuestType(questInfo.questID)
 
 				-- Determine if the current quest should be watched based on its type
 				local shouldWatch = false
@@ -12142,9 +12807,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				-- Add or remove the quest from watch based on the shouldWatch flag
 				if shouldWatch then
-					C_QuestLog.AddQuestWatch(questInfo.questID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questInfo.questID)
+					RQE.API.Client.C_QuestLog.AddQuestWatch(questInfo.questID)
 				else
-					C_QuestLog.RemoveQuestWatch(questInfo.questID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questInfo.questID)
+					RQE.API.Client.C_QuestLog.RemoveQuestWatch(questInfo.questID)
 				end
 			end
 		end
@@ -12163,9 +12830,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Resolve campaign metadata for a quest when the client exposes campaign information.
 	function RQE.GetQuestCampaignInfo(questID)
-		local campaignID = C_CampaignInfo.GetCampaignID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local campaignID = C_CampaignInfo.GetCampaignID(questID)
+		local campaignID = RQE.API.Client.C_CampaignInfo.GetCampaignID(questID)
 		if campaignID then
-			local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+			-- Previous Blizzard call changed 2026.09.25: local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+			local campaignInfo = RQE.API.Client.C_CampaignInfo.GetCampaignInfo(campaignID)
 			if campaignInfo then
 				return campaignInfo
 			end
@@ -12202,10 +12871,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
-				if C_CampaignInfo.IsCampaignQuest(questInfo.questID) then
-					local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: if C_CampaignInfo.IsCampaignQuest(questInfo.questID) then
+				if RQE.API.Client.C_CampaignInfo.IsCampaignQuest(questInfo.questID) then
+					-- Previous Blizzard call changed 2026.09.25: local campaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+					local campaignID = RQE.API.Client.C_CampaignInfo.GetCampaignID(questInfo.questID)
 					if campaignID then
-						local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+						-- Previous Blizzard call changed 2026.09.25: local campaignInfo = C_CampaignInfo.GetCampaignInfo(campaignID)
+						local campaignInfo = RQE.API.Client.C_CampaignInfo.GetCampaignInfo(campaignID)
 						if campaignInfo and not RQE.Campaigns[campaignID] then
 							RQE.Campaigns[campaignID] = campaignInfo.name
 						end
@@ -12255,11 +12927,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
-				local questCampaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: local questCampaignID = C_CampaignInfo.GetCampaignID(questInfo.questID)
+				local questCampaignID = RQE.API.Client.C_CampaignInfo.GetCampaignID(questInfo.questID)
 				if questCampaignID == campaignID then
-					C_QuestLog.AddQuestWatch(questInfo.questID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questInfo.questID)
+					RQE.API.Client.C_QuestLog.AddQuestWatch(questInfo.questID)
 				else
-					C_QuestLog.RemoveQuestWatch(questInfo.questID)
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questInfo.questID)
+					RQE.API.Client.C_QuestLog.RemoveQuestWatch(questInfo.questID)
 				end
 			end
 		end
@@ -12291,7 +12966,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Retrieve the quest line information for the given questID and uiMapID
-		local status, questLineInfo = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
+		-- Previous Blizzard call changed 2026.09.25: local status, questLineInfo = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
+		local status, questLineInfo = pcall(RQE.API.ResolveClientAPI("C_QuestLine.GetQuestLineInfo"), questID, uiMapID)
 
 		if status and questLineInfo then
 			-- Print the quest line information to chat
@@ -12316,9 +12992,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Get the X, Y, and MapID of a particular quest
 	function RQE.GetQuestUiMapID(questID)
-		local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-		local mapID = GetQuestUiMapID(questID)
-		local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		-- Previous Blizzard call changed 2026.09.25: local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+		local questIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local mapID = GetQuestUiMapID(questID)
+		local mapID = RQE.API.Client.GetQuestUiMapID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local x, y = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		local x, y = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, mapID)
 
 		print("Map is: " .. mapID)
 		print("X:", tostring(x), "Y:", tostring(y))
@@ -12334,8 +13013,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if questInfo and not questInfo.isHeader then
 				-- Directly use the map ID associated with the quest for more accurate quest line retrieval
 				local zoneID = RQE.API.GetQuestZoneID(questInfo.questID)
-				if not zoneID and type(GetQuestUiMapID) == "function" then
-					zoneID = GetQuestUiMapID(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: if not zoneID and type(GetQuestUiMapID) == "function" then
+				if not zoneID and type(RQE.API.ResolveClientAPI("GetQuestUiMapID")) == "function" then
+					-- Previous Blizzard call changed 2026.09.25: zoneID = GetQuestUiMapID(questInfo.questID)
+					zoneID = RQE.API.Client.GetQuestUiMapID(questInfo.questID)
 				end
 
 				-- The map argument is optional on Retail 12.1. Try the unscoped lookup
@@ -12418,13 +13099,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get the total number of quests currently watched
-		local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numQuestWatches = C_QuestLog.GetNumQuestWatches()
+		local numQuestWatches = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 
 		-- Loop through the current quest watches and remove those not in the selected questline
 		for i = numQuestWatches, 1, -1 do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if not questIDSet[questID] then
-				C_QuestLog.RemoveQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 			end
 		end
 
@@ -12432,9 +13116,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for _, questID in ipairs(questIDsForLine) do
 			local isWorldQuest = RQE.API.IsWorldQuest(questID)
 			if isWorldQuest then
-				C_QuestLog.AddWorldQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID)
 			else
-				C_QuestLog.AddQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 			end
 		end
 
@@ -12625,7 +13311,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					questLineInfo = entry.questLineInfo,
 				}
 
-				local questLink = GetQuestLink(entry.questID)
+				-- Previous Blizzard call changed 2026.09.25: local questLink = GetQuestLink(entry.questID)
+				local questLink = RQE.API.Client.GetQuestLink(entry.questID)
 				if not isNonEmptyString(questLink) then
 					questLink = format("|Hquesttip:%d|h[%s]|h", entry.questID, entry.title)
 				end
@@ -12677,7 +13364,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- A single short safety deadline prevents a missing event from hanging the
 		-- output. Normally the event-driven path completes well before this runs.
-		C_Timer.After(1.0, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.0, function()
+		RQE.API.Client.C_Timer.After(1.0, function()
 			if finished then return end
 			for questID in pairs(pendingQuestIDs) do
 				local entry = entriesByQuestID[questID]
@@ -12719,11 +13407,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		and WOW_PROJECT_ID == WOW_PROJECT_MAINLINE
 
 	if not isRetailClient and type(ChatFrame_OnHyperlinkShow) == "function" then
-		hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
+		-- Previous Blizzard call changed 2026.09.25: hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
+		RQE.API.Client.hooksecurefunc("ChatFrame_OnHyperlinkShow", function(chatFrame, link, text, button)
 			HandleRQEQuestTooltipLink(link)
 		end)
 	else
-		hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+		-- Previous Blizzard call changed 2026.09.25: hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
+		RQE.API.Client.hooksecurefunc("SetItemRef", function(link, text, button, chatFrame)
 			HandleRQEQuestTooltipLink(link)
 		end)
 	end
@@ -12731,7 +13421,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Returns the available quests at a quest giver when GOSSIP_SHOW is called from EventManager
 	function RQE.GetAvailableQuests()
 		-- Fetch the available quests using the Gossip API
-		local availableQuests = C_GossipInfo.GetAvailableQuests()
+		-- Previous Blizzard call changed 2026.09.25: local availableQuests = C_GossipInfo.GetAvailableQuests()
+		local availableQuests = RQE.API.Client.C_GossipInfo.GetAvailableQuests()
 
 		-- Check if there are available quests
 		if not availableQuests or #availableQuests == 0 then
@@ -12756,7 +13447,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		for i = 1, numEntries do
 			local questInfo = RQE.API.GetQuestLogInfo(i)
 			if questInfo and not questInfo.isHeader then
-				local questType = C_QuestLog.GetQuestType(questInfo.questID)
+				-- Previous Blizzard call changed 2026.09.25: local questType = C_QuestLog.GetQuestType(questInfo.questID)
+				local questType = RQE.API.Client.C_QuestLog.GetQuestType(questInfo.questID)
 				-- Check if questType is a valid number
 				if questType and type(questType) == "number" then
 					-- Consolidate quest types 0 and 261 or 270 or 282 under a special key "Misc"
@@ -12889,9 +13581,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Player pos in normalized space
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then return end
-		local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+		local pos = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not pos then return end
 		local px, py = pos:GetXY()
 		if not (px and py) then return end
@@ -12950,10 +13644,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to save the currently watched world quests
 	function RQE:SaveWorldQuestWatches()
 		wipe(RQE.savedWorldQuestWatches)
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
-				local watchType = C_QuestLog.GetQuestWatchType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 				if watchType == Enum.QuestWatchType.Manual then  -- Save only if the watch type is Manual
 					RQE.savedWorldQuestWatches[questID] = true
 					RQE.infoLog("Saved manually tracked World Quest ID:", questID)
@@ -12974,7 +13671,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Remove the world quest from tracking
-		C_QuestLog.RemoveWorldQuestWatch(questID)
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+		RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 
 		-- Update the saved list
 		RQE.savedWorldQuestWatches[questID] = nil
@@ -12997,10 +13695,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to save the currently watched world quests with Automatic watch type
 	function RQE:SaveAutomaticWorldQuestWatches()
 		wipe(RQE.savedAutomaticWorldQuestWatches)
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
-				local watchType = C_QuestLog.GetQuestWatchType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 				if watchType == Enum.QuestWatchType.Automatic then  -- Save only if the watch type is Automatic
 					RQE.savedAutomaticWorldQuestWatches[questID] = true
 					RQE.infoLog("Saved automatically tracked World Quest ID:", questID)
@@ -13023,7 +13724,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Remove the world quest from tracking
-		C_QuestLog.RemoveWorldQuestWatch(questID)
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+		RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 
 		-- Update the saved list
 		RQE.savedAutomaticWorldQuestWatches[questID] = nil
@@ -13032,7 +13734,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Optionally clear RQEFrame if necessary
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			RQE.CheckAndClearRQEFrame()
 		end)
 	end
@@ -13051,13 +13754,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				return
 			end
 			local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
-			if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
-				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+			-- Previous Blizzard call changed 2026.09.25: if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+			if RQE.API.IsWorldQuest(questID) and not RQE.API.Client.C_QuestLog.GetQuestWatchType(questID) then
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+				RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Manually tracking World Quest ID " .. questID)
 				end
 			end
-			C_Timer.After(1, restoreNext) -- Call the next restoration after 1 second
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, restoreNext) -- Call the next restoration after 1 second
+			RQE.API.Client.C_Timer.After(1, restoreNext) -- Call the next restoration after 1 second
 		end
 
 		-- Start the restoration process
@@ -13078,13 +13784,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				return
 			end
 			local questID = table.remove(questsToRestore, 1) -- Get next questID to restore
-			if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
-				C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+			-- Previous Blizzard call changed 2026.09.25: if RQE.API.IsWorldQuest(questID) and not C_QuestLog.GetQuestWatchType(questID) then
+			if RQE.API.IsWorldQuest(questID) and not RQE.API.Client.C_QuestLog.GetQuestWatchType(questID) then
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+				RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Automatically tracking World Quest ID " .. questID)
 				end
 			end
-			C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
+			RQE.API.Client.C_Timer.After(0.5, restoreNext) -- Call the next restoration after 0.5 seconds
 		end
 
 		-- Start the restoration process
@@ -13097,10 +13806,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to print the tracking type of all watched world quests
 	function RQE.PrintTrackedWorldQuestTypes()
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
-				local watchType = C_QuestLog.GetQuestWatchType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 				local trackingType = watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("Quest ID " .. questID .. " is being tracked " .. trackingType)
@@ -13112,7 +13824,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Prints the quests that are on the current player map
 	function RQE.GetMapQuests()
 		-- Get the player's current map ID
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- Check if playerMapID is valid
 		if not playerMapID then
@@ -13121,7 +13834,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Fetch quests on the current map
-		local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+		local quests = RQE.API.Client.C_QuestLog.GetQuestsOnMap(playerMapID)
 
 		-- Check if there are any quests on the map
 		if not quests or #quests == 0 then
@@ -13142,7 +13856,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Prints the quests that are on the current player map
 	function RQE.GetWorldMapQuests()
 		-- Get the player's current map ID
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- Check if playerMapID is valid
 		if not playerMapID then
@@ -13151,7 +13866,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Fetch quests on the current map
-		local quests = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local quests = C_TaskQuest.GetQuestsOnMap(playerMapID)
+		local quests = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)
 
 		-- Check if there are any quests on the map
 		if not quests or #quests == 0 then
@@ -13172,7 +13888,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Pulls map information for quests in the present zone and saves them
 	function RQE.PullDataFromMapQuests()
 		-- Get the player's current map ID
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- Check if playerMapID is valid
 		if not playerMapID then
@@ -13181,7 +13898,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Fetch quests on the current map
-		local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local quests = C_QuestLog.GetQuestsOnMap(playerMapID)
+		local quests = RQE.API.Client.C_QuestLog.GetQuestsOnMap(playerMapID)
 
 		-- Check if there are any quests on the map
 		if not quests or #quests == 0 then
@@ -13225,7 +13943,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Removes Automatic WQ when leaving area of WQ location
 	function RQE.UntrackAutomaticWorldQuests()
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Unable to get player's map ID.")
@@ -13233,7 +13952,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		-- Previous Blizzard call changed 2026.09.25: local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		local questsInArea = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 		local questsInAreaLookup = {}
 
 		if questsInArea then
@@ -13255,14 +13975,18 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
-				local watchType = C_QuestLog.GetQuestWatchType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 
 				if watchType == Enum.QuestWatchType.Automatic then
 					if not questsInAreaLookup[questID] then
-						C_QuestLog.RemoveWorldQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Removed automatic world quest tracking: " .. questID)
 						end
@@ -13274,7 +13998,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Remove automatically watched world quests that no longer belong to the player's current map.
 	function RQE.UntrackAutomaticWorldQuestsByMap()
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		if not playerMapID then
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -13283,7 +14008,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local mapQuests = C_QuestLog.GetQuestsOnMap(playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local mapQuests = C_QuestLog.GetQuestsOnMap(playerMapID)
+		local mapQuests = RQE.API.Client.C_QuestLog.GetQuestsOnMap(playerMapID)
 		local mapQuestsLookup = {}
 		for _, quest in ipairs(mapQuests) do
 			mapQuestsLookup[quest.questID] = true
@@ -13292,7 +14018,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		-- Previous Blizzard call changed 2026.09.25: local questsInArea = C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
+		local questsInArea = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(playerMapID)		-- The following has been implemented with 11.0.5, the previous version, C_TaskQuest.GetQuestsForPlayerByMapID(uiMapID) will be removed in the 12.0 expansion
 		local questsInAreaLookup = {}
 		for _, taskPOI in ipairs(questsInArea) do
 			questsInAreaLookup[taskPOI.questID] = true
@@ -13310,17 +14037,21 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Checking watched world quests:")
 		end
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
-				local watchType = C_QuestLog.GetQuestWatchType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+				local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("WQ " .. i .. ": ID " .. questID .. ", WatchType: " .. (watchType == Enum.QuestWatchType.Automatic and "Automatic" or "Manual"))
 				end
 
 				if watchType == Enum.QuestWatchType.Automatic then
 					if not questsInAreaLookup[questID] and not mapQuestsLookup[questID] then
-						C_QuestLog.RemoveWorldQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 						RQE.infoLog("Removed WQ " .. questID .. " from watch list.")
 					end
 				end
@@ -13351,8 +14082,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- Check if the visible quest is not a regular quest
 		if visibleQuestID and not isOnQuest then
 			local isWorldQuestTracked = false
-			for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-				local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+			for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+				-- Previous Blizzard call changed 2026.09.25: local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+				local qID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 				if qID == visibleQuestID then
 					isWorldQuestTracked = true
 					break
@@ -13449,13 +14182,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			if playSoundForCompletion then
-				PlaySound(6199) -- Sound for quest completion
+				-- Previous Blizzard call changed 2026.09.25: PlaySound(6199) -- Sound for quest completion
+				RQE.API.Client.PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
-				C_Timer.After(5, function() soundCooldown = false end)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			elseif playSoundForObjectives then
-				PlaySound(6192) -- Sound for individual objective completion
+				-- Previous Blizzard call changed 2026.09.25: PlaySound(6192) -- Sound for individual objective completion
+				RQE.API.Client.PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
-				C_Timer.After(5, function() soundCooldown = false end)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			end
 
 			-- Only run periodic checks if objectives actually changed
@@ -13463,14 +14200,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local questID = RQE.API.GetSuperTrackedQuestID()
 
 				if questID then
-					C_Timer.After(0.65, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.65, function()
+					RQE.API.Client.C_Timer.After(0.65, function()
 
 						if RQE:DidObjectivesChange(questID) then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Objective Sound Played → objective change → StartPeriodicChecks()")
 							end
 
-							C_Timer.After(0.35, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+							RQE.API.Client.C_Timer.After(0.35, function()
 								RQE:StartPeriodicChecks()
 							end)
 
@@ -13515,13 +14254,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			if playSoundForCompletion then
-				PlaySound(6199) -- Sound for quest completion
+				-- Previous Blizzard call changed 2026.09.25: PlaySound(6199) -- Sound for quest completion
+				RQE.API.Client.PlaySound(6199) -- Sound for quest completion
 				soundCooldown = true
-				C_Timer.After(5, function() soundCooldown = false end)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			elseif playSoundForObjectives then
-				PlaySound(6192) -- Sound for individual objective completion
+				-- Previous Blizzard call changed 2026.09.25: PlaySound(6192) -- Sound for individual objective completion
+				RQE.API.Client.PlaySound(6192) -- Sound for individual objective completion
 				soundCooldown = true
-				C_Timer.After(5, function() soundCooldown = false end)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function() soundCooldown = false end)
+				RQE.API.Client.C_Timer.After(5, function() soundCooldown = false end)
 			end
 
 			-- Only run periodic checks if objectives actually changed
@@ -13529,14 +14272,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				local questID = RQE.API.GetSuperTrackedQuestID()
 
 				if questID then
-					C_Timer.After(0.65, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.65, function()
+					RQE.API.Client.C_Timer.After(0.65, function()
 
 						if RQE:DidObjectivesChange(questID) then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Objective Sound Played → objective change → StartPeriodicChecks()")
 							end
 
-							C_Timer.After(0.35, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+							RQE.API.Client.C_Timer.After(0.35, function()
 								RQE:StartPeriodicChecks()
 							end)
 
@@ -13553,7 +14298,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if event == "PLAYER_LOGIN" then
 			InitializeQuestObjectiveCompletion()
 		elseif event == "QUEST_LOG_UPDATE" then
-			C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
+			RQE.API.Client.C_Timer.After(0.1, CheckQuestObjectivesAndPlaySound)
 		end
 	end)
 
@@ -13563,7 +14309,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- This function will handle the auto clicking of WaypointButton for the super tracked QuestLogIndexButton
 	function RQE:AutoClickQuestLogIndexWaypointButton()
-		if InCombatLockdown() then return end
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
+		if RQE.API.Client.InCombatLockdown() then return end
 
 		if RQE.db.profile.autoClickWaypointButton then
 			local questID = RQE.API.GetSuperTrackedQuestID()
@@ -13587,9 +14334,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Toggle Graphics Outline Mode between enabled (1) and disabled (0)
 	function RQE:ToggleGraphicsOutlineMode()
-		local newSetting = GetCVar("graphicsOutlineMode") == "1" and "0" or "1"
+		-- Previous Blizzard call changed 2026.09.25: local newSetting = GetCVar("graphicsOutlineMode") == "1" and "0" or "1"
+		local newSetting = RQE.API.Client.GetCVar("graphicsOutlineMode") == "1" and "0" or "1"
 
-		SetCVar("graphicsOutlineMode", newSetting)
+		-- Previous Blizzard call changed 2026.09.25: SetCVar("graphicsOutlineMode", newSetting)
+		RQE.API.Client.SetCVar("graphicsOutlineMode", newSetting)
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("RQE: Graphics Outline Mode " .. (newSetting == "1" and "enabled." or "disabled."))
@@ -13598,11 +14347,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to toggle script profiling and prompt for reload
 	function RQE:ToggleCPUProfiling()
-		local currentSetting = GetCVar("scriptProfile") == "1"
+		-- Previous Blizzard call changed 2026.09.25: local currentSetting = GetCVar("scriptProfile") == "1"
+		local currentSetting = RQE.API.Client.GetCVar("scriptProfile") == "1"
 		local newSetting = currentSetting and "0" or "1"
 		
 		-- Set the new profiling value
-		SetCVar("scriptProfile", newSetting)
+		-- Previous Blizzard call changed 2026.09.25: SetCVar("scriptProfile", newSetting)
+		RQE.API.Client.SetCVar("scriptProfile", newSetting)
 
 		-- Message for the dialog box
 		local message = (newSetting == "1") 
@@ -13615,7 +14366,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			button1 = "Reload UI",
 			button2 = "Cancel",
 			OnAccept = function()
-				ReloadUI()
+				-- Previous Blizzard call changed 2026.09.25: ReloadUI()
+				RQE.API.Client.ReloadUI()
 			end,
 			timeout = 0,
 			whileDead = true,
@@ -13629,18 +14381,23 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to check the CPU usage of the addon
 	function RQE:CheckCPUUsage()
-		if GetCVar("scriptProfile") == "1" then
+		-- Previous Blizzard call changed 2026.09.25: if GetCVar("scriptProfile") == "1" then
+		if RQE.API.Client.GetCVar("scriptProfile") == "1" then
 			if RQE.db and RQE.db.profile.displayRQEcpuUsage then
 				-- Ensure CPU tracking is updated
-				UpdateAddOnCPUUsage()
+				-- Previous Blizzard call changed 2026.09.25: UpdateAddOnCPUUsage()
+				RQE.API.Client.UpdateAddOnCPUUsage()
 
 				-- Fetch CPU usage
-				local cpuUsage = GetAddOnCPUUsage("RQE")
+				-- Previous Blizzard call changed 2026.09.25: local cpuUsage = GetAddOnCPUUsage("RQE")
+				local cpuUsage = RQE.API.Client.GetAddOnCPUUsage("RQE")
 
 				-- Ensure CPU usage is calculated as a percentage
 				local totalCPU = 0
-				for i = 1, C_AddOns.GetNumAddOns() do
-					totalCPU = totalCPU + GetAddOnCPUUsage(i)
+				-- Previous Blizzard call changed 2026.09.25: for i = 1, C_AddOns.GetNumAddOns() do
+				for i = 1, RQE.API.Client.C_AddOns.GetNumAddOns() do
+					-- Previous Blizzard call changed 2026.09.25: totalCPU = totalCPU + GetAddOnCPUUsage(i)
+					totalCPU = totalCPU + RQE.API.Client.GetAddOnCPUUsage(i)
 				end
 
 				-- Calculate percentage usage
@@ -13670,10 +14427,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:CheckMemoryUsage()
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
 			-- Update the memory usage information via the following Blizzard API
-			UpdateAddOnMemoryUsage()
+			-- Previous Blizzard call changed 2026.09.25: UpdateAddOnMemoryUsage()
+			RQE.API.Client.UpdateAddOnMemoryUsage()
 
 			-- Get the memory usage for the RQE addon
-			local memUsage = GetAddOnMemoryUsage("RQE")
+			-- Previous Blizzard call changed 2026.09.25: local memUsage = GetAddOnMemoryUsage("RQE")
+			local memUsage = RQE.API.Client.GetAddOnMemoryUsage("RQE")
 
 			-- Check if memUsage is greater than 1000 KB, then convert to MB
 			local memUsageText
@@ -13715,7 +14474,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Determine questID based on various fallbacks
 			questID = RQE.searchedQuestID or extractedQuestID or questID or currentSuperTrackedQuestID
 
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				RQE:ClickSuperTrackedQuestButton()
 			end)
 		end
@@ -13733,13 +14493,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			-- Tier Four Importance: RQE.CheckAndBuildMacroIfNeeded function
 			RQE.CreateMacroForCheckAndBuildMacroIfNeed = true
 			RQEMacro:CreateMacroForCurrentStep()
-			C_Timer.After(3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			RQE.API.Client.C_Timer.After(3, function()
 				RQE.CreateMacroForCheckAndBuildMacroIfNeed = false
 			end)
 		end
 
 		if RQE.shouldCheckFinalStep then
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				RQE.CheckAndSetFinalStep()
 			end)
 		end
@@ -13753,7 +14515,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local questID = RQE.API.GetSuperTrackedQuestID()	
 
 			-- Allow time for the UI to update and for the super track to register
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				-- Fetch the quest data here
 				local questData = RQE.getQuestData(questID)
 				if not questData then
@@ -13815,88 +14578,53 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- #18i. Profession Recipe Tracking & Crafting
 	-------------------------------------------------------
 
-	-- Function to update the recipe tracking frame with the tracked recipe info
-	function RQE:UpdateRecipeTrackingFrame(recipeID)
-		local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeID)
-		if not recipeInfo then
-			print("Recipe info not found for recipeID:", recipeID)
-			return
-		end
-
-		-- Get recipe name and output item data
-		local recipeName = recipeInfo.name
-		local outputData = C_TradeSkillUI.GetRecipeOutputItemData(recipeID)
-
-		-- Get reagents
-		local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeID, false, recipeInfo.unlockedRecipeLevel)
-		local reagents = {}
-		local seenReagentNames = {}
-			
-		if schematic and schematic.reagentSlotSchematics then
-			for _, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
-				local isBasic = slotSchematic.reagentType == Enum.CraftingReagentType.Basic
-				local isSpark = slotSchematic.reagentType == Enum.CraftingReagentType.Modifying
-					and slotSchematic.slotInfo
-					and slotSchematic.slotInfo.name
-					and slotSchematic.slotInfo.name:lower():find("spark")
-
-				if isBasic or isSpark then
-					local addedName = false
-
-					for _, reagent in ipairs(slotSchematic.reagents) do
-						local itemID = reagent.itemID
-						local name = itemID and C_Item.GetItemInfo(itemID)
-
-						if not name then
-							name = slotSchematic.slotInfo and slotSchematic.slotInfo.name or "Unknown Reagent"
-						end
-
-						if name and not seenReagentNames[name] then
-							table.insert(reagents, {
-								name = name,
-								required = slotSchematic.quantityRequired,
-								playerCount = itemID and C_Item.GetItemCount(itemID) or 0
+	-- Build every tracked recipe afresh so untracking one recipe cannot hide the others.
+	function RQE:UpdateRecipeTrackingFrame()
+		local tradeSkills = RQE.API.Client.C_TradeSkillUI
+		local recipes = {}
+		self.recipeItemLoadRequested = self.recipeItemLoadRequested or {}
+		local trackedLists = { RQE.API.GetTrackedRecipeIDs(true), RQE.API.GetTrackedRecipeIDs(false) }
+		for listIndex, tracked in ipairs(trackedLists) do
+			local isRecraft = listIndex == 1
+			for _, recipeID in ipairs(tracked) do
+				local info = tradeSkills.GetRecipeInfo(recipeID)
+				local schematic = RQE.API.GetTrackedRecipeSchematic(recipeID, isRecraft, info and info.unlockedRecipeLevel)
+				local recipe = {
+					id = recipeID, isRecraft = isRecraft,
+					name = (schematic and schematic.name) or (info and info.name) or tostring(recipeID),
+					reagents = {},
+				}
+				if isRecraft then
+					recipe.name = (PROFESSIONS_CRAFTING_FORM_RECRAFTING_HEADER or "Recrafting %s"):format(recipe.name)
+				end
+				if schematic and schematic.reagentSlotSchematics then
+					for _, slot in ipairs(schematic.reagentSlotSchematics) do
+						local required = RQE.API.IsTrackedRecipeSlotRequired(slot)
+						if required and slot.reagents and slot.reagents[1] then
+							local first = slot.reagents[1]
+							local count = RQE.API.GetTrackedRecipeReagentCount(slot.reagents)
+							local quantity = RQE.API.GetTrackedRecipeSlotQuantity(slot, first)
+							local itemName = first.itemID and RQE.API.Client.C_Item.GetItemInfo(first.itemID)
+							if first.itemID and not itemName and not self.recipeItemLoadRequested[first.itemID] then
+								self.recipeItemLoadRequested[first.itemID] = true
+								RQE.API.Client.C_Item.RequestLoadItemDataByID(first.itemID)
+							end
+							local currency = RQE.API.GetTrackedRecipeCurrencyInfo(first.currencyID)
+							local name = itemName or (currency and currency.name)
+								or (slot.slotInfo and (slot.slotInfo.slotText or slot.slotInfo.name))
+								or (first.itemID and ("Item " .. first.itemID)) or "Reagent"
+							table.insert(recipe.reagents, {
+								name = name, itemID = first.itemID, currencyID = first.currencyID,
+								count = count, required = quantity,
 							})
-							seenReagentNames[name] = true
-							addedName = true
-						end
-					end
-
-					if not addedName then
-						local fallbackName = slotSchematic.slotInfo and slotSchematic.slotInfo.name
-						if fallbackName and not seenReagentNames[fallbackName] then
-							table.insert(reagents, {
-								name = fallbackName,
-								required = slotSchematic.quantityRequired,
-								playerCount = 0
-							})
-							seenReagentNames[fallbackName] = true
 						end
 					end
 				end
+				table.insert(recipes, recipe)
 			end
 		end
-
-		-- Display the recipe info on the frame
-		if not RQE.recipeTrackingFrame.recipeText then
-			RQE.recipeTrackingFrame.recipeText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.recipeTrackingFrame.recipeText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame, "TOPLEFT", 10, -10)
-		end
-		RQE.recipeTrackingFrame.recipeText:SetText(recipeName)
-
-		-- Display the reagents info on the frame
-		if not RQE.recipeTrackingFrame.reagentsText then
-			RQE.recipeTrackingFrame.reagentsText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.recipeTrackingFrame.reagentsText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame.recipeText, "BOTTOMLEFT", 0, -10)
-		end
-		local reagentString = ""
-		for _, reagent in ipairs(reagents) do
-			reagentString = reagentString .. string.format("%s: %d/%d\n", reagent.name, reagent.playerCount, reagent.required)
-		end
-		RQE.recipeTrackingFrame.reagentsText:SetText(reagentString)
-
-		-- Show the frame
-		RQE.recipeTrackingFrame:Show()
+		if #recipes > 0 then self:CreateRecipeTrackingFrame() end
+		if self.RenderRecipeTrackingFrame then self:RenderRecipeTrackingFrame(recipes) end
 	end
 
 	-- Craft Specific Item for Quest
@@ -13904,7 +14632,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if RQE.db.profile.debugLevel ~= "INFO+" then return end
 
 		-- Retrieve recipe information to check if it can be crafted
-		local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeSpellID)
+		-- Previous Blizzard call changed 2026.09.25: local recipeInfo = C_TradeSkillUI.GetRecipeInfo(recipeSpellID)
+		local recipeInfo = RQE.API.Client.C_TradeSkillUI.GetRecipeInfo(recipeSpellID)
 		if not recipeInfo or not recipeInfo.learned or not recipeInfo.craftable then
 			print("Recipe is not learned, not craftable, or doesn't exist.")
 			return
@@ -13927,7 +14656,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Display an ItemLink for the required Reagents
 	function RQE:PrintRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
-		local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
+		-- Previous Blizzard call changed 2026.09.25: local schematic = C_TradeSkillUI.GetRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
+		local schematic = RQE.API.Client.C_TradeSkillUI.GetRecipeSchematic(recipeSpellID, isRecraft, recipeLevel)
 		if not schematic then
 			print("Schematic not found for recipeSpellID:", recipeSpellID)
 			return
@@ -13950,7 +14680,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					for _, reagent in ipairs(slotSchematic.reagents) do
 						local itemName = "Unknown"
 						if reagent.itemID then
-							itemName = GetItemInfo(reagent.itemID) or itemName
+							-- Previous Blizzard call changed 2026.09.25: itemName = GetItemInfo(reagent.itemID) or itemName
+							itemName = RQE.API.Client.GetItemInfo(reagent.itemID) or itemName
 						end
 						RQE.infoLog("  - Item:", itemName, "Item ID:", reagent.itemID or "N/A", "Quantity Required:", slotSchematic.quantityRequired)
 					end
@@ -13965,7 +14696,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			for i, slotSchematic in ipairs(schematic.reagentSlotSchematics) do
 				if slotSchematic.reagents then
 					for _, reagent in ipairs(slotSchematic.reagents) do
-						local itemLink = select(2, GetItemInfo(reagent.itemID))
+						-- Previous Blizzard call changed 2026.09.25: local itemLink = select(2, GetItemInfo(reagent.itemID))
+						local itemLink = select(2, RQE.API.Client.GetItemInfo(reagent.itemID))
 						local quantityRequired = slotSchematic.quantityRequired
 						if itemLink and quantityRequired then
 							if not firstReagent then
@@ -13991,11 +14723,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to obtain the index of a given itemID and pass that onto a function used for purchasing that item
 	function RQE:BuyItemByItemID(itemID, quantity)
-		C_Timer.After(1.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		RQE.API.Client.C_Timer.After(1.2, function()
 			local itemFound = false
 
-			for index = 1, GetMerchantNumItems() do
-				local merchantItemID = GetMerchantItemID(index)
+			-- Previous Blizzard call changed 2026.09.25: for index = 1, GetMerchantNumItems() do
+			for index = 1, RQE.API.Client.GetMerchantNumItems() do
+				-- Previous Blizzard call changed 2026.09.25: local merchantItemID = GetMerchantItemID(index)
+				local merchantItemID = RQE.API.Client.GetMerchantItemID(index)
 
 				if merchantItemID == itemID then
 					itemFound = true
@@ -14022,9 +14757,13 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to confirm and buy an item from a merchant
 	function RQE:ConfirmAndBuyMerchantItem(index, quantity)
-		local itemName = C_MerchantFrame.GetItemInfo(index)
-		local maxStack = GetMerchantItemMaxStack(index)
-		local itemLink = GetMerchantItemLink(index)
+		-- Previous Blizzard call changed 2026.09.25: local itemName = C_MerchantFrame.GetItemInfo(index)
+		local merchantInfo = RQE.API.Client.C_MerchantFrame.GetItemInfo(index)
+		local itemName = merchantInfo and merchantInfo.name
+		-- Previous Blizzard call changed 2026.09.25: local maxStack = GetMerchantItemMaxStack(index)
+		local maxStack = RQE.API.Client.GetMerchantItemMaxStack(index)
+		-- Previous Blizzard call changed 2026.09.25: local itemLink = GetMerchantItemLink(index)
+		local itemLink = RQE.API.Client.GetMerchantItemLink(index)
 		quantity = tonumber(quantity) or 1
 		maxStack = tonumber(maxStack) or 1
 
@@ -14034,9 +14773,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Get pricing information
-		local price = select(3, C_MerchantFrame.GetItemInfo(index)) or 0
+		-- Previous Blizzard call changed 2026.09.25: local price = select(3, C_MerchantFrame.GetItemInfo(index)) or 0
+		local price = merchantInfo and merchantInfo.price or 0
 		local totalCost = price * quantity
-		local priceString = (totalCost > 0) and C_CurrencyInfo.GetCoinTextureString(totalCost) or "free"
+		-- Previous Blizzard call changed 2026.09.25: local priceString = (totalCost > 0) and C_CurrencyInfo.GetCoinTextureString(totalCost) or "free"
+		local priceString = (totalCost > 0) and RQE.API.Client.C_CurrencyInfo.GetCoinTextureString(totalCost) or "free"
 
 		local itemDisplay = itemLink or itemName
 
@@ -14049,13 +14790,16 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					local fullStacks = math.floor(quantity / maxStack)
 					local remainder = quantity % maxStack
 					for i = 1, fullStacks do
-						BuyMerchantItem(index, maxStack)
+						-- Previous Blizzard call changed 2026.09.25: BuyMerchantItem(index, maxStack)
+						RQE.API.Client.BuyMerchantItem(index, maxStack)
 					end
 					if remainder > 0 then
-						BuyMerchantItem(index, remainder)
+						-- Previous Blizzard call changed 2026.09.25: BuyMerchantItem(index, remainder)
+						RQE.API.Client.BuyMerchantItem(index, remainder)
 					end
 				else
-					BuyMerchantItem(index, quantity)
+					-- Previous Blizzard call changed 2026.09.25: BuyMerchantItem(index, quantity)
+					RQE.API.Client.BuyMerchantItem(index, quantity)
 				end
 			end,
 			OnShow = function(self)
@@ -14093,7 +14837,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- #18k. Auction House Purchasing
 	-------------------------------------------------------
 
-	-- Function that handles a series of functions related to purchasing an item from the AH	-- FIX TO MAKE WORK WITH DIFFERENT OBJECTIVE NUMBERS (OTHER THAN JUST OBJECTIVE #1) (2025.09.30)
+	-- Resolve the requested item quantity before searching and asking for purchase confirmation.
 	function RQE:SearchPreparePurchaseConfirmAH(itemID, quantity)
 		local finalQuantity
 
@@ -14101,93 +14845,72 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		if type(quantity) == "number" and quantity > 0 then
 			finalQuantity = quantity
 
-		-- Case 2: If "x" is passed, or quantity is not valid, try to resolve from supertracked quest
+		-- Case 2: x/nil means the remaining amount for the matching quest objective.
 		else
 			local questID = RQE.API.GetSuperTrackedQuestID()
-			if questID and questID > 0 then
-				local objectives = RQE.API.GetQuestObjectives(questID)
-				if objectives and #objectives > 0 then
-					-- The current step's item tag identifies the objective even when
-					-- the item name is uncached. neededAmt may only be an intermediate
-					-- step threshold, not the full quest objective quantity.
-					local questData = RQE.getQuestData and RQE.getQuestData(questID)
-					local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
-					local step = questData and stepIndex and questData[stepIndex]
-					local itemTag = "{item:" .. tostring(itemID) .. ":"
-					local objectiveIndex = step and tonumber(step.objectiveIndex)
-					local needed = step and type(step.neededAmt) == "table"
-						and tonumber(step.neededAmt[1])
-					if step and type(step.description) == "string"
-						and step.description:find(itemTag, 1, true)
-						and objectiveIndex then
-						local objective = objectives[objectiveIndex]
-						local required = objective and tonumber(objective.numRequired)
-						local fulfilled = objective and tonumber(objective.numFulfilled)
-						if (required == nil or fulfilled == nil) and GetQuestObjectiveInfo then
-							local _, _, _, apiFulfilled, apiRequired = GetQuestObjectiveInfo(
-								questID, objectiveIndex, false)
-							required = required or tonumber(apiRequired)
-							fulfilled = fulfilled or tonumber(apiFulfilled)
-						end
-						if fulfilled ~= nil then
-							if required and required > 0 then
-								finalQuantity = required - fulfilled
-							elseif required == nil then
-								-- When Blizzard omits a total, use the largest threshold
-								-- for this same item/objective, not the current step alone.
-								local target = needed
-								for _, candidate in pairs(questData) do
-									if type(candidate) == "table"
-										and tonumber(candidate.objectiveIndex) == objectiveIndex
-										and type(candidate.description) == "string"
-										and candidate.description:find(itemTag, 1, true) then
-										local threshold = type(candidate.neededAmt) == "table"
-											and tonumber(candidate.neededAmt[1])
-										if threshold and threshold > (target or 0) then
-											target = threshold
-										end
-									end
-								end
-								if target and target > 0 then finalQuantity = target - fulfilled end
-							end
-						end
-					end
-
-					-- Other x macros retain the native-objective fallback, but an
-					-- empty item name must never match every objective's text.
-					if finalQuantity == nil then
-						local itemName = C_Item and C_Item.GetItemNameByID
-							and C_Item.GetItemNameByID(itemID)
-						for i, obj in ipairs(objectives) do
-							local itemIDMatches = obj.itemID
-								and tonumber(obj.itemID) == tonumber(itemID)
-							local textMatches = itemName and itemName ~= ""
-								and type(obj.text) == "string"
-								and obj.text:find(itemName, 1, true)
-							if itemIDMatches or textMatches then
-								local required = tonumber(obj.numRequired)
-								local fulfilled = tonumber(obj.numFulfilled)
-								if required and fulfilled then
-									finalQuantity = required - fulfilled
-									if RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+" then
-										print("|cffffff00[RQE]|r Objective " .. i .. ": Required = " .. required .. " Fulfilled = " .. fulfilled)
-									end
-									break
-								end
-							end
-						end
-					end
-				else
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Quest has no objectives.")
-					end
-					return
-				end
-			else
+			if not questID or questID <= 0 then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("No supertracked quest found for dynamic quantity resolution.")
 				end
 				return
+			end
+
+			local objectives = RQE.API.GetQuestObjectives(questID) or {}
+			local questData = RQE.getQuestData and RQE.getQuestData(questID)
+			local stepIndex = tonumber(RQE.AddonSetStepIndex) or tonumber(RQE.CurrentDisplayedStepIndex)
+			local step = questData and stepIndex and questData[stepIndex]
+			local itemTag = "{item:" .. tostring(itemID) .. ":"
+
+			local function RemainingForObjective(objectiveIndex, needed)
+				local objective = objectives[objectiveIndex]
+				local fulfilled, required
+				-- Read the indexed objective even when the list contains numeric counts:
+				-- those can describe a completion flag rather than the item quantity.
+				-- Previous Blizzard call changed 2026.09.25: if GetQuestObjectiveInfo then
+				if RQE.API.ResolveClientAPI("GetQuestObjectiveInfo") then
+					-- Previous Blizzard call changed 2026.09.25: local _, _, _, apiFulfilled, apiRequired = GetQuestObjectiveInfo(questID, objectiveIndex, false)
+					local _, _, _, apiFulfilled, apiRequired = RQE.API.Client.GetQuestObjectiveInfo(questID, objectiveIndex, false)
+					fulfilled = tonumber(apiFulfilled)
+					required = tonumber(apiRequired)
+				end
+				fulfilled = fulfilled or (objective and tonumber(objective.numFulfilled))
+				required = required or (objective and tonumber(objective.numRequired))
+				local target = needed and needed > 0 and needed or required
+				-- Bags and objective progress may count the same items; do not add them.
+				-- Exclude bank/reagent-bank stock from the inventory fallback.
+				local bagCount
+				-- Previous Blizzard call changed 2026.09.25: if C_Item.GetItemCount then
+				if RQE.API.ResolveClientAPI("C_Item.GetItemCount") then
+					-- Previous Blizzard call changed 2026.09.25: bagCount = C_Item.GetItemCount(itemID, false, false, false)
+					bagCount = tonumber(RQE.API.Client.C_Item.GetItemCount(itemID, false, false, false))
+				end
+				if fulfilled == nil and bagCount == nil then return nil end
+				local current = math.max(fulfilled or 0, bagCount or 0)
+				if target and target > 0 then return math.max(0, target - current) end
+			end
+
+			-- The selected step binds the item to its objective without cached names.
+			local objectiveIndex = step and tonumber(step.objectiveIndex)
+			if step and type(step.description) == "string"
+				and step.description:find(itemTag, 1, true)
+				and objectiveIndex and objectiveIndex > 0 and objectiveIndex ~= 99 then
+				local needed = type(step.neededAmt) == "table" and tonumber(step.neededAmt[1])
+				finalQuantity = RemainingForObjective(objectiveIndex, needed)
+			end
+
+			-- Other x macros can match an objective by item ID or a cached item name.
+			if finalQuantity == nil then
+				-- Previous Blizzard call changed 2026.09.25: local itemName = C_Item.GetItemNameByID(itemID)
+				local itemName = RQE.API.Client.C_Item.GetItemNameByID(itemID)
+				for i, objective in ipairs(objectives) do
+					local itemIDMatches = objective.itemID and tonumber(objective.itemID) == tonumber(itemID)
+					local textMatches = itemName and itemName ~= ""
+						and type(objective.text) == "string" and objective.text:find(itemName, 1, true)
+					if itemIDMatches or textMatches then
+						finalQuantity = RemainingForObjective(i)
+						if finalQuantity ~= nil then break end
+					end
+				end
 			end
 		end
 
@@ -14203,7 +14926,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		finalQuantity = math.floor(finalQuantity + 0.5)
 
 		-- Purchase logic
-		if C_AddOns.IsAddOnLoaded("CraftSim") then
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("CraftSim") then
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("CraftSim") then
 			RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
 		else
 			RQE:SearchAndPrepareAuctionItem(itemID, finalQuantity)
@@ -14221,23 +14945,28 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+		-- Previous Blizzard call changed 2026.09.25: local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+		local itemKey = RQE.API.Client.C_AuctionHouse.MakeItemKey(itemID)
 		RQE.debugLog("Created ItemKey for itemID:", itemID, "Item Level:", itemKey.itemLevel, "Item Suffix:", itemKey.itemSuffix)
 
 		-- Array of itemKeys to search
 		local itemKeys = {itemKey}
 
 		-- Search for the item using ItemKeys
-		C_AuctionHouse.SearchForItemKeys(itemKeys, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false})
+		-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.SearchForItemKeys(itemKeys, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false})
+		RQE.API.Client.C_AuctionHouse.SearchForItemKeys(itemKeys, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false})
 		RQE.infoLog("Search query sent for ItemID:", itemID, "with quantity:", quantity)
 
 		-- Check and display search results after a short delay to allow data to load
-		C_Timer.After(1, function()
-			local numResults = C_AuctionHouse.GetNumItemSearchResults(itemKey)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: local numResults = C_AuctionHouse.GetNumItemSearchResults(itemKey)
+			local numResults = RQE.API.Client.C_AuctionHouse.GetNumItemSearchResults(itemKey)
 
 			if numResults > 0 then
 				for index = 1, numResults do
-					local resultInfo = C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
+					-- Previous Blizzard call changed 2026.09.25: local resultInfo = C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
+					local resultInfo = RQE.API.Client.C_AuctionHouse.GetItemSearchResultInfo(itemKey, index)
 					if resultInfo then
 						print("Result", index, ": Price =", resultInfo.buyoutPrice or "No buyout", "Quantity =", resultInfo.quantity)
 					end
@@ -14260,24 +14989,31 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Creating the item key for the commodity
-		local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+		-- Previous Blizzard call changed 2026.09.25: local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+		local itemKey = RQE.API.Client.C_AuctionHouse.MakeItemKey(itemID)
 		local searchQuery = {
 			itemKey = itemKey,
 			sorts = { sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false }
 		}
 
 		-- Sending the search query
-		C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
+		-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
+		RQE.API.Client.C_AuctionHouse.SendSearchQuery(itemKey, searchQuery.sorts, false)
 
-		C_Timer.After(1, function()
-			if C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
-				local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: if C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
+			if RQE.API.Client.C_AuctionHouse.HasFullCommoditySearchResults(itemID) then
+				-- Previous Blizzard call changed 2026.09.25: local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+				local numResults = RQE.API.Client.C_AuctionHouse.GetNumCommoditySearchResults(itemID)
 				if numResults > 0 then
 					-- Iterate through results and display them
 					for index = 1, numResults do
-						local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+						-- Previous Blizzard call changed 2026.09.25: local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+						local result = RQE.API.Client.C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
 						if result then
-							print("Result " .. index .. ": Price per unit: " .. GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
+							-- Previous Blizzard call changed 2026.09.25: print("Result " .. index .. ": Price per unit: " .. GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
+							print("Result " .. index .. ": Price per unit: " .. RQE.API.Client.GetCoinTextureString(result.unitPrice) .. ", Quantity: " .. result.quantity)
 						end
 					end
 				else
@@ -14285,7 +15021,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			else
 				-- Not all results may be loaded immediately; consider requesting more results or retrying
-				C_AuctionHouse.RequestMoreCommoditySearchResults(itemID)
+				-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.RequestMoreCommoditySearchResults(itemID)
+				RQE.API.Client.C_AuctionHouse.RequestMoreCommoditySearchResults(itemID)
 			end
 		end)
 	end
@@ -14299,51 +15036,65 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local itemName = C_Item.GetItemNameByID(itemID)  -- Fetch the item name directly from the item ID
+		-- Previous Blizzard call changed 2026.09.25: local itemName = C_Item.GetItemNameByID(itemID)  -- Fetch the item name directly from the item ID
+		local itemName = RQE.API.Client.C_Item.GetItemNameByID(itemID)  -- Fetch the item name directly from the item ID
 		if not itemName then
 			print("Failed to retrieve item name for ID:".. itemID .. ". Please try search again.")
 			return
 		end
 
-		local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+		-- Previous Blizzard call changed 2026.09.25: local itemKey = C_AuctionHouse.MakeItemKey(itemID)
+		local itemKey = RQE.API.Client.C_AuctionHouse.MakeItemKey(itemID)
 		-- Sending the search query
-		C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
+		-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
+		RQE.API.Client.C_AuctionHouse.SendSearchQuery(itemKey, {sortOrder = Enum.AuctionHouseSortOrder.Price, reverseSort = false}, false)
 
-		C_Timer.After(1, function()
-			local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: local numResults = C_AuctionHouse.GetNumCommoditySearchResults(itemID)
+			local numResults = RQE.API.Client.C_AuctionHouse.GetNumCommoditySearchResults(itemID)
 			if numResults > 0 then
 				local totalQuantityNeeded = quantity
 				local totalCost = 0
 				local index = 1
 				while totalQuantityNeeded > 0 and index <= numResults do
-					local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+					-- Previous Blizzard call changed 2026.09.25: local result = C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
+					local result = RQE.API.Client.C_AuctionHouse.GetCommoditySearchResultInfo(itemID, index)
 					if result then
 						local quantityAvailable = result.quantity
 						local unitPrice = result.unitPrice
 						local quantityToBuy = min(quantityAvailable, totalQuantityNeeded)
 						totalCost = totalCost + (quantityToBuy * unitPrice)
 						totalQuantityNeeded = totalQuantityNeeded - quantityToBuy
-						print("|cFFFF3333[RQE]|r Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
+						-- Previous Blizzard call changed 2026.09.25: print("|cFFFF3333[RQE]|r Buying", quantityToBuy, "units at", GetCoinTextureString(unitPrice), "each.")
+						print("|cFFFF3333[RQE]|r Buying", quantityToBuy, "units at", RQE.API.Client.GetCoinTextureString(unitPrice), "each.")
 					end
 					index = index + 1
 				end
 				if totalQuantityNeeded > 0 then
 					print("Not enough quantity available to meet the requested purchase.")
 				else
-					local itemLink = C_AuctionHouse.GetReplicateItemLink(1) or select(2, GetItemInfo(itemID))
+					-- Previous Blizzard call changed 2026.09.25: local itemLink = C_AuctionHouse.GetReplicateItemLink(1) or select(2, GetItemInfo(itemID))
+					local itemLink = RQE.API.Client.C_AuctionHouse.GetReplicateItemLink(1) or select(2, RQE.API.Client.GetItemInfo(itemID))
 					if not itemLink then
-						itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
+						-- Previous Blizzard call changed 2026.09.25: itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, C_Item.GetItemNameByID(itemID))
+						itemLink = string.format("\124cff0070dd\124Hitem:%d::::::::70:::::\124h[%s]\124h\124r", itemID, RQE.API.Client.C_Item.GetItemNameByID(itemID))
 					end
-					print("|cFFFF3333[RQE]|r Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
+					-- Previous Blizzard call changed 2026.09.25: print("|cFFFF3333[RQE]|r Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. GetCoinTextureString(totalCost))
+					print("|cFFFF3333[RQE]|r Total cost for " .. itemLink .. " x" .. quantity .. " will be " .. RQE.API.Client.GetCoinTextureString(totalCost))
 					-- Display the confirmation popup with the total cost
 					StaticPopupDialogs["RQE_CONFIRM_PURCHASE_COMMODITY"] = {
-						text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
+						-- Previous Blizzard call changed 2026.09.25: text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, C_Item.GetItemNameByID(itemID), GetCoinTextureString(totalCost)),
+						text = string.format("Confirm your purchase of %d x [%s] for %s.", quantity, RQE.API.Client.C_Item.GetItemNameByID(itemID), RQE.API.Client.GetCoinTextureString(totalCost)),
 						button1 = "Yes",
 						button2 = "No",
 						OnAccept = function()
-							C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
-							C_Timer.After(1.5, function()  -- Allow for server response time
-								C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
+							-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+							RQE.API.Client.C_AuctionHouse.StartCommoditiesPurchase(itemID, quantity)
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()  -- Allow for server response time
+							RQE.API.Client.C_Timer.After(1.5, function()  -- Allow for server response time
+								-- Previous Blizzard call changed 2026.09.25: C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
+								RQE.API.Client.C_AuctionHouse.ConfirmCommoditiesPurchase(itemID, quantity)
 							end)
 						end,
 						timeout = 3,
@@ -14352,7 +15103,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						preferredIndex = 3,  -- Avoid taint from UIParent
 					OnShow = function(self)
 						if self.text then
-							self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+							-- Previous Blizzard call changed 2026.09.25: self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, GetCoinTextureString(totalCost))
+							self.text:SetFormattedText(self.text:GetText(), itemLink, quantity, RQE.API.Client.GetCoinTextureString(totalCost))
 						end
 						local itemFrame = CreateFrame("Frame", nil, self)
 						itemFrame:SetAllPoints(self.text or self)  -- fallback to whole popup if self.text is nil
@@ -14379,7 +15131,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function that checks to see if player has a DragonRiding Aura/Mount active
 	function RQE.CheckForDragonMounts()
 		for _, dragonName in ipairs(RQE.dragonMounts) do
-			local aura = C_UnitAuras.GetAuraDataBySpellName("player", dragonName)
+			-- Previous Blizzard call changed 2026.09.25: local aura = C_UnitAuras.GetAuraDataBySpellName("player", dragonName)
+			local aura = RQE.API.Client.C_UnitAuras.GetAuraDataBySpellName("player", dragonName)
 			if aura then
 				RQE.infoLog("Dragon riding with:", dragonName)
 				return true  -- Dragon mount aura found
@@ -14392,7 +15145,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that checks if the player has the Dragon Racing Aura up
 	function RQE.HasDragonraceAura()
-		local aura = C_UnitAuras.GetAuraDataBySpellName("player", "Racing", "HELPFUL")  -- Assuming "Racing" is the correct aura name and it's a buff
+		-- Previous Blizzard call changed 2026.09.25: local aura = C_UnitAuras.GetAuraDataBySpellName("player", "Racing", "HELPFUL")  -- Assuming "Racing" is the correct aura name and it's a buff
+		local aura = RQE.API.Client.C_UnitAuras.GetAuraDataBySpellName("player", "Racing", "HELPFUL")  -- Assuming "Racing" is the correct aura name and it's a buff
 		if aura then
 			return true
 		else
@@ -14436,7 +15190,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local closestDistance = math.huge  -- Initialize with a large number
 
 		-- Get the current map of the player (for quest location purposes)
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- Iterate through all quests in the player's quest log
 		for i = 1, RQE.API.GetNumQuestLogEntries() do
@@ -14449,7 +15204,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 				-- Ensure the quest position is valid
 				if questPosition then
-					local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+					-- Previous Blizzard call changed 2026.09.25: local distance = C_QuestLog.GetDistanceSqToQuest(info.questID)
+					local distance = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(info.questID)
 
 					-- Check if this quest is closer than the current closest one
 					if distance and distance < closestDistance then
@@ -14483,7 +15239,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			RQE.BlacklistUnderway = true
 
 			-- Temporarily remove the quest from the watch list
-			C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
+			RQE.API.Client.C_QuestLog.RemoveQuestWatch(superTrackedQuestID)
 			RQE.Buttons.ClearButtonPressed()
 
 			-- Supertrack the next closest non-blacklisted quest
@@ -14499,8 +15256,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				RQE.BlacklistUnderway = false
 
 				-- After a delay, re-add the blacklisted quest to the watch list, but do not re-supertrack it
-				C_Timer.After(2.5, function()
-					C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+				RQE.API.Client.C_Timer.After(2.5, function()
+					-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)
+					RQE.API.Client.C_QuestLog.AddQuestWatch(RQE.BlackListedQuestID)
 				end)
 			end
 		end
@@ -14518,7 +15277,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			local info = RQE.API.GetQuestLogInfo(i)
 			if info and info.questID then
 				-- Found a quest, supertrack it
-				C_SuperTrack.SetSuperTrackedQuestID(info.questID)
+				-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(info.questID)
+				RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(info.questID)
 				RQE:SaveSuperTrackedQuestToCharacter()
 
 				-- Print debug message
@@ -14542,8 +15302,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Function to log scenario information, including previously ignored values
 	function RQE.LogScenarioInfo()
 		if not RQE.debugMode then return end  -- Only log if debugging is explicitly enabled
-		if C_Scenario.IsInScenario() then
-			local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit, scenarioID = C_Scenario.GetInfo()
+		-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then
+		if RQE.API.Client.C_Scenario.IsInScenario() then
+			-- Previous Blizzard call changed 2026.09.25: local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit, scenarioID = C_Scenario.GetInfo()
+			local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed, xp, money, scenarioType, areaName, textureKit, scenarioID = RQE.API.Client.C_Scenario.GetInfo()
 
 			RQE.infoLog("Scenario Name: " .. tostring(scenarioName))
 			RQE.infoLog("Current Stage: " .. tostring(currentStage))
@@ -14566,16 +15328,20 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- only supporting 1 active timer
 		for i = 1, select("#", ...) do
 			local timerID = select(i, ...);
-			local _, elapsedTime, type = GetWorldElapsedTime(timerID);
+			-- Previous Blizzard call changed 2026.09.25: local _, elapsedTime, type = GetWorldElapsedTime(timerID);
+			local _, elapsedTime, type = RQE.API.Client.GetWorldElapsedTime(timerID);
 			if ( type == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE) then
-				local mapID = C_ChallengeMode.GetActiveChallengeMapID();
+				-- Previous Blizzard call changed 2026.09.25: local mapID = C_ChallengeMode.GetActiveChallengeMapID();
+				local mapID = RQE.API.Client.C_ChallengeMode.GetActiveChallengeMapID();
 				if ( mapID ) then
-					local _, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID);
+					-- Previous Blizzard call changed 2026.09.25: local _, _, timeLimit = C_ChallengeMode.GetMapUIInfo(mapID);
+					local _, _, timeLimit = RQE.API.Client.C_ChallengeMode.GetMapUIInfo(mapID);
 					Scenario_ChallengeMode_ShowBlock(timerID, elapsedTime, timeLimit);
 					return;
 				end
 			elseif ( type == LE_WORLD_ELAPSED_TIMER_TYPE_PROVING_GROUND ) then
-				local diffID, currWave, maxWave, duration = C_Scenario.GetProvingGroundsInfo()
+				-- Previous Blizzard call changed 2026.09.25: local diffID, currWave, maxWave, duration = C_Scenario.GetProvingGroundsInfo()
+				local diffID, currWave, maxWave, duration = RQE.API.Client.C_Scenario.GetProvingGroundsInfo()
 				if (duration > 0) then
 					Scenario_ProvingGrounds_ShowBlock(timerID, elapsedTime, duration, diffID, currWave, maxWave);
 					return;
@@ -14618,7 +15384,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to process the next gossip selection in queue
 	local function ProcessNextGossipOption()
-		local options = C_GossipInfo.GetOptions()
+		-- Previous Blizzard call changed 2026.09.25: local options = C_GossipInfo.GetOptions()
+		local options = RQE.API.Client.C_GossipInfo.GetOptions()
 
 		-- If no options are available, stop processing
 		if not options or #options == 0 then
@@ -14626,10 +15393,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Ensure we are interacting with the correct NPC
-		local isInInstance, instanceType = IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local isInInstance, instanceType = IsInInstance()
+		local isInInstance, instanceType = RQE.API.Client.IsInInstance()
 		if isInInstance then return end
 
-		local currentNPCName = UnitName("npc")
+		-- Previous Blizzard call changed 2026.09.25: local currentNPCName = UnitName("npc")
+		local currentNPCName = RQE.API.Client.UnitName("npc")
 		if not currentNPCName or currentNPCName ~= selectedGossipOption.npcName then
 			return
 		end
@@ -14645,13 +15414,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 					end
 
 					-- Select the option
-					C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+					-- Previous Blizzard call changed 2026.09.25: C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+					RQE.API.Client.C_GossipInfo.SelectOptionByIndex(option.orderIndex)
 
 					-- Move to the next option
 					selectedGossipOption.currentIndex = selectedGossipOption.currentIndex + 1
 
 					-- Schedule next selection
-					C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
+					RQE.API.Client.C_Timer.After(0.5, ProcessNextGossipOption) -- Add a slight delay to process sequentially
 					break
 				end
 			end
@@ -14665,7 +15436,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- Set the selected gossip option for future use
 		if npcName == "target" then
-			selectedGossipSingle.npcName = UnitName("target")
+			-- Previous Blizzard call changed 2026.09.25: selectedGossipSingle.npcName = UnitName("target")
+			selectedGossipSingle.npcName = RQE.API.Client.UnitName("target")
 		else
 			selectedGossipSingle.npcName = npcName
 		end
@@ -14683,7 +15455,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		-- If no npcName is provided, default to current target's name
 		if not npcName or npcName == "" then
-			local targetName = UnitName("target")
+			-- Previous Blizzard call changed 2026.09.25: local targetName = UnitName("target")
+			local targetName = RQE.API.Client.UnitName("target")
 			if targetName then
 				npcName = targetName
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -14708,7 +15481,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- If the NPC gossip window is already open, process immediately
-		if UnitName("npc") == npcName then
+		-- Previous Blizzard call changed 2026.09.25: if UnitName("npc") == npcName then
+		if RQE.API.Client.UnitName("npc") == npcName then
 			ProcessNextGossipOption()
 		end
 	end
@@ -14723,7 +15497,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return options
 		end
 
-		print("Gossip Options for NPC: " .. (UnitName("npc") or "Unknown"))
+		-- Previous Blizzard call changed 2026.09.25: print("Gossip Options for NPC: " .. (UnitName("npc") or "Unknown"))
+		print("Gossip Options for NPC: " .. (RQE.API.Client.UnitName("npc") or "Unknown"))
 
 		for i, option in ipairs(options) do
 			print(("Option %d"):format(i))
@@ -14774,7 +15549,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	RQEGossipFrame:HookScript("OnEvent", function(self, event)
 		if event == "GOSSIP_SHOW" then
 			-- Fetch available gossip options
-			local options = C_GossipInfo.GetOptions()
+			-- Previous Blizzard call changed 2026.09.25: local options = C_GossipInfo.GetOptions()
+			local options = RQE.API.Client.C_GossipInfo.GetOptions()
 
 			-- Check if options exist
 			if not options or #options == 0 then
@@ -14782,7 +15558,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 
 			-- Get the current NPC name
-			local currentNPCName = UnitName("npc")
+			-- Previous Blizzard call changed 2026.09.25: local currentNPCName = UnitName("npc")
+			local currentNPCName = RQE.API.Client.UnitName("npc")
 
 			-- Check if the selection criteria match the current NPC
 			if selectedGossipSingle.npcName and currentNPCName == selectedGossipSingle.npcName then
@@ -14792,7 +15569,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Selecting gossip option:", option.orderIndex, "for NPC:", selectedGossipSingle.npcName)
 						end
-						C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+						-- Previous Blizzard call changed 2026.09.25: C_GossipInfo.SelectOptionByIndex(option.orderIndex)
+						RQE.API.Client.C_GossipInfo.SelectOptionByIndex(option.orderIndex)
 						break
 					end
 				end
@@ -14810,8 +15588,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Closes the gossip window to ensure that the options are clean slate
 	function RQE.ResetGossipWindow()
-		if UnitExists("npc") then
-			C_GossipInfo.CloseGossip() -- Close the gossip window
+		-- Previous Blizzard call changed 2026.09.25: if UnitExists("npc") then
+		if RQE.API.Client.UnitExists("npc") then
+			-- Previous Blizzard call changed 2026.09.25: C_GossipInfo.CloseGossip() -- Close the gossip window
+			RQE.API.Client.C_GossipInfo.CloseGossip() -- Close the gossip window
 		end
 	end
 
@@ -14821,13 +15601,15 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Prints the closest flight master to the player's current location
 	function RQE:GetClosestFlightMaster()
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			print(">> No valid mapID found.")
 			return nil
 		end
 
-		local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		local position = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not position then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(">> Unable to get player map position.")
@@ -14845,9 +15627,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		local closestNode = nil
 		local shortestDistance = math.huge
-		local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+		-- Previous Blizzard call changed 2026.09.25: local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+		local nodes = RQE.API.Client.C_TaxiMap.GetTaxiNodesForMap(mapID)
 
-		local playerFaction = UnitFactionGroup("player")  -- "Alliance", "Horde", or "Neutral"
+		-- Previous Blizzard call changed 2026.09.25: local playerFaction = UnitFactionGroup("player")  -- "Alliance", "Horde", or "Neutral"
+		local playerFaction = RQE.API.Client.UnitFactionGroup("player")  -- "Alliance", "Horde", or "Neutral"
 
 		for _, node in ipairs(nodes or {}) do
 			if not node.isUndiscovered then
@@ -14888,23 +15672,28 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return nil
 		end
 
-		local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 		if not waypointText then return end
 
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			return nil
 		end
 
 		local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
-		local label = C_QuestLog.GetNextWaypointText(questID) or "Quest waypoint"
+		-- Previous Blizzard call changed 2026.09.25: local label = C_QuestLog.GetNextWaypointText(questID) or "Quest waypoint"
+		local label = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID) or "Quest waypoint"
 
 		-- Preferred: exact waypoint on the player's current map
-		local xNorm, yNorm = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		-- Previous Blizzard call changed 2026.09.25: local xNorm, yNorm = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+		local xNorm, yNorm = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, mapID)
 
 		-- Fallback 1: generic waypoint (may be vec or POI id)
 		if not (xNorm and yNorm) then
-			local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
+			-- Previous Blizzard call changed 2026.09.25: local wpMapID, wpData = C_QuestLog.GetNextWaypoint(questID)
+			local wpMapID, wpData = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 			if wpMapID then
 				if type(wpData) == "table" then
 					if wpData.x and wpData.y then
@@ -14915,7 +15704,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						mapID = wpMapID
 					end
 				elseif type(wpData) == "number" then
-					local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+					-- Previous Blizzard call changed 2026.09.25: local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+					local poiInfo = RQE.API.Client.C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
 					if poiInfo and poiInfo.position then
 						xNorm, yNorm = poiInfo.position.x, poiInfo.position.y
 						mapID = wpMapID
@@ -14980,7 +15770,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		RQE.x, RQE.y = xPct, yPct  -- legacy helpers you were using before
 
 		-- Create the actual waypoint (this function handles TomTom/Carbonite)
-		C_Timer.After(1.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		RQE.API.Client.C_Timer.After(1.2, function()
 			if RQE.CreateUnknownQuestWaypointWithDirectionText then
 				RQE:CreateUnknownQuestWaypointWithDirectionText(questID, mapID)
 			end
@@ -14998,7 +15789,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		local closestNode = nil
 		local shortestDistance = math.huge
-		local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+		-- Previous Blizzard call changed 2026.09.25: local nodes = C_TaxiMap.GetTaxiNodesForMap(mapID)
+		local nodes = RQE.API.Client.C_TaxiMap.GetTaxiNodesForMap(mapID)
 
 		for _, node in ipairs(nodes or {}) do
 			if not node.isUndiscovered then
@@ -15080,8 +15872,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			if mapID then
 				finalMapID = mapID
 			elseif continentID then
-				local playerMapID = C_Map.GetBestMapForUnit("player")
-				local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+				local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: local parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+				local parent = playerMapID and RQE.API.Client.C_Map.GetMapInfo(playerMapID).parentMapID
 				if parent == continentID then
 					finalMapID = continentID
 				end
@@ -15134,8 +15928,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		local stepCoords = activeStep.coordinates
 
-		local playerMapID = C_Map.GetBestMapForUnit("player")
-		local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerPos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		local playerPos = RQE.API.Client.C_Map.GetPlayerMapPosition(playerMapID, "player")
 		if not playerPos then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(">> Unable to determine player position.")
@@ -15212,8 +16008,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	function RQE:EstimatePlayerSpeed(sampleTime)
 		sampleTime = sampleTime or 1  -- default to 1 second
 
-		local mapID = C_Map.GetBestMapForUnit("player")
-		local startPos = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local startPos = C_Map.GetPlayerMapPosition(mapID, "player")
+		local startPos = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not startPos then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(">> Unable to get player position.")
@@ -15223,8 +16021,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		local x1, y1 = startPos:GetXY()
 
-		C_Timer.After(sampleTime, function()
-			local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(sampleTime, function()
+		RQE.API.Client.C_Timer.After(sampleTime, function()
+			-- Previous Blizzard call changed 2026.09.25: local newPos = C_Map.GetPlayerMapPosition(mapID, "player")
+			local newPos = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 			if not newPos then
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print(">> Unable to get player position (after delay).")
@@ -15244,8 +16044,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Ask the player if they want a TomTom waypoint to the closest flight master, then set it on Yes.
 	function RQE:AskSetWaypointToClosestFlightMaster()
-		if UnitOnTaxi("player") then return end  -- No popups while flying
-		local tomtomLoaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: if UnitOnTaxi("player") then return end  -- No popups while flying
+		if RQE.API.Client.UnitOnTaxi("player") then return end  -- No popups while flying
+		-- Previous Blizzard call changed 2026.09.25: local tomtomLoaded = C_AddOns and C_AddOns.IsAddOnLoaded and C_AddOns.IsAddOnLoaded("TomTom")
+		local tomtomLoaded = C_AddOns and RQE.API.ResolveClientAPI("C_AddOns.IsAddOnLoaded") and RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if not (tomtomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility) then
 			return
 		end
@@ -15279,7 +16081,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			print(">> No valid mapID found (cannot set waypoint).")
 			return
@@ -15305,9 +16108,11 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		-- coordOrder chain while its waypoint is being installed.
 		self._settingManualFlightMasterWaypoint = true
 
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 
-		local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableTomTomCompatibility then
 			if TomTom and TomTom.waydb and TomTom.waydb.ResetProfile then
 				TomTom.waydb:ResetProfile()
@@ -15321,8 +16126,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		else
 			-- Blizzard fallback
 			local wp = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = title }
-			C_Map.SetUserWaypoint(wp)
-			C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+			-- Previous Blizzard call changed 2026.09.25: C_Map.SetUserWaypoint(wp)
+			RQE.API.Client.C_Map.SetUserWaypoint(wp)
+			-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+			RQE.API.Client.C_SuperTrack.SetSuperTrackedUserWaypoint(true)
 
 			if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
 				print(string.format(">> Blizzard waypoint => %s (%.2f, %.2f, mapID %d) [TomTom not available/disabled]", title, xPct, yPct, mapID))
@@ -15383,7 +16190,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local continentID, continentName
 		local m = mapID
 		while m do
-			local info = C_Map.GetMapInfo(m)
+			-- Previous Blizzard call changed 2026.09.25: local info = C_Map.GetMapInfo(m)
+			local info = RQE.API.Client.C_Map.GetMapInfo(m)
 			if not info then break end
 			if info.mapType == 2 then -- 2 = continent
 				continentID, continentName = info.mapID, info.name
@@ -15393,7 +16201,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Convert coords to continent-normalized space
-		local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+		local contPos = RQE.API.Client.C_Map.GetPlayerMapPosition(continentID, "player")
 		if not contPos then
 			if continentID ~= 905 and continentID ~= 1550 then	-- Argus (905) is not a true navigable parent map despite being listed as a continentID appears Shadowlands (1550) is the same
 				if RQE.db.profile.debugLevel == "INFO" then
@@ -15452,7 +16261,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local continentID, continentName
 		local m = mapID
 		while m do
-			local info = C_Map.GetMapInfo(m)
+			-- Previous Blizzard call changed 2026.09.25: local info = C_Map.GetMapInfo(m)
+			local info = RQE.API.Client.C_Map.GetMapInfo(m)
 			if not info then break end
 			if info.mapType == 2 then -- 2 = continent
 				continentID, continentName = info.mapID, info.name
@@ -15467,7 +16277,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		-- Convert coords to continent-normalized space
-		local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+		local contPos = RQE.API.Client.C_Map.GetPlayerMapPosition(continentID, "player")
 		if not contPos then
 			if continentID ~= 905 and continentID ~= 1550 then	-- Argus (905) is not a true navigable parent map despite being listed as a continentID appears Shadowlands (1550) is the same
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -15520,7 +16331,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						print(string.format("				{ x = %.2f, y = %.2f, continentID = %d },", cx * 100, cy * 100, continentID))
 					end
 					print("			},")
-					PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
+					-- Previous Blizzard call changed 2026.09.25: PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
+					RQE.API.Client.PlaySound(265395)	-- VO_110_Alleria_Windrunner_29_F (Alleria: Angry)
 				end
 			end
 		end
@@ -15578,7 +16390,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 						print(string.format("					{ x = %.2f, y = %.2f, mapID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", hotspotX, hotspotY, hotspotMapID))
 						print(string.format("					{ x = %.2f, y = %.2f, continentID = %d, priorityBias = 1, minSwitchYards = 15, visitedRadius = 35 },", cx * 100, cy * 100, continentID))
 						print("				},")
-						PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
+						-- Previous Blizzard call changed 2026.09.25: PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
+						RQE.API.Client.PlaySound(265380)	-- VO_110_Alleria_Windrunner_21_F (Alleria: Greeting)
 					end
 				else
 					if RQE.db.profile.debugLevel == "INFO+" then
@@ -15780,7 +16593,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 		PrintNothing("Debug: resolved questID " .. tostring(questID) .. ", stepIndex " .. tostring(stepIndex) .. ", hasStepData = " .. tostring(hasStepData))
 
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			PrintNothing("Unable to determine current map.")
 			return
@@ -15789,7 +16603,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local continentID
 		local m = mapID
 		while m do
-			local info = C_Map.GetMapInfo(m)
+			-- Previous Blizzard call changed 2026.09.25: local info = C_Map.GetMapInfo(m)
+			local info = RQE.API.Client.C_Map.GetMapInfo(m)
 			if not info then break end
 
 			if info.mapType == Enum.UIMapType.Continent or info.mapType == 2 then
@@ -15805,7 +16620,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local contPos = C_Map.GetPlayerMapPosition(continentID, "player")
+		local contPos = RQE.API.Client.C_Map.GetPlayerMapPosition(continentID, "player")
 		if not contPos then
 			PrintNothing("Unable to get player position on continentID: " .. tostring(continentID))
 			return
@@ -15980,7 +16796,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Debug to print TomTom waypoints and also player coordinates as they relate to the DB
 	function RQE:Debug_PlayerCoordinates()
-		if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+		-- Previous Blizzard call changed 2026.09.25: if not C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
+		if not RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then return end
 
 		local maincolor = RQE.ColorPINK or "|cffff69b4"
 		local nullcolor = RQE.ColorCANARY or "|cffffff66"
@@ -16221,7 +17038,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 	-- Debug utility: Prints channeling info for the player
 	function RQE.CheckChannelInfo()
 		local name, displayName, textureID, startTimeMs, endTimeMs, isTradeskill,
-			  notInterruptible, spellID, isEmpowered, numEmpowerStages = UnitChannelInfo("player")
+			  -- Previous Blizzard call changed 2026.09.25: notInterruptible, spellID, isEmpowered, numEmpowerStages = UnitChannelInfo("player")
+			  notInterruptible, spellID, isEmpowered, numEmpowerStages = RQE.API.Client.UnitChannelInfo("player")
 
 		if not name then
 			print("|cff00ff00[RQE]|r You are not currently channeling any spell.")
@@ -16229,7 +17047,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		local duration = (endTimeMs - startTimeMs) / 1000
-		local timeRemaining = (endTimeMs / 1000) - GetTime()
+		-- Previous Blizzard call changed 2026.09.25: local timeRemaining = (endTimeMs / 1000) - GetTime()
+		local timeRemaining = (endTimeMs / 1000) - RQE.API.Client.GetTime()
 
 		print("|cff00ff00[RQE]|r Channel Info:")
 		print("------------------------------------------------")
@@ -16250,7 +17069,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Debug utility: Prints channeling info for the player
 	function RQE.CheckCastingInfo()
-		local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitChannelInfo("player")
+		-- Previous Blizzard call changed 2026.09.25: local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = UnitChannelInfo("player")
+		local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellId = RQE.API.Client.UnitChannelInfo("player")
 
 		if not name then
 			print("|cff00ff00[RQE]|r You are not currently casting any spell.")
@@ -16258,7 +17078,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		end
 
 		local duration = (endTimeMs - startTimeMs) / 1000
-		local timeRemaining = (endTimeMs / 1000) - GetTime()
+		-- Previous Blizzard call changed 2026.09.25: local timeRemaining = (endTimeMs / 1000) - GetTime()
+		local timeRemaining = (endTimeMs / 1000) - RQE.API.Client.GetTime()
 
 		print("|cff00ff00[RQE]|r Channel Info:")
 		print("------------------------------------------------")
@@ -16277,12 +17098,14 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function that prints out the distance to the current waypoint in yards
 	function RQE:Debug_NavGetDistance()
-		if not C_Navigation or not C_Navigation.GetDistance then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Navigation or not C_Navigation.GetDistance then
+		if not C_Navigation or not RQE.API.ResolveClientAPI("C_Navigation.GetDistance") then
 			print((self.ColorCRIMSON or "|cffff0000") .. "C_Navigation.GetDistance is not available on this client." .. (self.ColorRESET or "|r"))
 			return nil
 		end
 
-		local distance = C_Navigation.GetDistance()
+		-- Previous Blizzard call changed 2026.09.25: local distance = C_Navigation.GetDistance()
+		local distance = RQE.API.Client.C_Navigation.GetDistance()
 		if distance == nil then
 			print((self.ColorYELLOW or "|cffffff00") .. "[RQE] Nav Distance: nil (no tracked destination?)" .. (self.ColorRESET or "|r"))
 			return nil
