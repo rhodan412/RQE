@@ -157,7 +157,8 @@ Debug message capture, filtering, display, export, and legacy print integration
 		local logEntry
 		local playerMapID
 		if isRetail then
-			playerMapID = C_Map.GetBestMapForUnit("player") or 0
+			-- Previous Blizzard call changed 2026.09.25: playerMapID = C_Map.GetBestMapForUnit("player") or 0
+			playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player") or 0
 		else
 			playerMapID = RQE.API and RQE.API.GetBestMapForUnit
 				and RQE.API.GetBestMapForUnit("player")
@@ -176,11 +177,13 @@ Debug message capture, filtering, display, export, and legacy print integration
 		-- Prevent duplicate messages
 		local isInScenario
 		if isRetail then
-			isInScenario = C_Scenario.IsInScenario()
+			-- Previous Blizzard call changed 2026.09.25: isInScenario = C_Scenario.IsInScenario()
+			isInScenario = RQE.API.Client.C_Scenario.IsInScenario()
 		else
 			isInScenario = RQE.API and RQE.API.IsInScenario and RQE.API.IsInScenario() or false
 		end
-		if isGarrisonMap or (not isInScenario and not IsInInstance()) then
+		-- Previous Blizzard call changed 2026.09.25: if isGarrisonMap or (not isInScenario and not IsInInstance()) then
+		if isGarrisonMap or (not isInScenario and not RQE.API.Client.IsInInstance()) then
 			if logTable[#logTable] ~= logEntry then
 				table.insert(logTable, logEntry)
 				RQE.UpdateLogFrame()
