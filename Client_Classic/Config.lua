@@ -985,6 +985,7 @@ Classic addon configuration, option schemas, custom widgets, and settings panels
 							},
 						},
 					},
+					trackerSectionOrder = RQE.ConfigUI:BuildTrackerOrderOptions(),
 				},
 			},
 	-------------------------------------------------------
