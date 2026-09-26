@@ -5053,6 +5053,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Priority: explicit param > search override > current super-tracked
 		local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
 		questID = RQE:NormalizeQuestID(questID) or RQE.searchedQuestID or RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
+		local wasDisplayingQuest = RQE.DisplayedQuestID == questID
 		-- questID = tonumber(questID) or RQE.searchedQuestID or currentSuperTrackedQuestID
 
 		-- Only continue if something actually changed
@@ -5138,8 +5139,15 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE.debugLog("questInfo.objectives is ", questInfo.objectives)
 
 			if RQE.CreateStepsText then  -- Check if CreateStepsText is initialized
+				local selectedStepIndex, selectedWaypointIndex
+				if wasDisplayingQuest then
+					selectedStepIndex = tonumber(RQE.AddonSetStepIndex)
+						or (RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex)
+					selectedWaypointIndex = RQE.LastClickedWaypointButton
+						and RQE.WaypointButtonIndices[RQE.LastClickedWaypointButton]
+				end
 				RQE:ClearStepsTextInFrame()
-				RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
+				RQE:CreateStepsText(StepsText, CoordsText, MapIDs, selectedStepIndex, selectedWaypointIndex)
 			end
 		end
 
@@ -6157,6 +6165,8 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 	-- Function that tracks the closest quest on certain events in the Event Manager
 	function RQE.TrackClosestQuest()
 		if not RQEFrame:IsShown() then return end
+		-- A watched-list refresh must not replace an already-focused quest.
+		if (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
 
 		local functionName = "RQE.TrackClosestQuest()"
 
@@ -10181,6 +10191,10 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			if not activeQuestID or activeQuestID <= 0 then
 				return
 			end
+			-- Skip a stale request if another quest gained focus first.
+			if tonumber(activeQuestID) ~= tonumber(self._lastPeriodicQuestID) then
+				return
+			end
 
 			-- Optional cooldown so back-to-back events in the same burst don't all run
 			local now = GetTime()
@@ -10203,7 +10217,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 
 
 	-- Periodic check setup comparing with entry in RQEDatabase
-	function RQE:StartPeriodicChecks()
+	function RQE:StartPeriodicChecks(newlyFocusedQuestID)
 		if InCombatLockdown() then
 			self.RunPeriodicChecksAfterCombat = true
 			return
@@ -10222,22 +10236,17 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
-		local extractedQuestID
-		if RQE.QuestIDText and RQE.QuestIDText:GetText() then
-			extractedQuestID = RQE.DisplayedQuestID
-			-- extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
-		end
-		local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID() or extractedQuestID
+		-- The displayed tracker quest is not necessarily the focused quest.
+		local superTrackedQuestID = tonumber(RQE.API.GetSuperTrackedQuestID())
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showStartPeriodicCheckInfo then
 			print("RQE StartPeriodicChecks: questID", tostring(superTrackedQuestID))
 		end
-		--local superTrackedQuestID = C_SuperTrack.GetSuperTrackedQuestID() or extractedQuestID
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("Current superTrackedQuestID:", superTrackedQuestID)
 		end
 
-		if not superTrackedQuestID then return end
+		if not superTrackedQuestID or superTrackedQuestID <= 0 then return end
 
 		RQE.CheckAndClickSeparateWaypointButtonButton()	-- If this button exists and is valid it will click the button automatically at start, but might need to check that a waypoint doesn't already exist before running this call
 
@@ -10288,50 +10297,70 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- end
 
 		local stepIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex or 1
+		-- A pooled button reference may lag the displayed index after a redraw.
+		-- Prefer the active numeric index for steps that opt in to retry checks.
+		local activeRetryIndex = tonumber(RQE.AddonSetStepIndex)
+		local activeRetryStep = activeRetryIndex and questData[activeRetryIndex]
+		if activeRetryStep and (activeRetryStep.failedcheck or activeRetryStep.failedchecks) then
+			stepIndex = activeRetryIndex
+		end
+		local selectedStepIndex = tonumber(stepIndex) or 1
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("stepIndex being evaluated:", stepIndex)
 		end
 
 		-- Handle turn-in readiness
 		-- if C_QuestLog.ReadyForTurnIn(superTrackedQuestID) then
-		if self:IsQuestReadyForTurnIn(superTrackedQuestID) then
+		local questReadyForTurnIn = self:IsQuestReadyForTurnIn(superTrackedQuestID)
+		local readyTurnInStepIndex
+		local initialReadyStepScan = false
+		if questReadyForTurnIn then
 			local hasCheckDBComplete, finalStepIndex = self:HasCheckDBComplete(questData)
 			if hasCheckDBComplete then
-				-- local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
-				local waypointText = C_QuestLog.GetNextWaypointText
-					and C_QuestLog.GetNextWaypointText(superTrackedQuestID)
-					or nil
-				if not waypointText then
-					-- No Blizzard waypoint text: advance to final step and stop here.
-					self:ClickWaypointButtonForIndex(finalStepIndex)
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
-					end
-					RQE.OkayWaypointButtonToMove = true
-					return
+				-- On a new focus, check intermediate DB steps before turn-in.
+				initialReadyStepScan = tonumber(newlyFocusedQuestID) == tonumber(superTrackedQuestID)
+					and finalStepIndex > 2
+				if initialReadyStepScan then
+					stepIndex = 1
+					selectedStepIndex = 1
 				else
-					-- Blizzard is already guiding the player.
-					-- Keep our logic running, but make the UI reflect the turn-in step.
-					if RQE.db.profile.debugLevel == "INFO+" then
-						print("Quest ready for turn-in and waypointText present; syncing UI to final step (no auto-advance).")
+					readyTurnInStepIndex = finalStepIndex
+					-- local waypointText = C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+					local waypointText = C_QuestLog.GetNextWaypointText
+						and C_QuestLog.GetNextWaypointText(superTrackedQuestID)
+						or nil
+					if not waypointText then
+						-- No Blizzard waypoint text: advance to final step and stop here.
+						self:ClickWaypointButtonForIndex(finalStepIndex)
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Quest ready for turn-in. Advancing to final stepIndex:", finalStepIndex)
+						end
+						RQE.OkayWaypointButtonToMove = true
+						return
+					else
+						-- Blizzard is already guiding the player.
+						-- Keep our logic running, but make the UI reflect the turn-in step.
+						if RQE.db.profile.debugLevel == "INFO+" then
+							print("Quest ready for turn-in and waypointText present; syncing UI to final step (no auto-advance).")
+						end
+
+						-- Make RQE display the final step without forcing our own waypoint.
+						stepIndex = finalStepIndex
+						RQE.AddonSetStepIndex = finalStepIndex
+						if RQE.db.profile.enableStepControls then
+							RQE.CurrentStepIndex = finalStepIndex
+							RQE.StoredStepIndex = finalStepIndex
+						end
+
+						-- Refresh frames so Separate Focus shows the final step.
+						if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
+						--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
+						if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
+
+						-- Optionally, if you want your transition/portal waypoint to appear too:
+						-- RQE:FindQuestZoneTransition(superTrackedQuestID)
+						-- (leave commented if you only want Blizzard's arrow)
 					end
-
-					-- Make RQE display step 2/2 (final) without forcing our own waypoint.
-					stepIndex = finalStepIndex
-					RQE.AddonSetStepIndex = finalStepIndex
-					if RQE.db.profile.enableStepControls then
-						RQE.CurrentStepIndex = finalStepIndex
-						RQE.StoredStepIndex = finalStepIndex
-					end
-
-					-- Refresh frames so Separate Focus shows 2/2
-					if UpdateFrame then UpdateFrame(superTrackedQuestID, questData) end
-					--if UpdateRQEQuestFrame then UpdateRQEQuestFrame() end
-					if RQE.UpdateSeparateFocusFrame then RQE:UpdateSeparateFocusFrame() end
-
-					-- Optionally, if you want your transition/portal waypoint to appear too:
-					-- RQE:FindQuestZoneTransition(superTrackedQuestID)
-					-- (leave commented if you only want Blizzard's arrow)
 				end
 			else
 				if RQE.db.profile.debugLevel == "INFO+" then
@@ -10341,8 +10370,19 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			end
 		end
 
-		-- Iterate over all steps to evaluate which one should be active
-		for i, stepData in ipairs(questData) do
+		-- Retry-enabled steps must get their own normal completion check first,
+		-- even if an earlier step would currently fail in a full rescan.
+		-- Turn-in readiness already selected the final DB step above.
+		-- Skip normal checks; the waypoint-text path still refreshes the UI below.
+		local firstStepToEvaluate = readyTurnInStepIndex and (#questData + 1) or 1
+		local selectedStepForRetry = questData[selectedStepIndex]
+		if not readyTurnInStepIndex and selectedStepForRetry and (selectedStepForRetry.failedcheck or selectedStepForRetry.failedchecks) then
+			firstStepToEvaluate = selectedStepIndex
+		end
+		local lastStepToEvaluate = initialReadyStepScan and (#questData - 1) or #questData
+		for i = firstStepToEvaluate, lastStepToEvaluate do
+			local stepData = questData[i]
+			if not stepData then break end
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Evaluating stepIndex:", i)
 			end
@@ -10477,6 +10517,151 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 						print("Not all checks passed for stepIndex:", i)
 					end
 					break
+				end
+			end
+		end
+
+		-- An active step can opt in to a backward retry after normal progression
+		-- fails. A single zone failedcheck retains its failed-zone meaning.
+		if not questReadyForTurnIn and stepIndex == selectedStepIndex then
+			local selectedStep = questData[selectedStepIndex]
+			local failedChecks = selectedStep and selectedStep.failedchecks
+			if failedChecks == nil and selectedStep and selectedStep.failedcheck then
+				failedChecks = {{
+					mod = selectedStep.failedfunc == "CheckDBZoneChange" and "NOT" or "",
+					check = selectedStep.failedcheck,
+					neededAmt = selectedStep.failedNeededAmt or { "1" },
+					funct = selectedStep.failedfunc,
+					failedIndex = selectedStep.failedIndex,
+				}}
+			end
+
+			if type(failedChecks) == "table" and #failedChecks > 0 then
+				-- Each entry names its own return step; the first unmet entry
+				-- supplies the target when the combined checks fail.
+				local function EvaluateFailedCheck(checkData, checkFunction)
+					local funct = checkData.funct
+					local check = checkData.check
+					local neededAmt = checkData.neededAmt
+					if #check == 0 or #neededAmt == 0 then return nil end
+
+					if funct == "CheckDBInventory" then
+						local items = {}
+						for i, item in ipairs(check) do
+							items[i] = tonumber(item) or item
+						end
+						return checkFunction(self, superTrackedQuestID, selectedStepIndex, items, neededAmt)
+					elseif funct == "CheckDBBuff" or funct == "CheckDBDebuff" then
+						local spells = {}
+						for i, spell in ipairs(check) do
+							local spellID = tonumber(spell)
+							if spellID then
+								local spellInfo = C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(spellID)
+								spells[i] = (C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(spellID))
+									or (spellInfo and spellInfo.name)
+									or (GetSpellInfo and GetSpellInfo(spellID))
+								if not spells[i] then return nil end
+							else
+							spells[i] = spell
+							end
+						end
+						return checkFunction(self, superTrackedQuestID, selectedStepIndex, spells, neededAmt)
+					elseif funct == "CheckDBZoneChange" then
+						local mapID = C_Map.GetBestMapForUnit("player")
+						local mapInfo = mapID and C_Map.GetMapInfo(mapID)
+						local names = {
+							mapInfo and mapInfo.name,
+							GetMinimapZoneText(), GetSubZoneText(), GetZoneText(), GetRealZoneText(),
+						}
+						for _, zone in ipairs(check) do
+							local zoneID = tonumber(zone)
+							if zoneID and zoneID == mapID then return true end
+							if not zoneID then
+								local wanted = tostring(zone):lower():gsub("^%s+", ""):gsub("%s+$", "")
+								for _, name in pairs(names) do
+									if type(name) == "string" and name:lower():gsub("^%s+", ""):gsub("%s+$", "") == wanted then
+										return true
+									end
+								end
+							end
+						end
+						return false
+					elseif funct == "CheckScenarioStage" then
+						local requiredStage = tonumber(neededAmt[1])
+						if not requiredStage then return nil end
+						local scenarioInfo = C_Scenario and C_Scenario.IsInScenario()
+							and C_ScenarioInfo and C_ScenarioInfo.GetScenarioInfo and C_ScenarioInfo.GetScenarioInfo()
+						local currentStage = scenarioInfo and tonumber(scenarioInfo.currentStage)
+						return currentStage and currentStage >= requiredStage or false
+					elseif funct == "CheckScenarioCriteria" then
+						local criteriaIndex = tonumber(check[1])
+						local requiredAmount = tonumber(neededAmt[1])
+						if not criteriaIndex or not requiredAmount then return nil end
+						local criteriaInfo = C_Scenario and C_Scenario.IsInScenario()
+							and C_ScenarioInfo and C_ScenarioInfo.GetCriteriaInfo and C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+						if not criteriaInfo then return false end
+						local threshold = requiredAmount == 1 and criteriaInfo.totalQuantity or requiredAmount
+						return tonumber(criteriaInfo.quantity) and tonumber(threshold)
+							and criteriaInfo.quantity >= threshold or false
+					elseif funct == "CheckDBConditionalsOnly" then
+						local expression = check[1]
+						if type(expression) ~= "string" then return nil end
+						local funcName, rawParams = expression:match("^RQE%.([%w_]+)%((.-)%)$")
+						local safeCondition = funcName == "CheckKnownSpell" or funcName == "CheckMap"
+							or funcName == "CheckQuestState" or funcName == "CheckCoordinateDistance"
+						if not safeCondition or type(RQE[funcName]) ~= "function" then return nil end
+						local args = {}
+						for param in string.gmatch(rawParams or "", "[^,%s]+") do
+							args[#args + 1] = tonumber(param) or param:gsub("^['\"]", ""):gsub("['\"]$", "")
+						end
+					local ok, result = pcall(RQE[funcName], RQE, unpack(args))
+					if not ok then return nil end
+					return not not result
+					elseif funct == "CheckDBComplete" then
+						local checkedQuestID = tonumber(check[1])
+						if not checkedQuestID then return nil end
+						return self:IsQuestReadyForTurnIn(checkedQuestID) == true
+					elseif funct == "CheckDBObjectiveStatus" then
+						if tonumber(check[1]) ~= tonumber(superTrackedQuestID) then return nil end
+					elseif funct == "CheckDBQuestCompleted" then
+						if not tonumber(check[1]) then return nil end
+					end
+
+					return checkFunction(self, superTrackedQuestID, selectedStepIndex, check, neededAmt)
+				end
+				local failedResults = {}
+				local validFailedChecks = true
+				local failedIndex
+				for j, checkData in ipairs(failedChecks) do
+					local functionName = type(checkData) == "table" and functionMap[checkData.funct]
+					local checkFunction = functionName and self[functionName]
+					local targetIndex = type(checkData) == "table" and tonumber(checkData.failedIndex)
+					if type(checkFunction) ~= "function" or type(checkData.check) ~= "table"
+						or type(checkData.neededAmt) ~= "table" or not targetIndex
+						or targetIndex < 1 or targetIndex >= selectedStepIndex
+						or targetIndex % 1 ~= 0 or not questData[targetIndex] then
+						validFailedChecks = false
+						break
+					end
+					local result = EvaluateFailedCheck(checkData, checkFunction)
+					if result == nil then
+						validFailedChecks = false
+						break
+					end
+					failedResults[j] = result
+					if failedIndex == nil and ((checkData.mod == "NOT" and result)
+						or (checkData.mod ~= "NOT" and not result)) then
+						failedIndex = targetIndex
+					end
+				end
+
+				if validFailedChecks and failedIndex
+					and not self:CombineCheckResults(failedResults, { checks = failedChecks }) then
+					if RQE.db.profile.debugLevel == "INFO+" then
+						print("Failed step checks; returning to stepIndex:", failedIndex)
+					end
+					stepIndex = failedIndex
+					RQE.OkayWaypointButtonToMove = true
 				end
 			end
 		end
@@ -11837,8 +12022,16 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				end)
 			end)
 		else
-			local button = self.WaypointButtons[index]
+			local button = self.WaypointButtons and self.WaypointButtons[index]
 			if not button then
+				-- Preserve the resolved step if focus changes before buttons render.
+				local questID = RQE.API.GetSuperTrackedQuestID()
+				self.LastClickedButtonRef = nil
+				self.CurrentStepIndex = index
+				self.AddonSetStepIndex = index
+				self.StoredStepIndex = index
+				if questID and UpdateFrame then UpdateFrame(questID) end
+				if self.UpdateSeparateFocusFrame then self:UpdateSeparateFocusFrame() end
 				return
 			end
 
@@ -11921,13 +12114,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			self:ClickWaypointButtonForIndex(RQE.AddonSetStepIndex)		-- FIRES from StartPeriodicChecks function, this is possibly redundant!
 		end
 
-		-- After faction logic, check failedfunc
-		C_Timer.After(0.5, function()
-			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-			if superTrackedQuestID then
-				RQE:HandleFailedFunction(superTrackedQuestID, RQE.AddonSetStepIndex)
-			end
-		end)
+		-- StartPeriodicChecks evaluates retry conditions after normal step checks.
 	end
 
 
@@ -12099,6 +12286,11 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		end
 
 		-- Check for failedfunc and failedcheck
+		-- StartPeriodicChecks handles opt-in non-zone retries; this callback keeps
+		-- its original zone-change routing only.
+		if stepData.failedfunc and stepData.failedfunc ~= "CheckDBZoneChange" then
+			return false
+		end
 		if stepData.failedfunc and stepData.failedcheck then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Failed function detected for stepIndex:", stepIndex, "Failed Function:", stepData.failedfunc)
@@ -16499,7 +16691,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 		-- Display the recipe info on the frame
 		if not RQE.recipeTrackingFrame.recipeText then
 			RQE.recipeTrackingFrame.recipeText = RQE.recipeTrackingFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			RQE.recipeTrackingFrame.recipeText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame, "TOPLEFT", 10, -10)
+			RQE.recipeTrackingFrame.recipeText:SetPoint("TOPLEFT", RQE.recipeTrackingFrame, "TOPLEFT", 10, -42)
 		end
 		RQE.recipeTrackingFrame.recipeText:SetText(recipeName)
 
@@ -16513,6 +16705,9 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 			reagentString = reagentString .. string.format("%s: %d/%d\n", reagent.name, reagent.playerCount, reagent.required)
 		end
 		RQE.recipeTrackingFrame.reagentsText:SetText(reagentString)
+		RQE.recipeTrackingFrame.trackedRecipeCount = 1
+		RQE.recipeTrackingFrame._rqeRenderedHeight = math.max(75, 78 + #reagents * 16)
+		RQE.recipeTrackingFrame:SetHeight(RQE.recipeTrackingFrame._rqeRenderedHeight)
 
 		-- Show the frame
 		RQE.recipeTrackingFrame:Show()
