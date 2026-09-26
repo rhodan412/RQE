@@ -1807,10 +1807,12 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 	--- @class WaypointButton : Button
 	--- @field stepIndex number
 	--- @field bg Texture
-	function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
-		local lastClickedIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex
-		local lastWaypointIndex = self.LastClickedWaypointButton
+	function RQE:CreateStepsText(StepsText, CoordsText, MapIDs, selectedStepIndex, selectedWaypointIndex)
+		local lastClickedIndex = selectedStepIndex
+			or (self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex)
+		local lastWaypointIndex = selectedWaypointIndex or (self.LastClickedWaypointButton
 			and self.WaypointButtonIndices[self.LastClickedWaypointButton]
+		)
 		self.LastClickedButtonRef, self.LastClickedWaypointButton = nil, nil
 		RQE.API.ReleaseRenderGroup(content, "steps")
 		self.WaypointButtonHover = false
@@ -2063,11 +2065,9 @@ Classic Quest Helper frame construction, rendering, interaction, persistence, an
 			WaypointButton.bg = bg
 			bg:SetAlpha(1)
 			bg:SetAllPoints()
-
-			if RQE.db.profile.enableStepControls then
-				WaypointButton.stepIndex = i
-				WaypointButton.bg = bg
-			end
+			-- Automatic progression reads this even when manual step controls are off.
+			-- The render pool clears it every time the quest steps are rebuilt.
+			WaypointButton.stepIndex = i
 
 			-- Check if autoClickWaypointButton is enabled and LastClickedIdentifier is nil and set to 1 if so
 			if RQE.db.profile.autoClickWaypointButton then
