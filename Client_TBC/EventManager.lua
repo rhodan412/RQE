@@ -74,6 +74,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		"ADDON_LOADED",
 		"BAG_NEW_ITEMS_UPDATED",
 		"BAG_UPDATE",
+		"BAG_UPDATE_DELAYED",
 		"BOSS_KILL",
 		"CLIENT_SCENE_CLOSED",
 		"CLIENT_SCENE_OPENED",
@@ -205,6 +206,28 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		return false
 	end
 
+	-- A consumed quest item may only change the bags, without changing a quest
+	-- objective. Recheck only when the active DB step depends on inventory.
+	local function CurrentStepUsesInventoryCheck(questID)
+		local questData = questID and RQE.getQuestData(questID)
+		local stepIndex = tonumber(RQE.AddonSetStepIndex)
+			or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+			or 1
+		local stepData = questData and questData[stepIndex]
+		if not stepData then return false end
+		if stepData.funct == "CheckDBInventory" then return true end
+		for _, checkData in ipairs(stepData.checks or {}) do
+			if checkData.funct == "CheckDBInventory" then return true end
+		end
+		if stepData.failedfunc == "CheckDBInventory" and stepData.failedcheck then
+			return true
+		end
+		for _, checkData in ipairs(stepData.failedchecks or {}) do
+			if checkData.funct == "CheckDBInventory" then return true end
+		end
+		return false
+	end
+
 
 --------------------------------------------------
 -- #5. ⚡ Event Dispatch & Handler Families
@@ -272,6 +295,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			ADDON_LOADED = RQE.handleAddonLoaded,
 			BAG_NEW_ITEMS_UPDATED = RQE.BagNewItemsAdded,
 			BAG_UPDATE = RQE.ReagentBagUpdate,
+			BAG_UPDATE_DELAYED = RQE.handleBagUpdateDelayed,
 			BOSS_KILL = RQE.handleBossKill,
 			CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 			CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,  -- MAY NEED TO COMMENT OUT AGAIN
@@ -766,6 +790,13 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	end
 
 
+	-- Re-evaluate inventory-based steps after the bag change has settled.
+	function RQE.handleBagUpdateDelayed()
+		local questID = RQE.API.GetSuperTrackedQuestID()
+		if not CurrentStepUsesInventoryCheck(questID) then return end
+		RQE:QueuePeriodicChecks("BAG_UPDATE_DELAYED", 0.2, questID)
+	end
+
 	-- Handles BAG_NEW_ITEMS_UPDATED event
 	function RQE.BagNewItemsAdded()
 		if InCombatLockdown() then return end
@@ -823,9 +854,6 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 	-- Handles BAG_UPDATE event:
 	-- Fired when a bags inventory changes
 	function RQE.ReagentBagUpdate(...)
-		local event = select(2, ...)
-		local bagID = select(3, ...)
-
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
@@ -841,116 +869,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 		end
 
-		--UpdateRQEQuestFrame()
-
-		-- Return if the auto-click option is disabled
-		if not RQE.db.profile.autoClickWaypointButton then return end
-
-		-- Array of allowed questID and minimap zone text pairs
-		local allowedQuests = {
-			["12000"] = { "Dragonblight", "Moonrest Gardens" },
-			-- Add more questIDs and zones as needed
-		}
-
-		-- Get the current minimap zone text
-		local currentMinimapZone = GetMinimapZoneText() or ""
-		local currentRealZone = (GetRealZoneText() or ""):lower()
-
-		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		if not questID then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No super-tracked quest ID found, skipping inventory checks.")
-			end
-			return
-		end
-
-		-- Check if the questID and minimap zone match the allowed pairs
-		local isAllowedQuest = false
-		if allowedQuests[tostring(questID)] then
-			for _, zone in ipairs(allowedQuests[tostring(questID)]) do
-				if currentMinimapZone == zone then
-					isAllowedQuest = true
-					break
-				end
-			end
-		end
-
-		-- If not an allowed quest in the allowed zones, exit early
-		if not isAllowedQuest then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE not related to the allowed questID or minimap zone. QuestID:", questID, "Minimap Zone:", currentMinimapZone)
-			end
-			return
-		end
-
-		local questData = RQE.getQuestData(questID)
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No quest data available for quest ID:", questID)
-			end
-			return
-		end
-
-		-- Determine the current stepIndex
-		local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-		local stepData = questData[stepIndex]
-		if not stepData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-			end
-			return
-		end
-
-		-- Check if the current step relies on inventory checks
-		local function stepUsesInventoryCheck(step)
-			if step.funct == "CheckDBInventory" then return true end
-			if step.checks then
-				for _, chk in ipairs(step.checks) do
-					if chk.funct == "CheckDBInventory" then return true end
-				end
-			end
-			return false
-		end
-
-		local isInventoryCheck = stepUsesInventoryCheck(stepData)
-
-		-- local isInventoryCheck = false
-		-- if stepData.funct and stepData.funct == "CheckDBInventory" then
-			-- isInventoryCheck = true
-		-- elseif stepData.checks then
-			-- -- Also evaluate `checks` for CheckDBInventory
-			-- for _, checkData in ipairs(stepData.checks) do
-				-- if checkData.funct and checkData.funct == "CheckDBInventory" then
-					-- isInventoryCheck = true
-					-- break
-				-- end
-			-- end
-		-- end
-
-		-- If the current step is tied to inventory checks, re-run periodic checks
-		if isInventoryCheck then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-
-			UpdateRQEQuestFrame()
-			RQE:QueuePeriodicChecks("BAG_UPDATE", 1.65, questID)
-
-			C_Timer.After(1.65, function()
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
-				end
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("RQE:StartPeriodicChecks() fired from BAG_UPDATE event")
-				end
-				--RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after BAG_UPDATE fires
-			end)
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE not related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-		end
+		-- BAG_UPDATE_DELAYED evaluates inventory steps after the bag change settles.
 	end
 
 
@@ -1089,16 +1008,9 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 
 
 	-- Handles UNIT_INVENTORY_CHANGED event
-	-- Fires when an item is destroyed
+	-- Rechecks active inventory steps when the player's inventory or equipment changes
 	function RQE.handleUnitInventoryChange(...)
-		local event = select(2, ...)
 		local unitTarget = select(3, ...)
-
-		-- Array of allowed questID and minimap zone text pairs
-		local allowedQuests = {
-			["12000"] = { "Dragonblight", "Moonrest Gardens" },
-			-- Add more questIDs and zones as needed
-		}
 
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
@@ -1115,109 +1027,12 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 		end
 
-		if unitTarget ~= "player" then  -- Only process changes for the player
-			return
-		end
-
+		if unitTarget ~= "player" then return end
 		if not RQE.db.profile.autoClickWaypointButton then return end
 
-		local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-		if not questID then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No super-tracked quest ID found, skipping inventory change checks.")
-			end
-			return
-		end
-
-		-- Get the current minimap zone text
-		local currentMinimapZone = GetMinimapZoneText() or ""
-		local currentRealZone = (GetRealZoneText() or ""):lower()
-
-		-- Check if the questID and minimap zone match the allowed pairs
-		local isAllowedQuest = false
-		if allowedQuests[tostring(questID)] then
-			for _, zone in ipairs(allowedQuests[tostring(questID)]) do
-				if currentMinimapZone == zone then
-					isAllowedQuest = true
-					break
-				end
-			end
-		end
-
-		-- If not an allowed quest in the allowed zones, exit early
-		if not isAllowedQuest then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE not related to the allowed questID or minimap zone. QuestID:", questID, "Minimap Zone:", currentMinimapZone)
-			end
-			return
-		end
-
-		local questData = RQE.getQuestData(questID)
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No quest data available for quest ID:", questID)
-			end
-			return
-		end
-
-		-- Determine the current stepIndex
-		local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-		local stepData = questData[stepIndex]
-
-		-- Validate stepData exists before continuing
-		if not stepData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-			end
-			return
-		end
-
-		-- Check if the current step relies on inventory checks
-		local function stepUsesInventoryCheck(step)
-			if step.funct == "CheckDBInventory" then
-				return true
-			end
-			if step.checks then
-				for _, chk in ipairs(step.checks) do
-					if chk.funct == "CheckDBInventory" then
-						return true
-					end
-				end
-			end
-			return false
-		end
-
-		local isInventoryCheck = stepUsesInventoryCheck(stepData)
-
-		-- local isInventoryCheck = false
-		-- if stepData.funct and stepData.funct == "CheckDBInventory" then
-			-- isInventoryCheck = true
-		-- elseif stepData.checks then
-			-- -- Also evaluate `checks` for CheckDBInventory
-			-- for _, checkData in ipairs(stepData.checks) do
-				-- if checkData.funct and checkData.funct == "CheckDBInventory" then
-					-- isInventoryCheck = true
-					-- break
-				-- end
-			-- end
-		-- end
-
-		-- If the current step is tied to inventory checks, re-run periodic checks
-		if isInventoryCheck then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("UNIT_INVENTORY_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-			C_Timer.After(1.7, function()
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("~~ Running RQE:StartPeriodicChecks() from UNIT_INVENTORY_CHANGED ~~")
-				end
-				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_INVENTORY_CHANGED fires
-			end)
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("UNIT_INVENTORY_CHANGED not related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-		end
+		local questID = RQE.API.GetSuperTrackedQuestID()
+		if not CurrentStepUsesInventoryCheck(questID) then return end
+		RQE:QueuePeriodicChecks("UNIT_INVENTORY_CHANGED", 0.2, questID)
 	end
 
 
@@ -3614,7 +3429,16 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			RQE.QuestTrackerHiddenSuperTrackedPressed = true
 
 			if questID then
-				RQE:QueuePeriodicChecks("SUPER_TRACKING_CHANGED", 0.1, questID)
+				if RQE.db.profile.autoClickWaypointButton
+					and tonumber(newQID) and tonumber(newQID) > 0
+					and tonumber(newQID) ~= tonumber(oldQID) then
+					C_Timer.After(1, function()
+						if RQE.db.profile.autoClickWaypointButton
+							and tonumber(RQE.API.GetSuperTrackedQuestID()) == tonumber(newQID) then
+							RQE:StartPeriodicChecks(newQID)
+						end
+					end)
+				end
 			else
 				C_Timer.After(0.1, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
@@ -3829,7 +3653,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 		end
 
-		-- Only run periodic checks if objectives actually changed
+		-- Reconcile the guidance step only when the focused quest changes.
 		if RQE.db.profile.autoClickWaypointButton then
 			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
 
@@ -3837,14 +3661,22 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				C_Timer.After(0.25, function()
 
 					-- Only fire if the quest itself actually changed
-					if newQID ~= oldQID then
+					if tonumber(newQID) and tonumber(newQID) > 0
+						and tonumber(newQID) ~= tonumber(oldQID) then
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("SUPER_TRACKING_CHANGED → Actual change of super-tracked quest → StartPeriodicChecks()")
 						end
 
 						RQE.StartPerioFromSuperTrackChange = true
 
-						RQE:QueuePeriodicChecks("SUPER_TRACKING_CHANGED", 0.1, questID)
+						-- Check once after the newly focused quest's objectives and
+						-- step buttons settle, independently of other queued events.
+						C_Timer.After(0.75, function()
+							if RQE.db.profile.autoClickWaypointButton
+								and tonumber(RQE.API.GetSuperTrackedQuestID()) == tonumber(questID) then
+								RQE:StartPeriodicChecks(questID)
+							end
+						end)
 
 						-- C_Timer.After(0.10, function()
 							-- RQE:StartPeriodicChecks()
@@ -4027,6 +3859,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			local questInfo = RQE.API.GetQuestLogInfo(acceptedQuestLogIndex)
 			questID = questInfo and tonumber(questInfo.questID) or nil
 		end
+		local focusedQuestAtAcceptance = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
 
 		if questID and RQE.ClearQuestDependencyCompletions then
 			RQE:ClearQuestDependencyCompletions(questID)
@@ -4279,6 +4112,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		-- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
 		if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
 			C_Timer.After(2, function()
+				if focusedQuestAtAcceptance > 0
+					or (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
 				RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
 				RQE.ClickQuestLogIndexButton(questID)	-- May need to remove if issues
 			end)
@@ -4303,43 +4138,6 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 				RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_ACCEPTED event fires
 			end
 			RQE:UpdateRQEFrameVisibility()
-		end
-
-		-- -- Tier Four Importance: QUEST_ACCEPTED event
-		if RQE.db.profile.autoClickWaypointButton then
-			local currentSuperQuestID = RQE.API.GetSuperTrackedQuestID()	--C_SuperTrack.GetSuperTrackedQuestID()
-			if RQE.LastAcceptedQuest == currentSuperQuestID then
-
-				if questID then
-					RQE:QueuePeriodicChecks("QUEST_ACCEPTED", 2.3, questID)
-				else
-					C_Timer.After(2.3, function()
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires
-					end)
-				end
-			end
-
-			-- C_Timer.After(2.3, function()
-				-- -- RQE.StartPerioFromQuestAccepted = true
-				-- -- if not RQE.StartPerioFromUQLC then
-					-- -- if not RQE.SuperTrackChangeRanStartPeriodicChecks then
-						-- local currentSuperQuestID = C_SuperTrack.GetSuperTrackedQuestID()
-						-- if RQE.LastAcceptedQuest == currentSuperQuestID then
-							-- -- print("RQE.LastAcceptedQuest is " .. RQE.LastAcceptedQuest)
-							-- -- print("currentSuperQuestID is " .. currentSuperQuestID)
-							-- RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires	-- May need to remove if issues
-						-- -- else
-							-- -- print("RQE.LastAcceptedQuest is " .. RQE.LastAcceptedQuest)
-							-- -- print("currentSuperQuestID is " .. currentSuperQuestID)
-						-- end
-						-- -- C_Timer.After(3, function()
-							-- -- RQE.StartPerioFromQuestAccepted = false
-						-- -- end)
-					-- -- end
-					-- -- RQE.SuperTrackChangeRanStartPeriodicChecks = false
-				-- -- end
-				-- -- RQE.StartPerioFromUQLC = false
-			-- end)
 		end
 
 		-- Update Display of Memory Usage of Addon
@@ -4706,6 +4504,17 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 		end
 
+		-- Zone retries also depend on subzone and minimap text changes.
+		if stepData.failedfunc == "CheckDBZoneChange" and stepData.failedcheck then
+			isZoneChangeCheck = true
+		end
+		for _, failedData in ipairs(stepData.failedchecks or {}) do
+			if failedData.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+				break
+			end
+		end
+
 		-- Avoid frequent firing by checking state
 		local currentMinimapZone = GetMinimapZoneText() or ""
 		local currentRealZone = GetRealZoneText() or ""
@@ -4936,44 +4745,27 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 
 		RQE:AutoSuperTrackClosestQuest()	-- Fires with the ZONE_CHANGED_NEW_AREA event
 
-		-- Check to advance to next step in quest
+		-- Recheck configured zone retries through StartPeriodicChecks, which evaluates
+		-- the normal step condition before considering a return step.
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()	--local questID = C_SuperTrack.GetSuperTrackedQuestID()
-			local playerMapID = C_Map.GetBestMapForUnit("player")
-			local questData = RQE.getQuestData(questID)
-
-			-- Click the "W" Button is autoclick is selected and no steps or questData exist
 			RQE.CheckAndClickWButton()
-
-			if questData then
-				if RQE.LastClickedButtonRef == nil then return end
-				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-				--local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-				local stepData = questData[stepIndex]
-
-				if stepData then
-					local failedIndex = stepData.failedIndex or stepIndex -- Default to current step if no failedIndex is provided
-
-					-- Log the failed check details if available
-					if stepData.failedfunc then
-						RQE.infoLog(tostring(stepData.failedfunc) .. " " .. table.concat(stepData.failedcheck or {}, ", "))
-					end
-
-					if stepData.failedfunc == "CheckDBZoneChange" and not RQE.TableIncludes(stepData.failedcheck, tostring(playerMapID)) then
-						C_Timer.After(0.5, function()
-							if InCombatLockdown() then
-								RQE.RunPeriodicChecksAfterCombat = true
-								return
-							end
-
-							if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-								RQE.WaypointButtons[failedIndex]:Click()
-							else
-								RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
-							end
-						end)
-					end
+		end
+		local zoneQuestID = RQE.API.GetSuperTrackedQuestID()
+		local zoneQuestData = zoneQuestID and RQE.getQuestData(zoneQuestID)
+		local zoneStepIndex = tonumber(RQE.AddonSetStepIndex)
+			or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+			or 1
+		local zoneStep = zoneQuestData and zoneQuestData[zoneStepIndex]
+		if zoneStep then
+			local hasZoneRetry = zoneStep.failedfunc == "CheckDBZoneChange" and zoneStep.failedcheck
+			for _, failedData in ipairs(zoneStep.failedchecks or {}) do
+				if failedData.funct == "CheckDBZoneChange" then
+					hasZoneRetry = true
+					break
 				end
+			end
+			if hasZoneRetry then
+				RQE:QueuePeriodicChecks("ZONE_CHANGED_NEW_AREA_FAILED_CHECK", 0.5, zoneQuestID)
 			end
 		end
 
@@ -7085,7 +6877,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 					end
 				end
 			end
-		elseif not isSuperTracking then
+		elseif RQE.db.profile.enableNearestSuperTrack and not isSuperTracking
+			and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 			-- print("~~~ SetSuperTrack: 4783~~~")
 			-- C_SuperTrack.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
 			RQE.API.SetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
@@ -7483,7 +7276,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 
 			-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 			if RQE.db.profile.enableNearestSuperTrack then
-				if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+				if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 					if not RQEFrame:IsShown() then return end
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
@@ -7510,7 +7303,8 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 			end
 
 			-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
-			if RQE.QuestAddedForWatchListChanged and not isSuperTracking then
+			if RQE.db.profile.enableNearestSuperTrack and RQE.QuestAddedForWatchListChanged
+				and not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)		--C_QuestLog.IsWorldQuest(questID)
 				if not isWorldQuest then
 					-- print("~~~ SetSuperTrack: 5059~~~")
@@ -7904,7 +7698,7 @@ TBC event registration, quest-state routing, combat deferrals, and frame coordin
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 		if RQE.db.profile.enableNearestSuperTrack then
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()	--C_SuperTrack.IsSuperTrackingQuest()
-			if not RQE.isSuperTracking or not isSuperTracking then	--if not isSuperTracking then
+			if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
