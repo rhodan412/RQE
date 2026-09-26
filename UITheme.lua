@@ -396,7 +396,7 @@ function UI:StyleIconButton(button, iconName, options)
 	if self:IsEnabled() then self:_ApplyIconButton(button, iconName, options) end
 end
 
-function UI:_ApplyTextButton(button)
+function UI:_ApplyTextButton(button, options)
 	if not button then return end
 	self:StripBlizzardButton(button)
 	local normal = setButtonTexture(button, "SetNormalTexture", self.Textures.buttonWide)
@@ -411,11 +411,19 @@ function UI:_ApplyTextButton(button)
 	if button.SetHighlightFontObject then button:SetHighlightFontObject("GameFontHighlight") end
 	local font = button.GetFontString and button:GetFontString()
 	if font then font:SetTextColor(self.Colors.gold[1], self.Colors.gold[2], self.Colors.gold[3]) end
+	if options and options.trackerAction then
+		-- Wide.tga leaves large transparent margins for larger buttons. Crop
+		-- those margins only on these compact controls so the themed border
+		-- surrounds the label with visible padding in every button state.
+		for _, texture in ipairs({ normal, highlight, pushed, disabled }) do
+			if texture then texture:SetTexCoord(0.16, 0.88, 0.03, 0.94) end
+		end
+	end
 end
 
-function UI:StyleTextButton(button)
-	remember(self.Registry.textButtons, button)
-	if self:IsEnabled() then self:_ApplyTextButton(button) end
+function UI:StyleTextButton(button, options)
+	remember(self.Registry.textButtons, button, options or {})
+	if self:IsEnabled() then self:_ApplyTextButton(button, options) end
 end
 
 function UI:_ApplySearchBox(editBox)
@@ -685,11 +693,11 @@ function UI:_ApplyFrameLayout()
 		RQE.QuestTrackerSearchRow:ClearAllPoints()
 		RQE.QuestTrackerSearchRow:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 12, -54)
 		RQE.QuestTrackerSearchRow:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPRIGHT", -30, -54)
-		RQE.QuestTrackerSearchRow:SetHeight(28)
+		RQE.QuestTrackerSearchRow:SetHeight(32)
 	end
 	if RQE.QuestTrackerSearchInput then RQE.QuestTrackerSearchInput:SetHeight(28) end
-	if RQE.QuestTrackerSearchButton then RQE.QuestTrackerSearchButton:SetHeight(26) end
-	if RQE.QuestTrackerRestoreButton then RQE.QuestTrackerRestoreButton:SetHeight(26) end
+	if RQE.QuestTrackerSearchButton then RQE.QuestTrackerSearchButton:SetHeight(30) end
+	if RQE.QuestTrackerRestoreButton then RQE.QuestTrackerRestoreButton:SetHeight(30) end
 	if RQE.QTScrollFrame and RQE.RQEQuestFrame then
 		RQE.QTScrollFrame:ClearAllPoints()
 		-- The viewport remains frameWidth - 40, matching AdjustQuestItemWidths,
@@ -763,7 +771,7 @@ function UI:ApplySavedTheme()
 	end
 	for _, e in ipairs(self.Registry.headers) do self:_ApplyHeader(e.target, e.data.child) end
 	for _, e in ipairs(self.Registry.iconButtons) do self:_ApplyIconButton(e.target, e.data.iconName, e.data.options) end
-	for _, e in ipairs(self.Registry.textButtons) do self:_ApplyTextButton(e.target) end
+	for _, e in ipairs(self.Registry.textButtons) do self:_ApplyTextButton(e.target, e.data) end
 	for _, e in ipairs(self.Registry.searchBoxes) do self:_ApplySearchBox(e.target) end
 	for _, e in ipairs(self.Registry.legacyButtons) do
 		hideRegion(e.data.background); hideRegion(e.data.label)
