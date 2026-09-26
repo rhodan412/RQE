@@ -116,7 +116,8 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 
 		-- Shared client-aware selector. Retail uses only its Retail-era expansion
 		-- sections, so generated data retains Retail map IDs and coordinates.
-		local version = GetBuildInfo()
+		-- Previous Blizzard call changed 2026.09.25: local version = GetBuildInfo()
+		local version = RQE.API.Client.GetBuildInfo()
 		local majorText, minorText, patchText = tostring(version):match("^(%d+)%.(%d+)%.?(%d*)")
 		local majorVersion = tonumber(majorText) or 0
 		local minorVersion = tonumber(minorText) or 0
@@ -147,7 +148,8 @@ Cross-client quest database selection, sandbox precedence, and lookup control
 			if majorVersion >= 7 then AddDatabaseSection("Legion") end
 
 			if majorVersion >= 6 then
-				local garrisonInfo = C_Garrison and C_Garrison.GetGarrisonInfo and C_Garrison.GetGarrisonInfo(2)
+				-- Previous Blizzard call changed 2026.09.25: local garrisonInfo = C_Garrison and C_Garrison.GetGarrisonInfo and C_Garrison.GetGarrisonInfo(2)
+				local garrisonInfo = C_Garrison and RQE.API.ResolveClientAPI("C_Garrison.GetGarrisonInfo") and RQE.API.Client.C_Garrison.GetGarrisonInfo(2)
 				local wodGarrisonLevel = type(garrisonInfo) == "table" and garrisonInfo.level or tonumber(garrisonInfo)
 				if wodGarrisonLevel == 3 then
 					AddDatabaseSection("WarlordsOfDraenor03")
