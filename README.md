@@ -13,6 +13,7 @@ RQE is a quest helper and tracker for World of Warcraft. It brings the next obje
 - **Follow guided quest steps.** Read the current objective, location, and instructions for supported quests. Move between steps manually when needed.
 - **Find the next destination.** Follow map waypoints and coordinates associated with the active step.
 - **Track progress.** Keep quest objectives visible in the Quest Helper and Quest Tracker, and search for a quest even when it is not currently tracked.
+- **Watch recipes and achievements.** See tracked profession recipes with their required materials and current counts, alongside achievement criteria and numeric progress.
 - **Recognize NPCs and objects.** Mouse over linked names in step descriptions to open a movable preview. Zoom or pan the view when you need a closer look.
 - **Use quest-aware controls.** Access helpful targeting and quest-item macros where a step provides them. RQE can update its macro button when a needed quest item becomes available.
 - **Choose your layout.** Move, resize, or lock the main frames; adjust fonts, colors, previews, and the Azure & Gold theme in settings.
@@ -35,6 +36,18 @@ RQE has addon builds for Retail, Classic Era/Season of Discovery, Classic Foreve
 RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect quest lines, tooltips, and quest-giver locations.
 
 ## More examples
+
+### Profession recipes and achievements
+
+The Quest Tracker gives tracked recipes their own **Profession** section above **Achievements**. It lists each recipe's materials and the amount you own; counts turn green when you have enough to craft one. A tracked recipe keeps the Tracker available even when you have no quests or achievements watched.
+
+Achievement entries show each criterion, including numeric progress and the objective text. Achievements without a usable criterion show their description instead. Completed criteria appear in green.
+
+[![RQE tracked recipes: material counts and item tooltips in the Profession section](https://github.com/user-attachments/assets/5111b1d2-c409-46fc-a07d-f1b751857e16)](https://github.com/user-attachments/assets/5111b1d2-c409-46fc-a07d-f1b751857e16)
+
+[![RQE tracked achievements: completed criteria, numeric progress, and description fallback](https://github.com/user-attachments/assets/58bd5a83-16cb-421d-9966-ae23efdc2240)](https://github.com/user-attachments/assets/58bd5a83-16cb-421d-9966-ae23efdc2240)
+
+Hover a recipe or ingredient for details, and click it to open the profession recipe or inspect an unlearned recipe. Hover an achievement for its category, icon, and criteria summary; click its title to open it. **Shift+left-click** a recipe, ingredient, or achievement title to stop tracking that entry. The [Quest Helper and Tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker) has more examples.
 
 ### Interactive guidance
 
