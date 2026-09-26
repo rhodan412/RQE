@@ -258,7 +258,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		RQE.superY = nil
 		RQE.superMapID = nil
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if not questID then
 				if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -277,7 +278,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 				return
 			end
 
-			local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+			local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 
 			if tonumber(RQE.searchedQuestID) == tonumber(questID)
 				and tonumber(questID) ~= tonumber(RQE.API.GetSuperTrackedQuestID()) then
@@ -320,8 +322,10 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			return
 		end
 
-		local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID)
-		local isInLog = C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isComplete = C_QuestLog.IsQuestFlaggedCompleted(questID)
+		local isComplete = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isInLog = C_QuestLog.GetLogIndexForQuestID(questID)
+		local isInLog = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 
 		if isComplete then
 			RQE.debugLog("QuestID", questID, "is already completed.")
@@ -330,7 +334,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		if isInLog then
 			RQE.debugLog("QuestID", questID, "is in player log, skipping location-based waypoint.")
-			local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
+			-- Previous Blizzard call changed 2026.09.25: local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
+			local blizzWaypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 
 			-- Bail out early if there is no actual direction text
 			if (not blizzWaypointText or blizzWaypointText == "") and (not RQE.DirectionText or RQE.DirectionText == "" or RQE.DirectionText == "No direction available.") then
@@ -354,7 +359,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		-- end
 
 		-- ✅ FIX: Use playerMapID for resolution logic, not mapID from the W-button
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- ✅ Pass the W-button-provided mapID as targetMapID (a hint)
 		-- local x, y, locMapID, continentID = RQE.GetPrimaryLocation(dbEntry, mapID)
@@ -452,7 +458,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		-- end
 
 		-- 2) Exclusions / hidden quest type
-		local qType = C_QuestLog.GetQuestType(questID)
+		-- Previous Blizzard call changed 2026.09.25: local qType = C_QuestLog.GetQuestType(questID)
+		local qType = RQE.API.Client.C_QuestLog.GetQuestType(questID)
 		if (RQE.ExcludedWaypointQuests and RQE.ExcludedWaypointQuests[questID]) or qType == 265 then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print(questID .. " is excluded (explicitly or by quest type 265); waypoint will not be generated")
@@ -461,7 +468,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- 3) Prefer caller/player map
-		mapID = mapID or RQE.WPmapID or C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: mapID = mapID or RQE.WPmapID or C_Map.GetBestMapForUnit("player")
+		mapID = mapID or RQE.WPmapID or RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			return
 		end
@@ -491,7 +499,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- 6) FALLBACK A: exact quest waypoint for this map
 		if not (xPct and yPct) then
-			local xn, yn = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			-- Previous Blizzard call changed 2026.09.25: local xn, yn = C_QuestLog.GetNextWaypointForMap(questID, mapID)
+			local xn, yn = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, mapID)
 			if xn and yn then
 				setFrom(xn, yn, mapID)
 				--print(("Using GetNextWaypointForMap -> %.2f, %.2f on map %d"):format(xPct, yPct, mapID))
@@ -500,7 +509,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- 7) FALLBACK B: generic next waypoint (vec or areaPoiID)
 		if not (xPct and yPct) then
-			local wpMapID, wpData, wpY = C_QuestLog.GetNextWaypoint(questID)
+			-- Previous Blizzard call changed 2026.09.25: local wpMapID, wpData, wpY = C_QuestLog.GetNextWaypoint(questID)
+			local wpMapID, wpData, wpY = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 			if wpMapID then
 				if type(wpData) == "number" and type(wpY) == "number" then
 					-- Modern clients return mapID, x, y rather than a POI payload.
@@ -517,7 +527,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 						-- end
 					-- end
 				elseif type(wpData) == "number" then
-					local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+					-- Previous Blizzard call changed 2026.09.25: local poiInfo = C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
+					local poiInfo = RQE.API.Client.C_AreaPoiInfo.GetAreaPOIInfo(wpMapID, wpData)
 					if poiInfo and poiInfo.position then
 						setFrom(poiInfo.position.x, poiInfo.position.y, wpMapID)
 						-- if RQE.db.profile.debugLevel == "INFO" then
@@ -549,7 +560,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- 9) Build title lines for arrow (single-line) + multiline preview for debug
 		local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown"
-		local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local blizzWaypointText = C_QuestLog.GetNextWaypointText(questID)
+		local blizzWaypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 
 		-- Bail out early if there is no actual direction text
 		if (not blizzWaypointText or blizzWaypointText == "") and (not RQE.DirectionText or RQE.DirectionText == "" or RQE.DirectionText == "No direction available.") then
@@ -598,9 +610,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		local waypointTitle = RQE:GetWaypointTitle(questID, mapID, xNorm, yNorm, arrowTitle)	
 
 		-- 10) Place waypoint(s)
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 
-		local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			RQE.Waypoints:Replace(mapID, xPct / 100, yPct / 100, waypointTitle)
 		else
@@ -609,7 +623,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			end
 		end
 
-		local isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		-- Previous Blizzard call changed 2026.09.25: local isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		local isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db and RQE.db.profile and RQE.db.profile.enableCarboniteCompatibility then
 			Nx:TTAddWaypoint(mapID, xPct / 100, yPct / 100, { opt = waypointTitle })
 		end
@@ -706,7 +721,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			waypointTitle = "Quest Start: " .. questData.title
 		else
 			-- Fetch coordinates using super tracking data
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				if RQE:IsCoordblockWaypointProtected() then return end
 				local extractedQuestID = nil
 
@@ -727,7 +743,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 				end
 
 				if questID then
-					mapID = GetQuestUiMapID(questID)
+					-- Previous Blizzard call changed 2026.09.25: mapID = GetQuestUiMapID(questID)
+					mapID = RQE.API.Client.GetQuestUiMapID(questID)
 					questData = RQE.getQuestData(questID)
 					if mapID == 0 then mapID = nil end
 				end
@@ -762,7 +779,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 							RQE.MapID = qmapID
 						else
 							if questID then
-								local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+								-- Previous Blizzard call changed 2026.09.25: local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+								local waypointMapID, waypointX, waypointY = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 								if waypointX and waypointY and waypointMapID then
 									RQE.x = waypointX
 									RQE.y = waypointY
@@ -803,7 +821,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 						else
 							-- Add a check here to ensure GetNextWaypoint only runs if waypoints are available
 							if questID then
-								local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+								-- Previous Blizzard call changed 2026.09.25: local waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(questID)
+								local waypointMapID, waypointX, waypointY = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 								if waypointX and waypointY and waypointMapID then
 									RQE.x = waypointX
 									RQE.y = waypointY
@@ -838,7 +857,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 				end
 
 				-- Set a default title if questID is still nil or 0
-				local questType = C_QuestLog.GetQuestType(questID)
+				-- Previous Blizzard call changed 2026.09.25: local questType = C_QuestLog.GetQuestType(questID)
+				local questType = RQE.API.Client.C_QuestLog.GetQuestType(questID)
 				if RQE.ExcludedWaypointQuests[questID] or questType == 265 then		-- Prevents a waypoint from being created 'hidden' type quests
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print(questID .. " is excluded (explicitly or by quest type 265); waypoint will not be generated")
@@ -853,21 +873,25 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 				RQE.infoLog("Before clearing user waypoint: x =", x, "y =", y, "mapID =", mapID)
 
-				C_Map.ClearUserWaypoint()
+				-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+				RQE.API.Client.C_Map.ClearUserWaypoint()
 
-				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 					TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
 				end
 
-				C_Timer.After(0.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				RQE.API.Client.C_Timer.After(0.5, function()
 					if RQE:IsCoordblockWaypointProtected() then return end
 					if RQE.DirectionText and RQE.DirectionText ~= "No direction available." then
 						waypointTitle = waypointTitle .. "\n" .. RQE.DirectionText
 					end
 
-					local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+					-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+					local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 					if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 						if mapID and x and y then
 							RQE.debugLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
@@ -879,7 +903,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 						RQE.debugLog("TomTom is not available.")
 					end
 
-					local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+					-- Previous Blizzard call changed 2026.09.25: local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+					local _, isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 					if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 						if mapID and x and y then
 							RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
@@ -983,14 +1008,17 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		-- An event callback can outlive the route state it started under.
 		if self:IsCoordblockWaypointProtected(questID, self.AddonSetStepIndex) then return end
 		-- Clear any existing waypoint
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 
 		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then
 					RQE.infoLog("Adding waypoint to TomTom: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
@@ -1004,9 +1032,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Check if Carbonite is loaded and compatibility is enabled
-		local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		-- Previous Blizzard call changed 2026.09.25: local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		local _, isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE:IsCoordblockWaypointProtected(questID, RQE.AddonSetStepIndex) then return end
 				if mapID and x and y then
 					RQE.infoLog("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
@@ -1023,7 +1053,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		if not isTomTomLoaded and not isCarboniteLoaded then
 			if self:IsCoordblockWaypointProtected(questID, self.AddonSetStepIndex) then return end
 			RQE.debugLog("Setting default waypoint with C_Map.SetUserWaypoint")
-			C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x / 100, y / 100))
+			-- Previous Blizzard call changed 2026.09.25: C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x / 100, y / 100))
+			RQE.API.Client.C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, x / 100, y / 100))
 		end
 	end
 
@@ -1085,17 +1116,20 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		y = tonumber(y) or 0
 
 		-- Clear any existing user waypoint
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 
 		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
 
 		-- Set a timer to handle waypoint setting (with delay for compatibility reasons)
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			if RQE:IsCoordblockWaypointProtected() then return end
 			if RQE.DescriptionText and RQE.DescriptionText ~= "No direction available." then
 				waypointTitle = waypointTitle .. "\n" .. RQE.DescriptionText -- Append DirectionText on a new line if available
@@ -1119,7 +1153,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			end
 
 			-- Check if Carbonite is loaded and compatibility is enabled
-			local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+			-- Previous Blizzard call changed 2026.09.25: local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+			local _, isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 			if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 				if mapID and x and y then -- Check if x and y are not nil
 					print("Adding waypoint to Carbonite: mapID =", mapID, "x =", x, "y =", y, "title =", waypointTitle)
@@ -1173,14 +1208,16 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Retrieve the Next Waypoint text
-		local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 		if not waypointText or waypointText == "" then
 			print("No Next Waypoint text available for questID:", questID)
 			return
 		end
 
 		-- Retrieve the next waypoint coordinates
-		local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+		-- Previous Blizzard call changed 2026.09.25: local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+		local mapID, x, y = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 		if not mapID or not x or not y then
 			print("No waypoint data available for questID:", questID)
 			return
@@ -1196,7 +1233,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Clear existing waypoint
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 
 		-- Create a new user waypoint
 		local waypointData = {
@@ -1204,18 +1242,22 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 			position = CreateVector2D(x / 100, y / 100),
 			name = waypointText
 		}
-		C_Map.SetUserWaypoint(waypointData)
-		C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+		-- Previous Blizzard call changed 2026.09.25: C_Map.SetUserWaypoint(waypointData)
+		RQE.API.Client.C_Map.SetUserWaypoint(waypointData)
+		-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedUserWaypoint(true)
+		RQE.API.Client.C_SuperTrack.SetSuperTrackedUserWaypoint(true)
 
 		-- TomTom Integration (if enabled)
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointText)
 			print("Waypoint added to TomTom for questID:", questID)
 		end
 
 		-- Carbonite Integration (if enabled)
-		local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		-- Previous Blizzard call changed 2026.09.25: local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		local _, isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 			Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointText })
 			print("Waypoint added to Carbonite for questID:", questID)
@@ -1276,7 +1318,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Retrieve the Next Waypoint text
-		local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+		local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 		if not waypointText or waypointText == "" then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No Next Waypoint text available for questID:", questID)
@@ -1285,7 +1328,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Retrieve the next waypoint coordinates
-		local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+		-- Previous Blizzard call changed 2026.09.25: local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+		local mapID, x, y = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 		if not mapID or not x or not y then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("No waypoint data available for questID:", questID)
@@ -1310,7 +1354,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		}
 
 		-- TomTom Integration (if enabled)
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			RQE._currentTomTomUID = RQE.Waypoints:Replace(mapID, x, y, waypointText)
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -1319,7 +1364,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Carbonite Integration (if enabled)
-		local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		-- Previous Blizzard call changed 2026.09.25: local _, isCarboniteLoaded = C_AddOns.IsAddOnLoaded("Carbonite")
+		local _, isCarboniteLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite")
 		if isCarboniteLoaded and RQE.db.profile.enableCarboniteCompatibility then
 			Nx:TTAddWaypoint(mapID, x / 100, y / 100, { opt = waypointText })
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -1377,9 +1423,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 	-- @param mapPinID: The ID of the map pin to remove (note: mapPinID is not needed for clearing the user waypoint)
 	function RQE:RemoveMapPin()
 		-- Check if there is a user waypoint set
-		if C_Map.HasUserWaypoint() then
+		-- Previous Blizzard call changed 2026.09.25: if C_Map.HasUserWaypoint() then
+		if RQE.API.Client.C_Map.HasUserWaypoint() then
 			-- Clear the user waypoint
-			C_Map.ClearUserWaypoint()
+			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+			RQE.API.Client.C_Map.ClearUserWaypoint()
 			RQE.debugLog("Removed user waypoint")
 		else
 			RQE.debugLog("No user waypoint to remove")
@@ -1448,7 +1496,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			RQE.debugLog("TomTom is available.")
 
@@ -1479,14 +1528,16 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		if not RQE.API.IsSuperTrackingQuest() then return end
 		qid   = qid   or RQE.API.GetSuperTrackedQuestID()
-		mapID = mapID or C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: mapID = mapID or C_Map.GetBestMapForUnit("player")
+		mapID = mapID or RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not qid or not mapID then return end
 
 		-- Clear any stale state so we never “stick” on the last quest
 		RQE._currentHotspotIdx = nil
 		RQE._lastWP = nil
 		RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = nil, nil, nil
-		local _, ttLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, ttLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, ttLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if ttLoaded and RQE._currentTomTomUID and TomTom and TomTom.RemoveWaypoint then
 			TomTom:RemoveWaypoint(RQE._currentTomTomUID)
 			RQE._currentTomTomUID = nil
@@ -1495,7 +1546,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		if RQE:PreferSameMapHotspotWaypoint(qid) then return end
 
 		-- 1) If Blizzard supplies direction text, use the direction-text flow
-		local dtxt = C_QuestLog.GetNextWaypointText(qid)
+		-- Previous Blizzard call changed 2026.09.25: local dtxt = C_QuestLog.GetNextWaypointText(qid)
+		local dtxt = RQE.API.Client.C_QuestLog.GetNextWaypointText(qid)
 		if dtxt and dtxt ~= "" then
 			return RQE:CreateUnknownQuestWaypointWithDirectionText(qid, mapID)
 		end
@@ -1513,9 +1565,11 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- 4) DB entry exists but no step lines → Blizzard fallback
 		do
-			local bx, by = C_QuestLog.GetNextWaypointForMap(qid, mapID)
+			-- Previous Blizzard call changed 2026.09.25: local bx, by = C_QuestLog.GetNextWaypointForMap(qid, mapID)
+			local bx, by = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(qid, mapID)
 			if bx and by then return RQE:CreateWaypoint(bx, by, mapID) end
-			local gMap, gx, gy = C_QuestLog.GetNextWaypoint(qid)
+			-- Previous Blizzard call changed 2026.09.25: local gMap, gx, gy = C_QuestLog.GetNextWaypoint(qid)
+			local gMap, gx, gy = RQE.API.Client.C_QuestLog.GetNextWaypoint(qid)
 			if gMap and gx and gy then return RQE:CreateWaypoint(gx, gy, gMap) end
 		end
 
@@ -1547,8 +1601,10 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 
 		-- A same-map DB hotspot must not inherit a portal directionText as its
 		-- arrow title. Match the point being installed before stale wayText caches.
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit
-			and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+			and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if step and type(step.coordinateHotspots) == "table"
 			and playerMapID == mapID and xNorm and yNorm then
 			for _, hotspot in ipairs(step.coordinateHotspots) do
@@ -1611,7 +1667,8 @@ Waypoint creation, quest-route resolution, provider integration, and map-pin man
 		end
 
 		-- 3) Blizzard fallback (if available)
-		local blizzText = C_QuestLog.GetNextWaypointText and C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local blizzText = C_QuestLog.GetNextWaypointText and C_QuestLog.GetNextWaypointText(questID)
+		local blizzText = RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointText") and RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 		if blizzText and blizzText ~= "" then
 			return string.format("QID %d — %s — %s", questID, questData.title or "Quest", blizzText)
 		end
