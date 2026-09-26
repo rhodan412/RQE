@@ -119,11 +119,14 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdownRQEFrame(self, questID)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
-			local isPlayerInGroup = IsInGroup()
-			local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isPlayerInGroup = IsInGroup()
+			local isPlayerInGroup = RQE.API.Client.IsInGroup()
+			-- Previous Blizzard call changed 2026.09.25: local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+			local isQuestShareable = RQE.API.Client.C_QuestLog.IsPushableQuest(questID)
 			local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
@@ -142,10 +145,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 
 			if isPlayerInGroup and isQuestShareable then
-				rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				rootDescription:CreateButton("Share Quest", function() RQE.API.Client.C_QuestLog.SetSelectedQuest(questID); RQE.API.Client.QuestLogPushQuest(); end)
 			end
 
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE.db.profile.enableStepControls then
 					rootDescription:CreateButton("|cff00ff00Disable StepIndex Manual + Enable Auto Click Waypoint Control|r", function() RQE:ToggleAutoClickAndStepControls(); end)		-- Green color
 					rootDescription:CreateButton("|cffff0000Disable StepIndex Manual Control|r", function() RQE:ToggleStepControls(); end)		-- Red color
@@ -162,7 +167,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
-			rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
+			-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
+			rootDescription:CreateButton("Untrack Quest", function() RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID); RQE:ClearFrameData(); end)
 			rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
 			rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
@@ -195,7 +201,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
 			local questLabel = questID and tostring(questID) or RQE.searchedQuestID or RQE.CurrentDisplayedQuestID or "<Nothing Tracked>"
 
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
@@ -227,7 +234,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
 
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
 				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
 				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
@@ -1095,7 +1103,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	MapIDText:SetPoint("LEFT", LocationInfoBar, "LEFT", 8, 0)
 	MapIDText:SetJustifyH("LEFT")
 	MapIDText:SetWordWrap(false)
-	local initialMapID = C_Map.GetBestMapForUnit("player")
+	-- Previous Blizzard call changed 2026.09.25: local initialMapID = C_Map.GetBestMapForUnit("player")
+	local initialMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 	MapIDText:SetText(initialMapID and ("Map " .. tostring(initialMapID)) or "Map —")
 	LocationInfoBar.MapIDText = MapIDText
 	RQEFrame.MapIDText = MapIDText
@@ -1256,7 +1265,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Add a click event to open the quest details for the current QuestID
 	RQE.QuestIDText:SetScript("OnMouseDown", function(self, button)
-		if button == "LeftButton" and not IsShiftKeyDown() then
+		-- Previous Blizzard call changed 2026.09.25: if button == "LeftButton" and not IsShiftKeyDown() then
+		if button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
 			local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 			OpenQuestLogToQuestDetails(questID)
 			return
@@ -1267,7 +1277,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	-- Add a click event to open the map for the current QuestName
 	if RQE.QuestNameText then  -- Check if QuestNameText is initialized
 		RQE.QuestNameText:SetScript("OnMouseDown", function(self, button)
-			if button == "LeftButton" and not IsShiftKeyDown() then
+			-- Previous Blizzard call changed 2026.09.25: if button == "LeftButton" and not IsShiftKeyDown() then
+			if button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
 				local questID = RQE.API.GetSuperTrackedQuestID() or RQE.DisplayedQuestID
 				OpenQuestLogToQuestDetails(questID)
 				return
@@ -1406,9 +1417,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Add description
-		local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+		-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+		local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
 		if questLogIndex then
-			local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+			local _, questObjectives = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 			local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 			GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 			GameTooltip:AddLine(" ")
@@ -1433,17 +1446,20 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 		if questID then
 			-- Check if the quest is ready to be turned in
-			if C_QuestLog.ReadyForTurnIn(questID) then
+			-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.ReadyForTurnIn(questID) then
+			if RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
 				GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
 			-- Check if the quest is completed
-			elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
+			-- Previous Blizzard call changed 2026.09.25: elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
+			elseif RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
 				GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
 			else
 				if RQE.searchedQuestID then
 					GameTooltip:AddLine(" ")
 				end
 				GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-				if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+				-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+				if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
 					GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
 				else
 					GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
@@ -1501,11 +1517,15 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			end
 
 			-- Party Members' Quest Progress
-			if IsInGroup() then
-				if IsInRaid() then return end
-				local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+			-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
+			if RQE.API.Client.IsInGroup() then
+				-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
+				if RQE.API.Client.IsInRaid() then return end
+				-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+				local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
 				if tooltipData and tooltipData.lines then
-					local player_name = UnitName("player")
+					-- Previous Blizzard call changed 2026.09.25: local player_name = UnitName("player")
+					local player_name = RQE.API.Client.UnitName("player")
 					local isFirstPartyMember = true
 					local skipPlayerLines = false
 					local skipQuestNameLine = false  -- Flag to skip quest name lines
@@ -1743,10 +1763,13 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- DisplayResults function
 	function RQE.SearchModule:FetchAndDisplayQuestData(questID)
-		C_QuestLog.RequestLoadQuestByID(questID)
-		C_Timer.After(1, function()  -- Wait for 1 second for data to load
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RequestLoadQuestByID(questID)
+		RQE.API.Client.C_QuestLog.RequestLoadQuestByID(questID)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()  -- Wait for 1 second for data to load
+		RQE.API.Client.C_Timer.After(1, function()  -- Wait for 1 second for data to load
 			local questTitle = RQE.API.GetTitleForQuestID(questID)
-			local questDetail, questObjectives = GetQuestLogQuestText(questID)
+			-- Previous Blizzard call changed 2026.09.25: local questDetail, questObjectives = GetQuestLogQuestText(questID)
+			local questDetail, questObjectives = RQE.API.GetQuestDescriptionForQuestID(questID)
 
 			if not questTitle or not questDetail or not questObjectives then
 				RQE.debugLog("Quest information not available for Quest ID: " .. questID)
@@ -1766,10 +1789,12 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	--- @class WaypointButton : Button
 	--- @field stepIndex number
 	--- @field bg Texture
-	function RQE:CreateStepsText(StepsText, CoordsText, MapIDs)
-		local lastClickedIndex = self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex
-		local lastWaypointIndex = self.LastClickedWaypointButton
+	function RQE:CreateStepsText(StepsText, CoordsText, MapIDs, selectedStepIndex, selectedWaypointIndex)
+		local lastClickedIndex = selectedStepIndex
+			or (self.LastClickedButtonRef and self.LastClickedButtonRef.stepIndex)
+		local lastWaypointIndex = selectedWaypointIndex or (self.LastClickedWaypointButton
 			and self.WaypointButtonIndices[self.LastClickedWaypointButton]
+		)
 		self.LastClickedButtonRef, self.LastClickedWaypointButton = nil, nil
 		RQE.API.ReleaseRenderGroup(content, "steps")
 		self.WaypointButtonHover = false
@@ -1887,7 +1912,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				StepText:Show()
 
 				-- ✅ Re-measure after a tick (this keeps step 5 from collapsing)
-				C_Timer.After(0.05, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				RQE.API.Client.C_Timer.After(0.05, function()
 					local h = StepText:GetContentHeight()
 					if h and h > 0 then
 						StepText:SetHeight(h + 4)
@@ -1950,7 +1976,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				end)
 
 				-- ✅ Make sure SimpleHTML sizes properly and wraps text
-				C_Timer.After(0.05, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				RQE.API.Client.C_Timer.After(0.05, function()
 					local h = StepText:GetContentHeight()
 					if h and h > 0 then
 						StepText:SetHeight(h + 4)
@@ -2021,11 +2048,9 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			WaypointButton.bg = bg
 			bg:SetAlpha(1)
 			bg:SetAllPoints()
-
-			if RQE.db.profile.enableStepControls then
-				WaypointButton.stepIndex = i
-				WaypointButton.bg = bg
-			end
+			-- Automatic progression reads this even when manual step controls are off.
+			-- The render pool clears it every time the quest steps are rebuilt.
+			WaypointButton.stepIndex = i
 
 			-- Check if autoClickWaypointButton is enabled and LastClickedIdentifier is nil and set to 1 if so
 			if RQE.db.profile.autoClickWaypointButton then
@@ -2098,9 +2123,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				local questID = RQE.searchedQuestID or extractedQuestID or currentSuperTrackedQuestID
 
 				if questID and not RQE:IsCoordblockWaypointProtected(questID) then
-					local waypointText = C_QuestLog.GetNextWaypointText(questID)
+					-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+					local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 					if not waypointText then
-						C_Map.ClearUserWaypoint()
+						-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+						RQE.API.Client.C_Map.ClearUserWaypoint()
 					end
 				end
 
@@ -2108,7 +2135,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					or RQE.hoveringOnRQEFrameAndButton)
 					and not RQE:IsCoordblockWaypointProtected(questID) then
 					-- Check if TomTom is loaded and compatibility is enabled
-					if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+					-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+					if RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 						TomTom.waydb:ResetProfile()
 						RQE._currentTomTomUID = nil
 					end
@@ -2184,7 +2212,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				end
 
 				-- Check if MagicButton should be visible based on macro body
-				C_Timer.After(1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+				RQE.API.Client.C_Timer.After(1, function()
 					RQE.Buttons.UpdateMagicButtonVisibility()
 				end)
 
@@ -2226,7 +2255,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 		-- Updates the height of the RQEFrame based on the number of steps a quest has in the RQEDatabase
 		if not self._stepsLayoutTimer then
-			self._stepsLayoutTimer = C_Timer.NewTimer(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: self._stepsLayoutTimer = C_Timer.NewTimer(0.5, function()
+			self._stepsLayoutTimer = RQE.API.Client.C_Timer.NewTimer(0.5, function()
 				self._stepsLayoutTimer = nil
 				self:UpdateContentSize()
 			end)
@@ -2307,7 +2337,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		local nextObjectiveIndex = highestCompletedObjectiveIndex + 1 -- Default to the next index (will show up as 100 if the quest is completed)
 
 		-- Handle quest completion and specific objectives
-		if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if allObjectivesCompleted or C_QuestLog.ReadyForTurnIn(questID) then
+		if allObjectivesCompleted or RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
 			nextObjectiveIndex = 99 -- Override if all objectives are completed
 		end
 	end
@@ -2415,8 +2446,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Retrieve the activity ID for the quest
-		local activityID = C_LFGList.GetActivityIDForQuestID(questID)
-		local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or RQE.API.GetTitleForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+		local activityID = RQE.API.Client.C_LFGList.GetActivityIDForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local questName = C_TaskQuest.GetQuestInfoByQuestID(questID) or RQE.API.GetTitleForQuestID(questID)
+		local questName = RQE.API.Client.C_TaskQuest.GetQuestInfoByQuestID(questID) or RQE.API.GetTitleForQuestID(questID)
 
 		-- Set the search panel to the appropriate category
 		local SearchPanel = LFGListFrame.SearchPanel
@@ -2432,7 +2465,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 		-- Set search criteria to the questID or fallback to the quest name if activityID is missing
 		if activityID then
-			C_LFGList.SetSearchToQuestID(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_LFGList.SetSearchToQuestID(questID)
+			RQE.API.Client.C_LFGList.SetSearchToQuestID(questID)
 		else
 			-- Fallback: Search by quest name if activityID is unavailable or unreliable
 			SearchPanel.SearchBox:SetText(questName or "")
@@ -2454,7 +2488,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Retrieve the activity ID for the quest
-		local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+		local activityID = RQE.API.Client.C_LFGList.GetActivityIDForQuestID(questID)
 		if not activityID then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("LFG_Create: No activity ID found for questID", questID)
@@ -2463,8 +2498,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Define group listing parameters
-		local playerIlvl = GetAverageItemLevel()
-		local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
+		-- Previous Blizzard call changed 2026.09.25: local playerIlvl = GetAverageItemLevel()
+		local playerIlvl = RQE.API.Client.GetAverageItemLevel()
+		-- Previous Blizzard call changed 2026.09.25: local minIlvlReq = UnitLevel('player') >= 60 and 120 or 50
+		local minIlvlReq = RQE.API.Client.UnitLevel('player') >= 60 and 120 or 50
 		local itemLevel = minIlvlReq > playerIlvl and math.floor(playerIlvl) or minIlvlReq
 		local honorLevel = 0 -- Honor level requirement
 		local autoAccept = true
@@ -2492,10 +2529,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		end
 
 		-- Attempt to create the group listing
-		local success, err = pcall(C_LFGList.CreateListing, createData)
+		-- Previous Blizzard call changed 2026.09.25: local success, err = pcall(C_LFGList.CreateListing, createData)
+		local success, err = pcall(RQE.API.ResolveClientAPI("C_LFGList.CreateListing"), createData)
 
 		if RQE.db.profile.debugLevel == "INFO+" then
-			if not success then
+			if not success or err == false then
 				print("LFG_Create: Error creating group listing:", err)
 			else
 				print("LFG_Create: Group listing created successfully!")
@@ -2506,7 +2544,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Function to handle button clicks
 	function RQE:LFG_Delist(questID)
-		C_LFGList.RemoveListing();
+		-- Previous Blizzard call changed 2026.09.25: C_LFGList.RemoveListing();
+		RQE.API.Client.C_LFGList.RemoveListing();
 	end
 
 
@@ -2526,11 +2565,16 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Function to update the group size and type
 	function RQEUpdateGroupSizeAndType()
-		local isInRaid = IsInRaid()
-		local isInGroup = IsInGroup()
-		local isInstanceGroup = IsInInstance()
-		local groupSize = GetNumGroupMembers()
-		local availTank, availHealer, availDPS = C_LFGList.GetAvailableRoles()
+		-- Previous Blizzard call changed 2026.09.25: local isInRaid = IsInRaid()
+		local isInRaid = RQE.API.Client.IsInRaid()
+		-- Previous Blizzard call changed 2026.09.25: local isInGroup = IsInGroup()
+		local isInGroup = RQE.API.Client.IsInGroup()
+		-- Previous Blizzard call changed 2026.09.25: local isInstanceGroup = IsInInstance()
+		local isInstanceGroup = RQE.API.Client.IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local groupSize = GetNumGroupMembers()
+		local groupSize = RQE.API.Client.GetNumGroupMembers()
+		-- Previous Blizzard call changed 2026.09.25: local availTank, availHealer, availDPS = C_LFGList.GetAvailableRoles()
+		local availTank, availHealer, availDPS = RQE.API.Client.C_LFGList.GetAvailableRoles()
 
 		if isInRaid then
 			lastGroupType = "raid"
@@ -2548,16 +2592,20 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Define the function to handle GROUP_ROSTER_UPDATE event
 	function RQEOnGroupRosterUpdate()
-		local isInGroup = IsInGroup()
-		local isInRaid = IsInRaid()
-		local isInstanceGroup = IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local isInGroup = IsInGroup()
+		local isInGroup = RQE.API.Client.IsInGroup()
+		-- Previous Blizzard call changed 2026.09.25: local isInRaid = IsInRaid()
+		local isInRaid = RQE.API.Client.IsInRaid()
+		-- Previous Blizzard call changed 2026.09.25: local isInstanceGroup = IsInInstance()
+		local isInstanceGroup = RQE.API.Client.IsInInstance()
 		local questID = RQE.API.GetSuperTrackedQuestID()
 
 		-- Trigger the role selection only if the player was in an outdoor raid group
 		if lastGroupType == "raid" and not isInGroup and not isInRaid and not isInstanceGroup then
 			-- Ensure the questID is valid before proceeding
 			if questID and questID > 0 then
-				local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+				-- Previous Blizzard call changed 2026.09.25: local activityID = C_LFGList.GetActivityIDForQuestID(questID)
+				local activityID = RQE.API.Client.C_LFGList.GetActivityIDForQuestID(questID)
 				if activityID then
 					RQEShowRoleSelection(activityID)
 				else
@@ -2826,7 +2874,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		-- ALT/CTRL/SHIFT (either left or right key) scrolls the Focus Frame
 		-- anywhere inside it. A plain wheel keeps scrolling the main RQEFrame.
 		local focusFrame = RQE.SeparateFocusFrame
-		local modifierHeld = IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown()
+		-- Previous Blizzard call changed 2026.09.25: local modifierHeld = IsAltKeyDown() or IsControlKeyDown() or IsShiftKeyDown()
+		local modifierHeld = RQE.API.Client.IsAltKeyDown() or RQE.API.Client.IsControlKeyDown() or RQE.API.Client.IsShiftKeyDown()
 		local target = focusFrame and focusFrame:IsMouseOver() and modifierHeld
 			and RQE.SeparateScrollFrame or RQE.ScrollFrame
 		if not target then return end
@@ -2841,13 +2890,19 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 	-- Capture the current map, zone, and minimap names used to detect Separate Focus location changes.
 	local function GetSeparateFocusLocation()
-		local mapID = C_Map and C_Map.GetBestMapForUnit
-			and C_Map.GetBestMapForUnit("player")
-		local mapInfo = mapID and C_Map and C_Map.GetMapInfo
-			and C_Map.GetMapInfo(mapID)
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map and C_Map.GetBestMapForUnit
+		local mapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+			and RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapInfo = mapID and C_Map and C_Map.GetMapInfo
+		local mapInfo = mapID and C_Map and RQE.API.ResolveClientAPI("C_Map.GetMapInfo")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetMapInfo(mapID)
+			and RQE.API.Client.C_Map.GetMapInfo(mapID)
 		local mapName = mapInfo and mapInfo.name or ""
-		local zoneName = GetZoneText and GetZoneText() or ""
-		local minimapZone = GetMinimapZoneText and GetMinimapZoneText() or ""
+		-- Previous Blizzard call changed 2026.09.25: local zoneName = GetZoneText and GetZoneText() or ""
+		local zoneName = RQE.API.ResolveClientAPI("GetZoneText") and RQE.API.Client.GetZoneText() or ""
+		-- Previous Blizzard call changed 2026.09.25: local minimapZone = GetMinimapZoneText and GetMinimapZoneText() or ""
+		local minimapZone = RQE.API.ResolveClientAPI("GetMinimapZoneText") and RQE.API.Client.GetMinimapZoneText() or ""
 		return mapID, mapName, zoneName, minimapZone
 	end
 
@@ -3178,8 +3233,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- continues to show exactly the authored description.
 			local routeLinks = {}
 			local routeQuest, routeStep, _, _, routeData, routePoints = RQE:GetCurrentCoordOrderStep()
-			local playerMapID = C_Map and C_Map.GetBestMapForUnit
-				and C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+			local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+				-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+				and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			if routeQuest == tonumber(questID) and routeStep == stepIndex then
 				for index, point in ipairs(routePoints) do
 					if point.mapID == playerMapID then
@@ -3332,7 +3389,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 						print(string.format("|cff00ff00[RQE]|r Created waypoint to (%.2f, %.2f) map %s%s",
 							x, y, mapID, (title and title ~= "") and (" - " .. title:gsub("\"", "")) or ""))
 						if markedActive then
-							C_Timer.After(0, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+							RQE.API.Client.C_Timer.After(0, function()
 								if RQE.ActiveCoordblock and RQE.ActiveCoordblock.data == coordblockData then
 									RQE:RefreshActiveCoordblockLinks()
 								end
@@ -3352,7 +3410,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 						if itemID then
 							GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR_RIGHT")
 							GameTooltip:SetItemByID(itemID)
-							local count = C_Item.GetItemCount(itemID) or 0
+							-- Previous Blizzard call changed 2026.09.25: local count = C_Item.GetItemCount(itemID) or 0
+							local count = RQE.API.Client.C_Item.GetItemCount(itemID) or 0
 							GameTooltip:AddLine(("You have: |cffffff00%d|r"):format(count))
 							GameTooltip:Show()
 						end
@@ -3400,7 +3459,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 				end)
 
 				-- Adjust height after rendering
-				C_Timer.After(0.05, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				RQE.API.Client.C_Timer.After(0.05, function()
 					-- Ignore stale delayed callbacks from older rebuilds
 					if buildToken ~= RQE._SeparateFocusBuildToken then
 						return
@@ -3415,7 +3475,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 				-- ✅ Handle following paragraphs (if \n exists)
 				if #paragraphs > 1 then
-					C_Timer.After(0.05, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+					RQE.API.Client.C_Timer.After(0.05, function()
 						-- Ignore stale delayed callbacks from older rebuilds
 						if buildToken ~= RQE._SeparateFocusBuildToken then
 							return
@@ -3526,7 +3587,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- Update content height dynamically
 			RQE.UpdateSeparateContentHeight()
 			if #routeLinks > 0 then
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					if buildToken ~= RQE._SeparateFocusBuildToken
 						or RQE.CurrentDisplayedQuestID ~= questID
 						or RQE.CurrentDisplayedStepIndex ~= stepIndex then return end
@@ -3535,7 +3597,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					RQE.UpdateSeparateContentHeight()
 				end)
 			end
-			C_Timer.After(0.12, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.12, function()
+			RQE.API.Client.C_Timer.After(0.12, function()
 				if buildToken ~= RQE._SeparateFocusBuildToken then return end
 				RQE.UpdateSeparateContentHeight()
 			end)
@@ -3680,7 +3743,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 					if stepIndex == 1 then
 						-- Tier Two Importance: 
 						if RQE.db.profile.autoClickWaypointButton then
-							C_Timer.After(0.1, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+							RQE.API.Client.C_Timer.After(0.1, function()
 								RQE.isCheckingMacroContents = true
 								local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -3689,9 +3753,11 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 								end
 
 								RQEMacro:CreateMacroForCurrentStep()
-								C_Timer.After(0.2, function()
+								-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+								RQE.API.Client.C_Timer.After(0.2, function()
 									RQE.isCheckingMacroContents = false
-									C_Timer.After(3, function()
+									-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+									RQE.API.Client.C_Timer.After(3, function()
 										RQE.CreateMacroForUpdateSeparateFocusFrame = false
 									end)
 								end)
@@ -3789,8 +3855,10 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			-- hotspot outranks a stale cross-map target just as the click does.
 			if step.coordinateHotspots then
 				local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
-				local playerMapID = C_Map and C_Map.GetBestMapForUnit
-					and C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+				local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+					-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+					and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 				if playerMapID and smap ~= playerMapID then
 					local localMap, localX, localY = RQE.WPUtil.GetSameMapHotspot(
 						questID, stepIndex, playerMapID)
@@ -3861,7 +3929,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 		-- Check for the RQEFrame visibility setting
 		if RQE.db.profile.enableFrame then
 			-- Show the RQEFrame if it should be enabled and is not currently shown
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				if not RQEFrame:IsShown() then
 					if RQEFrame then
 						RQEFrame:Show()
@@ -3870,7 +3939,8 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 			end
 		else
 			-- Hide the RQEFrame if it should not be shown
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				if RQEFrame:IsShown() then
 					if RQEFrame then
 						RQEFrame:Hide()
@@ -3897,10 +3967,14 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 
 
 	-- Frequent checking with OnUpdate to enforce the visibility state of RQE frames
-	C_Timer.NewTicker(1.5, function()
-		if InCombatLockdown() then return end
-		local isMoving = IsPlayerMoving()
-		local inScenario = C_Scenario.IsInScenario()
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.NewTicker(1.5, function()
+	RQE.API.Client.C_Timer.NewTicker(1.5, function()
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
+		if RQE.API.Client.InCombatLockdown() then return end
+		-- Previous Blizzard call changed 2026.09.25: local isMoving = IsPlayerMoving()
+		local isMoving = RQE.API.Client.IsPlayerMoving()
+		-- Previous Blizzard call changed 2026.09.25: local inScenario = C_Scenario.IsInScenario()
+		local inScenario = RQE.API.Client.C_Scenario.IsInScenario()
 
 		if not isMoving or inScenario then
 			RQE:CheckFrameVisibility()
