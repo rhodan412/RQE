@@ -18,7 +18,8 @@ local validAnchors = {
 function RQE:CanSaveFrameGeometry()
 	return self.ProfileWorldReady and self.db and self.db.profile
 		and not self.ProfileApplyPending and not self.ApplyingProfile
-		and self.AppliedProfile == self.db.profile and not InCombatLockdown()
+		-- Previous Blizzard call changed 2026.09.25: and self.AppliedProfile == self.db.profile and not InCombatLockdown()
+		and self.AppliedProfile == self.db.profile and not RQE.API.Client.InCombatLockdown()
 end
 
 
@@ -26,7 +27,8 @@ end
 -- touching either frame; resize callbacks must not mutate our source values.
 function RQE:ApplyCurrentProfile()
 	if self.ApplyingProfile or not self.ProfileWorldReady or not self.db
-		or not RQEFrame or not self.RQEQuestFrame or InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: or not RQEFrame or not self.RQEQuestFrame or InCombatLockdown() then
+		or not RQEFrame or not self.RQEQuestFrame or RQE.API.Client.InCombatLockdown() then
 		return false
 	end
 
@@ -70,6 +72,7 @@ function RQE:ApplyCurrentProfile()
 		end
 		self:ApplyUISettings()
 		self:ConfigurationChanged()
+		if self.RefreshTrackerSectionOrder then self:RefreshTrackerSectionOrder() end
 		self:UpdateCoordinates()
 		self:ToggleMinimapIcon()
 		self:UpdateMinimapButtonPosition()
@@ -112,7 +115,8 @@ function RQE:ApplyCurrentProfile()
 	self.ApplyingProfile = false
 	if not success then
 		-- Leave the save guard armed on failure; never commit half-restored UI.
-		geterrorhandler()(err)
+		-- Previous Blizzard call changed 2026.09.25: geterrorhandler()(err)
+		RQE.API.Client.geterrorhandler()(err)
 		return false
 	end
 	if self.db.profile ~= profile then return false end
@@ -144,7 +148,8 @@ profileEvents:SetScript("OnEvent", function(_, event)
 			RQE.CharacterStateRestoreScheduled = true
 			-- Schedule before any gameplay refresh can fail in combat. Quest-log
 			-- restoration starts after world entry, not while still loading.
-			C_Timer.After(0.6, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.6, function()
+			RQE.API.Client.C_Timer.After(0.6, function()
 				RQE:RestoreTrackedQuestsForCharacter()
 				RQE:RestoreSuperTrackedQuestForCharacter()
 			end)
@@ -152,9 +157,11 @@ profileEvents:SetScript("OnEvent", function(_, event)
 	end
 	-- Allow Blizzard's world/layout initialization to finish first. The guard
 	-- stays armed while queued, and combat is checked again at execution time.
-	C_Timer.After(0, function()
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+	RQE.API.Client.C_Timer.After(0, function()
 		if RQE.ProfileApplyPending then RQE:ApplyCurrentProfile() end
-		if RQE.ReapplyMacroBindingAfterCombat and not InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if RQE.ReapplyMacroBindingAfterCombat and not InCombatLockdown() then
+		if RQE.ReapplyMacroBindingAfterCombat and not RQE.API.Client.InCombatLockdown() then
 			RQE:SetupOverrideMacroBinding()
 		end
 	end)
