@@ -84,9 +84,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Create the content frame
 	local content = CreateFrame("Frame", nil, ScrollFrame)
-	content:SetSize(360, 600)  -- Set the content size here
+	content:SetPoint("TOPLEFT", ScrollFrame, "TOPLEFT", 0, 0)
+	content:SetSize(math.max(1, ScrollFrame:GetWidth()), 600)
 	ScrollFrame:SetScrollChild(content)
-	content:SetAllPoints()
+	ScrollFrame:SetScript("OnSizeChanged", function(self, width)
+		content:SetWidth(math.max(1, width))
+	end)
 	RQE.QTcontent = content
 
 
@@ -124,18 +127,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	local questTrackerSearchRow = CreateFrame("Frame", nil, RQE.RQEQuestFrame)
 	questTrackerSearchRow:SetPoint("TOPLEFT", RQE.RQEQuestFrame, "TOPLEFT", 10, -40)
 	questTrackerSearchRow:SetPoint("TOPRIGHT", RQE.RQEQuestFrame, "TOPRIGHT", -30, -40)
-	questTrackerSearchRow:SetHeight(26)
+	questTrackerSearchRow:SetHeight(30)
 	RQE.QuestTrackerSearchRow = questTrackerSearchRow
 
 	local questTrackerRestoreButton = CreateFrame("Button", nil, questTrackerSearchRow, "UIPanelButtonTemplate")
-	questTrackerRestoreButton:SetSize(72, 24)
+	questTrackerRestoreButton:SetSize(90, 28)
 	questTrackerRestoreButton:SetPoint("RIGHT", questTrackerSearchRow, "RIGHT", 0, 0)
 	questTrackerRestoreButton:SetText("Restore")
 	questTrackerRestoreButton:Disable()
 	RQE.QuestTrackerRestoreButton = questTrackerRestoreButton
 
 	local questTrackerSearchButton = CreateFrame("Button", nil, questTrackerSearchRow, "UIPanelButtonTemplate")
-	questTrackerSearchButton:SetSize(68, 24)
+	questTrackerSearchButton:SetSize(82, 28)
 	questTrackerSearchButton:SetPoint("RIGHT", questTrackerRestoreButton, "LEFT", -4, 0)
 	questTrackerSearchButton:SetText("Search")
 	RQE.QuestTrackerSearchButton = questTrackerSearchButton
@@ -149,8 +152,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	questTrackerSearchInput:SetTextInsets(6, 6, 0, 0)
 	RQE.QuestTrackerSearchInput = questTrackerSearchInput
 	if RQE.UI then
-		RQE.UI:StyleTextButton(questTrackerSearchButton)
-		RQE.UI:StyleTextButton(questTrackerRestoreButton)
+		RQE.UI:StyleTextButton(questTrackerSearchButton, { trackerAction = true })
+		RQE.UI:StyleTextButton(questTrackerRestoreButton, { trackerAction = true })
 		RQE.UI:StyleSearchBox(questTrackerSearchInput)
 	end
 
@@ -243,7 +246,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		frame:SetScript("OnLeave", function()
 			-- Delay to recheck mouse position to ensure accurate detection
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				-- Check if mouse is still over the frame or any of its children
 				-- if not MouseIsOver(frame) then
 				if not frame:IsMouseOver() then
@@ -513,8 +517,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Check every frame so Blizzard's tracker cannot linger after quest/movement updates.
 	local objectiveTrackerWatchdog = CreateFrame("Frame")
 	objectiveTrackerWatchdog:SetScript("OnUpdate", function()
-		if RQE.db.profile.mythicScenarioMode and not InCombatLockdown() then
-			if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if RQE.db.profile.mythicScenarioMode and not InCombatLockdown() then
+		if RQE.db.profile.mythicScenarioMode and not RQE.API.Client.InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+			if not RQE.API.Client.C_Scenario.IsInScenario() then
 				RQE:UpdateTrackerVisibility()
 			end
 		end
@@ -525,7 +531,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if RQE.db.profile.toggleBlizzObjectiveTracker or RQE.db.profile.mythicScenarioMode then
 			return
 		end
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			RQE.UpdateTrackerVisibilityAfterCombat = true
 			return
 		end
@@ -645,42 +652,99 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 
-	-- Create the Recipe Tracking Frame using the CreateChildFrame method
+	-- Profession is a normal scrollable child section, immediately before Achievements.
 	function RQE:CreateRecipeTrackingFrame()
-		-- If the frame already exists, return
-		if RQE.recipeTrackingFrame then
-			return
-		end
-
-		-- Create the child frame using the same helper function as the others
-		local recipeFrame = CreateChildFrame("RQERecipeTrackingFrame", content, 0, -60, content:GetWidth(), 50)
-
-		-- Set the backdrop
+		if RQE.recipeTrackingFrame then return end
+		local recipeFrame = CreateChildFrame("RQERecipeTrackingFrame", content, 0, 0, content:GetWidth(), 60)
 		recipeFrame:SetBackdrop({
 			bgFile = "Interface/Tooltips/UI-Tooltip-Background",
 			edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
 			tile = true, tileSize = 16, edgeSize = 8,
 			insets = { left = 4, right = 4, top = 4, bottom = 4 }
 		})
-
-		-- Set the backdrop color
 		recipeFrame:SetBackdropColor(0.2, 0.2, 0.2, 0.7)
 		if RQE.UI then RQE.UI:StylePanel(recipeFrame, 0.72, "section") end
-
-		-- Store the frame for future reference
 		RQE.recipeTrackingFrame = recipeFrame
+		recipeFrame.header = CreateChildFrameHeader(recipeFrame, "Profession")
+		recipeFrame.rows = {}
+		recipeFrame:Hide()
+	end
 
-		-- Add a clickable button or interactive text for the recipe
-		local recipeButton = CreateFrame("Button", nil, RQE.recipeTrackingFrame, "GameFontNormal")
-		local recipeName
-		recipeButton:SetPoint("CENTER", RQE.recipeTrackingFrame, "CENTER", 0, 0)
-		recipeButton:SetSize(250, 20)
-		recipeButton:SetText(recipeName)
-		recipeButton:SetNormalFontObject("GameFontNormal")
-		recipeButton:SetHighlightFontObject("GameFontHighlight")
-		RQE.recipeButton = recipeButton
+	local function CreateRecipeRow(recipeFrame)
+		local row = CreateFrame("Button", nil, recipeFrame)
+		row:SetHeight(19)
+		row.text = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		row.text:SetPoint("TOPLEFT", row, "TOPLEFT", 0, 0)
+		row.text:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
+		row.text:SetJustifyH("LEFT")
+		row.text:SetWordWrap(false)
+		row:RegisterForClicks("LeftButtonUp")
+		row:SetScript("OnClick", function(self)
+			if RQE.API.Client.IsShiftKeyDown() then
+				RQE.API.SetTrackedRecipe(self.recipeID, false, self.isRecraft)
+				return
+			end
+			RQE.API.OpenTrackedRecipe(self.recipeID)
+		end)
+		row:SetScript("OnEnter", function(self)
+			RQE.API.ShowTrackedRecipeTooltip(self)
+		end)
+		row:SetScript("OnLeave", RQE.API.HideTrackedTooltip)
+		return row
+	end
 
-		RQE.recipeButton:EnableMouse(true)
+	function RQE:RenderRecipeTrackingFrame(recipes)
+		local recipeFrame = self.recipeTrackingFrame
+		if not recipeFrame then return end
+		local rowIndex, offset = 0, -35
+		for _, recipe in ipairs(recipes) do
+			rowIndex = rowIndex + 1
+			local row = recipeFrame.rows[rowIndex] or CreateRecipeRow(recipeFrame)
+			recipeFrame.rows[rowIndex] = row
+			row.recipeID, row.isRecraft = recipe.id, recipe.isRecraft
+			row.recipeName, row.itemID, row.currencyID = recipe.name, nil, nil
+			local craftCount
+			for _, reagent in ipairs(recipe.reagents) do
+				if reagent.required > 0 then
+					local possible = math.floor(reagent.count / reagent.required)
+					craftCount = craftCount and math.min(craftCount, possible) or possible
+				end
+			end
+			row.text:SetText(craftCount and string.format("%s [x%d]", recipe.name, craftCount) or recipe.name)
+			row.text:SetTextColor(1, 0.82, 0)
+			row:ClearAllPoints()
+			row:SetPoint("TOPLEFT", recipeFrame, "TOPLEFT", 12, offset)
+			row:SetPoint("TOPRIGHT", recipeFrame, "TOPRIGHT", -12, offset)
+			row:Show()
+			offset = offset - 21
+			for _, reagent in ipairs(recipe.reagents) do
+				rowIndex = rowIndex + 1
+				row = recipeFrame.rows[rowIndex] or CreateRecipeRow(recipeFrame)
+				recipeFrame.rows[rowIndex] = row
+				row.recipeID, row.isRecraft = recipe.id, recipe.isRecraft
+				row.recipeName, row.itemID, row.currencyID = recipe.name, reagent.itemID, reagent.currencyID
+				row.text:SetText(string.format("%s: %d/%d", reagent.name, reagent.count, reagent.required))
+				if reagent.required > 0 and reagent.count >= reagent.required then
+					row.text:SetTextColor(0.25, 1, 0.25)
+				else
+					row.text:SetTextColor(1, 1, 1)
+				end
+				row:ClearAllPoints()
+				row:SetPoint("TOPLEFT", recipeFrame, "TOPLEFT", 26, offset)
+				row:SetPoint("TOPRIGHT", recipeFrame, "TOPRIGHT", -12, offset)
+				row:Show()
+				offset = offset - 19
+			end
+			offset = offset - 7
+		end
+		for i = rowIndex + 1, #recipeFrame.rows do recipeFrame.rows[i]:Hide() end
+		recipeFrame.trackedRecipeCount = #recipes
+		recipeFrame._rqeRenderedHeight = math.max(60, -offset + 9)
+		recipeFrame:SetHeight(recipeFrame._rqeRenderedHeight)
+		recipeFrame:SetShown(#recipes > 0)
+		if self.UpdateRecipeTrackingAnchor then self.UpdateRecipeTrackingAnchor() end
+		self.RefreshQuestTrackerScrollRange()
+		self:UpdateRQEQuestFrameVisibility()
 	end
 
 	-- Create headers for each child frame
@@ -730,18 +794,21 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to dynamically set ScenarioChildFrame height based on the number of criteria
 	function RQE.SetScenarioChildFrameHeight()
 		-- Check if the player is currently in a scenario
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			return
 		end
 
 		-- Fetch scenario information
-		local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+		local scenarioInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
 		if not scenarioInfo then
 			return
 		end
 
 		-- Fetch the number of criteria for the current scenario step
-		local numCriteria = select(3, C_Scenario.GetStepInfo()) or 0
+		-- Previous Blizzard call changed 2026.09.25: local numCriteria = select(3, C_Scenario.GetStepInfo()) or 0
+		local numCriteria = select(3, RQE.API.Client.C_Scenario.GetStepInfo()) or 0
 
 		-- Base height for the frame
 		local baseHeight = 120
@@ -767,7 +834,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	local function UpdateHeader(frame, baseTitle, questCount)
-		local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
+		-- Previous Blizzard call changed 2026.09.25: local maxQuests = C_QuestLog.GetMaxNumQuestsCanAccept()
+		local maxQuests = RQE.API.Client.C_QuestLog.GetMaxNumQuestsCanAccept()
 		local numShownEntries, numQuestsInLog = RQE.API.GetNumQuestLogEntries()
 		local titleText = baseTitle
 		if frame == RQE.QuestsFrame then
@@ -775,7 +843,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		else
 			titleText = titleText .. " (" .. questCount .. ")"
 		end
-		frame.header:SetText(titleText)
+		if RQE.RefreshTrackerSectionHeaderText then
+			RQE:RefreshTrackerSectionHeaderText(frame, titleText)
+		else
+			frame.header:SetText(titleText)
+		end
 	end
 
 
@@ -786,8 +858,42 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 	-- #4a. Default Category Anchors
 	-------------------------------------------------------
+	function RQE.UpdateRecipeTrackingAnchor()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
+		local recipeFrame = RQE.recipeTrackingFrame
+		if not recipeFrame then return end
+		local previous
+		for _, section in ipairs({ RQE.TaskQuestsFrame, RQE.BonusQuestsFrame,
+			RQE.WorldQuestsFrame, RQE.QuestsFrame, RQE.CampaignFrame, RQE.ScenarioChildFrame }) do
+			if section and section:IsShown() then
+				previous = section
+				break
+			end
+		end
+		recipeFrame:ClearAllPoints()
+		if previous then
+			recipeFrame:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -5)
+		else
+			recipeFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+		end
+		RQE.AchievementsFrame:ClearAllPoints()
+		if recipeFrame:IsShown() then
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", recipeFrame, "BOTTOMLEFT", 0, -5)
+		elseif previous then
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -5)
+		else
+			RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+		end
+	end
 
 	function UpdateFrameAnchors()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
 		-- Clear all points to prevent any previous anchoring affecting the new setup
 		RQE.CampaignFrame:ClearAllPoints()
 		RQE.QuestsFrame:ClearAllPoints()
@@ -871,23 +977,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 		end
 
-		-- Anchor RecipeTrackingFrame (if it exists) below the last frame
-		if RQE.recipeTrackingFrame then
-			if RQE.AchievementsFrame and RQE.AchievementsFrame:IsShown() then
-				RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.AchievementsFrame, "BOTTOMLEFT", 0, -30)
-			elseif RQE.WorldQuestsFrame and RQE.WorldQuestsFrame:IsShown() then
-				RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.WorldQuestsFrame, "BOTTOMLEFT", 0, -5)
-			elseif RQE.QuestsFrame and RQE.QuestsFrame:IsShown() then
-				RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.QuestsFrame, "BOTTOMLEFT", 0, -5)
-			elseif RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
-				RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.CampaignFrame, "BOTTOMLEFT", 0, -10)
-			elseif RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
-				RQE.recipeTrackingFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
-			else
-				-- Default to the top of content if no other frame is shown
-				RQE.recipeTrackingFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-			end
-		end
+		RQE.UpdateRecipeTrackingAnchor()
 	end
 
 
@@ -897,6 +987,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Make the function global or move it outside where it is defined so it can be accessed by UpdateFrameAnchors
 	function ResetChildFramesToDefault()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
 		-- CampaignFrame positioning
 		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 			RQE.CampaignFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
@@ -936,6 +1030,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		else
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 		end
+		RQE.UpdateRecipeTrackingAnchor()
 	end
 
 
@@ -952,6 +1047,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Adjust Set Point Anchor of Child Frames based on LastElements
 	function UpdateChildFramePositions(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder(lastCampaignElement, lastQuestElement, lastWorldQuestElement)
+			return
+		end
 		-- Reset positions to default first
 		ResetChildFramesToDefault()
 		local elementStackGap = GetQuestSectionBottomPadding() + 5
@@ -1002,6 +1101,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		else
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 		end
+		RQE.UpdateRecipeTrackingAnchor()
 	end
 
 
@@ -1011,6 +1111,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Update the Campaign frame anchor dynamically based on the state of the ScenarioChild being is present or not
 	function RQE.UpdateCampaignFrameAnchor()
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+			return
+		end
 		if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame:IsShown() then
 			-- If ScenarioChildFrame is present and shown, anchor CampaignFrame to ScenarioChildFrame
 			RQE.CampaignFrame:ClearAllPoints()  -- Clear existing points
@@ -1182,6 +1286,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.BonusQuestsFrame,
 			RQE.TaskQuestsFrame,
 			RQE.AchievementsFrame,
+			RQE.recipeTrackingFrame,
 		}
 
 		-- Adjust width for each element
@@ -1264,7 +1369,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				-- corrected child width.
 				if childFrame.header then
 					local objectType = childFrame.header.GetObjectType and childFrame.header:GetObjectType()
-					if objectType == "FontString" then
+					if objectType == "FontString" and childFrame._rqeCollapseButton
+						and RQE.RefreshTrackerSectionHeaderText then
+						RQE:RefreshTrackerSectionHeaderText(childFrame)
+					elseif objectType == "FontString" then
 						childFrame.header:SetWidth(math.max(1, childWidth - textPadding))
 					end
 				end
@@ -1309,12 +1417,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to create and position the ScrollFrame's child frames
 	local function shouldSortQuests()
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			return false  -- If no valid mapID, return false to prevent sorting
 		end
 
-		local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		local position = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not position then return false end
 
 		local x, y = position:GetXY()
@@ -1328,12 +1438,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 
 	local function shouldSortQuestsWhileDragonRiding()
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			return false  -- If no valid mapID, return false to prevent sorting
 		end
 
-		local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local position = C_Map.GetPlayerMapPosition(mapID, "player")
+		local position = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not position then return false end
 
 		local x, y = position:GetXY()
@@ -1358,7 +1470,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	]]
 	function RQE:AddEmptyWorldQuestsToWatch(mapID, allowedClassifications)
 		-- Default to current zone if none passed
-		mapID = mapID or C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: mapID = mapID or C_Map.GetBestMapForUnit("player")
+		mapID = mapID or RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then
 			print("Could not determine map ID.")
 			return
@@ -1368,7 +1481,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		allowedClassifications = allowedClassifications or { [10] = true }
 
 		-- Fetch world quests on the map
-		local taskPOIs = C_TaskQuest.GetQuestsOnMap(mapID)
+		-- Previous Blizzard call changed 2026.09.25: local taskPOIs = C_TaskQuest.GetQuestsOnMap(mapID)
+		local taskPOIs = RQE.API.Client.C_TaskQuest.GetQuestsOnMap(mapID)
 		if not taskPOIs or #taskPOIs == 0 then
 			print("No world quests found on this map.")
 			return
@@ -1378,7 +1492,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			local questID = poi.questID
 			if questID then
 				-- Check classification
-				local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+				-- Previous Blizzard call changed 2026.09.25: local classification = C_QuestInfoSystem.GetQuestClassification(questID)
+				local classification = RQE.API.Client.C_QuestInfoSystem.GetQuestClassification(questID)
 				if allowedClassifications[classification] then
 					local questData = RQE.getQuestData(questID)
 					local stepIndex = RQE.AddonSetStepIndex or 1
@@ -1386,7 +1501,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 					if questData and stepIndex == 1 and totalSteps == 0 then
 						-- Add to world quest watch
-						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+						RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 
 						if RQE.db.profile.debugLevel == "INFO" then
 							print(string.format("Watching empty WQ: %d - '%s'", questID, RQE.API.GetTitleForQuestID(questID) or "Unknown"))
@@ -1405,10 +1521,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to clear all watched quests and add only those in DB with zero steps
 	function RQE:WatchQuestsInDBWithNoSteps()
 		-- Clear all currently watched quests
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local watchedID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local watchedID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local watchedID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if watchedID then
-				C_QuestLog.RemoveQuestWatch(watchedID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(watchedID)
+				RQE.API.Client.C_QuestLog.RemoveQuestWatch(watchedID)
 			end
 		end
 
@@ -1427,7 +1546,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					local totalSteps = #questData
 					if totalSteps == 0 then
 						-- Add to quest watch
-						C_QuestLog.AddQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 						if RQE.db.profile.debugLevel == "INFO" then
 							local title = RQE.API.GetTitleForQuestID(questID) or "Unknown"
 							print(string.format("Watching quest with no steps: %d - '%s'", questID, title))
@@ -1448,14 +1568,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if RQE.PlayerMountStatus == "Dragonriding" then
 			if shouldSortQuestsWhileDragonRiding() or RQE.canSortQuests then
 				-- Logic to sort quests based on proximity
-				C_QuestLog.SortQuestWatches()
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SortQuestWatches()
+				RQE.API.Client.C_QuestLog.SortQuestWatches()
 				GatherAndSortWorldQuestsByProximity()
 				RQE.canSortQuests = false
 			end
 		else
 			if shouldSortQuests() or RQE.canSortQuests then
 				-- Logic to sort quests based on proximity
-				C_QuestLog.SortQuestWatches()
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SortQuestWatches()
+				RQE.API.Client.C_QuestLog.SortQuestWatches()
 				GatherAndSortWorldQuestsByProximity()
 				RQE.canSortQuests = false
 			end
@@ -1465,8 +1587,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function that prints the currently watched quest along with a listing of distance
 	function RQE:PrintSortedWatchedQuests()
-		local playerMapID = C_Map.GetBestMapForUnit("player")
-		local pos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local pos = C_Map.GetPlayerMapPosition(playerMapID, "player")
+		local pos = RQE.API.Client.C_Map.GetPlayerMapPosition(playerMapID, "player")
 
 		if not pos then
 			print("Error: Unable to determine player position.")
@@ -1479,11 +1603,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local questDistances = {}
 
 		-- Iterate over watched quests
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 
 			-- Get the squared distance to the quest
-			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			-- Previous Blizzard call changed 2026.09.25: local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			local distanceSq, onContinent = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(questID)
 
 			-- Only include quests that are on the same continent
 			if distanceSq and onContinent then
@@ -1515,19 +1642,23 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	function RQE:SortWatchedQuestsByProximity()
 		RQE.SortedWatchedQuests = {}
 
-		local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+		local numTrackedQuests = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		if numTrackedQuests == 0 then return end
 
 		for sourceOrder = 1, numTrackedQuests do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(sourceOrder)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(sourceOrder)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(sourceOrder)
 			if questID and not RQE.API.IsWorldQuest(questID) then
-				local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+				-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+				local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 				local questInfo = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
 				local questTitle = (questInfo and questInfo.title)
 					or (RQE.API.GetTitleForQuestID and RQE.API.GetTitleForQuestID(questID))
 					or "Unknown Quest"
 				local questLevel = tonumber(questInfo and questInfo.level) or -math.huge
-				local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+				local isCampaignQuest = RQE.API.Client.C_CampaignInfo.IsCampaignQuest(questID) or RQE.API.Client.C_QuestLog.IsMetaQuest(questID)
 				local distanceYards, stepIndex = RQE:GetTrackerQuestStepDistance(questID)
 
 				table.insert(RQE.SortedWatchedQuests, {
@@ -1659,19 +1790,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 
 	local function GetTrackerItemCount(itemID)
-		if C_Item and C_Item.GetItemCount then
-			return tonumber(C_Item.GetItemCount(itemID)) or 0
+		-- Previous Blizzard call changed 2026.09.25: if C_Item and C_Item.GetItemCount then
+		if C_Item and RQE.API.ResolveClientAPI("C_Item.GetItemCount") then
+			-- Previous Blizzard call changed 2026.09.25: return tonumber(C_Item.GetItemCount(itemID)) or 0
+			return tonumber(RQE.API.Client.C_Item.GetItemCount(itemID)) or 0
 		end
-		if GetItemCount then
-			return tonumber(GetItemCount(itemID, false)) or 0
+		-- Previous Blizzard call changed 2026.09.25: if GetItemCount then
+		if RQE.API.ResolveClientAPI("GetItemCount") then
+			-- Previous Blizzard call changed 2026.09.25: return tonumber(GetItemCount(itemID, false)) or 0
+			return tonumber(RQE.API.Client.GetItemCount(itemID, false)) or 0
 		end
 		return 0
 	end
 
 
 	local function GetTrackerAuraStacks(auraName, filter)
-		if not (C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName) then return 0 end
-		local aura = C_UnitAuras.GetAuraDataBySpellName("player", auraName, filter)
+		-- Previous Blizzard call changed 2026.09.25: if not (C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName) then return 0 end
+		if not (C_UnitAuras and RQE.API.ResolveClientAPI("C_UnitAuras.GetAuraDataBySpellName")) then return 0 end
+		-- Previous Blizzard call changed 2026.09.25: local aura = C_UnitAuras.GetAuraDataBySpellName("player", auraName, filter)
+		local aura = RQE.API.Client.C_UnitAuras.GetAuraDataBySpellName("player", auraName, filter)
 		if not aura then return 0 end
 		return aura.applications and aura.applications > 0 and aura.applications or 1
 	end
@@ -1739,10 +1876,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			return #check > 0
 
 		elseif functionName == "CheckDBZoneChange" then
-			local currentMapID = C_Map.GetBestMapForUnit("player")
-			local currentSubZone = tostring(GetSubZoneText and GetSubZoneText() or ""):lower()
-			local currentZone = tostring(GetZoneText and GetZoneText() or ""):lower()
-			local currentRealZone = tostring(GetRealZoneText and GetRealZoneText() or ""):lower()
+			-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player")
+			local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local currentSubZone = tostring(GetSubZoneText and GetSubZoneText() or ""):lower()
+			local currentSubZone = tostring(RQE.API.ResolveClientAPI("GetSubZoneText") and RQE.API.Client.GetSubZoneText() or ""):lower()
+			-- Previous Blizzard call changed 2026.09.25: local currentZone = tostring(GetZoneText and GetZoneText() or ""):lower()
+			local currentZone = tostring(RQE.API.ResolveClientAPI("GetZoneText") and RQE.API.Client.GetZoneText() or ""):lower()
+			-- Previous Blizzard call changed 2026.09.25: local currentRealZone = tostring(GetRealZoneText and GetRealZoneText() or ""):lower()
+			local currentRealZone = tostring(RQE.API.ResolveClientAPI("GetRealZoneText") and RQE.API.Client.GetRealZoneText() or ""):lower()
 			for _, mapOrZone in ipairs(check) do
 				local requiredMapID = tonumber(mapOrZone)
 				if (requiredMapID and requiredMapID == currentMapID)
@@ -1762,15 +1903,19 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			if not objective then return false end
 
 			local objectiveType
-			if GetQuestObjectiveInfo then
-				objectiveType = select(2, GetQuestObjectiveInfo(questID, objectiveIndex, false))
+			-- Previous Blizzard call changed 2026.09.25: if GetQuestObjectiveInfo then
+			if RQE.API.ResolveClientAPI("GetQuestObjectiveInfo") then
+				-- Previous Blizzard call changed 2026.09.25: objectiveType = select(2, GetQuestObjectiveInfo(questID, objectiveIndex, false))
+				objectiveType = select(2, RQE.API.Client.GetQuestObjectiveInfo(questID, objectiveIndex, false))
 			end
 
 			for index = 1, math.max(1, #neededAmount) do
 				local required = tonumber(neededAmount[index]) or 1
-				if objectiveType == "progressbar" and GetQuestProgressBarPercent then
+				-- Previous Blizzard call changed 2026.09.25: if objectiveType == "progressbar" and GetQuestProgressBarPercent then
+				if objectiveType == "progressbar" and RQE.API.ResolveClientAPI("GetQuestProgressBarPercent") then
 					if required == 1 then required = 100 elseif required == 0.01 then required = 1 end
-					if (tonumber(GetQuestProgressBarPercent(questID)) or 0) < required then return false end
+					-- Previous Blizzard call changed 2026.09.25: if (tonumber(GetQuestProgressBarPercent(questID)) or 0) < required then return false end
+					if (tonumber(RQE.API.Client.GetQuestProgressBarPercent(questID)) or 0) < required then return false end
 				else
 					local fulfilled = tonumber(objective.numFulfilled) or 0
 					if fulfilled < required then return false end
@@ -1782,20 +1927,26 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		elseif functionName == "CheckDBComplete" then
 			local checkedQuestID = tonumber(check[1]) or questID
-			return C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+			-- Previous Blizzard call changed 2026.09.25: return C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
+			return RQE.API.ResolveClientAPI("C_QuestLog.ReadyForTurnIn") and RQE.API.Client.C_QuestLog.ReadyForTurnIn(checkedQuestID) == true
 
 		elseif functionName == "CheckScenarioStage" then
-			if not (C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario()) then return false end
-			local scenarioInfo = C_ScenarioInfo and C_ScenarioInfo.GetScenarioInfo and C_ScenarioInfo.GetScenarioInfo()
+			-- Previous Blizzard call changed 2026.09.25: if not (C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario()) then return false end
+			if not (C_Scenario and RQE.API.ResolveClientAPI("C_Scenario.IsInScenario") and RQE.API.Client.C_Scenario.IsInScenario()) then return false end
+			-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_ScenarioInfo and C_ScenarioInfo.GetScenarioInfo and C_ScenarioInfo.GetScenarioInfo()
+			local scenarioInfo = C_ScenarioInfo and RQE.API.ResolveClientAPI("C_ScenarioInfo.GetScenarioInfo") and RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
 			return scenarioInfo and tonumber(scenarioInfo.currentStage)
 				and scenarioInfo.currentStage >= (tonumber(neededAmount[1]) or 1) or false
 
 		elseif functionName == "CheckScenarioCriteria" then
-			if not (C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario()) then return false end
+			-- Previous Blizzard call changed 2026.09.25: if not (C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario()) then return false end
+			if not (C_Scenario and RQE.API.ResolveClientAPI("C_Scenario.IsInScenario") and RQE.API.Client.C_Scenario.IsInScenario()) then return false end
 			local results = {}
 			for index, criteriaIndex in ipairs(check) do
-				local criteriaInfo = C_ScenarioInfo and C_ScenarioInfo.GetCriteriaInfo
-					and C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
+				-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo and C_ScenarioInfo.GetCriteriaInfo
+				local criteriaInfo = C_ScenarioInfo and RQE.API.ResolveClientAPI("C_ScenarioInfo.GetCriteriaInfo")
+					-- Previous Blizzard call changed 2026.09.25: and C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
+					and RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(tonumber(criteriaIndex))
 				results[index] = criteriaInfo
 					and (tonumber(criteriaInfo.quantity) or 0) >= (tonumber(neededAmount[index]) or tonumber(criteriaInfo.totalQuantity) or 1)
 					or false
@@ -1851,7 +2002,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		local objectiveIndex = tonumber(stepData.objectiveIndex)
 		if objectiveIndex == 99 then
-			return C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID) == true
+			-- Previous Blizzard call changed 2026.09.25: return C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID) == true
+			return RQE.API.ResolveClientAPI("C_QuestLog.ReadyForTurnIn") and RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) == true
 		elseif objectiveIndex and objectives[objectiveIndex] then
 			return objectives[objectiveIndex].finished == true
 		end
@@ -1865,14 +2017,17 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local description = tostring(stepData and stepData.description or "")
 		local requiredFaction = description:match("^%s*(ALLIANCE):") or description:match("^%s*(HORDE):")
 		if not requiredFaction then return false end
-		local playerFaction = UnitFactionGroup and UnitFactionGroup("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerFaction = UnitFactionGroup and UnitFactionGroup("player")
+		local playerFaction = RQE.API.ResolveClientAPI("UnitFactionGroup") and RQE.API.Client.UnitFactionGroup("player")
 		return playerFaction and requiredFaction ~= string.upper(playerFaction)
 	end
 
 
 	local function ResolveTrackerQuestStepIndex(questID, questData)
-		if (C_QuestLog.IsComplete and C_QuestLog.IsComplete(questID))
-			or (C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID))
+		-- Previous Blizzard call changed 2026.09.25: if (C_QuestLog.IsComplete and C_QuestLog.IsComplete(questID))
+		if (RQE.API.ResolveClientAPI("C_QuestLog.IsComplete") and RQE.API.Client.C_QuestLog.IsComplete(questID))
+			-- Previous Blizzard call changed 2026.09.25: or (C_QuestLog.ReadyForTurnIn and C_QuestLog.ReadyForTurnIn(questID))
+			or (RQE.API.ResolveClientAPI("C_QuestLog.ReadyForTurnIn") and RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID))
 		then
 			for stepIndex, stepData in ipairs(questData) do
 				if tonumber(stepData.objectiveIndex) == 99 or stepData.funct == "CheckDBComplete" then
@@ -1914,8 +2069,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if not (ownerQuestID and liveStepIndex) then return end
 
 		local isWatched = false
-		for watchIndex = 1, C_QuestLog.GetNumQuestWatches() do
-			if C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex) == ownerQuestID then
+		-- Previous Blizzard call changed 2026.09.25: for watchIndex = 1, C_QuestLog.GetNumQuestWatches() do
+		for watchIndex = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex) == ownerQuestID then
+			if RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex) == ownerQuestID then
 				isWatched = true
 				break
 			end
@@ -1971,8 +2128,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- The cache aliases SavedVariables; leave it intact until tracking is restored.
 		if self.PendingTrackerStateRestore then return end
 		local watchedQuestIDs = {}
-		for watchIndex = 1, C_QuestLog.GetNumQuestWatches() do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+		-- Previous Blizzard call changed 2026.09.25: for watchIndex = 1, C_QuestLog.GetNumQuestWatches() do
+		for watchIndex = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
 			if questID and not RQE.API.IsWorldQuest(questID) then
 				watchedQuestIDs[questID] = true
 				self:GetNextIncompleteTrackerStepIndex(questID, true)
@@ -2002,12 +2161,15 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		local targetPosition = CreateVector2D and CreateVector2D(x, y)
 		local function GetWorldDistance(playerMapID, playerPosition)
-			if not (targetPosition and C_Map.GetWorldPosFromMapPos and playerMapID and playerPosition) then
+			-- Previous Blizzard call changed 2026.09.25: if not (targetPosition and C_Map.GetWorldPosFromMapPos and playerMapID and playerPosition) then
+			if not (targetPosition and RQE.API.ResolveClientAPI("C_Map.GetWorldPosFromMapPos") and playerMapID and playerPosition) then
 				return nil
 			end
 
-			local playerContinent, playerWorldPosition = C_Map.GetWorldPosFromMapPos(playerMapID, playerPosition)
-			local targetContinent, targetWorldPosition = C_Map.GetWorldPosFromMapPos(mapID, targetPosition)
+			-- Previous Blizzard call changed 2026.09.25: local playerContinent, playerWorldPosition = C_Map.GetWorldPosFromMapPos(playerMapID, playerPosition)
+			local playerContinent, playerWorldPosition = RQE.API.Client.C_Map.GetWorldPosFromMapPos(playerMapID, playerPosition)
+			-- Previous Blizzard call changed 2026.09.25: local targetContinent, targetWorldPosition = C_Map.GetWorldPosFromMapPos(mapID, targetPosition)
+			local targetContinent, targetWorldPosition = RQE.API.Client.C_Map.GetWorldPosFromMapPos(mapID, targetPosition)
 			if not (playerWorldPosition and targetWorldPosition and playerContinent == targetContinent) then
 				return nil
 			end
@@ -2025,15 +2187,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Ask for the player's position on the destination map first. This avoids
 		-- child/parent map mismatches and works for maps whose world origin is absent.
-		local playerOnTargetMap = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local playerOnTargetMap = C_Map.GetPlayerMapPosition(mapID, "player")
+		local playerOnTargetMap = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if playerOnTargetMap then
 			local distance = GetWorldDistance(mapID, playerOnTargetMap)
 			if distance then return distance end
 
 			-- Retail documents these dimensions in yards, so this is still an exact
 			-- same-map distance when GetWorldPosFromMapPos is unavailable.
-			if C_Map.GetMapWorldSize then
-				local mapWidth, mapHeight = C_Map.GetMapWorldSize(mapID)
+			-- Previous Blizzard call changed 2026.09.25: if C_Map.GetMapWorldSize then
+			if RQE.API.ResolveClientAPI("C_Map.GetMapWorldSize") then
+				-- Previous Blizzard call changed 2026.09.25: local mapWidth, mapHeight = C_Map.GetMapWorldSize(mapID)
+				local mapWidth, mapHeight = RQE.API.Client.C_Map.GetMapWorldSize(mapID)
 				local playerX, playerY = playerOnTargetMap:GetXY()
 				if mapWidth and mapHeight and mapWidth > 0 and mapHeight > 0 and playerX and playerY then
 					local deltaX = (x - playerX) * mapWidth
@@ -2045,8 +2210,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Cross-map native world-space attempt, followed by the addon's existing HBD
 		-- translator for maps that require its parent/child map transforms.
-		local playerMapID = C_Map.GetBestMapForUnit("player")
-		local playerPosition = playerMapID and C_Map.GetPlayerMapPosition(playerMapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerPosition = playerMapID and C_Map.GetPlayerMapPosition(playerMapID, "player")
+		local playerPosition = playerMapID and RQE.API.Client.C_Map.GetPlayerMapPosition(playerMapID, "player")
 		local distance = GetWorldDistance(playerMapID, playerPosition)
 		if distance then return distance end
 
@@ -2063,10 +2230,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- RQE.PullDataFromMapQuests/C_QuestLog.GetQuestsOnMap. Cache that same snapshot
 	-- briefly so refreshing a full tracker only scans Blizzard's POIs once.
 	local function GetTrackerBlizzardPOICoordinates(questID)
-		local playerMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not playerMapID then return nil end
 
-		local now = GetTime()
+		-- Previous Blizzard call changed 2026.09.25: local now = GetTime()
+		local now = RQE.API.Client.GetTime()
 		local cache = RQE.trackerBlizzardPOICache
 		if not cache or cache.mapID ~= playerMapID or now - cache.updatedAt >= 1 then
 			local quests = RQE.PullDataFromMapQuests and RQE.PullDataFromMapQuests() or {}
@@ -2116,9 +2285,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Next ask Blizzard for a route waypoint on the quest's UI map, rather than
 		-- assuming the player's best map is the same.
-		local questMapID = GetQuestUiMapID and GetQuestUiMapID(questID)
-		if questMapID and C_QuestLog.GetNextWaypointForMap then
-			local x, y = C_QuestLog.GetNextWaypointForMap(questID, questMapID)
+		-- Previous Blizzard call changed 2026.09.25: local questMapID = GetQuestUiMapID and GetQuestUiMapID(questID)
+		local questMapID = RQE.API.ResolveClientAPI("GetQuestUiMapID") and RQE.API.Client.GetQuestUiMapID(questID)
+		-- Previous Blizzard call changed 2026.09.25: if questMapID and C_QuestLog.GetNextWaypointForMap then
+		if questMapID and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointForMap") then
+			-- Previous Blizzard call changed 2026.09.25: local x, y = C_QuestLog.GetNextWaypointForMap(questID, questMapID)
+			local x, y = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, questMapID)
 			if x and y then
 				local distance = GetPlayerDistanceToMapPositionYards(questMapID, x, y)
 				if distance then
@@ -2128,8 +2300,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Generic route/transition waypoint fallback.
-		if C_QuestLog.GetNextWaypoint then
-			local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.GetNextWaypoint then
+		if RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypoint") then
+			-- Previous Blizzard call changed 2026.09.25: local mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+			local mapID, x, y = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 			if mapID and x and y then
 				local distance = GetPlayerDistanceToMapPositionYards(mapID, x, y)
 				if distance then
@@ -2139,9 +2313,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Last resort: look for a waypoint on the player's current map.
-		local playerMapID = C_Map.GetBestMapForUnit("player")
-		if playerMapID and C_QuestLog.GetNextWaypointForMap then
-			local x, y = C_QuestLog.GetNextWaypointForMap(questID, playerMapID)
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+		local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: if playerMapID and C_QuestLog.GetNextWaypointForMap then
+		if playerMapID and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointForMap") then
+			-- Previous Blizzard call changed 2026.09.25: local x, y = C_QuestLog.GetNextWaypointForMap(questID, playerMapID)
+			local x, y = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(questID, playerMapID)
 			if x and y then
 				local distance = GetPlayerDistanceToMapPositionYards(playerMapID, x, y)
 				if distance then
@@ -2152,8 +2329,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Blizzard's quest-distance API uses the same active objective destination and
 		-- is a final fallback if a POI exists but no coordinate conversion is exposed.
-		if C_QuestLog.GetDistanceSqToQuest then
-			local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.GetDistanceSqToQuest then
+		if RQE.API.ResolveClientAPI("C_QuestLog.GetDistanceSqToQuest") then
+			-- Previous Blizzard call changed 2026.09.25: local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+			local distanceSq, onContinent = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(questID)
 			if distanceSq and onContinent then
 				return math.sqrt(distanceSq)
 			end
@@ -2171,8 +2350,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- C_Map coordinates can drift by tiny fractions while the player is standing
 	-- still, which otherwise makes rounded yard labels oscillate by a few yards.
 	local function GetTrackedDistancePositionCell()
-		local mapID = C_Map.GetBestMapForUnit("player")
-		local position = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local position = mapID and C_Map.GetPlayerMapPosition(mapID, "player")
+		local position = mapID and RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not position then return nil end
 
 		local x, y = position:GetXY()
@@ -2203,7 +2384,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	function RQE:RefreshTrackedQuestDistances(force)
 		if not (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()) then return end
 
-		local now = GetTime()
+		-- Previous Blizzard call changed 2026.09.25: local now = GetTime()
+		local now = RQE.API.Client.GetTime()
 		if not force and RQE.lastTrackedQuestDistanceRefresh
 			and now - RQE.lastTrackedQuestDistanceRefresh < 0.2
 		then
@@ -2267,19 +2449,23 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to gather and sort World Quests by proximity
 	function GatherAndSortWorldQuestsByProximity()
 		local worldQuests = {}
-		local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+		local numTrackedWorldQuests = RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches()
 
 		-- Gather World Quests
 		for i = 1, numTrackedWorldQuests do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID and RQE.API.IsWorldQuest(questID) then
-				local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: local distanceSq = C_QuestLog.GetDistanceSqToQuest(questID)
+				local distanceSq = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(questID)
 				table.insert(worldQuests, { questID = questID, distanceSq = distanceSq or math.huge, type = "WQ" })
 			end
 		end
 
 		-- Get the player's current map ID
-		local currentMapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player")
+		local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not currentMapID then
 			-- If currentMapID is nil, print an error message and return the current worldQuests table
 			if RQE.db.profile.debugLevel == "INFO+" then
@@ -2305,8 +2491,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Build a lookup of currently watched quests
 		local watched = {}
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local id = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local id = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local id = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if id then
 				watched[id] = true
 			end
@@ -2315,7 +2503,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Compare against accepted list and add missing
 		for _, questID in ipairs(RQE.DelayedQuestWatchCheck) do
 			if RQE.API.IsOnQuest(questID) and not watched[questID] then
-				C_QuestLog.AddQuestWatch(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+				RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					DEFAULT_CHAT_FRAME:AddMessage("Repair Watch: Added questID " .. questID, 0.46, 0.96, 0.46)
 				end
@@ -2331,14 +2520,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
-			local isPlayerInGroup = IsInGroup()
-			local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isPlayerInGroup = IsInGroup()
+			local isPlayerInGroup = RQE.API.Client.IsInGroup()
+			-- Previous Blizzard call changed 2026.09.25: local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
+			local isQuestShareable = RQE.API.Client.C_QuestLog.IsPushableQuest(questID)
 
 			if isPlayerInGroup and isQuestShareable then
-				rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Share Quest", function() C_QuestLog.SetSelectedQuest(questID); QuestLogPushQuest(); end)
+				rootDescription:CreateButton("Share Quest", function() RQE.API.Client.C_QuestLog.SetSelectedQuest(questID); RQE.API.Client.QuestLogPushQuest(); end)
 			end
 
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
@@ -2348,7 +2541,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 
 			rootDescription:CreateButton("Set Waypoint to Closest Flight Master", function() RQE:SetTomTomWaypointToClosestFlightMaster() end)
-			rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
+			-- Previous Blizzard call changed 2026.09.25: rootDescription:CreateButton("Untrack Quest", function() C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
+			rootDescription:CreateButton("Untrack Quest", function() RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID); RQE:ClearRQEQuestFrame(); UpdateRQEQuestFrame() end)
 			rootDescription:CreateButton("Abandon Quest", function() RQE:AbandonQuest(questID); end)
 			rootDescription:CreateButton("View Quest", function() OpenQuestLogToQuestDetails(questID) end)
 
@@ -2362,7 +2556,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
 				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
@@ -2392,7 +2587,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	function ShowDropdownRQEQuestFrame(self)
 		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
-			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+			if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
 				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
 				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
@@ -2523,7 +2719,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Update scenarioTitle and stage based on Torghast information
-		if IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
+		-- Previous Blizzard call changed 2026.09.25: if IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
+		if RQE.API.Client.IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
 			local torghastTypeString = RQE.ConvertTorghastTypeToString(RQE.TorghastType)
 			RQE.ScenarioChildFrame.scenarioTitle:SetText("Torghast, Tower of the Damned\n" .. torghastTypeString)
 			RQE.ScenarioChildFrame.stage:SetText("Layer " .. RQE.TorghastLayerNum .. " - Floor " .. RQE.TorghastFloorID)
@@ -2538,7 +2735,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- /run RQE.PrintScenarioTimer()
 	-- Check and set the scenario start time
 	function RQE.CheckScenarioStartTime()
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			return
 		end
 
@@ -2556,7 +2754,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Print elapsed time since the scenario started
 	function RQE.PrintScenarioElapsedTime()
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			return
 		end
 
@@ -2582,20 +2781,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to update the scenario frame with the latest information
 	function RQE.UpdateScenarioFrame()
 		-- Fast exit if we are not in a scenario (most reliable first check)
-		if not C_Scenario.IsInScenario or not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario or not C_Scenario.IsInScenario() then
+		if not RQE.API.ResolveClientAPI("C_Scenario.IsInScenario") or not RQE.API.Client.C_Scenario.IsInScenario() then
 			if RQE.ScenarioChildFrame then RQE.ScenarioChildFrame:Hide() end
 			return
 		end
 
 		-- Get the full scenario information once at the beginning of the function
-		local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
-		local scenarioStepInfo = C_ScenarioInfo.GetScenarioInfo()
-		local numCriteria = select(3, C_Scenario.GetStepInfo())
+		-- Previous Blizzard call changed 2026.09.25: local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
+		local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = RQE.API.Client.C_Scenario.GetInfo()
+		-- Previous Blizzard call changed 2026.09.25: local scenarioStepInfo = C_ScenarioInfo.GetScenarioInfo()
+		local scenarioStepInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
+		-- Previous Blizzard call changed 2026.09.25: local numCriteria = select(3, C_Scenario.GetStepInfo())
+		local numCriteria = select(3, RQE.API.Client.C_Scenario.GetStepInfo())
 
 		-- Only set stepID if scenarioStepInfo exists
 		local stepID = scenarioStepInfo and scenarioStepInfo.currentStage
 		local criteriaIndex = 1
-		local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+		-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+		local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 
 		-- Check if we have valid scenario information
 		if scenarioStepInfo and type(scenarioStepInfo) == "table" and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.title then
@@ -2627,7 +2831,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			local criteriaText = ""
 			-- Iterate through each criteria and collect information
 			for criteriaIndex = 1, numCriteria do
-				local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+				-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+				local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 
 				if criteriaInfo then
 					local description = criteriaInfo.description or "No description available"
@@ -2669,7 +2874,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.ScenarioChildFrame:Hide()
 		end
 
-		C_Timer.After(0.35, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+		RQE.API.Client.C_Timer.After(0.35, function()
 			UpdateRQEQuestFrame()
 		end)
 	end
@@ -2812,7 +3018,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Button click: supertrack this bonus quest
 		bonusQuestButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
 		bonusQuestButton:SetScript("OnMouseDown", function(self, button)
-			if button == "LeftButton" and not IsShiftKeyDown() then
+			-- Previous Blizzard call changed 2026.09.25: if button == "LeftButton" and not IsShiftKeyDown() then
+			if button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
 				RQE.ManualSuperTrack = "BQ"
 				RQE.ManualSuperTrackedQuestID = questID
 				RQE.searchedQuestID = nil
@@ -2825,7 +3032,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				RQE.ManuallyTrackedQuests[questID] = true
 				RQE.DisplayedQuestID = questID
 
-				C_SuperTrack.SetSuperTrackedQuestID(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(questID)
+				RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(questID)
 
 				if UpdateRQEQuestFrame then
 					UpdateRQEQuestFrame()
@@ -2835,17 +3043,20 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					RQE:SaveSuperTrackedQuestToCharacter()
 				end
 
-				C_Timer.After(0.15, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+				RQE.API.Client.C_Timer.After(0.15, function()
 					RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 				end)
 
-				C_Timer.After(0.50, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.50, function()
+				RQE.API.Client.C_Timer.After(0.50, function()
 					if RQE.API.GetSuperTrackedQuestID() == questID then
 						RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 					end
 				end)
 
-				C_Timer.After(1.00, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.00, function()
+				RQE.API.Client.C_Timer.After(1.00, function()
 					if RQE.API.GetSuperTrackedQuestID() == questID then
 						RQE:DisplayBonusQuestInRQEFrame(questID, questTitle)
 					end
@@ -2972,7 +3183,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function to start showing the elapsed time in the RQEQuestFrame
 	function RQE.StartScenarioTimer()
 		-- Only proceed if the player is in a scenario
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			return
 		end
 
@@ -3095,7 +3307,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if not questID or not info or info.isHeader then return false end
 		if RQE.API.IsWorldQuest and RQE.API.IsWorldQuest(questID) then return false end
 		if info.isTask then return false end
-		if C_QuestLog and C_QuestLog.IsQuestTask and C_QuestLog.IsQuestTask(questID) then return false end
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and C_QuestLog.IsQuestTask and C_QuestLog.IsQuestTask(questID) then return false end
+		if C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.IsQuestTask") and RQE.API.Client.C_QuestLog.IsQuestTask(questID) then return false end
 		return true
 	end
 
@@ -3124,8 +3337,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				local searchableText = { tostring(questID) }
 				AddQuestTrackerSearchText(searchableText, info.title)
 
-				if type(GetQuestLogQuestText) == "function" then
-					local descriptionText, objectivesText = GetQuestLogQuestText(questLogIndex)
+				-- Previous Blizzard call changed 2026.09.25: if type(GetQuestLogQuestText) == "function" then
+				if type(RQE.API.ResolveClientAPI("GetQuestLogQuestText")) == "function" then
+					-- Previous Blizzard call changed 2026.09.25: local descriptionText, objectivesText = GetQuestLogQuestText(questLogIndex)
+					local descriptionText, objectivesText = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 					AddQuestTrackerSearchText(searchableText, descriptionText)
 					AddQuestTrackerSearchText(searchableText, objectivesText)
 				end
@@ -3164,8 +3379,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- wrapper even though Blizzard's native Retail API is available. Prefer the
 	-- native API, then use the wrapper only when it exists.
 	local function GetRetailQuestTrackerLogIndex(questID)
-		if C_QuestLog and C_QuestLog.GetLogIndexForQuestID then
-			return C_QuestLog.GetLogIndexForQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and C_QuestLog.GetLogIndexForQuestID then
+		if C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.GetLogIndexForQuestID") then
+			-- Previous Blizzard call changed 2026.09.25: return C_QuestLog.GetLogIndexForQuestID(questID)
+			return RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		end
 		if RQE.API.GetLogIndexForQuestID then
 			return RQE.API.GetLogIndexForQuestID(questID)
@@ -3184,9 +3401,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	local function CollectRetailQuestTrackerSearchWatches()
 		local watchedQuestIDs = {}
-		local numWatches = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
+		-- Previous Blizzard call changed 2026.09.25: local numWatches = C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches() or 0
+		local numWatches = RQE.API.ResolveClientAPI("C_QuestLog.GetNumQuestWatches") and RQE.API.Client.C_QuestLog.GetNumQuestWatches() or 0
 		for watchIndex = 1, numWatches do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(watchIndex)
 			local questLogIndex = questID and GetRetailQuestTrackerLogIndex(questID)
 			local info = questLogIndex and RQE.API.GetQuestLogInfo(questLogIndex)
 			if IsQuestTrackerSearchableLogQuest(questID, info) then
@@ -3199,16 +3418,20 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- The search must use Retail's live watch API. Some installs do not populate
 	-- the corresponding RQE_API wrappers, so native calls are deliberately first.
 	local function RemoveRetailQuestTrackerSearchWatch(questID)
-		if C_QuestLog and C_QuestLog.RemoveQuestWatch then
-			C_QuestLog.RemoveQuestWatch(questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and C_QuestLog.RemoveQuestWatch then
+		if C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.RemoveQuestWatch") then
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 		elseif RQE.API.RemoveQuestWatch then
 			RQE.API.RemoveQuestWatch(questID)
 		end
 	end
 
 	local function AddRetailQuestTrackerSearchWatch(questID)
-		if C_QuestLog and C_QuestLog.AddQuestWatch then
-			return C_QuestLog.AddQuestWatch(questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and C_QuestLog.AddQuestWatch then
+		if C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.AddQuestWatch") then
+			-- Previous Blizzard call changed 2026.09.25: return C_QuestLog.AddQuestWatch(questID)
+			return RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 		elseif RQE.API.AddQuestWatch then
 			return RQE.API.AddQuestWatch(questID)
 		end
@@ -3241,7 +3464,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 	function RQE:SearchQuestTracker(searchText)
-		if InCombatLockdown and InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown and InCombatLockdown() then
+		if RQE.API.ResolveClientAPI("InCombatLockdown") and RQE.API.Client.InCombatLockdown() then
 			print("RQE Quest Tracker search is unavailable during combat.")
 			return
 		end
@@ -3281,7 +3505,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	end
 
 	function RQE:RestoreQuestTrackerSearch()
-		if InCombatLockdown and InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown and InCombatLockdown() then
+		if RQE.API.ResolveClientAPI("InCombatLockdown") and RQE.API.Client.InCombatLockdown() then
 			print("RQE Quest Tracker restore is unavailable during combat.")
 			return
 		end
@@ -3342,12 +3567,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	function RQE:ClearAchievementFrame()
 		-- Check if the achievements frame exists
 		if RQE.AchievementsFrame then
-			local header = RQE.AchievementsFrame.header
+			local headerFrame = RQE.AchievementsFrame.headerFrame
 
 			-- Iterate through all child frames and hide them
 			local children = {RQE.AchievementsFrame:GetChildren()}
 			for _, child in ipairs(children) do
-				if child ~= header then
+				if child ~= headerFrame then
 					child:Hide()
 					child:SetParent(nil)
 				end
@@ -3361,7 +3586,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end
 			end
 		end
-		RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+		-- Keep the original header and its collapse button across achievement
+		-- redraws; recreating it would orphan the persistent section control.
+		if RQE.AchievementsFrame and not RQE.AchievementsFrame.headerFrame then
+			RQE.AchievementsFrame.header = CreateChildFrameHeader(RQE.AchievementsFrame, "Achievements")
+		end
 	end
 
 
@@ -3376,7 +3605,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local t = {}
 
 		-- Check if the quest is ready for turn-in
-		local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		local isReadyForTurnIn = RQE.API.Client.C_QuestLog.IsComplete(questID) or RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
 		local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
 		if objectivesData then
@@ -3412,7 +3642,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local t = {}
 
 		-- Check if the quest is ready for turn-in
-		local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isReadyForTurnIn = C_QuestLog.IsComplete(questID) or C_QuestLog.ReadyForTurnIn(questID)
+		local isReadyForTurnIn = RQE.API.Client.C_QuestLog.IsComplete(questID) or RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
 		local isAuto = RQE and RQE.IsQuestAutoComplete and RQE:IsQuestAutoComplete(questID)
 
 		if objectivesData then
@@ -3451,8 +3682,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			return nil, nil
 		end
 
-		local isReadyForTurnIn = C_QuestLog.IsComplete(questID)
-			or C_QuestLog.ReadyForTurnIn(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isReadyForTurnIn = C_QuestLog.IsComplete(questID)
+		local isReadyForTurnIn = RQE.API.Client.C_QuestLog.IsComplete(questID)
+			-- Previous Blizzard call changed 2026.09.25: or C_QuestLog.ReadyForTurnIn(questID)
+			or RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID)
 		local lines = {}
 		local progressInfo
 
@@ -3469,8 +3702,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 			local percentage
 			if not progressInfo and objectiveType == "progressbar"
-				and type(GetQuestProgressBarPercent) == "function" then
-				local ok, value = pcall(GetQuestProgressBarPercent, questID)
+				-- Previous Blizzard call changed 2026.09.25: and type(GetQuestProgressBarPercent) == "function" then
+				and type(RQE.API.ResolveClientAPI("GetQuestProgressBarPercent")) == "function" then
+				-- Previous Blizzard call changed 2026.09.25: local ok, value = pcall(GetQuestProgressBarPercent, questID)
+				local ok, value = pcall(RQE.API.ResolveClientAPI("GetQuestProgressBarPercent"), questID)
 				if ok then percentage = tonumber(value) end
 			end
 
@@ -3632,43 +3867,61 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		}
 
 		-- Stores the current selected quest, then select the one we’re building tooltip for
-		local prevSelectedQuest = C_QuestLog.GetSelectedQuest()
-		C_QuestLog.SetSelectedQuest(questID)
+		-- Previous Blizzard call changed 2026.09.25: local prevSelectedQuest = C_QuestLog.GetSelectedQuest()
+		local prevSelectedQuest = RQE.API.Client.C_QuestLog.GetSelectedQuest()
+		-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SetSelectedQuest(questID)
+		RQE.API.Client.C_QuestLog.SetSelectedQuest(questID)
 
 		-- Retrieve rewards
-		local rewardXP = GetQuestLogRewardXP(questID)
-		local rewardMoney = GetQuestLogRewardMoney(questID)
-		local rewardArtifactXP = GetQuestLogRewardArtifactXP(questID)
-		local rewardHonor = GetQuestLogRewardHonor(questID)
-		local playerTitle = GetQuestLogRewardTitle(questID)
-		local numQuestCurrencies = #C_QuestLog.GetQuestRewardCurrencies(questID)
-		local rewardItemsCount = GetNumQuestLogRewards(questID)
-		local choiceItemsCount = GetNumQuestLogChoices(questID, true)
-		local reputationRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
-		local spellIDs = C_QuestInfoSystem.GetQuestRewardSpells(questID) or {}
+		-- Previous Blizzard call changed 2026.09.25: local rewardXP = GetQuestLogRewardXP(questID)
+		local rewardXP = RQE.API.Client.GetQuestLogRewardXP(questID)
+		-- Previous Blizzard call changed 2026.09.25: local rewardMoney = GetQuestLogRewardMoney(questID)
+		local rewardMoney = RQE.API.Client.GetQuestLogRewardMoney(questID)
+		-- Previous Blizzard call changed 2026.09.25: local rewardArtifactXP = GetQuestLogRewardArtifactXP(questID)
+		local rewardArtifactXP = RQE.API.Client.GetQuestLogRewardArtifactXP(questID)
+		-- Previous Blizzard call changed 2026.09.25: local rewardHonor = GetQuestLogRewardHonor(questID)
+		local rewardHonor = RQE.API.Client.GetQuestLogRewardHonor(questID)
+		-- Previous Blizzard call changed 2026.09.25: local playerTitle = GetQuestLogRewardTitle(questID)
+		local playerTitle = RQE.API.Client.GetQuestLogRewardTitle(questID)
+		-- Previous Blizzard call changed 2026.09.25: local numQuestCurrencies = #C_QuestLog.GetQuestRewardCurrencies(questID)
+		local numQuestCurrencies = #RQE.API.Client.C_QuestLog.GetQuestRewardCurrencies(questID)
+		-- Previous Blizzard call changed 2026.09.25: local rewardItemsCount = GetNumQuestLogRewards(questID)
+		local rewardItemsCount = RQE.API.Client.GetNumQuestLogRewards(questID)
+		-- Previous Blizzard call changed 2026.09.25: local choiceItemsCount = GetNumQuestLogChoices(questID, true)
+		local choiceItemsCount = RQE.API.Client.GetNumQuestLogChoices(questID, true)
+		-- Previous Blizzard call changed 2026.09.25: local reputationRewards = C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
+		local reputationRewards = RQE.API.Client.C_QuestLog.GetQuestLogMajorFactionReputationRewards(questID)
+		-- Previous Blizzard call changed 2026.09.25: local spellIDs = C_QuestInfoSystem.GetQuestRewardSpells(questID) or {}
+		local spellIDs = RQE.API.Client.C_QuestInfoSystem.GetQuestRewardSpells(questID) or {}
 
-		local skillName, skillIcon, rawSkillPoints = GetQuestLogRewardSkillPoints()
+		-- Previous Blizzard call changed 2026.09.25: local skillName, skillIcon, rawSkillPoints = GetQuestLogRewardSkillPoints()
+		local skillName, skillIcon, rawSkillPoints = RQE.API.Client.GetQuestLogRewardSkillPoints()
 		local rewardSkillPoints = tonumber(rawSkillPoints) or 0
 
 		-- If it's a World Quest or Task Quest, handle differently
-		if RQE.API.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if RQE.API.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
+		if RQE.API.IsWorldQuest(questID) or RQE.API.Client.C_TaskQuest.IsActive(questID) then
 			tooltip:AddLine("Rewards:", 1, 1, 1)
 
 			-- XP and money
-			local xp = GetQuestLogRewardXP(questID)
+			-- Previous Blizzard call changed 2026.09.25: local xp = GetQuestLogRewardXP(questID)
+			local xp = RQE.API.Client.GetQuestLogRewardXP(questID)
 			if xp and xp > 0 then
 				tooltip:AddLine("XP: " .. FormatLargeNumber(xp), 1, 1, 1)
 				tooltip:AddLine(" ")
 			end
 
-			local money = GetQuestLogRewardMoney(questID)
+			-- Previous Blizzard call changed 2026.09.25: local money = GetQuestLogRewardMoney(questID)
+			local money = RQE.API.Client.GetQuestLogRewardMoney(questID)
 			if money and money > 0 then
-				tooltip:AddLine("Gold: " .. GetCoinTextureString(money), 1, 1, 1)
+				-- Previous Blizzard call changed 2026.09.25: tooltip:AddLine("Gold: " .. GetCoinTextureString(money), 1, 1, 1)
+				tooltip:AddLine("Gold: " .. RQE.API.Client.GetCoinTextureString(money), 1, 1, 1)
 				tooltip:AddLine(" ")
 			end
 
 			-- Currencies
-			local currencies = C_QuestLog.GetQuestRewardCurrencies(questID) or {}
+			-- Previous Blizzard call changed 2026.09.25: local currencies = C_QuestLog.GetQuestRewardCurrencies(questID) or {}
+			local currencies = RQE.API.Client.C_QuestLog.GetQuestRewardCurrencies(questID) or {}
 			for i, currencyInfo in ipairs(currencies) do
 				if currencyInfo and currencyInfo.name and currencyInfo.texture then
 					local amount = FormatLargeNumber(currencyInfo.totalRewardAmount or 0)
@@ -3680,9 +3933,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 
 			-- Items
-			local numQuestRewards = GetNumQuestLogRewards(questID) or 0
+			-- Previous Blizzard call changed 2026.09.25: local numQuestRewards = GetNumQuestLogRewards(questID) or 0
+			local numQuestRewards = RQE.API.Client.GetNumQuestLogRewards(questID) or 0
 			for i = 1, numQuestRewards do
-				local name, texture, numItems, quality = GetQuestLogRewardInfo(i, questID)
+				-- Previous Blizzard call changed 2026.09.25: local name, texture, numItems, quality = GetQuestLogRewardInfo(i, questID)
+				local name, texture, numItems, quality = RQE.API.Client.GetQuestLogRewardInfo(i, questID)
 				if name then
 					local countText = (numItems > 1) and (numItems .. "x ") or ""
 					local text = (texture and "|T" .. texture .. ":16|t " or "") .. countText .. name
@@ -3695,7 +3950,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			tooltip:Show()
 			-- Restore selected quest if needed
 			if prevSelectedQuest then
-				C_QuestLog.SetSelectedQuest(prevSelectedQuest)
+				-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SetSelectedQuest(prevSelectedQuest)
+				RQE.API.Client.C_QuestLog.SetSelectedQuest(prevSelectedQuest)
 			end
 			return
 		end
@@ -3704,10 +3960,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if choiceItemsCount > 0 then
 			tooltip:AddLine(choiceItemsCount == 1 and "You will receive:" or "Choose one of the following rewards:")
 			for i = 1, choiceItemsCount do
-				local lootType = GetQuestLogChoiceInfoLootType(i)
+				-- Previous Blizzard call changed 2026.09.25: local lootType = GetQuestLogChoiceInfoLootType(i)
+				local lootType = RQE.API.Client.GetQuestLogChoiceInfoLootType(i)
 				if lootType == 0 then
 					-- Item choice
-					local itemName, _, numItems, quality = GetQuestLogChoiceInfo(i)
+					-- Previous Blizzard call changed 2026.09.25: local itemName, _, numItems, quality = GetQuestLogChoiceInfo(i)
+					local itemName, _, numItems, quality = RQE.API.Client.GetQuestLogChoiceInfo(i)
 					if itemName then
 						local text = (numItems > 1) and (numItems .. "x " .. itemName) or itemName
 						local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
@@ -3715,7 +3973,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					end
 				elseif lootType == 1 then
 					-- Currency choice
-					local currencyInfo = C_QuestLog.GetQuestRewardCurrencyInfo(questID, i, true)
+					-- Previous Blizzard call changed 2026.09.25: local currencyInfo = C_QuestLog.GetQuestRewardCurrencyInfo(questID, i, true)
+					local currencyInfo = RQE.API.Client.C_QuestLog.GetQuestRewardCurrencyInfo(questID, i, true)
 					if currencyInfo and currencyInfo.name and currencyInfo.texture then
 						local amount = FormatLargeNumber(currencyInfo.totalRewardAmount or 0)
 						local text = "|T" .. currencyInfo.texture .. ":16|t " .. amount .. " " .. currencyInfo.name
@@ -3732,7 +3991,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			if choiceItemsCount > 0 then tooltip:AddLine("\nAdditional rewards:") else tooltip:AddLine("Rewards:") end
 
 			if rewardXP > 0 then tooltip:AddLine("XP: " .. FormatLargeNumber(rewardXP), 1, 1, 1) end
-			if rewardMoney > 0 then tooltip:AddLine("Gold: " .. C_CurrencyInfo.GetCoinTextureString(rewardMoney), 1, 1, 1) end
+			-- Previous Blizzard call changed 2026.09.25: if rewardMoney > 0 then tooltip:AddLine("Gold: " .. C_CurrencyInfo.GetCoinTextureString(rewardMoney), 1, 1, 1) end
+			if rewardMoney > 0 then tooltip:AddLine("Gold: " .. RQE.API.Client.C_CurrencyInfo.GetCoinTextureString(rewardMoney), 1, 1, 1) end
 			if rewardArtifactXP > 0 then tooltip:AddLine("Artifact Power: " .. FormatLargeNumber(rewardArtifactXP), 1, 1, 1) end
 			if rewardHonor > 0 then tooltip:AddLine("Honor: " .. rewardHonor, 1, 1, 1) end
 			if playerTitle then tooltip:AddLine("Title: " .. playerTitle, 1, 1, 1) end
@@ -3746,7 +4006,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 
 			for i = 1, rewardItemsCount do
-				local itemName, _, numItems, quality = GetQuestLogRewardInfo(i, questID)
+				-- Previous Blizzard call changed 2026.09.25: local itemName, _, numItems, quality = GetQuestLogRewardInfo(i, questID)
+				local itemName, _, numItems, quality = RQE.API.Client.GetQuestLogRewardInfo(i, questID)
 				if itemName then
 					local text = (numItems > 1) and (numItems .. "x " .. itemName) or itemName
 					local color = customItemQualityColors[quality] or { r = 1, g = 1, b = 1 }
@@ -3757,8 +4018,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			if #spellIDs > 0 then
 				tooltip:AddLine("\nReward Spells:")
 				for _, spellID in ipairs(spellIDs) do
-					local info = C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
-					if info and info.name and not IsSpellKnownOrOverridesKnown(spellID) and (not info.isBoostSpell or IsCharacterNewlyBoosted()) and (not info.garrFollowerID or not C_Garrison.IsFollowerCollected(info.garrFollowerID)) then
+					-- Previous Blizzard call changed 2026.09.25: local info = C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
+					local info = RQE.API.Client.C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
+					-- Previous Blizzard call changed 2026.09.25: if info and info.name and not IsSpellKnownOrOverridesKnown(spellID) and (not info.isBoostSpell or IsCharacterNewlyBoosted()) and (not info.garrFollowerID or not C_Garrison.IsFollowerCollected(info.garrFollowerID)) then
+					if info and info.name and not RQE.API.Client.IsSpellKnownOrOverridesKnown(spellID) and (not info.isBoostSpell or RQE.API.Client.IsCharacterNewlyBoosted()) and (not info.garrFollowerID or not RQE.API.Client.C_Garrison.IsFollowerCollected(info.garrFollowerID)) then
 						local icon = info.texture or 134400
 						tooltip:AddLine("|T" .. icon .. ":16|t " .. info.name, 1, 1, 1)
 					end
@@ -3768,7 +4031,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			if reputationRewards and #reputationRewards > 0 then
 				tooltip:AddLine("\nReputation:")
 				for _, reward in ipairs(reputationRewards) do
-					local data = C_MajorFactions.GetMajorFactionData(reward.factionID)
+					-- Previous Blizzard call changed 2026.09.25: local data = C_MajorFactions.GetMajorFactionData(reward.factionID)
+					local data = RQE.API.Client.C_MajorFactions.GetMajorFactionData(reward.factionID)
 					tooltip:AddLine((data and data.name or ("Faction ID " .. reward.factionID)) .. ": " .. reward.rewardAmount, 0, 1, 0)
 				end
 			end
@@ -3776,7 +4040,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Restore previously selected quest
 		if prevSelectedQuest then
-			C_QuestLog.SetSelectedQuest(prevSelectedQuest)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.SetSelectedQuest(prevSelectedQuest)
+			RQE.API.Client.C_QuestLog.SetSelectedQuest(prevSelectedQuest)
 		end
 
 		tooltip:Show()
@@ -3789,9 +4054,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Enhanced Determine QuestType Function
 	function GetQuestType(questID)
-		local questClassification = C_QuestInfoSystem.GetQuestClassification(questID)
+		-- Previous Blizzard call changed 2026.09.25: local questClassification = C_QuestInfoSystem.GetQuestClassification(questID)
+		local questClassification = RQE.API.Client.C_QuestInfoSystem.GetQuestClassification(questID)
 
-		if C_QuestLog.ReadyForTurnIn(questID) then
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.ReadyForTurnIn(questID) then
+		if RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
 			return "|cFF00FF00QUEST COMPLETE|r"  -- Green color for completed quests
 
 		elseif questClassification == 1 then
@@ -3872,34 +4139,42 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to get the zone name for a given quest
 	function GetQuestZone(questID)
-		local mapID = GetQuestUiMapID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local mapID = GetQuestUiMapID(questID)
+		local mapID = RQE.API.Client.GetQuestUiMapID(questID)
 		if mapID then
-			local mapInfo = C_Map.GetMapInfo(mapID)
+			-- Previous Blizzard call changed 2026.09.25: local mapInfo = C_Map.GetMapInfo(mapID)
+			local mapInfo = RQE.API.Client.C_Map.GetMapInfo(mapID)
 			if mapInfo and mapInfo.name then
 				return mapInfo.name
 			end
 		end
 		-- Do not mutate QuestMapFrame/WorldMapFrame to resolve a display label.
 		-- Retail's map refresh can reach protected pin setup during combat.
-		local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questID)
+		-- Previous Blizzard call changed 2026.09.25: local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = C_QuestLog.GetQuestAdditionalHighlights(questID)
+		local uiMapID, worldQuests, worldQuestsElite, dungeons, treasures = RQE.API.Client.C_QuestLog.GetQuestAdditionalHighlights(questID)
 		if uiMapID then
-			local mapInfo = C_Map.GetMapInfo(uiMapID)
+			-- Previous Blizzard call changed 2026.09.25: local mapInfo = C_Map.GetMapInfo(uiMapID)
+			local mapInfo = RQE.API.Client.C_Map.GetMapInfo(uiMapID)
 			if mapInfo and mapInfo.name then
 				return mapInfo.name
 			end
 		end
 
-		local fallbackZoneID = C_TaskQuest.GetQuestZoneID(questID)
+		-- Previous Blizzard call changed 2026.09.25: local fallbackZoneID = C_TaskQuest.GetQuestZoneID(questID)
+		local fallbackZoneID = RQE.API.Client.C_TaskQuest.GetQuestZoneID(questID)
 		if fallbackZoneID then
-			local fallbackMapInfo = C_Map.GetMapInfo(fallbackZoneID)
+			-- Previous Blizzard call changed 2026.09.25: local fallbackMapInfo = C_Map.GetMapInfo(fallbackZoneID)
+			local fallbackMapInfo = RQE.API.Client.C_Map.GetMapInfo(fallbackZoneID)
 			if fallbackMapInfo and fallbackMapInfo.name then
 				return fallbackMapInfo.name
 			end
 		end
 
-		local waypointZoneID = C_QuestLog.GetNextWaypoint(questID)
+		-- Previous Blizzard call changed 2026.09.25: local waypointZoneID = C_QuestLog.GetNextWaypoint(questID)
+		local waypointZoneID = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 		if waypointZoneID then
-			local waypointMapInfo = C_Map.GetMapInfo(waypointZoneID)
+			-- Previous Blizzard call changed 2026.09.25: local waypointMapInfo = C_Map.GetMapInfo(waypointZoneID)
+			local waypointMapInfo = RQE.API.Client.C_Map.GetMapInfo(waypointZoneID)
 			if waypointMapInfo and waypointMapInfo.name then
 				return waypointMapInfo.name
 			end
@@ -3916,14 +4191,17 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to determine if each quest belongs to World Quest or Non-World Quest
 	function RQE:QuestType()
-		local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
-		local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+		local numTrackedQuests = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+		local numTrackedWorldQuests = RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches()
 		local regularQuestUpdated = false
 		local worldQuestUpdated = false
 
 		-- Loop through all tracked quests for regular and campaign quests
 		for i = 1, numTrackedQuests do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if questID and not RQE.API.IsWorldQuest(questID) then
 				regularQuestUpdated = true
 			end
@@ -3931,7 +4209,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Loop through all tracked World Quests
 		for i = 1, numTrackedWorldQuests do
-			local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if questID then
 				worldQuestUpdated = true
 			end
@@ -3954,7 +4233,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Updates the RQEQuestFrame
 	function UpdateRQEQuestFrame()
 		RQE.LastTrackerStepCacheMapID = RQE.LastTrackerStepCacheMapID
-			or C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: or C_Map.GetBestMapForUnit("player")
+			or RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		RQE:SortWatchedQuestsByProximity()
 		RQE:ClearRQEQuestFrame() -- Clears the Quest Frame in preparation for refreshing it
 
@@ -3978,13 +4258,17 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Loop through all tracked quests to count campaign and world quests
-		local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numTrackedQuests = C_QuestLog.GetNumQuestWatches()
+		local numTrackedQuests = RQE.API.Client.C_QuestLog.GetNumQuestWatches()
 		RQE.worldQuestCount = 0  -- Reset before counting
-		RQE.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: RQE.worldQuestCount = C_QuestLog.GetNumWorldQuestWatches()
+		RQE.worldQuestCount = RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches()
 
 		for i = 1, numTrackedQuests do
-			local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
-			local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+			-- Previous Blizzard call changed 2026.09.25: local questID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local questID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			-- Previous Blizzard call changed 2026.09.25: local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+			local isCampaignQuest = RQE.API.Client.C_CampaignInfo.IsCampaignQuest(questID) or RQE.API.Client.C_QuestLog.IsMetaQuest(questID)
 			if isCampaignQuest then
 				RQE.campaignQuestCount = RQE.campaignQuestCount + 1
 			elseif RQE.API.IsWorldQuest(questID) then
@@ -4006,13 +4290,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local campaignHeight = baseHeight + (RQE.campaignQuestCount * questHeight) + (campaignStatusLineCount * 14)
 		local regularHeight = baseHeight + (RQE.regularQuestCount * questHeight) + (regularStatusLineCount * 14) + extraHeightForScenario
 		local worldQuestHeight = baseHeight + (RQE.worldQuestCount * questHeight)
-		local achievementHeight = baseHeight + (RQE.AchievementsFrame.achieveCount * 40)
+		local achievementHeight = RQE.AchievementsFrame.lastMeasuredHeight or baseHeight
 
 		-- World Quest rows are deliberately not rebuilt during combat because that
 		-- renderer can create and reconfigure buttons.  Keep its last measured
 		-- height instead of replacing it with this coarse count-based estimate;
 		-- otherwise the Bonus Quests header is pushed well below the visible row.
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			worldQuestHeight = RQE.WorldQuestsFrame.lastMeasuredHeight or RQE.WorldQuestsFrame:GetHeight()
 		end
 
@@ -4043,6 +4328,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Create a variable to hold the last QuestObjectivesOrDescription
 		local lastQuestObjectivesOrDescription = nil
 
+		-- Custom orders must be laid out as a whole. The legacy Campaign -> Normal
+		-- -> World chain can point back into a reordered section and form a cycle.
+		if RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout() then
+			RQE:ApplyTrackerSectionOrder()
+		else
 		-- Create the Set Point for the Regular Quests Child Frame
 		if RQE.CampaignFrame and RQE.CampaignFrame:IsShown() then
 			-- If CampaignFrame is present and shown, anchor QuestsFrame to CampaignFrame
@@ -4099,6 +4389,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			RQE.AchievementsFrame:ClearAllPoints()
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
 		end
+		end
 
 		-- Separate variables to track the last element in each child frame
 		local lastCampaignElement, lastQuestElement, lastWorldQuestElement = nil, nil, nil
@@ -4112,10 +4403,13 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Loop through sorted watched quests by proximity
 		for i, questData in ipairs(RQE.SortedWatchedQuests) do
 			local questID = questData.questID
-			local directionText = C_QuestLog.GetNextWaypointText(questID)
+			-- Previous Blizzard call changed 2026.09.25: local directionText = C_QuestLog.GetNextWaypointText(questID)
+			local directionText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 			RQE.QuestDirectionText = directionText
-			local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
-			local isQuestComplete = C_QuestLog.IsComplete(questID)
+			-- Previous Blizzard call changed 2026.09.25: local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+			local questIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isQuestComplete = C_QuestLog.IsComplete(questID)
+			local isQuestComplete = RQE.API.Client.C_QuestLog.IsComplete(questID)
 			local isSuperTracked = RQE.API.GetSuperTrackedQuestID() == questID
 
 			if questIndex and not RQE.API.IsWorldQuest(questID) then
@@ -4123,9 +4417,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				if info and not info.isHeader then
 					-- Determine the type of the quest (Campaign, World Quest, or Regular)
-					local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+					-- Previous Blizzard call changed 2026.09.25: local isCampaignQuest = C_CampaignInfo.IsCampaignQuest(questID) or C_QuestLog.IsMetaQuest(questID)
+					local isCampaignQuest = RQE.API.Client.C_CampaignInfo.IsCampaignQuest(questID) or RQE.API.Client.C_QuestLog.IsMetaQuest(questID)
 					local isWorldQuest = RQE.API.IsWorldQuest(questID)
-					local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+					-- Previous Blizzard call changed 2026.09.25: local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+					local isBonusQuest = RQE.API.Client.C_QuestLog.IsQuestTask(questID) or RQE.API.Client.C_QuestLog.IsThreatQuest(questID)
 					local dailyFrequency = Enum and Enum.QuestFrequency and Enum.QuestFrequency.Daily or 1
 					local isDailyQuest = info.frequency == dailyFrequency
 
@@ -4146,7 +4442,12 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					---@class QuestLogIndexButton : Button
 					---@field bg Texture
 					---@field number FontString
-					local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, content)	-- TAINT?: possibly source if run in combat
+					local QuestLogIndexButton = RQE.QuestLogIndexButtons[i] or CreateFrame("Button", nil, parentFrame)	-- TAINT?: possibly source if run in combat
+					-- Rows must belong to their section so collapsing or hiding that
+					-- section also hides its quest text and interactive button.
+					if QuestLogIndexButton:GetParent() ~= parentFrame then
+						QuestLogIndexButton:SetParent(parentFrame)
+					end
 					QuestLogIndexButton:SetSize(TRACKER_QUEST_BUTTON_SIZE, TRACKER_QUEST_BUTTON_SIZE)
 
 					-- Create or update the background texture
@@ -4174,7 +4475,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					-- Quest Watch List
 					QuestLogIndexButton:RegisterForClicks("LeftButtonDown", "RightButtonDown")
 					QuestLogIndexButton:SetScript("OnMouseDown", function(self, button, confirmed)
-						local shiftLeftClick = not confirmed and IsShiftKeyDown()
+						-- Previous Blizzard call changed 2026.09.25: local shiftLeftClick = not confirmed and IsShiftKeyDown()
+						local shiftLeftClick = not confirmed and RQE.API.Client.IsShiftKeyDown()
 							and button == "LeftButton"
 						if not confirmed and not self:IsMouseOver() then return end
 						if not confirmed and not shiftLeftClick
@@ -4201,7 +4503,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE:ClearSeparateFocusFrame()
 
 						-- Check if the player is in combat and return if an automatic click
-						if InCombatLockdown() then
+						-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+						if RQE.API.Client.InCombatLockdown() then
 							if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
 								return
 							end
@@ -4229,7 +4532,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 							-- Untrack the quest
 							if not RQE.hoveringOnFrame then return end
-							C_QuestLog.RemoveQuestWatch(questID)
+							-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+							RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 
 							local extractedQuestID
 							if RQE.QuestIDText and RQE.QuestIDText:GetText() then
@@ -4244,7 +4548,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							-- Refresh the UI here to update the button state
 							UpdateRQEQuestFrame()
 
-							C_Timer.After(0.25, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+							RQE.API.Client.C_Timer.After(0.25, function()
 								RQE:SaveTrackedQuestsToCharacter()
 								RQE:SaveSuperTrackedQuestToCharacter()
 							end)
@@ -4256,8 +4561,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							local previousStep = tonumber(RQE.AddonSetStepIndex
 								or RQE.CurrentDisplayedStepIndex)
 							RQE._coordOrderReselect = {
-								questID = questID, expiresAt = GetTime() + 5,
-								readyAt = GetTime() + (sameQuestReselect and 0 or 0.75),
+								-- Previous Blizzard call changed 2026.09.25: questID = questID, expiresAt = GetTime() + 5,
+								questID = questID, expiresAt = RQE.API.Client.GetTime() + 5,
+								-- Previous Blizzard call changed 2026.09.25: readyAt = GetTime() + (sameQuestReselect and 0 or 0.75),
+								readyAt = RQE.API.Client.GetTime() + (sameQuestReselect and 0 or 0.75),
 								sameQuest = sameQuestReselect, previousStep = previousStep,
 								armed = false,
 							}
@@ -4272,12 +4579,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 								RQE.shouldCheckFinalStep = true
 								RQE.CheckAndSetFinalStep()
-								C_Timer.After(0.1, function()
+								-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+								RQE.API.Client.C_Timer.After(0.1, function()
 									RQE.ClickUnknownQuestButton()
 									RQE.NearestFlightMasterSet = false
 
 									if RQE.db.profile.enableTravelSuggestions then
-										C_Timer.After(0.8, function()
+										-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.8, function()
+										RQE.API.Client.C_Timer.After(0.8, function()
 											RQE:RecommendFastestTravelMethod()
 										end)
 									end
@@ -4291,21 +4600,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 									RQE.ObtainSuperTrackQuestDetails()
 
 									if RQE.db.profile.autoClickWaypointButton then
-										C_Timer.After(0.1, function()
+										-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+										RQE.API.Client.C_Timer.After(0.1, function()
 											if not sameQuestReselect then RQE.AddonSetStepIndex = 1 end
 											RQE:StartPeriodicChecks()
 										end)
 									end
 
-									C_Timer.After(0.2, function()
+									-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+									RQE.API.Client.C_Timer.After(0.2, function()
 										RQE:SaveSuperTrackedQuestToCharacter()
 									end)
 								end)
 							end
 
-							C_Map.ClearUserWaypoint()
+							-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+							RQE.API.Client.C_Map.ClearUserWaypoint()
 							-- Check if TomTom is loaded and compatibility is enabled
-							if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+							-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
+							if RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom") and RQE.db.profile.enableTomTomCompatibility then
 								TomTom.waydb:ResetProfile()
 								RQE._currentTomTomUID = nil
 							end
@@ -4338,14 +4651,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							-- This will re-super track the quest even if it's the same as the currently super tracked quest
 							RQE.ManualSuperTrack = true
 							RQE.ManualSuperTrackedQuestID = questID
-							C_SuperTrack.SetSuperTrackedQuestID(questID)
+							-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(questID)
+							RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(questID)
 							if RQE._coordOrderReselect and RQE._coordOrderReselect.questID == questID then
 								RQE._coordOrderReselect.armed = true
 							end
 							RQE:SaveSuperTrackedQuestToCharacter()
 
 							-- Allow time for the UI to update and for the super track to register
-							C_Timer.After(1, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+							RQE.API.Client.C_Timer.After(1, function()
 								-- Fetch the quest data here
 								local questData = RQE.getQuestData(questID)
 								if not questData then
@@ -4369,7 +4684,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							UpdateRQEQuestFrame()
 
 							-- Check if MagicButton should be visible based on macro body
-							C_Timer.After(1, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+							RQE.API.Client.C_Timer.After(1, function()
 								RQE.Buttons.UpdateMagicButtonVisibility()
 							end)
 						end
@@ -4380,7 +4696,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					QuestLogIndexButton.questID = questID  -- Store the questID with its respective button
 
 					-- Fetch Quest Description
-					local _, questObjectivesText = GetQuestLogQuestText(questIndex)
+					-- Previous Blizzard call changed 2026.09.25: local _, questObjectivesText = GetQuestLogQuestText(questIndex)
+					local _, questObjectivesText = RQE.API.Client.GetQuestLogQuestText(questIndex)
 
 					-- Fetch Quest Objectives
 					local objectivesTable = RQE.API.GetQuestObjectives(questID)
@@ -4398,7 +4715,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					-- Use the regular quest title, level, and suggestedSize of party
 					questTitle = info.title
 					questLevel = info.level
-					suggestedSize = C_QuestLog.GetSuggestedGroupSize(questID)
+					-- Previous Blizzard call changed 2026.09.25: suggestedSize = C_QuestLog.GetSuggestedGroupSize(questID)
+					suggestedSize = RQE.API.Client.C_QuestLog.GetSuggestedGroupSize(questID)
 
 					-- Create or reuse the QuestLevelAndName label
 					local QuestLevelAndName = RQE.QuestLogIndexButtons[i].QuestLevelAndName or QuestLogIndexButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")--, content)
@@ -4513,7 +4831,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						if button == "RightButton" then
 							ShowQuestDropdown(self, questID)
 							return
-						elseif button == "LeftButton" and not IsShiftKeyDown() then
+						-- Previous Blizzard call changed 2026.09.25: elseif button == "LeftButton" and not IsShiftKeyDown() then
+						elseif button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
 							OpenQuestLogToQuestDetails(questID)
 							return
 						else
@@ -4529,7 +4848,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 							RQE.Buttons.ClearButtonPressed()
 						else
 							-- Quest Details and Menu
-							if IsShiftKeyDown() and button == "LeftButton" then
+							-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
+							if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
 								if RQE.db.profile.debugLevel == "INFO+" then
 									if RQE.RQEQuestFrame and not RQE.RQEQuestFrame:IsMouseOver() then
 										print("Not hovering over RQEQuestFrame!")
@@ -4538,12 +4858,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 								end
 
 								-- Untrack the quest
-								C_QuestLog.RemoveQuestWatch(questID)
+								-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+								RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 								RQE:ClearRQEQuestFrame()
 							elseif button == "RightButton" then
 								ShowQuestDropdown(self, questID)
 								return
-							elseif button == "LeftButton" and not IsShiftKeyDown() then
+							-- Previous Blizzard call changed 2026.09.25: elseif button == "LeftButton" and not IsShiftKeyDown() then
+							elseif button == "LeftButton" and not RQE.API.Client.IsShiftKeyDown() then
 								OpenQuestLogToQuestDetails(questID)
 								return
 							end
@@ -4561,15 +4883,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:AddLine(" ")
 
 						-- Add description
-						local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+						-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+						local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
 						if questLogIndex then
-							local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+							-- Previous Blizzard call changed 2026.09.25: local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+							local _, questObjectives = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 							local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 							GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 						end
 
 						-- Add Direction Text
-						local directionText = C_QuestLog.GetNextWaypointText(questID)
+						-- Previous Blizzard call changed 2026.09.25: local directionText = C_QuestLog.GetNextWaypointText(questID)
+						local directionText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 						if RQE.db.profile.debugLevel == "INFO+" then
 							RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)
 						end
@@ -4585,19 +4910,23 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 						if questID then
 							-- Check if the quest is ready to be turned in
-							if C_QuestLog.ReadyForTurnIn(questID) then
+							-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.ReadyForTurnIn(questID) then
+							if RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
 								GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
 							-- Check if the quest is completed
-							elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
+							-- Previous Blizzard call changed 2026.09.25: elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
+							elseif RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
 								GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-								if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
 									GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0) -- Green color for completed on warband & character
 								else
 									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
 								end
 							else
 								GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-								if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
 									GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
 								else
 									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
@@ -4619,11 +4948,15 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 						-- Party Members' Quest Progress
-						if IsInGroup() then
-							if IsInRaid() then return end
-							local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+						-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
+						if RQE.API.Client.IsInGroup() then
+							-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
+							if RQE.API.Client.IsInRaid() then return end
+							-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+							local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
 							if tooltipData and tooltipData.lines then
-								local player_name = UnitName("player")
+								-- Previous Blizzard call changed 2026.09.25: local player_name = UnitName("player")
+								local player_name = RQE.API.Client.UnitName("player")
 								local isFirstPartyMember = true
 								local skipPlayerLines = false
 								local skipQuestNameLine = false  -- Flag to skip quest name lines
@@ -4671,15 +5004,18 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						GameTooltip:AddLine(" ")
 
 						-- Add description
-						local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+						-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+						local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
 						if questLogIndex then
-							local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+							-- Previous Blizzard call changed 2026.09.25: local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+							local _, questObjectives = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 							local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 							GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 						end
 
 						-- Add Direction Text
-						local directionText = C_QuestLog.GetNextWaypointText(questID)
+						-- Previous Blizzard call changed 2026.09.25: local directionText = C_QuestLog.GetNextWaypointText(questID)
+						local directionText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 						if RQE.db.profile.debugLevel == "INFO+" then
 							RQE.infoLog("Debug - QuestID:", questID, "Direction Text:", directionText)  -- Debug print
 						end
@@ -4695,19 +5031,23 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 						if questID then
 							-- Check if the quest is ready to be turned in
-							if C_QuestLog.ReadyForTurnIn(questID) then
+							-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.ReadyForTurnIn(questID) then
+							if RQE.API.Client.C_QuestLog.ReadyForTurnIn(questID) then
 								GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
 							-- Check if the quest is completed
-							elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
+							-- Previous Blizzard call changed 2026.09.25: elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
+							elseif RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) then
 								GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-								if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
 									GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0) -- Green color for completed on warband & character
 								else
 									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
 								end
 							else
 								GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-								if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
+								if RQE.API.Client.C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
 									GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0) -- Yellow color for completed on warband
 								else
 									GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0) -- Red color for not completed on warband
@@ -4729,12 +5069,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 						-- Party Members' Quest Progress
-						if IsInGroup() then
-							if IsInRaid() then return end
+						-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
+						if RQE.API.Client.IsInGroup() then
+							-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
+							if RQE.API.Client.IsInRaid() then return end
 							GameTooltip:AddLine(" ")
-							local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+							-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+							local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
 							if tooltipData and tooltipData.lines then
-								local player_name = UnitName("player")
+								-- Previous Blizzard call changed 2026.09.25: local player_name = UnitName("player")
+								local player_name = RQE.API.Client.UnitName("player")
 								local isFirstPartyMember = true
 								local skipPlayerLines = false
 								local skipQuestNameLine = false  -- Flag to skip quest name lines
@@ -4827,7 +5171,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			local frameTop = sectionFrame:GetTop()
 			local elementBottom = lastElement:GetBottom()
 			if frameTop and elementBottom then
-				sectionFrame:SetHeight(math.max(80, frameTop - elementBottom + GetQuestSectionBottomPadding()))
+				sectionFrame._rqeRenderedHeight = math.max(80, frameTop - elementBottom + GetQuestSectionBottomPadding())
+				sectionFrame:SetHeight(sectionFrame._rqeRenderedHeight)
+			elseif sectionFrame._rqeRenderedHeight then
+				sectionFrame:SetHeight(sectionFrame._rqeRenderedHeight)
 			end
 		end
 
@@ -4878,7 +5225,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		UpdateRQEWorldQuestFrame()
 		UpdateRQETaskQuestFrame()
 		RQE.RefreshQuestTrackerScrollRange()
-		C_Timer.After(0, RQE.RefreshQuestTrackerScrollRange)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, RQE.RefreshQuestTrackerScrollRange)
+		RQE.API.Client.C_Timer.After(0, RQE.RefreshQuestTrackerScrollRange)
 	end
 
 
@@ -4888,7 +5236,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to update the RQE.WorldQuestFrame with tracked World Quests
 	function UpdateRQEWorldQuestFrame()
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			RQE.RunUpdateRQEWorldQuestFrame = true
 			return
 		end
@@ -4898,7 +5247,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local yOffset = -45 -- Y offset for the first element
 
 		-- Get the player's current map ID
-		local currentMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
+		-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
+		local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player") -- Get the player's current map ID
 
 		-- Gather and sort World Quests by proximity
 		local sortedWorldQuests = GatherAndSortWorldQuestsByProximity()
@@ -4915,7 +5265,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		end
 
 		-- Get the number of tracked World Quests
-		local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+		-- Previous Blizzard call changed 2026.09.25: local numTrackedWorldQuests = C_QuestLog.GetNumWorldQuestWatches()
+		local numTrackedWorldQuests = RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches()
 		local numTrackedBonusQuests = 0
 		local lastWorldQuestElement = nil
 		local usedQuestIDs = {}  -- Table to keep track of used quest IDs
@@ -4972,7 +5323,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQnumber:SetTextColor(1, 0.7, 0.2)
 
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)
-				local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: local isBonusQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+				local isBonusQuest = RQE.API.Client.C_QuestLog.IsQuestTask(questID) or RQE.API.Client.C_QuestLog.IsThreatQuest(questID)
 
 				if isWorldQuest then
 					WQnumber:SetText("WQ")
@@ -5000,8 +5352,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestLogIndexButton:SetScript("OnClick", function(self, button)
 					RQE.OkaytoUpdateCreateSteps = true
 					RQE.AllFramesShouldUpdate = true
-					if IsShiftKeyDown() and button == "LeftButton" then
-						C_QuestLog.RemoveWorldQuestWatch(questID)
+					-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
+					if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveWorldQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveWorldQuestWatch(questID)
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("Removing world quest watch for quest: " .. questID)
 						end
@@ -5033,12 +5387,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE.ScrollFrameToTop()
 						RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 						RQE.ManualSuperTrack = true
-						C_SuperTrack.SetSuperTrackedQuestID(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(questID)
+						RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(questID)
 						RQE:SaveSuperTrackedQuestToCharacter()
 						RQE.ManualSuperTrackedQuestID = questID
 						RQE.ManuallyTrackedQuests[questID] = true
 
-						C_Timer.After(1, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+						RQE.API.Client.C_Timer.After(1, function()
 							local questData = RQE.getQuestData(questID)
 							if not questData then
 								RQE.debugLog("Quest data not found for questID:", questID)
@@ -5058,7 +5414,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 						RQE:ClearRQEQuestFrame()
 						UpdateRQEQuestFrame()
 
-						C_Timer.After(1, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+						RQE.API.Client.C_Timer.After(1, function()
 							RQE.Buttons.UpdateMagicButtonVisibility()
 						end)
 					end
@@ -5112,9 +5469,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Untrack World Quest
 				WQuestLevelAndName:SetScript("OnMouseDown", function(self, button)
-					if IsShiftKeyDown() and button == "LeftButton" then
+					-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
+					if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
 						-- Untrack the quest
-						C_QuestLog.RemoveQuestWatch(questID)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 						RQE:ClearRQEQuestFrame()
 					elseif button == "RightButton" then
 						ShowQuestDropdown(self, questID)
@@ -5153,12 +5512,14 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestLogIndexButton.WQuestTimeLeft = WQuestTimeLeft
 
 				-- Get the time left for the World Quest
-				local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(questID)
+				-- Previous Blizzard call changed 2026.09.25: local secondsLeft = C_TaskQuest.GetQuestTimeLeftSeconds(questID)
+				local secondsLeft = RQE.API.Client.C_TaskQuest.GetQuestTimeLeftSeconds(questID)
 				local timeLeftString = FormatTimeLeft(secondsLeft)  -- Ensure it always returns a string
 				WQuestTimeLeft:SetText(timeLeftString)
 				WQuestTimeLeft:Show()
 
-				local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+				-- Previous Blizzard call changed 2026.09.25: local distanceSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
+				local distanceSq, onContinent = RQE.API.Client.C_QuestLog.GetDistanceSqToQuest(questID)
 				RQE.debugLog("DEBUG: Processing QuestID:", questID, "OnContinent:", onContinent, "DistanceSq:", distanceSq)
 				local questDistanceText = "Distance: N/A"  -- Default text if distance is not available
 
@@ -5203,8 +5564,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				WQuestLogIndexButton:SetScript("OnMouseDown", function(self, button)
 					RQE.OkaytoUpdateCreateSteps = true
 					RQE.AllFramesShouldUpdate = true
-					if IsShiftKeyDown() and button == "LeftButton" then
-						C_QuestLog.RemoveQuestWatch(questID)
+					-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
+					if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.RemoveQuestWatch(questID)
+						RQE.API.Client.C_QuestLog.RemoveQuestWatch(questID)
 					end
 				end)
 
@@ -5242,16 +5605,19 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					GameTooltip:AddLine(" ")  -- Blank line
 
 					-- Add description
-					local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+					-- Previous Blizzard call changed 2026.09.25: local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
+					local questLogIndex = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID)  -- Use questID instead of self.questID
 					if questLogIndex then
-						local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+						-- Previous Blizzard call changed 2026.09.25: local _, questObjectives = GetQuestLogQuestText(questLogIndex)
+						local _, questObjectives = RQE.API.Client.GetQuestLogQuestText(questLogIndex)
 						local descriptionText = questObjectives and questObjectives ~= "" and questObjectives or "No description available."
 						GameTooltip:AddLine(descriptionText, 1, 1, 1, true)
 						GameTooltip:AddLine(" ")
 					end
 
 					-- Add objectives
-					local objectivesText = GetQuestLogQuestText(C_QuestLog.GetLogIndexForQuestID(questID))
+					-- Previous Blizzard call changed 2026.09.25: local objectivesText = GetQuestLogQuestText(C_QuestLog.GetLogIndexForQuestID(questID))
+					local objectivesText = RQE.API.Client.GetQuestLogQuestText(RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID))
 					if objectivesText and objectivesText ~= "" then
 						GameTooltip:AddLine("Objectives:")
 
@@ -5264,7 +5630,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 					RQE:QuestRewardsTooltip(GameTooltip, questID)
 
 					-- Add time left
-					local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
+					-- Previous Blizzard call changed 2026.09.25: local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
+					local timeLeftString = FormatTimeLeft(RQE.API.Client.C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
 					if timeLeftString and timeLeftString ~= "" then
 						GameTooltip:AddLine("Time Left: " .. timeLeftString, 1, 0.08, 0.58) -- Pink color
 						GameTooltip:AddLine(" ")  -- Blank line
@@ -5277,12 +5644,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end)
 
 				-- Party Members' Quest Progress
-				if IsInGroup() then
-					if IsInRaid() then return end
+				-- Previous Blizzard call changed 2026.09.25: if IsInGroup() then
+				if RQE.API.Client.IsInGroup() then
+					-- Previous Blizzard call changed 2026.09.25: if IsInRaid() then return end
+					if RQE.API.Client.IsInRaid() then return end
 					GameTooltip:AddLine(" ")
-					local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+					-- Previous Blizzard call changed 2026.09.25: local tooltipData = C_TooltipInfo.GetQuestPartyProgress(questID)
+					local tooltipData = RQE.API.Client.C_TooltipInfo.GetQuestPartyProgress(questID)
 					if tooltipData and tooltipData.lines then
-						local player_name = UnitName("player")
+						-- Previous Blizzard call changed 2026.09.25: local player_name = UnitName("player")
+						local player_name = RQE.API.Client.UnitName("player")
 						local isFirstPartyMember = true
 						local skipPlayerLines = false
 						local skipQuestNameLine = false  -- Flag to skip quest name lines
@@ -5349,7 +5720,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		-- Font-string bounds can settle on the following frame after a quest title
 		-- or objective wraps.  Recheck then so the Bonus Quests header always
 		-- follows the real bottom of the World Quests row.
-		C_Timer.After(0, ResizeWorldQuestSection)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, ResizeWorldQuestSection)
+		RQE.API.Client.C_Timer.After(0, ResizeWorldQuestSection)
 		RQE.RefreshQuestTrackerScrollRange()
 	end
 
@@ -5374,23 +5746,33 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	function UpdateRQETaskQuestFrame()
 		local taskFrame = RQE.TaskQuestsFrame
 		if not taskFrame then return end
+		local managedLayout = RQE.UsesManagedTrackerSectionLayout and RQE:UsesManagedTrackerSectionLayout()
 
 		local taskQuests = RQE:GetActiveTrackedTaskQuests()
 		RQE:ClearTaskQuestElements()
 		taskFrame.questCount = #taskQuests
-		taskFrame.header:SetText("Task Quests (" .. taskFrame.questCount .. ")")
+		local taskTitle = "Task Quests (" .. taskFrame.questCount .. ")"
+		if RQE.RefreshTrackerSectionHeaderText then
+			RQE:RefreshTrackerSectionHeaderText(taskFrame, taskTitle)
+		else
+			taskFrame.header:SetText(taskTitle)
+		end
 
 		if taskFrame.questCount == 0 then
 			taskFrame:Hide()
-			if RQE.AchievementsFrame and RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
+			if not managedLayout and RQE.AchievementsFrame and RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
 				RQE.AchievementsFrame:ClearAllPoints()
 				RQE.AchievementsFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
 			end
+			RQE.UpdateRecipeTrackingAnchor()
 			RQE.RefreshQuestTrackerScrollRange()
 			return
 		end
 
 		taskFrame:Show()
+		if managedLayout then
+			RQE:ApplyTrackerSectionOrder()
+		else
 		taskFrame:ClearAllPoints()
 		if RQE.BonusQuestsFrame and RQE.BonusQuestsFrame:IsShown() then
 			taskFrame:SetPoint("TOPLEFT", RQE.BonusQuestsFrame, "BOTTOMLEFT", 0, -15)
@@ -5404,6 +5786,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			taskFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "BOTTOMLEFT", 0, -30)
 		else
 			taskFrame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+		end
 		end
 
 		local lastElement
@@ -5455,7 +5838,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				RQE.DisplayedQuestID = questID
 				RQE.ManuallyTrackedQuests = RQE.ManuallyTrackedQuests or {}
 				RQE.ManuallyTrackedQuests[questID] = true
-				C_SuperTrack.SetSuperTrackedQuestID(questID)
+				-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(questID)
+				RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(questID)
 
 				local questData = RQE.getQuestData(questID)
 				if questData then
@@ -5486,10 +5870,11 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		taskFrame:SetHeight(taskFrameHeight)
 
 		-- Keep Achievements below the new section whenever it is visible.
-		if RQE.AchievementsFrame then
+		if not managedLayout and RQE.AchievementsFrame then
 			RQE.AchievementsFrame:ClearAllPoints()
 			RQE.AchievementsFrame:SetPoint("TOPLEFT", taskFrame, "BOTTOMLEFT", 0, -15)
 		end
+		RQE.UpdateRecipeTrackingAnchor()
 		RQE.RefreshQuestTrackerScrollRange()
 	end
 
@@ -5501,7 +5886,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function that simulates a click of the QuestLogIndexButton
 	function RQE.ClickQuestLogIndexButton(questID)
 		-- Check if the player is in combat
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			RQE.QuestButtonToReClickAfterCombat = questID
 			RQE.ReClickQuestLogIndexButtonAfterCombat = true
 		end
@@ -5528,7 +5914,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Tier Three Importance: CLICKQUESTLOGINDEXBUTTON function
 		if RQE.db.profile.autoClickWaypointButton then
-			C_Timer.After(3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			RQE.API.Client.C_Timer.After(3, function()
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -5537,7 +5924,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				end
 
 				RQEMacro:CreateMacroForCurrentStep()
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
@@ -5548,18 +5936,22 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- Function that simulates a click of the UnknownQuestButton but streamlined
 	function RQE.ClickRandomQuestLogIndexButton(bigQuestID)
 		local randomQuestID = 81930
-		C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
+		-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
+		RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(randomQuestID)
 
 		RQE.ClickQuestLogIndexButton(randomQuestID)
 
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			RQE.CheckAndClickWButton()
 		end)
 
-		C_Timer.After(0.3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+		RQE.API.Client.C_Timer.After(0.3, function()
 			RQE.ClickQuestLogIndexButton(bigQuestID)
 
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.CheckAndClickWButton()
 			end)
 		end)
@@ -5576,7 +5968,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		print("Creating/updating quest item button for questID:", questID, "questLogIndex:", questLogIndex)
 
 		-- Fetch the special quest item info using the correct quest log index
-		local itemLink, itemIcon, charges, showItemWhenComplete = GetQuestLogSpecialItemInfo(questLogIndex)
+		-- Previous Blizzard call changed 2026.09.25: local itemLink, itemIcon, charges, showItemWhenComplete = GetQuestLogSpecialItemInfo(questLogIndex)
+		local itemLink, itemIcon, charges, showItemWhenComplete = RQE.API.Client.GetQuestLogSpecialItemInfo(questLogIndex)
 		if not itemLink then
 			print("No item link found for questID:", questID, "questLogIndex:", questLogIndex)
 			return
@@ -5586,7 +5979,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		print("Retrieved item link:", itemLink, "itemIcon:", itemIcon)
 
 		-- Fetch detailed item info
-		local itemName, itemID = C_Item.GetItemInfo(itemLink)
+		-- Previous Blizzard call changed 2026.09.25: local itemName, itemID = C_Item.GetItemInfo(itemLink)
+		local itemName, itemID = RQE.API.Client.C_Item.GetItemInfo(itemLink)
 		if not itemIcon then
 			print("Item icon not found for questID:", questID, "questLogIndex:", questLogIndex)
 			return
@@ -5617,7 +6011,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end)
 			itemButton:SetScript("PreClick", function(self)
 				-- Use the quest log special item function to ensure the correct usage
-				UseQuestLogSpecialItem(self:GetAttribute("questLogIndex"))
+				-- Previous Blizzard call changed 2026.09.25: UseQuestLogSpecialItem(self:GetAttribute("questLogIndex"))
+				RQE.API.Client.UseQuestLogSpecialItem(self:GetAttribute("questLogIndex"))
 			end)
 		else
 			print("Updating existing item button:", buttonName)
@@ -5647,7 +6042,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	function RQE:ForceRefreshAndClickWorldQuestButton(questID)
 		UpdateRQEWorldQuestFrame()  -- Force a refresh of all buttons
-		C_Timer.After(1, function()  -- Delay to ensure UI updates
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()  -- Delay to ensure UI updates
+		RQE.API.Client.C_Timer.After(1, function()  -- Delay to ensure UI updates
 			self:ClickWorldQuestButton(questID)
 		end)
 	end
@@ -5680,7 +6076,8 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to fetch and update the list of tracked achievements
 	function RQE.UpdateTrackedAchievementList()
-		local achievementIDs = C_ContentTracking.GetTrackedIDs(Enum.ContentTrackingType.Achievement)
+		-- Previous Blizzard call changed 2026.09.25: local achievementIDs = C_ContentTracking.GetTrackedIDs(Enum.ContentTrackingType.Achievement)
+		local achievementIDs = RQE.API.Client.C_ContentTracking.GetTrackedIDs(Enum.ContentTrackingType.Achievement)
 		RQE.TrackedAchievementIDs = achievementIDs -- Assuming RQE.TrackedAchievementIDs is initialized as a table somewhere
 		-- Optionally, call a function to update UI with the new list
 		UpdateRQEAchievementsFrame()
@@ -5697,6 +6094,33 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 		end
 		return count
+	end
+
+	-- Keep the full criteria list, but supply the text omitted by numeric and
+	-- description-only achievements in the standard criteria label.
+	local function GetTrackedAchievementCriteriaText(achievementID, criteriaIndex, description)
+		local label, criteriaType, complete, quantity, totalQuantity, _, _, assetID, progressText =
+			RQE.API.Client.GetAchievementCriteriaInfo(achievementID, criteriaIndex)
+		if CRITERIA_TYPE_ACHIEVEMENT and criteriaType == CRITERIA_TYPE_ACHIEVEMENT and assetID then
+			local _, linkedName = RQE.API.Client.GetAchievementInfo(assetID)
+			label = linkedName or label
+		end
+		if type(label) ~= "string" or label:match("^%s*%-?%s*$") then
+			label = description or ""
+		end
+		local hasRatio = type(progressText) == "string"
+			and progressText:match("^%s*[%d,]+%s*/%s*[%d,]+")
+		if (type(totalQuantity) == "number" and totalQuantity > 1) or hasRatio then
+			local progress = progressText
+			if not hasRatio then
+				progress = string.format("%d/%d", quantity or 0, totalQuantity)
+			end
+			progress = progress:gsub("%s*/%s*", "/")
+			if not label:find("^%d[%d,]*/%d") then
+				label = progress .. (label ~= "" and (" " .. label) or "")
+			end
+		end
+		return label, complete
 	end
 
 
@@ -5723,12 +6147,15 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Loop through each tracked achievement ID and display it along with the description
 		for _, achievementID in ipairs(RQE.TrackedAchievementIDs) do
-			local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
+			-- Previous Blizzard call changed 2026.09.25: local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = GetAchievementInfo(achievementID)
+			local id, name, points, completed, month, day, year, description, flags, icon, rewardText, isGuild, wasEarnedByMe, earnedBy, isStatistic = RQE.API.Client.GetAchievementInfo(achievementID)
 			RQE.infoLog("- Achievement ID:", achievementID)
 
 			if id then
 				-- Create the header for each achievement
 				local achievementHeader = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+				achievementHeader:SetWidth(math.max(1, availableWidth))
+				achievementHeader:SetWordWrap(true)
 				achievementHeader:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
 				achievementHeader:SetText("[" .. id .. "] " .. name)
 				achievementHeader:SetTextColor(1, 0.5, 0.3) -- Tan color for the achievement ID and name
@@ -5737,37 +6164,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				-- Set up the tooltip for the achievement header
 				achievementHeader:SetScript("OnEnter", function(self)
-					GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-					GameTooltip:SetText(name, 1, 1, 0, 1) -- Yellow title
-					if rewardText and rewardText ~= "" then
-						GameTooltip:AddLine(rewardText, 0, 0.5, 1, 1) -- Light Blue reward text
-						GameTooltip:AddLine(" ") -- Spacer
-					end
-					GameTooltip:AddLine(description, 1, 0.7, 0.7, true) -- Light Pink description
-					GameTooltip:AddLine(" ") -- Spacer
-
-					-- Add criteria info
-					local numCriteria = GetAchievementNumCriteria(id)
-					for criteriaIndex = 1, numCriteria do
-						local criteriaString, criteriaType, criteriaCompleted = GetAchievementCriteriaInfo(id, criteriaIndex)
-						if criteriaCompleted then
-							GameTooltip:AddLine("- " .. criteriaString, 0, 1, 0) -- Green for completed criteria
-						else
-							GameTooltip:AddLine("- " .. criteriaString, 1, 1, 1) -- White for incomplete criteria
-						end
-					end
-
-					GameTooltip:AddLine(" ")
-					if wasEarnedByMe then
-						GameTooltip:AddLine("Achievement completed by " .. UnitName("player"), 0, 1, 0, true) -- Green Text
-					else
-						GameTooltip:AddLine("In progress by " .. UnitName("player"), 0, 1, 0, true)
-					end
-					GameTooltip:AddLine("Achievement ID: " .. id, 1, 0.75, 0.35, true)
-					GameTooltip:Show()
+					RQE.API.ShowTrackedAchievementTooltip(self, id, name, description)
 				end)
 				achievementHeader:SetScript("OnLeave", function(self)
-					GameTooltip:Hide()
+					RQE.API.HideTrackedTooltip()
 				end)
 
 				-- Set up the clickable action for the achievement header
@@ -5775,9 +6175,16 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 				achievementHeader:SetScript("OnMouseUp", function(self, button)
 					if button == "LeftButton" then
-						local _, isBlizzAchieveLoaded = C_AddOns.IsAddOnLoaded("Blizzard_AchievementUI")
+						if RQE.API.Client.IsShiftKeyDown() then
+							RQE.API.HideTrackedTooltip()
+							RQE.API.StopTrackingAchievement(id)
+							return
+						end
+						-- Previous Blizzard call changed 2026.09.25: local _, isBlizzAchieveLoaded = C_AddOns.IsAddOnLoaded("Blizzard_AchievementUI")
+						local _, isBlizzAchieveLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Blizzard_AchievementUI")
 						if not isBlizzAchieveLoaded then
-							C_AddOns.LoadAddOn("Blizzard_AchievementUI")
+							-- Previous Blizzard call changed 2026.09.25: C_AddOns.LoadAddOn("Blizzard_AchievementUI")
+							RQE.API.Client.C_AddOns.LoadAddOn("Blizzard_AchievementUI")
 						end
 						if AchievementFrame then
 							if not AchievementFrame:IsShown() then
@@ -5791,16 +6198,26 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 				offsetY = offsetY - achievementHeader:GetStringHeight() - spacing -- Adjust offsetY for the header and additional spacing
 
 				-- Loop through criteria
-				local numCriteria = GetAchievementNumCriteria(id)
+				-- Previous Blizzard call changed 2026.09.25: local numCriteria = GetAchievementNumCriteria(id)
+				local numCriteria = RQE.API.Client.GetAchievementNumCriteria(id)
+				if numCriteria == 0 and description and description ~= "" then
+					local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+					criteriaText:SetWidth(math.max(1, availableWidth))
+					criteriaText:SetJustifyH("LEFT")
+					criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
+					criteriaText:SetWordWrap(true)
+					criteriaText:SetTextColor(1, 1, 1)
+					criteriaText:SetText("- " .. description)
+					offsetY = offsetY - criteriaText:GetStringHeight() - spacing
+				end
 				for criteriaIndex = 1, numCriteria do
-					local criteriaString, criteriaType, criteriaCompleted = GetAchievementCriteriaInfo(id, criteriaIndex)
+					local criteriaString, criteriaCompleted = GetTrackedAchievementCriteriaText(id, criteriaIndex, description)
 
 					-- Create a FontString for each criteria
 					local criteriaText = RQE.AchievementsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-					criteriaText:SetWidth(availableWidth)
+					criteriaText:SetWidth(math.max(1, availableWidth))
 					criteriaText:SetJustifyH("LEFT")
 					criteriaText:SetPoint("TOPLEFT", RQE.AchievementsFrame, "TOPLEFT", 10, offsetY)
-					criteriaText:SetHeight(criteriaText:GetStringHeight())
 					criteriaText:SetWordWrap(true)
 
 					-- Set color based on completion status
@@ -5819,16 +6236,34 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 		end
 
+		-- Include every rendered criteria line in the section and scroll range.
+		-- A fixed height per achievement cannot contain long or wrapped criteria.
+		RQE.AchievementsFrame.lastMeasuredHeight = math.max(80,
+			-offsetY + GetQuestSectionBottomPadding())
+		RQE.AchievementsFrame:SetHeight(RQE.AchievementsFrame.lastMeasuredHeight)
+
 		-- After creating each new FontString, insert it into RQE.AchievementsIDWidgets:
 		table.insert(RQE.AchievementsIDWidgets, RQE.AchievementHeader)
 
 		-- Check if any achievements in the Achievement Frame are being tracked/watched
 		RQE.AchievementsFrame:SetShown(RQE.AchievementsFrame.achieveCount > 0)
+		RQE.UpdateRecipeTrackingAnchor()
 
 		-- Update the scroll frame range if necessary
 		if RQE.AchievementsFrame.scrollFrame then
 			RQE.AchievementsFrame.scrollFrame:SetVerticalScrollRange(math.abs(offsetY))
 		end
+
+		RQE.RefreshQuestTrackerScrollRange()
+		-- Let wrapped FontStrings settle before measuring the final scroll extent.
+		RQE.API.Client.C_Timer.After(0, function()
+			if RQE.AchievementsFrame and RQE.AchievementsFrame:IsShown() then
+				RQE.AchievementsFrame.lastMeasuredHeight = math.max(80,
+					-offsetY + GetQuestSectionBottomPadding())
+				RQE.AchievementsFrame:SetHeight(RQE.AchievementsFrame.lastMeasuredHeight)
+			end
+			RQE.RefreshQuestTrackerScrollRange()
+		end)
 
 		-- Visibility Update Check for RQEQuestFrame
 		RQE:UpdateRQEQuestFrameVisibility()
@@ -5845,16 +6280,20 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		local displayedQuests = {}
 
 		-- Build list of all watched normal quests
-		for i = 1, C_QuestLog.GetNumQuestWatches() do
-			local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local qID = C_QuestLog.GetQuestIDForQuestWatchIndex(i)
+			local qID = RQE.API.Client.C_QuestLog.GetQuestIDForQuestWatchIndex(i)
 			if qID then
 				watchedQuests[qID] = true
 			end
 		end
 
 		-- Build list of all watched world quests
-		for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
-			local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+		-- Previous Blizzard call changed 2026.09.25: for i = 1, C_QuestLog.GetNumWorldQuestWatches() do
+		for i = 1, RQE.API.Client.C_QuestLog.GetNumWorldQuestWatches() do
+			-- Previous Blizzard call changed 2026.09.25: local qID = C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
+			local qID = RQE.API.Client.C_QuestLog.GetQuestIDForWorldQuestWatchIndex(i)
 			if qID then
 				watchedQuests[qID] = true
 			end
@@ -5881,18 +6320,21 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 
 	-- Frequent checking to enforce the visibility of quests being tracked to be displayed in RQEQuestFrame
-	C_Timer.NewTicker(1, function()
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.NewTicker(1, function()
+	RQE.API.Client.C_Timer.NewTicker(1, function()
 		-- Retry Blizzard-backed labels even while stationary. Quest POI data may not
 		-- be populated during the first tracker build immediately after a reload.
 		if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() and RQE.RefreshTrackedQuestDistances then
 			RQE:RefreshTrackedQuestDistances()
 		end
 
-		if InCombatLockdown() then return end
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
+		if RQE.API.Client.InCombatLockdown() then return end
 
 		local isMapOpen = WorldMapFrame:IsShown()
 		local isClassicQuestLogOpen = ClassicQuestLog and ClassicQuestLog:IsShown()
-		local isPlayerStationary = not UnitCastingInfo("player") and not UnitChannelInfo("player") and not IsPlayerMoving()
+		-- Previous Blizzard call changed 2026.09.25: local isPlayerStationary = not UnitCastingInfo("player") and not UnitChannelInfo("player") and not IsPlayerMoving()
+		local isPlayerStationary = not RQE.API.Client.UnitCastingInfo("player") and not RQE.API.Client.UnitChannelInfo("player") and not RQE.API.Client.IsPlayerMoving()
 		local isMouseOverRelevantFrames = WorldMapFrame:IsMouseOver() or (RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsMouseOver())
 
 		if isPlayerStationary and (isMapOpen or isClassicQuestLogOpen or isMouseOverRelevantFrames) then
