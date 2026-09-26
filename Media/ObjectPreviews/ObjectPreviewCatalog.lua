@@ -9,7 +9,10 @@ RQE.ObjectPreviewCatalog = {
 	["187986"] = { file = "187986 - Mid Point Station Valve.tga", name = "Mid Point Station Valve" },
 	["188109"] = { file = "188109 - South Point Station Valve.tga", name = "South Point Station Valve" },
 	["188236"] = { file = "188236 - Horde Armaments.tga", name = "Horde Armaments" },
+	["188432"] = { file = "188432 - Black Blood of Yogg-Saron.tga", name = "Black Blood of Yogg-Saron" },
+	["188463"] = { file = "188463 - Anub'ar Mechanism.tga", name = "Anub'ar Mechanism" },
 	["190335"] = { file = "190335 - The Gearmaster's Manual.tga", name = "The Gearmaster's Manual" },
 	["bt001"] = { file = "bt001 - Portal to Naxxanar.tga", name = "Portal to Naxxanar" },
 	["bt002"] = { file = "bt002 - Portal to Middle Naxxanar.tga", name = "Portal to Middle Naxxanar" },
+	["db001"] = { file = "db001 - Warsong Battle Standard.tga", name = "Warsong Battle Standard" },
 }
