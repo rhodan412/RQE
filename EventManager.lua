@@ -73,10 +73,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		"ADDON_LOADED",
 		"BAG_NEW_ITEMS_UPDATED",
 		"BAG_UPDATE",
+		"BAG_UPDATE_DELAYED",
+		"BANKFRAME_OPENED",
 		"BOSS_KILL",
 		"CLIENT_SCENE_CLOSED",
 		"CLIENT_SCENE_OPENED",
 		"CONTENT_TRACKING_UPDATE",
+		"CURRENCY_DISPLAY_UPDATE",
 		"CRITERIA_EARNED",
 		"ENCOUNTER_END",
 		-- "FOG_OF_WAR_UPDATED",
@@ -84,6 +87,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		"GOSSIP_CLOSED",
 		-- "GOSSIP_CONFIRM",
 		"GOSSIP_CONFIRM_CANCEL",
+		"GET_ITEM_INFO_RECEIVED",
 		"GOSSIP_SHOW",
 		"ITEM_COUNT_CHANGED",
 		"JAILERS_TOWER_LEVEL_UPDATE",
@@ -96,6 +100,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		"NEW_WMO_CHUNK",
 		--"OBJECT_ENTERED_AOI",
 		--"OBJECT_LEFT_AOI",
+		"PLAYERBANKSLOTS_CHANGED",
 		"PLAYER_CONTROL_GAINED",
 		"PLAYER_CONTROL_LOST",
 		"PLAYER_ENTERING_WORLD",
@@ -204,6 +209,28 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		return false
 	end
 
+	-- A consumed quest item may only change the bags, without changing a quest
+	-- objective. Recheck only when the active DB step depends on inventory.
+	local function CurrentStepUsesInventoryCheck(questID)
+		local questData = questID and RQE.getQuestData(questID)
+		local stepIndex = tonumber(RQE.AddonSetStepIndex)
+			or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+			or 1
+		local stepData = questData and questData[stepIndex]
+		if not stepData then return false end
+		if stepData.funct == "CheckDBInventory" then return true end
+		for _, checkData in ipairs(stepData.checks or {}) do
+			if checkData.funct == "CheckDBInventory" then return true end
+		end
+		if stepData.failedfunc == "CheckDBInventory" and stepData.failedcheck then
+			return true
+		end
+		for _, checkData in ipairs(stepData.failedchecks or {}) do
+			if checkData.funct == "CheckDBInventory" then return true end
+		end
+		return false
+	end
+
 
 	-- Retail refreshes quest-map pins as part of super-tracking changes. An
 	-- automatic change made from an event handler during any combat can taint that
@@ -227,7 +254,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Area POI tooltips and quest pins are built under WorldMapFrame. Do not
 		-- start an automatic map refresh until the player has finished using it.
 		if IsWorldMapShown() then
-			C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
+			RQE.API.Client.C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
 			return
 		end
 
@@ -256,17 +284,20 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.PendingMapSafeSuperTrackQuestID = questID
 			if not RQE.MapSafeSuperTrackRetryQueued then
 				RQE.MapSafeSuperTrackRetryQueued = true
-				C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
+				RQE.API.Client.C_Timer.After(0.25, FlushPendingMapSafeSuperTrack)
 			end
 			return false
 		end
 
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			RQE.PendingCombatSuperTrackQuestID = questID
 			return false
 		end
 
-		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		-- Previous Blizzard call changed 2026.09.25: C_SuperTrack.SetSuperTrackedQuestID(questID)
+		RQE.API.Client.C_SuperTrack.SetSuperTrackedQuestID(questID)
 		return true
 	end
 
@@ -325,7 +356,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				-- Get the current memory usage of the addon
 				local addonName = "RQE"
 				RQE:CheckMemoryUsage()
-				local memoryUsage = GetAddOnMemoryUsage(addonName)
+				-- Previous Blizzard call changed 2026.09.25: local memoryUsage = GetAddOnMemoryUsage(addonName)
+				local memoryUsage = RQE.API.Client.GetAddOnMemoryUsage(addonName)
 				local memUsageText = string.format("|cffffc0cbRQE Usage: %.2f KB|r", memoryUsage)	-- Print the current memory usage with the event in pink
 				print(memUsageText)
 			end
@@ -337,10 +369,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			ADDON_LOADED = RQE.handleAddonLoaded,
 			BAG_NEW_ITEMS_UPDATED = RQE.BagNewItemsAdded,
 			BAG_UPDATE = RQE.ReagentBagUpdate,
+			BAG_UPDATE_DELAYED = RQE.handleBagUpdateDelayed,
+			BANKFRAME_OPENED = RQE.handleRecipeMaterialUpdate,
 			BOSS_KILL = RQE.handleBossKill,
 			CLIENT_SCENE_CLOSED = RQE.HandleClientSceneClosed,
 			CLIENT_SCENE_OPENED = RQE.HandleClientSceneOpened,  -- MAY NEED TO COMMENT OUT AGAIN
 			CONTENT_TRACKING_UPDATE = RQE.handleContentUpdate,
+			CURRENCY_DISPLAY_UPDATE = RQE.handleRecipeMaterialUpdate,
 			CRITERIA_EARNED = RQE.handleCriteriaEarned,
 			ENCOUNTER_END = RQE.handleBossKill,
 			FOG_OF_WAR_UPDATED = RQE.handleFogOfWarUpdate,
@@ -348,6 +383,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			GOSSIP_CLOSED = RQE.handleGossipClosed,
 			--GOSSIP_CONFIRM = RQE.handleGossipConfirm,
 			GOSSIP_CONFIRM_CANCEL = RQE.handleGossipConfirmCancel,
+			GET_ITEM_INFO_RECEIVED = RQE.handleRecipeMaterialUpdate,
 			GOSSIP_SHOW = RQE.handleGossipShow,
 			ITEM_COUNT_CHANGED = RQE.handleItemCountChanged,
 			JAILERS_TOWER_LEVEL_UPDATE = RQE.handleJailersUpdate,
@@ -360,6 +396,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			NEW_WMO_CHUNK = RQE.handleNewWMOChunk,
 			OBJECT_ENTERED_AOI = RQE.handleObjectEnteredLeft,
 			OBJECT_LEFT_AOI = RQE.handleObjectEnteredLeft,
+			PLAYERBANKSLOTS_CHANGED = RQE.handleRecipeMaterialUpdate,
 			PLAYER_CONTROL_GAINED = RQE.handlePlayerControlGained,
 			PLAYER_CONTROL_LOST = RQE.handlePlayerControlLost,
 			PLAYER_ENTERING_WORLD = RQE.handlePlayerEnterWorld,
@@ -479,7 +516,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles CONTENT_TRACKING_UPDATE Events
 	function RQE.handleContentUpdate(...)
 		local event = select(2, ...)
-		local type = select(3, ...)
+		local contentType = select(3, ...)
 		local id = select(4, ...)
 		local isTracked = select(5, ...)
 
@@ -498,13 +535,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		if type == 2 then -- Assuming 2 indicates an achievement
+		if contentType == Enum.ContentTrackingType.Achievement then
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.showEventContentTrackingUpdate then
-				DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(type) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
+				DEFAULT_CHAT_FRAME:AddMessage("Debug: CONTENT_TRACKING_UPDATE event triggered for type: " .. tostring(contentType) .. ", id: " .. tostring(id) .. ", isTracked: " .. tostring(isTracked), 0xFA, 0x80, 0x72) -- Salmon color
 			end
 
-			RQE.UpdateTrackedAchievementList()
-			RQE.UpdateTrackedAchievements(type, id, isTracked)
+			RQE.UpdateTrackedAchievements(contentType, id, isTracked)
 		end
 	end
 
@@ -530,8 +566,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Handles the FOG_OF_WAR_UPDATED event function
 	function RQE.handleFogOfWarUpdate()
-		if IsFlying("player") then return end
-		if IsMounted() then return end
+		-- Previous Blizzard call changed 2026.09.25: if IsFlying("player") then return end
+		if RQE.API.Client.IsFlying("player") then return end
+		-- Previous Blizzard call changed 2026.09.25: if IsMounted() then return end
+		if RQE.API.Client.IsMounted() then return end
 	end
 
 
@@ -611,7 +649,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			for _, step in ipairs(data) do
 				-- Check `check` field
 				if stepData.funct and (stepData.funct == "CheckDBBuff" or stepData.funct == "CheckDBDebuff") then
-					C_Timer.After(4.5, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(4.5, function()
+					RQE.API.Client.C_Timer.After(4.5, function()
 						-- print("CheckDBBuff/CheckDBDebuff is present within the 'check' or 'checks' of the DB entry")
 						RQE:StartPeriodicChecks()
 					end)
@@ -621,7 +660,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if step.checks then
 					for _, checkData in ipairs(step.checks) do
 						if checkData.funct and (checkData.funct == "CheckDBBuff" or checkData.funct == "CheckDBDebuff") then
-							C_Timer.After(4.5, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(4.5, function()
+							RQE.API.Client.C_Timer.After(4.5, function()
 								-- print("CheckDBBuff/CheckDBDebuff is present within the 'check' or 'checks' of the DB entry")
 								RQE:StartPeriodicChecks()
 							end)
@@ -791,7 +831,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if questID then
 				RQE:QueuePeriodicChecks("ITEM_COUNT_CHANGED", 0.2, questID)
 			else
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after ITEM_COUNT_CHANGED fires
 				end)
 			end
@@ -803,9 +844,18 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	end
 
 
+	-- Re-evaluate inventory-based steps after the bag change has settled.
+	function RQE.handleBagUpdateDelayed()
+		if RQE.recipeTrackingFrame then RQE:UpdateRecipeTrackingFrame() end
+		local questID = RQE.API.GetSuperTrackedQuestID()
+		if not CurrentStepUsesInventoryCheck(questID) then return end
+		RQE:QueuePeriodicChecks("BAG_UPDATE_DELAYED", 0.2, questID)
+	end
+
 	-- Handles BAG_NEW_ITEMS_UPDATED event
 	function RQE.BagNewItemsAdded()
-		if InCombatLockdown() then return end
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
+		if RQE.API.Client.InCombatLockdown() then return end
 
 		if RQE.db.profile.debugLevel == "INFO+" then
 			print("|cffffff00BAG_NEW_ITEMS_UPDATED triggered.|r")
@@ -850,7 +900,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		local isInventoryCheck = stepUsesInventoryCheck(stepData)
 
 		if isInventoryCheck then
-			C_Timer.After(1.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+			RQE.API.Client.C_Timer.After(1.2, function()
 				RQE:StartPeriodicChecks()
 			end)
 		end
@@ -860,9 +911,6 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles BAG_UPDATE event:
 	-- Fired when a bags inventory changes
 	function RQE.ReagentBagUpdate(...)
-		local event = select(2, ...)
-		local bagID = select(3, ...)
-
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
 			local args = {...}  -- Capture all arguments into a table
@@ -878,115 +926,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		--UpdateRQEQuestFrame()
-
-		-- Return if the auto-click option is disabled
-		if not RQE.db.profile.autoClickWaypointButton then return end
-
-		-- Array of allowed questID and minimap zone text pairs
-		local allowedQuests = {
-			["12000"] = { "Dragonblight", "Moonrest Gardens" },
-			-- Add more questIDs and zones as needed
-		}
-
-		-- Get the current minimap zone text
-		local currentMinimapZone = GetMinimapZoneText() or ""
-		local currentRealZone = (GetRealZoneText() or ""):lower()
-
-		-- Get the currently super-tracked quest
-		local questID = RQE.API.GetSuperTrackedQuestID()
-		if not questID then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No super-tracked quest ID found, skipping inventory checks.")
-			end
-			return
-		end
-
-		-- Check if the questID and minimap zone match the allowed pairs
-		local isAllowedQuest = false
-		if allowedQuests[tostring(questID)] then
-			for _, zone in ipairs(allowedQuests[tostring(questID)]) do
-				if currentMinimapZone == zone then
-					isAllowedQuest = true
-					break
-				end
-			end
-		end
-
-		-- If not an allowed quest in the allowed zones, exit early
-		if not isAllowedQuest then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE not related to the allowed questID or minimap zone. QuestID:", questID, "Minimap Zone:", currentMinimapZone)
-			end
-			return
-		end
-
-		local questData = RQE.getQuestData(questID)
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No quest data available for quest ID:", questID)
-			end
-			return
-		end
-
-		-- Determine the current stepIndex
-		local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-		local stepData = questData[stepIndex]
-		if not stepData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-			end
-			return
-		end
-
-		-- Check if the current step relies on inventory checks
-		local function stepUsesInventoryCheck(step)
-			if step.funct == "CheckDBInventory" then return true end
-			if step.checks then
-				for _, chk in ipairs(step.checks) do
-					if chk.funct == "CheckDBInventory" then return true end
-				end
-			end
-			return false
-		end
-
-		local isInventoryCheck = stepUsesInventoryCheck(stepData)
-
-		-- local isInventoryCheck = false
-		-- if stepData.funct and stepData.funct == "CheckDBInventory" then
-			-- isInventoryCheck = true
-		-- elseif stepData.checks then
-			-- -- Also evaluate `checks` for CheckDBInventory
-			-- for _, checkData in ipairs(stepData.checks) do
-				-- if checkData.funct and checkData.funct == "CheckDBInventory" then
-					-- isInventoryCheck = true
-					-- break
-				-- end
-			-- end
-		-- end
-
-		-- If the current step is tied to inventory checks, re-run periodic checks
-		if isInventoryCheck then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-
-			UpdateRQEQuestFrame()
-			RQE:QueuePeriodicChecks("BAG_UPDATE", 1.65, questID)
-
-			C_Timer.After(1.65, function()
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("~~ Running RQE:StartPeriodicChecks() from BAG_UPDATE ~~")
-				end
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("RQE:StartPeriodicChecks() fired from BAG_UPDATE event")
-				end
-			end)
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE not related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-		end
+		-- BAG_UPDATE_DELAYED evaluates inventory steps after the bag change settles.
 	end
 
 
@@ -1036,7 +976,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		if stepUsesInventoryCheck(stepData) then
-			C_Timer.After(3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+			RQE.API.Client.C_Timer.After(3, function()
 				RQE:StartPeriodicChecks()
 			end)
 		end
@@ -1110,7 +1051,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("MERCHANT_UPDATE related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
-			C_Timer.After(1.3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.3, function()
+			RQE.API.Client.C_Timer.After(1.3, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from MERCHANT_UPDATE ~~")
 				end
@@ -1125,16 +1067,9 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 
 	-- Handles UNIT_INVENTORY_CHANGED event
-	-- Fires when an item is destroyed
+	-- Rechecks active inventory steps when the player's inventory or equipment changes
 	function RQE.handleUnitInventoryChange(...)
-		local event = select(2, ...)
 		local unitTarget = select(3, ...)
-
-		-- Array of allowed questID and minimap zone text pairs
-		local allowedQuests = {
-			["12000"] = { "Dragonblight", "Moonrest Gardens" },
-			-- Add more questIDs and zones as needed
-		}
 
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
@@ -1151,109 +1086,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		if unitTarget ~= "player" then  -- Only process changes for the player
-			return
-		end
-
+		if unitTarget ~= "player" then return end
 		if not RQE.db.profile.autoClickWaypointButton then return end
 
 		local questID = RQE.API.GetSuperTrackedQuestID()
-		if not questID then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No super-tracked quest ID found, skipping inventory change checks.")
-			end
-			return
-		end
-
-		-- Get the current minimap zone text
-		local currentMinimapZone = GetMinimapZoneText() or ""
-		local currentRealZone = (GetRealZoneText() or ""):lower()
-
-		-- Check if the questID and minimap zone match the allowed pairs
-		local isAllowedQuest = false
-		if allowedQuests[tostring(questID)] then
-			for _, zone in ipairs(allowedQuests[tostring(questID)]) do
-				if currentMinimapZone == zone then
-					isAllowedQuest = true
-					break
-				end
-			end
-		end
-
-		-- If not an allowed quest in the allowed zones, exit early
-		if not isAllowedQuest then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("BAG_UPDATE not related to the allowed questID or minimap zone. QuestID:", questID, "Minimap Zone:", currentMinimapZone)
-			end
-			return
-		end
-
-		local questData = RQE.getQuestData(questID)
-		if not questData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No quest data available for quest ID:", questID)
-			end
-			return
-		end
-
-		-- Determine the current stepIndex
-		local stepIndex = RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex or 1
-		local stepData = questData[stepIndex]
-
-		-- Validate stepData exists before continuing
-		if not stepData then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("No step data available for quest ID:", questID, "stepIndex:", stepIndex)
-			end
-			return
-		end
-
-		-- Check if the current step relies on inventory checks
-		local function stepUsesInventoryCheck(step)
-			if step.funct == "CheckDBInventory" then
-				return true
-			end
-			if step.checks then
-				for _, chk in ipairs(step.checks) do
-					if chk.funct == "CheckDBInventory" then
-						return true
-					end
-				end
-			end
-			return false
-		end
-
-		local isInventoryCheck = stepUsesInventoryCheck(stepData)
-
-		-- local isInventoryCheck = false
-		-- if stepData.funct and stepData.funct == "CheckDBInventory" then
-			-- isInventoryCheck = true
-		-- elseif stepData.checks then
-			-- -- Also evaluate `checks` for CheckDBInventory
-			-- for _, checkData in ipairs(stepData.checks) do
-				-- if checkData.funct and checkData.funct == "CheckDBInventory" then
-					-- isInventoryCheck = true
-					-- break
-				-- end
-			-- end
-		-- end
-
-		-- If the current step is tied to inventory checks, re-run periodic checks
-		if isInventoryCheck then
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("UNIT_INVENTORY_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-			C_Timer.After(1.7, function()
-				if RQE.db.profile.debugLevel == "INFO+" then
-					print("~~ Running RQE:StartPeriodicChecks() from UNIT_INVENTORY_CHANGED ~~")
-				end
-				RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_INVENTORY_CHANGED fires
-			end)
-		else
-			if RQE.db.profile.debugLevel == "INFO+" then
-				print("UNIT_INVENTORY_CHANGED not related to current stepIndex:", stepIndex, "for questID:", questID)
-			end
-		end
+		if not CurrentStepUsesInventoryCheck(questID) then return end
+		RQE:QueuePeriodicChecks("UNIT_INVENTORY_CHANGED", 0.2, questID)
 	end
 
 
@@ -1286,7 +1124,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if RQE.PendingCombatSuperTrackQuestID then
 			local questID = RQE.PendingCombatSuperTrackQuestID
 			RQE.PendingCombatSuperTrackQuestID = nil
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				RQE:AutoSetSuperTrackedQuestID(questID)
 			end)
 		end
@@ -1296,10 +1135,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE:ClearSeparateFocusFrame()
 			RQE.ClearSeparateFocusFrameAfterCombat = false
 
-			C_Timer.After(1.3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.3, function()
+			RQE.API.Client.C_Timer.After(1.3, function()
 				RQE.isCheckingMacroContents = true
 				RQEMacro:CreateMacroForCurrentStep()-- Checks for macro status if PLAYER_REGEN_ENABLED event fires
-				C_Timer.After(0.3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+				RQE.API.Client.C_Timer.After(0.3, function()
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
@@ -1307,7 +1148,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Updates RQEWorldQuestFrame after combat ends
 		if RQE.RunUpdateRQEWorldQuestFrame then
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				UpdateRQEWorldQuestFrame()
 				RQE.RunUpdateRQEWorldQuestFrame = false
 			end)
@@ -1332,9 +1174,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- After leaving combat, only start periodic checks if the current DB step contains a CheckDBInventory check
-		C_Timer.After(0.85, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.85, function()
+		RQE.API.Client.C_Timer.After(0.85, function()
 			-- Don’t do anything if we somehow re-entered combat
-			if InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+			if RQE.API.Client.InCombatLockdown() then
 				return
 			end
 
@@ -1350,11 +1194,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			-- Checks to make sure that the SeparateFocusFrame contains information when it should
-			C_Timer.After(1.15, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.15, function()
+			RQE.API.Client.C_Timer.After(1.15, function()
 				RQE:CheckAndRefreshSeparateFocusFrame()		-- Checks SeparateFocusFrame and refreshes it if RQEFrame has quest data but SeparateFocusFrame is empty when PLAYER_REGEN_ENABLED event fires
 			end)
 
-			C_Timer.After(1.75, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.75, function()
+			RQE.API.Client.C_Timer.After(1.75, function()
 				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()		-- Checks if SeparateFocusFrame has meaningful text while RQEFrame is missing quest info when PLAYER_REGEN_ENABLED event fires
 			end)
 
@@ -1411,12 +1257,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- ZONE_CHANGED_NEW_AREA.  Wait briefly for Blizzard's player map to settle
 		-- and suppress duplicate PLAYER_MAP_CHANGED notifications for the same map.
 		if RQE.db and RQE.db.profile and RQE.db.profile.autoTrackZoneQuests then
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				if not (RQE.db and RQE.db.profile and RQE.db.profile.autoTrackZoneQuests) then
 					return
 				end
 
-				local currentMapID = C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player")
+				local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 				if not currentMapID or RQE.LastAutoTrackedZoneMapID == currentMapID then
 					return
 				end
@@ -1431,8 +1279,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Tracker steps are intentionally re-evaluated on real map transitions,
 		-- never on the movement-distance ticker. Use the event's old map as a first
 		-- baseline when available so the character cache survives an ordinary reload.
-		C_Timer.After(0.15, function()
-			local currentMapID = C_Map.GetBestMapForUnit("player") or tonumber(newMapID)
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		RQE.API.Client.C_Timer.After(0.15, function()
+			-- Previous Blizzard call changed 2026.09.25: local currentMapID = C_Map.GetBestMapForUnit("player") or tonumber(newMapID)
+			local currentMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player") or tonumber(newMapID)
 			local previousMapID = RQE.LastTrackerStepCacheMapID or tonumber(oldMapID)
 			RQE.LastTrackerStepCacheMapID = currentMapID or previousMapID
 
@@ -1475,22 +1325,28 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE:UpdateStepDistance()
 		RQE.StepDistanceOverride = false
 
-		local OnTaxi = UnitOnTaxi("player")
-		local isResting = IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+		local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
 
 		if not OnTaxi and not isResting then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
 				RQE:SortWatchedQuestsByProximity()	-- Sorts RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
-				C_Timer.After(0.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				RQE.API.Client.C_Timer.After(0.5, function()
 					RQE.SortOnly = false
 				end)
 			end
 		end
 
-		if not InCombatLockdown() then
-			local isMounted = IsMounted()
-			C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+		if not RQE.API.Client.InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: local isMounted = IsMounted()
+			local isMounted = RQE.API.Client.IsMounted()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				if isMounted then
 					RQE:AutoSuperTrackClosestQuest()	-- Fires with the PLAYER_MOUNT_DISPLAY_CHANGED event
 				end
@@ -1554,24 +1410,29 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		local OnTaxi = UnitOnTaxi("player")
-		local isResting = IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+		local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
 
 		if inBlobState then
 			RQE.ActiveTaskQuests[questID] = true
 		else
 			RQE.ActiveTaskQuests[questID] = nil
-			C_Timer.After(0.55, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.55, function()
+			RQE.API.Client.C_Timer.After(0.55, function()
 				RQE.isCheckingMacroContents = true
 				RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED event fires
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
 		end
 
 		-- TQ visibility is defined by the blob state, so refresh on both entry and exit.
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			if UpdateRQEQuestFrame then
 				UpdateRQEQuestFrame()
 			end
@@ -1605,7 +1466,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Fetch current MapID to have option of appearing with Frame
 		RQE:UpdateMapIDDisplay()
 
-		C_Timer.After(1.75, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.75, function()
+		RQE.API.Client.C_Timer.After(1.75, function()
 			RQE:UpdateTrackerVisibility()
 		end)
 
@@ -1640,7 +1502,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.UntrackAutomaticWorldQuests()
 
 		-- Check if autoClickWaypointButton is selected in the configuration
-		C_Timer.After(2.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+		RQE.API.Client.C_Timer.After(2.5, function()
 			if RQE.db.profile.autoClickWaypointButton then
 				local currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 				-- Click the "W" Button is autoclick is selected and no steps or questData exist
@@ -1649,7 +1512,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end)
 
 		local loginDebugLogCaptureGeneration = RQE.GetDebugLogCaptureGeneration and RQE:GetDebugLogCaptureGeneration() or nil
-		C_Timer.After(6, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(6, function()
+		RQE.API.Client.C_Timer.After(6, function()
 			-- Do not let the delayed login sweep overwrite a quest-data capture that
 			-- started afterwards, or revive a Debug Log the player has since closed.
 			if RQE.IsDebugLogQuestCaptureActive and RQE:IsDebugLogQuestCaptureActive() then
@@ -1664,7 +1528,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end)
 
 		if RQE.db.profile.autoClickWaypointButton then
-			C_Timer.After(12, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(12, function()
+			RQE.API.Client.C_Timer.After(12, function()
 				local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 				if isSuperTracking then
 				local questID = RQE.API.GetSuperTrackedQuestID()
@@ -1679,11 +1544,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Handles the AREA_POIS_UPDATED event function
 	function RQE.handleAreaPOI()
-		if IsFlying("player") then return end
+		-- Previous Blizzard call changed 2026.09.25: if IsFlying("player") then return end
+		if RQE.API.Client.IsFlying("player") then return end
 
-		local isInRaid = IsInRaid()
-		local isResting = IsResting()
-		local isIndoors = IsIndoors()
+		-- Previous Blizzard call changed 2026.09.25: local isInRaid = IsInRaid()
+		local isInRaid = RQE.API.Client.IsInRaid()
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local isIndoors = IsIndoors()
+		local isIndoors = RQE.API.Client.IsIndoors()
 
 		if not isInRaid then
 			-- AREA_POIS_UPDATED is raised while Retail's map provider builds Area POI
@@ -1811,7 +1680,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Hide the default objective tracker and make other UI adjustments after a short delay
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			HideObjectiveTracker()
 
 			if AdjustQuestItemWidths then
@@ -1950,13 +1820,16 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			DEFAULT_CHAT_FRAME:AddMessage("SC Debug: " .. tostring(event) .. " completed. Quest ID: " .. tostring(questID) .. ", XP: " .. tostring(xp) .. ", Money: " .. tostring(money), 0.9, 0.7, 0.9)	-- French Lilac
 		end
 
-		C_Timer.After(1.6, function()
-			if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.6, function()
+		RQE.API.Client.C_Timer.After(1.6, function()
+			-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+			if not RQE.API.Client.C_Scenario.IsInScenario() then
 				UpdateRQEQuestFrame()
 			end
 		end)
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:UpdateTrackerVisibility()
 			-- RQE.updateScenarioUI()
 		end)
@@ -1982,7 +1855,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		C_Timer.After(1.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		RQE.API.Client.C_Timer.After(1.2, function()
 			if RQE.ScenarioChildFrame:IsVisible() then
 				UpdateRQEQuestFrame()
 			end
@@ -1999,7 +1873,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			-- -- print("In scenario... Continuing")
 		-- end
 
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			RQE:UpdateTrackerVisibility()
 		end)
 
@@ -2093,7 +1968,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	function RQE.handleSpellsChanged()
 		RQE:StartPeriodicChecks()
 
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -2102,7 +1978,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SPELLS_CHANGED event fires
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
 		end)
@@ -2235,7 +2112,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Scheduled InitializeScenarioFrame after 4 seconds.", 0.0, 1.0, 1.0)	-- Aqua
 		end
-		C_Timer.After(4, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(4, function()
+		RQE.API.Client.C_Timer.After(4, function()
 			RQE.updateScenarioUI()
 			UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when Scenario Frame update fires (possible duplicate)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.JailorsTowerLevelUpdate then
@@ -2273,8 +2151,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Normalize current minimap zone text
-		local currentMinimapZone = GetMinimapZoneText() or ""
-		local currentRealZone = GetRealZoneText() or ""
+		-- Previous Blizzard call changed 2026.09.25: local currentMinimapZone = GetMinimapZoneText() or ""
+		local currentMinimapZone = RQE.API.Client.GetMinimapZoneText() or ""
+		-- Previous Blizzard call changed 2026.09.25: local currentRealZone = GetRealZoneText() or ""
+		local currentRealZone = RQE.API.Client.GetRealZoneText() or ""
 		currentMinimapZone = currentMinimapZone:lower()
 		currentRealZone = currentRealZone:lower()
 		if RQE.db.profile.debugLevel == "INFO+" then
@@ -2347,7 +2227,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 				RQE:QueuePeriodicChecks("MINIMAP_UPDATE_ZOOM", 1.3, questID)
 			else
-				C_Timer.After(1.3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.3, function()
+				RQE.API.Client.C_Timer.After(1.3, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("[RQE] Detected CheckDBZoneChange logic. Scheduling RQE:StartPeriodicChecks()...")
 						print("[RQE] RQE:StartPeriodicChecks() running from MINIMAP_UPDATE_ZOOM")
@@ -2362,7 +2243,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("[RQE] Failed zone check matches AddonSetStepIndex. Triggering button click.")
 				end
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.ClickQuestLogIndexButton(questID)
 				end)
 			end
@@ -2400,10 +2282,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Handles the NEW_WMO_CHUNK event function
 	function RQE.handleNewWMOChunk()
-		if IsFlying("player") then return end
-		if IsMounted() then return end
+		-- Previous Blizzard call changed 2026.09.25: if IsFlying("player") then return end
+		if RQE.API.Client.IsFlying("player") then return end
+		-- Previous Blizzard call changed 2026.09.25: if IsMounted() then return end
+		if RQE.API.Client.IsMounted() then return end
 
-		C_Timer.After(1.4, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.4, function()
+		RQE.API.Client.C_Timer.After(1.4, function()
 			if RQE.NavigationDestinationReached then
 				UpdateFrame()
 				RQE.CheckAndClickSeparateWaypointButtonButton()
@@ -2438,7 +2323,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handles PLAYER_CONTROL_GAINED event
 	-- Fires after the PLAYER_CONTROL_LOST event, when control has been restored to the player (typically after landing from a taxi)
 	function RQE.handlePlayerControlGained()
-		C_Timer.After(1.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+		RQE.API.Client.C_Timer.After(1.5, function()
 			RQE:UpdateMapIDDisplay()
 			RQE:UpdateCoordinates()
 			RQE.StepDistanceOverride = true
@@ -2446,13 +2332,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.StepDistanceOverride = false
 		end)
 
-		local OnTaxi = UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+		local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
 
 		if not OnTaxi then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when PLAYER_MOUNT_DISPLAY_CHANGED event fires
-				C_Timer.After(0.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				RQE.API.Client.C_Timer.After(0.5, function()
 					RQE.SortOnly = false
 				end)
 			end
@@ -2467,7 +2355,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			local questID = RQE.API.GetSuperTrackedQuestID()
 
 			if questID then
-				C_Timer.After(0.25, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+				RQE.API.Client.C_Timer.After(0.25, function()
 
 					RQE:QueuePeriodicChecks("PLAYER_CONTROL_GAINED", 0.1, questID)
 				end)
@@ -2489,8 +2378,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handling PLAYER_CONTROL_LOST event
 	-- Fires whenever the player is unable to control the character. Examples are when afflicted by fear, mind controlled, or when using a taxi. 
 	function RQE.handlePlayerControlLost()
-		C_Timer.After(2.5, function()
-			if UnitOnTaxi("player") then
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+		RQE.API.Client.C_Timer.After(2.5, function()
+			-- Previous Blizzard call changed 2026.09.25: if UnitOnTaxi("player") then
+			if RQE.API.Client.UnitOnTaxi("player") then
 				RQE.NearestFlightMasterSet = false
 			end
 		end)
@@ -2513,36 +2404,47 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Checks to see if showCoordinates is selected as true for an option before calling the applicable function
 		if RQE.db.profile.showCoordinates then
-			C_Timer.After(0.3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+			RQE.API.Client.C_Timer.After(0.3, function()
 				RQE:StartUpdatingCoordinates()
 			end)
 		end
 
 		-- When player starts moving if not super tracking it will clear the RQEFrame of bad/outdated display info as long as player not in a scenario
-		if C_Scenario.IsInScenario() then return end
+		-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then return end
+		if RQE.API.Client.C_Scenario.IsInScenario() then return end
 		if not RQE.db.profile.autoClickWaypointButton then return end
 
-	 	if InCombatLockdown() then
+	 	-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+	 	if RQE.API.Client.InCombatLockdown() then
 			return
 		end
 
-		local isFlying = IsFlying("player")
-		local isMounted = IsMounted()
-		local onTaxi = UnitOnTaxi("player")
-		local isResting = IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local isFlying = IsFlying("player")
+		local isFlying = RQE.API.Client.IsFlying("player")
+		-- Previous Blizzard call changed 2026.09.25: local isMounted = IsMounted()
+		local isMounted = RQE.API.Client.IsMounted()
+		-- Previous Blizzard call changed 2026.09.25: local onTaxi = UnitOnTaxi("player")
+		local onTaxi = RQE.API.Client.UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
 
 		if not isFlying and not isMounted and not onTaxi then
-			C_Timer.After(0.3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+			RQE.API.Client.C_Timer.After(0.3, function()
 				-- Get the macro index for 'RQE Macro'
-				local macroIndex = GetMacroIndexByName("RQE Macro")
+				-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+				local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 
 				-- If the macro exists, retrieve its content
 				if macroIndex > 0 then
-					local _, _, macroBody = GetMacroInfo(macroIndex)
+					-- Previous Blizzard call changed 2026.09.25: local _, _, macroBody = GetMacroInfo(macroIndex)
+					local _, _, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 
 					-- Check if the macro body has content
 					if macroBody and macroBody == "" then
-						C_Timer.After(0.25, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+						RQE.API.Client.C_Timer.After(0.25, function()
 							RQE.isCheckingMacroContents = true
 							local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -2551,7 +2453,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 							end
 
 							RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_STARTED_MOVING event fires
-							C_Timer.After(0.1, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+							RQE.API.Client.C_Timer.After(0.1, function()
 								RQE.isCheckingMacroContents = false
 							end)
 						end)
@@ -2560,9 +2463,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end)
 		end
 
-		if IsMounted() then
-			C_Timer.After(1.1, function()
-				if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if IsMounted() then
+		if RQE.API.Client.IsMounted() then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.1, function()
+			RQE.API.Client.C_Timer.After(1.1, function()
+				-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+				if not RQE.API.Client.C_Scenario.IsInScenario() then
 					UpdateRQEQuestFrame()
 				end
 			end)
@@ -2572,8 +2478,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Handling PLAYER_STOPPED_MOVING Event
 	function RQE.handlePlayerStoppedMoving()
-		local isInRaid = IsInRaid()
-		local groupSize = GetNumGroupMembers()
+		-- Previous Blizzard call changed 2026.09.25: local isInRaid = IsInRaid()
+		local isInRaid = RQE.API.Client.IsInRaid()
+		-- Previous Blizzard call changed 2026.09.25: local groupSize = GetNumGroupMembers()
+		local groupSize = RQE.API.Client.GetNumGroupMembers()
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStoppedMoving then
 			DEFAULT_CHAT_FRAME:AddMessage("Debug: Player stopped moving.", 0.93, 0.82, 0.25)	-- Festival
@@ -2586,7 +2494,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Update Display of Memory Usage of Addon
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
-			if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+			if not RQE.API.Client.InCombatLockdown() then
 				RQE:CheckMemoryUsage()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerStoppedMoving then
 					DEFAULT_CHAT_FRAME:AddMessage("Debug: Checked memory usage.", 0.93, 0.82, 0.25)	-- Festival
@@ -2652,7 +2561,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("UPDATE_OVERRIDE_ACTIONBAR related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from UPDATE_OVERRIDE_ACTIONBAR ~~")
 				end
@@ -2660,7 +2570,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if questID then
 					RQE:QueuePeriodicChecks("UPDATE_OVERRIDE_ACTIONBAR", 0.5, questID)
 				else
-					C_Timer.After(0.5, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+					RQE.API.Client.C_Timer.After(0.5, function()
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_MODEL_CHANGED fires
 					end)
 				end
@@ -2679,7 +2590,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if RQE._vehicleActionBarTimer then
 			RQE._vehicleActionBarTimer:Cancel()
 		end
-		RQE._vehicleActionBarTimer = C_Timer.NewTimer(0.4, function()
+		-- Previous Blizzard call changed 2026.09.25: RQE._vehicleActionBarTimer = C_Timer.NewTimer(0.4, function()
+		RQE._vehicleActionBarTimer = RQE.API.Client.C_Timer.NewTimer(0.4, function()
 			RQE._vehicleActionBarTimer = nil
 
 			-- A different quest may have become supertracked during the delay.
@@ -2803,7 +2715,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Handling UPDATE_SHAPESHIFT_FORM event
 	-- Fired when the current form changes
 	function RQE.handleUpdateShapeShiftForm()
-		local isBearFormSpellKnown = IsPlayerSpell(5487)
+		-- Previous Blizzard call changed 2026.09.25: local isBearFormSpellKnown = IsPlayerSpell(5487)
+		local isBearFormSpellKnown = RQE.API.Client.IsPlayerSpell(5487)
 		if not isBearFormSpellKnown then
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("SpellID 5487 is not known by player")
@@ -2811,16 +2724,19 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			return
 		end
 
-	 	if InCombatLockdown() then
+	 	-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+	 	if RQE.API.Client.InCombatLockdown() then
 			return
 		end
 
 		-- Get the macro index for 'RQE Macro'
-		local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+		local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 
 		-- If the macro exists, retrieve its content
 		if macroIndex > 0 then
-			local _, _, macroBody = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, _, macroBody = GetMacroInfo(macroIndex)
+			local _, _, macroBody = RQE.API.Client.GetMacroInfo(macroIndex)
 
 			-- Check if the macro body has content
 			if macroBody and macroBody ~= "" then
@@ -2874,11 +2790,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Fired in response to the CVars, Keybindings and other associated "Blizzard" variables being loaded
 	function RQE.handleVariablesLoaded()
 		RQE:InitializeFrame()
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			HideObjectiveTracker()
 		end)
 
-		if C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then
+		if RQE.API.Client.C_Scenario.IsInScenario() then
 			RQE.ScenarioChildFrame:Show()
 		else
 			RQE.ScenarioChildFrame:Hide()
@@ -2896,7 +2814,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
 		-- Load time End timer
-		RQE.endTime = debugprofilestop()
+		-- Previous Blizzard call changed 2026.09.25: RQE.endTime = debugprofilestop()
+		RQE.endTime = RQE.API.Client.debugprofilestop()
 		RQE.loadTime = RQE.endTime - RQE.startTime
 		local loadTimeSeconds = RQE.loadTime / 1000
 		RQE.infoLog("Rhodan's Quest Explorer (RQE) loaded in " .. RQE.loadTime .. " ms. (" .. loadTimeSeconds .. " seconds)")
@@ -2921,10 +2840,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Geometry is owned by ProfileManager; no independent startup resize/anchor.
 
 		-- Clear frame data and waypoints
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 
 		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
@@ -2941,6 +2862,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		local event = select(2, ...)
 		local isLogin = select(3, ...)
 		local isReload = select(4, ...)
+		RQE.API.Client.C_Timer.After(0.2, function() RQE:UpdateRecipeTrackingFrame() end)
 
 		-- Print Event-specific Args
 		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
@@ -3004,11 +2926,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.HasReloaded = false
 		end
 
-		C_Timer.After(3.3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3.3, function()
+		RQE.API.Client.C_Timer.After(3.3, function()
 			RQE:CheckFrameVisibility()
 		end)
 
-		C_Timer.After(10, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(10, function()
+		RQE.API.Client.C_Timer.After(10, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("RQE.HasLoggedIn is: " .. tostring(RQE.HasLoggedIn) .. " & RQE.HasReloaded is: " .. tostring(RQE.HasReloaded) .. " & RQE.HasPortaledOrHearthed is: " .. tostring(RQE.HasPortaledOrHearthed))
 			end
@@ -3021,9 +2945,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				RQE.Buttons.ClearButtonPressed()
 
 				-- Code to clear waypoints for refreshing on reload and login
-				C_Map.ClearUserWaypoint()
+				-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+				RQE.API.Client.C_Map.ClearUserWaypoint()
 				-- Check if TomTom is loaded and compatibility is enabled
-				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 					TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
@@ -3031,14 +2957,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 				RQE.AllFramesShouldUpdate = true
 
-				C_Timer.After(0.05, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+				RQE.API.Client.C_Timer.After(0.05, function()
 					UpdateFrame()
 					RQE:UpdateSeparateFocusFrame()
-					C_Timer.After(1, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+					RQE.API.Client.C_Timer.After(1, function()
 						RQE.AllFramesShouldUpdate = false
 					end)
 
-					C_Timer.After(0.05, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+					RQE.API.Client.C_Timer.After(0.05, function()
 						RQE:RestoreTrackedQuestsForCharacter()
 						RQE:RestoreSuperTrackedQuestForCharacter()
 					end)
@@ -3066,7 +2995,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
-		C_Timer.After(3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+		RQE.API.Client.C_Timer.After(3, function()
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not RQE.isSuperTracking or not isSuperTracking then
 				if not RQEFrame:IsShown() then return end
@@ -3085,7 +3015,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					RQE.TrackClosestQuest()
 				end
 
-				C_Timer.After(1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+				RQE.API.Client.C_Timer.After(1, function()
 					UpdateFrame()
 				end)
 
@@ -3099,13 +3030,16 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end)
 
-		C_Timer.After(5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function()
+		RQE.API.Client.C_Timer.After(5, function()
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
-			local playerMapID = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+			local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			RQE:CreateUnknownQuestWaypointWithDirectionText(superTrackedQuestID, playerMapID)
 		end)
 
-		C_Timer.After(2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+		RQE.API.Client.C_Timer.After(2, function()
 			-- Check for Dragonriding & Capture and print the current states for debugging purposes
 			if RQE.CheckForDragonMounts() then
 				RQE.isDragonRiding = true
@@ -3113,9 +3047,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				RQE.isDragonRiding = false
 			end
 
-			local isFlying = IsFlying("player")
-			local isMounted = IsMounted()
-			local OnTaxi = UnitOnTaxi("player")
+			-- Previous Blizzard call changed 2026.09.25: local isFlying = IsFlying("player")
+			local isFlying = RQE.API.Client.IsFlying("player")
+			-- Previous Blizzard call changed 2026.09.25: local isMounted = IsMounted()
+			local isMounted = RQE.API.Client.IsMounted()
+			-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+			local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
 
 			-- Update RQE.PlayerMountStatus based on conditions
 			if not RQE.isDragonRiding and isFlying and isMounted then
@@ -3135,14 +3072,16 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 06 Debug: Entering handlePlayerEnterWorld function.", 0.93, 0.51, 0.93)	-- Violet
 		end
 
-		C_Timer.After(1, function()  -- Delay of 1 second
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()  -- Delay of 1 second
+		RQE.API.Client.C_Timer.After(1, function()  -- Delay of 1 second
 			wipe(RQE.savedWorldQuestWatches)
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 				DEFAULT_CHAT_FRAME:AddMessage("PEW 07 Debug: Cleared saved World Quest watches.", 0.93, 0.51, 0.93)	-- Violet
 			end
 		end)
 
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 08 Debug: Current map ID: " .. tostring(mapID), 0.93, 0.51, 0.93)	-- Violet
 		end
@@ -3153,7 +3092,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		if isReload or isLogin then
-			if C_Scenario.IsInScenario() then
+			-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then
+			if RQE.API.Client.C_Scenario.IsInScenario() then
 				RQE.ScenarioChildFrame:Show()
 				RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
@@ -3182,7 +3122,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					local questID = RQE.API.GetSuperTrackedQuestID()
 
 					if questID then
-						C_Timer.After(0.35, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
+						RQE.API.Client.C_Timer.After(0.35, function()
 
 							local questData = RQE.getQuestData(questID)
 							local stepIndex = RQE.AddonSetStepIndex or 1
@@ -3201,7 +3142,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 								RQE.StartPerioFromPlayerEnteringWorld = true
 								RQE:QueuePeriodicChecks("PLAYER_ENTERING_WORLD", 0.1, questID)
 
-								C_Timer.After(3, function()
+								-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+								RQE.API.Client.C_Timer.After(3, function()
 									RQE.StartPerioFromPlayerEnteringWorld = false
 								end)
 
@@ -3216,8 +3158,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			-- Checks to see if in scenario and if no, will reset the scenario timer
-			if not C_Scenario.IsInScenario() then
-				C_Timer.After(0.7, function()
+			-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+			if not RQE.API.Client.C_Scenario.IsInScenario() then
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+				RQE.API.Client.C_Timer.After(0.7, function()
 					RQE.StopScenarioTimer()
 				end)
 			end
@@ -3226,7 +3170,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.updateScenarioUI()
 		end
 
-		C_Timer.After(2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+		RQE.API.Client.C_Timer.After(2, function()
 			RQE:QuestType()
 
 			local questID = RQE.API.GetSuperTrackedQuestID()
@@ -3243,7 +3188,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end)
 
 		-- Check if still in a scenario (useful for relogs or loading screens)
-		RQE.isInScenario = C_Scenario.IsInScenario()
+		-- Previous Blizzard call changed 2026.09.25: RQE.isInScenario = C_Scenario.IsInScenario()
+		RQE.isInScenario = RQE.API.Client.C_Scenario.IsInScenario()
 		RQE.UpdateCampaignFrameAnchor()
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.PlayerEnteringWorld then
 			DEFAULT_CHAT_FRAME:AddMessage("PEW 12 Debug: isInScenario status updated.", 0.93, 0.51, 0.93)	-- Violet
@@ -3276,7 +3222,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Clicks Waypoint Button if autoClickWaypointButton is true
 		RQE:AutoClickQuestLogIndexWaypointButton()
 
-		C_Timer.After(5.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5.5, function()
+		RQE.API.Client.C_Timer.After(5.5, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -3285,7 +3232,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if PLAYER_ENTERING_WORLD event fires
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
 		end)
@@ -3310,7 +3258,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 		local reselectPending = reselect and reselect.sameQuest
 			and tonumber(reselect.questID) and tonumber(reselect.questID) > 0
-			and (not reselect.expiresAt or GetTime() < reselect.expiresAt)
+			-- Previous Blizzard call changed 2026.09.25: and (not reselect.expiresAt or GetTime() < reselect.expiresAt)
+			and (not reselect.expiresAt or RQE.API.Client.GetTime() < reselect.expiresAt)
 			and (tonumber(newQID) == tonumber(reselect.questID)
 				or ((not tonumber(newQID) or tonumber(newQID) == 0)
 					and not reselect.armed))
@@ -3368,7 +3317,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.previousSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 			-- Check if TomTom is loaded and compatibility is enabled and if so to clear the waypoint
-			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
 				and not reselectPending
 				and not RQE:IsCoordblockWaypointProtected() then
@@ -3380,18 +3330,30 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.QuestTrackerHiddenSuperTrackedPressed = true
 
 			if questID then
-				RQE:QueuePeriodicChecks("SUPER_TRACKING_CHANGED", 0.1, questID)
+				if RQE.db.profile.autoClickWaypointButton
+					and tonumber(newQID) and tonumber(newQID) > 0
+					and tonumber(newQID) ~= tonumber(oldQID) then
+					RQE.API.Client.C_Timer.After(1, function()
+						if RQE.db.profile.autoClickWaypointButton
+							and tonumber(RQE.API.GetSuperTrackedQuestID()) == tonumber(newQID) then
+							RQE:StartPeriodicChecks(newQID)
+						end
+					end)
+				end
 			else
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after SUPER_TRACKING_CHANGED fires
 				end)
 			end
 
-			C_Timer.After(0.15, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+			RQE.API.Client.C_Timer.After(0.15, function()
 				RQE.QuestTrackerHiddenSuperTrackedPressed = false
 			end)
 
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -3400,7 +3362,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 
 				RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if SUPER_TRACKING_CHANGED event fires
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
@@ -3441,7 +3404,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		C_Timer.After(1.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+		RQE.API.Client.C_Timer.After(1.5, function()
 			RQE:UpdateContentSize()
 		end)
 
@@ -3493,7 +3457,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if RQE.db.profile.autoClickWaypointButton and not preserveReselectedStep then
 
 				-- Ensure that the quest ID is valid and that the necessary data is available
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					-- Ensure that WaypointButtons and LastClickedButtonRef are valid before using them
 					if RQE.WaypointButtons and RQE.WaypointButtons[RQE.AddonSetStepIndex] then
 						if RQE.LastClickedButtonRef and RQE.LastClickedButtonRef.stepIndex and RQE.WaypointButtons[RQE.LastClickedButtonRef.stepIndex] then
@@ -3558,9 +3523,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Check if the objective is a progress bar
 		local stepIndex = RQE.AddonSetStepIndex or 1
 		if RQE.currentSuperTrackedQuestID then
-			local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(RQE.currentSuperTrackedQuestID, stepIndex, false)
+			-- Previous Blizzard call changed 2026.09.25: local _, objectiveType, _, fulfilled, required = GetQuestObjectiveInfo(RQE.currentSuperTrackedQuestID, stepIndex, false)
+			local _, objectiveType, _, fulfilled, required = RQE.API.Client.GetQuestObjectiveInfo(RQE.currentSuperTrackedQuestID, stepIndex, false)
 			if objectiveType == "progressbar" then
-				local progress = GetQuestProgressBarPercent(RQE.currentSuperTrackedQuestID)
+				-- Previous Blizzard call changed 2026.09.25: local progress = GetQuestProgressBarPercent(RQE.currentSuperTrackedQuestID)
+				local progress = RQE.API.Client.GetQuestProgressBarPercent(RQE.currentSuperTrackedQuestID)
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print(string.format(">> Checking progress bar for quest %s at step %s", RQE.currentSuperTrackedQuestID, stepIndex))
 				end
@@ -3571,24 +3538,34 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		-- Only run periodic checks if objectives actually changed
+		-- Reconcile the guidance step only when the focused quest changes.
 		if RQE.db.profile.autoClickWaypointButton then
 			local questID = RQE.API.GetSuperTrackedQuestID()
 
 			if questID then
-				C_Timer.After(0.25, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+				RQE.API.Client.C_Timer.After(0.25, function()
 
 					-- Only fire if the quest itself actually changed
-					if newQID ~= oldQID then
+					if tonumber(newQID) and tonumber(newQID) > 0
+						and tonumber(newQID) ~= tonumber(oldQID) then
 						if RQE.db.profile.debugLevel == "INFO+" then
 							print("SUPER_TRACKING_CHANGED → Actual change of super-tracked quest → StartPeriodicChecks()")
 						end
 
 						RQE.StartPerioFromSuperTrackChange = true
 
-						RQE:QueuePeriodicChecks("SUPER_TRACKING_CHANGED", 0.1, questID)
+						-- Check once after the newly focused quest's objectives and step
+						-- buttons settle, independently of other queued event checks.
+						RQE.API.Client.C_Timer.After(0.75, function()
+							if RQE.db.profile.autoClickWaypointButton
+								and tonumber(RQE.API.GetSuperTrackedQuestID()) == tonumber(questID) then
+								RQE:StartPeriodicChecks(questID)
+							end
+						end)
 
-						C_Timer.After(3, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+						RQE.API.Client.C_Timer.After(3, function()
 							RQE.StartPerioFromSuperTrackChange = false
 						end)
 
@@ -3623,7 +3600,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.superTrackingChanged = true
 
 		local questID = RQE.API.GetSuperTrackedQuestID()
-		local mapID = C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+		local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 		-- Runs check to make sure still super tracking as this doesn't need to run if SUPER_TRACKING_CHANGED fires as it goes from a supertracked quest to nil
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
@@ -3631,7 +3609,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if questID then
 				local questName
 				questName = RQE.API.GetTitleForQuestID(questID)
-				local questLink = GetQuestLink(questID)  -- Generate the quest link
+				-- Previous Blizzard call changed 2026.09.25: local questLink = GetQuestLink(questID)  -- Generate the quest link
+				local questLink = RQE.API.Client.GetQuestLink(questID)  -- Generate the quest link
 
 				RQE.debugLog("Quest Name and Quest Link: ", questName, questLink)
 
@@ -3656,15 +3635,18 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		C_Timer.After(0.05, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+		RQE.API.Client.C_Timer.After(0.05, function()
 			local qid = RQE.API.GetSuperTrackedQuestID()
-			local pid = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local pid = C_Map.GetBestMapForUnit("player")
+			local pid = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			RQE:ForceWaypointForSupertracked(qid, pid)
 		end)
 
 		-- Checks to make sure if UpdateFrame occurred as a result of more information in the code above with StepsText, CoordsText and MapIDs. If so, this doesn't need to also run
 		if not RQE.SuperTrackUpdatingFrameWithStepTextInfo then
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				UpdateFrame()
 			end)
 		end
@@ -3682,11 +3664,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE:CheckCPUUsage()
 		end
 
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 
-		C_Timer.After(1.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+		RQE.API.Client.C_Timer.After(1.5, function()
 			UpdateFrame()
 		end)
 
@@ -3697,10 +3681,13 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Function that handles the SUPER_TRACKING_PATH_UPDATED event
 	function RQE.handleSuperTrackingPathUpdate()
-		if C_Scenario.IsInScenario() then return end
+		-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then return end
+		if RQE.API.Client.C_Scenario.IsInScenario() then return end
 
-		local isResting = IsResting()
-		local isFlyable = IsFlyableArea()
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local isFlyable = IsFlyableArea()
+		local isFlyable = RQE.API.Client.IsFlyableArea()
 
 		if not isResting then return end
 		if isFlyable then return end
@@ -3720,6 +3707,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Retail 12.1 supplies questID as the first payload. Prefer an optional
 		-- second ID for compatibility with variants that also provide a log index.
 		local questID = secondQuestPayload or firstQuestPayload
+		local focusedQuestAtAcceptance = tonumber(RQE.API.GetSuperTrackedQuestID()) or 0
 
 		if questID and RQE.ClearQuestDependencyCompletions then
 			RQE:ClearQuestDependencyCompletions(questID)
@@ -3743,7 +3731,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		-- Cache accepted IDs, then let GetActiveTrackedTaskQuests apply the task-only
 		-- predicate after Blizzard has finished updating its quest state.
 		-- This does not change any Bonus Quest behavior.
-		C_Timer.After(0.25, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+		RQE.API.Client.C_Timer.After(0.25, function()
 			if questID then
 				RQE.ActiveTaskQuests[questID] = true
 
@@ -3759,13 +3748,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		local debugLogCaptureGeneration
 		if questID
 			and (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+")
-			and C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: and C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			and RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 			and RQE.PrepareDebugLogQuestCapture then
 			debugLogCaptureGeneration = RQE:PrepareDebugLogQuestCapture(questID)
 		elseif RQE.GetDebugLogCaptureGeneration then
 			debugLogCaptureGeneration = RQE:GetDebugLogCaptureGeneration()
 		end
-		C_Timer.After(2.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+		RQE.API.Client.C_Timer.After(2.5, function()
 			RQE.GetMissingQuestData(questID, debugLogCaptureGeneration)	-- This will run a function in a sister add-on to obtain information for the DB file, but will only call that function if user is on the correct bnet account
 		end)
 
@@ -3777,13 +3768,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.OkaytoUpdateCreateSteps = true
 			RQE.QuestLogIndexButtonPressed = true
 			RQE:ShouldClearFrame()
-			C_Timer.After(1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				RQE:AutoSetSuperTrackedQuestID(questID)
 				UpdateFrame(questID)
 			end)
 		else
 			if RQE.searchedQuestID then
-				C_Timer.After(2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+				RQE.API.Client.C_Timer.After(2, function()
 					RQE.DontUpdateFrame = false
 					RQE:GenerateNpcMacroIfNeeded(RQE.searchedQuestID)
 				end)
@@ -3791,7 +3784,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		-- Print in locations array format
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			RQE.MapAndContinentFromQuestAccepted = true
 			RQE.DebugPrintPlayerContinentPosition(questID)
 		end
@@ -3802,7 +3796,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			-- Delay processing of all quest watches after multiple acceptances
 			if not RQE.DelayedQuestWatchScheduled then
 				RQE.DelayedQuestWatchScheduled = true
-				C_Timer.After(4, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(4, function()
+				RQE.API.Client.C_Timer.After(4, function()
 					RQE:VerifyWatchedQuests()
 					RQE.DelayedQuestWatchCheck = {}
 					RQE.DelayedQuestWatchScheduled = false
@@ -3811,13 +3806,15 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		local isSuperTracking = RQE.API.IsSuperTrackingQuest()
-		local questLink = questID and GetQuestLink(questID) or nil
+		-- Previous Blizzard call changed 2026.09.25: local questLink = questID and GetQuestLink(questID) or nil
+		local questLink = questID and RQE.API.Client.GetQuestLink(questID) or nil
 
 		RQE.QuestStepsBlocked(questID)	-- Function call that checks to see if quest is in the DB already, but nothing is printed unless debug mode is set to 'Info'
 		RQE.QuestAcceptedToSuperTrackOkay = true
 		RQE.SetInitialFromAccept = true
 
-		C_Timer.After(1.3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.3, function()
+		RQE.API.Client.C_Timer.After(1.3, function()
 			RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_ACCEPTED event
 		end)
 
@@ -3825,7 +3822,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE:CheckCoordHotspotsInSteps(questID)
 		end
 
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			RQE:QuestType()	-- Fail safe to run function to check for new WQ/Bonus Quests when event fires to accept a quest (fires during QUEST_ACCEPTED event) - possible duplicate
 		end)
 
@@ -3845,12 +3843,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if questID then
 			RQE.LastAcceptedQuest = questID
 			local isWorldQuest = RQE.API.IsWorldQuest(questID)
-			local isTaskQuest = C_QuestLog.IsQuestTask(questID)
-			local isMetaQuest = C_QuestLog.IsMetaQuest(questID)
-			local watchType = C_QuestLog.GetQuestWatchType(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isTaskQuest = C_QuestLog.IsQuestTask(questID)
+			local isTaskQuest = RQE.API.Client.C_QuestLog.IsQuestTask(questID)
+			-- Previous Blizzard call changed 2026.09.25: local isMetaQuest = C_QuestLog.IsMetaQuest(questID)
+			local isMetaQuest = RQE.API.Client.C_QuestLog.IsMetaQuest(questID)
+			-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+			local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 			local isManuallyTracked = (watchType == Enum.QuestWatchType.Manual)  -- Applies when world quest is manually watched and then accepted when player travels to world quest spot
-			local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
-			local playerMapID = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local questMapID = C_TaskQuest.GetQuestZoneID(questID) or GetQuestUiMapID(questID)
+			local questMapID = RQE.API.Client.C_TaskQuest.GetQuestZoneID(questID) or RQE.API.Client.GetQuestUiMapID(questID)
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+			local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 
 			local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 			local messagePrefix = "QuestID (accepted): " .. tostring(questID) .. " - " .. questName
@@ -3883,25 +3886,31 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				-- DEFAULT_CHAT_FRAME:AddMessage("QA 06 Debug: playerMapID: " .. tostring(playerMapID) .. " (" .. type(playerMapID) .. ")", 0.46, 0.62, 1)	-- Cornflower Blue
 			-- end
 
-			C_Timer.After(0.25, function()
-				if C_QuestLog.GetLogIndexForQuestID(questID) then  -- Confirm it's in the log
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+			RQE.API.Client.C_Timer.After(0.25, function()
+				-- Previous Blizzard call changed 2026.09.25: if C_QuestLog.GetLogIndexForQuestID(questID) then  -- Confirm it's in the log
+				if RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(questID) then  -- Confirm it's in the log
 					if isWorldQuest and not isManuallyTracked then
-						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
+						RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Automatic)
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 							DEFAULT_CHAT_FRAME:AddMessage("QA 07 Debug: Automatically added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)	-- Cornflower Blue
 						end
 					elseif isWorldQuest and isManuallyTracked then
-						C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
+						RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID, Enum.QuestWatchType.Manual)
 						if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestAccepted then
 							DEFAULT_CHAT_FRAME:AddMessage("QA 08 Debug: Manually added World Quest watch for questID: " .. tostring(questID), 0.46, 0.62, 1)	-- Cornflower Blue
 						end
 					else
-						C_QuestLog.AddQuestWatch(questID)	-- Designed to be called in the event that the quest accepted is something like a meta quest
+						-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)	-- Designed to be called in the event that the quest accepted is something like a meta quest
+						RQE.API.Client.C_QuestLog.AddQuestWatch(questID)	-- Designed to be called in the event that the quest accepted is something like a meta quest
 					end
 				end
 			end)
 
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				-- Reapply the manual super-tracked quest ID if it's set and different from the current one
 				if RQE.ManualSuperTrack then
 					local superTrackIDToApply = RQE.ManualSuperTrackedQuestID
@@ -3932,7 +3941,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Delay to check for a blank RQEFrame and attempt to click the QuestLogIndexButton if necessary
 		if not RQE.QuestIDText or not RQE.QuestIDText:GetText() or RQE.QuestIDText:GetText() == "" then
-			C_Timer.After(2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+			RQE.API.Client.C_Timer.After(2, function()
+				if focusedQuestAtAcceptance > 0
+					or (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) > 0 then return end
 				RQE.infoLog("RQEFrame appears blank, attempting to click QuestLogIndexButton for questID:", questID)
 				RQE.ClickQuestLogIndexButton(questID)	-- May need to remove if issues
 			end)
@@ -3950,28 +3962,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		if isSuperTracking then
 			local superTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 			if questID == superTrackedQuestID then
-				C_Timer.After(1, function()  -- Delay of 1 second
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()  -- Delay of 1 second
+				RQE.API.Client.C_Timer.After(1, function()  -- Delay of 1 second
 					UpdateFrame()
 				end)
 				RQE.SetInitialWaypointToOne()	-- May need to remove if issues
 				RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when QUEST_ACCEPTED event fires
 			end
 			RQE:UpdateRQEFrameVisibility()
-		end
-
-		-- -- Tier Four Importance: QUEST_ACCEPTED event
-		if RQE.db.profile.autoClickWaypointButton then
-			local currentSuperQuestID = RQE.API.GetSuperTrackedQuestID()
-			if RQE.LastAcceptedQuest == currentSuperQuestID then
-
-				if questID then
-					RQE:QueuePeriodicChecks("QUEST_ACCEPTED", 2.3, questID)
-				else
-					C_Timer.After(2.3, function()
-						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_ACCEPTED fires
-					end)
-				end
-			end
 		end
 
 		-- Update Display of Memory Usage of Addon
@@ -4033,14 +4031,18 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	function RQE.handleZoneChange(...)
 		local event = select(2, ...)
 
-		local OnTaxi = UnitOnTaxi("player")
-		local isResting = IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+		local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
 
 		RQE:UpdateTrackerVisibility()
 
-		C_Timer.After(2.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.1, function()
+		RQE.API.Client.C_Timer.After(2.1, function()
 			RQE.UpdateScenarioFrame()
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.updateScenarioUI()
 			end)
 		end)
@@ -4051,7 +4053,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			if questID then
 				RQE:QueuePeriodicChecks("UNIT_EXITING_VEHICLE", 1.8, questID)
 			else
-				C_Timer.After(1.8, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.8, function()
+				RQE.API.Client.C_Timer.After(1.8, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_EXITING_VEHICLE fires
 				end)
 			end
@@ -4068,7 +4071,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 						print("Zone change → direction text changed → UpdateFrame()")
 					end
 					
-					C_Timer.After(0.05, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+					RQE.API.Client.C_Timer.After(0.05, function()
 						RQE.DirectionChangedUpdateRQEFrame = true
 						UpdateFrame()
 					end)
@@ -4097,8 +4101,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 			end
 
-			C_Timer.After(0.1, function()
-				if not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+				if not RQE.API.Client.InCombatLockdown() then
 					RQE:CheckWatchedQuestsSync()	-- Fires when ZONE_CHANGED or ZONE_CHANGED_INDOORS event is called
 				end
 
@@ -4106,7 +4112,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					if not RQE.hoveringOnFrame then
 						RQE.SortOnly = true
 						UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED or ZONE_CHANGED_INDOORS events fire
-						C_Timer.After(0.5, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+						RQE.API.Client.C_Timer.After(0.5, function()
 							RQE.SortOnly = false
 						end)
 					end
@@ -4118,7 +4125,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			RQE.CheckAndClickSeparateWaypointButtonButton()
 		end
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
 				local extractedQuestID = RQE.DisplayedQuestID
 				if not extractedQuestID or extractedQuestID == 0 then
@@ -4128,7 +4136,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end)
 
-		C_Timer.After(2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+		RQE.API.Client.C_Timer.After(2, function()
 			-- Check for Dragonriding & Capture and print the current states for debugging purposes
 			if RQE.CheckForDragonMounts() then
 				RQE.isDragonRiding = true
@@ -4136,9 +4145,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				RQE.isDragonRiding = false
 			end
 
-			local isFlying = IsFlying("player")
-			local isMounted = IsMounted()
-			local OnTaxi = UnitOnTaxi("player")
+			-- Previous Blizzard call changed 2026.09.25: local isFlying = IsFlying("player")
+			local isFlying = RQE.API.Client.IsFlying("player")
+			-- Previous Blizzard call changed 2026.09.25: local isMounted = IsMounted()
+			local isMounted = RQE.API.Client.IsMounted()
+			-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+			local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
 
 			-- Update RQE.PlayerMountStatus based on conditions
 			if not RQE.isDragonRiding and isFlying and isMounted then
@@ -4156,13 +4168,16 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		if RQE.PlayerMountStatus == "None" or RQE.PlayerMountStatus == "Mounted" then
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. SubZone Text: " .. tostring(GetSubZoneText()), 0, 1, 1)  -- Cyan
+				-- Previous Blizzard call changed 2026.09.25: DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. SubZone Text: " .. tostring(GetSubZoneText()), 0, 1, 1)  -- Cyan
+				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: " .. tostring(event) .. " triggered. SubZone Text: " .. tostring(RQE.API.Client.GetSubZoneText()), 0, 1, 1)  -- Cyan
 			end
 
 			-- Get the current map ID
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-				C_Timer.After(1.0, function()  -- Delay of 1 second
-					local mapID = C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.0, function()  -- Delay of 1 second
+				RQE.API.Client.C_Timer.After(1.0, function()  -- Delay of 1 second
+					-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+					local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 					DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID), 0, 1, 1)  -- Cyan
 				end)
 			end
@@ -4170,7 +4185,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Update Display of Memory Usage of Addon
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
-			if RQE.PlayerMountStatus ~= "Flying" and not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if RQE.PlayerMountStatus ~= "Flying" and not InCombatLockdown() then
+			if RQE.PlayerMountStatus ~= "Flying" and not RQE.API.Client.InCombatLockdown() then
 				RQE.debugLog("Player not flying or dragonriding")
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
 					RQE:CheckMemoryUsage()
@@ -4225,9 +4241,12 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE.QuestScrollFrameToTop()
 
 		-- Clears World Quest that are Automatically Tracked when switching to a new area
-		local isFlying = IsFlying("player")
-		local isMounted = IsMounted()
-		local OnTaxi = UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local isFlying = IsFlying("player")
+		local isFlying = RQE.API.Client.IsFlying("player")
+		-- Previous Blizzard call changed 2026.09.25: local isMounted = IsMounted()
+		local isMounted = RQE.API.Client.IsMounted()
+		-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+		local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
 
 		local questData = RQE.getQuestData(questID)
 		if not questData then
@@ -4264,8 +4283,10 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					isZoneChangeCheck = true
 
 					-- Get the current minimap zone text
-					local currentMinimapZone = GetMinimapZoneText() or "" -- Minimap zone text
-					local currentRealZone = GetRealZoneText() or ""
+					-- Previous Blizzard call changed 2026.09.25: local currentMinimapZone = GetMinimapZoneText() or "" -- Minimap zone text
+					local currentMinimapZone = RQE.API.Client.GetMinimapZoneText() or "" -- Minimap zone text
+					-- Previous Blizzard call changed 2026.09.25: local currentRealZone = GetRealZoneText() or ""
+					local currentRealZone = RQE.API.Client.GetRealZoneText() or ""
 					currentMinimapZone = currentMinimapZone:lower() -- Normalize casing
 					currentRealZone = currentRealZone:lower()
 
@@ -4304,9 +4325,22 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
+		-- Zone retries also depend on subzone and minimap text changes.
+		if stepData.failedfunc == "CheckDBZoneChange" and stepData.failedcheck then
+			isZoneChangeCheck = true
+		end
+		for _, failedData in ipairs(stepData.failedchecks or {}) do
+			if failedData.funct == "CheckDBZoneChange" then
+				isZoneChangeCheck = true
+				break
+			end
+		end
+
 		-- Avoid frequent firing by checking state
-		local currentMinimapZone = GetMinimapZoneText() or ""
-		local currentRealZone = GetRealZoneText() or ""
+		-- Previous Blizzard call changed 2026.09.25: local currentMinimapZone = GetMinimapZoneText() or ""
+		local currentMinimapZone = RQE.API.Client.GetMinimapZoneText() or ""
+		-- Previous Blizzard call changed 2026.09.25: local currentRealZone = GetRealZoneText() or ""
+		local currentRealZone = RQE.API.Client.GetRealZoneText() or ""
 		local currentZoneKey = currentMinimapZone .. "||" .. currentRealZone
 
 		if lastCheckedZone ~= currentZoneKey or lastCheckedStepIndex ~= stepIndex then
@@ -4315,7 +4349,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 			-- Trigger the button click only if the failed zone matches and we are on the correct stepIndex
 			if isFailedZoneCheck and stepIndex == RQE.AddonSetStepIndex then
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Failed zone check. Clicking supertracked quest button.")
 					end
@@ -4328,7 +4363,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("ZONE_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
 				end
-				C_Timer.After(1.3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.3, function()
+				RQE.API.Client.C_Timer.After(1.3, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("~~ Running RQE:StartPeriodicChecks() from ZONE_CHANGED ~~")
 					end
@@ -4346,7 +4382,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 
-		if not IsFlying and not isMounted and not OnTaxi then
+		-- Previous Blizzard call changed 2026.09.25: if not IsFlying and not isMounted and not OnTaxi then
+		if not RQE.API.ResolveClientAPI("IsFlying") and not isMounted and not OnTaxi then
 			RQE.UntrackAutomaticWorldQuests()
 		end
 	end
@@ -4362,7 +4399,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		RQE:UpdateCoordinates()
 		RQE:RemoveWorldQuestsIfOutOfSubzone()	-- Removes WQ that are auto watched that are not in the current player's area
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			if isSuperTracking then
 			local questID = RQE.API.GetSuperTrackedQuestID()
 				RQE.DontPrintTransitionBits = true
@@ -4387,12 +4425,14 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 						print("Zone change → direction text changed → UpdateFrame()")
 					end
 					
-					C_Timer.After(0.05, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, function()
+					RQE.API.Client.C_Timer.After(0.05, function()
 						RQE.DirectionChangedUpdateRQEFrame = true
 						UpdateFrame()
 					end)
 
-					C_Timer.After(0.10, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.10, function()
+					RQE.API.Client.C_Timer.After(0.10, function()
 						local questID = RQE.API.GetSuperTrackedQuestID()
 						if questID then
 							RQE:QueuePeriodicChecks("ZONE_CHANGED_NEW_AREA", 0.05, questID)
@@ -4408,7 +4448,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 				end
 
 				-- Delay slightly to allow supertrack data to settle
-				C_Timer.After(0.3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+				RQE.API.Client.C_Timer.After(0.3, function()
 					local questData = RQE.getQuestData(qid)
 					local step = questData and questData[sidx]
 
@@ -4468,14 +4509,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		RQE:UpdateSeparateFocusFrame()	-- Updates the Focus Frame within the RQE when ZONE_CHANGED_NEW_AREA event fires
 
-		local OnTaxi = UnitOnTaxi("player")
-		local isResting = IsResting()
+		-- Previous Blizzard call changed 2026.09.25: local OnTaxi = UnitOnTaxi("player")
+		local OnTaxi = RQE.API.Client.UnitOnTaxi("player")
+		-- Previous Blizzard call changed 2026.09.25: local isResting = IsResting()
+		local isResting = RQE.API.Client.IsResting()
 
 		if not OnTaxi and not isResting then
 			if not RQE.hoveringOnFrame then
 				RQE.SortOnly = true
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
-				C_Timer.After(0.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				RQE.API.Client.C_Timer.After(0.5, function()
 					RQE.SortOnly = false
 				end)
 			end
@@ -4505,9 +4549,11 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			return
 		end
 
-		C_Timer.After(1.15, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.15, function()
+		RQE.API.Client.C_Timer.After(1.15, function()
 			RQE.UpdateScenarioFrame()
-			C_Timer.After(0.15, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+			RQE.API.Client.C_Timer.After(0.15, function()
 				RQE.updateScenarioUI()
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when ZONE_CHANGED_NEW_AREA event fires
 			end)
@@ -4515,47 +4561,39 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		RQE:AutoSuperTrackClosestQuest()	-- Fires with the ZONE_CHANGED_NEW_AREA event
 
-		-- Check to advance to next step in quest
+		-- Recheck configured zone retries through StartPeriodicChecks, which evaluates
+		-- the normal step condition before considering a return step.
 		if RQE.db.profile.autoClickWaypointButton then
-			local questID = RQE.API.GetSuperTrackedQuestID()
-			local playerMapID = C_Map.GetBestMapForUnit("player")
-			local questData = RQE.getQuestData(questID)
-
-			-- Click the "W" Button is autoclick is selected and no steps or questData exist
 			RQE.CheckAndClickWButton()
-
-			if questData then
-				if RQE.LastClickedButtonRef == nil then return end
-				local stepIndex = RQE.LastClickedButtonRef.stepIndex or 1
-				local stepData = questData[stepIndex]
-
-				if stepData then
-					local failedIndex = stepData.failedIndex or stepIndex -- Default to current step if no failedIndex is provided
-
-					-- Log the failed check details if available
-					if stepData.failedfunc then
-						RQE.infoLog(tostring(stepData.failedfunc) .. " " .. table.concat(stepData.failedcheck or {}, ", "))
-					end
-
-					if stepData.failedfunc == "CheckDBZoneChange" and not table.includes(stepData.failedcheck, tostring(playerMapID)) then
-						C_Timer.After(0.5, function()
-							if RQE.WaypointButtons and RQE.WaypointButtons[failedIndex] then
-								RQE.WaypointButtons[failedIndex]:Click()
-							else
-								RQE.debugLog("Failed to find WaypointButton for index:", failedIndex)
-							end
-						end)
-					end
+		end
+		local zoneQuestID = RQE.API.GetSuperTrackedQuestID()
+		local zoneQuestData = zoneQuestID and RQE.getQuestData(zoneQuestID)
+		local zoneStepIndex = tonumber(RQE.AddonSetStepIndex)
+			or (RQE.LastClickedButtonRef and tonumber(RQE.LastClickedButtonRef.stepIndex))
+			or 1
+		local zoneStep = zoneQuestData and zoneQuestData[zoneStepIndex]
+		if zoneStep then
+			local hasZoneRetry = zoneStep.failedfunc == "CheckDBZoneChange" and zoneStep.failedcheck
+			for _, failedData in ipairs(zoneStep.failedchecks or {}) do
+				if failedData.funct == "CheckDBZoneChange" then
+					hasZoneRetry = true
+					break
 				end
+			end
+			if hasZoneRetry then
+				RQE:QueuePeriodicChecks("ZONE_CHANGED_NEW_AREA_FAILED_CHECK", 0.5, zoneQuestID)
 			end
 		end
 
-		C_Timer.After(1.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+		RQE.API.Client.C_Timer.After(1.5, function()
 
 			-- Get the current map ID
-			local mapID = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+			local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
-				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
+				-- Previous Blizzard call changed 2026.09.25: DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
+				DEFAULT_CHAT_FRAME:AddMessage("|cff00FFFFDebug: Current Map ID: " .. tostring(mapID) .. " - " .. tostring(RQE.API.Client.C_Map.GetMapInfo(mapID).name), 0, 1, 1)  -- Cyan
 			end
 
 			if RQE.db.profile.autoTrackZoneQuests then
@@ -4570,7 +4608,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 		-- Update Display of Memory Usage of Addon
 		if RQE.db and RQE.db.profile.displayRQEmemUsage then
-			if not RQE.PlayerMountStatus == "Flying" and not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if not RQE.PlayerMountStatus == "Flying" and not InCombatLockdown() then
+			if not RQE.PlayerMountStatus == "Flying" and not RQE.API.Client.InCombatLockdown() then
 				RQE.debugLog("Player not flying or dragonriding")
 				RQE:CheckMemoryUsage()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.ZoneChange then
@@ -4587,7 +4626,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		end
 
 		if RQE.db and RQE.db.profile.autoTrackZoneQuests then
-			local mapID = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map.GetBestMapForUnit("player")
+			local mapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			RQE.filterByZone(mapID)
 		end
 
@@ -4605,34 +4645,17 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 
 	-- Handles TRACKED_RECIPE_UPDATE event
 	function RQE.handleTrackedRecipeUpdate(...)
-		local event = select(2, ...)
-		local recipeID = select(3, ...)
-		local tracked = select(4, ...)
+		RQE:UpdateRecipeTrackingFrame()
+	end
 
-		-- Print Event-specific Args
-		if (RQE.db.profile.debugLevel == "INFO" or RQE.db.profile.debugLevel == "INFO+") and RQE.db.profile.showArgPayloadInfo then
-			local args = {...}  -- Capture all arguments into a table
-			for i, arg in ipairs(args) do
-				if type(arg) == "table" then
-					print("Arg " .. i .. ": (table)")
-					for k, v in pairs(arg) do
-						print("  " .. tostring(k) .. ": " .. tostring(v))
-					end
-				else
-					print("Arg " .. i .. ": " .. tostring(arg))
-				end
-			end
+	-- Refresh reagent names and material counts after currency, item, or bank updates.
+	function RQE.handleRecipeMaterialUpdate(_, event, itemID, success)
+		if event == "GET_ITEM_INFO_RECEIVED"
+			and (success == false or not RQE.recipeItemLoadRequested or not RQE.recipeItemLoadRequested[itemID]) then
+			return
 		end
-
-		if tracked then
-			-- Recipe is being tracked, update the recipe frame
-			RQE:CreateRecipeTrackingFrame()
-			RQE:UpdateRecipeTrackingFrame(recipeID)
-		else
-			-- Recipe is untracked, clear the frame
-			if RQE.recipeTrackingFrame then
-				RQE.recipeTrackingFrame:Hide()
-			end
+		if RQE.recipeTrackingFrame and RQE.recipeTrackingFrame:IsShown() then
+			RQE:UpdateRecipeTrackingFrame()
 		end
 	end
 
@@ -4675,18 +4698,21 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 		end
 
-		C_Timer.After(0.3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+		RQE.API.Client.C_Timer.After(0.3, function()
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not isSuperTracking then return end
 
 			local questID = RQE.API.GetSuperTrackedQuestID()
 
-			C_Timer.After(2.6, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.6, function()
+			RQE.API.Client.C_Timer.After(2.6, function()
 				RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 			end)
 
 			if messageType == 310 then
-				C_Timer.After(1.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.5, function()
+				RQE.API.Client.C_Timer.After(1.5, function()
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Running RQE:StartPeriodicChecks() due to UI_INFO_MESSAGE idx 310: " .. tostring(message))
 					end
@@ -4695,7 +4721,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			end
 
 			if messageType == 310 or messageType == 311 then
-				C_Timer.After(2.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+				RQE.API.Client.C_Timer.After(2.5, function()
 					-- print("Checking contents")
 
 					RQE.isCheckingMacroContents = true
@@ -4706,7 +4733,8 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 					end
 
 					RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UI_INFO_MESSAGE event fires with idx 311 or 312
-					C_Timer.After(0.2, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+					RQE.API.Client.C_Timer.After(0.2, function()
 						RQE.isCheckingMacroContents = false
 					end)
 				end)
@@ -4889,7 +4917,8 @@ local function StepUsesAuraCheck(step)
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("UNIT_MODEL_CHANGED related to current stepIndex:", stepIndex, "for questID:", questID)
 			end
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				if RQE.db.profile.debugLevel == "INFO+" then
 					print("~~ Running RQE:StartPeriodicChecks() from UNIT_MODEL_CHANGED ~~")
 				end
@@ -4897,7 +4926,8 @@ local function StepUsesAuraCheck(step)
 				if questID then
 					RQE:QueuePeriodicChecks("UNIT_MODEL_CHANGED", 0.5, questID)
 				else
-					C_Timer.After(0.5, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+					RQE.API.Client.C_Timer.After(0.5, function()
 						RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after UNIT_MODEL_CHANGED fires
 					end)
 				end
@@ -5006,7 +5036,8 @@ local function StepUsesAuraCheck(step)
 		-- Coalesce the frequent log-change events into one Task Quests refresh.
 		if unitTarget == "player" and not RQE.TaskQuestRefreshScheduled then
 			RQE.TaskQuestRefreshScheduled = true
-			C_Timer.After(0.15, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+			RQE.API.Client.C_Timer.After(0.15, function()
 				RQE.TaskQuestRefreshScheduled = false
 				if UpdateRQETaskQuestFrame then
 					UpdateRQETaskQuestFrame()
@@ -5031,7 +5062,8 @@ local function StepUsesAuraCheck(step)
 
 		-- A cached task row remains visible only while IsOnQuest is true.
 		if unitTarget == "player" then
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				if UpdateRQEWorldQuestFrame then
 					UpdateRQEWorldQuestFrame()
 				end
@@ -5044,12 +5076,15 @@ local function StepUsesAuraCheck(step)
 		local questID = RQE.API.GetSuperTrackedQuestID()
 		if not questID then return end
 
-		C_Timer.After(2.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+		RQE.API.Client.C_Timer.After(2.5, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
-		if unitTarget == "player" and questID and not UnitOnTaxi("player") and RQE.db.profile.autoClickWaypointButton then
-			C_Timer.After(0.25, function()
+		-- Previous Blizzard call changed 2026.09.25: if unitTarget == "player" and questID and not UnitOnTaxi("player") and RQE.db.profile.autoClickWaypointButton then
+		if unitTarget == "player" and questID and not RQE.API.Client.UnitOnTaxi("player") and RQE.db.profile.autoClickWaypointButton then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+			RQE.API.Client.C_Timer.After(0.25, function()
 
 				-- Auto-click W button if needed
 				RQE.CheckAndClickWButton()
@@ -5073,7 +5108,8 @@ local function StepUsesAuraCheck(step)
 						RQE:QueuePeriodicChecks("UNIT_QUEST_LOG_CHANGED", 0.25, questID)
 						RQE.PeriodicIsFiring = true
 					else
-						C_Timer.After(0.25, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+						RQE.API.Client.C_Timer.After(0.25, function()
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Running RQE:StartPeriodicChecks() due to changes detected")
 							end
@@ -5083,7 +5119,8 @@ local function StepUsesAuraCheck(step)
 						end)
 					end
 
-					C_Timer.After(3, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+					RQE.API.Client.C_Timer.After(3, function()
 						RQE.StartPerioFromUnitQuestLogChanged = false
 					end)
 				else
@@ -5094,7 +5131,8 @@ local function StepUsesAuraCheck(step)
 
 				-- Delayed retry for objective-based steps, such as profession crafting objectives
 				if CurrentStepUsesObjectiveStatus(questID) then
-					C_Timer.After(0.75, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.75, function()
+					RQE.API.Client.C_Timer.After(0.75, function()
 						if RQE.API.GetSuperTrackedQuestID() == questID then	
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("Running delayed objective-status recheck for questID:", questID)
@@ -5110,7 +5148,8 @@ local function StepUsesAuraCheck(step)
 				-----------------------------------------
 				RQE.currentSuperTrackedQuestID = questID
 
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					if RQE.WaypointButtons and RQE.AddonSetStepIndex then
 						if RQE.PeriodicIsFiring then
 							local btn = RQE.WaypointButtons[RQE.AddonSetStepIndex]
@@ -5135,7 +5174,8 @@ local function StepUsesAuraCheck(step)
 		-- ALWAYS RUN: Achievements frame refresh
 		-----------------------------------------
 		if RQE.AchievementsFrame:IsShown() then
-			C_Timer.After(2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+			RQE.API.Client.C_Timer.After(2, function()
 				if not RQE.SuperTrackingHandlingUnitQuestLogUpdateNotNeeded then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Running RQE:QuestType()")
@@ -5148,7 +5188,8 @@ local function StepUsesAuraCheck(step)
 		-----------------------------------------
 		-- ALWAYS RUN: UpdateQuestFrame refresh
 		-----------------------------------------
-		C_Timer.After(0.45, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.45, function()
+		RQE.API.Client.C_Timer.After(0.45, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("Running UpdateRQEQuestFrame")
 			end
@@ -5160,13 +5201,15 @@ local function StepUsesAuraCheck(step)
 	-- Function that handles the Scenario UI Updates coming from SCENARIO_CRITERA_UPDATE
 	function RQE.updateScenarioCriteriaUI()
 		-- If we're in combat, defer the update
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			RQE.deferredScenarioCriteriaUpdate = true
 			return
 		end
 
 		-- Check to see if player in scenario, if not it will end
-		if not C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
 			if RQE.ScenarioChildFrame:IsVisible() then
 				RQE.ScenarioChildFrame:Hide()
 			end
@@ -5180,7 +5223,8 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Get the current scenario information
-		local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
+		-- Previous Blizzard call changed 2026.09.25: local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
+		local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = RQE.API.Client.C_Scenario.GetInfo()
 
 		-- Check if the scenario has been marked as completed
 		if completed then
@@ -5197,7 +5241,8 @@ local function StepUsesAuraCheck(step)
 			return
 		end
 
-		if C_Scenario.IsInScenario() then
+		-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then
+		if RQE.API.Client.C_Scenario.IsInScenario() then
 			if not RQE.ScenarioChildFrame:IsVisible() then
 				RQE.ScenarioChildFrame:Show()
 			end
@@ -5231,7 +5276,8 @@ local function StepUsesAuraCheck(step)
 
 		if not mythicMode then
 			-- If we're in combat, defer the update
-			if InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+			if RQE.API.Client.InCombatLockdown() then
 				RQE.deferredScenarioUpdate = true  -- Set a flag to update after combat
 				return
 			end
@@ -5239,7 +5285,8 @@ local function StepUsesAuraCheck(step)
 			-- RQE.SetScenarioChildFrameHeight()	-- Updates the height of the scenario child frame based on the number of criteria called (called separately but might localize here)
 
 			-- Check to see if player in scenario, if not it will end
-			if not C_Scenario.IsInScenario() then
+			-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+			if not RQE.API.Client.C_Scenario.IsInScenario() then
 				if RQE.ScenarioChildFrame:IsVisible() then
 					RQE.ScenarioChildFrame:Hide()
 				end
@@ -5252,7 +5299,8 @@ local function StepUsesAuraCheck(step)
 			end
 
 			-- Get the current scenario information
-			local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
+			-- Previous Blizzard call changed 2026.09.25: local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = C_Scenario.GetInfo()
+			local scenarioName, currentStage, numStages, flags, hasBonusStep, isBonusStepComplete, completed = RQE.API.Client.C_Scenario.GetInfo()
 
 			-- Check if the scenario has been marked as completed
 			if completed then
@@ -5271,7 +5319,8 @@ local function StepUsesAuraCheck(step)
 				return
 			end
 
-			if C_Scenario.IsInScenario() then
+			-- Previous Blizzard call changed 2026.09.25: if C_Scenario.IsInScenario() then
+			if RQE.API.Client.C_Scenario.IsInScenario() then
 				if not RQE.ScenarioChildFrame:IsVisible() then
 					RQE.ScenarioChildFrame:Show()
 				end
@@ -5307,8 +5356,10 @@ local function StepUsesAuraCheck(step)
 	-- Fired when data from RequestRaidInfo is available and also when player uses portals
 	function RQE.handleInstanceInfoUpdate()
 		-- Clicks the button to trigger a waypoint creation shortly after login of the current supertracked quest
-		if not C_Scenario.IsInScenario() then
-			C_Timer.After(1.15, function()
+		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
+		if not RQE.API.Client.C_Scenario.IsInScenario() then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.15, function()
+			RQE.API.Client.C_Timer.After(1.15, function()
 				RQE.CheckAndClickWButton()
 			end)
 		end
@@ -5316,13 +5367,16 @@ local function StepUsesAuraCheck(step)
 		RQE:UpdateMapIDDisplay()
 		RQE:UpdateCoordinates()
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:UpdateTrackerVisibility()
 		end)
 
-		C_Timer.After(1.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		RQE.API.Client.C_Timer.After(1.2, function()
 			RQE.UpdateScenarioFrame()
-			C_Timer.After(0.15, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+			RQE.API.Client.C_Timer.After(0.15, function()
 				RQE.updateScenarioUI()
 				UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when UPDATE_INSTANCE_INFO event fires
 			end)
@@ -5353,7 +5407,8 @@ local function StepUsesAuraCheck(step)
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("UPDATE_INSTANCE_INFO: Objective change → StartPeriodicChecks()")
 					end
-					C_Timer.After(3, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+					RQE.API.Client.C_Timer.After(3, function()
 						RQE.StartPerioFromInstanceInfoUpdate = false
 					end)
 
@@ -5363,7 +5418,8 @@ local function StepUsesAuraCheck(step)
 			end
 		end
 
-		C_Timer.After(0.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+		RQE.API.Client.C_Timer.After(0.1, function()
 			RQE.isCheckingMacroContents = true
 			local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -5372,7 +5428,8 @@ local function StepUsesAuraCheck(step)
 			end
 
 			RQEMacro:CreateMacroForCurrentStep()	-- Checks for macro status if UPDATE_INSTANCE_INFO event fires
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				RQE.isCheckingMacroContents = false
 			end)
 		end)
@@ -5430,7 +5487,8 @@ local function StepUsesAuraCheck(step)
 		local StepsText, CoordsText, MapIDs = PrintQuestStepsToChat(questID)
 
 		if RQE.PlayerMountStatus == "Flying" or RQE.PlayerMountStatus ~= "Taxi" or RQE.PlayerMountStatus ~= "Dragonriding" then
-			C_Timer.After(0.7, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			RQE.API.Client.C_Timer.After(0.7, function()
 				if questID then
 					if RQE.ManualSuperTrack and questID ~= RQE.ManualSuperTrackedQuestID then
 						RQE:AutoSetSuperTrackedQuestID(RQE.ManualSuperTrackedQuestID)
@@ -5462,7 +5520,8 @@ local function StepUsesAuraCheck(step)
 						-- The super-tracked quest is not what we set; avoid changing focus
 						RQE:CheckAndRefreshSeparateFocusFrame()
 
-						C_Timer.After(1.7, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.7, function()
+						RQE.API.Client.C_Timer.After(1.7, function()
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #1 event function")
 							end
@@ -5486,11 +5545,13 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Checks to make sure that the SeparateFocusFrame contains information when it should
-		C_Timer.After(1.35, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.35, function()
+		RQE.API.Client.C_Timer.After(1.35, function()
 			RQE:CheckAndRefreshSeparateFocusFrame()
 		end)
 
-		C_Timer.After(1.7, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.7, function()
+		RQE.API.Client.C_Timer.After(1.7, function()
 			if RQE.db.profile.debugLevel == "INFO+" then
 				print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_LOG_UPDATE #2 event function")
 			end
@@ -5530,8 +5591,10 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Clear the raid marker from the current target
-		if UnitExists("target") then
-			C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: if UnitExists("target") then
+		if RQE.API.Client.UnitExists("target") then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				if questID and not RQE:IsQuestRelevant(questID) then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -5591,7 +5654,8 @@ local function StepUsesAuraCheck(step)
 			end
 		end
 
-		C_Timer.After(2.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.1, function()
+		RQE.API.Client.C_Timer.After(2.1, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
@@ -5620,8 +5684,10 @@ local function StepUsesAuraCheck(step)
 		local quantity = select(5, ...)
 
 		-- Clear the raid marker from the current target
-		if UnitExists("target") then
-			C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: if UnitExists("target") then
+		if RQE.API.Client.UnitExists("target") then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+			RQE.API.Client.C_Timer.After(1, function()
 				if questID and not RQE:IsQuestRelevant(questID) then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("Clearing target following QUEST_CURRENCY_LOOT_RECEIVED event")
@@ -5698,7 +5764,8 @@ local function StepUsesAuraCheck(step)
 		RQE.alreadyPrintedSchematics = false
 
 		if RQE.ReEnableRQEFrames then
-			C_Timer.After(2.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+			RQE.API.Client.C_Timer.After(2.5, function()
 				RQE.ToggleBothFramesfromLDB()
 			end)
 			RQE.ReEnableRQEFrames = false
@@ -5734,7 +5801,8 @@ local function StepUsesAuraCheck(step)
 
 		RQE:QuestComplete(questID)
 
-		C_Timer.After(2.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.1, function()
+		RQE.API.Client.C_Timer.After(2.1, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
@@ -5765,13 +5833,16 @@ local function StepUsesAuraCheck(step)
 			RQE.StartPerioFromQuestComplete = true
 			if questID then
 				RQE:QueuePeriodicChecks("QUEST_COMPLETE", 1.3, questID)
-				C_Timer.After(3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+				RQE.API.Client.C_Timer.After(3, function()
 					RQE.StartPerioFromQuestComplete = false
 				end)
 			else
-				C_Timer.After(1.3, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.3, function()
+				RQE.API.Client.C_Timer.After(1.3, function()
 					RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_COMPLETE fires
-					C_Timer.After(3, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(3, function()
+					RQE.API.Client.C_Timer.After(3, function()
 						RQE.StartPerioFromQuestComplete = false
 					end)
 				end)
@@ -5822,7 +5893,8 @@ local function StepUsesAuraCheck(step)
 
 		RQE:QuestComplete(questID)
 
-		C_Timer.After(2.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.1, function()
+		RQE.API.Client.C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 			end
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
@@ -5885,10 +5957,12 @@ local function StepUsesAuraCheck(step)
 	-- Handling CLIENT_SCENE_CLOSED event (restoring of World Quests when event fires):
 	function RQE.HandleClientSceneClosed()
 		RQE.isRestoringWorldQuests = true
-		C_Timer.After(1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1, function()
+		RQE.API.Client.C_Timer.After(1, function()
 			RQE:RestoreSavedWorldQuestWatches()
 			-- Set isRestoringWorldQuests back to false after all quests are restored
-			C_Timer.After(2, function() -- adjust the delay as needed
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function() -- adjust the delay as needed
+			RQE.API.Client.C_Timer.After(2, function() -- adjust the delay as needed
 				RQE.isRestoringWorldQuests = false
 			end)
 		end)
@@ -5927,7 +6001,8 @@ local function StepUsesAuraCheck(step)
 
 		UpdateRQEWorldQuestFrame()
 
-		C_Timer.After(0.15, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		RQE.API.Client.C_Timer.After(0.15, function()
 			RQE:SaveTrackedQuestsToCharacter()
 		end)
 	end
@@ -6009,10 +6084,12 @@ local function StepUsesAuraCheck(step)
 		RQE.currentSuperTrackedQuestID = RQE.API.GetSuperTrackedQuestID()
 
 		if isSuperTracking and RQE.currentSuperTrackedQuestID and RQE.currentSuperTrackedQuestID ~= questID then
-			C_Timer.After(0.7, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			RQE.API.Client.C_Timer.After(0.7, function()
 				UpdateRQEQuestFrame()
 			end)
-			C_Timer.After(1.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.1, function()
+			RQE.API.Client.C_Timer.After(1.1, function()
 				AdjustRQEFrameWidths()
 				AdjustQuestItemWidths(RQE.RQEQuestFrame:GetWidth())
 
@@ -6046,7 +6123,8 @@ local function StepUsesAuraCheck(step)
 					end
 				end
 			end
-		elseif not isSuperTracking then
+		elseif RQE.db.profile.enableNearestSuperTrack and not isSuperTracking
+			and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 			RQE:AutoSetSuperTrackedQuestID(questID) -- Supertracks quest with progress if nothing is being supertracked
 			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_UPDATE event fires
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_UPDATE event fires
@@ -6062,7 +6140,8 @@ local function StepUsesAuraCheck(step)
 			DEFAULT_CHAT_FRAME:AddMessage("QWU 03 Debug: Current super tracked quest ID/Name: " .. tostring(RQE.currentSuperTrackedQuestID) .. " / " .. tostring(superTrackedQuestName), 0.56, 0.93, 0.56)	-- Light Green
 		end
 
-		C_Timer.After(2.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.1, function()
+		RQE.API.Client.C_Timer.After(2.1, function()
 			if RQE.db.profile.debugLevel == "INFO" then
 				-- print("~~ RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest() fired within QUEST_WATCH_UPDATE event function")
 			end
@@ -6090,22 +6169,29 @@ local function StepUsesAuraCheck(step)
 		-- Retail's quest-map refresh, which can reach protected map-pin setup during
 		-- a world-boss encounter without changing the watch list at all.
 		local isWorldQuest = RQE.API.IsWorldQuest(questID)
-		local isTaskQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
-		local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or false
-		local watchType = C_QuestLog.GetQuestWatchType(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isTaskQuest = C_QuestLog.IsQuestTask(questID) or C_QuestLog.IsThreatQuest(questID)
+		local isTaskQuest = RQE.API.Client.C_QuestLog.IsQuestTask(questID) or RQE.API.Client.C_QuestLog.IsThreatQuest(questID)
+		-- Previous Blizzard call changed 2026.09.25: local isQuestCompleted = C_QuestLog.IsQuestFlaggedCompleted(questID) or false
+		local isQuestCompleted = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(questID) or false
+		-- Previous Blizzard call changed 2026.09.25: local watchType = C_QuestLog.GetQuestWatchType(questID)
+		local watchType = RQE.API.Client.C_QuestLog.GetQuestWatchType(questID)
 
 		if not isQuestCompleted and not watchType and isWorldQuest then
-			C_QuestLog.AddWorldQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddWorldQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.AddWorldQuestWatch(questID)
 		elseif not isQuestCompleted and not watchType and isTaskQuest then
-			C_QuestLog.AddQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 		elseif not isQuestCompleted and not watchType then
-			C_QuestLog.AddQuestWatch(questID)
+			-- Previous Blizzard call changed 2026.09.25: C_QuestLog.AddQuestWatch(questID)
+			RQE.API.Client.C_QuestLog.AddQuestWatch(questID)
 		end
 
 		-- Retrieve the current watched quest ID if needed
 		local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 		local questInfo = RQE.getQuestData(questID) or { questID = questID, name = questName }
-		local questLink = questID and GetQuestLink(questID) or nil
+		-- Previous Blizzard call changed 2026.09.25: local questLink = questID and GetQuestLink(questID) or nil
+		local questLink = questID and RQE.API.Client.GetQuestLink(questID) or nil
 		local StepsText, CoordsText, MapIDs, questHeader = {}, {}, {}, {}
 
 		if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestWatchUpdate then
@@ -6156,7 +6242,8 @@ local function StepUsesAuraCheck(step)
 
 			-- Checks to see if any changes were made to the objectives and if so will call the RQE:StartPeriodicChecks(), if it exists in the DB
 			if RQE.db.profile.autoClickWaypointButton then
-				C_Timer.After(0.25, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.25, function()
+				RQE.API.Client.C_Timer.After(0.25, function()
 					-- Click the "W" Button is autoclick is selected and no steps or questData exist
 					RQE.CheckAndClickWButton()
 
@@ -6168,7 +6255,8 @@ local function StepUsesAuraCheck(step)
 								print("Objective change → continuing StartPeriodicChecks()")
 							end
 						else
-							C_Timer.After(0.1, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+							RQE.API.Client.C_Timer.After(0.1, function()
 								RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_UPDATE fires
 								if RQE.db.profile.debugLevel == "INFO+" then
 									print("Objective change → continuing StartPeriodicChecks()")
@@ -6187,7 +6275,8 @@ local function StepUsesAuraCheck(step)
 				end)
 			end
 
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE.QuestWatchUpdateFired then
 					RQE.QuestWatchUpdateFired = false	-- Reset the flag to false if it is currently marked as true
 				end
@@ -6195,7 +6284,8 @@ local function StepUsesAuraCheck(step)
 			end)
 		end
 
-		C_Timer.After(0.7, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+		RQE.API.Client.C_Timer.After(0.7, function()
 			UpdateRQEQuestFrame()
 		end)
 	end
@@ -6249,13 +6339,15 @@ local function StepUsesAuraCheck(step)
 			UpdateRQEWorldQuestFrame()
 		end
 
-		C_Timer.After(0.15, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+		RQE.API.Client.C_Timer.After(0.15, function()
 			RQE:SaveTrackedQuestsToCharacter()	-- Saves the character's watched quest list when QUEST_WATCH_LIST_CHANGED event fires
 			RQE:SaveSuperTrackedQuestToCharacter()	-- Saves the character's currently supertracked quest when QUEST_WATCH_LIST_CHANGED event fires
 			RQE.UnitQuestLogChangedFired = false
 		end)
 
-		C_Timer.After(2.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.5, function()
+		RQE.API.Client.C_Timer.After(2.5, function()
 			RQE:ShouldClearFrame()
 		end)
 
@@ -6281,7 +6373,8 @@ local function StepUsesAuraCheck(step)
 		end
 
 		if RQE.UnitQuestLogChangedFired then	-- may need to place this flag in other locations too to ensure that RQEQuestFrame updates, but keep lag low
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				RQE:UpdateTrackerVisibility()
 			end)
 
@@ -6345,7 +6438,8 @@ local function StepUsesAuraCheck(step)
 						if superTrackedQuestID then
 							RQE:QueuePeriodicChecks("QUEST_WATCH_LIST_CHANGED", 0.5, superTrackedQuestID)
 						else
-							C_Timer.After(0.5, function()
+							-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+							RQE.API.Client.C_Timer.After(0.5, function()
 								RQE:StartPeriodicChecks()	-- Checks 'funct' for current quest in DB after QUEST_WATCH_LIST_CHANGED fires
 							end)
 						end
@@ -6358,7 +6452,7 @@ local function StepUsesAuraCheck(step)
 
 			-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 			if RQE.db.profile.enableNearestSuperTrack then
-				if not RQE.isSuperTracking or not isSuperTracking then
+				if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 					if not RQEFrame:IsShown() then return end
 					local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 					if closestQuestID then
@@ -6383,7 +6477,8 @@ local function StepUsesAuraCheck(step)
 			end
 
 			-- If nothing is still being supertracked, a quest will be super tracked if it is added to the RQEQuestFrame
-			if RQE.QuestAddedForWatchListChanged and not isSuperTracking then
+			if RQE.db.profile.enableNearestSuperTrack and RQE.QuestAddedForWatchListChanged
+				and not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				local isWorldQuest = RQE.API.IsWorldQuest(questID)
 				if not isWorldQuest then
 					RQE:AutoSetSuperTrackedQuestID(questID)	-- If still nothing is being supertracked the addon will opt to super track the quest that fired the event
@@ -6392,16 +6487,19 @@ local function StepUsesAuraCheck(step)
 				end
 			end
 
-			C_Timer.After(1.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+			RQE.API.Client.C_Timer.After(1.2, function()
 				RQE.UpdateScenarioFrame()
-				C_Timer.After(0.15, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.15, function()
+				RQE.API.Client.C_Timer.After(0.15, function()
 					RQE.updateScenarioUI()
 					UpdateRQEQuestFrame()	-- Updates RQEQuestFrame when QUEST_WATCH_LIST_CHANGED event fires
 				end)
 			end)
 		end
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			if RQE.QuestIDText and RQE.QuestIDText:GetText() then  -- Check if QuestIDText exists and has text
 				local extractedQuestID = RQE.DisplayedQuestID
 				-- local extractedQuestID = tonumber(RQE.QuestIDText:GetText():match("%d+"))
@@ -6451,7 +6549,8 @@ local function StepUsesAuraCheck(step)
 		end
 
 		-- Print in coordinateHotspots format and should show use the coordinates that are reflected in the DB file for that last step
-		if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		-- Previous Blizzard call changed 2026.09.25: if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
+		if RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 			RQE.MapAndContinentFromQuestTurnIn = true
 			RQE.TurnInQuestID = questID
 			RQE.DebugPrintPlayerContinentPosition(RQE.TurnInQuestID)
@@ -6475,12 +6574,14 @@ local function StepUsesAuraCheck(step)
 		end
 
 		if RQE.db.profile.enableAutoSuperTrackSwap then
-			C_Timer.After(0.7, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.7, function()
+			RQE.API.Client.C_Timer.After(0.7, function()
 				RQE:AutoSuperTrackClosestQuest()	-- Fires, after a brief delay, following the QUEST_TURNED_IN event
 			end)
 		end
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
 			if not RQE.previousSuperTrackedQuestID then
 				RQE.previousSuperTrackedQuestID = nil
@@ -6490,7 +6591,8 @@ local function StepUsesAuraCheck(step)
 				RQE.Buttons.ClearButtonPressed()	-- Simulate pressing the "C" ClearButton
 				-- Clear user waypoint and reset TomTom if loaded
 				if not RQE:IsCoordblockWaypointProtected() then
-					C_Map.ClearUserWaypoint()
+					-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+					RQE.API.Client.C_Map.ClearUserWaypoint()
 				end
 
 				-- Reset the "Clicked" WaypointButton to nil
@@ -6500,7 +6602,8 @@ local function StepUsesAuraCheck(step)
 				RQE.LastClickedButtonRef = RQE.WaypointButtons[1]
 
 				-- Check if TomTom is loaded and compatibility is enabled
-				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility
 					and not RQE:IsCoordblockWaypointProtected() then
 					TomTom.waydb:ResetProfile()
@@ -6562,11 +6665,13 @@ local function StepUsesAuraCheck(step)
 			end
 		end
 
-		if not InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+		if not RQE.API.Client.InCombatLockdown() then
 			RQE:CheckWatchedQuestsSync()	-- Fires when QUEST_DETAIL event is called
 		end
 
-		local questID = GetQuestID()
+		-- Previous Blizzard call changed 2026.09.25: local questID = GetQuestID()
+		local questID = RQE.API.Client.GetQuestID()
 		local questName = RQE.API.GetTitleForQuestID(questID) or "Unknown Quest"
 		local messagePrefix = "QuestID (displayed): " .. tostring(questID) .. " - " .. questName
 
@@ -6632,7 +6737,8 @@ local function StepUsesAuraCheck(step)
 				DEFAULT_CHAT_FRAME:AddMessage("  descriptionQuestText: " .. (descriptionOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 				DEFAULT_CHAT_FRAME:AddMessage("  npc: "	.. (npcOK and "|cFF00FF00[has data]|r" or "|cFFFF0000[blank/missing]|r"), 0.46, 0.82, 0.95)
 				if not npcOK then
-					local npcName = UnitName("target")
+					-- Previous Blizzard call changed 2026.09.25: local npcName = UnitName("target")
+					local npcName = RQE.API.Client.UnitName("target")
 					if type(npcName) == "string" and npcName:match("%S") then
 						print(string.format("			npc = { \"%s\" },", npcName))
 					else
@@ -6651,7 +6757,7 @@ local function StepUsesAuraCheck(step)
 		-- If no quest is currently super-tracked and enableNearestSuperTrack is activated, find and set the closest tracked quest
 		if RQE.db.profile.enableNearestSuperTrack then
 			local isSuperTracking = RQE.API.IsSuperTrackingQuest()
-			if not RQE.isSuperTracking or not isSuperTracking then
+			if not isSuperTracking and (tonumber(RQE.API.GetSuperTrackedQuestID()) or 0) == 0 then
 				if not RQEFrame:IsShown() then return end
 				local closestQuestID = RQE:GetClosestTrackedQuest()  -- Get the closest tracked quest
 				if closestQuestID then
@@ -6695,7 +6801,8 @@ local function StepUsesAuraCheck(step)
 			return	-- returns if nothing is being supertracked
 		end
 
-		C_Timer.After(2.1, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2.1, function()
+		RQE.API.Client.C_Timer.After(2.1, function()
 			RQE:CheckSeparateFocusHasTextButRQEFrameMissingQuest()
 		end)
 
@@ -6732,7 +6839,8 @@ local function StepUsesAuraCheck(step)
 
 		-- Check to advance to next step in quest
 		if RQE.db.profile.autoClickWaypointButton then
-			C_Timer.After(0.5, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+			RQE.API.Client.C_Timer.After(0.5, function()
 				if RQE.db.profile.debugLevel == "INFO+" and RQE.db.profile.QuestFinished then
 					DEFAULT_CHAT_FRAME:AddMessage("QF 07 Debug: Called CheckAndAdvanceStep for QuestID: " .. tostring(questID), 1, 0.75, 0.79)		-- Pink
 				end
@@ -6827,7 +6935,8 @@ local function StepUsesAuraCheck(step)
 				ObjectiveTrackerFrame:Hide()
 			end
 			-- Recheck after a delay to ensure it remains hidden
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				if ObjectiveTrackerFrame:IsShown() then
 					ObjectiveTrackerFrame:Hide()
 				end
@@ -6840,7 +6949,8 @@ local function StepUsesAuraCheck(step)
 	function RQE:BlizzObjectiveTracker()
 		RQE.ToggleBothFramesfromLDB()
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:ToggleObjectiveTracker()
 		end)
 
@@ -6852,18 +6962,21 @@ local function StepUsesAuraCheck(step)
 	function RQE:TempBlizzObjectiveTracker()
 		RQE.ToggleBothFramesfromLDB()
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:ToggleObjectiveTracker()
 		end)
 
-		C_Timer.After(10, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(10, function()
+		RQE.API.Client.C_Timer.After(10, function()
 			RQE.ToggleBothFramesfromLDB()
 		end)
 	end
 
 	-- Function to Display or Hide the Objective Tracker
 	function RQE:ToggleObjectiveTracker()
-		if InCombatLockdown() then return end
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
+		if RQE.API.Client.InCombatLockdown() then return end
 
 		-- If Mythic/Scenario mode is active, always show Blizzard Tracker and hide only RQEQuestFrame
 		if self.db.profile.mythicScenarioMode then
@@ -6878,13 +6991,15 @@ local function StepUsesAuraCheck(step)
 			-- Hide RQE frames and show Blizzard Tracker
 			if RQEFrame and RQEFrame:IsShown() then
 				RQEFrame:Hide()
-				C_Timer.After(0.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				RQE.API.Client.C_Timer.After(0.5, function()
 					RQE:ToggleObjectiveTracker()
 				end)
 			end
 			if RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown() then
 				RQE.RQEQuestFrame:Hide()
-				C_Timer.After(0.5, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+				RQE.API.Client.C_Timer.After(0.5, function()
 					RQE:ToggleObjectiveTracker()
 				end)
 			end
@@ -6911,10 +7026,12 @@ local function StepUsesAuraCheck(step)
 			-- Hide RQE frames
 			RQEFrame:Hide()
 
-			C_Map.ClearUserWaypoint()
+			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+			RQE.API.Client.C_Map.ClearUserWaypoint()
 
 			-- Check if TomTom is loaded and compatibility is enabled
-			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
@@ -6976,8 +7093,10 @@ local function StepUsesAuraCheck(step)
 
 	-- OnUpdate function that checks if the map (quest details) are open and if so, it will resist closing the map when hovering over the "W" Button in RQEFrame
 	mapRqeFrame:HookScript("OnUpdate", function(self, elapsed)
-		local isInInstance, _ = IsInInstance()
-		local isInScenario = C_Scenario.IsInScenario()
+		-- Previous Blizzard call changed 2026.09.25: local isInInstance, _ = IsInInstance()
+		local isInInstance, _ = RQE.API.Client.IsInInstance()
+		-- Previous Blizzard call changed 2026.09.25: local isInScenario = C_Scenario.IsInScenario()
+		local isInScenario = RQE.API.Client.C_Scenario.IsInScenario()
 
 		if isInInstance or isInScenario then return end
 
