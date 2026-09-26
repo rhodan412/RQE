@@ -86,7 +86,8 @@ local function Clamp(value, minimum, maximum)
 end
 
 local function GetCursorInRegionSpace(region)
-	local x, y = GetCursorPosition()
+	-- Previous Blizzard call changed 2026.09.25: local x, y = GetCursorPosition()
+	local x, y = RQE.API.Client.GetCursorPosition()
 	local scale = region and region:GetEffectiveScale() or 1
 	if not scale or scale == 0 then scale = 1 end
 	return x / scale, y / scale
@@ -520,7 +521,8 @@ local function BeginPreview(title, previewKey, loader, unavailableMessage, quest
 	end
 
 	if not frame.previewReady then
-		frame.loadTimer = C_Timer.NewTimer(LOAD_TIMEOUT, function()
+		-- Previous Blizzard call changed 2026.09.25: frame.loadTimer = C_Timer.NewTimer(LOAD_TIMEOUT, function()
+		frame.loadTimer = RQE.API.Client.C_Timer.NewTimer(LOAD_TIMEOUT, function()
 			if frame.requestToken ~= token then return end
 			frame.loadTimer = nil
 			if frame:IsShown() and frame.Status:IsShown() then
