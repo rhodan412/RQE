@@ -102,7 +102,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				if not RQE.db.profile.enableStepControls then
 					RQE:StartPeriodicChecks()		-- keeping this in place means that if player is manually tracking a step that differs from what is part of the "automatic" or true step the "W" button won't generate the waypoint for the manually set stepIndex
 				end
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.hoveringOnRQEFrameAndButton = false
 				end)
 			end
@@ -123,7 +124,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			end
 
 			-- Update the macro if the WaypointButton is physically clicked by the player
-			C_Timer.After(0.1, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+			RQE.API.Client.C_Timer.After(0.1, function()
 				RQE.isCheckingMacroContents = true
 				local isMacroCorrect = RQE.CheckCurrentMacroContents()
 
@@ -132,7 +134,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				end
 
 				RQEMacro:CreateMacroForCurrentStep()
-				C_Timer.After(0.2, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+				RQE.API.Client.C_Timer.After(0.2, function()
 					RQE.isCheckingMacroContents = false
 				end)
 			end)
@@ -206,7 +209,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				elseif (not RQE.DatabaseSuperX and RQE.DatabaseSuperY) or (not RQE.superX or not RQE.superY and RQE.superMapID) then
 					x, y, mapID = RQE.GetQuestCoordinates(questID)
 					if not (x and y and mapID) then
-						mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+						-- Previous Blizzard call changed 2026.09.25: mapID, x, y = C_QuestLog.GetNextWaypoint(questID)
+						mapID, x, y = RQE.API.Client.C_QuestLog.GetNextWaypoint(questID)
 						if RQE.db and RQE.db.profile and RQE.db.profile.debugLevel == "INFO+" then
 							print("Fallback to GetNextWaypoint for coordinates for questID:", questID)
 						end
@@ -258,9 +262,11 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			return RQE.WPUtil.GetPlayerMapAndXY()
 		end
 		-- Fallback: use retail API if available; returns mapID, x, y (normalized)
-		local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		local mapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit") and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not mapID then return nil end
-		local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+		-- Previous Blizzard call changed 2026.09.25: local pos = C_Map.GetPlayerMapPosition(mapID, "player")
+		local pos = RQE.API.Client.C_Map.GetPlayerMapPosition(mapID, "player")
 		if not pos then return mapID, nil, nil end
 		return mapID, pos.x, pos.y
 	end
@@ -371,8 +377,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- A cached coordinate is not proof that its Blizzard map pin still exists.
 	-- The same check is shared by hotspots and ordered routes.
 	local function BlizzardPinMatches(point)
-		if not (point and C_Map and C_Map.GetUserWaypoint) then return false end
-		local pin = C_Map.GetUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: if not (point and C_Map and C_Map.GetUserWaypoint) then return false end
+		if not (point and C_Map and RQE.API.ResolveClientAPI("C_Map.GetUserWaypoint")) then return false end
+		-- Previous Blizzard call changed 2026.09.25: local pin = C_Map.GetUserWaypoint()
+		local pin = RQE.API.Client.C_Map.GetUserWaypoint()
 		local pos = pin and pin.position
 		if not (pin and pin.uiMapID == point.mapID and pos) then return false end
 		local x, y
@@ -405,7 +413,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		end
 
 		-- Remove previous TomTom waypoint (if any)
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			if RQE._currentTomTomUID and TomTom and TomTom.RemoveWaypoint then
 				TomTom:RemoveWaypoint(RQE._currentTomTomUID)
@@ -418,8 +427,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		end
 
 		-- Clear Blizzard user pin (keeps the in-game map nice & tidy)
-		if C_Map and C_Map.ClearUserWaypoint then
-			C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: if C_Map and C_Map.ClearUserWaypoint then
+		if C_Map and RQE.API.ResolveClientAPI("C_Map.ClearUserWaypoint") then
+			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+			RQE.API.Client.C_Map.ClearUserWaypoint()
 		end
 
 		local uid
@@ -448,15 +459,18 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		-- Ordered chains also need a map waypoint when TomTom is disabled. Do
 		-- not supertrack this user pin, which would hide the owning quest ID.
 		if options and RQE._settingCoordOrderWaypoint and not uid
-			and C_Map and C_Map.SetUserWaypoint then
+			-- Previous Blizzard call changed 2026.09.25: and C_Map and C_Map.SetUserWaypoint then
+			and C_Map and RQE.API.ResolveClientAPI("C_Map.SetUserWaypoint") then
 			local pin = UiMapPoint and UiMapPoint.CreateFromCoordinates
 				and UiMapPoint.CreateFromCoordinates(mapID, xNorm, yNorm)
 			if not pin and CreateVector2D then
 				pin = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = title }
 			end
 			if pin then
-				C_Map.SetUserWaypoint(pin)
-				usedBlizzardPin = not C_Map.GetUserWaypoint
+				-- Previous Blizzard call changed 2026.09.25: C_Map.SetUserWaypoint(pin)
+				RQE.API.Client.C_Map.SetUserWaypoint(pin)
+				-- Previous Blizzard call changed 2026.09.25: usedBlizzardPin = not C_Map.GetUserWaypoint
+				usedBlizzardPin = not RQE.API.ResolveClientAPI("C_Map.GetUserWaypoint")
 					or BlizzardPinMatches({ mapID = mapID, x = xNorm, y = yNorm })
 			end
 		end
@@ -484,16 +498,20 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 		-- Ask selector which hotspot is “best” *right now*
 		local mapID, xNorm, yNorm, idx = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit
-			and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+			and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if playerMapID and mapID ~= playerMapID then
 			local localMap, localX, localY = RQE.WPUtil.GetSameMapHotspot
 				and RQE.WPUtil.GetSameMapHotspot(questID, stepIndex, playerMapID)
 			if localMap then
 				mapID, xNorm, yNorm, idx = localMap, localX, localY, 0
 			else
-				local direction = C_QuestLog and C_QuestLog.GetNextWaypointText
-					and C_QuestLog.GetNextWaypointText(questID)
+				-- Previous Blizzard call changed 2026.09.25: local direction = C_QuestLog and C_QuestLog.GetNextWaypointText
+				local direction = C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointText")
+					-- Previous Blizzard call changed 2026.09.25: and C_QuestLog.GetNextWaypointText(questID)
+					and RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 				if direction and direction ~= "" then return end
 			end
 		end
@@ -549,16 +567,19 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		-- pin keeps the quest itself supertracked for later routing decisions.
 		if sameMapHotspot and not (TomTom and TomTom.AddWaypoint)
 			and not (Nx and Nx.WaypointAdd)
-			and C_Map and C_Map.SetUserWaypoint then
+			-- Previous Blizzard call changed 2026.09.25: and C_Map and C_Map.SetUserWaypoint then
+			and C_Map and RQE.API.ResolveClientAPI("C_Map.SetUserWaypoint") then
 			local pin = UiMapPoint and UiMapPoint.CreateFromCoordinates
 				and UiMapPoint.CreateFromCoordinates(mapID, xNorm, yNorm)
 			if not pin and CreateVector2D then
 				pin = { uiMapID = mapID, position = CreateVector2D(xNorm, yNorm), name = ttl }
 			end
 			if pin then
-				C_Map.SetUserWaypoint(pin)
+				-- Previous Blizzard call changed 2026.09.25: C_Map.SetUserWaypoint(pin)
+				RQE.API.Client.C_Map.SetUserWaypoint(pin)
 				self._lastWP = { mapID = mapID, x = xNorm, y = yNorm, title = ttl }
-				return not C_Map.GetUserWaypoint
+				-- Previous Blizzard call changed 2026.09.25: return not C_Map.GetUserWaypoint
+				return not RQE.API.ResolveClientAPI("C_Map.GetUserWaypoint")
 					or BlizzardPinMatches({ mapID = mapID, x = xNorm, y = yNorm })
 			end
 		end
@@ -891,7 +912,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				end
 				st.currentIdx = nil
 			else
-				local playerMapID = C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+				local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 				if playerMapID and cur.mapID and cur.mapID ~= playerMapID then
 					if RQE.db.profile.debugLevel == "INFO+" then
 						print("DEBUG: st.currentIdx mapID", cur.mapID, "does not match player map", playerMapID, "- resetting it")
@@ -911,7 +933,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		norm.priorityBands = bands
 
 		-- Throttle by time + movement (only if we can measure movement in yards)
-		local now = GetTime and GetTime() or 0
+		-- Previous Blizzard call changed 2026.09.25: local now = GetTime and GetTime() or 0
+		local now = RQE.API.ResolveClientAPI("GetTime") and RQE.API.Client.GetTime() or 0
 		local throttled = (now - (st.lastEval.t or 0)) < norm.defaults.evalThrottleSec
 		local movedFar = true
 		do
@@ -961,7 +984,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				end
 				if bestIdx then
 					st.currentIdx = bestIdx
-					local now = GetTime and GetTime() or 0
+					-- Previous Blizzard call changed 2026.09.25: local now = GetTime and GetTime() or 0
+					local now = RQE.API.ResolveClientAPI("GetTime") and RQE.API.Client.GetTime() or 0
 					st.lastEval.t, st.lastEval.mapID, st.lastEval.px, st.lastEval.py = now, pmid, px, py
 
 					-- DEBUG (INFO): first selection
@@ -978,13 +1002,15 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				end
 
 				-- 🔽 ContinentID fallback if no same-map hotspot matched
-				local playerMapID = C_Map.GetBestMapForUnit("player")
+				-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+				local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 				if playerMapID then
 					-- climb to continent
 					local continentID, continentName
 					local m = playerMapID
 					while m do
-						local info = C_Map.GetMapInfo(m)
+						-- Previous Blizzard call changed 2026.09.25: local info = C_Map.GetMapInfo(m)
+						local info = RQE.API.Client.C_Map.GetMapInfo(m)
 						if not info then break end
 						if info.mapType == 2 then
 							continentID, continentName = info.mapID, info.name
@@ -1071,13 +1097,15 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			end
 
 			if switch then
-				local waypointText = C_QuestLog.GetNextWaypointText(questID)
+				-- Previous Blizzard call changed 2026.09.25: local waypointText = C_QuestLog.GetNextWaypointText(questID)
+				local waypointText = RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 				-- Checks to see if waypointText (or DirectionText) exists and will run if it is not 'No Direction Available' in the RQEFrame
 				if waypointText then
 					-- Prevent switching from continent hotspot → zone hotspot unless player is actually in that zone
 					if cur and cur.continentID and bestIdx then
 						local newH = norm.hotspots[bestIdx]
-						local playerMapID = C_Map.GetBestMapForUnit("player")
+						-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+						local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 						if newH and newH.mapID and newH.mapID ~= playerMapID then
 							if RQE.db.profile.debugLevel == "INFO+" then
 								print("DEBUG: Staying on continent hotspot until player enters zone", newH.mapID)
@@ -1218,11 +1246,14 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 
 		-- Multiple locations
 		if dbEntry.locations then
-			local playerMapID = C_Map.GetBestMapForUnit("player")
-			local mapInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+			local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local mapInfo = playerMapID and C_Map.GetMapInfo(playerMapID)
+			local mapInfo = playerMapID and RQE.API.Client.C_Map.GetMapInfo(playerMapID)
 			local topMostContinent = mapInfo
 			while topMostContinent and topMostContinent.parentMapID and topMostContinent.mapType and topMostContinent.mapType ~= 2 do
-				topMostContinent = C_Map.GetMapInfo(topMostContinent.parentMapID)
+				-- Previous Blizzard call changed 2026.09.25: topMostContinent = C_Map.GetMapInfo(topMostContinent.parentMapID)
+				topMostContinent = RQE.API.Client.C_Map.GetMapInfo(topMostContinent.parentMapID)
 			end
 			local trueContinentID = topMostContinent and topMostContinent.mapID
 			local parentContinentID = mapInfo and mapInfo.parentMapID
@@ -1341,8 +1372,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			and tonumber(self.API.GetSuperTrackedQuestID())
 		if not tracked or tonumber(questID) ~= tracked then return false end
 		local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit
-			and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+			and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not (stepIndex and playerMapID) then return false end
 		local mapID = RQE.WPUtil.GetSameMapHotspot(
 			questID, stepIndex, playerMapID)
@@ -1429,7 +1462,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		self:CreateWaypoint(tonumber(x), tonumber(y), tonumber(mapID),
 			title or "Custom Waypoint")
 		if markedActive then
-			C_Timer.After(0, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+			RQE.API.Client.C_Timer.After(0, function()
 				if not RQE.ActiveCoordblock or RQE.ActiveCoordblock.data ~= data then return end
 				RQE:RefreshActiveCoordblockLinks()
 				if RQE.Buttons and RQE.Buttons.UpdateHeaderNavigation then
@@ -1486,8 +1520,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		end
 
 		local routeQuest, routeStep, _, _, route, points = self:GetCurrentCoordOrderStep()
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit
-			and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+			and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if routeQuest == questID and routeStep == stepIndex and playerMapID then
 			local entries = {}
 			local currentPosition = 0
@@ -1583,7 +1619,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 				OnAccept = function()
 					local pending = RQE._coordOrderPendingConfirmation
 					RQE._coordOrderPendingConfirmation = nil
-					if not pending or GetTime() > pending.expiresAt then return end
+					-- Previous Blizzard call changed 2026.09.25: if not pending or GetTime() > pending.expiresAt then return end
+					if not pending or RQE.API.Client.GetTime() > pending.expiresAt then return end
 					local currentQuest, currentStep, _, _, currentRoute =
 						RQE:GetCurrentCoordOrderStep()
 					if currentQuest == pending.questID and currentStep == pending.stepIndex
@@ -1600,12 +1637,14 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		end
 		local pending = {
 			questID = questID, stepIndex = stepIndex, route = route,
-			popupKey = popupKey, expiresAt = GetTime() + 5, onYes = onYes,
+			-- Previous Blizzard call changed 2026.09.25: popupKey = popupKey, expiresAt = GetTime() + 5, onYes = onYes,
+			popupKey = popupKey, expiresAt = RQE.API.Client.GetTime() + 5, onYes = onYes,
 		}
 		self._coordOrderPendingConfirmation = pending
 		StaticPopup_Show(popupKey, label)
 		-- Clears the guarded request if the confirmation window reaches its timeout
-		C_Timer.After(5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(5, function()
+		RQE.API.Client.C_Timer.After(5, function()
 			if RQE._coordOrderPendingConfirmation == pending then
 				RQE._coordOrderPendingConfirmation = nil
 				StaticPopup_Hide(popupKey)
@@ -1755,8 +1794,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			tonumber(pointIndex)
 		if currentQuest ~= questID or currentStep ~= stepIndex
 			or not pointIndex or not points[pointIndex] then return false end
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit
-			and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+			-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+			and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if points[pointIndex].mapID ~= playerMapID then return false end
 		local state = self._coordOrderState
 		if not state or state.questID ~= questID or state.stepIndex ~= stepIndex
@@ -1806,13 +1847,15 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			or not (RQEFrame and RQEFrame:IsShown()) then return false end
 		if not (self.API and self.API.GetSuperTrackedQuestID) then return false end
 		local reselect = self._coordOrderReselect
-		if reselect and GetTime() > reselect.expiresAt then
+		-- Previous Blizzard call changed 2026.09.25: if reselect and GetTime() > reselect.expiresAt then
+		if reselect and RQE.API.Client.GetTime() > reselect.expiresAt then
 			self._coordOrderReselect = nil
 			reselect = nil
 		end
 		local questID = tonumber(self.API.GetSuperTrackedQuestID())
 		local stepIndex = tonumber(self.AddonSetStepIndex or self.CurrentDisplayedStepIndex)
-		local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit") and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		if not (questID and questID > 0 and stepIndex and playerMapID) then
 			-- A physical quest-row reselect briefly removes supertracking before
 			-- reinstating the same quest. Keep its route prefix through that gap.
@@ -1853,7 +1896,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			state.currentIdx = nil
 		end
 		if reselect and reselect.armed and not reselect.rebased
-			and GetTime() >= reselect.readyAt
+			-- Previous Blizzard call changed 2026.09.25: and GetTime() >= reselect.readyAt
+			and RQE.API.Client.GetTime() >= reselect.readyAt
 			and reselect.questID == questID then
 			-- A deliberate row press may start beside a later cave waypoint. Rebase
 			-- once to the closest same-map point, never on every poll.
@@ -1983,8 +2027,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 			and tonumber(self.API.GetSuperTrackedQuestID())
 		if not questID or questID ~= trackedQuestID then return nil end
 		if not self:SyncCoordOrderWaypoint() then return nil end
-		return C_QuestLog and C_QuestLog.GetNextWaypointText
-			and C_QuestLog.GetNextWaypointText(questID) or nil
+		-- Previous Blizzard call changed 2026.09.25: return C_QuestLog and C_QuestLog.GetNextWaypointText
+		return C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointText")
+			-- Previous Blizzard call changed 2026.09.25: and C_QuestLog.GetNextWaypointText(questID) or nil
+			and RQE.API.Client.C_QuestLog.GetNextWaypointText(questID) or nil
 	end
 
 	-- A lightweight movement poll advances an active chain without waiting for a
@@ -1995,8 +2041,10 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- Function to restore Blizzard's ordinary direction text after an ordered route releases control
 	local function RestoreOrdinaryQuestDirection(questID)
 		if RQE.DisplayedQuestID ~= questID or not RQE.DirectionTextFrame then return end
-		local text = C_QuestLog and C_QuestLog.GetNextWaypointText
-			and C_QuestLog.GetNextWaypointText(questID)
+		-- Previous Blizzard call changed 2026.09.25: local text = C_QuestLog and C_QuestLog.GetNextWaypointText
+		local text = C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointText")
+			-- Previous Blizzard call changed 2026.09.25: and C_QuestLog.GetNextWaypointText(questID)
+			and RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 		if text == "" then text = nil end
 		RQE.DirectionTextFrame:SetText(text or "No direction available.")
 		if RQEFrame then RQEFrame.DirectionText = text end
@@ -2010,7 +2058,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		local questID = RQE.API and RQE.API.GetSuperTrackedQuestID
 			and tonumber(RQE.API.GetSuperTrackedQuestID())
 		local stepIndex = tonumber(RQE.AddonSetStepIndex or RQE.CurrentDisplayedStepIndex)
-		local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		-- Previous Blizzard call changed 2026.09.25: local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+		local mapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit") and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 		local frameShown = RQEFrame and RQEFrame:IsShown() or false
 		local sandboxEntry = questID and RQE_Sandbox and RQE_Sandbox.GetRuntimeEntry
 			and RQE_Sandbox.GetRuntimeEntry(questID)
@@ -2067,7 +2116,8 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 	-- Function to update distance to waypoint display
 	function RQE:UpdateStepDistance()
 		if not RQE.StepDistanceOverride then
-			if not IsPlayerMoving() then return end
+			-- Previous Blizzard call changed 2026.09.25: if not IsPlayerMoving() then return end
+			if not RQE.API.Client.IsPlayerMoving() then return end
 		end
 
 		if not (RQEFrame and RQEFrame.StepDistanceText) then return end
@@ -2143,15 +2193,19 @@ Waypoint coordinate utilities, hotspot selection, ordered routes, and distance t
 		if step.coordinateHotspots then
 			-- This returns mapID,x,y (normalized) in your system
 			local smap, sx, sy = RQE.WPUtil.SelectBestHotspot(questID, stepIndex, step)
-			local playerMapID = C_Map and C_Map.GetBestMapForUnit
-				and C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map and C_Map.GetBestMapForUnit
+			local playerMapID = C_Map and RQE.API.ResolveClientAPI("C_Map.GetBestMapForUnit")
+				-- Previous Blizzard call changed 2026.09.25: and C_Map.GetBestMapForUnit("player")
+				and RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			if playerMapID and smap ~= playerMapID then
 				local localMap, localX, localY = RQE.WPUtil.GetSameMapHotspot(
 					questID, stepIndex, playerMapID)
 				if localMap then smap, sx, sy = localMap, localX, localY end
 				if not localMap then
-					local direction = C_QuestLog and C_QuestLog.GetNextWaypointText
-						and C_QuestLog.GetNextWaypointText(questID)
+					-- Previous Blizzard call changed 2026.09.25: local direction = C_QuestLog and C_QuestLog.GetNextWaypointText
+					local direction = C_QuestLog and RQE.API.ResolveClientAPI("C_QuestLog.GetNextWaypointText")
+						-- Previous Blizzard call changed 2026.09.25: and C_QuestLog.GetNextWaypointText(questID)
+						and RQE.API.Client.C_QuestLog.GetNextWaypointText(questID)
 					if direction and direction ~= "" then return nil end
 				end
 			end
