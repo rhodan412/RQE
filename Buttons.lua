@@ -118,8 +118,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				local isInLog
 
 				if isRetail then
-					isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
-					isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
+					-- Previous Blizzard call changed 2026.09.25: isComplete = C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
+					isComplete = RQE.API.Client.C_QuestLog.IsQuestFlaggedCompleted(searchedQuestID)
+					-- Previous Blizzard call changed 2026.09.25: isInLog = C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
+					isInLog = RQE.API.Client.C_QuestLog.GetLogIndexForQuestID(searchedQuestID)
 				else
 					isComplete = RQE.API.IsQuestFlaggedCompleted(searchedQuestID)
 					isInLog = RQE.API.GetLogIndexForQuestID(searchedQuestID)
@@ -137,8 +139,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 						local parent
 
 						if isRetail then
-							playerMapID = C_Map.GetBestMapForUnit("player")
-							parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+							-- Previous Blizzard call changed 2026.09.25: playerMapID = C_Map.GetBestMapForUnit("player")
+							playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
+							-- Previous Blizzard call changed 2026.09.25: parent = playerMapID and C_Map.GetMapInfo(playerMapID).parentMapID
+							parent = playerMapID and RQE.API.Client.C_Map.GetMapInfo(playerMapID).parentMapID
 						else
 							playerMapID = RQE.API.GetBestMapForUnit("player")
 							local mapInfo = playerMapID and RQE.API.GetMapInfo(playerMapID)
@@ -177,8 +181,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			if RQE.db.profile.autoClickWaypointButton then
 				if RQE.db.profile.debugLevel == "INFO" then
 					RQE.ClickWButton()
-					C_Timer.After(0.3, function()
-						C_Timer.After(0.2, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+					RQE.API.Client.C_Timer.After(0.3, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						RQE.API.Client.C_Timer.After(0.2, function()
 							RQE.CheckAndClickSeparateWaypointButtonButton()
 							-- Prints the tooltip information for the separate focus waypoint button by duplicating RQE.GetTooltipDataForCButton() function call. The function call can't be performed due to an error.
 							if RQE.db.profile.debugLevel == "INFO" then
@@ -229,7 +235,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					end)
 				end
 			end
-			C_Timer.After(0.2, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+			RQE.API.Client.C_Timer.After(0.2, function()
 				GameTooltip:SetOwner(RQE.UnknownQuestButton, "ANCHOR_NONE")
 				GameTooltip:ClearAllPoints()
 				GameTooltip:SetPoint("TOPRIGHT", RQE.UnknownQuestButton, "TOPRIGHT", 0, 33)
@@ -254,12 +261,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				end
 
 				if RQE.CurrentTrackedQuestID then  -- Add a check to ensure questID is not nil
-					local mapID = GetQuestUiMapID(RQE.CurrentTrackedQuestID)
+					-- Previous Blizzard call changed 2026.09.25: local mapID = GetQuestUiMapID(RQE.CurrentTrackedQuestID)
+					local mapID = RQE.API.Client.GetQuestUiMapID(RQE.CurrentTrackedQuestID)
 					RQE.WPmapID = mapID
 					local questData = RQE.getQuestData(RQE.CurrentTrackedQuestID)
 					local x, y
 					if isRetail then
-						x, y = C_QuestLog.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
+						-- Previous Blizzard call changed 2026.09.25: x, y = C_QuestLog.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
+						x, y = RQE.API.Client.C_QuestLog.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
 					else
 						x, y = RQE.API.GetNextWaypointForMap(RQE.CurrentTrackedQuestID, mapID)
 					end
@@ -271,7 +280,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 							DEFAULT_CHAT_FRAME:AddMessage("QuestID: " .. RQE.CurrentTrackedQuestID .. " - Coords: " .. tooltipText, 0, 1, 1)  -- Cyan
 							local directionText
 							if isRetail then
-								directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+								-- Previous Blizzard call changed 2026.09.25: directionText = C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
+								directionText = RQE.API.Client.C_QuestLog.GetNextWaypointText(RQE.CurrentTrackedQuestID)
 							else
 								directionText = RQE.API.GetNextWaypointText(RQE.CurrentTrackedQuestID)
 							end
@@ -333,7 +343,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 						-- Fallback to using RQE.GetNextWaypoint if coordinates are not available
 						local waypointMapID, waypointX, waypointY
 						if isRetail then
-							waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(RQE.CurrentTrackedQuestID)
+							-- Previous Blizzard call changed 2026.09.25: waypointMapID, waypointX, waypointY = C_QuestLog.GetNextWaypoint(RQE.CurrentTrackedQuestID)
+							waypointMapID, waypointX, waypointY = RQE.API.Client.C_QuestLog.GetNextWaypoint(RQE.CurrentTrackedQuestID)
 						else
 							waypointMapID, waypointX, waypointY = RQE.API.GetNextWaypoint(RQE.CurrentTrackedQuestID)
 						end
@@ -368,7 +379,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					RQE.WPmapID = RQE.superMapID
 				end
 				-- Fixed taint caused when mousing over "W" button while in combat
-				if not InCombatLockdown() then
+				-- Previous Blizzard call changed 2026.09.25: if not InCombatLockdown() then
+				if not RQE.API.Client.InCombatLockdown() then
 					if not RQE.DontCloseMap then
 						WorldMapFrame:Hide()
 					end
@@ -385,7 +397,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	function RQE:KhadgarCoordsMatch(questID)
 		local isContributionLoaded
 		if isRetail then
-			isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			isContributionLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 		else
 			isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
 		end
@@ -400,9 +413,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
 		end
 
-		PlaySound(8959)
+		-- Previous Blizzard call changed 2026.09.25: PlaySound(8959)
+		RQE.API.Client.PlaySound(8959)
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(45024)	-- VO_60_SMV_KHADGAR_GREETING (Khadgar: Greeting)
 		end)
 
@@ -411,7 +426,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			return
 		end
 
-		C_Timer.After(1.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		RQE.API.Client.C_Timer.After(1.2, function()
 			RQE:CheckCoordHotspotsInSteps(questID)
 		end)
 	end
@@ -420,7 +436,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	function RQE:CoordsNOMatch(questID)
 		local isContributionLoaded
 		if isRetail then
-			isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			isContributionLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 		else
 			isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
 		end
@@ -435,9 +452,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RaidNotice_AddMessage(RaidWarningFrame, leavemessage, ChatTypeInfo["RAID_WARNING"])
 		end
 
-		PlaySound(8959)
+		-- Previous Blizzard call changed 2026.09.25: PlaySound(8959)
+		RQE.API.Client.PlaySound(8959)
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(135755)	-- VO_82_Mechagnome_Citizen_Formal_F_Greetings
 		end)
 
@@ -445,7 +464,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			return
 		end
 
-		C_Timer.After(1.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(1.2, function()
+		RQE.API.Client.C_Timer.After(1.2, function()
 			RQE:CheckCoordHotspotsInSteps(questID)
 		end)
 	end
@@ -454,7 +474,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	function RQE:LegacyCoordsDetected(questID)
 		local isContributionLoaded
 		if isRetail then
-			isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			isContributionLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 		else
 			isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
 		end
@@ -463,9 +484,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		questID = tonumber(questID) or 0
 		local leavemessage = string.format("** Legacy Coordinates Detected! (QID: %d) **", questID)
 
-		PlaySound(8959)
+		-- Previous Blizzard call changed 2026.09.25: PlaySound(8959)
+		RQE.API.Client.PlaySound(8959)
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 1, b = 0 })
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(4574)	-- igPVPUpdate
 		end)
 	end
@@ -475,8 +498,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local isChattynatorLoaded
 		local isContributionLoaded
 		if isRetail then
-			isChattynatorLoaded = C_AddOns.IsAddOnLoaded("Chattynator")
-			isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: isChattynatorLoaded = C_AddOns.IsAddOnLoaded("Chattynator")
+			isChattynatorLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("Chattynator")
+			-- Previous Blizzard call changed 2026.09.25: isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			isContributionLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 		else
 			isChattynatorLoaded = RQE.API.IsAddOnLoaded("Chattynator")
 			isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
@@ -489,7 +514,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 1, g = 0, b = 0 })
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(3784)	-- AirElemental
 		end)
 	end
@@ -498,7 +524,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	function RQE:NoLegacyCoordsDetected(questID)
 		local isContributionLoaded
 		if isRetail then
-			isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: isContributionLoaded = C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			isContributionLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 		else
 			isContributionLoaded = RQE.API.IsAddOnLoaded("RQE_Contribution")
 		end
@@ -507,10 +534,12 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		questID = tonumber(questID) or 0
 		local leavemessage = string.format("** All steps use coordinateHotspots (QID: %d) **", questID)
 
-		PlaySound(8959)
+		-- Previous Blizzard call changed 2026.09.25: PlaySound(8959)
+		RQE.API.Client.PlaySound(8959)
 		RaidNotice_AddMessage(RaidWarningFrame, leavemessage, { r = 0, g = 1, b = 0 })
 
-		C_Timer.After(0.5, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
+		RQE.API.Client.C_Timer.After(0.5, function()
 			RQE:PlayThrottledSound(888)	-- LEVELUP
 		end)
 	end
@@ -551,7 +580,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			end
 
 			-- ✅ Figure out which mapID or continentID to use
-			local playerMapID = C_Map.GetBestMapForUnit("player")
+			-- Previous Blizzard call changed 2026.09.25: local playerMapID = C_Map.GetBestMapForUnit("player")
+			local playerMapID = RQE.API.Client.C_Map.GetBestMapForUnit("player")
 			local selectedMapID = nil
 
 			-- Single-location quests
@@ -620,9 +650,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Function to play an alert sound only when the shared sound cooldown has elapsed
 	function RQE:PlayThrottledSound(soundID)
-		local timeNow = GetTime() -- Get the current time in seconds
+		-- Previous Blizzard call changed 2026.09.25: local timeNow = GetTime() -- Get the current time in seconds
+		local timeNow = RQE.API.Client.GetTime() -- Get the current time in seconds
 		if (timeNow - self.lastSoundTime) >= self.soundThrottle then
-			PlaySound(soundID)
+			-- Previous Blizzard call changed 2026.09.25: PlaySound(soundID)
+			RQE.API.Client.PlaySound(soundID)
 			self.lastSoundTime = timeNow
 		end
 	end
@@ -651,7 +683,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				return
 			end
 
-			if IsShiftKeyDown() and button == "LeftButton" then
+			-- Previous Blizzard call changed 2026.09.25: if IsShiftKeyDown() and button == "LeftButton" then
+			if RQE.API.Client.IsShiftKeyDown() and button == "LeftButton" then
 				-- Delist the group if Shift + LeftClick
 				RQE:LFG_Delist(questID)
 				RQE.LFGActive = false -- Delisting means no active group
@@ -670,9 +703,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					RQE:LFG_Create(questID)
 					
 					-- Delay to check if the group was successfully created
-					C_Timer.After(2, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+					RQE.API.Client.C_Timer.After(2, function()
 						-- Check if group was successfully created using C_LFGList.GetActiveEntryInfo()
-						local groupInfo = C_LFGList.GetActiveEntryInfo()
+						-- Previous Blizzard call changed 2026.09.25: local groupInfo = C_LFGList.GetActiveEntryInfo()
+						local groupInfo = RQE.API.Client.C_LFGList.GetActiveEntryInfo()
 						if groupInfo then
 							--print("Group successfully created for quest ID:", questID)
 							RQE.LFGActive = true -- Mark group as active
@@ -717,9 +752,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		local defaultIconID = 134400 -- This is just an example; replace with a valid default icon ID or path
 		local iconID = defaultIconID -- Initialize with default icon
 
-		local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+		local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 		if macroIndex > 0 then
-			local _, macroIconID = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, macroIconID = GetMacroInfo(macroIndex)
+			local _, macroIconID = RQE.API.Client.GetMacroInfo(macroIndex)
 			if macroIconID then
 				iconID = macroIconID -- Use the macro's icon if available
 			end
@@ -736,9 +773,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		-- Tooltip
 		MagicButton:SetScript("OnEnter", function(self)
-			local macroIndex = GetMacroIndexByName("RQE Macro")
+			-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+			local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 			if macroIndex and macroIndex > 0 then
-				local _, _, body = GetMacroInfo(macroIndex)
+				-- Previous Blizzard call changed 2026.09.25: local _, _, body = GetMacroInfo(macroIndex)
+				local _, _, body = RQE.API.Client.GetMacroInfo(macroIndex)
 				-- Check if the body has content (not nil and not an empty string)
 				if body and string.trim(body) ~= "" then
 					GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -769,11 +808,13 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 	-- Update MagicButton based on macro content
 	function RQE.Buttons.UpdateMagicButtonVisibility()
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			return
 		end
 
-		local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+		local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 		local MagicButton = RQE.MagicButton -- Assuming MagicButton stored globally in RQE.MagicButton
 
 		-- Check if the RQEFrame is hidden first
@@ -785,7 +826,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end
 
 		if macroIndex > 0 then
-			local _, _, body = GetMacroInfo(macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: local _, _, body = GetMacroInfo(macroIndex)
+			local _, _, body = RQE.API.Client.GetMacroInfo(macroIndex)
 			if body and body:trim() ~= "" then
 				if MagicButton then MagicButton:Show() end
 			else
@@ -806,7 +848,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			profile.keyBindSetting = profile.macroBindingKey
 		end
 		profile.macroBindingKey = nil
-		if InCombatLockdown() then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+		if RQE.API.Client.InCombatLockdown() then
 			self.ReapplyMacroBindingAfterCombat = true
 			return
 		end
@@ -815,12 +858,15 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		self.ReapplyMacroBindingAfterCombat = nil
 
 		-- Clear the old profile's override even when unbound or the macro is gone.
-		ClearOverrideBindings(ownerFrame)
+		-- Previous Blizzard call changed 2026.09.25: ClearOverrideBindings(ownerFrame)
+		RQE.API.Client.ClearOverrideBindings(ownerFrame)
 		local bindingKey = profile.keyBindSetting
 		if not bindingKey or bindingKey == "" then return end
-		local macroIndex = GetMacroIndexByName("RQE Macro")
+		-- Previous Blizzard call changed 2026.09.25: local macroIndex = GetMacroIndexByName("RQE Macro")
+		local macroIndex = RQE.API.Client.GetMacroIndexByName("RQE Macro")
 		if macroIndex and macroIndex > 0 then
-			SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
+			-- Previous Blizzard call changed 2026.09.25: SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
+			RQE.API.Client.SetOverrideBindingMacro(ownerFrame, true, bindingKey, macroIndex)
 		end
 	end
 
@@ -834,12 +880,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	local function ClearOverrideMacroBinding()
 		local ownerFrame = RQE.MagicButton -- The same frame binding is set to
 
-		if InCombatLockdown() or not ownerFrame then
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() or not ownerFrame then
+		if RQE.API.Client.InCombatLockdown() or not ownerFrame then
 			return
 		end
 
 		-- This will clear all override bindings associated with the ownerFrame
-		ClearOverrideBindings(ownerFrame)
+		-- Previous Blizzard call changed 2026.09.25: ClearOverrideBindings(ownerFrame)
+		RQE.API.Client.ClearOverrideBindings(ownerFrame)
 	end
 
 	-------------------------------------------------------
@@ -864,13 +912,16 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			-- Code for ClearButton functionality here
 			RQE.Buttons.ClearButtonPressed()
 			RQE.searchedQuestID = nil
-			C_Timer.After(0.3, function()
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+			RQE.API.Client.C_Timer.After(0.3, function()
 				RQE:SaveSuperTrackedQuestToCharacter()
 
 				-- Code for RWButton functionality here
-				C_Map.ClearUserWaypoint()
+				-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+				RQE.API.Client.C_Map.ClearUserWaypoint()
 				-- Check if TomTom is loaded and compatibility is enabled
-				local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+				local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 				if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 					TomTom.waydb:ResetProfile()
 					RQE._currentTomTomUID = nil
@@ -928,16 +979,19 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RQE:RemoveSuperTrackingFromQuest()
 		RQE:UpdateRQEFrameVisibility()
 
-		C_Map.ClearUserWaypoint()
+		-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+		RQE.API.Client.C_Map.ClearUserWaypoint()
 		-- Check if TomTom is loaded and compatibility is enabled
-		local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+		local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 		if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 			TomTom.waydb:ResetProfile()
 			RQE._currentTomTomUID = nil
 		end
 
 		-- Clearing the frame data a second time
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			RQE.isSuperTracking = false
 			RQE.CurrentlySuperQuestID = nil
 			RQE:ClearFrameData()
@@ -946,7 +1000,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		end)
 
 		-- Clearing the frame data a third time
-		C_Timer.After(0.3, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.3, function()
+		RQE.API.Client.C_Timer.After(0.3, function()
 			RQE.isSuperTracking = false
 			RQE.CurrentlySuperQuestID = nil
 			RQE:ClearFrameData()
@@ -954,11 +1009,13 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RQE:RemoveSuperTrackingFromQuest()
 		end)
 
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			RQEMacro:ClearMacroContentByName("RQE Macro")
 		end)
 
-		C_Timer.After(0.2, function()
+		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+		RQE.API.Client.C_Timer.After(0.2, function()
 			RQE.Buttons.UpdateMagicButtonVisibility()
 		end)
 	end
@@ -982,9 +1039,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		RWButton:SetPoint("TOPLEFT", RQE.ClearButton, "TOPRIGHT", 3, 0)  -- Anchoring
 		RWButton:SetScript("OnClick", function()
 			-- Code for RWButton functionality here
-			C_Map.ClearUserWaypoint()
+			-- Previous Blizzard call changed 2026.09.25: C_Map.ClearUserWaypoint()
+			RQE.API.Client.C_Map.ClearUserWaypoint()
 			-- Check if TomTom is loaded and compatibility is enabled
-			local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			-- Previous Blizzard call changed 2026.09.25: local _, isTomTomLoaded = C_AddOns.IsAddOnLoaded("TomTom")
+			local _, isTomTomLoaded = RQE.API.Client.C_AddOns.IsAddOnLoaded("TomTom")
 			if isTomTomLoaded and RQE.db.profile.enableTomTomCompatibility then
 				TomTom.waydb:ResetProfile()
 				RQE._currentTomTomUID = nil
@@ -1030,8 +1089,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- Function to detect the Contribution addon through the API available on the active client
 	local function IsContributionAddonLoaded()
 		if isRetail then
-			return C_AddOns and C_AddOns.IsAddOnLoaded
-				and C_AddOns.IsAddOnLoaded("RQE_Contribution")
+			-- Previous Blizzard call changed 2026.09.25: return C_AddOns and C_AddOns.IsAddOnLoaded
+			return C_AddOns and RQE.API.ResolveClientAPI("C_AddOns.IsAddOnLoaded")
+				-- Previous Blizzard call changed 2026.09.25: and C_AddOns.IsAddOnLoaded("RQE_Contribution")
+				and RQE.API.Client.C_AddOns.IsAddOnLoaded("RQE_Contribution")
 		end
 		return RQE.API and RQE.API.IsAddOnLoaded
 			and RQE.API.IsAddOnLoaded("RQE_Contribution")
@@ -1060,8 +1121,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			if RQE_Contribution and RQE_Contribution.ToggleContributeButtons then
 				RQE_Contribution:ToggleContributeButtons(showEditor)
 			end
-			if showEditor and C_Timer and C_Timer.After then
-				C_Timer.After(2, function()
+			-- Previous Blizzard call changed 2026.09.25: if showEditor and C_Timer and C_Timer.After then
+			if showEditor and C_Timer and RQE.API.ResolveClientAPI("C_Timer.After") then
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(2, function()
+				RQE.API.Client.C_Timer.After(2, function()
 					if editor:IsShown() and RQE_Contribution
 						and RQE_Contribution.SearchQuestIDFieldInStepEditor then
 						RQE_Contribution:SearchQuestIDFieldInStepEditor()
@@ -1228,7 +1291,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					if targetStep >= 1 then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
 
-						C_Timer.After(0.2, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
 								RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
@@ -1245,7 +1309,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					if targetStep >= 0 and (targetStep >= 1 or RQE:CanNavigateSearchedQuestSteps(questID)) then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
 
-						C_Timer.After(0.2, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
 								if RQE:CanNavigateSearchedQuestSteps(questID) then
@@ -1325,7 +1390,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					if questData and questData[targetStep] then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
 
-						C_Timer.After(0.2, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
 								RQE:CreateUnknownQuestWaypoint(questID, RQE.mapID)
@@ -1343,7 +1409,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 					if questData and questData[targetStep] then
 						RQE:SetDisplayedStepFromStepsList(targetStep)
 
-						C_Timer.After(0.2, function()
+						-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.2, function()
+						RQE.API.Client.C_Timer.After(0.2, function()
 							local questID = RQE.searchedQuestID or RQE.DisplayedQuestID or RQE.API.GetSuperTrackedQuestID()
 							if questID then
 								if RQE:CanNavigateSearchedQuestSteps(questID) then
@@ -1997,8 +2064,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	function RQE_QuestMenuMixin:ShowMenu(anchorFrame, isSubmenu)
 		self:ClearAllPoints()
 
-		local screenWidth = GetScreenWidth()
-		local screenHeight = GetScreenHeight()
+		-- Previous Blizzard call changed 2026.09.25: local screenWidth = GetScreenWidth()
+		local screenWidth = RQE.API.Client.GetScreenWidth()
+		-- Previous Blizzard call changed 2026.09.25: local screenHeight = GetScreenHeight()
+		local screenHeight = RQE.API.Client.GetScreenHeight()
 		local anchorX, anchorY = anchorFrame:GetCenter()
 
 		local isTopHalf = anchorY > (screenHeight / 2)
@@ -2099,15 +2168,18 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				self:Show()
 			end)
 			self.QuestFilterDropDownMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOverMenu
 					local isMouseOverButton
 					if isRetail then
 						isMouseOverMenu = self:IsMouseOver()
 						isMouseOverButton = RQE.QTQuestFilterButton:IsMouseOver()
 					else
-						isMouseOverMenu = MouseIsOver(self)
-						isMouseOverButton = MouseIsOver(RQE.QTQuestFilterButton)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverMenu = MouseIsOver(self)
+						isMouseOverMenu = RQE.API.Client.MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverButton = MouseIsOver(RQE.QTQuestFilterButton)
+						isMouseOverButton = RQE.API.Client.MouseIsOver(RQE.QTQuestFilterButton)
 					end
 					if not isMouseOverMenu and not isMouseOverButton then
 						self:Hide()
@@ -2255,15 +2327,18 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 			-- Example for one of the submenus, apply similar logic to others
 			self.CampaignSubMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOverSubMenu
 					local isMouseOverParent
 					if isRetail then
 						isMouseOverSubMenu = self:IsMouseOver()
 						isMouseOverParent = self:GetParent():IsMouseOver()
 					else
-						isMouseOverSubMenu = MouseIsOver(self)
-						isMouseOverParent = MouseIsOver(self:GetParent())
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverSubMenu = MouseIsOver(self)
+						isMouseOverSubMenu = RQE.API.Client.MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOverParent = MouseIsOver(self:GetParent())
+						isMouseOverParent = RQE.API.Client.MouseIsOver(self:GetParent())
 					end
 					if not isMouseOverSubMenu and not isMouseOverParent then
 						self:Hide()
@@ -2294,12 +2369,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				self:Show()
 			end)
 			self.QuestTypeSubMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOver
 					if isRetail then
 						isMouseOver = self:IsMouseOver()
 					else
-						isMouseOver = MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOver = MouseIsOver(self)
+						isMouseOver = RQE.API.Client.MouseIsOver(self)
 					end
 					if not isMouseOver then
 						self:Hide()
@@ -2329,12 +2406,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				self:Show()
 			end)
 			self.ZoneQuestSubMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOver
 					if isRetail then
 						isMouseOver = self:IsMouseOver()
 					else
-						isMouseOver = MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOver = MouseIsOver(self)
+						isMouseOver = RQE.API.Client.MouseIsOver(self)
 					end
 					if not isMouseOver then
 						self:Hide()
@@ -2364,12 +2443,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 				self:Show()
 			end)
 			self.QuestLineSubMenu:SetScript("OnLeave", function(self)
-				C_Timer.After(0.1, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
+				RQE.API.Client.C_Timer.After(0.1, function()
 					local isMouseOver
 					if isRetail then
 						isMouseOver = self:IsMouseOver()
 					else
-						isMouseOver = MouseIsOver(self)
+						-- Previous Blizzard call changed 2026.09.25: isMouseOver = MouseIsOver(self)
+						isMouseOver = RQE.API.Client.MouseIsOver(self)
 					end
 					if not isMouseOver then
 						self:Hide()
@@ -2427,7 +2508,8 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- SecureActionButtonTemplate. Visual cooldown and usability updates may run
 	-- during combat; protected button changes wait for PLAYER_REGEN_ENABLED.
 	local function QuestItemButtonsInCombat()
-		return type(InCombatLockdown) == "function" and InCombatLockdown()
+		-- Previous Blizzard call changed 2026.09.25: return type(InCombatLockdown) == "function" and InCombatLockdown()
+		return type(RQE.API.ResolveClientAPI("InCombatLockdown")) == "function" and RQE.API.Client.InCombatLockdown()
 	end
 
 	-- Native special-item functions take a quest-log index, not a quest ID. Use
@@ -2458,13 +2540,17 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- Normalize modern C_Container results and older positional bag API returns
 	-- to item ID, hyperlink, icon, and stack count.
 	local function GetContainerItemDetails(bag, slot)
-		if C_Container and type(C_Container.GetContainerItemInfo) == "function" then
-			local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
+		-- Previous Blizzard call changed 2026.09.25: if C_Container and type(C_Container.GetContainerItemInfo) == "function" then
+		if C_Container and type(RQE.API.ResolveClientAPI("C_Container.GetContainerItemInfo")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
+			local itemInfo = RQE.API.Client.C_Container.GetContainerItemInfo(bag, slot)
 			if itemInfo then
 				return itemInfo.itemID, itemInfo.hyperlink, itemInfo.iconFileID, itemInfo.stackCount
 			end
-		elseif type(GetContainerItemInfo) == "function" then
-			local texture, count, _, _, _, _, link, _, _, itemID = GetContainerItemInfo(bag, slot)
+		-- Previous Blizzard call changed 2026.09.25: elseif type(GetContainerItemInfo) == "function" then
+		elseif type(RQE.API.ResolveClientAPI("GetContainerItemInfo")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: local texture, count, _, _, _, _, link, _, _, itemID = GetContainerItemInfo(bag, slot)
+			local texture, count, _, _, _, _, link, _, _, itemID = RQE.API.Client.GetContainerItemInfo(bag, slot)
 			if not itemID and type(link) == "string" then
 				itemID = tonumber(link:match("item:(%d+)"))
 			end
@@ -2485,10 +2571,14 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		for bag = 0, lastBag do
 			local numSlots = 0
-			if C_Container and type(C_Container.GetContainerNumSlots) == "function" then
-				numSlots = C_Container.GetContainerNumSlots(bag) or 0
-			elseif type(GetContainerNumSlots) == "function" then
-				numSlots = GetContainerNumSlots(bag) or 0
+			-- Previous Blizzard call changed 2026.09.25: if C_Container and type(C_Container.GetContainerNumSlots) == "function" then
+			if C_Container and type(RQE.API.ResolveClientAPI("C_Container.GetContainerNumSlots")) == "function" then
+				-- Previous Blizzard call changed 2026.09.25: numSlots = C_Container.GetContainerNumSlots(bag) or 0
+				numSlots = RQE.API.Client.C_Container.GetContainerNumSlots(bag) or 0
+			-- Previous Blizzard call changed 2026.09.25: elseif type(GetContainerNumSlots) == "function" then
+			elseif type(RQE.API.ResolveClientAPI("GetContainerNumSlots")) == "function" then
+				-- Previous Blizzard call changed 2026.09.25: numSlots = GetContainerNumSlots(bag) or 0
+				numSlots = RQE.API.Client.GetContainerNumSlots(bag) or 0
 			end
 
 			for slot = 1, numSlots do
@@ -2522,9 +2612,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	-- Prefer Blizzard's quest-log association where it exists. Questie supplies
 	-- a fallback on legacy clients when the native function returns no item.
 	local function GetSpecialQuestItemInfo(questID, questLogIndex)
-		if type(GetQuestLogSpecialItemInfo) == "function" then
+		-- Previous Blizzard call changed 2026.09.25: if type(GetQuestLogSpecialItemInfo) == "function" then
+		if type(RQE.API.ResolveClientAPI("GetQuestLogSpecialItemInfo")) == "function" then
 			local ok, link, texture, charges, showItemWhenComplete =
-				pcall(GetQuestLogSpecialItemInfo, questLogIndex)
+				-- Previous Blizzard call changed 2026.09.25: pcall(GetQuestLogSpecialItemInfo, questLogIndex)
+				pcall(RQE.API.ResolveClientAPI("GetQuestLogSpecialItemInfo"), questLogIndex)
 			if ok and link then
 				return link, texture, charges, showItemWhenComplete,
 					tonumber(link:match("item:(%d+)"))
@@ -2547,8 +2639,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			end
 		end
 
-		if C_QuestLog and type(C_QuestLog.IsComplete) == "function" then
-			local ok, complete = pcall(C_QuestLog.IsComplete, questID)
+		-- Previous Blizzard call changed 2026.09.25: if C_QuestLog and type(C_QuestLog.IsComplete) == "function" then
+		if C_QuestLog and type(RQE.API.ResolveClientAPI("C_QuestLog.IsComplete")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: local ok, complete = pcall(C_QuestLog.IsComplete, questID)
+			local ok, complete = pcall(RQE.API.ResolveClientAPI("C_QuestLog.IsComplete"), questID)
 			if ok then return complete == true or complete == 1 end
 		end
 		return false
@@ -2561,11 +2655,15 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			return charges
 		end
 
-		if C_Item and type(C_Item.GetItemCount) == "function" then
-			return C_Item.GetItemCount(itemID or itemLink) or 0
+		-- Previous Blizzard call changed 2026.09.25: if C_Item and type(C_Item.GetItemCount) == "function" then
+		if C_Item and type(RQE.API.ResolveClientAPI("C_Item.GetItemCount")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: return C_Item.GetItemCount(itemID or itemLink) or 0
+			return RQE.API.Client.C_Item.GetItemCount(itemID or itemLink) or 0
 		end
-		if type(GetItemCount) == "function" then
-			return GetItemCount(itemID or itemLink) or 0
+		-- Previous Blizzard call changed 2026.09.25: if type(GetItemCount) == "function" then
+		if type(RQE.API.ResolveClientAPI("GetItemCount")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: return GetItemCount(itemID or itemLink) or 0
+			return RQE.API.Client.GetItemCount(itemID or itemLink) or 0
 		end
 		return 0
 	end
@@ -2579,14 +2677,22 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 	local function UpdateQuestItemButtonCooldown(button)
 		local questLogIndex = button.questLogIndex
 		local ok, startTime, duration, enable
-		if questLogIndex and type(GetQuestLogSpecialItemCooldown) == "function" then
-			ok, startTime, duration, enable = pcall(GetQuestLogSpecialItemCooldown, questLogIndex)
-		elseif button.itemID and C_Item and type(C_Item.GetItemCooldown) == "function" then
-			ok, startTime, duration, enable = pcall(C_Item.GetItemCooldown, button.itemID)
-		elseif button.itemID and C_Container and type(C_Container.GetItemCooldown) == "function" then
-			ok, startTime, duration, enable = pcall(C_Container.GetItemCooldown, button.itemID)
-		elseif button.itemID and type(GetItemCooldown) == "function" then
-			ok, startTime, duration, enable = pcall(GetItemCooldown, button.itemID)
+		-- Previous Blizzard call changed 2026.09.25: if questLogIndex and type(GetQuestLogSpecialItemCooldown) == "function" then
+		if questLogIndex and type(RQE.API.ResolveClientAPI("GetQuestLogSpecialItemCooldown")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: ok, startTime, duration, enable = pcall(GetQuestLogSpecialItemCooldown, questLogIndex)
+			ok, startTime, duration, enable = pcall(RQE.API.ResolveClientAPI("GetQuestLogSpecialItemCooldown"), questLogIndex)
+		-- Previous Blizzard call changed 2026.09.25: elseif button.itemID and C_Item and type(C_Item.GetItemCooldown) == "function" then
+		elseif button.itemID and C_Item and type(RQE.API.ResolveClientAPI("C_Item.GetItemCooldown")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: ok, startTime, duration, enable = pcall(C_Item.GetItemCooldown, button.itemID)
+			ok, startTime, duration, enable = pcall(RQE.API.ResolveClientAPI("C_Item.GetItemCooldown"), button.itemID)
+		-- Previous Blizzard call changed 2026.09.25: elseif button.itemID and C_Container and type(C_Container.GetItemCooldown) == "function" then
+		elseif button.itemID and C_Container and type(RQE.API.ResolveClientAPI("C_Container.GetItemCooldown")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: ok, startTime, duration, enable = pcall(C_Container.GetItemCooldown, button.itemID)
+			ok, startTime, duration, enable = pcall(RQE.API.ResolveClientAPI("C_Container.GetItemCooldown"), button.itemID)
+		-- Previous Blizzard call changed 2026.09.25: elseif button.itemID and type(GetItemCooldown) == "function" then
+		elseif button.itemID and type(RQE.API.ResolveClientAPI("GetItemCooldown")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: ok, startTime, duration, enable = pcall(GetItemCooldown, button.itemID)
+			ok, startTime, duration, enable = pcall(RQE.API.ResolveClientAPI("GetItemCooldown"), button.itemID)
 		end
 
 		if ok and startTime and duration and duration > 0 and enable ~= 0 then
@@ -2602,26 +2708,33 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if not button:IsShown() then return end
 
 		local usable = true
-		if type(IsUsableItem) == "function" and button.itemLink then
-			local itemUsable = IsUsableItem(button.itemLink)
+		-- Previous Blizzard call changed 2026.09.25: if type(IsUsableItem) == "function" and button.itemLink then
+		if type(RQE.API.ResolveClientAPI("IsUsableItem")) == "function" and button.itemLink then
+			-- Previous Blizzard call changed 2026.09.25: local itemUsable = IsUsableItem(button.itemLink)
+			local itemUsable = RQE.API.Client.IsUsableItem(button.itemLink)
 			if itemUsable ~= nil then
 				usable = itemUsable == true or itemUsable == 1
 			end
 		end
 
 		local inRange
-		if button.questLogIndex and type(IsQuestLogSpecialItemInRange) == "function" then
-			local ok, rangeResult = pcall(IsQuestLogSpecialItemInRange, button.questLogIndex)
+		-- Previous Blizzard call changed 2026.09.25: if button.questLogIndex and type(IsQuestLogSpecialItemInRange) == "function" then
+		if button.questLogIndex and type(RQE.API.ResolveClientAPI("IsQuestLogSpecialItemInRange")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: local ok, rangeResult = pcall(IsQuestLogSpecialItemInRange, button.questLogIndex)
+			local ok, rangeResult = pcall(RQE.API.ResolveClientAPI("IsQuestLogSpecialItemInRange"), button.questLogIndex)
 			if ok then inRange = rangeResult end
 		end
 		if inRange == nil
 			and not isRetail
 			and button.itemID
 			and C_Item
-			and type(C_Item.IsItemInRange) == "function"
-			and ((UnitExists("target") and not UnitIsFriend("player", "target")) or not QuestItemButtonsInCombat())
+			-- Previous Blizzard call changed 2026.09.25: and type(C_Item.IsItemInRange) == "function"
+			and type(RQE.API.ResolveClientAPI("C_Item.IsItemInRange")) == "function"
+			-- Previous Blizzard call changed 2026.09.25: and ((UnitExists("target") and not UnitIsFriend("player", "target")) or not QuestItemButtonsInCombat())
+			and ((RQE.API.Client.UnitExists("target") and not RQE.API.Client.UnitIsFriend("player", "target")) or not QuestItemButtonsInCombat())
 		then
-			local ok, rangeResult = pcall(C_Item.IsItemInRange, button.itemID, "target")
+			-- Previous Blizzard call changed 2026.09.25: local ok, rangeResult = pcall(C_Item.IsItemInRange, button.itemID, "target")
+			local ok, rangeResult = pcall(RQE.API.ResolveClientAPI("C_Item.IsItemInRange"), button.itemID, "target")
 			if ok then inRange = rangeResult end
 		end
 
@@ -2905,8 +3018,10 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 			RQE.Buttons.UpdateQuestItemButtons()
 		end
 
-		if C_Timer and type(C_Timer.After) == "function" then
-			C_Timer.After(0, RunUpdate)
+		-- Previous Blizzard call changed 2026.09.25: if C_Timer and type(C_Timer.After) == "function" then
+		if C_Timer and type(RQE.API.ResolveClientAPI("C_Timer.After")) == "function" then
+			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, RunUpdate)
+			RQE.API.Client.C_Timer.After(0, RunUpdate)
 		else
 			RunUpdate()
 		end
@@ -2937,9 +3052,11 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 
 		if not questItemButtonState.hookInstalled
 			and type(UpdateRQEQuestFrame) == "function"
-			and type(hooksecurefunc) == "function"
+			-- Previous Blizzard call changed 2026.09.25: and type(hooksecurefunc) == "function"
+			and type(RQE.API.ResolveClientAPI("hooksecurefunc")) == "function"
 		then
-			hooksecurefunc("UpdateRQEQuestFrame", function()
+			-- Previous Blizzard call changed 2026.09.25: hooksecurefunc("UpdateRQEQuestFrame", function()
+			RQE.API.Client.hooksecurefunc("UpdateRQEQuestFrame", function()
 				RQE.Buttons.ScheduleQuestItemButtonUpdate()
 			end)
 			questItemButtonState.hookInstalled = true
