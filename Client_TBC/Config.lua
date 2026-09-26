@@ -985,6 +985,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 							},
 						},
 					},
+					trackerSectionOrder = RQE.ConfigUI:BuildTrackerOrderOptions(),
 				},
 			},
 	-------------------------------------------------------
