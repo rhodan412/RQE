@@ -368,13 +368,15 @@ local function styleScrollFrame(widget)
 		end
 		local originalFixScroll = widget.FixScroll
 		widget.FixScroll = function(owner, ...)
+			if owner.RQESuspendScrollFix then return end
 			local result = originalFixScroll(owner, ...)
 			if owner.RQEConfigChildMode == "styled" then updateStyledScrollFrame(owner) end
 			return result
 		end
 		if widget.frame and widget.frame.HookScript then
 			widget.frame:HookScript("OnShow", function()
-				C_Timer.After(0, function()
+				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+				RQE.API.Client.C_Timer.After(0, function()
 					if widget.RQEConfigChildMode == "styled" then updateStyledScrollFrame(widget) end
 				end)
 			end)
@@ -565,6 +567,109 @@ local function createOptionGroup(iconName, name, order)
 	}
 end
 
+-- Both settings surfaces use the same saved ordering and actions. The
+-- standalone window uses row containers so its wider Flow layout stays aligned.
+function ConfigUI:BuildTrackerOrderOptions()
+	local labels = {
+		scenario = "Scenario", campaign = "Campaign/Meta", normal = "Normal Quests",
+		world = "World Quests", bonus = "Bonus Objectives", task = "Task Quests",
+		profession = "Profession", achievements = "Achievements",
+	}
+	-- Blizzard's settings panel is narrow enough to wrap the four flat controls
+	-- after each row. The standalone window is much wider, so give it a separate
+	-- full-width SimpleGroup per row without changing Blizzard's existing layout.
+	-- The app name remains distinct during AceConfigDialog's own click refreshes.
+	local function inStandaloneWindow(info)
+		return info and info.appName == "RQE_Frame_Standalone"
+	end
+	local function runOrderAction(info, action, ...)
+		local previous = ConfigUI.suppressStandaloneOrderRefresh
+		if inStandaloneWindow(info) then ConfigUI.suppressStandaloneOrderRefresh = true end
+		local succeeded, result = pcall(action, RQE, ...)
+		ConfigUI.suppressStandaloneOrderRefresh = previous
+		if not succeeded then error(result, 2) end
+	end
+	local function currentLabel(index)
+		local key = RQE:GetTrackerSectionOrder()[index]
+		return index .. ". " .. (labels[key] or key or "")
+	end
+	local function defaultLabel(index)
+		local key = RQE:GetTrackerSectionDefaults()[index]
+		return labels[key] or key or ""
+	end
+	local group = {
+		type = "group", name = "Tracker Section Order", inline = true, order = 4,
+		args = {
+			intro = {
+				type = "description", order = 1, width = "full",
+				name = "Move sections up or down. Changes apply immediately and are saved with the active profile.",
+			},
+			headCurrent = { type = "description", name = "Current order", width = 2.1, order = 2, hidden = inStandaloneWindow },
+			headDefault = { type = "description", name = "Default", width = 0.9, order = 3, hidden = inStandaloneWindow },
+			standaloneHeading = {
+				type = "group", name = "", inline = true, order = 4,
+				hidden = function(info) return not inStandaloneWindow(info) end,
+				args = {
+					current = { type = "description", name = "Current order", width = 3, order = 1 },
+					default = { type = "description", name = "Default order", width = 1.35, order = 2 },
+				},
+			},
+		},
+	}
+	for index = 1, 8 do
+		local rowIndex = index
+		local row = index * 10
+		group.args["current" .. index] = {
+			type = "description", order = row, width = 1.2, hidden = inStandaloneWindow,
+			name = function() return currentLabel(rowIndex) end,
+		}
+		group.args["up" .. index] = {
+			type = "execute", name = "Up", width = 0.45, order = row + 1, hidden = inStandaloneWindow,
+			disabled = index == 1,
+			func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, -1) end,
+		}
+		group.args["down" .. index] = {
+			type = "execute", name = "Down", width = 0.45, order = row + 2, hidden = inStandaloneWindow,
+			disabled = index == 8,
+			func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, 1) end,
+		}
+		group.args["default" .. index] = {
+			type = "description", order = row + 3, width = 0.9, hidden = inStandaloneWindow,
+			name = function() return defaultLabel(rowIndex) end,
+		}
+		group.args["standaloneRow" .. index] = {
+			type = "group", name = "", inline = true, order = row + 4,
+			hidden = function(info) return not inStandaloneWindow(info) end,
+			args = {
+				current = {
+					type = "description", order = 1, width = 1.7,
+					name = function() return currentLabel(rowIndex) end,
+				},
+				up = {
+					type = "execute", name = "Up", width = 0.65, order = 2,
+					disabled = rowIndex == 1,
+					func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, -1) end,
+				},
+				down = {
+					type = "execute", name = "Down", width = 0.65, order = 3,
+					disabled = rowIndex == 8,
+					func = function(info) runOrderAction(info, RQE.MoveTrackerSectionAt, rowIndex, 1) end,
+				},
+				default = {
+					type = "description", order = 4, width = 1.35,
+					name = function() return defaultLabel(rowIndex) end,
+				},
+			},
+		}
+	end
+	group.args.reset = {
+		type = "execute", name = "Restore default order", width = 1.5, order = 90,
+		disabled = function() return not RQE:HasCustomTrackerSectionOrder() end,
+		func = function(info) runOrderAction(info, RQE.ResetTrackerSectionOrder) end,
+	}
+	return group
+end
+
 local function placeOption(destination, source, used, key, name, order, width)
 	local option = source[key]
 	if not option then return end
@@ -662,7 +767,7 @@ end
 
 local function composeFramePage(page)
 	local source = page.args
-	local used = { framePosition = true, QuestFramePosition = true }
+	local used = { framePosition = true, QuestFramePosition = true, trackerSectionOrder = true }
 	local behavior = createOptionGroup("ShowAll", "Display Behavior", 1)
 	placeOption(behavior.args, source, used, "toggleBlizzObjectiveTracker", "Blizzard Objective Tracker", 1, 1.5)
 	placeOption(behavior.args, source, used, "mythicScenarioMode", "Use Blizzard tracker in scenarios", 2, 1.85)
@@ -675,10 +780,16 @@ local function composeFramePage(page)
 	configurePositionGroup(source.QuestFramePosition, "QuestWorld", "Quest Tracker Layout")
 	source.framePosition.order = 2
 	source.QuestFramePosition.order = 3
+	if source.trackerSectionOrder then
+		source.trackerSectionOrder.name = sectionTitle("QuestWorld", "Tracker Section Order")
+		source.trackerSectionOrder.inline = true
+		source.trackerSectionOrder.order = 4
+	end
 	page.args = {
 		behavior = behavior,
 		framePosition = source.framePosition,
 		QuestFramePosition = source.QuestFramePosition,
+		trackerSectionOrder = source.trackerSectionOrder,
 	}
 end
 
@@ -912,54 +1023,121 @@ function ConfigUI:ComposeProfiles(profiles)
 	}
 end
 
+local function RefreshOptionsPageScroll(page, content, scrollValue)
+	if not page or not page.frame or not page.frame:IsShown() then return end
+	if content.DoLayout then content:DoLayout() end
+	if page.DoLayout then page:DoLayout() end
+	if page.FixScroll then page:FixScroll() end
+	if scrollValue and page.scrollbar then
+		page.scrollbar:SetValue(scrollValue)
+		page:SetScroll(scrollValue)
+	end
+	updateStyledScrollFrame(page)
+end
+
+local function InstallStandaloneOpenScrollGuard()
+	local dialog = LibStub("AceConfigDialog-3.0")
+	if dialog.RQEConfigOpenWrapped then return end
+	local originalOpen = dialog.Open
+	dialog.Open = function(owner, appName, container, ...)
+		local page = ConfigUI.optionsPage
+		if appName ~= "RQE_Frame_Standalone" or container ~= ConfigUI.optionsContent or not page then
+			return originalOpen(owner, appName, container, ...)
+		end
+		-- AceConfig reopens an execute option's custom container before its click
+		-- callback returns. Hold the outer scroll offset through that rebuild so
+		-- its temporary empty state never snaps to the top for a visible frame.
+		local scrollValue = page.scrollbar and page.scrollbar:GetValue()
+		page.RQESuspendScrollFix = true
+		local succeeded, result = pcall(originalOpen, owner, appName, container, ...)
+		page.RQESuspendScrollFix = nil
+		if not succeeded then error(result, 2) end
+		RefreshOptionsPageScroll(page, container, scrollValue)
+		return result
+	end
+	dialog.RQEConfigOpenWrapped = true
+end
+
 function ConfigUI:OpenOptionsPage(container, appName)
 	if not container or not appName then return end
 	-- Custom AceGUI containers are not included in AceConfigDialog's automatic
 	-- refresh list. Remember the current page, including while its window hides.
 	self.optionsContainer, self.optionsAppName = container, appName
+	self.optionsPageGeneration = (self.optionsPageGeneration or 0) + 1
+	local pageGeneration = self.optionsPageGeneration
+	if self.optionsPage then self.optionsPage.RQESuspendScrollFix = nil end
 	container:ReleaseChildren()
 	local page = LibStub("AceGUI-3.0"):Create("ScrollFrame")
+	self.optionsPage = page
 	page:SetLayout("Flow")
 	page:SetFullWidth(true)
 	page:SetFullHeight(true)
 	local content = LibStub("AceGUI-3.0"):Create("SimpleGroup")
+	self.optionsContent = content
 	content:SetLayout("Flow")
 	content:SetFullWidth(true)
 	self:SkinWidget(page)
 	container:AddChild(page)
 	page:AddChild(content)
-	LibStub("AceConfigDialog-3.0"):Open(appName, content)
+	local displayAppName = appName
+	if appName == "RQE_Frame" then
+		-- AceConfigDialog immediately reopens its app after an Up/Down click.
+		-- A separate registration keeps that refresh in the themed row layout,
+		-- while Blizzard's RQE_Frame registration retains its normal flat layout.
+		local registry = LibStub("AceConfigRegistry-3.0")
+		displayAppName = "RQE_Frame_Standalone"
+		if not registry:GetOptionsTable(displayAppName) then
+			local sourceOptions = registry:GetOptionsTable(appName)
+			registry:RegisterOptionsTable(displayAppName, function(uiType, uiName)
+				return sourceOptions(uiType, uiName)
+			end)
+		end
+	end
+	self.optionsDisplayAppName = displayAppName
+	InstallStandaloneOpenScrollGuard()
+	LibStub("AceConfigDialog-3.0"):Open(displayAppName, content)
 	self:SkinWidget(page)
 	local function RefreshPageScroll()
-		if not page.frame or not page.frame:IsShown() then return end
-		if content.DoLayout then content:DoLayout() end
-		if page.DoLayout then page:DoLayout() end
-		if page.FixScroll then page:FixScroll() end
-		updateStyledScrollFrame(page)
+		if self.optionsPageGeneration ~= pageGeneration then return end
+		RefreshOptionsPageScroll(page, content)
 	end
 	-- AceConfig finishes sizing several nested groups after Open returns. Force
 	-- the initial range once on the next frame and once after that settling pass,
 	-- so a small settings window never needs a manual resize to reveal its thumb.
-	C_Timer.After(0, RefreshPageScroll)
-	C_Timer.After(0.05, RefreshPageScroll)
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, RefreshPageScroll)
+	RQE.API.Client.C_Timer.After(0, RefreshPageScroll)
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.05, RefreshPageScroll)
+	RQE.API.Client.C_Timer.After(0.05, RefreshPageScroll)
 end
 
--- Coalesce notifications until the current widget callback has finished before
--- releasing its controls. Read the latest page so a tab change cannot revive it.
+-- Coalesce notifications until the clicked AceConfig control has finished its
+-- callback. Refresh only the options inside the existing scroll page; replacing
+-- that page briefly displays its top before a deferred scroll restore can run.
 function ConfigUI:RefreshStandalonePage()
 	if self.refreshQueued then return end
 	self.refreshQueued = true
-	C_Timer.After(0, function()
+	local refreshedAppName = self.optionsAppName
+	local pageGeneration = self.optionsPageGeneration
+	local page = self.optionsPage
+	local content = self.optionsContent
+	local scrollValue = page and page.scrollbar and page.scrollbar:GetValue()
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+	RQE.API.Client.C_Timer.After(0, function()
 		self.refreshQueued = nil
 		local container = self.optionsContainer
-		if container and container.frame:IsShown() then
-			self:OpenOptionsPage(container, self.optionsAppName)
-		end
+		if not container or not container.frame:IsShown()
+			or self.optionsAppName ~= refreshedAppName or self.optionsPageGeneration ~= pageGeneration then return end
+		if not content then return end
+		LibStub("AceConfigDialog-3.0"):Open(self.optionsDisplayAppName, content)
+		self:SkinWidget(page)
+		RefreshOptionsPageScroll(page, content, scrollValue)
 	end)
 end
 
 LibStub("AceConfigRegistry-3.0").RegisterCallback(ConfigUI, "ConfigTableChange", function(_, appName)
-	if appName == ConfigUI.optionsAppName then ConfigUI:RefreshStandalonePage() end
+	if appName == ConfigUI.optionsAppName and not ConfigUI.suppressStandaloneOrderRefresh then
+		ConfigUI:RefreshStandalonePage()
+	end
 end)
 
 -- Blizzard's secure menu can open Settings in combat, but an addon shortcut
@@ -967,8 +1145,10 @@ end)
 local settingsEvents = CreateFrame("Frame")
 settingsEvents:RegisterEvent("PLAYER_REGEN_ENABLED")
 settingsEvents:SetScript("OnEvent", function()
-	C_Timer.After(0, function()
-		if InCombatLockdown() or not ConfigUI.pendingPanelKey then return end
+	-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+	RQE.API.Client.C_Timer.After(0, function()
+		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() or not ConfigUI.pendingPanelKey then return end
+		if RQE.API.Client.InCombatLockdown() or not ConfigUI.pendingPanelKey then return end
 		local panelKey = ConfigUI.pendingPanelKey
 		ConfigUI.pendingPanelKey = nil
 		ConfigUI:OpenRegisteredPanel(panelKey)
@@ -977,7 +1157,8 @@ end)
 
 function ConfigUI:OpenRegisteredPanel(panelKey)
 	panelKey = panelKey or "general"
-	if InCombatLockdown() then
+	-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
+	if RQE.API.Client.InCombatLockdown() then
 		if not self.pendingPanelKey then
 			print("RQE: AddOn Settings will open after combat. You can still open them manually through Blizzard's menu.")
 		end
@@ -1086,17 +1267,20 @@ function ConfigUI:SkinConfigFrame(widget)
 		frame:SetPropagateKeyboardInput(true)
 		frame:HookScript("OnKeyDown", function(owner, key)
 			if key == "ESCAPE" and owner:IsShown() then
-				local canSuppress = not InCombatLockdown()
+				-- Previous Blizzard call changed 2026.09.25: local canSuppress = not InCombatLockdown()
+				local canSuppress = not RQE.API.Client.InCombatLockdown()
 				if canSuppress then owner:SetPropagateKeyboardInput(false) end
 				widget:Hide()
 				if canSuppress then
-					C_Timer.After(0, function()
+					-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0, function()
+					RQE.API.Client.C_Timer.After(0, function()
 						if owner and owner.SetPropagateKeyboardInput then
 							owner:SetPropagateKeyboardInput(true)
 						end
 					end)
 				end
-			elseif not InCombatLockdown() then
+			-- Previous Blizzard call changed 2026.09.25: elseif not InCombatLockdown() then
+			elseif not RQE.API.Client.InCombatLockdown() then
 				owner:SetPropagateKeyboardInput(true)
 			end
 		end)
