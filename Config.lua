@@ -470,10 +470,12 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 						desc = "Automatically track quests as soon as you obtain them and after achieving an objective.\n\n" ..
 								"|cFFFF3333If the Auto Quest Watch setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 						order = 9,
-						get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
+						-- Previous Blizzard call changed 2026.09.25: get = function() return GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
+						get = function() return RQE.API.Client.GetCVarBool("autoQuestWatch") end,  -- Get the current CVAR value
 						set = function(_, newValue)
 							RQE.db.profile.autoQuestWatch = newValue;
-							SetCVar("autoQuestWatch", newValue and "1" or "0")  -- Set the CVAR based on the new value
+							-- Previous Blizzard call changed 2026.09.25: SetCVar("autoQuestWatch", newValue and "1" or "0")  -- Set the CVAR based on the new value
+							RQE.API.Client.SetCVar("autoQuestWatch", newValue and "1" or "0")  -- Set the CVAR based on the new value
 						end,
 					},
 					autoQuestProgress = {
@@ -482,10 +484,12 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 						desc = "Quests are automatically watched for 5 minutes when you achieve a quest objective.\n\n" ..
 								"|cFFFF3333If the Auto Quest Progress setting changes 'on its own' check if another quest tracking addon may be interfering with your choice and set it to the same as this setting.|r",
 						order = 10,
-						get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
+						-- Previous Blizzard call changed 2026.09.25: get = function() return GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
+						get = function() return RQE.API.Client.GetCVarBool("autoQuestProgress") end,  -- Get the current CVAR value
 						set = function(_, newValue)
 							RQE.db.profile.autoQuestProgress = newValue;
-							SetCVar("autoQuestProgress", newValue and "1" or "0")  -- Set the CVAR based on the new value
+							-- Previous Blizzard call changed 2026.09.25: SetCVar("autoQuestProgress", newValue and "1" or "0")  -- Set the CVAR based on the new value
+							RQE.API.Client.SetCVar("autoQuestProgress", newValue and "1" or "0")  -- Set the CVAR based on the new value
 						end,
 					},
 					removeWQatLogin = {
@@ -578,7 +582,8 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 					enableNearestSuperTrackCampaign = {
 						type = "toggle",
 						name = function() 
-							return "Enable SuperTrack Nearest Campaign Quest [Max Level: " .. GetMaxPlayerLevel() .. "]"
+							-- Previous Blizzard call changed 2026.09.25: return "Enable SuperTrack Nearest Campaign Quest [Max Level: " .. GetMaxPlayerLevel() .. "]"
+							return "Enable SuperTrack Nearest Campaign Quest [Max Level: " .. RQE.API.Client.GetMaxPlayerLevel() .. "]"
 						end,
 						desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking",
 						order = 19,
@@ -592,7 +597,8 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 					enableNearestSuperTrackCampaignLevelingOnly = {
 						type = "toggle",
 						name = function() 
-							return "Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. UnitLevel("player") .. "/" .. GetMaxPlayerLevel() .. "]"
+							-- Previous Blizzard call changed 2026.09.25: return "Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. UnitLevel("player") .. "/" .. GetMaxPlayerLevel() .. "]"
+							return "Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. RQE.API.Client.UnitLevel("player") .. "/" .. RQE.API.Client.GetMaxPlayerLevel() .. "]"
 						end,
 						desc = "Enable SuperTracking nearest campaign quest when frame changes, such as turning in a quest, if not already supertracking, but only while leveling",
 						order = 20,
@@ -1014,6 +1020,7 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 							},
 						},
 					},
+					trackerSectionOrder = RQE.ConfigUI:BuildTrackerOrderOptions(),
 				},
 			},
 
@@ -1348,14 +1355,16 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 						-- get = function() return RQE.db.profile.displayRQEcpuUsage end,
 						get = function() 
 							-- Get the actual scriptProfile state instead of just saved profile value
-							return GetCVar("scriptProfile") == "1"
+							-- Previous Blizzard call changed 2026.09.25: return GetCVar("scriptProfile") == "1"
+							return RQE.API.Client.GetCVar("scriptProfile") == "1"
 						end,
 						set = function(_, newValue)
 							-- Save setting
 							RQE.db.profile.displayRQEcpuUsage = newValue
 
 							-- If the new value differs from scriptProfile, toggle it and show the popup
-							if (GetCVar("scriptProfile") == "1") ~= newValue then
+							-- Previous Blizzard call changed 2026.09.25: if (GetCVar("scriptProfile") == "1") ~= newValue then
+							if (RQE.API.Client.GetCVar("scriptProfile") == "1") ~= newValue then
 								RQE:ToggleCPUProfiling()  -- Only toggle if needed
 							end
 
@@ -1722,10 +1731,12 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		-- Auto Quest Watch Checkbox
 		local autoQuestWatchCheckbox = AceGUI:Create("CheckBox")
 		autoQuestWatchCheckbox:SetLabel("Auto Quest Watch")
-		autoQuestWatchCheckbox:SetValue(GetCVarBool("autoQuestWatch"))
+		-- Previous Blizzard call changed 2026.09.25: autoQuestWatchCheckbox:SetValue(GetCVarBool("autoQuestWatch"))
+		autoQuestWatchCheckbox:SetValue(RQE.API.Client.GetCVarBool("autoQuestWatch"))
 		autoQuestWatchCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 			RQE.db.profile.autoQuestWatch = value
-			SetCVar("autoQuestWatch", value and "1" or "0")
+			-- Previous Blizzard call changed 2026.09.25: SetCVar("autoQuestWatch", value and "1" or "0")
+			RQE.API.Client.SetCVar("autoQuestWatch", value and "1" or "0")
 		end)
 
 		-- Add a tooltip description for autoQuestWatchCheckbox (RQE.db.profile.autoQuestWatch)
@@ -1743,10 +1754,12 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		-- Auto Quest Progress Checkbox
 		local autoQuestProgressCheckbox = AceGUI:Create("CheckBox")
 		autoQuestProgressCheckbox:SetLabel("Auto Quest Progress")
-		autoQuestProgressCheckbox:SetValue(GetCVarBool("autoQuestProgress"))
+		-- Previous Blizzard call changed 2026.09.25: autoQuestProgressCheckbox:SetValue(GetCVarBool("autoQuestProgress"))
+		autoQuestProgressCheckbox:SetValue(RQE.API.Client.GetCVarBool("autoQuestProgress"))
 		autoQuestProgressCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 			RQE.db.profile.autoQuestProgress = value
-			SetCVar("autoQuestProgress", value and "1" or "0")
+			-- Previous Blizzard call changed 2026.09.25: SetCVar("autoQuestProgress", value and "1" or "0")
+			RQE.API.Client.SetCVar("autoQuestProgress", value and "1" or "0")
 		end)
 
 		-- Add a tooltip description for autoQuestProgressCheckbox (RQE.db.profile.autoQuestProgress)
@@ -1938,7 +1951,8 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		scrollFrame:AddChild(enableNearestSuperTrack)
 
 		-- Enable SuperTrack Nearest Campaign Quest Checkbox
-		local maxPlayerLevel = GetMaxPlayerLevel()
+		-- Previous Blizzard call changed 2026.09.25: local maxPlayerLevel = GetMaxPlayerLevel()
+		local maxPlayerLevel = RQE.API.Client.GetMaxPlayerLevel()
 		local enableNearestSuperTrackCampaign = AceGUI:Create("CheckBox")
 		enableNearestSuperTrackCampaign:SetLabel("Enable SuperTrack Nearest Campaign Quest [Max Level: " .. maxPlayerLevel .. "]")
 		enableNearestSuperTrackCampaign:SetValue(RQE.db.profile.enableNearestSuperTrackCampaign)
@@ -1962,8 +1976,10 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 		scrollFrame:AddChild(enableNearestSuperTrackCampaign)
 
 		-- Enable SuperTrack Nearest Campaign Quest Checkbox
-		local playerLevel = UnitLevel("player")
-		local maxPlayerLevel = GetMaxPlayerLevel()
+		-- Previous Blizzard call changed 2026.09.25: local playerLevel = UnitLevel("player")
+		local playerLevel = RQE.API.Client.UnitLevel("player")
+		-- Previous Blizzard call changed 2026.09.25: local maxPlayerLevel = GetMaxPlayerLevel()
+		local maxPlayerLevel = RQE.API.Client.GetMaxPlayerLevel()
 		local enableNearestSuperTrackCampaignLevelingOnly = AceGUI:Create("CheckBox")
 		enableNearestSuperTrackCampaignLevelingOnly:SetLabel("Enable SuperTrack Nearest Campaign Quest [Leveling Only: " .. playerLevel .. "/" .. maxPlayerLevel .. "]")
 		enableNearestSuperTrackCampaignLevelingOnly:SetValue(RQE.db.profile.enableNearestSuperTrackCampaignLevelingOnly)
@@ -2912,13 +2928,15 @@ Retail configuration schemas, custom widgets, settings panels, and profile contr
 			displayCPUUsageCheckbox:SetLabel("Display CPU Usage")
 
 			-- Set checkbox to reflect scriptProfile setting
-			displayCPUUsageCheckbox:SetValue(GetCVar("scriptProfile") == "1")
+			-- Previous Blizzard call changed 2026.09.25: displayCPUUsageCheckbox:SetValue(GetCVar("scriptProfile") == "1")
+			displayCPUUsageCheckbox:SetValue(RQE.API.Client.GetCVar("scriptProfile") == "1")
 
 			displayCPUUsageCheckbox:SetCallback("OnValueChanged", function(widget, event, value)
 				RQE.db.profile.displayRQEcpuUsage = value
 				
 				-- Only toggle profiling if the state actually needs to change
-				if (GetCVar("scriptProfile") == "1") ~= value then
+				-- Previous Blizzard call changed 2026.09.25: if (GetCVar("scriptProfile") == "1") ~= value then
+				if (RQE.API.Client.GetCVar("scriptProfile") == "1") ~= value then
 					RQE:ToggleCPUProfiling()
 				end
 
