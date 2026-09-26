@@ -16,7 +16,7 @@ RQE is a quest helper and tracker for World of Warcraft. It brings the next obje
 - **Watch recipes and achievements.** See tracked profession recipes with their required materials and current counts, alongside achievement criteria and numeric progress.
 - **Recognize NPCs and objects.** Mouse over linked names in step descriptions to open a movable preview. Zoom or pan the view when you need a closer look.
 - **Use quest-aware controls.** Access helpful targeting and quest-item macros where a step provides them. RQE can update its macro button when a needed quest item becomes available.
-- **Choose your layout.** Move, resize, or lock the main frames; adjust fonts, colors, previews, and the Azure & Gold theme in settings.
+- **Choose your layout.** Move, resize, or lock the main frames; reorder and collapse Quest Tracker sections; adjust fonts, colors, previews, and the Azure & Gold theme in settings.
 - **Find a group.** Use the quest interface to find groups for eligible quests.
 
 ## Get started
@@ -37,9 +37,21 @@ RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect qu
 
 ## More examples
 
+### Arrange the Quest Tracker
+
+Open **Frame Settings → Tracker Section Order** in AddOn Settings or the Config Window. Move Scenario, Campaign/Meta, Normal Quests, World Quests, Bonus Objectives, Task Quests, Profession, and Achievements with **Up** and **Down**. Changes appear immediately and are saved with the active profile; **Restore default order** returns to the original arrangement.
+
+Click a section-header chevron to collapse or expand that section independently (except Scenario). The remaining sections close the gap, and each section remembers its state in the active profile. The Quest Tracker header has a separate control to minimize the entire frame.
+
+| Set your section order | Fold the sections you do not need |
+| --- | --- |
+| [![Tracker Section Order controls in Frame Settings](https://github.com/user-attachments/assets/4accc760-63f2-45f7-8eab-6bbd5bb937b2)](https://github.com/user-attachments/assets/4accc760-63f2-45f7-8eab-6bbd5bb937b2) | [![Quest Tracker sections collapsed and selectively expanded](https://github.com/user-attachments/assets/929ebc88-6247-4b11-ae5f-21711d62f34d)](https://github.com/user-attachments/assets/929ebc88-6247-4b11-ae5f-21711d62f34d) |
+
+See the [Tracker section order settings](https://github.com/rhodan412/RQE/wiki/Settings-and-Controls#tracker-section-order) and [collapse guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#collapse-tracker-sections) for details.
+
 ### Profession recipes and achievements
 
-The Quest Tracker gives tracked recipes their own **Profession** section above **Achievements**. It lists each recipe's materials and the amount you own; counts turn green when you have enough to craft one. A tracked recipe keeps the Tracker available even when you have no quests or achievements watched.
+By default, the Quest Tracker places tracked recipes in a **Profession** section above **Achievements**. It lists each recipe's materials and the amount you own; counts turn green when you have enough to craft one. A tracked recipe keeps the Tracker available even when you have no quests or achievements watched.
 
 Achievement entries show each criterion, including numeric progress and the objective text. Achievements without a usable criterion show their description instead. Completed criteria appear in green.
 
