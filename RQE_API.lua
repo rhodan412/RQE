@@ -210,8 +210,11 @@ end
 local version, build, _, tocversion = GetBuildInfo()
 local major, minor, patch = string.match(version, "(%d+)%.(%d+)%.?(%d*)")
 major, minor, patch = tonumber(major), tonumber(minor), tonumber(patch) or 0
-local isLegacyClient = major == 1 or major == 2
 local isForever = major == 1 and minor == 60
+-- Forever's 1.60 product version exposes the Retail/Midnight API surface.
+local isLegacyClient = major == 2 or (major == 1 and not isForever)
+local apiMajor, apiMinor, apiPatch = major, minor, patch
+if isForever then apiMajor, apiMinor, apiPatch = 12, 0, 0 end
 -- Use Blizzard's client-family identifier, not an expansion version number.
 local isRetail = WOW_PROJECT_ID ~= nil
 	and WOW_PROJECT_MAINLINE ~= nil
@@ -220,6 +223,10 @@ RQE.IsRetail = isRetail
 
 RQE.API.GameVersion = {
 	full = version,
+	apiMajor = apiMajor,
+	apiMinor = apiMinor,
+	apiPatch = apiPatch,
+	apiProfile = isForever and "forever" or (major == 1 and "classic" or (major == 2 and "tbc" or "retail")),
 	build = build,
 	major = major,
 	minor = minor,
@@ -235,9 +242,9 @@ RQE.API.GameVersion = {
 	managesBlizzardObjectiveTracker = not isLegacyClient,
 	supportsRetailQuestTypes = not isLegacyClient,
 	usesLegacyQuestLogSelection = isLegacyClient,
-	questLogTextDescriptionIsSecond = major == 1,
-	supportsAchievements = major >= 3,
-	supportsWarband = major >= 11,
+	questLogTextDescriptionIsSecond = isLegacyClient and major == 1,
+	supportsAchievements = apiMajor >= 3,
+	supportsWarband = apiMajor >= 11,
 }
 
 -- Forever omits the global helper expected by the bundled AceGUI checkbox.
@@ -271,12 +278,12 @@ local function SnapshotAPI(api)
 	return snapshot
 end
 
-local NativeQuestLog = isLegacyClient and SnapshotAPI(C_QuestLog) or {}
-local NativeMap = isLegacyClient and SnapshotAPI(C_Map) or {}
-local NativeSuperTrack = isLegacyClient and SnapshotAPI(C_SuperTrack) or {}
-local NativeScenario = isLegacyClient and SnapshotAPI(C_Scenario) or {}
-local NativeTaskQuest = isLegacyClient and SnapshotAPI(C_TaskQuest) or {}
-local NativeAddOns = isLegacyClient and SnapshotAPI(C_AddOns) or {}
+local NativeQuestLog = SnapshotAPI(C_QuestLog)
+local NativeMap = SnapshotAPI(C_Map)
+local NativeSuperTrack = SnapshotAPI(C_SuperTrack)
+local NativeScenario = SnapshotAPI(C_Scenario)
+local NativeTaskQuest = SnapshotAPI(C_TaskQuest)
+local NativeAddOns = SnapshotAPI(C_AddOns)
 
 local function Has(api, method)
 	return type(api) == "table" and type(api[method]) == "function"
@@ -312,7 +319,7 @@ end
 -- #🏆 Achievements / 📚 Encounter Journal APIs
 -------------------------------------------------
 
-if major >= 3 then
+if apiMajor >= 3 then
 	-- Use: local info = RQE.API.GetAchievementInfo(achievementID) instead of: C_AchievementInfo.GetAchievementInfo(achievementID)
 	-- Returns a table:
 	-- {
@@ -364,7 +371,7 @@ end
 -- #🧾 Adventure Journal / Factions APIs
 -------------------------------------------------
 
-if major >= 10 then
+if apiMajor >= 10 then
 	-- Use: local info = RQE.API.GetMajorFactionData(factionID)	instead of: C_MajorFactions.GetMajorFactionData(factionID)
 	-- Returns a table:
 	-- {
@@ -405,7 +412,7 @@ end
 -- #🎯 Gossip / NPC Interaction APIs
 -------------------------------------------------
 
-if major >= 9 then
+if apiMajor >= 9 then
 	-- Structured gossip API (Shadowlands and later)
 
 	-- Use: local options = RQE.API.GetGossipOptions()
@@ -446,7 +453,7 @@ if major >= 9 then
 
 	-- Added in 10.0.7: Select by orderIndex
 	-- Use: RQE.API.SelectGossipOptionByIndex(index [, text, confirmed])
-	if C_GossipInfo.SelectOptionByIndex then
+	if C_GossipInfo and type(C_GossipInfo.SelectOptionByIndex) == "function" then
 		RQE.API.SelectGossipOptionByIndex = function(index, text, confirmed)
 			return C_GossipInfo.SelectOptionByIndex(index, text, confirmed)
 		end
@@ -488,7 +495,7 @@ end
 -- #📢 Group / LFG APIs
 -------------------------------------------------
 
-if major >= 6 then
+if apiMajor >= 6 then
 	-- Use: local info = RQE.API.CreateListing(createData)
 	-- Returns a normalized table with at least:
 	-- {
@@ -570,7 +577,7 @@ end
 -- #🗺️ Map APIs
 -------------------------------------------------
 
-if major >= 9 then
+if apiMajor >= 9 then
 	-- Use: local hasWaypoint = RQE.API.HasUserWaypoint()	instead of: C_Map.HasUserWaypoint()
 	-- Returns a normalized table:
 	-- {
@@ -703,7 +710,7 @@ if major >= 9 then
 		return RQE.UserWaypointLinkInfo
 	end
 
-elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Use: local info = RQE.API.GetBestMapForUnit("player") instead of: C_Map.GetBestMapForUnit("player")
 	-- Returns a normalized table:
 	-- {
@@ -825,7 +832,7 @@ elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) 
 		return results
 	end
 
-elseif major >= 8 then
+elseif apiMajor >= 8 then
 	-- Use: local x, y = RQE.API.GetNextWaypointForMap(questID, uiMapID) instead of: C_QuestLog.GetNextWaypointForMap(questID, uiMapID)
 	-- Returns a normalized table:
 	-- {
@@ -845,7 +852,7 @@ elseif major >= 8 then
 		return RQE.NextWaypointInfo
 	end
 
-elseif major >= 4 then
+elseif apiMajor >= 4 then
 	-- Only GetMapNameByID(mapID) exists
 	-- Returns a normalized table:
 	-- {
@@ -861,7 +868,7 @@ elseif major >= 4 then
 		return RQE.MapInfo
 	end
 
-elseif major >= 1 then
+elseif apiMajor >= 1 then
 	-- Classic fallback (1.13 re-release + Vanilla-style GetPlayerMapPosition)
 	-- Some Classic clients expose C_Map API, others only the old global.
 	local hasCMap = C_Map and C_Map.GetPlayerMapPosition
@@ -1068,7 +1075,7 @@ end
 -- #🛒 Merchant APIs
 -------------------------------------------------
 
-if major >= 12 then
+if apiMajor >= 12 then
 	-- Use: local info = RQE.API.GetMerchantItemInfo(index) instead of: C_MerchantFrame.GetItemInfo(index)
 	-- Returns a table: { name, texture, price, quantity, numAvailable, isPurchasable, isUsable, extendedCost, currencyID, spellID }
 	-- Recalled with either: print("Merchant item:", info.name, info.price, info.numAvailable) - OR - print("Merchant item:", RQE.MerchantInfo.name, RQE.MerchantInfo.price, RQE.MerchantInfo.numAvailable)
@@ -1112,7 +1119,7 @@ if major >= 12 then
 		}
 	end
 
-elseif major >= 11 then
+elseif apiMajor >= 11 then
 	-- Use: local info = RQE.API.GetMerchantItemInfo(index)	instead of: GetMerchantItemInfo(index)
 	-- Returns a table: { name, texture, price, quantity, numAvailable, isPurchasable, isUsable, extendedCost, currencyID, spellID }
 	-- Recalled with either: print("Merchant item:", info.name, info.price, info.numAvailable) - OR - print("Merchant item:", RQE.MerchantInfo.name, RQE.MerchantInfo.price, RQE.MerchantInfo.numAvailable)
@@ -1154,7 +1161,7 @@ elseif major >= 11 then
 		}
 	end
 
-elseif (major > 8) or (major == 8 and minor >= 1) then
+elseif (apiMajor > 8) or (apiMajor == 8 and apiMinor >= 1) then
 	-- Retail 8.1.5 and later
 	-- Use: local refundable = RQE.API.IsMerchantItemRefundable(index) instead of: C_MerchantFrame.IsMerchantItemRefundable(index)
 	-- Returns: boolean
@@ -1162,7 +1169,7 @@ elseif (major > 8) or (major == 8 and minor >= 1) then
 		return C_MerchantFrame.IsMerchantItemRefundable(index)
 	end
 
-elseif (major > 7) or (major == 7 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif (apiMajor > 7) or (apiMajor == 7 and apiMinor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Post-7.2 Retail and all Classic re-releases (1.13+)
 	-- isPurchasable field is available
 	RQE.API.GetMerchantItemInfo = function(index)
@@ -1270,7 +1277,7 @@ end
 -- #🧭 Quest APIs
 -------------------------------------------------
 
-if major >= 9 then
+if apiMajor >= 9 then
 	-- Use: local questID = RQE.API.GetSuperTrackedQuestID() instead of: C_SuperTrack.GetSuperTrackedQuestID()
 	RQE.API.GetSuperTrackedQuestID = function()
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
@@ -1295,13 +1302,13 @@ if major >= 9 then
 		-- return C_SuperTrack.IsSuperTrackingQuest()
 	-- end
 
-elseif (major == 8 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif (apiMajor == 8 and apiMinor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Retail 8.2.5–8.3.x and Classic 1.13+ → C_QuestSession
 	RQE.API.GetSuperTrackedQuestID = function()
 		return C_QuestSession.GetSuperTrackedQuest()
 	end
 
-elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- -- Retail 8.0+ and Classic re-releases (1.13+) → C_QuestLog
 	-- RQE.API.GetQuestObjectives = function(questID)
 		-- local objectives = C_QuestLog.GetQuestObjectives(questID)
@@ -1481,7 +1488,7 @@ RQE.API.GetQuestLineInfo = function(questID, uiMapID, displayableOnly)
 		return nil
 	end
 
-	if major >= 11 then
+	if apiMajor >= 11 then
 		return C_QuestLine.GetQuestLineInfo(questID, uiMapID, displayableOnly == true)
 	end
 
@@ -1546,7 +1553,7 @@ end
 -- #📜 Quest Log / Quest Info APIs
 -------------------------------------------------
 
-if major >= 11 then
+if apiMajor >= 11 then
 	-- Use: local index = RQE.API.GetHeaderIndexForQuest(questID) instead of: C_QuestLog.GetHeaderIndexForQuest(questID)
 	RQE.API.GetHeaderIndexForQuest = function(questID)
 		return C_QuestLog.GetHeaderIndexForQuest(questID)
@@ -1638,7 +1645,7 @@ if major >= 11 then
 		return RQE.IsMetaQuestInfo
 	end
 
-elseif major > 10 or (major == 10 and minor >= 1 and rev >= 5) then
+elseif apiMajor > 10 or (apiMajor == 10 and apiMinor >= 1 and apiPatch >= 5) then
 	-- Use: local info = RQE.API.IsImportantQuest(questID) instead of: C_QuestLog.IsImportantQuest(questID)
 	-- Returns a normalized table:
 	-- {
@@ -1654,7 +1661,7 @@ elseif major > 10 or (major == 10 and minor >= 1 and rev >= 5) then
 		return RQE.IsImportantQuestInfo
 	end
 
-elseif major >= 10 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and minor >= 14) then
+elseif apiMajor >= 10 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMinor >= 14) then
 	-- Use C_QuestInfoSystem.GetQuestRewardSpellInfo (10.1+ and Classic 1.14+)
 	-- Returns QuestRewardSpellInfo with Enum.QuestCompleteSpellType values
 	-- Use: local info = RQE.API.GetQuestRewardSpellInfo(questID, spellID) instead of: C_QuestInfoSystem.GetQuestRewardSpellInfo(questID, spellID)
@@ -1689,7 +1696,7 @@ elseif major >= 10 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC 
 		}
 	end
 
-elseif major >= 10 then
+elseif apiMajor >= 10 then
 	-- Use: local awards = RQE.API.DoesQuestAwardReputationWithFaction(questID, factionID) instead of: C_QuestLog.DoesQuestAwardReputationWithFaction(...)
 	RQE.API.DoesQuestAwardReputationWithFaction = function(questID, factionID)
 		return C_QuestLog.DoesQuestAwardReputationWithFaction(questID, factionID)
@@ -1737,7 +1744,7 @@ elseif major >= 10 then
 		return RQE.UnitIsRelatedToActiveQuestInfo
 	end
 
-elseif major >= 9 and minor >= 1 then
+elseif apiMajor >= 9 and apiMinor >= 1 then
 	-- Use: local info = RQE.API.GetQuestLogPortraitGiver(questLogIndex) instead of: C_QuestLog.GetQuestLogPortraitGiver(questLogIndex)
 	-- Returns a normalized table:
 	--	{
@@ -1760,7 +1767,7 @@ elseif major >= 9 and minor >= 1 then
 		}
 	end
 
-elseif major >= 9 then
+elseif apiMajor >= 9 then
 	-- Retail 9.0+  → C_QuestLog.GetInfo(questLogIndex)
 	-- -- Use: local title = RQE.API.GetTitleForQuestID(questID)	instead of: RQE.API.GetTitleForQuestID(questID)
 	-- RQE.API.GetTitleForQuestID = function(questID)
@@ -2277,14 +2284,14 @@ elseif major >= 9 then
 		return RQE.IsRepeatableQuestInfo
 	end
 
-elseif major > 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 2) then
+elseif apiMajor > 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMajor >= 2) then
 	-- Retail 8.2.5+ and Classic 1.14+ → C_QuestLog.IsQuestFlaggedCompleted
 	-- Use: local completed = RQE.API.IsQuestFlaggedCompleted(questID)	instead of: C_QuestLog.IsQuestFlaggedCompleted(questID)
 	RQE.API.IsQuestFlaggedCompleted = function(questID)
 		return C_QuestLog.IsQuestFlaggedCompleted(questID)
 	end
 
-elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 1 and minor >= 15) then
+elseif apiMajor >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMajor >= 1 and apiMinor >= 15) then
 	-- Retail 8.0.1+ and Classic 1.15+
 	-- Use: local quests = RQE.API.GetQuestsOnMap(uiMapID) instead of: C_QuestLog.GetQuestsOnMap(uiMapID)
 	-- Returns a normalized table (array) of quests on the given map:
@@ -2331,7 +2338,7 @@ elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC a
 		return RQE.QuestsOnMap
 	end
 
-elseif major > 8 or (major == 8 and minor >= 3) then
+elseif apiMajor > 8 or (apiMajor == 8 and apiMinor >= 3) then
 	-- Use: local maps = RQE.API.GetActiveThreatMaps() instead of: C_QuestLog.GetActiveThreatMaps()
 	RQE.API.GetActiveThreatMaps = function()
 		return C_QuestLog.GetActiveThreatMaps()
@@ -2355,7 +2362,7 @@ elseif major > 8 or (major == 8 and minor >= 3) then
 		return RQE.HasActiveThreatsInfo
 	end
 
-elseif (major > 8 and minor >= 2 and patch >= 5) then
+elseif (apiMajor > 8 and apiMinor >= 2 and apiPatch >= 5) then
 	-- Use: local completed = RQE.API.GetQuestDifficultyLevel(questID)	instead of: C_QuestLog.GetQuestDifficultyLevel(questID)
 	RQE.API.GetQuestDifficultyLevel = function(questID)
 		return C_QuestLog.GetQuestDifficultyLevel(questID)
@@ -2381,7 +2388,7 @@ elseif (major > 8 and minor >= 2 and patch >= 5) then
 		return RQE.IsQuestTrivialInfo
 	end
 
-elseif major > 8 or (major == 8 and minor >= 2) then
+elseif apiMajor > 8 or (apiMajor == 8 and apiMinor >= 2) then
 	-- Retail 8.2+ (BfA Rise of Azshara and onward)
 	-- Use: local text = RQE.API.GetNextWaypointText(questID)	instead of: C_QuestLog.GetNextWaypointText(questID)
 	RQE.API.GetNextWaypointText = function(questID)
@@ -2394,7 +2401,7 @@ elseif major > 8 or (major == 8 and minor >= 2) then
 		return C_QuestLog.GetNextWaypoint(questID)
 	end
 
-elseif major > 8 or (major == 8 and minor >= 1) then
+elseif apiMajor > 8 or (apiMajor == 8 and apiMinor >= 1) then
 	-- Retail 8.1+
 	-- Use: local numObjectives = RQE.API.GetNumQuestObjectives(questID)	instead of: C_QuestLog.GetNumQuestObjectives(questID)
 	-- Returns: number (leaderboardCount)
@@ -2402,7 +2409,7 @@ elseif major > 8 or (major == 8 and minor >= 1) then
 		return C_QuestLog.GetNumQuestObjectives(questID)
 	end
 
-elseif major >= 8 then
+elseif apiMajor >= 8 then
 	-- BfA Patch 8.2.5 (2019-09-24) → Shadowlands prepatch
 	-- Used AddQuestWatchForQuestID
 	-- Use: local wasWatched = RQE.API.AddQuestWatch(questID)
@@ -2456,13 +2463,13 @@ elseif major >= 8 then
 		return RQE.ZoneStoryInfo
 	end
 
-elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and minor >= 15) then
+elseif apiMajor >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMinor >= 15) then
 	-- Use: local uiMapID = RQE.API.GetMapForQuestPOIs() instead of: C_QuestLog.GetMapForQuestPOIs()
 	RQE.API.GetMapForQuestPOIs = function()
 		return C_QuestLog.GetMapForQuestPOIs()
 	end
 
-elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- -- BfA 8.x and all Classic re-releases (but not Vanilla)
 	-- RQE.API.GetTitleForQuestID = function(questID)
 		-- return C_QuestLog.GetQuestInfo(questID)
@@ -2483,7 +2490,7 @@ elseif major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) 
 		return C_QuestLog.GetMaxNumQuestsCanAccept()
 	end
 
-elseif major >= 7 then
+elseif apiMajor >= 7 then
 	-- Introduced World Quests, but no C_QuestLog version yet
 	-- Use: local wasWatched = RQE.API.AddWorldQuestWatch(questID [, watchType]) instead of: C_QuestLog.AddWorldQuestWatch(...)
 	RQE.API.AddWorldQuestWatch = function(questID)
@@ -2544,7 +2551,7 @@ elseif major >= 7 then
 		return GetNumWorldQuestWatches()
 	end
 
-elseif major >= 6 then
+elseif apiMajor >= 6 then
 	-- Retail (6.0.2+) → GetQuestObjectiveInfo
 	-- Use: local info = RQE.API.GetQuestObjectiveInfo(questID, objectiveIndex, displayProgressText) instead of: GetQuestObjectiveInfo(questID, objectiveIndex, displayProgressText)
 	-- Returns a normalized table:
@@ -2578,7 +2585,7 @@ elseif major >= 6 then
 		return RQE.QuestObjectiveInfo
 	end
 
-elseif major >= 6 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 1 and minor >= 13) then
+elseif apiMajor >= 6 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMajor >= 1 and apiMinor >= 13) then
 	-- Warlords+ (6.0) to pre-9.0, Classic 1.13+
 	-- Use: local info = RQE.API.GetQuestTagInfo(questID) instead of: GetQuestTagInfo(questID)
 	-- Returns a normalized table:
@@ -2635,20 +2642,20 @@ elseif major >= 6 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC a
 		return RQE.IsCompleteInfo
 	end
 
-elseif major >= 5 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major == 1) then
+elseif apiMajor >= 5 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMajor == 1) then
 	-- Retail 5.0 → 8.2.0 and Classic 1.13.x → IsQuestFlaggedCompleted
 	RQE.API.IsQuestFlaggedCompleted = function(questID)
 		return IsQuestFlaggedCompleted(questID)
 	end
 
-elseif major >= 5 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 5 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Classic & Vanilla (1.0.0+), Burning Crusade (2.x), Wrath (3.x), Cata/MoP/WoD/Legion/BFA (up to 8.x)
 	-- Use: CanAbandonQuest(questID)
 	RQE.API.CanAbandonQuest = function(questID)
 		return CanAbandonQuest(questID) or false
 	end
 
-elseif major >= 4 then
+elseif apiMajor >= 4 then
 	-- Cataclysm → MoP (4.x → 6.x)
 	-- Use: local info = RQE.API.GetDistanceSqToQuest(questID) instead of: GetDistanceSqToQuest(questID)
 	-- Returns a normalized table:
@@ -2673,7 +2680,7 @@ elseif major >= 4 then
 		return nil
 	end
 
-elseif major >= 4 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 4 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Cataclysm 4.0.1+ and Classic Projects (1.13 / 1.14)
 	-- Uses the older API GetQuestLogIndexByID
 	RQE.API.GetLogIndexForQuestID = function(questID)
@@ -2707,7 +2714,7 @@ elseif major >= 4 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) 
 		}
 	end
 
-elseif major >= 3 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 3 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Wrath 3.3.0+ and Classic Projects (1.13 / 1.14)
 	-- Uses GetQuestsCompleted(), which returns a dictionary of questID=true
 	-- Convert to array to match retail style
@@ -2721,7 +2728,7 @@ elseif major >= 3 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) 
 		return completed
 	end
 
-elseif (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) or major < 9 then
+elseif (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) or apiMajor < 9 then
 	-- Classic re-releases (1.13+) and Retail pre-9  → GetQuestLogTitle(index)
 	-- Use: local completed = RQE.API.GetAllCompletedQuestIDs() instead of: GetQuestsCompleted()
 	-- Returns a normalized array of completed quest IDs (sorted ascending to mimic Retail behavior).
@@ -2759,7 +2766,7 @@ elseif (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) or major < 9 t
 		-- }
 	-- end
 
-elseif major >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Classic projects (1.13, 2.5, 3.4, 1.14, etc.) and TBC+ Retail
 	-- Only supported the old index-based AddQuestWatch
 	-- Use: RQE.API.AddQuestWatch(questIndex)
@@ -2793,13 +2800,13 @@ elseif major >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) 
 		return RQE.SuggestedGroupSizeInfo
 	end
 
-elseif major >= 1 and ((WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) or major < 9) then
+elseif apiMajor >= 1 and ((WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) or apiMajor < 9) then
 	-- Wrath (3.3) through BFA, and Classic re-releases
 	RQE.API.GetNumQuestWatches = function()
 		return GetNumQuestWatches()
 	end
 
-elseif major >= 1 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 1 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Classic & Vanilla (1.x, 2.x, … up through BfA)
 	-- Use: AbandonQuest()
 	RQE.API.AbandonQuest = function()
@@ -3337,6 +3344,10 @@ end
 -- Use: local title = RQE.API.GetTitleForQuestID(questID)
 -- instead of: C_QuestLog.GetTitleForQuestID(questID)
 RQE.API.GetTitleForQuestID = function(questID)
+	if isForever then
+		questID = tonumber(questID)
+		if not questID or questID < 1 or questID > 2147483647 or questID % 1 ~= 0 then return nil end
+	end
 	if not questID then
 		return nil
 	end
@@ -3948,7 +3959,7 @@ end
 -- #🤝 Quest Session APIs
 -------------------------------------------------
 
-if (major > 8) or (major == 8 and minor >= 2 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+if (apiMajor > 8) or (apiMajor == 8 and apiMinor >= 2 and apiPatch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Retail 8.2.5+ and all Classic re-releases (Party Sync introduced)
 	-- Use: local allowed = RQE.API.CanStartQuestSession() instead of: C_QuestSession.CanStart()
 	RQE.API.CanStartQuestSession = function()
@@ -4149,7 +4160,7 @@ end
 -- ⚔️ Scenario APIs
 -------------------------------------------------
 
-if (major >= 11) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+if (apiMajor >= 11) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Use: local crit = RQE.API.GetCriteriaInfo(criteriaIndex)	instead of: C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
 	--	Returns: {
 	--		description, criteriaType, completed, quantity, totalQuantity, flags, assetID, criteriaID, duration, elapsed, failed, isWeightedProgress, isFormatted, quantityString (11.0.2+)
@@ -4177,7 +4188,7 @@ if (major >= 11) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) t
 		return normalized
 	end
 
-elseif (major > 9) or (major == 9 and minor >= 1) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif (apiMajor > 9) or (apiMajor == 9 and apiMinor >= 1) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Retail 9.1+ and Classic re-releases
 	-- Use: local info = RQE.API.GetScenarioInfo() instead of: C_ScenarioInfo.GetScenarioInfo()
 	--	Returns a normalized table with fields:
@@ -4237,7 +4248,7 @@ elseif (major > 9) or (major == 9 and minor >= 1) or (WOW_PROJECT_ID and WOW_PRO
 		return normalized
 	end
 
-elseif (major == 9) then
+elseif (apiMajor == 9) then
 	-- Use: local towerType = RQE.API.GetJailersTowerTypeString(runType) instead of: C_ScenarioInfo.GetJailersTowerTypeString(runType)
 	-- Returns a string type, depending on Enum.JailersTowerType
 	-- Enum.JailersTowerType Values:
@@ -4262,7 +4273,7 @@ elseif (major == 9) then
 		return s
 	end
 
-elseif (major == 6) then
+elseif (apiMajor == 6) then
 	-- Warlords of Draenor 6.0.2+ (step required)
 	-- Use: local crit = RQE.API.GetCriteriaInfoByStep(stepID, criteriaIndex)
 	RQE.API.GetCriteriaInfo = function(criteriaIndex)
@@ -4270,7 +4281,7 @@ elseif (major == 6) then
 		return nil, "Use GetCriteriaInfoByStep(stepID, criteriaIndex)"
 	end
 
-elseif (major == 5) then
+elseif (apiMajor == 5) then
 	-- Mists of Pandaria 5.0.4+
 	-- Use: local crit = RQE.API.GetCriteriaInfo(criteriaIndex) instead of: C_Scenario.GetCriteriaInfo(criteriaIndex)
 	--
@@ -4301,7 +4312,7 @@ elseif (major == 5) then
 	--		• Normalized into a table for consistency across versions.
 	--		• Also cached in `RQE.ScenarioCriteriaInfo` for reuse.
 	RQE.API.GetCriteriaInfo = function(criteriaIndex)
-		local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, quantityString, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
+		local description, criteriaType, completed, quantity, totalQuantity, flags, assetID, progressText, criteriaID, duration, elapsed, criteriaFailed, isWeightedProgress = C_Scenario.GetCriteriaInfo(criteriaIndex)
 
 		if not description then return nil end
 		local normalized = {
@@ -4312,7 +4323,7 @@ elseif (major == 5) then
 			totalQuantity	= totalQuantity,
 			flags			= flags,
 			assetID			= assetID,
-			quantityString	= quantityString,
+			quantityString	= progressText,
 			criteriaID		= criteriaID,
 			duration	= duration,
 			elapsed		= elapsed,
@@ -4364,7 +4375,7 @@ end
 -- #🎯 SuperTrack APIs
 -------------------------------------------------
 
-if major >= 11 then
+if apiMajor >= 11 then
 	-- Use: RQE.API.ClearAllSuperTracked() instead of: C_SuperTrack.ClearAllSuperTracked()
 	RQE.API.ClearAllSuperTracked = function()
 		return C_SuperTrack.ClearAllSuperTracked()
@@ -4394,7 +4405,7 @@ end
 -- #🛠️ TradeSkill / Crafting APIs
 -------------------------------------------------
 
-if major >= 11 then
+if apiMajor >= 11 then
 	-- Use: RQE.API.OpenRecipe(recipeID) instead of: C_TradeSkillUI.OpenRecipe(recipeID)
 	--	Arguments:
 	--		recipeID (number) – the spellID/recipeID of the trade skill recipe
@@ -4412,7 +4423,7 @@ if major >= 11 then
 		return C_TradeSkillUI.CraftRecipe(recipeID, count, craftingReagents, recipeLevel, orderID, applyConcentration)
 	end
 
-elseif major >= 10 then
+elseif apiMajor >= 10 then
 	-- Retail (Dragonflight 10.0+)
 	-- Added orderID (10.0.2), changed optionalReagents → craftingReagents (10.0.0)
 	-- Use: RQE.API.CraftRecipe(recipeID, count, craftingReagents, recipeLevel, orderID) instead of: C_TradeSkillUI.CraftRecipe(recipeID, count)
@@ -4420,7 +4431,7 @@ elseif major >= 10 then
 		return C_TradeSkillUI.CraftRecipe(recipeID, count, craftingReagents, recipeLevel, orderID)
 	end
 
-elseif major >= 7 then
+elseif apiMajor >= 7 then
 	-- Retail (Legion 7.0+)
 	-- First moved from DoTradeSkill → C_TradeSkillUI.CraftRecipe
 	-- Use: RQE.API.CraftRecipe(recipeID, count, optionalReagents, recipeLevel)	instead of: C_TradeSkillUI.CraftRecipe(recipeID, count)
@@ -4440,12 +4451,118 @@ else
 	end
 end
 
+-- The tracker uses these entry points for profession and achievement data and
+-- actions. Keep game API details here so its rendering code only handles rows.
+function RQE.API.GetTrackedRecipeIDs(isRecraft)
+	return C_TradeSkillUI and C_TradeSkillUI.GetRecipesTracked
+		and C_TradeSkillUI.GetRecipesTracked(isRecraft) or {}
+end
+
+function RQE.API.GetTrackedRecipeSchematic(recipeID, isRecraft, recipeLevel)
+	local schematic = ProfessionsUtil and ProfessionsUtil.GetRecipeSchematic
+		and ProfessionsUtil.GetRecipeSchematic(recipeID, isRecraft)
+	if schematic then return schematic end
+	return RQE.API.Client.C_TradeSkillUI.GetRecipeSchematic(recipeID, isRecraft, recipeLevel)
+end
+
+function RQE.API.IsTrackedRecipeSlotRequired(slot)
+	local required = ProfessionsUtil and ProfessionsUtil.IsReagentSlotRequired
+		and ProfessionsUtil.IsReagentSlotRequired(slot)
+	if required ~= nil then return required end
+	return slot.reagentType == Enum.CraftingReagentType.Basic
+		or (slot.reagentType == Enum.CraftingReagentType.Modifying and slot.required)
+end
+
+function RQE.API.GetTrackedRecipeSlotQuantity(slot, reagent)
+	return slot.GetQuantityRequired and slot:GetQuantityRequired(reagent) or slot.quantityRequired or 0
+end
+
+function RQE.API.GetTrackedRecipeCurrencyInfo(currencyID)
+	return currencyID and C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo
+		and C_CurrencyInfo.GetCurrencyInfo(currencyID) or nil
+end
+
+function RQE.API.GetTrackedRecipeReagentCount(reagents)
+	local count, countedItems, countedCurrencies = 0, {}, {}
+	for _, reagent in ipairs(reagents or {}) do
+		local itemID, currencyID = reagent.itemID, reagent.currencyID
+		if itemID and not countedItems[itemID] then
+			countedItems[itemID] = true
+			-- Include personal bank, reagent bank, and account bank for each quality.
+			if C_Item and C_Item.GetItemCount then
+				count = count + (C_Item.GetItemCount(itemID, true, false, true, true) or 0)
+			end
+		elseif currencyID and not countedCurrencies[currencyID] then
+			countedCurrencies[currencyID] = true
+			local currency = RQE.API.GetTrackedRecipeCurrencyInfo(currencyID)
+			count = count + (currency and currency.quantity or 0)
+		end
+	end
+	return count
+end
+
+function RQE.API.SetTrackedRecipe(recipeID, tracked, isRecraft)
+	if C_TradeSkillUI and C_TradeSkillUI.SetRecipeTracked then
+		return C_TradeSkillUI.SetRecipeTracked(recipeID, tracked, isRecraft)
+	end
+end
+
+function RQE.API.OpenTrackedRecipe(recipeID)
+	if not ProfessionsFrame and ProfessionsFrame_LoadUI then ProfessionsFrame_LoadUI() end
+	if C_TradeSkillUI and C_TradeSkillUI.IsRecipeProfessionLearned
+		and C_TradeSkillUI.IsRecipeProfessionLearned(recipeID) then
+		return RQE.API.OpenRecipe(recipeID)
+	end
+	if Professions and Professions.InspectRecipe then
+		return Professions.InspectRecipe(recipeID)
+	end
+end
+
+function RQE.API.ShowTrackedRecipeTooltip(row)
+	GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+	if row.itemID then
+		GameTooltip:SetItemByID(row.itemID)
+	elseif row.currencyID and GameTooltip.SetCurrencyByID then
+		GameTooltip:SetCurrencyByID(row.currencyID)
+	elseif row.recipeID and GameTooltip.SetRecipeResultItem then
+		GameTooltip:SetRecipeResultItem(row.recipeID)
+	else
+		GameTooltip:SetText(row.recipeName or "Recipe")
+	end
+	GameTooltip:Show()
+end
+
+function RQE.API.ShowTrackedAchievementTooltip(owner, achievementID, name, description)
+	GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+	local link = GetAchievementLink and GetAchievementLink(achievementID)
+	if link then
+		GameTooltip:SetHyperlink(link)
+	else
+		GameTooltip:SetText(name, 1, 0.82, 0)
+		if description and description ~= "" then
+			GameTooltip:AddLine(description, 1, 1, 1, true)
+		end
+	end
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddDoubleLine(" ", "ID: " .. achievementID, 1, 1, 1, 1, 1, 1)
+	GameTooltip:Show()
+end
+
+function RQE.API.HideTrackedTooltip()
+	GameTooltip:Hide()
+end
+
+function RQE.API.StopTrackingAchievement(achievementID)
+	return C_ContentTracking.StopTracking(Enum.ContentTrackingType.Achievement,
+		achievementID, Enum.ContentTrackingStopType.Manual)
+end
+
 
 -------------------------------------------------
 -- #💬 Unit / Buff / Debuff APIs
 -------------------------------------------------
 
-if (major > 10) or (major == 10 and minor >= 2 and patch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 1 and minor >= 15) then
+if (apiMajor > 10) or (apiMajor == 10 and apiMinor >= 2 and apiPatch >= 5) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMajor >= 1 and apiMinor >= 15) then
 	-- Retail (10.2.5+) and Classic 1.15+ → C_UnitAuras.GetBuffDataByIndex
 	-- Use: local name, icon, count, debuffType, duration, expirationTime, source, isStealable, nameplateShowPersonal, spellId = RQE.API.UnitBuff("player", 1) instead of: UnitBuff("player", 1)
 	RQE.API.UnitBuff = function(unit, index)
@@ -4463,7 +4580,7 @@ if (major > 10) or (major == 10 and minor >= 2 and patch >= 5) or (WOW_PROJECT_I
 		return aura.name, aura.icon, aura.applications or aura.charges, aura.dispelName, aura.duration, aura.expirationTime, aura.sourceUnit, aura.isStealable, aura.nameplateShowPersonal, aura.spellId
 	end
 
-elseif major >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Burning Crusade → Dragonflight pre-10.2.5, and Classic 1.13–1.14
 	RQE.API.UnitBuff = function(unit, index)
 		-- Vanilla and Classic both provided UnitBuff
@@ -4475,14 +4592,14 @@ elseif major >= 2 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) 
 		return UnitDebuff(unit, index)
 	end
 
-elseif major > 1 or (major == 1 and minor >= 12) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+elseif apiMajor > 1 or (apiMajor == 1 and apiMinor >= 12) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Post-1.12 (returns name, realm)
 	RQE.API.UnitName = function(unit)
 		local name, realm = UnitName(unit)
 		return name, realm
 	end
 
-elseif major == 1 and minor < 12 then
+elseif apiMajor == 1 and apiMinor < 12 then
 	-- Vanilla pre-1.12 (returns name only)
 	RQE.API.UnitName = function(unit)
 		local name = UnitName(unit)
@@ -4511,7 +4628,7 @@ end
 -- #📍 POI APIs
 -------------------------------------------------
 
-if major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
+if apiMajor >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 	-- Post-8.0 (BfA+) and Classic re-releases (1.13+)
 	-- Use: local info = RQE.API.GetAreaPOIInfo(uiMapID, areaPoiID)	instead of: C_AreaPoiInfo.GetAreaPOIInfo(uiMapID, areaPoiID)
 	-- Returns AreaPOIInfo table with fields evolving across versions:
@@ -4531,7 +4648,7 @@ if major >= 8 or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC) then
 		return poiInfo
 	end
 
-elseif major >= 1 and major < 8 then
+elseif apiMajor >= 1 and apiMajor < 8 then
 	-- Pre-8.0 (Vanilla → Legion, original only; not classic projects)
 	-- Use: local type, name, description, textureIndex, x, y, mapLinkID, showInBattleMap, graveyardID, areaID, poiID, isObjectIcon, atlasName, displayAsBanner, mapFloor (7.3+), textureKitPrefix (7.3+) = GetMapLandmarkInfo(landmarkIndex)
 	--
@@ -4675,7 +4792,7 @@ end
 -- #🛠️ Miscellaneous APIs
 -------------------------------------------------
 
-if major > 10 or (major == 10 and minor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and major >= 1 and minor >= 15) then
+if apiMajor > 10 or (apiMajor == 10 and apiMinor >= 2) or (WOW_PROJECT_ID and WOW_PROJECT_ID == WOW_PROJECT_CLASSIC and apiMajor >= 1 and apiMinor >= 15) then
 	-- Retail 10.2+ and Classic 1.15+
 	-- Use: local loadedOrLoading, loaded = RQE.API.IsAddOnLoaded("Blizzard_WorldMap") instead of: C_AddOns.IsAddOnLoaded("Blizzard_WorldMap")
 	-- Returns:
@@ -4707,5 +4824,760 @@ if isLegacyClient then
 	RQE.API.GetAddOnMetadata = function(name, field)
 		if Has(NativeAddOns, "GetAddOnMetadata") then return NativeAddOns.GetAddOnMetadata(name, field) end
 		return type(GetAddOnMetadata) == "function" and GetAddOnMetadata(name, field) or nil
+	end
+end
+
+-------------------------------------------------
+-- Unified client API surface (Retail / SoD / Anniversary / Forever)
+-------------------------------------------------
+-- Client preserves Blizzard's argument and return contracts. The older flat
+-- RQE.API helpers above sometimes return normalized tables instead of tuples;
+-- keeping this surface separate avoids changing their existing consumers.
+-- No native Blizzard namespace is patched by this bridge. The pre-existing
+-- legacy shims above remain for the untouched Client_Classic/Client_TBC files.
+-- Sources: Blizzard_APIDocumentationGenerated in Gethe/wow-ui-source branches
+-- live, classic_era, classic_anniversary and forever (reviewed 2026.09.25).
+do
+	local API = RQE.API
+	local Client = {}
+	API.Client = Client
+	local adapters, requirements, overrides = {}, {}, {}
+	local aliases = {}
+	local savedNamespaces = {
+		C_QuestLog = NativeQuestLog, C_Map = NativeMap,
+		C_SuperTrack = NativeSuperTrack, C_Scenario = NativeScenario,
+		C_TaskQuest = NativeTaskQuest, C_AddOns = NativeAddOns,
+	}
+
+	local function native(path)
+		local namespace, method = path:match("^([^.]+)%.(.+)$")
+		local value
+		if namespace then
+			local source = savedNamespaces[namespace] or _G[namespace]
+			value = type(source) == "table" and source[method]
+		else
+			value = _G[path]
+		end
+		return type(value) == "function" and value or nil
+	end
+
+	local function call(path, ...)
+		local fn = native(path)
+		if fn then return fn(...) end
+	end
+
+	local function alias(a, b)
+		aliases[a] = aliases[a] or {}
+		table.insert(aliases[a], b)
+	end
+	local function pair(a, b)
+		alias(a, b)
+		alias(b, a)
+	end
+
+	-- Only signature-equivalent renames belong here. Table/tuple changes and
+	-- quest ID/log-index conversions have explicit adapters below.
+	for _, method in ipairs({ "GetItemInfo", "GetItemInfoInstant", "GetItemCount", "GetItemSpell", "IsUsableItem" }) do
+		pair(method, "C_Item." .. method)
+	end
+	for _, method in ipairs({ "GetAddOnMetadata", "GetNumAddOns", "IsAddOnLoaded", "LoadAddOn", "GetAddOnCPUUsage", "GetAddOnMemoryUsage", "UpdateAddOnCPUUsage", "UpdateAddOnMemoryUsage" }) do
+		pair(method, "C_AddOns." .. method)
+	end
+	for _, method in ipairs({ "GetCVar", "GetCVarBool", "SetCVar" }) do pair(method, "C_CVar." .. method) end
+	pair("GetCoinTextureString", "C_CurrencyInfo.GetCoinTextureString")
+	pair("GetContainerNumSlots", "C_Container.GetContainerNumSlots")
+	pair("GetContainerItemID", "C_Container.GetContainerItemID")
+	pair("GetItemCooldown", "C_Container.GetItemCooldown")
+	pair("IsQuestFlaggedCompleted", "C_QuestLog.IsQuestFlaggedCompleted")
+	pair("C_ChatInfo.SendAddonMessage", "SendAddonMessage")
+	pair("C_GossipInfo.CloseGossip", "CloseGossip")
+	pair("C_GossipInfo.SelectOptionByIndex", "SelectGossipOption")
+
+	-- A requirement describes a real native dependency, not a success-shaped
+	-- default. ResolveClientAPI returns nil if no implementation is available,
+	-- preserving the callers' old feature checks and optional pcall fallbacks.
+	local function adapt(path, requirement, fn, force)
+		adapters[path], requirements[path], overrides[path] = fn, requirement, force
+	end
+	local function available(requirement)
+		if type(requirement) == "function" then return requirement() end
+		if type(requirement) == "string" then return native(requirement) ~= nil end
+		return requirement == true
+	end
+	local function implementation(path)
+		if overrides[path] and available(requirements[path]) then return adapters[path] end
+		local fn = native(path)
+		if fn then return fn end
+		for _, other in ipairs(aliases[path] or {}) do
+			fn = native(other)
+			if fn then return fn end
+		end
+		if adapters[path] and available(requirements[path]) then return adapters[path] end
+	end
+	local function spellBank(pet)
+		return Enum and Enum.SpellBookSpellBank and (pet and Enum.SpellBookSpellBank.Pet or Enum.SpellBookSpellBank.Player) or (pet and 1 or 0)
+	end
+	adapt("IsPlayerSpell", "C_SpellBook.IsSpellKnown", function(spellID)
+		return call("C_SpellBook.IsSpellKnown", spellID, spellBank(false))
+	end)
+	adapt("IsSpellKnown", "C_SpellBook.IsSpellKnown", function(spellID, pet)
+		return call("C_SpellBook.IsSpellKnown", spellID, spellBank(pet))
+	end)
+	adapt("IsSpellKnownOrOverridesKnown", "C_SpellBook.IsSpellKnownOrInSpellBook", function(spellID, pet)
+		return call("C_SpellBook.IsSpellKnownOrInSpellBook", spellID, spellBank(pet), true)
+	end)
+
+	local function itemName(item)
+		local fn = native("C_Item.GetItemInfo") or native("GetItemInfo")
+		if fn then return (fn(item)) end
+	end
+	adapt("C_Item.GetItemNameByID", function() return native("C_Item.GetItemInfo") or native("GetItemInfo") end, itemName)
+	adapt("C_Item.IsItemInRange", "IsItemInRange", function(item, unit)
+		local result = call("IsItemInRange", item, unit)
+		if result == nil then return nil end
+		return result == true or result == 1
+	end)
+	adapt("C_Item.RequestLoadItemDataByID", "GetItemInfo", function(itemID) call("GetItemInfo", itemID) end)
+
+	adapt("C_Container.GetContainerItemInfo", "GetContainerItemInfo", function(bag, slot)
+		local icon, count, locked, quality, readable, lootable, link, filtered, noValue, itemID, bound = call("GetContainerItemInfo", bag, slot)
+		if not icon then return nil end
+		if type(icon) == "table" then return icon end
+		return { iconFileID = icon, stackCount = count, isLocked = locked, quality = quality,
+			isReadable = readable, hasLoot = lootable, hyperlink = link, isFiltered = filtered,
+			hasNoValue = noValue, itemID = itemID, isBound = bound }
+	end)
+	adapt("GetContainerItemInfo", "C_Container.GetContainerItemInfo", function(bag, slot)
+		local info = call("C_Container.GetContainerItemInfo", bag, slot)
+		if not info then return nil end
+		return info.iconFileID, info.stackCount, info.isLocked, info.quality, info.isReadable,
+			info.hasLoot, info.hyperlink, info.isFiltered, info.hasNoValue, info.itemID, info.isBound
+	end)
+	adapt("C_Item.GetItemCooldown", function() return native("C_Container.GetItemCooldown") or native("GetItemCooldown") end, function(item)
+		local fn = native("C_Container.GetItemCooldown") or native("GetItemCooldown")
+		local start, duration, enabled = fn(item)
+		return start, duration, enabled == true or enabled == 1
+	end)
+	local function legacyItemCooldown(item)
+		local start, duration, enabled = call("C_Item.GetItemCooldown", item)
+		return start, duration, (enabled == true or enabled == 1) and 1 or 0
+	end
+	adapt("GetItemCooldown", "C_Item.GetItemCooldown", legacyItemCooldown)
+	adapt("C_Container.GetItemCooldown", "C_Item.GetItemCooldown", legacyItemCooldown)
+
+	adapt("C_Spell.GetSpellInfo", "GetSpellInfo", function(spell)
+		local name, rank, icon, castTime, minRange, maxRange, spellID, originalIcon = call("GetSpellInfo", spell)
+		if not name then return nil end
+		return { name = name, iconID = icon, castTime = castTime, minRange = minRange,
+			maxRange = maxRange, spellID = spellID, originalIconID = originalIcon }
+	end)
+	adapt("GetSpellInfo", "C_Spell.GetSpellInfo", function(spell)
+		local info = call("C_Spell.GetSpellInfo", spell)
+		if not info then return nil end
+		return info.name, nil, info.iconID, info.castTime, info.minRange, info.maxRange, info.spellID, info.originalIconID
+	end)
+	adapt("C_Spell.GetSpellName", function() return native("C_Spell.GetSpellInfo") or native("GetSpellInfo") end, function(spell)
+		local fn = implementation("C_Spell.GetSpellInfo")
+		local info = fn and fn(spell)
+		return info and info.name
+	end)
+	adapt("C_Spell.GetSpellCooldown", "GetSpellCooldown", function(spell)
+		local start, duration, enabled, rate = call("GetSpellCooldown", spell)
+		if start == nil then return nil end
+		return { startTime = start, duration = duration, isEnabled = enabled == true or enabled == 1, modRate = rate or 1 }
+	end)
+
+	local function legacyAura(unit, index, filter)
+		local fn = native("UnitAura") or (filter == "HARMFUL" and native("UnitDebuff") or native("UnitBuff"))
+		if not fn then return nil end
+		local name, icon, count, dispel, duration, expiration, source, stealable, personal, spellID = fn(unit, index, filter)
+		if not name then return nil end
+		return { name = name, icon = icon, applications = count or 0, dispelName = dispel,
+			duration = duration, expirationTime = expiration, sourceUnit = source,
+			isStealable = stealable, nameplateShowPersonal = personal, spellId = spellID }
+	end
+	adapt("C_UnitAuras.GetBuffDataByIndex", function() return native("UnitAura") or native("UnitBuff") end, function(unit, index, filter)
+		return legacyAura(unit, index, filter or "HELPFUL")
+	end)
+	adapt("C_UnitAuras.GetAuraDataBySpellName", function() return native("UnitAura") or native("UnitBuff") end, function(unit, name, filter)
+		for index = 1, 255 do
+			local aura = legacyAura(unit, index, filter or "HELPFUL")
+			if not aura then break end
+			if aura.name == name then return aura end
+		end
+	end)
+	-- Aura instance IDs have no equivalent on clients exposing only UnitAura.
+
+	adapt("C_MerchantFrame.GetItemInfo", "GetMerchantItemInfo", function(index)
+		local name, texture, price, count, stock, usable, extended = call("GetMerchantItemInfo", index)
+		if not name then return nil end
+		return { name = name, texture = texture, price = price, stackCount = count,
+			numAvailable = stock, isUsable = usable, isPurchasable = stock ~= 0, hasExtendedCost = extended }
+	end)
+	adapt("GetMerchantItemInfo", "C_MerchantFrame.GetItemInfo", function(index)
+		local info = call("C_MerchantFrame.GetItemInfo", index)
+		if not info then return nil end
+		return info.name, info.texture, info.price, info.stackCount, info.numAvailable, info.isUsable, info.hasExtendedCost
+	end)
+
+	adapt("C_GossipInfo.GetOptions", "GetGossipOptions", function()
+		local flat, options = { call("GetGossipOptions") }, {}
+		for index = 1, #flat, 2 do
+			options[#options + 1] = { gossipOptionID = (#options + 1), orderIndex = (#options + 1), name = flat[index], type = flat[index + 1] }
+		end
+		return options
+	end)
+	adapt("C_GossipInfo.GetAvailableQuests", "GetGossipAvailableQuests", function()
+		local flat, quests = { call("GetGossipAvailableQuests") }, {}
+		-- Classic/Anniversary return seven values per available quest.
+		for index = 1, #flat, 7 do
+			quests[#quests + 1] = { title = flat[index], questLevel = flat[index + 1], isTrivial = flat[index + 2],
+				frequency = flat[index + 3], isRepeatable = flat[index + 4], isLegendary = flat[index + 5], questID = flat[index + 6] }
+		end
+		return quests
+	end)
+
+	local function logIndex(questID) return API.GetLogIndexForQuestID(questID) end
+	local function logInfo(questID)
+		local index = logIndex(questID)
+		return index and API.GetQuestLogInfo(index)
+	end
+	local function legacyQuestLogAvailable()
+		return native("GetQuestLogTitle") ~= nil and native("GetNumQuestLogEntries") ~= nil
+	end
+	adapt("GetMaxPlayerLevel", function() return isLegacyClient end, function()
+		return MAX_PLAYER_LEVEL or (major == 2 and 70 or 60)
+	end)
+	adapt("GetQuestObjectiveInfo", function() return native("C_QuestLog.GetQuestObjectives") or legacyQuestLogAvailable() end, function(questID, index)
+		local objective = (Client.C_QuestLog.GetQuestObjectives(questID) or {})[index]
+		if objective then return objective.text, objective.type, objective.finished, objective.numFulfilled, objective.numRequired end
+	end)
+	-- These existing legacy helpers were inspected for their argument/return
+	-- contracts. Do not forward similarly named table-normalizing helpers here.
+	local questHelpers = {
+		GetInfo = "GetQuestLogInfo", GetLogIndexForQuestID = "GetLogIndexForQuestID",
+		GetNumQuestLogEntries = "GetNumQuestLogEntries", GetQuestObjectives = "GetQuestObjectives",
+		GetNumQuestObjectives = "GetNumQuestObjectives", GetTitleForQuestID = "GetTitleForQuestID",
+		GetNumQuestWatches = "GetNumQuestWatches", GetQuestIDForQuestWatchIndex = "GetQuestIDForQuestWatchIndex",
+		GetSelectedQuest = "GetSelectedQuest", SetSelectedQuest = "SetSelectedQuest",
+		AddQuestWatch = "AddQuestWatch", RemoveQuestWatch = "RemoveQuestWatch",
+	}
+	for method, helper in pairs(questHelpers) do
+		local helperName = helper
+		adapt("C_QuestLog." .. method, function() return isLegacyClient and legacyQuestLogAvailable() end,
+			function(...) return API[helperName](...) end)
+	end
+	adapt("C_QuestLog.RemoveQuestWatch", function() return isLegacyClient and legacyQuestLogAvailable() and native("RemoveQuestWatch") end, function(questID)
+		local index = logIndex(questID)
+		if not index then return false end
+		call("RemoveQuestWatch", index)
+		return true
+	end)
+	adapt("C_QuestLog.GetDistanceSqToQuest", "GetQuestLogDistanceSquared", function(questID)
+		local index = logIndex(questID)
+		if index then return call("GetQuestLogDistanceSquared", index) end
+		return nil, false
+	end)
+	adapt("C_QuestLog.IsOnQuest", legacyQuestLogAvailable, function(questID) return logIndex(questID) ~= nil end)
+	adapt("C_QuestLog.IsComplete", legacyQuestLogAvailable, function(questID)
+		local info = logInfo(questID)
+		return info and (info.isComplete == true or info.isComplete == 1) or false
+	end)
+	adapt("C_QuestLog.ReadyForTurnIn", legacyQuestLogAvailable, function(questID) return Client.C_QuestLog.IsComplete(questID) end)
+	adapt("C_QuestLog.IsFailed", legacyQuestLogAvailable, function(questID)
+		local info = logInfo(questID)
+		return info and info.isComplete == -1 or false
+	end)
+	adapt("C_QuestLog.IsQuestObjectiveComplete", true, function(questID, objectiveIndex)
+		local objective = (Client.C_QuestLog.GetQuestObjectives(questID) or {})[objectiveIndex]
+		return objective and objective.finished == true or false
+	end)
+	adapt("C_QuestLog.IsQuestWatched", true, function(questID)
+		for index = 1, Client.C_QuestLog.GetNumQuestWatches() or 0 do
+			if Client.C_QuestLog.GetQuestIDForQuestWatchIndex(index) == questID then return true end
+		end
+		return false
+	end)
+	adapt("C_QuestLog.GetQuestWatchType", legacyQuestLogAvailable, function(questID)
+		if Client.C_QuestLog.IsQuestWatched(questID) then return Enum and Enum.QuestWatchType and Enum.QuestWatchType.Manual or 1 end
+	end)
+	adapt("C_QuestLog.GetSuggestedGroupSize", legacyQuestLogAvailable, function(questID)
+		local info = logInfo(questID)
+		return info and info.suggestedGroup or 0
+	end)
+	adapt("C_QuestLog.GetQuestTagInfo", "GetQuestTagInfo", function(questID)
+		local tagID, tagName, worldQuestType, quality, elite, expiry = call("GetQuestTagInfo", questID)
+		if not tagID then return nil end
+		return { tagID = tagID, tagName = tagName, worldQuestType = worldQuestType, quality = quality, isElite = elite, displayExpiration = expiry }
+	end)
+	adapt("GetQuestTagInfo", "C_QuestLog.GetQuestTagInfo", function(questID)
+		local info = call("C_QuestLog.GetQuestTagInfo", questID)
+		if info then return info.tagID, info.tagName, info.worldQuestType, info.quality, info.isElite, info.displayExpiration end
+	end)
+	adapt("C_QuestLog.GetAllCompletedQuestIDs", "GetQuestsCompleted", function()
+		local completed, ids = {}, {}
+		call("GetQuestsCompleted", completed)
+		for id, done in pairs(completed) do if done then ids[#ids + 1] = id end end
+		return ids
+	end)
+	for _, method in ipairs({ "AbandonQuest", "SetAbandonQuest", "IsPushableQuest" }) do
+		alias("C_QuestLog." .. method, method)
+	end
+	adapt("C_QuestLog.GetAbandonQuest", legacyQuestLogAvailable, function() return Client.C_QuestLog.GetSelectedQuest() end)
+	adapt("C_QuestLog.IsPushableQuest", "GetQuestLogPushable", function(questID)
+		local index = logIndex(questID)
+		return index and call("GetQuestLogPushable", index) or false
+	end)
+	adapt("C_QuestLog.GetMaxNumQuestsCanAccept", function() return isLegacyClient end, function() return MAX_QUESTLOG_QUESTS or (major == 2 and 25 or 20) end)
+	adapt("C_QuestLog.GetAbandonQuestItems", "GetAbandonQuestItems", function() return { call("GetAbandonQuestItems") } end)
+	adapt("C_SuperTrack.GetSuperTrackedQuestID", function() return isLegacyClient end, function() return API.GetSuperTrackedQuestID() end)
+	adapt("C_SuperTrack.SetSuperTrackedQuestID", function() return isLegacyClient end, function(questID) return API.SetSuperTrackedQuestID(questID) end)
+	adapt("GetQuestLogQuestText", "GetQuestLogQuestText", function(index)
+		local first, second = call("GetQuestLogQuestText", tonumber(index) or index)
+		if isLegacyClient and major == 1 then return second, first end
+		return first, second
+	end, true)
+	adapt("GetQuestLink", "GetQuestLink", function(questID) return API.GetQuestLink(questID) end, true)
+
+	-- Legacy reward globals inspect the selected quest, whereas modern callers
+	-- pass a quest ID. Select the requested log entry only for the duration of
+	-- the lookup, restoring selection even if the native lookup raises an error.
+	local function pack(...) return { n = select("#", ...), ... } end
+	local unpackResults = unpack or table.unpack
+	local function selectedReward(path, questID, ...)
+		local fn = native(path)
+		if not fn then return nil end
+		if not questID then return fn(...) end
+		local index = logIndex(questID)
+		if not index then return nil end
+		local previous = call("GetQuestLogSelection")
+		call("SelectQuestLogEntry", index)
+		local result = pack(pcall(fn, ...))
+		if previous then call("SelectQuestLogEntry", previous) end
+		if not result[1] then error(result[2], 0) end
+		return unpackResults(result, 2, result.n)
+	end
+	for _, name in ipairs({ "GetNumQuestLogChoices", "GetNumQuestLogRewards", "GetQuestLogRewardMoney", "GetQuestLogRewardXP", "GetQuestLogRewardHonor", "GetQuestLogRewardArtifactXP", "GetQuestLogRewardSkillPoints", "GetQuestLogRewardTitle" }) do
+		local path = name
+		adapt(path, function() return isLegacyClient and native(path) and native("SelectQuestLogEntry") and native("GetQuestLogSelection") end,
+			function(questID) return selectedReward(path, questID) end, true)
+	end
+	for _, name in ipairs({ "GetQuestLogRewardInfo", "GetQuestLogChoiceInfo" }) do
+		local path = name
+		adapt(path, function() return isLegacyClient and native(path) and native("SelectQuestLogEntry") and native("GetQuestLogSelection") end,
+			function(index, questID) return selectedReward(path, questID, index) end, true)
+	end
+
+	-- Legacy scenario namespaces return tuples; ScenarioInfo returns structures.
+	adapt("C_ScenarioInfo.GetCriteriaInfo", "C_Scenario.GetCriteriaInfo", function(index)
+		local description, criteriaType, completed, quantity, total, flags, assetID, progressText, criteriaID, duration, elapsed, failed, weighted = call("C_Scenario.GetCriteriaInfo", index)
+		if not description then return nil end
+		return { description = description, criteriaType = criteriaType, completed = completed, quantity = quantity,
+			totalQuantity = total, flags = flags, assetID = assetID, quantityString = progressText,
+			criteriaID = criteriaID, duration = duration, elapsed = elapsed, failed = failed, isWeightedProgress = weighted }
+	end)
+	adapt("C_ScenarioInfo.GetScenarioInfo", "C_Scenario.GetInfo", function()
+		local name, stage, stages, flags, bonus, bonusComplete, complete, xp, money, scenarioType, areaName, textureKit, scenarioID = call("C_Scenario.GetInfo")
+		if not name then return nil end
+		return { name = name, currentStage = stage, numStages = stages, flags = flags, hasBonusStep = bonus,
+			isBonusStepComplete = bonusComplete, isComplete = complete, xp = xp, money = money,
+			type = scenarioType, area = areaName, uiTextureKit = textureKit, scenarioID = scenarioID }
+	end)
+	adapt("C_Scenario.GetInfo", "C_ScenarioInfo.GetScenarioInfo", function()
+		local info = call("C_ScenarioInfo.GetScenarioInfo")
+		if not info then return nil end
+		return info.name, info.currentStage, info.numStages, info.flags, info.hasBonusStep, info.isBonusStepComplete,
+			info.isComplete, info.xp, info.money, info.type, info.area, info.uiTextureKit, info.scenarioID
+	end)
+	adapt("C_Scenario.IsInScenario", "C_ScenarioInfo.GetScenarioInfo", function()
+		local info = call("C_ScenarioInfo.GetScenarioInfo")
+		return info and (info.scenarioID or 0) > 0 or false
+	end)
+	adapt("C_Scenario.GetStepInfo", "C_ScenarioInfo.GetScenarioStepInfo", function(stepID)
+		local info = call("C_ScenarioInfo.GetScenarioStepInfo", stepID)
+		if not info then return nil, nil, 0 end
+		return info.title, info.description, info.numCriteria, info.stepFailed, info.isBonusStep, info.isForCurrentStepOnly, info.shouldShowBonusObjective, info.spells, info.weightedProgress, info.rewardQuestID, info.widgetSetID
+	end)
+	-- Auction commodities cannot be emulated with classic bid APIs. Unsupported
+	-- actions return false and remain unavailable to ResolveClientAPI; never
+	-- manufacture an auction ID, price, or successful transaction.
+	adapt("C_AuctionHouse.MakeItemKey", true, function(itemID, level, suffix, petSpecies)
+		return { itemID = itemID, itemLevel = level or 0, itemSuffix = suffix or 0, battlePetSpeciesID = petSpecies or 0 }
+	end)
+
+	local defaults = {
+		none = function() return nil end,
+		boolean = function() return false end,
+		zero = function() return 0 end,
+		list = function() return {} end,
+		action = function() return false, "This API is unavailable on the current client." end,
+		counts = function() return 0, 0 end,
+		cooldown = function() return 0, 0, 0 end,
+		roles = function() return false, false, false end,
+		step = function() return nil, nil, 0 end,
+		challenge = function() return nil, nil, 0 end,
+	}
+
+	-- Explicit inventory: every audited game API, including APIs whose callers
+	-- remain in the untouched Classic/TBC folders. Defaults describe only the
+	-- unsupported case; native nils, false values and multiple returns survive.
+	local specifications = {
+		["BNGetInfo"] = "none",
+		["BuyMerchantItem"] = "action",
+		["C_AddOns.GetAddOnMetadata"] = "none",
+		["C_AddOns.GetNumAddOns"] = "zero",
+		["C_AddOns.IsAddOnLoaded"] = "boolean",
+		["C_AddOns.LoadAddOn"] = "boolean",
+		["C_AreaPoiInfo.GetAreaPOIInfo"] = "none",
+		["C_AuctionHouse.ConfirmCommoditiesPurchase"] = "action",
+		["C_AuctionHouse.ConfirmItemPurchase"] = "action",
+		["C_AuctionHouse.GetCommoditySearchResultInfo"] = "none",
+		["C_AuctionHouse.GetItemSearchResultInfo"] = "none",
+		["C_AuctionHouse.GetNumCommoditySearchResults"] = "zero",
+		["C_AuctionHouse.GetNumItemSearchResults"] = "zero",
+		["C_AuctionHouse.GetReplicateItemLink"] = "none",
+		["C_AuctionHouse.HasFullCommoditySearchResults"] = "boolean",
+		["C_AuctionHouse.IsItemCommodity"] = "boolean",
+		["C_AuctionHouse.MakeItemKey"] = "none",
+		["C_AuctionHouse.RequestMoreCommoditySearchResults"] = "boolean",
+		["C_AuctionHouse.SearchForItemKeys"] = "action",
+		["C_AuctionHouse.SendSearchQuery"] = "action",
+		["C_AuctionHouse.StartCommoditiesPurchase"] = "action",
+		["C_AuctionHouse.StartItemPurchase"] = "action",
+		["C_Calendar.GetDayEvent"] = "none",
+		["C_Calendar.GetNumDayEvents"] = "zero",
+		["C_CampaignInfo.GetCampaignID"] = "none",
+		["C_CampaignInfo.GetCampaignInfo"] = "none",
+		["C_CampaignInfo.IsCampaignQuest"] = "boolean",
+		["C_ChallengeMode.GetActiveChallengeMapID"] = "none",
+		["C_ChallengeMode.GetMapUIInfo"] = "challenge",
+		["C_ChatInfo.SendAddonMessage"] = "action",
+		["C_Container.GetContainerItemID"] = "none",
+		["C_Container.GetContainerItemInfo"] = "none",
+		["C_Container.GetContainerNumSlots"] = "zero",
+		["C_Container.GetItemCooldown"] = "cooldown",
+		["C_ContentTracking.GetTrackedIDs"] = "list",
+		["C_CurrencyInfo.GetCoinTextureString"] = "none",
+		["C_DateAndTime.GetCurrentCalendarTime"] = "none",
+		["C_Garrison.GetGarrisonInfo"] = "none",
+		["C_Garrison.IsFollowerCollected"] = "boolean",
+		["C_GossipInfo.CloseGossip"] = "none",
+		["C_GossipInfo.GetAvailableQuests"] = "list",
+		["C_GossipInfo.GetOptions"] = "list",
+		["C_GossipInfo.SelectOptionByIndex"] = "action",
+		["C_Item.GetItemCooldown"] = "none",
+		["C_Item.GetItemCount"] = "zero",
+		["C_Item.GetItemInfo"] = "none",
+		["C_Item.GetItemInfoInstant"] = "none",
+		["C_Item.GetItemNameByID"] = "none",
+		["C_Item.GetItemSpell"] = "none",
+		["C_Item.IsItemInRange"] = "boolean",
+		["C_Item.RequestLoadItemDataByID"] = "action",
+		["C_LFGList.CanCreateQuestGroup"] = "boolean",
+		["C_LFGList.CreateListing"] = "boolean",
+		["C_LFGList.GetActiveEntryInfo"] = "none",
+		["C_LFGList.GetActivityIDForQuestID"] = "none",
+		["C_LFGList.GetAvailableRoles"] = "roles",
+		["C_LFGList.RemoveListing"] = "action",
+		["C_LFGList.SetSearchToQuestID"] = "action",
+		["C_MajorFactions.GetMajorFactionData"] = "none",
+		["C_Map.ClearUserWaypoint"] = "action",
+		["C_Map.GetBestMapForUnit"] = "none",
+		["C_Map.GetMapInfo"] = "none",
+		["C_Map.GetMapPosFromWorldPos"] = "none",
+		["C_Map.GetMapWorldSize"] = "none",
+		["C_Map.GetPlayerMapPosition"] = "none",
+		["C_Map.GetUserWaypoint"] = "none",
+		["C_Map.GetWorldPosFromMapPos"] = "none",
+		["C_Map.HasUserWaypoint"] = "boolean",
+		["C_Map.SetUserWaypoint"] = "boolean",
+		["C_MerchantFrame.GetItemInfo"] = "none",
+		["C_MountJournal.SummonByID"] = "none",
+		["C_Navigation.GetDistance"] = "none",
+		["C_QuestInfoSystem.GetQuestClassification"] = "none",
+		["C_QuestInfoSystem.GetQuestRewardSpellInfo"] = "none",
+		["C_QuestInfoSystem.GetQuestRewardSpells"] = "list",
+		["C_QuestLine.GetQuestLineInfo"] = "none",
+		["C_QuestLine.GetQuestLineQuests"] = "list",
+		["C_QuestLog.AbandonQuest"] = "action",
+		["C_QuestLog.AddQuestWatch"] = "boolean",
+		["C_QuestLog.AddWorldQuestWatch"] = "boolean",
+		["C_QuestLog.GetAbandonQuest"] = "none",
+		["C_QuestLog.GetAbandonQuestItems"] = "list",
+		["C_QuestLog.GetAllCompletedQuestIDs"] = "list",
+		["C_QuestLog.GetDistanceSqToQuest"] = "none",
+		["C_QuestLog.GetInfo"] = "none",
+		["C_QuestLog.GetLogIndexForQuestID"] = "none",
+		["C_QuestLog.GetMaxNumQuestsCanAccept"] = "zero",
+		["C_QuestLog.GetNextWaypoint"] = "none",
+		["C_QuestLog.GetNextWaypointForMap"] = "none",
+		["C_QuestLog.GetNextWaypointText"] = "none",
+		["C_QuestLog.GetNumQuestLogEntries"] = "counts",
+		["C_QuestLog.GetNumQuestObjectives"] = "zero",
+		["C_QuestLog.GetNumQuestWatches"] = "zero",
+		["C_QuestLog.GetNumWorldQuestWatches"] = "zero",
+		["C_QuestLog.GetQuestAdditionalHighlights"] = "none",
+		["C_QuestLog.GetQuestIDForQuestWatchIndex"] = "none",
+		["C_QuestLog.GetQuestIDForWorldQuestWatchIndex"] = "none",
+		["C_QuestLog.GetQuestLogMajorFactionReputationRewards"] = "list",
+		["C_QuestLog.GetQuestObjectives"] = "list",
+		["C_QuestLog.GetQuestRewardCurrencies"] = "list",
+		["C_QuestLog.GetQuestRewardCurrencyInfo"] = "none",
+		["C_QuestLog.GetQuestTagInfo"] = "none",
+		["C_QuestLog.GetQuestType"] = "none",
+		["C_QuestLog.GetQuestWatchType"] = "none",
+		["C_QuestLog.GetQuestsOnMap"] = "list",
+		["C_QuestLog.GetSelectedQuest"] = "none",
+		["C_QuestLog.GetSuggestedGroupSize"] = "zero",
+		["C_QuestLog.GetTitleForQuestID"] = "none",
+		["C_QuestLog.IsComplete"] = "boolean",
+		["C_QuestLog.IsFailed"] = "boolean",
+		["C_QuestLog.IsMetaQuest"] = "boolean",
+		["C_QuestLog.IsOnQuest"] = "boolean",
+		["C_QuestLog.IsPushableQuest"] = "boolean",
+		["C_QuestLog.IsQuestFlaggedCompleted"] = "boolean",
+		["C_QuestLog.IsQuestFlaggedCompletedOnAccount"] = "boolean",
+		["C_QuestLog.IsQuestObjectiveComplete"] = "boolean",
+		["C_QuestLog.IsQuestTask"] = "boolean",
+		["C_QuestLog.IsQuestWatched"] = "boolean",
+		["C_QuestLog.IsThreatQuest"] = "boolean",
+		["C_QuestLog.IsWorldQuest"] = "boolean",
+		["C_QuestLog.ReadyForTurnIn"] = "boolean",
+		["C_QuestLog.RemoveQuestWatch"] = "boolean",
+		["C_QuestLog.RemoveWorldQuestWatch"] = "boolean",
+		["C_QuestLog.RequestLoadQuestByID"] = "action",
+		["C_QuestLog.SetAbandonQuest"] = "action",
+		["C_QuestLog.SetSelectedQuest"] = "action",
+		["C_QuestLog.SortQuestWatches"] = "action",
+		["C_Scenario.GetInfo"] = "none",
+		["C_Scenario.GetProvingGroundsInfo"] = "none",
+		["C_Scenario.GetStepInfo"] = "step",
+		["C_Scenario.IsInScenario"] = "boolean",
+		["C_ScenarioInfo.GetCriteriaInfo"] = "none",
+		["C_ScenarioInfo.GetCriteriaInfoByStep"] = "none",
+		["C_ScenarioInfo.GetScenarioInfo"] = "none",
+		["C_Spell.GetSpellCooldown"] = "none",
+		["C_Spell.GetSpellInfo"] = "none",
+		["C_Spell.GetSpellName"] = "none",
+		["C_SuperTrack.GetSuperTrackedQuestID"] = "none",
+		["C_SuperTrack.SetSuperTrackedQuestID"] = "action",
+		["C_SuperTrack.SetSuperTrackedUserWaypoint"] = "action",
+		["C_TaskQuest.GetQuestInfoByQuestID"] = "none",
+		["C_TaskQuest.GetQuestLocation"] = "none",
+		["C_TaskQuest.GetQuestTimeLeftSeconds"] = "none",
+		["C_TaskQuest.GetQuestZoneID"] = "none",
+		["C_TaskQuest.GetQuestsOnMap"] = "list",
+		["C_TaskQuest.IsActive"] = "boolean",
+		["C_TaxiMap.GetTaxiNodesForMap"] = "list",
+		["C_Timer.After"] = "action",
+		["C_Timer.NewTicker"] = "none",
+		["C_Timer.NewTimer"] = "none",
+		["C_TooltipInfo.GetQuestPartyProgress"] = "none",
+		["C_TradeSkillUI.GetRecipeInfo"] = "none",
+		["C_TradeSkillUI.GetRecipeOutputItemData"] = "none",
+		["C_TradeSkillUI.GetRecipeSchematic"] = "none",
+		["C_UnitAuras.GetAuraDataByAuraInstanceID"] = "none",
+		["C_UnitAuras.GetAuraDataBySpellName"] = "none",
+		["C_UnitAuras.GetBuffDataByIndex"] = "none",
+		["C_VignetteInfo.GetVignetteInfo"] = "none",
+		["C_VignetteInfo.GetVignettePosition"] = "none",
+		["ClearOverrideBindings"] = "action",
+		["CombatLogGetCurrentEventInfo"] = "none",
+		["CreateMacro"] = "action",
+		["DeleteMacro"] = "action",
+		["EditMacro"] = "action",
+		["GetAchievementCriteriaInfo"] = "none",
+		["GetAchievementInfo"] = "none",
+		["GetAchievementNumCriteria"] = "zero",
+		["GetAddOnCPUUsage"] = "zero",
+		["GetAddOnMemoryUsage"] = "zero",
+		["GetAuctionItemInfo"] = "none",
+		["GetAverageItemLevel"] = "counts",
+		["GetBuildInfo"] = "none",
+		["GetCVar"] = "none",
+		["GetCVarBool"] = "none",
+		["GetCoinTextureString"] = "none",
+		["GetContainerItemInfo"] = "none",
+		["GetContainerNumSlots"] = "zero",
+		["GetCursorPosition"] = "none",
+		["GetItemCooldown"] = "cooldown",
+		["GetItemCount"] = "zero",
+		["GetItemInfo"] = "none",
+		["GetItemInfoInstant"] = "none",
+		["GetJailersTowerLevel"] = "zero",
+		["GetLootSlotInfo"] = "none",
+		["GetLootSlotLink"] = "none",
+		["GetLootSourceInfo"] = "none",
+		["GetMacroIndexByName"] = "none",
+		["GetMacroInfo"] = "none",
+		["GetMaxPlayerLevel"] = "none",
+		["GetMerchantItemID"] = "none",
+		["GetMerchantItemInfo"] = "none",
+		["GetMerchantItemLink"] = "none",
+		["GetMerchantItemMaxStack"] = "none",
+		["GetMerchantNumItems"] = "zero",
+		["GetMinimapZoneText"] = "none",
+		["GetMouseButtonClicked"] = "none",
+		["GetNumAuctionItems"] = "zero",
+		["GetNumGroupMembers"] = "zero",
+		["GetNumLootItems"] = "zero",
+		["GetNumMacros"] = "counts",
+		["GetNumQuestLogChoices"] = "zero",
+		["GetNumQuestLogRewards"] = "zero",
+		["GetPhysicalScreenSize"] = "none",
+		["GetQuestID"] = "none",
+		["GetQuestLevel"] = "none",
+		["GetQuestLink"] = "none",
+		["GetQuestLogChoiceInfo"] = "none",
+		["GetQuestLogChoiceInfoLootType"] = "none",
+		["GetQuestLogQuestText"] = "none",
+		["GetQuestLogRewardArtifactXP"] = "zero",
+		["GetQuestLogRewardHonor"] = "zero",
+		["GetQuestLogRewardInfo"] = "none",
+		["GetQuestLogRewardMoney"] = "zero",
+		["GetQuestLogRewardSkillPoints"] = "counts",
+		["GetQuestLogRewardTitle"] = "none",
+		["GetQuestLogRewardXP"] = "zero",
+		["GetQuestLogSelection"] = "none",
+		["GetQuestLogSpecialItemCooldown"] = "cooldown",
+		["GetQuestLogSpecialItemInfo"] = "none",
+		["GetQuestObjectiveInfo"] = "none",
+		["GetQuestProgressBarPercent"] = "zero",
+		["GetQuestTagInfo"] = "none",
+		["GetQuestUiMapID"] = "none",
+		["GetRaidTargetIndex"] = "none",
+		["GetRealZoneText"] = "none",
+		["GetRealmName"] = "none",
+		["GetScreenHeight"] = "none",
+		["GetScreenWidth"] = "none",
+		["GetSpellInfo"] = "none",
+		["GetSubZoneText"] = "none",
+		["GetTaskInfo"] = "none",
+		["GetTime"] = "none",
+		["GetTitleText"] = "none",
+		["GetWorldElapsedTime"] = "none",
+		["GetZoneText"] = "none",
+		["HaveQuestData"] = "boolean",
+		["InCombatLockdown"] = "boolean",
+		["IsAltKeyDown"] = "boolean",
+		["IsCharacterNewlyBoosted"] = "boolean",
+		["IsControlKeyDown"] = "boolean",
+		["IsFlyableArea"] = "boolean",
+		["IsFlying"] = "boolean",
+		["IsInGroup"] = "boolean",
+		["IsInInstance"] = "boolean",
+		["IsInJailersTower"] = "boolean",
+		["IsInRaid"] = "boolean",
+		["IsIndoors"] = "boolean",
+		["IsMounted"] = "boolean",
+		["IsMouseButtonDown"] = "boolean",
+		["IsPlayerMoving"] = "boolean",
+		["IsPlayerSpell"] = "boolean",
+		["IsQuestFlaggedCompleted"] = "boolean",
+		["IsQuestLogSpecialItemInRange"] = "boolean",
+		["IsResting"] = "boolean",
+		["IsShiftKeyDown"] = "boolean",
+		["IsSpellKnown"] = "boolean",
+		["IsSpellKnownOrOverridesKnown"] = "boolean",
+		["IsUsableItem"] = "boolean",
+		["MouseIsOver"] = "boolean",
+		["PlaceAuctionBid"] = "action",
+		["PlaySound"] = "action",
+		["QueryAuctionItems"] = "action",
+		["QuestLogPushQuest"] = "action",
+		["ReloadUI"] = "action",
+		["SelectQuestLogEntry"] = "action",
+		["SetAbandonQuest"] = "action",
+		["SetCVar"] = "action",
+		["SetLFGRoles"] = "action",
+		["SetOverrideBindingMacro"] = "action",
+		["SetRaidTarget"] = "action",
+		["ShowQuestComplete"] = "action",
+		["UnitAffectingCombat"] = "boolean",
+		["UnitCanAttack"] = "boolean",
+		["UnitCastingInfo"] = "none",
+		["UnitChannelInfo"] = "none",
+		["UnitClass"] = "none",
+		["UnitClassification"] = "none",
+		["UnitCreatureFamily"] = "none",
+		["UnitCreatureType"] = "none",
+		["UnitExists"] = "boolean",
+		["UnitFactionGroup"] = "none",
+		["UnitGUID"] = "none",
+		["UnitHealthMax"] = "none",
+		["UnitIsDead"] = "boolean",
+		["UnitIsFriend"] = "boolean",
+		["UnitIsPlayer"] = "boolean",
+		["UnitLevel"] = "none",
+		["UnitName"] = "none",
+		["UnitOnTaxi"] = "boolean",
+		["UnitRace"] = "none",
+		["UnitReaction"] = "none",
+		["UpdateAddOnCPUUsage"] = "action",
+		["UpdateAddOnMemoryUsage"] = "action",
+		["UseQuestLogSpecialItem"] = "action",
+		["debugprofilestop"] = "none",
+		["debugstack"] = "none",
+		["geterrorhandler"] = "none",
+		["hooksecurefunc"] = "action",
+	}
+	local wrappers = {}
+	for path, defaultName in pairs(specifications) do
+		local apiPath, missing = path, defaults[defaultName]
+		local wrapper = function(...)
+			local fn = implementation(apiPath)
+			if fn then return fn(...) end
+			return missing()
+		end
+		wrappers[path] = wrapper
+		local namespace, method = path:match("^([^.]+)%.(.+)$")
+		if namespace then
+			Client[namespace] = Client[namespace] or {}
+			Client[namespace][method] = wrapper
+		else
+			Client[path] = wrapper
+		end
+	end
+
+	function API.ResolveClientAPI(path)
+		if wrappers[path] and implementation(path) then return wrappers[path] end
+		return nil
+	end
+
+	function API.GetQuestDescriptionForQuestID(questID)
+		local index = Client.C_QuestLog.GetLogIndexForQuestID(questID)
+		if index then return Client.GetQuestLogQuestText(index) end
+	end
+	function API.GetQuestLogText(index) return Client.GetQuestLogQuestText(index) end
+	function API.GetQuestLogDescription(index) return (Client.GetQuestLogQuestText(index)) end
+	function API.GetQuestLogObjectivesText(index)
+		local _, objectives = Client.GetQuestLogQuestText(index)
+		return objectives
+	end
+
+	-- Earlier mutually-exclusive version blocks can leave these existing flat
+	-- helpers undefined on modern clients. Their consumers expect the same
+	-- scalar/tuple contracts as Client; keep the legacy implementations intact.
+	local missingFlatHelpers = {
+		GetBestMapForUnit = "C_Map.GetBestMapForUnit", GetMapInfo = "C_Map.GetMapInfo",
+		GetNextWaypoint = "C_QuestLog.GetNextWaypoint", GetNextWaypointForMap = "C_QuestLog.GetNextWaypointForMap",
+		GetNextWaypointText = "C_QuestLog.GetNextWaypointText", AddQuestWatch = "C_QuestLog.AddQuestWatch",
+		RemoveQuestWatch = "C_QuestLog.RemoveQuestWatch", IsInScenario = "C_Scenario.IsInScenario",
+	}
+	for helper, path in pairs(missingFlatHelpers) do
+		if type(API[helper]) ~= "function" then API[helper] = wrappers[path] end
+	end
+
+	-- Reconcile the existing flat merchant helpers with the actual table API.
+	API.GetMerchantFrameItemInfo = Client.C_MerchantFrame.GetItemInfo
+	API.GetMerchantItemInfo = function(index)
+		local info = Client.C_MerchantFrame.GetItemInfo(index)
+		if not info then return nil end
+		RQE.MerchantInfo = { name = info.name, texture = info.texture, price = info.price,
+			quantity = info.stackCount, stackCount = info.stackCount, numAvailable = info.numAvailable,
+			isPurchasable = info.isPurchasable, isUsable = info.isUsable,
+			extendedCost = info.hasExtendedCost, hasExtendedCost = info.hasExtendedCost,
+			currencyID = info.currencyID, spellID = info.spellID }
+		return RQE.MerchantInfo
 	end
 end
