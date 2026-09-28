@@ -473,7 +473,7 @@ Classic addon lifecycle, quest-state orchestration, frame coordination, and shar
 				scale = 1,
 			},
 			minimapButtonAngle = 125,
-			mythicScenarioMode = true,
+			mythicScenarioMode = false,
 			PlayerEnteringWorld = false,
 			PlayerStartedMoving = false,
 			PlayerStoppedMoving = false,
