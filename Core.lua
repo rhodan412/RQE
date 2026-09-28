@@ -476,7 +476,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				scale = 1,
 			},
 			minimapButtonAngle = 175,
-			mythicScenarioMode = true,
+			mythicScenarioMode = false,
 			PlayerEnteringWorld = false,
 			PlayerStartedMoving = false,
 			PlayerStoppedMoving = false,
@@ -2344,12 +2344,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Function to initialize the objective tracker state based on the checkbox and frames visibility
 	function RQE:InitializeObjectiveTracker()
-		local isRQEQuestTrackerVisible = RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()
-		if RQE.db.profile.toggleBlizzObjectiveTracker or not isRQEQuestTrackerVisible then
-			ObjectiveTrackerFrame:Show()
-		else
-			ObjectiveTrackerFrame:Hide()
-		end
+		self:UpdateTrackerVisibility()
 	end
 
 	-------------------------------------------------------
@@ -2358,13 +2353,17 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 
 	-- Helper function to toggle display of the RQEQuestFrame in the mythicScenarioMode
 	function RQE:UpdateTrackerVisibility()
-		-- The tracker is an anchor for secure quest-item buttons. Visibility and
-		-- ObjectiveTrackerFrame changes must wait until combat lockdown ends.
+		-- The tracker anchors secure quest-item buttons. Defer real visibility
+		-- changes in combat, but keep Blizzard's tracker visually suppressed.
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
 		if RQE.API.Client.InCombatLockdown() then
 			self.UpdateTrackerVisibilityAfterCombat = true
+			if self.EnforceObjectiveTrackerVisibility then self:EnforceObjectiveTrackerVisibility() end
 			return
 		end
+		-- Automatic scenario/zone changes supersede a deliberate temporary
+		-- switch to Blizzard's tracker from the context menu or minimap.
+		self.manualBlizzardTrackerOverride = nil
 
 		-- Previous Blizzard call changed 2026.09.25: local inScenario = C_Scenario.IsInScenario()
 		local inScenario = RQE.API.Client.C_Scenario.IsInScenario()
@@ -2386,9 +2385,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				end
 			end
 
-			if self.EnforceObjectiveTrackerVisibility then
-				self:EnforceObjectiveTrackerVisibility()
-			end
+			if ObjectiveTrackerFrame then ObjectiveTrackerFrame:Hide() end
+			if self.updateScenarioUI then self.updateScenarioUI() end
 			return
 		end
 
@@ -2417,6 +2415,7 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 				ObjectiveTrackerFrame:SetPoint("TOPRIGHT", RQEFrame, "BOTTOMRIGHT", 0, -10)	-- TO DO: change the 0, -10 to be variables to be changed in the configuration for player customization
 				ObjectiveTrackerFrame:Show()
 			end
+			if self.UpdateScenarioFrame then self.UpdateScenarioFrame() end
 
 			return -- Exit early to avoid post-scenario logic
 		end
@@ -2438,16 +2437,10 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			end
 		end
 
-		-- Outside a scenario, follow the normal Quest Tracker visibility rule.
-		-- The previous code always hid Blizzard's tracker in this branch.
-		if ObjectiveTrackerFrame then
-			if configWantsQuestFrame then
-				ObjectiveTrackerFrame:Hide()
-			else
-				ObjectiveTrackerFrame:Show()
-			end
-		end
+		-- Scenario mode only hands off to Blizzard while a scenario is active.
+		if ObjectiveTrackerFrame then ObjectiveTrackerFrame:Hide() end
 
+		if self.UpdateScenarioFrame then self.UpdateScenarioFrame() end
 		RQE.updateScenarioUI()
 	end
 
