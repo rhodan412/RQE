@@ -469,7 +469,7 @@ TBC addon lifecycle, quest-state orchestration, frame coordination, and shared u
 				scale = 1,
 			},
 			minimapButtonAngle = 125,
-			mythicScenarioMode = true,
+			mythicScenarioMode = false,
 			PlayerEnteringWorld = false,
 			PlayerStartedMoving = false,
 			PlayerStoppedMoving = false,
