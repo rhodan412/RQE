@@ -2372,6 +2372,12 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 		local configWantsQuestFrame = self.db.profile.enableQuestFrame
 
 		if not mythicMode then
+			-- Disabling scenario mode must also release the scenario Show override.
+			self.forceHideRQEQuestFrame = false
+			if self.RQEQuestFrame and self.RQEQuestFrame._originalShow then
+				self.RQEQuestFrame.Show = self.RQEQuestFrame._originalShow
+				self.RQEQuestFrame._originalShow = nil
+			end
 			if self.RQEQuestFrame then
 				if configWantsQuestFrame then
 					self.RQEQuestFrame:Show()
@@ -2386,18 +2392,8 @@ Core addon lifecycle, quest-state orchestration, frame coordination, and shared 
 			return
 		end
 
-		-- Previous Blizzard call changed 2026.09.25: if not C_AddOns.IsAddOnLoaded("Carbonite Quest") then
-		if not RQE.API.Client.C_AddOns.IsAddOnLoaded("Carbonite Quest") then
-			if mythicMode and inScenario then
-				if ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown() then
-					self.RQEQuestFrame:Hide()
-				else
-					print("Mythic/Scenario mode may not work correctly with current Carbonite Quests settings!\n\nGo to Carbonite addon settings > Quest Module > Watch Options\nCHECK: \"Hide Quest Watch Window\"\nUN-CHECK: \"Hide Blizzards Quest Track Window\"\nThen reload your UI via \"/reload\"")
-					return
-				end
-			end
-		end
-
+		-- Blizzard's tracker normally starts hidden while RQE is active. Switch
+		-- directly; its current visibility is not a prerequisite for showing it.
 		if mythicMode and inScenario then
 			RQE.forceHideRQEQuestFrame = true
 
