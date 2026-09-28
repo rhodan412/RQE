@@ -109,7 +109,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 		"PLAYER_LOGOUT",
 		"PLAYER_MAP_CHANGED",
 		"PLAYER_MOUNT_DISPLAY_CHANGED",
-		-- "PLAYER_REGEN_DISABLED",
+		"PLAYER_REGEN_DISABLED",
 		"PLAYER_REGEN_ENABLED",
 		"PLAYER_STARTED_MOVING",
 		"PLAYER_STOPPED_MOVING",
@@ -405,7 +405,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 			PLAYER_LOGOUT = RQE.handlePlayerLogout,
 			PLAYER_MAP_CHANGED = RQE.handlePlayerMapChanged,
 			PLAYER_MOUNT_DISPLAY_CHANGED = RQE.handlePlayerMountDisplayChanged,
-			--PLAYER_REGEN_DISABLED = RQE.handlePlayerRegenDisabled,
+			PLAYER_REGEN_DISABLED = RQE.handlePlayerRegenDisabled,
 			PLAYER_REGEN_ENABLED = RQE.handlePlayerRegenEnabled,
 			PLAYER_STARTED_MOVING = RQE.handlePlayerStartedMoving,
 			PLAYER_STOPPED_MOVING = RQE.handlePlayerStoppedMoving,
@@ -1102,7 +1102,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- Function that handles PLAYER_REGEN_DISABLED event
 	-- Fired whenever you enter combat, as normal regen rates are disabled during combat. This means that either you are in the hate list of a NPC or that you've been taking part in a pvp action (either as attacker or victim). 
 	function RQE.handlePlayerRegenDisabled()
-		-- Bits of code for handling code during combat
+		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
 	end
 
 
@@ -1111,6 +1111,7 @@ Retail event dispatch, quest-state callbacks, and frame coordination
 	-- This occurs when you are not on the hate list of any NPC, or a few seconds after the latest pvp attack that you were involved with.
 	function RQE.handlePlayerRegenEnabled()
 		local mythicMode = RQE.db.profile.mythicScenarioMode
+		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
 
 		-- Reapply the latest tracker settings after a combat-time visibility request.
 		if RQE.UpdateTrackerVisibilityAfterCombat then
@@ -6927,21 +6928,12 @@ local function StepUsesAuraCheck(step)
 	end
 
 
-	-- Function to Hide the Objective Tracker (only if the toggle is enabled)
+	-- Reapply automatic objective tracker visibility after Blizzard UI updates.
 	function HideObjectiveTracker()
-		if not RQE.db.profile.toggleBlizzObjectiveTracker and not RQE.db.profile.mythicScenarioMode then
-			-- Hide the tracker only if the toggle is disabled
-			if ObjectiveTrackerFrame:IsShown() then
-				ObjectiveTrackerFrame:Hide()
-			end
-			-- Recheck after a delay to ensure it remains hidden
-			-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.1, function()
-			RQE.API.Client.C_Timer.After(0.1, function()
-				if ObjectiveTrackerFrame:IsShown() then
-					ObjectiveTrackerFrame:Hide()
-				end
-			end)
-		end
+		if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
+		RQE.API.Client.C_Timer.After(0.1, function()
+			if RQE.EnforceObjectiveTrackerVisibility then RQE:EnforceObjectiveTrackerVisibility() end
+		end)
 	end
 
 
@@ -6978,8 +6970,8 @@ local function StepUsesAuraCheck(step)
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then return end
 		if RQE.API.Client.InCombatLockdown() then return end
 
-		-- If Mythic/Scenario mode is active, always show Blizzard Tracker and hide only RQEQuestFrame
-		if self.db.profile.mythicScenarioMode then
+		-- Scenario mode hands off only while a scenario is active.
+		if self.db.profile.mythicScenarioMode and RQE.API.Client.C_Scenario.IsInScenario() then
 			if self.RQEQuestFrame and self.RQEQuestFrame:IsShown() then
 				self.RQEQuestFrame:Hide()
 			end
@@ -6989,6 +6981,7 @@ local function StepUsesAuraCheck(step)
 
 		if RQE.db.profile.toggleBlizzObjectiveTracker then
 			-- Hide RQE frames and show Blizzard Tracker
+			RQE.manualBlizzardTrackerOverride = true
 			if RQEFrame and RQEFrame:IsShown() then
 				RQEFrame:Hide()
 				-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.5, function()
@@ -7007,6 +7000,7 @@ local function StepUsesAuraCheck(step)
 			ObjectiveTrackerFrame:Show()
 		else
 			print("Showing RQE frames and hiding Blizzard Tracker")
+			RQE.manualBlizzardTrackerOverride = nil
 			-- Show RQE frames and hide Blizzard Tracker
 			if RQEFrame and not RQEFrame:IsShown() then
 				RQEFrame:Show()
@@ -7044,14 +7038,17 @@ local function StepUsesAuraCheck(step)
 			RQE.isRQEFrameManuallyClosed = true
 			RQE.isRQEQuestFrameManuallyClosed = true
 
-			-- Show Blizzard Tracker whenever the RQE Quest Tracker is hidden.
+			-- Deliberately closing RQE may temporarily show Blizzard's tracker.
 			if RQE.db.profile.toggleBlizzObjectiveTracker or not RQE.RQEQuestFrame:IsShown() then
+				RQE.manualBlizzardTrackerOverride = true
 				ObjectiveTrackerFrame:Show()
 			else
+				RQE.manualBlizzardTrackerOverride = nil
 				ObjectiveTrackerFrame:Hide()
 			end
 		else
 			-- Show RQE frames
+			RQE.manualBlizzardTrackerOverride = nil
 			RQE:ClearFrameData()
 			RQE:ClearWaypointButtonData()
 			RQE:ClearSeparateFocusFrame()
@@ -7069,12 +7066,7 @@ local function StepUsesAuraCheck(step)
 			RQE.isRQEFrameManuallyClosed = false
 			RQE.isRQEQuestFrameManuallyClosed = false
 
-			-- The RQE Quest Tracker alone controls the Blizzard tracker visibility.
-			if RQE.RQEQuestFrame:IsShown() then
-				ObjectiveTrackerFrame:Hide()
-			else
-				ObjectiveTrackerFrame:Show()
-			end
+			ObjectiveTrackerFrame:Hide()
 
 			-- Check if MagicButton should be visible based on macro body
 			RQE.Buttons.UpdateMagicButtonVisibility()
