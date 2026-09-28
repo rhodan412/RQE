@@ -13,6 +13,7 @@ RQE is a quest helper and tracker for World of Warcraft. It brings the next obje
 - **Follow guided quest steps.** Read the current objective, location, and instructions for supported quests. Move between steps manually when needed.
 - **Find the next destination.** Follow map waypoints and coordinates associated with the active step.
 - **Track progress.** Keep quest objectives visible in the Quest Helper and Quest Tracker, and search for a quest even when it is not currently tracked.
+- **Follow live scenarios on Retail.** See Torghast, Delve, and timed-event stages inside the Quest Tracker, with Blizzard's progress displays and hover details.
 - **Watch recipes and achievements.** See tracked profession recipes with their required materials and current counts, alongside achievement criteria and numeric progress.
 - **Recognize NPCs and objects.** Mouse over linked names in step descriptions to open a movable preview. Zoom or pan the view when you need a closer look.
 - **Use quest-aware controls.** Access helpful targeting and quest-item macros where a step provides them. RQE can update its macro button when a needed quest item becomes available.
@@ -36,6 +37,21 @@ RQE has addon builds for Retail, Classic Era/Season of Discovery, Classic Foreve
 RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect quest lines, tooltips, and quest-giver locations.
 
 ## More examples
+
+### Live scenario stages
+
+On Retail, RQE can bring Blizzard's live stage displays into the Quest Tracker's **Scenario** section. Torghast shows its floor, deaths, Phantasma, and Anima Powers; timed events such as Superbloom show a stage countdown and objective; and Delves show tier, objectives, and weighted progress when available. These panels combine separate activities to show how each appears in RQE.
+
+[![RQE Scenario Tracker showing Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/27f38b07-570e-460c-815c-e6d714e454ea)](https://github.com/user-attachments/assets/27f38b07-570e-460c-815c-e6d714e454ea)
+
+Hover stage icons and Torghast powers for Blizzard's tooltips; the Anima Powers control opens a power list. Mythic+ runs can also show the countdown, keystone, affixes, and death penalty. See the [scenario tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#live-scenario-stages) for details and the **Mythic/Scenario Mode** setting.
+
+<details>
+<summary>See Torghast powers and Delve hover details</summary>
+
+[![Torghast Anima Powers flyout and Delve stage tooltips](https://github.com/user-attachments/assets/91a1c50d-9b3f-4ee2-8130-e284afb16c75)](https://github.com/user-attachments/assets/91a1c50d-9b3f-4ee2-8130-e284afb16c75)
+
+</details>
 
 ### Arrange the Quest Tracker
 
