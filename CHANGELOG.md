@@ -1,3 +1,46 @@
+12.1.0.11 (2026.09.28)
+
+	**HIGHLIGHTS**
+		- Scenario mode now switches to Blizzard's tracker even when it starts hidden, and turning the option off correctly restores RQE's tracker.
+		- Retail and Forever quest authors can capture the supertracked quest's Blizzard waypoint from a new RQE header button when Contribution is loaded.
+		- Captured Blizzard waypoints now include a continent coordinate suggestion when Blizzard provides one for the waypoint's continent.
+		- Waypoint capture now succeeds when Blizzard supplies the quest's map-specific waypoint but no general next waypoint.
+		- Quest authors can capture Blizzard's general waypoint and the player's continent waypoint independently, with clear results for each lookup.
+		- Quest waypoint capture now uses the supertracked quest's map POI when Blizzard supplies no next waypoint, and identifies the fallback in the result.
+		- Contribution capture now follows the W button's quest map coordinates, including quests with no next waypoint from Blizzard.
+
+	Buttons.lua
+		- Added a Retail/Forever-only waypoint capture button beside the Contribution Step Editor launcher, routed clicks to Contribution, and reserved header title space when the button is visible. (2026.09.27.1225)
+
+	Client_Classic/Core.lua
+		- Removed the obsolete Carbonite/current-visibility prerequisite from the scenario tracker handoff and restored the saved Show method when scenario mode is disabled, keeping the Classic copy consistent without changing its client capability checks. (2026.09.26.1905)
+
+	Client_TBC/Core.lua
+		- Removed the obsolete Carbonite/current-visibility prerequisite from the scenario tracker handoff and restored the saved Show method when scenario mode is disabled, keeping the TBC copy consistent without changing its client capability checks. (2026.09.26.1905)
+
+	Core.lua
+		- Removed the early return that required Blizzard's tracker to already be visible before scenario mode could show it; a hidden starting state now completes the handoff instead of leaving RQE active and printing an unrelated Carbonite warning. (2026.09.26.1905)
+		- Released forceHideRQEQuestFrame and restored the original Show method before applying the disabled scenario-mode setting, so unchecking the option can display RQE's tracker immediately outside combat. (2026.09.26.1905)
+
+	RQE_API.lua
+		- Added GetSpellPresentation to resolve a contribution author's spell ID to its name and icon through the client-aware spell-info adapter on Retail, Forever, SoD, and TBC. (2026.09.27.1013)
+		- Added GetSupertrackedContributionWaypoint to read Blizzard's next waypoint for the supertracked quest on Retail/Forever, reject unavailable or protected values, and convert normalized map coordinates to authoring percentages. (2026.09.27.1225)
+		- Extended contribution waypoint capture to find the waypoint map's continent and request its map-specific Blizzard waypoint, saving valid continent coordinates as an optional rounded suggestion. (2026.09.27.1238)
+		- Fell back to the quest UI map's GetNextWaypointForMap result when GetNextWaypoint has no usable result, matching the W tooltip's available quest waypoint; identified the quest and map-specific lookup status in capture failures. (2026.09.27.1243)
+		- Replaced the quest UI map fallback with independent GetNextWaypoint and GetNextWaypointForMap lookups on the player's current continent, reporting missing, protected, failed, and valid results without treating W tooltip cache or POI coordinates as Blizzard waypoints. (2026.09.27.1257)
+		- Added a quest-ID-matched GetQuestsOnMap fallback for the player's map and continent when their respective waypoint APIs return no usable coordinates; rounded and labeled each POI result separately while keeping Retail/Forever lookup and Blizzard API calls in this adapter. (2026.09.27.1315)
+		- Removed the contribution-specific coordinate selection workflow from RQE_API.lua so Contribution can use the W button's existing quest-coordinate function; corrected the client-aware GetNextWaypoint and GetNextWaypointForMap wrappers to return every Blizzard coordinate value. (2026.09.27.1327)
+
+	RQE.toc
+		- Updated version# (2026.09.25.0038)
+
+	RQEDatabase.lua
+		- Updated some Northrend Horde quests in DB (2026.09.25.0038)
+
+	RQEFrame.lua
+		- Created the Contribution waypoint capture control in the Retail/Forever quest helper header, leaving the SoD and TBC frame construction unchanged. (2026.09.27.1225)
+
+
 12.1.0.10 (2026.09.26)
 
 	**HIGHLIGHTS**
