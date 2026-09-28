@@ -3803,10 +3803,16 @@ if isLegacyClient then
 	end
 
 	RQE.API.GetNextWaypoint = function(questID)
-		return Has(NativeQuestLog, "GetNextWaypoint") and NativeQuestLog.GetNextWaypoint(questID) or nil
+		if Has(NativeQuestLog, "GetNextWaypoint") then
+			return NativeQuestLog.GetNextWaypoint(questID)
+		end
+		return nil, nil, nil
 	end
 	RQE.API.GetNextWaypointForMap = function(questID, mapID)
-		return Has(NativeQuestLog, "GetNextWaypointForMap") and NativeQuestLog.GetNextWaypointForMap(questID, mapID) or nil
+		if Has(NativeQuestLog, "GetNextWaypointForMap") then
+			return NativeQuestLog.GetNextWaypointForMap(questID, mapID)
+		end
+		return nil, nil
 	end
 	RQE.API.GetNextWaypointText = function(questID)
 		return Has(NativeQuestLog, "GetNextWaypointText") and NativeQuestLog.GetNextWaypointText(questID) or nil
@@ -5544,6 +5550,19 @@ do
 		return nil
 	end
 
+	-- Contribution authoring needs the same spell name and icon on every client.
+	-- Client.C_Spell.GetSpellInfo normalizes legacy GetSpellInfo's tuple to the
+	-- Retail SpellInfo table, including Classic Forever's modern API profile.
+	function API.GetSpellPresentation(spellID)
+		spellID = tonumber(spellID)
+		if not spellID or spellID < 1 or spellID % 1 ~= 0 then return nil end
+		local getSpellInfo = API.ResolveClientAPI("C_Spell.GetSpellInfo")
+		if not getSpellInfo then return nil end
+		local ok, info = pcall(getSpellInfo, spellID)
+		if not ok or type(info) ~= "table" then return nil end
+		return info.name, info.iconID
+	end
+
 	function API.GetQuestDescriptionForQuestID(questID)
 		local index = Client.C_QuestLog.GetLogIndexForQuestID(questID)
 		if index then return Client.GetQuestLogQuestText(index) end
@@ -5581,3 +5600,4 @@ do
 		return RQE.MerchantInfo
 	end
 end
+
