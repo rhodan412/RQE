@@ -1196,6 +1196,7 @@ Retail main quest helper layout, interactions, persistence, and separate-focus U
 	RQE.Buttons.CreateRWButton(RQEFrame)
 	RQE.Buttons.CreateSearchButton(RQEFrame)
 	RQE.Buttons.CreateContributionButton(RQEFrame)
+	RQE.Buttons.CreateContributionWaypointButton(RQEFrame)
 	-- RQE.Buttons.CreateQMButton(RQEFrame) -- Disabled: QF no longer controls the redesigned quest/objective trackers.
 	RQE.Buttons.CreateCloseButton(RQEFrame)
 	-- RQE.Buttons.CreateMaximizeButton(RQEFrame, RQE.originalWidth, RQE.originalHeight, RQE.content, ScrollFrame, slider)
