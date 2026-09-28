@@ -514,13 +514,25 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- #3b. Objective Tracker Visibility & Hooks
 	-------------------------------------------------------
 
-	-- Check every frame so Blizzard's tracker cannot linger after quest/movement updates.
+	-- Recover a missed scenario enter/exit transition without continually
+	-- resetting a deliberate manual tracker switch outside scenarios.
 	local objectiveTrackerWatchdog = CreateFrame("Frame")
 	objectiveTrackerWatchdog:SetScript("OnUpdate", function()
-		-- Previous Blizzard call changed 2026.09.25: if RQE.db.profile.mythicScenarioMode and not InCombatLockdown() then
-		if RQE.db.profile.mythicScenarioMode and not RQE.API.Client.InCombatLockdown() then
-			-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
-			if not RQE.API.Client.C_Scenario.IsInScenario() then
+		if not RQE.db then return end
+		if RQE.API.Client.InCombatLockdown() then
+			-- Blizzard can show or change the alpha of its protected tracker during
+			-- combat. Keep it visually suppressed until a real Hide is legal.
+			local useBlizzard = RQE.manualBlizzardTrackerOverride
+				or (RQE.db.profile.mythicScenarioMode
+					and RQE.API.Client.C_Scenario.IsInScenario())
+			if not useBlizzard and ObjectiveTrackerFrame and ObjectiveTrackerFrame:IsShown()
+				and ObjectiveTrackerFrame:GetAlpha() ~= 0 then
+				RQE:EnforceObjectiveTrackerVisibility()
+			end
+		else
+			local shouldReplace = RQE.db.profile.mythicScenarioMode
+				and RQE.API.Client.C_Scenario.IsInScenario()
+			if shouldReplace ~= (RQE.forceHideRQEQuestFrame == true) then
 				RQE:UpdateTrackerVisibility()
 			end
 		end
@@ -528,24 +540,33 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 
 	function RQE:EnforceObjectiveTrackerVisibility()
-		if RQE.db.profile.toggleBlizzObjectiveTracker or RQE.db.profile.mythicScenarioMode then
-			return
-		end
+		if not ObjectiveTrackerFrame or not RQE.db then return end
+		local useBlizzard = RQE.manualBlizzardTrackerOverride
+			or (RQE.db.profile.mythicScenarioMode
+				and RQE.API.Client.C_Scenario.IsInScenario())
 		-- Previous Blizzard call changed 2026.09.25: if InCombatLockdown() then
 		if RQE.API.Client.InCombatLockdown() then
 			RQE.UpdateTrackerVisibilityAfterCombat = true
+			if not useBlizzard then
+				if self._objectiveTrackerAlphaBeforeCombat == nil then
+					self._objectiveTrackerAlphaBeforeCombat = ObjectiveTrackerFrame:GetAlpha()
+				end
+				if ObjectiveTrackerFrame:GetAlpha() ~= 0 then ObjectiveTrackerFrame:SetAlpha(0) end
+			elseif self._objectiveTrackerAlphaBeforeCombat ~= nil then
+				ObjectiveTrackerFrame:SetAlpha(self._objectiveTrackerAlphaBeforeCombat)
+				self._objectiveTrackerAlphaBeforeCombat = nil
+			end
 			return
 		end
 
-		local isRQEQuestTrackerVisible = RQE.RQEQuestFrame and RQE.RQEQuestFrame:IsShown()
-		if isRQEQuestTrackerVisible then
-			if ObjectiveTrackerFrame:IsShown() then
-				ObjectiveTrackerFrame:Hide()
-			end
-		else
-			if not ObjectiveTrackerFrame:IsShown() then
-				ObjectiveTrackerFrame:Show()
-			end
+		if self._objectiveTrackerAlphaBeforeCombat ~= nil then
+			ObjectiveTrackerFrame:SetAlpha(self._objectiveTrackerAlphaBeforeCombat)
+			self._objectiveTrackerAlphaBeforeCombat = nil
+		end
+		if useBlizzard then
+			if not ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Show() end
+		elseif ObjectiveTrackerFrame:IsShown() then
+			ObjectiveTrackerFrame:Hide()
 		end
 	end
 
@@ -793,39 +814,58 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to dynamically set ScenarioChildFrame height based on the number of criteria
 	function RQE.SetScenarioChildFrameHeight()
-		-- Check if the player is currently in a scenario
-		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
-		if not RQE.API.Client.C_Scenario.IsInScenario() then
-			return
+		local frame = RQE.ScenarioChildFrame
+		if not frame or not RQE.API.Client.C_Scenario.IsInScenario() then return end
+		local headerHeight = 115
+		local stageHeight = 0
+		if frame.challengePanel and frame.challengePanel:IsShown() then
+			headerHeight = 132
+		elseif frame.stageWidgets and frame.stageWidgets:IsShown()
+			and frame.stageWidgets:HasAnyWidgetsShowing() then
+			stageHeight = math.max(100, frame.stageWidgets:GetHeight() or 0)
+			headerHeight = stageHeight + 48
 		end
-
-		-- Fetch scenario information
-		-- Previous Blizzard call changed 2026.09.25: local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-		local scenarioInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
-		if not scenarioInfo then
-			return
+		if frame.topWidgets and frame.topWidgets:IsShown()
+			and frame.topWidgets:HasAnyWidgetsShowing() then
+			local topOffset = (frame.challengePanel and frame.challengePanel:IsShown()) and 133
+				or (stageHeight > 0 and stageHeight + 55 or 105)
+			frame.topWidgets:ClearAllPoints()
+			frame.topWidgets:SetPoint("TOP", frame.header, "TOP", 0, -topOffset)
+			headerHeight = math.max(headerHeight, topOffset + math.max(28, frame.topWidgets:GetHeight() or 0) + 12)
 		end
-
-		-- Fetch the number of criteria for the current scenario step
-		-- Previous Blizzard call changed 2026.09.25: local numCriteria = select(3, C_Scenario.GetStepInfo()) or 0
-		local numCriteria = select(3, RQE.API.Client.C_Scenario.GetStepInfo()) or 0
-
-		-- Base height for the frame
-		local baseHeight = 120
-
-		-- Height per criteria (adjust as needed for proper spacing)
-		local heightPerCriteria = 45
-
-		-- Calculate the total height
-		local totalHeight = baseHeight + (numCriteria * heightPerCriteria)
-
-		-- Set the height of the ScenarioChildFrame dynamically
-		RQE.ScenarioChildFrame:SetHeight(totalHeight)
+		frame.header:SetHeight(headerHeight)
+		local hasMawBuffs = frame.mawBuffs and frame.mawBuffs:IsShown()
+		if frame.body then
+			frame.body:ClearAllPoints()
+			frame.body:SetWidth(math.max(1, frame:GetWidth() - 44))
+			frame.body:SetPoint("TOPLEFT", frame, "TOPLEFT", 22,
+				-headerHeight - (hasMawBuffs and 65 or 0) - 14)
+		end
+		if frame.scenarioTitle then
+			frame.scenarioTitle:SetWidth(math.max(1, frame:GetWidth() - 135))
+		end
+		local bodyHeight = frame.body and frame.body:GetStringHeight() or 0
+		if frame.scenarioProgressBar and frame.scenarioProgressBar:IsShown() then
+			frame.scenarioProgressBar:ClearAllPoints()
+			frame.scenarioProgressBar:SetPoint("TOPLEFT", frame.body, "TOPLEFT", 0, -bodyHeight - 7)
+			frame.scenarioProgressBar:SetWidth(math.max(1, frame.body:GetWidth()))
+		end
+		local progressHeight = frame.scenarioProgressBar and frame.scenarioProgressBar:IsShown() and 24 or 0
+		local contentHeight = headerHeight + (hasMawBuffs and 65 or 0) + math.max(28, bodyHeight + 22 + progressHeight)
+		local totalHeight = contentHeight
+		if frame.bottomWidgets and frame.bottomWidgets:IsShown()
+			and frame.bottomWidgets:HasAnyWidgetsShowing() then
+			frame.bottomWidgets:ClearAllPoints()
+			frame.bottomWidgets:SetPoint("TOP", frame, "TOP", 0, -contentHeight - 4)
+			totalHeight = contentHeight + math.max(28, frame.bottomWidgets:GetHeight() or 0) + 14
+		end
+		frame:SetHeight(totalHeight)
+		if RQE.RefreshQuestTrackerScrollRange then RQE.RefreshQuestTrackerScrollRange() end
 	end
 
 
 	-- Use the function to create a unique header for the ScenarioChildFrame
-	RQE.ScenarioChildFrame = RQE.ScenarioChildFrame or CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
+	RQE.ScenarioChildFrame = RQE.ScenarioChildFrame or CreateFrame("Frame", "RQEScenarioChildFrame", UIParent, "BackdropTemplate")
 	CreateUniqueScenarioHeader(RQE.ScenarioChildFrame, "")
 
 
@@ -1245,7 +1285,6 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			WorldQuestDistance = 65,
 
 			-- Scenario Base Padding
-			ScenarioChildFrameBody = 75,  -- Added base padding for RQE.ScenarioChildFrame.body
 			ScenarioChildFrameScenarioTitle = 55,  -- Added base padding for RQE.ScenarioChildFrame.scenarioTitle
 			ScenarioChildFrameTitle = 75,  -- Added base padding for RQE.ScenarioChildFrame.title
 			ScenarioTimerFrame = 15,
@@ -1337,9 +1376,9 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			end
 		end
 
-		-- Adjust width for RQE.ScenarioChildFrame.body using dynamic padding if not nil
+		-- Keep the scenario objective text inside its matching left and right insets.
 		if RQE.ScenarioChildFrame.body then
-			RQE.ScenarioChildFrame.body:SetWidth(frameWidth - (basePadding.ScenarioChildFrameBody * (1 + paddingMultiplier)))
+			RQE.ScenarioChildFrame.body:SetWidth(math.max(1, RQE.ScenarioChildFrame:GetWidth() - 44))
 		end
 
 		-- Adjust width for RQE.ScenarioChildFrame.scenarioTitle using dynamic padding if not nil
@@ -2611,6 +2650,260 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-------------------------------------------------------
 
 	-- [Functions related to the scenario frame, such as RQE.InitializeScenarioFrame, RQE.UpdateScenarioFrame]
+	local function GetActiveChallengeRun()
+		local getTimers = RQE.API.ResolveClientAPI("GetWorldElapsedTimers")
+		local getTimer = RQE.API.ResolveClientAPI("GetWorldElapsedTime")
+		if not getTimers or not getTimer then return end
+		local challengeType = Enum and Enum.WorldElapsedTimerTypes and Enum.WorldElapsedTimerTypes.ChallengeMode
+			or LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE
+		if not challengeType then return end
+		for _, timerID in ipairs({ getTimers() }) do
+			local _, elapsed, timerType = getTimer(timerID)
+			if timerType == challengeType and type(elapsed) == "number" then
+				local mapID = RQE.API.Client.C_ChallengeMode.GetActiveChallengeMapID()
+				if mapID then
+					local _, _, limit = RQE.API.Client.C_ChallengeMode.GetMapUIInfo(mapID)
+					if type(limit) == "number" and limit > 0 then
+						return timerID, elapsed, limit
+					end
+				end
+			end
+		end
+	end
+
+	local function SetChallengeTime(panel, elapsed, limit)
+		local remaining = math.max(0, limit - elapsed)
+		panel.clock:SetText(SecondsToClock(remaining))
+		panel.bar:SetMinMaxValues(0, limit)
+		panel.bar:SetValue(remaining)
+		if remaining <= 0 then
+			panel.bar:SetStatusBarColor(0.82, 0.15, 0.18)
+		elseif RQE.UI and RQE.UI:IsEnabled() then
+			panel.bar:SetStatusBarColor(0.13, 0.58, 0.9)
+		else
+			panel.bar:SetStatusBarColor(0.22, 0.68, 0.24)
+		end
+	end
+
+	local function EnsureChallengePanel(frame)
+		if frame.challengePanel then return frame.challengePanel end
+		local panel = CreateFrame("Frame", nil, frame.header, "BackdropTemplate")
+		panel:SetPoint("TOPLEFT", frame.header, "TOPLEFT", 10, -36)
+		panel:SetPoint("TOPRIGHT", frame.header, "TOPRIGHT", -10, -36)
+		panel:SetHeight(88)
+		panel:SetBackdrop({ bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+			edgeFile = "Interface/Tooltips/UI-Tooltip-Border", edgeSize = 12,
+			insets = { left = 4, right = 4, top = 4, bottom = 4 } })
+		panel:SetBackdropColor(0.06, 0.06, 0.06, 0.9)
+		panel:SetBackdropBorderColor(0.52, 0.48, 0.38, 1)
+		if RQE.UI then RQE.UI:StylePanel(panel, 0.94, "section") end
+		panel.level = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+		panel.level:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -11)
+		panel.clock = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		panel.clock:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -14, -10)
+		panel.penalty = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		panel.penalty:SetPoint("TOPLEFT", panel.level, "BOTTOMLEFT", 0, -10)
+		panel.bar = CreateFrame("StatusBar", nil, panel)
+		panel.bar:SetPoint("BOTTOMLEFT", panel, "BOTTOMLEFT", 14, 12)
+		panel.bar:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -14, 12)
+		panel.bar:SetHeight(7)
+		panel.bar:SetStatusBarTexture("Interface/TargetingFrame/UI-StatusBar")
+		panel.affixButtons = {}
+		for index = 1, 5 do
+			local button = CreateFrame("Button", nil, panel)
+			button:SetSize(24, 24)
+			button:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -14 - (index - 1) * 28, -37)
+			button.icon = button:CreateTexture(nil, "ARTWORK")
+			button.icon:SetPoint("CENTER")
+			button.icon:SetSize(20, 20)
+			button.border = button:CreateTexture(nil, "OVERLAY")
+			button.border:SetAllPoints()
+			button.border:SetAtlas("ChallengeMode-AffixRing-Sm")
+			button:SetScript("OnEnter", function(self)
+				if not self.affixID then return end
+				local name, description = RQE.API.Client.C_ChallengeMode.GetAffixInfo(self.affixID)
+				if not name then return end
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+				GameTooltip:SetText(name)
+				if description then GameTooltip:AddLine(description, 1, 1, 1, true) end
+				GameTooltip:Show()
+			end)
+			button:SetScript("OnLeave", GameTooltip_Hide)
+			button:Hide()
+			panel.affixButtons[index] = button
+		end
+		panel:Hide()
+		frame.challengePanel = panel
+		return panel
+	end
+
+	local function UpdateChallengePanel(frame, timerID, elapsed, limit)
+		local panel = EnsureChallengePanel(frame)
+		frame.challengeTimerID = timerID
+		frame.challengeTimeLimit = limit
+		local level, affixes = RQE.API.Client.C_ChallengeMode.GetActiveKeystoneInfo()
+		panel.level:SetText(level and ("Mythic +" .. level) or "Mythic Keystone")
+		local deaths, timeLost = RQE.API.Client.C_ChallengeMode.GetDeathCount()
+		panel.penalty:SetText(("Deaths: %d"):format(deaths or 0)
+			.. ((timeLost and timeLost > 0) and ("  •  +" .. SecondsToClock(timeLost)) or ""))
+		for index, button in ipairs(panel.affixButtons) do
+			local affixID = type(affixes) == "table" and affixes[index]
+			local icon
+			if affixID then
+				local _, _, texture = RQE.API.Client.C_ChallengeMode.GetAffixInfo(affixID)
+				icon = texture
+			end
+			button.affixID = affixID
+			button.icon:SetTexture(icon)
+			button:SetShown(affixID ~= nil)
+		end
+		SetChallengeTime(panel, elapsed, limit)
+		panel:Show()
+	end
+
+	local scenarioTimerVisualizations = {
+		"C_UIWidgetManager.GetScenarioHeaderCurrenciesAndBackgroundWidgetVisualizationInfo",
+		"C_UIWidgetManager.GetScenarioHeaderDelvesWidgetVisualizationInfo",
+		"C_UIWidgetManager.GetScenarioHeaderTimerWidgetVisualizationInfo",
+		"C_UIWidgetManager.GetStatusBarWidgetVisualizationInfo",
+	}
+
+	local function WidgetSetHasCountdown(widgetSetID)
+		if type(widgetSetID) ~= "number" or widgetSetID <= 0 then return false end
+		local getWidgets = RQE.API.ResolveClientAPI("C_UIWidgetManager.GetAllWidgetsBySetID")
+		if not getWidgets then return false end
+		local ok, hasCountdown = pcall(function()
+			local widgets = getWidgets(widgetSetID)
+			if type(widgets) ~= "table" then return false end
+			for _, widget in ipairs(widgets) do
+				local widgetID = type(widget) == "table" and widget.widgetID
+				if type(widgetID) == "number" then
+					for _, path in ipairs(scenarioTimerVisualizations) do
+						local getInfo = RQE.API.ResolveClientAPI(path)
+						local infoOK, info = getInfo and pcall(getInfo, widgetID)
+						if infoOK and type(info) == "table" and info.shownState == 1 then
+							if info.hasTimer then return true end
+							if path == "C_UIWidgetManager.GetScenarioHeaderTimerWidgetVisualizationInfo"
+								and type(info.timerMax) == "number" and info.timerMax > 0 then
+								return true
+							end
+							if path == "C_UIWidgetManager.GetStatusBarWidgetVisualizationInfo"
+								and (info.barValueTextType == 3 or info.barValueTextType == 4) then
+								return true
+							end
+						end
+					end
+				end
+			end
+			return false
+		end)
+		return ok and hasCountdown or false
+	end
+
+	local function EnsureScenarioNativeWidgets(frame)
+		local function QueueLayout()
+			if frame:IsShown() and not frame.widgetLayoutQueued then
+				frame.widgetLayoutQueued = true
+				RQE.API.Client.C_Timer.After(0, function()
+					frame.widgetLayoutQueued = nil
+					if frame:IsShown() then RQE.UpdateScenarioFrame() end
+				end)
+			end
+		end
+		if not frame.stageWidgets then
+			local ok, widgetContainer = pcall(CreateFrame, "Frame", nil, frame.header, "UIWidgetContainerTemplate")
+			if ok and widgetContainer and type(widgetContainer.RegisterForWidgetSet) == "function" then
+				-- The scenario header uses LOW strata for its artwork. Keep the live
+				-- widget hit regions above the tracker scroll frame so Blizzard's
+				-- built-in icon tooltip handlers receive mouseover events.
+				widgetContainer:SetFrameStrata(frame:GetFrameStrata())
+				widgetContainer:SetFrameLevel(frame:GetFrameLevel() + 4)
+				widgetContainer.disableWidgetTooltips = false
+				widgetContainer:SetPoint("TOP", frame.header, "TOP", 0, -38)
+				widgetContainer.verticalAnchorPoint = "TOPRIGHT"
+				widgetContainer.verticalRelativePoint = "TOPRIGHT"
+				widgetContainer:HookScript("OnSizeChanged", QueueLayout)
+				widgetContainer:Hide()
+				frame.stageWidgets = widgetContainer
+			end
+		end
+		if not frame.topWidgets then
+			local ok, widgets = pcall(CreateFrame, "Frame", nil, frame.header, "UIWidgetContainerTemplate")
+			if ok and widgets and type(widgets.RegisterForWidgetSet) == "function" then
+				widgets:SetPoint("TOP", frame.header, "TOP", 0, -105)
+				widgets:HookScript("OnSizeChanged", QueueLayout)
+				frame.topWidgets = widgets
+			end
+		end
+		if not frame.bottomWidgets then
+			local ok, widgets = pcall(CreateFrame, "Frame", nil, frame, "UIWidgetContainerTemplate")
+			if ok and widgets and type(widgets.RegisterForWidgetSet) == "function" then
+				widgets:SetPoint("TOP", frame, "TOP", 0, -200)
+				widgets:HookScript("OnSizeChanged", QueueLayout)
+				frame.bottomWidgets = widgets
+			end
+		end
+		if frame.mawBuffs or not RQE.API.Client.IsInJailersTower() then return end
+		local ok, buffs = pcall(CreateFrame, "Button", nil, frame, "MawBuffsContainer")
+		if not ok or not buffs or not buffs.List then return end
+		buffs:SetPoint("TOP", frame.header, "BOTTOM", 0, -9)
+		buffs.List:SetParent(UIParent)
+		buffs.List:SetFrameStrata("DIALOG")
+		buffs.List:SetClampedToScreen(true)
+		local function AlignFlyout()
+			local x = frame:GetCenter()
+			local screenX = UIParent:GetCenter()
+			if not x or not screenX then return end
+			-- Blizzard's alignment method anchors its button to the objective tracker.
+			-- Keep this instance inside RQE after that method runs.
+			buffs:ClearAllPoints()
+			buffs:SetPoint("TOP", frame.header, "BOTTOM", 0, -9)
+			buffs.List:ClearAllPoints()
+			if x >= screenX then
+				buffs.List:SetPoint("TOPRIGHT", buffs, "TOPLEFT", -8, 1)
+			else
+				buffs.List:SetPoint("TOPLEFT", buffs, "TOPRIGHT", 8, 1)
+			end
+		end
+		if type(buffs.UpdateAlignment) == "function" then hooksecurefunc(buffs, "UpdateAlignment", AlignFlyout) end
+		buffs:HookScript("OnShow", AlignFlyout)
+		frame:HookScript("OnHide", function() buffs.List:Hide() end)
+		buffs:Hide()
+		frame.mawBuffs = buffs
+	end
+
+	-- Show a compact percentage bar beneath a weighted scenario objective when
+	-- Azure & Gold is active. Blizzard's stage widgets remain in the header.
+	local function EnsureScenarioProgressBar(frame)
+		if frame.scenarioProgressBar then return frame.scenarioProgressBar end
+		local bar = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+		bar:SetHeight(16)
+		bar:SetBackdrop({
+			bgFile = "Interface\\Buttons\\WHITE8X8",
+			edgeFile = "Interface\\Buttons\\WHITE8X8",
+			edgeSize = 1,
+			insets = { left = 1, right = 1, top = 1, bottom = 1 },
+		})
+		bar:SetBackdropColor(9 / 255, 14 / 255, 23 / 255, 0.98)
+		bar:SetBackdropBorderColor(1, 215 / 255, 0, 1)
+		bar.fill = CreateFrame("StatusBar", nil, bar)
+		bar.fill:SetPoint("TOPLEFT", bar, "TOPLEFT", 3, -3)
+		bar.fill:SetPoint("BOTTOMRIGHT", bar, "BOTTOMRIGHT", -3, 3)
+		bar.fill:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+		bar.fill:SetStatusBarColor(0, 87 / 255, 184 / 255, 1)
+		bar.fill:SetMinMaxValues(0, 100)
+		bar.background = bar.fill:CreateTexture(nil, "BACKGROUND")
+		bar.background:SetAllPoints()
+		bar.background:SetColorTexture(5 / 255, 10 / 255, 22 / 255, 1)
+		bar.percent = bar.fill:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+		bar.percent:SetPoint("CENTER")
+		bar.percent:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+		bar.percent:SetTextColor(1, 1, 1)
+		bar:SetFrameLevel(frame:GetFrameLevel() + 2)
+		bar:Hide()
+		frame.scenarioProgressBar = bar
+		return bar
+	end
 
 	-- Function to initiate the Scenario Frame
 	---@class RQE.ScenarioChildFrame : Frame
@@ -2626,9 +2919,10 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		if not RQE.ScenarioChildFrame then
 			---@type RQE.ScenarioChildFrame
 			-- Create the ScenarioChildFrame if it does not already exist
-			RQE.ScenarioChildFrame = CreateFrame("Frame", "RQEScenarioChildFrame", UIParent)
+			RQE.ScenarioChildFrame = CreateFrame("Frame", "RQEScenarioChildFrame", UIParent, "BackdropTemplate")
 			RQE.ScenarioChildFrame:SetSize(400, 200) -- Set the size as needed
 			RQE.ScenarioChildFrame:SetPoint("CENTER") -- Position it at the center, or change as needed
+			if RQE.UI then RQE.UI:StylePanel(RQE.ScenarioChildFrame, 0.10, "section") end
 		end
 
 		if not RQE.ScenarioChildFrame.scenarioTitle then
@@ -2673,6 +2967,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 		-- Create a new frame for the timer
 		---@type TimerFrame
+		if not RQE.ScenarioChildFrame.timerFrame then
 		RQE.ScenarioChildFrame.timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame, "BackdropTemplate")
 		RQE.ScenarioChildFrame.timerFrame:SetSize(100, 50)
 		RQE.ScenarioChildFrame.timerFrame:SetPoint("BOTTOMRIGHT", RQE.ScenarioChildFrame.header, "BOTTOMRIGHT", -10, 10)
@@ -2694,21 +2989,21 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 		RQE.ScenarioChildFrame.timer:SetAllPoints()
 		RQE.ScenarioChildFrame.timer:SetJustifyH("CENTER")
 		RQE.ScenarioChildFrame.timer:SetJustifyV("MIDDLE")
-		RQE.ScenarioChildFrame.timer:SetText("Initial Timer")
+		RQE.ScenarioChildFrame.timer:SetText("")
 		RQE.ScenarioChildFrame.timer:SetHeight(0)
 		RQE.ScenarioChildFrame.timer:SetWordWrap(true)
 		RQE.ScenarioChildFrame.timer:SetTextColor(1, 1, 0, 1)
 
 		-- Show the timer frame and its text
-		RQE.ScenarioChildFrame.timerFrame:Show()
-		RQE.ScenarioChildFrame.timer:Show()
+		RQE.ScenarioChildFrame.timerFrame:Hide()
+		end
 
 		if not RQE.ScenarioChildFrame.body then
 			-- Create the body as a FontString below the header
 			RQE.ScenarioChildFrame.body = RQE.ScenarioChildFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			RQE.ScenarioChildFrame.body:ClearAllPoints()
-			RQE.ScenarioChildFrame.body:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "BOTTOMLEFT", 10, -15)  -- Assuming the header is around 60px in height plus a 30px gap
-			RQE.ScenarioChildFrame.body:SetFont("Fonts\\FRIZQT__.TTF", 14, "MONOCHROME")
+			RQE.ScenarioChildFrame.body:SetPoint("TOPLEFT", RQE.ScenarioChildFrame.header, "BOTTOMLEFT", 22, -15)
+			RQE.ScenarioChildFrame.body:SetFont("Fonts\\FRIZQT__.TTF", 12, "MONOCHROME")
 			RQE.ScenarioChildFrame.body:SetText("Initial Body Text")
 			RQE.ScenarioChildFrame.body:SetJustifyH("LEFT")
 			RQE.ScenarioChildFrame.body:SetJustifyV("TOP")
@@ -2717,6 +3012,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			-- Set the color of the body FontString to white (r, g, b, alpha)
 			RQE.ScenarioChildFrame.body:SetTextColor(1, 1, 1, 0.9) -- White color
 		end
+		EnsureScenarioNativeWidgets(RQE.ScenarioChildFrame)
 
 		-- Update scenarioTitle and stage based on Torghast information
 		-- Previous Blizzard call changed 2026.09.25: if IsInJailersTower() and RQE.TorghastType and RQE.TorghastLayerNum and RQE.TorghastFloorID then
@@ -2780,99 +3076,124 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 
 	-- Function to update the scenario frame with the latest information
 	function RQE.UpdateScenarioFrame()
-		-- Fast exit if we are not in a scenario (most reliable first check)
-		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario or not C_Scenario.IsInScenario() then
-		if not RQE.API.ResolveClientAPI("C_Scenario.IsInScenario") or not RQE.API.Client.C_Scenario.IsInScenario() then
-			if RQE.ScenarioChildFrame then RQE.ScenarioChildFrame:Hide() end
-			return
-		end
+			local frame = RQE.ScenarioChildFrame
+			if not frame then return end
+			if RQE.db.profile.mythicScenarioMode or not RQE.API.Client.C_Scenario.IsInScenario() then
+				if frame.stageWidgets then frame.stageWidgets:RegisterForWidgetSet(nil) end
+				frame.stageWidgetSetID = nil
+				if frame.topWidgets then frame.topWidgets:RegisterForWidgetSet(nil) end
+				if frame.bottomWidgets then frame.bottomWidgets:RegisterForWidgetSet(nil) end
+				frame.topWidgetsRegistered = nil
+				frame.bottomWidgetsRegistered = nil
+				frame.hasNativeCountdown = nil
+				if frame.mawBuffs then frame.mawBuffs.List:Hide() end
+				frame:Hide()
+				return
+			end
 
-		-- Get the full scenario information once at the beginning of the function
-		-- Previous Blizzard call changed 2026.09.25: local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = C_Scenario.GetInfo()
-		local scenarioName, currentStage, numStages, flags, _, _, completed, xp, money, scenarioType, _, textureKit = RQE.API.Client.C_Scenario.GetInfo()
-		-- Previous Blizzard call changed 2026.09.25: local scenarioStepInfo = C_ScenarioInfo.GetScenarioInfo()
-		local scenarioStepInfo = RQE.API.Client.C_ScenarioInfo.GetScenarioInfo()
-		-- Previous Blizzard call changed 2026.09.25: local numCriteria = select(3, C_Scenario.GetStepInfo())
-		local numCriteria = select(3, RQE.API.Client.C_Scenario.GetStepInfo())
+			RQE.InitializeScenarioFrame()
+			if frame.topWidgets and not frame.topWidgetsRegistered then
+				frame.topWidgets:RegisterForWidgetSet(514)
+				frame.topWidgetsRegistered = true
+			end
+			if frame.bottomWidgets and not frame.bottomWidgetsRegistered then
+				frame.bottomWidgets:RegisterForWidgetSet(252)
+				frame.bottomWidgetsRegistered = true
+			end
+			local scenarioName, currentStage, numStages = RQE.API.Client.C_Scenario.GetInfo()
+			if not scenarioName or not numStages or numStages < 1 then
+				frame:Hide()
+				return
+			end
+			local stepName, stepDescription, numCriteria, _, _, _, _, _, _, weightedProgress, _, widgetSetID = RQE.API.Client.C_Scenario.GetStepInfo()
+			local timerID, elapsed, timeLimit = GetActiveChallengeRun()
+			if timerID then
+				UpdateChallengePanel(frame, timerID, elapsed, timeLimit)
+			elseif frame.challengePanel then
+				frame.challengePanel:Hide()
+				frame.challengeTimerID = nil
+			end
 
-		-- Only set stepID if scenarioStepInfo exists
-		local stepID = scenarioStepInfo and scenarioStepInfo.currentStage
-		local criteriaIndex = 1
-		-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-		local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+			local showNativeStage = false
+			local hasWidgetSet = type(widgetSetID) == "number" and widgetSetID > 0
+			if frame.stageWidgets then
+				if frame.stageWidgetSetID ~= (hasWidgetSet and widgetSetID or nil) then
+					frame.stageWidgets:RegisterForWidgetSet(hasWidgetSet and widgetSetID or nil)
+					frame.stageWidgetSetID = hasWidgetSet and widgetSetID or nil
+				end
+				frame.stageWidgets:SetShown(hasWidgetSet and not timerID)
+				showNativeStage = not timerID and hasWidgetSet and frame.stageWidgets:HasAnyWidgetsShowing()
+			end
+			-- Native timer widgets read the live scenario state, including a stage
+			-- already running when the player arrives. Other widgets keep RQE's clock.
+			frame.hasNativeCountdown = (showNativeStage and WidgetSetHasCountdown(widgetSetID))
+				or (frame.topWidgets and frame.topWidgets:IsShown()
+					and frame.topWidgets:HasAnyWidgetsShowing() and WidgetSetHasCountdown(514))
+				or (frame.bottomWidgets and frame.bottomWidgets:IsShown()
+					and frame.bottomWidgets:HasAnyWidgetsShowing() and WidgetSetHasCountdown(252))
 
-		-- Check if we have valid scenario information
-		if scenarioStepInfo and type(scenarioStepInfo) == "table" and RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.title then
-			if scenarioStepInfo.title then
-				RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title)
+			frame.scenarioTitle:SetText(scenarioName)
+			if timerID or showNativeStage then
+				frame.stage:Hide()
+				frame.title:Hide()
 			else
-				RQE.ScenarioChildFrame.title:SetText("Title is not available")
-			end
-		end
-
-		-- Check if we have valid scenario information
-		if scenarioName and scenarioStepInfo then
-			-- Update the scenarioTitle with the scenario name
-			if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.scenarioTitle then
-				RQE.ScenarioChildFrame.scenarioTitle:SetText(scenarioName)
+				frame.stage:SetText(("Stage %s of %s"):format(tostring(currentStage or 1), tostring(numStages)))
+				frame.title:SetText(stepName or "")
+				frame.stage:Show()
+				frame.title:Show()
 			end
 
-			-- Update the stage with the current stage and total stages
-			if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.stage then
-				RQE.ScenarioChildFrame.stage:SetText("Stage " .. currentStage .. " of " .. numStages)
+			local inTorghast = RQE.API.Client.IsInJailersTower()
+			if frame.mawBuffs then frame.mawBuffs:SetShown(not not inTorghast) end
+			if not inTorghast and frame.mawBuffs then frame.mawBuffs.List:Hide() end
+
+			local lines = {}
+			local timedCriteria
+			local progressPercent = type(weightedProgress) == "number" and weightedProgress or nil
+			local weightedCriteriaCount = 0
+			frame.timedCriteriaIndex = nil
+			if progressPercent and stepDescription and stepDescription ~= "" then
+				lines[#lines + 1] = stepDescription
 			end
-
-			-- Update the title with the scenario step title
-			if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.title then
-				RQE.ScenarioChildFrame.title:SetText(scenarioStepInfo.title or "Title is not available")
-			end
-
-			-- Update the main frame with criteria
-			local criteriaText = ""
-			-- Iterate through each criteria and collect information
-			for criteriaIndex = 1, numCriteria do
-				-- Previous Blizzard call changed 2026.09.25: local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-				local criteriaInfo = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
-
-				if criteriaInfo then
-					local description = criteriaInfo.description or "No description available"
-					local quantity = criteriaInfo.quantity or 0
-					local totalQuantity = criteriaInfo.totalQuantity or 0
-					local completed = criteriaInfo.completed or false
-
-					-- Format the criteria text
-					if completed then
-						criteriaText = criteriaText .. "|cff00ff00" .. quantity .. " / " .. totalQuantity .. " " .. description .. "|r\n" -- Green color for completed
-					else
-						criteriaText = criteriaText .. quantity .. " / " .. totalQuantity .. " " .. description .. "\n" -- Default color for not completed
+			for criteriaIndex = 1, progressPercent and 0 or (tonumber(numCriteria) or 0) do
+				local criteria = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+				if criteria and criteria.description then
+					if not timedCriteria and type(criteria.duration) == "number" and criteria.duration > 0
+						and type(criteria.elapsed) == "number" then
+						timedCriteria = math.max(0, criteria.duration - criteria.elapsed)
+						frame.timedCriteriaIndex = criteriaIndex
 					end
+					local progress = ""
+					if not criteria.isWeightedProgress and not criteria.isFormatted
+						and criteria.totalQuantity and criteria.totalQuantity > 0 then
+						progress = tostring(criteria.quantity or 0) .. "/" .. tostring(criteria.totalQuantity) .. "  "
+					end
+					if criteria.isWeightedProgress and not criteria.completed
+						and type(criteria.quantity) == "number" then
+						weightedCriteriaCount = weightedCriteriaCount + 1
+						progressPercent = criteria.quantity
+					end
+					local line = progress .. criteria.description
+					lines[#lines + 1] = criteria.completed and ("|cff69df91" .. line .. "|r") or line
 				end
 			end
-
-			if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.body then
-				RQE.ScenarioChildFrame.body:SetText(criteriaText)
+			frame.body:SetText(table.concat(lines, "\n"))
+			if RQE.UI and RQE.UI:IsEnabled() and progressPercent
+				and (type(weightedProgress) == "number" or weightedCriteriaCount == 1) then
+				local bar = EnsureScenarioProgressBar(frame)
+				local percent = math.max(0, math.min(100, progressPercent))
+				bar.fill:SetValue(percent)
+				bar.percent:SetText(("%d%%"):format(math.floor(percent + 0.5)))
+				bar:Show()
+			elseif frame.scenarioProgressBar then
+				frame.scenarioProgressBar:Hide()
 			end
-
-			-- Update the timer, if applicable
-			local duration = criteriaInfo and criteriaInfo.duration
-			local elapsed = criteriaInfo and criteriaInfo.elapsed
-
-			if RQE.ScenarioChildFrame and RQE.ScenarioChildFrame.timer then
-				if duration and elapsed then
-					local timeLeft = duration - elapsed
-					RQE.ScenarioChildFrame.timer:SetText(SecondsToTime(timeLeft))
-				else
-					RQE.ScenarioChildFrame.timer:SetText("")
-				end
+			if frame.timerFrame then
+				frame.timerFrame:SetShown(not timerID and not frame.hasNativeCountdown and timedCriteria ~= nil)
+				if timedCriteria then frame.timer:SetText(SecondsToTime(timedCriteria)) end
 			end
-
-			-- Display the frame if it's not already shown
-			RQE.ScenarioChildFrame:Show()
-		else
-			RQE.debugLog("No active scenario or scenario information is not available.")
-			-- Hide the scenario frame since we're not in a scenario
-			RQE.ScenarioChildFrame:Hide()
-		end
+			frame:Show()
+			RQE.SetScenarioChildFrameHeight()
 
 		-- Previous Blizzard call changed 2026.09.25: C_Timer.After(0.35, function()
 		RQE.API.Client.C_Timer.After(0.35, function()
@@ -3145,34 +3466,38 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 --------------------------------------------------
 
 	-------------------------------------------------------
-	-- #10a. Timer Text & Elapsed-Time Updates
+	-- #10a. Live Scenario Timer Updates
 	-------------------------------------------------------
 
-	-- Create a FontString for the timer text inside RQE.ScenarioChildFrame
+	-- This frame polls Blizzard's active timers without drawing a second clock.
 	local timerFrame = CreateFrame("Frame", nil, RQE.ScenarioChildFrame)
-	timerFrame:SetSize(100, 10) -- Adjust size as needed
-	timerFrame:SetPoint("TOP", RQE.ScenarioChildFrame.header, "TOP", 75, -45)
+	timerFrame:SetSize(1, 1)
+	timerFrame:SetPoint("TOPLEFT", RQE.ScenarioChildFrame, "TOPLEFT")
 
-	local timerText = timerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	timerText:SetAllPoints(timerFrame)
-	timerText:SetFont("Fonts\\FRIZQT__.TTF", 16, "OUTLINE")  -- Increase font size to 16, adjust as needed
-	timerText:SetTextColor(1, 1, 1, 1) -- Set timerText color to white
-
-	-- Function to update the timer display based on elapsed time from the DB
+	-- Use Blizzard's live challenge and scenario countdowns when available.
 	local function UpdateScenarioTimer(self, elapsed)
-		if not RQE.db or not RQE.db.char.scenarioStartTime then
-			timerText:SetText("00:00:00")  -- Reset if no time is found
+		self.updateAccumulator = (self.updateAccumulator or 0) + elapsed
+		if self.updateAccumulator < 0.5 then return end
+		self.updateAccumulator = 0
+		local frame = RQE.ScenarioChildFrame
+		local timerID, worldElapsed, limit = GetActiveChallengeRun()
+		if timerID then
+			if frame.challengeTimerID ~= timerID then
+				if not RQE.API.Client.InCombatLockdown() then RQE.UpdateScenarioFrame() end
+			elseif frame.challengePanel then
+				SetChallengeTime(frame.challengePanel, worldElapsed, limit)
+			end
 			return
+		elseif frame.challengeTimerID and not RQE.API.Client.InCombatLockdown() then
+			RQE.UpdateScenarioFrame()
 		end
-
-		-- Calculate the elapsed time from the stored start time
-		local elapsedTime = time() - RQE.db.char.scenarioStartTime
-		local hours = math.floor(elapsedTime / 3600)
-		local minutes = math.floor(elapsedTime / 60) % 60
-		local seconds = math.floor(elapsedTime % 60)
-
-		-- Update the timer text display
-		timerText:SetText(string.format("%02d:%02d:%02d", hours, minutes, seconds))
+		if frame.timerFrame and frame.timerFrame:IsShown() and frame.timedCriteriaIndex then
+			local criteria = RQE.API.Client.C_ScenarioInfo.GetCriteriaInfo(frame.timedCriteriaIndex)
+			if criteria and type(criteria.duration) == "number" and criteria.duration > 0
+				and type(criteria.elapsed) == "number" then
+				frame.timer:SetText(SecondsToTime(math.max(0, criteria.duration - criteria.elapsed)))
+			end
+		end
 	end
 
 
@@ -3180,7 +3505,7 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 	-- #10b. Timer Start & Stop Controls
 	-------------------------------------------------------
 
-	-- Function to start showing the elapsed time in the RQEQuestFrame
+	-- Poll live timers while the scenario child frame is active.
 	function RQE.StartScenarioTimer()
 		-- Only proceed if the player is in a scenario
 		-- Previous Blizzard call changed 2026.09.25: if not C_Scenario.IsInScenario() then
@@ -3188,18 +3513,34 @@ Retail quest tracker construction, sorting, search, rendering, and interaction
 			return
 		end
 
-		-- Ensure the timer keeps updating based on the saved start time
+		-- Keep polling for late Mythic+ timers and timed scenario criteria.
 		timerFrame:SetScript("OnUpdate", UpdateScenarioTimer)
-		timerFrame:Show() -- Show the frame displaying the timer
+		timerFrame:Show()
 	end
 
 	-- Function to stop the timer and clear the saved time from the DB
 	function RQE.StopScenarioTimer()
 		RQE.db.char.scenarioStartTime = nil  -- Clear the start time from the DB
 		timerFrame:SetScript("OnUpdate", nil)  -- Stop updating the timer
-		timerText:SetText("00:00:00")  -- Reset the displayed text
 		timerFrame:Hide()
 	end
+
+	local challengeEvents = CreateFrame("Frame")
+	for _, event in ipairs({ "ACTIVE_DELVE_DATA_UPDATE", "CHALLENGE_MODE_START", "CHALLENGE_MODE_DEATH_COUNT_UPDATED",
+		"WORLD_STATE_TIMER_START", "WORLD_STATE_TIMER_STOP", "PLAYER_ENTERING_WORLD",
+		"PLAYER_REGEN_ENABLED" }) do
+		if event ~= "ACTIVE_DELVE_DATA_UPDATE" or RQE.IsRetail then
+			challengeEvents:RegisterEvent(event)
+		end
+	end
+	challengeEvents:SetScript("OnEvent", function()
+		if RQE.db and not RQE.db.profile.mythicScenarioMode
+			and RQE.API.Client.C_Scenario.IsInScenario() and not RQE.API.Client.InCombatLockdown() then
+			RQE.UpdateScenarioFrame()
+			RQE.CheckScenarioStartTime()
+			RQE.StartScenarioTimer()
+		end
+	end)
 
 
 --------------------------------------------------
