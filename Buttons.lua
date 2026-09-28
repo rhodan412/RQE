@@ -1139,6 +1139,50 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		return button
 	end
 
+	-- A one-click authoring capture for the currently supertracked quest.
+	-- The Contribution addon owns the per-quest SavedVariables and step attachment.
+	function RQE.Buttons.CreateContributionWaypointButton(RQEFrame)
+		local version = RQE.API and RQE.API.GameVersion
+		if not version or not (version.isRetail or version.isForever) then return end
+		if RQE.ContributionWaypointButton then return RQE.ContributionWaypointButton end
+
+		local button = CreateFrame("Button", nil, RQEFrame, "UIPanelButtonTemplate")
+		button:SetSize(18, 18)
+		button:SetText("W")
+		button:SetFrameStrata("MEDIUM")
+		button:SetFrameLevel(3)
+		button:SetPoint("TOPLEFT", RQE.RQEContributionButton, "TOPRIGHT", 3, 0)
+		button:Hide()
+		RQE.ContributionWaypointButton = button
+
+		button:SetScript("OnClick", function()
+			if not RQE_Contribution or not RQE_Contribution.CaptureSupertrackedWaypoint then return end
+			local _, message = RQE_Contribution.CaptureSupertrackedWaypoint()
+			if message then print("RQE Contribution: " .. message) end
+		end)
+		button:SetScript("OnEvent", function(self, _, addonName)
+			if addonName == "RQE_Contribution" then
+				self:UnregisterEvent("ADDON_LOADED")
+				RQE.Buttons.RefreshContributionWaypointButton()
+			end
+		end)
+		button:RegisterEvent("ADDON_LOADED")
+		CreateTooltip(button, "Capture Blizzard's next waypoint for the supertracked quest")
+		CreateBorder(button)
+		if RQE.UI then RQE.UI:StyleIconButton(button, "WaypointTarget") end
+		RQE.Buttons.RefreshContributionWaypointButton()
+		return button
+	end
+
+	function RQE.Buttons.RefreshContributionWaypointButton()
+		local button = RQE.ContributionWaypointButton
+		if not button then return end
+		local ready = IsContributionAddonLoaded() and RQE_Contribution
+			and type(RQE_Contribution.CaptureSupertrackedWaypoint) == "function"
+		button:SetShown(ready and true or false)
+		if RQE.Buttons.UpdateHeaderNavigation then RQE.Buttons.UpdateHeaderNavigation() end
+	end
+
 	-- Function to show, hide, and restyle the Contribution launcher when its editor becomes available
 	function RQE.Buttons.RefreshContributionButton()
 		local button = RQE.RQEContributionButton
@@ -1160,6 +1204,7 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		if RQE.Buttons.UpdateHeaderNavigation then
 			RQE.Buttons.UpdateHeaderNavigation()
 		end
+		RQE.Buttons.RefreshContributionWaypointButton()
 	end
 
 	-------------------------------------------------------
@@ -1575,7 +1620,9 @@ Shared button behavior, main-frame controls, quest-tracker menus, and secure que
 		-- Center the title inside the space that remains between the left utility
 		-- buttons and whichever navigation group currently begins on the right.
 		if RQE.headerText and RQE.RQEFrameHeader then
-			local leftAnchor = RQE.ContributeButton or RQE.SearchButton or RQE.RQEFrameHeader
+			local captureButton = RQE.ContributionWaypointButton
+			local leftAnchor = (captureButton and captureButton:IsShown() and captureButton)
+				or RQE.ContributeButton or RQE.SearchButton or RQE.RQEFrameHeader
 			local rightAnchor
 			if showWaypoints then
 				rightAnchor = BackButton
