@@ -1,3 +1,65 @@
+12.1.0.12 (2026.09.28)
+
+	**HIGHLIGHTS**
+		- RQE's scenario section now shows Blizzard's stage displays for activities such as Delves and Torghast, plus Torghast Anima Powers and their flyout.
+		- Mythic+ runs now show the Blizzard run countdown, keystone level, affixes with tooltips, and death penalty in RQE's scenario section.
+		- Superbloom and other timed scenarios now show Blizzard's current stage countdown, including when joining after a stage has started.
+		- New Mythic+ details match Azure & Gold when enabled and use the classic RQE look when it is off.
+		- The scenario section no longer shows a second count-up clock, and its objective lines are more compact.
+		- Scenario Mode now hides Blizzard's Objective Tracker when off or outside a scenario, and restores the RQE tracker when leaving one.
+		- Scenario objective text sits inside its border, and Azure & Gold shows a progress bar only for stages with weighted progress.
+		- Torghast's stage icons can show their Blizzard tooltips inside RQE's scenario section.
+		- New profiles start with the RQE scenario tracker selected across Retail, Forever, SoD, and TBC Anniversary.
+		- Blizzard's Objective Tracker now stays visually hidden through combat when Scenario Mode is unchecked.
+
+	Client_Classic/Core.lua
+		- Defaulted Scenario Mode to unchecked for new Classic/SoD profiles so RQE's tracker remains active until the player opts into Blizzard's scenario tracker. (2026.09.28.1239)
+
+	Client_TBC/Core.lua
+		- Defaulted Scenario Mode to unchecked for new TBC Anniversary profiles so RQE's tracker remains active until the player opts into Blizzard's scenario tracker. (2026.09.28.1239)
+
+	Config.lua
+		- Clarified both Scenario Mode tooltips so players know the unchecked state hides Blizzard's tracker during normal play and scenarios. (2026.09.28.1219)
+
+	Core.lua
+		- Made Scenario Mode the automatic Blizzard tracker handoff: unchecking or leaving a scenario restores RQE's tracker and hides Blizzard's, while entering a scenario with the option enabled suppresses the RQE quest frame. (2026.09.28.1219)
+		- Cleared temporary manual Blizzard tracker requests on automatic visibility refreshes and refreshed scenario content when switching tracker modes. (2026.09.28.1219)
+		- Defaulted Scenario Mode to unchecked for new Retail and Forever profiles so RQE's tracker remains active until the player opts into Blizzard's scenario tracker. (2026.09.28.1239)
+		- Applied the combat-safe Blizzard tracker visibility rule even when a full tracker layout change must wait for combat to end. (2026.09.28.1256)
+
+	EventManager.lua
+		- Reapplied the scenario visibility rule after delayed Blizzard UI updates and kept explicit context-menu or frame-toggle requests as temporary Blizzard tracker overrides. (2026.09.28.1219)
+		- Limited scenario-mode handoff in the manual tracker toggle to active scenarios and hid Blizzard's tracker when reopening RQE's frames. (2026.09.28.1219)
+		- Registered combat entry to suppress Blizzard's Objective Tracker immediately, then restored its normal hidden state on combat exit. (2026.09.28.1256)
+
+	QuestingModule.lua
+		- Embedded Blizzard's live scenario widget set in the RQE scenario header and added the native Maw Buffs control with a screen-aware Anima Powers flyout, so floor, currency, deaths remaining, and power details appear while RQE's tracker is active. (2026.09.28.1133)
+		- Added an RQE-styled Mythic+ panel using the active world timer, keystone and affix data, and death count; refreshed it on challenge and timer events and kept the existing elapsed timer for other scenarios. (2026.09.28.1133)
+		- Sized the scenario section around native widgets, Anima Powers, and wrapped criteria, used the live step name instead of an unavailable-title placeholder, and kept timed criteria visible without overlapping the Mythic+ clock. (2026.09.28.1133)
+		- Registered Blizzard's fixed scenario widget groups and suppressed RQE's local elapsed and criteria clocks while native widgets provide the live display, so Superbloom stage timers pick up the current countdown after a mid-stage arrival. (2026.09.28.1140)
+		- Applied RQE's optional Azure & Gold panel style to the Mythic+ display and switched its countdown bar and classic backdrop colors by theme state, keeping Blizzard scenario widgets functional in either appearance. (2026.09.28.1143)
+		- Refreshed timed-criteria countdowns from Blizzard's current duration and elapsed data while the scenario is active, so non-widget stage timers also keep counting down after the player arrives mid-stage. (2026.09.28.1145)
+		- Refreshed the Retail scenario section when active Delve data changes, keeping its native floor and progress display synchronized without registering a Retail-only event on other clients. (2026.09.28.1147)
+		- Inspected Blizzard widget visualization data to hide RQE's clocks only for visible native countdowns, preserving the elapsed clock beside Torghast and Delve widgets that have no timer. (2026.09.28.1149)
+		- Removed the small local elapsed-time text from the scenario header while retaining invisible polling for Mythic+ and timed-criteria countdowns, so Blizzard's stage timer appears without a competing count-up clock. (2026.09.28.1203)
+		- Reduced the Scenario Child Frame objective body font from 14 to 12 points, making progress lines such as 0/1 less prominent and improving fit beneath the stage widget. (2026.09.28.1203)
+		- Enforced the scenario-only Blizzard tracker handoff in the visibility hook and limited the transition watchdog to actual state changes, so Blizzard's tracker does not linger when Scenario Mode is off. (2026.09.28.1219)
+		- Moved scenario objective text 12 pixels inward and sized it to the child frame, preventing wrapped 0/1 lines from touching the Azure & Gold panel border. (2026.09.28.1219)
+		- Added an Azure & Gold percentage bar for Blizzard weighted-progress criteria or stages and reserved space beneath the objective text; ordinary numeric goals such as 0/1 do not show a bar. (2026.09.28.1219)
+		- Raised the native scenario stage widget container above the tracker scroll frame and enabled its Blizzard tooltip handling, allowing Torghast floor, death, and Phantasma icon hover regions to receive mouse events. (2026.09.28.1239)
+		- Used temporary combat alpha suppression for Blizzard's protected Objective Tracker, reinforced by its show hook and existing watchdog, and restored its prior alpha before the normal post-combat hide. (2026.09.28.1256)
+
+	RQE_API.lua
+		- Exposed Blizzard's world timer enumeration and challenge-mode keystone, affix, and death APIs through the client adapter so the Retail scenario panel can read live run data with unavailable-API fallbacks. (2026.09.28.1133)
+		- Added client-adapter access to scenario widget sets and their timer, currency, Delve, and status-bar visualization data so RQE can identify a native countdown without assuming every scenario widget is a timer. (2026.09.28.1149)
+
+	RQE.toc
+		- Updated version# (2026.09.28.1612)
+
+	RQEDatabase.lua
+		- Updated some Northrend Horde quests in DB (2026.09.28.1612)
+
+
 12.1.0.11 (2026.09.28)
 
 	**HIGHLIGHTS**
