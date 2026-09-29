@@ -40,16 +40,24 @@ RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect qu
 
 ### Live scenario stages
 
-On Retail, RQE can bring Blizzard's live stage displays into the Quest Tracker's **Scenario** section. Torghast shows its floor, deaths, Phantasma, and Anima Powers; timed events such as Superbloom show a stage countdown and objective; and Delves show tier, objectives, and weighted progress when available. These panels combine separate activities to show how each appears in RQE.
+On Retail, RQE keeps Blizzard's live stage displays in the Quest Tracker's **Scenario** section. With Azure & Gold enabled, Torghast, timed events such as Superbloom, and Delves each have their own stage artwork. Floor information, countdowns, tier, objectives, currencies, and weighted progress remain live and readable. This panel combines screenshots from three separate activities.
 
-[![RQE Scenario Tracker showing Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/27f38b07-570e-460c-815c-e6d714e454ea)](https://github.com/user-attachments/assets/27f38b07-570e-460c-815c-e6d714e454ea)
+[![Azure and Gold scenario artwork for Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/f7167d1c-0277-4e54-8b86-1539711785ee)](https://github.com/user-attachments/assets/f7167d1c-0277-4e54-8b86-1539711785ee)
 
-Hover stage icons and Torghast powers for Blizzard's tooltips; the Anima Powers control opens a power list. Mythic+ runs can also show the countdown, keystone, affixes, and death penalty. See the [scenario tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#live-scenario-stages) for details and the **Mythic/Scenario Mode** setting.
+Hover stage icons and Torghast powers for Blizzard's details; the **Anima Powers** control opens a power list. Mythic+ runs can also show the countdown, keystone, affixes, and death penalty. For smoother transitions into and out of scenarios, leave **Mythic/Scenario Mode** unchecked and use RQE's Scenario section. See the [scenario tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#live-scenario-stages) for the tracker choice.
+
+### Dungeon cards by difficulty
+
+With Azure & Gold, **Follower**, **Normal**, and **Heroic** dungeons have distinct name-card backgrounds and difficulty badges. **Mythic 0** and **Mythic+** both keep the simpler Blizzard background, without an added difficulty badge, so the name, timer, and run icons stay clear. The Mythic 0 example below illustrates that shared background; it is not a Mythic+ screenshot.
+
+[![Follower, Normal, Heroic, and Mythic 0 dungeon cards in RQE](https://github.com/user-attachments/assets/396c5df0-73f9-4e5d-91af-1a4dc6388dff)](https://github.com/user-attachments/assets/396c5df0-73f9-4e5d-91af-1a4dc6388dff)
+
+Hover a Follower, Normal, or Heroic difficulty badge for its difficulty and player-count tooltip. Follower identifies the mode as **Follower Dungeon**; Normal and Heroic use Blizzard-style details. See the [dungeon card guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#dungeon-cards-by-difficulty) for more context.
 
 <details>
-<summary>See Torghast powers and Delve hover details</summary>
+<summary>See the three dungeon difficulty tooltips</summary>
 
-[![Torghast Anima Powers flyout and Delve stage tooltips](https://github.com/user-attachments/assets/91a1c50d-9b3f-4ee2-8130-e284afb16c75)](https://github.com/user-attachments/assets/91a1c50d-9b3f-4ee2-8130-e284afb16c75)
+[![Follower, Normal, and Heroic dungeon difficulty badge hover tooltips](https://github.com/user-attachments/assets/d84fcec0-4c54-45ee-9b3a-9141a14be382)](https://github.com/user-attachments/assets/d84fcec0-4c54-45ee-9b3a-9141a14be382)
 
 </details>
 
