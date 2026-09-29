@@ -42,7 +42,7 @@ RQE can link tracked quests to Wowhead and Warcraft Wiki and help you inspect qu
 
 On Retail, RQE keeps Blizzard's live stage displays in the Quest Tracker's **Scenario** section. With Azure & Gold enabled, Torghast, timed events such as Superbloom, and Delves each have their own stage artwork. Floor information, countdowns, tier, objectives, currencies, and weighted progress remain live and readable. This panel combines screenshots from three separate activities.
 
-[![Azure and Gold scenario artwork for Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/f7167d1c-0277-4e54-8b86-1539711785ee)](https://github.com/user-attachments/assets/f7167d1c-0277-4e54-8b86-1539711785ee)
+[![Azure and Gold scenario artwork for Torghast, Superbloom, and Delves](https://github.com/user-attachments/assets/863998cf-7e6e-4cca-8fc6-2dd54702d3bf)](https://github.com/user-attachments/assets/863998cf-7e6e-4cca-8fc6-2dd54702d3bf)
 
 Hover stage icons and Torghast powers for Blizzard's details; the **Anima Powers** control opens a power list. Mythic+ runs can also show the countdown, keystone, affixes, and death penalty. For smoother transitions into and out of scenarios, leave **Mythic/Scenario Mode** unchecked and use RQE's Scenario section. See the [scenario tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#live-scenario-stages) for the tracker choice.
 
@@ -50,14 +50,14 @@ Hover stage icons and Torghast powers for Blizzard's details; the **Anima Powers
 
 With Azure & Gold, **Follower**, **Normal**, and **Heroic** dungeons have distinct name-card backgrounds and difficulty badges. **Mythic 0** and **Mythic+** both keep the simpler Blizzard background, without an added difficulty badge, so the name, timer, and run icons stay clear. The Mythic 0 example below illustrates that shared background; it is not a Mythic+ screenshot.
 
-[![Follower, Normal, Heroic, and Mythic 0 dungeon cards in RQE](https://github.com/user-attachments/assets/396c5df0-73f9-4e5d-91af-1a4dc6388dff)](https://github.com/user-attachments/assets/396c5df0-73f9-4e5d-91af-1a4dc6388dff)
+[![Follower, Normal, Heroic, and Mythic 0 dungeon cards in RQE](https://github.com/user-attachments/assets/c76d6f64-2684-47e0-9edf-6e23b3854103)](https://github.com/user-attachments/assets/c76d6f64-2684-47e0-9edf-6e23b3854103)
 
 Hover a Follower, Normal, or Heroic difficulty badge for its difficulty and player-count tooltip. Follower identifies the mode as **Follower Dungeon**; Normal and Heroic use Blizzard-style details. See the [dungeon card guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#dungeon-cards-by-difficulty) for more context.
 
 <details>
 <summary>See the three dungeon difficulty tooltips</summary>
 
-[![Follower, Normal, and Heroic dungeon difficulty badge hover tooltips](https://github.com/user-attachments/assets/d84fcec0-4c54-45ee-9b3a-9141a14be382)](https://github.com/user-attachments/assets/d84fcec0-4c54-45ee-9b3a-9141a14be382)
+[![Follower, Normal, and Heroic dungeon difficulty badge hover tooltips](https://github.com/user-attachments/assets/0d22f26b-a97a-4ecb-8ef2-9dfd11b1b1a2)](https://github.com/user-attachments/assets/0d22f26b-a97a-4ecb-8ef2-9dfd11b1b1a2)
 
 </details>
 
@@ -69,7 +69,7 @@ Click a section-header chevron to collapse or expand that section independently 
 
 | Set your section order | Fold the sections you do not need |
 | --- | --- |
-| [![Tracker Section Order controls in Frame Settings](https://github.com/user-attachments/assets/4accc760-63f2-45f7-8eab-6bbd5bb937b2)](https://github.com/user-attachments/assets/4accc760-63f2-45f7-8eab-6bbd5bb937b2) | [![Quest Tracker sections collapsed and selectively expanded](https://github.com/user-attachments/assets/929ebc88-6247-4b11-ae5f-21711d62f34d)](https://github.com/user-attachments/assets/929ebc88-6247-4b11-ae5f-21711d62f34d) |
+| [![Tracker Section Order controls in Frame Settings](https://github.com/user-attachments/assets/de5a23fb-22de-49dd-b6a5-9f78a87f2543)](https://github.com/user-attachments/assets/de5a23fb-22de-49dd-b6a5-9f78a87f2543) | [![Quest Tracker sections collapsed and selectively expanded](https://github.com/user-attachments/assets/02b1487b-f7f7-497c-a761-9ebef1998374)](https://github.com/user-attachments/assets/02b1487b-f7f7-497c-a761-9ebef1998374) |
 
 See the [Tracker section order settings](https://github.com/rhodan412/RQE/wiki/Settings-and-Controls#tracker-section-order) and [collapse guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker#collapse-tracker-sections) for details.
 
@@ -79,9 +79,9 @@ By default, the Quest Tracker places tracked recipes in a **Profession** section
 
 Achievement entries show each criterion, including numeric progress and the objective text. Achievements without a usable criterion show their description instead. Completed criteria appear in green.
 
-[![RQE tracked recipes: material counts and item tooltips in the Profession section](https://github.com/user-attachments/assets/5111b1d2-c409-46fc-a07d-f1b751857e16)](https://github.com/user-attachments/assets/5111b1d2-c409-46fc-a07d-f1b751857e16)
+[![RQE tracked recipes: material counts and item tooltips in the Profession section](https://github.com/user-attachments/assets/e99fd348-0326-4666-b909-8fdf0a03423f)](https://github.com/user-attachments/assets/e99fd348-0326-4666-b909-8fdf0a03423f)
 
-[![RQE tracked achievements: completed criteria, numeric progress, and description fallback](https://github.com/user-attachments/assets/58bd5a83-16cb-421d-9966-ae23efdc2240)](https://github.com/user-attachments/assets/58bd5a83-16cb-421d-9966-ae23efdc2240)
+[![RQE tracked achievements: completed criteria, numeric progress, and description fallback](https://github.com/user-attachments/assets/a37d24bc-d66c-45e6-916d-7b358d0f9199)](https://github.com/user-attachments/assets/a37d24bc-d66c-45e6-916d-7b358d0f9199)
 
 Hover a recipe or ingredient for details, and click it to open the profession recipe or inspect an unlearned recipe. Hover an achievement for its category, icon, and criteria summary; click its title to open it. **Shift+left-click** a recipe, ingredient, or achievement title to stop tracking that entry. The [Quest Helper and Tracker guide](https://github.com/rhodan412/RQE/wiki/Quest-Helper-and-Tracker) has more examples.
 
