@@ -1,3 +1,301 @@
+12.1.0.13 (2026.10.01)
+
+	**HIGHLIGHTS**
+		- Quest steps can show the live number of objectives remaining in colored text, updating as Blizzard reports progress.
+		- Azure & Gold now gives timed scenarios, Torghast, and untimed scenarios distinct stage artwork while preserving Blizzard's live widgets and tooltips; Torghast's skull sits clear of the border.
+		- Azure & Gold gives the Delve tier flag a blue tint to match its new lapis stage artwork.
+		- Azure & Gold Delve stages now keep their artwork after reloading inside a Delve and center the stage card within its header.
+		- The Delve tier flag now has a visible gold edge around its blue center.
+		- Azure & Gold untimed stage cards now fit between their gold side rails without crowding the scenario title, and Delve flags have a brighter gold outline.
+		- Azure & Gold timed scenario cards now fill more of the header width and sit more evenly between its gold bars while keeping the live countdown and text at their original size.
+		- Azure & Gold timed scenario cards now sit higher within their header to reduce the gray space above the timer.
+		- Azure & Gold timed scenario cards now sit closer to the scenario title while keeping the countdown and progress bar unchanged.
+		- Timed scenario artwork and positioning now follow the visible stage timer even when the widget-set countdown lookup misses it.
+		- Azure & Gold Torghast stages now fill more of the header and show Phantasma on a distinct lighter field.
+		- Mythic 0 and Mythic+ dungeons keep Blizzard's stage artwork, and the keystone countdown keeps its stock backdrop in Azure & Gold.
+		- Follower, Normal, Heroic, Mythic, and Mythic+ dungeons now show a Blizzard-style dungeon name card instead of a duplicate stage label, while active keystone runs keep their countdown visible.
+		- Dungeon name cards now sit higher within their headers, leaving more even space above and below the Blizzard artwork.
+		- Azure & Gold now gives Follower, Normal, and Heroic dungeons separate name-card artwork while Mythic 0 and Mythic+ keep the Blizzard card and live key timer.
+		- Follower, Normal, and Heroic dungeon cards now show matching difficulty badges; Normal and Heroic use Blizzard-style difficulty tooltips, and Follower shows a fixed Follower Dungeon tooltip.
+		- Dungeon difficulty badges now sit closer to the card's gold top border and accept mouseover so their tooltips can appear in the tracker.
+		- The tracker now switches between Basic and Azure & Gold from a Themes page with a preview, applying the chosen look without a reload or after combat ends.
+		- Switching to Basic now restores its original frame backgrounds, simple section headers, and quest row borders without a reload.
+		- Azure & Gold now shows the section border around tracked achievements, and Basic keeps its plain quest section borders after switching themes.
+		- The Quest Tracker filter menu now offers "Track Quests not in DB" below Quest Line when RQE Contribution is loaded, on every supported WoW client.
+		- Tracking quests missing from the DB now saves the selection; SoD and TBC show those quests through RQE's virtual tracker without using Blizzard's limited quest watches.
+		- Choosing the missing-DB filter after a tracker search now replaces the search result and clears its stale Restore action.
+		- With RQE Contribution loaded, "Track Quests Missing Both DBs" prints and tracks only visible quests missing from both databases, saving after the tracker repopulates and keeping current tracking when none are found.
+		- The quest filter now uses compact flyouts with quest counts and one-click tracking choices, including Instance, Incomplete, and Ready for turn-in.
+		- More filters groups zone, type, and quest-line choices; automatic zone tracking and Restore previous tracking are easy to reach while RQE keeps its existing proximity sorting.
+		- Contribution filters now share one flyout that appears only when RQE Contribution is loaded.
+		- Nested filter lists continue outward and offer Back navigation when another column would overlap the main menu.
+		- Wowhead and Warcraft Wiki links open focused and fully selected for Ctrl+C, with quest-name headers, movable windows, an X button, and Escape closure.
+		- NPC previews now center creatures horizontally and vertically in the existing window while preserving object previews and manual pan/zoom.
+		- Toggling Auto-track current zone now keeps the filter menu open, updates its checkmark immediately, and retains the menu scroll position.
+		- The Quest Helper Search Frame now closes with Escape whether or not its input is focused, and its search button reopens it on the next click.
+		- Quest hovers in the Helper and Tracker now place available Warband completion beneath the title, omit redundant Status lines, keep clear section spacing, and show Quest ID at the lower right; chat-link tooltips keep their existing presentation.
+		- Quest hovers now finish displaying their details and Quest ID while in a raid group.
+		- Task and world quest hovers now show reputation reward choices, including Warband reputation, while preserving other rewards and chat-link tooltips.
+		- Right-click menus in the Quest Helper and Quest Tracker now use compact flyouts that follow the selected tracker theme and keep their existing actions.
+		- Contribution actions now sit in a right-click flyout, while Open Sandbox stays first whenever it is available.
+		- Quest right-click menus can show optional companion-addon actions beside the built-in quest links.
+		- Themes now show large, cropped Quest Helper and timed scenario Tracker examples for Basic and Azure & Gold in both settings windows.
+		- Theme examples are smaller and evenly spaced, with each heading staying beside its screenshot as the settings window narrows.
+		- The standalone Themes page can now scroll through both examples when they appear side by side.
+		- Azure & Gold now offers separate, previewable card styles for Timed Scenarios, Heroic, Normal, and Follower Dungeons, Delves, and Torghast, with an individual default reset for each.
+		- Card style choices stay with the current profile when switching between Basic and Azure & Gold; dungeon difficulty badges and their tooltips remain in place.
+		- Gilded Slate is the default Azure & Gold Delves card style for new profiles and the Delves Reset button.
+		- Delve stage cards now sit more evenly between the scenario header's left and right borders across all three styles.
+		- The Delves card now uses the horizontal position confirmed in game after the first adjustment.
+		- Scenario cards now keep their alignment when entering an activity or advancing stages, without requiring a reload.
+		- Azure & Gold Delve cards now center on first entry as well as after stage changes, without a reload.
+		- Void Strike and other scenarios without a native stage card now show readable stage text inside the Azure & Gold header, with long event names given room to stay on one line.
+		- Azure & Gold untimed scenario event names now sit within the gold border, with clearer spacing between the event, stage number, and stage objective.
+		- Azure & Gold offers more card artwork choices for timed scenarios, Follower, Normal, and Heroic dungeons, Delves, and Torghast while keeping the existing card layout and difficulty tooltips.
+		- Azure & Gold adds Hourglass Sands, Frostwind Rush, and Eclipse Mantle for timed scenarios, Runic Relay for Torghast, and Ember Sprint for Delves.
+		- Azure & Gold now starts with Gathered Camp for Follower dungeons, Moonlit Passage for Normal dungeons, Sunward Citadel for Heroic dungeons, and Veiled Souls for Torghast; card style menus list their choices alphabetically.
+		- Torghast's full scenario name now stays on one readable line above its stage card in both Basic and Azure & Gold, including after tracker resizing.
+		- With RQE Contribution loaded, the tracker right-click menu can preview Follower, Normal, Heroic, and Mythic-0 dungeon cards, Torghast, Timed Scenarios, and Delves while changing themes and card styles outside those activities.
+		- The Superbloom test card starts a 10:33 countdown with a fixed brown bar; turning off Test Scenario Cards restores the live scenario card or hides the scenario child outside scenarios.
+		- Hourglass Sands is now the default Azure & Gold Timed Scenario card style for new profiles and Reset.
+		- Live Azure & Gold Delve artwork sits slightly higher and extends farther toward its lower gold border without shifting the tier flag, title, or story icon.
+		- Leaving an outdoor scenario now moves the next visible tracker section into place as soon as the scenario card disappears.
+
+	Buttons.lua
+		- Kept native button borders available when Azure & Gold is active and refreshed their visibility on theme changes, so switching back to Basic restores the original controls. (2026.09.28.2251)
+		- Added the Contribution-only "Track Quests not in DB" filter as the last main-menu item, checking addon load state each time the menu opens and reusing the existing cross-client quest-log tracking action. (2026.09.29.1050)
+		- Added "Track Quests Missing Both DBs" directly beneath the existing missing-DB option when Contribution and its scan-and-track function are loaded, delegating to the printed scan and native/virtual watch replacement action shared by all client menus. (2026.09.29.1703)
+		- Replaced the large framed filter panel and duplicate submenu mixins with the existing filter-button launcher for the shared compact flyouts, retaining the tracker header icon and tooltip. (2026.09.29.2233)
+
+	Client_Classic/Config.lua
+		- Replaced the Classic reload-only theme checkbox with a Themes tab and settings opener, using the shared picker and saved named theme. (2026.09.28.2300)
+
+	Client_Classic/Core.lua
+		- Formatted opt-in remaining-count tokens in the Classic/SoD step list when objective progress changes. (2026.09.28.1627)
+		- Compared the actual fulfilled and required snapshot fields so progress changes refresh the step list even if Blizzard's objective wording stays the same. (2026.09.28.1633)
+		- Registered the shared Themes page in Classic AddOn Settings so Classic profiles can use the same live tracker picker. (2026.09.28.2300)
+		- Routed profile and slider opacity updates through the active tracker theme so Azure & Gold keeps its charcoal tint and Basic keeps its native black tint. (2026.09.28.2314)
+		- Changed TrackQuestsNotInDB to rebuild the Classic/SoD tracker with persistent RQE virtual watches, reset prior filter views, refresh the frame, and save only after the missing quests have been selected, avoiding Blizzard's quest-watch limit. (2026.09.29.1057)
+		- Cleared active tracker search results and disabled their stale Restore action when the missing-DB filter takes over the Classic/SoD virtual tracker. (2026.09.29.1100)
+		- Removed the separate Classic/SoD Wowhead and Warcraft Wiki popups and unused chat-message clipboard listener; QuestTools now owns focus, full-text selection, moving, quest-name headers, X close, and Escape. (2026.09.29.2233)
+
+	Client_Classic/QuestingModule.lua
+		- Added the explicit quest-menu selection as a Classic/SoD virtual tracker source below search-result precedence, suppressing unrelated native and virtual sources even for an empty selection while retaining the existing proximity comparator and search matching. (2026.09.29.2233)
+		- Removed the duplicate character Status section from Classic/SoD tracker quest-title and objective hovers and called the shared capability-aware Warband header; preserved level prefixes, description, Next Step, objectives, rewards and reward spells, and used right-column Quest ID footers for normal, world-quest and bonus-objective hovers without changing tooltip theme styling. (2026.09.30.0013)
+		- Made raid groups skip only party-progress lines in the Classic/SoD tracker quest hover builders so the footer and tooltip display still complete. (2026.09.30.0013)
+		- Added the frame-hover-only reputation-choice opt-in to the shared-shaped Classic/SoD reward builder and its task/world path, delegating reward identification to RQE.API; the native legacy reward branch and its quest-log selection/restoration remain unchanged, and default chat reward calls do not opt in. (2026.09.30.0035)
+		- Routed the Classic/SoD tracker background and quest right-click menus through the shared themed flyout, marking Contribution-only tracking and diagnostics for the nested Contribution list while retaining each quest action, condition, and callback. (2026.09.30.1017)
+		- Added the generic quest-context extension slot after the built-in reference links in the Classic/SoD tracker quest menu, passing the clicked quest ID to registered companion actions without changing the built-in links. (2026.09.30.1044)
+
+	Client_Classic/RQEFrame.lua
+		- Resolved the remaining objective count in the Classic/SoD focus step so its colored description follows live progress. (2026.09.28.1627)
+		- Added focused-input and global Escape closure for the Classic/SoD Search Frame through a live UISpecialFrames alias; restored the pooled AceGUI input handler, cleared the alias and frame reference on close, synchronized the search-button state, and released the visible widget when toggled off. (2026.09.29.2347)
+		- Applied the shared Warband-capability check below the Classic/SoD helper hover title and removed the character and searched-quest Status rows; retained the level prefix, descriptions, DB fallbacks, objectives, rewards and current-step help, normalized section spacing, and right-aligned the Quest ID footer without adding unavailable Warband data. (2026.09.30.0013)
+		- Skipped only party progress in raid groups instead of exiting the Classic/SoD helper tooltip, allowing its footer and display to complete. (2026.09.30.0013)
+		- Opted the Classic/SoD helper quest hover into the capability-guarded reputation-choice reward call while keeping native legacy rewards unchanged. (2026.09.30.0035)
+		- Routed both Classic/SoD Quest Helper right-click menus through the shared themed flyout, marking Contribution-only tools, controls, and tracking actions for the nested list while leaving the gated Open Sandbox action at the root. (2026.09.30.1017)
+		- Added the generic quest-context extension slot after the built-in reference links in the Classic/SoD Quest Helper quest menu, passing its displayed quest ID while leaving the other frame menu unchanged. (2026.09.30.1044)
+
+	Client_Classic/WaypointManager.lua
+		- Resolved remaining-count tokens in Classic/SoD waypoint descriptions and titles so raw tokens do not appear on the map. (2026.09.28.1627)
+
+	Client_TBC/Config.lua
+		- Replaced the TBC Anniversary reload-only theme checkbox with a Themes tab and settings opener, using the shared picker and saved named theme. (2026.09.28.2300)
+
+	Client_TBC/Core.lua
+		- Formatted opt-in remaining-count tokens in the TBC Anniversary step list when objective progress changes. (2026.09.28.1627)
+		- Compared the actual fulfilled and required snapshot fields so progress changes refresh the step list even if Blizzard's objective wording stays the same. (2026.09.28.1633)
+		- Registered the shared Themes page in TBC Anniversary AddOn Settings so TBC profiles can use the same live tracker picker. (2026.09.28.2300)
+		- Routed profile and slider opacity updates through the active tracker theme so Azure & Gold keeps its charcoal tint and Basic keeps its native black tint. (2026.09.28.2314)
+		- Changed TrackQuestsNotInDB to rebuild the TBC Anniversary tracker with persistent RQE virtual watches, reset prior filter views, refresh the frame, and save only after the missing quests have been selected, avoiding Blizzard's quest-watch limit. (2026.09.29.1057)
+		- Cleared active tracker search results and disabled their stale Restore action when the missing-DB filter takes over the TBC Anniversary virtual tracker. (2026.09.29.1100)
+		- Removed the separate TBC Anniversary Wowhead and Warcraft Wiki popups and unused chat-message clipboard listener; QuestTools now owns focus, full-text selection, moving, quest-name headers, X close, and Escape. (2026.09.29.2233)
+
+	Client_TBC/QuestingModule.lua
+		- Added the explicit quest-menu selection as a TBC Anniversary virtual tracker source below search-result precedence, suppressing unrelated native and virtual sources even for an empty selection while retaining the existing proximity comparator and search matching. (2026.09.29.2233)
+		- Removed the duplicate character Status section from TBC Anniversary tracker quest-title and objective hovers and called the shared capability-aware Warband header; retained level prefixes, description, Next Step, objectives, rewards and reward spells, and used right-column Quest ID footers for normal, world-quest and bonus-objective hovers without changing tooltip theme styling. (2026.09.30.0013)
+		- Made raid groups skip only party-progress lines in the TBC Anniversary tracker quest hover builders so the footer and tooltip display still complete. (2026.09.30.0013)
+		- Added the frame-hover-only reputation-choice opt-in to the shared-shaped TBC Anniversary reward builder and its task/world path, delegating reward identification to RQE.API; the native legacy reward branch and its quest-log selection/restoration remain unchanged, and default chat reward calls do not opt in. (2026.09.30.0035)
+		- Routed the TBC Anniversary tracker background and quest right-click menus through the shared themed flyout, marking Contribution-only tracking and diagnostics for the nested Contribution list while retaining each quest action, condition, and callback. (2026.09.30.1017)
+		- Added the generic quest-context extension slot after the built-in reference links in the TBC Anniversary tracker quest menu, passing the clicked quest ID to registered companion actions without changing the built-in links. (2026.09.30.1044)
+
+	Client_TBC/RQEFrame.lua
+		- Resolved the remaining objective count in the TBC Anniversary focus step so its colored description follows live progress. (2026.09.28.1627)
+		- Added focused-input and global Escape closure for the TBC Anniversary Search Frame through a live UISpecialFrames alias; restored the pooled AceGUI input handler, cleared the alias and frame reference on close, synchronized the search-button state, and released the visible widget when toggled off. (2026.09.29.2347)
+		- Applied the shared Warband-capability check below the TBC Anniversary helper hover title and removed the character and searched-quest Status rows; preserved the level prefix, descriptions, DB fallbacks, objectives, rewards and current-step help, normalized section spacing, and right-aligned the Quest ID footer without adding unavailable Warband data. (2026.09.30.0013)
+		- Skipped only party progress in raid groups instead of exiting the TBC Anniversary helper tooltip, allowing its footer and display to complete. (2026.09.30.0013)
+		- Opted the TBC Anniversary helper quest hover into the capability-guarded reputation-choice reward call while keeping native legacy rewards unchanged. (2026.09.30.0035)
+		- Routed both TBC Anniversary Quest Helper right-click menus through the shared themed flyout, marking Contribution-only tools, controls, and tracking actions for the nested list while leaving the gated Open Sandbox action at the root. (2026.09.30.1017)
+		- Added the generic quest-context extension slot after the built-in reference links in the TBC Anniversary Quest Helper quest menu, passing its displayed quest ID while leaving the other frame menu unchanged. (2026.09.30.1044)
+
+	Client_TBC/WaypointManager.lua
+		- Resolved remaining-count tokens in TBC Anniversary waypoint descriptions and titles so raw tokens do not appear on the map. (2026.09.28.1627)
+
+	Config.lua
+		- Replaced the old reload-only theme checkbox with a Themes tab in the standalone window and a direct opener for the Blizzard settings page. (2026.09.28.2251)
+
+	ConfigTheme.lua
+		- Added a shared theme dropdown and adjacent changing preview while keeping both configuration surfaces on their established styling. (2026.09.28.2251)
+		- Sized the picker previews for tracker header artwork so the two choices show recognizable theme chrome beside the dropdown. (2026.09.28.2300)
+		- Replaced the small header sample with paired Quest Helper and timed scenario Tracker screenshot previews, placed the selected theme description below the dropdown, and shared the layout between the standalone and Blizzard settings pages. (2026.09.30.1132)
+		- Grouped each theme preview heading, divider, and screenshot into a top-aligned AceGUI card that wraps as one unit; reduced both screenshot slots to 80% of their former sizes and centralized those dimensions so future themes display uniformly in both settings windows. (2026.09.30.1211)
+		- Gave both preview cards a shared Flow alignment offset based on the taller screenshot, so AceGUI measures the full side-by-side row and the standalone Themes scroll frame includes the Tracker example. (2026.09.30.1227)
+		- Added six ordered Azure & Gold card-style groups to the shared Themes options, each with only its activity's choices, an adjacent scaled artwork preview, and a reset button naming its own default; the compact preview widget reports its height for the standalone scroll layout. (2026.09.30.1402)
+		- Sorted each activity's card-style dropdown by its displayed style name without changing the card registry, selected artwork, preview, or per-activity Reset action. (2026.09.30.1737)
+
+	Core.lua
+		- Formatted opt-in remaining-count tokens in the Retail/Forever step list when objective progress changes. (2026.09.28.1627)
+		- Compared the actual fulfilled and required snapshot fields so progress changes refresh the step list even if Blizzard's objective wording stays the same. (2026.09.28.1633)
+		- Registered the new Themes page under Blizzard AddOn Settings so it appears beside the existing RQE settings pages. (2026.09.28.2251)
+		- Routed profile and slider opacity updates through the active tracker theme so changing opacity does not overwrite Azure & Gold's charcoal backdrop. (2026.09.28.2314)
+		- Saved the Retail/Forever watched-quest selection after TrackQuestsNotInDB finishes its delayed quest-log scan and adds the matching Blizzard quest watches. (2026.09.29.1057)
+		- Cleared active tracker search state when choosing the missing-DB filter on Retail/Forever so Restore cannot replace the newly saved watched-quest selection. (2026.09.29.1100)
+		- Removed the separate Retail/Forever Wowhead and Warcraft Wiki popups and unused chat-message clipboard listener; QuestTools now owns the movable focused dialog instead of requiring the Highlight Text button. (2026.09.29.2233)
+		- Kept the quest tracker visible for the Retail Contribution-only scenario-card preview even when the profile normally hides an empty tracker, while preserving the manual close rule and ordinary visibility behavior after preview ends. (2026.09.30.1815)
+
+	EventManager.lua
+		- Preserved an active scenario-card preview through scenario and zone UI refreshes and skipped live scenario content updates while preview is selected; ordinary scenario rendering resumes when the preview checkbox is cleared. (2026.09.30.1815)
+
+	ProfileManager.lua
+		- Applied each profile's tracker theme during profile restoration and refreshed the Themes page when profiles change, without requiring a UI reload. (2026.09.28.2251)
+
+	QuestingModule.lua
+		- Applied theme-specific timer, Torghast, or untimed artwork to RQE's native scenario stage widget after Blizzard updates it, preserving live countdowns, currencies, icons, and tooltip hit regions while leaving Blizzard artwork intact when the theme is off. (2026.09.28.1719)
+		- Moved only the themed Torghast skull decoration inward from the stage widget border without repositioning the native widget or its other controls. (2026.09.28.1719)
+		- Recolored the native Delve tier flag for Azure & Gold while retaining its tier text and tooltip frame. (2026.09.28.1725)
+		- Styled live scenario widgets already present when the saved theme loads, then installed late-loaded Blizzard widget hooks so Delve artwork remains themed after reloading inside a scenario. (2026.09.28.1737)
+		- Raised only untimed, non-Torghast stage widgets in Azure & Gold to center their artwork within the Scenario Child header without moving timed or Torghast stages or changing unthemed layouts. (2026.09.28.1737)
+		- Tinted the native Delve flag gold and layered a smaller blue atlas copy beneath its tier text, making the border distinct from the lapis background while preserving the native tooltip frame and its layout. (2026.09.28.1737)
+		- Lowered and shortened only the themed untimed stage artwork, widened it within the header rails, and compensated for the widget container's right alignment so the card is centered without changing timer or Torghast widgets. (2026.09.28.1752)
+		- Added a shaped additive gold overlay and a small top-edge highlight to the Delve tier flag so its outline and lower V read clearly without enlarging the V or replacing Blizzard's tooltip frame. (2026.09.28.1752)
+		- Widened only the themed timed stage backdrop symmetrically and raised its native widget slightly to reduce gray margins while leaving countdown text, progress fill, widget height, and Torghast styling unchanged. (2026.09.28.1805)
+		- Raised the timed, non-Torghast stage widget a further six UI units to balance the gray margins above and below the artwork without changing its width or timer layout. (2026.09.28.1808)
+		- Raised the themed timed, non-Torghast stage widget eight more UI units after in-game comparison showed excess gray space above the timer card. (2026.09.28.1811)
+		- Used the visible stage widget's own timer state when choosing timed placement and suppressing RQE's duplicate clock, so a missed widget-set countdown cannot leave the card at the untimed/default offset. (2026.09.28.1814)
+		- Widened and raised only the Azure & Gold Torghast backdrop inside the header rails while keeping Blizzard's floor label, currencies, skull, and tooltip hit regions at their native positions. (2026.09.28.1837)
+		- Added a lighter slate inset behind the rightmost live Torghast currency, reanchoring it after Blizzard updates the currency frames so the icon and count stay readable without replacing their tooltip controls. (2026.09.28.1837)
+		- Preserved Blizzard's scenario stage art and native placement in Mythic 0 or challenge dungeon instances by checking the party difficulty ID and live challenge state instead of the broader Mythic+ availability flag. (2026.09.28.1905)
+		- Kept the existing Mythic+ clock and affix panel on Blizzard's stock tooltip backdrop in themed mode so its countdown remains visible without custom Azure & Gold panel artwork. (2026.09.28.1905)
+		- Kept native Blizzard scenario widget artwork and placement for every party dungeon, including follower, Normal, Heroic, Mythic 0, and Mythic+; the party instance type distinguishes these from Delves, Torghast, and outdoor scenarios even when IsMythicPlusActive is true. (2026.09.28.1925)
+		- Replaced the text-only dungeon stage fallback with a name card using Blizzard's texture-kit tracker header atlas and a default atlas fallback, while retaining the dungeon objectives below it. (2026.09.28.1925)
+		- Placed the existing live keystone clock beneath the dungeon name card and expanded only dungeon header height so an active key timer and affix controls remain visible. (2026.09.28.1925)
+		- Raised the Blizzard-style name card eight UI units in all party dungeons to balance the space inside the header without changing card size, objective text, or the keystone timer layout. (2026.09.28.1930)
+		- Applied the selected Guided Expedition, Arcane Map, and Obsidian Crest card textures only at Follower (205), Normal (1), and Heroic (2) difficulties when Azure & Gold is enabled, leaving the shared card placement and live dungeon-name text unchanged. (2026.09.28.1957)
+		- Kept the Blizzard dungeon atlas for Mythic 0, challenge difficulty, active challenge maps or timers, and disabled themes so the keystone countdown path stays visible and separate from the non-Mythic artwork. (2026.09.28.1957)
+		- Added Blizzard atlas difficulty badges to the themed Follower, Normal, and Heroic dungeon name cards at a responsive upper-right position, preserving the approved card anchors and reserving text space beside each badge. (2026.09.28.2016)
+		- Matched Blizzard's localized difficulty and player-count tooltip formatting for Normal and Heroic badge hover; gave Follower a Normal-style badge with a fixed Follower Dungeon and 5 Players tooltip, while hiding badges on Mythic cards. (2026.09.28.2016)
+		- Raised the shared Follower, Normal, and Heroic badge position toward the card's upper gold border, and lifted its mouse target above the tracker scroll frame so the Follower tooltip and the other badge tooltips receive hover events. (2026.09.28.2024)
+		- Preserved Blizzard scenario widget artwork and geometry before applying Azure & Gold, then restored native stage art, Delve flag colors, and Torghast decoration when Basic is selected. (2026.09.28.2251)
+		- Updated Retail/Forever quest-title and objective hovers to show only the supported Warband row beneath the title, removing the standalone character Status section while retaining description, Next Step, objective colors and reward/spell details; applied the same header and right-column Quest ID footer to world-quest and bonus-objective hovers using the existing GameTooltip styling. (2026.09.30.0013)
+		- Changed the normal quest hover party-progress guards to exclude raids without returning from the tooltip builder, so the right-aligned Quest ID and final Show call remain available in raid groups. (2026.09.30.0013)
+		- Added only missing reputation currency choices to the Retail/Forever task/world reward path before its early return, using RQE.API.GetQuestReputationChoiceRewards and RQE's existing choice heading, icons, amount formatting and quality colors. Frame hovers pass an optional opt-in argument; two-argument chat calls, ordinary choice handling, XP, money, items, spells, major-faction rewards and selected-quest restoration keep their existing behavior. (2026.09.30.0035)
+		- Routed the Retail/Forever tracker background and quest right-click menus through the shared themed flyout, marking Contribution-only tracking and diagnostics for the nested Contribution list while retaining each quest action, condition, and callback. (2026.09.30.1017)
+		- Added the generic quest-context extension slot after the built-in reference links in the Retail/Forever tracker quest menu, passing the clicked quest ID to registered companion actions without changing the built-in links. (2026.09.30.1044)
+		- Resolved the selected profile artwork for Torghast, Delve, timed scenario, and Follower/Normal/Heroic dungeon cards through the card-style registry while retaining their existing placement, live widget content, difficulty badges, tooltip targets, and native Mythic artwork. (2026.09.30.1402)
+		- Shifted only the themed Delve stage widget 20 UI units right to balance its visible margins; Follower, Normal, Heroic, Mythic, Torghast, and timed scenario anchors remain on their existing placement paths. (2026.09.30.1418)
+		- Applied the in-game-tested Delve X correction by removing its extra negative 12-unit category offset; the card now uses only the existing half-width inset, leaving other scenario and dungeon anchors unchanged. (2026.09.30.1424)
+		- Reconciled Blizzard stage-widget Setup captures against the last themed frame and widget dimensions, preserving the original native width, height, anchors, and art when a reused widget has not reset them; Delve, timed, and Torghast cards therefore keep their existing placement across entry and stage transitions without changing dungeon card anchors or difficulty controls. (2026.09.30.1441)
+		- Queued a scenario layout pass after widget size changes during initial entry and when the header reaches its final width, preventing first-entry card placement from remaining at an earlier size until reload. (2026.09.30.1447)
+		- Held the stage-widget anchor steady while Blizzard briefly has no visible stage widget between steps, then applied the same activity placement when the new widget appears. (2026.09.30.1451)
+		- Limited the additional entry and header-width layout passes to Azure & Gold scenario widgets, preserving Basic and party-dungeon update timing while retaining the no-reload theme switch. (2026.09.30.1452)
+		- Removed the extra horizontal offset from the shared scenario stage-widget anchor because Blizzard's resize layout already centers the themed widget width; this keeps Delve art in the same position on entry and later stages without changing the separate dungeon-card anchors. (2026.09.30.1510)
+		- Marked the native scenario widget container for layout whenever Azure & Gold changes an untimed widget's width or Basic restores its native width, so live theme and header-size changes remeasure the card without requiring a reload. (2026.09.30.1510)
+		- Widened the scenario name's usable text area only for Azure & Gold fallback stages, keeping names such as Arcane Construct Warfare on one line as progress updates resize the tracker; retained the original width for Basic and native widget cards. (2026.09.30.1546)
+		- Positioned fallback stage and step text together within the themed header and switched those two lines to a plain outlined font, restoring their original anchors and fonts whenever the fallback is not themed so objectives no longer overlap its gold border. (2026.09.30.1546)
+		- Moved the Azure & Gold fallback event name below the top gold rail, reduced the event and stage text sizes, and grouped the stage number closer to its objective; restored the original title size when another card or Basic is active so native scenario cards retain their established layout. (2026.09.30.1554)
+		- Sized only Torghast's scenario-name FontString from the actual scenario child width during height updates and tracker resizing, disabled wrapping and reduced its font only when necessary; removed the initializer's forced newline so the full name stays above the card in Basic and Azure & Gold. (2026.09.30.1737)
+		- Added a transient Retail Contribution-gated scenario-card preview that uses the existing dungeon card and selected artwork, plus sample Torghast, Timed Scenario, and Delve stage content in the scenario child; the Superbloom sample counts down from 10:33 without changing its brown bar. (2026.09.30.1815)
+		- Reused the scenario child's height and Torghast title fitting for preview-only content, paused native widget registrations during testing, and restored their registration, badge hover, and live scenario rendering on exit without changing live card anchors. (2026.09.30.1815)
+		- Cleared the preview-only height override for dungeon cards so Follower, Normal, Heroic, and Mythic-0 tests use the live 126-unit header; reduced the Timed Scenario, Torghast, and Delve sample artwork to the native widget height within a 148-unit header, keeping their text, timer, and objective rows inside the existing frame. (2026.09.30.1956)
+		- Replaced the preview's Delve rectangle and Torghast placeholder icons with Blizzard's Delve flag atlas, Torghast decoration atlas, and Deaths/Phantasma currency icons; adjusted preview-only timer, currency field, and Anima Powers positions and sizes to resemble the live cards without changing live widget geometry. (2026.09.30.1956)
+		- Matched the Delve test card to Blizzard's title font, native-size tier flag and Azure & Gold flag layers, and circular story spell icon placement; the preview remembers the most recently displayed live Delve icon without changing that widget's layout or tooltips. (2026.09.30.2037)
+		- Raised only the live Delve stage artwork by four UI units and extended its texture height from native minus twelve to native plus four, keeping the widget and its child anchors unchanged while leaving non-Delve untimed, timed, Torghast, dungeon, and preview layout values as before. (2026.09.30.2059)
+		- In the Delve-only test preview, inset the artwork two UI units on each side, raise its top five units, and extend its bottom three units to match the confirmed live Delve border; restored full-size artwork bounds for the other preview types while leaving all preview text, icon, and flag anchors and every live card untouched. (2026.09.30.2109)
+		- Replaced the Delve test title's small-caps font with a mixed-case Friz Quadrata face at the live title's apparent size, moved it left and upward, and moved only the preview story icon left and downward beneath the title; retained the confirmed preview border and tier flag and all live Delve geometry. (2026.09.30.2116)
+		- Shifted only the Timed Scenario test stage name and countdown left to the live Superbloom text anchors, lowered the countdown and fixed-width preview bar slightly, and replaced its flat brown fill with a gold-tinted status-bar texture closer to the live bar; left live timer and other preview card layouts unchanged. (2026.09.30.2207)
+		- Refreshed the existing default or player-ordered tracker anchors and scroll range when the scenario child actually hides while the tracker content is visible, so outdoor scenario exits close the empty gap without changing any scenario card layout. (2026.09.30.2223)
+
+	QuestTools.lua
+		- Added pooled, scrollable compact filter menus with fresh quest-log counts and one-time All, Current zone, Campaign, Daily / Weekly, Instance, Incomplete, and Ready for turn-in selections; Instance uses instance-specific quest tags and excludes outdoor group quests. (2026.09.29.2233)
+		- Grouped zone, quest-type, and quest-line choices under More filters and the two existing missing-database actions under a Contribution flyout shown only when RQE Contribution is loaded; retained its filter-frame refresh integration and preserved current tracking when its scan returns no matches. (2026.09.29.2233)
+		- Applied native watch differences on Retail/Forever and saved explicit persistent virtual selections on Classic/SoD and TBC Anniversary, avoiding the legacy native watch limit and stale temporary-progress expiry; manual choices release active search views and automatic zone membership. (2026.09.29.2233)
+		- Added Restore previous tracking snapshots for native watches, legacy display sources, search state, and automatic zone tracking; routed the zone checkbox through existing client behavior, guarded tracking changes in combat, and preserved the focused helper quest across membership refreshes. (2026.09.29.2233)
+		- Kept the existing sorting implementation active and exposed its status without adding alternate sort modes; left quest and frame right-click menu layouts unchanged. (2026.09.29.2233)
+		- Anchored flyouts outside their parent borders using scaled screen coordinates, continued nested menus in the same outward direction, and replaced an intermediate column with a Back row when another column would overlap an ancestor; retained mouse-leave dismissal, screen clamping, scrolling, and Escape closure. (2026.09.29.2233)
+		- Added one reusable movable Wowhead/Warcraft Wiki copy dialog with provider and quest-name headers, an X button, and a Ctrl+C hint; focused and selected the full URL immediately and after context-menu dismissal or dragging, with edit-box and global Escape handlers and focus cleanup on hide. (2026.09.29.2233)
+		- Encoded reserved characters and UTF-8 bytes in Warcraft Wiki quest-name searches, used API/log/database title fallbacks, and registered dialog controls and compact menu colors with the existing Basic and Azure & Gold theme system. (2026.09.29.2233)
+		- Kept the Auto-track current zone checkbox open after checking or unchecking it, rebuilt its rows to show the current checkmark and Restore availability, and retained the prior scroll offset; other action clicks, flyout toggles, filter-button toggles, and mouse-away dismissal retain their existing behavior. (2026.09.29.2347)
+		- Added a reusable cursor-anchored right-click menu adapter to the existing scrollable filter flyout renderer, preserving client menu callbacks, moving gated Contribution actions into a nested list, keeping Open Sandbox first, and converting dashed no-op rows into visual separators. Its menu palette now reads the active theme colors and gives Basic neutral styling, so current and future themes use the same menu structure. (2026.09.30.1017)
+		- Added a keyed registry for optional quest-context actions and an inert insertion method when no companion action is registered, preserving the unconditional built-in menu rows and their order. (2026.09.30.1044)
+		- Exposed generic quest-title and copyable-URL presentation methods and routed the existing reference actions through the shared dialog without changing their link formats, focus behavior, or theme styling. (2026.09.30.1044)
+		- Added a Retail-only Test Scenario Cards checkbox to the loaded Contribution right-click flyout and a content-choice submenu for Follower, Normal, Heroic, Mythic-0, Torghast, Timed Scenario, and Delves previews. (2026.09.30.1815)
+		- Refreshed open child flyouts after checkbox actions so the Contribution menu stays open, updates its checkmark, and reveals or removes the preview-choice row without affecting the filter menu's existing auto-track behavior. (2026.09.30.1815)
+
+	README.md
+		- Replaced the earlier scenario overview with current Torghast, Superbloom, and Delve artwork; documented all five dungeon difficulty cards, badge hover details, and the shared Blizzard background for Mythic 0 and Mythic+ so players can compare the new tracker presentation. (2026.09.28.2132)
+
+	RQE-Camelot.TOC
+		- Loaded QuestTools.lua after Buttons.lua for Classic Forever so the compact filter menu and focused copy dialog are available before tracker frames are created. (2026.09.29.2233)
+
+	RQE-Classic.toc
+		- Loaded QuestTools.lua after Buttons.lua for Classic/SoD so the compact filter menu, virtual-selection integration, and focused copy dialog share the supported client implementation. (2026.09.29.2233)
+
+	RQE-Tbc.toc
+		- Loaded QuestTools.lua after Buttons.lua for TBC Anniversary so the compact filter menu, virtual-selection integration, and focused copy dialog share the supported client implementation. (2026.09.29.2233)
+
+	RQE.toc
+		- Updated version# (2026.09.29.0115)
+		- Loaded QuestTools.lua after Buttons.lua for Retail so the compact filter menu and focused copy dialog are available before tracker frames are created. (2026.09.29.2233)
+
+	RQEFrame.lua
+		- Resolved the remaining objective count in the Retail/Forever focus step so its colored description follows live progress. (2026.09.28.1627)
+		- Registered the unnamed Retail/Forever Search Frame through a live UISpecialFrames alias and closed it from the focused input's Escape handler; restored the original AceGUI edit-box script and removed the alias before release, synchronized the search-button state, and hid/released the live widget on toggle-off to avoid orphaned pooled frames. (2026.09.29.2347)
+		- Moved the Warband completion row directly below the quest name in the Retail/Forever helper hover tooltip and removed the redundant character and searched-quest Status rows; normalized description/objective section gaps, preserved DB descriptions, objectives, rewards and current-step help, and placed the aquamarine Quest ID in the footer's right column. (2026.09.30.0013)
+		- Limited party-progress retrieval to non-raid groups instead of returning from the helper hover builder in raids, so the tooltip still reaches its Quest ID footer and Show call. (2026.09.30.0013)
+		- Opted the Retail/Forever helper quest hover into the new reputation-choice reward reader through the existing reward tooltip call, leaving chat callers on the unchanged default contract. (2026.09.30.0035)
+		- Routed both Retail/Forever Quest Helper right-click menus through the shared themed flyout, marking Contribution-only tools, controls, and tracking actions for the nested list while leaving the gated Open Sandbox action at the root. (2026.09.30.1017)
+		- Added the generic quest-context extension slot after the built-in reference links in the Retail/Forever Quest Helper quest menu, passing its displayed quest ID while leaving the other frame menu unchanged. (2026.09.30.1044)
+
+	RQE_API.lua
+		- Added a guarded, client-aware objective count reader that returns Blizzard's fulfilled and required counts without inventing a fallback total. (2026.09.28.1627)
+		- Added display-time replacement for {objectiveRemaining} using required minus fulfilled while leaving authored descriptions and existing text unchanged. (2026.09.28.1627)
+		- Replaced fixed NPC view offsets with the CinematicModel viewport midpoint on both axes while leaving PlayerModel at its native centered origin; retained manual pan relative to that midpoint if model loading changes viewport geometry, without changing model zoom, facing, frame dimensions, or object-image handling. (2026.09.29.2347)
+		- Installed each NPC request's view options before SetCreature can invoke a cached-load callback, refreshed the creature camera before configuration, and applied translation after all camera setters so later camera setup cannot overwrite the requested framing. (2026.09.29.2347)
+		- Added AddFrameQuestTooltipWarbandStatus for helper/tracker quest hovers, checking the client Warband capability and resolving a supported account-completion API before adding one wrapped completion row; unavailable clients omit the row, and chat-link tooltip presentation stays separate. (2026.09.30.0013)
+		- Added the guarded GetQuestReputationChoiceRewards reader and currency-to-faction API dispatch. Kaliel's System/Utils.lua reads currency choices with GetQuestLogChoiceInfoLootType and C_QuestLog.GetQuestRewardCurrencyInfo; RQE independently uses those public reward APIs plus C_CurrencyInfo.GetFactionGrantedByCurrency to identify reputation, retaining native total amounts and context flags. For example, quest 93605's Amani choice can report currency 3354 and a total of 2,500, which is displayed once without adding its Warband bonus again; unsupported legacy clients and unavailable data return no fabricated rows. (2026.09.30.0035)
+
+	RQE_ModelPreview.lua
+		- Removed the old fixed NPC drag-start fallback and the camera refresh that followed OnModelLoaded framing; NPC dragging now reads the resolved view supplied by the shared API, while object loading, image layout, pan/zoom, and shared window handlers remain unchanged. (2026.09.29.2347)
+
+	RQEDatabase.lua
+		- Added additional end-game quests to Midnight DB (2026.10.01.0130)
+
+	TrackerOrder.lua
+		- Kept Azure & Gold border slices hidden whenever Basic is selected during section refreshes, and read the live tracked achievement count so its themed section border stays visible after quest-list rebuilds. (2026.09.28.2326)
+
+	UITheme.lua
+		- Registered separate Azure & Gold artwork paths for timed, Torghast, and untimed scenario widgets so future themes can supply their own designs. (2026.09.28.1719)
+		- Scheduled one scenario refresh after the saved theme is applied so active stage widgets created before profile initialization receive Azure & Gold artwork on reload. (2026.09.28.1737)
+		- Registered separate Azure & Gold texture paths for Follower, Normal, and Heroic dungeon name cards, allowing difficulty-specific backgrounds without replacing Blizzard's Mythic art. (2026.09.28.1957)
+		- Centralized Basic and Azure & Gold theme metadata, saved named choices while honoring existing useModernTheme profiles, and queued theme application during combat. (2026.09.28.2251)
+		- Captured native tracker presentation before skinning controls and restored it on Basic selection, including headers, buttons, location bars, quest badges, layout, and current tracker content. (2026.09.28.2251)
+		- Restored Blizzard button states from saved texture assets instead of passing texture objects to WoW's asset setter, fixing the Basic selection error seen in live testing. (2026.09.28.2300)
+		- Switched the theme previews to representative native and Azure & Gold header artwork rather than a plain dark Basic sample. (2026.09.28.2300)
+		- Copied native backdrop definitions before skinning and hid theme-only regions after restoring native regions, so Basic switches back to its original panel and header design without a reload. (2026.09.28.2314)
+		- Applied current profile opacity in each theme's own panel color during theme and settings changes, retaining the selected background when profiles or opacity sliders change. (2026.09.28.2314)
+		- Refreshed the compact quest-menu palette after applying a saved theme so open flyouts follow Basic or Azure & Gold without changing tracking or sorting. (2026.09.29.2233)
+		- Registered cropped, power-of-two screenshot assets and their visible dimensions for each theme's Helper and Tracker preview, keeping preview selection alongside the existing theme metadata. (2026.09.30.1132)
+		- Registered three named card styles and a default per Azure & Gold activity, stored non-default selections in the current AceDB profile, refreshed visible cards after selection and profile changes, and deferred protected refreshes until combat ends so Basic/theme switching preserves those choices. (2026.09.30.1402)
+		- Set Gilded Slate as the Delves default after in-game comparison, so a new profile and the Delves-only Reset control select it without changing other activity styles. (2026.09.30.1406)
+		- Added named Azure & Gold card styles for timed scenarios, Heroic, Normal, and Follower dungeons, Delves, and Torghast; shared Battleworn Aegis between Normal and Follower choices and kept the existing per-activity defaults and texture lookup intact. (2026.09.30.1649)
+		- Registered three additional timed-scenario textures plus Torghast-only Runic Relay and Delves-only Ember Sprint in their existing Azure & Gold card groups, preserving per-activity defaults and shared frame layout. (2026.09.30.1659)
+		- Set Azure & Gold defaults to Gathered Camp for Follower, Moonlit Passage for Normal, Sunward Citadel for Heroic, and Veiled Souls for Torghast so new profiles and each group's Reset action select the approved card while Delves and Timed Scenarios retain their defaults. (2026.09.30.1737)
+		- Set Hourglass Sands as the Azure & Gold Timed Scenario group's default so new profiles and its Reset action select the approved artwork while saved explicit choices and the other activity groups remain independent. (2026.09.30.2007)
+
+	WaypointManager.lua
+		- Resolved remaining-count tokens in Retail/Forever waypoint descriptions so raw tokens do not appear in map guidance. (2026.09.28.1627)
+
+
 12.1.0.12 (2026.09.28)
 
 	**HIGHLIGHTS**
@@ -49,12 +347,12 @@
 		- Raised the native scenario stage widget container above the tracker scroll frame and enabled its Blizzard tooltip handling, allowing Torghast floor, death, and Phantasma icon hover regions to receive mouse events. (2026.09.28.1239)
 		- Used temporary combat alpha suppression for Blizzard's protected Objective Tracker, reinforced by its show hook and existing watchdog, and restored its prior alpha before the normal post-combat hide. (2026.09.28.1256)
 
+	RQE.toc
+		- Updated version# (2026.09.28.1612)
+
 	RQE_API.lua
 		- Exposed Blizzard's world timer enumeration and challenge-mode keystone, affix, and death APIs through the client adapter so the Retail scenario panel can read live run data with unavailable-API fallbacks. (2026.09.28.1133)
 		- Added client-adapter access to scenario widget sets and their timer, currency, Delve, and status-bar visualization data so RQE can identify a native countdown without assuming every scenario widget is a timer. (2026.09.28.1149)
-
-	RQE.toc
-		- Updated version# (2026.09.28.1612)
 
 	RQEDatabase.lua
 		- Updated some Northrend Horde quests in DB (2026.09.28.1612)
@@ -84,6 +382,9 @@
 		- Removed the early return that required Blizzard's tracker to already be visible before scenario mode could show it; a hidden starting state now completes the handoff instead of leaving RQE active and printing an unrelated Carbonite warning. (2026.09.26.1905)
 		- Released forceHideRQEQuestFrame and restored the original Show method before applying the disabled scenario-mode setting, so unchecking the option can display RQE's tracker immediately outside combat. (2026.09.26.1905)
 
+	RQE.toc
+		- Updated version# (2026.09.25.0038)
+
 	RQE_API.lua
 		- Added GetSpellPresentation to resolve a contribution author's spell ID to its name and icon through the client-aware spell-info adapter on Retail, Forever, SoD, and TBC. (2026.09.27.1013)
 		- Added GetSupertrackedContributionWaypoint to read Blizzard's next waypoint for the supertracked quest on Retail/Forever, reject unavailable or protected values, and convert normalized map coordinates to authoring percentages. (2026.09.27.1225)
@@ -92,9 +393,6 @@
 		- Replaced the quest UI map fallback with independent GetNextWaypoint and GetNextWaypointForMap lookups on the player's current continent, reporting missing, protected, failed, and valid results without treating W tooltip cache or POI coordinates as Blizzard waypoints. (2026.09.27.1257)
 		- Added a quest-ID-matched GetQuestsOnMap fallback for the player's map and continent when their respective waypoint APIs return no usable coordinates; rounded and labeled each POI result separately while keeping Retail/Forever lookup and Blizzard API calls in this adapter. (2026.09.27.1315)
 		- Removed the contribution-specific coordinate selection workflow from RQE_API.lua so Contribution can use the W button's existing quest-coordinate function; corrected the client-aware GetNextWaypoint and GetNextWaypointForMap wrappers to return every Blizzard coordinate value. (2026.09.27.1327)
-
-	RQE.toc
-		- Updated version# (2026.09.25.0038)
 
 	RQEDatabase.lua
 		- Updated some Northrend Horde quests in DB (2026.09.25.0038)
@@ -302,6 +600,17 @@
 		- Loaded RQE_API.lua before the root Core.lua and ProfileManager.lua so Retail metadata reads and hook registration can use the unified API during file loading; interface and version metadata are unchanged. (2026.09.25.0856)
 		- Loaded the shared tracker-order module after Retail's tracker frames, retaining the existing TOC version metadata. (2026.09.26.1207)
 
+	RQE_API.lua
+		- Added the RQE.API.Client surface for all 298 audited game API names, including those still called directly in the untouched Classic/TBC files; native dispatch preserves multiple returns, nils, booleans, callback arguments, and timer handles, while ResolveClientAPI distinguishes real/native-or-adapted support from unsupported defaults. (2026.09.25.0856)
+		- Separated the real game version from API-generation routing: Forever 1.60 selects the Midnight API generation, while Classic/SoD and Anniversary retain legacy quest-log adapters. Captured native namespaces before existing compatibility shims and kept all new dispatch inside RQE without replacing native Blizzard methods. (2026.09.25.0856)
+		- Added explicit bidirectional item/container/spell/merchant conversions, spell-bank conversion, legacy aura/gossip and scenario adapters, quest-ID/log-index and watch helpers, and selected-quest reward lookups that restore selection after success or error. Unsupported APIs use explicit nil/false/count/list contracts without pretending unsupported transactions succeeded. (2026.09.25.0856)
+		- Filled modern flat map/waypoint/watch/scenario helper gaps, unified quest-description access, retained Forever quest-ID validation, and reconciled both merchant helper contracts with the native MerchantItemInfo table. (2026.09.25.0856)
+		- Added tracker-facing profession data and action helpers plus tooltip and achievement-untracking helpers, keeping their game API calls in the shared Retail/Forever API layer. (2026.09.26.0934)
+		- Count each distinct reagent item across carried inventory, personal bank, reagent bank, and account bank, and combine the eligible quality variants for a recipe slot without double-counting IDs. (2026.09.26.1007)
+
+	RQE_ModelPreview.lua
+		- Routed preview-load timers and cursor-position queries through the shared API with original-call comments; model widget calls and preview layout remain unchanged. (2026.09.25.0856)
+
 	RQEDatabase.lua
 		- Set quest 11999 and 12000 step 2 to complete on the Plans objective and added an inventory failure target of step 1, so consuming an empty Personal Effects bag restores the collect instruction and macro. (2026.09.24.2157)
 		- Updated dynamic Auction House macros in the database to omit the quantity variable, using RQE:SearchPreparePurchaseConfirmAH(itemID) so nil selects the remaining-objective calculation without global-variable collisions. Kept explicit numeric quantities for inventory-based purchases, including quest 29517 Shiny Bauble (10), Coarse Thread (5), and Blue Dye (5) macros. (2026.09.25.0939)
@@ -316,17 +625,6 @@
 
 	RQEMinimap.lua
 		- Routed launcher addon checks, waypoint clearing, timers, cursor/screen queries, and combat/modifier state through the unified API, retaining original-call comments and leaving minimap widget behavior intact. (2026.09.25.0856)
-
-	RQE_API.lua
-		- Added the RQE.API.Client surface for all 298 audited game API names, including those still called directly in the untouched Classic/TBC files; native dispatch preserves multiple returns, nils, booleans, callback arguments, and timer handles, while ResolveClientAPI distinguishes real/native-or-adapted support from unsupported defaults. (2026.09.25.0856)
-		- Separated the real game version from API-generation routing: Forever 1.60 selects the Midnight API generation, while Classic/SoD and Anniversary retain legacy quest-log adapters. Captured native namespaces before existing compatibility shims and kept all new dispatch inside RQE without replacing native Blizzard methods. (2026.09.25.0856)
-		- Added explicit bidirectional item/container/spell/merchant conversions, spell-bank conversion, legacy aura/gossip and scenario adapters, quest-ID/log-index and watch helpers, and selected-quest reward lookups that restore selection after success or error. Unsupported APIs use explicit nil/false/count/list contracts without pretending unsupported transactions succeeded. (2026.09.25.0856)
-		- Filled modern flat map/waypoint/watch/scenario helper gaps, unified quest-description access, retained Forever quest-ID validation, and reconciled both merchant helper contracts with the native MerchantItemInfo table. (2026.09.25.0856)
-		- Added tracker-facing profession data and action helpers plus tooltip and achievement-untracking helpers, keeping their game API calls in the shared Retail/Forever API layer. (2026.09.26.0934)
-		- Count each distinct reagent item across carried inventory, personal bank, reagent bank, and account bank, and combine the eligible quality variants for a recipe slot without double-counting IDs. (2026.09.26.1007)
-
-	RQE_ModelPreview.lua
-		- Routed preview-load timers and cursor-position queries through the shared API with original-call comments; model widget calls and preview layout remain unchanged. (2026.09.25.0856)
 
 	TrackerOrder.lua
 		- Normalized and saved section keys per AceDB profile, preserved each client's existing order as its default, and provided immediate move/reset operations without changing the default anchoring path. (2026.09.26.1207)
