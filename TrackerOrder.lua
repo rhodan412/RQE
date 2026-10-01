@@ -84,15 +84,21 @@ local function SectionFrames()
 end
 
 local function TrackedCount(key, frame)
-	if key == "achievements" then return tonumber(frame.achieveCount) or 0 end
+	if key == "achievements" then
+		-- Quest-list refreshes can reset achieveCount before the achievement
+		-- renderer runs, even while tracked achievement rows remain visible.
+		return (RQE.GetNumTrackedAchievements and RQE.GetNumTrackedAchievements())
+			or tonumber(frame.achieveCount) or 0
+	end
 	if key == "profession" then return tonumber(frame.trackedRecipeCount) or 0 end
 	return tonumber(frame.questCount) or 0
 end
 
 local function SetSectionBorderVisible(frame, visible)
+	local themed = RQE.UI and RQE.UI:IsEnabled() or false
 	for _, key in ipairs(sectionBorderPieces) do
 		local piece = frame[key]
-		if piece then piece:SetShown(visible) end
+		if piece then piece:SetShown(themed and visible) end
 	end
 	local backdrop = frame.GetBackdrop and frame:GetBackdrop()
 	if backdrop and backdrop.edgeFile and frame.SetBackdropBorderColor then
