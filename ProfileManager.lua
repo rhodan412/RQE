@@ -64,11 +64,10 @@ function RQE:ApplyCurrentProfile()
 			self.RQEQuestFrame:SetHeight((self.UI and self.UI:IsEnabled()) and 48 or 30)
 		end
 
-		-- Theme selection retains its existing reload requirement. Apply the
-		-- session theme once, then restore the selected profile's fonts/opacity.
-		if not self.ProfileThemeApplied and self.UI and self.UI.ApplySavedTheme then
+		-- A profile can select a different tracker theme; apply it before the
+		-- profile's fonts and opacity so no reload is needed.
+		if self.UI and self.UI.ApplySavedTheme then
 			self.UI:ApplySavedTheme()
-			self.ProfileThemeApplied = true
 		end
 		self:ApplyUISettings()
 		self:ConfigurationChanged()
@@ -107,7 +106,7 @@ function RQE:ApplyCurrentProfile()
 		-- rebuild the controls underneath a player dragging a geometry slider.
 		if self.AppliedProfile ~= profile or self.ProfileSettingsChanged then
 			local registry = LibStub("AceConfigRegistry-3.0")
-			for _, name in ipairs({ "RQE_Main", "RQE_Frame", "RQE_Font", "RQE_Debug", "RQE_Profiles" }) do
+			for _, name in ipairs({ "RQE_Main", "RQE_Frame", "RQE_Themes", "RQE_Font", "RQE_Debug", "RQE_Profiles" }) do
 				registry:NotifyChange(name)
 			end
 		end
