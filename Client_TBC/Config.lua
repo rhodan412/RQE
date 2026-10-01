@@ -301,6 +301,10 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		RQE.ConfigUI:OpenRegisteredPanel("frame")
 	end
 
+	function RQE:OpenThemeSettings()
+		RQE.ConfigUI:OpenRegisteredPanel("themes")
+	end
+
 	-- Function to open the Font Settings panel
 	function RQE:OpenFontSettings()
 		RQE.ConfigUI:OpenRegisteredPanel("font")
@@ -713,18 +717,6 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 						end,
 						width = "full",
 						order = 3,
-					},
-					useModernTheme = {
-						type = "toggle",
-						name = "Azure & Gold RQE Theme",
-						desc = "Uses RQE's custom Azure, Golden Yellow, and charcoal frames and icon controls. Reload the UI after changing this option.",
-						get = function() return RQE.db.profile.useModernTheme ~= false end,
-						set = function(_, value)
-							RQE.db.profile.useModernTheme = value
-							print("|cFFFFD700[RQE]|r Theme changed. Type |cFF008CFF/reload|r to update every frame.")
-						end,
-						width = "full",
-						order = 3.5,
 					},
 					creatureObjectPreview = {
 						type = "group", name = "Creature and Object Preview", inline = true, order = 3.6,
@@ -1407,6 +1399,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 
 	-- Event Manager dealing with opening different panels in the addon options
 	RQE:RegisterChatCommand("rqe_frame", "OpenFrameSettings")
+		RQE:RegisterChatCommand("rqe_themes", "OpenThemeSettings")
 	RQE:RegisterChatCommand("rqe_font", "OpenFontSettings")
 	RQE:RegisterChatCommand("rqe_debug", "OpenDebugOptions")
 	RQE:RegisterChatCommand("RQE_Profiles", "OpenProfiles")
@@ -1444,6 +1437,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 			tabGroup:SetTabs({
 				{text = "General Settings", value = "general"},
 				{text = "Frame Settings", value = "frame"},
+				{text = "Themes", value = "themes"},
 				{text = "Font Settings", value = "font"},
 				{text = "Debug Options", value = "debug"},
 				{text = "Profiles", value = "profiles"}
@@ -1453,6 +1447,7 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 				local pages = {
 					general = "RQE_Main",
 					frame = "RQE_Frame",
+					themes = "RQE_Themes",
 					font = "RQE_Font",
 					debug = "RQE_Debug",
 					profiles = "RQE_Profiles",
@@ -2176,17 +2171,6 @@ TBC configuration schemas, custom widgets, settings panels, and profile controls
 		end)
 
 		scrollFrame:AddChild(enableStepControlsCheckbox)
-
-		local modernThemeCheckbox = AceGUI:Create("CheckBox")
-		modernThemeCheckbox:SetLabel("Azure & Gold RQE Theme")
-		modernThemeCheckbox:SetDescription("Custom RQE frames, headers, and icon controls. Reload the UI after changing this option.")
-		modernThemeCheckbox:SetValue(RQE.db.profile.useModernTheme ~= false)
-		modernThemeCheckbox:SetFullWidth(true)
-		modernThemeCheckbox:SetCallback("OnValueChanged", function(_, _, value)
-			RQE.db.profile.useModernTheme = value
-			print("|cFFFFD700[RQE]|r Theme changed. Type |cFF008CFF/reload|r to update every frame.")
-		end)
-		scrollFrame:AddChild(modernThemeCheckbox)
 
 		local previewPosition = RQE.db.profile.creatureObjectPreviewPosition
 		local previewAnchorPoints = { TOPLEFT="TOPLEFT", TOP="TOP", TOPRIGHT="TOPRIGHT", LEFT="LEFT", CENTER="CENTER", RIGHT="RIGHT", BOTTOMLEFT="BOTTOMLEFT", BOTTOM="BOTTOM", BOTTOMRIGHT="BOTTOMRIGHT" }
