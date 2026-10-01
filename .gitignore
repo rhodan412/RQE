@@ -1,14 +1,11 @@
-.gitignore
-.gitattributes
-# Keep GitHub-only metadata trackable; .gitattributes omits it from Git archives.
+# Keep packaging rules and GitHub-only metadata trackable; Git archives omit them.
 !/.github/
 !/.github/**
 AGENTS.md
 .vscode/
 /Tests/
-Media/UI/Source/__pycache__/
-Media/UI/Source/build_assets.py
-Media/UI/Source/THEMES.md
+# Editable UI source artwork and build inputs are not loaded by the addon.
+/Media/UI/Source/
 Media/ObjectPreviews/PNG/
 Media/ObjectPreviews/__pycache__/
 Media/ObjectPreviews/convert_png_to_tga.py
