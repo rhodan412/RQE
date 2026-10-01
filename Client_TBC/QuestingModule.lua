@@ -1827,6 +1827,11 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			for questID in pairs(RQE.QuestTrackerSearchResults) do
 				addQuestToRQETracker(questID, true)
 			end
+		elseif RQE.QuestMenuSelection then
+			-- Explicit menu choices share the existing proximity-sorted renderer.
+			for questID in pairs(RQE.QuestMenuSelection) do
+				addQuestToRQETracker(questID, true)
+			end
 		elseif RQE.ShowOnlyAllCompleteVirtualQuests then
 			for questID in pairs(RQE.AllCompleteVirtualQuestWatches or {}) do
 				addQuestToRQETracker(questID, true)
@@ -1860,7 +1865,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		-- unrelated Auto Quest Watch/Progress entry from appearing as an out-of-zone
 		-- zone quest while preserving manually checked quests across map changes.
 		local virtualWatchSource = RQE.ClassicVirtualQuestWatches or {}
-		if RQE.QuestTrackerSearchResults then
+		if RQE.QuestTrackerSearchResults or RQE.QuestMenuSelection then
 			virtualWatchSource = {}
 		elseif RQE.ShowOnlyAllCompleteVirtualQuests then
 			virtualWatchSource = {}
@@ -2206,7 +2211,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowQuestDropdown(self, questID)
-		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			local isPlayerInGroup = IsInGroup()
 			-- local isQuestShareable = C_QuestLog.IsPushableQuest(questID)
 			local isQuestShareable = C_QuestLog.IsPushableQuest and C_QuestLog.IsPushableQuest(questID) or false
@@ -2219,8 +2224,8 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				if RQE_SandboxEditor then
 					rootDescription:CreateButton("Open Sandbox", function() RQE_SandboxEditor:Show() end)
 				end
-				rootDescription:CreateButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
-				rootDescription:CreateButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
+				rootDescription:CreateContributionButton("Print Supertracked Quest (Sandbox/DB)", function() RQE.PrintSupertrackedQuest() end)
+				rootDescription:CreateContributionButton("Check Coordinate Status for Quest", function() RQE:CheckCoordHotspotsInSteps(questID) end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			end
 
@@ -2260,9 +2265,9 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
-				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
-				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
-				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
 			else
 				rootDescription:CreateButton("|cff888888-----------------------------------------------|r", function() end)
@@ -2270,6 +2275,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 			rootDescription:CreateButton("Show Wowhead Link", function() RQE:ShowWowheadLink(questID) end)
 			rootDescription:CreateButton("Search Warcraft Wiki", function() RQE:ShowWowWikiLink(questID) end)
+			rootDescription:AppendQuestContextActions(questID)
 			rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
 				RQE.ToggleRQEQuestFrameLock()
@@ -2286,12 +2292,12 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 	-- Function to Show Right-Click Dropdown Menu
 	function ShowDropdownRQEQuestFrame(self)
-		MenuUtil.CreateContextMenu(UIParent, function(ownerRegion, rootDescription)
+		RQE:ShowStyledContextMenu(function(ownerRegion, rootDescription)
 			-- Only show RQE buttons if the RQE_Contribution addon is loaded
 			if C_AddOns.IsAddOnLoaded("RQE_Contribution") then
-				rootDescription:CreateButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
-				rootDescription:CreateButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
-				rootDescription:CreateButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
+				rootDescription:CreateContributionButton("Track Quests in DB without Steps", function() RQE.TrackDBQuestsWithoutSteps() end)
+				rootDescription:CreateContributionButton("Track Quests in DB with Steps", function() RQE.TrackDBQuestsWithSteps() end)
+				rootDescription:CreateContributionButton("Track Quests Not in DB", function() RQE.TrackQuestsNotInDB() end)
 				rootDescription:CreateButton("|cff888888----------------------------------|r", function() end)
 			end
 			rootDescription:CreateButton(isQuestFrameLocked and "Unlock Quest Tracker Position & Size" or "Lock Quest Tracker Position & Size", function()
@@ -2800,6 +2806,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 			GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 			-- GameTooltip:SetText(questTitle)
 			GameTooltip:SetText(RQE:GetQuestTooltipTitle(questID, questTitle))
+			RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
 			GameTooltip:AddLine(" ")
 
@@ -2809,10 +2816,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 				GameTooltip:AddLine(" ")
 			end
 
-			RQE:QuestRewardsTooltip(GameTooltip, questID)
+			RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 			GameTooltip:AddLine(" ")
-			GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)
+			GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)
 			GameTooltip:Show()
 		end)
 
@@ -3457,7 +3464,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 	-- #11f. Quest Rewards Tooltip
 	-------------------------------------------------------
 
-	function RQE:QuestRewardsTooltip(tooltip, questID)
+	function RQE:QuestRewardsTooltip(tooltip, questID, includeReputationChoices)
 		-- if tonumber((GetBuildInfo()):match("^(%d+)")) == 1 then
 		-- 	return
 		-- end
@@ -3581,6 +3588,20 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 		if RQE.API.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
 		--if C_QuestLog.IsWorldQuest(questID) or C_TaskQuest.IsActive(questID) then
 			tooltip:AddLine("Rewards:", 1, 1, 1)
+
+			-- Task/world reward paths return before the ordinary choice renderer.
+			-- Frame hovers opt in; chat-link reward presentation stays unchanged.
+			local reputationChoices = includeReputationChoices and RQE.API.GetQuestReputationChoiceRewards(questID, choiceItemsCount) or {}
+			if #reputationChoices > 0 then
+				tooltip:AddLine(choiceItemsCount == 1 and "You will receive:" or "Choose one of the following rewards:")
+				for _, reward in ipairs(reputationChoices) do
+					local icon = reward.texture and ("|T" .. reward.texture .. ":16|t ") or ""
+					local text = icon .. FormatLargeNumber(reward.amount) .. " " .. reward.name
+					local color = customItemQualityColors[reward.quality] or { r = 1, g = 1, b = 1 }
+					tooltip:AddLine(text, color.r, color.g, color.b, true)
+				end
+				tooltip:AddLine(" ")
+			end
 
 			-- XP and money
 			local xp = GetQuestLogRewardXP(questID)
@@ -4651,6 +4672,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 						-- GameTooltip:SetText(info.title)
 						GameTooltip:SetText(RQE:GetQuestTooltipTitle(questID, info.title))
+						RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
 						GameTooltip:AddLine(" ")
 
@@ -4677,33 +4699,6 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 							GameTooltip:AddLine(" ")
 						end
 
-						if questID then
-							-- Check if the quest is ready to be turned in
-							if C_QuestLog.ReadyForTurnIn(questID) then
-								GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
-							-- Check if the quest is completed
-							elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
-								GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-								if RQE.API.GameVersion and RQE.API.GameVersion.supportsWarband then
-									if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-										GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0)
-									else
-										GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0)
-									end
-								end
-							else
-								GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-								if RQE.API.GameVersion and RQE.API.GameVersion.supportsWarband then
-									if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-										GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0)
-									else
-										GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0)
-									end
-								end
-							end
-							GameTooltip:AddLine(" ")
-						end
-
 						-- Add objectives
 						if objectivesText and objectivesText ~= "" then
 							GameTooltip:AddLine("Objectives:")
@@ -4714,11 +4709,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						end
 
 						-- Add Rewards
-						RQE:QuestRewardsTooltip(GameTooltip, questID)
+						RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 						-- Party Members' Quest Progress
-						if IsInGroup() then
-							if IsInRaid() then return end
+						if IsInGroup() and not IsInRaid() then
 							-- GetQuestPartyProgress is unavailable in Classic Era.
 							local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
 							if tooltipData and tooltipData.lines then
@@ -4756,7 +4750,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						end
 
 						GameTooltip:AddLine(" ")
-						GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
 					end)
 
@@ -4770,6 +4764,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						GameTooltip:SetPoint("BOTTOMLEFT", self, "TOPLEFT")
 						-- GameTooltip:SetText(info.title)
 						GameTooltip:SetText(RQE:GetQuestTooltipTitle(questID, info.title))
+						RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 
 						GameTooltip:AddLine(" ")
 
@@ -4796,33 +4791,6 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 							GameTooltip:AddLine(" ")
 						end
 
-						if questID then
-							-- Check if the quest is ready to be turned in
-							if C_QuestLog.ReadyForTurnIn(questID) then
-								GameTooltip:AddLine("Status: Ready for Turn In", 1, 1, 0) -- Yellow color for ready to turn in
-							-- Check if the quest is completed
-							elseif C_QuestLog.IsQuestFlaggedCompleted(questID) then
-								GameTooltip:AddLine("Status: Completed", 0, 1, 0) -- Green color for completed
-								if RQE.API.GameVersion and RQE.API.GameVersion.supportsWarband then
-									if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-										GameTooltip:AddLine("Status: Completed on Warband", 0, 1, 0)
-									else
-										GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0)
-									end
-								end
-							else
-								GameTooltip:AddLine("Status: Not Completed", 1, 0, 0) -- Red color for not completed
-								if RQE.API.GameVersion and RQE.API.GameVersion.supportsWarband then
-									if C_QuestLog.IsQuestFlaggedCompletedOnAccount(questID) then
-										GameTooltip:AddLine("Status: Completed on Warband", 1, 1, 0)
-									else
-										GameTooltip:AddLine("Status: Not Completed on Warband or repeatable", 1, 0, 0)
-									end
-								end
-							end
-							GameTooltip:AddLine(" ")
-						end
-
 						-- Add objectives
 						if objectivesText and objectivesText ~= "" then
 							GameTooltip:AddLine("Objectives:")
@@ -4833,11 +4801,10 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						end
 
 						-- Add Rewards
-						RQE:QuestRewardsTooltip(GameTooltip, questID)
+						RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 						-- Party Members' Quest Progress
-						if IsInGroup() then
-							if IsInRaid() then return end
+						if IsInGroup() and not IsInRaid() then
 							GameTooltip:AddLine(" ")
 							-- GetQuestPartyProgress is unavailable in Classic Era.
 							local tooltipData = C_TooltipInfo and C_TooltipInfo.GetQuestPartyProgress and C_TooltipInfo.GetQuestPartyProgress(questID)
@@ -4876,7 +4843,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 						end
 
 						GameTooltip:AddLine(" ")
-						GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82) -- Aquamarine
+						GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82) -- Aquamarine
 						GameTooltip:Show()
 					end)
 
@@ -5379,6 +5346,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 
 					-- Add the quest title
 					GameTooltip:AddLine(questTitle)
+					RQE.API.AddFrameQuestTooltipWarbandStatus(GameTooltip, questID)
 					GameTooltip:AddLine(" ")  -- Blank line
 
 					-- Add description
@@ -5401,7 +5369,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 					end
 
 					-- Add Rewards
-					RQE:QuestRewardsTooltip(GameTooltip, questID)
+					RQE:QuestRewardsTooltip(GameTooltip, questID, true)
 
 					-- Add time left
 					local timeLeftString = FormatTimeLeft(C_TaskQuest.GetQuestTimeLeftSeconds(questID))  -- Make sure FormatTimeLeft function is defined as previously described
@@ -5411,7 +5379,7 @@ TBC quest tracker frames, search, sorting, scenario displays, and interactive qu
 					end
 
 					-- Add the quest ID
-					GameTooltip:AddLine("Quest ID: " .. questID, 0.49, 1, 0.82)  -- Aquamarine color
+					GameTooltip:AddDoubleLine(" ", "Quest ID: " .. questID, 1, 1, 1, 0.49, 1, 0.82)  -- Aquamarine color
 
 					GameTooltip:Show()
 				end)
