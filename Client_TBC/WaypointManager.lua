@@ -451,7 +451,7 @@ TBC waypoint routing, provider compatibility, map pins, and quest-aware coordina
 
 		RQE.WPxPos, RQE.WPyPos, RQE.WPmapID = x, y, mapID
 		RQE.isForcedWaypoint = true
-		RQE:CreateWaypoint(x, y, mapID, stepData.description or questData.title)
+		RQE:CreateWaypoint(x, y, mapID, RQE.FormatStepDescription(questID, stepData) or questData.title)
 		RQE.isForcedWaypoint = nil
 	end
 
@@ -1168,7 +1168,7 @@ TBC waypoint routing, provider compatibility, map pins, and quest-aware coordina
 
 		-- Fetch the description from the specific stepIndex, if available
 		local stepData = questData[stepIndex]
-		RQE.DescriptionText = stepData and stepData.description or "No step description available"
+		RQE.DescriptionText = RQE.FormatStepDescription(questID, stepData) or "No step description available"
 
 		if not x or not y or not mapID then
 			print("Invalid coordinates for questID:", questID, "stepIndex:", stepIndex)
@@ -1551,7 +1551,7 @@ TBC waypoint routing, provider compatibility, map pins, and quest-aware coordina
 
 		-- Fetch the description from the specific stepIndex, if available
 		local stepData = questData[stepIndex]
-		local description = stepData and stepData.description or "No step description available"
+		local description = RQE.FormatStepDescription(questID, stepData) or "No step description available"
 
 		local directionText = RQE.DirectionText
 
